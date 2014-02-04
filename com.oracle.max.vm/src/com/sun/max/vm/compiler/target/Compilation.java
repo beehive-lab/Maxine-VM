@@ -193,11 +193,9 @@ public class Compilation {
      */
     public TargetMethod compile() {
         RuntimeCompiler compiler = this.compiler;
-
         Throwable error = null;
         String methodString = "";
         long startCompile = 0;
-
         try {
 
             InspectableCompilationInfo.notifyCompilationEvent(classMethodActor, null);
@@ -212,6 +210,7 @@ public class Compilation {
             if (TIME_COMPILATION.getValue()) {
                 startCompile = System.currentTimeMillis();
             }
+
             result = compiler.compile(classMethodActor, isDeopt, true, null);
             if (result == null) {
                 throw new InternalError(classMethodActor.format("Result of compiling of %H.%n(%p) is null"));

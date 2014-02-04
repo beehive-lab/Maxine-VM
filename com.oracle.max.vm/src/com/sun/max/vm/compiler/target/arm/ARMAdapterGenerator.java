@@ -700,7 +700,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             }
         }
 
-        static final int PROLOGUE_SIZE = 13;
+        static final int PROLOGUE_SIZE = 29; // calculated by running APN ...
         static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = 8;
 
         Opt2Baseline() {
@@ -754,6 +754,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             asm.bind(end);
 
             int size = asm.codeBuffer.position();
+            System.err.println("ASM " + size + " " + PROLOGUE_SIZE);
             assert size == PROLOGUE_SIZE;
             copyIfOutputStream(asm.codeBuffer, out);
             return size;

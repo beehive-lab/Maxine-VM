@@ -196,8 +196,9 @@ public class CiRegisterConfig implements RiRegisterConfig {
         int firstStackIndex = (stackArg0Offsets[type.ordinal()]) / target.spillSlotSize;
         int currentStackIndex = firstStackIndex;
 
-        System.err.println(parameters.length + " cpu " + cpuParameters.length);
-        System.err.println(" fpu length "+ fpuParameters.length ) ;
+
+        System.err.println("PARAMS " + parameters.length);
+
         for (int i = 0; i < parameters.length; i++) {
             locations[i] = null; // APN necessary?
             final CiKind kind = parameters[i];
@@ -212,6 +213,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
                     if (!stackOnly && currentGeneral < cpuParameters.length) {
                         CiRegister register = cpuParameters[currentGeneral++];
                         locations[i] = register.asValue(kind);
+
                     }
                     break;
                 case Long:
@@ -220,7 +222,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
                             CiRegister register = cpuParameters[currentGeneral++];
                             locations[i] = register.asValue(kind);
                             //currentGeneral++;
-                            System.err.println("LONG needs 2 register  getCallingConvention");
+                            System.err.println("LONG needs 2 register  getCallingConvention " + i);
 
                         }
                    // else throw new InternalError("long requires two registers");
@@ -235,7 +237,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
                         CiRegister register = fpuParameters[currentXMM++];
                         locations[i] = register.asValue(kind);
                     }
-                    System.err.println("FIX REQUIRED for DOUBLE  getCallingConvention")  ;
+                    System.err.println("FIX REQUIRED for DOUBLE  getCallingConvention "+ i)  ;
                     // ARM
                     /*
                     if (!stackOnly) {
@@ -254,12 +256,13 @@ public class CiRegisterConfig implements RiRegisterConfig {
             }
 
             if (locations[i] == null) {
+                if(kind == CiKind.Float || kind == CiKind.Double) System.err.println("FLOAT/DOUBLE ");
                 System.err.println("REALLY placed on the stack " + i)  ;
                 locations[i] = CiStackSlot.get(kind.stackKind(), currentStackIndex, !type.out);
                 currentStackIndex += target.spillSlots(kind);
             }
         }
-
+        System.err.println("FP " + currentXMM+ " GP " + currentGeneral + " TOTAL REGS " + (currentGeneral + currentXMM));
         return new CiCallingConvention(locations, (currentStackIndex - firstStackIndex) * target.spillSlotSize);
     }
 

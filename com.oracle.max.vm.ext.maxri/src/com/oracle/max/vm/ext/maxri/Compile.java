@@ -26,6 +26,7 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.max.asm.*;
+import com.oracle.max.asm.target.armv7.ARMV7;
 import com.sun.cri.ci.*;
 import com.sun.max.*;
 import com.sun.max.config.*;
@@ -173,21 +174,33 @@ public class Compile {
         cb.optimizingCompiler.initialize(Phase.HOSTED_COMPILING);
         if (cb.optimizingCompiler != cb.baselineCompiler && compiler == cb.baselineCompiler) {
             cb.baselineCompiler.initialize(Phase.HOSTED_COMPILING);
-        }
+            out.println("baseline inited") ;
 
+        }
+	out.println("!!!!!!! Compile standalone version COMPILERS ALL INITIALISED!");
         final Classpath classpath = Classpath.fromSystem();
         final List<MethodActor> methods = new MyMethodFinder().find(arguments, classpath, Compile.class.getClassLoader(), null);
         if (methods.size() == 0) {
             out.println("no methods matched");
             return;
         }
+        out.println("METHODS tO BE COMPILED " + methods.size());
+        for(MethodActor  actor: methods) {
+            out.println(actor + " CODE SIZE " + actor.codeSize());
+            for(int i = 0; i < actor.codeSize();i++)    {
+                out.println("BYTECODE " + i + " " + actor.code()[i]);
+            }
+        }
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
 
         if (reflectionStubsOption.getValue()) {
             addReflectionStubs(methods);
+            out.println("REFLECTION STUBS ADDED!");
         }
+        out.println("DOCOMPILE START!");
 
         doCompile(compiler, methods, progress);
+	out.println("DOCOMPILE FINISHED!");
 
         if (verboseOption.getValue() > 0) {
             progress.report();
@@ -244,6 +257,7 @@ public class Compile {
         Throwable thrown = null;
         CiStatistics stats = new CiStatistics();
         try {
+            System.err.println("Goung to compiler.compile");
             TargetMethod tm = compiler.compile(classMethodActor, false, true, stats);
             if (validateInline.getValue()) {
                 validateInlining(tm);

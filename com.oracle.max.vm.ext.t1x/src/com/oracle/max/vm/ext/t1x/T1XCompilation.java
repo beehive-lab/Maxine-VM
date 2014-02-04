@@ -420,6 +420,7 @@ public abstract class T1XCompilation {
      * Translates the bytecode of a given method into a {@link T1XTargetMethod}.
      */
     public T1XTargetMethod compile(ClassMethodActor method, boolean isDeopt, boolean install) {
+        System.err.println("T1XCompilation::compile");
         try {
             this.isDeopt = isDeopt;
             return compile1(method, method.codeAttribute(), install);
@@ -434,6 +435,31 @@ public abstract class T1XCompilation {
             return compile1(method, codeAttribute, install);
         }
     }
+
+    public T1XTargetMethod debugT1XCompile(ClassMethodActor method,
+                                           boolean isDeopt,  //not used
+                                           boolean instal  ) //not used
+
+    {
+
+            initCompile(method,method.codeAttribute());
+            try {
+                    compile2(method);
+            } finally {
+            }
+
+             try {
+                int endPos = buf.position();
+                fixup();
+                buf.setPosition(endPos);
+             }finally {
+             }
+
+            return newT1XTargetMethod(this, false);
+
+    }
+
+
 
     private T1XTargetMethod compile1(ClassMethodActor method, CodeAttribute codeAttribute, boolean install) {
         startTimer(T1XTimer.PRE_COMPILE);
@@ -468,6 +494,7 @@ public abstract class T1XCompilation {
     }
 
     void compile2(ClassMethodActor method) throws InternalError {
+        if(template == null) System.err.println("COMPILE2TEMPLATE WAS NULL");
         adapter = emitPrologue();
 
         emitUnprotectMethod();
@@ -563,6 +590,9 @@ public abstract class T1XCompilation {
     protected void start(T1XTemplate startTemplate) {
         assert template == null;
         this.template = startTemplate;
+        if(startTemplate != null)
+        System.err.println("TEMPlATE NONNULL");
+        else System.err.println("TEMPLATE null");
         initializedArgs = 0;
         Sig sig = template.sig;
         if (sig.stackArgs != 0) {
@@ -731,7 +761,11 @@ public abstract class T1XCompilation {
                 }
             }
         }
-        buf.emitBytes(template.code, 0, template.code.length);
+        if(buf == null) System.err.println("buf is null");
+        if(template == null) System.err.println("template is null");
+        if(template.code == null) System.err.println("template code is null REMOVE COMMENTED OUT T1XCompilation::emitAndRecordSafepoints");
+        System.err.println("BUFFER POS " + buf.position()); // this is the machine code right?
+        if(template.code != null) buf.emitBytes(template.code, 0, template.code.length);
     }
 
     /**
@@ -1095,6 +1129,7 @@ public abstract class T1XCompilation {
     }
 
     protected void processBytecode(int opcode) throws InternalError {
+        System.err.println("PROCESS BYTECODE");
         beginBytecode(opcode);
         switch (opcode) {
             // Checkstyle: stop
@@ -1791,7 +1826,7 @@ public abstract class T1XCompilation {
 
     protected boolean processIntrinsic(MethodActor method) {
         String intrinsic = method.intrinsic();
-
+        System.err.println("PROCESS INTRINSIC T1X");
         if (T1X.unsafeIntrinsicIDs.contains(intrinsic)) {
             T1XMetrics.Bailouts++;
             if (T1XOptions.PrintBailouts) {
@@ -1822,7 +1857,7 @@ public abstract class T1XCompilation {
         if (template == null) {
             return false;
         }
-
+        assert(template != null);
         start(template);
         finish();
 
@@ -2389,5 +2424,10 @@ public abstract class T1XCompilation {
 
     protected void do_sastore() {
         emit(SASTORE);
+    }
+
+    // APN for testing
+    public Buffer    getBuffer() {
+        return buf;
     }
 }

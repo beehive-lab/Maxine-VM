@@ -129,6 +129,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     public void peekWord(CiRegister dst, int index) {
         //asm.movq(dst, spWord(index));
         // APN same as peekObject as everything is 32bits.
+        System.err.println("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ");
         asm.setUpScratch(spWord(index));
         asm.ldr(ConditionFlag.Always,0,0,0,dst,asm.scratchRegister,ARMV7.r0,0,0);
 
@@ -476,6 +477,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         //asm.ret(stackAmountInBytes);                  // APN dont know what to do here.
         // ret needs removing or turning into a nop?
         asm.addq(ARMV7.r13,stackAmountInBytes)  ;
+        System.err.println("ARM emitEPILOGUE");
         // NOt really sure how much of X86 we need to keep
         // and how much we can get rid off?
     }
@@ -1028,4 +1030,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         return returnKind;
     }
 
+    public void assignmentTests(CiRegister reg, long value)
+    {
+         assignLong(reg,value);
+        System.err.println("Done");
+    }
 }

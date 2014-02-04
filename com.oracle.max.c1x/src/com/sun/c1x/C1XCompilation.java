@@ -219,8 +219,11 @@ public final class C1XCompilation {
         CiTargetMethod targetMethod;
         try {
             emitHIR();
+            System.err.println("Emitted HIR");
             emitLIR();
+            System.err.println("Emitted LIR");
             targetMethod = emitCode();
+            System.err.println("Emitted CODE");
 
             if (C1XOptions.PrintMetrics) {
                 C1XMetrics.BytecodesCompiled += method.code().length;

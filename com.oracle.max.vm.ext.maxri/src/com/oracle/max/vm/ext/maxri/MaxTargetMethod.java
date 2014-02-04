@@ -101,10 +101,15 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     public MaxTargetMethod(ClassMethodActor classMethodActor, CiTargetMethod ciTargetMethod, boolean install) {
         super(classMethodActor, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         assert classMethodActor != null;
-        List<CodeAnnotation> annotations = ciTargetMethod.annotations();
+        System.err.println("T1X debug portion of code commented out MaxTargetMethod constructor COMMENT BACK IN!!!");
+        /*List<CodeAnnotation> annotations = ciTargetMethod.annotations();
         this.annotations = annotations == null ? null : annotations.toArray(new CodeAnnotation[annotations.size()]);
         init(ciTargetMethod, install);
+        */
+        this.annotations = null;
+        //init(ciTargetMethod,install);
     }
+
 
     private void init(CiTargetMethod ciTargetMethod, boolean install) {
 

@@ -124,7 +124,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     /**
      * Creates a compiler in which some template definitions may be overridden.
      * by calling {@link #setTemplateSource(Class)} before {@link #initialize}.
-     * @param templateSource class defining the modified template definitions
+     * @param  templateSource class defining the modified template definitions
      * @param factory for creating {@link T1XCompilation} instances
      */
     @HOSTED_ONLY
@@ -136,7 +136,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     private final ThreadLocal<T1XCompilation> compilation = new ThreadLocal<T1XCompilation>() {
         @Override
         protected T1XCompilation initialValue() {
-            return t1XCompilationFactory.newT1XCompilation(T1X.this);
+           return t1XCompilationFactory.newT1XCompilation(T1X.this);
         }
     };
 
@@ -149,9 +149,11 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         T1X t1x = this;
         if (!MaxineVM.isHosted() && useVMTITemplates(method)) {
             // Use JVMTI templates to create code-related events.
+            System.err.println("!!!!!!! using vmtiT1X ");
             t1x = vmtiT1X;
         }
         T1XCompilation c = t1x.compilation.get();
+        System.err.println("!!!!!got t1x");
         boolean reentrant = false;
         if (c.method != null) {
             // Re-entrant call to T1X - use a new compilation object that will be discarded
@@ -176,6 +178,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
             T1XTargetMethod t1xMethod = c.compile(method, isDeopt, install);
             T1XMetrics.BytecodesCompiled += t1xMethod.codeAttribute.code().length;
             T1XMetrics.CodeBytesEmitted += t1xMethod.code().length;
+            System.err.println("STATS bytecode len " + t1xMethod.codeAttribute.code().length + " machine code len " +t1xMethod.code().length );
             if (stats != null) {
                 stats.bytecodeCount = t1xMethod.codeAttribute.code().length;
             }
@@ -459,6 +462,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         return UNIMPLEMENTED_TEMPLATES.contains(tag);
     }
 
+
     private MaxTargetMethod compileTemplate(RuntimeCompiler bootCompiler, ClassMethodActor templateSource) {
         FatalError.check(templateSource.isTemplate(), "Method with " + T1X_TEMPLATE.class.getSimpleName() + " annotation should be a template: " + templateSource);
         FatalError.check(!hasStackParameters(templateSource), "Template must not have *any* stack parameters: " + templateSource);
@@ -467,13 +471,25 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
             Kind k = templateSource.getParameterKinds()[i];
             FatalError.check(k.stackKind == k, "Template parameter " + i + " is not a stack kind: " + templateSource);
         }
+        System.err.println("length of code " +templateSource.codeSize());
+        byte []codecopy = templateSource.code();
+        for(int i=0; i < codecopy.length; i++)    {
 
+
+            System.out.printf("BYTE is %08X\n",codecopy[i]) ;
+        }
+        System.err.println("T1X compileTemplate commented out C1X bootCompiler.compile");
+        System.out.println("compiling  method " + templateSource.qualifiedName() + templateSource.isTemplate());
+        /*
         final MaxTargetMethod templateCode = (MaxTargetMethod) bootCompiler.compile(templateSource, false, true, null);
         FatalError.check(templateCode.scalarLiterals() == null, "Template must not have *any* scalar literals: " + templateCode);
         int frameSlots = Ints.roundUp(templateCode.frameSize(), STACK_SLOT_SIZE) / STACK_SLOT_SIZE;
         if (frameSlots > T1XTargetMethod.templateSlots) {
             T1XTargetMethod.templateSlots = frameSlots;
         }
+        */
+        MaxTargetMethod templateCode = new MaxTargetMethod(templateSource,null,false);
+
         return templateCode;
     }
 

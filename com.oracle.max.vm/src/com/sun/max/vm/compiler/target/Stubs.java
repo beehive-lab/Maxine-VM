@@ -1190,6 +1190,7 @@ public class Stubs {
             CiValue[] args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
             if (!kind.isVoid()) {
                 // Copy return value into arg 4
+
                 CiRegister arg4 = args[4].asRegister();
                 CiRegister returnRegister = registerConfig.getReturnRegister(kind);
                 if (arg4 != returnRegister) {
@@ -1280,25 +1281,64 @@ public class Stubs {
                 // Copy return value into arg 4
                 // this must be on the stack for ARM?
 
-
-                CiAddress arg4 = new CiAddress(kind,ARMV7.RSP,((CiStackSlot)args[4]).index()*4);
-                asm.setUpScratch(arg4);
+                // APN
+                 /*
+                 If we have 5th register, then it has to go on the stack? What if we have some integer and some
+                  floating point? do we need to do the copy.
+                 */
+                // CiRegister arg4 = args[4].asRegister();
+                CiAddress arg4;
                 CiRegister returnRegister = registerConfig.getReturnRegister(kind);
-                // APN TODO wrong wrong wrong!!!
-                    if (kind.isFloat()) {
-                        //asm.movflt(arg4, returnRegister);
-                        asm.movror(ARMV7Assembler.ConditionFlag.Always,false,returnRegister,ARMV7.r12,0);
-                    } else if (kind.isDouble()) {
+
+                switch(kind) {
+                    case Byte:
+                    case Boolean:
+                    case Short:
+                    case Char:
+                    case Int:
+                    case Object:
+                        assert(args[4].isRegister() == false);
+
+                        arg4 =   new CiAddress(kind,ARMV7.RSP,((CiStackSlot)args[4]).index()*4);
+                        asm.setUpScratch(arg4);
+                        asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
                         asm.movror(ARMV7Assembler.ConditionFlag.Always,false,returnRegister,ARMV7.r12,0);
 
+                    break;
 
-                        //asm.movdbl(arg4, returnRegister);
-                       // throw(new InternalError("double not supported yet"));
-                    } else {
+                    case Long:
+                               // broken needs TWO registers TODO
+                        assert(args[4].isRegister() == false);
 
+                        arg4 =   new CiAddress(kind,ARMV7.RSP,((CiStackSlot)args[4]).index()*4);
+                        asm.setUpScratch(arg4);
+                        asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
                         asm.movror(ARMV7Assembler.ConditionFlag.Always,false,returnRegister,ARMV7.r12,0);
-                        //asm.movq(arg4, returnRegister);
-                    }
+
+                    break;
+
+                    case Float:
+                        CiRegister tmp = args[4].asRegister();
+                        asm.vmov();        //TODO
+
+                    break;
+
+                    case Double:
+                        CiRegister tmp2arg4 = args[4].asRegister();
+                            // aPN TODO this is broken beyond belief
+                            // we will be trying to move a FP reg into a core register?
+                            //
+                        asm.vmov(); // TODO
+
+                    break;
+
+                    default:
+                        throw new InternalError("Unexpected parameter kind: " + kind);
+                }
+
+                //CiRegister arg4 = args[4].asRegister(); // APN we should have a method to load/setup any register
+
+
             }
             // APN honestly believe this is wrong ....
             // we need arg0 to be returnvalue ...
@@ -1419,6 +1459,7 @@ public class Stubs {
             CiValue[] args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
             if (kind != null && !kind.isVoid()) {
                 // Copy return value into arg 4
+
                 CiRegister arg4 = args[4].asRegister();
                 CiStackSlot ss = (CiStackSlot) registerConfigs.compilerStub.getCallingConvention(JavaCall, new CiKind[] {kind}, target(), true).locations[0];
                 assert ss.index() == 1 : "compiler stub return value slot index has changed?";
@@ -1489,7 +1530,7 @@ public class Stubs {
             CiCalleeSaveLayout csl = registerConfig.csl;
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(csl.size);
-            int cfo = frameSize + 8; // Caller frame offset
+            int cfo = frameSize + 4; // APN 4 bytes for ARM? Caller frame offset
 
             String runtimeRoutineName;
             if (kind == null) {
@@ -1506,7 +1547,7 @@ public class Stubs {
             }
 
             // now allocate the frame for this method (including return address slot)
-            asm.subq(ARMV7.r13, frameSize + 8);
+            asm.subq(ARMV7.r13, frameSize + 4);
             // save all the callee save registers
             asm.save(csl, csl.frameOffsetToCSA);
 
@@ -1514,12 +1555,62 @@ public class Stubs {
             CiValue[] args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
             if (kind != null && !kind.isVoid()) {
                 // Copy return value into arg 4
-                CiAddress arg4 = new CiAddress(kind,ARMV7.RSP,((CiStackSlot)args[4]).index()*4);
+
+                //CiRegister arg4 = args[4].asRegister();
+                CiAddress arg4;
+                switch(kind) {
+                    case Byte:
+                    case Boolean:
+                    case Short:
+                    case Char:
+                    case Int:
+                    case Object:
+                        assert(args[4].isRegister() == false);
+
+                        arg4 =   new CiAddress(kind,ARMV7.RSP,((CiStackSlot)args[4]).index()*4);
+                        asm.setUpScratch(arg4);
+                        asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
+                        asm.movror(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r0,ARMV7.r12,0);
+
+                        break;
+                    case Long:
+                        assert(args[4].isRegister() == false);
+
+                        // broken needs TWO registers TODO
+                        arg4 =   new CiAddress(kind,ARMV7.RSP,((CiStackSlot)args[4]).index()*4);
+                        asm.setUpScratch(arg4);
+                        asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
+                        asm.movror(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r0,ARMV7.r12,0);
+
+                        break;
+
+                    case Float:
+                        System.err.println("FLOAT");
+                        CiRegister tmp = args[4].asRegister();
+                        asm.vmov();        //TODO
+
+                        break;
+                    case Double:
+                        System.err.println("DOUBLE");
+                        CiRegister tmp2arg4 = args[4].asRegister();
+                        // aPN TODO this is broken beyond belief
+                        // we will be trying to move a FP reg into a core register?
+                        //
+                        asm.vmov(); // TODO
+
+                        break;
+
+                    default:
+                        throw new InternalError("Unexpected parameter kind: " + kind);
+                }
+
+                /*CiAddress arg4 = new CiAddress(kind,ARMV7.RSP,((CiStackSlot)args[4]).index()*4);
                 asm.setUpScratch(arg4);
                 //CiRegister arg4 = args[4].asRegister();
                 CiStackSlot ss = (CiStackSlot) registerConfigs.compilerStub.getCallingConvention(JavaCall, new CiKind[] {kind}, target(), true).locations[0];
                 assert ss.index() == 1 : "compiler stub return value slot index has changed?";
                 CiAddress src = new CiAddress(kind, ARMV7.RSP, cfo + (ss.index() * 4));
+
                 if (kind.isFloat()) {
                     //asm.movflt(arg4, src);
                     // TODO throw (new InternalError("floats not implemented"));
@@ -1534,6 +1625,7 @@ public class Stubs {
                     asm.str(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, ARMV7.r12, 0, 0);
                   //  asm.movq(arg4, src);
                 }
+                */
             }
 
 
