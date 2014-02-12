@@ -18,6 +18,7 @@ import java.util.Map;
 public class ARMV7AssemblerTest extends MaxTestCase {
     ARMV7Assembler asm;
     CiTarget armv7;
+    ARMCodeWriter code;
 
     static final class Pair {
         public final int first;
@@ -42,6 +43,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                 false);
 
         asm = new ARMV7Assembler(armv7, null);
+        code = null;
     }
 
     public static void main(String[] args) {
@@ -54,6 +56,32 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     // public void adc(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int immed_8, final int rotate_amount)
 
 
+    public void testmovw() throws Exception {
+        int instructions[] = new int[1];
+        long  expectedValues[] = new long [17];
+        boolean  testvalues[] = new boolean[17];
+        for(int j = 0;j <17;j++)  testvalues[j] = false;
+        testvalues[0] = true;
+
+        for(int i = 0; i < ARMV7Assembler.ConditionFlag.values().length;i++)    {
+            for(int value = 0; value < 256;value++) {
+                 expectedValues[0] = value;
+                 asm.movw(ARMV7Assembler.ConditionFlag.values()[i],ARMV7.r0,value);
+                 code = new ARMCodeWriter(1,instructions);
+                 MaxineARMTester r = new MaxineARMTester(expectedValues,testvalues);
+	             r.assembleStartup();
+	             r.assembleEntry();
+	             r.compile();
+	             r.link();
+	             r.objcopy();
+	             System.out.println("RETURNED " + r.runSimulation());
+
+                assertTrue(asm.codeBuffer.getInt(0) == (0x03000000 | (ARMV7Assembler.ConditionFlag.values()[i].value() <<28) | (value & 0xfff) | ((value & 0xf000) << 4)));
+                 instructions[0] = asm.codeBuffer.getInt(0);
+                 asm.codeBuffer.reset();
+            }
+        }
+    }
     public void testAdc() throws Exception {
         // public CiRegister(int number, int encoding, int spillSlotSize, String name, RegisterFlag... flags)
 
