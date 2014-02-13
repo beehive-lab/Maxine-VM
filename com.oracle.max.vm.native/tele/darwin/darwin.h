@@ -27,8 +27,11 @@
 #include "isa.h"
 
 #if isa_AMD64
+#if defined(Maverick)
+#   include <mach/thread_act.h>
+#else
 #   include <mach/x86_64/thread_act.h>
-
+#endif
 #   define INTEGER_REGISTER_COUNT x86_THREAD_STATE64_COUNT
 #   define STATE_REGISTER_COUNT x86_THREAD_STATE64_COUNT
 #   define FLOATING_POINT_REGISTER_COUNT x86_FLOAT_STATE64_COUNT
