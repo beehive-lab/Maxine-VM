@@ -54,6 +54,7 @@ HOSTOS = $(shell uname -s)
 # Set TARGETOS explicitly to cross-compile for a different target 
 # (required for Maxine VE when building tele/inspector)
 TARGETOS ?= $(shell uname -s)
+DARWIN_RELEASE ?= $(shell uname -r | cut -d'.' -f 1)
 
 ifeq ($(TARGETOS),Darwin)
     OS := darwin
@@ -61,12 +62,18 @@ ifeq ($(TARGETOS),Darwin)
     a := $(shell uname -p)
     ifeq ($a,i386)
         mach := $(shell ls /usr/include/mach/x86_64)
-        ifneq ($(mach), )
+        ifneq ($(mach), ) 
     	    DARWIN_GCC_MFLAG := -m64
             ISA := amd64
         else
-            ISA := ia32
+        	ifeq ($(DARWIN_RELEASE),13) 
+    	    	DARWIN_GCC_MFLAG := -m64 -DMaverick
+    	    	ISA := amd64
+            else
+            	ISA := ia32
+            endif
         endif
+        
     else
        ifeq ($a,powerpc)
            ISA := power
