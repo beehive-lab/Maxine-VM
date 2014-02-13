@@ -53,35 +53,95 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     public void testPatchJumpTarget() throws Exception {
 
     }
-    // public void adc(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int immed_8, final int rotate_amount)
 
-
+    public static int valueTestSet[] = {0,1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,
+            32768,65535};
     public void testmovw() throws Exception {
         int instructions[] = new int[1];
+
+        int value,i,j;
         long  expectedValues[] = new long [17];
         boolean  testvalues[] = new boolean[17];
-        for(int j = 0;j <17;j++)  testvalues[j] = false;
-        testvalues[0] = true;
+        for(j = 0;j <17;j++)  testvalues[j] = false;
 
-        for(int i = 0; i < ARMV7Assembler.ConditionFlag.values().length;i++)    {
-            for(int value = 0; value < 256;value++) {
-                 expectedValues[0] = value;
-                 asm.movw(ARMV7Assembler.ConditionFlag.values()[i],ARMV7.r0,value);
+            /* APN we are only doing condition code testing for .Always
+               we might extend this testing later
+               ARMV7Assembler.ConditionFlag.values()[i]
+               only testing the movw to registers 0 to 12 inclusive
+             */
+        for(int destReg = 0;destReg < 13;destReg++)                {
+            System.out.println("DESTREG " + destReg);
+            if(destReg > 0) {
+                testvalues[destReg-1] = false;
+            }
+            testvalues[destReg] = true;
+            for( j = 0; j< valueTestSet.length;j++) {
+
+                //value < 65536;value++) {
+                 value = valueTestSet[j];
+                 expectedValues[destReg] = value;
+                 asm.movw(ARMV7Assembler.ConditionFlag.Always,ARMV7.cpuRegisters[destReg],value);
+                 instructions[0] = asm.codeBuffer.getInt(0);
+
                  code = new ARMCodeWriter(1,instructions);
-                 MaxineARMTester r = new MaxineARMTester(expectedValues,testvalues);
+                 MaxineARMTester r = new MaxineARMTester(expectedValues,testvalues,MaxineARMTester.BitsFlag.Lower16Bits);
 	             r.assembleStartup();
 	             r.assembleEntry();
 	             r.compile();
 	             r.link();
 	             r.objcopy();
-	             System.out.println("RETURNED " + r.runSimulation());
+	             r.runSimulation();
 
-                assertTrue(asm.codeBuffer.getInt(0) == (0x03000000 | (ARMV7Assembler.ConditionFlag.values()[i].value() <<28) | (value & 0xfff) | ((value & 0xf000) << 4)));
-                 instructions[0] = asm.codeBuffer.getInt(0);
+                 assertTrue(asm.codeBuffer.getInt(0) == (0x03000000 | (ARMV7Assembler.ConditionFlag.Always.value() <<28) |(destReg << 12)| (value & 0xfff) | ((value & 0xf000) << 4)));
                  asm.codeBuffer.reset();
             }
         }
+
     }
+
+    public void testmovt() throws Exception {
+        int instructions[] = new int[1];
+        int value,i,j;
+        long  expectedValues[] = new long [17];
+        boolean  testvalues[] = new boolean[17];
+        for(j = 0;j <17;j++)  testvalues[j] = false;
+        System.out.println("Testing movt");
+        i = 0;
+            /* APN we are only doing condition code testing for .Always
+                we might extend this testing later
+               only testing the movw to registers 0 to 12 inclusive
+             */
+        for(int destReg = 0;destReg < 13;destReg++)                {
+            System.out.println("DESTREG " + destReg);
+            if(destReg > 0) {
+                testvalues[destReg-1] = false;
+            }
+            testvalues[destReg] = true;
+            for( j = 0; j< valueTestSet.length;j++) {
+
+                //value < 65536;value++) {
+                value = valueTestSet[j];
+                expectedValues[destReg] = ((long)value) << 16;
+                asm.movt(ARMV7Assembler.ConditionFlag.Always,ARMV7.cpuRegisters[destReg],value);
+                instructions[0] = asm.codeBuffer.getInt(0);
+
+                code = new ARMCodeWriter(1,instructions);
+                MaxineARMTester r = new MaxineARMTester(expectedValues,testvalues,MaxineARMTester.BitsFlag.Upper16Bits);
+                r.assembleStartup();
+                r.assembleEntry();
+                r.compile();
+                r.link();
+                r.objcopy();
+                r.runSimulation();
+
+                assertTrue(asm.codeBuffer.getInt(0) == (0x03400000 | (ARMV7Assembler.ConditionFlag.Always.value() <<28) |(destReg << 12)| (value & 0xfff) | ((value & 0xf000) << 4)));
+                asm.codeBuffer.reset();
+            }
+        }
+
+    }
+    // public void adc(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int immed_8, final int rotate_amount)
+
     public void testAdc() throws Exception {
         // public CiRegister(int number, int encoding, int spillSlotSize, String name, RegisterFlag... flags)
 
