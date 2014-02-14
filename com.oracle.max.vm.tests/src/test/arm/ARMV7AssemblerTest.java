@@ -57,19 +57,21 @@ public class ARMV7AssemblerTest extends MaxTestCase {
 
     public void testAdc() throws Exception {
         // public CiRegister(int number, int encoding, int spillSlotSize, String name, RegisterFlag... flags)
-        int instructions[] = new int[1];
+      /*  int instructions[] = new int[3];
         int value,i,j,k;
+        setBitMasks(-1,MaxineARMTester.BitsFlag.All32Bits);
         for(j = 0; j < 17;j++) testvalues[j] = false;
-        for(int srcReg = 0; srcReg < 3;srcReg++)
-            for(int destReg = 4; destReg < 6; destReg++)
+        int srcReg = 0;
+            for(int destReg = 4; destReg < 6; destReg++) {
+                testvalues[destReg] = true;
+                testvalues[destReg-1] = false;
                 for(j = 14; j <16;j++){
-                asm.movt(ARMV7Assembler.ConditionFlag.Always,ARMV7.cpuRegisters[destReg],valueTestSet[j]);
-                asm.movt(ARMV7Assembler.ConditionFlag.Always,ARMV7.cpuRegisters[srcReg],valueTestSet[j]);
-                // TWO registers are then loaded with the value
-                asm.adc(ARMV7Assembler.ConditionFlag.Always,true,ARMV7.cpuRegisters[destReg],ARMV7.cpuRegisters[srcReg],valueTestSet[j] <<7,2);
-                    // The left shift of 7 means that the valueTestValues used will
+                    asm.movt(ARMV7Assembler.ConditionFlag.Always,ARMV7.cpuRegisters[destReg],valueTestSet[j]);
+                    asm.adc(ARMV7Assembler.ConditionFlag.Always,true,ARMV7.cpuRegisters[destReg],ARMV7.cpuRegisters[srcReg],valueTestSet[j] <<7,2);
+                    // The left shift of 7 means that the valueTestValues used will always be less than 8bits (255)
 
                 }
+            }
         // testing conditionflags (signed/unsigned)
         for( i=0; i < ARMV7Assembler.ConditionFlag.values().length; i++) {
             asm.adc(ARMV7Assembler.ConditionFlag.values()[i], false, armv7.arch.registers[0], armv7.arch.registers[1], 0, 0);
@@ -79,6 +81,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             assertTrue(asm.codeBuffer.getInt(0) == ( 0x02B10000 | ARMV7Assembler.ConditionFlag.values()[i].value() <<28));
             asm.codeBuffer.reset();
         }
+        */
     }
     private static int valueTestSet[] = {0,1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,
             32768,65535};
@@ -90,15 +93,75 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             MaxineARMTester.BitsFlag.All32Bits,MaxineARMTester.BitsFlag.All32Bits,MaxineARMTester.BitsFlag.All32Bits,MaxineARMTester.BitsFlag.All32Bits,
             MaxineARMTester.BitsFlag.All32Bits,MaxineARMTester.BitsFlag.All32Bits,MaxineARMTester.BitsFlag.All32Bits,MaxineARMTester.BitsFlag.All32Bits,
             MaxineARMTester.BitsFlag.All32Bits,MaxineARMTester.BitsFlag.All32Bits,MaxineARMTester.BitsFlag.All32Bits};
+
     private static void setBitMasks(int i, MaxineARMTester.BitsFlag mask) {
             if ((i < 0)|| i>= bitmasks.length)  {
                  for(i = 0; i < bitmasks.length;i++)
                      bitmasks[i] = mask;
             }else bitmasks[i] = mask;
     }
+    private static void setTestValues(int i,boolean value){
+        if ((i < 0)|| i>= testvalues.length)  {
+            for(i = 0; i < testvalues.length;i++)
+                testvalues[i] = value;
+        }else testvalues[i] = value;
+    }
     private static long expectedValues[] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}; // therse values will be udpdated
     // to those expected to be found in a register after simulated execution of code
     private static boolean  testvalues[] = new boolean[17];
+
+
+
+    public void testMovror() throws Exception {
+        int instructions[] = new int[4];
+        int value,i,j;
+        setBitMasks(-1, MaxineARMTester.BitsFlag.All32Bits);
+        setTestValues(-1,false);
+        System.out.println("TESTING MOVROR  -- register") ;
+        /*for(i=0; i < ARMV7Assembler.ConditionFlag.values().length; i++) { // test encodings
+            asm.movw(ARMV7Assembler.ConditionFlag.Always,ARMV7.cpuRegisters[0],0xffff);  // load 0x0000ffff
+
+            asm.movror(ARMV7Assembler.ConditionFlag.values()[i], false, ARMV7.cpuRegisters[1], ARMV7.cpuRegisters[0],
+                    2); // rotate right two bits 0x30003fff?
+
+            System.out.println("BUFFER " + Integer.toString(asm.codeBuffer.getInt(1),16)+ " CALCED "+ Integer.toString( 0x01A00060|(2<<7) |(1<<12) |
+                    (ARMV7Assembler.ConditionFlag.values()[i].value() <<28),16));
+            assertTrue(asm.codeBuffer.getInt(4) == ( 0x01A01060|(2<<7) |ARMV7Assembler.ConditionFlag.values()[i].value() <<28));
+            asm.codeBuffer.reset();
+            asm.movror(ARMV7Assembler.ConditionFlag.values()[i], true, armv7.arch.registers[2], armv7.arch.registers[1],
+                    0);  /// rotate right 30 bits?  to get 0x0000ffff
+            assertTrue(asm.codeBuffer.getInt(0) == ( 0x01B02060 |(28<<7)| ARMV7Assembler.ConditionFlag.values()[i].value() <<28));
+            asm.codeBuffer.reset();
+        } */
+        asm.movw(ARMV7Assembler.ConditionFlag.Always,ARMV7.cpuRegisters[0],0xffff);  // load 0x0000ffff
+
+        asm.movt(ARMV7Assembler.ConditionFlag.Always,ARMV7.cpuRegisters[0],0x0);
+        asm.movror(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[1], ARMV7.cpuRegisters[0],2);
+        // to get 0x30003fff
+        asm.movror(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[2], ARMV7.cpuRegisters[1],30);  /// rotate right 30 bits?
+        //  to get 0x0000ffff
+        //  implies ... APSR.N = 0, APSR.Z = 0, APSR.C = 0
+
+                     expectedValues[0] = 0x0000ffff;testvalues[0] = true;
+        expectedValues[1] = Long.parseLong("c0003fff",16); ;testvalues[1] = true;
+        expectedValues[2] = 0x0000ffff;testvalues[2] = true;
+        expectedValues[16] = 0x0; testvalues[16] = true;
+        setBitMasks(16,MaxineARMTester.BitsFlag.NZCBits);
+        for(i = 0; i < 4;i++) {instructions[i] =  asm.codeBuffer.getInt(i*4);
+            System.out.println("INSTRUCTION in HEX " + Integer.toString(instructions[i],16));
+        }
+        ARMCodeWriter.debug = true;
+        code = new ARMCodeWriter(4,instructions);
+        ARMCodeWriter.debug = false;
+        MaxineARMTester r = new MaxineARMTester(expectedValues,testvalues,bitmasks);
+        r.assembleStartup();
+        r.assembleEntry();
+        r.compile();
+        r.link();
+        r.objcopy();
+        r.runSimulation();
+
+    }
 
     public void testmovw() throws Exception {
         int instructions[] = new int[1];
@@ -112,7 +175,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                only testing the movw to registers 0 to 12 inclusive
              */
         for(int destReg = 0;destReg < 13;destReg++)                {
-            System.out.println("DESTREG " + destReg);
+            System.out.println("MOVW DESTREG " + destReg);
             if(destReg > 0) {
                 testvalues[destReg-1] = false;
             }
@@ -146,14 +209,13 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         int value,i,j;
         setBitMasks(-1,MaxineARMTester.BitsFlag.Upper16Bits);
         for(j = 0;j <17;j++)  testvalues[j] = false;
-        System.out.println("Testing movt");
         i = 0;
             /* APN we are only doing condition code testing for .Always
                 we might extend this testing later
                only testing the movw to registers 0 to 12 inclusive
              */
         for(int destReg = 0;destReg < 13;destReg++)                {
-            System.out.println("DESTREG " + destReg);
+            System.out.println("MOVT DESTREG " + destReg);
             if(destReg > 0) {
                 testvalues[destReg-1] = false;
             }
@@ -274,18 +336,6 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         }
     }
 
-    public void testMovror() throws Exception {
-        for(int i=0; i < ARMV7Assembler.ConditionFlag.values().length; i++) {
-            asm.movror(ARMV7Assembler.ConditionFlag.values()[i], false, armv7.arch.registers[0], armv7.arch.registers[1],
-                    0);
-            assertTrue(asm.codeBuffer.getInt(0) == ( 0x01A00061| ARMV7Assembler.ConditionFlag.values()[i].value() <<28));
-            asm.codeBuffer.reset();
-            asm.movror(ARMV7Assembler.ConditionFlag.values()[i], true, armv7.arch.registers[0], armv7.arch.registers[1],
-                    0);
-            assertTrue(asm.codeBuffer.getInt(0) == ( 0x01B00061 | ARMV7Assembler.ConditionFlag.values()[i].value() <<28));
-            asm.codeBuffer.reset();
-        }
-    }
 
     public void testMvnror() throws Exception {
         for(int i=0; i < ARMV7Assembler.ConditionFlag.values().length; i++) {
