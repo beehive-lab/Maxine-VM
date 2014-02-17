@@ -85,6 +85,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     }
     private static int valueTestSet[] = {0,1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,
             32768,65535};
+    private static long scratchTestSet[] = {0,1,0xff,0xffff,0xffffff,0xfffffff,0x00000000ffffffffL };
     // Each test should set the contents of this array appropriately, it enables the instruction under test to select the specific bit values for
     // comparison ie for example testing upper or lower 16bits for movt,movw and for testing specifc bits in the status register etc
     // concerning whether a carry has been set
@@ -110,6 +111,83 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     // to those expected to be found in a register after simulated execution of code
     private static boolean  testvalues[] = new boolean[17];
 
+    public void testadd() throws Exception {
+        int instructions[] = new int[3];
+        long value;
+        int  i,j,immediate,result;
+
+        setBitMasks(-1,MaxineARMTester.BitsFlag.All32Bits);
+        System.out.println("TESTING ADD ");
+
+        for(int srcReg = 0; srcReg < 13;srcReg++)
+           for(int destReg = 0; destReg < 13;destReg++)    {
+
+               if(destReg > 0) testvalues[destReg-1] = false;
+               testvalues[destReg] = true;
+
+               for ( i = 0; i < scratchTestSet.length;i++) {
+
+                    asm.codeBuffer.reset();
+                    value = scratchTestSet[i];
+                    asm.movw(ARMV7Assembler.ConditionFlag.Always,ARMV7.cpuRegisters[srcReg],(int)(value &0xffff));  // load 0x0000ffff
+                    asm.movt(ARMV7Assembler.ConditionFlag.Always,ARMV7.cpuRegisters[srcReg],(int)((value >>16)&0xffff));
+                    asm.add(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.cpuRegisters[destReg],ARMV7.cpuRegisters[srcReg],
+                            0, 0);
+                    instructions[0] = asm.codeBuffer.getInt(0);
+                    instructions[1] = asm.codeBuffer.getInt(4);
+                    instructions[2] = asm.codeBuffer.getInt(8);
+
+
+                    expectedValues[destReg] = scratchTestSet[i];
+
+
+                    System.out.println("EXPECT " + expectedValues[destReg]);
+
+                    //ARMCodeWriter.debug = true;
+                    code = new ARMCodeWriter(3,instructions);
+                    ARMCodeWriter.debug = false;
+                    MaxineARMTester r = new MaxineARMTester(expectedValues,testvalues,bitmasks);
+                    r.assembleStartup();
+                    r.assembleEntry();
+                    r.compile();
+                    r.link();
+                    r.objcopy();
+                    r.runSimulation();
+                }
+           }
+
+    }
+    /*public void testsetUpScratch() throws Exception {
+        int instructions[] = new int[1];
+        int value,i,j;
+        setBitMasks(-1,MaxineARMTester.BitsFlag.All32Bits);
+        for(j = 0;j <17;j++)  testvalues[j] = false;
+        testvalues[12-1] = true;
+        i = 0;
+
+            for( j = 0; j< scratchTestSet.length;j++) {
+
+                //value < 65536;value++) {
+                value = scratchTestSet[j];
+                expectedValues[destReg] = ((long)value);
+                asm.setUpScratch(new CiAddress(), value);
+                instructions[0] = asm.codeBuffer.getInt(0);
+
+                code = new ARMCodeWriter(1,instructions);
+                MaxineARMTester r = new MaxineARMTester(expectedValues,testvalues,bitmasks);
+                r.assembleStartup();
+                r.assembleEntry();
+                r.compile();
+                r.link();
+                r.objcopy();
+                r.runSimulation();
+
+                assertTrue(asm.codeBuffer.getInt(0) == (0x03400000 | (ARMV7Assembler.ConditionFlag.Always.value() <<28) |(destReg << 12)| (value & 0xfff) | ((value & 0xf000) << 4)));
+                asm.codeBuffer.reset();
+            }
+        }
+
+    } */
 
 
     public void testMovror() throws Exception {
@@ -194,6 +272,8 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                  expectedValues[destReg] = value;
                  asm.movw(ARMV7Assembler.ConditionFlag.Always,ARMV7.cpuRegisters[destReg],value);
                  instructions[0] = asm.codeBuffer.getInt(0);
+
+
 
                  code = new ARMCodeWriter(1,instructions);
                  MaxineARMTester r = new MaxineARMTester(expectedValues,testvalues,bitmasks);

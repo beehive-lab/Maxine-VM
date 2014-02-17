@@ -241,7 +241,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         objectLiterals.add(value);
 
         //asm.movq(dst, CiAddress.Placeholder);
-        asm.movl(ARMV7.r12, 0); // APN so the idea is
+        asm.mov32BitConstant(ARMV7.r12, 0); // APN so the idea is
         /*  APN
             load the immediate 32bit constant address into r12 (scratch)
             then load the contents of this address into
@@ -312,7 +312,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignInt(CiRegister dst, int value) {
-        asm.movl(dst, value);
+        asm.mov32BitConstant(dst, value);
     }
 
     @Override
@@ -427,7 +427,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         //asm.enter(frameSize-Word.size());
         asm.stm(ConditionFlag.Always,0,0,0,0,ARMV7.r13, 11<<1 ); // push frame pointer
         asm.movror(ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13,0);  // framepoiter = stack ptr
-        asm.movl(ARMV7.r12,frameSize = Word.size());
+        asm.mov32BitConstant(ARMV7.r12,frameSize = Word.size());
         asm.sub(ConditionFlag.Always,false,ARMV7.r13,ARMV7.r11,ARMV7.r12,0,0);
         asm.subq(r11, framePointerAdjustment());
         if (Trap.STACK_BANGING) {

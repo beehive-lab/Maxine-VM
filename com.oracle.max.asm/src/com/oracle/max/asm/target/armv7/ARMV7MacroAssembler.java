@@ -368,8 +368,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
         stm(ConditionFlag.Always,0,0,1,0,com.oracle.max.asm.target.armv7.ARMV7.r13,(1<<12)|1|2);// r13 is the stack pointer
         setUpScratch(dst);
-        movl(ARMV7.r0,(int)(0xffffffff&src));
-        movl(ARMV7.r1,(int) ((src>>32)&0xffffffff));
+        mov32BitConstant(ARMV7.r0,(int)(0xffffffff&src));
+        mov32BitConstant(ARMV7.r1,(int) ((src>>32)&0xffffffff));
         str(ConditionFlag.Always,0,0,0,ARMV7.r0,ARMV7.r12,ARMV7.r0,0,0);
         add(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,4,0); // add 4 to the address
         str(ConditionFlag.Always,0,0,0,ARMV7.r1,ARMV7.r12,ARMV7.r1,0,0);

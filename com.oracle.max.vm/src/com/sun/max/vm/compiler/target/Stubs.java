@@ -454,7 +454,7 @@ public class Stubs {
 
             // save the index in the scratch register. This register is then callee-saved
             // so that the stack walker can find it.
-            asm.movl(registerConfig.getScratchRegister(), index);
+            asm.mov32BitConstant(registerConfig.getScratchRegister(), index);
             if (isHosted() && index == 0) {
                 indexMovInstrPos = asm.codeBuffer.position() -  WordWidth.BITS_32.numberOfBytes;
             }
@@ -470,7 +470,7 @@ public class Stubs {
             //asm.movq(locations[0].asRegister(), locations[0].asRegister());
 
             // load the index into the second arg register
-            asm.movl(args[1].asRegister(), index);
+            asm.mov32BitConstant(args[1].asRegister(), index);
 
             // load the return address into the third arg register
             // APN shouldnt this be LR r13 ...
