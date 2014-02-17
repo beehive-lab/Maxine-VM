@@ -114,52 +114,59 @@ public class ARMV7AssemblerTest extends MaxTestCase {
 
     public void testMovror() throws Exception {
         int instructions[] = new int[4];
-        int value,i,j;
+        int value,i,j,shift;
         setBitMasks(-1, MaxineARMTester.BitsFlag.All32Bits);
         setTestValues(-1,false);
         System.out.println("TESTING MOVROR  -- register") ;
-        /*for(i=0; i < ARMV7Assembler.ConditionFlag.values().length; i++) { // test encodings
-            asm.movw(ARMV7Assembler.ConditionFlag.Always,ARMV7.cpuRegisters[0],0xffff);  // load 0x0000ffff
+        for(int srcReg = 0; srcReg < 16;srcReg++)
+            for(int destReg = 0; destReg < 16;destReg++)
+                for(shift = 0; shift <= 31;shift++)
+                    for(i=0; i < ARMV7Assembler.ConditionFlag.values().length; i++) { // test encodings
+                        asm.movror(ARMV7Assembler.ConditionFlag.values()[i], false, ARMV7.cpuRegisters[destReg], ARMV7.cpuRegisters[srcReg],
+                        shift); // rotate right two bits 0x30003fff?
 
-            asm.movror(ARMV7Assembler.ConditionFlag.values()[i], false, ARMV7.cpuRegisters[1], ARMV7.cpuRegisters[0],
-                    2); // rotate right two bits 0x30003fff?
-
-            System.out.println("BUFFER " + Integer.toString(asm.codeBuffer.getInt(1),16)+ " CALCED "+ Integer.toString( 0x01A00060|(2<<7) |(1<<12) |
-                    (ARMV7Assembler.ConditionFlag.values()[i].value() <<28),16));
-            assertTrue(asm.codeBuffer.getInt(4) == ( 0x01A01060|(2<<7) |ARMV7Assembler.ConditionFlag.values()[i].value() <<28));
-            asm.codeBuffer.reset();
-            asm.movror(ARMV7Assembler.ConditionFlag.values()[i], true, armv7.arch.registers[2], armv7.arch.registers[1],
-                    0);  /// rotate right 30 bits?  to get 0x0000ffff
-            assertTrue(asm.codeBuffer.getInt(0) == ( 0x01B02060 |(28<<7)| ARMV7Assembler.ConditionFlag.values()[i].value() <<28));
-            asm.codeBuffer.reset();
-        } */
-        asm.movw(ARMV7Assembler.ConditionFlag.Always,ARMV7.cpuRegisters[0],0xffff);  // load 0x0000ffff
-
-        asm.movt(ARMV7Assembler.ConditionFlag.Always,ARMV7.cpuRegisters[0],0x0);
-        asm.movror(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[1], ARMV7.cpuRegisters[0],2);
-        // to get 0x30003fff
-        asm.movror(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[2], ARMV7.cpuRegisters[1],30);  /// rotate right 30 bits?
-        //  to get 0x0000ffff
-        //  implies ... APSR.N = 0, APSR.Z = 0, APSR.C = 0
-
-                     expectedValues[0] = 0x0000ffff;testvalues[0] = true;
-        expectedValues[1] = Long.parseLong("c0003fff",16); ;testvalues[1] = true;
-        expectedValues[2] = 0x0000ffff;testvalues[2] = true;
-        expectedValues[16] = 0x0; testvalues[16] = true;
-        setBitMasks(16,MaxineARMTester.BitsFlag.NZCBits);
-        for(i = 0; i < 4;i++) {instructions[i] =  asm.codeBuffer.getInt(i*4);
-            System.out.println("INSTRUCTION in HEX " + Integer.toString(instructions[i],16));
+                        assertTrue(asm.codeBuffer.getInt(0) == ( 0x01A00060|(shift<<7)|(destReg << 12)|srcReg |ARMV7Assembler.ConditionFlag.values()[i].value() <<28));
+                        asm.codeBuffer.reset();
+                        asm.movror(ARMV7Assembler.ConditionFlag.values()[i], true, ARMV7.cpuRegisters[destReg], ARMV7.cpuRegisters[srcReg],shift);  /// rotate right 30 bits?  to get 0x0000ffff
+                        assertTrue(asm.codeBuffer.getInt(0) == ( 0x01B00060 |(shift<<7)|(srcReg)|(destReg << 12)| ARMV7Assembler.ConditionFlag.values()[i].value() <<28));
+                        asm.codeBuffer.reset();
         }
-        ARMCodeWriter.debug = true;
-        code = new ARMCodeWriter(4,instructions);
-        ARMCodeWriter.debug = false;
-        MaxineARMTester r = new MaxineARMTester(expectedValues,testvalues,bitmasks);
-        r.assembleStartup();
-        r.assembleEntry();
-        r.compile();
-        r.link();
-        r.objcopy();
-        r.runSimulation();
+        long mask = 1;
+
+        for(shift = 1; shift <= 31;shift++) {
+
+
+            System.out.println("MOVROR SHIFT " + shift + " MASK " + mask);
+            asm.codeBuffer.reset();
+            asm.movw(ARMV7Assembler.ConditionFlag.Always,ARMV7.cpuRegisters[0],0xffff);  // load 0x0000ffff
+            asm.movt(ARMV7Assembler.ConditionFlag.Always,ARMV7.cpuRegisters[0],0x0);
+            asm.movror(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[1], ARMV7.cpuRegisters[0],shift);
+
+            // not testing ROR with ZEROshift as that needs to know the carry bit of the registerA RRX
+            asm.movror(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[2], ARMV7.cpuRegisters[1],32-shift);  /// rotate right 30 bits?
+            //  implies ... APSR.N = , APSR.Z = , APSR.C =
+
+            expectedValues[0] = 0x0000ffff;testvalues[0] = true;
+            expectedValues[1] = (0x0000ffff >> (shift))| (((expectedValues[0]&mask) << (32-shift))); testvalues[1] = true;
+            expectedValues[2] = 0x0000ffff;testvalues[2] = true;
+            expectedValues[16] = 0x0; testvalues[16] = false;
+            setBitMasks(16,MaxineARMTester.BitsFlag.NZCBits);
+
+            for(i = 0; i < 4;i++) {instructions[i] =  asm.codeBuffer.getInt(i*4);
+              //  System.out.println("INSTRUCTION in HEX " + Integer.toString(instructions[i],16));
+            }
+
+
+            code = new ARMCodeWriter(4,instructions);
+            MaxineARMTester r = new MaxineARMTester(expectedValues,testvalues,bitmasks);
+            r.assembleStartup();
+            r.assembleEntry();
+            r.compile();
+            r.link();
+            r.objcopy();
+            r.runSimulation();
+            mask = mask | (mask + 1);
+        }
 
     }
 
