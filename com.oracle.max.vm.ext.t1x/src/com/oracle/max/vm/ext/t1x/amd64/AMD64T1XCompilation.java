@@ -274,8 +274,10 @@ public class AMD64T1XCompilation extends T1XCompilation {
     }
 
     @Override
-    protected void nullCheck(CiRegister src) {
+    protected int nullCheck(CiRegister src) {
+        int safepointPos = buf.position();
         asm.nullCheck(src);
+        return Safepoints.make(safepointPos);
     }
 
     private void alignDirectCall(int callPos) {

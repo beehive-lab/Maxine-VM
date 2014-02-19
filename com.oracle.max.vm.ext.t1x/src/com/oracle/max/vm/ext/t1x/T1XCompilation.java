@@ -947,8 +947,10 @@ public abstract class T1XCompilation {
 
     /**
      * Emits code to trap if the value in register {@code src} is 0.
+     *
+     * @return the {@linkplain Safepoints safepoint} for the nullCheck
      */
-    protected abstract void nullCheck(CiRegister src);
+    protected abstract int nullCheck(CiRegister src);
 
     /**
      * Emits a direct call instruction whose immediate operand (denoting the absolute or relative offset to the target) will be patched later.
@@ -1658,7 +1660,8 @@ public abstract class T1XCompilation {
 
     protected void do_invokespecial_resolved(T1XTemplateTag tag, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
         peekObject(scratch, receiverStackIndex);
-        nullCheck(scratch);
+        int safepoint = nullCheck(scratch);
+        safepointsBuilder.addSafepoint(stream.currentBCI(), safepoint, null);
     }
 
     protected void do_invokestatic_resolved(T1XTemplateTag tag, StaticMethodActor staticMethodActor) {
