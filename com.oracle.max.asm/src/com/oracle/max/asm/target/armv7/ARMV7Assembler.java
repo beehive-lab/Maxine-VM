@@ -895,12 +895,76 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction = ((flag.value() &0xf)<< 28);
         instruction |= (((0x8|preIndexing)&0x9) <<24);
         instruction |= (((upWard&0x1)<<3)|((sBit&0x1) << 2)|((wBit&0x1)<<1)|(0x1&isStore)) <<20;
-        instruction |= (baseRegister.encoding << 16);
+        instruction |= ((baseRegister.encoding &0xf) << 16);
         instruction |= (registerList & 0xFFFF);
         return instruction;
 
     }
-    public void ldm(final ConditionFlag flag,final int upWard,final int preIndexing,
+
+    public void push(final ConditionFlag flag, final int registerList) {
+        int instruction;
+        instruction =  ((flag.value() &0xf)<< 28);
+
+        instruction |= (0x9 << 24);
+        instruction |= (0x2 << 20);
+        instruction |= (0xd << 16);
+        instruction |= (0xffff&registerList);
+
+
+        emitInt(instruction);
+    }
+    public void pop(final ConditionFlag flag,final int  registerList) {
+        int instruction;
+        instruction =  ((flag.value() &0xf)<< 28);
+
+        instruction |= (0x8 << 24);
+        instruction |= (0xb << 20);
+        instruction |= (0xd << 16);
+        instruction |= (0xffff&registerList);
+        emitInt(instruction);
+
+    }
+    public void strd(final ConditionFlag flag, final CiRegister valueReg, final CiRegister baseReg,
+                    final int offset8) {
+        int instruction;
+        instruction= 0x004000f0;
+        int P,U,W;
+        P = 1;
+        U = 1;
+        W = 0;
+        instruction |= P<<24;
+        instruction |= U<<23;
+        instruction |= W<<21;
+        instruction |=  (valueReg.encoding&0xf) << 16;
+        instruction |= (baseReg.encoding&0xf)<< 12;
+        instruction |= (offset8 &0xf0) << 4;
+        instruction |= (offset8&0xf);
+        emitInt(instruction);
+    }
+
+
+    public void str(final ConditionFlag flag, final CiRegister valueReg, final CiRegister baseRegister, final int offset12)
+    {
+        int instruction;
+        instruction = 0x05800000;
+        instruction =  ((flag.value() &0xf)<< 28);
+        instruction |= (valueReg.encoding&0xf) << 16;
+        instruction |= (baseRegister.encoding&0xf)<<12;
+        instruction |= offset12 & 0xfff;
+        emitInt(instruction);
+    }
+    public void ldr(final ConditionFlag flag, final CiRegister destReg, final CiRegister baseRegister, final int offset12)
+    {
+        int instruction;
+        instruction = 0x05900000;
+        instruction =  ((flag.value() &0xf)<< 28);
+        instruction |= (destReg.encoding&0xf) << 16;
+        instruction |= (baseRegister.encoding&0xf)<<12;
+        instruction |= offset12 & 0xfff;
+        emitInt(instruction);
+
+    }
+    /*public void ldm(final ConditionFlag flag,final int upWard,final int preIndexing,
                     final int wBit, final int sBit,final CiRegister baseRegister,final int registerList ) {
         int instruction = ldmstmHelper(1, flag, upWard, preIndexing, wBit, sBit, baseRegister, registerList);
         emitInt(instruction);
@@ -912,6 +976,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         int instruction = ldmstmHelper(0,flag,upWard,preIndexing,wBit,sBit,baseRegister,registerList);
         emitInt(instruction);
     }
+    */
     public void cmp(final ConditionFlag flag, final CiRegister Rn, final CiRegister Rm, int imm5, int imm2Type) {
         int instruction = 0x01500000;
         checkConstraint(0 <= imm5 && imm5 <= 31, "0 <= imm5 && imm5 <= 31");
@@ -963,7 +1028,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         // TODO fix this so it will issue loads when appropriate!
         if (base.isValid()) {
             if(disp != 0) {
-                mov32BitConstant(scratchRegister,disp);
+                mov32BitConstant(scratchRegister, disp);
                 add(ConditionFlag.Always,false,scratchRegister,base,0,0);
             }
             if(index.isValid()){
@@ -978,7 +1043,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
     public final void subq(CiRegister dst, int imm32) {
         assert(dst.isValid());
-        mov32BitConstant(scratchRegister,imm32);
+        mov32BitConstant(scratchRegister, imm32);
         // dst = dst - imm32;
         sub(ConditionFlag.Always,false,dst,dst,scratchRegister,0,0);
 
@@ -1052,14 +1117,14 @@ public class ARMV7Assembler extends AbstractAssembler {
         // below will be sensible
         // probable errors ... neds to use 2x32bit registers and do a sign extend
         // possibly needs to store result of sign extension in memory.
-        mov32BitConstant(dst.base(),imm32);
+        mov32BitConstant(dst.base(), imm32);
     }
     public final void cmpl(CiRegister src,int imm32) {
         /*
         APN ... condition flags need to be set presumably and used at a later point
          */
         assert(src.isValid());
-        mov32BitConstant(scratchRegister,imm32);
+        mov32BitConstant(scratchRegister, imm32);
         cmp(ConditionFlag.Always,src,scratchRegister,0,0);
 
     }
@@ -1083,7 +1148,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
     public final void addq(CiRegister dst,int imm32)    {
         assert(dst.isValid());
-        mov32BitConstant(scratchRegister,imm32); ;
+        mov32BitConstant(scratchRegister, imm32); ;
         // dst = dst + imm32;
         add(ConditionFlag.Always,false,dst,scratchRegister,0,0);
 
@@ -1118,13 +1183,13 @@ public class ARMV7Assembler extends AbstractAssembler {
         // APN simple case where we just have a register destination
         if (base.isValid()) {
             if(disp != 0) {
-                mov32BitConstant(scratchRegister,disp);
+                mov32BitConstant(scratchRegister, disp);
                 add(ConditionFlag.Always,false,scratchRegister,base,0,0);
             }
             if(index.isValid()){
                 adclsl(ConditionFlag.Always,false,scratchRegister,scratchRegister,index,scale.log2); // APN even if scale is zero this is ok.
             }
-            ldm(ConditionFlag.Always,0,0,1,0,com.oracle.max.asm.target.armv7.ARMV7.r13,encode(scratchRegister));// r13 is the stack pointer
+            pop(ConditionFlag.Always, 1 << encode(scratchRegister));// r13 is the stack pointer
 
         }
     }
@@ -1170,7 +1235,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         if(base.isValid() && (!index.isValid()) && scale.value == 1 && disp == 0) {
             // Base register is valid and stores an address
 
-            stm(ConditionFlag.Always,0,0,1,0,com.oracle.max.asm.target.armv7.ARMV7.r13,1<<encode(base));// r13 is the stack pointer
+            push(ConditionFlag.Always, 1 << encode(base));// r13 is the stack pointer
 
         } else if (base.isValid()) {  // APN superfluous check, but base might be invalid once we sort out Placeholders
                 if(disp != 0) {
@@ -1179,7 +1244,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                     // do we know the range of immediate values that might be produced?
                     // TODO try to do some tracing of Maxine and see what values come out of here.
                     // in the meantime we do it inefficiently but correctly for 32 bit displacements
-                    mov32BitConstant(scratchRegister,disp);
+                    mov32BitConstant(scratchRegister, disp);
                     add(ConditionFlag.Always,false,scratchRegister,base,0,0); //APN A8.8.5 ADD(immediate,ARM)
 
                 }
@@ -1200,7 +1265,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
                 }
 
-                    stm(ConditionFlag.Always,0,0,1,0,com.oracle.max.asm.target.armv7.ARMV7.r13,encode(scratchRegister)); // r13 is the stack pointer
+                    push(ConditionFlag.Always,1<<encode(scratchRegister)); // r13 is the stack pointer
 
         }
 
@@ -1302,7 +1367,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             emitInt((cc.value&0xf) << 28| (0xa << 24)| (disp&0xffffff));
         }else {
             // we need or have been instructed to do this as a 32 bit branch
-            mov32BitConstant(scratchRegister,target);
+            mov32BitConstant(scratchRegister, target);
             movror(ConditionFlag.Always,false,ARMV7.r15,scratchRegister,0); // UPDATE the PC to the target
         }
 
@@ -1314,7 +1379,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             // we can do this in a single conditional branch
             emitInt(((0xe) << 28)| (0xa << 24)| (disp&0xffffff));
         }else {
-            mov32BitConstant(scratchRegister,target);
+            mov32BitConstant(scratchRegister, target);
             movror(ConditionFlag.Always,false,ARMV7.r15,scratchRegister,0); // UPDATE the PC to the target
         }
 

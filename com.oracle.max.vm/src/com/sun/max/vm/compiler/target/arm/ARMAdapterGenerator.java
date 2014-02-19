@@ -430,7 +430,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             //asm.enter(explicitlyAllocatedFrameSize, 0);
             // APN more to be done here ...
-            asm.stm(ARMV7Assembler.ConditionFlag.Always,0,0,0,0,ARMV7.r13,1<<ARMV7.r14.encoding);
+            asm.push(ARMV7Assembler.ConditionFlag.Always,1<<ARMV7.r14.encoding);
             // APN what is menat by a RIP slot?
 
             // At this point, the top of the baseline caller's stack (i.e the last arg to the call) is immediately
@@ -838,21 +838,21 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 case WORD:     // APN changed cases matching this as in ARM most things fit in 32bits.
                 case REFERENCE:
                                 asm.setUpScratch(new CiAddress(CiKind.Int, ARMV7.r13.asValue(), offset32));
-                                asm.stm(ARMV7Assembler.ConditionFlag.Always,0,0,0,0,ARMV7.r12,1<< reg.encoding );     break;
+                                asm.str(ARMV7Assembler.ConditionFlag.Always,reg,ARMV7.r12,0 );     break;
                                 //asm.movl(new CiAddress(CiKind.Int, ARMV7.r13.asValue(), offset32), reg);  break;
                 case LONG:
                                 asm.setUpScratch(new CiAddress(CiKind.Long, ARMV7.r13.asValue(), offset32));     // longs occupy two regists in ARM
-                                asm.stm(ARMV7Assembler.ConditionFlag.Always,0,0,0,0,ARMV7.r12,(1 << reg.encoding | (1<< (reg.encoding+1))));
+                                asm.strd(ARMV7Assembler.ConditionFlag.Always,reg,ARMV7.r12,0);
                                 //asm.movl(new CiAddress(CiKind.Long, ARMV7.r13.asValue(), offset32), reg);  break;
                 case FLOAT:
                                 asm.setUpScratch(new CiAddress(CiKind.Float, ARMV7.r13.asValue(),offset32));
-                                asm.stm (ARMV7Assembler.ConditionFlag.Always,0,0,0,0,ARMV7.r12,1 << reg.encoding);// 32 bit store ...
+                                asm.str (ARMV7Assembler.ConditionFlag.Always,reg,ARMV7.r12,0);// 32 bit store ...
                                     // APN what if the values are in float/coprocessor regs, you need a different instruction
                                 //asm.movss(new CiAddress(CiKind.Float, ARMV7.r13.asValue(), offset32), reg);
                                 break;
                 case DOUBLE:
                                 asm.setUpScratch(new CiAddress(CiKind.Double, ARMV7.r13.asValue(),offset32)) ;
-                                asm.stm(ARMV7Assembler.ConditionFlag.Always,0,0,0,0,ARMV7.r12,(1 << reg.encoding | (1<< (reg.encoding+1))));
+                                asm.strd(ARMV7Assembler.ConditionFlag.Always,reg,ARMV7.r12,0);
                                 // APN again what if using FP regs!!!
                                 // double is 64 bits so 2 regs?
                                 //asm.movsd(new CiAddress(CiKind.Double, ARMV7.r13.asValue(), offset32), reg);

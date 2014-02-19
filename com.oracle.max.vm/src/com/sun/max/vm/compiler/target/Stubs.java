@@ -803,35 +803,35 @@ public class Stubs {
             asm.movror(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r0,asm.scratchRegister,0); // move it to r0
             // APN we want to store the value in r0 into the address specified by scratch.
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameToCSA + csl.offsetOf(latch)));
-            asm.stm(ARMV7Assembler.ConditionFlag.Always,0,0,0,0,asm.scratchRegister,1);
+            asm.str(ARMV7Assembler.ConditionFlag.Always,ARMV7.r0,asm.scratchRegister,0);
             // write the return address pointer to the end of the frame
             //asm.movq(scratch, new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
             asm.movror(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r0,asm.scratchRegister,0); // move it to r0
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize), scratch);
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize));
-            asm.stm(ARMV7Assembler.ConditionFlag.Always,0,0,0,0,asm.scratchRegister,1);
+            asm.str(ARMV7Assembler.ConditionFlag.Always,ARMV7.r0,ARMV7.r12,0);
 
 
             // load the trap number from the thread locals into the first parameter register
             //asm.movq(args[0].asRegister(), new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_NUMBER.offset));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue()));
-            asm.ldm(ARMV7Assembler.ConditionFlag.Always,0,0,0,0,asm.scratchRegister,1 << args[0].asRegister().encoding);
+            asm.ldr(ARMV7Assembler.ConditionFlag.Always,args[0].asRegister(),ARMV7.r12,0);
 
             // also save the trap number into the trap frame
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameToCSA + ARMTrapFrameAccess.TRAP_NUMBER_OFFSET), args[0].asRegister());
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameToCSA + ARMTrapFrameAccess.TRAP_NUMBER_OFFSET));
-            asm.stm(ARMV7Assembler.ConditionFlag.Always,0,0,0,0,asm.scratchRegister,1<< args[0].asRegister().encoding);
+            asm.str(ARMV7Assembler.ConditionFlag.Always,args[0].asRegister(), asm.scratchRegister,0);
 
             // load the trap frame pointer into the second parameter register
             //asm.leaq(args[1].asRegister(), new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameToCSA));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameToCSA));
-            asm.ldm(ARMV7Assembler.ConditionFlag.Always,0,0,0,0,asm.scratchRegister, 1 << args[1].asRegister().encoding );
+            asm.ldr(ARMV7Assembler.ConditionFlag.Always, args[1].asRegister(),asm.scratchRegister,0 );
 
             // load the fault address from the thread locals into the third parameter register
             //asm.movq(args[2].asRegister(), new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_FAULT_ADDRESS.offset));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_FAULT_ADDRESS.offset));
-            asm.ldm(ARMV7Assembler.ConditionFlag.Always,0,0,0,0,asm.scratchRegister,1 << args[2].asRegister().encoding);
+            asm.ldr(ARMV7Assembler.ConditionFlag.Always,args[2].asRegister(),asm.scratchRegister,0);
 
             asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
@@ -994,7 +994,7 @@ public class Stubs {
             // and the stack will be in the correct state for the handler.
             asm.subq(sp, Word.size());
             asm.setUpScratch(new CiAddress(WordUtil.archKind(),sp.asValue()));
-            asm.stm(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, 0, asm.scratchRegister, 1 << pc.encoding);
+            asm.str(ARMV7Assembler.ConditionFlag.Always, pc, asm.scratchRegister,0);
             //asm.movq(new CiAddress(WordUtil.archKind(), sp.asValue()), pc);
             //asm.movq(ARMV7.rbp, fp);
             asm.movror(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r11,fp,0);

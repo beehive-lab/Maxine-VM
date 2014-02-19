@@ -425,7 +425,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         int frameSize = frame.frameSize();
         //asm.enter(frameSize - Word.size(), 0);
         //asm.enter(frameSize-Word.size());
-        asm.stm(ConditionFlag.Always,0,0,0,0,ARMV7.r13, 11<<1 ); // push frame pointer
+        asm.push(ConditionFlag.Always, 11<<1 ); // push frame pointer
         asm.movror(ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13,0);  // framepoiter = stack ptr
         asm.mov32BitConstant(ARMV7.r12,frameSize = Word.size());
         asm.sub(ConditionFlag.Always,false,ARMV7.r13,ARMV7.r11,ARMV7.r12,0,0);
@@ -467,7 +467,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         // stackptr = r11
         // r11 popped off stack
         asm.movror(ConditionFlag.Always,false,ARMV7.r13,ARMV7.r11,0);
-        asm.ldm(ConditionFlag.Always,0,0,0,0,ARMV7.r13, 11<<1 ); // pop stack
+        asm.pop(ConditionFlag.Always,1<<ARMV7.r11.encoding ); // pop stack
         // push frame pointer
         // framepointer = stackpointer
         // stackptr = framepointer -stacksize

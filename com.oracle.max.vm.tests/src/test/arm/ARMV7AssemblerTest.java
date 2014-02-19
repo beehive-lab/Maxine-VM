@@ -109,14 +109,81 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     }
     private static long expectedValues[] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}; // therse values will be udpdated
     // to those expected to be found in a register after simulated execution of code
+    private static void initialiseExpectedValues() {
+            for(int i = 0; i < 17;i++)expectedValues[i] = (long) i;
+    }
     private static boolean  testvalues[] = new boolean[17];
 
+    public void testpushAndPop() throws Exception {
+        int instructions[]  = new int [42];
+        long value;
+        int i,registers = 1;
+        setBitMasks(-1,MaxineARMTester.BitsFlag.All32Bits);
+
+
+        System.out.println("TESTING PUSH AND POP");
+        for(i = 0; i < 16;i++) {
+            expectedValues[i] = (long) i; // re-initialise in case another test has been run before us
+            if(i < 13) testvalues[i] = true;  // test register values r0..r12
+        }
+
+        for(int bitmask = 1; bitmask <= 0xfff; bitmask = bitmask |(bitmask+1),registers++)  {
+            asm.codeBuffer.reset();
+            initialiseExpectedValues();
+            System.out.println("REGISTERS " + registers + " BITMASK "+ bitmask);
+            for(i = 0; i < 13;i++)   {  // we are not breaking the stack (r13)
+                asm.mov32BitConstant(ARMV7.cpuRegisters[i], (int) expectedValues[i]); // 2 instructions movw, movt
+                // all registers initialised.
+            }
+            asm.push(ARMV7Assembler.ConditionFlag.Always,bitmask); // store all registers referred to
+            // by bitmask on the stack
+            for(i = 0; i < 13;i++) asm.add(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.cpuRegisters[i],ARMV7.cpuRegisters[i],1,0);
+            // r0..r12 should now all have +1 more than their previous values stored on the stack
+
+            // restore the same registers that were placed on the stack
+            asm.pop(ARMV7Assembler.ConditionFlag.Always,bitmask);
+
+            for(i = 0; i < 13; i++) {
+                if(i < registers)
+                    expectedValues[i] = (long) i;
+                else
+                    expectedValues[i] = (long) (i+1);
+            }
+            for(i = 0; i < (2*13+1+13+1);i++) instructions[i] = asm.codeBuffer.getInt(i*4);
+
+            ARMCodeWriter.debug = false;
+            code = new ARMCodeWriter(41,instructions);
+
+            try {
+                MaxineARMTester r = new MaxineARMTester(expectedValues,testvalues,bitmasks);
+
+                r.assembleStartup();
+                r.assembleEntry();
+                r.compile();
+                r.link();
+                r.objcopy();
+                r.runSimulation();
+            } catch (Exception e) {
+                System.err.println(e);
+                e.printStackTrace();
+                System.exit(-1);
+            }
+
+        }
+        ARMCodeWriter.debug = false;
+
+
+
+    }
     public void testadd() throws Exception {
         int instructions[] = new int[3];
         long value;
         int  i,j,immediate,result;
 
         setBitMasks(-1,MaxineARMTester.BitsFlag.All32Bits);
+        initialiseExpectedValues();
+        setTestValues(-1,false);
+
         System.out.println("TESTING ADD ");
 
         for(int srcReg = 0; srcReg < 13;srcReg++)

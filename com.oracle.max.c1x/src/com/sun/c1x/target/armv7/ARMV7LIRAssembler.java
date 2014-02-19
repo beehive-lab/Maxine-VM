@@ -159,7 +159,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         // Do not optimize with an XOR as this instruction may be between
         // a CMP and a Jcc in which case the XOR will modify the condition
         // flags and interfere with the Jcc.
-        masm.movl(dst, constant);
+        masm.mov32BitConstant(dst, constant);
     }
 
     private void const2reg(CiRegister dst, long constant) {
@@ -196,7 +196,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         if (Float.floatToRawIntBits(constant) == Float.floatToRawIntBits(0.0f)) {
             //masm.xorps(dst, dst);
         } else {
-            masm.movl(rscratch1, Float.floatToRawIntBits(constant));
+            masm.mov32BitConstant(rscratch1, Float.floatToRawIntBits(constant));
             //masm.movdl(dst, rscratch1);
         }
     }

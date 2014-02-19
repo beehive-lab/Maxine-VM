@@ -366,14 +366,14 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         // AS a hack suggestion is to push a couple of registers onto the stack
         // load them with the constanv values
 
-        stm(ConditionFlag.Always,0,0,1,0,com.oracle.max.asm.target.armv7.ARMV7.r13,(1<<12)|1|2);// r13 is the stack pointer
+        push(ConditionFlag.Always,(1<<12)|1|2);// r13 is the stack pointer
         setUpScratch(dst);
-        mov32BitConstant(ARMV7.r0,(int)(0xffffffff&src));
-        mov32BitConstant(ARMV7.r1,(int) ((src>>32)&0xffffffff));
+        mov32BitConstant(ARMV7.r0,(int)(0xffffffffL&src));
+        mov32BitConstant(ARMV7.r1,(int) ((src>>32)&0xffffffffL));
         str(ConditionFlag.Always,0,0,0,ARMV7.r0,ARMV7.r12,ARMV7.r0,0,0);
         add(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,4,0); // add 4 to the address
         str(ConditionFlag.Always,0,0,0,ARMV7.r1,ARMV7.r12,ARMV7.r1,0,0);
-        ldm(ConditionFlag.Always,0,0,1,0,ARMV7.r13,(1<<12)|1|2); //restore all
+        pop(ConditionFlag.Always,(1<<12)|1|2); //restore all
         //CiAddress high = new CiAddress(dst.kind, dst.base, dst.index, dst.scale, dst.displacement + 4);
 
         /*
@@ -456,7 +456,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         for (CiRegister r : csl.registers) {
             int offset = csl.offsetOf(r);
             registerList = (1<<(r.encoding & 0xf)); // only storing one register at a time.
-            stm(ConditionFlag.Always,0,0,1,0,ARMV7.r13,registerList);// r13 is the stack po
+            push(ConditionFlag.Always,registerList);// r13 is the stack po
             /*if (first) {
                 //if(offset != 0) System.err.println("off set is " + offset);
                // assert(offset == 0);
@@ -482,7 +482,10 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
             int offset = csl.offsetOf(r);
             registerList = (1<<(r.encoding & 0xf));
             //movq(r, new CiAddress(target.wordKind, frame, frameToCSA + offset));
-            ldm(ConditionFlag.Always,0,0,1,0,frameRegister,registerList);
+            // APN TODO check that it is ok to use the stack pointer here  for ARM
+            // TODO this means seeing if the frameRegister might somehow be used by Stubs
+            // or Adapters in an unusual or unexpected way.
+            pop(ConditionFlag.Always,registerList);
 
         }
     }
