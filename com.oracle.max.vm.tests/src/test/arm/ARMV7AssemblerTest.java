@@ -114,6 +114,52 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     }
     private static boolean  testvalues[] = new boolean[17];
 
+    public void teststrdAndldrd() throws Exception
+    {
+        /*
+        strd and ldrd refer to the store/load register dual
+        the versions encoded here are for a base register value plus/minus an 8 bit immediate.
+        int instructions[] = new int
+         */
+        int instructions []= new int[10];
+        initialiseExpectedValues();
+        setBitMasks(-1,MaxineARMTester.BitsFlag.All32Bits);
+        setTestValues(-1,false);
+        System.out.println("TESTING STRD and LDRD -- please test with a negative offset NOT DONE");
+        for(int i = 0; i < 10;i+=2) {
+            System.out.println("REG "+i+ " expected vals "+ expectedValues[i]+ " " + expectedValues[i+1] );
+            asm.codeBuffer.reset();
+            asm.mov32BitConstant(ARMV7.cpuRegisters[i],(int)expectedValues[i]);
+            asm.mov32BitConstant(ARMV7.cpuRegisters[i+1],(int)expectedValues[i+1]);  // load a vlaue into 2 registers
+            asm.strd(ARMV7Assembler.ConditionFlag.Always,ARMV7.cpuRegisters[i],ARMV7.r13,0); // put them on the stack on the stack!
+            asm.mov32BitConstant(ARMV7.cpuRegisters[i],0);     // zero the value in the registers
+            asm.mov32BitConstant(ARMV7.cpuRegisters[i+1],0);
+            asm.ldrd(ARMV7Assembler.ConditionFlag.Always,ARMV7.cpuRegisters[i],ARMV7.r13,0);
+            testvalues[i] = true;
+            testvalues[i+1] = true;
+            if(i != 0)  {
+                testvalues[i-1] = false;
+                testvalues[i-2] = false;
+            }
+            for(int j = 0; j < 10;j++) {
+                 instructions[j] = asm.codeBuffer.getInt(j*4);
+            }
+            ARMCodeWriter.debug = false;
+
+            code = new ARMCodeWriter(10,instructions);
+            MaxineARMTester r = new MaxineARMTester(expectedValues,testvalues,bitmasks);
+
+            r.assembleStartup();
+            r.assembleEntry();
+            r.compile();
+            r.link();
+            r.objcopy();
+            r.runSimulation();
+
+
+        }
+
+    }
     public void testpushAndPop() throws Exception {
         int instructions[]  = new int [42];
         long value;

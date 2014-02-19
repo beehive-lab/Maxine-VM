@@ -924,20 +924,52 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
 
     }
+    public void ldrd(final ConditionFlag flag, final CiRegister valueReg, final CiRegister baseReg,
+                      int offset8) {
+        int instruction;
+        int P,U,W;
+        instruction = 0x004000d0;
+        checkConstraint(-255 <= offset8 && offset8 <= 255, "-255 <= offset8 && offset8 <= 255");
+        if(offset8 < 0) {
+            U = 0;
+            offset8 *= -1;
+        }
+        else U = 1;
+        P = 1;
+        W = 0;
+        checkConstraint(valueReg.encoding %2 == 0,"ldrd register must be even");
+        instruction |=  ((flag.value() &0xf)<< 28);
+        instruction |= (P<<24);
+        instruction |= (U<<23);
+        instruction |= (W<<21);
+        instruction |=  ((valueReg.encoding&0xf) << 12);
+        instruction |= ((baseReg.encoding&0xf)<< 16);
+        instruction |= ((offset8 &0xf0) << 4);
+        instruction |= (offset8&0xf);
+        emitInt(instruction);
+    }
     public void strd(final ConditionFlag flag, final CiRegister valueReg, final CiRegister baseReg,
-                    final int offset8) {
+                     int offset8) {
         int instruction;
         instruction= 0x004000f0;
         int P,U,W;
+        checkConstraint(valueReg.encoding %2 == 0,"strd register must be even");
+        checkConstraint(-255 <= offset8 && offset8 <= 255, "-255 <= offset8 && offset8 <= 255");
+        if(offset8 < 0) {
+            U = 0;
+            offset8 *= -1;
+        }
+        else U = 1;
+
         P = 1;
-        U = 1;
         W = 0;
-        instruction |= P<<24;
-        instruction |= U<<23;
-        instruction |= W<<21;
-        instruction |=  (valueReg.encoding&0xf) << 16;
-        instruction |= (baseReg.encoding&0xf)<< 12;
-        instruction |= (offset8 &0xf0) << 4;
+        instruction |=  ((flag.value() &0xf)<< 28);
+        instruction |= (P<<24);
+        instruction |= (U<<23);
+        instruction |= (W<<21);
+        instruction |=  ((valueReg.encoding&0xf) << 12);
+        instruction |= ((baseReg.encoding&0xf)<< 16);
+        instruction |= ((offset8 &0xf0) << 4);
         instruction |= (offset8&0xf);
         emitInt(instruction);
     }
@@ -947,7 +979,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     {
         int instruction;
         instruction = 0x05800000;
-        instruction =  ((flag.value() &0xf)<< 28);
+        instruction |=  ((flag.value() &0xf)<< 28);
         instruction |= (valueReg.encoding&0xf) << 16;
         instruction |= (baseRegister.encoding&0xf)<<12;
         instruction |= offset12 & 0xfff;
