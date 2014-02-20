@@ -114,7 +114,61 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     }
     private static boolean  testvalues[] = new boolean[17];
 
+    public void testldrsh() throws Exception
+    {
+        /*
+        strd and ldrd refer to the store/load register dual
+        the versions encoded here are for a base register value plus/minus an 8 bit immediate.
+        int instructions[] = new int
+         */
+        int assemblerStatements = 9;
+        int instructions []= new int[assemblerStatements];
+        long testval [] = {0x03020100L,0x8fed9ba9L};
+        long mask = 0xffff;
+        initialiseExpectedValues();
+        setBitMasks(-1,MaxineARMTester.BitsFlag.All32Bits);
+        setTestValues(-1,false);
+        System.out.println("TESTING  LDRSH -- please test with a -ve offset NOT DONE");
 
+        asm.codeBuffer.reset();
+        // load r0 and r1 with sensible values for testing the loading of bytes.
+        asm.mov32BitConstant(ARMV7.cpuRegisters[0],(int)testval[0]);
+        asm.mov32BitConstant(ARMV7.cpuRegisters[1],(int)testval[1]);
+        asm.push(ARMV7Assembler.ConditionFlag.Always,1|2);   // values now lie on the stack
+
+        for(int i = 0; i < 4;i++) {
+            asm.ldrshw(ARMV7Assembler.ConditionFlag.Always,1,1,0,ARMV7.cpuRegisters[i],ARMV7.cpuRegisters[13],i*2); // stack pointer advanced by 8
+            testvalues[i] = true;
+            if(i < 2)
+                expectedValues[i] =  (testval[0]& (mask<< (16*(i%2)))) >> 16*(i);
+            else
+                expectedValues[i] =  (testval[1]& (mask<< (16*(i%2)))) >> 16*(i%2);
+            if((expectedValues[i] & 0x8000) != 0) {
+                expectedValues[i] = expectedValues[i] | 0xffff0000L; // sign extension
+            }
+
+        }
+
+        for(int j = 0; j < assemblerStatements;j++) {
+            instructions[j] = asm.codeBuffer.getInt(j*4);
+        }
+        ARMCodeWriter.debug = false;
+
+        code = new ARMCodeWriter(assemblerStatements,instructions);
+        MaxineARMTester r = new MaxineARMTester(expectedValues,testvalues,bitmasks);
+
+        r.assembleStartup();
+        r.assembleEntry();
+        r.compile();
+        r.link();
+        r.objcopy();
+        r.runSimulation();
+
+
+
+
+
+    }
     public void testldrb() throws Exception
     {
         /*

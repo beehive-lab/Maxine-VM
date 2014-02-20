@@ -506,7 +506,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 case SHORT:
                     //asm.movsxw(reg, new CiAddress(CiKind.Short, rsp.asValue(), offset32));
                     asm.setUpScratch( new CiAddress(CiKind.Short, ARMV7.r13.asValue(), offset32));
-                    asm.ldrshw(ARMV7Assembler.ConditionFlag.Always,0,0,0, reg, ARMV7.r12,ARMV7.r12);
+                    asm.ldrshw(ARMV7Assembler.ConditionFlag.Always,1,1,0, reg, ARMV7.r12,0);
                 break;
 
                 case CHAR:
