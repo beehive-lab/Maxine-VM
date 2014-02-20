@@ -537,7 +537,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     }
 
 
-    public void testMvnror() throws Exception {
+    /*public void testMvnror() throws Exception {
         for(int i=0; i < ARMV7Assembler.ConditionFlag.values().length; i++) {
             asm.mvnror(ARMV7Assembler.ConditionFlag.values()[i], false, armv7.arch.registers[0], armv7.arch.registers[1],
                     armv7.arch.registers[2]);
@@ -548,9 +548,9 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             assertTrue(asm.codeBuffer.getInt(0) == ( 0x01F00271 | ARMV7Assembler.ConditionFlag.values()[i].value() <<28));
             asm.codeBuffer.reset();
         }
-    }
+    } */
 
-    public void testOrrlsl() throws Exception {
+    /*public void testOrrlsl() throws Exception {
         for(int i=0; i < ARMV7Assembler.ConditionFlag.values().length; i++) {
             asm.orrlsl(ARMV7Assembler.ConditionFlag.values()[i], false, armv7.arch.registers[0], armv7.arch.registers[1],
                     armv7.arch.registers[2], 0);
@@ -561,9 +561,9 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             assertTrue(asm.codeBuffer.getInt(0) == ( 0x01910002 | ARMV7Assembler.ConditionFlag.values()[i].value() <<28));
             asm.codeBuffer.reset();
         }
-    }
+    } */
 
-    public void testRsb() throws Exception {
+    /*public void testRsb() throws Exception {
         for(int i=0; i < ARMV7Assembler.ConditionFlag.values().length; i++) {
             asm.rsb(ARMV7Assembler.ConditionFlag.values()[i], false, armv7.arch.registers[0], armv7.arch.registers[1],
                     0, 0);
@@ -575,8 +575,8 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             asm.codeBuffer.reset();
         }
     }
-
-    public void testRsblsl() throws Exception {
+      */
+    /*public void testRsblsl() throws Exception {
         for(int i=0; i < ARMV7Assembler.ConditionFlag.values().length; i++) {
             asm.rsblsl(ARMV7Assembler.ConditionFlag.values()[i], false, armv7.arch.registers[0], armv7.arch.registers[1],
                     armv7.arch.registers[2], 0);
@@ -587,9 +587,9 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             assertTrue(asm.codeBuffer.getInt(0) == ( 0x00710002 | ARMV7Assembler.ConditionFlag.values()[i].value() <<28));
             asm.codeBuffer.reset();
         }
-    }
+    } */
 
-    public void testRsc() throws Exception {
+    /*public void testRsc() throws Exception {
         for(int i=0; i < ARMV7Assembler.ConditionFlag.values().length; i++) {
             asm.rsc(ARMV7Assembler.ConditionFlag.values()[i], false, armv7.arch.registers[0], armv7.arch.registers[1],
                     armv7.arch.registers[2]);
@@ -600,8 +600,8 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             assertTrue(asm.codeBuffer.getInt(0) == ( 0x00F10002 | ARMV7Assembler.ConditionFlag.values()[i].value() <<28));
             asm.codeBuffer.reset();
         }
-    }
-
+    } */
+        /*
     public void testRsclsr() throws Exception {
         for(int i=0; i < ARMV7Assembler.ConditionFlag.values().length; i++) {
             asm.rsclsr(ARMV7Assembler.ConditionFlag.values()[i], false, armv7.arch.registers[0], armv7.arch.registers[1],
@@ -613,8 +613,8 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             assertTrue(asm.codeBuffer.getInt(0) == ( 0x00F10332 | ARMV7Assembler.ConditionFlag.values()[i].value() <<28));
             asm.codeBuffer.reset();
         }
-    }
-
+    }     */
+            /*
     public void testSbcror() throws Exception {
         for(int i=0; i < ARMV7Assembler.ConditionFlag.values().length; i++) {
             asm.sbcror(ARMV7Assembler.ConditionFlag.values()[i], false, armv7.arch.registers[0], armv7.arch.registers[1],
@@ -626,7 +626,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             assertTrue(asm.codeBuffer.getInt(0) == ( 0x00D10372 | ARMV7Assembler.ConditionFlag.values()[i].value() <<28));
             asm.codeBuffer.reset();
         }
-    }
+    }         */
 
     public void testSub() throws Exception {
         for(int i=0; i < ARMV7Assembler.ConditionFlag.values().length; i++) {

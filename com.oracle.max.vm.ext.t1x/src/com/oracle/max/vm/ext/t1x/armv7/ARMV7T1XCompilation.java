@@ -262,7 +262,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected void loadLong(CiRegister dst, int index) {
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
-        asm.ldrd(ConditionFlag.Always,0,0,0,dst,asm.scratchRegister,asm.scratchRegister);
+        asm.ldrd(ConditionFlag.Always,dst,asm.scratchRegister,0);
         //asm.movq(dst, localSlot(localSlotOffset(index, Kind.LONG)));
     }
 
@@ -384,10 +384,12 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
 
     @Override
-    protected void nullCheck(CiRegister src) {
+    protected int nullCheck(CiRegister src) {
         // nullCheck on AMD64 testl(AMD64.rax, new CiAddress(Word, r.asValue(Word), 0));
-
+        int safepointPos = buf.position();
         asm.nullCheck(src);
+        return Safepoints.make(safepointPos);
+
     }
 
     private void alignDirectCall(int callPos) {

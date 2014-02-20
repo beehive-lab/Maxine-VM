@@ -354,7 +354,7 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.34"
      */
     // Template#: 11, Serial#: 107
-    public void mvnror(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rm, final CiRegister Rs) {
+    /*public void mvnror(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rm, final CiRegister Rs) {
         int instruction = 0x01E00070;
         instruction |= ((cond.value() & 0xf) << 28);
         instruction |= ((s?1:0) << 20);
@@ -362,7 +362,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (Rm.encoding & 0xf);
         instruction |= ((Rs.encoding & 0xf) << 8);
         emitInt(instruction);
-    }
+    } */
 
     /**
      * Pseudo-external assembler syntax: {@code orr[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
@@ -373,7 +373,7 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.35"
      */
     // Template#: 12, Serial#: 112
-    public void orrlsl(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
+    /*public void orrlsl(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
         int instruction = 0x01800000;
         checkConstraint(0 <= shift_imm && shift_imm <= 31, "0 <= shift_imm && shift_imm <= 31");
         instruction |= ((cond.value() & 0xf) << 28);
@@ -383,7 +383,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (Rm.encoding & 0xf);
         instruction |= ((shift_imm & 0x1f) << 7);
         emitInt(instruction);
-    }
+    } */
 
     /**
      * Pseudo-external assembler syntax: {@code rsb[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>immed_8</i>, <i>rotate_amount</i>
@@ -396,7 +396,7 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.36"
      */
     // Template#: 13, Serial#: 122
-    public void rsb(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int immed_8, final int rotate_amount) {
+    /*public void rsb(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int immed_8, final int rotate_amount) {
         int instruction = 0x02600000;
         checkConstraint(0 <= immed_8 && immed_8 <= 255, "0 <= immed_8 && immed_8 <= 255");
         checkConstraint((rotate_amount % 2) == 0, "(rotate_amount % 2) == 0");
@@ -408,7 +408,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (immed_8 & 0xff);
         instruction |= ((rotate_amount / 2 & 0xf) << 8);
         emitInt(instruction);
-    }
+    } */
 
     /**
      * Pseudo-external assembler syntax: {@code rsb[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
@@ -419,7 +419,7 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.36"
      */
     // Template#: 14, Serial#: 124
-    public void rsblsl(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
+    /*public void rsblsl(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
         int instruction = 0x00600000;
         checkConstraint(0 <= shift_imm && shift_imm <= 31, "0 <= shift_imm && shift_imm <= 31");
         instruction |= ((cond.value() & 0xf) << 28);
@@ -429,7 +429,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (Rm.encoding & 0xf);
         instruction |= ((shift_imm & 0x1f) << 7);
         emitInt(instruction);
-    }
+    } */
 
     /**
      * Pseudo-external assembler syntax: {@code rsc[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>
@@ -438,7 +438,7 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.37"
      */
     // Template#: 15, Serial#: 135
-    public void rsc(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm) {
+    /*public void rsc(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm) {
         int instruction = 0x00E00000;
         instruction |= ((cond.value() & 0xf) << 28);
         instruction |= ((s?1:0) << 20);
@@ -446,7 +446,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= ((Rn.encoding & 0xf) << 16);
         instruction |= (Rm.encoding & 0xf);
         emitInt(instruction);
-    }
+    } */
 
     /**
      * Pseudo-external assembler syntax: {@code rsc[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>Rs</i>
@@ -455,7 +455,7 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.37"
      */
     // Template#: 16, Serial#: 141
-    public void rsclsr(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final CiRegister Rs) {
+    /*public void rsclsr(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final CiRegister Rs) {
         int instruction = 0x00E00030;
         instruction |= ((cond.value() & 0xf) << 28);
         instruction |= ((s?1:0) << 20);
@@ -464,7 +464,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (Rm.encoding & 0xf);
         instruction |= ((Rs.encoding & 0xf) << 8);
         emitInt(instruction);
-    }
+    } */
 
     /**
      * Pseudo-external assembler syntax: {@code sbc[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>Rs</i>
@@ -473,7 +473,7 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.38"
      */
     // Template#: 17, Serial#: 155
-    public void sbcror(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final CiRegister Rs) {
+    /*public void sbcror(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final CiRegister Rs) {
         int instruction = 0x00C00070;
         instruction |= ((cond.value() & 0xf) << 28);
         instruction |= ((s?1:0) << 20);
@@ -482,7 +482,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (Rm.encoding & 0xf);
         instruction |= ((Rs.encoding & 0xf) << 8);
         emitInt(instruction);
-    }
+    } */
 
     /**
      * Pseudo-external assembler syntax: {@code sub[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>immed_8</i>, <i>rotate_amount</i>
@@ -749,12 +749,15 @@ public class ARMV7Assembler extends AbstractAssembler {
     {                // move a float ...
                     // APN might want/need to make it use special registers?
                     // so some logic might need to be placed here to choose the correct instruction
+        System.err.println("movss support needs to be finalised");
         ldr(cond,P,U,W,Rn,Rt,Rm,imm2Type,imm5);
 
     }
     public void movsd(final ConditionFlag cond, int P, int U, int W,final CiRegister Rn, final CiRegister Rt, final CiRegister Rm)
     {
         // APN same issue as above ...
+        System.err.println("movsd support needs to be finalised");
+
         ldrd(cond,P,U,W,Rn,Rt,Rm);
 
     }
@@ -1231,6 +1234,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         // Im assuming base cannot be destructively updated perhaps this is stupid and maybe DO NOT NEED
         to use the scratch register as defined in RegisterConfigs.java for the target as AMD64Assembler does not
         seem to use it ...
+        TODO are we really moving the value stored at an address onto the stack or just the address!!
          */
 
         CiRegister base = addr.base();
@@ -1314,6 +1318,8 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     }
     public void align(int modulus) {
+        // Is alignment relevant at all for ARM
+        // we do not have the same restrictions as X86.
         if (codeBuffer.position() % modulus != 0) {
             nop(modulus - (codeBuffer.position() % modulus));
         }
@@ -1325,14 +1331,14 @@ public class ARMV7Assembler extends AbstractAssembler {
             nop();
     }
     public final void nop() {
-        movror(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,0);
+        movror(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,0); // this will change the value of r12 due to the carry bit.
     }
 
     public final void ret()
 
     {
 
-        movror(ConditionFlag.Always,false,ARMV7.r15,ARMV7.r14,0);
+        movror(ConditionFlag.Always,false,ARMV7.r15,ARMV7.r14,0); // TODO CHANGE -- movror is not correct cdue to carry!!!!
     }
     public final void ret(int imm16) {
         movw(ConditionFlag.Always,ARMV7.r0,imm16);

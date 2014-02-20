@@ -525,7 +525,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
                 case LONG: // what about long long? we dont have an enum CiKind for that? APN
                     asm.setUpScratch(    new CiAddress(CiKind.Long, ARMV7.r13.asValue(), offset32));
-                    asm.ldrd(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, reg, ARMV7.r12, ARMV7.r12);
+                    asm.ldrd(ARMV7Assembler.ConditionFlag.Always,reg, ARMV7.r12, 0);
                       //  asm.movq(reg, new CiAddress(CiKind.Long, rsp.asValue(), offset32));
                 break;
 
