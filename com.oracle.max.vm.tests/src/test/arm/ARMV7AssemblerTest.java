@@ -122,7 +122,8 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         the versions encoded here are for a base register value plus/minus an 8 bit immediate.
         int instructions[] = new int
          */
-        int instructions []= new int[13];
+        int assemblerStatements = 13;
+        int instructions []= new int[assemblerStatements];
         long testval [] = {0x03020100L,0xffedcba9L};
         long mask = 0xff;
         initialiseExpectedValues();
@@ -147,12 +148,12 @@ public class ARMV7AssemblerTest extends MaxTestCase {
 
         }
 
-        for(int j = 0; j < 13;j++) {
+        for(int j = 0; j < assemblerStatements;j++) {
             instructions[j] = asm.codeBuffer.getInt(j*4);
         }
         ARMCodeWriter.debug = false;
 
-        code = new ARMCodeWriter(13,instructions);
+        code = new ARMCodeWriter(assemblerStatements,instructions);
         MaxineARMTester r = new MaxineARMTester(expectedValues,testvalues,bitmasks);
 
         r.assembleStartup();
