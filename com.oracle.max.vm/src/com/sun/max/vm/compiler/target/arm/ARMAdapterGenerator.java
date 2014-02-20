@@ -494,13 +494,13 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             switch (kind.asEnum) {
                 case BYTE:      //asm.movsxb(reg, new CiAddress(CiKind.Byte, rsp.asValue(), offset32));
                     asm.setUpScratch(new CiAddress(CiKind.Byte, ARMV7.r13.asValue(), offset32));
-                    asm.ldrb(ARMV7Assembler.ConditionFlag.Always,0,0,0,reg,ARMV7.r12,ARMV7.r12,0,0);
+                    asm.ldrb(ARMV7Assembler.ConditionFlag.Always,1,1,0,reg,ARMV7.r12,0);
 
                 break;
 
                 case BOOLEAN:   //asm.movzxb(reg, new CiAddress(CiKind.Boolean, rsp.asValue(), offset32));
                     asm.setUpScratch(new CiAddress(CiKind.Boolean, ARMV7.r13.asValue(), offset32));
-                    asm.ldrb(ARMV7Assembler.ConditionFlag.Always,0,0,0, reg, ARMV7.r12,ARMV7.r12,0, 0);
+                    asm.ldrb(ARMV7Assembler.ConditionFlag.Always,1,1,0, reg, ARMV7.r12, 0);
                 break;
 
                 case SHORT:
@@ -511,7 +511,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
                 case CHAR:
                     asm.setUpScratch(    new CiAddress(CiKind.Char, ARMV7.r13.asValue(), offset32));
-                    asm.ldrb(ARMV7Assembler.ConditionFlag.Always,0,0,0,reg,ARMV7.r12,ARMV7.r12,0,0);
+                    asm.ldrb(ARMV7Assembler.ConditionFlag.Always,1,1,0,reg,ARMV7.r12,0);
                             //asm.movzxl(reg, new CiAddress(CiKind.Char, rsp.asValue(), offset32));
                 break;
 

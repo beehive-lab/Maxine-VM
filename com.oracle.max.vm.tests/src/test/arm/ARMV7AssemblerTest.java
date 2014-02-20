@@ -114,6 +114,59 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     }
     private static boolean  testvalues[] = new boolean[17];
 
+
+    public void testldrb() throws Exception
+    {
+        /*
+        strd and ldrd refer to the store/load register dual
+        the versions encoded here are for a base register value plus/minus an 8 bit immediate.
+        int instructions[] = new int
+         */
+        int instructions []= new int[13];
+        long testval [] = {0x03020100L,0xffedcba9L};
+        long mask = 0xff;
+        initialiseExpectedValues();
+        setBitMasks(-1,MaxineARMTester.BitsFlag.All32Bits);
+        setTestValues(-1,false);
+        System.out.println("TESTING  LDRDB -- please test with a shifted -ve offset NOT DONE");
+
+        asm.codeBuffer.reset();
+            // load r0 and r1 with sensible values for testing the loading of bytes.
+        asm.mov32BitConstant(ARMV7.cpuRegisters[0],(int)testval[0]);
+        asm.mov32BitConstant(ARMV7.cpuRegisters[1],(int)testval[1]);
+        asm.push(ARMV7Assembler.ConditionFlag.Always,1|2);   // values now lie on the stack
+
+        for(int i = 0; i < 8;i++) {
+            asm.ldrb(ARMV7Assembler.ConditionFlag.Always,1,1,0,ARMV7.cpuRegisters[i],ARMV7.cpuRegisters[13],i); // stack pointer advanced by 8
+            testvalues[i] = true;
+            if(i < 4)
+                expectedValues[i] =  (testval[0]& (mask<< (8*(i%4)))) >> 8*(i);
+            else
+                expectedValues[i] =  (testval[1]& (mask<< (8*(i%4)))) >> 8*(i%4
+                );
+
+        }
+
+        for(int j = 0; j < 13;j++) {
+            instructions[j] = asm.codeBuffer.getInt(j*4);
+        }
+        ARMCodeWriter.debug = false;
+
+        code = new ARMCodeWriter(13,instructions);
+        MaxineARMTester r = new MaxineARMTester(expectedValues,testvalues,bitmasks);
+
+        r.assembleStartup();
+        r.assembleEntry();
+        r.compile();
+        r.link();
+        r.objcopy();
+        r.runSimulation();
+
+
+
+
+
+    }
     public void teststrdAndldrd() throws Exception
     {
         /*
@@ -469,7 +522,9 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         }
     }
 
+    /*
     public void testAddror() throws Exception {
+
         for(int i=0; i < ARMV7Assembler.ConditionFlag.values().length; i++) {
             asm.addror(ARMV7Assembler.ConditionFlag.values()[i], false, armv7.arch.registers[0], armv7.arch.registers[1],
                     armv7.arch.registers[2], 0);
@@ -536,7 +591,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         }
     }
 
-
+    */
     /*public void testMvnror() throws Exception {
         for(int i=0; i < ARMV7Assembler.ConditionFlag.values().length; i++) {
             asm.mvnror(ARMV7Assembler.ConditionFlag.values()[i], false, armv7.arch.registers[0], armv7.arch.registers[1],
@@ -640,7 +695,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             asm.codeBuffer.reset();
         }
     }
-
+     /*
     public void testTst() throws Exception {
         for(int i=0; i < ARMV7Assembler.ConditionFlag.values().length; i++) {
             asm.tst(ARMV7Assembler.ConditionFlag.values()[i], armv7.arch.registers[0], 0);
@@ -713,5 +768,5 @@ public class ARMV7AssemblerTest extends MaxTestCase {
 
     public void testCheckConstraint() throws Exception {
 
-    }
+    } */
 }

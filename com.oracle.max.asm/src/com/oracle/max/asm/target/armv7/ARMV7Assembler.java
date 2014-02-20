@@ -115,7 +115,7 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.2"
      */
     // Template#: 1, Serial#: 2
-    public void adc(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int immed_8, final int rotate_amount) {
+    /*public void adc(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int immed_8, final int rotate_amount) {
         int instruction = 0x02A00000;
         checkConstraint(0 <= immed_8 && immed_8 <= 255, "0 <= immed_8 && immed_8 <= 255");
         checkConstraint((rotate_amount % 2) == 0, "(rotate_amount % 2) == 0");
@@ -128,7 +128,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= ((rotate_amount / 2 & 0xf) << 8);
         emitInt(instruction);
     }
-
+      */
     /**
      * Pseudo-external assembler syntax: {@code adc[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
      * Example disassembly syntax: {@code adceq         r0, r0, r0, lsl #0x0}
@@ -185,7 +185,7 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.3"
      */
     // Template#: 4, Serial#: 19
-    public void addror(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
+    /*public void addror(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
         int instruction = 0x00800060;
         checkConstraint(0 <= shift_imm && shift_imm <= 31, "0 <= shift_imm && shift_imm <= 31");
         instruction |= ((cond.value() & 0xf) << 28);
@@ -195,7 +195,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (Rm.encoding & 0xf);
         instruction |= ((shift_imm & 0x1f) << 7);
         emitInt(instruction);
-    }
+    } */
 
     /**
      * Pseudo-external assembler syntax: {@code bic[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>Rs</i>
@@ -204,7 +204,7 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.6"
      */
     // Template#: 5, Serial#: 45
-    public void biclsr(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final CiRegister Rs) {
+    /*public void biclsr(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final CiRegister Rs) {
         int instruction = 0x01C00030;
         instruction |= ((cond.value() & 0xf) << 28);
         instruction |= ((s?1:0) << 20);
@@ -214,7 +214,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= ((Rs.encoding & 0xf) << 8);
         emitInt(instruction);
     }
-
+      */
     /**
      * Pseudo-external assembler syntax: {@code cmn[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rn</i>, <i>Rm</i>, <i>Rs</i>
      * Example disassembly syntax: {@code cmneq         r0, r0, asr r0}
@@ -222,14 +222,14 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.13"
      */
     // Template#: 6, Serial#: 58
-    public void cmnasr(final ConditionFlag cond, final CiRegister Rn, final CiRegister Rm, final CiRegister Rs) {
+    /*public void cmnasr(final ConditionFlag cond, final CiRegister Rn, final CiRegister Rm, final CiRegister Rs) {
         int instruction = 0x01700050;
         instruction |= ((cond.value() & 0xf) << 28);
         instruction |= ((Rn.encoding & 0xf) << 16);
         instruction |= (Rm.encoding & 0xf);
         instruction |= ((Rs.encoding & 0xf) << 8);
         emitInt(instruction);
-    }
+    } */
 
     /**
      * Pseudo-external assembler syntax: {@code cmn[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rn</i>, <i>Rm</i>, <i>Rs</i>
@@ -238,14 +238,14 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.13"
      */
     // Template#: 7, Serial#: 59
-    public void cmnror(final ConditionFlag cond, final CiRegister Rn, final CiRegister Rm, final CiRegister Rs) {
+    /*public void cmnror(final ConditionFlag cond, final CiRegister Rn, final CiRegister Rm, final CiRegister Rs) {
         int instruction = 0x01700070;
         instruction |= ((cond.value() & 0xf) << 28);
         instruction |= ((Rn.encoding & 0xf) << 16);
         instruction |= (Rm.encoding & 0xf);
         instruction |= ((Rs.encoding & 0xf) << 8);
         emitInt(instruction);
-    }
+    } */
 
     /**
      * Pseudo-external assembler syntax: {@code cmp[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
@@ -256,7 +256,7 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.14"
      */
     // Template#: 8, Serial#: 66
-    public void cmpasr(final ConditionFlag cond, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
+    /*public void cmpasr(final ConditionFlag cond, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
         int instruction = 0x01500040;
         checkConstraint(0 <= shift_imm % 32 && shift_imm % 32 <= 31, "0 <= shift_imm % 32 && shift_imm % 32 <= 31");
         instruction |= ((cond.value() & 0xf) << 28);
@@ -264,7 +264,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (Rm.encoding & 0xf);
         instruction |= ((shift_imm % 32 & 0x1f) << 7);
         emitInt(instruction);
-    }
+    } */
 
     /**
      * Pseudo-external assembler syntax: {@code eor[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>Rs</i>
@@ -273,7 +273,7 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.15"
      */
     // Template#: 9, Serial#: 81
-    public void eorlsr(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final CiRegister Rs) {
+    /*public void eorlsr(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final CiRegister Rs) {
         int instruction = 0x00200030;
         instruction |= ((cond.value() & 0xf) << 28);
         instruction |= ((s?1:0) << 20);
@@ -282,7 +282,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (Rm.encoding & 0xf);
         instruction |= ((Rs.encoding & 0xf) << 8);
         emitInt(instruction);
-    }
+    } */
     public void eor(final ConditionFlag cond,final boolean s, final CiRegister Rd,final CiRegister Rn,final CiRegister Rm,final int imm5,final int  imm2) {
         int instruction = 0x00200000;
         // type ie imm2 refers to 00 LSL
@@ -535,14 +535,14 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.54"
      */
     // Template#: 19, Serial#: 181
-    public void tst(final ConditionFlag cond, final CiRegister Rn, final int immediate) {
+    /*public void tst(final ConditionFlag cond, final CiRegister Rn, final int immediate) {
         int instruction = 0x03100000;
         checkConstraint(0 <= ARMImmediates.calculateShifter(immediate) && ARMImmediates.calculateShifter(immediate) <= 4095, "0 <= ARMImmediates.calculateShifter(immediate) && ARMImmediates.calculateShifter(immediate) <= 4095");
         instruction |= ((cond.value() & 0xf) << 28);
         instruction |= ((Rn.encoding & 0xf) << 16);
         instruction |= (ARMImmediates.calculateShifter(immediate) & 0xfff);
         emitInt(instruction);
-    }
+    } */
 
     /**
      * Pseudo-external assembler syntax: {@code tst[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
@@ -553,7 +553,7 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.54"
      */
     // Template#: 20, Serial#: 185
-    public void tstlsr(final ConditionFlag cond, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
+    /*public void tstlsr(final ConditionFlag cond, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
         int instruction = 0x01100020;
         checkConstraint(0 <= shift_imm % 32 && shift_imm % 32 <= 31, "0 <= shift_imm % 32 && shift_imm % 32 <= 31");
         instruction |= ((cond.value() & 0xf) << 28);
@@ -561,7 +561,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (Rm.encoding & 0xf);
         instruction |= ((shift_imm % 32 & 0x1f) << 7);
         emitInt(instruction);
-    }
+    }  */
 
     /**
      * Pseudo-external assembler syntax: {@code smlal[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>RdLo</i>, <i>RdHi</i>, <i>Rm</i>, <i>Rs</i>
@@ -578,7 +578,7 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.39"
      */
     // Template#: 21, Serial#: 195
-    public void smlal(final ConditionFlag cond, final boolean s, final CiRegister RdLo, final CiRegister RdHi, final CiRegister Rm, final CiRegister Rs) {
+    /*public void smlal(final ConditionFlag cond, final boolean s, final CiRegister RdLo, final CiRegister RdHi, final CiRegister Rm, final CiRegister Rs) {
         int instruction = 0x00E00090;
         checkConstraint(RdLo.encoding != RdHi.encoding, "RdLo.encoding != RdHi.encoding");
         checkConstraint(RdLo.encoding != Rm.encoding, "RdLo.encoding != Rm.encoding");
@@ -594,7 +594,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (Rm.encoding & 0xf);
         instruction |= ((Rs.encoding & 0xf) << 8);
         emitInt(instruction);
-    }
+    } */
 
     /**
      * Pseudo-external assembler syntax: {@code umull[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>RdLo</i>, <i>RdHi</i>, <i>Rm</i>, <i>Rs</i>
@@ -611,7 +611,7 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.56"
      */
     // Template#: 22, Serial#: 198
-    public void umull(final ConditionFlag cond, final boolean s, final CiRegister RdLo, final CiRegister RdHi, final CiRegister Rm, final CiRegister Rs) {
+    /*public void umull(final ConditionFlag cond, final boolean s, final CiRegister RdLo, final CiRegister RdHi, final CiRegister Rm, final CiRegister Rs) {
         int instruction = 0x00800090;
         checkConstraint(RdLo.encoding != RdHi.encoding, "RdLo.encoding != RdHi.encoding");
         checkConstraint(RdLo.encoding != Rm.encoding, "RdLo.encoding != Rm.encoding");
@@ -627,7 +627,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (Rm.encoding & 0xf);
         instruction |= ((Rs.encoding & 0xf) << 8);
         emitInt(instruction);
-    }
+    } */
 
     /**
      * Pseudo-external assembler syntax: {@code ldr[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>
@@ -638,7 +638,7 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.20"
      */
     // Template#: 23, Serial#: 204
-    public void ldradd(final ConditionFlag cond, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm) {
+    /*public void ldradd(final ConditionFlag cond, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm) {
         int instruction = 0x07900000;
         checkConstraint(Rm.encoding != 15, "Rm.encoding != 15");
         instruction |= ((cond.value() & 0xf) << 28);
@@ -646,7 +646,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= ((Rn.encoding & 0xf) << 16);
         instruction |= (Rm.encoding & 0xf);
         emitInt(instruction);
-    }
+    } */
     public void strd(final ConditionFlag cond,int P, int U, int W,
                     final CiRegister Rt, final CiRegister Rn, final CiRegister Rm) {
         int instruction = 0x000000f0;
@@ -685,7 +685,7 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.20"
      */
     // Template#: 24, Serial#: 217
-    public void ldrsubw(final ConditionFlag cond, final CiRegister Rd, final CiRegister Rn, final int offset_12) {
+    /*public void ldrsubw(final ConditionFlag cond, final CiRegister Rd, final CiRegister Rn, final int offset_12) {
         int instruction = 0x05300000;
         checkConstraint(0 <= offset_12 && offset_12 <= 4095, "0 <= offset_12 && offset_12 <= 4095");
         checkConstraint(Rd.encoding != Rn.encoding, "Rd.encoding != Rn.encoding");
@@ -695,7 +695,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= ((Rn.encoding & 0xf) << 16);
         instruction |= (offset_12 & 0xfff);
         emitInt(instruction);
-    }
+    } */
     public void ldrshw(final ConditionFlag cond, int P, int U, int W,final CiRegister Rn, final CiRegister Rt, final CiRegister Rm)
     {
 
@@ -710,7 +710,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |=      (Rm.encoding &0xf);
         emitInt(instruction);
     }
-    public void ldrb(final ConditionFlag cond, int P, int U, int W,final CiRegister Rn, final CiRegister Rt, final CiRegister Rm,
+    /*public void ldrb(final ConditionFlag cond, int P, int U, int W,final CiRegister Rn, final CiRegister Rt, final CiRegister Rm,
     int imm2Type, int imm5)
     {
 
@@ -726,7 +726,21 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |=  ((imm2Type & 0x3) <<5);
         instruction |=  ((imm5&0x1f) << 7);
         emitInt(instruction);
+    } */
+    public void ldrb(final ConditionFlag cond, int P, int U, int W,final CiRegister Rt, final CiRegister Rn, int imm12) {
+        int instruction = 0x04500000;
+        P = P & 1;
+        U = U & 1;
+        W = W & 1;
+        instruction |= (P<<24) |   (U<<23) | (W << 21);
+        instruction |=    ((cond.value() & 0xf) << 28);
+        instruction |=     ( (Rn.encoding &0xf) << 16);
+        instruction |=     ( (Rt.encoding &0xf) << 12);
+        instruction  |=     (0xfff&imm12);
+        emitInt(instruction);
+
     }
+
     public void ldr(final ConditionFlag cond, int P, int U, int W,final CiRegister Rn, final CiRegister Rt, final CiRegister Rm,
                      int imm2Type, int imm5)
     {
@@ -787,7 +801,7 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.20"
      */
     // Template#: 25, Serial#: 240
-    public void ldraddrorpost(final ConditionFlag cond, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
+    /*public void ldraddrorpost(final ConditionFlag cond, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
         int instruction = 0x06900060;
         checkConstraint(0 <= shift_imm && shift_imm <= 31, "0 <= shift_imm && shift_imm <= 31");
         checkConstraint(Rm.encoding != 15, "Rm.encoding != 15");
@@ -799,7 +813,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (Rm.encoding & 0xf);
         instruction |= ((shift_imm & 0x1f) << 7);
         emitInt(instruction);
-    }
+    } */
 
     /**
      * Pseudo-external assembler syntax: {@code str[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
@@ -811,7 +825,7 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.44"
      */
     // Template#: 26, Serial#: 253
-    public void strsubasr(final ConditionFlag cond, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
+    /*public void strsubasr(final ConditionFlag cond, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
         int instruction = 0x07000040;
         checkConstraint(0 <= shift_imm % 32 && shift_imm % 32 <= 31, "0 <= shift_imm % 32 && shift_imm % 32 <= 31");
         checkConstraint(Rm.encoding != 15, "Rm.encoding != 15");
@@ -821,7 +835,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (Rm.encoding & 0xf);
         instruction |= ((shift_imm % 32 & 0x1f) << 7);
         emitInt(instruction);
-    }
+    } */
 
     /**
      * Pseudo-external assembler syntax: {@code str[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
@@ -836,7 +850,7 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.44"
      */
     // Template#: 27, Serial#: 269
-    public void strsubrorw(final ConditionFlag cond, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
+    /*public void strsubrorw(final ConditionFlag cond, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
         int instruction = 0x07200060;
         checkConstraint(0 <= shift_imm && shift_imm <= 31, "0 <= shift_imm && shift_imm <= 31");
         checkConstraint(Rd.encoding != Rn.encoding, "Rd.encoding != Rn.encoding");
@@ -849,7 +863,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (Rm.encoding & 0xf);
         instruction |= ((shift_imm & 0x1f) << 7);
         emitInt(instruction);
-    }
+    } */
 
     /**
      * Pseudo-external assembler syntax: {@code str[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rd</i>, <i>Rn</i>, <i>offset_12</i>
@@ -861,7 +875,7 @@ public class ARMV7Assembler extends AbstractAssembler {
      * @see "ARM Architecture Reference Manual, Second Edition - Section 4.1.44"
      */
     // Template#: 28, Serial#: 272
-    public void straddpost(final ConditionFlag cond, final CiRegister Rd, final CiRegister Rn, final int offset_12) {
+    /*public void straddpost(final ConditionFlag cond, final CiRegister Rd, final CiRegister Rn, final int offset_12) {
         int instruction = 0x04800000;
         checkConstraint(0 <= offset_12 && offset_12 <= 4095, "0 <= offset_12 && offset_12 <= 4095");
         checkConstraint(Rn.encoding != 15, "Rn.encoding != 15");
@@ -870,7 +884,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= ((Rn.encoding & 0xf) << 16);
         instruction |= (offset_12 & 0xfff);
         emitInt(instruction);
-    }
+    } */
 
 
 
@@ -892,7 +906,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
     // APN not including Thumb mode for now
-    private int ldmstmHelper(final int isStore,final ConditionFlag flag,final int upWard,
+    /*private int ldmstmHelper(final int isStore,final ConditionFlag flag,final int upWard,
             final int preIndexing, final int wBit, final int sBit,final CiRegister baseRegister,final int registerList) {
         int instruction;
         instruction = ((flag.value() &0xf)<< 28);
@@ -902,7 +916,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (registerList & 0xFFFF);
         return instruction;
 
-    }
+    } */
 
     public void push(final ConditionFlag flag, final int registerList) {
         int instruction;
@@ -1086,7 +1100,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final void mov32BitConstant(CiRegister dst, int imm32)   {    // crude way to load a 32 bit immediate
         //assert(dst.isFpu());
         movw   (ConditionFlag.Always,dst,imm32&0xffff);
-        movt    (ConditionFlag.Always,dst,((imm32&0xffff0000) >> 16)) ;
+        movt    (ConditionFlag.Always,dst,(int)(((((long)imm32)&0xffff0000L) >> 16))) ;
 
     }
     public final void alignForPatchableDirectCall() { // APN copy of X86
