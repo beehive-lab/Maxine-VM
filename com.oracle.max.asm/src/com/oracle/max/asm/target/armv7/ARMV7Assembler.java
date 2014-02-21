@@ -46,6 +46,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         this.frameRegister = registerConfig == null ? null : registerConfig.getFrameRegister();
     }
 
+
     public enum ConditionFlag {
         Equal(0x0, "="),
         NotEqual(0x1, "!="),
@@ -175,7 +176,27 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= ((rotate_amount / 2 & 0xf) << 8);
         emitInt(instruction);
     }
+    public void addRegisters(final ConditionFlag cond,
+                             final boolean s,
+                             final CiRegister Rd,
+                             final CiRegister Rn,
+                             final CiRegister Rm,
+                             final int imm2Type,
+                              final int imm5
+                              )
+    {
+        int instruction = 0x00800000;
+        checkConstraint(0 <= imm5 && imm5 <= 31, "0 <= imm5 && imm5 <= 31");
+        checkConstraint(0 <= imm2Type && imm2Type <= 3, "0 <= imm2Type && imm2Type <= 3");
+        instruction |= ((cond.value() & 0xf) << 28);
+        instruction |= ((s?1:0) << 20);
+        instruction |= ((Rd.encoding & 0xf) << 12);
+        instruction |= ((Rn.encoding & 0xf) << 16);
+        instruction |= (imm5 <<7)|(imm2Type <<5);
+        instruction |= (Rm.encoding&0xf);
+        emitInt(instruction) ;
 
+    }
     /**
      * Pseudo-external assembler syntax: {@code add[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv][s]  }<i>Rd</i>, <i>Rn</i>, <i>Rm</i>, <i>shift_imm</i>
      * Example disassembly syntax: {@code addeq         r0, r0, r0, ror #0x0}
@@ -1216,7 +1237,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         assert(dst.isValid());
         mov32BitConstant(scratchRegister, imm32); ;
         // dst = dst + imm32;
-        add(ConditionFlag.Always,false,dst,scratchRegister,0,0);
+        addRegisters(ConditionFlag.Always,false,dst,dst,scratchRegister,0,0);
 
     }
     public void xorq(CiRegister dest,CiAddress src) {

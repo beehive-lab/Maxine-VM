@@ -114,6 +114,100 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     }
     private static boolean  testvalues[] = new boolean[17];
 
+
+    public void testsubq() throws Exception
+    {
+        /*
+        strd and ldrd refer to the store/load register dual
+        the versions encoded here are for a base register value plus/minus an 8 bit immediate.
+        int instructions[] = new int
+         */
+        int assemblerStatements = 50;
+        int instructions []= new int[assemblerStatements];
+        long mask = 0xff;
+        initialiseExpectedValues();
+        setBitMasks(-1,MaxineARMTester.BitsFlag.All32Bits);
+        setTestValues(-1,false);
+        System.out.println("TESTING  SUBQ -- please test with a -ve constant NOT DONE");
+
+        asm.codeBuffer.reset();
+        for(int i = 0; i < 10;i++) {
+            asm.mov32BitConstant(ARMV7.cpuRegisters[i],(int)expectedValues[i]);   // 2 instructions
+            if(i%2 == 1 ) {
+                asm.subq(ARMV7.cpuRegisters[i],(int)(2*expectedValues[i]));               // 3 instruction
+                expectedValues[i] -= (2*expectedValues[i]);
+            }else {
+                asm.subq(ARMV7.cpuRegisters[i],(int)expectedValues[i]);
+                expectedValues[i] -= expectedValues[i];
+            }
+            testvalues[i] = true;
+
+        }
+
+        for(int j = 0; j < assemblerStatements;j++) {
+            instructions[j] = asm.codeBuffer.getInt(j*4);
+        }
+        ARMCodeWriter.debug = false;
+
+        code = new ARMCodeWriter(assemblerStatements,instructions);
+        MaxineARMTester r = new MaxineARMTester(expectedValues,testvalues,bitmasks);
+
+        r.assembleStartup();
+        r.assembleEntry();
+        r.compile();
+        r.link();
+        r.objcopy();
+        r.runSimulation();
+
+
+
+
+
+    }
+    public void testaddq() throws Exception
+    {
+        /*
+        strd and ldrd refer to the store/load register dual
+        the versions encoded here are for a base register value plus/minus an 8 bit immediate.
+        int instructions[] = new int
+         */
+        int assemblerStatements = 50;
+        int instructions []= new int[assemblerStatements];
+        long mask = 0xff;
+        initialiseExpectedValues();
+        setBitMasks(-1,MaxineARMTester.BitsFlag.All32Bits);
+        setTestValues(-1,false);
+        System.out.println("TESTING  ADDQ -- please test with a -ve constant NOT DONE");
+
+        asm.codeBuffer.reset();
+        for(int i = 0; i < 10;i++) {
+            asm.mov32BitConstant(ARMV7.cpuRegisters[i],(int)expectedValues[i]);   // 2 instructions
+            asm.addq(ARMV7.cpuRegisters[i],(int)expectedValues[i]);               // 3 instruction
+            expectedValues[i] += expectedValues[i];
+            testvalues[i] = true;
+
+        }
+
+        for(int j = 0; j < assemblerStatements;j++) {
+            instructions[j] = asm.codeBuffer.getInt(j*4);
+        }
+        ARMCodeWriter.debug = false;
+
+        code = new ARMCodeWriter(assemblerStatements,instructions);
+        MaxineARMTester r = new MaxineARMTester(expectedValues,testvalues,bitmasks);
+
+        r.assembleStartup();
+        r.assembleEntry();
+        r.compile();
+        r.link();
+        r.objcopy();
+        r.runSimulation();
+
+
+
+
+
+    }
     public void testldrsh() throws Exception
     {
         /*
@@ -144,7 +238,8 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             else
                 expectedValues[i] =  (testval[1]& (mask<< (16*(i%2)))) >> 16*(i%2);
             if((expectedValues[i] & 0x8000) != 0) {
-                expectedValues[i] = expectedValues[i] | 0xffff0000L; // sign extension
+                expectedValues[i] =  expectedValues[i] | 0xffff0000L; // sign extension for negative vals
+                expectedValues[i] =   expectedValues[i] -0x100000000L;
             }
 
         }
@@ -340,11 +435,12 @@ public class ARMV7AssemblerTest extends MaxTestCase {
 
         System.out.println("TESTING ADD ");
 
-        for(int srcReg = 0; srcReg < 13;srcReg++)
-           for(int destReg = 0; destReg < 13;destReg++)    {
+        for(int srcReg = 0; srcReg < 12;srcReg++)
+           for(int destReg = 0; destReg < 12;destReg++)    {
 
                if(destReg > 0) testvalues[destReg-1] = false;
                testvalues[destReg] = true;
+
 
                for ( i = 0; i < scratchTestSet.length;i++) {
 
@@ -358,11 +454,14 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                     instructions[1] = asm.codeBuffer.getInt(4);
                     instructions[2] = asm.codeBuffer.getInt(8);
 
+                    if(scratchTestSet[i] >= 0x80000000L) {
+                        //System.out.println("negative ");
+                        expectedValues[destReg] = scratchTestSet[i] -0x100000000L;
+                    }
+                    else expectedValues[destReg] = scratchTestSet[i];
 
-                    expectedValues[destReg] = scratchTestSet[i];
 
-
-                    System.out.println("EXPECT " + expectedValues[destReg]);
+                    System.out.println("SRCREG " + srcReg+ " DESTREG " + destReg + " EXPECT " + expectedValues[destReg]);
 
                     //ARMCodeWriter.debug = true;
                     code = new ARMCodeWriter(3,instructions);
@@ -375,6 +474,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                     r.objcopy();
                     r.runSimulation();
                 }
+               if(destReg == 11)testvalues[11] = false;
            }
 
     }
@@ -449,6 +549,11 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             expectedValues[1] = (0x0000ffff >> (shift))| (((expectedValues[0]&mask) << (32-shift))); testvalues[1] = true;
             expectedValues[2] = 0x0000ffff;testvalues[2] = true;
             expectedValues[16] = 0x0; testvalues[16] = false;
+            if (expectedValues[1] >= 0x80000000L) {
+                //System.out.println("negative ");
+                expectedValues[1] = expectedValues[1] -0x100000000L;
+            }
+
             setBitMasks(16,MaxineARMTester.BitsFlag.NZCBits);
 
             for(i = 0; i < 4;i++) {instructions[i] =  asm.codeBuffer.getInt(i*4);
