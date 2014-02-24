@@ -129,6 +129,29 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         r.objcopy();
         return r.runSimulation();
     }
+    public void testSubReg() throws Exception {
+
+        int assemblerStatements = 30;
+        int i,instructions []= new int[assemblerStatements];
+        initialiseExpectedValues();
+        setBitMasks(-1,MaxineARMTester.BitsFlag.All32Bits);
+        setTestValues(-1,false);
+        System.out.println("TESTING  SUB of a register value need to test shifts of the register!!!");
+        asm.codeBuffer.reset();
+
+
+        for(i=0; i < 5; i++) {
+            asm.mov32BitConstant(ARMV7.cpuRegisters[i],(int)expectedValues[i]);
+
+        }
+        for(i = 0; i < 5;i++)   {
+            asm.sub(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.cpuRegisters[i+5],ARMV7.cpuRegisters[5-(i+1)],ARMV7.cpuRegisters[i],0,0);
+            expectedValues[i+5] = expectedValues[5-(i+1)]-expectedValues[i];
+            testvalues[i+5] = true;
+        }
+        generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
+    }
+
     public void testMOV() throws Exception {
 
         int assemblerStatements = 30;

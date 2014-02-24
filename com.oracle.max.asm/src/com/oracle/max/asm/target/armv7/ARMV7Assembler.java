@@ -524,7 +524,7 @@ public class ARMV7Assembler extends AbstractAssembler {
      */
     // Template#: 18, Serial#: 158
     public void sub(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int immed_8, final int rotate_amount) {
-        int instruction = 0x02400000;
+        int instruction = 0x02400000;     // subract of an immediate
         checkConstraint(0 <= immed_8 && immed_8 <= 255, "0 <= immed_8 && immed_8 <= 255");
 
         checkConstraint(0 <= rotate_amount && rotate_amount  <= 15, "0 <= rotate_amount && rotate_amount  <= 15");
