@@ -129,7 +129,27 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         r.objcopy();
         return r.runSimulation();
     }
+    public void testMOV() throws Exception {
 
+        int assemblerStatements = 30;
+        int instructions []= new int[assemblerStatements];
+        initialiseExpectedValues();
+        setBitMasks(-1,MaxineARMTester.BitsFlag.All32Bits);
+        setTestValues(-1,false);
+        System.out.println("TESTING  MOV no rotation!!!");
+        asm.codeBuffer.reset();
+
+        for(int i=0; i < 5; i++) {
+            asm.mov32BitConstant(ARMV7.cpuRegisters[i],(int)expectedValues[i]);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[i+5], ARMV7.cpuRegisters[i]);
+            expectedValues[i+5] = expectedValues[i];
+            testvalues[i] = true;
+            testvalues[i+5] = true;
+
+        }
+
+        generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
+    }
     public void testSub() throws Exception {
 
         int assemblerStatements = 30;

@@ -345,7 +345,14 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= ((shift_imm & 0x1f) << 7);
         emitInt(instruction);
     }
-
+    public void mov(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rm) {
+        int instruction = 0x01a00000;
+        instruction |= ((cond.value() & 0xf) << 28);
+        instruction |= ((s?1:0) << 20);
+        instruction |= ((Rd.encoding & 0xf) << 12);
+        instruction |= (Rm.encoding & 0xf);
+        emitInt(instruction);
+    }
     public void movt(final ConditionFlag cond,final CiRegister Rd, final int imm16) {
         int instruction = 0x03400000;
         checkConstraint(0<= imm16 && imm16 <= 65535,"0<= imm16 && imm16 <= 65535 " );
@@ -1169,7 +1176,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         // so we can use whatever registers we want!
         emitInt(0); // movw(scratch,const)                                        fixup later
         emitInt(0); //movt(scratch,const)                                         fixup later
-        movror(ConditionFlag.Always,false,ARMV7.r15,ARMV7.r12,0); // mov PC,scratch
+        mov(ConditionFlag.Always,false,ARMV7.r15,ARMV7.r12); // mov PC,scratch
         // APN need to update LR14 and do an absolute MOV to a new PC held in scratch
         // or need to do a BL
         // WHO/what/where is responsible for stack save/restore and procedure call standard
@@ -1187,7 +1194,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
     public final void leave()
     {
-        movror(ConditionFlag.Always,false,ARMV7.r15,ARMV7.r12,0); // might be wrong!
+        mov(ConditionFlag.Always,false,ARMV7.r15,ARMV7.r12); // might be wrong!
 
     }
     public final void movslq(CiAddress dst,int imm32)  {
@@ -1383,14 +1390,14 @@ public class ARMV7Assembler extends AbstractAssembler {
             nop();
     }
     public final void nop() {
-        movror(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,0); // this will change the value of r12 due to the carry bit.
+        mov(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12); //
     }
 
     public final void ret()
 
     {
 
-        movror(ConditionFlag.Always,false,ARMV7.r15,ARMV7.r14,0); // TODO CHANGE -- movror is not correct cdue to carry!!!!
+        mov(ConditionFlag.Always,false,ARMV7.r15,ARMV7.r14);
     }
     public final void ret(int imm16) {
         movw(ConditionFlag.Always,ARMV7.r0,imm16);
@@ -1458,7 +1465,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         }else {
             // we need or have been instructed to do this as a 32 bit branch
             mov32BitConstant(scratchRegister, target);
-            movror(ConditionFlag.Always,false,ARMV7.r15,scratchRegister,0); // UPDATE the PC to the target
+            mov(ConditionFlag.Always,false,ARMV7.r15,scratchRegister); // UPDATE the PC to the target
         }
 
     }
@@ -1470,7 +1477,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             emitInt(((0xe) << 28)| (0xa << 24)| (disp&0xffffff));
         }else {
             mov32BitConstant(scratchRegister, target);
-            movror(ConditionFlag.Always,false,ARMV7.r15,scratchRegister,0); // UPDATE the PC to the target
+            mov(ConditionFlag.Always,false,ARMV7.r15,scratchRegister); // UPDATE the PC to the target
         }
 
 
