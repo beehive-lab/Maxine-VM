@@ -519,8 +519,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     public void sub(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int immed_8, final int rotate_amount) {
         int instruction = 0x02400000;
         checkConstraint(0 <= immed_8 && immed_8 <= 255, "0 <= immed_8 && immed_8 <= 255");
-        checkConstraint((rotate_amount % 2) == 0, "(rotate_amount % 2) == 0");
-        checkConstraint(0 <= rotate_amount / 2 && rotate_amount / 2 <= 15, "0 <= rotate_amount / 2 && rotate_amount / 2 <= 15");
+
+        checkConstraint(0 <= rotate_amount && rotate_amount  <= 15, "0 <= rotate_amount && rotate_amount  <= 15");
         instruction |= ((cond.value() & 0xf) << 28);
         instruction |= ((s?1:0) << 20);
         instruction |= ((Rd.encoding & 0xf) << 12);

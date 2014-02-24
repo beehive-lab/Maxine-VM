@@ -130,6 +130,27 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         return r.runSimulation();
     }
 
+    public void testSub() throws Exception {
+
+        int assemblerStatements = 30;
+        int instructions []= new int[assemblerStatements];
+        initialiseExpectedValues();
+        setBitMasks(-1,MaxineARMTester.BitsFlag.All32Bits);
+        setTestValues(-1,false);
+        System.out.println("TESTING  SUB of an immediate value!!!");
+        asm.codeBuffer.reset();
+
+        for(int i=0; i < 10; i++) {
+            asm.mov32BitConstant(ARMV7.cpuRegisters[i],(int)expectedValues[i]);
+            asm.sub(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[i], ARMV7.cpuRegisters[i],i*2,0);
+            expectedValues[i] = expectedValues[i] - i*2;
+            testvalues[i] = true;
+
+        }
+        generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
+    }
+
+
     public void teststr() throws Exception
     {
 
@@ -969,18 +990,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         }
     }         */
 
-    public void testSub() throws Exception {
-        for(int i=0; i < ARMV7Assembler.ConditionFlag.values().length; i++) {
-            asm.sub(ARMV7Assembler.ConditionFlag.values()[i], false, armv7.arch.registers[0], armv7.arch.registers[1],
-                    0, 0);
-            assertTrue(asm.codeBuffer.getInt(0) == ( 0x02410000| ARMV7Assembler.ConditionFlag.values()[i].value() <<28));
-            asm.codeBuffer.reset();
-            asm.sub(ARMV7Assembler.ConditionFlag.values()[i], true, armv7.arch.registers[0], armv7.arch.registers[1],
-                    0, 0);
-            assertTrue(asm.codeBuffer.getInt(0) == ( 0x02510000 | ARMV7Assembler.ConditionFlag.values()[i].value() <<28));
-            asm.codeBuffer.reset();
-        }
-    }
+
      /*
     public void testTst() throws Exception {
         for(int i=0; i < ARMV7Assembler.ConditionFlag.values().length; i++) {
