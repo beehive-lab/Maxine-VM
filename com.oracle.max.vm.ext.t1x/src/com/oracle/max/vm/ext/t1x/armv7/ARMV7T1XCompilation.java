@@ -208,13 +208,13 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         /**
          * Emits code to assign the value in {@code src} to {@code dst}.
          */
-        asm.movror(ConditionFlag.Always,false,dst, src,0);
+        asm.mov(ConditionFlag.Always,false,dst, src);
     }
 
     @Override
     protected void assignWordReg(CiRegister dst, CiRegister src) {
         //asm.movq(dst, src);
-        asm.movror(ConditionFlag.Always,false,dst, src,0);
+        asm.mov(ConditionFlag.Always,false,dst, src);
     }
 
     @Override
@@ -428,7 +428,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         //asm.enter(frameSize - Word.size(), 0);
         //asm.enter(frameSize-Word.size());
         asm.push(ConditionFlag.Always, 11<<1 ); // push frame pointer
-        asm.movror(ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13,0);  // framepoiter = stack ptr
+        asm.mov(ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13);  // framepoiter = stack ptr
         asm.mov32BitConstant(ARMV7.r12,frameSize = Word.size());
         asm.sub(ConditionFlag.Always,false,ARMV7.r13,ARMV7.r11,ARMV7.r12,0,0);
         asm.subq(r11, framePointerAdjustment());
@@ -468,7 +468,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         asm.leave();
         // stackptr = r11
         // r11 popped off stack
-        asm.movror(ConditionFlag.Always,false,ARMV7.r13,ARMV7.r11,0);
+        asm.mov(ConditionFlag.Always,false,ARMV7.r13,ARMV7.r11);
         asm.pop(ConditionFlag.Always,1<<ARMV7.r11.encoding ); // pop stack
         // push frame pointer
         // framepointer = stackpointer

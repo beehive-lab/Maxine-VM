@@ -395,7 +395,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             //asm.movq(rax, new CiAddress(WordUtil.archKind(), rsp.asValue()));
             // APN so is RAX storing the return address?
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
-            asm.movror(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r14, ARMV7.r12, 0);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r14, ARMV7.r12);
 
             // Compute the number of stack args needed for the call (i.e. the args that won't
             // be put into registers)
@@ -461,7 +461,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // Args are now copied to the OPT locations; call the OPT main body
             int callPos = asm.codeBuffer.position();
             //asm.call(rax);
-            asm.movror(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r15,ARMV7.r12,0);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r15,ARMV7.r12);
             int callSize = asm.codeBuffer.position() - callPos;
 
             // Restore RSP and RBP. Given that RBP is never modified by OPT methods and baseline methods always
@@ -778,7 +778,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // Save the address of the baseline callee's main body in RAX
             //asm.movq(rax, new CiAddress(WordUtil.archKind(), rsp.asValue()));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
-            asm.movror(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r14,ARMV7.r12,0 );
+            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r14,ARMV7.r12 );
             // Initial args are in registers, remaining args are on the stack.
             int baselineArgsSize = frameSizeFor(sig.kinds, BASELINE_SLOT_SIZE);
             assert baselineArgsSize % target().stackAlignment == 0 : "BASELINE_SLOT_SIZE should guarantee parametersSize satifies ABI alignment requirements";
@@ -805,7 +805,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // Args are now copied to the baseline locations; call the baseline main body
             int callPos = asm.codeBuffer.position();
             //asm.call(); // TODO APN was call RAX  this is all wrong!! NEEDS to be fixed
-            asm.movror(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r15,ARMV7.r14,0);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r15,ARMV7.r14);
             int callSize = asm.codeBuffer.position() - callPos;
 
             // The baseline method will have popped the args off the stack so now
