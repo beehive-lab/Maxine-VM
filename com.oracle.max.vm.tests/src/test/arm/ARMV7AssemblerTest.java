@@ -113,8 +113,147 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             for(int i = 0; i < 17;i++)expectedValues[i] = (long) i;
     }
     private static boolean  testvalues[] = new boolean[17];
+    private boolean generateAndTest(int assemblerStatements, long expected[],boolean tests[],MaxineARMTester.BitsFlag masks[])
+    {
+        int instructions[] = new int[assemblerStatements];
+        for(int j = 0; j < assemblerStatements;j++) {
+            instructions[j] = asm.codeBuffer.getInt(j*4);
+        }
+        ARMCodeWriter code = new ARMCodeWriter(assemblerStatements,instructions);
+        MaxineARMTester r = new MaxineARMTester(expected,tests,masks);
+
+        r.assembleStartup();
+        r.assembleEntry();
+        r.compile();
+        r.link();
+        r.objcopy();
+        return r.runSimulation();
+    }
+
+    public void teststr() throws Exception
+    {
+
+        int assemblerStatements = 62;
+        int instructions []= new int[assemblerStatements];
+        long mask = 0xff;
+        initialiseExpectedValues();
+        setBitMasks(-1,MaxineARMTester.BitsFlag.All32Bits);
+        setTestValues(-1,false);
+        System.out.println("TESTING  STR!!!");
+
+        asm.codeBuffer.reset();
+        asm.mov32BitConstant(ARMV7.cpuRegisters[12],0);
+        for(int i = 0; i < 10;i++) {
+            /* Basically, write some (expected) values to registers, store them, change the register contents,
+            load them back from memory, if they match the expected values then we're ok
+            Note the use of P indexed, and U add bits, we naughtily use the stack register as a memory region where we could
+            write to, but we don't adjust the index register, ie W bit is unset??
+             */
+            asm.mov32BitConstant(ARMV7.cpuRegisters[i], (int) expectedValues[i]);   // 2 instructions
+            testvalues[i] = true;
+            asm.str(ARMV7Assembler.ConditionFlag.Always,1,0,0,ARMV7.cpuRegisters[i],ARMV7.cpuRegisters[13],ARMV7.cpuRegisters[12],i*4,0);
+            asm.mov32BitConstant(ARMV7.cpuRegisters[i],-2*(int)(expectedValues[i]));
+            asm.ldr(ARMV7Assembler.ConditionFlag.Always,1,0,0,ARMV7.cpuRegisters[i],ARMV7.cpuRegisters[13],ARMV7.cpuRegisters[12],i*4,0);
+        }
 
 
+        generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
+
+    }
+
+    public void testldr() throws Exception
+    {
+        /*
+        str and ldr refer to the store/load register
+
+         */
+        int assemblerStatements = 61;
+        int instructions []= new int[assemblerStatements];
+        long mask = 0xff;
+        initialiseExpectedValues();
+        setBitMasks(-1,MaxineARMTester.BitsFlag.All32Bits);
+        setTestValues(-1,false);
+        System.out.println("TESTING  LDR!!!");
+
+        asm.codeBuffer.reset();
+        for(int i = 0; i < 10;i++) {                  // 2*10 = 20
+            asm.mov32BitConstant(ARMV7.cpuRegisters[i], (int) expectedValues[i]);   // 2 instructions
+            testvalues[i] = true;
+
+        }
+        asm.push(ARMV7Assembler.ConditionFlag.Always,1|2|4|8|16|32|64|128|256|512);               // 1 instruction
+        for(int i = 0; i < 10;i++)   { // 3 * 10 = 30
+            asm.add(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.cpuRegisters[i],ARMV7.cpuRegisters[i],i*2,0);
+            asm.movw(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, i * 4);
+            asm.movt(ARMV7Assembler.ConditionFlag.Always,ARMV7.r12,0);
+            asm.ldr(ARMV7Assembler.ConditionFlag.Always,1,1,0,ARMV7.cpuRegisters[i],ARMV7.cpuRegisters[13],
+                    ARMV7.cpuRegisters[12],0,0);
+        }
+
+
+        generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
+
+    }
+
+    public void testdecq() throws Exception
+    {
+        /*
+        strd and ldrd refer to the store/load register dual
+        the versions encoded here are for a base register value plus/minus an 8 bit immediate.
+        int instructions[] = new int
+         */
+        int assemblerStatements = 50;
+        int instructions []= new int[assemblerStatements];
+        long mask = 0xff;
+        initialiseExpectedValues();
+        setBitMasks(-1,MaxineARMTester.BitsFlag.All32Bits);
+        setTestValues(-1,false);
+        System.out.println("TESTING  DECQ");
+
+        asm.codeBuffer.reset();
+        for(int i = 0; i < 10;i++) {
+            asm.mov32BitConstant(ARMV7.cpuRegisters[i],(int)expectedValues[i]);   // 2 instructions
+            asm.decq(ARMV7.cpuRegisters[i]);               // 3 instruction
+            expectedValues[i] -= 1;
+            testvalues[i] = true;
+
+        }
+
+        generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
+
+    }
+    public void testincq() throws Exception
+    {
+        /*
+        strd and ldrd refer to the store/load register dual
+        the versions encoded here are for a base register value plus/minus an 8 bit immediate.
+        int instructions[] = new int
+         */
+        int assemblerStatements = 30;
+        int instructions []= new int[assemblerStatements];
+        long mask = 0xff;
+        initialiseExpectedValues();
+        setBitMasks(-1,MaxineARMTester.BitsFlag.All32Bits);
+        setTestValues(-1,false);
+        System.out.println("TESTING  INCQ");
+
+        asm.codeBuffer.reset();
+        for(int i = 0; i < 10;i++) {
+            asm.mov32BitConstant(ARMV7.cpuRegisters[i],(int)expectedValues[i]);   // 2 instructions
+            asm.incq(ARMV7.cpuRegisters[i]);               // 3 instruction
+            expectedValues[i] += 1;
+            testvalues[i] = true;
+
+        }
+        generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
+
+
+
+
+
+
+
+    }
     public void testsubq() throws Exception
     {
         /*
@@ -143,21 +282,8 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             testvalues[i] = true;
 
         }
+        generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
 
-        for(int j = 0; j < assemblerStatements;j++) {
-            instructions[j] = asm.codeBuffer.getInt(j*4);
-        }
-        ARMCodeWriter.debug = false;
-
-        code = new ARMCodeWriter(assemblerStatements,instructions);
-        MaxineARMTester r = new MaxineARMTester(expectedValues,testvalues,bitmasks);
-
-        r.assembleStartup();
-        r.assembleEntry();
-        r.compile();
-        r.link();
-        r.objcopy();
-        r.runSimulation();
 
 
 
@@ -435,8 +561,8 @@ public class ARMV7AssemblerTest extends MaxTestCase {
 
         System.out.println("TESTING ADD ");
 
-        for(int srcReg = 0; srcReg < 12;srcReg++)
-           for(int destReg = 0; destReg < 12;destReg++)    {
+        for(int srcReg = 0; srcReg < 3;srcReg++)
+           for(int destReg = 0; destReg < 3;destReg++)    {
 
                if(destReg > 0) testvalues[destReg-1] = false;
                testvalues[destReg] = true;
@@ -461,7 +587,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                     else expectedValues[destReg] = scratchTestSet[i];
 
 
-                    System.out.println("SRCREG " + srcReg+ " DESTREG " + destReg + " EXPECT " + expectedValues[destReg]);
+                    //System.out.println("SRCREG " + srcReg+ " DESTREG " + destReg + " EXPECT " + expectedValues[destReg]);
 
                     //ARMCodeWriter.debug = true;
                     code = new ARMCodeWriter(3,instructions);
@@ -474,7 +600,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                     r.objcopy();
                     r.runSimulation();
                 }
-               if(destReg == 11)testvalues[11] = false;
+               if(destReg == 2)testvalues[2] = false;
            }
 
     }

@@ -779,7 +779,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     }
 
-    public void ldr(final ConditionFlag cond, int P, int U, int W,final CiRegister Rn, final CiRegister Rt, final CiRegister Rm,
+    public void ldr(final ConditionFlag cond, int P, int U, int W,final CiRegister Rt, final CiRegister Rn, final CiRegister Rm,
                      int imm2Type, int imm5)
     {
 
