@@ -149,8 +149,9 @@ public class RegisterConfigs {
                          */
                         allocatable = new CiRegister[] {r0,r1,r2,r3,r4,r5,r6,r7,com.oracle.max.asm.target.armv7.ARMV7.r8,com.oracle.max.asm.target.armv7.ARMV7.r9,
                                 com.oracle.max.asm.target.armv7.ARMV7.r10,
-                        vfp0,vfp1,vfp2,vfp3,vfp4,vfp5}; // no scratch in allocatable
-                        parameters = new CiRegister[] {r0,r1,r2,r3,vfp0,vfp1,vfp2,vfp3};
+                        d0,d1,d2,d3,d4,d5,d6,d7,d8,d9,d10,d11,d12,d13,d14,d15,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,s12,s13,s14,s15,s16,s17,s18,s19,s20,s21,
+                        s22,s23,s24,s25,s26,s27,s28,s29}; // no scratch in allocatable
+                        parameters = new CiRegister[] {r0,r1,r2,r3,d0,d1,d2,d3,s0,s1,s2,s3};
                         allRegistersExceptLatch = new CiRegister[] {r0,r1,r2,r3,r4,r5,r6,r7,com.oracle.max.asm.target.armv7.ARMV7.r8,
                                 com.oracle.max.asm.target.armv7.ARMV7.r9,
                                 com.oracle.max.asm.target.armv7.ARMV7.r11,
@@ -158,7 +159,8 @@ public class RegisterConfigs {
                                 com.oracle.max.asm.target.armv7.ARMV7.r13,
                                 com.oracle.max.asm.target.armv7.ARMV7.r14,
                                 com.oracle.max.asm.target.armv7.ARMV7.r15,
-                        vfp0,vfp1,vfp2,vfp3,vfp4,vfp5,vfp6,vfp7,vfp8,vfp9,vfp10,vfp11,vfp12,vfp13,vfp14,vfp15};
+                        d0,d1,d2,d3,d4,d5,d6,d7,d8,d9,d10,d11,d12,d13,d14,d15,s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,
+                        s11,s12,s13,s14,s15,s16,s17,s18,s19,s20,s21,s22,s23,s24,s25,s26,s27,s28,s29,s30,s31};
                         roleMap.put(CPU_SP,com.oracle.max.asm.target.armv7.ARMV7.r13);
                         roleMap.put(CPU_FP,com.oracle.max.asm.target.armv7.ARMV7.r11);           // TODO CHECK
                         roleMap.put(ABI_SP,com.oracle.max.asm.target.armv7.ARMV7.r13);
@@ -178,7 +180,9 @@ public class RegisterConfigs {
                                 com.oracle.max.asm.target.armv7.ARMV7.r13,                 // frame
                                 r0,                 // integral return value
 
-                                vfp0,                // floating point return value
+                                d0,                // APN TODO floating point return value     for simplicity ALWAYS return a double
+                                // TODO this means we must do the conversion as necessary if it is really a float?
+                                // TODO it might be better to handle this another way
                                 com.oracle.max.asm.target.armv7.ARMV7.r12,                 // scratch
                                 allocatable,         // allocatable
                                 allocatable,         // caller save *** TODO APN-- not sure we might need a
@@ -209,7 +213,8 @@ public class RegisterConfigs {
                             APN I don't get why we need in the x86 version cpuxmmRegisters and all registers perhaps this will become
                             clearer when we delve into the stubs below, I substituted allRegisters for cpuxmmRegisters for uncommonTrapStub
                          */
-                        CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 4, allRegistersExceptLatch));
+                        CiRegisterConfig compilerStub = new CiRegisterConfig(standard,
+                                new CiCalleeSaveLayout(0, -1, 4, allRegistersExceptLatch));
                         CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 4, com.oracle.max.asm.target.armv7.ARMV7.allRegisters));
                         CiRegisterConfig trapStub = null;
                         if(platform().isa == ISA.ARM) trapStub = new CiRegisterConfig(standard, ARMTrapFrameAccess.CSL);
@@ -245,7 +250,7 @@ public class RegisterConfigs {
                         CiRegisterConfig template = new CiRegisterConfig(
                                 com.oracle.max.asm.target.armv7.ARMV7.r11,                 // frame
                                 r0,                 // integral return value
-                                vfp0,                // floating point return value
+                                d0,                // floating point return value
                                 com.oracle.max.asm.target.armv7.ARMV7.r12,                 // scratch
                                 allocatable,         // allocatable
                                 allocatable,         // caller save

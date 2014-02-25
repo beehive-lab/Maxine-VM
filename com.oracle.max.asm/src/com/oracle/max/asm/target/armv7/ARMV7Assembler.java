@@ -1150,21 +1150,18 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
     public final void alignForPatchableDirectCall() { // APN copy of X86
         /*
-            APN as far as I am aware there are not alignment restrictions.
-            seems to be an interaction with Safepoints
+            APN as far as I am aware there are no alignment restrictions.
+            seems to be an interaction with Safepoints  --- not tested but
+            nops are based on movs which are tested, included for compatibility with X86.
 
         */
-        /*int dispStart = codeBuffer.position() + 1;
-
+        int dispStart = codeBuffer.position() + 1;
         int mask = target.wordSize - 1;
-        System.err.println((codeBuffer.position()+1));
         if ((dispStart & ~mask) != ((dispStart + 3) & ~mask)) {
-            for(int i = 0; i < (target.wordSize - (dispStart & mask));i++)
-            //nop(target.wordSize - (dispStart & mask));
-                    nop();
-            System.err.println("total nops " + (target.wordSize - (dispStart & mask))+ " disp " + dispStart + " codebuff " + codeBuffer.position() + " mask "+ mask);
-            // APN not relevant? assert ((codeBuffer.position() + 1) & mask) == 0;
-        }*/
+            nop(target.wordSize - (dispStart & mask));
+            assert ((codeBuffer.position() + 1) & mask) == 0;
+        }
+
     }
     public final void call()
     {
@@ -1482,10 +1479,46 @@ public class ARMV7Assembler extends AbstractAssembler {
 
 
     }
-    public final void vmov () {
-        emitInt(0xdeadbeef);
-        System.err.println("vmov in ARMV7Assembler completely unimplemented");
+
+    public final void vmov (ConditionFlag cond,CiRegister dest,CiRegister src) {
+
+        /*
+        APN potentially we need to do lots of checks on instrucitonencodings for this
+        case regarding the particular registers used
+        vmov.f32 s,s
+        vmov.f64 d,d
+        This particular vmov only moves registers that are float regs.
+         */
+        int instruction = (cond.value()&0xf)<<28;
+        int vmovSameType = 0x0eb00a40;
+        int vmovSingleCore =   0x0e00a10;// WRONG!!!
+        int vmovDoubleCore =   0x0c400b10;
+
+        if((src.number >= 16 && src.number <= 31) && (dest.number >=16 && dest.number <= 31) )  {
+                   instruction |= (1<<8)|vmovSameType;
+                   instruction |= (dest.encoding << 12);
+                   instruction  |= (src.encoding);
+
+        } else if(src.number >=32 && dest.number >= 32)  {
+                instruction |= vmovSameType;
+                instruction |= (dest.encoding&0xf << 12) | ((dest.encoding &0x10)<<22);
+                instruction |= (src.encoding &0xf) | ((src.encoding&0x10)<<5);
+
+        }else if ((dest.number <=15 || src.number <=15)&&(src.number >= 32 || dest.number >= 32)) {
+                instruction |= vmovSingleCore;
+                if(dest.number <=15) instruction |= (1<<20)|((src.encoding&0x10)<<3)| (dest.encoding << 12)| (src.encoding<< 16);
+                else instruction |=  (src.encoding<< 12)| (dest.encoding <<16)| ((dest.encoding &0x10)<<3);
+
+
+        } else if (src.number >= 16 && src.number <= 31 && dest.number <= 15)  {
+            // deviating slightly from ARM book, we are assuming this to transfer double to pair of core registers
+            // aligned on an even 0, 2, ... boundary
+        }
+
+        emitInt(instruction);
     }
+
+
 
 }
 

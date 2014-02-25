@@ -129,6 +129,36 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         r.objcopy();
         return r.runSimulation();
     }
+
+    public void testFloatIngPointExperiments() throws Exception {
+        /*
+        Will create a few simple examples (using hardcoded emitInt()) to verify concepts/principles then
+        will add the instructions
+         */
+        int assemblerStatements = 11;
+        int i,instructions []= new int[assemblerStatements];
+        initialiseExpectedValues();
+        setBitMasks(-1,MaxineARMTester.BitsFlag.All32Bits);
+        setTestValues(-1,false);
+        System.out.println("TESTING  FLOAT sample!!!");
+        asm.codeBuffer.reset();
+        asm.mov32BitConstant(ARMV7.cpuRegisters[0],(int)12);
+        asm.mov32BitConstant(ARMV7.cpuRegisters[1],(int)10);
+        asm.codeBuffer.emitInt(0xee000a10);
+        asm.codeBuffer.emitInt(0xee001a90);
+        asm.codeBuffer.emitInt(0xeeb81ac0);
+        asm.codeBuffer.emitInt(0xeef81ae0);
+        asm.codeBuffer.emitInt(0xee210a21);
+        asm.codeBuffer.emitInt(0xeebd0a40);
+        asm.codeBuffer.emitInt(0xee100a10);
+        expectedValues[0] = 120;
+        testvalues[0]= true;
+        generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
+        System.exit(0);
+
+
+
+    }
     public void testSubReg() throws Exception {
 
         int assemblerStatements = 30;

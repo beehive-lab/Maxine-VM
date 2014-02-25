@@ -57,34 +57,74 @@ public class ARMV7 extends CiArchitecture {
     public static final CiRegister r15 = new CiRegister(15, 15, 4, "r15", CPU, RegisterFlag.Byte);
 
     //TODO: CiArchitecture doesn't allow mixed-size registers (pretending we have 4 byte FP regs)
-    //TODO: Might be something to do with the spillSlotSize the size of the stack slot used to spill the value of the register
-    public static final CiRegister vfp0 = new CiRegister(16, 0, 4, "vfp0", RegisterFlag.FPU);
-    public static final CiRegister vfp1 = new CiRegister(17, 1, 4, "vfp1", RegisterFlag.FPU);
-    public static final CiRegister vfp2 = new CiRegister(18, 2, 4, "vfp2", RegisterFlag.FPU);
-    public static final CiRegister vfp3 = new CiRegister(19, 3, 4, "vfp3", RegisterFlag.FPU);
-    public static final CiRegister vfp4 = new CiRegister(20, 4, 4, "vfp4", RegisterFlag.FPU);
-    public static final CiRegister vfp5 = new CiRegister(21, 5, 4, "vfp5", RegisterFlag.FPU);
-    public static final CiRegister vfp6 = new CiRegister(22, 6, 4, "vfp6", RegisterFlag.FPU);
-    public static final CiRegister vfp7 = new CiRegister(23, 7, 4, "vfp7", RegisterFlag.FPU);
-    public static final CiRegister vfp8 = new CiRegister(24, 8, 4, "vfp8", RegisterFlag.FPU);
-    public static final CiRegister vfp9 = new CiRegister(25, 9, 4, "vfp9", RegisterFlag.FPU);
-    public static final CiRegister vfp10 = new CiRegister(26, 10, 4, "vfp10", RegisterFlag.FPU);
-    public static final CiRegister vfp11 = new CiRegister(27, 11, 4, "vfp11", RegisterFlag.FPU);
-    public static final CiRegister vfp12 = new CiRegister(28, 12, 4, "vfp12", RegisterFlag.FPU);
-    public static final CiRegister vfp13 = new CiRegister(29, 13, 4, "vfp13", RegisterFlag.FPU);
-    public static final CiRegister vfp14 = new CiRegister(30, 14, 4, "vfp14", RegisterFlag.FPU);
-    public static final CiRegister vfp15 = new CiRegister(31, 15, 4, "vfp15", RegisterFlag.FPU);
+    //TODO: Might be something to do with the spillSlotSize the size of the stack slot used to spill
+    // TODO the value of the register
+    // APN I think the spill slot size can be specified when creating a register so if it is possible to
+    // do this per class ie FPU? then it is possible to state that the DO..D15 registers are 64bit and the
+    // S0.S31 registers are 32bit. I don't know how to specify overlapping storage tha tis present
+    // between the Dx and Sx registers.
 
+    public static final CiRegister d0 = new CiRegister(16, 0, 8, "D0", RegisterFlag.FPU);
+    public static final CiRegister d1 = new CiRegister(17, 1, 8, "D1", RegisterFlag.FPU);
+    public static final CiRegister d2 = new CiRegister(18, 2, 8, "D2", RegisterFlag.FPU);
+    public static final CiRegister d3 = new CiRegister(19, 3, 8, "D3", RegisterFlag.FPU);
+    public static final CiRegister d4 = new CiRegister(20, 4, 8, "D4", RegisterFlag.FPU);
+    public static final CiRegister d5 = new CiRegister(21, 5, 8, "D5", RegisterFlag.FPU);
+    public static final CiRegister d6 = new CiRegister(22, 6, 8, "D6", RegisterFlag.FPU);
+    public static final CiRegister d7 = new CiRegister(23, 7, 8, "D7", RegisterFlag.FPU);
+    public static final CiRegister d8 = new CiRegister(24, 8, 8, "D8", RegisterFlag.FPU);
+    public static final CiRegister d9 = new CiRegister(25, 9, 8, "D9", RegisterFlag.FPU);
+    public static final CiRegister d10 = new CiRegister(26, 10, 8, "D10", RegisterFlag.FPU);
+    public static final CiRegister d11 = new CiRegister(27, 11, 8, "D11", RegisterFlag.FPU);
+    public static final CiRegister d12 = new CiRegister(28, 12, 8, "D12", RegisterFlag.FPU);
+    public static final CiRegister d13 = new CiRegister(29, 13, 8, "D13", RegisterFlag.FPU);
+    public static final CiRegister d14 = new CiRegister(30, 14, 8, "D14", RegisterFlag.FPU);
+    public static final CiRegister d15 = new CiRegister(31, 15, 8, "D15", RegisterFlag.FPU);
+
+    public static final CiRegister s0 = new CiRegister(32, 0, 4, "s0", RegisterFlag.FPU);
+    public static final CiRegister s1 = new CiRegister(33, 1, 4, "s1", RegisterFlag.FPU);
+    public static final CiRegister s2 = new CiRegister(34, 2, 4, "s2", RegisterFlag.FPU);
+    public static final CiRegister s3 = new CiRegister(35, 3, 4, "s3", RegisterFlag.FPU);
+    public static final CiRegister s4 = new CiRegister(36, 4, 4, "s4", RegisterFlag.FPU);
+    public static final CiRegister s5 = new CiRegister(37, 5, 4, "s5", RegisterFlag.FPU);
+    public static final CiRegister s6 = new CiRegister(38, 6, 4, "s6", RegisterFlag.FPU);
+    public static final CiRegister s7 = new CiRegister(39, 7, 4 ,"s7", RegisterFlag.FPU);
+    public static final CiRegister s8 = new CiRegister(40, 8, 4 ,"s8", RegisterFlag.FPU);
+    public static final CiRegister s9 = new CiRegister(41, 9, 4, "s9", RegisterFlag.FPU);
+    public static final CiRegister s10 = new CiRegister(42, 10, 4 ,"s10", RegisterFlag.FPU);
+    public static final CiRegister s11 = new CiRegister(43, 11, 4, "s11", RegisterFlag.FPU);
+    public static final CiRegister s12 = new CiRegister(44, 12, 4 ,"s12", RegisterFlag.FPU);
+    public static final CiRegister s13 = new CiRegister(45, 13, 4, "s13", RegisterFlag.FPU);
+    public static final CiRegister s14 = new CiRegister(46, 14, 4, "s14", RegisterFlag.FPU);
+    public static final CiRegister s15= new CiRegister(47, 15, 4 ,"s15", RegisterFlag.FPU);
+
+    public static final CiRegister s16 = new CiRegister(48, 16, 4 ,"s16", RegisterFlag.FPU);
+    public static final CiRegister s17 = new CiRegister(49, 17, 4 ,"s17", RegisterFlag.FPU);
+    public static final CiRegister s18 = new CiRegister(50,18, 4 ,"s18", RegisterFlag.FPU);
+    public static final CiRegister s19 = new CiRegister(51, 19, 4, "s19", RegisterFlag.FPU);
+    public static final CiRegister s20 = new CiRegister(52, 20, 4 ,"s20", RegisterFlag.FPU);
+    public static final CiRegister s21 = new CiRegister(53, 21, 4, "s21", RegisterFlag.FPU);
+    public static final CiRegister s22 = new CiRegister(54, 22, 4, "s22", RegisterFlag.FPU);
+    public static final CiRegister s23 = new CiRegister(55, 23, 4 ,"s23", RegisterFlag.FPU);
+    public static final CiRegister s24 = new CiRegister(56, 24, 4 ,"s24", RegisterFlag.FPU);
+    public static final CiRegister s25 = new CiRegister(57, 25, 4, "s25", RegisterFlag.FPU);
+    public static final CiRegister s26 = new CiRegister(58, 26, 4 ,"s26", RegisterFlag.FPU);
+    public static final CiRegister s27 = new CiRegister(59, 27, 4, "s27", RegisterFlag.FPU);
+    public static final CiRegister s28 = new CiRegister(60, 28, 4 ,"s28", RegisterFlag.FPU);
+    public static final CiRegister s29 = new CiRegister(61, 29, 4, "s29", RegisterFlag.FPU);
+    public static final CiRegister s30 = new CiRegister(62, 30, 4 ,"s30", RegisterFlag.FPU);
+    public static final CiRegister s31 = new CiRegister(63, 31, 4 ,"s31", RegisterFlag.FPU);
     public static final CiRegister[] cpuRegisters = {
             r0, r1, r2, r3, r4, r5, r6, r7,
             r8, r9, r10, r11, r12, r13, r14, r15
     };
 
-    // TODO: not including the other 16 floating point registers out of laziness for now
+    // TODO: not including the other 32 advanced SIMD floating point registers out of laziness for now
+    // also because we are not targetting advanced SIMD yet.
     public static final CiRegister[] floatRegisters = {
-            vfp0, vfp1, vfp2, vfp3, vfp4, vfp5,
-            vfp6, vfp7, vfp8, vfp9, vfp10, vfp11,
-            vfp12, vfp13, vfp14, vfp15
+            d0,d1,d2,d3,d4,d5,d6,d7,d8,d9,d10,d11,d12,d13,d14,d15 ,
+            s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,s12,s13,s14,s15,s16,s17,s18,s19,s20,
+            s21,s22,s23,s24,s25,s26,s27,s28,s29,s30,s31
     };
 
 
@@ -96,9 +136,9 @@ public class ARMV7 extends CiArchitecture {
     public static final CiRegister[] allRegisters = {
             r0,  r1,  r2,   r3,   r4,   r5,   r6,   r7,
             r8,   r9,   r10,   r11,   r12,   r13,   r14,   r15,
-            vfp0, vfp1, vfp2, vfp3, vfp4, vfp5,
-            vfp6, vfp7, vfp8, vfp9, vfp10, vfp11,
-            vfp12, vfp13, vfp14, vfp15
+            d0,d1,d2,d3,d4,d5,d6,d7,d8,d9,d10,d11,d12,d13,d14,d15,
+            s0,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,s12,s13,s14,s15,s16,s17,s18,s19,s20,
+            s21,s22,s23,s24,s25,s26,s27,s28,s29,s30,s31
     };
 
 
@@ -111,10 +151,11 @@ public class ARMV7 extends CiArchitecture {
                 allRegisters,
                 LOAD_STORE | STORE_STORE,
                 1,
-                r15.encoding + 1,
+                s31.number+1,
+                //r15.encoding + 1,
                 4);
     }
-    public static final CiRegisterValue RSP = r12.asValue(Int); // APN might need to be an int?
+    public static final CiRegisterValue RSP = r13.asValue(Int); // APN might need to be an int?
 
     @Override
     public boolean isARMV7() {

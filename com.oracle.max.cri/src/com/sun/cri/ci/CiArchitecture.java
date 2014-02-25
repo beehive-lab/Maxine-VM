@@ -137,6 +137,7 @@ public abstract class CiArchitecture {
         registersByName = new HashMap<String, CiRegister>(registers.length);
         for (CiRegister register : registers) {
             registersByName.put(register.name, register);
+            //System.err.println(register.name);
             assert registers[register.number] == register;
         }
 
