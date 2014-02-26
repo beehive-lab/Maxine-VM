@@ -1479,6 +1479,104 @@ public class ARMV7Assembler extends AbstractAssembler {
 
 
     }
+    public final void vmul(ConditionFlag cond, CiRegister dest,CiRegister rn, CiRegister rm) {
+        int instruction   =    (cond.value()&0xf)<<28;
+        instruction |= 0x0e200a00;
+        int sz = 0;
+        checkConstraint((dest.number >= 16 && rn.number >=16 && rm.number >=16), "vmul ALL  FP/DP regs"  );
+
+        checkConstraint((dest.number <= 31 && rn.number <= 31 && rm.number <= 31)||(dest.number >= 32&& rn.number >= 32 && rm.number >= 32), "vmul ALL  FP OR ALL DP regs"  );
+        if (dest.number <= 31) sz = 1;
+        if(sz== 1) {     // bit rest of bits
+            instruction |=  (dest.encoding&0xf) <<12;
+            instruction |=  (rn.encoding&0xf) <<16;
+            instruction |=  (rm.encoding&0xf);
+            instruction |=  (dest.encoding>>4) <<22;
+            instruction |=  (rn.encoding>>4) <<7;
+            instruction |=  (rm.encoding>>4) <<5;
+
+        }else {
+            instruction |=  (dest.encoding>>1) <<12;
+            instruction |=  (rn.encoding>>1) <<16;
+            instruction |=  (rm.encoding>>1);
+            instruction |=  (dest.encoding&0x1) <<22;
+            instruction |=  (rn.encoding&0x1) <<7;
+            instruction |=  (rm.encoding&0x1) <<5;
+
+        }
+        instruction |= sz<<8;
+
+
+        emitInt(instruction);
+    }
+    public final void vcvt(ConditionFlag cond, CiRegister dest, boolean toInt,boolean signed, CiRegister src ) {
+        int instruction =    (cond.value()&0xf)<<28;
+        instruction |= 0x0eb80a40;
+        int sz = 0;
+        int op = 0;
+        int opc2;
+
+        checkConstraint((dest.number>= 16 && src.number >=16), "vcvt must be FP/DP regs"  );
+        checkConstraint(!(dest.number <= 31 && src.number <= 31),"vcvt one reg mus be FP another DP");
+        checkConstraint(!(dest.number >= 32 && src.number >= 32),"vcvt one reg mus be FP another DP");
+        if (dest.number <= 31 || src.number <= 31) sz = 1;
+        if(signed) {
+            if(toInt) opc2 = 5;
+            else{
+               opc2 = 0; op = 1;
+            }
+        }else {
+            if(toInt)  opc2 = 4;
+            else {
+                 opc2 = 0;
+                 op = 0;
+            }
+        }
+        if(toInt){
+            instruction |= ((dest.encoding>>1) << 12);  // LSB in bit 22
+            instruction |= ((dest.encoding &0x1) <<22);
+            if(sz == 1) {
+                instruction |= (src.encoding&0xf);   //
+                instruction |= (src.encoding>>4) <<5;
+
+            }   else {
+                instruction |= (src.encoding>>1);
+                instruction |= (src.encoding&0x1) <<5;
+            }
+        } else {
+            instruction |= (src.encoding>>1);
+            instruction |= (src.encoding&0x1) <<5;
+            if(sz == 0) {
+                instruction |= ((dest.encoding >>1) <<12);
+                instruction |= ((dest.encoding &0x1) << 22) ;
+            }   else {
+                instruction |= ((dest.encoding&0xf) << 12);
+                instruction |= ((dest.encoding>>4) << 22);
+            }
+        }
+        instruction |= opc2<<16;
+        instruction |= op << 7;
+        instruction |= sz << 8;
+        emitInt(instruction);
+        /*VCVT{R}{<c>}{<q>}.S32.F64 <Sd>, <Dm>                      Encoded as opc2 = 0b101, sz = 1
+
+                VCVT{R}{<c>}{<q>}.S32.F32 <Sd>, <Sm>             Encoded as opc2 = 0b101, sz = 0
+
+                VCVT{R}{<c>}{<q>}.U32.F64 <Sd>, <Dm>               Encoded as opc2 = 0b100, sz = 1
+
+                VCVT{R}{<c>}{<q>}.U32.F32 <Sd>, <Sm>               Encoded as opc2 = 0b100, sz = 0
+
+                VCVT{<c>}{<q>}.F64.<Tm> <Dd>, <Sm>                Encoded as opc2 = 0b000, sz = 1
+
+                VCVT{<c>}{<q>}.F32.<Tm> <Sd>, <Sm>               Encoded as opc2 = 0b000, sz = 0
+
+
+                Tm  S32 encoded as op  =1
+                U32 encoded as op = 0;
+         */
+
+
+    }
     public final void vstr(ConditionFlag cond, CiRegister dest,CiRegister src,int imm8)
     {
         int instruction = (cond.value()&0xf)<<28;
@@ -1551,7 +1649,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         }else if ((dest.number <=15 || src.number <=15)&&(src.number >= 32 || dest.number >= 32)) {
                 instruction |= vmovSingleCore;
                 if(dest.number <=15) instruction |= (1<<20)|((src.encoding>>4)<<7)| (dest.encoding << 12)| (src.encoding<< 16);
-                else instruction |=  (src.encoding<< 12)| ((dest.encoding&0xf) <<16)| ((dest.encoding>>4)<<7);
+                else instruction |=  (src.encoding<< 12)| ((dest.encoding>>1) <<16)| ((dest.encoding&0x1)<<7);
 
 
         } else if ((src.number >= 16 && src.number <= 31 && dest.number <= 15) ||
