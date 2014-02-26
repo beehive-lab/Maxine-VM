@@ -129,6 +129,70 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         r.objcopy();
         return r.runSimulation();
     }
+    public void testVLDRSTR() {
+
+        int assemblerStatements = 15;
+        int i,instructions [] = new int [assemblerStatements];
+        initialiseExpectedValues();
+        setBitMasks(-1, MaxineARMTester.BitsFlag.All32Bits);
+        setTestValues(-1, false);
+        System.out.println("TESTING  VLDR  VSTR.... needs more extensive testing of encodings and asserts sample!!!");
+        asm.codeBuffer.reset();
+        asm.mov32BitConstant(ARMV7.cpuRegisters[0], (int) 12);
+        asm.mov32BitConstant(ARMV7.cpuRegisters[1], (int) 10);
+        asm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512|1024|2048);               // 1 instruction
+        asm.vldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.s0, ARMV7.r13, 0);
+        asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, ARMV7.s0);  // r2 has r0?
+        asm.vldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.d2, ARMV7.r13, 0) ;
+        asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4, ARMV7.d2); // r4 and r5 contain r0 and r1
+
+        asm.vstr(ARMV7Assembler.ConditionFlag.Always, ARMV7.d2, ARMV7.r13, -8) ;
+        asm.vstr(ARMV7Assembler.ConditionFlag.Always, ARMV7.s0, ARMV7.r13, -16);
+        asm.vldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.d5, ARMV7.r13, -8);
+        asm.vldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.s31, ARMV7.r13, -16);
+        asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r6, ARMV7.d5);
+        asm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r8,ARMV7.s31);
+        expectedValues[0] = 12;testvalues[0] = true;
+        expectedValues[1] = 10;testvalues[1] = true;
+        expectedValues[2] = 12;testvalues[2] = true;
+
+        expectedValues[4] = 12;testvalues[4] = true;
+        expectedValues[5] = 10;testvalues[5] = true;
+        expectedValues[6] = 12;testvalues[6] = true;
+        expectedValues[7] = 10;testvalues[7] = true;
+        expectedValues[8] = 12;testvalues[8] = true;
+
+        generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+    }
+    public void testVLDR() {
+
+        int assemblerStatements = 9;
+        int i,instructions [] = new int [assemblerStatements];
+        initialiseExpectedValues();
+        setBitMasks(-1, MaxineARMTester.BitsFlag.All32Bits);
+        setTestValues(-1, false);
+        System.out.println("TESTING  VLDR .... needs more extensive tesating of encodings and asserts sample!!!");
+        asm.codeBuffer.reset();           while(asm.codeBuffer.equals(new Integer("6")) == false)    ;
+
+        asm.mov32BitConstant(ARMV7.cpuRegisters[0], (int) 12);
+        asm.mov32BitConstant(ARMV7.cpuRegisters[1], (int) 10);
+        asm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);               // 1 instruction
+        asm.vldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.s0, ARMV7.r13, 0);
+        asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, ARMV7.s0);  // r2 has r0?
+        asm.vldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.d2, ARMV7.r13, 0) ;
+
+        asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4, ARMV7.d2); // r4 and r5 contain r0 and r1
+
+        expectedValues[0] = 12;testvalues[0] = true;
+        expectedValues[1] = 10;testvalues[1] = true;
+        expectedValues[2] = 12;testvalues[2] = true;
+
+        expectedValues[4] = 12;testvalues[4] = true;
+        expectedValues[5] = 10;testvalues[5] = true;
+
+
+        generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+    }
     public void testVMOV() {
 
         int assemblerStatements = 8;
@@ -141,9 +205,9 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         asm.mov32BitConstant(ARMV7.cpuRegisters[0], (int) 12);
         asm.mov32BitConstant(ARMV7.cpuRegisters[1], (int) 10);
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.d0, ARMV7.r0);
-        asm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r2,ARMV7.d0); // r2 and r3 contain r0 and r1
-        asm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.s5,ARMV7.r0);
-        asm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r4,ARMV7.s5);
+        asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, ARMV7.d0); // r2 and r3 contain r0 and r1
+        asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.s5, ARMV7.r0);
+        asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4, ARMV7.s5);
         expectedValues[0] = 12;testvalues[0] = true;
         expectedValues[1] = 10;testvalues[1] = true;
         expectedValues[2] = 12;testvalues[2] = true;

@@ -1479,7 +1479,52 @@ public class ARMV7Assembler extends AbstractAssembler {
 
 
     }
+    public final void vstr(ConditionFlag cond, CiRegister dest,CiRegister src,int imm8)
+    {
+        int instruction = (cond.value()&0xf)<<28;
+        checkConstraint((dest.number<=63 && dest.number >=16), "vstr dest must be a FP/DP reg"  );
+        checkConstraint(-255<=imm8 && imm8 <= 255, "vmov offset greater than +/- 255 ");
+        if(imm8 >= 0) instruction |= (1<<23);
+        else imm8 = -1*imm8;
+        instruction |= imm8;
+        instruction |= ((src.encoding&0xf) << 16);
+        if(dest.number <= 31)             {
+            instruction |= 0x0d000b00;
+            instruction |= ((dest.encoding&0xf) <<12);
 
+        }   else {
+            instruction |= 0xd000a00;
+            instruction |= ((dest.encoding&0x1f>>1) << 12);
+            instruction |= ((dest.encoding&1) << 22); /// Hmmm check some assembler encodings for this please.
+
+        }
+
+
+        emitInt(instruction);
+    }
+    public final void vldr(ConditionFlag cond, CiRegister dest, CiRegister src,int imm8) {
+
+        int instruction = (cond.value()&0xf)<<28;
+        checkConstraint((dest.number<=63 && dest.number >=16), "vldr dest must be a FP/DP reg"  );
+        checkConstraint(-255<=imm8 && imm8 <= 255, "vmov offset greater than +/- 255 ");
+        if(imm8 >= 0) instruction |= (1<<23);
+        else imm8 = -1*imm8;
+        instruction |= imm8;
+        instruction |= src.encoding << 16;
+        if(dest.number <= 31)             {
+            instruction |= 0x0d100b00;
+            instruction |= dest.encoding <<12;
+
+        }   else {
+            instruction |= 0xd100a00;
+            instruction |= ((dest.encoding&0xf) << 12);
+            instruction |= (dest.encoding>>4) << 22; /// Hmmm check some assembler encodings for this please.
+
+        }
+
+
+        emitInt(instruction);
+    }
     public final void vmov (ConditionFlag cond,CiRegister dest,CiRegister src) {
 
         /*
@@ -1490,7 +1535,7 @@ public class ARMV7Assembler extends AbstractAssembler {
          */
         int instruction = (cond.value()&0xf)<<28;
         int vmovSameType = 0x0eb00a40; // A8.8.340
-        int vmovSingleCore =   0x0e000b10;// A8.8.341 and 342 full word only    // ARM core to scalar
+        int vmovSingleCore =   0x0e000a10;// A8.8.343 full word only    // ARM core to scalar
         int vmovDoubleCore =   0x0c400b10; // A8.8.345   // TWO ARM core to doubleword  extension
 
         if((src.number >= 16 && src.number <= 31) && (dest.number >=16 && dest.number <= 31) )  {
@@ -1501,12 +1546,12 @@ public class ARMV7Assembler extends AbstractAssembler {
         } else if(src.number >=32 && dest.number >= 32)  {
                 instruction |= vmovSameType;
                 instruction |= (dest.encoding&0xf << 12) | ((dest.encoding &0x10)<<22);
-                instruction |= (src.encoding &0xf) | ((src.encoding&0x10)<<5);
+                instruction |= (src.encoding &0xf) | ((src.encoding>>4)<<7);
 
         }else if ((dest.number <=15 || src.number <=15)&&(src.number >= 32 || dest.number >= 32)) {
                 instruction |= vmovSingleCore;
-                if(dest.number <=15) instruction |= (1<<20)|((src.encoding&0x10)<<6)| (dest.encoding << 12)| (src.encoding<< 16);
-                else instruction |=  (src.encoding<< 12)| ((dest.encoding&0xf) <<16)| ((dest.encoding &0x10)<<6);
+                if(dest.number <=15) instruction |= (1<<20)|((src.encoding>>4)<<7)| (dest.encoding << 12)| (src.encoding<< 16);
+                else instruction |=  (src.encoding<< 12)| ((dest.encoding&0xf) <<16)| ((dest.encoding>>4)<<7);
 
 
         } else if ((src.number >= 16 && src.number <= 31 && dest.number <= 15) ||
