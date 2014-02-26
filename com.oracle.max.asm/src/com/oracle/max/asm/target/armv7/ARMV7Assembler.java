@@ -1487,12 +1487,11 @@ public class ARMV7Assembler extends AbstractAssembler {
         case regarding the particular registers used
         vmov.f32 s,s
         vmov.f64 d,d
-        This particular vmov only moves registers that are float regs.
          */
         int instruction = (cond.value()&0xf)<<28;
-        int vmovSameType = 0x0eb00a40;
-        int vmovSingleCore =   0x0e00a10;// WRONG!!!
-        int vmovDoubleCore =   0x0c400b10;
+        int vmovSameType = 0x0eb00a40; // A8.8.340
+        int vmovSingleCore =   0x0e000b10;// A8.8.341 and 342 full word only    // ARM core to scalar
+        int vmovDoubleCore =   0x0c400b10; // A8.8.345   // TWO ARM core to doubleword  extension
 
         if((src.number >= 16 && src.number <= 31) && (dest.number >=16 && dest.number <= 31) )  {
                    instruction |= (1<<8)|vmovSameType;
@@ -1506,13 +1505,31 @@ public class ARMV7Assembler extends AbstractAssembler {
 
         }else if ((dest.number <=15 || src.number <=15)&&(src.number >= 32 || dest.number >= 32)) {
                 instruction |= vmovSingleCore;
-                if(dest.number <=15) instruction |= (1<<20)|((src.encoding&0x10)<<3)| (dest.encoding << 12)| (src.encoding<< 16);
-                else instruction |=  (src.encoding<< 12)| (dest.encoding <<16)| ((dest.encoding &0x10)<<3);
+                if(dest.number <=15) instruction |= (1<<20)|((src.encoding&0x10)<<6)| (dest.encoding << 12)| (src.encoding<< 16);
+                else instruction |=  (src.encoding<< 12)| ((dest.encoding&0xf) <<16)| ((dest.encoding &0x10)<<6);
 
 
-        } else if (src.number >= 16 && src.number <= 31 && dest.number <= 15)  {
+        } else if ((src.number >= 16 && src.number <= 31 && dest.number <= 15) ||
+                (dest.number >= 16 && dest.number <= 31 && src.number <= 15))  {
             // deviating slightly from ARM book, we are assuming this to transfer double to pair of core registers
             // aligned on an even 0, 2, ... boundary
+            instruction |= vmovDoubleCore;
+            if(dest.number <=15) {// to ARM
+                checkConstraint((dest.encoding)<=14, "vmov doubleword to core destination register > 14"  );
+
+                instruction |= (1<<20);
+                instruction |= dest.encoding << 12;
+                instruction |= (dest.encoding+1) << 16;
+                instruction |= src.encoding;
+            }else {
+                checkConstraint((src.encoding)<=14, "vmov core to doubleword core register > 14"  );
+
+                instruction |= (src.encoding+1) <<16;
+                instruction |= src.encoding << 12;
+                instruction |= dest.encoding;
+            }
+
+
         }
 
         emitInt(instruction);

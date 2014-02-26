@@ -479,7 +479,7 @@ public class Stubs {
             // we will need to test this carefully
             asm.setUpScratch(new CiAddress(WordUtil.archKind(),ARMV7.r13.asValue(),frameSize));
             //asm.movq(args[2].asRegister(), new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize));
-            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,args[2].asRegister(),asm.scratchRegister);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, args[2].asRegister(), asm.scratchRegister);
 
             asm.alignForPatchableDirectCall();// insert nops so that the call is in an allowed position
                                             // obeying alignment rules
@@ -500,7 +500,7 @@ public class Stubs {
             CiRegister returnReg = registerConfig.getReturnRegister(WordUtil.archKind());
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize - 8));
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize - 8), returnReg);
-            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,asm.scratchRegister,returnReg);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, asm.scratchRegister, returnReg);
 
             // Restore all parameter registers before returning
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
@@ -512,7 +512,7 @@ public class Stubs {
             //asm.ret(0);
             // APN ok do I need to do a return or can I merely set the PC to the correct instruction.
             // We can but try.
-            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r15,asm.scratchRegister);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, asm.scratchRegister);
 
             byte[] code = asm.codeBuffer.close(true);
             final Type type = isInterface ? InterfaceTrampoline : VirtualTrampoline;
@@ -629,7 +629,7 @@ public class Stubs {
             CiRegister callSite = registerConfig.getScratchRegister();
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
             //asm.movq(callSite, new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue()));
-            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,callSite,asm.scratchRegister);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, callSite, asm.scratchRegister);
             asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
 
             // now allocate the frame for this method
@@ -643,7 +643,7 @@ public class Stubs {
             CiValue[] locations = registerConfig.getCallingConvention(JavaCall, trampolineParameters, target(), false).locations;
 
             // load the static trampoline call site into the first parameter register
-            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,locations[0].asRegister(), callSite);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, locations[0].asRegister(), callSite);
 
             asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
@@ -661,13 +661,13 @@ public class Stubs {
             // patch the return address to re-execute the static call
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
             //asm.movq(callSite, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
-            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,callSite,asm.scratchRegister);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, callSite, asm.scratchRegister);
             asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue()), callSite);
-            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,asm.scratchRegister,callSite);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, asm.scratchRegister, callSite);
             //asm.ret(0);
-            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r15,asm.scratchRegister);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, asm.scratchRegister);
             String stubName = "strampoline";
             byte[] code = asm.codeBuffer.close(true);
 
@@ -800,17 +800,17 @@ public class Stubs {
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameToCSA + csl.offsetOf(latch)), scratch);
             // scratch has the value we want and we move that value to r0
 
-            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r0,asm.scratchRegister); // move it to r0
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, asm.scratchRegister); // move it to r0
             // APN we want to store the value in r0 into the address specified by scratch.
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameToCSA + csl.offsetOf(latch)));
-            asm.str(ARMV7Assembler.ConditionFlag.Always,ARMV7.r0,asm.scratchRegister,0);
+            asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, asm.scratchRegister, 0);
             // write the return address pointer to the end of the frame
             //asm.movq(scratch, new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
-            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r0,asm.scratchRegister); // move it to r0
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, asm.scratchRegister); // move it to r0
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize), scratch);
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize));
-            asm.str(ARMV7Assembler.ConditionFlag.Always,ARMV7.r0,ARMV7.r12,0);
+            asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, ARMV7.r12, 0);
 
 
             // load the trap number from the thread locals into the first parameter register
@@ -821,12 +821,12 @@ public class Stubs {
             // also save the trap number into the trap frame
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameToCSA + ARMTrapFrameAccess.TRAP_NUMBER_OFFSET), args[0].asRegister());
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameToCSA + ARMTrapFrameAccess.TRAP_NUMBER_OFFSET));
-            asm.str(ARMV7Assembler.ConditionFlag.Always,args[0].asRegister(), asm.scratchRegister,0);
+            asm.str(ARMV7Assembler.ConditionFlag.Always, args[0].asRegister(), asm.scratchRegister, 0);
 
             // load the trap frame pointer into the second parameter register
             //asm.leaq(args[1].asRegister(), new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameToCSA));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameToCSA));
-            asm.ldr(ARMV7Assembler.ConditionFlag.Always, args[1].asRegister(),asm.scratchRegister,0 );
+            asm.ldr(ARMV7Assembler.ConditionFlag.Always, args[1].asRegister(), asm.scratchRegister, 0);
 
             // load the fault address from the thread locals into the third parameter register
             //asm.movq(args[2].asRegister(), new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_FAULT_ADDRESS.offset));
@@ -846,7 +846,7 @@ public class Stubs {
             // APN maybe I should have saved and restored the FLAGS?
             // my understanding is that normal handler code will do this?
             // Will r14 be correctly set to the appropriate return address?
-            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r15,ARMV7.r14);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
             //asm.ret(0);
 
             byte[] code = asm.codeBuffer.close(true);
@@ -973,7 +973,7 @@ public class Stubs {
                     case Int:
                     case Long:
                     case Object:
-                        asm.mov(ARMV7Assembler.ConditionFlag.Always,false,registerConfig.getReturnRegister(CiKind.Int), reg);
+                        asm.mov(ARMV7Assembler.ConditionFlag.Always, false, registerConfig.getReturnRegister(CiKind.Int), reg);
                         break;
                     case Float:
                         asm.movflt(registerConfig.getReturnRegister(CiKind.Float), reg);
@@ -997,11 +997,11 @@ public class Stubs {
             asm.str(ARMV7Assembler.ConditionFlag.Always, pc, asm.scratchRegister,0);
             //asm.movq(new CiAddress(WordUtil.archKind(), sp.asValue()), pc);
             //asm.movq(ARMV7.rbp, fp);
-            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r11,fp);
-            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r13,sp);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r11, fp);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r13, sp);
             //asm.movq(ARMV7.rsp, sp);
             //asm.ret(0);
-            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r15,ARMV7.r12);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12);
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnwindStub, name, frameSize, code, -1, -1, null, -1);
         }else throw FatalError.unimplemented();
@@ -1290,6 +1290,7 @@ public class Stubs {
                 CiAddress arg4;
                 CiRegister returnRegister = registerConfig.getReturnRegister(kind);
 
+
                 switch(kind) {
                     case Byte:
                     case Boolean:
@@ -1319,7 +1320,15 @@ public class Stubs {
 
                     case Float:
                         CiRegister tmp = args[4].asRegister();
-                        asm.vmov();        //TODO
+                        arg4 =   new CiAddress(kind,ARMV7.RSP,((CiStackSlot)args[4]).index()*4);
+                        asm.setUpScratch(arg4);
+                        if(tmp.number <=15)
+                        asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,tmp,ARMV7.r12,ARMV7.r12,0,0);
+                        else {
+                            asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
+
+                            asm.vmov(ARMV7Assembler.ConditionFlag.Always,tmp,ARMV7.r12);
+                        }
 
                     break;
 
@@ -1327,8 +1336,21 @@ public class Stubs {
                         CiRegister tmp2arg4 = args[4].asRegister();
                             // aPN TODO this is broken beyond belief
                             // we will be trying to move a FP reg into a core register?
-                            //
-                        asm.vmov(); // TODO
+                            //        assumptions on where to put float/doubles and if they go on the stack or if they
+                            // are in registers is all hazy so dont expect this to work first time.
+                            // Aslo assumptions about index slot sizes are a bit broken and offsets as some types are bigger than
+                            // 32bits --- long/double so multiplying by 4 will give an incorrect offset in general.
+                        arg4 = new    CiAddress(kind,ARMV7.RSP,((CiStackSlot)args[4]).index()*4);
+                        // broken we need TWO registers so this needs VLDR!!!!!!!!!
+                        System.err.println("Stubs --- we need VLDR");
+                        if(tmp2arg4.number <=15)
+                            asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,tmp2arg4,ARMV7.r12,ARMV7.r12,0,0);
+                        else {
+                            asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
+
+                            asm.vmov(ARMV7Assembler.ConditionFlag.Always,tmp2arg4,ARMV7.r12);
+                        }
+
 
                     break;
 
@@ -1587,7 +1609,16 @@ public class Stubs {
                     case Float:
                         System.err.println("FLOAT");
                         CiRegister tmp = args[4].asRegister();
-                        asm.vmov();        //TODO
+                        arg4 =   new CiAddress(kind,ARMV7.RSP,((CiStackSlot)args[4]).index()*4);
+                        asm.setUpScratch(arg4);
+                        if(tmp.number <=15)
+                            asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,tmp,ARMV7.r12,ARMV7.r12,0,0);
+                        else {
+                            asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
+
+                            asm.vmov(ARMV7Assembler.ConditionFlag.Always,tmp,ARMV7.r12);
+                        }
+
 
                         break;
                     case Double:
@@ -1595,8 +1626,24 @@ public class Stubs {
                         CiRegister tmp2arg4 = args[4].asRegister();
                         // aPN TODO this is broken beyond belief
                         // we will be trying to move a FP reg into a core register?
+                        //        assumptions on where to put float/doubles and if they go on the stack or if they
+                        // are in registers is all hazy so dont expect this to work first time.
+                        // Aslo assumptions about index slot sizes are a bit broken and offsets as some types are bigger than
+                        // 32bits --- long/double so multiplying by 4 will give an incorrect offset in general.
+                        arg4 = new    CiAddress(kind,ARMV7.RSP,((CiStackSlot)args[4]).index()*4);
+                        // broken we need TWO registers so this needs VLDR!!!!!!!!!
+                        System.err.println("Stubs --- we need VLDR");
+                        if(tmp2arg4.number <=15)
+                            asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,tmp2arg4,ARMV7.r12,ARMV7.r12,0,0);
+                        else {
+                            asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
+
+                            asm.vmov(ARMV7Assembler.ConditionFlag.Always,tmp2arg4,ARMV7.r12);
+                        }
+
+                        // aPN TODO this is broken beyond belief
+                        // we will be trying to move a FP reg into a core register?
                         //
-                        asm.vmov(); // TODO
 
                         break;
 

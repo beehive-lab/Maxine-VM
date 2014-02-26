@@ -129,7 +129,29 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         r.objcopy();
         return r.runSimulation();
     }
+    public void testVMOV() {
 
+        int assemblerStatements = 8;
+        int i,instructions [] = new int [assemblerStatements];
+        initialiseExpectedValues();
+        setBitMasks(-1, MaxineARMTester.BitsFlag.All32Bits);
+        setTestValues(-1, false);
+        System.out.println("TESTING  VMOV .... needs more extensive tesating of encodings and asserts sample!!!");
+        asm.codeBuffer.reset();
+        asm.mov32BitConstant(ARMV7.cpuRegisters[0], (int) 12);
+        asm.mov32BitConstant(ARMV7.cpuRegisters[1], (int) 10);
+        asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.d0, ARMV7.r0);
+        asm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r2,ARMV7.d0); // r2 and r3 contain r0 and r1
+        asm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.s5,ARMV7.r0);
+        asm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r4,ARMV7.s5);
+        expectedValues[0] = 12;testvalues[0] = true;
+        expectedValues[1] = 10;testvalues[1] = true;
+        expectedValues[2] = 12;testvalues[2] = true;
+        expectedValues[3] = 10;testvalues[3] = true;
+        expectedValues[4] = 12;testvalues[4] = true;
+
+        generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+    }
     public void testFloatIngPointExperiments() throws Exception {
         /*
         Will create a few simple examples (using hardcoded emitInt()) to verify concepts/principles then
@@ -138,12 +160,12 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         int assemblerStatements = 11;
         int i,instructions []= new int[assemblerStatements];
         initialiseExpectedValues();
-        setBitMasks(-1,MaxineARMTester.BitsFlag.All32Bits);
-        setTestValues(-1,false);
+        setBitMasks(-1, MaxineARMTester.BitsFlag.All32Bits);
+        setTestValues(-1, false);
         System.out.println("TESTING  FLOAT sample!!!");
         asm.codeBuffer.reset();
-        asm.mov32BitConstant(ARMV7.cpuRegisters[0],(int)12);
-        asm.mov32BitConstant(ARMV7.cpuRegisters[1],(int)10);
+        asm.mov32BitConstant(ARMV7.cpuRegisters[0], (int) 12);
+        asm.mov32BitConstant(ARMV7.cpuRegisters[1], (int) 10);
         asm.codeBuffer.emitInt(0xee000a10);
         asm.codeBuffer.emitInt(0xee001a90);
         asm.codeBuffer.emitInt(0xeeb81ac0);
@@ -153,8 +175,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         asm.codeBuffer.emitInt(0xee100a10);
         expectedValues[0] = 120;
         testvalues[0]= true;
-        generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
-        System.exit(0);
+        generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
 
 
 
