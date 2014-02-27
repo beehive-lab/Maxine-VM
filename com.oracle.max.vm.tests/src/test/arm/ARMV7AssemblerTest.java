@@ -129,6 +129,71 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         r.objcopy();
         return r.runSimulation();
     }
+    public void testpushPOP() {
+        int assemblerStatements = 37;
+        int i,instructions [] = new int [assemblerStatements];
+        initialiseExpectedValues();
+        setBitMasks(-1, MaxineARMTester.BitsFlag.All32Bits);
+        setTestValues(-1, false);
+        System.out.println("TESTING  vpush vpop... only tested SINGLE PRECISION !!!!. needs more extensive testing of encodings and asserts HIGH probability of bugs!!!");
+        asm.codeBuffer.reset();
+        for(i = 0; i < 5;i++) {  // 5*5 = 25
+            asm.mov32BitConstant(ARMV7.cpuRegisters[i], (int) i);
+            asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.allRegisters[i + 32], ARMV7.cpuRegisters[i]);
+            asm.mov32BitConstant(ARMV7.cpuRegisters[i], -i);
+
+        }
+        // 1
+        asm.vpush(ARMV7Assembler.ConditionFlag.Always,ARMV7.allRegisters[32],ARMV7.allRegisters[32+4]);
+        for(i = 0; i < 5;i++) {  // 1*5 = 5
+            asm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.allRegisters[i+32],ARMV7.cpuRegisters[i]);
+
+        }
+        // 1
+        asm.vpop(ARMV7Assembler.ConditionFlag.Always,ARMV7.allRegisters[32],ARMV7.allRegisters[32+4]);
+        for(i = 0; i < 5;i++) { // 5
+            asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.cpuRegisters[i], ARMV7.allRegisters[i+32]);
+        }
+
+
+        expectedValues[0] = 0;testvalues[0] = true;
+        expectedValues[1] = 1;testvalues[1] = true;
+        expectedValues[2] = 2;testvalues[2] = true;
+        expectedValues[3] = 3;testvalues[3] = true;
+        expectedValues[4] = 4;testvalues[4] = true;
+
+
+        generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+
+    }
+    public void testVDIV() {
+        int assemblerStatements = 11;
+        int i,instructions [] = new int [assemblerStatements];
+        initialiseExpectedValues();
+        setBitMasks(-1, MaxineARMTester.BitsFlag.All32Bits);
+        setTestValues(-1, false);
+        System.out.println("TESTING  VDIV.... needs more extensive testing of encodings and asserts HIGH probability of bugs!!!");
+        asm.codeBuffer.reset();
+        asm.mov32BitConstant(ARMV7.cpuRegisters[0], (int) 10);
+        asm.mov32BitConstant(ARMV7.cpuRegisters[1], (int) 24);
+        asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.s0, ARMV7.r0);  // r2 has r0?
+        asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.s1, ARMV7.r1); // r4 and r5 contain r0 and r1
+        asm.vcvt(ARMV7Assembler.ConditionFlag.Always,ARMV7.d1,false,false,ARMV7.s0);
+        asm.vcvt(ARMV7Assembler.ConditionFlag.Always,ARMV7.d2,false,false,ARMV7.s1);
+        asm.vdiv(ARMV7Assembler.ConditionFlag.Always, ARMV7.d1, ARMV7.d2, ARMV7.d1);
+        asm.vcvt(ARMV7Assembler.ConditionFlag.Always,ARMV7.s0,true,true,ARMV7.d1);
+        asm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r2,ARMV7.s0);
+
+        expectedValues[0] = 10;testvalues[0] = true;
+        expectedValues[1] = 24;testvalues[1] = true;
+        expectedValues[2] = 2;testvalues[2] = true;
+
+
+        generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+
+    }
     public void testVADD() {
         int assemblerStatements = 11;
         int i,instructions [] = new int [assemblerStatements];
@@ -143,7 +208,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.s1, ARMV7.r1); // r4 and r5 contain r0 and r1
         asm.vcvt(ARMV7Assembler.ConditionFlag.Always,ARMV7.d1,false,false,ARMV7.s0);
         asm.vcvt(ARMV7Assembler.ConditionFlag.Always,ARMV7.d2,false,false,ARMV7.s1);
-        asm.vadd(ARMV7Assembler.ConditionFlag.Always,ARMV7.d1,ARMV7.d2,ARMV7.d1);
+        asm.vadd(ARMV7Assembler.ConditionFlag.Always, ARMV7.d1, ARMV7.d2, ARMV7.d1);
         asm.vcvt(ARMV7Assembler.ConditionFlag.Always,ARMV7.s0,true,true,ARMV7.d1);
         asm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r2,ARMV7.s0);
 
@@ -170,7 +235,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.s1, ARMV7.r1); // r4 and r5 contain r0 and r1
         asm.vcvt(ARMV7Assembler.ConditionFlag.Always,ARMV7.d1,false,false,ARMV7.s0);
         asm.vcvt(ARMV7Assembler.ConditionFlag.Always,ARMV7.d2,false,false,ARMV7.s1);
-        asm.vsub(ARMV7Assembler.ConditionFlag.Always,ARMV7.d1,ARMV7.d2,ARMV7.d1);
+        asm.vsub(ARMV7Assembler.ConditionFlag.Always, ARMV7.d1, ARMV7.d2, ARMV7.d1);
         asm.vcvt(ARMV7Assembler.ConditionFlag.Always,ARMV7.s0,true,true,ARMV7.d1);
         asm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r2,ARMV7.s0);
 

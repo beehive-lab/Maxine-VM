@@ -1655,6 +1655,100 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
 
     }
+    public final void vpop(ConditionFlag cond, CiRegister first, CiRegister last) {
+        // A8.8.367
+        int instruction = (cond.value()&0xf)<<28;
+
+        checkConstraint((first.number >=16 && last.number >=16), "vpop NO CORE REGISTERS ALLOWED"  );
+        checkConstraint((first.number <= 31&& last.number <= 31)||(first.number <= 63 && last.number <= 63),
+                "vpop ALL REGISTERS must be SP OR DP no mix allowed");
+        checkConstraint(last.number >= first.number,"vpop at least ONE register!!");
+        int sz = 0;
+        if(first.number <= 31) sz = 1;
+
+        if(sz ==1) {
+            instruction |= 0x0cbd0c00;
+            // VFPV3 only has 16 regs and these fit so no need to do the MSB
+            // for double precision registers
+
+            instruction |= (first.encoding &0xf) <<12;
+            instruction |= (last.encoding - first.encoding +1)<<1;
+
+        }else {
+            instruction |= 0x0cbd0b00;
+            // VFPV3 has 32 regs so we NEED to do the MSB manipulation --
+            // different to what it would be for doubles!!! (if there were 32)
+            instruction |= (first.encoding&0x1) << 22;
+            instruction |= (first.encoding >> 1) <<12;
+            instruction |= (last.encoding - first.encoding +1)<<1;
+
+        }
+        emitInt(instruction);
+
+    }
+    public final void vpush(ConditionFlag cond, CiRegister first, CiRegister last) {
+        // A8.8.368
+        int instruction = (cond.value()&0xf)<<28;
+
+        checkConstraint((first.number >=16 && last.number>= 16), "vpush NO CORE REGISTERS ALLOWED"  );
+        checkConstraint((first.number <= 31&& last.number <= 31)||(first.number <= 63 && last.number <= 63),
+                "vpush ALL REGISTERS must be SP OR DP no mix allowed");
+        checkConstraint(last.number >= first.number,"vpush at least ONE register!!");
+        int sz = 0;
+        if(first.number <= 31) sz = 1;
+
+        if(sz ==1) {
+            instruction |= 0x0d2d0b00;
+            // VFPV3 only has 16 regs and these fit so no need to do the MSB
+            // for double precision registers
+
+            instruction |= (first.encoding &0xf) <<12;
+            instruction |= (last.encoding - first.encoding +1)<<1;
+
+        }else {
+            instruction |= 0x0d2d0a00;
+            // VFPV3 has 32 regs so we NEED to do the MSB manipulation --
+            // different to what it would be for doubles!!! (if there were 32)
+            instruction |= (first.encoding&0x1) << 22;
+            instruction |= (first.encoding >> 1) <<12;
+            instruction |= (last.encoding - first.encoding +1)<<1;
+
+        }
+        emitInt(instruction);
+
+    }
+    public final void vdiv(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
+        // A8.8.415
+        int instruction = (cond.value()&0xf)<<28;
+        instruction |= 0x0e800a00;
+        checkConstraint((dest.number >=16 && rn.number >= 16 && rm.number >= 16), "vdiv NO CORE REGISTERS ALLOWED"  );
+        checkConstraint((dest.number <= 31&& rn.number <= 31 && rm.number <= 31)||(dest.number <= 63 && rn.number <= 63 && rm.number <= 63),
+                "vdiv ALL REGISTERS must be SP OR DP no mix allowed");
+        int sz = 0;
+        if(dest.number <= 31) sz = 1;
+        instruction |= sz<<8;
+        if(sz ==1) {
+            // VFPV3 only has 16 regs and these fit so no need to do the MSB
+            // for double precision registers
+            instruction |= (rn.encoding &0xf) <<16;
+            instruction |= (dest.encoding &0xf) <<12;
+            instruction |= (rm.encoding &0xf);
+
+        }else {
+            // VFPV3 has 32 regs so we NEED to do the MSB manipulation --
+            // different to what it would be for doubles!!! (if there were 32)
+            instruction |= (rn.encoding>>4) << 7;
+            instruction |= (rm.encoding>>4) << 5;
+            instruction |= (dest.encoding>>4) << 22;
+
+            instruction |= (rn.encoding >> 1) <<16;
+            instruction |= (dest.encoding >> 1) <<12;
+            instruction |= (rm.encoding >>1);
+
+        }
+        emitInt(instruction);
+
+    }
     public final void vsub(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
         // A8.8.415
         int instruction = (cond.value()&0xf)<<28;
