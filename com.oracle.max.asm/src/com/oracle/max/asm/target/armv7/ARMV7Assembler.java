@@ -1623,6 +1623,70 @@ public class ARMV7Assembler extends AbstractAssembler {
 
         emitInt(instruction);
     }
+    public final void vadd(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
+        // A8.8.283
+        int instruction = (cond.value()&0xf)<<28;
+        instruction |= 0x0e300a00;
+        checkConstraint((dest.number >=16 && rn.number >= 16 && rm.number >= 16), "vadd NO CORE REGISTERS ALLOWED"  );
+        checkConstraint((dest.number <= 31&& rn.number <= 31 && rm.number <= 31)||(dest.number <= 63 && rn.number <= 63 && rm.number <= 63),
+                "vadd ALL REGISTERS must be SP OR DP no mix allowed");
+        int sz = 0;
+        if(dest.number <= 31) sz = 1;
+        instruction |= sz<<8;
+        if(sz ==1) {
+            // VFPV3 only has 16 regs and these fit so no need to do the MSB
+            // for double precision registers
+            instruction |= (rn.encoding &0xf) <<16;
+            instruction |= (dest.encoding &0xf) <<12;
+            instruction |= (rm.encoding &0xf);
+
+        }else {
+            // VFPV3 has 32 regs so we NEED to do the MSB manipulation --
+            // different to what it would be for doubles!!! (if there were 32)
+            instruction |= (rn.encoding>>4) << 7;
+            instruction |= (rm.encoding>>4) << 5;
+            instruction |= (dest.encoding>>4) << 22;
+
+            instruction |= (rn.encoding >> 1) <<16;
+            instruction |= (dest.encoding >> 1) <<12;
+            instruction |= (rm.encoding >>1);
+
+        }
+        emitInt(instruction);
+
+    }
+    public final void vsub(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
+        // A8.8.415
+        int instruction = (cond.value()&0xf)<<28;
+        instruction |= 0x0e300a40;
+        checkConstraint((dest.number >=16 && rn.number >= 16 && rm.number >= 16), "vsub NO CORE REGISTERS ALLOWED"  );
+        checkConstraint((dest.number <= 31&& rn.number <= 31 && rm.number <= 31)||(dest.number <= 63 && rn.number <= 63 && rm.number <= 63),
+        "vsub ALL REGISTERS must be SP OR DP no mix allowed");
+        int sz = 0;
+        if(dest.number <= 31) sz = 1;
+        instruction |= sz<<8;
+        if(sz ==1) {
+            // VFPV3 only has 16 regs and these fit so no need to do the MSB
+            // for double precision registers
+            instruction |= (rn.encoding &0xf) <<16;
+            instruction |= (dest.encoding &0xf) <<12;
+            instruction |= (rm.encoding &0xf);
+
+        }else {
+            // VFPV3 has 32 regs so we NEED to do the MSB manipulation --
+            // different to what it would be for doubles!!! (if there were 32)
+            instruction |= (rn.encoding>>4) << 7;
+            instruction |= (rm.encoding>>4) << 5;
+            instruction |= (dest.encoding>>4) << 22;
+
+                    instruction |= (rn.encoding >> 1) <<16;
+            instruction |= (dest.encoding >> 1) <<12;
+            instruction |= (rm.encoding >>1);
+
+        }
+        emitInt(instruction);
+
+    }
     public final void vmov (ConditionFlag cond,CiRegister dest,CiRegister src) {
 
         /*
@@ -1648,7 +1712,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
         }else if ((dest.number <=15 || src.number <=15)&&(src.number >= 32 || dest.number >= 32)) {
                 instruction |= vmovSingleCore;
-                if(dest.number <=15) instruction |= (1<<20)|((src.encoding>>4)<<7)| (dest.encoding << 12)| (src.encoding<< 16);
+                if(dest.number <=15) instruction |= (1<<20)|((src.encoding&1)<<7)| (dest.encoding << 12)| ((src.encoding>>1)<< 16);
                 else instruction |=  (src.encoding<< 12)| ((dest.encoding>>1) <<16)| ((dest.encoding&0x1)<<7);
 
 
