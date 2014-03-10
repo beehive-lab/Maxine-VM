@@ -1320,14 +1320,10 @@ public class Stubs {
 
                     case Float:
                         CiRegister tmp = args[4].asRegister();
-                        arg4 =   new CiAddress(kind,ARMV7.RSP,((CiStackSlot)args[4]).index()*4);
-                        asm.setUpScratch(arg4);
                         if(tmp.number <=15)
-                        asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,tmp,ARMV7.r12,ARMV7.r12,0,0);
+                        asm.pop(ARMV7Assembler.ConditionFlag.Always,1<<tmp.number);
                         else {
-                            asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
-
-                            asm.vmov(ARMV7Assembler.ConditionFlag.Always,tmp,ARMV7.r12);
+                            asm.vpop(ARMV7Assembler.ConditionFlag.Always,tmp,tmp);
                         }
 
                     break;
@@ -1340,16 +1336,14 @@ public class Stubs {
                             // are in registers is all hazy so dont expect this to work first time.
                             // Aslo assumptions about index slot sizes are a bit broken and offsets as some types are bigger than
                             // 32bits --- long/double so multiplying by 4 will give an incorrect offset in general.
-                        arg4 = new    CiAddress(kind,ARMV7.RSP,((CiStackSlot)args[4]).index()*4);
                         // broken we need TWO registers so this needs VLDR!!!!!!!!!
                         System.err.println("Stubs --- we need VLDR");
-                        if(tmp2arg4.number <=15)
-                            asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,tmp2arg4,ARMV7.r12,ARMV7.r12,0,0);
-                        else {
-                            asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
-
-                            asm.vmov(ARMV7Assembler.ConditionFlag.Always,tmp2arg4,ARMV7.r12);
+                        if(tmp2arg4.number <=15)  {
+                            asm.pop(ARMV7Assembler.ConditionFlag.Always,(1<<tmp2arg4.number)| (1<< (tmp2arg4.number+1)));
+                        }else {
+                            asm.vpop(ARMV7Assembler.ConditionFlag.Always,tmp2arg4,tmp2arg4);
                         }
+
 
 
                     break;
@@ -1609,15 +1603,13 @@ public class Stubs {
                     case Float:
                         System.err.println("FLOAT");
                         CiRegister tmp = args[4].asRegister();
-                        arg4 =   new CiAddress(kind,ARMV7.RSP,((CiStackSlot)args[4]).index()*4);
-                        asm.setUpScratch(arg4);
-                        if(tmp.number <=15)
-                            asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,tmp,ARMV7.r12,ARMV7.r12,0,0);
-                        else {
-                            asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
 
-                            asm.vmov(ARMV7Assembler.ConditionFlag.Always,tmp,ARMV7.r12);
+                        if(tmp.number <=15)
+                            asm.push(ARMV7Assembler.ConditionFlag.Always,1<<tmp.number);
+                        else {
+                            asm.vpush(ARMV7Assembler.ConditionFlag.Always,tmp,tmp);
                         }
+
 
 
                         break;
@@ -1630,15 +1622,12 @@ public class Stubs {
                         // are in registers is all hazy so dont expect this to work first time.
                         // Aslo assumptions about index slot sizes are a bit broken and offsets as some types are bigger than
                         // 32bits --- long/double so multiplying by 4 will give an incorrect offset in general.
-                        arg4 = new    CiAddress(kind,ARMV7.RSP,((CiStackSlot)args[4]).index()*4);
                         // broken we need TWO registers so this needs VLDR!!!!!!!!!
                         System.err.println("Stubs --- we need VLDR");
                         if(tmp2arg4.number <=15)
-                            asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,tmp2arg4,ARMV7.r12,ARMV7.r12,0,0);
+                            asm.push(ARMV7Assembler.ConditionFlag.Always,(1<<tmp2arg4.number)|  (1<<(tmp2arg4.number+1)));
                         else {
-                            asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
-
-                            asm.vmov(ARMV7Assembler.ConditionFlag.Always,tmp2arg4,ARMV7.r12);
+                            asm.vpush(ARMV7Assembler.ConditionFlag.Always,tmp2arg4,tmp2arg4);
                         }
 
                         // aPN TODO this is broken beyond belief
