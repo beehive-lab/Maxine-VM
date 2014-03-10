@@ -51,7 +51,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     }
 
     public void testPatchJumpTarget() throws Exception {
-
+           System.err.println("test patch jump target TEST is not implemented!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
     }
     // public void adc(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int immed_8, final int rotate_amount)
 
@@ -119,6 +119,8 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         for(int j = 0; j < assemblerStatements;j++) {
             instructions[j] = asm.codeBuffer.getInt(j*4);
         }
+        ARMCodeWriter.debug = false;
+
         ARMCodeWriter code = new ARMCodeWriter(assemblerStatements,instructions);
         MaxineARMTester r = new MaxineARMTester(expected,tests,masks);
 
@@ -129,7 +131,46 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         r.objcopy();
         return r.runSimulation();
     }
-    public void testpushPOP() {
+    public void testMulSdivUdiv() {
+        /*
+        Cortex-a9 does not have a hardware integer divide unit we will need to replace this with a software
+        subroutine
+        int assemblerStatements = 15;
+        int i,instructions [] = new int [assemblerStatements];
+        initialiseExpectedValues();
+        setBitMasks(-1, MaxineARMTester.BitsFlag.All32Bits);
+        setTestValues(-1, false);
+        System.out.println("TESTING  MUL SDIV UDIV HIGH probability of bugs!!!");
+        asm.codeBuffer.reset();
+        for(i = 1; i < 8;i++) {  // 2*8= 16
+            testvalues[i-1] = true;
+            if(i%2 == 0)          {
+                expectedValues[i-1] = 2*i;
+            asm.mov32BitConstant(ARMV7.cpuRegisters[i-1], (int) i*2);
+            }else  {
+                expectedValues[i-1] = -i*2;
+                asm.mov32BitConstant(ARMV7.cpuRegisters[i-1], (int) -i*2);
+            }
+        }
+        // 1
+        asm.mul(ARMV7Assembler.ConditionFlag.Always,ARMV7.r8,ARMV7.r0,ARMV7.r1);
+        //asm.udiv(ARMV7Assembler.ConditionFlag.Always,ARMV7.r9,ARMV7.r5,ARMV7.r1); // 14/2 = 7
+        asm.sdiv(ARMV7Assembler.ConditionFlag.Always,ARMV7.r10,ARMV7.r5,ARMV7.r6); // -16/14
+        //asm.sdiv(ARMV7Assembler.ConditionFlag.Always,ARMV7.r10,ARMV7.r7,ARMV7.r5); // -16/-12
+
+
+
+        expectedValues[8] = -8;testvalues[8] = true;
+        //expectedValues[9] = 7;testvalues[9] = true;
+        expectedValues[10] = -1;testvalues[10] = true;
+        //expectedValues[11] = 1;testvalues[11] = true;
+
+
+        generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+          */
+
+    }
+    public void testVPUSHPOP() {
         int assemblerStatements = 37;
         int i,instructions [] = new int [assemblerStatements];
         initialiseExpectedValues();

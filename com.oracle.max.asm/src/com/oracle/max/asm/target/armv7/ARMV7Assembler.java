@@ -1159,7 +1159,8 @@ public class ARMV7Assembler extends AbstractAssembler {
         int mask = target.wordSize - 1;
         if ((dispStart & ~mask) != ((dispStart + 3) & ~mask)) {
             nop(target.wordSize - (dispStart & mask));
-            assert ((codeBuffer.position() + 1) & mask) == 0;
+            System.out.println("alignForPatchableDirectCall --- needs some attention");
+            //assert ((codeBuffer.position() + 1) & mask) == 0;
         }
 
     }
@@ -1714,6 +1715,41 @@ public class ARMV7Assembler extends AbstractAssembler {
             instruction |= (last.encoding - first.encoding +1)<<1;
 
         }
+        emitInt(instruction);
+
+    }
+    public final void mul(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
+        int instruction = (cond.value()&0xf)<<28;
+        instruction |= 0x00000090;
+
+        instruction |= (rm.encoding &0xf) <<8;
+        instruction |= (dest.encoding &0xf) <<16;
+        instruction |= (rn.encoding &0xf);
+
+        emitInt(instruction);
+
+    }
+    public final void sdiv(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
+        // A8.8.165
+        int instruction = (cond.value()&0xf)<<28;
+        instruction |= 0x0710f010;
+
+        instruction |= (rm.encoding &0xf) <<8;
+        instruction |= (dest.encoding &0xf) <<16;
+        instruction |= (rn.encoding &0xf);
+
+        emitInt(instruction);
+
+    }
+    public final void udiv(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
+        // A8.8.248
+        int instruction = (cond.value()&0xf)<<28;
+        instruction |= 0x0730f010;
+
+        instruction |= (rm.encoding &0xf) <<8;
+        instruction |= (dest.encoding &0xf) <<16;
+        instruction |= (rn.encoding &0xf);
+
         emitInt(instruction);
 
     }

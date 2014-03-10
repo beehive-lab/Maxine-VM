@@ -145,6 +145,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         return RuntimeCompiler.Nature.BASELINE;
     }
 
+
     public TargetMethod compile(ClassMethodActor method, boolean isDeopt, boolean install, CiStatistics stats) {
         T1X t1x = this;
         if (!MaxineVM.isHosted() && useVMTITemplates(method)) {

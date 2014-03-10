@@ -71,12 +71,12 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     public ARMV7T1XCompilation(T1X compiler) {
         super(compiler);
-	System.err.println("Creating ARMV7T1XCompilation");
+	System.out.println("Creating ARMV7T1XCompilation");
         asm = new ARMV7MacroAssembler(target(), null);
         buf = asm.codeBuffer;
-	System.err.println("code buffer created ");
+	System.out.println("code buffer created ");
         patchInfo = new PatchInfoARMV7();
-	System.err.println("patchInfo created");
+	System.out.println("patchInfo created");
     }
 
     @Override
