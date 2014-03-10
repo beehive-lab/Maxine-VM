@@ -479,17 +479,16 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
 
             System.out.printf("BYTE is %08X\n",codecopy[i]) ;
         }
-        System.err.println("T1X compileTemplate commented out C1X bootCompiler.compile");
+        /*System.err.println("T1X compileTemplate commented out C1X bootCompiler.compile");*/
         System.out.println("compiling  method " + templateSource.qualifiedName() + templateSource.isTemplate());
-        /*
+
         final MaxTargetMethod templateCode = (MaxTargetMethod) bootCompiler.compile(templateSource, false, true, null);
         FatalError.check(templateCode.scalarLiterals() == null, "Template must not have *any* scalar literals: " + templateCode);
         int frameSlots = Ints.roundUp(templateCode.frameSize(), STACK_SLOT_SIZE) / STACK_SLOT_SIZE;
         if (frameSlots > T1XTargetMethod.templateSlots) {
             T1XTargetMethod.templateSlots = frameSlots;
         }
-        */
-        MaxTargetMethod templateCode = new MaxTargetMethod(templateSource,null,false);
+
 
         return templateCode;
     }
