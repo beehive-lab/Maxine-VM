@@ -139,6 +139,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
            return t1XCompilationFactory.newT1XCompilation(T1X.this);
         }
     };
+    public T1XCompilation getT1XCompilationUNITTEST() { return compilation.get();}
 
     @Override
     public RuntimeCompiler.Nature nature() {

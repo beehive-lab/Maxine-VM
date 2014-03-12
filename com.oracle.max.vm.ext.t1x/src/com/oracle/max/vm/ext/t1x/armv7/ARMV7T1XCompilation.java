@@ -89,7 +89,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         }
         frame = new ARMV7JVMSFrameLayout(maxLocals, maxStack, maxParams, T1XTargetMethod.templateSlots());
     }
-
+    public ARMV7MacroAssembler getMacroAssemblerUNITTEST() {
+        return asm;
+    }
     @Override
     public void decStack(int numberOfSlots) {
         assert numberOfSlots > 0;

@@ -2430,7 +2430,7 @@ public abstract class T1XCompilation {
     }
 
     // APN for testing
-    public Buffer    getBuffer() {
+    /*public Buffer    getBuffer() {
         return buf;
-    }
+    } */
 }

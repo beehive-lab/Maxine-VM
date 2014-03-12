@@ -246,7 +246,7 @@ public class CompilationBroker {
 
     public static RuntimeCompiler instantiateCompiler(String name) {
         try {
-		System.out.println("instantiatng compiler instance "+ name);
+		System.out.println("instantiating compiler instance "+ name);
 
             return (RuntimeCompiler) Class.forName(name).newInstance();
         } catch (Exception e) {

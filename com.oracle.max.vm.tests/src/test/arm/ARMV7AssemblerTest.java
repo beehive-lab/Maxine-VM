@@ -1129,8 +1129,12 @@ public class ARMV7AssemblerTest extends MaxTestCase {
 
                 //value < 65536;value++) {
                 value = valueTestSet[j];
-                expectedValues[destReg] = ((long)value) << 16;
-                asm.movt(ARMV7Assembler.ConditionFlag.Always, ARMV7.cpuRegisters[destReg], value);
+                expectedValues[destReg] = ((long)(value&0xffff)) << 16;
+                if (expectedValues[destReg] >= 0x80000000L) {
+                    //System.out.println("negative ");
+                    expectedValues[destReg] = expectedValues[destReg] -0x100000000L;
+                }
+                asm.movt(ARMV7Assembler.ConditionFlag.Always, ARMV7.cpuRegisters[destReg], value&0xffff);
                 instructions[0] = asm.codeBuffer.getInt(0);
 
                 code = new ARMCodeWriter(1,instructions);
