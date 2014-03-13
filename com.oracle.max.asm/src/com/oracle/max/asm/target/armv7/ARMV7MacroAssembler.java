@@ -59,7 +59,6 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
          * Base & index would be registers.
          *
          */
-        pushq(src);
 
 
     }
@@ -255,6 +254,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void incrementl(CiRegister reg, int value) {
+        if(value == 0) return;
+
         movw(ConditionFlag.Always,ARMV7.r12,value&0xffff);
         movt(ConditionFlag.Always,ARMV7.r12,value&0xffff0000);
         add(ConditionFlag.Always,false,reg,ARMV7.r12,0,0);
@@ -277,6 +278,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void incrementl(CiAddress dst, int value) {
+        if(value == 0) return;
+
         /*if (value == Integer.MIN_VALUE) {
             addl(dst, value);
             return;
@@ -351,8 +354,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void movdbl(CiAddress dst, CiRegister src) {
-        /*assert src.isFpu();
-        movsd(dst, src);*/
+       /* assert src.isFpu();
+        movsd(dst, src); */
     }
 
     /**

@@ -47,6 +47,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     }
 
     public static void main(String[] args) {
+        System.out.println("ARMV7AssemblerTest commented out");
         junit.textui.TestRunner.run(ARMV7AssemblerTest.class);
     }
 
@@ -83,6 +84,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         }
         */
     }
+    public static boolean normalExecution = false; // turns off simulation
     private static int valueTestSet[] = {0,1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,
             32768,65535};
     private static long scratchTestSet[] = {0,1,0xff,0xffff,0xffffff,0xfffffff,0x00000000ffffffffL };
@@ -123,7 +125,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
 
         ARMCodeWriter code = new ARMCodeWriter(assemblerStatements,instructions);
         MaxineARMTester r = new MaxineARMTester(expected,tests,masks);
-
+        if(!normalExecution)return true;
         r.assembleStartup();
         r.assembleEntry();
         r.compile();
@@ -679,8 +681,9 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             testvalues[i] = true;
 
         }
+        generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
 
-        for(int j = 0; j < assemblerStatements;j++) {
+        /*for(int j = 0; j < assemblerStatements;j++) {
             instructions[j] = asm.codeBuffer.getInt(j*4);
         }
         ARMCodeWriter.debug = false;
@@ -694,7 +697,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         r.link();
         r.objcopy();
         r.runSimulation();
-
+        */
 
 
 
@@ -735,7 +738,8 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             }
 
         }
-
+        generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
+        /*
         for(int j = 0; j < assemblerStatements;j++) {
             instructions[j] = asm.codeBuffer.getInt(j*4);
         }
@@ -750,7 +754,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         r.link();
         r.objcopy();
         r.runSimulation();
-
+        */
 
 
 
@@ -788,7 +792,8 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                 );
 
         }
-
+        generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
+        /*
         for(int j = 0; j < assemblerStatements;j++) {
             instructions[j] = asm.codeBuffer.getInt(j*4);
         }
@@ -803,7 +808,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         r.link();
         r.objcopy();
         r.runSimulation();
-
+        */
 
 
 
@@ -836,7 +841,9 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                 testvalues[i-1] = false;
                 testvalues[i-2] = false;
             }
-            for(int j = 0; j < 10;j++) {
+            generateAndTest(10,expectedValues,testvalues,bitmasks);
+
+            /*for(int j = 0; j < 10;j++) {
                  instructions[j] = asm.codeBuffer.getInt(j*4);
             }
             ARMCodeWriter.debug = false;
@@ -850,7 +857,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             r.link();
             r.objcopy();
             r.runSimulation();
-
+            */
 
         }
 
@@ -890,7 +897,9 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                 else
                     expectedValues[i] = (long) (i+1);
             }
-            for(i = 0; i < (2*13+1+13+1);i++) instructions[i] = asm.codeBuffer.getInt(i*4);
+            generateAndTest(41,expectedValues,testvalues,bitmasks);
+
+            /*for(i = 0; i < (2*13+1+13+1);i++) instructions[i] = asm.codeBuffer.getInt(i*4);
 
             ARMCodeWriter.debug = false;
             code = new ARMCodeWriter(41,instructions);
@@ -908,7 +917,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                 System.err.println(e);
                 e.printStackTrace();
                 System.exit(-1);
-            }
+            } */
 
         }
         ARMCodeWriter.debug = false;
@@ -951,8 +960,9 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                         expectedValues[destReg] = scratchTestSet[i] -0x100000000L;
                     }
                     else expectedValues[destReg] = scratchTestSet[i];
+                    generateAndTest(3,expectedValues,testvalues,bitmasks);
 
-
+                /*
                     //System.out.println("SRCREG " + srcReg+ " DESTREG " + destReg + " EXPECT " + expectedValues[destReg]);
 
                     //ARMCodeWriter.debug = true;
@@ -964,7 +974,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                     r.compile();
                     r.link();
                     r.objcopy();
-                    r.runSimulation();
+                    r.runSimulation();  */
                 }
                if(destReg == 2)testvalues[2] = false;
            }
@@ -1047,7 +1057,8 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             }
 
             setBitMasks(16,MaxineARMTester.BitsFlag.NZCBits);
-
+            generateAndTest(4,expectedValues,testvalues,bitmasks);
+            /*
             for(i = 0; i < 4;i++) {instructions[i] =  asm.codeBuffer.getInt(i*4);
               //  System.out.println("INSTRUCTION in HEX " + Integer.toString(instructions[i],16));
             }
@@ -1060,7 +1071,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             r.compile();
             r.link();
             r.objcopy();
-            r.runSimulation();
+            r.runSimulation();*/
             mask = mask | (mask + 1);
         }
 
@@ -1089,6 +1100,9 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                  value = valueTestSet[j];
                  expectedValues[destReg] = value;
                  asm.movw(ARMV7Assembler.ConditionFlag.Always,ARMV7.cpuRegisters[destReg],value);
+                 generateAndTest(1,expectedValues,testvalues,bitmasks);
+
+                 /*
                  instructions[0] = asm.codeBuffer.getInt(0);
 
 
@@ -1101,7 +1115,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
 	             r.link();
 	             r.objcopy();
 	             r.runSimulation();
-
+                 */
                  assertTrue(asm.codeBuffer.getInt(0) == (0x03000000 | (ARMV7Assembler.ConditionFlag.Always.value() <<28) |(destReg << 12)| (value & 0xfff) | ((value & 0xf000) << 4)));
                  asm.codeBuffer.reset();
             }
@@ -1135,7 +1149,9 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                     expectedValues[destReg] = expectedValues[destReg] -0x100000000L;
                 }
                 asm.movt(ARMV7Assembler.ConditionFlag.Always, ARMV7.cpuRegisters[destReg], value&0xffff);
-                instructions[0] = asm.codeBuffer.getInt(0);
+                generateAndTest(1,expectedValues,testvalues,bitmasks);
+
+                /*instructions[0] = asm.codeBuffer.getInt(0);
 
                 code = new ARMCodeWriter(1,instructions);
                 MaxineARMTester r = new MaxineARMTester(expectedValues,testvalues,bitmasks);
@@ -1145,7 +1161,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                 r.link();
                 r.objcopy();
                 r.runSimulation();
-
+                */
                 assertTrue(asm.codeBuffer.getInt(0) == (0x03400000 | (ARMV7Assembler.ConditionFlag.Always.value() <<28) |(destReg << 12)| (value & 0xfff) | ((value & 0xf000) << 4)));
                 asm.codeBuffer.reset();
             }

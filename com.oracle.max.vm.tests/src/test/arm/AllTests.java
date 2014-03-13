@@ -40,7 +40,7 @@ public final class AllTests {
     public static Test suite() {
         final TestSuite suite = new TestSuite(AllTests.class.getPackage().getName());
         suite.addTestSuite(ARMV7T1XTest.class);
-        //suite.addTestSuite(ARMV7AssemblerTest.class);
+        suite.addTestSuite(ARMV7AssemblerTest.class);
 
         return new TestCaseClassSet(AllTests.class).toTestSuite();
     }

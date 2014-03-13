@@ -1743,6 +1743,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
     public final void udiv(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
         // A8.8.248
+        // TODO we need a subroutine for this as most of the ARM hardware we have will not
+        // have a hardware integer unit, so the instruction will be undefined/not implemented.
         int instruction = (cond.value()&0xf)<<28;
         instruction |= 0x0730f010;
 
