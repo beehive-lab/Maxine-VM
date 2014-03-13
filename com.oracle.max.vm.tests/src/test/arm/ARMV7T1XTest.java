@@ -207,9 +207,27 @@ public class ARMV7T1XTest  extends MaxTestCase {
         public void testDecStack() throws Exception {
 //TODO: Test goes here...
             //int i,instructions [] = new int [assemblerStatements];
+            int assemblerStatements;
+            int instructions [] = null;
+            long []registerValues = null;
 
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssemblerUNITTEST();
+            theCompiler.incStack(3);
+            masm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r0,ARMV7.r13); // copy stack value into r0
+            theCompiler.decStack(1);
+            masm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r1,ARMV7.r13); // copy stack value onto r1
             theCompiler.decStack(2);
-            System.out.println("ARMV7T1XTest T1XT1XT1X");
+            masm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r2,ARMV7.r13);
+
+            assemblerStatements =  masm.codeBuffer.position()/4;
+            instructions = new int [assemblerStatements];
+
+            registerValues  = generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
+            for(int i = 0; i < 16;i++) {
+                System.out.println("REGISTER " + i + " VALUE " + registerValues[i]) ;
+                assert(2*(registerValues[1]-registerValues[0]) == (registerValues[2]-registerValues[1]));
+            }
+            System.out.println("decStack passed");
 
         }
 
@@ -219,7 +237,6 @@ public class ARMV7T1XTest  extends MaxTestCase {
          *
          */
         public void testIncStack() throws Exception {
-//TODO: Test goes here...
             int assemblerStatements;
             int instructions [] = null;
             long []registerValues = null;
@@ -237,7 +254,7 @@ public class ARMV7T1XTest  extends MaxTestCase {
             registerValues  = generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
             for(int i = 0; i < 16;i++) {
                 System.out.println("REGISTER " + i + " VALUE " + registerValues[i]) ;
-                assert(2*(registerValues[0]-registerValues[1]) == (registerValues[1]-registeValues[2]));
+                assert(2*(registerValues[0]-registerValues[1]) == (registerValues[1]-registerValues[2]));
             }
             System.out.println("incStack passed");
 
@@ -251,7 +268,51 @@ public class ARMV7T1XTest  extends MaxTestCase {
          *
          */
         public void testAdjustReg() throws Exception {
-//TODO: Test goes here...
+// adjustReg is protected but it directly calls incrementl.
+            int assemblerStatements;
+            int instructions [] = null;
+            long []registerValues = null;
+
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssemblerUNITTEST();
+            masm.mov32BitConstant(ARMV7.r0,0);
+            masm.mov32BitConstant(ARMV7.r1,1);
+            masm.mov32BitConstant(ARMV7.r2,Integer.MIN_VALUE);
+            masm.mov32BitConstant(ARMV7.r3,Integer.MAX_VALUE);
+            masm.mov32BitConstant(ARMV7.r4,0);
+            masm.mov32BitConstant(ARMV7.r5,0);
+            masm.incrementl(ARMV7.r0,1);
+            masm.incrementl(ARMV7.r1,-1);
+            masm.incrementl(ARMV7.r2,-1);
+            masm.incrementl(ARMV7.r3,1);
+            masm.incrementl(ARMV7.r4,Integer.MAX_VALUE);
+            masm.incrementl(ARMV7.r5,0);
+            masm.mov32BitConstant(ARMV7.r6,-10);
+            masm.incrementl(ARMV7.r6,-1);
+
+
+            assemblerStatements =  masm.codeBuffer.position()/4;
+            instructions = new int [assemblerStatements];
+
+            registerValues  = generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
+            for(int i = 0; i < 16;i++) {
+                System.out.println("REGISTER " + i + " VALUE " + registerValues[i]) ;
+
+            }
+            expectedValues[0] = 1;  // 0+1 = 1
+            expectedValues[1] = 0;  // 1 + -1 = 0
+            expectedValues[2] = Integer.MAX_VALUE;  // MIN + -1 = MAX
+            expectedValues[3] = Integer.MIN_VALUE; // MAX + 1 = MIN
+            expectedValues[4] = Integer.MAX_VALUE;
+            expectedValues[5] = 0;
+            expectedValues[6] = -11;
+            for(int i = 0; i < 7;i++)   {
+                          if(registerValues[i] != expectedValues[i]) {
+                              System.out.println("REGISTER " + i + " " + registerValues[i] + " EXPECTED " + expectedValues[i]);
+                          } else { System.out.println("REGISTER " + i + " AS EXPECTED");}
+            }
+            System.out.println("testadjustReg passed");
+
+
         }
 
         /**

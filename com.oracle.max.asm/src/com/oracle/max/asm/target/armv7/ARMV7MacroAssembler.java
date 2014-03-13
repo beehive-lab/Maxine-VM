@@ -256,9 +256,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public void incrementl(CiRegister reg, int value) {
         if(value == 0) return;
 
-        movw(ConditionFlag.Always,ARMV7.r12,value&0xffff);
-        movt(ConditionFlag.Always,ARMV7.r12,value&0xffff0000);
-        add(ConditionFlag.Always,false,reg,ARMV7.r12,0,0);
+        addq(reg,value);
         /*if (value == Integer.MIN_VALUE) {
             addl(reg, value);
             return;
