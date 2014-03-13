@@ -1,0 +1,286 @@
+/localhome/andyn/MAXINE/HOTSPOT/jdk1.7.0_45/bin/java -d64 -ea -Xss2m -Xmx1g -cp .:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.api.runtime/bin:/localhome/andyn/MAXINE/Current/graal/lib/junit-4.8.jar:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.test/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.api.meta/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.api.code/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.asm/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.asm.test/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.amd64/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.asm.amd64/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.asm.amd64.test/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.base/bin:/localhome/andyn/MAXINE/HOTSPOT/jdk1.7.0_45/lib/tools.jar:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.cri/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.criutils/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.asm/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.vm/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.asmdis/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.hcfdis/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.vm.ext.maxri/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.graph/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.debug/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.api.replacements/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.nodes/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.options/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.phases/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.phases.common/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.virtual/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.loop/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.alloc/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.lir/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.compiler/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.bytecode/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.java/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.word/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.replacements/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.java.decompiler/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.printer/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.hotspot/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.asm.ptx/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.lir.ptx/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.compiler.ptx/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.c1x/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.vm.ext.c1x/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.hsail/bin:/localhome/andyn/MAXINE/Current/graal/lib/okra-1.2.jar:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.asm.hsail/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.lir.hsail/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.lir.amd64/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.compiler.amd64/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.replacements.amd64/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.hotspot.amd64/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.compiler.hsail/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.compiler.test/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.jtt/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.truffle.api/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.truffle.api.dsl/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.truffle.api.dsl.test/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.vmdi/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.truffle.printer/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.truffle/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.truffle.test/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.sparc/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.vm.ext.t1x/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.vm.ext.jvmti/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.vm.ext.graal/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.vm.ext.vma/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.compiler.hsail.test.infra/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.compiler.hsail.test/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.java.decompiler.test/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.tests/jasmin_classes:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.tests/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.vm.tests/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.armport/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.compiler.amd64.test/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.replacements.test/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.hotspot.test/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.tests.jsr292/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.vm.ext.c1xgraal/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.api.meta.test/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.tools/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.nodes.test/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.truffle.dsl.processor/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.replacements.verifier/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.vm.ext.bctrans/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.jdwp/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.elf/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.tele.vm/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.tele.ins/jlfgr-1_0.jar:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.tele.ins/NB3B.jar:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.tele.ins/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.asm.sparc/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.lir.sparc/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.compiler.sparc/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.hotspot.sparc/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.ptx/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.compiler.ptx.test/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.tele.jdwp/bin:/localhome/andyn/MAXINE/Current/maxine/com.oracle.max.vma.tools/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.service.processor/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.truffle.api.test/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.compiler.sparc.test/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.graph.test/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.truffle.sl/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.truffle.sl.test/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.hotspot.amd64.test/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.hotspot.server/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.debug.test/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.api.test/bin:/localhome/andyn/MAXINE/Current/graal/graal/com.oracle.graal.hotspot.jdk8.test/bin com.oracle.max.vm.ext.maxri.Compile -c=T1X -trace=1 -T1X:+TraceMethods -T1X:+PrintCompilation Helloworld
+OVERRIDDEN getProperty for isa and cpu for ARM Platform.java
+instantiatng compiler instance com.oracle.max.vm.ext.c1x.C1X
+C1X-two
+C1X-one
+instantiatng compiler instance com.oracle.max.vm.ext.t1x.T1X
+Initializing Java prototype... ======================== VM Configuration ========================
+Build level: PRODUCT
+Reference scheme: com.sun.max.vm.reference.direct.DirectReferenceScheme
+Layout scheme: com.sun.max.vm.layout.ohm.OhmLayoutScheme
+Monitor scheme: com.sun.max.vm.monitor.modal.schemes.thin_inflated.ThinInflatedMonitorScheme
+Heap scheme: com.sun.max.vm.heap.sequential.gen.semiSpace.GenSSHeapScheme
+Run scheme: com.sun.max.vm.run.java.JavaRunScheme
+Optimizing compiler: C1X
+Baseline compiler: T1X
+JDK: 1.7.0_45
+==================================================================
+<Trace 1> loading: com.sun.max.vm.reference.direct
+<Trace 1> loading: com.sun.max.vm.layout.ohm
+<Trace 1> loading: com.sun.max.vm.heap.sequential.gen.semiSpace
+<Trace 1> loading: com.sun.max.vm.monitor.modal.schemes.thin_inflated
+<Trace 1> loading: com.sun.max.vm.run.java
+FIX REQUIRED for DOUBLE  getCallingConvention
+FIX REQUIRED for DOUBLE  getCallingConvention
+FIX REQUIRED for DOUBLE  getCallingConvention
+FIX REQUIRED for DOUBLE  getCallingConvention
+DOUBLE needs 2 register  getCallingConvention
+LONG needs 2 register  getCallingConvention
+FIX REQUIRED for DOUBLE  getCallingConvention
+FIX REQUIRED for DOUBLE  getCallingConvention
+FIX REQUIRED for DOUBLE  getCallingConvention
+FIX REQUIRED for DOUBLE  getCallingConvention
+DOUBLE needs 2 register  getCallingConvention
+<Trace 1> Substitutee for public static java.lang.Class[] com.sun.max.vm.jdk.JDK_java_util_ResourceBundle.getClassContext() not found - skipping
+<Trace 1> Substitutee for private java.lang.Class com.sun.max.vm.jdk.JDK_java_lang_ClassLoader.defineClass1(java.lang.String,byte[],int,int,java.security.ProtectionDomain,java.lang.String,boolean) not found - skipping
+<Trace 1> Substitutee for private java.lang.Class com.sun.max.vm.jdk.JDK_java_lang_ClassLoader.defineClass2(java.lang.String,java.nio.ByteBuffer,int,int,java.security.ProtectionDomain,java.lang.String,boolean) not found - skipping
+<Trace 1> loading: com.oracle.max.asm
+<Trace 1> loading: com.oracle.max.asm.target.amd64
+<Trace 1> loading: com.oracle.max.asm.target.armv7
+<Trace 1> loading: com.oracle.max.asm.target.armv7_real
+<Trace 1> loading: com.oracle.max.cri
+<Trace 1> loading: com.oracle.max.cri.intrinsics
+<Trace 1> loading: com.oracle.max.criutils
+<Trace 1> loading: com.oracle.max.vm.ext.c1x
+<Trace 1> loading: com.oracle.max.vm.ext.jjvmti
+<Trace 1> loading: com.oracle.max.vm.ext.maxri
+<Trace 1> loading: com.oracle.max.vm.ext.t1x
+<Trace 1> loading: com.oracle.max.vm.ext.t1x.armv7
+<Trace 1> loading: com.oracle.max.vm.ext.t1x.jvmti
+<Trace 1> loading: com.oracle.max.vm.ext.t1x.jvmti.amd64
+<Trace 1> loading: com.sun.c1x
+<Trace 1> loading: com.sun.c1x.alloc
+<Trace 1> loading: com.sun.c1x.asm
+<Trace 1> loading: com.sun.c1x.debug
+<Trace 1> loading: com.sun.c1x.gen
+<Trace 1> loading: com.sun.c1x.graph
+<Trace 1> loading: com.sun.c1x.intrinsics
+<Trace 1> loading: com.sun.c1x.ir
+<Trace 1> loading: com.sun.c1x.lir
+<Trace 1> loading: com.sun.c1x.observer
+<Trace 1> loading: com.sun.c1x.opt
+<Trace 1> loading: com.sun.c1x.stub
+<Trace 1> loading: com.sun.c1x.target
+<Trace 1> loading: com.sun.c1x.target.amd64
+<Trace 1> loading: com.sun.c1x.target.armv7
+<Trace 1> loading: com.sun.c1x.target.sparc
+<Trace 1> loading: com.sun.c1x.util
+<Trace 1> loading: com.sun.c1x.value
+<Trace 1> loading: com.sun.cri
+<Trace 1> loading: com.sun.cri.bytecode
+<Trace 1> loading: com.sun.cri.ci
+<Trace 1> loading: com.sun.cri.ri
+<Trace 1> loading: com.sun.cri.xir
+<Trace 1> loading: com.sun.max
+<Trace 1> loading: com.sun.max.annotate
+<Trace 1> loading: com.sun.max.atomic
+<Trace 1> loading: com.sun.max.collect
+<Trace 1> loading: com.sun.max.config
+<Trace 1> loading: com.sun.max.config.base
+<Trace 1> loading: com.sun.max.config.c1x
+<Trace 1> loading: com.sun.max.config.jdk
+<Trace 1> loading: com.sun.max.config.maxri
+<Trace 1> loading: com.sun.max.config.test
+<Trace 1> loading: com.sun.max.config.vm
+<Trace 1> loading: com.sun.max.io
+<Trace 1> loading: com.sun.max.lang
+<Trace 1> loading: com.sun.max.memory
+<Trace 1> loading: com.sun.max.platform
+<Trace 1> loading: com.sun.max.profile
+<Trace 1> loading: com.sun.max.program
+<Trace 1> loading: com.sun.max.program.option
+<Trace 1> loading: com.sun.max.unsafe
+<Trace 1> loading: com.sun.max.util
+<Trace 1> loading: com.sun.max.util.timer
+<Trace 1> loading: com.sun.max.vm
+<Trace 1> loading: com.sun.max.vm.actor
+<Trace 1> loading: com.sun.max.vm.actor.holder
+<Trace 1> loading: com.sun.max.vm.actor.member
+<Trace 1> loading: com.sun.max.vm.bytecode
+<Trace 1> loading: com.sun.max.vm.bytecode.graft
+<Trace 1> loading: com.sun.max.vm.bytecode.refmaps
+<Trace 1> loading: com.sun.max.vm.classfile
+<Trace 1> loading: com.sun.max.vm.classfile.constant
+<Trace 1> loading: com.sun.max.vm.classfile.stackmap
+<Trace 1> loading: com.sun.max.vm.code
+<Trace 1> loading: com.sun.max.vm.collect
+<Trace 1> loading: com.sun.max.vm.compiler
+<Trace 1> loading: com.sun.max.vm.compiler.deopt
+<Trace 1> loading: com.sun.max.vm.compiler.deps
+<Trace 1> loading: com.sun.max.vm.compiler.target
+<Trace 1> loading: com.sun.max.vm.compiler.target.arm
+<Trace 1> loading: com.sun.max.vm.debug
+<Trace 1> loading: com.sun.max.vm.ext.jvmti
+<Trace 1> loading: com.sun.max.vm.heap
+<Trace 1> loading: com.sun.max.vm.heap.debug
+<Trace 1> loading: com.sun.max.vm.heap.sequential
+<Trace 1> loading: com.sun.max.vm.heap.sequential.gen.semiSpace
+<Trace 1> loading: com.sun.max.vm.instrument
+<Trace 1> loading: com.sun.max.vm.jdk
+<Trace 1> loading: com.sun.max.vm.jdk.unix
+<Trace 1> loading: com.sun.max.vm.jni
+<Trace 1> loading: com.sun.max.vm.layout
+<Trace 1> loading: com.sun.max.vm.layout.ohm
+<Trace 1> loading: com.sun.max.vm.log
+<Trace 1> loading: com.sun.max.vm.log.hosted
+<Trace 1> loading: com.sun.max.vm.log.nat
+<Trace 1> loading: com.sun.max.vm.log.nat.thread
+<Trace 1> loading: com.sun.max.vm.log.nat.thread.var
+<Trace 1> loading: com.sun.max.vm.log.nat.thread.var.std
+<Trace 1> loading: com.sun.max.vm.management
+<Trace 1> loading: com.sun.max.vm.monitor
+<Trace 1> loading: com.sun.max.vm.monitor.modal
+<Trace 1> loading: com.sun.max.vm.monitor.modal.modehandlers
+<Trace 1> loading: com.sun.max.vm.monitor.modal.modehandlers.inflated
+<Trace 1> loading: com.sun.max.vm.monitor.modal.modehandlers.lightweight
+<Trace 1> loading: com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased
+<Trace 1> loading: com.sun.max.vm.monitor.modal.modehandlers.lightweight.thin
+<Trace 1> loading: com.sun.max.vm.monitor.modal.modehandlers.observer
+<Trace 1> loading: com.sun.max.vm.monitor.modal.schemes
+<Trace 1> loading: com.sun.max.vm.monitor.modal.schemes.thin_inflated
+<Trace 1> loading: com.sun.max.vm.monitor.modal.sync
+<Trace 1> loading: com.sun.max.vm.monitor.modal.sync.nat
+<Trace 1> loading: com.sun.max.vm.object
+<Trace 1> loading: com.sun.max.vm.profile
+<Trace 1> loading: com.sun.max.vm.profilers.sampling
+<Trace 1> loading: com.sun.max.vm.reference
+<Trace 1> loading: com.sun.max.vm.reference.direct
+<Trace 1> loading: com.sun.max.vm.reflection
+<Trace 1> loading: com.sun.max.vm.run
+<Trace 1> loading: com.sun.max.vm.run.java
+<Trace 1> loading: com.sun.max.vm.runtime
+<Trace 1> loading: com.sun.max.vm.runtime.arm
+<Trace 1> loading: com.sun.max.vm.stack
+<Trace 1> loading: com.sun.max.vm.stack.armv7
+<Trace 1> loading: com.sun.max.vm.tele
+<Trace 1> loading: com.sun.max.vm.test
+<Trace 1> loading: com.sun.max.vm.thread
+<Trace 1> loading: com.sun.max.vm.ti
+<Trace 1> loading: com.sun.max.vm.type
+<Trace 1> loading: com.sun.max.vm.value
+<Trace 1> loading: com.sun.max.vm.verifier
+<Trace 1> loading: com.sun.max.vm.verifier.types
+<Trace 1> loading: java.lang
+<Trace 1> loading: java.lang.ref
+<Trace 1> loading: java.lang.reflect
+C1X-initialize
+C!X-init finished
+done
+Compile.java CompilationBroker created NAME com.oracle.max.vm.ext.t1x.T1X
+C1X-initialize
+C1X ARMV7Backend created
+C1XCompiler created
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+FIX REQUIRED for DOUBLE  getCallingConvention
+FIX REQUIRED for DOUBLE  getCallingConvention
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+FIX REQUIRED for DOUBLE  getCallingConvention
+FIX REQUIRED for DOUBLE  getCallingConvention
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+FIX REQUIRED for DOUBLE  getCallingConvention
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+FIX REQUIRED for DOUBLE  getCallingConvention
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+FIX REQUIRED for DOUBLE  getCallingConvention
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+C1X TargetMethodAssembler
+FIX REQUIRED for DOUBLE  getCallingConvention
+C!X-init finished
+<Trace 1> BEGIN: creating T1X templates from com.oracle.max.vm.ext.t1x.T1XTemplateSource
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+REMOVE ARM PORT HACK LinearScan.java::pdAddTemps compilation.target.arch.isARM addition to assert
+REMOVE ARM PORT HACK LinearScan.java::pdAddTemps compilation.target.arch.isARM addition to assert
+REMOVE ARM PORT HACK LinearScan.java::pdAddTemps compilation.target.arch.isARM addition to assert
+REMOVE ARM PORT HACK LinearScan.java::pdAddTemps compilation.target.arch.isARM addition to assert
+REMOVE ARM PORT HACK LinearScan.java::pdAddTemps compilation.target.arch.isARM addition to assert
+C1X TargetMethodAssembler
+com.oracle.max.c1x/src/com/sun/c1x C1X created
+please remove the || isARM and fill in LIRItem:loadNonconstant
+please remove the || isARM and fill in LIRItem:loadNonconstant
+please remove the || isARM and fill in LIRItem:loadNonconstant
+please remove the || isARM and fill in LIRItem:loadNonconstant
+Exception in thread "main" com.sun.cri.ci.CiBailout: Exception while compiling: com.oracle.max.vm.ext.t1x.T1XTemplateSource.monitorexit(Object)
+	at com.sun.c1x.C1XCompilation.compile(C1XCompilation.java:231)
+	at com.sun.c1x.C1XCompiler.compileMethod(C1XCompiler.java:107)
+	at com.oracle.max.vm.ext.c1x.C1X.compile(C1X.java:261)
+	at com.oracle.max.vm.ext.t1x.T1X.compileTemplate(T1X.java:471)
+	at com.oracle.max.vm.ext.t1x.T1X.createTemplates(T1X.java:418)
+	at com.oracle.max.vm.ext.t1x.T1X.initialize(T1X.java:349)
+	at com.oracle.max.vm.ext.maxri.Compile.main(Compile.java:175)
+Caused by: java.lang.AssertionError: using fixed register that is not defined in this block
+	at com.sun.c1x.alloc.LinearScan.verifyInput(LinearScan.java:740)
+	at com.sun.c1x.alloc.LinearScan.computeLocalLiveSets(LinearScan.java:637)
+	at com.sun.c1x.alloc.LinearScan.allocate(LinearScan.java:2263)
+	at com.sun.c1x.C1XCompilation.emitLIR(C1XCompilation.java:268)
+	at com.sun.c1x.C1XCompilation.compile(C1XCompilation.java:222)
+	... 6 more
+[exit code: 1]

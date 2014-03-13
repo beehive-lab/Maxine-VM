@@ -1,0 +1,157 @@
+/*package test.arm;
+
+
+
+import static com.oracle.max.cri.intrinsics.IntrinsicIDs.*;
+import static com.oracle.max.vm.ext.t1x.T1XOptions.*;
+import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.compiler.target.Safepoints.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+import static com.sun.max.vm.stack.VMFrameLayout.*;
+
+import java.io.*;
+import java.lang.reflect.*;
+import java.util.*;
+
+import com.oracle.max.criutils.*;
+import com.oracle.max.vm.ext.maxri.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.CiCallingConvention.Type;
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiUtil.RefMapFormatter;
+import com.sun.cri.ri.*;
+import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
+import com.sun.max.platform.*;
+import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.bytecode.*;
+import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.heap.debug.*;
+import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.layout.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.*;
+import com.sun.max.vm.ti.*;
+import com.sun.max.vm.type.*;
+import com.sun.max.vm.verifier.*;
+
+import com.oracle.max.vm.ext.maxri.*;
+import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
+import static com.sun.max.vm.MaxineVM.*;
+import com.sun.max.annotate.HOSTED_ONLY;
+
+import java.util.*;
+
+import com.oracle.max.vm.ext.t1x.*;
+import static com.oracle.max.asm.target.armv7.ARMV7.*;
+import com.oracle.max.asm.Buffer;
+import com.oracle.max.vm.ext.t1x.T1X;
+import com.oracle.max.vm.ext.t1x.armv7.*;
+import com.sun.max.ide.MaxTestCase;
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.classfile.ErrorContext.*;
+import static com.sun.max.vm.compiler.target.Safepoints.*;
+import static com.sun.max.vm.stack.JVMSFrameLayout.*;
+import static com.oracle.max.asm.target.armv7.ARMV7.*;
+import static com.sun.max.vm.classfile.ErrorContext.*;
+import static com.sun.max.vm.compiler.target.Safepoints.*;
+import static com.sun.max.vm.stack.JVMSFrameLayout.*;
+
+import java.util.*;
+import com.oracle.max.asm.target.amd64.AMD64;
+import com.oracle.max.asm.target.armv7.*;
+import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
+import com.oracle.max.cri.intrinsics.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiAddress.Scale;
+import com.sun.cri.ci.CiTargetMethod.JumpTable;
+import com.sun.cri.ci.CiTargetMethod.LookupTable;
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.*;
+import com.sun.max.vm.stack.armv7.*;
+import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
+
+                      */
+/**
+ * Created with IntelliJ IDEA.
+ * User: andyn
+ * Date: 03/02/14
+ * Time: 13:19
+ * To change this template use File | Settings | File Templates.
+ */ /*
+public class ARMV7T1XCompilationTest extends MaxTestCase {
+    ARMV7Assembler asm;
+    CiTarget armv7;
+    static CompilationBroker broker;
+
+    static ARMV7T1XCompilation armv7T1X;
+
+    public ARMV7T1XCompilationTest() {
+        T1X obj = new T1X()                ;
+        System.err.println("Starting ARMV7T1XCompilationTest");
+        System.err.println("Creating compilation broker");
+        broker = CompilationBroker.create();
+        System.err.println("initializing broker");
+        broker.initialize(MaxineVM.Phase.HOSTED_COMPILING);
+        System.out.println("broker initialised");
+        broker.addCompiler(new String("T1X"),new String("ARMV7T1XCompilation.class"));
+        RuntimeCompiler xx = broker.baselineCompiler;
+        System.err.println("got the compiler ...") ;
+        armv7T1X = (ARMV7T1XCompilation)xx;
+        try {
+        testAssignLong();
+        }catch (Exception e) {
+            System.err.println(e);
+        }
+    }
+    public static void main(String []args) {
+        System.err.println("in MAIN");
+        System.err.println("Starting ARMV7T1XCompilationTest");
+        System.err.println("Creating compilation broker");
+        broker = CompilationBroker.create();
+        System.err.println("initializing broker");
+        broker.initialize(MaxineVM.Phase.HOSTED_COMPILING);
+        System.out.println("broker initialised");
+        junit.textui.TestRunner.run(ARMV7T1XCompilationTest.class);
+    }
+    public boolean simulate(Buffer code) {
+        System.err.println("in simulate");
+        for(int i = 0; i < code.position();i++)
+              System.out.println(code.getByte(i));
+
+        return true;
+
+    }
+    public void testAssignLong() throws Exception {
+        System.err.println("in testAssignLong");
+         long value;
+        value = Long.MAX_VALUE;
+       armv7T1X.assignmentTests(ARMV7.r0, value);
+        assertTrue("Test",simulate(armv7T1X.getBuffer()));
+         // We need to reset the buffer? etc
+        value = Long.MIN_VALUE;
+        armv7T1X.assignmentTests(ARMV7.r0, value);
+
+        assertTrue("Test",simulate(armv7T1X.getBuffer()));
+    }
+}
+       */
+
