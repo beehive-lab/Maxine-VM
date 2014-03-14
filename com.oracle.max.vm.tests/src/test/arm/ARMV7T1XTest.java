@@ -269,6 +269,7 @@ public class ARMV7T1XTest  extends MaxTestCase {
          */
         public void testAdjustReg() throws Exception {
 // adjustReg is protected but it directly calls incrementl.
+            boolean success = true;
             int assemblerStatements;
             int instructions [] = null;
             long []registerValues = null;
@@ -308,8 +309,10 @@ public class ARMV7T1XTest  extends MaxTestCase {
             for(int i = 0; i < 7;i++)   {
                           if(registerValues[i] != expectedValues[i]) {
                               System.out.println("REGISTER " + i + " " + registerValues[i] + " EXPECTED " + expectedValues[i]);
+                               success = false;
                           } else { System.out.println("REGISTER " + i + " AS EXPECTED");}
             }
+            assert(success = true);
             System.out.println("testadjustReg passed");
 
 

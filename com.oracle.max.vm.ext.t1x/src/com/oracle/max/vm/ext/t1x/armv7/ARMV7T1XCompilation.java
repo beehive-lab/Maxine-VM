@@ -178,31 +178,42 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     public void peekDouble(CiRegister dst, int index) {
         //asm.movdbl(dst, spLong(index));
         // APN if we use coporocessor REGS then we need to use Coprocesor asm
+        assert(dst.isFpu());
+        assert((dst.number <= ARMV7.d15.number) && (dst.number >= ARMV7.d0.number)); // must be double
         asm.setUpScratch(spLong(index));
-        asm.ldr(ConditionFlag.Always,0,0,0,dst,asm.scratchRegister,ARMV7.r0,0,0);
-
+        asm.vldr(ARMV7Assembler.ConditionFlag.Always, dst, asm.scratchRegister, 0);
 
     }
 
     @Override
     public void pokeDouble(CiRegister src, int index) {
         //asm.movdbl(spLong(index), src);
+        assert(src.isFpu()); // APN might not be strictly necessary, it could have been moved into a core
+                            // register but we could make it so that any move to core means there has been
+                            // a VCVT operation?
+        assert((src.number <= ARMV7.d15.number) && (src.number >= ARMV7.d0.number)); // must be double
         asm.setUpScratch(spLong(index));
-        asm.str(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,ARMV7.r0,0,0);
+        asm.vstr(ARMV7Assembler.ConditionFlag.Always, src, asm.scratchRegister, 0) ;
+
     }
 
     @Override
     public void peekFloat(CiRegister dst, int index) {
+        assert(dst.isFpu());
+        assert((dst.number <= ARMV7.s31.number) && (dst.number >= ARMV7.s0.number)); // must be double
+
         asm.setUpScratch(spInt(index));
-        asm.ldr(ConditionFlag.Always,0,0,0,dst,asm.scratchRegister,ARMV7.r0,0,0);
+        asm.vldr(ConditionFlag.Always,dst,asm.scratchRegister,0);
         //asm.movflt(dst, spInt(index));
     }
 
     @Override
     public void pokeFloat(CiRegister src, int index) {
         //asm.movflt(spInt(index), src);
+        assert(src.isFpu());
+        assert((src.number <= ARMV7.s31.number) && (src.number >= ARMV7.s0.number));
         asm.setUpScratch(spInt(index));
-        asm.str(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,ARMV7.r0,0,0);
+        asm.vstr(ConditionFlag.Always,src,asm.scratchRegister,0);
     }
 
     @Override
@@ -210,13 +221,22 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         /**
          * Emits code to assign the value in {@code src} to {@code dst}.
          */
-        asm.mov(ConditionFlag.Always,false,dst, src);
+        // TODO check the functionality of this in a unit test for X86
+       // asm.movq(ConditionFlag.Always,false,dst, src);
+        // scratch r12 stores the loaded value
+        // then we store the loaded value into the address pointed by dst
+        asm.mov(ARMV7Assembler.ConditionFlag.Always, true, dst,src);
+
+
+
     }
 
     @Override
     protected void assignWordReg(CiRegister dst, CiRegister src) {
         //asm.movq(dst, src);
-        asm.mov(ConditionFlag.Always,false,dst, src);
+        //asm.mov(ConditionFlag.Always,false,dst, src); think it is a memory-memory operation as in assignObjectReg
+        asm.mov(ARMV7Assembler.ConditionFlag.Always, true, dst,src);
+
     }
 
     @Override
@@ -224,8 +244,11 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         //asm.movq(dst, value);
         // how are the registers constrianed to correctly use the registers for long?
         //asm.movlong(dst,value);
+        // TODO constrain register allocator to prevent r11 being used for LONGS!!!!
+        // as it will then overflow into r12, the scratch register and break!
+        assert(dst.number < 11);
         asm.movw(ConditionFlag.Always,dst,(int)(value&0xffff));
-        asm.movt(ConditionFlag.Always,dst,(int)((value&0xffff0000)>>16));
+        asm.movt(ConditionFlag.Always,dst,(int)((value>>16)&0xffff));
         asm.movw(ConditionFlag.Always,ARMV7.cpuRegisters[dst.encoding +1],(int)(((value>>32)&0xffff)));
         asm.movt(ConditionFlag.Always,ARMV7.cpuRegisters[dst.encoding +1],(int)(((value>>48)&0xffff)));
 
@@ -243,10 +266,26 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         objectLiterals.add(value);
 
         //asm.movq(dst, CiAddress.Placeholder);
-        asm.mov32BitConstant(ARMV7.r12, 0); // APN so the idea is
+        System.out.println("CiAddress.Placeholder and ARMV7T1XCompilation.assignObject pathcInfo needs workaround");
+        asm.nop(2);
+         // leave space to do a setup scratch for a known address/value
+                        // it might needs to be bigger more nops required based on
+                        // how we fix up the address to be loaded into scratch.
         /*  APN
-            load the immediate 32bit constant address into r12 (scratch)
-            then load the contents of this address into
+            Placeholder might be problematic.
+
+            original code for method below
+            if (value == null) {
+            asm.xorq(dst, dst);
+            return;
+        }
+
+        int index = objectLiterals.size();
+        objectLiterals.add(value);
+
+        asm.movq(dst, CiAddress.Placeholder);
+        int dispPos = buf.position() - 4;
+        patchInfo.addObjectLiteral(dispPos, index);
 
          */
         asm.ldr(ConditionFlag.Always,0,0,0,dst,ARMV7.r12,ARMV7.r12,0,0);
@@ -263,6 +302,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected void loadLong(CiRegister dst, int index) {
+        assert(dst.number < 11);      // to prevent screwing up scratch 2 registers required for double!
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
         asm.ldrd(ConditionFlag.Always,dst,asm.scratchRegister,0);
         //asm.movq(dst, localSlot(localSlotOffset(index, Kind.LONG)));
@@ -292,6 +332,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected void storeLong(CiRegister src, int index) {
         // APN how do we constrain regs to be correct for ARM?
+        assert(src.number < 11); // sanity checking longs must not screw up scratch
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
         asm.strd(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,asm.scratchRegister);
         //asm.movq(localSlot(localSlotOffset(index, Kind.LONG)), src);
@@ -319,6 +360,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignFloat(CiRegister dst, float value) {
+        assert(dst.number >= ARMV7.s0.number && dst.number <= ARMV7.s31.number); // make sure its going to a float register
+        asm.mov32BitConstant(ARMV7.r12,Float.floatToRawIntBits(value));
+        asm.vmov(ConditionFlag.Always,dst,ARMV7.r12);
        /* if (value == 0.0f) {
             asm.xorps(dst, dst);
         } else {
@@ -331,6 +375,14 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignDouble(CiRegister dst, double value) {
+        assert(dst.number >= ARMV7.d0.number && dst.number <= ARMV7.d15.number); // make sure its going to a double register
+        long asLong = Double.doubleToRawLongBits(value);
+        // DIrty dirty code
+        asm.push(ConditionFlag.Always,1<< 11| 1 <<10);
+        assignLong(ARMV7.r10,asLong);
+        asm.vmov(ConditionFlag.Always,dst,ARMV7.r10);
+        asm.pop(ConditionFlag.Always,1<<11|1<<10);
+
         /*
         APN not implemented
         if (value == 0.0d) {
