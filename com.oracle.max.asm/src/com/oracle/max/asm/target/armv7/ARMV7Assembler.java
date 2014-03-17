@@ -1116,7 +1116,11 @@ public class ARMV7Assembler extends AbstractAssembler {
         CiAddress.Scale scale = addr.scale;
         int disp = addr.displacement;
 
-        assert (addr != CiAddress.Placeholder); // APN Placeholders not handled yet
+        if (addr == CiAddress.Placeholder) {  // APN Placeholders not handled yet
+            // OK need to leave enough spacve to handle all eventualities
+            nop(4); // 4 instructions, 2 for mov32, 1 for add and 1 for addclsl
+
+        }
         assert(base.isValid()); // APN can we have a memory address --- not handled yet?
         // APN simple case where we just have a register destination
         // TODO fix this so it will issue loads when appropriate!
@@ -1180,8 +1184,9 @@ public class ARMV7Assembler extends AbstractAssembler {
         // APN proposes we use the scratch register to calculate an address then we do the mov pc
         // looking at Stubs.java we can see that all registers have been saved
         // so we can use whatever registers we want!
-        emitInt(0); // movw(scratch,const)                                        fixup later
-        emitInt(0); //movt(scratch,const)                                         fixup later
+        emitInt(0); // space for setupscratch
+        emitInt(0);
+        //push(ConditionFlag.Always,1<<11|1<<13|1<<14|1<<15);
         mov(ConditionFlag.Always,false,ARMV7.r15,ARMV7.r12); // mov PC,scratch
         // APN need to update LR14 and do an absolute MOV to a new PC held in scratch
         // or need to do a BL
@@ -1190,17 +1195,22 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
     public final void call(CiRegister target)
     {
-        emitInt(0); // movw(scratch,const)
-        emitInt(0); //movt(scratch,const)
-        emitInt(0); // mov PC,scratch
-        // APN need to update LR14 and do an absolute MOV to a new PC held in scratch
-        // or need to do a BL
-        // WHO/what/where is responsible for stack save/restore and procedure call standard
+        //TODO APN believes that Adapters that do the necessary prologue/epilogue
+        // to save / restore state ....
 
+        mov(ConditionFlag.Always,false,ARMV7.r15,target); // mov PC,scratch
+
+
+
+    }
+    public final void leaq(CiRegister dest,CiAddress addr) {
+        setUpScratch(addr);
+        mov(ConditionFlag.Always,false,dest,ARMV7.r12);
     }
     public final void leave()
     {
-        mov(ConditionFlag.Always,false,ARMV7.r15,ARMV7.r12); // might be wrong!
+        assert(1 == 0);
+        //mov(ConditionFlag.Always,false,ARMV7.r15,ARMV7.r12); // might be wrong!
 
     }
     public final void movslq(CiAddress dst,int imm32)  {
@@ -1406,16 +1416,19 @@ public class ARMV7Assembler extends AbstractAssembler {
         mov(ConditionFlag.Always,false,ARMV7.r15,ARMV7.r14);
     }
     public final void ret(int imm16) {
+        addq(ARMV7.r13,imm16)  ;
+
         movw(ConditionFlag.Always,ARMV7.r0,imm16);
         ret();
     }
     public void enter(short imm16, byte imm8) {
-        emitByte(0xC8);
+        assert(0 == 1);
+        /*emitByte(0xC8);
         // appended:
         emitByte(imm16 & 0xff);
         imm16 >>= 8;
         emitByte(imm16 & 0xff);
-        emitByte(imm8);
+        emitByte(imm8);*/
     }
     public void nullCheck(CiRegister r) {
         emitInt((0xe<<28)|(0x3<< 24)|(0x5<< 20)|(r.encoding << 16)|0); // sets condition flags

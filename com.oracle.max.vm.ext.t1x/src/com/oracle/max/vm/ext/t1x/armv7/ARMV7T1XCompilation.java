@@ -245,8 +245,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         // how are the registers constrianed to correctly use the registers for long?
         //asm.movlong(dst,value);
         // TODO constrain register allocator to prevent r11 being used for LONGS!!!!
-        // as it will then overflow into r12, the scratch register and break!
-        assert(dst.number < 11);
+        // as it will then overflow into fp -- r11, r12, the scratch register and break!
+        assert(dst.number < 10);
         asm.movw(ConditionFlag.Always,dst,(int)(value&0xffff));
         asm.movt(ConditionFlag.Always,dst,(int)((value>>16)&0xffff));
         asm.movw(ConditionFlag.Always,ARMV7.cpuRegisters[dst.encoding +1],(int)(((value>>32)&0xffff)));
@@ -302,7 +302,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected void loadLong(CiRegister dst, int index) {
-        assert(dst.number < 11);      // to prevent screwing up scratch 2 registers required for double!
+        assert(dst.number < 10);      // to prevent screwing up scratch 2 registers required for double!
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
         asm.ldrd(ConditionFlag.Always,dst,asm.scratchRegister,0);
         //asm.movq(dst, localSlot(localSlotOffset(index, Kind.LONG)));
@@ -332,7 +332,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected void storeLong(CiRegister src, int index) {
         // APN how do we constrain regs to be correct for ARM?
-        assert(src.number < 11); // sanity checking longs must not screw up scratch
+        assert(src.number < 10); // sanity checking longs must not screw up scratch
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
         asm.strd(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,asm.scratchRegister);
         //asm.movq(localSlot(localSlotOffset(index, Kind.LONG)), src);
@@ -377,7 +377,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     protected void assignDouble(CiRegister dst, double value) {
         assert(dst.number >= ARMV7.d0.number && dst.number <= ARMV7.d15.number); // make sure its going to a double register
         long asLong = Double.doubleToRawLongBits(value);
-        // DIrty dirty code
+        // Dirty dirty code -- is there a better way?
         asm.push(ConditionFlag.Always,1<< 11| 1 <<10);
         assignLong(ARMV7.r10,asLong);
         asm.vmov(ConditionFlag.Always,dst,ARMV7.r10);
@@ -404,7 +404,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected int callDirect() {
-        alignDirectCall(buf.position());
+        //alignDirectCall(buf.position()); NOT required for ARM APN believes.
         int causePos = buf.position();
         asm.call();
         int safepointPos = buf.position();
@@ -448,6 +448,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     private void alignDirectCall(int callPos) {
         // Align bytecode call site for MT safe patching
+        // TODO APN is this required at all for  ARMv7?
         final int alignment = 7;
         final int roundDownMask = ~alignment;
         //final int directCallInstructionLength = 5; // [0xE8] disp32
@@ -460,10 +461,35 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     }
 
     private int framePointerAdjustment() {
+        // TODO APN is this required at all for  ARMv7?
+
         final int enterSize = frame.frameSize() - Word.size();
         return enterSize - frame.sizeOfNonParameterLocals();
     }
 
+    /*
+    protected Adapter emitPrologue() {
+        Adapter adapter = null;
+        if (adapterGenerator != null) {
+            adapter = adapterGenerator.adapt(method, asm);
+        }
+
+        int frameSize = frame.frameSize();
+        asm.enter(frameSize - Word.size(), 0);
+        asm.subq(rbp, framePointerAdjustment());
+        if (Trap.STACK_BANGING) {
+            int pageSize = platform().pageSize;
+            int framePages = frameSize / pageSize;
+            // emit multiple stack bangs for methods with frames larger than a page
+            for (int i = 0; i <= framePages; i++) {
+                int offset = (i + VmThread.STACK_SHADOW_PAGES) * pageSize;
+                // Deduct 'frameSize' to handle frames larger than (VmThread.STACK_SHADOW_PAGES * pageSize)
+                offset = offset - frameSize;
+                asm.movq(new CiAddress(WordUtil.archKind(), RSP, -offset), rax);
+            }
+        }
+        return adapter;
+    }       */
     @Override
     protected Adapter emitPrologue() {
         // APN need to understand the semantics of emitPrologue ...
@@ -494,6 +520,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 int offset = (i + VmThread.STACK_SHADOW_PAGES) * pageSize;
                 // Deduct 'frameSize' to handle frames larger than (VmThread.STACK_SHADOW_PAGES * pageSize)
                 offset = offset - frameSize;
+                // RSP is r13!
                 asm.setUpScratch(new CiAddress(WordUtil.archKind(), RSP, -offset));
                 asm.str(ConditionFlag.Always,0,0,0,ARMV7.r14,asm.scratchRegister,asm.scratchRegister,0,0);
                 // APN guessing rax is return address.
@@ -519,7 +546,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected void emitEpilogue() {
         asm.addq(ARMV7.r11, framePointerAdjustment());
-        asm.leave();
+        //asm.leave();
         // stackptr = r11
         // r11 popped off stack
         asm.mov(ConditionFlag.Always,false,ARMV7.r13,ARMV7.r11);
@@ -530,12 +557,11 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
         // when returning, retract from the caller stack by the space used for the arguments.
         final short stackAmountInBytes = (short) frame.sizeOfParameters();
-        //asm.ret(stackAmountInBytes);                  // APN dont know what to do here.
+        asm.ret(stackAmountInBytes);                  // APN dont know what to do here.
         // ret needs removing or turning into a nop?
-        asm.addq(ARMV7.r13,stackAmountInBytes)  ;
-        System.err.println("ARM emitEPILOGUE");
         // NOt really sure how much of X86 we need to keep
         // and how much we can get rid off?
+
     }
 
     @Override
@@ -574,36 +600,44 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         // need to look for the usage of such instruction streams in ARM and
         // fix it to be better ....
 
-        // Pop index from stack into rax
+        // Pop index from stack into scratch --
+        // could just pop but this code presumably makes it easier to move to 64bit!
         asm.setUpScratch(new CiAddress(CiKind.Int, r13.asValue()));
-        asm.ldr(ConditionFlag.Always,0,0,0,r14,asm.scratchRegister,asm.scratchRegister,0,0);
-        //asm.movl(r14, new CiAddress(CiKind.Int, r13.asValue()));
-        asm.addq(r12, JVMSFrameLayout.JVMS_SLOT_SIZE);
+        asm.ldr(ConditionFlag.Always,0,0,0,asm.scratchRegister,asm.scratchRegister,asm.scratchRegister,0,0);
 
+        asm.addq(r13, JVMSFrameLayout.JVMS_SLOT_SIZE); // increment stack (due to pop)
+
+        asm.push(ConditionFlag.Always,1<<10|1<<9); // push r9, r10 onto the stack
+        asm.mov(ConditionFlag.Always,false,ARMV7.r9,ARMV7.r12); // r9 stores index!
         // Compare index against jump table bounds
         if (lowMatch != 0) {
             // subtract the low value from the switch index
             // APN TODO asm.sub(r14, lowMatch);
-            asm.cmpl(r14, highMatch - lowMatch);
+            asm.subq(r12,lowMatch);
+            asm.cmpl(r12, highMatch - lowMatch);
         } else {
-            asm.cmpl(r14, highMatch);
+            asm.cmpl(r12, highMatch);
         }
+
 
         // Jump to default target if index is not within the jump table
         startBlock(ts.defaultTarget());
         int pos = buf.position();
-        // APN TODO just to let it compile patchInfo.addJCC(ConditionFlag.above, pos, ts.defaultTarget());
-        // APN TODO asm.jcc(ConditionFlag.above, 0, true);
+        patchInfo.addJCC(ConditionFlag.SignedGreater, pos, ts.defaultTarget()); // UnsignedGreater
+        asm.jcc(ConditionFlag.SignedGreater, 0, true); // UnsignedGreater?
 
-        // Set r15 to address of jump table
+        // Set r10 to address of jump table
         int leaPos = buf.position();
-        // APN TODO asm.leaq(r15, CiAddress.Placeholder);
+        asm.leaq(r10, CiAddress.Placeholder);
         int afterLea = buf.position();
 
         // Load jump table entry into r15 and jump to it
-        // APN TODO asm.movslq(r14, new CiAddress(CiKind.Int, r15.asValue(), r14.asValue(), Scale.Times4, 0));
-        // APN TODO asm.add(r15, r14);
-        // APN TODO asm.jmp(r15);
+        asm.setUpScratch(new CiAddress(CiKind.Int, r10.asValue(), r9.asValue(), Scale.Times4, 0));
+        asm.add(ConditionFlag.Always,false,r12, r10,0,0); // need to be careful are we using the right add!
+
+        asm.pop(ConditionFlag.Always,1<<9|1<<10); // restore r9/r10
+        // APN asm.jmp(r15) ; already done above
+        asm.mov(ConditionFlag.Always,false,ARMV7.r15, ARMV7.r12);
 
         // Inserting padding so that jump table address is 4-byte aligned
         if ((buf.position() & 0x3) != 0) {
@@ -612,9 +646,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
         // Patch LEA instruction above now that we know the position of the jump table
         int jumpTablePos = buf.position();
-        buf.setPosition(leaPos);
-        //APN TODO asm.leaq(r15, new CiAddress(WordUtil.archKind(), rip.asValue(), jumpTablePos - afterLea));
-        buf.setPosition(jumpTablePos);
+        buf.setPosition(leaPos);// move the  asm buffer position  to where the leaq was added
+        asm.leaq(r10, new CiAddress(WordUtil.archKind(), ARMV7.r15.asValue(), jumpTablePos - afterLea)); // patch it
+        buf.setPosition(jumpTablePos); // reposition back to the correct place
 
         // Emit jump table entries
         for (int i = 0; i < ts.numberOfCases(); i++) {
