@@ -1489,7 +1489,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     }
     public final void jmp(int target, boolean forceDisp32) {
-
+        // ARM but not tested!!!
         int disp = target - codeBuffer.position();
         if(disp <=16777215 && disp >= 16777216 && forceDisp32) {
             // we can do this in a single conditional branch

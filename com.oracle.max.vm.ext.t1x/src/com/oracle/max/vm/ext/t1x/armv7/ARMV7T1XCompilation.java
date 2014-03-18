@@ -667,7 +667,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected void do_lookupswitch() {
-        //APN TODO do this later, another way of doing a switch
+        // ported but untested
         int bci = stream.currentBCI();
         BytecodeLookupSwitch ls = new BytecodeLookupSwitch(stream, bci);
         if (ls.numberOfCases() == 0) {
@@ -681,54 +681,63 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             } else if (targetBCI <= bci) {
                 int target = bciToPos[targetBCI];
                 assert target != 0;
-         // APN TODO       asm.jmp(target, false);
+                asm.jmp(target, false);
             } else {
                 patchInfo.addJMP(buf.position(), targetBCI);
-         // APN TODO       asm.jmp(0, true);
+                asm.jmp(0, true);
             }
         } else {
-            // Pop key from stack into rax
-            // APN TODO        asm.movl(rax, new CiAddress(CiKind.Int, rsp.asValue()));
-            // APN TODO    asm.addq(rsp, JVMSFrameLayout.JVMS_SLOT_SIZE);
+            // Pop key from stack into r12 == scratch
+            asm.setUpScratch( new CiAddress(CiKind.Int, ARMV7.r13.asValue()));
+            asm.ldr(ConditionFlag.Always,0,0,0,asm.scratchRegister,asm.scratchRegister,asm.scratchRegister,0,0);
+            asm.addq(ARMV7.r13, JVMSFrameLayout.JVMS_SLOT_SIZE);
+            asm.push(ConditionFlag.Always,1<<8|1<<9|1<<10); // save r8, r9 and r10
+            asm.mov(ConditionFlag.Always,false,r8,r12); // r8 stores KEY
 
-            // Set rbx to address of lookup table
+            // Set r9 to address of lookup table
             int leaPos = buf.position();
-            // APN TODO    asm.leaq(rbx, CiAddress.Placeholder);
+            asm.leaq(r9, CiAddress.Placeholder); // but not used at present as will be patched!
             int afterLea = buf.position();
 
-            // Initialize rcx to index of last entry
-            // APN TODO    asm.movl(rcx, (ls.numberOfCases() - 1) * 2);
+            // Initialize r10 to index of last entry
+            asm.mov32BitConstant(r10, (ls.numberOfCases() - 1) * 2);
 
             int loopPos = buf.position();
 
             // Compare the value against the key
-            // APN TODO    asm.cmpl(rax, new CiAddress(CiKind.Int, rbx.asValue(), rcx.asValue(), Scale.Times4, 0));
+            asm.setUpScratch(new CiAddress(CiKind.Int, r9.asValue(), r10.asValue(), Scale.Times4, 0));
+            asm.cmpl(ARMV7.r8,ARMV7.r12) ;
 
             // If equal, exit loop
             int matchTestPos = buf.position();
-            final int placeholderForShortJumpDisp = matchTestPos + 2;
-            // APN TODO    asm.jcc(ConditionFlag.equal, placeholderForShortJumpDisp, false);
-            assert buf.position() - matchTestPos == 2;
+            final int placeholderForShortJumpDisp = matchTestPos + 2; // TODO check why + 2 this might be X86 asm buffer arithmetic
 
-            // Decrement loop var (r15) and jump to top of loop if it did not go below zero (i.e. carry flag was not set)
-            // APN TODO    asm.subl(rcx, 2);
-            // APN TODO    asm.jcc(ConditionFlag.carryClear, loopPos, false);
+            asm.jcc(ConditionFlag.Equal, placeholderForShortJumpDisp, false);
+            assert buf.position() - matchTestPos == 2;   // TODO check
+
+            // Decrement loop var (r10?) and jump to top of loop if it did not go below zero (i.e. carry flag was not set)
+            //asm.mov32BitConstant(asm.scratchRegister,2);
+            asm.sub(ConditionFlag.Always,true,r10,r10,2,0);
+            asm.jcc(ConditionFlag.CarryClear, loopPos, false); // carry clear?
 
             // Jump to default target
             startBlock(ls.defaultTarget());
             patchInfo.addJMP(buf.position(), ls.defaultTarget());
-            // APN TODO    asm.jmp(0, true);
+            asm.pop(ConditionFlag.Always,1<<9|1<<10|1<<8);
+            asm.jmp(0, true);
 
             // Patch the first conditional branch instruction above now that we know where's it's going
             int matchPos = buf.position();
             buf.setPosition(matchTestPos);
-            // APN TODO    asm.jcc(ConditionFlag.equal, matchPos, false);
+            asm.jcc(ConditionFlag.Equal, matchPos, false);
             buf.setPosition(matchPos);
 
             // Load jump table entry into r15 and jump to it
-            // APN TODO    asm.movslq(rcx, new CiAddress(CiKind.Int, rbx.asValue(), rcx.asValue(), Scale.Times4, 4));
-            // APN TODO    asm.addq(rbx, rcx);
-            // APN TODO    asm.jmp(rbx);
+            asm.setUpScratch(new CiAddress(CiKind.Int, r9.asValue(), r10.asValue(), Scale.Times4, 4));
+            asm.mov(ConditionFlag.Always,false,r10,r12);
+            asm.addRegisters(ConditionFlag.Always,false,r12,r9,r10,0,0); // correct add?
+            asm.pop(ConditionFlag.Always,1<<9|1<<10|1<<8);
+            asm.mov(ConditionFlag.Always,true,r15,r12);// APN is a jmp ok?
 
             // Inserting padding so that lookup table address is 4-byte aligned
             while ((buf.position() & 0x3) != 0) {
@@ -738,7 +747,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             // Patch the LEA instruction above now that we know the position of the lookup table
             int lookupTablePos = buf.position();
             buf.setPosition(leaPos);
-            // APN TODO    asm.leaq(rbx, new CiAddress(WordUtil.archKind(), rip.asValue(), lookupTablePos - afterLea));
+            asm.leaq(r9, new CiAddress(WordUtil.archKind(), r15.asValue(), lookupTablePos - afterLea));
             buf.setPosition(lookupTablePos);
 
             // Emit lookup table entries
@@ -748,7 +757,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 startBlock(targetBCI);
                 patchInfo.addLookupTableEntry(buf.position(), key, lookupTablePos, targetBCI);
                 buf.emitInt(key);
-                buf.emitInt(0);
+                buf.emitInt(0);  //TODO check APN what/how does this work?
             }
             if (codeAnnotations == null) {
                 codeAnnotations = new ArrayList<CiTargetMethod.CodeAnnotation>();
