@@ -1148,13 +1148,13 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
     public final void mov32BitConstant(CiRegister dst, int imm32)   {    // crude way to load a 32 bit immediate
         //assert(dst.isFpu());
-        System.out.println("32BITS!!! " +imm32) ;
-        System.out.println("MOVW " + (imm32&0xffff));
+        //System.out.println("32BITS!!! " +imm32) ;
+        //System.out.println("MOVW " + (imm32&0xffff));
         movw   (ConditionFlag.Always,dst,imm32&0xffff);
         imm32 = imm32 >> 16;
         imm32 = imm32& 0xffff;
         if(imm32 < 0) imm32 *= -1;
-        System.out.println(" MOVT " + imm32);
+        //System.out.println(" MOVT " + imm32);
         movt   (ConditionFlag.Always,dst,imm32&0xffff);
 
         //movt    (ConditionFlag.Always,dst,(int)(((((long)imm32)&0xffff0000L) >> 16))) ;

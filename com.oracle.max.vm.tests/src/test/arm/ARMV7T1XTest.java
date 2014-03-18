@@ -375,14 +375,66 @@ public class ARMV7T1XTest  extends MaxTestCase {
 //TODO: Test goes here...
         }
 
-        /**
-         *
-         * Method: peekLong(CiRegister dst, int index)
-         *
-         */
-        
-        public void testPeekLong() throws Exception {
+
+    /**
+     *
+     * Method: assignLong(CiRegister dst, long value)
+     *
+     */
+
+    public void testAssignLong() throws Exception {
 //TODO: Test goes here...
+        long []registerValues = null;
+        boolean success = true;
+        long gotVal= 0;
+        int instructions [] = null;
+        int i,assemblerStatements;
+        expectedValues[0] = Long.MIN_VALUE;
+        expectedValues[2] = Long.MAX_VALUE;
+        expectedValues[4] = 0xabdef01023456789L;
+        expectedValues[6] = 111;
+        expectedValues[8] = 0;
+
+        for( i = 0 ; i <10; i+=2) {
+            theCompiler.assignmentTests(ARMV7.cpuRegisters[i],expectedValues[i]);
+
+        }
+        /* DEST REGISTER STORES THE LEAST SIGNIFICANT WORD AND DEST+1 STORES THE MOST SIGNIFICANT WORD OF THE 2WORD IE
+        BIT LONG VALUE
+         */
+        ARMV7MacroAssembler masm = theCompiler.getMacroAssemblerUNITTEST();
+        assemblerStatements =  masm.codeBuffer.position()/4;
+        instructions = new int [assemblerStatements];
+        registerValues  = generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
+        for( i = 0; i < 10;i++) {
+            if(i%2 == 0) {
+                gotVal = 0;
+                gotVal = 0xffffffffL&registerValues[i];
+            }       else {
+                //gotVal =  gotVal << 32;
+                gotVal |= (0xffffffffL&registerValues[i]) << 32;
+                if(gotVal == expectedValues[i-1]) {
+                    System.out.println("OK got Correct Value");
+
+                } else
+                {
+                    success = false;
+                    System.out.println("FAILED incorrect value " + Long.toString(gotVal,16)+ " " + Long.toString(expectedValues[i-1],16));
+                }
+            }
+        }
+        assert(success == true);
+
+    }
+    /**
+     *
+     * Method: peekLong(CiRegister dst, int index)
+     *
+     */
+    public void testPeekLong() throws Exception {
+//TODO: Test goes here...
+
+
         }
 
         /**
@@ -455,15 +507,6 @@ public class ARMV7T1XTest  extends MaxTestCase {
 //TODO: Test goes here...
         }
 
-        /**
-         *
-         * Method: assignLong(CiRegister dst, long value)
-         *
-         */
-        
-        public void testAssignLong() throws Exception {
-//TODO: Test goes here...
-        }
 
         /**
          *

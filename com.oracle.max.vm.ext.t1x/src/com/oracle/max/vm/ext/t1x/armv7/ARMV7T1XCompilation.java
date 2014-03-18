@@ -247,11 +247,17 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         // TODO constrain register allocator to prevent r11 being used for LONGS!!!!
         // as it will then overflow into fp -- r11, r12, the scratch register and break!
         assert(dst.number < 10);
+        /* IF we use the register dst to store the MSW use the commented out code just here
+        asm.movw(ConditionFlag.Always,dst,(int)(((value>>32)&0xffff)));
+        asm.movt(ConditionFlag.Always,dst,(int)(((value>>48)&0xffff)));
+        asm.movw(ConditionFlag.Always,ARMV7.cpuRegisters[dst.encoding +1],(int)(value&0xffff));
+        asm.movt(ConditionFlag.Always,ARMV7.cpuRegisters[dst.encoding +1],(int)((value>>16)&0xffff));
+        */
+        // dst stores the LSW
         asm.movw(ConditionFlag.Always,dst,(int)(value&0xffff));
         asm.movt(ConditionFlag.Always,dst,(int)((value>>16)&0xffff));
         asm.movw(ConditionFlag.Always,ARMV7.cpuRegisters[dst.encoding +1],(int)(((value>>32)&0xffff)));
         asm.movt(ConditionFlag.Always,ARMV7.cpuRegisters[dst.encoding +1],(int)(((value>>48)&0xffff)));
-
 
     }
 
@@ -537,6 +543,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
         asm.xorq(scratch, scratch);
         //asm.movq(CiAddress.Placeholder, scratch);
+        // TODO store the value ZERO at a Placeholder address
         buf.emitInt(0);
         buf.emitInt(0);
         int dispPos = buf.position() - 8;
@@ -545,22 +552,20 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected void emitEpilogue() {
-        asm.addq(ARMV7.r11, framePointerAdjustment());
-        //asm.leave();
-        // stackptr = r11
-        // r11 popped off stack
-        asm.mov(ConditionFlag.Always,false,ARMV7.r13,ARMV7.r11);
-        asm.pop(ConditionFlag.Always,1<<ARMV7.r11.encoding ); // pop stack
-        // push frame pointer
-        // framepointer = stackpointer
-        // stackptr = framepointer -stacksize
+        /*ORIGINAL X86
+        asm.addq(rbp, framePointerAdjustment());
+        asm.leave();        //Releases the local stack storage created by the previous ENTER instruction.
 
         // when returning, retract from the caller stack by the space used for the arguments.
         final short stackAmountInBytes = (short) frame.sizeOfParameters();
-        asm.ret(stackAmountInBytes);                  // APN dont know what to do here.
-        // ret needs removing or turning into a nop?
-        // NOt really sure how much of X86 we need to keep
-        // and how much we can get rid off?
+        asm.ret(stackAmountInBytes);
+        */
+        asm.addq(ARMV7.r11, framePointerAdjustment());     // we might be missing some kind of pop here?
+        final short stackAmountInBytes = (short) frame.sizeOfParameters();
+        asm.mov32BitConstant(scratch,stackAmountInBytes);
+        asm.addRegisters(ConditionFlag.Always,true,ARMV7.r13,ARMV7.r13,ARMV7.r12,0,0);
+        asm.ret(); // mov R14 to r15 ,,,  who restores the rest of the environment?
+
 
     }
 
@@ -1012,29 +1017,24 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @HOSTED_ONLY
     public static int[] findDataPatchPosns(MaxTargetMethod source, int dispFromCodeStart) {
+
         int[] result = {};
-        /* APN
-        I don;t know if Im being an idiot but why is it only iterating over the FPregs at each code position then doing the
-        move of them?
 
-        We can ignore for now as we are not doing FP?? at least initially
-         */
-
-                                                                                                                /*
         for (int pos = 0; pos < source.codeLength(); pos++) {
-            for (CiRegister reg : ARMV7.cpuxmmRegisters) {
+            for (CiRegister reg : ARMV7.cpuRegisters) { // TODO extend this to include floats and doubles?
+                                                        // this means iterating over the set of  allRegisters
                 // Compute displacement operand position for a movq at 'pos'
                 ARMV7Assembler asm = new ARMV7Assembler(target(), null);
                 asm.setUpScratch(CiAddress.Placeholder);
-                asm.movror(ConditionFlag.Always,false,reg,ARMV7.r12,0);
-                int dispPos = pos + asm.codeBuffer.position() - 4;
+                asm.mov(ConditionFlag.Always,false,reg,r12);
+                int dispPos = pos + asm.codeBuffer.position() - 4*5;// where is the setUpScratch start in the buffer
                 int disp = movqDisp(dispPos, dispFromCodeStart);
-                asm.codeBuffer.reset(); // APN que? Dont understand why are we continually resetting the buffer?
+                asm.codeBuffer.reset();
 
                 // Assemble the movq instruction at 'pos' and compare it to the actual bytes at 'pos'
-                CiAddress src = new CiAddress(WordUtil.archKind(), ARMV7.r15.asValue(), disp); // assuming rip in X86 is r15
+                CiAddress src = new CiAddress(WordUtil.archKind(), ARMV7.r15.asValue(), disp);
                 asm.setUpScratch(src);
-                asm.movror(ConditionFlag.Always,false,reg, ARMV7.r12,0);
+                asm.ldr(ConditionFlag.Always,reg, r12,0); // TODO different instructions for FPregs?
                 byte[] pattern = asm.codeBuffer.close(true);
                 byte[] instr = Arrays.copyOfRange(source.code(), pos, pos + pattern.length);
                 if (Arrays.equals(pattern, instr)) {
@@ -1043,7 +1043,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 }
             }
 
-        }                                                                                                         */
+        }
+
 
         return result;
     }
@@ -1132,6 +1133,5 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     public void assignmentTests(CiRegister reg, long value)
     {
          assignLong(reg,value);
-        System.err.println("Done");
     }
 }

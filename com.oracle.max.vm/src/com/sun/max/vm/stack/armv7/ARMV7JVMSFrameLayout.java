@@ -35,7 +35,7 @@ import com.sun.max.vm.stack.*;
 
 /**
  * Describes a stack frame for a ARMV7 method whose frame conforms with the JVMS.
- * This convention uses both a stack and a frame pointer (respectively, %rsp and %rbp).
+ * This convention uses both a stack and a frame pointer (respectively, X86 %rsp r13 ARM  and X86  %rbp r11 ARM).
  * The frame pointer serves as a base for accessing local variables (as defined in class files of Java methods).
  * The stack pointer is used as an operand stack (as defined in the JVMS).
  * The layout of the stack is as follows:
