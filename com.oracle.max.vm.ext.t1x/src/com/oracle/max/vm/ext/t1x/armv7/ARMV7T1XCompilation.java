@@ -173,7 +173,10 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     public void pokeLong(CiRegister src, int index) {
         //asm.movq(spLong(index), src);
         asm.setUpScratch(spLong(index));
-        asm.str(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,ARMV7.r0,0,0);
+        asm.sub(ConditionFlag.Always,false,scratch,scratch,4,0);
+        asm.strd(ARMV7Assembler.ConditionFlag.Always,src,scratch,0); // put them on the stack on the stack!
+
+        //asm.str(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,ARMV7.r0,0,0);
     }
 
     @Override
