@@ -365,6 +365,68 @@ public class ARMV7T1XTest  extends MaxTestCase {
         
         public void testPokeInt() throws Exception {
 //TODO: Test goes here...
+            long []registerValues = null;
+            boolean success = true;
+            long gotVal= 0;
+            int instructions [] = null;
+            int i,assemblerStatements;
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssemblerUNITTEST();
+
+            expectedValues[0] = Integer.MIN_VALUE;
+            expectedValues[1] = Integer.MAX_VALUE;
+            expectedValues[2] = 0;
+            expectedValues[3] = -1;
+            expectedValues[4] = 40;
+            expectedValues[5] = -40;
+
+            for( i = 0 ; i <6; i++) {
+                masm.mov32BitConstant(ARMV7.cpuRegisters[i],i);
+
+            }
+            masm.push(ARMV7Assembler.ConditionFlag.Always,4|8); // this is to check/debug issues about wrong address loaded
+            masm.push(ARMV7Assembler.ConditionFlag.Always,1); // index 5
+            masm.push(ARMV7Assembler.ConditionFlag.Always,2); // index 4
+            masm.push(ARMV7Assembler.ConditionFlag.Always,4); // index 3
+            masm.push(ARMV7Assembler.ConditionFlag.Always,8); // index 2
+            masm.push(ARMV7Assembler.ConditionFlag.Always,16); // index 1
+            masm.push(ARMV7Assembler.ConditionFlag.Always,32); // index 0
+
+
+            for(i = 0;i <= 5;i++)
+                masm.mov32BitConstant(ARMV7.cpuRegisters[i],(int)expectedValues[i]);
+            theCompiler.pokeInt(ARMV7.cpuRegisters[0],5);
+            theCompiler.pokeInt(ARMV7.cpuRegisters[1],4);
+            theCompiler.pokeInt(ARMV7.cpuRegisters[2],3);
+            theCompiler.pokeInt(ARMV7.cpuRegisters[3],2);
+            theCompiler.pokeInt(ARMV7.cpuRegisters[4],1);
+            theCompiler.pokeInt(ARMV7.cpuRegisters[5],0);
+            for(i = 0;i <= 5;i++)
+                masm.mov32BitConstant(ARMV7.cpuRegisters[i],-25);
+            theCompiler.peekInt(ARMV7.cpuRegisters[0],5);
+            theCompiler.peekInt(ARMV7.cpuRegisters[1],4);
+            theCompiler.peekInt(ARMV7.cpuRegisters[2],3);
+            theCompiler.peekInt(ARMV7.cpuRegisters[3],2);
+            theCompiler.peekInt(ARMV7.cpuRegisters[4],1);
+            theCompiler.peekInt(ARMV7.cpuRegisters[5],0);
+
+        /* DEST REGISTER STORES THE LEAST SIGNIFICANT WORD AND DEST+1 STORES THE MOST SIGNIFICANT WORD OF THE 2WORD IE
+        BIT LONG VALUE
+         */
+            assemblerStatements =  masm.codeBuffer.position()/4;
+            instructions = new int [assemblerStatements];
+            registerValues  = generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
+            for( i = 0; i < 6;i++) {
+                if(registerValues[i] == expectedValues[i]) {
+                    System.out.println("OK REG " + i + " got Correct Value");
+
+                } else
+                {
+                    success = false;
+                    System.out.println("FAILED incorrect value " + Long.toString(registerValues[i],16)+ " " + Long.toString(expectedValues[i],16));
+                }
+
+            }
+            assert(success == true);
         }
 
 
