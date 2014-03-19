@@ -1125,10 +1125,10 @@ public class ARMV7Assembler extends AbstractAssembler {
         // APN simple case where we just have a register destination
         // TODO fix this so it will issue loads when appropriate!
         if (base.isValid()) {
-            if(disp != 0) {
+            //if(disp != 0) {
                 mov32BitConstant(scratchRegister, disp);
                 addRegisters(ConditionFlag.Always,false,scratchRegister,scratchRegister,base,0,0);
-            }
+            //}
             if(index.isValid()){
                 adclsl(ConditionFlag.Always,false,scratchRegister,scratchRegister,index,scale.log2); // APN even if scale is zero this is ok.
             }

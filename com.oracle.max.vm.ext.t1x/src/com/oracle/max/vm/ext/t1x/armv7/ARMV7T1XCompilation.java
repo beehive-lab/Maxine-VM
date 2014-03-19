@@ -150,6 +150,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
         //asm.movl(dst, spInt(index));
         asm.setUpScratch(spInt(index));
+        //asm.sub(ConditionFlag.Always,false,scratch,scratch,4,0);
         asm.ldr(ConditionFlag.Always,0,0,0,dst,asm.scratchRegister,ARMV7.r0,0,0);
     }
 
