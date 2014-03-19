@@ -164,7 +164,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     public void peekLong(CiRegister dst, int index) {
         //asm.movq(dst, spLong(index));
         asm.setUpScratch(spLong(index));
-        asm.ldr(ConditionFlag.Always,0,0,0,dst,asm.scratchRegister,ARMV7.r0,0,0); //dst needs to be big enough to hold a long!
+        asm.sub(ConditionFlag.Always,false,scratch,scratch,4,0);
+
+        asm.ldrd(ConditionFlag.Always,dst,asm.scratchRegister,0); //dst needs to be big enough to hold a long!
     }
 
     @Override
@@ -592,7 +594,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected void do_tableswitch() {
         // APN this is one way to do an implementation of a switch statement
-        // APN TODO lets leave this for now
+        // APN TODO needs a check
         int bci = stream.currentBCI();
         BytecodeTableSwitch ts = new BytecodeTableSwitch(stream, bci);
         int lowMatch = ts.lowKey();

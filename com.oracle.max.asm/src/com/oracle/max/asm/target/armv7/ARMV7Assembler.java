@@ -1127,7 +1127,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         if (base.isValid()) {
             if(disp != 0) {
                 mov32BitConstant(scratchRegister, disp);
-                add(ConditionFlag.Always,false,scratchRegister,base,0,0);
+                addRegisters(ConditionFlag.Always,false,scratchRegister,scratchRegister,base,0,0);
             }
             if(index.isValid()){
                 adclsl(ConditionFlag.Always,false,scratchRegister,scratchRegister,index,scale.log2); // APN even if scale is zero this is ok.
