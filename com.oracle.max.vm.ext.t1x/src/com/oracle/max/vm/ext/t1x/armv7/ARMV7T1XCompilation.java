@@ -199,6 +199,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                             // a VCVT operation?
         assert((src.number <= ARMV7.d15.number) && (src.number >= ARMV7.d0.number)); // must be double
         asm.setUpScratch(spLong(index));
+        asm.sub(ConditionFlag.Always,false,scratch,scratch,4,0);
+
         asm.vstr(ARMV7Assembler.ConditionFlag.Always, src, asm.scratchRegister, 0) ;
 
     }
