@@ -186,6 +186,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         assert(dst.isFpu());
         assert((dst.number <= ARMV7.d15.number) && (dst.number >= ARMV7.d0.number)); // must be double
         asm.setUpScratch(spLong(index));
+        asm.sub(ConditionFlag.Always,false,scratch,scratch,4,0);
         asm.vldr(ARMV7Assembler.ConditionFlag.Always, dst, asm.scratchRegister, 0);
 
     }
@@ -389,10 +390,13 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         assert(dst.number >= ARMV7.d0.number && dst.number <= ARMV7.d15.number); // make sure its going to a double register
         long asLong = Double.doubleToRawLongBits(value);
         // Dirty dirty code -- is there a better way?
-        asm.push(ConditionFlag.Always,1<< 11| 1 <<10);
-        assignLong(ARMV7.r10,asLong);
-        asm.vmov(ConditionFlag.Always,dst,ARMV7.r10);
-        asm.pop(ConditionFlag.Always,1<<11|1<<10);
+        // TODO, change to using scratch and assign to the appropriate single precision
+        // TODO register that overlaps with the appropriate double precision register.
+        // TODO this will save 2x2 memory stores and loads
+        asm.push(ConditionFlag.Always,1<<8|1<<9);
+        assignLong(ARMV7.r8,asLong);
+        asm.vmov(ConditionFlag.Always,dst,ARMV7.r8);
+        asm.pop(ConditionFlag.Always,1<<8|1<<9);
 
         /*
         APN not implemented
@@ -1138,5 +1142,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     public void assignmentTests(CiRegister reg, long value)
     {
          assignLong(reg,value);
+    }
+    public void assignDoubleTest(CiRegister reg, double value)
+    {
+         assignDouble(reg,value);
     }
 }

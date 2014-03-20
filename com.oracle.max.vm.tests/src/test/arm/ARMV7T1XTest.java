@@ -705,15 +705,6 @@ public class ARMV7T1XTest  extends MaxTestCase {
         assert(success == true);
 
     }
-        /**
-         *
-         * Method: peekDouble(CiRegister dst, int index)
-         *
-         */
-        
-        public void testPeekDouble() throws Exception {
-//TODO: Test goes here...
-        }
 
         /**
          *
@@ -1026,6 +1017,59 @@ public class ARMV7T1XTest  extends MaxTestCase {
         
         public void testAssignDouble() throws Exception {
 //TODO: Test goes here...
+            long []registerValues = null;
+            boolean success = true;
+            long gotVal= 0;
+            int instructions [] = null;
+            int i,assemblerStatements;
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssemblerUNITTEST();
+
+            expectedValues[0] = (long)Double.doubleToRawLongBits(Double.MIN_VALUE);
+            expectedValues[1] = (long)Double.doubleToRawLongBits(Double.MAX_VALUE);
+            expectedValues[2] = (long)Double.doubleToRawLongBits(0.0);
+            expectedValues[3] = (long)Double.doubleToRawLongBits(-1.0);
+            expectedValues[4] = (long)Double.doubleToRawLongBits(-100.75);
+
+            for( i = 0 ; i <5; i++) {
+                System.out.println("DOUBLES "+ Double.longBitsToDouble(expectedValues[i]) + " AS HEX "+ Long.toString(expectedValues[i],16));
+                theCompiler.assignDoubleTest(ARMV7.allRegisters[16+i],Double.longBitsToDouble(expectedValues[i]));
+            }
+            for(i = 0;i <= 9;i++)
+                masm.mov32BitConstant(ARMV7.cpuRegisters[i],-25);
+
+
+            masm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r0,ARMV7.d0);
+            masm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r2,ARMV7.d1);
+            masm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r4,ARMV7.d2);
+            masm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r6,ARMV7.d3);
+            masm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r8,ARMV7.d4);
+
+
+        /* DEST REGISTER STORES THE LEAST SIGNIFICANT WORD AND DEST+1 STORES THE MOST SIGNIFICANT WORD OF THE 2WORD IE
+        BIT LONG VALUE
+         */
+            assemblerStatements =  masm.codeBuffer.position()/4;
+            instructions = new int [assemblerStatements];
+            registerValues  = generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
+            for( i = 0; i < 10;i+=2) {
+                gotVal = 0;
+                gotVal = 0xffffffffL&registerValues[i];
+                gotVal |= (0xffffffffL&registerValues[i+1]) << 32;
+                if(gotVal == expectedValues[i/2]) {
+                    System.out.println("OK got Correct Value "+ Double.longBitsToDouble(expectedValues[i/2]));
+
+                } else
+                {
+                    success = false;
+                    System.out.println("FAILED incorrect value " +
+                            Long.toString(gotVal,16)+ " " + Long.toString(expectedValues[i/2],16) +
+                            " EXPECTED " + Double.longBitsToDouble(expectedValues[i/2]) + " GOT " + Double.longBitsToDouble(gotVal));
+                }
+
+
+
+            }
+            assert(success == true);
         }
 
         /**
@@ -1298,8 +1342,85 @@ try {
 }
 */
         }
+    /**
+     *
+     * Method: peekDouble(CiRegister dst, int index)
+     *
+     */
 
+    public void testPeekDouble() throws Exception {
+//TODO: Test goes here...
+        // testing assign, peekDouble ...
+        long []registerValues = null;
+        boolean success = true;
+        long gotVal= 0;
+        int instructions [] = null;
+        int i,assemblerStatements;
+        ARMV7MacroAssembler masm = theCompiler.getMacroAssemblerUNITTEST();
+
+        expectedValues[0] = (long)Double.doubleToRawLongBits(Double.MIN_VALUE);
+        expectedValues[1] = (long)Double.doubleToRawLongBits(Double.MAX_VALUE);
+        expectedValues[2] = (long)Double.doubleToRawLongBits(0.0);
+        expectedValues[3] = (long)Double.doubleToRawLongBits(-1.0);
+        expectedValues[4] = (long)Double.doubleToRawLongBits(-100.75);
+
+        for( i = 0 ; i <5; i++) {
+            System.out.println("DOUBLES "+ Double.longBitsToDouble(expectedValues[i]) + " AS HEX "+ Long.toString(expectedValues[i],16));
+            theCompiler.assignDoubleTest(ARMV7.allRegisters[16+i],Double.longBitsToDouble(expectedValues[i]));
+        }
+        masm.vpush(ARMV7Assembler.ConditionFlag.Always,ARMV7.d0,ARMV7.d0); // this is to check/debug issues about wrong address loaded
+        masm.vpush(ARMV7Assembler.ConditionFlag.Always,ARMV7.d0,ARMV7.d0); // index 8
+        masm.vpush(ARMV7Assembler.ConditionFlag.Always,ARMV7.d1,ARMV7.d1); // index 6
+        masm.vpush(ARMV7Assembler.ConditionFlag.Always,ARMV7.d2,ARMV7.d2); // index 4
+        masm.vpush(ARMV7Assembler.ConditionFlag.Always,ARMV7.d3,ARMV7.d3); // index 2
+        masm.vpush(ARMV7Assembler.ConditionFlag.Always,ARMV7.d4,ARMV7.d4); // index 0
+
+
+
+        for(i = 0;i <= 9;i++)
+            masm.mov32BitConstant(ARMV7.cpuRegisters[i],-25);
+
+        theCompiler.peekDouble(ARMV7.d0,8);
+        theCompiler.peekDouble(ARMV7.d1, 6);
+        theCompiler.peekDouble(ARMV7.d2,4);
+        theCompiler.peekDouble(ARMV7.d3,2);
+        theCompiler.peekDouble(ARMV7.d4,0);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r0,ARMV7.d0);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r2,ARMV7.d1);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r4,ARMV7.d2);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r6,ARMV7.d3);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r8,ARMV7.d4);
+
+
+        /* DEST REGISTER STORES THE LEAST SIGNIFICANT WORD AND DEST+1 STORES THE MOST SIGNIFICANT WORD OF THE 2WORD IE
+        BIT LONG VALUE
+         */
+        assemblerStatements =  masm.codeBuffer.position()/4;
+        instructions = new int [assemblerStatements];
+        registerValues  = generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
+        for( i = 0; i < 10;i+=2) {
+                gotVal = 0;
+                gotVal = 0xffffffffL&registerValues[i];
+                gotVal |= (0xffffffffL&registerValues[i+1]) << 32;
+                if(gotVal == expectedValues[i/2]) {
+                    System.out.println("OK got Correct Value "+ Double.longBitsToDouble(expectedValues[i/2]));
+
+                } else
+                {
+                    success = false;
+                    System.out.println("FAILED incorrect value " +
+                            Long.toString(gotVal,16)+ " " + Long.toString(expectedValues[i/2],16) +
+                            " EXPECTED " + Double.longBitsToDouble(expectedValues[i/2]) + " GOT " + Double.longBitsToDouble(gotVal));
+                }
+
+
+
+        }
+        assert(success == true);
     }
+
+
+}
 
 
 
