@@ -1614,8 +1614,8 @@ public class ARMV7Assembler extends AbstractAssembler {
 
         }   else {
             instruction |= 0xd000a00;
-            instruction |= ((dest.encoding&0x1f>>1) << 12);
-            instruction |= ((dest.encoding&1) << 22); /// Hmmm check some assembler encodings for this please.
+            instruction |= ((dest.encoding>>1) << 12);
+            instruction |= ((dest.encoding&0x1) << 22); /// Hmmm check some assembler encodings for this please.
 
         }
 
