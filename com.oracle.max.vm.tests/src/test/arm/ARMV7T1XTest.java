@@ -394,20 +394,20 @@ public class ARMV7T1XTest  extends MaxTestCase {
 
             for(i = 0;i <= 5;i++)
                 masm.mov32BitConstant(ARMV7.cpuRegisters[i],(int)expectedValues[i]);
-            theCompiler.pokeInt(ARMV7.cpuRegisters[0],5);
-            theCompiler.pokeInt(ARMV7.cpuRegisters[1],4);
-            theCompiler.pokeInt(ARMV7.cpuRegisters[2],3);
-            theCompiler.pokeInt(ARMV7.cpuRegisters[3],2);
-            theCompiler.pokeInt(ARMV7.cpuRegisters[4],1);
-            theCompiler.pokeInt(ARMV7.cpuRegisters[5],0);
+            theCompiler.pokeInt(ARMV7.cpuRegisters[0], 5);
+            theCompiler.pokeInt(ARMV7.cpuRegisters[1], 4);
+            theCompiler.pokeInt(ARMV7.cpuRegisters[2], 3);
+            theCompiler.pokeInt(ARMV7.cpuRegisters[3], 2);
+            theCompiler.pokeInt(ARMV7.cpuRegisters[4], 1);
+            theCompiler.pokeInt(ARMV7.cpuRegisters[5], 0);
             for(i = 0;i <= 5;i++)
                 masm.mov32BitConstant(ARMV7.cpuRegisters[i],-25);
-            theCompiler.peekInt(ARMV7.cpuRegisters[0],5);
-            theCompiler.peekInt(ARMV7.cpuRegisters[1],4);
-            theCompiler.peekInt(ARMV7.cpuRegisters[2],3);
-            theCompiler.peekInt(ARMV7.cpuRegisters[3],2);
-            theCompiler.peekInt(ARMV7.cpuRegisters[4],1);
-            theCompiler.peekInt(ARMV7.cpuRegisters[5],0);
+            theCompiler.peekInt(ARMV7.cpuRegisters[0], 5);
+            theCompiler.peekInt(ARMV7.cpuRegisters[1], 4);
+            theCompiler.peekInt(ARMV7.cpuRegisters[2], 3);
+            theCompiler.peekInt(ARMV7.cpuRegisters[3], 2);
+            theCompiler.peekInt(ARMV7.cpuRegisters[4], 1);
+            theCompiler.peekInt(ARMV7.cpuRegisters[5], 0);
 
         /* DEST REGISTER STORES THE LEAST SIGNIFICANT WORD AND DEST+1 STORES THE MOST SIGNIFICANT WORD OF THE 2WORD IE
         BIT LONG VALUE
@@ -733,6 +733,71 @@ public class ARMV7T1XTest  extends MaxTestCase {
         
         public void testPeekFloat() throws Exception {
 //TODO: Test goes here...
+            long []registerValues = null;
+            boolean success = true;
+            long gotVal= 0;
+            int instructions [] = null;
+            int i,assemblerStatements;
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssemblerUNITTEST();
+
+            expectedValues[0] = (long)Float.floatToRawIntBits(Float.MIN_VALUE);
+            expectedValues[1] = (long)Float.floatToRawIntBits(Float.MAX_VALUE);
+            expectedValues[2] = (long)Float.floatToRawIntBits(0.0f);
+            expectedValues[3] = (long)Float.floatToRawIntBits(-1.0f);
+            expectedValues[4] = (long)Float.floatToRawIntBits(2.5f);
+            expectedValues[5] = (long)Float.floatToRawIntBits(-100.75f);
+
+            for( i = 0 ; i <6; i++) {
+                masm.mov32BitConstant(ARMV7.cpuRegisters[i],(int)expectedValues[i]);
+                System.out.println(" AS LONGS "+ expectedValues[i]+ " AS FLOATS "+ Float.intBitsToFloat((int)expectedValues[i]));
+
+            }
+            masm.push(ARMV7Assembler.ConditionFlag.Always,4|8); // this is to check/debug issues about wrong address loaded
+            masm.push(ARMV7Assembler.ConditionFlag.Always,1); // index 5
+            masm.push(ARMV7Assembler.ConditionFlag.Always,2); // index 4
+            masm.push(ARMV7Assembler.ConditionFlag.Always,4); // index 3
+            masm.push(ARMV7Assembler.ConditionFlag.Always,8); // index 2
+            masm.push(ARMV7Assembler.ConditionFlag.Always,16); // index 1
+            masm.push(ARMV7Assembler.ConditionFlag.Always,32); // index 0
+
+
+            for(i = 0;i <= 5;i++)
+                masm.mov32BitConstant(ARMV7.cpuRegisters[i],-25);
+            theCompiler.peekFloat(ARMV7.s0,5);
+            theCompiler.peekFloat(ARMV7.s1,4);
+            theCompiler.peekFloat(ARMV7.s2, 3);
+            theCompiler.peekFloat(ARMV7.s3,2);
+            theCompiler.peekFloat(ARMV7.s4,1);
+            theCompiler.peekFloat(ARMV7.s5, 0);
+            masm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r0,ARMV7.s0);
+            masm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r1,ARMV7.s1);
+            masm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r2,ARMV7.s2);
+            masm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r3,ARMV7.s3);
+            masm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r4,ARMV7.s4);
+            masm.vmov(ARMV7Assembler.ConditionFlag.Always,ARMV7.r5,ARMV7.s5);
+
+
+        /* DEST REGISTER STORES THE LEAST SIGNIFICANT WORD AND DEST+1 STORES THE MOST SIGNIFICANT WORD OF THE 2WORD IE
+        BIT LONG VALUE
+         */
+            assemblerStatements =  masm.codeBuffer.position()/4;
+            instructions = new int [assemblerStatements];
+            registerValues  = generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
+            for( i = 0; i < 6;i++) {
+                if(registerValues[i] == expectedValues[i]) {
+                    System.out.println("OK REG " + i + " got Correct Value " + Float.intBitsToFloat((int)expectedValues[i]));
+
+                } else
+                {
+                    success = false;
+                    System.out.println("FAILED incorrect value " + Long.toString(registerValues[i],16)+
+                            " " + Long.toString(expectedValues[i],16)+ " EXPECTED "+ Float.intBitsToFloat((int)expectedValues[i])+
+                    " GOT " + Float.intBitsToFloat((int)registerValues[i]));
+                }
+
+            }
+            assert(success == true);
+
         }
 
         /**

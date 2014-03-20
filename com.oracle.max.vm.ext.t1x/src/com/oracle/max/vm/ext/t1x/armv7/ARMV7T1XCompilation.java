@@ -131,7 +131,6 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     public void peekWord(CiRegister dst, int index) {
         //asm.movq(dst, spWord(index));
         // APN same as peekObject as everything is 32bits.
-        System.err.println("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ");
         asm.setUpScratch(spWord(index));
         asm.ldr(ConditionFlag.Always,0,0,0,dst,asm.scratchRegister,ARMV7.r0,0,0);
 
@@ -206,7 +205,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     public void peekFloat(CiRegister dst, int index) {
         assert(dst.isFpu());
-        assert((dst.number <= ARMV7.s31.number) && (dst.number >= ARMV7.s0.number)); // must be double
+        assert((dst.number <= ARMV7.s31.number) && (dst.number >= ARMV7.s0.number)); // must be FLOAT!
 
         asm.setUpScratch(spInt(index));
         asm.vldr(ConditionFlag.Always,dst,asm.scratchRegister,0);
