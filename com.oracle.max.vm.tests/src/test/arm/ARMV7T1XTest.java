@@ -1500,6 +1500,50 @@ try {
         assert(success == true);
     }
 
+    public void testdo_lconst() throws Exception {
+        /*assignLong(scratch, value);
+        incStack(2);
+        pokeLong(scratch, 0);
+        */
+        long []registerValues = null;
+        boolean success = true;
+        long gotVal= 0;
+        int instructions [] = null;
+        int i,assemblerStatements;
+        System.out.println("running testdo_lconst");
+
+        ARMV7MacroAssembler masm = theCompiler.getMacroAssemblerUNITTEST();
+        expectedValues[0] = 0xffffffffL&0xffffffff0000ffffL;
+        expectedValues[1] = 0xffffffffL&(0xffffffff0000ffffL >>32);
+        expectedValues[8] = 0;
+        expectedValues[9] = 1;
+        masm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r2,ARMV7.r13); // copy stack pointer to r2
+        masm.mov32BitConstant(ARMV7.r8,0);
+        masm.mov32BitConstant(ARMV7.r9,1);
+        // r8 and r9 are used as temporaries, they are pushed onto stack and popped back after the operation
+        // we cannot use scratch on ARMV7 as its only 32bit  and we need 64.
+
+        theCompiler.do_lconstTests(0xffffffff0000ffffL);
+        masm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r3,ARMV7.r13); // copy revised stack pointer to r3
+        theCompiler.peekLong(ARMV7.r0,0);
+        assemblerStatements =  masm.codeBuffer.position()/4;
+        instructions = new int [assemblerStatements];
+        registerValues  = generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
+        gotVal = 0;
+        gotVal = 0xffffffffL&registerValues[0];
+        gotVal |= (0xffffffffL&registerValues[1]) << 32;
+        System.out.println(Long.toHexString(registerValues[0]) + " " +Long.toHexString(registerValues[1]));
+        System.out.println(Long.toHexString(gotVal) + " EXPECTED  0xffffffff0000ffffL")  ;
+        System.out.println(Long.toHexString(registerValues[8]) + " EXPECTED "+Long.toHexString(expectedValues[8]));
+        System.out.println(Long.toHexString(registerValues[9]) + " EXPECTED "+Long.toHexString(expectedValues[9]));
+        System.out.println("STACK " + registerValues[2] + " "+ registerValues[3]);
+        assert(gotVal == 0xffffffff0000ffffL);
+        assert(registerValues[8] == 0);
+        assert(registerValues[9] == 1);
+        assert(registerValues[2] - registerValues[3] == 8);
+         System.out.println("Passed testdo_lconst");
+    }
+
 
 }
 

@@ -804,7 +804,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             // Args are now copied to the baseline locations; call the baseline main body
             int callPos = asm.codeBuffer.position();
-            //asm.call(); // TODO APN was call RAX  this is all wrong!! NEEDS to be fixed
+            //asm.call(rax); // TODO APN was call RAX
             asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r15,ARMV7.r14);
             int callSize = asm.codeBuffer.position() - callPos;
 

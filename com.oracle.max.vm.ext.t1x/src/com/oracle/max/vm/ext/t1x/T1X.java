@@ -399,6 +399,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     @HOSTED_ONLY
     public T1XTemplate[] createTemplates(RuntimeCompiler compiler, Class<?> templateSourceClass, boolean checkComplete, T1XTemplate[] templates) {
         Trace.begin(1, "creating T1X templates from " + templateSourceClass.getName());
+        System.out.println("creating T1X templates from " + templateSourceClass.getName());
         if (templates == null) {
             templates = new T1XTemplate[T1XTemplateTag.values().length];
         }

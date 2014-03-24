@@ -163,6 +163,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     public void peekLong(CiRegister dst, int index) {
         //asm.movq(dst, spLong(index));
+        assert(dst.encoding < 10);
         asm.setUpScratch(spLong(index));
         asm.sub(ConditionFlag.Always,false,scratch,scratch,4,0);
 
@@ -172,6 +173,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     public void pokeLong(CiRegister src, int index) {
         //asm.movq(spLong(index), src);
+        assert(src.encoding < 10);
         asm.setUpScratch(spLong(index));
         asm.sub(ConditionFlag.Always,false,scratch,scratch,4,0);
         asm.strd(ARMV7Assembler.ConditionFlag.Always,src,scratch,0); // put them on the stack on the stack!
@@ -242,7 +244,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected void assignWordReg(CiRegister dst, CiRegister src) {
         //asm.movq(dst, src);
-        //asm.mov(ConditionFlag.Always,false,dst, src); think it is a memory-memory operation as in assignObjectReg
+        //asm.mov(ConditionFlag.Always,false,dst, src);  is it a memory-memory operation?
         asm.mov(ARMV7Assembler.ConditionFlag.Always, true, dst,src);
 
     }
@@ -386,7 +388,28 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         * APN not implemented
         */
     }
-
+    @Override
+    protected void do_dconst(double value) {
+        //assignLong(scratch, Double.doubleToRawLongBits(value));
+        //        incStack(2);
+        //pokeLong(scratch, 0);
+        incStack(2);
+        asm.push(ConditionFlag.Always,1<<8|1<<9);
+        assignLong(ARMV7.r8, Double.doubleToRawLongBits(value));
+        pokeLong(ARMV7.r8,1); // APN as we pop these off next!
+        asm.pop(ConditionFlag.Always,1<<8|1<<9);
+    }
+    @Override
+    protected void do_lconst(long value) {
+        //assignLong(scratch, value);
+        //incStack(2);
+        //pokeLong(scratch, 0);
+        incStack(2);
+        asm.push(ConditionFlag.Always,1<<8|1<<9);
+        assignLong(ARMV7.r8,value);
+        pokeLong(ARMV7.r8,2 );
+        asm.pop(ConditionFlag.Always,1<<8|1<<9);
+    }
     @Override
     protected void assignDouble(CiRegister dst, double value) {
         assert(dst.number >= ARMV7.d0.number && dst.number <= ARMV7.d15.number); // make sure its going to a double register
@@ -1141,6 +1164,10 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         return returnKind;
     }
 
+    public void do_lconstTests(long value)
+    {
+        do_lconst(value);
+    }
     public void assignmentTests(CiRegister reg, long value)
     {
          assignLong(reg,value);
