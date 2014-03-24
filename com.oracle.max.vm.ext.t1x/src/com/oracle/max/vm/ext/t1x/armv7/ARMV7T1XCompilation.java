@@ -388,6 +388,17 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         * APN not implemented
         */
     }
+
+    @Override
+    protected void do_fconst(float value) {
+        // did use to use scratch but scratch then gets corrupted.
+        // when we incStack etc etc
+        incStack(1);
+        asm.push(ConditionFlag.Always,1<<8);
+        assignInt(ARMV7.r8, Float.floatToRawIntBits(value));
+        pokeInt(ARMV7.r8, 1);
+        asm.pop(ConditionFlag.Always,1<<8);
+    }
     @Override
     protected void do_dconst(double value) {
         //assignLong(scratch, Double.doubleToRawLongBits(value));
@@ -1162,6 +1173,11 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             return Kind.WORD;
         }
         return returnKind;
+    }
+
+
+    public void do_fconstTests(float value) {
+        do_fconst(value);
     }
     public void do_dconstTests(double value)
     {
