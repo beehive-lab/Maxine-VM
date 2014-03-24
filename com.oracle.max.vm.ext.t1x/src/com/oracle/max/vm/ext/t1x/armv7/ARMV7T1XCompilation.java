@@ -396,7 +396,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         incStack(2);
         asm.push(ConditionFlag.Always,1<<8|1<<9);
         assignLong(ARMV7.r8, Double.doubleToRawLongBits(value));
-        pokeLong(ARMV7.r8,1); // APN as we pop these off next!
+        pokeLong(ARMV7.r8,2); // APN as we pop these off next!
         asm.pop(ConditionFlag.Always,1<<8|1<<9);
     }
     @Override
@@ -1163,7 +1163,10 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         }
         return returnKind;
     }
-
+    public void do_dconstTests(double value)
+    {
+        do_dconst(value);
+    }
     public void do_lconstTests(long value)
     {
         do_lconst(value);
