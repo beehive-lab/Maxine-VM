@@ -1024,31 +1024,7 @@ public class ARMV7T1XTest  extends MaxTestCase {
 //TODO: Test goes here...
         }
 
-        /**
-         *
-         * Method: loadInt(CiRegister dst, int index)
-         *
-         */
-        
-        public void testLoadInt() throws Exception {
-//TODO: Test goes here...
-        }
 
-        /**
-         *
-         * Method: loadLong(CiRegister dst, int index)
-         *
-         */
-        
-        public void testLoadLong() throws Exception {
-//TODO: Test goes here...
-        }
-
-        /**
-         *
-         * Method: loadWord(CiRegister dst, int index)
-         *
-         */
         
         public void testLoadWord() throws Exception {
 //TODO: Test goes here...
@@ -1064,25 +1040,6 @@ public class ARMV7T1XTest  extends MaxTestCase {
 //TODO: Test goes here...
         }
 
-        /**
-         *
-         * Method: storeInt(CiRegister src, int index)
-         *
-         */
-        
-        public void testStoreInt() throws Exception {
-//TODO: Test goes here...
-        }
-
-        /**
-         *
-         * Method: storeLong(CiRegister src, int index)
-         *
-         */
-        
-        public void testStoreLong() throws Exception {
-//TODO: Test goes here...
-        }
 
         /**
          *
@@ -1104,25 +1061,7 @@ public class ARMV7T1XTest  extends MaxTestCase {
 //TODO: Test goes here...
         }
 
-        /**
-         *
-         * Method: assignInt(CiRegister dst, int value)
-         *
-         */
-        
-        public void testAssignInt() throws Exception {
-//TODO: Test goes here...
-        }
 
-        /**
-         *
-         * Method: assignFloat(CiRegister dst, float value)
-         *
-         */
-        
-        public void testAssignFloat() throws Exception {
-//TODO: Test goes here...
-        }
 
         /**
          *
@@ -1717,24 +1656,18 @@ try {
         }
         theCompiler.do_loadTests(5,Kind.LONG);
         masm.pop(ARMV7Assembler.ConditionFlag.Always,1|2);
+
+        // Apologies hard coded assignLong here ....
         masm.movw(ARMV7Assembler.ConditionFlag.Always,ARMV7.r0,(int)(172L&0xffff));
         masm.movt(ARMV7Assembler.ConditionFlag.Always,ARMV7.r0,(int)((172L>>16)&0xffff));
         masm.movw(ARMV7Assembler.ConditionFlag.Always,ARMV7.r1,(int)(((172L>>32)&0xffff)));
         masm.movt(ARMV7Assembler.ConditionFlag.Always,ARMV7.r1,(int)(((172L>>48)&0xffff)));
         masm.push(ARMV7Assembler.ConditionFlag.Always,1|2);
         theCompiler.do_storeTests(5,Kind.LONG);
+
         for(i = 4;i>=0;i--)
             theCompiler.do_loadTests(i, Kind.INT);
-            theCompiler.do_loadTests(5,Kind.LONG);
-            // we should now see the values
-            /*
-            100
-            101
-            102
-            103
-            104
-            in memory at the offset of RBP = R11 decrementing in memoy
-             */
+        theCompiler.do_loadTests(5,Kind.LONG);
 
 
 
