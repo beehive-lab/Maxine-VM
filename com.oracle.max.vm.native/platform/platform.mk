@@ -89,7 +89,6 @@ ifeq ($(TARGETOS),Linux)
     a := $(shell uname -m)
     ifeq ($a,x86_64)
         ISA := amd64
-        $(shell echo $ISA)
 	#$(shell "echo 'platform.mk hardcoded for ARM'")
 	#ISA := arm
     else 
