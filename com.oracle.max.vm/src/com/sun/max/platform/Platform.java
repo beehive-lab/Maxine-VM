@@ -461,7 +461,7 @@ public final class Platform {
      */
     private static Platform createDefaultPlatform0() {
         String platformSpec = System.getProperty(PLATFORM_PROPERTY);
-        //System.err.println("Platform Spec " + platformSpec);
+        System.err.println("Platform Spec " + platformSpec);
         if (platformSpec != null) {
             Platform platform = parse(platformSpec);
             System.err.println("Platform " + platform);
