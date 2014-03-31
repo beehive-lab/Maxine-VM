@@ -451,11 +451,11 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         // APN if we assume that the first register is offset ZERO then we can save/restore them using a
         // single stm/ldm instruction for BASE REGISTERS but what about floating point!!!!!
         // this will need to be expanded to use VSTM/VLDM as necessary
-        boolean      first = true;
-        int oldOffset = -1;
+       // boolean      first = true;
+        //int oldOffset = -1;
         int registerList = 0;
         for (CiRegister r : csl.registers) {
-            int offset = csl.offsetOf(r);
+            //int offset = csl.offsetOf(r);
             registerList = (1<<(r.encoding & 0xf)); // only storing one register at a time.
             push(ConditionFlag.Always,registerList);// r13 is the stack po
             /*if (first) {
@@ -469,7 +469,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
                 // if it fails then we cannot to stm
             } */
 
-            oldOffset = offset;
+            //oldOffset = offset;
             //movq(new CiAddress(target.wordKind, frame, frameToCSA + offset), r);
         }
         //stm(ConditionFlag.Always,0,0,1,0,ARMV7.r13,registerList);// r13 is the stack pointer
@@ -477,10 +477,10 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void restore(CiCalleeSaveLayout csl, int frameToCSA) {
-        CiRegisterValue frame = frameRegister.asValue();
+       // CiRegisterValue frame = frameRegister.asValue();
         int registerList = 0;
         for (CiRegister r : csl.registers) {
-            int offset = csl.offsetOf(r);
+            //int offset = csl.offsetOf(r);
             registerList = (1<<(r.encoding & 0xf));
             //movq(r, new CiAddress(target.wordKind, frame, frameToCSA + offset));
             // APN TODO check that it is ok to use the stack pointer here  for ARM

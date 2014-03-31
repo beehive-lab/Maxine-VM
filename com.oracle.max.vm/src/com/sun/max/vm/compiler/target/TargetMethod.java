@@ -724,8 +724,8 @@ public abstract class TargetMethod extends MemoryRegion {
             // buffer so I will keep it in and produce a stripped down ARMISAInstructionDecoder that gets rid of all
             // the unnecessary X86 functionality                       com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMISAInstructionDecoder.java
             //
-	 	ARMISAInstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);
-	} else  {
+            ARMISAInstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);
+	} else {
             throw FatalError.unimplemented();
         }
     }

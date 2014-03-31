@@ -31,6 +31,7 @@ public class ArrayPool<T extends PoolObject> extends Pool<T> {
 
     protected final T[] objects;
 
+    @SuppressWarnings("unchecked")
     public ArrayPool(T... objects) {
         this.objects = objects;
     }

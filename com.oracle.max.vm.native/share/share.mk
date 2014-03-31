@@ -22,7 +22,7 @@
 #
 
 %.d: %.c
-	$(CC) $(C_DEPENDENCIES_FLAGS) $(CPPFLAGS) $< | sed 's/$*\.o/& $@/g' > $@
+	$(CC) $(C_DEPENDENCIES_FLAGS) $(DARWIN_GCC_MFLAG) $(CPPFLAGS) $< | sed 's/$*\.o/& $@/g' > $@
 
 DEPENDENCIES = $(SOURCES:%.c=%.d)
 

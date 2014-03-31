@@ -571,7 +571,7 @@ public class T1XTemplate {
         if (T1X.isAMD64()) {
             return AMD64T1XCompilation.findDataPatchPosns(source, dispFromCodeStart);
         } else if (T1X.isARM()) {
-	  return ARMV7T1XCompilation.findDataPatchPosns(source,dispFromCodeStart);
+	    return ARMV7T1XCompilation.findDataPatchPosns(source,dispFromCodeStart);
 	}else{
             throw T1X.unimplISA();
         }

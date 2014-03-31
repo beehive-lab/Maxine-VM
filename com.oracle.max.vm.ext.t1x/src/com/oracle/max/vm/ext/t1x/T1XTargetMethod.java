@@ -386,18 +386,24 @@ public class T1XTargetMethod extends TargetMethod {
 
     @Override
     public boolean isPatchableCallSite(CodePointer callSite) {
-	if(isAMD64())
-        return AMD64TargetMethodUtil.isPatchableCallSite(callSite);
-	if(isARM()) return ARMTargetMethodUtil.isPatchableCallSite(callSite);
-	return false; // SHOULD Really throw an exception.
+	if (isAMD64()) {
+            return AMD64TargetMethodUtil.isPatchableCallSite(callSite);
+	} else if(isARM()) {
+	    return ARMTargetMethodUtil.isPatchableCallSite(callSite);
+	} else {
+	    return false; // SHOULD Really throw an exception.
+	}
     }
 
     @Override
     public CodePointer fixupCallSite(int callOffset, CodePointer callEntryPoint) {
-	if(isAMD64())
-        return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
-	if(isARM()) return  ARMTargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
-	return null;
+	if (isAMD64()) {
+	    return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+	} else if(isARM()) {
+	    return  ARMTargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+	} else {
+	    return null;
+	}
     }
 
     public byte[] referenceMaps() {
@@ -432,11 +438,13 @@ public class T1XTargetMethod extends TargetMethod {
 
     @Override
     public CodePointer patchCallSite(int callOffset, CodePointer callEntryPoint) {
-	if(isAMD64())
-        return AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
-	if(isARM())
-	return ARMTargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
-	return null;
+	if (isAMD64()) {
+            return AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
+	} else if (isARM()) {
+	    return ARMTargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
+	} else {
+	    return null;
+	}
     }
 
     @Override
@@ -446,7 +454,7 @@ public class T1XTargetMethod extends TargetMethod {
             if (vm().compilationBroker.needsAdapters()) {
                 AMD64TargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(tm));
             }
-        } else if(platform().isa == ISA.ARM) {
+        } else if (platform().isa == ISA.ARM) {
             ARMTargetMethodUtil.patchWithJump(this, BASELINE_ENTRY_POINT.offset(), BASELINE_ENTRY_POINT.in(tm));
             if (vm().compilationBroker.needsAdapters()) {
                 ARMTargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(tm));
@@ -931,7 +939,7 @@ public class T1XTargetMethod extends TargetMethod {
         }
         return FramePointerStateARMV7.IN_RBP;
 	}
-	
+
     @PLATFORM(cpu = "amd64")
     @HOSTED_ONLY
     private FramePointerStateAMD64 computeFramePointerState(StackFrameCursor current, StackFrameWalker stackFrameWalker, CodePointer lastPrologueInstr) {
@@ -977,7 +985,7 @@ public class T1XTargetMethod extends TargetMethod {
             localVariablesBase = framePointerState.localVariablesBase(current);
             StackFrame stackFrame = new AMD64JVMSFrame(sfw.calleeStackFrame(), current.targetMethod(), current.vmIP().toPointer(), current.sp(), localVariablesBase, localVariablesBase);
             return visitor.visitFrame(stackFrame);
-        } else if(isARM()) {
+        } else if (isARM()) {
             StackFrameWalker sfw = current.stackFrameWalker();
             Pointer localVariablesBase = current.fp();
             CodePointer startOfPrologue;
@@ -1080,7 +1088,7 @@ public class T1XTargetMethod extends TargetMethod {
 
     @Override
     public Pointer returnAddressPointer(StackFrameCursor frame) {
-        if (isAMD64()||isARM()) {
+        if (isAMD64() || isARM()) {
             int dispToRip = frameSize() - sizeOfNonParameterLocals();
             return frame.fp().plus(dispToRip);
         } else  {
@@ -1245,7 +1253,7 @@ public class T1XTargetMethod extends TargetMethod {
                 int safepointPos = safepoints.posAt(safepointIndex);
                 if (curPos <= safepointPos && safepointPos < succPos) {
                     if (safepoints.isSetAt(TEMPLATE_CALL, safepointIndex)) {
-                        if (isAMD64()||isARM()) {
+                        if (isAMD64() || isARM()) {
                             // On x86 the safepoint position of a call *is* the return position
                             templateCallReturnPos = safepointPos;
                         } else {
@@ -1271,7 +1279,7 @@ public class T1XTargetMethod extends TargetMethod {
  * the context of the Inspector.
  */
 @HOSTED_ONLY
-@PLATFORM(cpu= "armv7") 
+@PLATFORM(cpu= "armv7")
 enum FramePointerStateARMV7 {
 	 /**
      * RBP holds the frame pointer of the current method activation. caller's RIP is at [RBP + FrameSize], caller's

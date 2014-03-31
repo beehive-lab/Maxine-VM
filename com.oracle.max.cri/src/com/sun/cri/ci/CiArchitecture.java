@@ -201,8 +201,9 @@ public abstract class CiArchitecture {
     public boolean isX86() {
         return false;
     }
+
     public boolean isARM() {
-	return true;
+	return false;
     }
 
     /**
@@ -212,9 +213,4 @@ public abstract class CiArchitecture {
     public boolean isSPARC() {
         return false;
     }
-
-    public boolean isARMV7() {
-        return false;
-    }
-
 }

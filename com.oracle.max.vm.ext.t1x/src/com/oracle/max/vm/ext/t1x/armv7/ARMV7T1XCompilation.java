@@ -30,11 +30,9 @@ import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 
 import java.util.*;
-// Test update APN to check operation of mercurial
-import com.oracle.max.asm.target.amd64.AMD64;
+
 import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
-import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.oracle.max.vm.ext.t1x.*;
 import com.sun.cri.bytecode.*;
@@ -53,6 +51,7 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.armv7.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
+// Test update APN to check operation of mercurial
 
 
 
@@ -617,7 +616,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected void do_preVolatileFieldAccess(T1XTemplateTag tag, FieldActor fieldActor) {
         if (fieldActor.isVolatile()) {
-            boolean isWrite = tag.opcode == Bytecodes.PUTFIELD || tag.opcode == Bytecodes.PUTSTATIC;
+            //boolean isWrite = tag.opcode == Bytecodes.PUTFIELD || tag.opcode == Bytecodes.PUTSTATIC;
             asm.membar(); // APN we will use the standard DMB instruction thisd might be overkill
                         // and we might need to consider other uses/ways of doing this ....
                         // in order to relax memory access further to account for the R-W W-R W-W semantics
@@ -628,7 +627,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected void do_postVolatileFieldAccess(T1XTemplateTag tag, FieldActor fieldActor) {
         if (fieldActor.isVolatile()) {
-            boolean isWrite = tag.opcode == Bytecodes.PUTFIELD || tag.opcode == Bytecodes.PUTSTATIC;
+            //boolean isWrite = tag.opcode == Bytecodes.PUTFIELD || tag.opcode == Bytecodes.PUTSTATIC;
             asm.membar(); // output a DMB instruction
             //asm.membar(isWrite ? MemoryBarriers.JMM_POST_VOLATILE_WRITE : MemoryBarriers.JMM_POST_VOLATILE_READ);
         }

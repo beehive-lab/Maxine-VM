@@ -302,9 +302,9 @@ public class Stubs {
     public static boolean isJumpToStaticTrampoline(TargetMethod tm) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.isJumpTo(tm, OPTIMIZED_ENTRY_POINT.offset(),  OPTIMIZED_ENTRY_POINT.in(vm().stubs.staticTrampoline()));
-        } else if(platform().isa == ISA.ARM) {
-		return ARMTargetMethodUtil.isJumpTo(tm, OPTIMIZED_ENTRY_POINT.offset(),  OPTIMIZED_ENTRY_POINT.in(vm().stubs.staticTrampoline())); 
-	}else {
+        } else if (platform().isa == ISA.ARM) {
+            return ARMTargetMethodUtil.isJumpTo(tm, OPTIMIZED_ENTRY_POINT.offset(),  OPTIMIZED_ENTRY_POINT.in(vm().stubs.staticTrampoline()));
+	} else {
             throw FatalError.unimplemented();
         }
     }
@@ -438,7 +438,7 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             final Type type = isInterface ? InterfaceTrampoline : VirtualTrampoline;
             return new Stub(type, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
-        }else if (platform().isa == ISA.ARM) {
+        } else if (platform().isa == ISA.ARM) {
             CiRegisterConfig registerConfig = registerConfigs.trampoline;
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
@@ -517,8 +517,9 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             final Type type = isInterface ? InterfaceTrampoline : VirtualTrampoline;
             return new Stub(type, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
-	} else
-        throw FatalError.unimplemented();
+	} else {
+            throw FatalError.unimplemented();
+	}
     }
     @PLATFORM(cpu= "armv7")
     private static void patchStaticTrampolineCallSiteARMV7(Pointer callSite) {
@@ -538,7 +539,6 @@ public class Stubs {
     }
     @PLATFORM(cpu = "amd64")
     private static void patchStaticTrampolineCallSiteAMD64(Pointer callSite) {
-	System.err.println("amd patchStaticTrampoline");
         CodePointer cpCallSite = CodePointer.from(callSite);
 
         final TargetMethod caller = cpCallSite.toTargetMethod();
@@ -614,7 +614,7 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
 
             return new Stub(StaticTrampoline, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
-        }else if (platform().isa == ISA.ARM)	{
+        } else if (platform().isa == ISA.ARM)	{
             CiRegisterConfig registerConfig = registerConfigs.trampoline;
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
@@ -672,8 +672,9 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
 
             return new Stub(StaticTrampoline, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
-	} else
-        throw FatalError.unimplemented();
+	} else {
+            throw FatalError.unimplemented();
+	}
     }
 
     /**
@@ -753,7 +754,7 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
 
             return new Stub(TrapStub, "trapStub", frameSize, code, callPos, callSize, callee, -1);
-        }else if (platform().isa == ISA.ARM)	{
+        } else if (platform().isa == ISA.ARM) {
 
             /*
             APN this is going to be a pretty brain damaged attempt
@@ -766,7 +767,7 @@ public class Stubs {
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
             CiRegister latch = ARMSafepointPoll.LATCH_REGISTER;
-            CiRegister scratch = registerConfig.getScratchRegister();
+            //CiRegister scratch = registerConfig.getScratchRegister();
             int frameSize = platform().target.alignFrameSize(csl.size);
             int frameToCSA = csl.frameOffsetToCSA;
             CiKind[] handleTrapParameters = CiUtil.signatureToKinds(Trap.handleTrap.classMethodActor);
@@ -852,8 +853,9 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
 
             return new Stub(TrapStub, "trapStub", frameSize, code, callPos, callSize, callee, -1);
-	}else
-        throw FatalError.unimplemented();
+	} else {
+            throw FatalError.unimplemented();
+	}
     }
 
     /**
@@ -1004,7 +1006,9 @@ public class Stubs {
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12);
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnwindStub, name, frameSize, code, -1, -1, null, -1);
-        }else throw FatalError.unimplemented();
+        } else {
+            throw FatalError.unimplemented();
+        }
     }
 
     /**
@@ -1044,7 +1048,7 @@ public class Stubs {
 
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnrollStub, "unrollStub", frameSize, code, callPos, callSize, callee, -1);
-        }else if (platform().isa == ISA.ARM) {
+        } else if (platform().isa == ISA.ARM) {
             CiRegisterConfig registerConfig = MaxineVM.vm().stubs.registerConfigs.standard;
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(0);
@@ -1067,8 +1071,9 @@ public class Stubs {
 
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnrollStub, "unrollStub", frameSize, code, callPos, callSize, callee, -1);
-	}else
-        throw FatalError.unimplemented();
+	} else {
+	    throw FatalError.unimplemented();
+	}
     }
 
     /**
@@ -1244,7 +1249,7 @@ public class Stubs {
             runtimeInits[runtimeInits.length - 1] = patch;
 
             return stub;
-        }else if(platform().isa == ISA.ARM) {
+        } else if (platform().isa == ISA.ARM) {
             /*
              * The deopt stub initially executes in the frame of the method that was returned to and is about to be
              * deoptimized. It then allocates a temporary frame of 2 slots to transfer control to the deopt
@@ -1386,7 +1391,7 @@ public class Stubs {
 
 
             // Put deopt method entry point into low slot
-            CiRegister scratch = registerConfig.getScratchRegister();
+            //CiRegister scratch = registerConfig.getScratchRegister();
             //asm.movq(scratch, 0xFFFFFFFFFFFFFFFFL);
             asm.movw(ARMV7Assembler.ConditionFlag.Always,ARMV7.r8,0xffff); // is r8 free ?
             asm.movt(ARMV7Assembler.ConditionFlag.Always,ARMV7.r8,0xffff);
@@ -1413,8 +1418,9 @@ public class Stubs {
             runtimeInits[runtimeInits.length - 1] = patch;
 
             return stub;
-	}else
-        throw FatalError.unimplemented();
+	} else {
+            throw FatalError.unimplemented();
+	}
     }
 
     /**
@@ -1523,7 +1529,7 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             Type stubType = kind == null ? DeoptStubFromSafepoint : DeoptStubFromCompilerStub;
             return new Stub(stubType, stubName, frameSize, code, callPos, callSize, runtimeRoutine.classMethodActor, -1);
-        }else if(platform().isa == ISA.ARM) {
+        } else if (platform().isa == ISA.ARM) {
             /*
              * The deopt stub initially executes in the frame of the method that was returned to (i.e. the method about to be
              * deoptimized). It then allocates a new frame, saves all registers, sets up args to deopt routine
@@ -1707,8 +1713,9 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             Type stubType = kind == null ? DeoptStubFromSafepoint : DeoptStubFromCompilerStub;
             return new Stub(stubType, stubName, frameSize, code, callPos, callSize, runtimeRoutine.classMethodActor, -1);
-	} else
-        throw FatalError.unimplemented();
+	} else {
+            throw FatalError.unimplemented();
+	}
     }
 
     /**
@@ -1768,7 +1775,7 @@ public class Stubs {
             String stubName = name + "Stub";
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UncommonTrapStub, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
-        }else if(platform().isa == ISA.ARM)	{
+        } else if(platform().isa == ISA.ARM) {
             CiRegisterConfig registerConfig = registerConfigs.uncommonTrapStub;
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
@@ -1788,22 +1795,22 @@ public class Stubs {
             String name = "uncommonTrap";
             final CriticalMethod uncommonTrap = new CriticalMethod(Deoptimization.class, name, null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
 
-            CiValue[] args = registerConfig.getCallingConvention(JavaCall, new CiKind[] {WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind()}, target(), false).locations;
+            //CiValue[] args = registerConfig.getCallingConvention(JavaCall, new CiKind[] {WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind()}, target(), false).locations;
 
             // Copy callee save area address into arg 0 (i.e. 'csa')
-            CiRegister arg0 = args[0].asRegister();
+            //CiRegister arg0 = args[0].asRegister();
             //asm.leaq(arg0, new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameToCSA));
 
             // Copy return address into arg 1 (i.e. 'ip')
-            CiRegister arg1 = args[1].asRegister();
+            //CiRegister arg1 = args[1].asRegister();
             //asm.movq(arg1, new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize));
 
             // Copy stack pointer into arg 2 (i.e. 'sp')
-            CiRegister arg2 = args[2].asRegister();
+            //CiRegister arg2 = args[2].asRegister();
             //asm.leaq(arg2, new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize + 8));
 
             // Copy original frame pointer into arg 3 (i.e. 'fp')
-            CiRegister arg3 = args[3].asRegister();
+            //CiRegister arg3 = args[3].asRegister();
             //asm.movq(arg3, ARMV7.rbp);
 
 
@@ -1820,8 +1827,9 @@ public class Stubs {
             String stubName = name + "Stub";
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UncommonTrapStub, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
-	} else
-        throw FatalError.unimplemented();
+	} else {
+            throw FatalError.unimplemented();
+	}
     }
 
     /**

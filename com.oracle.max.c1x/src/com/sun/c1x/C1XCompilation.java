@@ -95,7 +95,6 @@ public final class C1XCompilation {
         this.stats = stats == null ? new CiStatistics() : stats;
         this.registerConfig = method == null ? compiler.compilerStubRegisterConfig : runtime.getRegisterConfig(method);
         this.placeholderState = debugInfoLevel == DebugInfoLevel.REF_MAPS ? new MutableFrameState(new IRScope(null, null, method, -1), 0, 0, 0) : null;
-	System.err.println("com.oracle.max.c1x/src/com/sun/c1x C1X created");
         if (compiler.isObserved()) {
             compiler.fireCompilationStarted(new CompilationEvent(this));
         }
@@ -219,11 +218,8 @@ public final class C1XCompilation {
         CiTargetMethod targetMethod;
         try {
             emitHIR();
-            System.err.println("Emitted HIR");
             emitLIR();
-            System.err.println("Emitted LIR");
             targetMethod = emitCode();
-            System.err.println("Emitted CODE");
 
             if (C1XOptions.PrintMetrics) {
                 C1XMetrics.BytecodesCompiled += method.code().length;

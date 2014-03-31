@@ -399,7 +399,6 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     @HOSTED_ONLY
     public T1XTemplate[] createTemplates(RuntimeCompiler compiler, Class<?> templateSourceClass, boolean checkComplete, T1XTemplate[] templates) {
         Trace.begin(1, "creating T1X templates from " + templateSourceClass.getName());
-        System.out.println("creating T1X templates from " + templateSourceClass.getName());
         if (templates == null) {
             templates = new T1XTemplate[T1XTemplateTag.values().length];
         }
@@ -474,15 +473,6 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
             Kind k = templateSource.getParameterKinds()[i];
             FatalError.check(k.stackKind == k, "Template parameter " + i + " is not a stack kind: " + templateSource);
         }
-        System.err.println("length of code " +templateSource.codeSize());
-        byte []codecopy = templateSource.code();
-        for(int i=0; i < codecopy.length; i++)    {
-
-
-            System.out.printf("BYTE is %08X\n",codecopy[i]) ;
-        }
-        /*System.err.println("T1X compileTemplate commented out C1X bootCompiler.compile");*/
-        System.out.println("compiling  method " + templateSource.qualifiedName() + templateSource.isTemplate());
 
         final MaxTargetMethod templateCode = (MaxTargetMethod) bootCompiler.compile(templateSource, false, true, null);
         FatalError.check(templateCode.scalarLiterals() == null, "Template must not have *any* scalar literals: " + templateCode);
@@ -651,15 +641,13 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
      */
     @FOLD
     public static boolean isAMD64() {
-	//assert( Platform.platform().isa == ISA.AMD64);
-	return Platform.platform().isa == ISA.AMD64;
-        //return platform().isa == ISA.AMD64;
+	return platform().isa == ISA.AMD64;
     }
-	
-	
-    public static boolean isARM()	{
-	return platform().isa == ISA.ARM;
-	}
+
+    @FOLD
+    public static boolean isARM() {
+        return platform().isa == ISA.ARM;
+    }
 
     /**
      * Called to denote some functionality is not yet implemented for the target ISA.

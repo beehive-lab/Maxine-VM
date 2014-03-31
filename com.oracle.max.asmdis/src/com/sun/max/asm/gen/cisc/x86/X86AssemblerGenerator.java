@@ -102,7 +102,7 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
         return argument.getClass().getSimpleName() + "." + argument.name();
     }
 
-    protected <Argument_Type extends Enum<Argument_Type> & EnumerableArgument<Argument_Type>> void printModVariant(IndentWriter writer, final Template_Type template, Argument_Type... arguments) {
+    protected <Argument_Type extends Enum<Argument_Type> & EnumerableArgument<Argument_Type>> void printModVariant(IndentWriter writer, final Template_Type template, @SuppressWarnings("unchecked") Argument_Type... arguments) {
         final Class argumentType = arguments[0].getClass();
         final X86Parameter parameter = getParameter(template, argumentType);
         writer.print("if (");
@@ -229,7 +229,7 @@ public abstract class X86AssemblerGenerator<Template_Type extends X86Template> e
         writer.println();
     }
 
-    protected <Argument_Type extends Enum<Argument_Type> & EnumerableArgument<Argument_Type>> void printSibVariant(IndentWriter writer, Template_Type template, Argument_Type... arguments) {
+    protected <Argument_Type extends Enum<Argument_Type> & EnumerableArgument<Argument_Type>> void printSibVariant(IndentWriter writer, Template_Type template, @SuppressWarnings("unchecked") Argument_Type... arguments) {
         final Class argumentType = arguments[0].getClass();
         final X86Parameter parameter = getParameter(template, argumentType);
         writer.print("if (");

@@ -28,7 +28,6 @@ import java.util.*;
 
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.armv7.*;
-import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
 import com.sun.c1x.stub.*;
@@ -370,7 +369,7 @@ public class ARMV7CompilerStubEmitter {
         // Load arguments
         CiCallingConvention cc = comp.registerConfig.getCallingConvention(RuntimeCall, call.arguments, comp.target, false);
         for (int i = 0; i < cc.locations.length; ++i) {
-            CiValue location = cc.locations[i];
+            //CiValue location = cc.locations[i];
             //asm.movq(location.asRegister(), comp.frameMap().toStackAddress(inArgs[i]));
         }
 
@@ -387,7 +386,7 @@ public class ARMV7CompilerStubEmitter {
         tasm.recordDirectCall(before, after - before, comp.runtime.asCallTarget(call), null);
 
         if (call.resultKind != CiKind.Void) {
-            CiRegister returnRegister = comp.registerConfig.getReturnRegister(call.resultKind);
+            //CiRegister returnRegister = comp.registerConfig.getReturnRegister(call.resultKind);
            // asm.movq(comp.frameMap().toStackAddress(outResult), returnRegister);
         }
     }

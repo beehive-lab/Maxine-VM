@@ -1323,8 +1323,7 @@ public final class LinearScan {
 
     private void pdAddTemps(LIRInstruction op) {
         // TODO Platform dependent!
-        System.err.println("REMOVE ARM PORT HACK LinearScan.java::pdAddTemps compilation.target.arch.isARM addition to assert");
-        assert compilation.target.arch.isX86()|| compilation.target.arch.isARM();
+        assert compilation.target.arch.isX86() || compilation.target.arch.isARM();
 
         switch (op.code) {
             case Tan:

@@ -41,7 +41,6 @@ public class TargetMethodAssembler {
     public TargetMethodAssembler(AbstractAssembler asm) {
         this.asm = asm;
         this.targetMethod = new CiTargetMethod();
-	System.err.println("C1X TargetMethodAssembler");
     }
 
     public void setFrameSize(int frameSize) {

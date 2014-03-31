@@ -83,10 +83,12 @@ public interface Symbolizer<S extends Symbol> extends Iterable<S> {
             return map;
         }
 
+        @SuppressWarnings("unchecked")
         public static <S extends Symbol> Symbolizer<S> from(Class<S> symbolType, S... symbols) {
             return new ListSymbolizer<S>(symbolType, Arrays.asList(symbols));
         }
 
+        @SuppressWarnings("unchecked")
         public static <S extends Symbol> Symbolizer<S> fromList(Class<S> symbolType, Iterable< ? extends S> symbols,
                         final S... additionalSymbols) {
             final List<S> list = new ArrayList<S>(Arrays.asList(additionalSymbols));
@@ -96,10 +98,12 @@ public interface Symbolizer<S extends Symbol> extends Iterable<S> {
             return new ListSymbolizer<S>(symbolType, list);
         }
 
+        @SuppressWarnings("unchecked")
         public static <S extends Symbol> Symbolizer<S> append(Symbolizer<S> symbolizer, S... symbols) {
             return fromList(symbolizer.type(), symbolizer, symbols);
         }
 
+        @SuppressWarnings("unchecked")
         public static <S extends Symbol> Symbolizer<S> append(Class<S> symbolType, Symbolizer< ? extends S> symbolizer,
                         final S... symbols) {
             return fromList(symbolType, symbolizer, symbols);

@@ -22,7 +22,6 @@
  */
 package com.sun.max.vm.compiler.target.arm;
 
-import static com.oracle.max.asm.target.armv7.ARMV7.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
@@ -33,7 +32,6 @@ import static com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.*;
 import java.io.*;
 
 import com.oracle.max.asm.*;
-import com.oracle.max.asm.target.amd64.AMD64Assembler;
 import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.ci.*;

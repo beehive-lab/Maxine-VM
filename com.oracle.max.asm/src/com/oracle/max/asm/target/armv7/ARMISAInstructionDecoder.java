@@ -53,13 +53,13 @@ public final class ARMISAInstructionDecoder {
         assert inst >= 0 && inst < code.length;
 	// APN mostly not relevant so ARM so largely deleted
         int ip = inst;
-        boolean is64bit = false;
+        //boolean is64bit = false;
 
-        boolean hasDisp32 = false;
-        int tailSize = 0; // other random bytes (#32, #16, etc.) at end of insn
+        //boolean hasDisp32 = false;
+        //int tailSize = 0; // other random bytes (#32, #16, etc.) at end of insn
 
 
-        currentEndOfInstruction = ip + 4; // 32 bit instructions at the moment 
+        currentEndOfInstruction = ip + 4; // 32 bit instructions at the moment
 	// APN this will break above if we go to ARMV8 which is 64bit
         currentDisplacementPosition = ip;
     }

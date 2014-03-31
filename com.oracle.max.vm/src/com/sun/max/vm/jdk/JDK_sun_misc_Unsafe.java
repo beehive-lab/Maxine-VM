@@ -729,6 +729,7 @@ final class JDK_sun_misc_Unsafe {
      * @param length the length of the classfile
      * @return a new class from the specified parameters
      */
+    @SuppressWarnings("deprecation")
     @SUBSTITUTE
     public Class defineClass(String name, byte[] bytes, int offset, int length) {
         final Class currentClass = Reflection.getCallerClass(2);

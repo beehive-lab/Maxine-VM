@@ -111,8 +111,7 @@ public final class VMConfigurator {
      * Gets the package providing the default {@link LayoutScheme}.
      */
     public static BootImagePackage defaultLayoutScheme() {
-
-        if (platform().isa != com.sun.max.lang.ISA.ARM && platform().isa.category == Category.RISC) {
+        if (platform().isa == com.sun.max.lang.ISA.SPARC && platform().isa.category == Category.RISC) {
             // On SPARC, the HOM layout enables more optimized code for accessing array elements
             // smaller than a word as there is no need to perform address arithmetic to skip
             // over the header; the origin is pointing at array element 0.
@@ -121,7 +120,7 @@ public final class VMConfigurator {
             // and converting between them requires reading memory.
             return new com.sun.max.vm.layout.hom.Package();
         }
-	return new com.sun.max.vm.layout.ohm.Package();
+        return new com.sun.max.vm.layout.ohm.Package();
     }
 
     /**

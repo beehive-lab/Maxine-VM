@@ -67,7 +67,7 @@ public final class ARMTargetMethodUtil {
     // RIP_CALL using an ADD to PC, hope it;s the right way round for the regs.
     public static final int RIP_CALL = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf)<<28)
             |(0x8<<20)|(ARMV7.r15.encoding<<12)|  (ARMV7.r12.encoding << 16) ;
-            ;
+
 
     /**
      * X86 Opcode of a register-based call instruction.
@@ -94,7 +94,7 @@ public final class ARMTargetMethodUtil {
      *
      */
     public static final int RET = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) <<28)
-            |(0xd<<21)|(ARMV7.r15.encoding<<12)|  (ARMV7.r14.encoding );;
+            |(0xd<<21)|(ARMV7.r15.encoding<<12)|  (ARMV7.r14.encoding );
 
     /**
      * X86 Size (in bytes) of a RIP-relative call instruction.
@@ -127,7 +127,7 @@ public final class ARMTargetMethodUtil {
         // and/or patch a movw movt sequence with an absolute address.
         // currently this will be a patch of the movw movt
         final Address callSiteAddress = callSite.toAddress();
-        final Address endOfCallSite = callSiteAddress.plus(RIP_CALL_INSTRUCTION_LENGTH - 1);
+        //final Address endOfCallSite = callSiteAddress.plus(RIP_CALL_INSTRUCTION_LENGTH - 1);
         return callSiteAddress.isWordAligned();
         //return callSiteAddress.plus(1).isWordAligned() ? true :
         // last byte of call site:

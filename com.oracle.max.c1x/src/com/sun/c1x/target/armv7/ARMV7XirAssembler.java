@@ -26,7 +26,6 @@ import static com.sun.cri.xir.XirTemplate.GlobalFlags.*;
 
 import java.util.*;
 
-import com.oracle.max.asm.target.armv7.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.xir.*;

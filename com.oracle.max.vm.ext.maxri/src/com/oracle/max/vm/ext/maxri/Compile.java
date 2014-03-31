@@ -26,7 +26,6 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.max.asm.*;
-import com.oracle.max.asm.target.armv7.ARMV7;
 import com.sun.cri.ci.*;
 import com.sun.max.*;
 import com.sun.max.config.*;
@@ -40,7 +39,7 @@ import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.TargetMethod;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.reflection.*;

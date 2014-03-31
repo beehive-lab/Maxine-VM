@@ -178,6 +178,7 @@ public abstract class PoolSet<T extends PoolObject> implements Cloneable, Iterab
      * @param rest zero or more objects that will be in the returned set
      * @return a pool set containing {@code first} and all the objects in {@code rest}
      */
+    @SuppressWarnings("unchecked")
     public static <T extends PoolObject, S extends T> PoolSet<T> of(Pool<T> pool, S first, S... rest) {
         final PoolSet<T> poolSet = noneOf(pool);
         poolSet.add(first);

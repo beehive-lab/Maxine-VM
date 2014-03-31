@@ -147,19 +147,16 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     @HOSTED_ONLY
     public C1X() {
         this(new MaxXirGenerator(C1XOptions.PrintXirTemplates), platform().target);
-	System.err.println("C1X-one");
     }
 
     @HOSTED_ONLY
     public C1X(RiXirGenerator xirGenerator, CiTarget target) {
         this.xirGenerator = xirGenerator;
         this.target = target;
-	System.err.println("C1X-two");
     }
 
     @Override
     public void initialize(Phase phase) {
-	System.err.println("C1X-initialize");
         if (isHosted() && !optionsRegistered) {
             runtime.initialize();
 
@@ -195,7 +192,6 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
                 C1XTimers.print();
             }
         }
-	System.err.println("C1X-init finished");
     }
 
     private static class WordTypeRewriterObserver implements CompilationObserver {
@@ -257,7 +253,6 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     public TargetMethod compile(final ClassMethodActor method, boolean isDeopt, boolean install, CiStatistics stats) {
         CiTargetMethod compiledMethod;
         do {
-            System.err.println("!!!! method is template " +method.isTemplate() );
             DebugInfoLevel debugInfoLevel = method.isTemplate() ? DebugInfoLevel.REF_MAPS : DebugInfoLevel.FULL;
             compiledMethod = compiler().compileMethod(method, -1, stats, debugInfoLevel).targetMethod();
             Dependencies deps = Dependencies.validateDependencies(compiledMethod.assumptions());
@@ -274,7 +269,6 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
                 }
                 TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, method);
                 try {
-                    System.err.println("!!!!Machine code print");
                     printMachineCode(compiledMethod, maxTargetMethod, false);
                 } finally {
                     filter.remove();

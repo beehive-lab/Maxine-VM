@@ -29,7 +29,6 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import sun.misc.*;
-import sun.reflect.*;
 
 import com.sun.max.*;
 import com.sun.max.annotate.*;

@@ -1035,6 +1035,7 @@ public final class JDK_java_lang_System {
      * @param name the name of the library to load
      * @see BootClassLoader#loadJavaAndZipNativeLibraries(String, String)
      */
+    @SuppressWarnings("deprecation")
     @SUBSTITUTE
     @NEVER_INLINE
     public static void loadLibrary(String name) throws Throwable {

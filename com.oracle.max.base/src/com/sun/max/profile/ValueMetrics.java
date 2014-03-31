@@ -23,7 +23,6 @@
 package com.sun.max.profile;
 
 import java.util.*;
-import java.util.Arrays;
 
 import com.sun.max.*;
 import com.sun.max.profile.Metrics.*;
@@ -628,6 +627,7 @@ public class ValueMetrics {
      * @param set the set of objects for which to record exact profiling information
      * @return a new distribution capable of producing an exact profile of the occurence of the specified objects
      */
+    @SuppressWarnings("unchecked")
     public static <T> ObjectDistribution<T> newObjectDistribution(String name, T... set) {
         return newObjectDistribution(name, new FixedApproximation(set));
     }

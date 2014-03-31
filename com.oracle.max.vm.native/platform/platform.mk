@@ -89,11 +89,13 @@ ifeq ($(TARGETOS),Linux)
     a := $(shell uname -m)
     ifeq ($a,x86_64)
         ISA := amd64
+        $(shell echo $ISA)
 	#$(shell "echo 'platform.mk hardcoded for ARM'")
-	ISA := arm
+	#ISA := arm
     else 
         ifeq ($a, x86)
             ISA := ia32
+            $(shell echo $ISA)
         else
             ISA := $a
         endif
@@ -171,6 +173,8 @@ endif
 ifndef PLATFORM
     PLATFORM := $(OS)-$(ISA)
 endif
+
+$(echo $PLATFORM)
 
 
 # identify the JDK version (there are differences in how Maxine is built between JDK 6 and 7)

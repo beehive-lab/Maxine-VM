@@ -293,6 +293,7 @@ public final class BootImageGenerator {
         "java",
         "java/lang",
         "java/lang/invoke",
+        "com/sun/proxy"
     };
 
     /**

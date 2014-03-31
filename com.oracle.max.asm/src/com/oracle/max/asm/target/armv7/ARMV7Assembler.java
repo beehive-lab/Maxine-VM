@@ -1,14 +1,8 @@
 package com.oracle.max.asm.target.armv7;
 
 import com.oracle.max.asm.*;
-
-import com.oracle.max.asm.AbstractAssembler;
-import com.sun.cri.ci.CiAddress;
-import com.sun.cri.ci.CiRegister;
-import com.sun.cri.ci.CiTarget;
-import com.sun.cri.ri.RiRegisterConfig;
-
-import static com.oracle.max.asm.NumUtil.isByte;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -1258,7 +1252,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
     public final void addq(CiRegister dst,int imm32)    {
         assert(dst.isValid());
-        mov32BitConstant(scratchRegister, imm32); ;
+        mov32BitConstant(scratchRegister, imm32);
         // dst = dst + imm32;
         addRegisters(ConditionFlag.Always,false,dst,dst,scratchRegister,0,0);
 

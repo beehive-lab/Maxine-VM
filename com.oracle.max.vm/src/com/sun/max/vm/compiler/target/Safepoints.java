@@ -138,8 +138,8 @@ public final class Safepoints {
 
     private static final int CAUSE_OFFSET_MASK = ((1 << 28) - 1) & ~POS_MASK;
     private static final int CAUSE_OFFSET_SHIFT = 25;
-    //private static final int MAX_CAUSE_OFFSET = 7;
-    private static final int MAX_CAUSE_OFFSET = 12;; // ARM
+    private static final int MAX_CAUSE_OFFSET = 7;
+    //private static final int MAX_CAUSE_OFFSET = 12;; // ARM
     /**
      * Mask for extracting attributes.
      */

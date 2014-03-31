@@ -237,6 +237,7 @@ public class OptionsDialog extends JDialog {
             setInputAndLabelEnabled(objects != null);
         }
 
+        @SuppressWarnings("deprecation")
         @Override
         public List<Object> getValue() {
             if (guard.isSelected()) {

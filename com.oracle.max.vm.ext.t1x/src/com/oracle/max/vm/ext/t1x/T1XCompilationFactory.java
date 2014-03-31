@@ -31,10 +31,10 @@ import com.oracle.max.vm.ext.t1x.armv7.*;
 public class T1XCompilationFactory {
     public T1XCompilation newT1XCompilation(T1X t1x) {
         if (T1X.isAMD64()) {
-		System.out.println("AMD in T1XCompilationFactory");
+            System.out.println("AMD in T1XCompilationFactory");
             return new AMD64T1XCompilation(t1x);
         } else if(T1X.isARM()) {
-		System.out.println("ARM in T1XCompilationFactory");
+            System.out.println("ARM in T1XCompilationFactory");
 	    return new ARMV7T1XCompilation(t1x);
 	}else  {
             throw T1X.unimplISA();

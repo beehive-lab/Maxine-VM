@@ -31,7 +31,7 @@
 #define isa_IA32               0
 #define isa_AMD64              0
 #define isa_POWER              0
-#define isa_ARM			0
+#define isa_ARM                0
 
 #if defined(__sparc) || defined(sparc)
 #   undef  isa_SPARC

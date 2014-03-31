@@ -229,7 +229,7 @@ public class CompilationBroker {
     protected CompilationBroker() {
         assert optimizingCompilerOption.getValue() != null;
         String optName = optName();
-        String baselineName = baselineName(); // these are of the form com.oracle.max.vm.ext.t1x.T1X/C1X 
+        String baselineName = baselineName(); // these are of the form com.oracle.max.vm.ext.t1x.T1X/C1X
 					      // trying to use this to add another compiler
         optimizingCompiler = instantiateCompiler(optName);
         assert optimizingCompiler.nature() == Nature.OPT : optimizingCompiler + " is not an optimizing compiler";
@@ -246,12 +246,9 @@ public class CompilationBroker {
 
     public static RuntimeCompiler instantiateCompiler(String name) {
         try {
-		System.out.println("instantiating compiler instance "+ name);
-
             return (RuntimeCompiler) Class.forName(name).newInstance();
         } catch (Exception e) {
-		System.err.println("ERROR thrown in RuntimeCompiler instantiateCompiler(String name)");
-            throw FatalError.unexpected("Error instantiating compiler " + name, e);
+	    throw FatalError.unexpected("Error instantiating compiler " + name, e);
         }
     }
 
@@ -830,7 +827,7 @@ public class CompilationBroker {
 
         @Override
         public boolean visitFrame(StackFrameCursor current, StackFrameCursor callee) {
-	    if(platform().isa== ISA.ARM) 	{
+	    if (platform().isa== ISA.ARM) 	{
 		if(current.isTopFrame()) return true;
 		Pointer ip = current.ipAsPointer();
                 CodePointer callSite = CodePointer.from(ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE));

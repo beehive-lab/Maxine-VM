@@ -236,10 +236,10 @@ public class MaxRuntime implements RiRuntime {
         if (platform.isa == ISA.AMD64) {
             fp = AMD64.rsp;
             refMapToFPOffset = 0;
-        } else if(platform.isa == ISA.ARM)	{
-		fp = ARMV7.r13;
-		refMapToFPOffset = 0;
-	}else {
+        } else if(platform.isa == ISA.ARM) {
+            fp = ARMV7.r13;
+	    refMapToFPOffset = 0;
+	} else {
             throw FatalError.unimplemented();
         }
         RefMapFormatter slotFormatter = new RefMapFormatter(target().arch, target().spillSlotSize, fp, refMapToFPOffset);

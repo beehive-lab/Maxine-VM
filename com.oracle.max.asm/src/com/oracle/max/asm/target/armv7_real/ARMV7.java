@@ -114,8 +114,7 @@ public class ARMV7 extends CiArchitecture {
     }
 
     @Override
-    public boolean isARMV7() {
+    public boolean isARM() {
         return true;
     }
-
 }
