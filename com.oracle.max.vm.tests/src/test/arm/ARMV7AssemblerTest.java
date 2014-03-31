@@ -84,7 +84,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         }
         */
     }
-    public static boolean normalExecution = false; // turns off simulation
+    public static boolean normalExecution = false; // false turns off simulation
     private static int valueTestSet[] = {0,1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,
             32768,65535};
     private static long scratchTestSet[] = {0,1,0xff,0xffff,0xffffff,0xfffffff,0x00000000ffffffffL };
@@ -868,16 +868,19 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         int i,registers = 1;
         setBitMasks(-1,MaxineARMTester.BitsFlag.All32Bits);
 
+        initialiseExpectedValues();
 
         System.out.println("TESTING PUSH AND POP");
         for(i = 0; i < 16;i++) {
+            if(i%2 == 0)
             expectedValues[i] = (long) i; // re-initialise in case another test has been run before us
+            else
+            expectedValues[i] = (long) -i;
             if(i < 13) testvalues[i] = true;  // test register values r0..r12
         }
 
         for(int bitmask = 1; bitmask <= 0xfff; bitmask = bitmask |(bitmask+1),registers++)  {
             asm.codeBuffer.reset();
-            initialiseExpectedValues();
             System.out.println("REGISTERS " + registers + " BITMASK "+ bitmask);
             for(i = 0; i < 13;i++)   {  // we are not breaking the stack (r13)
                 asm.mov32BitConstant(ARMV7.cpuRegisters[i], (int) expectedValues[i]); // 2 instructions movw, movt
@@ -893,9 +896,9 @@ public class ARMV7AssemblerTest extends MaxTestCase {
 
             for(i = 0; i < 13; i++) {
                 if(i < registers)
-                    expectedValues[i] = (long) i;
+                    expectedValues[i] = expectedValues[i];
                 else
-                    expectedValues[i] = (long) (i+1);
+                    expectedValues[i] = expectedValues[i]+1;
             }
             generateAndTest(41,expectedValues,testvalues,bitmasks);
 

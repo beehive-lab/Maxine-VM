@@ -921,6 +921,7 @@ PARAMS 1
 REALLY placed on the stack 0
 FP 0 GP 0 TOTAL REGS 0
 C1X-init finished
+creating T1X templates from com.oracle.max.vm.ext.t1x.T1XTemplateSource
 PARAMS 1
 FP 0 GP 1 TOTAL REGS 1
 length of code 7
@@ -953,7 +954,7 @@ Exception in thread "main" java.lang.AssertionError: com.oracle.max.vm.ext.t1x.T
 	at com.oracle.max.vm.ext.maxri.MaxTargetMethod.init(MaxTargetMethod.java:134)
 	at com.oracle.max.vm.ext.maxri.MaxTargetMethod.<init>(MaxTargetMethod.java:110)
 	at com.oracle.max.vm.ext.c1x.C1X.compile(C1X.java:268)
-	at com.oracle.max.vm.ext.t1x.T1X.compileTemplate(T1X.java:485)
-	at com.oracle.max.vm.ext.t1x.T1X.createTemplates(T1X.java:422)
-	at com.oracle.max.vm.ext.t1x.T1X.initialize(T1X.java:353)
+	at com.oracle.max.vm.ext.t1x.T1X.compileTemplate(T1X.java:487)
+	at com.oracle.max.vm.ext.t1x.T1X.createTemplates(T1X.java:424)
+	at com.oracle.max.vm.ext.t1x.T1X.initialize(T1X.java:354)
 	at com.oracle.max.vm.ext.maxri.Compile.main(Compile.java:176)

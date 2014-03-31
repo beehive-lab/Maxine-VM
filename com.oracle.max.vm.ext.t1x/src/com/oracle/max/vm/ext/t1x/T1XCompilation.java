@@ -1353,7 +1353,7 @@ public abstract class T1XCompilation {
         safepointsBuilder.addSafepoint(stream.currentBCI(), Safepoints.make(pos), null);
     }
 
-    void do_profileMethodEntry() {
+     void do_profileMethodEntry() {
         if (methodProfileBuilder != null) {
             methodProfileBuilder.addEntryCounter(MethodInstrumentation.initialEntryCount);
             if (method.isStatic()) {

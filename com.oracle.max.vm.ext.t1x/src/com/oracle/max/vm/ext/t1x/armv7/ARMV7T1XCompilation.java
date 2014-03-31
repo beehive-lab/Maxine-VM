@@ -150,14 +150,18 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         //asm.movl(dst, spInt(index));
         asm.setUpScratch(spInt(index));
         //asm.sub(ConditionFlag.Always,false,scratch,scratch,4,0);
-        asm.ldr(ConditionFlag.Always,0,0,0,dst,asm.scratchRegister,ARMV7.r0,0,0);
+        //asm.ldr(ConditionFlag.Always,0,0,0,dst,asm.scratchRegister,ARMV7.r0,0,0);
+        asm.ldrImmediate(ConditionFlag.Always,0,0,0,dst,asm.scratchRegister,0);
+
     }
 
     @Override
     public void pokeInt(CiRegister src, int index) {
         //asm.movl(spInt(index), src);
+        //if(src == ARMV7.r12) asm.push(ConditionFlag.Always,1<<12);
         asm.setUpScratch(spInt(index));
-        asm.str(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,ARMV7.r0,0,0);
+        asm.strImmediate(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,0);
+        //if(src == ARMV7.r12) asm.pop(ConditionFlag.Always,1<<12);
     }
 
     @Override
@@ -312,7 +316,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected void loadInt(CiRegister dst, int index) {
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.INT)));
-        asm.ldr(ConditionFlag.Always,0,0,0,dst,ARMV7.r12,ARMV7.r12,0,0);
+        asm.ldrImmediate(ConditionFlag.Always,0,0,0,dst,ARMV7.r12,0);
         //asm.movl(dst, localSlot(localSlotOffset(index, Kind.INT)));
     }
 
@@ -341,7 +345,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected void storeInt(CiRegister src, int index) {
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.INT)));
-        asm.str(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,asm.scratchRegister,0,0) ;
+        asm.strImmediate(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,0);
+        //asm.str(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,asm.scratchRegister,0,0) ;
         //asm.movl(localSlot(localSlotOffset(index, Kind.INT)), src);
     }
 
@@ -350,14 +355,16 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         // APN how do we constrain regs to be correct for ARM?
         assert(src.number < 10); // sanity checking longs must not screw up scratch
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
-        asm.strd(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,asm.scratchRegister);
+        asm.strd(ARMV7Assembler.ConditionFlag.Always,src,scratch,0);
+        //asm.strd(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,asm.scratchRegister);
         //asm.movq(localSlot(localSlotOffset(index, Kind.LONG)), src);
     }
 
     @Override
     protected void storeWord(CiRegister src, int index) {
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.WORD)));
-        asm.str(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,asm.scratchRegister,0,0);
+        asm.strImmediate(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,0);
+        //asm.str(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,asm.scratchRegister,0,0);
         //asm.movq(localSlot(localSlotOffset(index, Kind.WORD)), src);
     }
 
@@ -365,7 +372,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     protected void storeObject(CiRegister src, int index) {
         //
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.REFERENCE)));
-        asm.str(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,asm.scratchRegister,0,0);
+        asm.strd(ARMV7Assembler.ConditionFlag.Always,src,scratch,0);
+        //asm.str(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,asm.scratchRegister,0,0);
         //asm.movq(localSlot(localSlotOffset(index, Kind.REFERENCE)), src);
     }
 
@@ -387,6 +395,65 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         }
         * APN not implemented
         */
+    }
+    @Override
+    protected void do_store(int index, Kind kind) {
+        // TODO ensure that r8 and r9 are not allocatable
+
+        switch(kind.asEnum) {
+            case INT:
+            case FLOAT:
+                peekInt(ARMV7.r8, 0);
+                decStack(1);
+                storeInt(ARMV7.r8, index);
+                break;
+            case REFERENCE:
+                peekWord(ARMV7.r8, 0);
+                decStack(1);
+                storeWord(ARMV7.r8, index);
+
+                break;
+            case LONG:
+            case DOUBLE:
+                peekLong(ARMV7.r8, 0);
+                decStack(2);
+                storeLong(ARMV7.r8, index);
+
+                break;
+            default:
+                throw new InternalError("Unexpected kind: " + kind);
+        }
+    }
+
+    @Override
+    protected void do_load(int index, Kind kind) {
+        // TODO ensure that r8 and r9 are not allocatable
+
+
+        switch(kind.asEnum) {
+            case INT:
+            case FLOAT:
+                loadInt(ARMV7.r8, index); // uses FP not stack!
+                incStack(1);
+                pokeInt(ARMV7.r8, 0);      // was slot zero
+
+                break;
+
+            case REFERENCE:
+                loadWord(ARMV7.r8, index); // uses FP not stack
+                incStack(1);
+                pokeWord(ARMV7.r8, 0);
+
+                break;
+            case LONG:
+            case DOUBLE:
+                loadLong(ARMV7.r8, index); // uses FP not stack
+                incStack(2);
+                pokeLong(ARMV7.r8, 0);
+                break;
+            default:
+                throw new InternalError("Unexpected kind: " + kind);
+        }
     }
 
     @Override
@@ -557,11 +624,10 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         // stackptr = framepointer -stacksize
         int frameSize = frame.frameSize();
         //asm.enter(frameSize - Word.size(), 0);
-        //asm.enter(frameSize-Word.size());
-        asm.push(ConditionFlag.Always, 11<<1 ); // push frame pointer
+
+        asm.push(ConditionFlag.Always, 1<<11 ); // push frame pointer  onto STACK
+        asm.subq(ARMV7.r13,frameSize - Word.size());
         asm.mov(ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13);  // framepoiter = stack ptr
-        asm.mov32BitConstant(ARMV7.r12,frameSize = Word.size());
-        asm.sub(ConditionFlag.Always,false,ARMV7.r13,ARMV7.r11,ARMV7.r12,0,0);
         asm.subq(r11, framePointerAdjustment());
         if (Trap.STACK_BANGING) {
             int pageSize = platform().pageSize;
@@ -573,7 +639,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 offset = offset - frameSize;
                 // RSP is r13!
                 asm.setUpScratch(new CiAddress(WordUtil.archKind(), RSP, -offset));
-                asm.str(ConditionFlag.Always,0,0,0,ARMV7.r14,asm.scratchRegister,asm.scratchRegister,0,0);
+                asm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r14,asm.scratchRegister,0);
                 // APN guessing rax is return address.
                 //asm.movq(new CiAddress(WordUtil.archKind(), RSP, -offset), rax);
             }
@@ -1176,7 +1242,48 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     }
 
 
-    public void do_fconstTests(float value) {
+
+    public void emitPrologueTests() {
+        emitPrologue();
+
+        emitUnprotectMethod();
+
+        //do_profileMethodEntry();
+
+        do_methodTraceEntry();
+
+        //do_synchronizedMethodAcquire();
+
+       // int bci = 0;
+        //int endBCI = stream.endBCI();
+        //while (bci < endBCI) {
+          //  int opcode = stream.currentBC();
+            //processBytecode(opcode);
+            //stream.next();
+            //bci = stream.currentBCI();
+       // }
+
+        //int epiloguePos = buf.position();
+
+       // do_synchronizedMethodHandler(method, endBCI);
+
+       // if (epiloguePos != buf.position()) {
+        //    bciToPos[endBCI] = epiloguePos;
+       // }
+    }
+
+        public void do_initFrameTests(ClassMethodActor method, CodeAttribute codeAttribute) {
+        initFrame(method,codeAttribute);
+    }
+    public void do_storeTests(int index, Kind kind) {
+        do_store(index,kind);
+    }
+
+    public void do_loadTests (int index, Kind kind) {
+        do_load(index,kind);
+    }
+
+        public void do_fconstTests(float value) {
         do_fconst(value);
     }
     public void do_dconstTests(double value)

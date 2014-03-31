@@ -6,7 +6,7 @@ import java.io.*;
 
 public class MaxineARMTester {
 
-
+     public static boolean debug = false;
      public enum BitsFlag {
          Bit0(0x1),
          Bit1(0x2),
@@ -196,14 +196,25 @@ qemu-system-arm -cpu cortex-a9 -M versatilepb -m 128M -nographic -s -S  -kernel 
     try {
         qemu = qemuB.start();
         while (new File("qemuoutput").exists() == false);
-        Thread.currentThread().sleep(1000);
+        Thread.currentThread().sleep(1500);
+        if(debug)
+            System.out.println("MaxineARMTester::QEMU started");
+        if(debug)
+            System.out.println("MaxineARMTester::arm-unknown-eabi-gdb started");
         gdbB = new ProcessBuilder("arm-unknown-eabi-gdb");
         gdbB.redirectInput(new File("gdbCommands"));
         gdbB.redirectOutput(new File("gdb-fullOUTPUT"));
         gdbB.redirectError(new File("ERRORS"));
         gdb = gdbB.start();
-        qemuStatus = qemu.waitFor();
+
         gdbStatus = gdb.waitFor();
+        if(debug)
+            System.out.println("GDB STATUS "+ gdbStatus);
+
+        qemuStatus = qemu.waitFor();
+
+        if(debug)
+            System.out.println("MaxineARMTester::arm-unknown-eabi-gdb started");
         qemuB = new ProcessBuilder("grep", "-A","16","r0*0x*","gdb-fullOUTPUT");
         qemuB.redirectOutput(new File("gdb-output"));
         qemuB.redirectError(new File("gdb-grep-ERROR"));
@@ -216,6 +227,8 @@ qemu-system-arm -cpu cortex-a9 -M versatilepb -m 128M -nographic -s -S  -kernel 
         e.printStackTrace();
         System.exit(-1);
     }
+        if(debug)
+            System.out.println("MaxineARMTester::about to read results started");
     chars  = registers.toCharArray();
     for(int i = 0; i < 17;i++)	{
         gotRegs[i] = findRegister(0,i);
@@ -371,7 +384,8 @@ qemu-system-arm -cpu cortex-a9 -M versatilepb -m 128M -nographic -s -S  -kernel 
 	    if(regNumber == 13) while (chars[oldpos++] != 's'); // sp
 	    if(regNumber == 14) while (chars[oldpos++] != 'l'); // lr
 	    if(regNumber == 15) while (chars[oldpos++] != 'p'); // pc
-	    if(regNumber == 16) while (chars[oldpos++] != 'r'); // cpsr
+	    if(regNumber == 16) {while(chars[oldpos] != '>')oldpos++;
+        }//while (chars[oldpos++] != 'r'); // cpsr
 	    switch(regNumber)	{
 		    case 0:
 		    case 1:
@@ -396,7 +410,10 @@ qemu-system-arm -cpu cortex-a9 -M versatilepb -m 128M -nographic -s -S  -kernel 
 			    oldpos +=16;
 		    break;
 		    case 16: // cpsr
-			    oldpos +=13;
+                while(chars[oldpos] != 'x')oldpos++;
+			    //oldpos +=13;
+                oldpos++;
+
 		
 		    break;
 	    }
@@ -407,7 +424,8 @@ qemu-system-arm -cpu cortex-a9 -M versatilepb -m 128M -nographic -s -S  -kernel 
 	    }
 	    oldpos--;
 	    String val = new String(chars,startPos,oldpos-startPos);
-	    //System.err.println(val);
+        if(debug)
+            System.err.println(val);
          return Long.parseLong(val,16);
 
 
