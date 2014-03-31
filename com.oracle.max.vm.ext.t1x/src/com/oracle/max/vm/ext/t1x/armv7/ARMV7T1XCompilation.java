@@ -1255,7 +1255,111 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         return returnKind;
     }
 
+    @Override
+    protected void do_dup() {
+        incStack(1);
+        peekWord(ARMV7.r8, 1);
+        pokeWord(ARMV7.r8, 0);
+    }
+    @Override
+    protected void do_dup_x1() {
+        incStack(1);
+        // value1
+        peekWord(ARMV7.r8, 1);
+        pokeWord(ARMV7.r8, 0);
 
+        // value2
+        peekWord(ARMV7.r8, 2);
+        pokeWord(ARMV7.r8, 1);
+
+        // value1
+        peekWord(ARMV7.r8, 0);
+        pokeWord(ARMV7.r8, 2);
+    }
+    @Override
+    protected void do_dup_x2() {
+        incStack(1);
+        // value1
+        peekWord(ARMV7.r8, 1);
+        pokeWord(ARMV7.r8, 0);
+
+        // value2
+        peekWord(ARMV7.r8, 2);
+        pokeWord(ARMV7.r8, 1);
+
+        // value3
+        peekWord(ARMV7.r8, 3);
+        pokeWord(ARMV7.r8, 2);
+
+        // value1
+        peekWord(ARMV7.r8, 0);
+        pokeWord(ARMV7.r8, 3);
+    }
+    @Override
+    protected void do_dup2() {
+        incStack(2);
+        peekWord(ARMV7.r8, 3);
+        pokeWord(ARMV7.r8, 1);
+        peekWord(ARMV7.r8, 2);
+        pokeWord(ARMV7.r8, 0);
+    }
+    @Override
+    protected void do_dup2_x1() {
+        incStack(2);
+        // value1
+        peekWord(ARMV7.r8, 2);
+        pokeWord(ARMV7.r8, 0);
+
+        // value2
+        peekWord(ARMV7.r8, 3);
+        pokeWord(ARMV7.r8, 1);
+
+        // value3
+        peekWord(ARMV7.r8, 4);
+        pokeWord(ARMV7.r8, 2);
+
+        // value1
+        peekWord(scratch, 0);
+        pokeWord(scratch, 3);
+
+        // value2
+        peekWord(ARMV7.r8, 1);
+        pokeWord(ARMV7.r8, 4);
+    }
+    @Override
+    protected void do_dup2_x2() {
+        incStack(2);
+        // value1
+        peekWord(ARMV7.r8, 2);
+        pokeWord(ARMV7.r8, 0);
+
+        // value2
+        peekWord(ARMV7.r8, 3);
+        pokeWord(ARMV7.r8, 1);
+
+        // value3
+        peekWord(ARMV7.r8, 4);
+        pokeWord(ARMV7.r8, 2);
+
+        // value4
+        peekWord(ARMV7.r8, 5);
+        pokeWord(ARMV7.r8, 3);
+
+        // value1
+        peekWord(ARMV7.r8, 0);
+        pokeWord(ARMV7.r8, 4);
+
+        // value2
+        peekWord(ARMV7.r8, 1);
+        pokeWord(ARMV7.r8, 5);
+    }
+    @Override
+    protected void do_swap() {
+        peekWord(ARMV7.r8, 0);
+        peekWord(ARMV7.r9, 1);
+        pokeWord(ARMV7.r8, 1);
+        pokeWord(ARMV7.r9, 0);
+    }
 
     public void emitPrologueTests() {
         emitPrologue();
