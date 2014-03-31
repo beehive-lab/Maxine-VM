@@ -17,11 +17,21 @@ import com.sun.max.program.Trace;
 import com.sun.max.program.option.OptionSet;
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.VMOption;
+import com.sun.max.vm.actor.Actor;
+import com.sun.max.vm.actor.member.StaticMethodActor;
+import com.sun.max.vm.classfile.CodeAttribute;
+import com.sun.max.vm.classfile.LineNumberTable;
+import com.sun.max.vm.classfile.LocalVariableTable;
+import com.sun.max.vm.classfile.StackMapTable;
+import com.sun.max.vm.classfile.constant.PoolConstant;
+import com.sun.max.vm.classfile.constant.Utf8Constant;
 import com.sun.max.vm.compiler.CompilationBroker;
 import com.sun.max.vm.compiler.RuntimeCompiler;
 import com.sun.max.vm.hosted.JavaPrototype;
 import com.sun.max.vm.hosted.VMConfigurator;
 import com.sun.max.vm.profile.MethodInstrumentation;
+import com.sun.max.vm.type.Kind;
+import com.sun.max.vm.type.SignatureDescriptor;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,7 +59,27 @@ public class ARMV7T1XTest  extends MaxTestCase {
             return t1XCompilationFactory.newT1XCompilation(T1X.this);
         }
     };*/
+    StaticMethodActor anMethod = null;
+    CodeAttribute codeAttr = null;
 
+    public void initialiseFrameForCompilation() {
+        /* initialise StaticMethodActor
+           SignatureDescriptor
+         */
+        System.out.println("The frame initialisation in ARMV7T1XTest is a bodge just to allow testing");
+        codeAttr = new CodeAttribute(null,
+                    new byte[50],
+                (char) 10, // TODO: compute max stack
+                (char) 8,
+                CodeAttribute.NO_EXCEPTION_HANDLER_TABLE,
+                LineNumberTable.EMPTY,
+                LocalVariableTable.EMPTY,
+                null);
+        String intrinsic = new String();
+
+        anMethod = new StaticMethodActor( null,          SignatureDescriptor.create("(Ljava/util/Map;)V") , Actor.JAVA_METHOD_FLAGS,codeAttr,intrinsic);
+
+    }
 
     //static T1X t1x = CompilationBroker.instantiateCompiler(new String("T1X"));
     static final class Pair {
@@ -122,6 +152,7 @@ public class ARMV7T1XTest  extends MaxTestCase {
         r.compile();
         r.link();
         r.objcopy();
+        MaxineARMTester.debug = false;
         return r.runRegisterSimulation();
     }
     public ARMV7T1XTest() {
@@ -207,6 +238,7 @@ public class ARMV7T1XTest  extends MaxTestCase {
         public void testDecStack() throws Exception {
 //TODO: Test goes here...
             //int i,instructions [] = new int [assemblerStatements];
+            boolean success = true;
             int assemblerStatements;
             int instructions [] = null;
             long []registerValues = null;
@@ -225,8 +257,10 @@ public class ARMV7T1XTest  extends MaxTestCase {
             registerValues  = generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
             for(int i = 0; i < 16;i++) {
                 System.out.println("REGISTER " + i + " VALUE " + registerValues[i]) ;
-                assert(2*(registerValues[1]-registerValues[0]) == (registerValues[2]-registerValues[1]));
+                if(2*(registerValues[1]-registerValues[0]) != (registerValues[2]-registerValues[1]))
+                     success = false;
             }
+            assert(success == true);
             System.out.println("decStack passed");
 
         }
@@ -1538,8 +1572,8 @@ try {
         System.out.println(Long.toHexString(registerValues[9]) + " EXPECTED "+Long.toHexString(expectedValues[9]));
         System.out.println("STACK " + registerValues[2] + " "+ registerValues[3]);
         assert(gotVal == 0xffffffff0000ffffL);
-        assert(registerValues[8] == 0);
-        assert(registerValues[9] == 1);
+        //assert(registerValues[8] == 0);
+        //assert(registerValues[9] == 1);
         assert(registerValues[2] - registerValues[3] == 8);
          System.out.println("Passed testdo_lconst");
     }
@@ -1566,10 +1600,10 @@ try {
         masm.mov32BitConstant(ARMV7.r8,0);
         masm.mov32BitConstant(ARMV7.r9,1);
         // r8 and r9 are used as temporaries, they are pushed onto stack and popped back after the operation
-        // we cannot use scratch on ARMV7 as its only 32bit  and we need 64.
+        // we cannot use scratch on ARMV7 as its only 32bit  and we need 64.          NO LONGER RELEVANT r8/r9 not allocatable
 
         theCompiler.do_dconstTests(myVal);
-        masm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r3,ARMV7.r13); // copy revised stack pointer to r3
+        masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r3, ARMV7.r13); // copy revised stack pointer to r3
         theCompiler.peekLong(ARMV7.r0,0);
         assemblerStatements =  masm.codeBuffer.position()/4;
         instructions = new int [assemblerStatements];
@@ -1580,12 +1614,12 @@ try {
         System.out.println(Long.toHexString(registerValues[0]) + " " +Long.toHexString(registerValues[1]));
         long tmp = Double.doubleToRawLongBits(myVal);
         System.out.println(Long.toHexString(gotVal) + " EXPECTED  " + Long.toHexString(tmp))  ;
-        System.out.println(Long.toHexString(registerValues[8]) + " EXPECTED "+Long.toHexString(expectedValues[8]));
+        System.out.println(Long.toHexString(registerValues[8]) + " EXPECTED " + Long.toHexString(expectedValues[8]));
         System.out.println(Long.toHexString(registerValues[9]) + " EXPECTED "+Long.toHexString(expectedValues[9]));
         System.out.println("STACK " + registerValues[2] + " "+ registerValues[3]);
         assert(gotVal == Double.doubleToRawLongBits(myVal));
-        assert(registerValues[8] == 0);
-        assert(registerValues[9] == 1);
+        //assert(registerValues[8] == 0);  r8 and r9 are not allocatable anymore ....
+        //assert(registerValues[9] == 1);
         assert(registerValues[2] - registerValues[3] == 8);
         System.out.println("Passed testdo_dconst");
     }
@@ -1614,7 +1648,7 @@ try {
         // we cannot use scratch on ARMV7 as its only 32bit  and we need 64.
 
         theCompiler.do_fconstTests(myVal);
-        masm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r3,ARMV7.r13); // copy revised stack pointer to r3
+        masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r3, ARMV7.r13); // copy revised stack pointer to r3
         theCompiler.peekInt(ARMV7.r0,0);
         assemblerStatements =  masm.codeBuffer.position()/4;
         instructions = new int [assemblerStatements];
@@ -1629,6 +1663,107 @@ try {
         assert(gotVal == (long)Float.floatToRawIntBits(myVal));
         assert(registerValues[2] - registerValues[3] == 4);
         System.out.println("Passed testdo_fconst");
+    }
+    public void testdo_load() throws Exception {
+        /*assignLong(scratch, value);
+        incStack(2);
+        pokeLong(scratch, 0);
+        */
+        System.out.println("Cannot test do_load until frame is initialised") ;
+        initialiseFrameForCompilation();
+        theCompiler.do_initFrameTests(anMethod, codeAttr);
+        theCompiler.emitPrologueTests();
+        long []registerValues = null;
+        boolean success = true;
+        long gotVal= 0;
+        int instructions [] = null;
+        int i,assemblerStatements;
+        ARMV7MacroAssembler masm = theCompiler.getMacroAssemblerUNITTEST();
+
+
+        expectedValues[0] = -2;
+        expectedValues[1] = -1;
+        expectedValues[2] = 0;
+        expectedValues[3] = 1;
+        expectedValues[4] = 2;
+        expectedValues[5] = 3;
+        expectedValues[6] = 4;
+        expectedValues[7] = 5;
+        expectedValues[8] =6;
+        expectedValues[9] = 7;
+        expectedValues[10] = 8;
+
+
+
+        for( i = 0 ; i <11; i++) {
+            masm.mov32BitConstant(ARMV7.cpuRegisters[i],(int)expectedValues[i]);
+        }
+        masm.push(ARMV7Assembler.ConditionFlag.Always,1|2|4|8|16|32|64|128|256|512);
+        masm.push(ARMV7Assembler.ConditionFlag.Always,1|2|4|8|16|32|64|128|256|512);
+        masm.push(ARMV7Assembler.ConditionFlag.Always,1|2|4|8|16|32|64|128|256|512);
+        masm.push(ARMV7Assembler.ConditionFlag.Always,1|2|4|8|16|32|64|128|256|512);
+
+
+
+
+        for(i = 0;i <= 10;i++)
+            masm.mov32BitConstant(ARMV7.cpuRegisters[i],-25);
+        for(i = 0; i < 5;i++) {
+            theCompiler.do_loadTests(i, Kind.INT);
+            masm.pop(ARMV7Assembler.ConditionFlag.Always,1);
+            masm.mov32BitConstant(ARMV7.r0,100+i);
+            masm.push(ARMV7Assembler.ConditionFlag.Always,1);
+            theCompiler.do_storeTests(i, Kind.INT);
+        }
+        theCompiler.do_loadTests(5,Kind.LONG);
+        masm.pop(ARMV7Assembler.ConditionFlag.Always,1|2);
+        masm.movw(ARMV7Assembler.ConditionFlag.Always,ARMV7.r0,(int)(172L&0xffff));
+        masm.movt(ARMV7Assembler.ConditionFlag.Always,ARMV7.r0,(int)((172L>>16)&0xffff));
+        masm.movw(ARMV7Assembler.ConditionFlag.Always,ARMV7.r1,(int)(((172L>>32)&0xffff)));
+        masm.movt(ARMV7Assembler.ConditionFlag.Always,ARMV7.r1,(int)(((172L>>48)&0xffff)));
+        masm.push(ARMV7Assembler.ConditionFlag.Always,1|2);
+        theCompiler.do_storeTests(5,Kind.LONG);
+        for(i = 4;i>=0;i--)
+            theCompiler.do_loadTests(i, Kind.INT);
+            theCompiler.do_loadTests(5,Kind.LONG);
+            // we should now see the values
+            /*
+            100
+            101
+            102
+            103
+            104
+            in memory at the offset of RBP = R11 decrementing in memoy
+             */
+
+
+
+
+
+        masm.pop(ARMV7Assembler.ConditionFlag.Always,1|2|4|8|16|32|64);
+
+        //theCompiler.fixup();
+        assemblerStatements =  masm.codeBuffer.position()/4;
+        instructions = new int [assemblerStatements];
+        expectedValues[0] = 172;
+        expectedValues[1] = 0;
+        expectedValues[2] = 100;
+        expectedValues[3] = 101;
+        expectedValues[4] = 102;
+        expectedValues[5] = 103;
+        expectedValues[6] = 104;
+
+        registerValues  = generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
+        for( i = 0; i <= 6;i++) {
+            if(registerValues[i] != expectedValues[i])  {
+                System.out.println("REG VALS ["+i+"] HEX " + Long.toString(registerValues[i],16)+ "  DEC " +registerValues[i] );
+                success = false;
+            }
+        }
+
+
+        assert(success == true);
+
     }
 
 }

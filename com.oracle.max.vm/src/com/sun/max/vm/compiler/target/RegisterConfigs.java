@@ -145,7 +145,10 @@ public class RegisterConfigs {
                 roleMap.put(CPU_SP, com.oracle.max.asm.target.armv7.ARMV7.r13);
                 roleMap.put(CPU_FP, com.oracle.max.asm.target.armv7.ARMV7.r11); // TODO CHECK
                 roleMap.put(ABI_SP, com.oracle.max.asm.target.armv7.ARMV7.r13);
-                roleMap.put(ABI_FP, com.oracle.max.asm.target.armv7.ARMV7.r11); // TODO CHECK
+                roleMap.put(ABI_FP, com.oracle.max.asm.target.armv7.ARMV7.r13);
+                //ARM PCS suggest that r11 is used as a frame pointer, not sure how this is set up for each new java frame
+
+
                 roleMap.put(LATCH, com.oracle.max.asm.target.armv7.ARMV7.r10);
                 /*
                  * the LATCH register is a callee saved register associated with
@@ -159,8 +162,8 @@ public class RegisterConfigs {
                  */
                 standard = new CiRegisterConfig(com.oracle.max.asm.target.armv7.ARMV7.r13, // frame
                                 r0, // integral return value
-
                                 d0, // APN TODO floating point return value for simplicity ALWAYS return a double
+
                                 // TODO this means we must do the conversion as necessary if it is really a float?
                                 // TODO it might be better to handle this another way
                                 com.oracle.max.asm.target.armv7.ARMV7.r12, // scratch

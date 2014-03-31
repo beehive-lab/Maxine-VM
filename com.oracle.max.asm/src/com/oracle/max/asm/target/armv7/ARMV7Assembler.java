@@ -696,6 +696,21 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= ((imm2Type & 0x3) << 5);
         emitInt(instruction);
     }
+    public void strImmediate(final ConditionFlag cond,int P, int U, int W,
+                    final CiRegister Rt, final CiRegister Rn,int imm12) {
+
+        int instruction = 0x04000000;
+        assert(imm12 == 0);// TODO fix the encoding its an ARM 12 bit
+        instruction |= ((P&0x1) << 24);
+        instruction |= ((U&0x1) << 23);
+        instruction |= ((W&0x1) << 21);
+        instruction |= ((cond.value() & 0xf) << 28);
+        instruction |= ((Rn.encoding & 0xf) << 16);
+        instruction |= ((Rt.encoding & 0xf) << 12);
+
+        instruction |= (imm12&0xfff);
+        emitInt(instruction);
+    }
     /**
      * Pseudo-external assembler syntax: {@code ldr[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rd</i>, <i>Rn</i>, <i>offset_12</i>
      * Example disassembly syntax: {@code ldreq         r0, [r0, #-0x0]!}
@@ -776,6 +791,22 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |=     ( (Rn.encoding &0xf) << 16);
         instruction |=     ( (Rt.encoding &0xf) << 12);
         instruction  |=     (0xfff&imm12);
+        emitInt(instruction);
+
+    }
+    public void
+    ldrImmediate(final ConditionFlag cond,int P, int U, int W,final CiRegister Rt, final CiRegister Rn, int imm12){
+
+        int instruction = 0x04100000;
+        P =P &1;
+        U = U &1;
+        W = W & 1;
+        instruction |=    ((cond.value() & 0xf) << 28);
+
+        instruction |= (P<<24)|(U<<23)|(W<<21);
+        instruction |= ((Rn.encoding&0xf)<<16);
+        instruction |=  ((Rt.encoding&0xf)<<12);
+        instruction |= imm12;
         emitInt(instruction);
 
     }
@@ -1147,7 +1178,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         movw   (ConditionFlag.Always,dst,imm32&0xffff);
         imm32 = imm32 >> 16;
         imm32 = imm32& 0xffff;
-        if(imm32 < 0) imm32 *= -1;
+        //if(imm32 < 0) imm32 *= -1;
         //System.out.println(" MOVT " + imm32);
         movt   (ConditionFlag.Always,dst,imm32&0xffff);
 

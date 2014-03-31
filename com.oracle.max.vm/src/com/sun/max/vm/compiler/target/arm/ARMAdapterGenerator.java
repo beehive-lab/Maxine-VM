@@ -900,7 +900,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
         // APN Im guessing that this copies values from one stack to another
         // If we have a 64 bit stack copy we can do it as 2 copies.
         // endianness?
-
+        System.err.println("ARMAdapterGenerator::stackCopy STACK COPY NOT IMPLEMENTED");
         if (kind.width == WordWidth.BITS_64) {
             // APN NOT sure how to do this ...
             // I can certainly do it with 2 temporary registers ...
