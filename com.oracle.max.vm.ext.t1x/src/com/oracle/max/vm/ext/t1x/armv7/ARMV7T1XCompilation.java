@@ -324,6 +324,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     protected void loadLong(CiRegister dst, int index) {
         assert(dst.number < 10);      // to prevent screwing up scratch 2 registers required for double!
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
+        asm.sub(ConditionFlag.Always,false,scratch,scratch,4,0);
+
         asm.ldrd(ConditionFlag.Always,dst,asm.scratchRegister,0);
         //asm.movq(dst, localSlot(localSlotOffset(index, Kind.LONG)));
     }
@@ -355,6 +357,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         // APN how do we constrain regs to be correct for ARM?
         assert(src.number < 10); // sanity checking longs must not screw up scratch
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
+        asm.sub(ConditionFlag.Always,false,scratch,scratch,4,0);
+
         asm.strd(ARMV7Assembler.ConditionFlag.Always,src,scratch,0);
         //asm.strd(ConditionFlag.Always,0,0,0,src,asm.scratchRegister,asm.scratchRegister);
         //asm.movq(localSlot(localSlotOffset(index, Kind.LONG)), src);
@@ -460,33 +464,44 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     protected void do_fconst(float value) {
         // did use to use scratch but scratch then gets corrupted.
         // when we incStack etc etc
-        incStack(1);
+        /*incStack(1);
         asm.push(ConditionFlag.Always,1<<8);
         assignInt(ARMV7.r8, Float.floatToRawIntBits(value));
         pokeInt(ARMV7.r8, 1);
         asm.pop(ConditionFlag.Always,1<<8);
+        */
+        assignInt(ARMV7.r8, Float.floatToRawIntBits(value));
+        incStack(1)    ;
+        pokeInt(ARMV7.r8,0);
     }
     @Override
     protected void do_dconst(double value) {
         //assignLong(scratch, Double.doubleToRawLongBits(value));
         //        incStack(2);
         //pokeLong(scratch, 0);
+        assignLong(ARMV7.r8, Double.doubleToRawLongBits(value));
         incStack(2);
+        pokeLong(ARMV7.r8, 0);
+        /*incStack(2);
         asm.push(ConditionFlag.Always,1<<8|1<<9);
         assignLong(ARMV7.r8, Double.doubleToRawLongBits(value));
         pokeLong(ARMV7.r8,2); // APN as we pop these off next!
         asm.pop(ConditionFlag.Always,1<<8|1<<9);
+        */
     }
     @Override
     protected void do_lconst(long value) {
         //assignLong(scratch, value);
         //incStack(2);
         //pokeLong(scratch, 0);
+        assignLong(ARMV7.r8,value);
         incStack(2);
+        pokeLong(ARMV7.r8,0);
+        /*incStack(2);
         asm.push(ConditionFlag.Always,1<<8|1<<9);
         assignLong(ARMV7.r8,value);
         pokeLong(ARMV7.r8,2 );
-        asm.pop(ConditionFlag.Always,1<<8|1<<9);
+        asm.pop(ConditionFlag.Always,1<<8|1<<9);*/
     }
     @Override
     protected void assignDouble(CiRegister dst, double value) {

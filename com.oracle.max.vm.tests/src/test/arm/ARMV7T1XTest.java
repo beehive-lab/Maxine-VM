@@ -70,7 +70,7 @@ public class ARMV7T1XTest  extends MaxTestCase {
         codeAttr = new CodeAttribute(null,
                     new byte[50],
                 (char) 10, // TODO: compute max stack
-                (char) 5,
+                (char) 8,
                 CodeAttribute.NO_EXCEPTION_HANDLER_TABLE,
                 LineNumberTable.EMPTY,
                 LocalVariableTable.EMPTY,
@@ -1572,8 +1572,8 @@ try {
         System.out.println(Long.toHexString(registerValues[9]) + " EXPECTED "+Long.toHexString(expectedValues[9]));
         System.out.println("STACK " + registerValues[2] + " "+ registerValues[3]);
         assert(gotVal == 0xffffffff0000ffffL);
-        assert(registerValues[8] == 0);
-        assert(registerValues[9] == 1);
+        //assert(registerValues[8] == 0);
+        //assert(registerValues[9] == 1);
         assert(registerValues[2] - registerValues[3] == 8);
          System.out.println("Passed testdo_lconst");
     }
@@ -1600,7 +1600,7 @@ try {
         masm.mov32BitConstant(ARMV7.r8,0);
         masm.mov32BitConstant(ARMV7.r9,1);
         // r8 and r9 are used as temporaries, they are pushed onto stack and popped back after the operation
-        // we cannot use scratch on ARMV7 as its only 32bit  and we need 64.
+        // we cannot use scratch on ARMV7 as its only 32bit  and we need 64.          NO LONGER RELEVANT r8/r9 not allocatable
 
         theCompiler.do_dconstTests(myVal);
         masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r3, ARMV7.r13); // copy revised stack pointer to r3
@@ -1618,8 +1618,8 @@ try {
         System.out.println(Long.toHexString(registerValues[9]) + " EXPECTED "+Long.toHexString(expectedValues[9]));
         System.out.println("STACK " + registerValues[2] + " "+ registerValues[3]);
         assert(gotVal == Double.doubleToRawLongBits(myVal));
-        assert(registerValues[8] == 0);
-        assert(registerValues[9] == 1);
+        //assert(registerValues[8] == 0);  r8 and r9 are not allocatable anymore ....
+        //assert(registerValues[9] == 1);
         assert(registerValues[2] - registerValues[3] == 8);
         System.out.println("Passed testdo_dconst");
     }
@@ -1715,8 +1715,17 @@ try {
             masm.push(ARMV7Assembler.ConditionFlag.Always,1);
             theCompiler.do_storeTests(i, Kind.INT);
         }
+        theCompiler.do_loadTests(5,Kind.LONG);
+        masm.pop(ARMV7Assembler.ConditionFlag.Always,1|2);
+        masm.movw(ARMV7Assembler.ConditionFlag.Always,ARMV7.r0,(int)(172L&0xffff));
+        masm.movt(ARMV7Assembler.ConditionFlag.Always,ARMV7.r0,(int)((172L>>16)&0xffff));
+        masm.movw(ARMV7Assembler.ConditionFlag.Always,ARMV7.r1,(int)(((172L>>32)&0xffff)));
+        masm.movt(ARMV7Assembler.ConditionFlag.Always,ARMV7.r1,(int)(((172L>>48)&0xffff)));
+        masm.push(ARMV7Assembler.ConditionFlag.Always,1|2);
+        theCompiler.do_storeTests(5,Kind.LONG);
         for(i = 4;i>=0;i--)
             theCompiler.do_loadTests(i, Kind.INT);
+            theCompiler.do_loadTests(5,Kind.LONG);
             // we should now see the values
             /*
             100
@@ -1731,19 +1740,21 @@ try {
 
 
 
-        masm.pop(ARMV7Assembler.ConditionFlag.Always,1|2|4|8|16);
+        masm.pop(ARMV7Assembler.ConditionFlag.Always,1|2|4|8|16|32|64);
 
         //theCompiler.fixup();
         assemblerStatements =  masm.codeBuffer.position()/4;
         instructions = new int [assemblerStatements];
-        expectedValues[0] = 100;
-        expectedValues[1] = 101;
-        expectedValues[2] = 102;
-        expectedValues[3] = 103;
-        expectedValues[4] = 104;
+        expectedValues[0] = 172;
+        expectedValues[1] = 0;
+        expectedValues[2] = 100;
+        expectedValues[3] = 101;
+        expectedValues[4] = 102;
+        expectedValues[5] = 103;
+        expectedValues[6] = 104;
 
         registerValues  = generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
-        for( i = 0; i <= 4;i++) {
+        for( i = 0; i <= 6;i++) {
             if(registerValues[i] != expectedValues[i])  {
                 System.out.println("REG VALS ["+i+"] HEX " + Long.toString(registerValues[i],16)+ "  DEC " +registerValues[i] );
                 success = false;
