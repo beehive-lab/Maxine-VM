@@ -1,0 +1,8 @@
+target remote localhost:1234
+file test.elf
+break c_entry
+continue
+stepi 5000
+info registers
+quit
+break print_uart0
