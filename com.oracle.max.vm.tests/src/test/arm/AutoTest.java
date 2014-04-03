@@ -1,8 +1,18 @@
 package test.arm;
 
-import junit.framework.*;
+import com.sun.max.ide.TestCaseClassSet;
+import junit.framework.Test;
+import junit.framework.TestSuite;
+import test.com.sun.max.vm.AllTests;
+import test.com.sun.max.vm.VmTestSetup;
 
-import com.sun.max.ide.*;
+/**
+ * Created with IntelliJ IDEA.
+ * User: yaman
+ * Date: 12/12/13
+ * Time: 15:20
+ * To change this template use File | Settings | File Templates.
+ */
 
 @org.junit.runner.RunWith(org.junit.runners.AllTests.class)
 public final class AutoTest {
