@@ -142,7 +142,7 @@ public class ARMV7T1XTest  extends MaxTestCase {
         for(int j = 0; j < assemblerStatements;j++) {
             instructions[j] = theCompiler.getMacroAssemblerUNITTEST().codeBuffer.getInt(j*4);
         }
-        ARMCodeWriter.debug = false;
+        //ARMCodeWriter.debug = false;
 
         ARMCodeWriter code = new ARMCodeWriter(assemblerStatements,instructions);
         MaxineARMTester r = new MaxineARMTester(expected,tests,masks);
@@ -152,7 +152,7 @@ public class ARMV7T1XTest  extends MaxTestCase {
         r.compile();
         r.link();
         r.objcopy();
-        MaxineARMTester.debug = false;
+        MaxineARMTester.debug = true;
         return r.runRegisterSimulation();
     }
     public ARMV7T1XTest() {
@@ -346,7 +346,7 @@ public class ARMV7T1XTest  extends MaxTestCase {
                                success = false;
                           } else { System.out.println("REGISTER " + i + " AS EXPECTED");}
             }
-            assert(success = true);
+            assert(success == true);
             System.out.println("testadjustReg passed");
 
 
@@ -1698,6 +1698,110 @@ try {
         assert(success == true);
 
     }
+
+
+    public void testAdd_Return() throws Exception {
+        boolean success = true;
+        long gotVal= 0;
+        long []registerValues = null;
+
+        double myVal = 3.14123;
+        int instructions [] = null;
+        int i,assemblerStatements;
+        System.out.println("running testAdd_Return");
+
+        ARMV7MacroAssembler masm = theCompiler.getMacroAssemblerUNITTEST();
+        theCompiler.do_iconstTests(1);
+        theCompiler.do_iconstTests(2);
+        theCompiler.do_iadd();
+        theCompiler.do_storeTests(1,Kind.INT);
+
+        gotVal = Double.doubleToRawLongBits(myVal);
+
+
+        expectedValues[0] = 0xffffffffL&gotVal;
+        expectedValues[1] = 0xffffffffL&(gotVal >>32);
+        expectedValues[8] = 0;
+        expectedValues[9] = 1;
+        masm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r2,ARMV7.r13); // copy stack pointer to r2
+        masm.mov32BitConstant(ARMV7.r8,0);
+        masm.mov32BitConstant(ARMV7.r9,1);
+        // r8 and r9 are used as temporaries, they are pushed onto stack and popped back after the operation
+        // we cannot use scratch on ARMV7 as its only 32bit  and we need 64.          NO LONGER RELEVANT r8/r9 not allocatable
+
+        theCompiler.do_dconstTests(myVal);
+        masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r3, ARMV7.r13); // copy revised stack pointer to r3
+        theCompiler.peekLong(ARMV7.r0,0);
+        assemblerStatements =  masm.codeBuffer.position()/4;
+        instructions = new int [assemblerStatements];
+        registerValues  = generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
+        gotVal = 0;
+        gotVal = 0xffffffffL&registerValues[0];
+        gotVal |= (0xffffffffL&registerValues[1]) << 32;
+        System.out.println(Long.toHexString(registerValues[0]) + " " +Long.toHexString(registerValues[1]));
+        long tmp = Double.doubleToRawLongBits(myVal);
+        System.out.println(Long.toHexString(gotVal) + " EXPECTED  " + Long.toHexString(tmp))  ;
+        System.out.println(Long.toHexString(registerValues[8]) + " EXPECTED " + Long.toHexString(expectedValues[8]));
+        System.out.println(Long.toHexString(registerValues[9]) + " EXPECTED "+Long.toHexString(expectedValues[9]));
+        System.out.println("STACK " + registerValues[2] + " "+ registerValues[3]);
+        assert(gotVal == Double.doubleToRawLongBits(myVal));
+        //assert(registerValues[8] == 0);  r8 and r9 are not allocatable anymore ....
+        //assert(registerValues[9] == 1);
+        assert(registerValues[2] - registerValues[3] == 8);
+        System.out.println("Passed testAdd_Return");
+
+    }
+
+    /*
+    public void testdo_jvms1_7SimpleLoopPG41() throws Exception {
+
+        boolean success = true;
+        long gotVal= 0;
+        long []registerValues = null;
+
+        double myVal = 3.14123;
+        int instructions [] = null;
+        int i,assemblerStatements;
+        System.out.println("running testdo_dconst");
+
+        ARMV7MacroAssembler masm = theCompiler.getMacroAssemblerUNITTEST();
+        theCompiler.do_iconstTests(0);
+        theCompiler.do_storeTests(1,Kind.INT);
+
+        gotVal = Double.doubleToRawLongBits(myVal);
+
+
+        expectedValues[0] = 0xffffffffL&gotVal;
+        expectedValues[1] = 0xffffffffL&(gotVal >>32);
+        expectedValues[8] = 0;
+        expectedValues[9] = 1;
+        masm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r2,ARMV7.r13); // copy stack pointer to r2
+        masm.mov32BitConstant(ARMV7.r8,0);
+        masm.mov32BitConstant(ARMV7.r9,1);
+        // r8 and r9 are used as temporaries, they are pushed onto stack and popped back after the operation
+        // we cannot use scratch on ARMV7 as its only 32bit  and we need 64.          NO LONGER RELEVANT r8/r9 not allocatable
+
+        theCompiler.do_dconstTests(myVal);
+        masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r3, ARMV7.r13); // copy revised stack pointer to r3
+        theCompiler.peekLong(ARMV7.r0,0);
+        assemblerStatements =  masm.codeBuffer.position()/4;
+        instructions = new int [assemblerStatements];
+        registerValues  = generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
+        gotVal = 0;
+        gotVal = 0xffffffffL&registerValues[0];
+        gotVal |= (0xffffffffL&registerValues[1]) << 32;
+        System.out.println(Long.toHexString(registerValues[0]) + " " +Long.toHexString(registerValues[1]));
+        long tmp = Double.doubleToRawLongBits(myVal);
+        System.out.println(Long.toHexString(gotVal) + " EXPECTED  " + Long.toHexString(tmp))  ;
+        System.out.println(Long.toHexString(registerValues[8]) + " EXPECTED " + Long.toHexString(expectedValues[8]));
+        System.out.println(Long.toHexString(registerValues[9]) + " EXPECTED "+Long.toHexString(expectedValues[9]));
+        System.out.println("STACK " + registerValues[2] + " "+ registerValues[3]);
+        assert(gotVal == Double.doubleToRawLongBits(myVal));
+        //assert(registerValues[8] == 0);  r8 and r9 are not allocatable anymore ....
+        //assert(registerValues[9] == 1);
+        assert(registerValues[2] - registerValues[3] == 8);
+        System.out.println("Passed testdo_dconst");
+    }   */
 
 }
 

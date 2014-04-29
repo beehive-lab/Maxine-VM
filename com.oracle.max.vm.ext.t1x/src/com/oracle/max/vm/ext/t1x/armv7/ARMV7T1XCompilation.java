@@ -458,6 +458,25 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 throw new InternalError("Unexpected kind: " + kind);
         }
     }
+    @Override
+    protected void do_oconst(Object value) {
+        assignObject(ARMV7.r8, value);
+        incStack(1);
+        pokeObject(ARMV7.r8, 0);
+    }
+    @Override
+    protected void do_iconst(int value) {
+        assignInt(ARMV7.r8, value);
+        incStack(1);
+        pokeInt(ARMV7.r8, 0);
+    }
+
+    @Override
+    protected void do_iinc(int index, int increment) {
+        loadInt(ARMV7.r8, index);
+        adjustReg(ARMV7.r8, increment);
+        storeInt(ARMV7.r8, index);
+    }
 
     @Override
     protected void do_fconst(float value) {
@@ -1407,6 +1426,10 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     public void do_dconstTests(double value)
     {
         do_dconst(value);
+    }
+    public void do_iconstTests(int value)
+    {
+        do_iconst(value);
     }
     public void do_lconstTests(long value)
     {
