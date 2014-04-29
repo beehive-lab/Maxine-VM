@@ -1381,6 +1381,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     }
 
     public void emitPrologueTests() {
+        /* mimics the functionality of
+        T1XCompilation::compile2
+         */
         emitPrologue();
 
         emitUnprotectMethod();
@@ -1409,6 +1412,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
        // }
     }
 
+    public void do_iaddTests() {
+                      do_iadd();
+    }
         public void do_initFrameTests(ClassMethodActor method, CodeAttribute codeAttribute) {
         initFrame(method,codeAttribute);
     }

@@ -1709,11 +1709,16 @@ try {
         int instructions [] = null;
         int i,assemblerStatements;
         System.out.println("running testAdd_Return");
+        initialiseFrameForCompilation();
+        theCompiler.do_initFrameTests(anMethod, codeAttr);
+        theCompiler.emitPrologueTests();
 
         ARMV7MacroAssembler masm = theCompiler.getMacroAssemblerUNITTEST();
+        masm.push(ARMV7Assembler.ConditionFlag.Always,1|2|4|8|16|32|64|128|256|512);
+
         theCompiler.do_iconstTests(1);
         theCompiler.do_iconstTests(2);
-        theCompiler.do_iadd();
+        theCompiler.do_iaddTests();
         theCompiler.do_storeTests(1,Kind.INT);
 
         gotVal = Double.doubleToRawLongBits(myVal);
