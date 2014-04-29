@@ -20,11 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package test.arm;
+package test.arm.t1x;
 
 import junit.framework.*;
 
 import org.junit.runner.*;
+
+import test.arm.t1x.*;
 
 import com.sun.max.ide.*;
 
@@ -38,10 +40,6 @@ public final class AllTests {
     }
 
     public static Test suite() {
-        final TestSuite suite = new TestSuite(AllTests.class.getPackage().getName());
-        suite.addTestSuite(ARMV7T1XTest.class);
-        suite.addTestSuite(ARMV7AssemblerTest.class);
-
         return new TestCaseClassSet(AllTests.class).toTestSuite();
     }
 }

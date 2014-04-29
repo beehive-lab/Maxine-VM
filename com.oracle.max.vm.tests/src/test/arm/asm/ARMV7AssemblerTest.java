@@ -1,4 +1,7 @@
-package test.arm;
+package test.arm.asm;
+
+import test.arm.asm.*;
+import test.arm.asm.MaxineARMTester.*;
 
 import com.oracle.max.asm.target.armv7.*;
 import com.sun.cri.ci.*;
@@ -60,7 +63,6 @@ public class ARMV7AssemblerTest extends MaxTestCase {
          */
     }
 
-    public static boolean normalExecution = true; // false turns off simulation
     private static int valueTestSet[] = { 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
     private static long scratchTestSet[] = { 0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x00000000ffffffffL};
     // Each test should set the contents of this array appropriately, it enables the instruction under test to select the specific bit values for
@@ -112,7 +114,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         ARMCodeWriter.disableDebug();
         ARMCodeWriter code = new ARMCodeWriter(assemblerStatements,instructions);
         MaxineARMTester r = new MaxineARMTester(expected, tests, masks);
-        if (!normalExecution) {
+        if (!MaxineARMTester.ENABLE_SIMULATOR) {
             System.out.println("ARMV7AssemblerTest:normalExecution FALSE *** NO CODE GENERATION PERFORMED");
             return true;
         }

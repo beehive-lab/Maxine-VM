@@ -1,4 +1,4 @@
-package test.arm;
+package test.arm.asm;
 
 import java.io.*;
 

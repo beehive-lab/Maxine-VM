@@ -1,9 +1,14 @@
-package test.arm;
+package test.arm.asm;
 import java.io.*;
+
+import com.sun.max.platform.*;
 
 public class MaxineARMTester {
 
     public static boolean debug = false;
+
+    public static final String ENABLE_QEMU = "max.arm.qemu";
+    public static boolean ENABLE_SIMULATOR = false;
 
     public static final int NUM_REGS = 17;
     // Checkstyle: off
@@ -335,6 +340,7 @@ public class MaxineARMTester {
     }
 
     public MaxineARMTester(long expected[], boolean test[], BitsFlag range[]) {
+        initializeQemu();
         bitMasks = range;
         for (int i = 0; i < NUM_REGS; i++) {
             expectRegs[i] = expected[i];
@@ -343,6 +349,7 @@ public class MaxineARMTester {
     }
 
     public MaxineARMTester(String args[]) {
+        initializeQemu();
         for (int i = 0; i < NUM_REGS; i++) {
             testRegs[i] = false;
         }
@@ -351,6 +358,16 @@ public class MaxineARMTester {
             testRegs[Integer.parseInt(args[i])] = true;
         }
     }
+
+    private void initializeQemu() {
+        //String enableQemu = System.getProperty(ENABLE_QEMU);
+        //if (enableQemu != null) {
+        //    ENABLE_SIMULATOR =  Integer.parseInt(enableQemu).intValue() > 0 ? true : false;
+        //} else {
+        //    ENABLE_SIMULATOR = false;
+        //}
+        ENABLE_SIMULATOR = Integer.getInteger(ENABLE_QEMU) != null && Integer.getInteger(ENABLE_QEMU) > 0 ? true : false;
+ }
 
     private byte[] readBin(String file) throws IOException {
         FileInputStream fis = new FileInputStream(file);

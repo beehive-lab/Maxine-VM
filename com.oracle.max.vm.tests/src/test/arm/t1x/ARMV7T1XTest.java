@@ -1,14 +1,12 @@
-package test.arm;
+package test.arm.t1x;
 
 import static com.oracle.max.asm.target.armv7.ARMV7.*;
 
 import com.oracle.max.asm.Buffer;
 import com.oracle.max.asm.target.armv7.ARMV7MacroAssembler;
 import com.oracle.max.vm.ext.t1x.*;
-
 import com.oracle.max.asm.target.armv7.ARMV7;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler;
-
 import com.oracle.max.vm.ext.t1x.armv7.ARMV7T1XCompilation;
 import com.sun.cri.ci.CiTarget;
 import com.sun.max.ide.MaxTestCase;
@@ -37,6 +35,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import test.arm.asm.*;
+import test.arm.asm.MaxineARMTester.*;
 
 /**
  /**
