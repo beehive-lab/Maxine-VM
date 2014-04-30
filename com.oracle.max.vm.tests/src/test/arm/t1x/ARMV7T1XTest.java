@@ -59,6 +59,7 @@ public class ARMV7T1XTest  extends MaxTestCase {
     protected T1XCompilation initialValue() {
             return t1XCompilationFactory.newT1XCompilation(T1X.this);
         }
+        }
     };*/
     StaticMethodActor anMethod = null;
     CodeAttribute codeAttr = null;
@@ -1489,13 +1490,12 @@ try {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssemblerUNITTEST();
         expectedValues[0] = 0xffffffffL&0xffffffff0000ffffL;
         expectedValues[1] = 0xffffffffL&(0xffffffff0000ffffL >>32);
-        expectedValues[8] = 0;
-        expectedValues[9] = 1;
+        expectedValues[6] = 0;
+        expectedValues[7] = 1;
         masm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r2,ARMV7.r13); // copy stack pointer to r2
-        masm.mov32BitConstant(ARMV7.r8,0);
-        masm.mov32BitConstant(ARMV7.r9,1);
-        // r8 and r9 are used as temporaries, they are pushed onto stack and popped back after the operation
-        // we cannot use scratch on ARMV7 as its only 32bit  and we need 64.
+        masm.mov32BitConstant(ARMV7.r6,0);
+        masm.mov32BitConstant(ARMV7.r7,1);
+        // r6 and r7 are used as temporaries,
 
         theCompiler.do_lconstTests(0xffffffff0000ffffL);
         masm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r3,ARMV7.r13); // copy revised stack pointer to r3
@@ -1508,13 +1508,14 @@ try {
         gotVal |= (0xffffffffL&registerValues[1]) << 32;
         System.out.println(Long.toHexString(registerValues[0]) + " " +Long.toHexString(registerValues[1]));
         System.out.println(Long.toHexString(gotVal) + " EXPECTED  0xffffffff0000ffffL")  ;
-        System.out.println(Long.toHexString(registerValues[8]) + " EXPECTED "+Long.toHexString(expectedValues[8]));
-        System.out.println(Long.toHexString(registerValues[9]) + " EXPECTED "+Long.toHexString(expectedValues[9]));
+        System.out.println(Long.toHexString(registerValues[6]) + " EXPECTED "+Long.toHexString(expectedValues[6]));
+        System.out.println(Long.toHexString(registerValues[7]) + " EXPECTED "+Long.toHexString(expectedValues[7]));
         System.out.println("STACK " + registerValues[2] + " "+ registerValues[3]);
         assert(gotVal == 0xffffffff0000ffffL);
         //assert(registerValues[8] == 0);
         //assert(registerValues[9] == 1);
-        assert(registerValues[2] - registerValues[3] == 8);
+        assert(registerValues[2] - registerValues[3] == 8);         // stack pointer has increased by 8 due to pushing the lconst.
+        // really ought to get the value back and use it in a calculation to test it  as well.
          System.out.println("Passed testdo_lconst");
     }
     public void testdo_dconst() throws Exception {
@@ -1534,14 +1535,12 @@ try {
         gotVal = Double.doubleToRawLongBits(myVal);
         expectedValues[0] = 0xffffffffL&gotVal;
         expectedValues[1] = 0xffffffffL&(gotVal >>32);
-        expectedValues[8] = 0;
-        expectedValues[9] = 1;
+        expectedValues[6] = 0;
+        expectedValues[7] = 1;
         masm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r2,ARMV7.r13); // copy stack pointer to r2
-        masm.mov32BitConstant(ARMV7.r8,0);
-        masm.mov32BitConstant(ARMV7.r9,1);
-        // r8 and r9 are used as temporaries, they are pushed onto stack and popped back after the operation
-        // we cannot use scratch on ARMV7 as its only 32bit  and we need 64.          NO LONGER RELEVANT r8/r9 not allocatable
-
+        masm.mov32BitConstant(ARMV7.r6,0);
+        masm.mov32BitConstant(ARMV7.r7,1);
+        // r6 and r7 are used as temporaries,
         theCompiler.do_dconstTests(myVal);
         masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r3, ARMV7.r13); // copy revised stack pointer to r3
         theCompiler.peekLong(ARMV7.r0,0);
@@ -1554,8 +1553,8 @@ try {
         System.out.println(Long.toHexString(registerValues[0]) + " " +Long.toHexString(registerValues[1]));
         long tmp = Double.doubleToRawLongBits(myVal);
         System.out.println(Long.toHexString(gotVal) + " EXPECTED  " + Long.toHexString(tmp))  ;
-        System.out.println(Long.toHexString(registerValues[8]) + " EXPECTED " + Long.toHexString(expectedValues[8]));
-        System.out.println(Long.toHexString(registerValues[9]) + " EXPECTED "+Long.toHexString(expectedValues[9]));
+        System.out.println(Long.toHexString(registerValues[6]) + " EXPECTED " + Long.toHexString(expectedValues[6]));
+        System.out.println(Long.toHexString(registerValues[7]) + " EXPECTED "+Long.toHexString(expectedValues[7]));
         System.out.println("STACK " + registerValues[2] + " "+ registerValues[3]);
         assert(gotVal == Double.doubleToRawLongBits(myVal));
         //assert(registerValues[8] == 0);  r8 and r9 are not allocatable anymore ....
@@ -1582,10 +1581,9 @@ try {
 
 
         masm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r2,ARMV7.r13); // copy stack pointer to r2
-        masm.mov32BitConstant(ARMV7.r8,0);
-        masm.mov32BitConstant(ARMV7.r9,1);
-        // r8 and r9 are used as temporaries, they are pushed onto stack and popped back after the operation
-        // we cannot use scratch on ARMV7 as its only 32bit  and we need 64.
+        masm.mov32BitConstant(ARMV7.r6,0);
+        masm.mov32BitConstant(ARMV7.r7,1);
+        // r6 and r7 are used as temporaries,
 
         theCompiler.do_fconstTests(myVal);
         masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r3, ARMV7.r13); // copy revised stack pointer to r3
