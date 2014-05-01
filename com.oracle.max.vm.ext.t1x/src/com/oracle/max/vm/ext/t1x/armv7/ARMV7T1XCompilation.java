@@ -1440,7 +1440,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         decStack(1);  // get slot 1
         peekInt(ARMV7.r1,0);
         decStack(1);  // get slot 0
-        asm.mul(ConditionFlag.Always,true,ARMV7.r0,ARMV7.r0,ARMV7.r1,0,0);
+        asm.mul(ConditionFlag.Always,true,ARMV7.r0,ARMV7.r0,ARMV7.r1);
         incStack(1);
         pokeInt(ARMV7.r0, 0); // push the result onto the operand stack.
 
