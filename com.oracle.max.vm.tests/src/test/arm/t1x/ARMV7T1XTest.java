@@ -1699,7 +1699,7 @@ try {
     }
 
 
-    public void testAdd_Return() throws Exception {
+    public void testAdd() throws Exception {
         boolean success = true;
         long gotVal= 0;
         long []registerValues = null;
@@ -1707,55 +1707,71 @@ try {
         double myVal = 3.14123;
         int instructions [] = null;
         int i,assemblerStatements;
-        System.out.println("running testAdd_Return");
+        System.out.println("running testAdd");
         initialiseFrameForCompilation();
         theCompiler.do_initFrameTests(anMethod, codeAttr);
         theCompiler.emitPrologueTests();
 
         ARMV7MacroAssembler masm = theCompiler.getMacroAssemblerUNITTEST();
         masm.push(ARMV7Assembler.ConditionFlag.Always,1|2|4|8|16|32|64|128|256|512);
+        masm.push(ARMV7Assembler.ConditionFlag.Always,1|2|4|8|16|32|64|128|256|512);
 
-        theCompiler.do_iconstTests(1);
-        theCompiler.do_iconstTests(2);
+        theCompiler.do_iconstTests(1);   // push the constant 1 onto the operand stack
+        theCompiler.do_iconstTests(2);   // push the constant 2 onto the operand stack
         theCompiler.do_iaddTests();
-        theCompiler.do_storeTests(1,Kind.INT);
-
-        gotVal = Double.doubleToRawLongBits(myVal);
+        //theCompiler.do_storeTests(1,Kind.INT);
 
 
-        expectedValues[0] = 0xffffffffL&gotVal;
-        expectedValues[1] = 0xffffffffL&(gotVal >>32);
-        expectedValues[8] = 0;
-        expectedValues[9] = 1;
-        masm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r2,ARMV7.r13); // copy stack pointer to r2
-        masm.mov32BitConstant(ARMV7.r8,0);
-        masm.mov32BitConstant(ARMV7.r9,1);
-        // r8 and r9 are used as temporaries, they are pushed onto stack and popped back after the operation
-        // we cannot use scratch on ARMV7 as its only 32bit  and we need 64.          NO LONGER RELEVANT r8/r9 not allocatable
 
-        theCompiler.do_dconstTests(myVal);
-        masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r3, ARMV7.r13); // copy revised stack pointer to r3
-        theCompiler.peekLong(ARMV7.r0,0);
+        expectedValues[0] = 3;
+        expectedValues[1] = 2;
+
         assemblerStatements =  masm.codeBuffer.position()/4;
         instructions = new int [assemblerStatements];
         registerValues  = generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
-        gotVal = 0;
-        gotVal = 0xffffffffL&registerValues[0];
-        gotVal |= (0xffffffffL&registerValues[1]) << 32;
-        System.out.println(Long.toHexString(registerValues[0]) + " " +Long.toHexString(registerValues[1]));
-        long tmp = Double.doubleToRawLongBits(myVal);
-        System.out.println(Long.toHexString(gotVal) + " EXPECTED  " + Long.toHexString(tmp))  ;
-        System.out.println(Long.toHexString(registerValues[8]) + " EXPECTED " + Long.toHexString(expectedValues[8]));
-        System.out.println(Long.toHexString(registerValues[9]) + " EXPECTED "+Long.toHexString(expectedValues[9]));
-        System.out.println("STACK " + registerValues[2] + " "+ registerValues[3]);
-        assert(gotVal == Double.doubleToRawLongBits(myVal));
-        //assert(registerValues[8] == 0);  r8 and r9 are not allocatable anymore ....
-        //assert(registerValues[9] == 1);
-        assert(registerValues[2] - registerValues[3] == 8);
+        System.out.println("EXPECTED " + expectedValues[0] + " " +Long.toHexString(registerValues[0]));
+        assert(expectedValues[0] == registerValues[0]);
         System.out.println("Passed testAdd_Return");
 
     }
 
+    public void testMul() throws Exception {
+        boolean success = true;
+        long gotVal= 0;
+        long []registerValues = null;
+
+        double myVal = 3.14123;
+        int instructions [] = null;
+        int i,assemblerStatements;
+        System.out.println("running testMull");
+        initialiseFrameForCompilation();
+        theCompiler.do_initFrameTests(anMethod, codeAttr);
+        theCompiler.emitPrologueTests();
+
+        ARMV7MacroAssembler masm = theCompiler.getMacroAssemblerUNITTEST();
+        masm.push(ARMV7Assembler.ConditionFlag.Always,1|2|4|8|16|32|64|128|256|512);
+        masm.push(ARMV7Assembler.ConditionFlag.Always,1|2|4|8|16|32|64|128|256|512);
+
+        theCompiler.do_iconstTests(3);   // push the constant 1 onto the operand stack
+        theCompiler.do_iconstTests(4);   // push the constant 2 onto the operand stack
+        theCompiler.do_imulTests();
+        //theCompiler.do_storeTests(1,Kind.INT);
+
+
+
+        expectedValues[0] = 12;
+        expectedValues[1] = 4;
+
+        assemblerStatements =  masm.codeBuffer.position()/4;
+        instructions = new int [assemblerStatements];
+        registerValues  = generateAndTest(assemblerStatements,expectedValues,testvalues,bitmasks);
+        System.out.println("EXPECTED " + expectedValues[0] + " " +Long.toHexString(registerValues[0]));
+        System.out.println("EXPECTED " + expectedValues[1] + " " +Long.toHexString(registerValues[1]));
+
+        assert(expectedValues[0] == registerValues[0]);
+        System.out.println("Passed testAdd_Return");
+
+    }
     /*
     public void testdo_jvms1_7SimpleLoopPG41() throws Exception {
 

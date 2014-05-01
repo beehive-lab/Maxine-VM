@@ -1413,7 +1413,38 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     }
 
     public void do_iaddTests() {
-                      do_iadd();
+        /*
+        @T1X_TEMPLATE(IADD)
+    public static int iadd(@Slot(1) int value1, @Slot(0) int value2) {
+        return value1 + value2;
+    }
+         */
+        peekInt(ARMV7.r0, 0);
+        decStack(1);  // get slot 1
+        peekInt(ARMV7.r1,0);
+        decStack(1);  // get slot 0
+        asm.addRegisters(ConditionFlag.Always,true,ARMV7.r0,ARMV7.r0,ARMV7.r1,0,0);
+        incStack(1);
+        pokeInt(ARMV7.r0, 0); // push the result onto the operand stack.
+
+        //do_iadd();
+    }
+    public void do_imulTests() {
+        /*
+        @T1X_TEMPLATE(IADD)
+    public static int iadd(@Slot(1) int value1, @Slot(0) int value2) {
+        return value1 + value2;
+    }
+         */
+        peekInt(ARMV7.r0, 0);
+        decStack(1);  // get slot 1
+        peekInt(ARMV7.r1,0);
+        decStack(1);  // get slot 0
+        asm.mul(ConditionFlag.Always,true,ARMV7.r0,ARMV7.r0,ARMV7.r1,0,0);
+        incStack(1);
+        pokeInt(ARMV7.r0, 0); // push the result onto the operand stack.
+
+        //do_iadd();
     }
         public void do_initFrameTests(ClassMethodActor method, CodeAttribute codeAttribute) {
         initFrame(method,codeAttribute);
