@@ -708,39 +708,38 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    // TODO: Fix me
-    public void ignoreAddReturn() throws Exception {
-        long[] expectedLongValues = new long[10];
-        long returnValue = 0;
-        double myVal = 3.14123;
+    public void testAdd() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.do_initFrameTests(anMethod, codeAttr);
         theCompiler.emitPrologueTests();
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
+        masm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
         theCompiler.do_iconstTests(1);
         theCompiler.do_iconstTests(2);
         theCompiler.do_iaddTests();
-        theCompiler.do_storeTests(1, Kind.INT);
-        returnValue = Double.doubleToRawLongBits(myVal);
-        expectedLongValues[0] = 0xffffffffL & returnValue;
-        expectedLongValues[1] = 0xffffffffL & (returnValue >> 32);
-        expectedLongValues[8] = 0;
-        expectedLongValues[9] = 1;
-        masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r2, ARMV7.r13); // copy stack pointer to r2
-        masm.mov32BitConstant(ARMV7.r8, 0);
-        masm.mov32BitConstant(ARMV7.r9, 1); // r8 and r9 are used
-        // as temporaries, they are pushed onto stack and popped back after the operation we cannot use scratch on ARMV7
-        // as its only 32bit and we need 64. NO LONGER RELEVANT r8/r9 not allocatable
-        theCompiler.do_dconstTests(myVal);
-        masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r3, ARMV7.r13);
-        theCompiler.peekLong(ARMV7.r0, 0);
+        expectedValues[0] = 3;
+        expectedValues[1] = 2;
         int assemblerStatements = masm.codeBuffer.position() / 4;
         int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
-        returnValue = 0xffffffffL & registerValues[0];
-        returnValue |= (0xffffffffL & registerValues[1]) << 32;
-        assert (returnValue == Double.doubleToRawLongBits(myVal));
-        assert (registerValues[2] - registerValues[3] == 8);
+        assert (expectedValues[0] == registerValues[0]);
+    }
+
+    public void testMul() throws Exception {
+        initialiseFrameForCompilation();
+        theCompiler.do_initFrameTests(anMethod, codeAttr);
+        theCompiler.emitPrologueTests();
+        ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
+        masm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
+        theCompiler.do_iconstTests(3); // push the constant 1 onto the operand stack
+        theCompiler.do_iconstTests(4); // push the constant 2 onto the operand stack
+        theCompiler.do_imulTests();
+        expectedValues[0] = 12;
+        expectedValues[1] = 4;
+        int assemblerStatements = masm.codeBuffer.position() / 4;
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        assert (expectedValues[0] == registerValues[0]);
     }
 
     public void ignoreCallDirect() throws Exception {

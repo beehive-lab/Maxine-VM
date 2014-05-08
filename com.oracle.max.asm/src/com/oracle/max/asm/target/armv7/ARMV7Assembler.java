@@ -1770,10 +1770,10 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
 
     }
-    public final void mul(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
+    public final void mul(ConditionFlag cond,boolean setFlags, CiRegister dest, CiRegister rn, CiRegister rm) {
         int instruction = (cond.value()&0xf)<<28;
         instruction |= 0x00000090;
-
+        if(setFlags) instruction |= (1<<20);
         instruction |= (rm.encoding &0xf) <<8;
         instruction |= (dest.encoding &0xf) <<16;
         instruction |= (rn.encoding &0xf);
