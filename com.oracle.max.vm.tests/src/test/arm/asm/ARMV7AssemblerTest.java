@@ -594,7 +594,6 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         int registers = 1;
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         initialiseExpectedValues();
-        System.out.println("TESTING PUSH AND POP");
         for (int i = 0; i < 16; i++) {
             if (i % 2 == 0) {
                 expectedValues[i] = i;
