@@ -26,8 +26,6 @@ import junit.framework.*;
 
 import org.junit.runner.*;
 
-import test.arm.t1x.*;
-
 import com.sun.max.ide.*;
 
 @RunWith(org.junit.runners.AllTests.class)

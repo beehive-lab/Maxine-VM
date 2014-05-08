@@ -70,12 +70,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     public ARMV7T1XCompilation(T1X compiler) {
         super(compiler);
-	System.out.println("Creating ARMV7T1XCompilation");
-        asm = new ARMV7MacroAssembler(target(), null);
+	asm = new ARMV7MacroAssembler(target(), null);
         buf = asm.codeBuffer;
-	System.out.println("code buffer created ");
-        patchInfo = new PatchInfoARMV7();
-	System.out.println("patchInfo created");
+	patchInfo = new PatchInfoARMV7();
     }
 
     @Override
@@ -88,7 +85,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         }
         frame = new ARMV7JVMSFrameLayout(maxLocals, maxStack, maxParams, T1XTargetMethod.templateSlots());
     }
-    public ARMV7MacroAssembler getMacroAssemblerUNITTEST() {
+    public ARMV7MacroAssembler getMacroAssembler() {
         return asm;
     }
     @Override
@@ -1413,40 +1410,42 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     }
 
     public void do_iaddTests() {
-                      do_iadd();
+        do_iadd();
     }
-        public void do_initFrameTests(ClassMethodActor method, CodeAttribute codeAttribute) {
-        initFrame(method,codeAttribute);
+
+    public void do_initFrameTests(ClassMethodActor method, CodeAttribute codeAttribute) {
+        initFrame(method, codeAttribute);
     }
+
     public void do_storeTests(int index, Kind kind) {
-        do_store(index,kind);
+        do_store(index, kind);
     }
 
-    public void do_loadTests (int index, Kind kind) {
-        do_load(index,kind);
+    public void do_loadTests(int index, Kind kind) {
+        do_load(index, kind);
     }
 
-        public void do_fconstTests(float value) {
+    public void do_fconstTests(float value) {
         do_fconst(value);
     }
-    public void do_dconstTests(double value)
-    {
+
+    public void do_dconstTests(double value) {
         do_dconst(value);
     }
-    public void do_iconstTests(int value)
-    {
+
+    public void do_iconstTests(int value) {
         do_iconst(value);
     }
-    public void do_lconstTests(long value)
-    {
+
+    public void do_lconstTests(long value) {
         do_lconst(value);
     }
-    public void assignmentTests(CiRegister reg, long value)
-    {
-         assignLong(reg,value);
+
+    public void assignmentTests(CiRegister reg, long value) {
+        assignLong(reg, value);
     }
-    public void assignDoubleTest(CiRegister reg, double value)
-    {
-         assignDouble(reg,value);
+
+    public void assignDoubleTest(CiRegister reg, double value) {
+        assignDouble(reg, value);
     }
 }

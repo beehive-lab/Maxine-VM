@@ -253,7 +253,6 @@ public class CompilationBroker {
     }
 
     public static RuntimeCompiler addCompiler(String name, String className) {
-	System.out.println("addCompiler about to instantiate "+ name + " " + className);
         RuntimeCompiler compiler = instantiateCompiler(className);
         singleton.altCompilers.put(name, compiler);
         return compiler;

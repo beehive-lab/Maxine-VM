@@ -19,5 +19,4 @@ public final class AutoTest {
         suite.addTest(test.arm.t1x.AllTests.suite());
         return suite;
     }
-
 }
