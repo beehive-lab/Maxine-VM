@@ -4,11 +4,9 @@ import java.io.*;
 
 public class MaxineARMTester {
 
-    public static boolean debug = true;
-
+    public static boolean DEBUG = false;
     public static final String ENABLE_QEMU = "max.arm.qemu";
     public static boolean ENABLE_SIMULATOR = false;
-
     public static final int NUM_REGS = 17;
 
     public enum BitsFlag {
@@ -344,15 +342,15 @@ public class MaxineARMTester {
     }
 
     public static void enableDebug() {
-        debug = true;
+        DEBUG = true;
     }
 
     public static void disableDebug() {
-        debug = false;
+        DEBUG = false;
     }
 
     private void log(String msg) {
-        if (debug) {
+        if (DEBUG) {
             System.out.println(msg);
         }
     }
