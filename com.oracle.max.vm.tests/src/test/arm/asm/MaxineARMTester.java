@@ -33,8 +33,6 @@ public class MaxineARMTester {
     private static final File gdbOutput = new File("gdb_output");
     private static final File gdbInput = new File("gdb_input");
     private static final File gdbErrors = new File("gdb_errors");
-    private static final File gdbGrepOutput = new File("gdb_grep_output");
-    private static final File gdbGrepErrors = new File("gdb_grep_errors");
     private static final File objCopyOutput = new File("obj_copy_output");
     private static final File objCopyErrors = new File("obj_copy_errors");
     private static final File gccOutput = new File("gcc_output");
@@ -44,7 +42,7 @@ public class MaxineARMTester {
     private static final File linkOutput = new File("link_output");
     private static final File linkErrors = new File("link_errors");
 
-    private Process objectCopy, gcc, assembler, assemblerEntry, linker, qemu, gdb, gdbGrep;
+    private Process objectCopy, gcc, assembler, assemblerEntry, linker, qemu, gdb;
     private BitsFlag bitMasks[];
     private char chars[];
     private int[] expectRegs = new int[NUM_REGS];
@@ -70,8 +68,6 @@ public class MaxineARMTester {
         deleteFile(bindOutput);
         deleteFile(gdbOutput);
         deleteFile(gdbErrors);
-        deleteFile(gdbGrepOutput);
-        deleteFile(gdbGrepErrors);
         deleteFile(objCopyOutput);
         deleteFile(objCopyErrors);
         deleteFile(gccOutput);
@@ -162,7 +158,6 @@ public class MaxineARMTester {
         terminateProcess(assemblerEntry);
         terminateProcess(linker);
         terminateProcess(gdb);
-        terminateProcess(gdbGrep);
         terminateProcess(qemu);
     }
 
@@ -180,9 +175,6 @@ public class MaxineARMTester {
         ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a9", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.bin");
         qemuProcess.redirectOutput(qemuOutput);
         qemuProcess.redirectError(qemuErrors);
-        ProcessBuilder qemuGrepProcess = new ProcessBuilder("grep", "-A", "16", "r0*0x*", gdbOutput.getName());
-        qemuGrepProcess.redirectOutput(gdbGrepOutput);
-        qemuGrepProcess.redirectError(gdbGrepErrors);
         try {
             qemu = qemuProcess.start();
             while (!qemuOutput.exists()) {
@@ -202,7 +194,6 @@ public class MaxineARMTester {
                 }
             } while (true);
             gdbProcess.start().waitFor();
-            qemuGrepProcess.start().waitFor();
         } catch (Exception e) {
             System.out.println(e);
             e.printStackTrace();
@@ -222,9 +213,6 @@ public class MaxineARMTester {
         ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a9", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.bin");
         qemuProcess.redirectOutput(qemuOutput);
         qemuProcess.redirectError(qemuErrors);
-        ProcessBuilder qemuGrepProcess = new ProcessBuilder("grep", "-A", "16", "r0*0x*", gdbOutput.getName());
-        qemuGrepProcess.redirectOutput(gdbGrepOutput);
-        qemuGrepProcess.redirectError(gdbGrepErrors);
         try {
             qemu = qemuProcess.start();
             while (!qemuOutput.exists()) {
@@ -245,8 +233,6 @@ public class MaxineARMTester {
             } while (true);
             gdb = gdbProcess.start();
             gdb.waitFor();
-            gdbGrep = qemuGrepProcess.start();
-            gdbGrep.waitFor();
         } catch (Exception e) {
             System.out.println(e);
             e.printStackTrace();
