@@ -725,7 +725,7 @@ public abstract class TargetMethod extends MemoryRegion {
             // the unnecessary X86 functionality                       com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMISAInstructionDecoder.java
             //
             ARMISAInstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);
-	} else {
+        } else {
             throw FatalError.unimplemented();
         }
     }

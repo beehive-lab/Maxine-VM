@@ -32,7 +32,6 @@ public class ARMV7JavaStackFrame extends VMStackFrame {
 
     public ARMV7JavaStackFrame(StackFrame callee, TargetMethod targetMethod, Pointer ip, Pointer fp, Pointer sp) {
         super(callee, targetMethod, ip, fp, sp);
-	System.err.println("ARMV7JavaStackFrame");
     }
 
     @Override

@@ -304,7 +304,7 @@ public class Stubs {
             return AMD64TargetMethodUtil.isJumpTo(tm, OPTIMIZED_ENTRY_POINT.offset(),  OPTIMIZED_ENTRY_POINT.in(vm().stubs.staticTrampoline()));
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.isJumpTo(tm, OPTIMIZED_ENTRY_POINT.offset(),  OPTIMIZED_ENTRY_POINT.in(vm().stubs.staticTrampoline()));
-	} else {
+        } else {
             throw FatalError.unimplemented();
         }
     }
@@ -477,11 +477,11 @@ public class Stubs {
             // so if we're constructing an address then please move it back to LR R13
             // NOT yet done.
             // we will need to test this carefully
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(),ARMV7.r13.asValue(),frameSize));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize));
             //asm.movq(args[2].asRegister(), new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize));
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, args[2].asRegister(), asm.scratchRegister);
 
-            asm.alignForPatchableDirectCall();// insert nops so that the call is in an allowed position
+            asm.alignForPatchableDirectCall(); // insert nops so that the call is in an allowed position
                                             // obeying alignment rules
             int callPos = asm.codeBuffer.position();
             ClassMethodActor callee = isInterface ? resolveInterfaceCall.classMethodActor : resolveVirtualCall.classMethodActor;
@@ -517,13 +517,13 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             final Type type = isInterface ? InterfaceTrampoline : VirtualTrampoline;
             return new Stub(type, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
-	} else {
+        } else {
             throw FatalError.unimplemented();
-	}
+        }
     }
-    @PLATFORM(cpu= "armv7")
+    @PLATFORM(cpu = "armv7")
     private static void patchStaticTrampolineCallSiteARMV7(Pointer callSite) {
-	System.err.println("ARM patchStaticTrampoline");
+        Log.println("ARM patchStaticTrampoline");
         CodePointer cpCallSite = CodePointer.from(callSite);
 
         final TargetMethod caller = cpCallSite.toTargetMethod();
@@ -614,7 +614,7 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
 
             return new Stub(StaticTrampoline, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
-        } else if (platform().isa == ISA.ARM)	{
+        } else if (platform().isa == ISA.ARM) {
             CiRegisterConfig registerConfig = registerConfigs.trampoline;
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
@@ -672,9 +672,9 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
 
             return new Stub(StaticTrampoline, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
-	} else {
+	    } else {
             throw FatalError.unimplemented();
-	}
+	    }
     }
 
     /**
@@ -817,7 +817,7 @@ public class Stubs {
             // load the trap number from the thread locals into the first parameter register
             //asm.movq(args[0].asRegister(), new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_NUMBER.offset));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue()));
-            asm.ldr(ARMV7Assembler.ConditionFlag.Always,args[0].asRegister(),ARMV7.r12,0);
+            asm.ldr(ARMV7Assembler.ConditionFlag.Always, args[0].asRegister(), ARMV7.r12, 0);
 
             // also save the trap number into the trap frame
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameToCSA + ARMTrapFrameAccess.TRAP_NUMBER_OFFSET), args[0].asRegister());
@@ -832,7 +832,7 @@ public class Stubs {
             // load the fault address from the thread locals into the third parameter register
             //asm.movq(args[2].asRegister(), new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_FAULT_ADDRESS.offset));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_FAULT_ADDRESS.offset));
-            asm.ldr(ARMV7Assembler.ConditionFlag.Always,args[2].asRegister(),asm.scratchRegister,0);
+            asm.ldr(ARMV7Assembler.ConditionFlag.Always, args[2].asRegister(), asm.scratchRegister, 0);
 
             asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
@@ -853,9 +853,9 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
 
             return new Stub(TrapStub, "trapStub", frameSize, code, callPos, callSize, callee, -1);
-	} else {
+	    } else {
             throw FatalError.unimplemented();
-	}
+	    }
     }
 
     /**
@@ -949,7 +949,7 @@ public class Stubs {
 
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnwindStub, name, frameSize, code, -1, -1, null, -1);
-        } else if(platform().isa ==  ISA.ARM) {
+        } else if (platform().isa ==  ISA.ARM) {
             CiRegisterConfig registerConfig = MaxineVM.vm().stubs.registerConfigs.standard;
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(0);
@@ -995,8 +995,8 @@ public class Stubs {
             // When the RET instruction is executed, the pushed 'pc' will be popped from the stack
             // and the stack will be in the correct state for the handler.
             asm.subq(sp, Word.size());
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(),sp.asValue()));
-            asm.str(ARMV7Assembler.ConditionFlag.Always, pc, asm.scratchRegister,0);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), sp.asValue()));
+            asm.str(ARMV7Assembler.ConditionFlag.Always, pc, asm.scratchRegister, 0);
             //asm.movq(new CiAddress(WordUtil.archKind(), sp.asValue()), pc);
             //asm.movq(ARMV7.rbp, fp);
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r11, fp);
@@ -1071,9 +1071,9 @@ public class Stubs {
 
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnrollStub, "unrollStub", frameSize, code, callPos, callSize, callee, -1);
-	} else {
-	    throw FatalError.unimplemented();
-	}
+	    } else {
+	        throw FatalError.unimplemented();
+	    }
     }
 
     /**
@@ -1303,35 +1303,35 @@ public class Stubs {
                     case Char:
                     case Int:
                     case Object:
-                        assert(args[4].isRegister() == false);
+                        assert args[4].isRegister() == false;
 
-                        arg4 =   new CiAddress(kind,ARMV7.RSP,((CiStackSlot)args[4]).index()*4);
+                        arg4 =   new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
-                        asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
-                        asm.mov(ARMV7Assembler.ConditionFlag.Always,false,returnRegister,ARMV7.r12);
+                        asm.ldr(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
+                        asm.mov(ARMV7Assembler.ConditionFlag.Always, false, returnRegister, ARMV7.r12);
 
-                    break;
+                        break;
 
                     case Long:
                                // broken needs TWO registers TODO
-                        assert(args[4].isRegister() == false);
+                        assert args[4].isRegister() == false;
 
-                        arg4 =   new CiAddress(kind,ARMV7.RSP,((CiStackSlot)args[4]).index()*4);
+                        arg4 =   new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
-                        asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
-                        asm.mov(ARMV7Assembler.ConditionFlag.Always,false,returnRegister,ARMV7.r12);
+                        asm.ldr(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
+                        asm.mov(ARMV7Assembler.ConditionFlag.Always, false, returnRegister, ARMV7.r12);
 
-                    break;
+                        break;
 
                     case Float:
                         CiRegister tmp = args[4].asRegister();
-                        if(tmp.number <=15)
-                        asm.pop(ARMV7Assembler.ConditionFlag.Always,1<<tmp.number);
-                        else {
-                            asm.vpop(ARMV7Assembler.ConditionFlag.Always,tmp,tmp);
+                        if (tmp.number <= 15) {
+                            asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << tmp.number);
+                        } else {
+                            asm.vpop(ARMV7Assembler.ConditionFlag.Always, tmp, tmp);
                         }
 
-                    break;
+                        break;
 
                     case Double:
                         CiRegister tmp2arg4 = args[4].asRegister();
@@ -1343,15 +1343,15 @@ public class Stubs {
                             // 32bits --- long/double so multiplying by 4 will give an incorrect offset in general.
                         // broken we need TWO registers so this needs VLDR!!!!!!!!!
                         System.err.println("Stubs --- we need VLDR");
-                        if(tmp2arg4.number <=15)  {
-                            asm.pop(ARMV7Assembler.ConditionFlag.Always,(1<<tmp2arg4.number)| (1<< (tmp2arg4.number+1)));
-                        }else {
-                            asm.vpop(ARMV7Assembler.ConditionFlag.Always,tmp2arg4,tmp2arg4);
+                        if (tmp2arg4.number <= 15)  {
+                            asm.pop(ARMV7Assembler.ConditionFlag.Always, (1 << tmp2arg4.number) | (1 << (tmp2arg4.number + 1)));
+                        } else {
+                            asm.vpop(ARMV7Assembler.ConditionFlag.Always, tmp2arg4, tmp2arg4);
                         }
 
 
 
-                    break;
+                        break;
 
                     default:
                         throw new InternalError("Unexpected parameter kind: " + kind);
@@ -1368,15 +1368,15 @@ public class Stubs {
             CiRegister arg0 = args[0].asRegister();
             //asm.movq(arg0, new CiAddress(WordUtil.archKind(), ARMV7.RSP, DEOPT_RETURN_ADDRESS_OFFSET));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, DEOPT_RETURN_ADDRESS_OFFSET));
-            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,arg0,ARMV7.r12);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg0, ARMV7.r12);
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
             //asm.movq(arg1, ARMV7.rsp);
-            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,arg1,ARMV7.r13);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg1, ARMV7.r13);
 
             // Copy original frame pointer into arg 2 (i.e. 'sp')
             CiRegister arg2 = args[2].asRegister();
-            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,arg2, ARMV7.r11);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg2, ARMV7.r11);
 
             // Zero arg 3 (i.e. 'csa')
             CiRegister arg3 = args[3].asRegister();
@@ -1385,7 +1385,7 @@ public class Stubs {
             // Put original return address into high slot
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.r13, 4), arg0);
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, 4));
-            asm.str(ARMV7Assembler.ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r13,ARMV7.r13,0,0); // might be the wrong way round
+            asm.str(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r13, ARMV7.r13, 0, 0); // might be the wrong way round
             // Allocate 2 extra stack slots ? one in ARM?
             asm.subq(ARMV7.r13, 4);
 
@@ -1393,19 +1393,19 @@ public class Stubs {
             // Put deopt method entry point into low slot
             //CiRegister scratch = registerConfig.getScratchRegister();
             //asm.movq(scratch, 0xFFFFFFFFFFFFFFFFL);
-            asm.movw(ARMV7Assembler.ConditionFlag.Always,ARMV7.r8,0xffff); // is r8 free ?
-            asm.movt(ARMV7Assembler.ConditionFlag.Always,ARMV7.r8,0xffff);
+            asm.movw(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, 0xffff); // is r8 free ?
+            asm.movt(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, 0xffff);
             // APN ok not sure if we have spare registers
             // if we return? who does the restore?
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP));
 
 
-            asm.str(ARMV7Assembler.ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r8,ARMV7.r8,0,0);
+            asm.str(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r8, ARMV7.r8, 0, 0);
             final int patchPos = asm.codeBuffer.position() - 8; // as we have two by 4 byte instructions to patch
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.RSP), scratch);
-            asm.subq(ARMV7.r13,4); // 2nd stack slot.
+            asm.subq(ARMV7.r13, 4); // 2nd stack slot.
 
-            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r15,ARMV7.r14);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
             // "return" to deopt routine
             //asm.ret(0);
 
@@ -1418,9 +1418,9 @@ public class Stubs {
             runtimeInits[runtimeInits.length - 1] = patch;
 
             return stub;
-	} else {
+	    } else {
             throw FatalError.unimplemented();
-	}
+	    }
     }
 
     /**
@@ -1587,22 +1587,22 @@ public class Stubs {
                     case Char:
                     case Int:
                     case Object:
-                        assert(args[4].isRegister() == false);
+                        assert args[4].isRegister() == false;
 
-                        arg4 =   new CiAddress(kind,ARMV7.RSP,((CiStackSlot)args[4]).index()*4);
+                        arg4 =   new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
-                        asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
-                        asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r0,ARMV7.r12);
+                        asm.ldr(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
+                        asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, ARMV7.r12);
 
                         break;
                     case Long:
-                        assert(args[4].isRegister() == false);
+                        assert args[4].isRegister() == false;
 
                         // broken needs TWO registers TODO
-                        arg4 =   new CiAddress(kind,ARMV7.RSP,((CiStackSlot)args[4]).index()*4);
+                        arg4 =   new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
-                        asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
-                        asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r0,ARMV7.r12);
+                        asm.ldr(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
+                        asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, ARMV7.r12);
 
                         break;
 
@@ -1610,10 +1610,10 @@ public class Stubs {
                         System.err.println("FLOAT");
                         CiRegister tmp = args[4].asRegister();
 
-                        if(tmp.number <=15)
-                            asm.push(ARMV7Assembler.ConditionFlag.Always,1<<tmp.number);
-                        else {
-                            asm.vpush(ARMV7Assembler.ConditionFlag.Always,tmp,tmp);
+                        if (tmp.number <= 15) {
+                            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << tmp.number);
+                        } else {
+                            asm.vpush(ARMV7Assembler.ConditionFlag.Always, tmp, tmp);
                         }
 
 
@@ -1630,10 +1630,10 @@ public class Stubs {
                         // 32bits --- long/double so multiplying by 4 will give an incorrect offset in general.
                         // broken we need TWO registers so this needs VLDR!!!!!!!!!
                         System.err.println("Stubs --- we need VLDR");
-                        if(tmp2arg4.number <=15)
-                            asm.push(ARMV7Assembler.ConditionFlag.Always,(1<<tmp2arg4.number)|  (1<<(tmp2arg4.number+1)));
-                        else {
-                            asm.vpush(ARMV7Assembler.ConditionFlag.Always,tmp2arg4,tmp2arg4);
+                        if (tmp2arg4.number <= 15) {
+                            asm.push(ARMV7Assembler.ConditionFlag.Always, (1 << tmp2arg4.number) | (1 << (tmp2arg4.number + 1)));
+                        } else {
+                            asm.vpush(ARMV7Assembler.ConditionFlag.Always, tmp2arg4, tmp2arg4);
                         }
 
                         // aPN TODO this is broken beyond belief
@@ -1675,28 +1675,28 @@ public class Stubs {
             CiRegister arg0 = args[0].asRegister();
             //asm.movq(arg0, new CiAddress(WordUtil.archKind(), ARMV7.RSP, cfo + DEOPT_RETURN_ADDRESS_OFFSET));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, cfo + DEOPT_RETURN_ADDRESS_OFFSET));
-            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,arg0,ARMV7.r12);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg0, ARMV7.r12);
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
             //asm.leaq(arg1, new CiAddress(WordUtil.archKind(), ARMV7.RSP, cfo));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, cfo));
-            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,arg1,ARMV7.r12);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg1, ARMV7.r12);
 
             // Copy original frame pointer into arg 2 (i.e. 'sp')
             CiRegister arg2 = args[2].asRegister();
             //asm.movq(arg2, ARMV7.rbp);
-            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,arg2,ARMV7.r11);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg2, ARMV7.r11);
 
             // Copy callee save area into arg3 (i.e. 'csa')
             CiRegister arg3 = args[3].asRegister();
-            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,arg3,ARMV7.r13);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg3, ARMV7.r13);
             //asm.movq(arg3, ARMV7.rsp);
 
             // Patch return address of deopt stub frame to look
             // like it was called by frame being deopt'ed.
 
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize));
-            asm.str(ARMV7Assembler.ConditionFlag.Always,0,0,0,arg0,ARMV7.r12,ARMV7.r12,0,0);
+            asm.str(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, arg0, ARMV7.r12, ARMV7.r12, 0, 0);
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize), arg0);
 
 
@@ -1713,9 +1713,9 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             Type stubType = kind == null ? DeoptStubFromSafepoint : DeoptStubFromCompilerStub;
             return new Stub(stubType, stubName, frameSize, code, callPos, callSize, runtimeRoutine.classMethodActor, -1);
-	} else {
+	    } else {
             throw FatalError.unimplemented();
-	}
+	    }
     }
 
     /**
@@ -1775,7 +1775,7 @@ public class Stubs {
             String stubName = name + "Stub";
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UncommonTrapStub, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
-        } else if(platform().isa == ISA.ARM) {
+        } else if (platform().isa == ISA.ARM) {
             CiRegisterConfig registerConfig = registerConfigs.uncommonTrapStub;
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
@@ -1827,9 +1827,9 @@ public class Stubs {
             String stubName = name + "Stub";
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UncommonTrapStub, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
-	} else {
+	    } else {
             throw FatalError.unimplemented();
-	}
+	    }
     }
 
     /**

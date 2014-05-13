@@ -97,6 +97,37 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         r.runSimulation();
         r.reset();
     }
+    public void testLdrb() throws Exception {
+        int assemblerStatements = 13;
+        int ignoreval[] = { 0x03020100, 0xffedcba9};
+        int mask = 0xff;
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        asm.codeBuffer.reset();
+        // load r0 and r1 with sensible values for ignoring the loading of bytes.
+        asm.mov32BitConstant(ARMV7.cpuRegisters[0], ignoreval[0]);
+        asm.mov32BitConstant(ARMV7.cpuRegisters[1], ignoreval[1]);
+        asm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2); // values now lie on the stack
+        for (int i = 0; i < 8; i++) {
+            // stackpointer advanced by 8
+            asm.ldrb(ARMV7Assembler.ConditionFlag.Always, 1, 1, 0, ARMV7.cpuRegisters[i], ARMV7.cpuRegisters[13], i);
+            testValues[i] = true;
+            if (i < 4) {
+                expectedValues[i] = (ignoreval[0] & (mask << (8 * (i % 4))));
+            } else {
+                expectedValues[i] = (ignoreval[1] & (mask << (8 * (i % 4))));
+            }
+
+            expectedValues[i] = expectedValues[i] >> 8 * (i % 4);
+            if(expectedValues[i] <0 ) expectedValues[i] =  0x100 + expectedValues[i];
+            // Bytes do not have a sign! So we need to make sure the  expectedValues are
+            // not affected by sign extension side effects when we take the MSByte of
+            // an integer.
+        }
+        generateAndTest(assemblerStatements, expectedValues, testValues, bitmasks);
+
+    }
 
     public void testAddConstant() throws Exception {
         int instructions[] = new int[3];
@@ -516,7 +547,12 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     }
 
     // TODO: Fix Me
-    public void ignoreLdrsh() throws Exception {
+    public void testLdrsh() throws Exception {
+        /* A8.8.88 ldrsh (immediate)  calculates an address from a base register value
+        and an immediate offset, loads a halfword from memory and sign-extends it to
+        form a 32bit word and writes it to a register.
+        */
+
         int assemblerStatements = 9;
         int ignoreval[] = { 0x03020100, 0x8fed9ba9};
         int mask = 0xffff;
@@ -528,46 +564,30 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         asm.mov32BitConstant(ARMV7.cpuRegisters[0], ignoreval[0]);
         asm.mov32BitConstant(ARMV7.cpuRegisters[1], ignoreval[1]);
         asm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2); // values now lie on the stack
+        // we now try to extract the "signed halfwords"
+        // from the stack and place them into r0..r3
         for (int i = 0; i < 4; i++) {
+            // in this test we are using the stack register as the base value!
             asm.ldrshw(ARMV7Assembler.ConditionFlag.Always, 1, 1, 0, ARMV7.cpuRegisters[i], ARMV7.cpuRegisters[13], i * 2); // stackpointer
 // advanced by 8
             testValues[i] = true;
             if (i < 2) {
-                expectedValues[i] = (ignoreval[0] & (mask << (16 * (i % 2)))) >> 16 * (i);
+                expectedValues[i] = (ignoreval[0] & (mask << (16 * (i % 2))));
             } else {
-                expectedValues[i] = (ignoreval[1] & (mask << (16 * (i % 2)))) >> 16 * (i % 2);
+                expectedValues[i] = (ignoreval[1] & (mask << (16 * (i % 2))));
             }
+            if((expectedValues[i] & 0x8000) != 0)
+                expectedValues[i] = expectedValues[i] - 0x10000; // sign extension workaround.
+            expectedValues[i] = expectedValues[i] >> 16*(i%2);
         }
+
         generateAndTest(assemblerStatements, expectedValues, testValues, bitmasks);
     }
 
-    // TODO: Fix Me
-    public void ignoreLdrb() throws Exception {
-        int assemblerStatements = 13;
-        int ignoreval[] = { 0x03020100, 0xffedcba9};
-        int mask = 0xff;
-        initialiseExpectedValues();
-        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
-        resetIgnoreValues();
-        asm.codeBuffer.reset();
-        // load r0 and r1 with sensible values for ignoring the loading of bytes.
-        asm.mov32BitConstant(ARMV7.cpuRegisters[0], ignoreval[0]);
-        asm.mov32BitConstant(ARMV7.cpuRegisters[1], ignoreval[1]);
-        asm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2); // values now lie on the stack
-        for (int i = 0; i < 8; i++) {
-            // stackpointer advanced by 8
-            asm.ldrb(ARMV7Assembler.ConditionFlag.Always, 1, 1, 0, ARMV7.cpuRegisters[i], ARMV7.cpuRegisters[13], i);
-            testValues[i] = true;
-            if (i < 4) {
-                expectedValues[i] = (ignoreval[0] & (mask << (8 * (i % 4)))) >> 8 * (i);
-            } else {
-                expectedValues[i] = (ignoreval[1] & (mask << (8 * (i % 4)))) >> 8 * (i % 4);
-            }
-        }
-        generateAndTest(assemblerStatements, expectedValues, testValues, bitmasks);
-    }
 
     public void testStrdAndLdrd() throws Exception {
+        MaxineARMTester.disableDebug();
+
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         resetIgnoreValues();
@@ -702,7 +722,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                 expectedValues[destReg] = (value & 0xffff) << 16;
                 asm.movt(ARMV7Assembler.ConditionFlag.Always, ARMV7.cpuRegisters[destReg], value & 0xffff);
                 generateAndTest(1, expectedValues, testValues, bitmasks);
-                assert (asm.codeBuffer.getInt(0) == (0x03400000 | (ARMV7Assembler.ConditionFlag.Always.value() << 28) | (destReg << 12) | (value & 0xfff) | ((value & 0xf000) << 4)));
+                assert (asm.codeBuffer.getInt(0) == (0x03400000 | (ARMV7Assembler.ConditionFlag.Always.value() << 28) | (destReg << 12) | (value & 0xfff) | (value & 0xf000) << 4));
                 asm.codeBuffer.reset();
             }
         }

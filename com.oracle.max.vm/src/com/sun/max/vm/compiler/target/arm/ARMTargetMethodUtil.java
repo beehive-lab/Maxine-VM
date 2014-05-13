@@ -65,8 +65,8 @@ public final class ARMTargetMethodUtil {
      *
      */
     // RIP_CALL using an ADD to PC, hope it;s the right way round for the regs.
-    public static final int RIP_CALL = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf)<<28)
-            |(0x8<<20)|(ARMV7.r15.encoding<<12)|  (ARMV7.r12.encoding << 16) ;
+    public static final int RIP_CALL = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28)
+            | (0x8 << 20) | (ARMV7.r15.encoding << 12) |  (ARMV7.r12.encoding << 16);
 
 
     /**
@@ -76,8 +76,8 @@ public final class ARMTargetMethodUtil {
      * move of a register into the PC
      */
     // REG_CALL using a MOV to the PC
-    public static final int REG_CALL =((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) <<28)
-            |(0xd<<21)|(ARMV7.r15.encoding<<12)|  (ARMV7.r12.encoding );
+    public static final int REG_CALL = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28)
+            | (0xd << 21) | (ARMV7.r15.encoding << 12) |  ARMV7.r12.encoding;
 
     /**
      * X86 Opcode of a RIP-relative jump instruction.
@@ -85,16 +85,16 @@ public final class ARMTargetMethodUtil {
      * as its a JMP we do not save the stack
      * We do this as an add to the PC ...
      */
-    public static final int RIP_JMP =((ARMV7Assembler.ConditionFlag.Always.value() & 0xf)<<28)
-            |(0x8<<20)|(ARMV7.r15.encoding<<12)|  (ARMV7.r12.encoding << 16) ;
+    public static final int RIP_JMP = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28)
+            | (0x8 << 20) | (ARMV7.r15.encoding << 12) |  (ARMV7.r12.encoding << 16);
 
     /**
      * X86 Opcode of a (near) return instruction.
      * ARM here we must do a LDMFD and we move the return address to the PC
      *
      */
-    public static final int RET = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) <<28)
-            |(0xd<<21)|(ARMV7.r15.encoding<<12)|  (ARMV7.r14.encoding );
+    public static final int RET = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28)
+            | (0xd << 21) | (ARMV7.r15.encoding << 12) |  ARMV7.r14.encoding;
 
     /**
      * X86 Size (in bytes) of a RIP-relative call instruction.

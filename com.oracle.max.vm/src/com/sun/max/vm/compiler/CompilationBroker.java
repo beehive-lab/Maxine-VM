@@ -141,7 +141,7 @@ public class CompilationBroker {
                     String key = part.substring(0, colon);
                     String value = part.substring(colon + 1);
                     map.put(key, value);
-		    Log.println("CompileCommand key value " + key +" " + value);
+                    Log.println("CompileCommand key value " + key + " " + value);
                 }
             }
             compileCommandMap = map;
@@ -149,7 +149,7 @@ public class CompilationBroker {
         String methodString = cma.toString();
         for (Map.Entry<String, String> e : compileCommandMap.entrySet()) {
             if (methodString.contains(e.getKey()) || "*".equals(e.getKey())) {
-		Log.println("CompileCommand: matched " + e.getKey());
+                Log.println("CompileCommand: matched " + e.getKey());
                 return e.getValue();
             }
         }
@@ -230,7 +230,7 @@ public class CompilationBroker {
         assert optimizingCompilerOption.getValue() != null;
         String optName = optName();
         String baselineName = baselineName(); // these are of the form com.oracle.max.vm.ext.t1x.T1X/C1X
-					      // trying to use this to add another compiler
+        // trying to use this to add another compiler
         optimizingCompiler = instantiateCompiler(optName);
         assert optimizingCompiler.nature() == Nature.OPT : optimizingCompiler + " is not an optimizing compiler";
         if (baselineName != null) {
@@ -248,7 +248,7 @@ public class CompilationBroker {
         try {
             return (RuntimeCompiler) Class.forName(name).newInstance();
         } catch (Exception e) {
-	    throw FatalError.unexpected("Error instantiating compiler " + name, e);
+            throw FatalError.unexpected("Error instantiating compiler " + name, e);
         }
     }
 
@@ -485,8 +485,9 @@ public class CompilationBroker {
                 String compilerName = compilerFor(cma);
                 reason = null;
                 compiler = null;
-		if (VMOptions.verboseOption.verboseCompilation)
- 			Log.println("attempting to set compiler as " + compilerName );
+                if (VMOptions.verboseOption.verboseCompilation) {
+                    Log.println("attempting to set compiler as " + compilerName);
+                }
                 if (compilerName != null) {
                     if (optimizingCompiler != null && optimizingCompiler.matches(compilerName)) {
                         compiler = optimizingCompiler;
@@ -826,9 +827,11 @@ public class CompilationBroker {
 
         @Override
         public boolean visitFrame(StackFrameCursor current, StackFrameCursor callee) {
-	    if (platform().isa== ISA.ARM) 	{
-		if(current.isTopFrame()) return true;
-		Pointer ip = current.ipAsPointer();
+            if (platform().isa == ISA.ARM) {
+                if (current.isTopFrame()) {
+                    return true;
+                }
+                Pointer ip = current.ipAsPointer();
                 CodePointer callSite = CodePointer.from(ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE));
                 Pointer callSitePointer = callSite.toPointer();
                 if ((callSitePointer.readByte(0) & 0xFF) == ARMTargetMethodUtil.RIP_CALL) {
@@ -860,7 +863,7 @@ public class CompilationBroker {
                 }
                 return true;
 
-	    }
+            }
             if (platform().isa == ISA.AMD64) {
                 if (current.isTopFrame()) {
                     return true;

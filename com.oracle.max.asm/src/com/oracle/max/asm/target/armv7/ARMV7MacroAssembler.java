@@ -133,13 +133,13 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public void cmpsd2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
         assert opr1.isFpu() && opr2.isFpu();
         ucomisd(opr1, opr2);
-        assert(!opr1.isFpu()); //force crash as not implemented yet.
+        assert !opr1.isFpu(); //force crash as not implemented yet.
         // get condition codes. don't set
         // FPSCR register  flags
-        // [31] N	Set to 1 if a comparison operation produces a less than result.
-        // 30]	Z	Set to 1 if a comparison operation produces an equal result.
-        //[29]	C	Set to 1 if a comparison operation produces an equal, greater than, or unordered result.
-        //[28]	V	Set to 1 if a comparison operation produces an unordered result. SAME as parity flag?
+        // [31] N Set to 1 if a comparison operation produces a less than result.
+        // 30] Z Set to 1 if a comparison operation produces an equal result.
+        //[29] C Set to 1 if a comparison operation produces an equal, greater than, or unordered result.
+        //[28] V Set to 1 if a comparison operation produces an unordered result. SAME as parity flag?
         // insert the statement to do this
         // do appropriate conditional moves in ARM ...
 
@@ -176,7 +176,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public void cmpss2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
         assert opr1.isFpu();
         assert opr2.isFpu();
-        assert(!opr1.isFpu());// APN force crash as not yet implemented
+        assert !opr1.isFpu(); // APN force crash as not yet implemented
         /*ucomiss(opr1, opr2);
 
         Label l = new Label();
@@ -254,9 +254,9 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void incrementl(CiRegister reg, int value) {
-        if(value == 0) return;
+        if (value == 0) { return; }
 
-        addq(reg,value);
+        addq(reg, value);
         /*if (value == Integer.MIN_VALUE) {
             addl(reg, value);
             return;
@@ -276,7 +276,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void incrementl(CiAddress dst, int value) {
-        if(value == 0) return;
+        if (value == 0) { return; }
 
         /*if (value == Integer.MIN_VALUE) {
             addl(dst, value);
@@ -367,14 +367,14 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         // AS a hack suggestion is to push a couple of registers onto the stack
         // load them with the constanv values
 
-        push(ConditionFlag.Always,(1<<12)|1|2);// r13 is the stack pointer
+        push(ConditionFlag.Always, (1 << 12) | 1 | 2); // r13 is the stack pointer
         setUpScratch(dst);
-        mov32BitConstant(ARMV7.r0,(int)(0xffffffffL&src));
-        mov32BitConstant(ARMV7.r1,(int) ((src>>32)&0xffffffffL));
-        str(ConditionFlag.Always,0,0,0,ARMV7.r0,ARMV7.r12,ARMV7.r0,0,0);
-        add(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,4,0); // add 4 to the address
-        str(ConditionFlag.Always,0,0,0,ARMV7.r1,ARMV7.r12,ARMV7.r1,0,0);
-        pop(ConditionFlag.Always,(1<<12)|1|2); //restore all
+        mov32BitConstant(ARMV7.r0, (int) (0xffffffffL & src));
+        mov32BitConstant(ARMV7.r1, (int) ((src >> 32) & 0xffffffffL));
+        str(ConditionFlag.Always, 0, 0, 0, ARMV7.r0, ARMV7.r12, ARMV7.r0, 0, 0);
+        add(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, 4, 0); // add 4 to the address
+        str(ConditionFlag.Always, 0, 0, 0, ARMV7.r1, ARMV7.r12, ARMV7.r1, 0, 0);
+        pop(ConditionFlag.Always, (1 << 12) | 1 | 2); //restore all
         //CiAddress high = new CiAddress(dst.kind, dst.base, dst.index, dst.scale, dst.displacement + 4);
 
         /*
@@ -456,8 +456,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         int registerList = 0;
         for (CiRegister r : csl.registers) {
             //int offset = csl.offsetOf(r);
-            registerList = (1<<(r.encoding & 0xf)); // only storing one register at a time.
-            push(ConditionFlag.Always,registerList);// r13 is the stack po
+            registerList = 1 << (r.encoding & 0xf); // only storing one register at a time.
+            push(ConditionFlag.Always, registerList); // r13 is the stack po
             /*if (first) {
                 //if(offset != 0) System.err.println("off set is " + offset);
                // assert(offset == 0);
@@ -481,12 +481,12 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         int registerList = 0;
         for (CiRegister r : csl.registers) {
             //int offset = csl.offsetOf(r);
-            registerList = (1<<(r.encoding & 0xf));
+            registerList = 1 << (r.encoding & 0xf);
             //movq(r, new CiAddress(target.wordKind, frame, frameToCSA + offset));
             // APN TODO check that it is ok to use the stack pointer here  for ARM
             // TODO this means seeing if the frameRegister might somehow be used by Stubs
             // or Adapters in an unusual or unexpected way.
-            pop(ConditionFlag.Always,registerList);
+            pop(ConditionFlag.Always, registerList);
 
         }
     }

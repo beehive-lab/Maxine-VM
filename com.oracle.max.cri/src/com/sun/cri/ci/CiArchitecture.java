@@ -203,7 +203,7 @@ public abstract class CiArchitecture {
     }
 
     public boolean isARM() {
-	return false;
+        return false;
     }
 
     /**

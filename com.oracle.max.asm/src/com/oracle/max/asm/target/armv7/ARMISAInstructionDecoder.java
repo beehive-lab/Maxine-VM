@@ -51,7 +51,7 @@ public final class ARMISAInstructionDecoder {
     public void decodePosition(int inst) {
 
         assert inst >= 0 && inst < code.length;
-	// APN mostly not relevant so ARM so largely deleted
+        // APN mostly not relevant so ARM so largely deleted
         int ip = inst;
         //boolean is64bit = false;
 
@@ -60,7 +60,7 @@ public final class ARMISAInstructionDecoder {
 
 
         currentEndOfInstruction = ip + 4; // 32 bit instructions at the moment
-	// APN this will break above if we go to ARMV8 which is 64bit
+        // APN this will break above if we go to ARMV8 which is 64bit
         currentDisplacementPosition = ip;
     }
 

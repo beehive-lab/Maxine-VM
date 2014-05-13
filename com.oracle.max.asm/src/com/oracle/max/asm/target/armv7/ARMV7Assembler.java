@@ -1,3 +1,4 @@
+/* ARMV7Assembler.java */
 package com.oracle.max.asm.target.armv7;
 
 import com.oracle.max.asm.*;
@@ -48,7 +49,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         CarryClear(0x3, "|ncarry|"),
         Minus(0x4, "|neg|"),
         Positive(0x5, "|pos|"),
-        SignedOverflow(0x6,".of."),
+        SignedOverflow(0x6, ".of."),
         NoSignedOverflow(0x7, "|nof|"),
         UnsignedHigher(0x8, "|>|"),
         UnsignedLowerOrEqual(0x9, "|<=|"),
@@ -73,28 +74,28 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     }
     public void branch(Label l) {
-    if (l.isBound()) {
-        // APn I need to compute a relative address if it is less than 24bits;
-        // then branch
-        // or I need to compute an absolute address and do a MOV PC,absolute.
-        //branch(l.position(), false);
-        checkConstraint(-0x800000<=(l.position()-codeBuffer.position()) && (l.position()-codeBuffer.position())<=0x7fffff, "branch must be within  a 24bit offset"  );
-        emitInt(0x06000000|(l.position()-codeBuffer.position())|ConditionFlag.Always.value()&0xf ) ;
-    } else {
-        // By default, forward jumps are always 24-bit displacements, since
-        // we can't yet know where the label will be bound. If you're sure that
-        // the forward jump will not run beyond 24-bits bytes, then its ok
+        if (l.isBound()) {
+            // APn I need to compute a relative address if it is less than 24bits;
+            // then branch
+            // or I need to compute an absolute address and do a MOV PC,absolute.
+            //branch(l.position(), false);
+            checkConstraint(-0x800000 <= (l.position() - codeBuffer.position()) && (l.position() - codeBuffer.position()) <= 0x7fffff, "branch must be within  a 24bit offset");
+            emitInt(0x06000000 | (l.position() - codeBuffer.position()) | ConditionFlag.Always.value() & 0xf);
+        } else {
+            // By default, forward jumps are always 24-bit displacements, since
+            // we can't yet know where the label will be bound. If you're sure that
+            // the forward jump will not run beyond 24-bits bytes, then its ok
 
-        l.addPatchAt(codeBuffer.position());
-        emitByte(0xE9);
-        emitInt(0);
-    }
+            l.addPatchAt(codeBuffer.position());
+            emitByte(0xE9);
+            emitInt(0);
+        }
     }
     @Override
     protected void patchJumpTarget(int branch, int target) {
         // b, bl & bx goes here
-        checkConstraint(-0x800000<=(target-branch) && (target-branch)<=0x7fffff, "branch must be within  a 24bit offset"  );
-        emitInt(0x06000000|(target-branch)|ConditionFlag.Always.value()&0xf ) ;
+        checkConstraint(-0x800000 <= (target - branch) && (target - branch) <= 0x7fffff, "branch must be within  a 24bit offset");
+        emitInt(0x06000000 | (target - branch) | ConditionFlag.Always.value() & 0xf);
 
     }
 
@@ -1146,47 +1147,48 @@ public class ARMV7Assembler extends AbstractAssembler {
             nop(4); // 4 instructions, 2 for mov32, 1 for add and 1 for addclsl
 
         }
-        assert(base.isValid()); // APN can we have a memory address --- not handled yet?
+        assert base.isValid(); // APN can we have a memory address --- not handled yet?
         // APN simple case where we just have a register destination
         // TODO fix this so it will issue loads when appropriate!
         if (base.isValid()) {
-            if(disp != 0) {
+            if (disp != 0) {
                 mov32BitConstant(scratchRegister, disp);
-                addRegisters(ConditionFlag.Always,false,scratchRegister,scratchRegister,base,0,0);
+                addRegisters(ConditionFlag.Always, false, scratchRegister, scratchRegister, base, 0, 0);
 
-                if(index.isValid())
-                    adclsl(ConditionFlag.Always,false,scratchRegister,scratchRegister,index,scale.log2); // APN even if scale is zero this is ok.
-
-            }else {
-                if(index.isValid())
-                    adclsl(ConditionFlag.Always,false,scratchRegister,base,index,scale.log2); // APN even if scale is zero this is ok.
-                else
-                    mov(ConditionFlag.Always,false,scratchRegister,base);
+                if (index.isValid()) {
+                    adclsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2); // APN even if scale is zero this is ok.
+                }
+            } else {
+                if (index.isValid())   {
+                    adclsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2); // APN even if scale is zero this is ok.
+                } else {
+                    mov(ConditionFlag.Always, false, scratchRegister, base);
+                }
             }
         }
     }
 
     public final void decq(CiRegister dst) {
-        assert(dst.isValid());
-        sub(ConditionFlag.Always,false,dst,dst,1,0);
+        assert dst.isValid();
+        sub(ConditionFlag.Always, false, dst, dst, 1, 0);
     }
     public final void subq(CiRegister dst, int imm32) {
-        assert(dst.isValid());
+        assert dst.isValid();
         mov32BitConstant(scratchRegister, imm32);
         // dst = dst - imm32;
-        sub(ConditionFlag.Always,false,dst,dst,scratchRegister,0,0);
+        sub(ConditionFlag.Always, false, dst, dst, scratchRegister, 0, 0);
 
     }
     public final void mov32BitConstant(CiRegister dst, int imm32)   {    // crude way to load a 32 bit immediate
         //assert(dst.isFpu());
         //System.out.println("32BITS!!! " +imm32) ;
         //System.out.println("MOVW " + (imm32&0xffff));
-        movw   (ConditionFlag.Always,dst,imm32&0xffff);
+        movw(ConditionFlag.Always, dst, imm32 & 0xffff);
         imm32 = imm32 >> 16;
-        imm32 = imm32& 0xffff;
+        imm32 = imm32 & 0xffff;
         //if(imm32 < 0) imm32 *= -1;
         //System.out.println(" MOVT " + imm32);
-        movt   (ConditionFlag.Always,dst,imm32&0xffff);
+        movt(ConditionFlag.Always, dst, imm32 & 0xffff);
 
         //movt    (ConditionFlag.Always,dst,(int)(((((long)imm32)&0xffff0000L) >> 16))) ;
 
@@ -1207,8 +1209,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
 
     }
-    public final void call()
-    {
+    public final void call() {
         // ok we do not have the same semantics as intel
         // this is used for a call where we don't know the actual target when we insert it
         // ie for a trampoline.
@@ -1218,33 +1219,31 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(0); // space for setupscratch
         emitInt(0);
         //push(ConditionFlag.Always,1<<11|1<<13|1<<14|1<<15);
-        mov(ConditionFlag.Always,false,ARMV7.r15,ARMV7.r12); // mov PC,scratch
+        mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12); // mov PC,scratch
         // APN need to update LR14 and do an absolute MOV to a new PC held in scratch
         // or need to do a BL
         // WHO/what/where is responsible for stack save/restore and procedure call standard
 
     }
-    public final void call(CiRegister target)
-    {
+    public final void call(CiRegister target) {
         //TODO APN believes that Adapters that do the necessary prologue/epilogue
         // to save / restore state ....
 
-        mov(ConditionFlag.Always,false,ARMV7.r15,target); // mov PC,scratch
+        mov(ConditionFlag.Always, false, ARMV7.r15, target); // mov PC,scratch
 
 
 
     }
-    public final void leaq(CiRegister dest,CiAddress addr) {
+    public final void leaq(CiRegister dest, CiAddress addr) {
         setUpScratch(addr);
-        mov(ConditionFlag.Always,false,dest,ARMV7.r12);
+        mov(ConditionFlag.Always, false, dest, ARMV7.r12);
     }
-    public final void leave()
-    {
-        assert(1 == 0);
+    public final void leave() {
+        assert 1 == 0;
         //mov(ConditionFlag.Always,false,ARMV7.r15,ARMV7.r12); // might be wrong!
 
     }
-    public final void movslq(CiAddress dst,int imm32)  {
+    public final void movslq(CiAddress dst, int imm32)  {
         // TODO APN ok Im assuming this is just as simple mov rather than an actual sign extend?
         // it might be used in 64 bit mode, but ARMV7 is only 32 bit anyway.
         // if it transpires that this is necessary for 64bit values in a 32bit processor
@@ -1260,13 +1259,13 @@ public class ARMV7Assembler extends AbstractAssembler {
         // possibly needs to store result of sign extension in memory.
         mov32BitConstant(dst.base(), imm32);
     }
-    public final void cmpl(CiRegister src,int imm32) {
+    public final void cmpl(CiRegister src, int imm32) {
         /*
         APN ... condition flags need to be set presumably and used at a later point
          */
-        assert(src.isValid());
+        assert src.isValid();
         mov32BitConstant(scratchRegister, imm32);
-        cmp(ConditionFlag.Always,src,scratchRegister,0,0);
+        cmp(ConditionFlag.Always, src, scratchRegister, 0, 0);
 
     }
     public final void cmpl(CiRegister src1, CiAddress src2) {
@@ -1274,38 +1273,38 @@ public class ARMV7Assembler extends AbstractAssembler {
         APN condition flags need to be set and used at a later point
          */
         setUpScratch(src2); // APN not sure if this requires a load!
-        assert(src1.isValid());
-        cmp(ConditionFlag.Always,src1,scratchRegister,0,0);
+        assert src1.isValid();
+        cmp(ConditionFlag.Always, src1, scratchRegister, 0, 0);
     }
 
     public final void cmpl(CiRegister src1, CiRegister src2) {
 
-        cmp(ConditionFlag.Always,src1,src2,0,0);
+        cmp(ConditionFlag.Always, src1, src2, 0, 0);
     }
 
     public final void incq(CiRegister dst) {
-        assert(dst.isValid());
-        add(ConditionFlag.Always,false,dst,dst,1,0);
+        assert dst.isValid();
+        add(ConditionFlag.Always, false, dst, dst, 1, 0);
     }
-    public final void addq(CiRegister dst,int imm32)    {
-        assert(dst.isValid());
+    public final void addq(CiRegister dst, int imm32)    {
+        assert dst.isValid();
         mov32BitConstant(scratchRegister, imm32);
         // dst = dst + imm32;
-        addRegisters(ConditionFlag.Always,false,dst,dst,scratchRegister,0,0);
+        addRegisters(ConditionFlag.Always, false, dst, dst, scratchRegister, 0, 0);
 
     }
-    public void xorq(CiRegister dest,CiAddress src) {
+    public void xorq(CiRegister dest, CiAddress src) {
 
-        assert(dest.isValid() );
+        assert dest.isValid();
         setUpScratch(src); // scratchRegister now contains the value of the address
         // APN I'm not sure if I need to load the memory[valueofAddress] into scratch
-        eor(ConditionFlag.Always,false,dest,dest,scratchRegister,0,0);
+        eor(ConditionFlag.Always, false, dest, dest, scratchRegister, 0, 0);
 
     }
     public void xorq(CiRegister dest, CiRegister src) {
-        assert(dest.isValid());
-        assert(src.isValid());
-        eor(ConditionFlag.Always,false,dest,dest,src,0,0);
+        assert dest.isValid();
+        assert src.isValid();
+        eor(ConditionFlag.Always, false, dest, dest, src, 0, 0);
     }
     public void popq(CiAddress addr) {
         // APN presume we are popping off the stack?
@@ -1319,18 +1318,18 @@ public class ARMV7Assembler extends AbstractAssembler {
         CiAddress.Scale scale = addr.scale;
         int disp = addr.displacement;
 
-        assert (addr != CiAddress.Placeholder); // APN Placeholders not handled yet
-        assert(base.isValid()); // APN can we have a memory address --- not handled yet?
+        assert addr != CiAddress.Placeholder; // APN Placeholders not handled yet
+        assert base.isValid(); // APN can we have a memory address --- not handled yet?
         // APN simple case where we just have a register destination
         if (base.isValid()) {
-            if(disp != 0) {
+            if (disp != 0) {
                 mov32BitConstant(scratchRegister, disp);
-                add(ConditionFlag.Always,false,scratchRegister,base,0,0);
+                add(ConditionFlag.Always, false, scratchRegister, base, 0, 0);
             }
-            if(index.isValid()){
-                adclsl(ConditionFlag.Always,false,scratchRegister,scratchRegister,index,scale.log2); // APN even if scale is zero this is ok.
+            if (index.isValid()) {
+                adclsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2); // APN even if scale is zero this is ok.
             }
-            pop(ConditionFlag.Always, 1 << encode(scratchRegister));// r13 is the stack pointer
+            pop(ConditionFlag.Always, 1 << encode(scratchRegister)); // r13 is the stack pointer
 
         }
     }
@@ -1364,50 +1363,50 @@ public class ARMV7Assembler extends AbstractAssembler {
 
         Scale has a value of 1,2,4,8 ... Shift of Zero,1,2,3
         */
-        assert(base.isValid()); // APN thinks it has to be valid or its an ERROR?
+        assert base.isValid(); // APN thinks it has to be valid or its an ERROR?
         // might not be the case if the addr is a PlaceHolder!
 
-        assert (addr != CiAddress.Placeholder);
+        assert addr != CiAddress.Placeholder;
         /* TODO APN we will need to add code for this ... Placeholders are sentinel values that will
         be patched at a later point, once we see how/where they are patched then we will be able to
         make sensible decisions
          */
 
         // APN case that its just a valid register no index scale or displacement
-        if(base.isValid() && (!index.isValid()) && scale.value == 1 && disp == 0) {
+        if (base.isValid() && (!index.isValid()) && scale.value == 1 && disp == 0) {
             // Base register is valid and stores an address
 
-            push(ConditionFlag.Always, 1 << encode(base));// r13 is the stack pointer
+            push(ConditionFlag.Always, 1 << encode(base)); // r13 is the stack pointer
 
         } else if (base.isValid()) {  // APN superfluous check, but base might be invalid once we sort out Placeholders
-                if(disp != 0) {
-                    // TODO EMIT AN INSTRUCTION TO DO BASE + DISPLACEMENT
-                    // can we destructively update base to store the result?
-                    // do we know the range of immediate values that might be produced?
-                    // TODO try to do some tracing of Maxine and see what values come out of here.
-                    // in the meantime we do it inefficiently but correctly for 32 bit displacements
-                    mov32BitConstant(scratchRegister, disp);
-                    add(ConditionFlag.Always,false,scratchRegister,base,0,0); //APN A8.8.5 ADD(immediate,ARM)
+            if (disp != 0) {
+                // TODO EMIT AN INSTRUCTION TO DO BASE + DISPLACEMENT
+                // can we destructively update base to store the result?
+                // do we know the range of immediate values that might be produced?
+                // TODO try to do some tracing of Maxine and see what values come out of here.
+                // in the meantime we do it inefficiently but correctly for 32 bit displacements
+                mov32BitConstant(scratchRegister, disp);
+                add(ConditionFlag.Always, false, scratchRegister, base, 0, 0); //APN A8.8.5 ADD(immediate,ARM)
 
-                }
-                if(index.isValid()) {
+            }
+            if (index.isValid()) {
 
-                    adclsl(ConditionFlag.Always,false,scratchRegister,scratchRegister,index,scale.log2); // APN even if scale is zero this is ok.
-                    // as a shift of zero will not affect the value.
+                adclsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2); // APN even if scale is zero this is ok.
+                // as a shift of zero will not affect the value.
                 /*if(scale.value != 1)  {
-                        // TODO emit an instruction to do
-                        // instruction= base + indexRegister* scale
-                        // NOTE scale can be 1,2,4 or 8 so we should be able to do
-                        // this with a simple shift of 1,2 or 3 bits
-                    }else {
-                        // TODO emit an instruction to do
-                        // instruction = base + indexRegister
+                // TODO emit an instruction to do
+                // instruction= base + indexRegister* scale
+                // NOTE scale can be 1,2,4 or 8 so we should be able to do
+                // this with a simple shift of 1,2 or 3 bits
+                }else {
+                // TODO emit an instruction to do
+                // instruction = base + indexRegister
 
                 } */
 
-                }
+            }
 
-                    push(ConditionFlag.Always,1<<encode(scratchRegister)); // r13 is the stack pointer
+            push(ConditionFlag.Always, 1 << encode(scratchRegister)); // r13 is the stack pointer
 
         }
 
@@ -1418,7 +1417,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         // Assuming this is a single precision load
         //vcmp(ConditionFlag.Always,dst,fpScratch);
         // set FPSCR flags these need to be accessed using a VMRS to transfer them to arm flags
-        assert(!dst.isFpu());// force a crash one way or another as this is notimplemented yet
+        assert !dst.isFpu(); // force a crash one way or another as this is notimplemented yet
 
 
 
@@ -1432,28 +1431,28 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void nop(int times) {
-        assert(times > 0);
-        for(int i = 0; i < times; i++)
+        assert times > 0;
+        for (int i = 0; i < times; i++)  {
             nop();
+        }
     }
+
     public final void nop() {
-        mov(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12); //
+        mov(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12); //
     }
 
-    public final void ret()
+    public final void ret() {
 
-    {
-
-        mov(ConditionFlag.Always,false,ARMV7.r15,ARMV7.r14);
+        mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
     }
     public final void ret(int imm16) {
-        addq(ARMV7.r13,imm16)  ;
+        addq(ARMV7.r13, imm16);
 
-        movw(ConditionFlag.Always,ARMV7.r0,imm16);
+        movw(ConditionFlag.Always, ARMV7.r0, imm16);
         ret();
     }
     public void enter(short imm16, byte imm8) {
-        assert(0 == 1);
+        assert 0 == 1;
         /*emitByte(0xC8);
         // appended:
         emitByte(imm16 & 0xff);
@@ -1462,13 +1461,12 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitByte(imm8);*/
     }
     public void nullCheck(CiRegister r) {
-        emitInt((0xe<<28)|(0x3<< 24)|(0x5<< 20)|(r.encoding << 16)|0); // sets condition flags
+        emitInt((0xe << 28) | (0x3 << 24) | (0x5 << 20) | (r.encoding << 16) | 0); // sets condition flags
         //to see if equal to zero
 
     }
-    public void membar()
-    {
-        emitInt((0xf<<28)|(0x5<< 24)|(0x7<<20)|(0xff05<<4)|(0xf));
+    public void membar() {
+        emitInt((0xf << 28) | (0x5 << 24) | (0x7 << 20) | (0xff05 << 4) | 0xf);
     }
     public void enter(short imm16) {
 
@@ -1509,105 +1507,108 @@ public class ARMV7Assembler extends AbstractAssembler {
         Some worries about alignment ... but not going to worry right now
          */
         int disp = target - codeBuffer.position();
-        if(disp <=16777215 && disp >= 16777216 && forceDisp32) {
+        if (disp <= 16777215 && disp >= 16777216 && forceDisp32) {
             // we can do this in a single conditional branch
-            emitInt((cc.value&0xf) << 28| (0xa << 24)| (disp&0xffffff));
-        }else {
+            emitInt((cc.value & 0xf) << 28 | (0xa << 24) | (disp & 0xffffff));
+        } else {
             // we need or have been instructed to do this as a 32 bit branch
             mov32BitConstant(scratchRegister, target);
-            mov(ConditionFlag.Always,false,ARMV7.r15,scratchRegister); // UPDATE the PC to the target
+            mov(ConditionFlag.Always, false, ARMV7.r15, scratchRegister); // UPDATE the PC to the target
         }
 
     }
     public final void jmp(int target, boolean forceDisp32) {
         // ARM but not tested!!!
         int disp = target - codeBuffer.position();
-        if(disp <=16777215 && disp >= 16777216 && forceDisp32) {
+        if (disp <= 16777215 && disp >= 16777216 && forceDisp32) {
             // we can do this in a single conditional branch
-            emitInt(((0xe) << 28)| (0xa << 24)| (disp&0xffffff));
-        }else {
+            emitInt((0xe << 28) | (0xa << 24) | (disp & 0xffffff));
+        } else {
             mov32BitConstant(scratchRegister, target);
-            mov(ConditionFlag.Always,false,ARMV7.r15,scratchRegister); // UPDATE the PC to the target
+            mov(ConditionFlag.Always, false, ARMV7.r15, scratchRegister); // UPDATE the PC to the target
         }
 
 
     }
-    public final void vmul(ConditionFlag cond, CiRegister dest,CiRegister rn, CiRegister rm) {
-        int instruction   =    (cond.value()&0xf)<<28;
+    public final void vmul(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
+        int instruction  = (cond.value() & 0xf) << 28;
         instruction |= 0x0e200a00;
         int sz = 0;
-        checkConstraint((dest.number >= 16 && rn.number >=16 && rm.number >=16), "vmul ALL  FP/DP regs"  );
+        checkConstraint(dest.number >= 16 && rn.number >= 16 && rm.number >= 16, "vmul ALL  FP/DP regs");
 
-        checkConstraint((dest.number <= 31 && rn.number <= 31 && rm.number <= 31)||(dest.number >= 32&& rn.number >= 32 && rm.number >= 32), "vmul ALL  FP OR ALL DP regs"  );
-        if (dest.number <= 31) sz = 1;
-        if(sz== 1) {     // bit rest of bits
-            instruction |=  (dest.encoding&0xf) <<12;
-            instruction |=  (rn.encoding&0xf) <<16;
-            instruction |=  (rm.encoding&0xf);
-            instruction |=  (dest.encoding>>4) <<22;
-            instruction |=  (rn.encoding>>4) <<7;
-            instruction |=  (rm.encoding>>4) <<5;
+        checkConstraint((dest.number <= 31 && rn.number <= 31 && rm.number <= 31) || (dest.number >= 32 && rn.number >= 32 && rm.number >= 32),
+                "vmul ALL  FP OR ALL DP regs");
+        if (dest.number <= 31) { sz = 1; }
+        if (sz == 1) {     // bit rest of bits
+            instruction |=  (dest.encoding & 0xf) << 12;
+            instruction |=  (rn.encoding & 0xf) << 16;
+            instruction |=  rm.encoding & 0xf;
+            instruction |=  (dest.encoding >> 4) << 22;
+            instruction |=  (rn.encoding >> 4) << 7;
+            instruction |=  (rm.encoding >> 4) << 5;
 
-        }else {
-            instruction |=  (dest.encoding>>1) <<12;
-            instruction |=  (rn.encoding>>1) <<16;
-            instruction |=  (rm.encoding>>1);
-            instruction |=  (dest.encoding&0x1) <<22;
-            instruction |=  (rn.encoding&0x1) <<7;
-            instruction |=  (rm.encoding&0x1) <<5;
+        } else {
+            instruction |=  (dest.encoding >> 1) << 12;
+            instruction |=  (rn.encoding >> 1) << 16;
+            instruction |=  rm.encoding >> 1;
+            instruction |=  (dest.encoding & 0x1) << 22;
+            instruction |=  (rn.encoding & 0x1) << 7;
+            instruction |=  (rm.encoding & 0x1) << 5;
 
         }
-        instruction |= sz<<8;
+        instruction |= sz << 8;
 
 
         emitInt(instruction);
     }
-    public final void vcvt(ConditionFlag cond, CiRegister dest, boolean toInt,boolean signed, CiRegister src ) {
-        int instruction =    (cond.value()&0xf)<<28;
+    public final void vcvt(ConditionFlag cond, CiRegister dest, boolean toInt, boolean signed, CiRegister src) {
+        int instruction =    (cond.value() & 0xf) << 28;
         instruction |= 0x0eb80a40;
         int sz = 0;
         int op = 0;
         int opc2;
 
-        checkConstraint((dest.number>= 16 && src.number >=16), "vcvt must be FP/DP regs"  );
-        checkConstraint(!(dest.number <= 31 && src.number <= 31),"vcvt one reg mus be FP another DP");
-        checkConstraint(!(dest.number >= 32 && src.number >= 32),"vcvt one reg mus be FP another DP");
-        if (dest.number <= 31 || src.number <= 31) sz = 1;
-        if(signed) {
-            if(toInt) opc2 = 5;
-            else{
-               opc2 = 0; op = 1;
-            }
-        }else {
-            if(toInt)  opc2 = 4;
-            else {
-                 opc2 = 0;
-                 op = 0;
-            }
-        }
-        if(toInt){
-            instruction |= ((dest.encoding>>1) << 12);  // LSB in bit 22
-            instruction |= ((dest.encoding &0x1) <<22);
-            if(sz == 1) {
-                instruction |= (src.encoding&0xf);   //
-                instruction |= (src.encoding>>4) <<5;
-
-            }   else {
-                instruction |= (src.encoding>>1);
-                instruction |= (src.encoding&0x1) <<5;
+        checkConstraint(dest.number >= 16 && src.number >= 16, "vcvt must be FP/DP regs");
+        checkConstraint(!(dest.number <= 31 && src.number <= 31), "vcvt one reg mus be FP another DP");
+        checkConstraint(!(dest.number >= 32 && src.number >= 32), "vcvt one reg mus be FP another DP");
+        if (dest.number <= 31 || src.number <= 31) { sz = 1; }
+        if (signed) {
+            if (toInt) {
+                opc2 = 5;
+            } else {
+                opc2 = 0; op = 1;
             }
         } else {
-            instruction |= (src.encoding>>1);
-            instruction |= (src.encoding&0x1) <<5;
-            if(sz == 0) {
-                instruction |= ((dest.encoding >>1) <<12);
-                instruction |= ((dest.encoding &0x1) << 22) ;
-            }   else {
-                instruction |= ((dest.encoding&0xf) << 12);
-                instruction |= ((dest.encoding>>4) << 22);
+            if (toInt) {
+                opc2 = 4;
+            } else {
+                opc2 = 0;
+                op = 0;
             }
         }
-        instruction |= opc2<<16;
+        if (toInt) {
+            instruction |= (dest.encoding >> 1) << 12;  // LSB in bit 22
+            instruction |= (dest.encoding & 0x1) << 22;
+            if (sz == 1) {
+                instruction |= src.encoding & 0xf;   //
+                instruction |= (src.encoding >> 4) << 5;
+
+            } else {
+                instruction |= src.encoding >> 1;
+                instruction |= (src.encoding & 0x1) << 5;
+            }
+        } else {
+            instruction |= src.encoding >> 1;
+            instruction |= (src.encoding & 0x1) << 5;
+            if (sz == 0) {
+                instruction |= (dest.encoding >> 1) << 12;
+                instruction |= (dest.encoding & 0x1) << 22;
+            }   else {
+                instruction |= (dest.encoding & 0xf) << 12;
+                instruction |= (dest.encoding >> 4) << 22;
+            }
+        }
+        instruction |= opc2 << 16;
         instruction |= op << 7;
         instruction |= sz << 8;
         emitInt(instruction);
@@ -1630,46 +1631,52 @@ public class ARMV7Assembler extends AbstractAssembler {
 
 
     }
-    public final void vstr(ConditionFlag cond, CiRegister dest,CiRegister src,int imm8)
+    public final void vstr(ConditionFlag cond, CiRegister dest, CiRegister src, int imm8)
     {
-        int instruction = (cond.value()&0xf)<<28;
-        checkConstraint((dest.number<=63 && dest.number >=16), "vstr dest must be a FP/DP reg"  );
-        checkConstraint(-255<=imm8 && imm8 <= 255, "vmov offset greater than +/- 255 ");
-        if(imm8 >= 0) instruction |= (1<<23);
-        else imm8 = -1*imm8;
+        int instruction = (cond.value() & 0xf) << 28;
+        checkConstraint(dest.number <= 63 && dest.number >= 16, "vstr dest must be a FP/DP reg");
+        checkConstraint(-255 <= imm8 && imm8 <= 255, "vmov offset greater than +/- 255 ");
+        if (imm8 >= 0) {
+            instruction |= 1 << 23;
+        } else {
+            imm8 = -1 * imm8;
+        }
         instruction |= imm8;
-        instruction |= ((src.encoding&0xf) << 16);
-        if(dest.number <= 31)             {
+        instruction |= (src.encoding & 0xf) << 16;
+        if (dest.number <= 31) {
             instruction |= 0x0d000b00;
-            instruction |= ((dest.encoding&0xf) <<12);
+            instruction |= (dest.encoding & 0xf) << 12;
 
-        }   else {
+        } else {
             instruction |= 0xd000a00;
-            instruction |= ((dest.encoding>>1) << 12);
-            instruction |= ((dest.encoding&0x1) << 22); /// Hmmm check some assembler encodings for this please.
+            instruction |= (dest.encoding >> 1) << 12;
+            instruction |= (dest.encoding & 0x1) << 22; /// Hmmm check some assembler encodings for this please.
 
         }
 
 
         emitInt(instruction);
     }
-    public final void vldr(ConditionFlag cond, CiRegister dest, CiRegister src,int imm8) {
+    public final void vldr(ConditionFlag cond, CiRegister dest, CiRegister src, int imm8) {
 
-        int instruction = (cond.value()&0xf)<<28;
-        checkConstraint((dest.number<=63 && dest.number >=16), "vldr dest must be a FP/DP reg"  );
-        checkConstraint(-255<=imm8 && imm8 <= 255, "vmov offset greater than +/- 255 ");
-        if(imm8 >= 0) instruction |= (1<<23);
-        else imm8 = -1*imm8;
+        int instruction = (cond.value() & 0xf) << 28;
+        checkConstraint(dest.number <= 63 && dest.number >= 16, "vldr dest must be a FP/DP reg");
+        checkConstraint(-255 <= imm8 && imm8 <= 255, "vmov offset greater than +/- 255 ");
+        if (imm8 >= 0) {
+            instruction |= 1 << 23;
+        } else {
+            imm8 = -1 * imm8;
+        }
         instruction |= imm8;
         instruction |= src.encoding << 16;
-        if(dest.number <= 31)             {
+        if (dest.number <= 31) {
             instruction |= 0x0d100b00;
-            instruction |= dest.encoding <<12;
+            instruction |= dest.encoding << 12;
 
-        }   else {
+        } else {
             instruction |= 0xd100a00;
-            instruction |= ((dest.encoding>>1) << 12);
-            instruction |= (dest.encoding&0x1) << 22; /// Hmmm check some assembler encodings for this please.
+            instruction |= (dest.encoding >> 1) << 12;
+            instruction |= (dest.encoding & 0x1) << 22; /// Hmmm check some assembler encodings for this please.
 
         }
 
@@ -1678,31 +1685,33 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
     public final void vadd(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
         // A8.8.283
-        int instruction = (cond.value()&0xf)<<28;
+        int instruction = (cond.value() & 0xf) << 28;
         instruction |= 0x0e300a00;
-        checkConstraint((dest.number >=16 && rn.number >= 16 && rm.number >= 16), "vadd NO CORE REGISTERS ALLOWED"  );
-        checkConstraint((dest.number <= 31&& rn.number <= 31 && rm.number <= 31)||(dest.number <= 63 && rn.number <= 63 && rm.number <= 63),
+        checkConstraint(dest.number >= 16 && rn.number >= 16 && rm.number >= 16, "vadd NO CORE REGISTERS ALLOWED");
+        checkConstraint((dest.number <= 31 && rn.number <= 31 && rm.number <= 31) || (dest.number <= 63 && rn.number <= 63 && rm.number <= 63),
                 "vadd ALL REGISTERS must be SP OR DP no mix allowed");
         int sz = 0;
-        if(dest.number <= 31) sz = 1;
-        instruction |= sz<<8;
-        if(sz ==1) {
+        if (dest.number <= 31) {
+            sz = 1;
+        }
+        instruction |= sz << 8;
+        if (sz == 1) {
             // VFPV3 only has 16 regs and these fit so no need to do the MSB
             // for double precision registers
-            instruction |= (rn.encoding &0xf) <<16;
-            instruction |= (dest.encoding &0xf) <<12;
-            instruction |= (rm.encoding &0xf);
+            instruction |= (rn.encoding & 0xf) << 16;
+            instruction |= (dest.encoding & 0xf) << 12;
+            instruction |= rm.encoding & 0xf;
 
-        }else {
+        } else {
             // VFPV3 has 32 regs so we NEED to do the MSB manipulation --
             // different to what it would be for doubles!!! (if there were 32)
-            instruction |= (rn.encoding>>4) << 7;
-            instruction |= (rm.encoding>>4) << 5;
-            instruction |= (dest.encoding>>4) << 22;
+            instruction |= (rn.encoding >> 4) << 7;
+            instruction |= (rm.encoding >> 4) << 5;
+            instruction |= (dest.encoding >> 4) << 22;
 
-            instruction |= (rn.encoding >> 1) <<16;
-            instruction |= (dest.encoding >> 1) <<12;
-            instruction |= (rm.encoding >>1);
+            instruction |= (rn.encoding >> 1) << 16;
+            instruction |= (dest.encoding >> 1) << 12;
+            instruction |= rm.encoding >> 1;
 
         }
         emitInt(instruction);
@@ -1710,30 +1719,32 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
     public final void vpop(ConditionFlag cond, CiRegister first, CiRegister last) {
         // A8.8.367
-        int instruction = (cond.value()&0xf)<<28;
+        int instruction = (cond.value() & 0xf) << 28;
 
-        checkConstraint((first.number >=16 && last.number >=16), "vpop NO CORE REGISTERS ALLOWED"  );
-        checkConstraint((first.number <= 31&& last.number <= 31)||(first.number <= 63 && last.number <= 63),
+        checkConstraint(first.number >= 16 && last.number >= 16, "vpop NO CORE REGISTERS ALLOWED");
+        checkConstraint((first.number <= 31 && last.number <= 31) || (first.number <= 63 && last.number <= 63),
                 "vpop ALL REGISTERS must be SP OR DP no mix allowed");
-        checkConstraint(last.number >= first.number,"vpop at least ONE register!!");
+        checkConstraint(last.number >= first.number, "vpop at least ONE register!!");
         int sz = 0;
-        if(first.number <= 31) sz = 1;
+        if (first.number <= 31) {
+            sz = 1;
+        }
 
-        if(sz ==1) {
+        if (sz == 1) {
             instruction |= 0x0cbd0c00;
             // VFPV3 only has 16 regs and these fit so no need to do the MSB
             // for double precision registers
 
-            instruction |= (first.encoding &0xf) <<12;
-            instruction |= (last.encoding - first.encoding +1)<<1;
+            instruction |= (first.encoding & 0xf) << 12;
+            instruction |= (last.encoding - first.encoding + 1) << 1;
 
-        }else {
+        } else {
             instruction |= 0x0cbd0b00;
             // VFPV3 has 32 regs so we NEED to do the MSB manipulation --
             // different to what it would be for doubles!!! (if there were 32)
-            instruction |= (first.encoding&0x1) << 22;
-            instruction |= (first.encoding >> 1) <<12;
-            instruction |= (last.encoding - first.encoding +1)<<1;
+            instruction |= (first.encoding & 0x1) << 22;
+            instruction |= (first.encoding >> 1) << 12;
+            instruction |= (last.encoding - first.encoding + 1) << 1;
 
         }
         emitInt(instruction);
@@ -1741,54 +1752,56 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
     public final void vpush(ConditionFlag cond, CiRegister first, CiRegister last) {
         // A8.8.368
-        int instruction = (cond.value()&0xf)<<28;
+        int instruction = (cond.value() & 0xf) << 28;
 
-        checkConstraint((first.number >=16 && last.number>= 16), "vpush NO CORE REGISTERS ALLOWED"  );
-        checkConstraint((first.number <= 31&& last.number <= 31)||(first.number <= 63 && last.number <= 63),
+        checkConstraint(first.number >= 16 && last.number >= 16, "vpush NO CORE REGISTERS ALLOWED");
+        checkConstraint((first.number <= 31 && last.number <= 31) || (first.number <= 63 && last.number <= 63),
                 "vpush ALL REGISTERS must be SP OR DP no mix allowed");
-        checkConstraint(last.number >= first.number,"vpush at least ONE register!!");
+        checkConstraint(last.number >= first.number, "vpush at least ONE register!!");
         int sz = 0;
-        if(first.number <= 31) sz = 1;
+        if (first.number <= 31) {
+            sz = 1;
+        }
 
-        if(sz ==1) {
+        if (sz == 1) {
             instruction |= 0x0d2d0b00;
             // VFPV3 only has 16 regs and these fit so no need to do the MSB
             // for double precision registers
 
-            instruction |= (first.encoding &0xf) <<12;
-            instruction |= (last.encoding - first.encoding +1)<<1;
+            instruction |= (first.encoding & 0xf) << 12;
+            instruction |= (last.encoding - first.encoding + 1) << 1;
 
-        }else {
+        } else {
             instruction |= 0x0d2d0a00;
             // VFPV3 has 32 regs so we NEED to do the MSB manipulation --
             // different to what it would be for doubles!!! (if there were 32)
-            instruction |= (first.encoding&0x1) << 22;
-            instruction |= (first.encoding >> 1) <<12;
-            instruction |= (last.encoding - first.encoding +1)<<1;
+            instruction |= (first.encoding & 0x1) << 22;
+            instruction |= (first.encoding >> 1) << 12;
+            instruction |= (last.encoding - first.encoding + 1) << 1;
 
         }
         emitInt(instruction);
 
     }
-    public final void mul(ConditionFlag cond,boolean setFlags, CiRegister dest, CiRegister rn, CiRegister rm) {
-        int instruction = (cond.value()&0xf)<<28;
+    public final void mul(ConditionFlag cond, boolean setFlags, CiRegister dest, CiRegister rn, CiRegister rm) {
+        int instruction = (cond.value() & 0xf) << 28;
         instruction |= 0x00000090;
-        if(setFlags) instruction |= (1<<20);
-        instruction |= (rm.encoding &0xf) <<8;
-        instruction |= (dest.encoding &0xf) <<16;
-        instruction |= (rn.encoding &0xf);
+        if (setFlags) { instruction |= 1 << 20; }
+        instruction |= (rm.encoding & 0xf) << 8;
+        instruction |= (dest.encoding & 0xf) << 16;
+        instruction |= rn.encoding & 0xf;
 
         emitInt(instruction);
 
     }
     public final void sdiv(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
         // A8.8.165
-        int instruction = (cond.value()&0xf)<<28;
+        int instruction = (cond.value() & 0xf) << 28;
         instruction |= 0x0710f010;
 
-        instruction |= (rm.encoding &0xf) <<8;
-        instruction |= (dest.encoding &0xf) <<16;
-        instruction |= (rn.encoding &0xf);
+        instruction |= (rm.encoding & 0xf) << 8;
+        instruction |= (dest.encoding & 0xf) << 16;
+        instruction |= rn.encoding & 0xf;
 
         emitInt(instruction);
 
@@ -1797,43 +1810,46 @@ public class ARMV7Assembler extends AbstractAssembler {
         // A8.8.248
         // TODO we need a subroutine for this as most of the ARM hardware we have will not
         // have a hardware integer unit, so the instruction will be undefined/not implemented.
-        int instruction = (cond.value()&0xf)<<28;
+        int instruction = (cond.value() & 0xf) << 28;
         instruction |= 0x0730f010;
 
-        instruction |= (rm.encoding &0xf) <<8;
-        instruction |= (dest.encoding &0xf) <<16;
-        instruction |= (rn.encoding &0xf);
+        instruction |= (rm.encoding & 0xf) << 8;
+        instruction |= (dest.encoding & 0xf) << 16;
+        instruction |= rn.encoding & 0xf;
 
         emitInt(instruction);
 
     }
     public final void vdiv(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
         // A8.8.415
-        int instruction = (cond.value()&0xf)<<28;
+        int instruction = (cond.value() & 0xf) << 28;
         instruction |= 0x0e800a00;
-        checkConstraint((dest.number >=16 && rn.number >= 16 && rm.number >= 16), "vdiv NO CORE REGISTERS ALLOWED"  );
-        checkConstraint((dest.number <= 31&& rn.number <= 31 && rm.number <= 31)||(dest.number <= 63 && rn.number <= 63 && rm.number <= 63),
+        checkConstraint(dest.number >= 16 && rn.number >= 16 && rm.number >= 16, "vdiv NO CORE REGISTERS ALLOWED");
+        checkConstraint((dest.number <= 31 && rn.number <= 31 && rm.number <= 31) ||
+                (dest.number <= 63 && rn.number <= 63 && rm.number <= 63),
                 "vdiv ALL REGISTERS must be SP OR DP no mix allowed");
         int sz = 0;
-        if(dest.number <= 31) sz = 1;
-        instruction |= sz<<8;
-        if(sz ==1) {
+        if (dest.number <= 31) {
+            sz = 1;
+        }
+        instruction |= sz << 8;
+        if (sz == 1) {
             // VFPV3 only has 16 regs and these fit so no need to do the MSB
             // for double precision registers
-            instruction |= (rn.encoding &0xf) <<16;
-            instruction |= (dest.encoding &0xf) <<12;
-            instruction |= (rm.encoding &0xf);
+            instruction |= (rn.encoding & 0xf) << 16;
+            instruction |= (dest.encoding & 0xf) << 12;
+            instruction |= rm.encoding & 0xf;
 
-        }else {
+        } else {
             // VFPV3 has 32 regs so we NEED to do the MSB manipulation --
             // different to what it would be for doubles!!! (if there were 32)
-            instruction |= (rn.encoding>>4) << 7;
-            instruction |= (rm.encoding>>4) << 5;
-            instruction |= (dest.encoding>>4) << 22;
+            instruction |= (rn.encoding >> 4) << 7;
+            instruction |= (rm.encoding >> 4) << 5;
+            instruction |= (dest.encoding >> 4) << 22;
 
-            instruction |= (rn.encoding >> 1) <<16;
-            instruction |= (dest.encoding >> 1) <<12;
-            instruction |= (rm.encoding >>1);
+            instruction |= (rn.encoding >> 1) << 16;
+            instruction |= (dest.encoding >> 1) << 12;
+            instruction |= rm.encoding >> 1;
 
         }
         emitInt(instruction);
@@ -1841,37 +1857,40 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
     public final void vsub(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
         // A8.8.415
-        int instruction = (cond.value()&0xf)<<28;
+        int instruction = (cond.value() & 0xf) << 28;
         instruction |= 0x0e300a40;
-        checkConstraint((dest.number >=16 && rn.number >= 16 && rm.number >= 16), "vsub NO CORE REGISTERS ALLOWED"  );
-        checkConstraint((dest.number <= 31&& rn.number <= 31 && rm.number <= 31)||(dest.number <= 63 && rn.number <= 63 && rm.number <= 63),
-        "vsub ALL REGISTERS must be SP OR DP no mix allowed");
+        checkConstraint(dest.number >= 16 && rn.number >= 16 && rm.number >= 16, "vsub NO CORE REGISTERS ALLOWED");
+        checkConstraint((dest.number <= 31 && rn.number <= 31 && rm.number <= 31)
+            || (dest.number <= 63 && rn.number <= 63 && rm.number <= 63),
+            "vsub ALL REGISTERS must be SP OR DP no mix allowed");
         int sz = 0;
-        if(dest.number <= 31) sz = 1;
-        instruction |= sz<<8;
-        if(sz ==1) {
+        if (dest.number <= 31) {
+            sz = 1;
+        }
+        instruction |= sz << 8;
+        if (sz == 1) {
             // VFPV3 only has 16 regs and these fit so no need to do the MSB
             // for double precision registers
-            instruction |= (rn.encoding &0xf) <<16;
-            instruction |= (dest.encoding &0xf) <<12;
-            instruction |= (rm.encoding &0xf);
+            instruction |= (rn.encoding & 0xf) << 16;
+            instruction |= (dest.encoding & 0xf) << 12;
+            instruction |= rm.encoding & 0xf;
 
-        }else {
+        } else {
             // VFPV3 has 32 regs so we NEED to do the MSB manipulation --
             // different to what it would be for doubles!!! (if there were 32)
-            instruction |= (rn.encoding>>4) << 7;
-            instruction |= (rm.encoding>>4) << 5;
-            instruction |= (dest.encoding>>4) << 22;
+            instruction |= (rn.encoding >> 4) << 7;
+            instruction |= (rm.encoding >> 4) << 5;
+            instruction |= (dest.encoding >> 4) << 22;
 
-                    instruction |= (rn.encoding >> 1) <<16;
-            instruction |= (dest.encoding >> 1) <<12;
-            instruction |= (rm.encoding >>1);
+            instruction |= (rn.encoding >> 1) << 16;
+            instruction |= (dest.encoding >> 1) << 12;
+            instruction |= rm.encoding >> 1;
 
         }
         emitInt(instruction);
 
     }
-    public final void vmov (ConditionFlag cond,CiRegister dest,CiRegister src) {
+    public final void vmov(ConditionFlag cond, CiRegister dest, CiRegister src) {
 
         /*
         APN potentially we need to do lots of checks on instrucitonencodings for this
@@ -1879,43 +1898,45 @@ public class ARMV7Assembler extends AbstractAssembler {
         vmov.f32 s,s
         vmov.f64 d,d
          */
-        int instruction = (cond.value()&0xf)<<28;
+        int instruction = (cond.value() & 0xf) << 28;
         int vmovSameType = 0x0eb00a40; // A8.8.340
-        int vmovSingleCore =   0x0e000a10;// A8.8.343 full word only    // ARM core to scalar
-        int vmovDoubleCore =   0x0c400b10; // A8.8.345   // TWO ARM core to doubleword  extension
+        int vmovSingleCore = 0x0e000a10; // A8.8.343 full word only    // ARM core to scalar
+        int vmovDoubleCore = 0x0c400b10; // A8.8.345   // TWO ARM core to doubleword  extension
 
-        if((src.number >= 16 && src.number <= 31) && (dest.number >=16 && dest.number <= 31) )  {
-                   instruction |= (1<<8)|vmovSameType;
-                   instruction |= (dest.encoding << 12);
-                   instruction  |= (src.encoding);
+        if ((src.number >= 16 && src.number <= 31) && (dest.number >= 16 && dest.number <= 31))  {
+            instruction |= (1 << 8) | vmovSameType;
+            instruction |= dest.encoding << 12;
+            instruction  |= src.encoding;
 
-        } else if(src.number >=32 && dest.number >= 32)  {
-                instruction |= vmovSameType;
-                instruction |= (dest.encoding&0xf << 12) | ((dest.encoding &0x10)<<22);
-                instruction |= (src.encoding &0xf) | ((src.encoding>>4)<<7);
+        } else if (src.number >= 32 && dest.number >= 32)  {
+            instruction |= vmovSameType;
+            instruction |= (dest.encoding & 0xf << 12) | ((dest.encoding & 0x10) << 22);
+            instruction |= (src.encoding  & 0xf) | ((src.encoding >> 4) << 7);
 
-        }else if ((dest.number <=15 || src.number <=15)&&(src.number >= 32 || dest.number >= 32)) {
-                instruction |= vmovSingleCore;
-                if(dest.number <=15) instruction |= (1<<20)|((src.encoding&1)<<7)| (dest.encoding << 12)| ((src.encoding>>1)<< 16);
-                else instruction |=  (src.encoding<< 12)| ((dest.encoding>>1) <<16)| ((dest.encoding&0x1)<<7);
-
+        } else if ((dest.number <= 15 || src.number <= 15) && (src.number >= 32 || dest.number >= 32)) {
+            instruction |= vmovSingleCore;
+            if (dest.number <= 15) {
+                instruction |= (1 << 20) | ((src.encoding & 1) << 7) | (dest.encoding << 12) | ((src.encoding >> 1) << 16);
+            } else {
+                instruction |=  (src.encoding << 12) | ((dest.encoding >> 1) << 16) | ((dest.encoding & 0x1) << 7);
+            }
 
         } else if ((src.number >= 16 && src.number <= 31 && dest.number <= 15) ||
                 (dest.number >= 16 && dest.number <= 31 && src.number <= 15))  {
             // deviating slightly from ARM book, we are assuming this to transfer double to pair of core registers
             // aligned on an even 0, 2, ... boundary
             instruction |= vmovDoubleCore;
-            if(dest.number <=15) {// to ARM
-                checkConstraint((dest.encoding)<=14, "vmov doubleword to core destination register > 14"  );
+            if (dest.number <= 15) { // to ARM
+                checkConstraint((dest.encoding) <= 14, "vmov doubleword to core destination register > 14");
 
-                instruction |= (1<<20);
+                instruction |= 1 << 20;
                 instruction |= dest.encoding << 12;
-                instruction |= (dest.encoding+1) << 16;
+                instruction |= (dest.encoding + 1) << 16;
                 instruction |= src.encoding;
-            }else {
-                checkConstraint((src.encoding)<=14, "vmov core to doubleword core register > 14"  );
+            } else {
+                checkConstraint((src.encoding) <= 14, "vmov core to doubleword core register > 14");
 
-                instruction |= (src.encoding+1) <<16;
+                instruction |= (src.encoding + 1) << 16;
                 instruction |= src.encoding << 12;
                 instruction |= dest.encoding;
             }
