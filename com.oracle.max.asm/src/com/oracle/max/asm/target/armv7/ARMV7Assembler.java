@@ -991,27 +991,24 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void push(final ConditionFlag flag, final int registerList) {
         int instruction;
-        instruction =  ((flag.value() &0xf)<< 28);
-
+        instruction = ((flag.value() & 0xf) << 28);
         instruction |= (0x9 << 24);
         instruction |= (0x2 << 20);
         instruction |= (0xd << 16);
-        instruction |= (0xffff&registerList);
-
-
+        instruction |= (0xffff & registerList);
         emitInt(instruction);
     }
-    public void pop(final ConditionFlag flag,final int  registerList) {
-        int instruction;
-        instruction =  ((flag.value() &0xf)<< 28);
 
+    public void pop(final ConditionFlag flag, final int registerList) {
+        int instruction;
+        instruction = ((flag.value() & 0xf) << 28);
         instruction |= (0x8 << 24);
         instruction |= (0xb << 20);
         instruction |= (0xd << 16);
-        instruction |= (0xffff&registerList);
+        instruction |= (0xffff & registerList);
         emitInt(instruction);
-
     }
+
     public void ldrd(final ConditionFlag flag, final CiRegister valueReg, final CiRegister baseReg,
                       int offset8) {
         int instruction;

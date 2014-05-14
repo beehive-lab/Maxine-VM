@@ -63,17 +63,17 @@ public class ARMV7T1XTest extends MaxTestCase {
         return result.toArray(new String[result.size()]);
     }
 
-    private static int []valueTestSet = {0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
-    private static long []scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x00000000ffffffffL};
-    private static MaxineARMTester.BitsFlag []bitmasks = {MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-        MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-        MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-        MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits};
+    private static int[] valueTestSet = { 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
+    private static long[] scratchTestSet = { 0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x00000000ffffffffL};
+    private static MaxineARMTester.BitsFlag[] bitmasks = { MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
+                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
+                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
+                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits};
 
-    private static int []expectedValues = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    private static boolean []testvalues = new boolean[17];
+    private static int[] expectedValues = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    private static boolean[] testvalues = new boolean[17];
 
-    private int [] generateAndTest(int assemblerStatements, int []expected, boolean []tests, MaxineARMTester.BitsFlag []masks) throws Exception {
+    private int[] generateAndTest(int assemblerStatements, int[] expected, boolean[] tests, MaxineARMTester.BitsFlag[] masks) throws Exception {
         ARMCodeWriter code = new ARMCodeWriter(assemblerStatements, theCompiler.getMacroAssembler().codeBuffer);
         code.createCodeFile();
         MaxineARMTester r = new MaxineARMTester(expected, tests, masks);
@@ -89,7 +89,7 @@ public class ARMV7T1XTest extends MaxTestCase {
 
     public ARMV7T1XTest() {
         try {
-            String []args = new String[2];
+            String[] args = new String[2];
             args[0] = new String("t1x");
             args[1] = new String("HelloWorld");
             if (options != null) {
@@ -743,6 +743,115 @@ public class ARMV7T1XTest extends MaxTestCase {
         assert expectedValues[0] == registerValues[0];
     }
 
+    public void testPeekWord() throws Exception {
+        ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+        expectedValues[0] = 134480128;
+        expectedValues[1] = 671351040;
+        expectedValues[2] = 407111936;
+        for (int i = 0; i < 3; i++) {
+            masm.mov32BitConstant(ARMV7.cpuRegisters[i], expectedValues[i]);
+        }
+        masm.push(ARMV7Assembler.ConditionFlag.Always, 1); // index 5
+        masm.push(ARMV7Assembler.ConditionFlag.Always, 2); // index 4
+        masm.push(ARMV7Assembler.ConditionFlag.Always, 4); // index 3
+        for (int i = 0; i <= 3; i++) {
+            masm.mov32BitConstant(ARMV7.cpuRegisters[i], -25);
+        }
+        theCompiler.peekWord(ARMV7.cpuRegisters[0], 2);
+        theCompiler.peekWord(ARMV7.cpuRegisters[1], 1);
+        theCompiler.peekWord(ARMV7.cpuRegisters[2], 0);
+        int assemblerStatements = masm.codeBuffer.position() / 4;
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        for (int i = 0; i < 3; i++) {
+            assert registerValues[i] == expectedValues[i] : "Failed incorrect value " + Long.toString(registerValues[i], 16) + " " + Long.toString(expectedValues[i], 16);
+        }
+    }
+
+    public void testPokeWord() throws Exception {
+        ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+        expectedValues[0] = 134480128;
+        expectedValues[1] = 671351040;
+        expectedValues[2] = 407111936;
+        for (int i = 0; i < 3; i++) {
+            masm.mov32BitConstant(ARMV7.cpuRegisters[i], i);
+        }
+        masm.push(ARMV7Assembler.ConditionFlag.Always, 4 | 8);
+        masm.push(ARMV7Assembler.ConditionFlag.Always, 1);
+        masm.push(ARMV7Assembler.ConditionFlag.Always, 2);
+        masm.push(ARMV7Assembler.ConditionFlag.Always, 16);
+        for (int i = 0; i <= 5; i++) {
+            masm.mov32BitConstant(ARMV7.cpuRegisters[i], expectedValues[i]);
+        }
+        theCompiler.pokeWord(ARMV7.cpuRegisters[0], 2);
+        theCompiler.pokeWord(ARMV7.cpuRegisters[1], 1);
+        theCompiler.pokeWord(ARMV7.cpuRegisters[2], 0);
+        for (int i = 0; i < 3; i++) {
+            masm.mov32BitConstant(ARMV7.cpuRegisters[i], -25);
+        }
+        theCompiler.peekWord(ARMV7.cpuRegisters[0], 2);
+        theCompiler.peekWord(ARMV7.cpuRegisters[1], 1);
+        theCompiler.peekWord(ARMV7.cpuRegisters[2], 0);
+        int assemblerStatements = masm.codeBuffer.position() / 4;
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        for (int i = 0; i < 3; i++) {
+            assert registerValues[i] == expectedValues[i] : "Failed incorrect value " + Long.toString(registerValues[i], 16) + " " + Long.toString(expectedValues[i], 16);
+        }
+    }
+
+    public void testPeekObject() throws Exception {
+        ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+        expectedValues[0] = 134480128;
+        expectedValues[1] = 671351040;
+        expectedValues[2] = 407111936;
+        for (int i = 0; i < 3; i++) {
+            masm.mov32BitConstant(ARMV7.cpuRegisters[i], expectedValues[i]);
+        }
+        masm.push(ARMV7Assembler.ConditionFlag.Always, 1); // index 5
+        masm.push(ARMV7Assembler.ConditionFlag.Always, 2); // index 4
+        masm.push(ARMV7Assembler.ConditionFlag.Always, 4); // index 3
+        for (int i = 0; i <= 3; i++) {
+            masm.mov32BitConstant(ARMV7.cpuRegisters[i], -25);
+        }
+        theCompiler.peekObject(ARMV7.cpuRegisters[0], 2);
+        theCompiler.peekObject(ARMV7.cpuRegisters[1], 1);
+        theCompiler.peekObject(ARMV7.cpuRegisters[2], 0);
+        int assemblerStatements = masm.codeBuffer.position() / 4;
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        for (int i = 0; i < 3; i++) {
+            assert registerValues[i] == expectedValues[i] : "Failed incorrect value " + Long.toString(registerValues[i], 16) + " " + Long.toString(expectedValues[i], 16);
+        }
+    }
+
+    public void testPokeObject() throws Exception {
+        ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+        expectedValues[0] = 134480128;
+        expectedValues[1] = 671351040;
+        expectedValues[2] = 407111936;
+        for (int i = 0; i < 3; i++) {
+            masm.mov32BitConstant(ARMV7.cpuRegisters[i], i);
+        }
+        masm.push(ARMV7Assembler.ConditionFlag.Always, 1); // index 5
+        masm.push(ARMV7Assembler.ConditionFlag.Always, 2); // index 4
+        masm.push(ARMV7Assembler.ConditionFlag.Always, 4); // index 3
+        for (int i = 0; i < 3; i++) {
+            masm.mov32BitConstant(ARMV7.cpuRegisters[i], expectedValues[i]);
+        }
+        theCompiler.pokeObject(ARMV7.cpuRegisters[0], 2);
+        theCompiler.pokeObject(ARMV7.cpuRegisters[1], 1);
+        theCompiler.pokeObject(ARMV7.cpuRegisters[2], 0);
+        for (int i = 0; i < 3; i++) {
+            masm.mov32BitConstant(ARMV7.cpuRegisters[i], -25);
+        }
+        theCompiler.peekObject(ARMV7.cpuRegisters[0], 2);
+        theCompiler.peekObject(ARMV7.cpuRegisters[1], 1);
+        theCompiler.peekObject(ARMV7.cpuRegisters[2], 0);
+        int assemblerStatements = masm.codeBuffer.position() / 4;
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        for (int i = 0; i < 3; i++) {
+            assert registerValues[i] == expectedValues[i] : "Failed incorrect value " + Long.toString(registerValues[i], 16) + " " + Long.toString(expectedValues[i], 16);
+        }
+    }
+
     public void ignoreCallDirect() throws Exception {
     }
 
@@ -843,12 +952,6 @@ public class ARMV7T1XTest extends MaxTestCase {
     }
 
     public void ignorePokeObject() throws Exception {
-    }
-
-    public void ignorePeekWord() throws Exception {
-    }
-
-    public void ignorePokeWord() throws Exception {
     }
 
 }
