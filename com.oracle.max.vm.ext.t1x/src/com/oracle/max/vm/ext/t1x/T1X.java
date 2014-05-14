@@ -136,7 +136,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     private final ThreadLocal<T1XCompilation> compilation = new ThreadLocal<T1XCompilation>() {
         @Override
         protected T1XCompilation initialValue() {
-           return t1XCompilationFactory.newT1XCompilation(T1X.this);
+            return t1XCompilationFactory.newT1XCompilation(T1X.this);
         }
     };
 
@@ -154,7 +154,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         T1X t1x = this;
         if (!MaxineVM.isHosted() && useVMTITemplates(method)) {
             // Use JVMTI templates to create code-related events.
-            System.err.println("!!!!!!! using vmtiT1X ");
+            Log.println("!!!!!!! using vmtiT1X ");
             t1x = vmtiT1X;
         }
         T1XCompilation c = t1x.compilation.get();
@@ -183,7 +183,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
             T1XTargetMethod t1xMethod = c.compile(method, isDeopt, install);
             T1XMetrics.BytecodesCompiled += t1xMethod.codeAttribute.code().length;
             T1XMetrics.CodeBytesEmitted += t1xMethod.code().length;
-            System.err.println("STATS bytecode len " + t1xMethod.codeAttribute.code().length + " machine code len " +t1xMethod.code().length );
+            Log.println("STATS bytecode len " + t1xMethod.codeAttribute.code().length + " machine code len " + t1xMethod.code().length);
             if (stats != null) {
                 stats.bytecodeCount = t1xMethod.codeAttribute.code().length;
             }
@@ -222,8 +222,8 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
             // Cannot write to file system at runtime until the VM is in the RUNNING phase
             return;
         }
-	APN */
-	System.err.println("T1X:printMachineCode is forced on");
+    APN */
+        Log.println("T1X:printMachineCode is forced on");
 
 
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
@@ -644,7 +644,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
      */
     @FOLD
     public static boolean isAMD64() {
-	return platform().isa == ISA.AMD64;
+        return platform().isa == ISA.AMD64;
     }
 
     @FOLD

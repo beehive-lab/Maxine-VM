@@ -386,24 +386,24 @@ public class T1XTargetMethod extends TargetMethod {
 
     @Override
     public boolean isPatchableCallSite(CodePointer callSite) {
-	if (isAMD64()) {
+        if (isAMD64()) {
             return AMD64TargetMethodUtil.isPatchableCallSite(callSite);
-	} else if(isARM()) {
-	    return ARMTargetMethodUtil.isPatchableCallSite(callSite);
-	} else {
-	    return false; // SHOULD Really throw an exception.
-	}
+        } else if (isARM()) {
+            return ARMTargetMethodUtil.isPatchableCallSite(callSite);
+        } else {
+            return false; // SHOULD Really throw an exception.
+        }
     }
 
     @Override
     public CodePointer fixupCallSite(int callOffset, CodePointer callEntryPoint) {
-	if (isAMD64()) {
-	    return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
-	} else if(isARM()) {
-	    return  ARMTargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
-	} else {
-	    return null;
-	}
+        if (isAMD64()) {
+            return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+        } else if (isARM()) {
+            return  ARMTargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+        } else {
+            return null;
+        }
     }
 
     public byte[] referenceMaps() {
@@ -438,13 +438,13 @@ public class T1XTargetMethod extends TargetMethod {
 
     @Override
     public CodePointer patchCallSite(int callOffset, CodePointer callEntryPoint) {
-	if (isAMD64()) {
+        if (isAMD64()) {
             return AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
-	} else if (isARM()) {
-	    return ARMTargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
-	} else {
-	    return null;
-	}
+        } else if (isARM()) {
+            return ARMTargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -459,7 +459,7 @@ public class T1XTargetMethod extends TargetMethod {
             if (vm().compilationBroker.needsAdapters()) {
                 ARMTargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(tm));
             }
-	}else {
+        } else {
             throw FatalError.unimplemented();
         }
     }
@@ -895,7 +895,7 @@ public class T1XTargetMethod extends TargetMethod {
                 Log.println(catchAddress.minus(codeStart()).toInt());
             }
 
-            if (isAMD64()||isARM()) {
+            if (isAMD64() || isARM()) {
                 Pointer localVariablesBase = current.fp();
                 Pointer catcherSP = adjustSPForHandler(current.sp(), current.fp());
 
@@ -913,7 +913,7 @@ public class T1XTargetMethod extends TargetMethod {
         }
     }
 
-    @PLATFORM(cpu="armv7")
+    @PLATFORM(cpu = "armv7")
     @HOSTED_ONLY
     private FramePointerStateARMV7 computeFramePointerStateARMV7(StackFrameCursor current, StackFrameWalker stackFrameWalker, CodePointer lastPrologueInstr) {
         // Checkstyle: stop
@@ -938,7 +938,7 @@ public class T1XTargetMethod extends TargetMethod {
             return FramePointerStateARMV7.RETURNING_FROM_RUNTIME;
         }
         return FramePointerStateARMV7.IN_RBP;
-	}
+    }
 
     @PLATFORM(cpu = "amd64")
     @HOSTED_ONLY
@@ -1000,7 +1000,7 @@ public class T1XTargetMethod extends TargetMethod {
             localVariablesBase = framePointerState.localVariablesBase(current);
             StackFrame stackFrame = new ARMV7JVMSFrame(sfw.calleeStackFrame(), current.targetMethod(), current.vmIP().toPointer(), current.sp(), localVariablesBase, localVariablesBase);
             return visitor.visitFrame(stackFrame);
-	}else {
+        } else {
             throw unimplISA();
         }
     }
@@ -1279,9 +1279,9 @@ public class T1XTargetMethod extends TargetMethod {
  * the context of the Inspector.
  */
 @HOSTED_ONLY
-@PLATFORM(cpu= "armv7")
+@PLATFORM(cpu = "armv7")
 enum FramePointerStateARMV7 {
-	 /**
+     /**
      * RBP holds the frame pointer of the current method activation. caller's RIP is at [RBP + FrameSize], caller's
      * frame pointer is at [RBP + FrameSize -1]
      */

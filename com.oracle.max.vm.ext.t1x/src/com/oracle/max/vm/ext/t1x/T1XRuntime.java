@@ -125,9 +125,9 @@ public class T1XRuntime {
                 int offset = (n - i - 1) * JVMS_SLOT_SIZE;
                 len = sp.readInt(offset);
             } else if (T1X.isARM()) {
-		int offset = (n - i - 1) * JVMS_SLOT_SIZE;
+                int offset = (n - i - 1) * JVMS_SLOT_SIZE;
                 len = sp.readInt(offset);
-	    }else {
+            } else {
                 throw T1X.unimplISA();
             }
             Snippets.checkArrayDimension(len);

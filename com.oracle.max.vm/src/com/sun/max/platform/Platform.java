@@ -159,9 +159,9 @@ public final class Platform {
             if (os == OS.DARWIN) {
                 stackAlignment = 16;
             } else if (os == OS.SOLARIS || os == OS.LINUX) {
-		stackAlignment = 4;
+                stackAlignment = 4;
             } else if (os == OS.MAXVE) {
-		stackAlignment = 8;
+                stackAlignment = 8;
             } else {
                 throw FatalError.unexpected("Unimplemented stack alignment: " + os);
             }
@@ -521,9 +521,9 @@ public final class Platform {
         map.put("solaris-sparcv9", new Platform(CPU.SPARCV9, OS.SOLARIS, Ints.K * 8, 32));
         map.put("darwin-amd64", new Platform(CPU.AMD64, OS.DARWIN, Ints.K * 4, 32));
         map.put("maxve-amd64", new Platform(CPU.AMD64, OS.MAXVE, Ints.K * 8, 32));
-	map.put("linux-arm", new Platform(CPU.ARMV7, OS.LINUX, Ints.K * 4, 32));
-	map.put("darwin-arm", new Platform(CPU.ARMV7, OS.DARWIN, Ints.K * 4, 32));
-	Supported = Collections.unmodifiableMap(map);
+        map.put("linux-arm", new Platform(CPU.ARMV7, OS.LINUX, Ints.K * 4, 32));
+        map.put("darwin-arm", new Platform(CPU.ARMV7, OS.DARWIN, Ints.K * 4, 32));
+        Supported = Collections.unmodifiableMap(map);
         Default = map.get("linux-amd64");
     }
 

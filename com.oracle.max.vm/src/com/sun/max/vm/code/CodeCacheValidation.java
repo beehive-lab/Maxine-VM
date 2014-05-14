@@ -218,19 +218,19 @@ public final class CodeCacheValidation extends VmOperation {
         final Safepoints safepoints = targetMethod.safepoints();
         for (int spi = safepoints.nextDirectCall(0); spi >= 0; spi = safepoints.nextDirectCall(spi + 1)) {
             final int callPos = safepoints.causePosAt(spi);
-	        if (platform().isa == ISA.AMD64) {
-	            final CodePointer callTarget = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
+            if (platform().isa == ISA.AMD64) {
+                final CodePointer callTarget = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
                 final TargetMethod actualCallee = callTarget.toTargetMethod();
                 assert validCodeAddress(callTarget) : "invalid call target (address) in direct call from " + targetMethod + "@" + spi + "(pos " + callPos + ") -> " + actualCallee + " (target: " + callTarget.to0xHexString() + ")";
                 assert actualCallee != null && validEntryPoint(callTarget, actualCallee) : "invalid entry point in direct call from " + targetMethod + "@" + spi + " -> " + actualCallee + " (target: " + callTarget.to0xHexString() + ")";
-            } else if(platform().isa == ISA.ARM) {
+            } else if (platform().isa == ISA.ARM) {
                 assert platform().isa == ISA.AMD64;
                 final CodePointer callTarget = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
                 final TargetMethod actualCallee = callTarget.toTargetMethod();
-		        assert validCodeAddress(callTarget) : "invalid call target (address) in direct call from " + targetMethod + "@" + spi + "(pos " + callPos + ") -> " + actualCallee + " (target: " + callTarget.to0xHexString() + ")";
+                assert validCodeAddress(callTarget) : "invalid call target (address) in direct call from " + targetMethod + "@" + spi + "(pos " + callPos + ") -> " + actualCallee + " (target: " + callTarget.to0xHexString() + ")";
                 assert actualCallee != null && validEntryPoint(callTarget, actualCallee) : "invalid entry point in direct call from " + targetMethod + "@" + spi + " -> " + actualCallee + " (target: " + callTarget.to0xHexString() + ")";
 
-	        } else {
+            } else {
                 throw FatalError.unimplemented();
             }
         }

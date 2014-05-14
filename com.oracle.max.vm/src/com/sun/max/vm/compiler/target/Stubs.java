@@ -672,9 +672,9 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
 
             return new Stub(StaticTrampoline, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
-	    } else {
+        } else {
             throw FatalError.unimplemented();
-	    }
+        }
     }
 
     /**
@@ -853,9 +853,9 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
 
             return new Stub(TrapStub, "trapStub", frameSize, code, callPos, callSize, callee, -1);
-	    } else {
+        } else {
             throw FatalError.unimplemented();
-	    }
+        }
     }
 
     /**
@@ -1071,9 +1071,9 @@ public class Stubs {
 
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnrollStub, "unrollStub", frameSize, code, callPos, callSize, callee, -1);
-	    } else {
-	        throw FatalError.unimplemented();
-	    }
+        } else {
+            throw FatalError.unimplemented();
+        }
     }
 
     /**
@@ -1418,9 +1418,9 @@ public class Stubs {
             runtimeInits[runtimeInits.length - 1] = patch;
 
             return stub;
-	    } else {
+        } else {
             throw FatalError.unimplemented();
-	    }
+        }
     }
 
     /**
@@ -1713,9 +1713,9 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             Type stubType = kind == null ? DeoptStubFromSafepoint : DeoptStubFromCompilerStub;
             return new Stub(stubType, stubName, frameSize, code, callPos, callSize, runtimeRoutine.classMethodActor, -1);
-	    } else {
+        } else {
             throw FatalError.unimplemented();
-	    }
+        }
     }
 
     /**
@@ -1827,9 +1827,9 @@ public class Stubs {
             String stubName = name + "Stub";
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UncommonTrapStub, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
-	    } else {
+        } else {
             throw FatalError.unimplemented();
-	    }
+        }
     }
 
     /**

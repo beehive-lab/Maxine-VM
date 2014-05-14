@@ -437,17 +437,19 @@ public abstract class T1XCompilation {
     }
 
     public T1XTargetMethod debugT1XCompile(ClassMethodActor method, boolean isDeopt, boolean install) {
-        initCompile(method,method.codeAttribute());
+        initCompile(method, method.codeAttribute());
         try {
             compile2(method);
         } finally {
+            // TODO
         }
 
         try {
             int endPos = buf.position();
             fixup();
             buf.setPosition(endPos);
-        }finally {
+        } finally {
+            // TODO
         }
 
         return newT1XTargetMethod(this, false);
@@ -1344,7 +1346,7 @@ public abstract class T1XCompilation {
         safepointsBuilder.addSafepoint(stream.currentBCI(), Safepoints.make(pos), null);
     }
 
-     void do_profileMethodEntry() {
+    void do_profileMethodEntry() {
         if (methodProfileBuilder != null) {
             methodProfileBuilder.addEntryCounter(MethodInstrumentation.initialEntryCount);
             if (method.isStatic()) {
@@ -1851,7 +1853,7 @@ public abstract class T1XCompilation {
         if (template == null) {
             return false;
         }
-        assert(template != null);
+        assert template != null;
         start(template);
         finish();
 

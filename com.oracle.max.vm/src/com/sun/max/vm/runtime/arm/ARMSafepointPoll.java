@@ -51,7 +51,7 @@ public final class ARMSafepointPoll extends SafepointPoll {
     protected byte[] createCode() {
         final ARMV7Assembler asm = new ARMV7Assembler(target(), null);
         asm.setUpScratch(new CiAddress(WordUtil.archKind(), LATCH_REGISTER.asValue()));
-        asm.ldr(ARMV7Assembler.ConditionFlag.Always,LATCH_REGISTER,asm.scratchRegister,0);
+        asm.ldr(ARMV7Assembler.ConditionFlag.Always, LATCH_REGISTER, asm.scratchRegister, 0);
         //APN really ought to use a normal load
         //asm.movq(LATCH_REGISTER, new CiAddress(WordUtil.archKind(), LATCH_REGISTER.asValue()));
         return asm.codeBuffer.close(true);

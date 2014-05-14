@@ -43,7 +43,6 @@ public class ARMV7Backend extends Backend {
 
     public ARMV7Backend(C1XCompiler compiler) {
         super(compiler);
-	System.err.println("C1X ARMV7Backend created");
     }
     /**
      * Creates a new LIRGenerator for x86.

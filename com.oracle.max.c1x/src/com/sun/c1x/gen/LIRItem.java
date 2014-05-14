@@ -161,15 +161,16 @@ public class LIRItem {
             }
         } else if (gen.compilation.target.arch.isSPARC()) {
             loadItem();
-        } else if(gen.compilation.target.arch.isARM()) {
-	}else {
+        } else if (gen.compilation.target.arch.isARM()) {
+            // TODO instantiate code ...
+        } else {
             Util.shouldNotReachHere();
         }
     }
 
     public void loadNonconstant() {
         if (gen.compilation.target.arch.isX86() || gen.compilation.target.arch.isARM()) {
-            if (gen.compilation.target.arch.isARM())	{
+            if (gen.compilation.target.arch.isARM())    {
                 System.err.println("please remove the || isARM and fill in LIRItem:loadNonconstant");
             }
             CiValue r = instruction.operand();
@@ -189,8 +190,9 @@ public class LIRItem {
                 loadItem();
             }
         } else if (gen.compilation.target.arch.isARM()) {
-	} else {
-	    Util.shouldNotReachHere();
+            // TODO instantiate code
+        } else {
+            Util.shouldNotReachHere();
         }
     }
 

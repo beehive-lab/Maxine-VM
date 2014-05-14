@@ -259,8 +259,8 @@ public class MaxineTester {
                     // run the shootout tests
                     new ShootoutHarness(filterTestsBySubstrings(MaxineTesterConfiguration.zeeShootoutTests, test.substring("shootout:".length()).split("\\+"))).run();
                 } else if (test.startsWith("armport")) {
-                     System.out.println("armport");
-                }else {
+                    System.out.println("armport");
+                } else {
                     out().println("Unrecognized test harness: " + test);
                     System.exit(-1);
                 }

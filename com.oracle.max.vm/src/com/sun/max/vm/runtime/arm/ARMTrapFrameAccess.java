@@ -91,12 +91,9 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
 
     public static final CiCalleeSaveLayout CSL;
     static {
-        CiRegister[] csaRegs = {       r0,r1,r2,r3,r4,r5,r6,r7,r8,r9,r10,r11,r13,r14,r15
+        CiRegister[] csaRegs = {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r13, r14, r15};
 
-
-        };
-
-        int size = 4*15;
+        int size = 4 * 15;
         TRAP_NUMBER_OFFSET = size;
         size += 4;
         FLAGS_OFFSET = size;
@@ -109,26 +106,22 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
      */
     @Override
     public Pointer getPCPointer(Pointer trapFrame) {
-	System.err.println("ARMTrapFrameAccess");
         return trapFrame.plus(vm().stubs.trapStub().frameSize());
 
     }
 
     @Override
     public Pointer getSP(Pointer trapFrame) {
-	System.err.println("ARMTrapFrameAccess");
         return trapFrame.plus(vm().stubs.trapStub().frameSize() + 8);
     }
 
     @Override
     public Pointer getFP(Pointer trapFrame) {
-	System.err.println("ARMTrapFrameAccess");
         return trapFrame.readWord(CSL.offsetOf(r11)).asPointer();
     }
 
     @Override
     public Pointer getSafepointLatch(Pointer trapFrame) {
-	System.err.println("ARMTrapFrameAccess");
         Pointer csa = getCalleeSaveArea(trapFrame);
         int offset = CSL.offsetOf(LATCH_REGISTER);
         return csa.readWord(offset).asPointer();
@@ -136,7 +129,6 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
 
     @Override
     public void setSafepointLatch(Pointer trapFrame, Pointer value) {
-	System.err.println("ARMTrapFrameAccess");
         Pointer csa = getCalleeSaveArea(trapFrame);
         int offset = CSL.offsetOf(LATCH_REGISTER);
         csa.writeWord(offset, value);
@@ -144,25 +136,21 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
 
     @Override
     public Pointer getCalleeSaveArea(Pointer trapFrame) {
-	System.err.println("ARMTrapFrameAccess");
         return trapFrame.plus(CSL.frameOffsetToCSA);
     }
 
     @Override
     public int getTrapNumber(Pointer trapFrame) {
-	System.err.println("ARMTrapFrameAccess");
         return trapFrame.readWord(TRAP_NUMBER_OFFSET).asAddress().toInt();
     }
 
     @Override
     public void setTrapNumber(Pointer trapFrame, int trapNumber) {
-	System.err.println("ARMTrapFrameAccess");
         trapFrame.writeWord(TRAP_NUMBER_OFFSET, Address.fromInt(trapNumber));
     }
 
     @Override
     public void logTrapFrame(Pointer trapFrame) {
-	System.err.println("ARMTrapFrameAccess");
         final Pointer csa = getCalleeSaveArea(trapFrame);
         Log.println("Non-zero registers:");
 

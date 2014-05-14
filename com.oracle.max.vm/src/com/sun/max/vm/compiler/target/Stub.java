@@ -211,7 +211,7 @@ public final class Stub extends TargetMethod {
             return AMD64TargetMethodUtil.returnAddressPointer(frame);
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.returnAddressPointer(frame);
-	    } else {
+        } else {
             throw FatalError.unimplemented();
         }
     }
@@ -230,11 +230,11 @@ public final class Stub extends TargetMethod {
             CiCalleeSaveLayout csl = calleeSaveLayout();
             Pointer csa = Pointer.zero();
             if (csl != null) {
-		        assert csl.frameOffsetToCSA != Integer.MAX_VALUE : "stub should have fixed offset for CSA";
-		        csa = current.sp().plus(csl.frameOffsetToCSA);
+                assert csl.frameOffsetToCSA != Integer.MAX_VALUE : "stub should have fixed offset for CSA";
+                csa = current.sp().plus(csl.frameOffsetToCSA);
             }
             ARMTargetMethodUtil.advance(current, csl, csa);
-	    } else  {
+        } else  {
             throw FatalError.unimplemented();
         }
     }
@@ -245,7 +245,7 @@ public final class Stub extends TargetMethod {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.acceptStackFrameVisitor(current, visitor);
         } else if (platform().isa == ISA.ARM) {
-	        return ARMTargetMethodUtil.acceptStackFrameVisitor(current, visitor);
+            return ARMTargetMethodUtil.acceptStackFrameVisitor(current, visitor);
         } else {
             throw FatalError.unimplemented();
         }
@@ -257,7 +257,7 @@ public final class Stub extends TargetMethod {
             return AMD64TargetMethodUtil.frameLayout(this);
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.frameLayout(this);
-	    } else {
+        } else {
             throw FatalError.unimplemented();
         }
     }
@@ -279,13 +279,13 @@ public final class Stub extends TargetMethod {
 
     @Override
     public CodePointer fixupCallSite(int callOffset, CodePointer callEntryPoint) {
-	    if (platform().isa == ISA.AMD64) {
-	        return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
-	    } else if (platform().isa == ISA.ARM) {
-	        return ARMTargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
-	    } else {
-	        throw FatalError.unimplemented();
-	    }
+        if (platform().isa == ISA.AMD64) {
+            return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+        } else if (platform().isa == ISA.ARM) {
+            return ARMTargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+        } else {
+            throw FatalError.unimplemented();
+        }
     }
 
     @Override

@@ -42,9 +42,15 @@ public class MaxineARMTester {
     private static final File linkOutput = new File("link_output");
     private static final File linkErrors = new File("link_errors");
 
-    private Process objectCopy, gcc, assembler, assemblerEntry, linker, qemu, gdb;
-    private BitsFlag bitMasks[];
-    private char chars[];
+    private Process objectCopy;
+    private Process gcc;
+    private Process assembler;
+    private Process assemblerEntry;
+    private Process linker;
+    private Process qemu;
+    private Process gdb;
+    private BitsFlag []bitMasks;
+    private char []chars;
     private int[] expectRegs = new int[NUM_REGS];
     private int[] gotRegs = new int[NUM_REGS];
     private boolean[] testRegs = new boolean[NUM_REGS];
@@ -270,7 +276,7 @@ public class MaxineARMTester {
         return result;
     }
 
-    public MaxineARMTester(int expected[], boolean test[], BitsFlag range[]) {
+    public MaxineARMTester(int []expected, boolean []test, BitsFlag []range) {
         initializeQemu();
         bitMasks = range;
         for (int i = 0; i < NUM_REGS; i++) {
@@ -279,7 +285,7 @@ public class MaxineARMTester {
         }
     }
 
-    public MaxineARMTester(String args[]) {
+    public MaxineARMTester(String []args) {
         initializeQemu();
         for (int i = 0; i < NUM_REGS; i++) {
             testRegs[i] = false;
