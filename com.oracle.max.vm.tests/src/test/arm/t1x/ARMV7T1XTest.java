@@ -948,10 +948,4 @@ public class ARMV7T1XTest extends MaxTestCase {
     public void ignoreStoreObject() throws Exception {
     }
 
-    public void ignorePeekObject() throws Exception {
-    }
-
-    public void ignorePokeObject() throws Exception {
-    }
-
 }
