@@ -314,6 +314,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
        /* assert dst.isFpu() && src.isFpu();
         if (AsmOptions.UseXmmRegToRegMoveAll) {
             movaps(dst, src);
+            ,
         } else {
             movss(dst, src);
         }

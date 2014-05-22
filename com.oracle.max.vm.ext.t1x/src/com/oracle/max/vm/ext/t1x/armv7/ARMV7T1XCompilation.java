@@ -518,8 +518,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         asm.xorq(scratch, scratch);
         // asm.movq(CiAddress.Placeholder, scratch);
         // TODO store the value ZERO at a Placeholder address
-        buf.emitInt(0);
-        buf.emitInt(0);
+        // TODO buf.emitInt(0);
+        // TODO buf.emitInt(0);
+        // TODO
         int dispPos = buf.position() - 8;
         patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
     }
@@ -958,7 +959,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 buf.setPosition(dispPos);
                 int dispFromCodeStart = dispFromCodeStart(objectLiterals.size(), 0, index, true);
                 int disp = movqDisp(dispPos, dispFromCodeStart);
-                buf.emitInt(disp);
+                // buf.emitInt(disp);
+                System.out.println("fixup OBJECT_LITERAL commented out");
             } else {
                 throw FatalError.unexpected(String.valueOf(tag));
             }
