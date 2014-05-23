@@ -1,6 +1,7 @@
 package com.oracle.max.asm.target.armv7;
 
 import com.oracle.max.asm.*;
+import com.oracle.max.asm.target.amd64.AMD64Assembler.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -725,30 +726,20 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void jcc(ConditionFlag cc, int target, boolean forceDisp32) {
-        // forceDisp32 seems to be true if its a forward branch
-        // and false if its negative ... a backwards branch
-        // int shortSize = 2;
-        // int longSize = 6;
-        /*
-         * APN ok we now need to decide if we can do a PC relative branch, with a signed immediate of 24 bits. 0..
-         * 16777215 down to -16777216 Some worries about alignment ... but not going to worry right now
-         */
-        int disp = target - codeBuffer.position();
-        if (disp <= 16777215 && disp >= 16777216 && forceDisp32) {
-            // we can do this in a single conditional branch
+        int disp = (target - codeBuffer.position());
+        if (disp <= 16777215 && forceDisp32) {
             emitInt((cc.value & 0xf) << 28 | (0xa << 24) | (disp & 0xffffff));
         } else {
             // we need or have been instructed to do this as a 32 bit branch
             mov32BitConstant(scratchRegister, target);
             mov(ConditionFlag.Always, false, ARMV7.r15, scratchRegister); // UPDATE the PC to the target
         }
-
     }
 
     public final void jmp(int target, boolean forceDisp32) {
         // ARM but not tested!!!
         int disp = target - codeBuffer.position();
-        if (disp <= 16777215 && disp >= 16777216 && forceDisp32) {
+        if (disp <= 16777215  && forceDisp32) {
             // we can do this in a single conditional branch
             emitInt((0xe << 28) | (0xa << 24) | (disp & 0xffffff));
         } else {

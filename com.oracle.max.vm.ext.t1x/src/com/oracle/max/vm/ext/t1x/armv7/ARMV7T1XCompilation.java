@@ -301,7 +301,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     }
 
     @Override
-    protected void assignInt(CiRegister dst, int value) {
+    public void assignInt(CiRegister dst, int value) {
         asm.mov32BitConstant(dst, value);
     }
 

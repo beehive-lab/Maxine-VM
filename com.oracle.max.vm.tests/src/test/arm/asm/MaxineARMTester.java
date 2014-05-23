@@ -68,7 +68,7 @@ public class MaxineARMTester {
         cleanProcesses();
     }
 
-    private void cleanFiles() {
+    public void cleanFiles() {
         deleteFile(qemuOutput);
         deleteFile(qemuErrors);
         deleteFile(bindOutput);
@@ -157,7 +157,7 @@ public class MaxineARMTester {
         }
     }
 
-    protected void cleanProcesses() {
+    public void cleanProcesses() {
         terminateProcess(objectCopy);
         terminateProcess(gcc);
         terminateProcess(assembler);
