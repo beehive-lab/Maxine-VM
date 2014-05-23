@@ -887,7 +887,10 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.decStack(1);
         masm.cmpl(ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[1]);
         ConditionFlag cc = ConditionFlag.Equal; //Testing the jump (eq)
-        masm.jcc(cc, masm.codeBuffer.position() + 1 , true);
+        theCompiler.assignInt(ARMV7.r12,99); // APN deliberate ... make scratch have nonzero value
+        //masm.jcc(cc, masm.codeBuffer.position() + 8 , true); // 8 as a true will insert TWO instructions!!!
+        masm.jcc(cc, masm.codeBuffer.position() + 1 , false); // 1 as a false will insert one instructions!!!
+
         theCompiler.assignInt(ARMV7.cpuRegisters[2], 20);
         theCompiler.assignInt(ARMV7.cpuRegisters[3], 10);
         int assemblerStatements = masm.codeBuffer.position() / 4;
@@ -915,7 +918,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.decStack(1);
         masm.cmpl(ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[1]);
         cc = ConditionFlag.NotEqual; //Testing the fallthrough (ne)
-        masm.jcc(cc, masm.codeBuffer.position() + 1, true);
+        masm.jcc(cc, masm.codeBuffer.position() + 8, true);
         theCompiler.assignInt(ARMV7.cpuRegisters[2], 20);
         theCompiler.assignInt(ARMV7.cpuRegisters[3], 10);
         assemblerStatements = masm.codeBuffer.position() / 4;
