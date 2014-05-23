@@ -9,6 +9,7 @@ import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
 import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.t1x.armv7.*;
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
@@ -33,10 +34,15 @@ public class ARMV7T1XTest extends MaxTestCase {
 
     public void initialiseFrameForCompilation() {
         // TODO: compute max stack
-        codeAttr = new CodeAttribute(null, new byte[50], (char) 10, (char) 8, CodeAttribute.NO_EXCEPTION_HANDLER_TABLE, LineNumberTable.EMPTY, LocalVariableTable.EMPTY, null);
+        codeAttr = new CodeAttribute(null, new byte[15], (char) 10, (char) 8, CodeAttribute.NO_EXCEPTION_HANDLER_TABLE, LineNumberTable.EMPTY, LocalVariableTable.EMPTY, null);
         anMethod = new StaticMethodActor(null, SignatureDescriptor.create("(Ljava/util/Map;)V"), Actor.JAVA_METHOD_FLAGS, codeAttr, new String());
     }
 
+    public void initialiseFrameForCompilation(byte [] code) {
+        // TODO: compute max stack
+        codeAttr = new CodeAttribute(null, code, (char) 10, (char) 8, CodeAttribute.NO_EXCEPTION_HANDLER_TABLE, LineNumberTable.EMPTY, LocalVariableTable.EMPTY, null);
+        anMethod = new StaticMethodActor(null, SignatureDescriptor.create("(Ljava/util/Map;)V"), Actor.JAVA_METHOD_FLAGS, codeAttr, new String());
+    }
     static final class Pair {
 
         public final int first;
@@ -65,12 +71,12 @@ public class ARMV7T1XTest extends MaxTestCase {
         return result.toArray(new String[result.size()]);
     }
 
-    private static int[] valueTestSet = { 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
-    private static long[] scratchTestSet = { 0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x00000000ffffffffL};
-    private static MaxineARMTester.BitsFlag[] bitmasks = { MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits};
+    private static int[] valueTestSet = {0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
+    private static long[] scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x00000000ffffffffL};
+    private static MaxineARMTester.BitsFlag[] bitmasks = {MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
+        MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
+        MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
+        MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits};
 
     private static int[] expectedValues = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     private static boolean[] ignorevalues = new boolean[17];
@@ -872,7 +878,6 @@ public class ARMV7T1XTest extends MaxTestCase {
         masm.push(ARMV7Assembler.ConditionFlag.Always, 2);
         masm.push(ARMV7Assembler.ConditionFlag.Always, 4);
         masm.push(ARMV7Assembler.ConditionFlag.Always, 8);
-
         for (int i = 0; i < 4; i++) {
             masm.mov32BitConstant(ARMV7.cpuRegisters[i], -1);
         }
@@ -885,7 +890,6 @@ public class ARMV7T1XTest extends MaxTestCase {
         masm.jcc(cc, masm.codeBuffer.position() + 1 , true);
         theCompiler.assignInt(ARMV7.cpuRegisters[2], 20);
         theCompiler.assignInt(ARMV7.cpuRegisters[3], 10);
-
         int assemblerStatements = masm.codeBuffer.position() / 4;
         int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
         assert registerValues[3] == 10 : "Failed incorrect value " + Long.toString(registerValues[3], 16) + " 10";
@@ -902,7 +906,6 @@ public class ARMV7T1XTest extends MaxTestCase {
         masm.push(ARMV7Assembler.ConditionFlag.Always, 2);
         masm.push(ARMV7Assembler.ConditionFlag.Always, 4);
         masm.push(ARMV7Assembler.ConditionFlag.Always, 8);
-
         for (int i = 0; i < 4; i++) {
             masm.mov32BitConstant(ARMV7.cpuRegisters[i], -1);
         }
@@ -921,7 +924,53 @@ public class ARMV7T1XTest extends MaxTestCase {
         assert registerValues[2] == 20 : "Failed incorrect value " + Long.toString(registerValues[0], 16) + " 20";
     }
 
+    public void testLoopJump() throws Exception {
+        expectedValues[0] = 10;
+        /*
+        Based on pg41 JVMSv1.7 ...
+        iconst_0
+        istore_1
+        goto 8 wrong it needs to be 6
+        iinc 1 1
+        iload_1
+        bipush 100
+        if_icmplt 5 this is WRONG it needs to be -6
+        // no return.
+         corresponding to
+         int i;
+         for(i = 0; i < 100;i++)  {
+             ; // empty loop body
+         }
+         return;
+         */
+        byte []instructions = new byte [16]; // RETURN is causing problems at the moment ... byte[15];
+        instructions[0] = (byte) Bytecodes.ICONST_0;
+        instructions[1] = (byte) Bytecodes.ISTORE_1;
+        instructions[2] = (byte) Bytecodes.GOTO;
+        instructions[3] = (byte) 0;
+        instructions[4] = (byte) 6;
+        instructions[5] = (byte) Bytecodes.IINC;
+        instructions[6] = (byte) 1;
+        instructions[7] = (byte) 1;
+        instructions[8] = (byte) Bytecodes.ILOAD_1;
+        instructions[9] = (byte) Bytecodes.BIPUSH;
+        instructions[10] = (byte) 10;
+        instructions[11] = (byte) Bytecodes.IF_ICMPLT;
+        instructions[12] = (byte) 0xff;
+        instructions[13] = (byte) 0xfa;
+        instructions[14] = (byte) Bytecodes.ILOAD_1; // push local variable 1 onto the stack
+        instructions[15] = (byte) Bytecodes.NOP;
 
+        //instructions[14] = (byte) Bytecodes.RETURN;
+        initialiseFrameForCompilation(instructions);
+
+        theCompiler.compileT1XTesting(anMethod, codeAttr, instructions, 15); // hardwired stop at 15! in the loop in compileT1XTesting
+        ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.pop(ARMV7Assembler.ConditionFlag.Always, 1); // pop local variable 1 off the stack into r0
+        int assemblerStatements = masm.codeBuffer.position() / 4;
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
+        assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + Long.toString(registerValues[0], 16) + " " + Long.toString(expectedValues[0], 16);
+    }
 
     public void ignoreCallDirect() throws Exception {
     }
