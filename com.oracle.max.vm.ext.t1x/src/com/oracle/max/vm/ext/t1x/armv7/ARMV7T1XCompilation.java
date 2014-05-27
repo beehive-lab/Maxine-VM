@@ -732,7 +732,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     }
 
     @Override
-    protected void cleanup() {
+    public void cleanup() {
         patchInfo.size = 0;
         super.cleanup();
     }
@@ -960,7 +960,6 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 int dispFromCodeStart = dispFromCodeStart(objectLiterals.size(), 0, index, true);
                 int disp = movqDisp(dispPos, dispFromCodeStart);
                 // buf.emitInt(disp);
-                System.out.println("fixup OBJECT_LITERAL commented out");
             } else {
                 throw FatalError.unexpected(String.valueOf(tag));
             }

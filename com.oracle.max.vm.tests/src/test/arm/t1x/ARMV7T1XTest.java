@@ -888,9 +888,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         masm.cmpl(ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[1]);
         ConditionFlag cc = ConditionFlag.Equal; //Testing the jump (eq)
         theCompiler.assignInt(ARMV7.r12,99); // APN deliberate ... make scratch have nonzero value
-        //masm.jcc(cc, masm.codeBuffer.position() + 8 , true); // 8 as a true will insert TWO instructions!!!
         masm.jcc(cc, masm.codeBuffer.position() + 1 , false); // 1 as a false will insert one instructions!!!
-
         theCompiler.assignInt(ARMV7.cpuRegisters[2], 20);
         theCompiler.assignInt(ARMV7.cpuRegisters[3], 10);
         int assemblerStatements = masm.codeBuffer.position() / 4;
@@ -927,8 +925,43 @@ public class ARMV7T1XTest extends MaxTestCase {
         assert registerValues[2] == 20 : "Failed incorrect value " + Long.toString(registerValues[0], 16) + " 20";
     }
 
-    public void testLoopJump() throws Exception {
-        expectedValues[0] = 10;
+    static final class BranchInfo {
+
+        private int bc;
+        private int start, end, expected;
+
+        private BranchInfo(int bc, int start, int end, int expected) {
+            this.bc = bc;
+            this.end = end;
+            this.start = start;
+            this.expected = expected;
+        }
+
+        public int getBytecode() {
+            return bc;
+        }
+
+        public int getStart() {
+            return start;
+        }
+
+        public int getEnd() {
+            return start;
+        }
+
+        public int getExpected() {
+            return start;
+        }
+
+    }
+
+    private static final List<BranchInfo> branches = new LinkedList<>();
+    static {
+        branches.add(new BranchInfo(Bytecodes.IF_ICMPLT, 0, 10, 10));
+    }
+
+
+    public void testBranchBytecodes() throws Exception {
         /*
         Based on pg41 JVMSv1.7 ...
         iconst_0
@@ -946,33 +979,37 @@ public class ARMV7T1XTest extends MaxTestCase {
          }
          return;
          */
-        byte []instructions = new byte [16]; // RETURN is causing problems at the moment ... byte[15];
-        instructions[0] = (byte) Bytecodes.ICONST_0;
-        instructions[1] = (byte) Bytecodes.ISTORE_1;
-        instructions[2] = (byte) Bytecodes.GOTO;
-        instructions[3] = (byte) 0;
-        instructions[4] = (byte) 6;
-        instructions[5] = (byte) Bytecodes.IINC;
-        instructions[6] = (byte) 1;
-        instructions[7] = (byte) 1;
-        instructions[8] = (byte) Bytecodes.ILOAD_1;
-        instructions[9] = (byte) Bytecodes.BIPUSH;
-        instructions[10] = (byte) 10;
-        instructions[11] = (byte) Bytecodes.IF_ICMPLT;
-        instructions[12] = (byte) 0xff;
-        instructions[13] = (byte) 0xfa;
-        instructions[14] = (byte) Bytecodes.ILOAD_1; // push local variable 1 onto the stack
-        instructions[15] = (byte) Bytecodes.NOP;
+        for (BranchInfo bi : branches) {
+            expectedValues[0] = bi.getExpected();
 
-        //instructions[14] = (byte) Bytecodes.RETURN;
-        initialiseFrameForCompilation(instructions);
+            byte[] instructions = new byte[16]; // RETURN is causing problems at the moment ... byte[15];
+            instructions[0] = (byte) Bytecodes.ICONST_0;
+            instructions[1] = (byte) Bytecodes.ISTORE_1;
+            instructions[2] = (byte) Bytecodes.GOTO;
+            instructions[3] = (byte) 0;
+            instructions[4] = (byte) 6;
+            instructions[5] = (byte) Bytecodes.IINC;
+            instructions[6] = (byte) 1;
+            instructions[7] = (byte) 1;
+            instructions[8] = (byte) Bytecodes.ILOAD_1;
+            instructions[9] = (byte) Bytecodes.BIPUSH;
+            instructions[10] = (byte) bi.getEnd();
+            instructions[11] = (byte) bi.getBytecode();
+            instructions[12] = (byte) 0xff;
+            instructions[13] = (byte) 0xfa;
+            instructions[14] = (byte) Bytecodes.ILOAD_1; // push local variable 1 onto the stack
+            instructions[15] = (byte) Bytecodes.NOP;
 
-        theCompiler.compileT1XTesting(anMethod, codeAttr, instructions, 15); // hardwired stop at 15! in the loop in compileT1XTesting
-        ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.pop(ARMV7Assembler.ConditionFlag.Always, 1); // pop local variable 1 off the stack into r0
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
-        assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + Long.toString(registerValues[0], 16) + " " + Long.toString(expectedValues[0], 16);
+            // instructions[14] = (byte) Bytecodes.RETURN;
+            initialiseFrameForCompilation(instructions);
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 15);
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.pop(ARMV7Assembler.ConditionFlag.Always, 1); // pop local variable 1 off the stack into r0
+            int assemblerStatements = masm.codeBuffer.position() / 4;
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
+            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + Long.toString(registerValues[0], 16) + " " + Long.toString(expectedValues[0], 16);
+            theCompiler.cleanup();
+        }
     }
 
     public void ignoreCallDirect() throws Exception {

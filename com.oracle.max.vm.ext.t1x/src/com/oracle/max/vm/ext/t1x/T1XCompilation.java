@@ -517,67 +517,43 @@ public abstract class T1XCompilation {
             bciToPos[endBCI] = epiloguePos;
         }
     }
-    /*
-     *  Fake route into the compile stream, we send a BytecodeStream containing the "code" we want
-     *  to be compiled this is initially being used to debug branches and jumps
-     *  it means we can start to fix some of the code concerning the faked java stack frame etc.
-     *  but not done currently
-     *  APN 20/5/14
-     *  Now attempting to integrate T1XCompilation.initCompile functionality into here as well ...
-      *      protected void initCompile(ClassMethodActor method, CodeAttribute codeAttribute)
-      *      This is necessary as there are various aspects/information/variables initialised
-      *      as a side effect of this .... we might remove the initialiseFrameForCompilation if
-      *      we get this working better!
 
+    /**
+     * The following method is used by T1X unit testing framework (ARM port). It receives as input the bytecode stream
+     * which will be compiled by T1X and consequently run by qemu. Code commented out is not yet required or implemented
+     * properly. Unresolved issues: Stack Frames, initCompile() method.
      */
-    public void compileT1XTesting(ClassMethodActor method, CodeAttribute codeAttribute, byte[] fakeBytes, int hardStop) {
-        /*
-         * Begin of initCompile fake .... anything commented out has been removed because it is not yet required or
-         * handled or breaks things in the T1X test harness -- the frame is the ONLY THING FAKED SO FAR SEE ARMT1XTest
-         * and initialiseFrameForCompilation
-         */
+    public void offlineT1XCompile(ClassMethodActor method, CodeAttribute codeAttribute, byte[] fakeBytes, int hardStop) {
+        // Begin of elided initCompile
         assert this.method == null;
         assert buf.position() == 0;
         assert objectLiterals.isEmpty();
         this.method = method;
         this.codeAttribute = codeAttribute;
         cp = codeAttribute.cp;
-        byte[] code = fakeBytes; // / codeAttribute.code(); APN - do we need to make codeAttribute.code BE fakeBytes
-        stream = new BytecodeStream(code); // APN do we need to fix up the codeAttribute?
-
+        byte[] code = fakeBytes; // codeAttribute.code(); Do we need to make codeAttribute.code BE fakeBytes?
+        stream = new BytecodeStream(code); //Do we need to fix up the codeAttribute?
         protectionLiteralIndex = -1;
-
         bciToPos = new int[code.length + 1];
         blockBCIs = new boolean[code.length];
         methodProfileBuilder = MethodInstrumentation.createMethodProfile(method);
-
         startBlock(0);
-
         initFrame(method, codeAttribute);
-
-        // initHandlers has not yet been considered ... keep it out PLEASE
         // initHandlers(method, code);
+        // End of initCompile
 
-        // TODO APN fill in the appropriate calls to correctly and appropriately fake the stack frame and to correctly
-        // initialize the adapter / prologues.
-        // This might not be possible until we take in a "real" java compiled class method.
-
+        // TODO Fill in the appropriate calls to correctly and appropriately fake the stack frame and to correctly
+        // initialize the adapter / prologues.This might not be possible until we take in a
+        // "real" java compiled class method.
         emitPrologue();
-
-        // APN removed
         emitUnprotectMethod();
-
         // do_profileMethodEntry();
-
         do_methodTraceEntry();
-
         // do_synchronizedMethodAcquire();
-
         int bci = 0;
         int endBCI = stream.endBCI();
         while (bci < endBCI) {
             if (bci >= hardStop) {
-                System.err.println("Hard Stop in compileT1XTesting invoked bci " + bci + " hardStop " + hardStop);
                 break;
             }
             int opcode = stream.currentBC();
@@ -586,12 +562,12 @@ public abstract class T1XCompilation {
             bci = stream.currentBCI();
         }
 
-        // TODO APN fill in the appropriate calls to patch any branches, jumps and/or conditionals
-
+        // TODO Fill in the appropriate calls to patch any branches, jumps and/or conditionals
         int endPos = buf.position();
         fixup();
         buf.setPosition(endPos);
     }
+
     /**
      * Create a new (subclass) of {@link T1XTargetMethod}.
      * @param comp
@@ -1198,11 +1174,9 @@ public abstract class T1XCompilation {
     }
 
     protected void processBytecode(int opcode) throws InternalError {
-        System.err.println("PROCESS BYTECODE");
         beginBytecode(opcode);
         switch (opcode) {
             // Checkstyle: stop
-
             case Bytecodes.NOP                : bciToPos[stream.currentBCI()] = buf.position(); break;
             case Bytecodes.AALOAD             : do_aaload(); break;
             case Bytecodes.AASTORE            : do_aastore(); break;
