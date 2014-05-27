@@ -947,11 +947,11 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
 
         public int getEnd() {
-            return start;
+            return end;
         }
 
         public int getExpected() {
-            return start;
+            return expected;
         }
 
         public int getStep() {
@@ -962,10 +962,11 @@ public class ARMV7T1XTest extends MaxTestCase {
     private static final List<BranchInfo> branches = new LinkedList<>();
     static {
         branches.add(new BranchInfo(Bytecodes.IF_ICMPLT, 0, 10, 10, 1));
-        branches.add(new BranchInfo(Bytecodes.IF_ICMPLE, 0, 10, 11, 1));
+       // branches.add(new BranchInfo(Bytecodes.IF_ICMPLE, 0, 10, 11, 1));
         branches.add(new BranchInfo(Bytecodes.IF_ICMPGT, 5, 0, 0, -1));
-        branches.add(new BranchInfo(Bytecodes.IF_ICMPGE, 5, 0, -1, -1));
-        branches.add(new BranchInfo(Bytecodes.IF_ICMPNE, 1, 6, 5, 1));
+        //branches.add(new BranchInfo(Bytecodes.IF_ICMPGE, 5, 0, -1, -1));
+        branches.add(new BranchInfo(Bytecodes.IF_ICMPNE, 5, 6, 6, 1));
+        //branches.add(new BranchInfo(Bytecodes.IF_ICMPEQ, 0, 1, 2, 2));
     }
 
 
@@ -989,8 +990,7 @@ public class ARMV7T1XTest extends MaxTestCase {
          */
         for (BranchInfo bi : branches) {
             expectedValues[0] = bi.getExpected();
-
-            byte[] instructions = new byte[16]; // RETURN is causing problems at the moment ... byte[15];
+            byte[] instructions = new byte[16];
             if (bi.getStart() == 0) {
                 instructions[0] = (byte) Bytecodes.ICONST_0;
             } else {
@@ -1009,14 +1009,14 @@ public class ARMV7T1XTest extends MaxTestCase {
             instructions[11] = (byte) bi.getBytecode();
             instructions[12] = (byte) 0xff;
             instructions[13] = (byte) 0xfa;
-            instructions[14] = (byte) Bytecodes.ILOAD_1; // push local variable 1 onto the stack
+            instructions[14] = (byte) Bytecodes.ILOAD_1;
             instructions[15] = (byte) Bytecodes.NOP;
 
             // instructions[14] = (byte) Bytecodes.RETURN;
             initialiseFrameForCompilation(instructions);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 15);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.pop(ARMV7Assembler.ConditionFlag.Always, 1); // pop local variable 1 off the stack into r0
+            masm.pop(ARMV7Assembler.ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
             int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + Long.toString(registerValues[0], 16) + " " + Long.toString(expectedValues[0], 16);

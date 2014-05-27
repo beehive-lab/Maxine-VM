@@ -154,11 +154,10 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         T1X t1x = this;
         if (!MaxineVM.isHosted() && useVMTITemplates(method)) {
             // Use JVMTI templates to create code-related events.
-            Log.println("!!!!!!! using vmtiT1X ");
             t1x = vmtiT1X;
         }
         T1XCompilation c = t1x.compilation.get();
-        System.err.println("!!!!!got t1x");
+
         boolean reentrant = false;
         if (c.method != null) {
             // Re-entrant call to T1X - use a new compilation object that will be discarded
