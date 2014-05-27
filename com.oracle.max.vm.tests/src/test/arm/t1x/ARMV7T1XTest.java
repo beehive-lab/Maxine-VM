@@ -928,13 +928,14 @@ public class ARMV7T1XTest extends MaxTestCase {
     static final class BranchInfo {
 
         private int bc;
-        private int start, end, expected;
+        private int start, end, expected, step;
 
-        private BranchInfo(int bc, int start, int end, int expected) {
+        private BranchInfo(int bc, int start, int end, int expected, int step) {
             this.bc = bc;
             this.end = end;
             this.start = start;
             this.expected = expected;
+            this.step = step;
         }
 
         public int getBytecode() {
@@ -953,12 +954,17 @@ public class ARMV7T1XTest extends MaxTestCase {
             return start;
         }
 
+        public int getStep() {
+            return step;
+        }
     }
 
     private static final List<BranchInfo> branches = new LinkedList<>();
     static {
-        branches.add(new BranchInfo(Bytecodes.IF_ICMPLT, 0, 10, 10));
-        branches.add(new BranchInfo(Bytecodes.IF_ICMPLE, 0, 10, 11));
+        branches.add(new BranchInfo(Bytecodes.IF_ICMPLT, 0, 10, 10, 1));
+        branches.add(new BranchInfo(Bytecodes.IF_ICMPLE, 0, 10, 11, 1));
+        branches.add(new BranchInfo(Bytecodes.IF_ICMPGT, 5, 0, 0, -1));
+        branches.add(new BranchInfo(Bytecodes.IF_ICMPGE, 5, 0, -1, -1));
     }
 
 
@@ -984,14 +990,18 @@ public class ARMV7T1XTest extends MaxTestCase {
             expectedValues[0] = bi.getExpected();
 
             byte[] instructions = new byte[16]; // RETURN is causing problems at the moment ... byte[15];
-            instructions[0] = (byte) Bytecodes.ICONST_0;
+            if (bi.getStart() == 0) {
+                instructions[0] = (byte) Bytecodes.ICONST_0;
+            } else {
+                instructions[0] = (byte) Bytecodes.ICONST_5;
+            }
             instructions[1] = (byte) Bytecodes.ISTORE_1;
             instructions[2] = (byte) Bytecodes.GOTO;
             instructions[3] = (byte) 0;
             instructions[4] = (byte) 6;
             instructions[5] = (byte) Bytecodes.IINC;
             instructions[6] = (byte) 1;
-            instructions[7] = (byte) 1;
+            instructions[7] = (byte) bi.getStep();
             instructions[8] = (byte) Bytecodes.ILOAD_1;
             instructions[9] = (byte) Bytecodes.BIPUSH;
             instructions[10] = (byte) bi.getEnd();
