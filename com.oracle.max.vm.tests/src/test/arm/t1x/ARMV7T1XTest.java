@@ -958,6 +958,7 @@ public class ARMV7T1XTest extends MaxTestCase {
     private static final List<BranchInfo> branches = new LinkedList<>();
     static {
         branches.add(new BranchInfo(Bytecodes.IF_ICMPLT, 0, 10, 10));
+        branches.add(new BranchInfo(Bytecodes.IF_ICMPLE, 0, 10, 11));
     }
 
 
