@@ -145,7 +145,7 @@ public class RegisterConfigs {
                 roleMap.put(CPU_SP, com.oracle.max.asm.target.armv7.ARMV7.r13);
                 roleMap.put(CPU_FP, com.oracle.max.asm.target.armv7.ARMV7.r11); // TODO CHECK
                 roleMap.put(ABI_SP, com.oracle.max.asm.target.armv7.ARMV7.r13);
-                roleMap.put(ABI_FP, com.oracle.max.asm.target.armv7.ARMV7.r13);
+                roleMap.put(ABI_FP, com.oracle.max.asm.target.armv7.ARMV7.r11);
                 //ARM PCS suggest that r11 is used as a frame pointer, not sure how this is set up for each new java frame
 
 

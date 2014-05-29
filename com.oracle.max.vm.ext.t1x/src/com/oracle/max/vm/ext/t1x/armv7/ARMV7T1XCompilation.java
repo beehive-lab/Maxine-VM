@@ -744,130 +744,130 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         // adjustment instructions as both affect the condition flags.
         switch (opcode) {
             case Bytecodes.IFEQ:
-                peekInt(scratch, 0);
-                assignInt(scratch2, 0);
+                peekInt(r8, 0);
+                assignInt(r9, 0);
                 decStack(1);
-                asm.cmpl(scratch, scratch2);
+                asm.cmpl(r8, r9);
                 // cc = ConditionFlag.equal;
                 cc = ConditionFlag.Equal;
                 break;
             case Bytecodes.IFNE:
-                peekInt(scratch, 0);
-                assignInt(scratch2, 0);
+                peekInt(r8, 0);
+                assignInt(r9, 0);
                 decStack(1);
-                asm.cmpl(scratch, scratch2);
+                asm.cmpl(r8, r9);
                 // cc = ConditionFlag.notEqual;
                 cc = ConditionFlag.NotEqual;
                 break;
             case Bytecodes.IFLE:
-                peekInt(scratch, 0);
-                assignInt(scratch2, 0);
+                peekInt(r8, 0);
+                assignInt(r9, 0);
                 decStack(1);
-                asm.cmpl(scratch, scratch2);
+                asm.cmpl(r8, r9);
                 // cc = ConditionFlag.lessEqual;
                 cc = ConditionFlag.SignedLowerOrEqual;
                 break;
             case Bytecodes.IFLT:
-                peekInt(scratch, 0);
-                assignInt(scratch2, 0);
+                peekInt(r8, 0);
+                assignInt(r9, 0);
                 decStack(1);
-                asm.cmpl(scratch, scratch2);
+                asm.cmpl(r8, r9);
                 // cc = ConditionFlag.less;
                 cc = ConditionFlag.SignedLesser;
                 break;
             case Bytecodes.IFGE:
-                peekInt(scratch, 0);
-                assignInt(scratch2, 0);
+                peekInt(r8, 0);
+                assignInt(r9, 0);
                 decStack(1);
-                asm.cmpl(scratch, scratch2);
+                asm.cmpl(r8, r9);
                 // cc = ConditionFlag.greaterEqual;
                 cc = ConditionFlag.SignedGreaterOrEqual;
                 break;
             case Bytecodes.IFGT:
-                peekInt(scratch, 0);
-                assignInt(scratch2, 0);
+                peekInt(r8, 0);
+                assignInt(r9, 0);
                 decStack(1);
-                asm.cmpl(scratch, scratch2);
+                asm.cmpl(r8, r9);
                 // cc = ConditionFlag.greater;
                 cc = ConditionFlag.SignedGreater;
                 break;
             case Bytecodes.IF_ICMPEQ:
-                peekInt(scratch, 1);
-                peekInt(scratch2, 0);
+                peekInt(r8, 1);
+                peekInt(r9, 0);
                 decStack(2);
-                asm.cmpl(scratch, scratch2);
+                asm.cmpl(r8, r9);
                 // cc = ConditionFlag.equal;
                 cc = ConditionFlag.Equal;
                 break;
             case Bytecodes.IF_ICMPNE:
-                peekInt(scratch, 1);
-                peekInt(scratch2, 0);
+                peekInt(r8, 1);
+                peekInt(r9, 0);
                 decStack(2);
-                asm.cmpl(scratch, scratch2);
+                asm.cmpl(r8, r9);
                 cc = ConditionFlag.NotEqual;
                 // cc = ConditionFlag.notEqual;
                 break;
             case Bytecodes.IF_ICMPGE:
-                peekInt(scratch, 1);
-                peekInt(scratch2, 0);
+                peekInt(r8, 1);
+                peekInt(r9, 0);
                 decStack(2);
-                asm.cmpl(scratch, scratch2);
+                asm.cmpl(r8, r9);
                 cc = ConditionFlag.SignedGreaterOrEqual;
                 // cc = ConditionFlag.greaterEqual;
                 break;
             case Bytecodes.IF_ICMPGT:
-                peekInt(scratch, 1);
-                peekInt(scratch2, 0);
+                peekInt(r8, 1);
+                peekInt(r9, 0);
                 decStack(2);
-                asm.cmpl(scratch, scratch2);
+                asm.cmpl(r8, r9);
                 // cc = ConditionFlag.greater;
                 cc = ConditionFlag.SignedGreater;
                 break;
             case Bytecodes.IF_ICMPLE:
-                peekInt(scratch, 1);
-                peekInt(scratch2, 0);
+                peekInt(r8, 1);
+                peekInt(r9, 0);
                 decStack(2);
-                asm.cmpl(scratch, scratch2);
+                asm.cmpl(r8, r9);
                 cc = ConditionFlag.SignedLowerOrEqual;
                 // cc = ConditionFlag.lessEqual;
                 break;
             case Bytecodes.IF_ICMPLT:
-                peekInt(scratch, 1);
-                peekInt(scratch2, 0);
+                peekInt(r8, 1);
+                peekInt(r9, 0);
                 decStack(2);
-                asm.cmpl(scratch, scratch2);
+                asm.cmpl(r8, r9);
                 // cc = ConditionFlag.less;
                 cc = ConditionFlag.SignedLesser;
                 break;
             case Bytecodes.IF_ACMPEQ:
-                peekObject(scratch, 1);
-                peekObject(scratch2, 0);
+                peekObject(r8, 1);
+                peekObject(r9, 0);
                 decStack(2);
-                asm.cmpl(scratch, scratch2);
+                asm.cmpl(r8, r9);
                 cc = ConditionFlag.Equal;
                 // cc = ConditionFlag.equal;
                 break;
             case Bytecodes.IF_ACMPNE:
-                peekObject(scratch, 1);
-                peekObject(scratch2, 0);
+                peekObject(r8, 1);
+                peekObject(r9, 0);
                 decStack(2);
-                asm.cmpl(scratch, scratch2);
+                asm.cmpl(r8, r9);
                 cc = ConditionFlag.NotEqual;
                 // cc= ConditionFlag.notEqual;
                 break;
             case Bytecodes.IFNULL:
-                peekObject(scratch, 0);
-                assignObject(scratch2, null);
+                peekObject(r8, 0);
+                assignObject(r9, null);
                 decStack(1);
-                asm.cmpl(scratch, scratch2);
+                asm.cmpl(r8, r9);
                 cc = ConditionFlag.Equal;
                 // cc = ConditionFlag.equal;
                 break;
             case Bytecodes.IFNONNULL:
-                peekObject(scratch, 0);
-                assignObject(scratch2, null);
+                peekObject(r9, 0);
+                assignObject(r9, null);
                 decStack(1);
-                asm.cmpl(scratch, scratch2);
+                asm.cmpl(r8, r9);
                 cc = ConditionFlag.NotEqual;
                 // cc = ConditionFlag.notEqual;
                 break;

@@ -418,6 +418,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (Rn.encoding & 0xf) << 16;
         instruction |= imm5 << 7;
         instruction |= imm2Type << 5;
+        instruction |= (Rm.encoding&0xf);
         emitInt(instruction);
 
     }
@@ -731,10 +732,12 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void jcc(ConditionFlag cc, int target, boolean forceDisp32) {
         int disp = (target - codeBuffer.position());
+        forceDisp32 = true;
         if (disp <= 16777215 && !forceDisp32) {
             emitInt((cc.value & 0xf) << 28 | (0xa << 24) | (disp & 0xffffff));
         } else {
             // we need or have been instructed to do this as a 32 bit branch
+            disp -= 16; // as we need 4x4byte instructions
             mov32BitConstant(scratchRegister, disp);
             addRegisters(ConditionFlag.Always, false, scratchRegister, ARMV7.r15, scratchRegister, 0, 0);
             mov(cc, false, ARMV7.r15, scratchRegister); // UPDATE the PC to the target
