@@ -732,8 +732,9 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void jcc(ConditionFlag cc, int target, boolean forceDisp32) {
         int disp = (target - codeBuffer.position());
-        forceDisp32 = true;
+        //forceDisp32 = true;
         if (disp <= 16777215 && !forceDisp32) {
+            disp = disp / 4 -2;
             emitInt((cc.value & 0xf) << 28 | (0xa << 24) | (disp & 0xffffff));
         } else {
             // we need or have been instructed to do this as a 32 bit branch
@@ -741,7 +742,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             mov32BitConstant(scratchRegister, disp);
             addRegisters(ConditionFlag.Always, false, scratchRegister, ARMV7.r15, scratchRegister, 0, 0);
             mov(cc, false, ARMV7.r15, scratchRegister); // UPDATE the PC to the target
-        }
+         }
     }
 
     public final void jmp(int target, boolean forceDisp32) {
@@ -749,10 +750,12 @@ public class ARMV7Assembler extends AbstractAssembler {
         int disp = target - codeBuffer.position();
         if (disp <= 16777215  && !forceDisp32) {
             // we can do this in a single conditional branch
+            disp = disp /4 - 2;
             emitInt((0xe << 28) | (0xa << 24) | (disp & 0xffffff));
         } else {
             // 4 instructions extra are inserted
             if (disp > 0) disp =  disp - 16;
+            // TODO does this work if above for both directions of a branch
             mov32BitConstant(scratchRegister, disp);
             addRegisters(ConditionFlag.Always, false, scratchRegister, ARMV7.r15, scratchRegister, 0, 0);
             mov(ConditionFlag.Always, false, ARMV7.r15, scratchRegister); // UPDATE the PC to the target
