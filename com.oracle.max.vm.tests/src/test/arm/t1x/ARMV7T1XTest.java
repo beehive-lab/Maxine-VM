@@ -968,7 +968,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         branches.add(new BranchInfo(Bytecodes.IF_ICMPGT, 5, 0, 0, -1));
         branches.add(new BranchInfo(Bytecodes.IF_ICMPGE, 5, 0, -1, -1));
         branches.add(new BranchInfo(Bytecodes.IF_ICMPNE, 5, 6, 6, 1));
-        //branches.add(new BranchInfo(Bytecodes.IF_ICMPEQ, 0, 1, 2, 2));
+        branches.add(new BranchInfo(Bytecodes.IF_ICMPEQ, 0, 0, 2, 2));
     }
 
 

@@ -751,6 +751,8 @@ public class ARMV7Assembler extends AbstractAssembler {
             // we can do this in a single conditional branch
             emitInt((0xe << 28) | (0xa << 24) | (disp & 0xffffff));
         } else {
+            // 4 instructions extra are inserted
+            if (disp > 0) disp =  disp - 16;
             mov32BitConstant(scratchRegister, disp);
             addRegisters(ConditionFlag.Always, false, scratchRegister, ARMV7.r15, scratchRegister, 0, 0);
             mov(ConditionFlag.Always, false, ARMV7.r15, scratchRegister); // UPDATE the PC to the target
