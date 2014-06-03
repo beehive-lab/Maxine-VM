@@ -160,6 +160,12 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
+    public void nop(final ConditionFlag cond) {
+        int instruction = 0x320F000;
+        instruction |= (cond.value() & 0xf) << 28;
+        emitInt(instruction);
+    }
+
     public void sub(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int immed_8, final int rotate_amount) {
         int instruction = 0x02400000; // subract of an immediate
         checkConstraint(0 <= immed_8 && immed_8 <= 255, "0 <= immed_8 && immed_8 <= 255");
@@ -447,11 +453,9 @@ public class ARMV7Assembler extends AbstractAssembler {
         CiRegister index = addr.index();
         CiAddress.Scale scale = addr.scale;
         int disp = addr.displacement;
-        // APN Placeholders not handled yet
-        // OK need to leave enough space to handle all eventualities
         if (addr == CiAddress.Placeholder) {
-            nop(4); // 4 instructions, 2 for mov32, 1 for add and 1 for addclsl
-
+            nop(numInstructions(addr)); // 4 instructions, 2 for mov32, 1 for add and 1 for addclsl
+            return;
         }
         assert base.isValid();
         // APN can we have a memory address --- not handled yet?
@@ -471,6 +475,20 @@ public class ARMV7Assembler extends AbstractAssembler {
                     mov(ConditionFlag.Always, false, scratchRegister, base);
                 }
             }
+        }
+    }
+
+    private int numInstructions(CiAddress addr) {
+        CiRegister index = addr.index();
+        int disp = addr.displacement;
+        if (disp != 0) {
+            if (index.isValid()) {
+                return 4;
+            } else {
+                return 3;
+            }
+        } else {
+            return 1;
         }
     }
 
@@ -531,8 +549,12 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void leaq(CiRegister dest, CiAddress addr) {
-        setUpScratch(addr);
-        mov(ConditionFlag.Always, false, dest, ARMV7.r12);
+        if (addr == CiAddress.Placeholder) {
+            nop(numInstructions(addr) + 1);
+        } else {
+            setUpScratch(addr);
+            mov(ConditionFlag.Always, false, dest, ARMV7.r12);
+        }
     }
 
     public final void leave() {
@@ -694,15 +716,15 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
     }
 
+    public final void nop() {
+        nop(1);
+    }
+
     public final void nop(int times) {
         assert times > 0;
         for (int i = 0; i < times; i++) {
-            nop();
+            nop(ConditionFlag.Always);
         }
-    }
-
-    public final void nop() {
-        mov(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12); //
     }
 
     public final void ret() {
@@ -732,30 +754,24 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void jcc(ConditionFlag cc, int target, boolean forceDisp32) {
         int disp = (target - codeBuffer.position());
-        //forceDisp32 = true;
-        if (disp <= 16777215 && !forceDisp32) {
-            disp = disp / 4 -2;
+        if (disp <= 16777215 && forceDisp32) {
+            disp = (disp / 4) - 2;
             emitInt((cc.value & 0xf) << 28 | (0xa << 24) | (disp & 0xffffff));
         } else {
-            // we need or have been instructed to do this as a 32 bit branch
-            disp -= 16; // as we need 4x4byte instructions
+            if (disp > 0) disp -= 16;
             mov32BitConstant(scratchRegister, disp);
             addRegisters(ConditionFlag.Always, false, scratchRegister, ARMV7.r15, scratchRegister, 0, 0);
-            mov(cc, false, ARMV7.r15, scratchRegister); // UPDATE the PC to the target
+            mov(cc, false, ARMV7.r15, scratchRegister);
          }
     }
 
     public final void jmp(int target, boolean forceDisp32) {
-        // ARM but not tested!!!
         int disp = target - codeBuffer.position();
-        if (disp <= 16777215  && !forceDisp32) {
-            // we can do this in a single conditional branch
-            disp = disp /4 - 2;
+        if (disp <= 16777215  && forceDisp32) {
+            disp = (disp / 4) - 2;
             emitInt((0xe << 28) | (0xa << 24) | (disp & 0xffffff));
         } else {
-            // 4 instructions extra are inserted
-            if (disp > 0) disp =  disp - 16;
-            // TODO does this work if above for both directions of a branch
+            if (disp > 0) disp -= 16;
             mov32BitConstant(scratchRegister, disp);
             addRegisters(ConditionFlag.Always, false, scratchRegister, ARMV7.r15, scratchRegister, 0, 0);
             mov(ConditionFlag.Always, false, ARMV7.r15, scratchRegister); // UPDATE the PC to the target

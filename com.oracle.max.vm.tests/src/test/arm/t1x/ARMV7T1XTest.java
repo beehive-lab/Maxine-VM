@@ -964,8 +964,6 @@ public class ARMV7T1XTest extends MaxTestCase {
 
     private static final List<BranchInfo> branches = new LinkedList<>();
     static {
-        // private BranchInfo(int bc, int start, int end, int expected, int step) {
-
         branches.add(new BranchInfo(Bytecodes.IF_ICMPLT, 0, 10, 10, 1));
         branches.add(new BranchInfo(Bytecodes.IF_ICMPLE, 0, 10, 11, 1));
         branches.add(new BranchInfo(Bytecodes.IF_ICMPGT, 5, 0, 0, -1));
@@ -1027,6 +1025,103 @@ public class ARMV7T1XTest extends MaxTestCase {
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + Long.toString(registerValues[0], 16) + " " + Long.toString(expectedValues[0], 16);
             theCompiler.cleanup();
         }
+    }
+
+    public void ignoreSwitchTable() throws Exception {
+     //int i = 1;
+     //int j;
+     //switch(i) {
+     //    case 0: j=10;
+     //    case 1: j=20;
+     //    case 2: j=30;
+     //    default: j=40;
+     //}
+
+     //int chooseNear(int i) {
+     //       switch (i) {
+     //} }
+     //compiles to:
+     //case 0:  return  0;
+     //case 1:  return  1;
+     //case 2:  return  2;
+     //default: return -1;
+     //Method int chooseNear(int)
+     //0 iload_1 // Push local variable 1 (argument i)
+     //1 tableswitch 0 to 2: // Valid indices are 0 through 2
+     //      0: 28
+     //      1: 30
+     //      2: 32
+     //      default:34
+     //28 iconst_0
+     //29 ireturn
+     //30 iconst_1
+     //31 ireturn
+     //32 iconst_2
+     //33 ireturn
+     //34 iconst_m1
+     //35 ireturn
+        expectedValues[0] = 20;
+
+        byte[] instructions = new byte[40];
+        instructions[0] = (byte) Bytecodes.ICONST_1;
+        instructions[1] = (byte) Bytecodes.ISTORE_1;
+        instructions[2] = (byte) Bytecodes.ILOAD_1;
+
+        instructions[3] = (byte) Bytecodes.TABLESWITCH;
+        instructions[4] = (byte) 0;
+        instructions[5] = (byte) 0;
+        instructions[6] = (byte) 0;
+        instructions[7] = (byte) 0x22;
+
+        instructions[8] = (byte) 0;
+        instructions[9] = (byte) 0;
+        instructions[10] = (byte) 0;
+        instructions[11] = (byte) 0;
+
+        instructions[12] = (byte) 0;
+        instructions[13] = (byte) 0;
+        instructions[14] = (byte) 0;
+        instructions[15] = (byte) 0x2;
+
+        instructions[16] = (byte) 0;
+        instructions[17] = (byte) 0;
+        instructions[18] = (byte) 0;
+        instructions[19] = (byte) 0x19;
+
+        instructions[20] = (byte) 0;
+        instructions[21] = (byte) 0;
+        instructions[22] = (byte) 0;
+        instructions[23] = (byte) 0x1c;
+
+        instructions[24] = (byte) 0;
+        instructions[25] = (byte) 0;
+        instructions[26] = (byte) 0;
+        instructions[27] = (byte) 0x1f;
+
+        instructions[28] = (byte) Bytecodes.BIPUSH;
+        instructions[29] = (byte) 10;
+        instructions[30] = (byte) Bytecodes.ISTORE_2;
+        instructions[31] = (byte) Bytecodes.BIPUSH;
+        instructions[32] = (byte) 20;
+        instructions[33] = (byte) Bytecodes.ISTORE_2;
+        instructions[34] = (byte) Bytecodes.BIPUSH;
+        instructions[35] = (byte) 30;
+        instructions[36] = (byte) Bytecodes.ISTORE_2;
+        instructions[37] = (byte) Bytecodes.BIPUSH;
+        instructions[38] = (byte) 40;
+        instructions[39] = (byte) Bytecodes.ISTORE_2;
+
+        initialiseFrameForCompilation(instructions);
+        theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 40);
+        ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.pop(ARMV7Assembler.ConditionFlag.Always, 1);
+        int assemblerStatements = masm.codeBuffer.position() / 4;
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
+        assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + Long.toString(registerValues[0], 16) + " " + Long.toString(expectedValues[0], 16);
+        theCompiler.cleanup();
+
+
+
     }
 
     public void ignoreCallDirect() throws Exception {

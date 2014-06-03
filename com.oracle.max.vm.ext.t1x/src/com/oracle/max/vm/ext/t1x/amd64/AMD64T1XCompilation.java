@@ -367,7 +367,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
         }
 
         // Pop index from stack into rax
-        asm.movl(rax, new CiAddress(CiKind.Int, rsp.asValue()));
+        asm.movl(rax, new CiAddress(CiKind.Int, RSP));
         asm.addq(rsp, JVMSFrameLayout.JVMS_SLOT_SIZE);
 
         // Compare index against jump table bounds
