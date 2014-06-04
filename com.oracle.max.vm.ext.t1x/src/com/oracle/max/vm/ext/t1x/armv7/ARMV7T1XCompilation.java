@@ -557,7 +557,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         BytecodeTableSwitch ts = new BytecodeTableSwitch(stream, bci);
         int lowMatch = ts.lowKey();
         int highMatch = ts.highKey();
-        System.out.println("Low " + lowMatch + " High " + highMatch +" Cases " + ts.numberOfCases());
+        System.out.println("Low " + lowMatch + " High " + highMatch +" Cases " + ts.numberOfCases() + " Default target " + ts.defaultTarget());
         if (lowMatch > highMatch) {
             throw verifyError("Low must be less than or equal to high in TABLESWITCH");
         }
@@ -596,9 +596,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
         // Load jump table entry into r15 and jump to it
         asm.setUpScratch(new CiAddress(CiKind.Int, r10.asValue(), r9.asValue(), Scale.Times4, 0));
-        asm.addRegisters(ConditionFlag.Always, false, r12, r10, r12, 0, 0); // need to be careful are we using the right add!
+        asm.ldrImmediate(ConditionFlag.Always, 0, 0, 0, r12, ARMV7.r12, 0);
+        asm.addRegisters(ConditionFlag.Always, false, r12, ARMV7.r15, r12, 0, 0); // need to be careful are we using the right add!
         asm.mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12);
-
         asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10); // restore r9/r10
 
         // Inserting padding so that jump table address is 4-byte aligned
@@ -611,7 +611,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         int jumpTablePos = buf.position();
         buf.setPosition(leaPos); // move the asm buffer position to where the leaq was added
         System.out.println("Jump table pos " + jumpTablePos + " After Lea " + afterLea);
-        asm.leaq(r10, new CiAddress(WordUtil.archKind(), ARMV7.r15.asValue(), jumpTablePos - afterLea)); // patch it
+        asm.leaq(r10, new CiAddress(WordUtil.archKind(), rip.asValue(), jumpTablePos - afterLea + 4)); // patch it
         buf.setPosition(jumpTablePos); // reposition back to the correct place
 
         // Emit jump table entries

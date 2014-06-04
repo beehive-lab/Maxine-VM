@@ -550,7 +550,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void leaq(CiRegister dest, CiAddress addr) {
         if (addr == CiAddress.Placeholder) {
-            nop(numInstructions(addr) + 1);
+            nop(5);
         } else {
             setUpScratch(addr);
             mov(ConditionFlag.Always, false, dest, ARMV7.r12);

@@ -411,7 +411,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
             int targetBCI = ts.targetAt(i);
             startBlock(targetBCI);
             pos = buf.position();
-            patchInfo.addJumpTableEntry(pos, jumpTablePos, targetBCI);
+            patchInfo.addJumpTableEntry(pos, jumpTablePos + 4, targetBCI);
             buf.emitInt(0);
         }
 

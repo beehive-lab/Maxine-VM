@@ -1027,14 +1027,14 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void ignoreSwitchTable() throws Exception {
+    public void testSwitchTable() throws Exception {
      //int i = 1;
-     //int j;
+     //int j, k , l, m;
      //switch(i) {
      //    case 0: j=10;
-     //    case 1: j=20;
-     //    case 2: j=30;
-     //    default: j=40;
+     //    case 1: k=20;
+     //    case 2: l=30;
+     //    default: m=40;
      //}
 
      //int chooseNear(int i) {
@@ -1060,9 +1060,13 @@ public class ARMV7T1XTest extends MaxTestCase {
      //33 ireturn
      //34 iconst_m1
      //35 ireturn
-        expectedValues[0] = 20;
+        expectedValues[0] = 0;
+        expectedValues[1] = 20;
+        expectedValues[2] = 0;
+        expectedValues[3] = 0;
 
-        byte[] instructions = new byte[40];
+
+        byte[] instructions = new byte[42];
         instructions[0] = (byte) Bytecodes.ICONST_1;
         instructions[1] = (byte) Bytecodes.ISTORE_1;
         instructions[2] = (byte) Bytecodes.ILOAD_1;
@@ -1071,7 +1075,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         instructions[4] = (byte) 0;
         instructions[5] = (byte) 0;
         instructions[6] = (byte) 0;
-        instructions[7] = (byte) 0x22;
+        instructions[7] = (byte) 0x23;
 
         instructions[8] = (byte) 0;
         instructions[9] = (byte) 0;
@@ -1101,27 +1105,41 @@ public class ARMV7T1XTest extends MaxTestCase {
         instructions[28] = (byte) Bytecodes.BIPUSH;
         instructions[29] = (byte) 10;
         instructions[30] = (byte) Bytecodes.ISTORE_2;
+
         instructions[31] = (byte) Bytecodes.BIPUSH;
         instructions[32] = (byte) 20;
-        instructions[33] = (byte) Bytecodes.ISTORE_2;
+        instructions[33] = (byte) Bytecodes.ISTORE_3;
+
         instructions[34] = (byte) Bytecodes.BIPUSH;
         instructions[35] = (byte) 30;
-        instructions[36] = (byte) Bytecodes.ISTORE_2;
-        instructions[37] = (byte) Bytecodes.BIPUSH;
-        instructions[38] = (byte) 40;
-        instructions[39] = (byte) Bytecodes.ISTORE_2;
+        instructions[36] = (byte) Bytecodes.ISTORE;
+        instructions[37] = (byte) 4;
+
+        instructions[38] = (byte) Bytecodes.BIPUSH;
+        instructions[39] = (byte) 40;
+        instructions[40] = (byte) Bytecodes.ISTORE;
+        instructions[41] = (byte) 5;
 
         initialiseFrameForCompilation(instructions);
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 40);
+        theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 42);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.pop(ARMV7Assembler.ConditionFlag.Always, 1);
+        theCompiler.peekInt(ARMV7.cpuRegisters[0], 4);
+        theCompiler.peekInt(ARMV7.cpuRegisters[1], 3);
+        theCompiler.peekInt(ARMV7.cpuRegisters[2], 2);
+        theCompiler.peekInt(ARMV7.cpuRegisters[3], 1);
+        theCompiler.peekInt(ARMV7.cpuRegisters[4], 0);
+
         int assemblerStatements = masm.codeBuffer.position() / 4;
         int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
-        assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + Long.toString(registerValues[0], 16) + " " + Long.toString(expectedValues[0], 16);
+        System.out.println("Register 0 " + registerValues[0]);
+        System.out.println("Register 1 " + registerValues[1]);
+        System.out.println("Register 2 " + registerValues[2]);
+        System.out.println("Register 3 " + registerValues[3]);
+        System.out.println("Register 4 " + registerValues[4]);
+
+        assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+        assert registerValues[1] == expectedValues[1] : "Failed incorrect value " + registerValues[1] + " " + expectedValues[1];
         theCompiler.cleanup();
-
-
-
     }
 
     public void ignoreCallDirect() throws Exception {

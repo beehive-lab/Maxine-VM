@@ -56,6 +56,7 @@ public class ARMV7 extends CiArchitecture {
     // R15 -> PC
     public static final CiRegister r15 = new CiRegister(15, 15, 4, "r15", CPU, RegisterFlag.Byte);
 
+
     //TODO: CiArchitecture doesn't allow mixed-size registers (pretending we have 4 byte FP regs)
     //TODO: Might be something to do with the spillSlotSize the size of the stack slot used to spill
     // TODO the value of the register
@@ -117,6 +118,9 @@ public class ARMV7 extends CiArchitecture {
     public static final CiRegister[] cpuRegisters = {
         r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, r15
     };
+
+    public static final CiRegister rip = new CiRegister(64, -1, 0, "rip");
+
 
     // TODO: not including the other 32 advanced SIMD floating point registers out of laziness for now
     // also because we are not targetting advanced SIMD yet.
