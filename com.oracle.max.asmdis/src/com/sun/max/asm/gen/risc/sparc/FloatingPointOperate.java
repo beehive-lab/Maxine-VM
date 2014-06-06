@@ -60,6 +60,11 @@ public class FloatingPointOperate extends SPARCInstructionDescriptionCreator {
         define("f" + name + type, head, opf(opfContents), frs2Field, frdField);
     }
 
+    private void createVis(String name, int opf, Object rd, Object rs2) {
+        assert opf > 0 && opf < (1 << 10) : opf;
+        define(name, op(2), op3(0x36), bits_18_14(0x00), opf(opf), rs2, rd);
+    }
+
     private void create_A12(Object[] head) {
         createBinaryArithmetic("add", "s", head, sfrs1, sfrs2, sfrd, 0x41);
         createBinaryArithmetic("add", "d", head, dfrs1, dfrs2, dfrd, 0x42);
@@ -132,6 +137,14 @@ public class FloatingPointOperate extends SPARCInstructionDescriptionCreator {
         createUnaryArithmetic("sqrt", "q", head, qfrs2, qfrd, 0x2b);
     }
 
+    private void create_VIS3(Object[] head) {
+        createVis("movdtox", 0x110, rd, dfrs2);
+        createVis("movstouw", 0x111, rd, sfrs2);
+        createVis("movstosw", 0x113, rd, sfrs2);
+        createVis("movxtod",  0x118, dfrd, rs2);
+        createVis("movwtos",  0x119, sfrd, rs2);
+    }
+
     FloatingPointOperate(RiscTemplateCreator templateCreator) {
         super(templateCreator);
 
@@ -161,6 +174,9 @@ public class FloatingPointOperate extends SPARCInstructionDescriptionCreator {
 
         setCurrentArchitectureManualSection("A.19");
         create_A19(head2);
+
+        setCurrentArchitectureManualSection("VIS3");
+        create_VIS3(new Object[]{op(2)});
     }
 
 }
