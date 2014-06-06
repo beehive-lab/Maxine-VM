@@ -1185,6 +1185,123 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
+    public void testLookupTable() throws Exception {
+        // int i = 1;
+        // int j, k , l, m;
+        // switch(i) {
+        // case -100: j=10;
+        // case 0: k=20;
+        // case 100: l=30;
+        // default: m=40;
+        // }
+
+        // int chooseNear(int i) {
+        // switch (i) {
+        // } }
+        // compiles to:
+        // case 0: return 0;
+        // case 1: return 1;
+        // case 2: return 2;
+        // default: return -1;
+        // Method int chooseNear(int)
+        // 0 iload_1 // Push local variable 1 (argument i)
+        // 1 tableswitch 0 to 2: // Valid indices are 0 through 2
+        // 0: 28
+        // 1: 30
+        // 2: 32
+        // default:34
+        // 28 iconst_0
+        // 29 ireturn
+        // 30 iconst_1
+        // 31 ireturn
+        // 32 iconst_2
+        // 33 ireturn
+        // 34 iconst_m1
+        // 35 ireturn
+
+        int[] values = new int[] { 10, 20, 30, 40};
+        for (int i = 0; i < values.length; i++) {
+            for (int j = 0; j < values.length; j++) {
+                if (i > j) {
+                    expectedValues[j] = 0;
+                } else {
+                    expectedValues[j] = values[j];
+                }
+            }
+
+            byte[] instructions = new byte[36];
+            if (i == 0) {
+                instructions[0] = (byte) Bytecodes.ICONST_0;
+            } else if (i == 1) {
+                instructions[0] = (byte) Bytecodes.ICONST_1;
+            } else if (i == 2) {
+                instructions[0] = (byte) Bytecodes.ICONST_2;
+            } else {
+                instructions[0] = (byte) Bytecodes.ICONST_3;
+            }
+            instructions[1] = (byte) Bytecodes.ISTORE_1;
+            instructions[2] = (byte) Bytecodes.ILOAD_1;
+
+            instructions[3] = (byte) Bytecodes.LOOKUPSWITCH;
+            instructions[4] = (byte) 0;
+            instructions[5] = (byte) 0;
+            instructions[6] = (byte) 0;
+            instructions[7] = (byte) 0x1f;
+
+            instructions[8] = (byte) 0;
+            instructions[9] = (byte) 0;
+            instructions[10] = (byte) 0;
+            instructions[11] = (byte) 0;
+
+            instructions[12] = (byte) 0;
+            instructions[13] = (byte) 0;
+            instructions[14] = (byte) 0;
+            instructions[15] = (byte) 0x2;
+
+            instructions[16] = (byte) 0;
+            instructions[17] = (byte) 0;
+            instructions[18] = (byte) 0;
+            instructions[19] = (byte) 0x19;
+
+            instructions[20] = (byte) 0;
+            instructions[21] = (byte) 0;
+            instructions[22] = (byte) 0;
+            instructions[23] = (byte) 0x1b;
+
+            instructions[24] = (byte) 0;
+            instructions[25] = (byte) 0;
+            instructions[26] = (byte) 0;
+            instructions[27] = (byte) 0x1d;
+
+            instructions[28] = (byte) Bytecodes.BIPUSH;
+            instructions[29] = (byte) values[0];
+
+            instructions[30] = (byte) Bytecodes.BIPUSH;
+            instructions[31] = (byte) values[1];
+
+            instructions[32] = (byte) Bytecodes.BIPUSH;
+            instructions[33] = (byte) values[2];
+
+            instructions[34] = (byte) Bytecodes.BIPUSH;
+            instructions[35] = (byte) values[3];
+
+            initialiseFrameForCompilation(instructions);
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 36);
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            theCompiler.peekInt(ARMV7.r3, 0);
+            theCompiler.peekInt(ARMV7.r2, 1);
+            theCompiler.peekInt(ARMV7.r1, 2);
+            theCompiler.peekInt(ARMV7.r0, 3);
+            int assemblerStatements = masm.codeBuffer.position() / 4;
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
+            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            assert registerValues[1] == expectedValues[1] : "Failed incorrect value " + registerValues[1] + " " + expectedValues[1];
+            assert registerValues[2] == expectedValues[2] : "Failed incorrect value " + registerValues[2] + " " + expectedValues[2];
+            assert registerValues[3] == expectedValues[3] : "Failed incorrect value " + registerValues[3] + " " + expectedValues[3];
+            theCompiler.cleanup();
+        }
+    }
+
     public void ignoreCallDirect() throws Exception {
     }
 
