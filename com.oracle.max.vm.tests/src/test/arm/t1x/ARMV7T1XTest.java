@@ -1101,17 +1101,13 @@ public class ARMV7T1XTest extends MaxTestCase {
         // 33 ireturn
         // 34 iconst_m1
         // 35 ireturn
-        //expectedValues[0] = 0;
-        //expectedValues[1] = 20;
-        //expectedValues[2] = 30;
-        //expectedValues[3] = 40;
 
         int[] values = new int[] { 10, 20, 30, 40};
         for (int i = 0; i < values.length; i++) {
             for (int j = 0; j < values.length; j++) {
                 if (i > j) {
                     expectedValues[j] = 0;
-               } else {
+                } else {
                     expectedValues[j] = values[j];
                 }
             }
@@ -1162,21 +1158,15 @@ public class ARMV7T1XTest extends MaxTestCase {
 
             instructions[28] = (byte) Bytecodes.BIPUSH;
             instructions[29] = (byte) values[0];
-            // instructions[30] = (byte) Bytecodes.ISTORE_2;
 
             instructions[30] = (byte) Bytecodes.BIPUSH;
             instructions[31] = (byte) values[1];
-            // instructions[33] = (byte) Bytecodes.ISTORE_3;
 
             instructions[32] = (byte) Bytecodes.BIPUSH;
             instructions[33] = (byte) values[2];
-            // instructions[36] = (byte) Bytecodes.ISTORE;
-            // instructions[37] = (byte) 4;
 
             instructions[34] = (byte) Bytecodes.BIPUSH;
             instructions[35] = (byte) values[3];
-            // instructions[40] = (byte) Bytecodes.ISTORE;
-            // instructions[41] = (byte) 5;
 
             initialiseFrameForCompilation(instructions);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 36);
@@ -1187,16 +1177,12 @@ public class ARMV7T1XTest extends MaxTestCase {
             theCompiler.peekInt(ARMV7.r0, 3);
             int assemblerStatements = masm.codeBuffer.position() / 4;
             int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
-            System.out.println("Register 0 " + registerValues[0]);
-            System.out.println("Register 1 " + registerValues[1]);
-            System.out.println("Register 2 " + registerValues[2]);
-            System.out.println("Register 3 " + registerValues[3]);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             assert registerValues[1] == expectedValues[1] : "Failed incorrect value " + registerValues[1] + " " + expectedValues[1];
             assert registerValues[2] == expectedValues[2] : "Failed incorrect value " + registerValues[2] + " " + expectedValues[2];
             assert registerValues[3] == expectedValues[3] : "Failed incorrect value " + registerValues[3] + " " + expectedValues[3];
             theCompiler.cleanup();
-       }
+        }
     }
 
     public void ignoreCallDirect() throws Exception {

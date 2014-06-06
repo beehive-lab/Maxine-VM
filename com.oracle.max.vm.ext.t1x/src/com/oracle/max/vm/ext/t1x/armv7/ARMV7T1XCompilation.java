@@ -557,24 +557,16 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         BytecodeTableSwitch ts = new BytecodeTableSwitch(stream, bci);
         int lowMatch = ts.lowKey();
         int highMatch = ts.highKey();
-        System.out.println("Low " + lowMatch + " High " + highMatch +" Cases " + ts.numberOfCases() + " Default target " + ts.defaultTarget());
         if (lowMatch > highMatch) {
             throw verifyError("Low must be less than or equal to high in TABLESWITCH");
         }
 
-        //PC 15
-        //RSP 13
-        //Scratch 12
-        // Index r9
-
-        // Pop index from stack into scratch --
-        // could just pop but this code presumably makes it easier to move to 64bit!
+        // Pop index from stack into scratch
         asm.setUpScratch(new CiAddress(CiKind.Int, RSP));
         asm.ldr(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, asm.scratchRegister, asm.scratchRegister, 0, 0);
-        asm.addq(r13, JVMSFrameLayout.JVMS_SLOT_SIZE); // increment stack (due to pop)
-
-        asm.push(ConditionFlag.Always, 1 << 10 | 1 << 9); // push r9, r10 onto the stack
-        asm.mov(ConditionFlag.Always, false, ARMV7.r9, ARMV7.r8); // r9 stores index!
+        asm.addq(r13, JVMSFrameLayout.JVMS_SLOT_SIZE);
+        asm.push(ConditionFlag.Always, 1 << 10 | 1 << 9);
+        asm.mov(ConditionFlag.Always, false, ARMV7.r9, ARMV7.r8); // r9 stores index
         // Compare index against jump table bounds
         if (lowMatch != 0) {
             asm.subq(r9, lowMatch);
@@ -604,14 +596,12 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
         // Inserting padding so that jump table address is 4-byte aligned
         if ((buf.position() & 0x3) != 0) {
-            System.out.println("Nops " + (4 - (buf.position() & 0x3)));
             asm.nop(4 - (buf.position() & 0x3));
         }
 
         // Patch LEA instruction above now that we know the position of the jump table
         int jumpTablePos = buf.position();
         buf.setPosition(leaPos); // move the asm buffer position to where the leaq was added
-        System.out.println("Jump table pos " + jumpTablePos + " After Lea " + afterLea);
         asm.leaq(r10, new CiAddress(WordUtil.archKind(), rip.asValue(), jumpTablePos - afterLea + 4)); // patch it
         buf.setPosition(jumpTablePos); // reposition back to the correct place
 
@@ -623,7 +613,6 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             patchInfo.addJumpTableEntry(pos, jumpTablePos, targetBCI);
             buf.emitInt(0);
         }
-
         if (codeAnnotations == null) {
             codeAnnotations = new ArrayList<CiTargetMethod.CodeAnnotation>();
         }
@@ -926,7 +915,6 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 assert target != 0;
                 buf.setPosition(pos);
                 asm.jcc(cc, target, true);
-                System.out.println("JCC target " + target);
             } else if (tag == PatchInfoARMV7.JMP) {
                 int pos = data[i++];
                 int targetBCI = data[i++];
@@ -943,7 +931,6 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 int disp = target - jumpTablePos;
                 buf.setPosition(pos);
                 buf.emitInt(disp);
-                System.out.println("JTW target target "+ target +" disp " + disp);
             } else if (tag == PatchInfoARMV7.LOOKUP_TABLE_ENTRY) {
                 int pos = data[i++];
                 int key = data[i++];
