@@ -1027,119 +1027,176 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void testSwitchTable() throws Exception {
-     //int i = 1;
-     //int j, k , l, m;
-     //switch(i) {
-     //    case 0: j=10;
-     //    case 1: k=20;
-     //    case 2: l=30;
-     //    default: m=40;
-     //}
-
-     //int chooseNear(int i) {
-     //       switch (i) {
-     //} }
-     //compiles to:
-     //case 0:  return  0;
-     //case 1:  return  1;
-     //case 2:  return  2;
-     //default: return -1;
-     //Method int chooseNear(int)
-     //0 iload_1 // Push local variable 1 (argument i)
-     //1 tableswitch 0 to 2: // Valid indices are 0 through 2
-     //      0: 28
-     //      1: 30
-     //      2: 32
-     //      default:34
-     //28 iconst_0
-     //29 ireturn
-     //30 iconst_1
-     //31 ireturn
-     //32 iconst_2
-     //33 ireturn
-     //34 iconst_m1
-     //35 ireturn
-        expectedValues[0] = 0;
+    /**
+     * This test does not yet actually tests local variables.
+     */
+    public void testLocals() throws Exception {
+        expectedValues[0] = 10;
         expectedValues[1] = 20;
-        expectedValues[2] = 0;
-        expectedValues[3] = 0;
-
-
-        byte[] instructions = new byte[42];
-        instructions[0] = (byte) Bytecodes.ICONST_1;
-        instructions[1] = (byte) Bytecodes.ISTORE_1;
-        instructions[2] = (byte) Bytecodes.ILOAD_1;
-
-        instructions[3] = (byte) Bytecodes.TABLESWITCH;
-        instructions[4] = (byte) 0;
-        instructions[5] = (byte) 0;
-        instructions[6] = (byte) 0;
-        instructions[7] = (byte) 0x23;
-
-        instructions[8] = (byte) 0;
-        instructions[9] = (byte) 0;
-        instructions[10] = (byte) 0;
-        instructions[11] = (byte) 0;
-
-        instructions[12] = (byte) 0;
-        instructions[13] = (byte) 0;
-        instructions[14] = (byte) 0;
-        instructions[15] = (byte) 0x2;
-
-        instructions[16] = (byte) 0;
-        instructions[17] = (byte) 0;
-        instructions[18] = (byte) 0;
-        instructions[19] = (byte) 0x19;
-
-        instructions[20] = (byte) 0;
-        instructions[21] = (byte) 0;
-        instructions[22] = (byte) 0;
-        instructions[23] = (byte) 0x1c;
-
-        instructions[24] = (byte) 0;
-        instructions[25] = (byte) 0;
-        instructions[26] = (byte) 0;
-        instructions[27] = (byte) 0x1f;
-
-        instructions[28] = (byte) Bytecodes.BIPUSH;
-        instructions[29] = (byte) 10;
-        instructions[30] = (byte) Bytecodes.ISTORE_2;
-
-        instructions[31] = (byte) Bytecodes.BIPUSH;
-        instructions[32] = (byte) 20;
-        instructions[33] = (byte) Bytecodes.ISTORE_3;
-
-        instructions[34] = (byte) Bytecodes.BIPUSH;
-        instructions[35] = (byte) 30;
-        instructions[36] = (byte) Bytecodes.ISTORE;
-        instructions[37] = (byte) 4;
-
-        instructions[38] = (byte) Bytecodes.BIPUSH;
-        instructions[39] = (byte) 40;
-        instructions[40] = (byte) Bytecodes.ISTORE;
-        instructions[41] = (byte) 5;
-
+        expectedValues[2] = 30;
+        expectedValues[3] = 40;
+        byte[] instructions = new byte[8];
+        instructions[0] = (byte) Bytecodes.BIPUSH;
+        instructions[1] = (byte) 10;
+        // instructions[2] = (byte) Bytecodes.ISTORE_0;
+        instructions[2] = (byte) Bytecodes.BIPUSH;
+        instructions[3] = (byte) 20;
+        // instructions[5] = (byte) Bytecodes.ISTORE_1;
+        instructions[4] = (byte) Bytecodes.BIPUSH;
+        instructions[5] = (byte) 30;
+        // instructions[8] = (byte) Bytecodes.ISTORE_2;
+        instructions[6] = (byte) Bytecodes.BIPUSH;
+        instructions[7] = (byte) 40;
+        // instructions[11] = (byte) Bytecodes.ISTORE_3;
+        // instructions[12] = (byte) Bytecodes.ILOAD_0;
+        // instructions[13] = (byte) Bytecodes.ILOAD_1;
+        // instructions[14] = (byte) Bytecodes.ILOAD_2;
+        // instructions[15] = (byte) Bytecodes.ILOAD_3;
         initialiseFrameForCompilation(instructions);
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 42);
+        theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 8);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        theCompiler.peekInt(ARMV7.cpuRegisters[0], 4);
-        theCompiler.peekInt(ARMV7.cpuRegisters[1], 3);
-        theCompiler.peekInt(ARMV7.cpuRegisters[2], 2);
-        theCompiler.peekInt(ARMV7.cpuRegisters[3], 1);
-        theCompiler.peekInt(ARMV7.cpuRegisters[4], 0);
-
+        theCompiler.peekInt(ARMV7.r3, 0);
+        theCompiler.peekInt(ARMV7.r2, 1);
+        theCompiler.peekInt(ARMV7.r1, 2);
+        theCompiler.peekInt(ARMV7.r0, 3);
         int assemblerStatements = masm.codeBuffer.position() / 4;
         int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
-        System.out.println("Register 0 " + registerValues[0]);
-        System.out.println("Register 1 " + registerValues[1]);
-        System.out.println("Register 2 " + registerValues[2]);
-        System.out.println("Register 3 " + registerValues[3]);
-        System.out.println("Register 4 " + registerValues[4]);
-
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         assert registerValues[1] == expectedValues[1] : "Failed incorrect value " + registerValues[1] + " " + expectedValues[1];
+        assert registerValues[2] == expectedValues[2] : "Failed incorrect value " + registerValues[2] + " " + expectedValues[2];
+        assert registerValues[3] == expectedValues[3] : "Failed incorrect value " + registerValues[3] + " " + expectedValues[3];
         theCompiler.cleanup();
+    }
+
+    public void testSwitchTable() throws Exception {
+        // int i = 1;
+        // int j, k , l, m;
+        // switch(i) {
+        // case 0: j=10;
+        // case 1: k=20;
+        // case 2: l=30;
+        // default: m=40;
+        // }
+
+        // int chooseNear(int i) {
+        // switch (i) {
+        // } }
+        // compiles to:
+        // case 0: return 0;
+        // case 1: return 1;
+        // case 2: return 2;
+        // default: return -1;
+        // Method int chooseNear(int)
+        // 0 iload_1 // Push local variable 1 (argument i)
+        // 1 tableswitch 0 to 2: // Valid indices are 0 through 2
+        // 0: 28
+        // 1: 30
+        // 2: 32
+        // default:34
+        // 28 iconst_0
+        // 29 ireturn
+        // 30 iconst_1
+        // 31 ireturn
+        // 32 iconst_2
+        // 33 ireturn
+        // 34 iconst_m1
+        // 35 ireturn
+        //expectedValues[0] = 0;
+        //expectedValues[1] = 20;
+        //expectedValues[2] = 30;
+        //expectedValues[3] = 40;
+
+        int[] values = new int[] { 10, 20, 30, 40};
+        for (int i = 0; i < values.length; i++) {
+            for (int j = 0; j < values.length; j++) {
+                if (i > j) {
+                    expectedValues[j] = 0;
+               } else {
+                    expectedValues[j] = values[j];
+                }
+            }
+
+            byte[] instructions = new byte[36];
+            if (i == 0) {
+                instructions[0] = (byte) Bytecodes.ICONST_0;
+            } else if (i == 1) {
+                instructions[0] = (byte) Bytecodes.ICONST_1;
+            } else if (i == 2) {
+                instructions[0] = (byte) Bytecodes.ICONST_2;
+            } else {
+                instructions[0] = (byte) Bytecodes.ICONST_3;
+            }
+            instructions[1] = (byte) Bytecodes.ISTORE_1;
+            instructions[2] = (byte) Bytecodes.ILOAD_1;
+
+            instructions[3] = (byte) Bytecodes.TABLESWITCH;
+            instructions[4] = (byte) 0;
+            instructions[5] = (byte) 0;
+            instructions[6] = (byte) 0;
+            instructions[7] = (byte) 0x1f;
+
+            instructions[8] = (byte) 0;
+            instructions[9] = (byte) 0;
+            instructions[10] = (byte) 0;
+            instructions[11] = (byte) 0;
+
+            instructions[12] = (byte) 0;
+            instructions[13] = (byte) 0;
+            instructions[14] = (byte) 0;
+            instructions[15] = (byte) 0x2;
+
+            instructions[16] = (byte) 0;
+            instructions[17] = (byte) 0;
+            instructions[18] = (byte) 0;
+            instructions[19] = (byte) 0x19;
+
+            instructions[20] = (byte) 0;
+            instructions[21] = (byte) 0;
+            instructions[22] = (byte) 0;
+            instructions[23] = (byte) 0x1b;
+
+            instructions[24] = (byte) 0;
+            instructions[25] = (byte) 0;
+            instructions[26] = (byte) 0;
+            instructions[27] = (byte) 0x1d;
+
+            instructions[28] = (byte) Bytecodes.BIPUSH;
+            instructions[29] = (byte) values[0];
+            // instructions[30] = (byte) Bytecodes.ISTORE_2;
+
+            instructions[30] = (byte) Bytecodes.BIPUSH;
+            instructions[31] = (byte) values[1];
+            // instructions[33] = (byte) Bytecodes.ISTORE_3;
+
+            instructions[32] = (byte) Bytecodes.BIPUSH;
+            instructions[33] = (byte) values[2];
+            // instructions[36] = (byte) Bytecodes.ISTORE;
+            // instructions[37] = (byte) 4;
+
+            instructions[34] = (byte) Bytecodes.BIPUSH;
+            instructions[35] = (byte) values[3];
+            // instructions[40] = (byte) Bytecodes.ISTORE;
+            // instructions[41] = (byte) 5;
+
+            initialiseFrameForCompilation(instructions);
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 36);
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            theCompiler.peekInt(ARMV7.r3, 0);
+            theCompiler.peekInt(ARMV7.r2, 1);
+            theCompiler.peekInt(ARMV7.r1, 2);
+            theCompiler.peekInt(ARMV7.r0, 3);
+            int assemblerStatements = masm.codeBuffer.position() / 4;
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
+            System.out.println("Register 0 " + registerValues[0]);
+            System.out.println("Register 1 " + registerValues[1]);
+            System.out.println("Register 2 " + registerValues[2]);
+            System.out.println("Register 3 " + registerValues[3]);
+            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            assert registerValues[1] == expectedValues[1] : "Failed incorrect value " + registerValues[1] + " " + expectedValues[1];
+            assert registerValues[2] == expectedValues[2] : "Failed incorrect value " + registerValues[2] + " " + expectedValues[2];
+            assert registerValues[3] == expectedValues[3] : "Failed incorrect value " + registerValues[3] + " " + expectedValues[3];
+            theCompiler.cleanup();
+       }
     }
 
     public void ignoreCallDirect() throws Exception {

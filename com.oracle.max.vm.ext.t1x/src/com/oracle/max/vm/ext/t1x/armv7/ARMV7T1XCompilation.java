@@ -598,6 +598,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         asm.setUpScratch(new CiAddress(CiKind.Int, r10.asValue(), r9.asValue(), Scale.Times4, 0));
         asm.ldrImmediate(ConditionFlag.Always, 0, 0, 0, r12, ARMV7.r12, 0);
         asm.addRegisters(ConditionFlag.Always, false, r12, ARMV7.r15, r12, 0, 0); // need to be careful are we using the right add!
+        asm.add(ConditionFlag.Always, false, r12, r12, 8, 0);
         asm.mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12);
         asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10); // restore r9/r10
 

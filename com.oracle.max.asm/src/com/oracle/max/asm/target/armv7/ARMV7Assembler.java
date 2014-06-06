@@ -63,8 +63,8 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     }
 
-    public void adclsl(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
-        int instruction = 0x00A00000;
+    public void adlsl(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
+        int instruction = 0x800000;
         checkConstraint(0 <= shift_imm && shift_imm <= 31, "0 <= shift_imm && shift_imm <= 31");
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (s ? 1 : 0) << 20;
@@ -466,11 +466,11 @@ public class ARMV7Assembler extends AbstractAssembler {
                 mov32BitConstant(scratchRegister, disp);
                 addRegisters(ConditionFlag.Always, false, scratchRegister, scratchRegister, base, 0, 0);
                 if (index.isValid()) {
-                    adclsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
+                    adlsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
                 }
             } else {
                 if (index.isValid()) {
-                    adclsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
+                    adlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
                 } else {
                     mov(ConditionFlag.Always, false, scratchRegister, base);
                 }
@@ -640,7 +640,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                 add(ConditionFlag.Always, false, scratchRegister, base, 0, 0);
             }
             if (index.isValid()) {
-                adclsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
+                adlsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
             }
             pop(ConditionFlag.Always, 1 << encode(scratchRegister));
 
@@ -682,7 +682,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                 add(ConditionFlag.Always, false, scratchRegister, base, 0, 0); // APN A8.8.5 ADD(immediate,ARM)
             }
             if (index.isValid()) {
-                adclsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
+                adlsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
                 // APN even if scale is zero this is ok.
                 // as a shift of zero will not affect the value.
                 /*
