@@ -63,7 +63,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     }
 
-    public void adlsl(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
+    public void addlsl(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
         int instruction = 0x800000;
         checkConstraint(0 <= shift_imm && shift_imm <= 31, "0 <= shift_imm && shift_imm <= 31");
         instruction |= (cond.value() & 0xf) << 28;
@@ -466,11 +466,11 @@ public class ARMV7Assembler extends AbstractAssembler {
                 mov32BitConstant(scratchRegister, disp);
                 addRegisters(ConditionFlag.Always, false, scratchRegister, scratchRegister, base, 0, 0);
                 if (index.isValid()) {
-                    adlsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
+                    addlsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
                 }
             } else {
                 if (index.isValid()) {
-                    adlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
+                    addlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
                 } else {
                     mov(ConditionFlag.Always, false, scratchRegister, base);
                 }
@@ -640,7 +640,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                 add(ConditionFlag.Always, false, scratchRegister, base, 0, 0);
             }
             if (index.isValid()) {
-                adlsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
+                addlsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
             }
             pop(ConditionFlag.Always, 1 << encode(scratchRegister));
 
@@ -682,7 +682,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                 add(ConditionFlag.Always, false, scratchRegister, base, 0, 0); // APN A8.8.5 ADD(immediate,ARM)
             }
             if (index.isValid()) {
-                adlsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
+                addlsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
                 // APN even if scale is zero this is ok.
                 // as a shift of zero will not affect the value.
                 /*
