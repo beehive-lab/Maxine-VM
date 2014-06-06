@@ -1185,7 +1185,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void testLookupTable() throws Exception {
+    public void ignoreLookupTable() throws Exception {
         // int i = 1;
         // int j, k , l, m;
         // switch(i) {
