@@ -17,35 +17,48 @@
  */
 package com.oracle.max.vm.ext.t1x.armv7;
 
-import static com.oracle.max.asm.target.armv7.ARMV7.*;
-import static com.oracle.max.vm.ext.t1x.T1X.*;
-import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.classfile.ErrorContext.*;
-import static com.sun.max.vm.compiler.target.Safepoints.*;
-import static com.sun.max.vm.stack.JVMSFrameLayout.*;
-
-import java.util.*;
-
-import com.oracle.max.asm.target.armv7.*;
+import com.oracle.max.asm.target.armv7.ARMV7;
+import com.oracle.max.asm.target.armv7.ARMV7Assembler;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
-import com.oracle.max.vm.ext.maxri.*;
+import com.oracle.max.asm.target.armv7.ARMV7MacroAssembler;
+import com.oracle.max.vm.ext.maxri.MaxTargetMethod;
 import com.oracle.max.vm.ext.t1x.*;
-import com.sun.cri.bytecode.*;
-import com.sun.cri.ci.*;
+import com.sun.cri.bytecode.BytecodeLookupSwitch;
+import com.sun.cri.bytecode.BytecodeTableSwitch;
+import com.sun.cri.bytecode.Bytecodes;
+import com.sun.cri.ci.CiAddress;
 import com.sun.cri.ci.CiAddress.Scale;
+import com.sun.cri.ci.CiKind;
+import com.sun.cri.ci.CiRegister;
+import com.sun.cri.ci.CiTargetMethod;
 import com.sun.cri.ci.CiTargetMethod.JumpTable;
 import com.sun.cri.ci.CiTargetMethod.LookupTable;
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.armv7.*;
-import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.actor.member.FieldActor;
+import com.sun.max.vm.classfile.CodeAttribute;
+import com.sun.max.vm.compiler.WordUtil;
+import com.sun.max.vm.compiler.target.Adapter;
+import com.sun.max.vm.compiler.target.Safepoints;
+import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.runtime.Trap;
+import com.sun.max.vm.stack.JVMSFrameLayout;
+import com.sun.max.vm.stack.armv7.ARMV7JVMSFrameLayout;
+import com.sun.max.vm.thread.VmThread;
+import com.sun.max.vm.type.Kind;
+import com.sun.max.vm.type.SignatureDescriptor;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import static com.oracle.max.asm.target.armv7.ARMV7.*;
+import static com.oracle.max.vm.ext.t1x.T1X.dispFromCodeStart;
+import static com.sun.max.platform.Platform.platform;
+import static com.sun.max.platform.Platform.target;
+import static com.sun.max.vm.classfile.ErrorContext.verifyError;
+import static com.sun.max.vm.compiler.target.Safepoints.*;
+import static com.sun.max.vm.stack.JVMSFrameLayout.JVMS_SLOT_SIZE;
 
 public class ARMV7T1XCompilation extends T1XCompilation {
 
@@ -277,7 +290,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected void storeInt(CiRegister src, int index) {
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.INT)));
-        asm.strImmediate(ConditionFlag.Always, 0, 0, 0, src, asm.scratchRegister, 0);
+        asm.strImmediate(ConditionFlag.Always, 0, 0, 0, src, ARMV7.r12, 0);
     }
 
     @Override
@@ -467,7 +480,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     }
 
     private int framePointerAdjustment() {
-        // TODO APN is this required at all for ARMv7?
+        // TODO APN this is required for ARMv7 but it is incorrect at the moment with fakedFrame
         final int enterSize = frame.frameSize() - Word.size();
         return enterSize - frame.sizeOfNonParameterLocals();
     }
@@ -490,9 +503,10 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         // asm.enter(frameSize - Word.size(), 0);
 
         asm.push(ConditionFlag.Always, 1 << 11); // push frame pointer onto STACK
-        asm.subq(ARMV7.r13, frameSize - Word.size());
-        asm.mov(ConditionFlag.Always, false, ARMV7.r11, ARMV7.r13); // framepoiter = stack ptr
-        asm.subq(r11, framePointerAdjustment());
+        asm.mov(ConditionFlag.Always, false, ARMV7.r11, ARMV7.r13); // create a new framepointer = stack ptr
+        asm.subq(ARMV7.r13, frameSize - Word.size()); // APN is this necessary for  ARM ie push does it anyway?
+
+        asm.subq(r13, framePointerAdjustment()); // TODO FP/SP not being set up correctly ...
         if (Trap.STACK_BANGING) {
             int pageSize = platform().pageSize;
             int framePages = frameSize / pageSize;
