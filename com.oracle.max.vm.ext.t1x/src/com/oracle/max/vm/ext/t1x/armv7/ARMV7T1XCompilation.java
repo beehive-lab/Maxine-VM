@@ -624,6 +624,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         // ported but untested
         int bci = stream.currentBCI();
         BytecodeLookupSwitch ls = new BytecodeLookupSwitch(stream, bci);
+        System.out.println("Number of cases " + ls.numberOfCases() + " Default Target " + ls.defaultTarget());
         if (ls.numberOfCases() == 0) {
             // Pop the key
             decStack(1);
@@ -640,39 +641,35 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 asm.jmp(0, true);
             }
         } else {
-            // Pop key from stack into r12 == scratch
-            asm.setUpScratch(new CiAddress(CiKind.Int, ARMV7.r13.asValue()));
-            asm.ldr(ConditionFlag.Always, 0, 0, 0, asm.scratchRegister, asm.scratchRegister, asm.scratchRegister, 0, 0);
+            asm.setUpScratch(new CiAddress(CiKind.Int, RSP));
+            asm.ldr(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, asm.scratchRegister, asm.scratchRegister, 0, 0);
             asm.addq(ARMV7.r13, JVMSFrameLayout.JVMS_SLOT_SIZE);
-            asm.push(ConditionFlag.Always, 1 << 8 | 1 << 9 | 1 << 10); // save r8, r9 and r10
-            asm.mov(ConditionFlag.Always, false, r8, r12); // r8 stores KEY
+            asm.push(ConditionFlag.Always, 1<<7 | 1 << 9 | 1 << 10);
+            asm.mov(ConditionFlag.Always, false, r9, r8); // r9 stores index
 
-            // Set r9 to address of lookup table
+
+            // Set r10 to address of lookup table
             int leaPos = buf.position();
-            asm.leaq(r9, CiAddress.Placeholder); // but not used at present as will be patched!
+            asm.leaq(r10, CiAddress.Placeholder);
             int afterLea = buf.position();
 
-            // Initialize r10 to index of last entry
-            asm.mov32BitConstant(r10, (ls.numberOfCases() - 1) * 2);
+            // Initialize r7 to index of last entry
+            asm.mov32BitConstant(r7, (ls.numberOfCases() - 1) * 2);
 
             int loopPos = buf.position();
 
             // Compare the value against the key
-            asm.setUpScratch(new CiAddress(CiKind.Int, r9.asValue(), r10.asValue(), Scale.Times4, 0));
-            asm.cmpl(ARMV7.r8, ARMV7.r12);
+            asm.setUpScratch(new CiAddress(CiKind.Int, r10.asValue(), r7.asValue(), Scale.Times4, 0));
+            asm.cmpl(ARMV7.r9, ARMV7.r12);
 
             // If equal, exit loop
             int matchTestPos = buf.position();
             final int placeholderForShortJumpDisp = matchTestPos + 2;
-            // TODO check why + 2 this might be X86 asm buffer arithmetic
-
             asm.jcc(ConditionFlag.Equal, placeholderForShortJumpDisp, false);
-            assert buf.position() - matchTestPos == 2; // TODO check
+            assert buf.position() - matchTestPos == 2;
 
-            // Decrement loop var (r10?) and jump to top of loop if it did not go below zero (i.e. carry flag was not
-// set)
-            // asm.mov32BitConstant(asm.scratchRegister,2);
-            asm.sub(ConditionFlag.Always, true, r10, r10, 2, 0);
+            // Decrement loop var and jump to top of loop if it did not go below zero (i.e. carry flag was notmset)
+            asm.sub(ConditionFlag.Always, true, r7, r7, 2, 0);
             asm.jcc(ConditionFlag.CarryClear, loopPos, false); // carry clear?
 
             // Jump to default target
@@ -688,8 +685,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             buf.setPosition(matchPos);
 
             // Load jump table entry into r15 and jump to it
-            asm.setUpScratch(new CiAddress(CiKind.Int, r9.asValue(), r10.asValue(), Scale.Times4, 4));
-            asm.mov(ConditionFlag.Always, false, r10, r12);
+            asm.setUpScratch(new CiAddress(CiKind.Int, r9.asValue(), r7.asValue(), Scale.Times4, 4));
+            asm.mov(ConditionFlag.Always, false, r9, r12);
             asm.addRegisters(ConditionFlag.Always, false, r12, r9, r10, 0, 0); // correct add?
             asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10 | 1 << 8);
             asm.mov(ConditionFlag.Always, true, r15, r12); // APN is a jmp ok?

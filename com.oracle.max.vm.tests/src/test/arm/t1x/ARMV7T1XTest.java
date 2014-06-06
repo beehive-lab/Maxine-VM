@@ -1185,15 +1185,20 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void ignoreLookupTable() throws Exception {
-        // int i = 1;
-        // int j, k , l, m;
-        // switch(i) {
-        // case -100: j=10;
-        // case 0: k=20;
-        // case 100: l=30;
-        // default: m=40;
-        // }
+    public void ignoretestLookupTable() throws Exception {
+        int ii = 1;
+
+        //int o, k, l, m;
+        //switch (ii) {
+        //    case -100:
+        //        o = 10;
+        //    case 0:
+        //        k = 20;
+        //    case 100:
+        //        l = 30;
+        //    default:
+        //        m = 40;
+        //}
 
         // int chooseNear(int i) {
         // switch (i) {
@@ -1251,39 +1256,49 @@ public class ARMV7T1XTest extends MaxTestCase {
             instructions[8] = (byte) 0;
             instructions[9] = (byte) 0;
             instructions[10] = (byte) 0;
-            instructions[11] = (byte) 0;
+            instructions[11] = (byte) 3;
 
-            instructions[12] = (byte) 0;
-            instructions[13] = (byte) 0;
-            instructions[14] = (byte) 0;
-            instructions[15] = (byte) 0x2;
+            instructions[12] = (byte) 0xff;
+            instructions[13] = (byte) 0xff;
+            instructions[14] = (byte) 0xff;
+            instructions[15] = (byte) 0x9c;
 
             instructions[16] = (byte) 0;
             instructions[17] = (byte) 0;
             instructions[18] = (byte) 0;
-            instructions[19] = (byte) 0x19;
+            instructions[19] = (byte) 0x21;
 
             instructions[20] = (byte) 0;
             instructions[21] = (byte) 0;
             instructions[22] = (byte) 0;
-            instructions[23] = (byte) 0x1b;
+            instructions[23] = (byte) 0;
 
             instructions[24] = (byte) 0;
             instructions[25] = (byte) 0;
             instructions[26] = (byte) 0;
-            instructions[27] = (byte) 0x1d;
+            instructions[27] = (byte) 0x23;
 
-            instructions[28] = (byte) Bytecodes.BIPUSH;
-            instructions[29] = (byte) values[0];
+            instructions[28] = (byte) 0;
+            instructions[29] = (byte) 0;
+            instructions[30] = (byte) 0;
+            instructions[31] = (byte) 0x64;
 
-            instructions[30] = (byte) Bytecodes.BIPUSH;
-            instructions[31] = (byte) values[1];
+            instructions[32] = (byte) 0;
+            instructions[33] = (byte) 0;
+            instructions[34] = (byte) 0;
+            instructions[35] = (byte) 0x25;
 
-            instructions[32] = (byte) Bytecodes.BIPUSH;
-            instructions[33] = (byte) values[2];
+            instructions[36] = (byte) Bytecodes.BIPUSH;
+            instructions[37] = (byte) values[0];
 
-            instructions[34] = (byte) Bytecodes.BIPUSH;
-            instructions[35] = (byte) values[3];
+            instructions[38] = (byte) Bytecodes.BIPUSH;
+            instructions[39] = (byte) values[1];
+
+            instructions[40] = (byte) Bytecodes.BIPUSH;
+            instructions[41] = (byte) values[2];
+
+            instructions[42] = (byte) Bytecodes.BIPUSH;
+            instructions[43] = (byte) values[3];
 
             initialiseFrameForCompilation(instructions);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 36);
