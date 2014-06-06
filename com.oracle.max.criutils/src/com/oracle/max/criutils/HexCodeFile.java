@@ -23,6 +23,7 @@
 package com.oracle.max.criutils;
 
 import java.io.*;
+import java.math.*;
 import java.util.*;
 import java.util.regex.*;
 
@@ -376,7 +377,7 @@ public class HexCodeFile {
                 m = HexCodeFile.HEX_CODE.matcher(body);
                 check(m.matches(), bodyOffset, "Code does not match pattern " + HexCodeFile.HEX_CODE);
                 String hexAddress = m.group(1);
-                startAddress = Long.valueOf(hexAddress, 16);
+                startAddress = new BigInteger(hexAddress, 16).longValue();
                 String hexCode = m.group(2);
                 if (hexCode == null) {
                     code = new byte[0];
