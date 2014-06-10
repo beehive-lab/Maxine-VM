@@ -3,6 +3,8 @@ package test.arm.t1x;
 import java.io.*;
 import java.util.*;
 
+import org.objectweb.asm.util.*;
+
 import test.arm.asm.*;
 
 import com.oracle.max.asm.target.armv7.*;
@@ -20,7 +22,6 @@ import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
-import org.objectweb.asm.*;
 
 
 public class ARMV7T1XTest extends MaxTestCase {
@@ -40,11 +41,12 @@ public class ARMV7T1XTest extends MaxTestCase {
         anMethod = new StaticMethodActor(null, SignatureDescriptor.create("(Ljava/util/Map;)V"), Actor.JAVA_METHOD_FLAGS, codeAttr, new String());
     }
 
-    public void initialiseFrameForCompilation(byte [] code) {
+    public void initialiseFrameForCompilation(byte[] code) {
         // TODO: compute max stack
         codeAttr = new CodeAttribute(null, code, (char) 40, (char) 20, CodeAttribute.NO_EXCEPTION_HANDLER_TABLE, LineNumberTable.EMPTY, LocalVariableTable.EMPTY, null);
         anMethod = new StaticMethodActor(null, SignatureDescriptor.create("(Ljava/util/Map;)V"), Actor.JAVA_METHOD_FLAGS, codeAttr, new String());
     }
+
     static final class Pair {
 
         public final int first;
@@ -73,14 +75,14 @@ public class ARMV7T1XTest extends MaxTestCase {
         return result.toArray(new String[result.size()]);
     }
 
-    private static int[] valueTestSet = {0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
-    private static long[] scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x00000000ffffffffL};
-    private static MaxineARMTester.BitsFlag[] bitmasks = {MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-        MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-        MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-        MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits};
+    private static int[] valueTestSet = { 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
+    private static long[] scratchTestSet = { 0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x00000000ffffffffL};
+    private static MaxineARMTester.BitsFlag[] bitmasks = { MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
+                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
+                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
+                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits};
 
-    private static int[] expectedValues = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    private static int[] expectedValues = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     private static boolean[] ignorevalues = new boolean[17];
 
     private int[] generateAndTest(int assemblerStatements, int[] expected, boolean[] ignores, MaxineARMTester.BitsFlag[] masks) throws Exception {
@@ -888,7 +890,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.assignInt(ARMV7.cpuRegisters[1], 2);
         theCompiler.decStack(1);
         masm.cmpl(ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[1]);
-        ConditionFlag cc = ConditionFlag.Equal; //Testing the jump (eq)
+        ConditionFlag cc = ConditionFlag.Equal; // Testing the jump (eq)
         theCompiler.assignInt(ARMV7.r12, 99); // APN deliberate ... make scratch have nonzero value
         masm.jcc(cc, masm.codeBuffer.position() + 1, false); // 1 as a false will insert one instructions!!!
         theCompiler.assignInt(ARMV7.cpuRegisters[2], 20);
@@ -917,7 +919,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.assignInt(ARMV7.cpuRegisters[1], 1);
         theCompiler.decStack(1);
         masm.cmpl(ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[1]);
-        cc = ConditionFlag.NotEqual; //Testing the fallthrough (ne)
+        cc = ConditionFlag.NotEqual; // Testing the fallthrough (ne)
         masm.jcc(cc, masm.codeBuffer.position() + 8, true);
         theCompiler.assignInt(ARMV7.cpuRegisters[2], 20);
         theCompiler.assignInt(ARMV7.cpuRegisters[3], 10);
@@ -974,24 +976,11 @@ public class ARMV7T1XTest extends MaxTestCase {
         branches.add(new BranchInfo(Bytecodes.IF_ICMPEQ, 0, 0, 2, 2));
     }
 
-
     public void testBranchBytecodes() throws Exception {
         /*
-        Based on pg41 JVMSv1.7 ...
-        iconst_0
-        istore_1
-        goto 8 wrong it needs to be 6
-        iinc 1 1
-        iload_1
-        bipush 100
-        if_icmplt 5 this is WRONG it needs to be -6
-        // no return.
-         corresponding to
-         int i;
-         for(i = 0; i < 100;i++)  {
-             ; // empty loop body
-         }
-         return;
+         * Based on pg41 JVMSv1.7 ... iconst_0 istore_1 goto 8 wrong it needs to be 6 iinc 1 1 iload_1 bipush 100
+         * if_icmplt 5 this is WRONG it needs to be -6 // no return. corresponding to int i; for(i = 0; i < 100;i++) { ;
+         * // empty loop body } return;
          */
         for (BranchInfo bi : branches) {
             expectedValues[0] = bi.getExpected();
@@ -1072,12 +1061,13 @@ public class ARMV7T1XTest extends MaxTestCase {
     }
 
     public void testByteCodeLoad() throws Exception {
-        org.objectweb.asm.util.MaxineByteCode xx = new org.objectweb.asm.util.MaxineByteCode();
-        byte[] code =  xx.getByteArray("run","test.arm.t1x.ByteCodeTests");
-        for(int i = 0; i < code.length;i++)
-             System.out.println("BYTE " + code[i]);
-
+        MaxineByteCode xx = new MaxineByteCode();
+        byte[] code = xx.getByteArray("run", "test.arm.t1x.ByteCodeTests");
+        for (int i = 0; i < code.length; i++) {
+            System.out.println("BYTE " + code[i]);
+        }
     }
+
     public void testSwitchTable() throws Exception {
         // int i = 1;
         // int j, k , l, m;
@@ -1197,7 +1187,6 @@ public class ARMV7T1XTest extends MaxTestCase {
 
     public void ignoreLookupTable() throws Exception {
         // int ii = 1;
-
         // int o, k, l, m;
         // switch (ii) {
         // case -100:
@@ -1302,10 +1291,10 @@ public class ARMV7T1XTest extends MaxTestCase {
             theCompiler.peekInt(ARMV7.r0, 3);
             int assemblerStatements = masm.codeBuffer.position() / 4;
             int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
-            //System.out.println("Value 0 " + registerValues[0]);
-            //System.out.println("Value 1 " + registerValues[1]);
-            //System.out.println("Value 2 " + registerValues[2]);
-            //System.out.println("Value 3 " + registerValues[3]);
+            // System.out.println("Value 0 " + registerValues[0]);
+            // System.out.println("Value 1 " + registerValues[1]);
+            // System.out.println("Value 2 " + registerValues[2]);
+            // System.out.println("Value 3 " + registerValues[3]);
 
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             assert registerValues[1] == expectedValues[1] : "Failed incorrect value " + registerValues[1] + " " + expectedValues[1];

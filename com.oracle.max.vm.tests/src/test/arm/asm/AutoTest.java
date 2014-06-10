@@ -1,9 +1,9 @@
 package test.arm.asm;
 
-import com.sun.max.ide.TestCaseClassSet;
-import junit.framework.Test;
-import junit.framework.TestSuite;
+import junit.framework.*;
 import test.com.sun.max.vm.AllTests;
+
+import com.sun.max.ide.*;
 
 @org.junit.runner.RunWith(org.junit.runners.AllTests.class)
 public final class AutoTest {
