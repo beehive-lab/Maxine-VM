@@ -1,0 +1,123 @@
+<!--
+ ! ASM: a very small and fast Java bytecode manipulation framework
+ ! Copyright (c) 2000-2011 INRIA, France Telecom
+ ! All rights reserved.
+ !
+ ! Redistribution and use in source and binary forms, with or without
+ ! modification, are permitted provided that the following conditions
+ ! are met:
+ ! 1. Redistributions of source code must retain the above copyright
+ !    notice, this list of conditions and the following disclaimer.
+ ! 2. Redistributions in binary form must reproduce the above copyright
+ !    notice, this list of conditions and the following disclaimer in the
+ !    documentation and/or other materials provided with the distribution.
+ ! 3. Neither the name of the copyright holders nor the names of its
+ !    contributors may be used to endorse or promote products derived from
+ !    this software without specific prior written permission.
+ !
+ ! THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ ! AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ ! IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ ! ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+ ! LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ ! CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ ! SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ ! INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ ! CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ ! ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ ! THE POSSIBILITY OF SUCH DAMAGE.
+-->
+
+<project name="conform" default="test">
+
+  <property name="agent.jar" value="localvariablessorter2-agent.jar" />
+
+  <target name="test.normal" unless="coverage">
+    <jar jarfile="${out.test}/${agent.jar}">
+      <fileset dir="${out}/build">
+        <include name="org/objectweb/asm/**/*.class"/>
+      </fileset>
+      <fileset dir="${out}/test">
+        <include name="org/objectweb/asm/**/*.class"/>
+      </fileset>
+      <manifest>
+        <attribute name="Premain-Class" value="org.objectweb.asm.commons.LocalVariablesSorterTest2"/>
+      </manifest>
+    </jar>
+    <junit fork="yes" 
+           printsummary="yes"
+           errorproperty="test.failed"
+           failureproperty="test.failed">
+      <test name="org.objectweb.asm.commons.LocalVariablesSorterTest2" 
+          fork="yes" 
+          todir="${out.test}/reports"
+          outfile="TEST-org.objectweb.asm.commons.LocalVariablesSorterTest2-1">
+      </test>
+      <formatter type="xml"/>
+      <classpath>
+          <pathelement location="${out.test}/cases"/>
+      </classpath>
+      <jvmarg value="-javaagent:${out.test}/${agent.jar}=${asm.test.class}"/>
+      <jvmarg value="-Dasm.test=${asm.test}"/>
+      <jvmarg value="-Dasm.test.class=${asm.test.class}"/>
+      <jvmarg value="-Dparts=2"/>
+      <jvmarg value="-Dpart=0"/>
+      <jvmarg value="-Xverify:all"/>
+    </junit>
+    <junit fork="yes" 
+           printsummary="yes"
+           errorproperty="test.failed"
+           failureproperty="test.failed">
+      <test name="org.objectweb.asm.commons.LocalVariablesSorterTest2" 
+          fork="yes" 
+          todir="${out.test}/reports"
+          outfile="TEST-org.objectweb.asm.commons.LocalVariablesSorterTest2-2">
+      </test>
+      <formatter type="xml"/>
+      <classpath>
+          <pathelement location="${out.test}/cases"/>
+      </classpath>
+      <jvmarg value="-javaagent:${out.test}/${agent.jar}=${asm.test.class}"/>
+      <jvmarg value="-Dasm.test=${asm.test}"/>
+      <jvmarg value="-Dasm.test.class=${asm.test.class}"/>
+      <jvmarg value="-Dparts=2"/>
+      <jvmarg value="-Dpart=1"/>
+      <jvmarg value="-Xverify:all"/>
+    </junit>
+  </target>
+
+  <target name="test.coverage" if="coverage">
+    <jar jarfile="${out.test}/${agent.jar}">
+      <fileset dir="${out}/instr">
+        <include name="org/objectweb/asm/**/*.class"/>
+      </fileset>
+      <fileset dir="${out}/test">
+        <include name="org/objectweb/asm/**/*.class"/>
+      </fileset>
+      <manifest>
+        <attribute name="Premain-Class" value="org.objectweb.asm.commons.LocalVariablesSorterTest2"/>
+      </manifest>
+    </jar>
+    <junit fork="yes" 
+           printsummary="yes"
+           errorproperty="test.failed"
+           failureproperty="test.failed">
+      <batchtest fork="yes" todir="${out.test}/reports">
+        <fileset dir="${test}/conform">
+          <include name="**/LocalVariablesSorterTest2.java"/>
+        </fileset>
+      </batchtest>
+      <formatter type="xml"/>
+      <classpath>
+          <pathelement location="${out.test}/cases"/>
+      </classpath>
+      <jvmarg value="-javaagent:${out.test}/${agent.jar}=${asm.test.class}"/>
+      <jvmarg value="-Dasm.test=${asm.test}"/>
+      <jvmarg value="-Dasm.test.class=${asm.test.class}"/>
+      <jvmarg value="-Xbootclasspath/p:${cobertura.runtime.path}"/>
+    </junit>
+  </target>
+
+  <target name="test" depends="test.normal,test.coverage"/>
+
+</project>

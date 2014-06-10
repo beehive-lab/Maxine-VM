@@ -1,0 +1,125 @@
+Running Checkstyle on /home/andyn/MAXINE/maxine/com.oracle.max.asm/src using /home/andyn/MAXINE/maxine/com.oracle.max.base/.checkstyle_checks.xml...
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:1: Line does not match expected header line of '/\*'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:65: Name 'Rd' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:65: Name 'Rn' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:65: Name 'Rm' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:65: Name 'shift_imm' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:77: Name 'Rd' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:77: Name 'Rn' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:77: Name 'immed_8' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:77: Name 'rotate_amount' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:91: Name 'Rd' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:91: Name 'Rn' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:91: Name 'Rm' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:105: Name 'Rd' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:105: Name 'Rn' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:105: Name 'Rm' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:122: Name 'Rd' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:122: Name 'Rm' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:122: Name 'shift_imm' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:133: Name 'Rd' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:133: Name 'Rm' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:142: Name 'Rd' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:152: Name 'Rd' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:162: Name 'Rd' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:162: Name 'Rn' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:162: Name 'immed_8' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:162: Name 'rotate_amount' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:175: Name 'Rd' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:175: Name 'Rn' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:175: Name 'Rm' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:189: Name 'P' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:189: Name 'U' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:189: Name 'W' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:189: Name 'Rt' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:189: Name 'Rn' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:189: Name 'Rm' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:201: Name 'P' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:201: Name 'U' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:201: Name 'W' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:201: Name 'Rt' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:201: Name 'Rn' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:201: Name 'Rm' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:215: Name 'P' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:215: Name 'U' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:215: Name 'W' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:215: Name 'Rt' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:215: Name 'Rn' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:228: Name 'P' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:228: Name 'U' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:228: Name 'W' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:228: Name 'Rt' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:228: Name 'Rn' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:245: Name 'P' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:245: Name 'U' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:245: Name 'W' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:245: Name 'Rt' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:245: Name 'Rn' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:258: Name 'P' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:258: Name 'U' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:258: Name 'W' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:258: Name 'Rt' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:258: Name 'Rn' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:271: Name 'P' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:271: Name 'U' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:271: Name 'W' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:271: Name 'Rt' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:271: Name 'Rn' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:271: Name 'Rm' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:287: Name 'P' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:287: Name 'U' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:287: Name 'W' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:287: Name 'Rn' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:287: Name 'Rt' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:287: Name 'Rm' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:292: Name 'P' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:292: Name 'U' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:292: Name 'W' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:292: Name 'Rn' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:292: Name 'Rt' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:292: Name 'Rm' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:296: Name 'P' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:296: Name 'U' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:296: Name 'W' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:296: Name 'Rn' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:296: Name 'Rt' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:296: Name 'Rm' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:309: Name 'immed_24' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:339: Name 'P' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:340: Name 'U' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:341: Name 'W' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:367: Name 'P' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:368: Name 'U' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:369: Name 'W' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:394: Unnecessary parentheses around assignment right-hand side.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:404: Unnecessary parentheses around assignment right-hand side.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:412: Name 'Rn' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:412: Name 'Rm' must match pattern '^[a-z][a-zA-Z0-9]*$'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:418: Unnecessary parentheses around identifier 'imm5'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:419: Unnecessary parentheses around identifier 'imm2Type'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMV7Assembler.java:745: ',' is not followed by whitespace.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7_real/ARMV7.java:77: array initialization child at indentation level 12 not at correct indentation, 8
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7_real/ARMV7.java:78: array initialization child at indentation level 12 not at correct indentation, 8
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7_real/ARMV7.java:83: array initialization child at indentation level 12 not at correct indentation, 8
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7_real/ARMV7.java:84: array initialization child at indentation level 12 not at correct indentation, 8
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7_real/ARMV7.java:85: array initialization child at indentation level 12 not at correct indentation, 8
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7_real/ARMV7.java:95: array initialization child at indentation level 12 not at correct indentation, 8
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7_real/ARMV7.java:96: array initialization child at indentation level 12 not at correct indentation, 8
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7_real/ARMV7.java:97: array initialization child at indentation level 12 not at correct indentation, 8
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7_real/ARMV7.java:98: array initialization child at indentation level 12 not at correct indentation, 8
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7_real/ARMV7.java:99: array initialization child at indentation level 12 not at correct indentation, 8
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7_real/ARMV7Assembler.java:1: Line does not match expected header line of '/\*'.
+/home/andyn/MAXINE/maxine/com.oracle.max.asm/src/com/oracle/max/asm/target/armv7_real/ARMV7Assembler.java:31: ',' is not followed by whitespace.
+Running Checkstyle on /home/andyn/MAXINE/maxine/com.oracle.max.vm.ext.t1x/src using /home/andyn/MAXINE/maxine/com.oracle.max.base/.checkstyle_checks.xml...
+/home/andyn/MAXINE/maxine/com.oracle.max.vm.ext.t1x/src/com/oracle/max/vm/ext/t1x/T1XCompilationFactory.java:3: Line does not match expected header line of ' \* DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.'.
+/home/andyn/MAXINE/maxine/com.oracle.max.vm.ext.t1x/src/com/oracle/max/vm/ext/t1x/T1XCompilation.java:584: '+' is not preceded with whitespace.
+/home/andyn/MAXINE/maxine/com.oracle.max.vm.ext.t1x/src/com/oracle/max/vm/ext/t1x/armv7/ARMV7T1XCompilation.java:3: Line does not match expected header line of ' \* DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.'.
+Running Checkstyle on /home/andyn/MAXINE/maxine/com.oracle.max.vm.ext.graal/src using /home/andyn/MAXINE/maxine/com.oracle.max.base/.checkstyle_checks.xml...
+/home/andyn/MAXINE/maxine/com.oracle.max.vm.ext.graal/src/com/oracle/max/vm/ext/graal/MaxGraalOptions.java:186: Line is longer than 250 characters.
+Running Checkstyle on /home/andyn/MAXINE/maxine/com.oracle.max.vm.tests/src using /home/andyn/MAXINE/maxine/com.oracle.max.base/.checkstyle_checks.xml...
+/home/andyn/MAXINE/maxine/com.oracle.max.vm.tests/src/test/arm/asm/ARMCodeWriter.java:1: Line does not match expected header line of '/\*'.
+/home/andyn/MAXINE/maxine/com.oracle.max.vm.tests/src/test/arm/asm/AutoTest.java:1: Line does not match expected header line of '/\*'.
+/home/andyn/MAXINE/maxine/com.oracle.max.vm.tests/src/test/arm/asm/MaxineARMTester.java:1: Line does not match expected header line of '/\*'.
+/home/andyn/MAXINE/maxine/com.oracle.max.vm.tests/src/test/arm/asm/ARMV7AssemblerTest.java:1: Line does not match expected header line of '/\*'.
+/home/andyn/MAXINE/maxine/com.oracle.max.vm.tests/src/test/arm/t1x/AutoTest.java:1: Line does not match expected header line of '/\*'.
+/home/andyn/MAXINE/maxine/com.oracle.max.vm.tests/src/test/arm/t1x/ARMV7T1XTest.java:1: Line does not match expected header line of '/\*'.
