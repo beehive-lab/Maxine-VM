@@ -635,10 +635,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected void do_lookupswitch() {
-        // ported but untested
         int bci = stream.currentBCI();
         BytecodeLookupSwitch ls = new BytecodeLookupSwitch(stream, bci);
-        System.out.println("Number of cases " + ls.numberOfCases() + " Default Target " + ls.defaultTarget());
         if (ls.numberOfCases() == 0) {
             // Pop the key
             decStack(1);
@@ -658,9 +656,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             asm.setUpScratch(new CiAddress(CiKind.Int, RSP));
             asm.ldr(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, asm.scratchRegister, asm.scratchRegister, 0, 0);
             asm.addq(ARMV7.r13, JVMSFrameLayout.JVMS_SLOT_SIZE);
-            asm.push(ConditionFlag.Always, 1<<7 | 1 << 9 | 1 << 10);
+            asm.push(ConditionFlag.Always, 1 << 7 | 1 << 9 | 1 << 10);
             asm.mov(ConditionFlag.Always, false, r9, r8); // r9 stores index
-
 
             // Set r10 to address of lookup table
             int leaPos = buf.position();
@@ -674,36 +671,38 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
             // Compare the value against the key
             asm.setUpScratch(new CiAddress(CiKind.Int, r10.asValue(), r7.asValue(), Scale.Times4, 0));
+            asm.ldrImmediate(ConditionFlag.Always, 0, 0, 0, r12, r12, 0);
             asm.cmpl(ARMV7.r9, ARMV7.r12);
 
             // If equal, exit loop
             int matchTestPos = buf.position();
-            final int placeholderForShortJumpDisp = matchTestPos + 2;
-            asm.jcc(ConditionFlag.Equal, placeholderForShortJumpDisp, false);
-            assert buf.position() - matchTestPos == 2;
+            final int placeholderForShortJumpDisp = matchTestPos + 4;
+            asm.jcc(ConditionFlag.Equal, placeholderForShortJumpDisp, true);
+            assert buf.position() - matchTestPos == 4;
 
-            // Decrement loop var and jump to top of loop if it did not go below zero (i.e. carry flag was notmset)
+            // Decrement loop var and jump to top of loop if it did not go below zero (i.e. carry flag was not set)
             asm.sub(ConditionFlag.Always, true, r7, r7, 2, 0);
-            asm.jcc(ConditionFlag.CarryClear, loopPos, false); // carry clear?
+            asm.jcc(ConditionFlag.NoSignedOverflow, loopPos, true);
 
             // Jump to default target
             startBlock(ls.defaultTarget());
             patchInfo.addJMP(buf.position(), ls.defaultTarget());
-            asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10 | 1 << 8);
+            asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10 | 1 << 7);
             asm.jmp(0, true);
 
             // Patch the first conditional branch instruction above now that we know where's it's going
             int matchPos = buf.position();
             buf.setPosition(matchTestPos);
-            asm.jcc(ConditionFlag.Equal, matchPos, false);
+            asm.jcc(ConditionFlag.Equal, matchPos, true);
             buf.setPosition(matchPos);
 
             // Load jump table entry into r15 and jump to it
-            asm.setUpScratch(new CiAddress(CiKind.Int, r9.asValue(), r7.asValue(), Scale.Times4, 4));
-            asm.mov(ConditionFlag.Always, false, r9, r12);
-            asm.addRegisters(ConditionFlag.Always, false, r12, r9, r10, 0, 0); // correct add?
-            asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10 | 1 << 8);
-            asm.mov(ConditionFlag.Always, true, r15, r12); // APN is a jmp ok?
+            asm.setUpScratch(new CiAddress(CiKind.Int, r10.asValue(), r7.asValue(), Scale.Times4, 4));
+            asm.ldrImmediate(ConditionFlag.Always, 0, 0, 0, r12, r12, 0);
+            asm.addRegisters(ConditionFlag.Always, false, r12, r15, r12, 0, 0);
+            asm.add(ConditionFlag.Always, false, r12, r12, 8, 0);
+            asm.mov(ConditionFlag.Always, true, r15, r12);
+            asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10 | 1 << 7);
 
             // Inserting padding so that lookup table address is 4-byte aligned
             while ((buf.position() & 0x3) != 0) {
@@ -713,7 +712,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             // Patch the LEA instruction above now that we know the position of the lookup table
             int lookupTablePos = buf.position();
             buf.setPosition(leaPos);
-            asm.leaq(r9, new CiAddress(WordUtil.archKind(), r15.asValue(), lookupTablePos - afterLea));
+            asm.leaq(r10, new CiAddress(WordUtil.archKind(), rip.asValue(), (lookupTablePos - afterLea) + 4));
             buf.setPosition(lookupTablePos);
 
             // Emit lookup table entries
@@ -723,7 +722,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 startBlock(targetBCI);
                 patchInfo.addLookupTableEntry(buf.position(), key, lookupTablePos, targetBCI);
                 buf.emitInt(key);
-                buf.emitInt(0); // TODO check APN what/how does this work?
+                buf.emitInt(0);
             }
             if (codeAnnotations == null) {
                 codeAnnotations = new ArrayList<CiTargetMethod.CodeAnnotation>();

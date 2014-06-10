@@ -1062,7 +1062,6 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.peekInt(ARMV7.r0, 3);
         int assemblerStatements = masm.codeBuffer.position() / 4;
         int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
-        System.out.println(registerValues[0] + " " + registerValues[1] +  " " + registerValues[2] +  " " + registerValues[3]);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         assert registerValues[1] == expectedValues[1] : "Failed incorrect value " + registerValues[1] + " " + expectedValues[1];
         assert registerValues[2] == expectedValues[2] : "Failed incorrect value " + registerValues[2] + " " + expectedValues[2];
@@ -1187,45 +1186,20 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void ignoretestLookupTable() throws Exception {
-        int ii = 1;
+    public void testLookupTable() throws Exception {
+        // int ii = 1;
 
-        //int o, k, l, m;
-        //switch (ii) {
-        //    case -100:
-        //        o = 10;
-        //    case 0:
-        //        k = 20;
-        //    case 100:
-        //        l = 30;
-        //    default:
-        //        m = 40;
-        //}
-
-        // int chooseNear(int i) {
-        // switch (i) {
-        // } }
-        // compiles to:
-        // case 0: return 0;
-        // case 1: return 1;
-        // case 2: return 2;
-        // default: return -1;
-        // Method int chooseNear(int)
-        // 0 iload_1 // Push local variable 1 (argument i)
-        // 1 tableswitch 0 to 2: // Valid indices are 0 through 2
-        // 0: 28
-        // 1: 30
-        // 2: 32
-        // default:34
-        // 28 iconst_0
-        // 29 ireturn
-        // 30 iconst_1
-        // 31 ireturn
-        // 32 iconst_2
-        // 33 ireturn
-        // 34 iconst_m1
-        // 35 ireturn
-
+        // int o, k, l, m;
+        // switch (ii) {
+        // case -100:
+        // o = 10;
+        // case 0:
+        // k = 20;
+        // case 100:
+        // l = 30;
+        // default:
+        // m = 40;
+        // }
         int[] values = new int[] { 10, 20, 30, 40};
         for (int i = 0; i < values.length; i++) {
             for (int j = 0; j < values.length; j++) {
@@ -1236,74 +1210,82 @@ public class ARMV7T1XTest extends MaxTestCase {
                 }
             }
 
-            byte[] instructions = new byte[36];
+            byte[] instructions = new byte[48];
             if (i == 0) {
-                instructions[0] = (byte) Bytecodes.ICONST_0;
+                instructions[0] = (byte) Bytecodes.BIPUSH;
+                instructions[1] = (byte) -100;
             } else if (i == 1) {
-                instructions[0] = (byte) Bytecodes.ICONST_1;
+                instructions[0] = (byte) Bytecodes.BIPUSH;
+                instructions[1] = (byte) 0;
             } else if (i == 2) {
-                instructions[0] = (byte) Bytecodes.ICONST_2;
+                instructions[0] = (byte) Bytecodes.BIPUSH;
+                instructions[1] = (byte) 100;
             } else {
-                instructions[0] = (byte) Bytecodes.ICONST_3;
+                instructions[0] = (byte) Bytecodes.BIPUSH;
+                instructions[1] = (byte) 100;
             }
-            instructions[1] = (byte) Bytecodes.ISTORE_1;
-            instructions[2] = (byte) Bytecodes.ILOAD_1;
+            instructions[2] = (byte) Bytecodes.ISTORE_1;
+            instructions[3] = (byte) Bytecodes.ILOAD_1;
 
-            instructions[3] = (byte) Bytecodes.LOOKUPSWITCH;
-            instructions[4] = (byte) 0;
+            instructions[4] = (byte) Bytecodes.LOOKUPSWITCH;
             instructions[5] = (byte) 0;
             instructions[6] = (byte) 0;
-            instructions[7] = (byte) 0x1f;
+            instructions[7] = (byte) 0;
 
             instructions[8] = (byte) 0;
             instructions[9] = (byte) 0;
             instructions[10] = (byte) 0;
-            instructions[11] = (byte) 3;
+            instructions[11] = (byte) 0x2A;
 
-            instructions[12] = (byte) 0xff;
-            instructions[13] = (byte) 0xff;
-            instructions[14] = (byte) 0xff;
-            instructions[15] = (byte) 0x9c;
+            instructions[12] = (byte) 0;
+            instructions[13] = (byte) 0;
+            instructions[14] = (byte) 0;
+            instructions[15] = (byte) 3;
 
-            instructions[16] = (byte) 0;
-            instructions[17] = (byte) 0;
-            instructions[18] = (byte) 0;
-            instructions[19] = (byte) 0x21;
+            instructions[16] = (byte) 0xff;
+            instructions[17] = (byte) 0xff;
+            instructions[18] = (byte) 0xff;
+            instructions[19] = (byte) 0x9c;
 
             instructions[20] = (byte) 0;
             instructions[21] = (byte) 0;
             instructions[22] = (byte) 0;
-            instructions[23] = (byte) 0;
+            instructions[23] = (byte) 0x24;
 
             instructions[24] = (byte) 0;
             instructions[25] = (byte) 0;
             instructions[26] = (byte) 0;
-            instructions[27] = (byte) 0x23;
+            instructions[27] = (byte) 0;
 
             instructions[28] = (byte) 0;
             instructions[29] = (byte) 0;
             instructions[30] = (byte) 0;
-            instructions[31] = (byte) 0x64;
+            instructions[31] = (byte) 0x26;
 
             instructions[32] = (byte) 0;
             instructions[33] = (byte) 0;
             instructions[34] = (byte) 0;
-            instructions[35] = (byte) 0x25;
+            instructions[35] = (byte) 0x64;
 
-            instructions[36] = (byte) Bytecodes.BIPUSH;
-            instructions[37] = (byte) values[0];
-
-            instructions[38] = (byte) Bytecodes.BIPUSH;
-            instructions[39] = (byte) values[1];
+            instructions[36] = (byte) 0;
+            instructions[37] = (byte) 0;
+            instructions[38] = (byte) 0;
+            instructions[39] = (byte) 0x28;
 
             instructions[40] = (byte) Bytecodes.BIPUSH;
-            instructions[41] = (byte) values[2];
+            instructions[41] = (byte) values[0];
 
             instructions[42] = (byte) Bytecodes.BIPUSH;
-            instructions[43] = (byte) values[3];
+            instructions[43] = (byte) values[1];
+
+            instructions[44] = (byte) Bytecodes.BIPUSH;
+            instructions[45] = (byte) values[2];
+
+            instructions[46] = (byte) Bytecodes.BIPUSH;
+            instructions[47] = (byte) values[3];
 
             initialiseFrameForCompilation(instructions);
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 36);
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 48);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             theCompiler.peekInt(ARMV7.r3, 0);
             theCompiler.peekInt(ARMV7.r2, 1);
@@ -1311,6 +1293,11 @@ public class ARMV7T1XTest extends MaxTestCase {
             theCompiler.peekInt(ARMV7.r0, 3);
             int assemblerStatements = masm.codeBuffer.position() / 4;
             int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
+            //System.out.println("Value 0 " + registerValues[0]);
+            //System.out.println("Value 1 " + registerValues[1]);
+            //System.out.println("Value 2 " + registerValues[2]);
+            //System.out.println("Value 3 " + registerValues[3]);
+
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             assert registerValues[1] == expectedValues[1] : "Failed incorrect value " + registerValues[1] + " " + expectedValues[1];
             assert registerValues[2] == expectedValues[2] : "Failed incorrect value " + registerValues[2] + " " + expectedValues[2];
