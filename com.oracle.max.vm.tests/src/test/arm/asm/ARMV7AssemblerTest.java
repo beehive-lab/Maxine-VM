@@ -732,6 +732,22 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         }
     }
 
+    public void testFlags() throws Exception {
+        int assemblerStatements = 30;
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        asm.codeBuffer.reset();
+        asm.mov32BitConstant(ARMV7.cpuRegisters[0], 30);
+        asm.sub(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0], 10, 0);
+        asm.sub(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0], 10, 0);
+        asm.sub(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0], 10, 0);
+        asm.sub(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0], 10, 0);
+        expectedValues[0] = -10;
+        generateAndTest(assemblerStatements, expectedValues, testValues, bitmasks);
+    }
+
+
     public void ignoreAdclsl() throws Exception {
 
     }
