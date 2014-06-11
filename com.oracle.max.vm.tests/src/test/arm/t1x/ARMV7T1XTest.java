@@ -1185,7 +1185,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void ignoreLookupTable() throws Exception {
+    public void testLookupTable() throws Exception {
         // int ii = 1;
         // int o, k, l, m;
         // switch (ii) {
@@ -1220,7 +1220,7 @@ public class ARMV7T1XTest extends MaxTestCase {
                 instructions[1] = (byte) 100;
             } else {
                 instructions[0] = (byte) Bytecodes.BIPUSH;
-                instructions[1] = (byte) 100;
+                instructions[1] = (byte) 1;
             }
             instructions[2] = (byte) Bytecodes.ISTORE_1;
             instructions[3] = (byte) Bytecodes.ILOAD_1;

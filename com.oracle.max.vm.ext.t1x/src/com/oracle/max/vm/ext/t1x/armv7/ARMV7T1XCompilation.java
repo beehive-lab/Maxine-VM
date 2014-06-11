@@ -682,7 +682,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
             // Decrement loop var and jump to top of loop if it did not go below zero (i.e. carry flag was not set)
             asm.sub(ConditionFlag.Always, true, r7, r7, 2, 0);
-            asm.jcc(ConditionFlag.NoSignedOverflow, loopPos, true);
+            asm.jcc(ConditionFlag.Positive, loopPos, true);
 
             // Jump to default target
             startBlock(ls.defaultTarget());
