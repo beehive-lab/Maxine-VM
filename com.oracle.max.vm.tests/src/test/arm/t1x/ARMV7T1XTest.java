@@ -1062,21 +1062,16 @@ public class ARMV7T1XTest extends MaxTestCase {
 
     public void testByteCodeLoad() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
-        ByteCodeTests  testClass = new ByteCodeTests();
-        System.out.println("RAN " + testClass.run());
+        ByteCodeTests testClass = new ByteCodeTests();
         expectedValues[0] = testClass.run();
         byte[] code = xx.getByteArray("run", "test.arm.t1x.ByteCodeTests");
-        for (int i = 0; i < code.length; i++) {
-            System.out.println("BYTE " + code[i]);
-        }
         initialiseFrameForCompilation(code);
-        theCompiler.offlineT1XCompile(anMethod,codeAttr,code,code.length-1);
+        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.pop(ConditionFlag.Always,1);
+        masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
         int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
-
     }
 
     public void testSwitchTable() throws Exception {
