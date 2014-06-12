@@ -8,7 +8,7 @@ public class ARM_BC_test_return1 {
        int i;
         i =arg;
         i++;
-        return 1;
+        return i;
     }
 
 }
