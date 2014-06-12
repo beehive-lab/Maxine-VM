@@ -22,29 +22,40 @@
  */
 package com.oracle.max.vm.ext.maxri;
 
-import java.io.*;
-import java.util.*;
-
-import com.oracle.max.asm.*;
-import com.sun.cri.ci.*;
-import com.sun.max.*;
-import com.sun.max.config.*;
-import com.sun.max.io.*;
-import com.sun.max.lang.*;
-import com.sun.max.program.*;
-import com.sun.max.program.option.*;
-import com.sun.max.test.*;
-import com.sun.max.vm.*;
+import com.oracle.max.asm.AsmOptions;
+import com.sun.cri.ci.CiStatistics;
+import com.sun.max.Utils;
+import com.sun.max.config.BootImagePackage;
+import com.sun.max.io.Files;
+import com.sun.max.lang.Classes;
+import com.sun.max.program.Classpath;
+import com.sun.max.program.Trace;
+import com.sun.max.program.option.Option;
+import com.sun.max.program.option.OptionSet;
+import com.sun.max.test.ProgressPrinter;
+import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.MaxineVM.Phase;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.profile.*;
-import com.sun.max.vm.reflection.*;
-import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
+import com.sun.max.vm.VMOption;
+import com.sun.max.vm.actor.holder.ClassActor;
+import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.actor.member.MethodActor;
+import com.sun.max.vm.compiler.CompilationBroker;
+import com.sun.max.vm.compiler.RuntimeCompiler;
+import com.sun.max.vm.compiler.target.TargetMethod;
+import com.sun.max.vm.hosted.CompiledPrototype;
+import com.sun.max.vm.hosted.JavaPrototype;
+import com.sun.max.vm.hosted.MethodFinder;
+import com.sun.max.vm.hosted.VMConfigurator;
+import com.sun.max.vm.profile.MethodInstrumentation;
+import com.sun.max.vm.reflection.Boxing;
+import com.sun.max.vm.reflection.InvocationStub;
+import com.sun.max.vm.type.ClassRegistry;
+import com.sun.max.vm.value.Value;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.*;
 
 /**
  * A harness to run a {@linkplain RuntimeCompiler compiler} offline.
@@ -256,7 +267,6 @@ public class Compile {
         Throwable thrown = null;
         CiStatistics stats = new CiStatistics();
         try {
-            System.err.println("Goung to compiler.compile");
             TargetMethod tm = compiler.compile(classMethodActor, false, true, stats);
             if (validateInline.getValue()) {
                 validateInlining(tm);

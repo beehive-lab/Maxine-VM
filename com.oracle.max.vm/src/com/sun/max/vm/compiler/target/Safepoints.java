@@ -22,14 +22,15 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import static com.sun.max.platform.Platform.*;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.lang.ISA;
+import com.sun.max.vm.runtime.FatalError;
 
-import java.lang.reflect.*;
-import java.util.*;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 
-import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
-import com.sun.max.vm.runtime.*;
+import static com.sun.max.platform.Platform.platform;
 
 /**
  * A set of safepoints sorted by their {@linkplain #posAt(int) positions}. The information for each safepoint
@@ -138,8 +139,8 @@ public final class Safepoints {
 
     private static final int CAUSE_OFFSET_MASK = ((1 << 28) - 1) & ~POS_MASK;
     private static final int CAUSE_OFFSET_SHIFT = 25;
-    private static final int MAX_CAUSE_OFFSET = 7;
-    //private static final int MAX_CAUSE_OFFSET = 12;; // ARM
+    //X86 was this .... private static final int MAX_CAUSE_OFFSET = 7;
+    private static final int MAX_CAUSE_OFFSET = 12;; // ARM seems to come in at 12, dont know why.
     /**
      * Mask for extracting attributes.
      */
