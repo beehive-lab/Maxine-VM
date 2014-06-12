@@ -1073,6 +1073,20 @@ public class ARMV7T1XTest extends MaxTestCase {
         int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
     }
+    public void testjttUsageOfStaticMethods() throws Exception{
+        MaxineByteCode xx = new MaxineByteCode();
+        int answer = jtt.bytecode.ARM_BC_test_return1.test(99);
+        System.out.println(answer);
+        expectedValues[0] = answer;
+        byte[] code = xx.getByteArray("test", "jtt.bytecode.ARM_BC_test_return1");
+        initialiseFrameForCompilation(code);
+        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+        ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.pop(ConditionFlag.Always, 1);
+        int assemblerStatements = masm.codeBuffer.position() / 4;
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
+        assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+    }
 
     public void testSwitchTable() throws Exception {
         // int i = 1;
