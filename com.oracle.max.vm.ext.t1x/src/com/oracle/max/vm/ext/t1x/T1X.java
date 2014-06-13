@@ -375,6 +375,33 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         }
     }
 
+    public void initializeOffline(Phase phase) {
+        if (isHosted() && phase == Phase.HOSTED_COMPILING) {
+
+            RuntimeCompiler compiler = createBootCompiler();
+
+            //createTemplates(compiler, templateSource, true, templates);
+            if (stdT1X != this) {
+                intrinsicTemplates = stdT1X.intrinsicTemplates;
+            } else {
+                intrinsicTemplates = createIntrinsicTemplates(compiler);
+            }
+            if (vmtiT1X != null) {
+                vmtiT1X.initialize(phase);
+            }
+        }
+        if (phase == Phase.TERMINATING) {
+
+            if (T1XOptions.PrintMetrics) {
+                T1XMetrics.print();
+            }
+            if (T1XOptions.PrintTimers) {
+                T1XTimer.print();
+            }
+
+        }
+    }
+
     @HOSTED_ONLY
     protected RuntimeCompiler createBootCompiler() {
         // Create a boot compiler to compile the templates
@@ -449,6 +476,47 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         return templates;
     }
 
+    @HOSTED_ONLY
+    public T1XTemplate createOfflineTemplate(RuntimeCompiler compiler, Class<?> templateSourceClass, T1XTemplate[] templates, String name) {
+        if (templates == null) {
+            templates = new T1XTemplate[T1XTemplateTag.values().length];
+        }
+
+        ClassActor.fromJava(T1XRuntime.class);
+        ClassVerifier verifier = new TypeCheckingVerifier(ClassActor.fromJava(templateSourceClass));
+
+        final Method[] templateMethods = templateSourceClass.getDeclaredMethods();
+        //for (Method method : templateMethods) {
+        //    System.out.println(method.getName());
+       // }
+        int codeSize = 0;
+        T1XTemplate template =null;
+        for (Method method : templateMethods) {
+            if (!method.getName().equals(name)) {
+                continue;
+            }
+            if (Platform.platform().isAcceptedBy(method.getAnnotation(PLATFORM.class))) {
+                T1X_TEMPLATE anno = method.getAnnotation(T1X_TEMPLATE.class);
+                if (anno != null) {
+                    T1XTemplateTag tag = anno.value();
+                    ClassMethodActor templateSource = ClassMethodActor.fromJava(method);
+                    try {
+                        templateSource.verify(verifier);
+                    } catch (VerifyError e) {
+                        FatalError.unexpected("Error verifying " + templateSource, e);
+                    }
+                    MaxTargetMethod templateCode = compileTemplate(compiler, templateSource);
+                    codeSize += templateCode.codeLength();
+                    template = templates[tag.ordinal()];
+                    if (template != null) {
+                        FatalError.unexpected("Template tag " + tag + " is already bound to " + template.method + ", cannot rebind to " + templateSource);
+                    }
+                    templates[tag.ordinal()] = new T1XTemplate(templateCode, tag, templateSource);
+                }
+            }
+        }
+        return template;
+    }
     /**
      * These templates are not used by T1X, but may be used by the variants (e.g., VMA). Since enums cannot be
      * subclassed, it is convenient to keep them in {@link T1XTemplateTag} and just avoid checking
