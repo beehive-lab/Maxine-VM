@@ -24,8 +24,6 @@ package com.sun.c1x.target.armv7;
 
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.cri.ci.CiValue.*;
-import static java.lang.Double.*;
-import static java.lang.Float.*;
 
 import java.util.*;
 
@@ -42,7 +40,6 @@ import com.sun.c1x.lir.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ci.CiTargetMethod.JumpTable;
 import com.sun.cri.ci.CiTargetMethod.Mark;
 import com.sun.cri.xir.*;
@@ -891,7 +888,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     switch (code) {
                       //  case Add : masm.addl(lreg, rreg); break;
                        // case Sub : masm.subl(lreg, rreg); break;
-                       // case Mul : masm.imull(lreg, rreg); break;
+                        case Mul : masm.imul(dest.asRegister(), lreg, rreg); break;
                         default  : throw Util.shouldNotReachHere();
                     }
                 } else if (kind.isFloat()) {

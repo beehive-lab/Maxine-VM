@@ -1100,7 +1100,6 @@ public class ARMV7T1XTest extends MaxTestCase {
 
         masm.push(ConditionFlag.Always,2); //local slot 1 is argument (r2)
         masm.push(ConditionFlag.Always,1); //local slot 0 is return (int is one slot) last push to stack is 0
-
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
@@ -1111,9 +1110,7 @@ public class ARMV7T1XTest extends MaxTestCase {
 
     public void test_jtt_BC_imul() throws Exception{
         MaxineByteCode xx = new MaxineByteCode();
-        int value  = 99;
         int answer = jtt.bytecode.BC_imul.test(10,12);
-        System.out.println(answer + " 120?");
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_imul");
 
@@ -1124,9 +1121,9 @@ public class ARMV7T1XTest extends MaxTestCase {
         masm.mov32BitConstant(ARMV7.r2,-99);
 
         masm.push(ConditionFlag.Always,1); // local slot is argument  r0
-        masm.push(ConditionFlag.Always,2); //local slot 1 is argument (r2)
+        masm.push(ConditionFlag.Always,2); //local slot 1 is argument (r1)
         masm.push(ConditionFlag.Always,4); //local slot 0 is return (int is one slot) last push to stack is 0
-
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "imul");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
@@ -1357,11 +1354,6 @@ public class ARMV7T1XTest extends MaxTestCase {
             theCompiler.peekInt(ARMV7.r0, 3);
             int assemblerStatements = masm.codeBuffer.position() / 4;
             int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
-            // System.out.println("Value 0 " + registerValues[0]);
-            // System.out.println("Value 1 " + registerValues[1]);
-            // System.out.println("Value 2 " + registerValues[2]);
-            // System.out.println("Value 3 " + registerValues[3]);
-
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             assert registerValues[1] == expectedValues[1] : "Failed incorrect value " + registerValues[1] + " " + expectedValues[1];
             assert registerValues[2] == expectedValues[2] : "Failed incorrect value " + registerValues[2] + " " + expectedValues[2];
@@ -1370,10 +1362,6 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void testTemplate() {
-       t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, null, "idiv");
-       theCompiler.cleanup();
-    }
     public void ignoreCallDirect() throws Exception {
     }
 

@@ -474,9 +474,6 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         ClassVerifier verifier = new TypeCheckingVerifier(ClassActor.fromJava(templateSourceClass));
 
         final Method[] templateMethods = templateSourceClass.getDeclaredMethods();
-        //for (Method method : templateMethods) {
-        //    System.out.println(method.getName());
-       // }
         int codeSize = 0;
         T1XTemplate template =null;
         for (Method method : templateMethods) {

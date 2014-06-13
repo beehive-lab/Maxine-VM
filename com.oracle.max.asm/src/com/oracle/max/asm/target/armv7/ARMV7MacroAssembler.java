@@ -491,4 +491,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
         }
     }
+
+    public void imul(CiRegister left, CiRegister right, CiRegister result) {
+        mul(ConditionFlag.Always, true, ARMV7.r0, left, right);
+    }
 }
