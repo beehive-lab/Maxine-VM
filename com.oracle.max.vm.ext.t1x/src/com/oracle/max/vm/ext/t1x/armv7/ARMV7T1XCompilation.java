@@ -1192,7 +1192,13 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         pokeWord(ARMV7.r8, 1);
         pokeWord(ARMV7.r9, 0);
     }
-
+    @Override
+    protected void emit(T1XTemplateTag tag) {
+        //start(tag);
+        //finish();
+        System.out.println("CALLED EMIT");
+        do_imulTests();
+    }
     public void emitPrologueTests() {
         /*
          * mimics the functionality of T1XCompilation::compile2

@@ -47,7 +47,7 @@ public class ARMV7T1XTest extends MaxTestCase {
     public void initialiseFrameForCompilation(byte[] code) {
         // TODO: compute max stack
         codeAttr = new CodeAttribute(null, code, (char) 40, (char) 20, CodeAttribute.NO_EXCEPTION_HANDLER_TABLE, LineNumberTable.EMPTY, LocalVariableTable.EMPTY, null);
-        anMethod = new StaticMethodActor(null, SignatureDescriptor.create("(I)I"), Actor.JAVA_METHOD_FLAGS, codeAttr, new String());
+        anMethod = new StaticMethodActor(null, SignatureDescriptor.create("(II)I"), Actor.JAVA_METHOD_FLAGS, codeAttr, new String());
     }
 
     static final class Pair {

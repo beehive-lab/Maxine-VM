@@ -1,9 +1,11 @@
 package com.oracle.max.asm.target.armv7;
 
-import com.oracle.max.asm.*;
-import com.oracle.max.asm.target.amd64.AMD64Assembler.*;
-import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
+import com.oracle.max.asm.AbstractAssembler;
+import com.oracle.max.asm.Label;
+import com.sun.cri.ci.CiAddress;
+import com.sun.cri.ci.CiRegister;
+import com.sun.cri.ci.CiTarget;
+import com.sun.cri.ri.RiRegisterConfig;
 
 public class ARMV7Assembler extends AbstractAssembler {
 
@@ -229,6 +231,19 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (Rn.encoding & 0xf) << 16;
         instruction |= (Rt.encoding & 0xf) << 12;
         instruction |= imm12 & 0xfff;
+        emitInt(instruction);
+    }
+    public void strDualImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
+        int instruction = 0x040000f0;
+        assert imm8 == 0; // TODO fix the encoding its an ARM 8 bit
+        instruction |= (P & 0x1) << 24;
+        instruction |= (U & 0x1) << 23;
+        instruction |= (W & 0x1) << 21;
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (Rn.encoding & 0xf) << 16;
+        instruction |= (Rt.encoding & 0xf) << 12;
+        instruction |= imm8 & 0xf;
+        instruction |= (imm8 & 0xf0) << 4;
         emitInt(instruction);
     }
 
