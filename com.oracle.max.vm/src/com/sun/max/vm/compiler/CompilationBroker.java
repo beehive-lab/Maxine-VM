@@ -93,6 +93,7 @@ public class CompilationBroker {
     private static boolean FailOverCompilation = true;
     private static boolean VMExtOpt;
     static int PrintCodeCacheMetrics;
+    public static boolean OFFLINE = false;
 
     static {
         addFieldOption("-X", "opt", CompilationBroker.class, "Select optimizing compiler whenever possible.");
