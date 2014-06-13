@@ -130,14 +130,9 @@ public class ARMV7T1XTest extends MaxTestCase {
             }
             t1x = (T1X) CompilationBroker.addCompiler("t1x", baselineCompilerName);
             c1x = (C1X) CompilationBroker.addCompiler("c1x", optimizingCompilerName);
-            //t1x = (T1X) CompilationBroker.singleton.baselineCompiler;
-            //c1x = (C1X) CompilationBroker.singleton.optimizingCompiler;
-
 
             c1x.initializeOffline(Phase.HOSTED_COMPILING);
-            //t1x.initializeOffline(Phase.HOSTED_COMPILING);
             theCompiler = (ARMV7T1XCompilation) t1x.getT1XCompilation();
-
         } catch (Exception e) {
             System.out.println(e);
             e.printStackTrace();

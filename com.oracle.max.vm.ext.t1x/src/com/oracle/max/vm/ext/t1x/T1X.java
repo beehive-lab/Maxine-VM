@@ -390,33 +390,6 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         }
     }
 
-    public void initializeOffline(Phase phase) {
-        if (isHosted() && phase == Phase.HOSTED_COMPILING) {
-
-            RuntimeCompiler compiler = createBootCompiler();
-
-            //createTemplates(compiler, templateSource, true, templates);
-            if (stdT1X != this) {
-                intrinsicTemplates = stdT1X.intrinsicTemplates;
-            } else {
-               // intrinsicTemplates = createIntrinsicTemplates(compiler);
-            }
-            //if (vmtiT1X != null) {
-            //    vmtiT1X.initialize(phase);
-            //}
-        }
-        if (phase == Phase.TERMINATING) {
-
-            if (T1XOptions.PrintMetrics) {
-                T1XMetrics.print();
-            }
-            if (T1XOptions.PrintTimers) {
-                T1XTimer.print();
-            }
-
-        }
-    }
-
     @HOSTED_ONLY
     protected RuntimeCompiler createBootCompiler() {
         // Create a boot compiler to compile the templates
