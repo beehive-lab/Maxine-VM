@@ -22,36 +22,46 @@
  */
 package com.oracle.max.vm.ext.t1x;
 
-import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
-import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.stack.JVMSFrameLayout.*;
-
-import java.util.*;
-
-import com.oracle.max.asm.*;
+import com.oracle.max.asm.Buffer;
 import com.oracle.max.vm.ext.t1x.T1XTemplate.Arg;
 import com.oracle.max.vm.ext.t1x.T1XTemplate.ObjectLiteral;
 import com.oracle.max.vm.ext.t1x.T1XTemplate.SafepointsBuilder;
 import com.oracle.max.vm.ext.t1x.T1XTemplate.Sig;
-import com.sun.cri.bytecode.*;
+import com.sun.cri.bytecode.BytecodeStream;
+import com.sun.cri.bytecode.Bytecodes;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.actor.*;
-import com.sun.max.vm.actor.holder.*;
+import com.sun.max.annotate.INLINE;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.Log;
+import com.sun.max.vm.actor.Actor;
+import com.sun.max.vm.actor.holder.ArrayClassActor;
+import com.sun.max.vm.actor.holder.ClassActor;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.classfile.CodeAttribute;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.intrinsics.*;
-import com.sun.max.vm.profile.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.*;
-import com.sun.max.vm.type.*;
-import com.sun.max.vm.verifier.*;
+import com.sun.max.vm.compiler.CallEntryPoint;
+import com.sun.max.vm.compiler.WordUtil;
+import com.sun.max.vm.compiler.target.Adapter;
+import com.sun.max.vm.compiler.target.AdapterGenerator;
+import com.sun.max.vm.compiler.target.Safepoints;
+import com.sun.max.vm.intrinsics.MaxineIntrinsicIDs;
+import com.sun.max.vm.profile.MethodInstrumentation;
+import com.sun.max.vm.profile.MethodProfile;
+import com.sun.max.vm.runtime.VMRegister;
+import com.sun.max.vm.stack.JVMSFrameLayout;
+import com.sun.max.vm.type.ClassRegistry;
+import com.sun.max.vm.type.Kind;
+import com.sun.max.vm.type.KindEnum;
+import com.sun.max.vm.type.SignatureDescriptor;
+import com.sun.max.vm.verifier.TypeInferencingVerifier;
+
+import java.util.ArrayList;
+import java.util.EnumMap;
+
+import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
+import static com.sun.max.vm.MaxineVM.vm;
+import static com.sun.max.vm.stack.JVMSFrameLayout.JVMS_SLOT_SIZE;
 
 /**
  * T1X per-compilation information.
@@ -420,7 +430,6 @@ public abstract class T1XCompilation {
      * Translates the bytecode of a given method into a {@link T1XTargetMethod}.
      */
     public T1XTargetMethod compile(ClassMethodActor method, boolean isDeopt, boolean install) {
-        System.err.println("T1XCompilation::compile");
         try {
             this.isDeopt = isDeopt;
             return compile1(method, method.codeAttribute(), install);
@@ -526,7 +535,8 @@ public abstract class T1XCompilation {
     public void offlineT1XCompile(ClassMethodActor method, CodeAttribute codeAttribute, byte[] fakeBytes, int hardStop) {
         // Begin of elided initCompile
         assert this.method == null;
-        assert buf.position() == 0;
+        // REMOVED APN as needed to initialise registers for arguments to a function/method call
+        // assert buf.position() == 0;
         assert objectLiterals.isEmpty();
         this.method = method;
         this.codeAttribute = codeAttribute;
@@ -1870,7 +1880,6 @@ public abstract class T1XCompilation {
 
     protected boolean processIntrinsic(MethodActor method) {
         String intrinsic = method.intrinsic();
-        System.err.println("PROCESS INTRINSIC T1X");
         if (T1X.unsafeIntrinsicIDs.contains(intrinsic)) {
             T1XMetrics.Bailouts++;
             if (T1XOptions.PrintBailouts) {

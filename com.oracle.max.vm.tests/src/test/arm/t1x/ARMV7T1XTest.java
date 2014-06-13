@@ -47,7 +47,7 @@ public class ARMV7T1XTest extends MaxTestCase {
     public void initialiseFrameForCompilation(byte[] code) {
         // TODO: compute max stack
         codeAttr = new CodeAttribute(null, code, (char) 40, (char) 20, CodeAttribute.NO_EXCEPTION_HANDLER_TABLE, LineNumberTable.EMPTY, LocalVariableTable.EMPTY, null);
-        anMethod = new StaticMethodActor(null, SignatureDescriptor.create("(Ljava/util/Map;)V"), Actor.JAVA_METHOD_FLAGS, codeAttr, new String());
+        anMethod = new StaticMethodActor(null, SignatureDescriptor.create("(I)I"), Actor.JAVA_METHOD_FLAGS, codeAttr, new String());
     }
 
     static final class Pair {
@@ -128,14 +128,14 @@ public class ARMV7T1XTest extends MaxTestCase {
                 JavaPrototype.initialize(false);
                 initialised = true;
             }
-            CompilationBroker.addCompiler("t1x", baselineCompilerName);
-            CompilationBroker.addCompiler("c1x", optimizingCompilerName);
-            t1x = (T1X) CompilationBroker.singleton.baselineCompiler;
-            c1x = (C1X) CompilationBroker.singleton.optimizingCompiler;
+            t1x = (T1X) CompilationBroker.addCompiler("t1x", baselineCompilerName);
+            c1x = (C1X) CompilationBroker.addCompiler("c1x", optimizingCompilerName);
+            //t1x = (T1X) CompilationBroker.singleton.baselineCompiler;
+            //c1x = (C1X) CompilationBroker.singleton.optimizingCompiler;
 
 
             c1x.initializeOffline(Phase.HOSTED_COMPILING);
-            t1x.initializeOffline(Phase.HOSTED_COMPILING);
+            //t1x.initializeOffline(Phase.HOSTED_COMPILING);
             theCompiler = (ARMV7T1XCompilation) t1x.getT1XCompilation();
 
         } catch (Exception e) {
@@ -1087,8 +1087,58 @@ public class ARMV7T1XTest extends MaxTestCase {
         int assemblerStatements = masm.codeBuffer.position() / 4;
         int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+        theCompiler.cleanup();
     }
 
+    public void testjttUsageOfStaticMethods() throws Exception{
+        MaxineByteCode xx = new MaxineByteCode();
+        int value  = 99;
+        int answer = jtt.bytecode.ARM_BC_test_return1.test(12);
+        System.out.println(answer);
+        expectedValues[0] = answer;
+        byte[] code = xx.getByteArray("test", "jtt.bytecode.ARM_BC_test_return1");
+
+        initialiseFrameForCompilation(code);
+        ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.mov32BitConstant(ARMV7.r0,value);
+        masm.mov32BitConstant(ARMV7.r1,12);
+
+        masm.push(ConditionFlag.Always,2); //local slot 1 is argument (r2)
+        masm.push(ConditionFlag.Always,1); //local slot 0 is return (int is one slot) last push to stack is 0
+
+        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+        masm.pop(ConditionFlag.Always, 1);
+        int assemblerStatements = masm.codeBuffer.position() / 4;
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
+        assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+        theCompiler.cleanup();
+    }
+
+    public void test_jtt_BC_imul() throws Exception{
+        MaxineByteCode xx = new MaxineByteCode();
+        int value  = 99;
+        int answer = jtt.bytecode.BC_imul.test(10,12);
+        System.out.println(answer + " 120?");
+        expectedValues[0] = answer;
+        byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_imul");
+
+        initialiseFrameForCompilation(code);
+        ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.mov32BitConstant(ARMV7.r0,10);
+        masm.mov32BitConstant(ARMV7.r1,12);
+        masm.mov32BitConstant(ARMV7.r2,-99);
+
+        masm.push(ConditionFlag.Always,1); // local slot is argument  r0
+        masm.push(ConditionFlag.Always,2); //local slot 1 is argument (r2)
+        masm.push(ConditionFlag.Always,4); //local slot 0 is return (int is one slot) last push to stack is 0
+
+        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+        masm.pop(ConditionFlag.Always, 1);
+        int assemblerStatements = masm.codeBuffer.position() / 4;
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
+        assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+        theCompiler.cleanup();
+    }
     public void testSwitchTable() throws Exception {
         // int i = 1;
         // int j, k , l, m;
@@ -1327,6 +1377,7 @@ public class ARMV7T1XTest extends MaxTestCase {
 
     public void testTemplate() {
        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, null, "idiv");
+       theCompiler.cleanup();
     }
     public void ignoreCallDirect() throws Exception {
     }

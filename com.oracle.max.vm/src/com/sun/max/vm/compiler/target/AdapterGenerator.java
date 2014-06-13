@@ -188,7 +188,7 @@ public abstract class AdapterGenerator {
      *         compiler configured for the VM.
      */
     public static AdapterGenerator forCallee(ClassMethodActor callee, CallEntryPoint callingConvention) {
-        if (!vm().compilationBroker.needsAdapters()) {
+        if (!vm().compilationBroker.needsAdapters() || CompilationBroker.OFFLINE) {
             // Only one calling convention; no adapters in use
             return null;
         }
