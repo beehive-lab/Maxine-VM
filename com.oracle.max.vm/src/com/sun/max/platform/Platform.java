@@ -22,21 +22,29 @@
  */
 package com.sun.max.platform;
 
-import static java.lang.Integer.*;
-import static java.lang.System.*;
-
-import java.io.*;
-import java.util.*;
-import java.util.regex.*;
-
-import com.oracle.max.asm.target.amd64.*;
-import com.oracle.max.asm.target.armv7.*;
-import com.sun.cri.ci.*;
-import com.sun.max.annotate.*;
+import com.oracle.max.asm.target.amd64.AMD64;
+import com.oracle.max.asm.target.armv7.ARMV7;
+import com.sun.cri.ci.CiArchitecture;
+import com.sun.cri.ci.CiTarget;
+import com.sun.max.annotate.FOLD;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.annotate.PLATFORM;
 import com.sun.max.lang.*;
-import com.sun.max.program.*;
-import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.runtime.*;
+import com.sun.max.program.ProgramError;
+import com.sun.max.program.ProgramWarning;
+import com.sun.max.vm.hosted.Prototype;
+import com.sun.max.vm.runtime.FatalError;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.PrintStream;
+import java.util.Collections;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.regex.Pattern;
+
+import static java.lang.Integer.getInteger;
+import static java.lang.System.getProperty;
 
 /**
  * Platform configuration information. This class maintains a current {@link #platform() platform} context
@@ -461,10 +469,10 @@ public final class Platform {
      */
     private static Platform createDefaultPlatform0() {
         String platformSpec = System.getProperty(PLATFORM_PROPERTY);
-        System.err.println("Platform Spec " + platformSpec);
+        //System.err.println("Platform Spec " + platformSpec);
         if (platformSpec != null) {
             Platform platform = parse(platformSpec);
-            System.err.println("Platform " + platform);
+            //System.err.println("Platform " + platform);
 
             if (platform == null) {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();

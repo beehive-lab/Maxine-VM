@@ -179,12 +179,10 @@ public class Compile {
         }
 
         CompilationBroker cb = MaxineVM.vm().compilationBroker;
-        out.println("Compile.java CompilationBroker created" + " NAME " + compilerName);
         final RuntimeCompiler compiler = compilerName.contains("T1X") ? cb.baselineCompiler : cb.optimizingCompiler;
         cb.optimizingCompiler.initialize(Phase.HOSTED_COMPILING);
         if (cb.optimizingCompiler != cb.baselineCompiler && compiler == cb.baselineCompiler) {
             cb.baselineCompiler.initialize(Phase.HOSTED_COMPILING);
-            out.println("baseline inited");
 
         }
         out.println("!!!!!!! Compile standalone version COMPILERS ALL INITIALISED!");
@@ -194,11 +192,11 @@ public class Compile {
             out.println("no methods matched");
             return;
         }
-        out.println("METHODS tO BE COMPILED " + methods.size());
+        //out.println("METHODS tO BE COMPILED " + methods.size());
         for (MethodActor  actor: methods) {
-            out.println(actor + " CODE SIZE " + actor.codeSize());
+            //out.println(actor + " CODE SIZE " + actor.codeSize());
             for (int i = 0; i < actor.codeSize(); i++)    {
-                out.println("BYTECODE " + i + " " + actor.code()[i]);
+                //out.println("BYTECODE " + i + " " + actor.code()[i]);
             }
         }
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
@@ -207,10 +205,8 @@ public class Compile {
             addReflectionStubs(methods);
             out.println("REFLECTION STUBS ADDED!");
         }
-        out.println("DOCOMPILE START!");
 
         doCompile(compiler, methods, progress);
-        out.println("DOCOMPILE FINISHED!");
 
         if (verboseOption.getValue() > 0) {
             progress.report();

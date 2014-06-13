@@ -430,7 +430,6 @@ public abstract class T1XCompilation {
      * Translates the bytecode of a given method into a {@link T1XTargetMethod}.
      */
     public T1XTargetMethod compile(ClassMethodActor method, boolean isDeopt, boolean install) {
-        System.err.println("T1XCompilation::compile");
         try {
             this.isDeopt = isDeopt;
             return compile1(method, method.codeAttribute(), install);
@@ -1881,7 +1880,6 @@ public abstract class T1XCompilation {
 
     protected boolean processIntrinsic(MethodActor method) {
         String intrinsic = method.intrinsic();
-        System.err.println("PROCESS INTRINSIC T1X");
         if (T1X.unsafeIntrinsicIDs.contains(intrinsic)) {
             T1XMetrics.Bailouts++;
             if (T1XOptions.PrintBailouts) {

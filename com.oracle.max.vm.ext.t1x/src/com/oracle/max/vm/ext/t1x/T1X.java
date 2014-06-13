@@ -22,48 +22,63 @@
  */
 package com.oracle.max.vm.ext.t1x;
 
-import static com.oracle.max.cri.intrinsics.IntrinsicIDs.*;
-import static com.oracle.max.vm.ext.t1x.T1XOptions.*;
-import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
-import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.compiler.target.Safepoints.*;
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
-import static com.sun.max.vm.stack.VMFrameLayout.*;
-
-import java.io.*;
-import java.lang.reflect.*;
-import java.util.*;
-
-import com.oracle.max.criutils.*;
-import com.oracle.max.vm.ext.maxri.*;
-import com.sun.cri.bytecode.*;
+import com.oracle.max.criutils.CompilationPrinter;
+import com.oracle.max.criutils.HexCodeFile;
+import com.oracle.max.criutils.TTY;
+import com.oracle.max.vm.ext.maxri.MaxTargetMethod;
+import com.sun.cri.bytecode.BytecodeStream;
+import com.sun.cri.bytecode.Bytecodes;
 import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiUtil.RefMapFormatter;
-import com.sun.cri.ri.*;
+import com.sun.cri.ri.RiMethod;
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
-import com.sun.max.platform.*;
-import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.Phase;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.heap.debug.*;
-import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.layout.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.*;
-import com.sun.max.vm.ti.*;
-import com.sun.max.vm.type.*;
-import com.sun.max.vm.verifier.*;
+import com.sun.max.lang.ISA;
+import com.sun.max.lang.Ints;
+import com.sun.max.platform.Platform;
+import com.sun.max.program.Trace;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.Log;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.VMOptions;
+import com.sun.max.vm.actor.holder.ClassActor;
+import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.actor.member.MethodActor;
+import com.sun.max.vm.bytecode.CodeAttributePrinter;
+import com.sun.max.vm.classfile.ClassfileReader;
+import com.sun.max.vm.classfile.constant.SymbolTable;
+import com.sun.max.vm.compiler.CompilationBroker;
+import com.sun.max.vm.compiler.RuntimeCompiler;
+import com.sun.max.vm.compiler.target.HexCodeFileTool;
+import com.sun.max.vm.compiler.target.Safepoints;
+import com.sun.max.vm.compiler.target.TargetMethod;
+import com.sun.max.vm.heap.debug.DebugHeap;
+import com.sun.max.vm.hosted.JavaPrototype;
+import com.sun.max.vm.layout.Layout;
+import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.stack.JVMSFrameLayout;
+import com.sun.max.vm.ti.VMTI;
+import com.sun.max.vm.type.ClassRegistry;
+import com.sun.max.vm.type.Kind;
+import com.sun.max.vm.verifier.ClassVerifier;
+import com.sun.max.vm.verifier.TypeCheckingVerifier;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.reflect.Method;
+import java.util.*;
+
+import static com.oracle.max.cri.intrinsics.IntrinsicIDs.*;
+import static com.oracle.max.vm.ext.t1x.T1XOptions.*;
+import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
+import static com.sun.max.platform.Platform.platform;
+import static com.sun.max.platform.Platform.target;
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.compiler.target.Safepoints.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+import static com.sun.max.vm.stack.VMFrameLayout.STACK_SLOT_SIZE;
 
 /**
  * The template JIT compiler based on C1X.
@@ -182,7 +197,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
             T1XTargetMethod t1xMethod = c.compile(method, isDeopt, install);
             T1XMetrics.BytecodesCompiled += t1xMethod.codeAttribute.code().length;
             T1XMetrics.CodeBytesEmitted += t1xMethod.code().length;
-            Log.println("STATS bytecode len " + t1xMethod.codeAttribute.code().length + " machine code len " + t1xMethod.code().length);
+            //Log.println("STATS bytecode len " + t1xMethod.codeAttribute.code().length + " machine code len " + t1xMethod.code().length);
             if (stats != null) {
                 stats.bytecodeCount = t1xMethod.codeAttribute.code().length;
             }
@@ -214,15 +229,15 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     private static final int MIN_OPCODE_LINE_LENGTH = 100;
 
     void printMachineCode(T1XCompilation c, T1XTargetMethod t1xMethod, boolean reentrant) {
-        /* APN if (!PrintCFGToFile || reentrant || c.method == null || TTY.isSuppressed()) {
+        if (!PrintCFGToFile || reentrant || c.method == null || TTY.isSuppressed()) {
             return;
         }
         if (!isHosted() && !isRunning()) {
             // Cannot write to file system at runtime until the VM is in the RUNNING phase
             return;
         }
-    APN */
-        Log.println("T1X:printMachineCode is forced on");
+
+        //Log.println("T1X:printMachineCode is forced on");
 
 
         ByteArrayOutputStream buf = new ByteArrayOutputStream();
