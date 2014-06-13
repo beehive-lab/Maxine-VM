@@ -171,10 +171,48 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
             optionsRegistered = true;
         }
 
+
         if (isHosted() && phase == Phase.HOSTED_COMPILING) {
             // Temporary work-around to support the @ACCESSOR annotation.
             GraphBuilder.setAccessor(ClassActor.fromJava(Accessor.class));
+            compiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.compilerStub);
+            compiler.addCompilationObserver(new WordTypeRewriterObserver());
+            MaxineIntrinsicImplementations.initialize(compiler.intrinsicRegistry);
+        }
 
+        if (phase == Phase.STARTING) {
+            // Speculative opts are ok provided the compilation broker can handle deopt
+            C1XOptions.UseAssumptions = vm().compilationBroker.isDeoptSupported() && Deoptimization.UseDeopt;
+        } else if (phase == Phase.TERMINATING) {
+            if (C1XOptions.PrintMetrics) {
+                C1XMetrics.print();
+                DebugInfo.dumpStats(Log.out);
+            }
+            if (C1XOptions.PrintTimers) {
+                C1XTimers.print();
+            }
+        }
+    }
+
+    public void initializeOffline(Phase phase) {
+        if (isHosted() && !optionsRegistered) {
+            //runtime.initialize();
+
+            C1XOptions.setOptimizationLevel(optLevelOption.getValue());
+            C1XOptions.OptIntrinsify = true;
+            C1XOptions.StackShadowPages = VmThread.STACK_SHADOW_PAGES;
+            VMOptions.addFieldOptions("-C1X:", C1XOptions.class, getHelpMap());
+            VMOptions.addFieldOptions("-ASM:", AsmOptions.class, null);
+
+            // Speculative opts (UseAssumptions) are the default in the boot image as they are limited
+            // to VM classes, which form a closed world.
+            optionsRegistered = true;
+        }
+
+
+        if (isHosted() && phase == Phase.HOSTED_COMPILING) {
+            // Temporary work-around to support the @ACCESSOR annotation.
+            GraphBuilder.setAccessor(ClassActor.fromJava(Accessor.class));
             compiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.compilerStub);
             compiler.addCompilationObserver(new WordTypeRewriterObserver());
             MaxineIntrinsicImplementations.initialize(compiler.intrinsicRegistry);
