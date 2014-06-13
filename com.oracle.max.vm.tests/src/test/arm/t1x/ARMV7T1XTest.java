@@ -11,11 +11,13 @@ import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
 import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.t1x.armv7.*;
+import com.oracle.max.vm.ext.c1x.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
 import com.sun.max.program.option.*;
+import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -30,6 +32,7 @@ public class ARMV7T1XTest extends MaxTestCase {
     private CiTarget armv7;
     private ARMCodeWriter code;
     private T1X t1x;
+    private C1X c1x;
     private ARMV7T1XCompilation theCompiler;
     private StaticMethodActor anMethod = null;
     private CodeAttribute codeAttr = null;
@@ -115,14 +118,26 @@ public class ARMV7T1XTest extends MaxTestCase {
             if (vmConfigurator == null) {
                 vmConfigurator = new VMConfigurator(options);
             }
-            String compilerName = new String("com.oracle.max.vm.ext.t1x.T1X");
-            RuntimeCompiler.baselineCompilerOption.setValue(compilerName);
+            String baselineCompilerName = new String("com.oracle.max.vm.ext.t1x.T1X");
+            String optimizingCompilerName = new String("com.oracle.max.vm.ext.c1x.C1X");
+            RuntimeCompiler.baselineCompilerOption.setValue(baselineCompilerName);
+            RuntimeCompiler.optimizingCompilerOption.setValue(optimizingCompilerName);
             if (initialised == false) {
                 vmConfigurator.create();
+                CompilationBroker.OFFLINE = true;
+                JavaPrototype.initialize(false);
                 initialised = true;
             }
-            t1x = (T1X) CompilationBroker.instantiateCompiler(compilerName);
+            CompilationBroker.addCompiler("t1x", baselineCompilerName);
+            CompilationBroker.addCompiler("c1x", optimizingCompilerName);
+            t1x = (T1X) CompilationBroker.singleton.baselineCompiler;
+            c1x = (C1X) CompilationBroker.singleton.optimizingCompiler;
+
+
+            c1x.initializeOffline(Phase.HOSTED_COMPILING);
+            t1x.initializeOffline(Phase.HOSTED_COMPILING);
             theCompiler = (ARMV7T1XCompilation) t1x.getT1XCompilation();
+
         } catch (Exception e) {
             System.out.println(e);
             e.printStackTrace();
@@ -1310,6 +1325,9 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
+    public void testTemplate() {
+       t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, null, "idiv");
+    }
     public void ignoreCallDirect() throws Exception {
     }
 
