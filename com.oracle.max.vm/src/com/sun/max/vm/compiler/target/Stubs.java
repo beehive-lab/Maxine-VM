@@ -1342,7 +1342,6 @@ public class Stubs {
                             // Aslo assumptions about index slot sizes are a bit broken and offsets as some types are bigger than
                             // 32bits --- long/double so multiplying by 4 will give an incorrect offset in general.
                         // broken we need TWO registers so this needs VLDR!!!!!!!!!
-                        System.err.println("Stubs --- we need VLDR");
                         if (tmp2arg4.number <= 15)  {
                             asm.pop(ARMV7Assembler.ConditionFlag.Always, (1 << tmp2arg4.number) | (1 << (tmp2arg4.number + 1)));
                         } else {
@@ -1607,7 +1606,6 @@ public class Stubs {
                         break;
 
                     case Float:
-                        System.err.println("FLOAT");
                         CiRegister tmp = args[4].asRegister();
 
                         if (tmp.number <= 15) {
@@ -1620,7 +1618,6 @@ public class Stubs {
 
                         break;
                     case Double:
-                        System.err.println("DOUBLE");
                         CiRegister tmp2arg4 = args[4].asRegister();
                         // aPN TODO this is broken beyond belief
                         // we will be trying to move a FP reg into a core register?
@@ -1629,7 +1626,6 @@ public class Stubs {
                         // Aslo assumptions about index slot sizes are a bit broken and offsets as some types are bigger than
                         // 32bits --- long/double so multiplying by 4 will give an incorrect offset in general.
                         // broken we need TWO registers so this needs VLDR!!!!!!!!!
-                        System.err.println("Stubs --- we need VLDR");
                         if (tmp2arg4.number <= 15) {
                             asm.push(ARMV7Assembler.ConditionFlag.Always, (1 << tmp2arg4.number) | (1 << (tmp2arg4.number + 1)));
                         } else {
