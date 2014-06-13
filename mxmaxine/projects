@@ -29,7 +29,7 @@ project@com.oracle.max.base@checkstyle=com.oracle.max.base
 project@com.oracle.max.base@javaCompliance=1.7
 
 project@com.oracle.max.tests@sourceDirs=src
-project@com.oracle.max.tests@dependencies=com.oracle.max.base,TESTS_JASMIN_CLASSES,com.oracle.max.vm.ext.t1x
+project@com.oracle.max.tests@dependencies=com.oracle.max.base,TESTS_JASMIN_CLASSES,com.oracle.max.vm.ext.t1x,com.oracle.max.vm.ext.c1x
 project@com.oracle.max.tests@checkstyle=com.oracle.max.base
 project@com.oracle.max.tests@javaCompliance=1.7
 
