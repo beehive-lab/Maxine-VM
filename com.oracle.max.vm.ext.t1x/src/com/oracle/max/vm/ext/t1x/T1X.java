@@ -386,9 +386,9 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
             } else {
                 intrinsicTemplates = createIntrinsicTemplates(compiler);
             }
-            if (vmtiT1X != null) {
-                vmtiT1X.initialize(phase);
-            }
+            //if (vmtiT1X != null) {
+            //    vmtiT1X.initialize(phase);
+            //}
         }
         if (phase == Phase.TERMINATING) {
 
