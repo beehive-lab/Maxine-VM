@@ -17,26 +17,29 @@
  */
 package com.sun.max.vm.compiler.target;
 
+import com.oracle.max.asm.target.armv7.ARMV7;
+import com.sun.cri.ci.CiCalleeSaveLayout;
+import com.sun.cri.ci.CiRegister;
+import com.sun.cri.ci.CiRegisterConfig;
+import com.sun.cri.ri.RiRegisterAttributes;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.lang.ISA;
+import com.sun.max.platform.OS;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.compiler.deopt.Deoptimization;
+import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.runtime.amd64.AMD64TrapFrameAccess;
+import com.sun.max.vm.runtime.arm.ARMTrapFrameAccess;
+
+import java.util.Arrays;
+import java.util.HashMap;
+
 import static com.oracle.max.asm.target.amd64.AMD64.*;
 import static com.oracle.max.asm.target.armv7.ARMV7.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
-import static com.sun.max.platform.Platform.*;
+import static com.sun.max.platform.Platform.platform;
 import static com.sun.max.vm.runtime.VMRegister.*;
-
-import java.util.*;
-
-import com.oracle.max.asm.target.armv7.ARMV7;
-import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
-import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
-import com.sun.max.platform.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.deopt.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.runtime.amd64.*;
-import com.sun.max.vm.runtime.arm.*;
 
 /**
  * The set of register configurations applicable to compiled code in the VM.
@@ -160,7 +163,7 @@ public class RegisterConfigs {
                  *
                  * as inlining is expected to reduce the call overhead sufficiently.
                  */
-                standard = new CiRegisterConfig(com.oracle.max.asm.target.armv7.ARMV7.r13, // frame
+                standard = new CiRegisterConfig(com.oracle.max.asm.target.armv7.ARMV7.r11, // frame
                     r0, // integral return value
                     d0, // APN TODO floating point return value for simplicity ALWAYS return a double
 

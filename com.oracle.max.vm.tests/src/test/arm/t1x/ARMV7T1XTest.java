@@ -1122,7 +1122,7 @@ public class ARMV7T1XTest extends MaxTestCase {
 
         masm.push(ConditionFlag.Always,1); // local slot is argument  r0
         masm.push(ConditionFlag.Always,2); //local slot 1 is argument (r1)
-        masm.push(ConditionFlag.Always,4); //local slot 0 is return (int is one slot) last push to stack is 0
+        masm.push(ConditionFlag.Always,4); //local slot 0 is return (int is one slot) last push to stack is
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "imul");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);

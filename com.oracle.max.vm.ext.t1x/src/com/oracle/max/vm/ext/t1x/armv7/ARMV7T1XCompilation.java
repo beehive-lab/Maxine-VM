@@ -1193,10 +1193,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     }
     @Override
     protected void emit(T1XTemplateTag tag) {
-        //start(tag);
-        //finish();
+        start(tag);
+        finish();
         System.out.println("CALLED EMIT");
-        do_imulTests();
     }
     public void emitPrologueTests() {
         /*
