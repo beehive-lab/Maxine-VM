@@ -44,10 +44,10 @@ public class ARMV7T1XTest extends MaxTestCase {
         anMethod = new StaticMethodActor(null, SignatureDescriptor.create("(Ljava/util/Map;)V"), Actor.JAVA_METHOD_FLAGS, codeAttr, new String());
     }
 
-    public void initialiseFrameForCompilation(byte[] code) {
+    public void initialiseFrameForCompilation(byte[] code, String sig) {
         // TODO: compute max stack
         codeAttr = new CodeAttribute(null, code, (char) 40, (char) 20, CodeAttribute.NO_EXCEPTION_HANDLER_TABLE, LineNumberTable.EMPTY, LocalVariableTable.EMPTY, null);
-        anMethod = new StaticMethodActor(null, SignatureDescriptor.create("(II)I"), Actor.JAVA_METHOD_FLAGS, codeAttr, new String());
+        anMethod = new StaticMethodActor(null, SignatureDescriptor.create(sig), Actor.JAVA_METHOD_FLAGS, codeAttr, new String());
     }
 
     static final class Pair {
@@ -1017,7 +1017,7 @@ public class ARMV7T1XTest extends MaxTestCase {
             instructions[15] = (byte) Bytecodes.NOP;
 
             // instructions[14] = (byte) Bytecodes.RETURN;
-            initialiseFrameForCompilation(instructions);
+            initialiseFrameForCompilation(instructions, "(II)I");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 15);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.pop(ARMV7Assembler.ConditionFlag.Always, 1);
@@ -1054,7 +1054,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         instructions[14] = (byte) Bytecodes.ILOAD_2;
         instructions[15] = (byte) Bytecodes.ILOAD_3;
         instructions[16] = (byte) Bytecodes.NOP;
-        initialiseFrameForCompilation(instructions);
+        initialiseFrameForCompilation(instructions, "(II)I");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 16);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         theCompiler.peekInt(ARMV7.r3, 0);
@@ -1075,7 +1075,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         ByteCodeTests testClass = new ByteCodeTests();
         expectedValues[0] = testClass.run();
         byte[] code = xx.getByteArray("run", "test.arm.t1x.ByteCodeTests");
-        initialiseFrameForCompilation(code);
+        initialiseFrameForCompilation(code, "(II)I");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.pop(ConditionFlag.Always, 1);
@@ -1093,7 +1093,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.ARM_BC_test_return1");
 
-        initialiseFrameForCompilation(code);
+        initialiseFrameForCompilation(code, "(I)I");
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0,value);
         masm.mov32BitConstant(ARMV7.r1,12);
@@ -1114,7 +1114,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_imul");
 
-        initialiseFrameForCompilation(code);
+        initialiseFrameForCompilation(code, "(II)I");
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0,10);
         masm.mov32BitConstant(ARMV7.r1,12);
@@ -1231,7 +1231,7 @@ public class ARMV7T1XTest extends MaxTestCase {
             instructions[34] = (byte) Bytecodes.BIPUSH;
             instructions[35] = (byte) values[3];
 
-            initialiseFrameForCompilation(instructions);
+            initialiseFrameForCompilation(instructions, "(II)I");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 36);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             theCompiler.peekInt(ARMV7.r3, 0);
@@ -1345,7 +1345,7 @@ public class ARMV7T1XTest extends MaxTestCase {
             instructions[46] = (byte) Bytecodes.BIPUSH;
             instructions[47] = (byte) values[3];
 
-            initialiseFrameForCompilation(instructions);
+            initialiseFrameForCompilation(instructions, "(II)I");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 48);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             theCompiler.peekInt(ARMV7.r3, 0);
