@@ -501,12 +501,11 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         // stackptr = framepointer -stacksize
         int frameSize = frame.frameSize();
         // asm.enter(frameSize - Word.size(), 0);
-
         asm.push(ConditionFlag.Always, 1 << 11); // push frame pointer onto STACK
         asm.mov(ConditionFlag.Always, false, ARMV7.r11, ARMV7.r13); // create a new framepointer = stack ptr
         asm.subq(ARMV7.r13, frameSize - Word.size()); // APN is this necessary for  ARM ie push does it anyway?
 
-        asm.subq(r13, framePointerAdjustment()); // TODO FP/SP not being set up correctly ...
+        asm.subq(r11, framePointerAdjustment()); // TODO FP/SP not being set up correctly ...
         if (Trap.STACK_BANGING) {
             int pageSize = platform().pageSize;
             int framePages = frameSize / pageSize;
@@ -1251,6 +1250,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         // public static int iadd(@Slot(1) int value1, @Slot(0) int value2) {
         // return value1 + value2;
         // }
+
         peekInt(ARMV7.r0, 0);
         decStack(1); // get slot 1
         peekInt(ARMV7.r1, 0);
