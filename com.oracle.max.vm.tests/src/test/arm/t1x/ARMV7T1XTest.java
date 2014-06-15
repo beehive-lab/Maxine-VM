@@ -1089,7 +1089,6 @@ public class ARMV7T1XTest extends MaxTestCase {
         MaxineByteCode xx = new MaxineByteCode();
         int value  = 99;
         int answer = jtt.bytecode.ARM_BC_test_return1.test(12);
-        System.out.println(answer);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.ARM_BC_test_return1");
 
