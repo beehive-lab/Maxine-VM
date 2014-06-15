@@ -924,8 +924,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         // register - stack
                         CiAddress raddr = frameMap.toStackAddress(((CiStackSlot) right));
                         switch (code) {
-                         //   case Add : masm.addl(lreg, raddr); break;
-                           // case Sub : masm.subl(lreg, raddr); break;
+                            case Add : masm.iadd(dest.asRegister(), lreg, raddr); break;
+                            case Sub : masm.isub(dest.asRegister(), lreg, raddr); break;
                             default  : throw Util.shouldNotReachHere();
                         }
                     } else if (right.isConstant()) {

@@ -22,8 +22,12 @@
  */
 package com.oracle.max.asm.target.armv7;
 
+import static com.oracle.max.asm.target.armv7.ARMV7.*;
+
 import com.oracle.max.asm.*;
+import com.oracle.max.asm.target.armv7.ARMV7Assembler.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiAddress.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -502,5 +506,17 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void iadd(CiRegister dest, CiRegister left, CiRegister right) {
         addRegisters(ConditionFlag.Always, true, dest, left, right, 0, 0);
+    }
+
+    public void iadd(CiRegister dest, CiRegister left, CiAddress right) {
+        setUpScratch(right);
+        ldrImmediate(ConditionFlag.Always, 0, 0, 0, r1, r12, 0);
+        addRegisters(ConditionFlag.Always, true, dest, left, r1, 0, 0);
+    }
+
+    public void isub(CiRegister dest, CiRegister left, CiAddress right) {
+        setUpScratch(right);
+        ldrImmediate(ConditionFlag.Always, 0, 0, 0, r1, r12, 0);
+        sub(ConditionFlag.Always, true, dest, left, r1, 0, 0);
     }
 }
