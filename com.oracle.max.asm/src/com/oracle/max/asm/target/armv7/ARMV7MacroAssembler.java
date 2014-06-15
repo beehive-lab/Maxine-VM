@@ -499,4 +499,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public void isub(CiRegister dest, CiRegister left, CiRegister right) {
         sub(ConditionFlag.Always, true, dest, left, right, 0, 0);
     }
+
+    public void iadd(CiRegister dest, CiRegister left, CiRegister right) {
+        addRegisters(ConditionFlag.Always, true, dest, left, right, 0, 0);
+    }
 }
