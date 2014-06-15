@@ -691,8 +691,8 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(INEG)
-    public static int ineg(@Slot(0) int value, int zero) {
-        return zero - value;
+    public static int ineg(@Slot(0) int value) {
+        return -value;
     }
 
     @T1X_TEMPLATE(IOR)

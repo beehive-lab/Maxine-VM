@@ -2087,7 +2087,6 @@ public abstract class T1XCompilation {
 
     protected void do_ineg() {
         start(INEG);
-        assignInt(1, "zero", 0);
         finish();
     }
 

@@ -1583,9 +1583,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         CiValue dest = op.result();
         assert left.isRegister();
         if (left.kind.isInt()) {
-        //    masm.negl(left.asRegister());
-            moveRegs(left.asRegister(), dest.asRegister());
-
+            masm.ineg(dest.asRegister(), left.asRegister());
         } else if (dest.kind.isFloat()) {
             if (asXmmFloatReg(left) != asXmmFloatReg(dest)) {
                 masm.movflt(asXmmFloatReg(dest), asXmmFloatReg(left));

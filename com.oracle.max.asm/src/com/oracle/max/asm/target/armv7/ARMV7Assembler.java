@@ -162,6 +162,16 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
+    public void neg(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int imm12) {
+        int instruction = 0x2600000;
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (s ? 1 : 0) << 20;
+        instruction |= (Rn.encoding & 0xf) << 16;
+        instruction |= (Rd.encoding & 0xf) << 12;
+        instruction |= imm12 & 0xfff;
+        emitInt(instruction);
+    }
+
     public void nop(final ConditionFlag cond) {
         int instruction = 0x320F000;
         instruction |= (cond.value() & 0xf) << 28;
