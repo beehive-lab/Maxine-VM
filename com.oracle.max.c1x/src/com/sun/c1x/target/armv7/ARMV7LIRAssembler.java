@@ -887,7 +887,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 if (kind.isInt()) {
                     switch (code) {
                       //  case Add : masm.addl(lreg, rreg); break;
-                       // case Sub : masm.subl(lreg, rreg); break;
+                        case Sub : masm.isub(dest.asRegister(), lreg, rreg); break;
                         case Mul : masm.imul(dest.asRegister(), lreg, rreg); break;
                         default  : throw Util.shouldNotReachHere();
                     }
