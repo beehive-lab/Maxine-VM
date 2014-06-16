@@ -643,8 +643,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 break;
 
             case I2C:
-                moveRegs(srcRegister, dest.asRegister());
-               // masm.andl(dest.asRegister(), 0xFFFF);
+                masm.mov32BitConstant(dest.asRegister(), 0xFFFF);
+                masm.and(ConditionFlag.Always, true, dest.asRegister(), srcRegister, dest.asRegister(), 0, 0);
                 break;
 
             case I2S:

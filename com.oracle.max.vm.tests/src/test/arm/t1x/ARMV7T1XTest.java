@@ -1512,6 +1512,48 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
+    public void test_jtt_BC_i2c() throws Exception {
+        MaxineByteCode xx = new MaxineByteCode();
+        int answer = jtt.bytecode.BC_i2c.test(-1);
+        expectedValues[0] = answer;
+        byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_i2c");
+        initialiseFrameForCompilation(code, "(I)I");
+        ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.mov32BitConstant(ARMV7.r0, -1);
+        masm.mov32BitConstant(ARMV7.r1, -99);
+
+        masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+        masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2c");
+        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+        masm.pop(ConditionFlag.Always, 1);
+        int assemblerStatements = masm.codeBuffer.position() / 4;
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
+        assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+        theCompiler.cleanup();
+    }
+
+    public void test_jtt_BC_i2c_1() throws Exception {
+        MaxineByteCode xx = new MaxineByteCode();
+        int answer = jtt.bytecode.BC_i2c.test(65535);
+        expectedValues[0] = answer;
+        byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_i2c");
+        initialiseFrameForCompilation(code, "(I)I");
+        ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.mov32BitConstant(ARMV7.r0, 65535);
+        masm.mov32BitConstant(ARMV7.r1, -99);
+
+        masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+        masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2c");
+        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+        masm.pop(ConditionFlag.Always, 1);
+        int assemblerStatements = masm.codeBuffer.position() / 4;
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
+        assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+        theCompiler.cleanup();
+    }
+
     public void testSwitchTable() throws Exception {
         // int i = 1;
         // int j, k , l, m;
