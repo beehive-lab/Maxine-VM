@@ -1,6 +1,7 @@
 package test.arm.t1x;
 
 import java.io.*;
+import java.lang.reflect.*;
 import java.util.*;
 
 import org.objectweb.asm.util.*;
@@ -47,6 +48,12 @@ public class ARMV7T1XTest extends MaxTestCase {
         // TODO: compute max stack
         codeAttr = new CodeAttribute(null, code, (char) 40, (char) 20, CodeAttribute.NO_EXCEPTION_HANDLER_TABLE, LineNumberTable.EMPTY, LocalVariableTable.EMPTY, null);
         anMethod = new StaticMethodActor(null, SignatureDescriptor.create(sig), Actor.JAVA_METHOD_FLAGS, codeAttr, new String());
+    }
+
+    public void initialiseFrameForCompilation(byte[] code, String sig, int flags) {
+        // TODO: compute max stack
+        codeAttr = new CodeAttribute(null, code, (char) 40, (char) 20, CodeAttribute.NO_EXCEPTION_HANDLER_TABLE, LineNumberTable.EMPTY, LocalVariableTable.EMPTY, null);
+        anMethod = new StaticMethodActor(null, SignatureDescriptor.create(sig), flags, codeAttr, new String());
     }
 
     static final class Pair {
@@ -1552,6 +1559,42 @@ public class ARMV7T1XTest extends MaxTestCase {
         int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
+    }
+
+    public void ignore_jtt_BC_tableswitch() throws Exception {
+        List<Pair> pairs = new LinkedList<Pair>();
+        pairs.add(new Pair(-1, 42));
+        pairs.add(new Pair(0, 10));
+        pairs.add(new Pair(1, 20));
+        pairs.add(new Pair(2, 30));
+        pairs.add(new Pair(3, 42));
+        pairs.add(new Pair(4, 40));
+        pairs.add(new Pair(5, 50));
+        pairs.add(new Pair(6, 42));
+
+        for (Pair pair : pairs) {
+            MaxineByteCode xx = new MaxineByteCode();
+            int answer = jtt.bytecode.BC_tableswitch.test(pair.first);
+            expectedValues[0] = answer;
+            byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_tableswitch");
+            initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.mov32BitConstant(ARMV7.r0, pair.first);
+            masm.mov32BitConstant(ARMV7.r1, -99);
+
+            masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+            masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+            t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+            t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
+            t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "tableswitch");
+
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            masm.pop(ConditionFlag.Always, 1);
+            int assemblerStatements = masm.codeBuffer.position() / 4;
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
+            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            theCompiler.cleanup();
+        }
     }
 
     public void testSwitchTable() throws Exception {

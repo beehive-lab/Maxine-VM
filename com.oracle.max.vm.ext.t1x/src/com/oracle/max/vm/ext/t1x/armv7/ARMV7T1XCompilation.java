@@ -545,7 +545,6 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         asm.mov32BitConstant(scratch, stackAmountInBytes);
         asm.addRegisters(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
         asm.ret(); // mov R14 to r15 ,,, who restores the rest of the environment?
-
     }
 
     @Override

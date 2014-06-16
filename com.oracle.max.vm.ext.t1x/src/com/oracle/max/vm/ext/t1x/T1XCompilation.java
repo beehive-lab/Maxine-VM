@@ -1615,6 +1615,7 @@ public abstract class T1XCompilation {
     }
 
     protected void do_return(T1XTemplateTag tag, T1XTemplateTag tagUnlock) {
+
         if (T1XOptions.TraceMethods) {
             start(TRACE_METHOD_EXIT);
             assignObject(0, "method", method.toString() + "}");
