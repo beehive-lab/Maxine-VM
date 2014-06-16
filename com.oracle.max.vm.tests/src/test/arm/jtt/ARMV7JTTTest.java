@@ -752,4 +752,179 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+
+    public void test_jtt_BC_lookupswitch_1() throws Exception {
+        List<Pair> pairs = new LinkedList<Pair>();
+        pairs.add(new Pair(0, 42));
+        pairs.add(new Pair(1, 42));
+        pairs.add(new Pair(66, 42));
+        pairs.add(new Pair(67, 0));
+        pairs.add(new Pair(68, 42));
+        pairs.add(new Pair(96, 42));
+        pairs.add(new Pair(97, 1));
+        pairs.add(new Pair(98, 42));
+        pairs.add(new Pair(106, 42));
+        pairs.add(new Pair(107, 2));
+        pairs.add(new Pair(108, 42));
+        pairs.add(new Pair(132, 42));
+        pairs.add(new Pair(133, 3));
+        pairs.add(new Pair(134, 42));
+        pairs.add(new Pair(211, 42));
+        pairs.add(new Pair(212, 4));
+        pairs.add(new Pair(213, 42));
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
+        for (Pair pair : pairs) {
+            MaxineByteCode xx = new MaxineByteCode();
+            int answer = jtt.bytecode.BC_lookupswitch01.test(pair.first);
+            expectedValues[0] = answer;
+            byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_lookupswitch01");
+            initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.mov32BitConstant(ARMV7.r0, pair.first);
+            masm.mov32BitConstant(ARMV7.r1, -99);
+            masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+            masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            masm.pop(ConditionFlag.Always, 1);
+            int assemblerStatements = masm.codeBuffer.position() / 4;
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            theCompiler.cleanup();
+        }
+    }
+
+    public void test_jtt_BC_lookupswitch_2() throws Exception {
+        List<Pair> pairs = new LinkedList<Pair>();
+        pairs.add(new Pair(0, 42));
+        pairs.add(new Pair(1, 42));
+        pairs.add(new Pair(66, 42));
+        pairs.add(new Pair(67, 0));
+        pairs.add(new Pair(68, 42));
+        pairs.add(new Pair(96, 42));
+        pairs.add(new Pair(97, 1));
+        pairs.add(new Pair(98, 42));
+        pairs.add(new Pair(106, 42));
+        pairs.add(new Pair(107, 2));
+        pairs.add(new Pair(108, 42));
+        pairs.add(new Pair(132, 42));
+        pairs.add(new Pair(133, 3));
+        pairs.add(new Pair(134, 42));
+        pairs.add(new Pair(211, 42));
+        pairs.add(new Pair(212, 4));
+        pairs.add(new Pair(213, 42));
+        pairs.add(new Pair(-121, 42));
+        pairs.add(new Pair(-122, 42));
+        pairs.add(new Pair(-123, 42));
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
+        for (Pair pair : pairs) {
+            MaxineByteCode xx = new MaxineByteCode();
+            int answer = jtt.bytecode.BC_lookupswitch02.test(pair.first);
+            expectedValues[0] = answer;
+            byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_lookupswitch02");
+            initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.mov32BitConstant(ARMV7.r0, pair.first);
+            masm.mov32BitConstant(ARMV7.r1, -99);
+            masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+            masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            masm.pop(ConditionFlag.Always, 1);
+            int assemblerStatements = masm.codeBuffer.position() / 4;
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            theCompiler.cleanup();
+        }
+    }
+
+    public void test_jtt_BC_lookupswitch_3() throws Exception {
+        List<Pair> pairs = new LinkedList<Pair>();
+        pairs.add(new Pair(0, 42));
+        pairs.add(new Pair(1, 42));
+        pairs.add(new Pair(66, 42));
+        pairs.add(new Pair(67, 0));
+        pairs.add(new Pair(68, 42));
+        pairs.add(new Pair(96, 42));
+        pairs.add(new Pair(97, 1));
+        pairs.add(new Pair(98, 42));
+        pairs.add(new Pair(106, 42));
+        pairs.add(new Pair(107, 2));
+        pairs.add(new Pair(108, 42));
+        pairs.add(new Pair(132, 42));
+        pairs.add(new Pair(133, 3));
+        pairs.add(new Pair(134, 42));
+        pairs.add(new Pair(211, 42));
+        pairs.add(new Pair(212, 4));
+        pairs.add(new Pair(213, 42));
+        pairs.add(new Pair(-121, 42));
+        pairs.add(new Pair(-122, 5));
+        pairs.add(new Pair(-123, 42));
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd");
+        for (Pair pair : pairs) {
+            MaxineByteCode xx = new MaxineByteCode();
+            int answer = jtt.bytecode.BC_lookupswitch03.test(pair.first);
+            expectedValues[0] = answer;
+            byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_lookupswitch03");
+            initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.mov32BitConstant(ARMV7.r0, pair.first);
+            masm.mov32BitConstant(ARMV7.r1, -99);
+            masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+            masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            masm.pop(ConditionFlag.Always, 1);
+            int assemblerStatements = masm.codeBuffer.position() / 4;
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            theCompiler.cleanup();
+        }
+    }
+
+    public void test_jtt_BC_lookupswitch_4() throws Exception {
+        List<Pair> pairs = new LinkedList<Pair>();
+        pairs.add(new Pair(0, 42));
+        pairs.add(new Pair(1, 42));
+        pairs.add(new Pair(66, 42));
+        pairs.add(new Pair(67, 0));
+        pairs.add(new Pair(68, 42));
+        pairs.add(new Pair(96, 42));
+        pairs.add(new Pair(97, 1));
+        pairs.add(new Pair(98, 42));
+        pairs.add(new Pair(106, 42));
+        pairs.add(new Pair(107, 2));
+        pairs.add(new Pair(108, 42));
+        pairs.add(new Pair(132, 42));
+        pairs.add(new Pair(133, 3));
+        pairs.add(new Pair(134, 42));
+        pairs.add(new Pair(211, 42));
+        pairs.add(new Pair(212, 4));
+        pairs.add(new Pair(213, 42));
+        pairs.add(new Pair(-121, 42));
+        pairs.add(new Pair(-122, 5));
+        pairs.add(new Pair(-123, 42));
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd");
+        for (Pair pair : pairs) {
+            MaxineByteCode xx = new MaxineByteCode();
+            int answer = jtt.bytecode.BC_lookupswitch04.test(pair.first);
+            expectedValues[0] = answer;
+            byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_lookupswitch04");
+            initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.mov32BitConstant(ARMV7.r0, pair.first);
+            masm.mov32BitConstant(ARMV7.r1, -99);
+            masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+            masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            masm.pop(ConditionFlag.Always, 1);
+            int assemblerStatements = masm.codeBuffer.position() / 4;
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            theCompiler.cleanup();
+        }
+    }
 }
