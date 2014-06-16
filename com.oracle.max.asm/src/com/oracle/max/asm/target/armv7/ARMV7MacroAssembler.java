@@ -526,4 +526,12 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public void ior(CiRegister dest, CiRegister left, CiRegister right) {
         orr(ConditionFlag.Always, true, dest, left, right, 0, 0);
     }
+
+    public void ixor(CiRegister dest, CiRegister left, CiRegister right) {
+        eor(ConditionFlag.Always, true, dest, left, right, 0, 0);
+    }
+
+    public void iand(CiRegister dest, CiRegister left, CiRegister right) {
+        and(ConditionFlag.Always, true, dest, left, right, 0, 0);
+    }
 }

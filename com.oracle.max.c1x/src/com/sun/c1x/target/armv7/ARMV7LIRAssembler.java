@@ -1071,9 +1071,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             } else {
                 CiRegister rright = right.asRegister();
                 switch (code) {
-            //        case LogicAnd : masm.andq(reg, rright); break;
+                      case LogicAnd : masm.iand(dst.asRegister(), reg, rright); break;
                       case LogicOr  : masm.ior(dst.asRegister(), reg, rright); break;
-                    //case LogicXor : masm.xorptr(reg, rright); break;
+                      case LogicXor : masm.ixor(dst.asRegister(), reg, rright); break;
                     default       : throw Util.shouldNotReachHere();
                 }
             }
