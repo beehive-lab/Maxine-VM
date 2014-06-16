@@ -298,17 +298,14 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         } */
     }
 
-    public void signExtendByte(CiRegister reg) {
-        /*if (reg.isByte()) {
-            movsxb(reg, reg); // movsxb
-        } else {
-            shll(reg, 24);
-            sarl(reg, 24);
-        } */
+    public void signExtendByte(CiRegister dest, CiRegister reg) {
+        ishl(dest, reg, 24);
+        iushr(dest, dest, 24);
     }
 
-    public void signExtendShort(CiRegister reg) {
-       // movsxw(reg, reg); // movsxw
+    public void signExtendShort(CiRegister dest, CiRegister reg) {
+        ishl(dest, reg, 16);
+        iushr(dest, dest, 16);
     }
 
     // Support optimal SSE move instructions.

@@ -639,8 +639,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 break;
 
             case I2B:
-                moveRegs(srcRegister, dest.asRegister());
-                masm.signExtendByte(dest.asRegister());
+                masm.signExtendByte(srcRegister, dest.asRegister());
                 break;
 
             case I2C:
@@ -649,8 +648,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 break;
 
             case I2S:
-                moveRegs(srcRegister, dest.asRegister());
-                masm.signExtendShort(dest.asRegister());
+                masm.signExtendShort(srcRegister, dest.asRegister());
                 break;
 
             case F2D:
