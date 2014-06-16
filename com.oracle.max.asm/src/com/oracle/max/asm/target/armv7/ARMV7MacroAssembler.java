@@ -541,4 +541,12 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public void ishl(CiRegister dest, CiRegister left, CiRegister right) {
         lsl(ConditionFlag.Always, true, dest, right, left);
     }
+
+    public void ishr(CiRegister dest, CiRegister left, int amount) {
+        lsr(ConditionFlag.Always, true, dest, left, amount);
+    }
+
+    public void ishr(CiRegister dest, CiRegister left, CiRegister right) {
+        lsr(ConditionFlag.Always, true, dest, right, left);
+    }
 }

@@ -125,6 +125,26 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
+    public void lsr(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rm, final int imm5) {
+        int instruction = 0x1A00020;
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (s ? 1 : 0) << 20;
+        instruction |= (Rd.encoding & 0xf) << 12;
+        instruction |= (imm5 & 0x1f) << 7;
+        instruction |= Rm.encoding & 0xf;
+        emitInt(instruction);
+    }
+
+    public void lsr(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rm, final CiRegister Rn) {
+        int instruction = 0x1A00030;
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (s ? 1 : 0) << 20;
+        instruction |= (Rd.encoding & 0xf) << 12;
+        instruction |= (Rm.encoding & 0xf) << 8;
+        instruction |= Rn.encoding & 0xf;
+        emitInt(instruction);
+    }
+
     public void and(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int imm5, final int imm2) {
         int instruction = 0x0000000;
         // type ie imm2 refers to 00 LSL

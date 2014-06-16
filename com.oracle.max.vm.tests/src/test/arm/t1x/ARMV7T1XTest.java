@@ -25,7 +25,6 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 
-
 public class ARMV7T1XTest extends MaxTestCase {
 
     private ARMV7Assembler asm;
@@ -1085,20 +1084,20 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void testjttUsageOfStaticMethods() throws Exception{
+    public void testjttUsageOfStaticMethods() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
-        int value  = 99;
+        int value = 99;
         int answer = jtt.bytecode.ARM_BC_test_return1.test(12);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.ARM_BC_test_return1");
 
         initialiseFrameForCompilation(code, "(I)I");
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(ARMV7.r0,value);
-        masm.mov32BitConstant(ARMV7.r1,12);
+        masm.mov32BitConstant(ARMV7.r0, value);
+        masm.mov32BitConstant(ARMV7.r1, 12);
 
-        masm.push(ConditionFlag.Always,2); //local slot 1 is argument (r2)
-        masm.push(ConditionFlag.Always,1); //local slot 0 is return (int is one slot) last push to stack is 0
+        masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r2)
+        masm.push(ConditionFlag.Always, 1); // local slot 0 is return (int is one slot) last push to stack is 0
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
@@ -1107,21 +1106,21 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_imul() throws Exception{
+    public void test_jtt_BC_imul() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
-        int answer = jtt.bytecode.BC_imul.test(10,12);
+        int answer = jtt.bytecode.BC_imul.test(10, 12);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_imul");
 
         initialiseFrameForCompilation(code, "(II)I");
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(ARMV7.r0,10);
-        masm.mov32BitConstant(ARMV7.r1,12);
-        masm.mov32BitConstant(ARMV7.r2,-99);
+        masm.mov32BitConstant(ARMV7.r0, 10);
+        masm.mov32BitConstant(ARMV7.r1, 12);
+        masm.mov32BitConstant(ARMV7.r2, -99);
 
-        masm.push(ConditionFlag.Always,1); // local slot is argument  r0
-        masm.push(ConditionFlag.Always,2); //local slot 1 is argument (r1)
-        masm.push(ConditionFlag.Always,4); //local slot 0 is return (int is one slot) last push to stack is
+        masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+        masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+        masm.push(ConditionFlag.Always, 4); // local slot 0 is return (int is one slot) last push to stack is
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "imul");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -1131,7 +1130,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_isub() throws Exception{
+    public void test_jtt_BC_isub() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         int answer = jtt.bytecode.BC_isub.test(100, 50);
         expectedValues[0] = answer;
@@ -1139,13 +1138,13 @@ public class ARMV7T1XTest extends MaxTestCase {
 
         initialiseFrameForCompilation(code, "(II)I");
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(ARMV7.r0,100);
-        masm.mov32BitConstant(ARMV7.r1,50);
-        masm.mov32BitConstant(ARMV7.r2,-99);
+        masm.mov32BitConstant(ARMV7.r0, 100);
+        masm.mov32BitConstant(ARMV7.r1, 50);
+        masm.mov32BitConstant(ARMV7.r2, -99);
 
-        masm.push(ConditionFlag.Always,1); // local slot is argument  r0
-        masm.push(ConditionFlag.Always,2); //local slot 1 is argument (r1)
-        masm.push(ConditionFlag.Always,4); //local slot 0 is return (int is one slot) last push to stack is
+        masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+        masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+        masm.push(ConditionFlag.Always, 4); // local slot 0 is return (int is one slot) last push to stack is
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "isub");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -1155,17 +1154,17 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_ineg() throws Exception{
+    public void test_jtt_BC_ineg() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         int answer = jtt.bytecode.BC_ineg.test(100);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_ineg");
         initialiseFrameForCompilation(code, "(I)I");
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(ARMV7.r0,100);
-        masm.mov32BitConstant(ARMV7.r1,-99);
-        masm.push(ConditionFlag.Always,1); // local slot is argument  r0
-        masm.push(ConditionFlag.Always,2); //local slot 1 is argument (r1)
+        masm.mov32BitConstant(ARMV7.r0, 100);
+        masm.mov32BitConstant(ARMV7.r1, -99);
+        masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+        masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ineg");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -1175,7 +1174,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_ineg_1() throws Exception{
+    public void test_jtt_BC_ineg_1() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         int answer = jtt.bytecode.BC_ineg.test(-100);
         expectedValues[0] = answer;
@@ -1184,10 +1183,10 @@ public class ARMV7T1XTest extends MaxTestCase {
         initialiseFrameForCompilation(code, "(I)I");
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, -100);
-        masm.mov32BitConstant(ARMV7.r1,-99);
-        masm.push(ConditionFlag.Always,1); // local slot is argument  r0
-        masm.push(ConditionFlag.Always,2); //local slot 1 is argument (r1)
-         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ineg");
+        masm.mov32BitConstant(ARMV7.r1, -99);
+        masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+        masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ineg");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
@@ -1196,7 +1195,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_iadd() throws Exception{
+    public void test_jtt_BC_iadd() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         int answer = jtt.bytecode.BC_iadd.test(50, 50);
         expectedValues[0] = answer;
@@ -1204,13 +1203,13 @@ public class ARMV7T1XTest extends MaxTestCase {
 
         initialiseFrameForCompilation(code, "(II)I");
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(ARMV7.r0,50);
-        masm.mov32BitConstant(ARMV7.r1,50);
-        masm.mov32BitConstant(ARMV7.r2,-99);
+        masm.mov32BitConstant(ARMV7.r0, 50);
+        masm.mov32BitConstant(ARMV7.r1, 50);
+        masm.mov32BitConstant(ARMV7.r2, -99);
 
-        masm.push(ConditionFlag.Always,1); // local slot is argument  r0
-        masm.push(ConditionFlag.Always,2); //local slot 1 is argument (r1)
-        masm.push(ConditionFlag.Always,4); //local slot 0 is return (int is one slot) last push to stack is
+        masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+        masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+        masm.push(ConditionFlag.Always, 4); // local slot 0 is return (int is one slot) last push to stack is
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -1220,7 +1219,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_ior() throws Exception{
+    public void test_jtt_BC_ior() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         int answer = jtt.bytecode.BC_ior.test(50, 100);
         expectedValues[0] = answer;
@@ -1228,13 +1227,13 @@ public class ARMV7T1XTest extends MaxTestCase {
 
         initialiseFrameForCompilation(code, "(II)I");
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(ARMV7.r0,50);
-        masm.mov32BitConstant(ARMV7.r1,100);
-        masm.mov32BitConstant(ARMV7.r2,-99);
+        masm.mov32BitConstant(ARMV7.r0, 50);
+        masm.mov32BitConstant(ARMV7.r1, 100);
+        masm.mov32BitConstant(ARMV7.r2, -99);
 
-        masm.push(ConditionFlag.Always,1); // local slot is argument  r0
-        masm.push(ConditionFlag.Always,2); //local slot 1 is argument (r1)
-        masm.push(ConditionFlag.Always,4); //local slot 0 is return (int is one slot) last push to stack is
+        masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+        masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+        masm.push(ConditionFlag.Always, 4); // local slot 0 is return (int is one slot) last push to stack is
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ior");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -1244,7 +1243,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_ixor() throws Exception{
+    public void test_jtt_BC_ixor() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         int answer = jtt.bytecode.BC_ixor.test(50, 39);
         expectedValues[0] = answer;
@@ -1252,13 +1251,13 @@ public class ARMV7T1XTest extends MaxTestCase {
 
         initialiseFrameForCompilation(code, "(II)I");
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(ARMV7.r0,50);
-        masm.mov32BitConstant(ARMV7.r1,39);
-        masm.mov32BitConstant(ARMV7.r2,-99);
+        masm.mov32BitConstant(ARMV7.r0, 50);
+        masm.mov32BitConstant(ARMV7.r1, 39);
+        masm.mov32BitConstant(ARMV7.r2, -99);
 
-        masm.push(ConditionFlag.Always,1); // local slot is argument  r0
-        masm.push(ConditionFlag.Always,2); //local slot 1 is argument (r1)
-        masm.push(ConditionFlag.Always,4); //local slot 0 is return (int is one slot) last push to stack is
+        masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+        masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+        masm.push(ConditionFlag.Always, 4); // local slot 0 is return (int is one slot) last push to stack is
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ixor");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -1268,7 +1267,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_iand() throws Exception{
+    public void test_jtt_BC_iand() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         int answer = jtt.bytecode.BC_iand.test(50, 39);
         expectedValues[0] = answer;
@@ -1276,13 +1275,13 @@ public class ARMV7T1XTest extends MaxTestCase {
 
         initialiseFrameForCompilation(code, "(II)I");
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(ARMV7.r0,50);
-        masm.mov32BitConstant(ARMV7.r1,39);
-        masm.mov32BitConstant(ARMV7.r2,-99);
+        masm.mov32BitConstant(ARMV7.r0, 50);
+        masm.mov32BitConstant(ARMV7.r1, 39);
+        masm.mov32BitConstant(ARMV7.r2, -99);
 
-        masm.push(ConditionFlag.Always,1); // local slot is argument  r0
-        masm.push(ConditionFlag.Always,2); //local slot 1 is argument (r1)
-        masm.push(ConditionFlag.Always,4); //local slot 0 is return (int is one slot) last push to stack is
+        masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+        masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+        masm.push(ConditionFlag.Always, 4); // local slot 0 is return (int is one slot) last push to stack is
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iand");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -1292,7 +1291,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_ishl() throws Exception{
+    public void test_jtt_BC_ishl() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         int answer = jtt.bytecode.BC_ishl.test(10, 2);
         expectedValues[0] = answer;
@@ -1300,14 +1299,38 @@ public class ARMV7T1XTest extends MaxTestCase {
 
         initialiseFrameForCompilation(code, "(II)I");
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(ARMV7.r0,10);
-        masm.mov32BitConstant(ARMV7.r1,2);
-        masm.mov32BitConstant(ARMV7.r2,-99);
+        masm.mov32BitConstant(ARMV7.r0, 10);
+        masm.mov32BitConstant(ARMV7.r1, 2);
+        masm.mov32BitConstant(ARMV7.r2, -99);
 
-        masm.push(ConditionFlag.Always,1); // local slot is argument  r0
-        masm.push(ConditionFlag.Always,2); //local slot 1 is argument (r1)
-        masm.push(ConditionFlag.Always,4); //local slot 0 is return (int is one slot) last push to stack is
+        masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+        masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+        masm.push(ConditionFlag.Always, 4); // local slot 0 is return (int is one slot) last push to stack is
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ishl");
+        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+        masm.pop(ConditionFlag.Always, 1);
+        int assemblerStatements = masm.codeBuffer.position() / 4;
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
+        assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+        theCompiler.cleanup();
+    }
+
+    public void test_jtt_BC_ishr() throws Exception {
+        MaxineByteCode xx = new MaxineByteCode();
+        int answer = jtt.bytecode.BC_ishr.test(2048, 2);
+        expectedValues[0] = answer;
+        byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_ishr");
+
+        initialiseFrameForCompilation(code, "(II)I");
+        ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.mov32BitConstant(ARMV7.r0, 2048);
+        masm.mov32BitConstant(ARMV7.r1, 2);
+        masm.mov32BitConstant(ARMV7.r2, -99);
+
+        masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+        masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+        masm.push(ConditionFlag.Always, 4); // local slot 0 is return (int is one slot) last push to stack is
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ishr");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
