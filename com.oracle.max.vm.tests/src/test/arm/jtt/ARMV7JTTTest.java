@@ -1035,4 +1035,86 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+
+    public void test_jtt_BC_iload_0() throws Exception {
+        List<Pair> pairs = new LinkedList<Pair>();
+        pairs.add(new Pair(0, 0));
+        pairs.add(new Pair(-1, -1));
+        pairs.add(new Pair(2, 2));
+        pairs.add(new Pair(1000345, 1000345));
+        for (Pair pair : pairs) {
+            MaxineByteCode xx = new MaxineByteCode();
+            int answer = jtt.bytecode.BC_iload_0.test(pair.first);
+            expectedValues[0] = answer;
+            byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_iload_0");
+            initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.mov32BitConstant(ARMV7.r0, pair.first);
+            masm.mov32BitConstant(ARMV7.r1, -99);
+            masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+            masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+            t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_0");
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            masm.pop(ConditionFlag.Always, 1);
+            int assemblerStatements = masm.codeBuffer.position() / 4;
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            theCompiler.cleanup();
+        }
+    }
+
+    public void test_jtt_BC_iload_0_1() throws Exception {
+        List<Pair> pairs = new LinkedList<Pair>();
+        pairs.add(new Pair(0, 1));
+        pairs.add(new Pair(-1, 0));
+        pairs.add(new Pair(2, 3));
+        pairs.add(new Pair(1000345, 1000346));
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd");
+        for (Pair pair : pairs) {
+            MaxineByteCode xx = new MaxineByteCode();
+            int answer = jtt.bytecode.BC_iload_0_1.test(pair.first);
+            expectedValues[0] = answer;
+            byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_iload_0_1");
+            initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.mov32BitConstant(ARMV7.r0, pair.first);
+            masm.mov32BitConstant(ARMV7.r1, -99);
+            masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+            masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+            t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_0_1");
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            masm.pop(ConditionFlag.Always, 1);
+            int assemblerStatements = masm.codeBuffer.position() / 4;
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            theCompiler.cleanup();
+        }
+    }
+
+    public void test_jtt_BC_iload_0_2() throws Exception {
+        List<Pair> pairs = new LinkedList<Pair>();
+        pairs.add(new Pair(0, 0));
+        pairs.add(new Pair(-1, -1));
+        pairs.add(new Pair(2, 2));
+        pairs.add(new Pair(1000345, 1000345));
+        for (Pair pair : pairs) {
+            MaxineByteCode xx = new MaxineByteCode();
+            int answer = jtt.bytecode.BC_iload_0_2.test(pair.first);
+            expectedValues[0] = answer;
+            byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_iload_0_2");
+            initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.mov32BitConstant(ARMV7.r0, pair.first);
+            masm.mov32BitConstant(ARMV7.r1, -99);
+            masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+            masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+            t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_0_2");
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            masm.pop(ConditionFlag.Always, 1);
+            int assemblerStatements = masm.codeBuffer.position() / 4;
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            theCompiler.cleanup();
+        }
+    }
 }
