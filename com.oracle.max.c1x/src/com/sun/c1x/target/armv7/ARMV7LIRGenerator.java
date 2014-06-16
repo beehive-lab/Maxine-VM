@@ -54,7 +54,7 @@ public class ARMV7LIRGenerator extends LIRGenerator {
      */
     private static final CiRegisterValue LMUL_OUT = RAX_L;
 
-    private static final CiRegisterValue SHIFT_COUNT_IN = ARMV7.r12.asValue(CiKind.Int);
+    private static final CiRegisterValue SHIFT_COUNT_IN = ARMV7.r1.asValue(CiKind.Int);
 
     protected static final CiValue ILLEGAL = CiValue.IllegalValue;
 

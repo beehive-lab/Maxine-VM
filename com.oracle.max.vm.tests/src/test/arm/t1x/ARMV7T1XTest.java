@@ -1292,6 +1292,30 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
+    public void test_jtt_BC_ishl() throws Exception{
+        MaxineByteCode xx = new MaxineByteCode();
+        int answer = jtt.bytecode.BC_ishl.test(10, 2);
+        expectedValues[0] = answer;
+        byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_ishl");
+
+        initialiseFrameForCompilation(code, "(II)I");
+        ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.mov32BitConstant(ARMV7.r0,10);
+        masm.mov32BitConstant(ARMV7.r1,2);
+        masm.mov32BitConstant(ARMV7.r2,-99);
+
+        masm.push(ConditionFlag.Always,1); // local slot is argument  r0
+        masm.push(ConditionFlag.Always,2); //local slot 1 is argument (r1)
+        masm.push(ConditionFlag.Always,4); //local slot 0 is return (int is one slot) last push to stack is
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ishl");
+        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+        masm.pop(ConditionFlag.Always, 1);
+        int assemblerStatements = masm.codeBuffer.position() / 4;
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, ignorevalues, bitmasks);
+        assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+        theCompiler.cleanup();
+    }
+
     public void testSwitchTable() throws Exception {
         // int i = 1;
         // int j, k , l, m;

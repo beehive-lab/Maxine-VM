@@ -54,7 +54,7 @@ import com.sun.cri.xir.CiXirAssembler.XirMark;
 public final class ARMV7LIRAssembler extends LIRAssembler {
 
     private static final Object[] NO_PARAMS = new Object[0];
-    private static final CiRegister SHIFTCount = ARMV7.r14;
+    private static final CiRegister SHIFTCount = ARMV7.r1;
 
     private static final long DoubleSignMask = 0x7FFFFFFFFFFFFFFFL;
 
@@ -1485,25 +1485,25 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         // * count must be already in ECX (guaranteed by LinearScan)
         // * left and dest must be equal
         // * tmp must be unused
-        assert count.asRegister() == SHIFTCount : "count must be in ECX";
+        assert count.asRegister() == SHIFTCount : "count must be in r1";
         assert left == dest : "left and dest must be equal";
         assert tmp.isIllegal() : "wasting a register if tmp is allocated";
         assert left.isRegister();
 
         if (left.kind.isInt()) {
             CiRegister value = left.asRegister();
-            assert value != SHIFTCount : "left cannot be ECX";
+            assert value != SHIFTCount : "left cannot be r1";
 
             // Checkstyle: off
             switch (code) {
-          //      case Shl  : masm.shll(value); break;
+                  case Shl  : masm.ishl(dest.asRegister(), value, count.asRegister()); break;
           //      case Shr  : masm.sarl(value); break;
           //      case Ushr : masm.shrl(value); break;
                 default   : throw Util.shouldNotReachHere();
             }
         } else {
             CiRegister lreg = left.asRegister();
-            assert lreg != SHIFTCount : "left cannot be ECX";
+            assert lreg != SHIFTCount : "left cannot be r1";
 
             switch (code) {
            //     case Shl  : masm.shlq(lreg); break;
@@ -1523,10 +1523,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             CiRegister value = dest.asRegister();
             count = count & 0x1F; // Java spec
 
-            moveRegs(left.asRegister(), value);
+            //moveRegs(left.asRegister(), value);
             // Checkstyle: off
             switch (code) {
-            //    case Shl  : masm.shll(value, count); break;
+                case Shl  : masm.ishl(dest.asRegister(), value, count); break;
             //    case Shr  : masm.sarl(value, count); break;
              //   case Ushr : masm.shrl(value, count); break;
                 default   : throw Util.shouldNotReachHere();
