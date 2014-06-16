@@ -579,17 +579,20 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         asm.addq(r13, JVMSFrameLayout.JVMS_SLOT_SIZE);
         asm.push(ConditionFlag.Always, 1 << 10 | 1 << 9);
         asm.mov(ConditionFlag.Always, false, ARMV7.r9, ARMV7.r8); // r9 stores index
-        // Compare index against jump table bounds
+
+        // Jump to default target if index is not within the jump table
+        startBlock(ts.defaultTarget());
+        asm.cmpl(r9, lowMatch);
+        int pos = buf.position();
+        patchInfo.addJCC(ConditionFlag.SignedLesser, pos, ts.defaultTarget());
+        asm.jcc(ConditionFlag.SignedLesser, 0, true);
         if (lowMatch != 0) {
             asm.subq(r9, lowMatch);
             asm.cmpl(r9, highMatch - lowMatch);
         } else {
             asm.cmpl(r9, highMatch);
         }
-
-        // Jump to default target if index is not within the jump table
-        startBlock(ts.defaultTarget());
-        int pos = buf.position();
+        pos = buf.position();
         patchInfo.addJCC(ConditionFlag.SignedGreater, pos, ts.defaultTarget());
         asm.jcc(ConditionFlag.SignedGreater, 0, true);
 
