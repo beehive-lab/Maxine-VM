@@ -1497,8 +1497,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             // Checkstyle: off
             switch (code) {
                   case Shl  : masm.ishl(dest.asRegister(), value, count.asRegister()); break;
-                  case Shr  : masm.ishr(dest.asRegister(), value, count.asRegister()); break;
-          //      case Ushr : masm.shrl(value); break;
+                  case Shr  : masm.iushr(dest.asRegister(), value, count.asRegister()); break;
+                  case Ushr : masm.ishr(dest.asRegister(), value, count.asRegister()); break;
                 default   : throw Util.shouldNotReachHere();
             }
         } else {
