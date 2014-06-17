@@ -55,14 +55,26 @@ public class ARMV7JTTTest extends MaxTestCase {
         anMethod = new StaticMethodActor(null, SignatureDescriptor.create(sig), flags, codeAttr, new String());
     }
 
-    static final class Pair {
+    static final class Args {
 
-        public final int first;
-        public final int second;
+        public int first;
+        public int second;
+        public int third;
+        public int fourth;
 
-        public Pair(int first, int second) {
+        public Args(int first, int second) {
             this.first = first;
             this.second = second;
+        }
+
+        public Args(int first, int second, int third) {
+            this(first, second);
+            this.third = third;
+        }
+
+        public Args(int first, int second, int third, int fourth) {
+            this(first, second, third);
+            this.fourth = fourth;
         }
     }
 
@@ -629,18 +641,18 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     public void test_jtt_BC_tableswitch() throws Exception {
-        List<Pair> pairs = new LinkedList<Pair>();
-        pairs.add(new Pair(-1, 42));
-        pairs.add(new Pair(0, 10));
-        pairs.add(new Pair(1, 20));
-        pairs.add(new Pair(2, 30));
-        pairs.add(new Pair(3, 42));
-        pairs.add(new Pair(4, 40));
-        pairs.add(new Pair(5, 50));
-        pairs.add(new Pair(6, 42));
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(-1, 42));
+        pairs.add(new Args(0, 10));
+        pairs.add(new Args(1, 20));
+        pairs.add(new Args(2, 30));
+        pairs.add(new Args(3, 42));
+        pairs.add(new Args(4, 40));
+        pairs.add(new Args(5, 50));
+        pairs.add(new Args(6, 42));
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
-        for (Pair pair : pairs) {
+        for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_tableswitch.test(pair.first);
             expectedValues[0] = answer;
@@ -661,17 +673,17 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     public void test_jtt_BC_tableswitch_2() throws Exception {
-        List<Pair> pairs = new LinkedList<Pair>();
-        pairs.add(new Pair(-1, 11));
-        pairs.add(new Pair(0, 11));
-        pairs.add(new Pair(1, 11));
-        pairs.add(new Pair(5, 55));
-        pairs.add(new Pair(6, 66));
-        pairs.add(new Pair(7, 77));
-        pairs.add(new Pair(8, 11));
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(-1, 11));
+        pairs.add(new Args(0, 11));
+        pairs.add(new Args(1, 11));
+        pairs.add(new Args(5, 55));
+        pairs.add(new Args(6, 66));
+        pairs.add(new Args(7, 77));
+        pairs.add(new Args(8, 11));
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
-        for (Pair pair : pairs) {
+        for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_tableswitch2.test(pair.first);
             expectedValues[0] = answer;
@@ -692,17 +704,17 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     public void test_jtt_BC_tableswitch_3() throws Exception {
-        List<Pair> pairs = new LinkedList<Pair>();
-        pairs.add(new Pair(-1, 11));
-        pairs.add(new Pair(-2, 22));
-        pairs.add(new Pair(-3, 99));
-        pairs.add(new Pair(-4, 99));
-        pairs.add(new Pair(1, 77));
-        pairs.add(new Pair(2, 99));
-        pairs.add(new Pair(10, 99));
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(-1, 11));
+        pairs.add(new Args(-2, 22));
+        pairs.add(new Args(-3, 99));
+        pairs.add(new Args(-4, 99));
+        pairs.add(new Args(1, 77));
+        pairs.add(new Args(2, 99));
+        pairs.add(new Args(10, 99));
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
-        for (Pair pair : pairs) {
+        for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_tableswitch3.test(pair.first);
             expectedValues[0] = answer;
@@ -723,17 +735,17 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     public void test_jtt_BC_tableswitch_4() throws Exception {
-        List<Pair> pairs = new LinkedList<Pair>();
-        pairs.add(new Pair(-1, 11));
-        pairs.add(new Pair(0, 11));
-        pairs.add(new Pair(1, 11));
-        pairs.add(new Pair(-5, 55));
-        pairs.add(new Pair(-4, 44));
-        pairs.add(new Pair(-3, 33));
-        pairs.add(new Pair(-8, 11));
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(-1, 11));
+        pairs.add(new Args(0, 11));
+        pairs.add(new Args(1, 11));
+        pairs.add(new Args(-5, 55));
+        pairs.add(new Args(-4, 44));
+        pairs.add(new Args(-3, 33));
+        pairs.add(new Args(-8, 11));
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
-        for (Pair pair : pairs) {
+        for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_tableswitch4.test(pair.first);
             expectedValues[0] = answer;
@@ -754,27 +766,27 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     public void test_jtt_BC_lookupswitch_1() throws Exception {
-        List<Pair> pairs = new LinkedList<Pair>();
-        pairs.add(new Pair(0, 42));
-        pairs.add(new Pair(1, 42));
-        pairs.add(new Pair(66, 42));
-        pairs.add(new Pair(67, 0));
-        pairs.add(new Pair(68, 42));
-        pairs.add(new Pair(96, 42));
-        pairs.add(new Pair(97, 1));
-        pairs.add(new Pair(98, 42));
-        pairs.add(new Pair(106, 42));
-        pairs.add(new Pair(107, 2));
-        pairs.add(new Pair(108, 42));
-        pairs.add(new Pair(132, 42));
-        pairs.add(new Pair(133, 3));
-        pairs.add(new Pair(134, 42));
-        pairs.add(new Pair(211, 42));
-        pairs.add(new Pair(212, 4));
-        pairs.add(new Pair(213, 42));
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(0, 42));
+        pairs.add(new Args(1, 42));
+        pairs.add(new Args(66, 42));
+        pairs.add(new Args(67, 0));
+        pairs.add(new Args(68, 42));
+        pairs.add(new Args(96, 42));
+        pairs.add(new Args(97, 1));
+        pairs.add(new Args(98, 42));
+        pairs.add(new Args(106, 42));
+        pairs.add(new Args(107, 2));
+        pairs.add(new Args(108, 42));
+        pairs.add(new Args(132, 42));
+        pairs.add(new Args(133, 3));
+        pairs.add(new Args(134, 42));
+        pairs.add(new Args(211, 42));
+        pairs.add(new Args(212, 4));
+        pairs.add(new Args(213, 42));
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
-        for (Pair pair : pairs) {
+        for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_lookupswitch01.test(pair.first);
             expectedValues[0] = answer;
@@ -795,30 +807,30 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     public void test_jtt_BC_lookupswitch_2() throws Exception {
-        List<Pair> pairs = new LinkedList<Pair>();
-        pairs.add(new Pair(0, 42));
-        pairs.add(new Pair(1, 42));
-        pairs.add(new Pair(66, 42));
-        pairs.add(new Pair(67, 0));
-        pairs.add(new Pair(68, 42));
-        pairs.add(new Pair(96, 42));
-        pairs.add(new Pair(97, 1));
-        pairs.add(new Pair(98, 42));
-        pairs.add(new Pair(106, 42));
-        pairs.add(new Pair(107, 2));
-        pairs.add(new Pair(108, 42));
-        pairs.add(new Pair(132, 42));
-        pairs.add(new Pair(133, 3));
-        pairs.add(new Pair(134, 42));
-        pairs.add(new Pair(211, 42));
-        pairs.add(new Pair(212, 4));
-        pairs.add(new Pair(213, 42));
-        pairs.add(new Pair(-121, 42));
-        pairs.add(new Pair(-122, 42));
-        pairs.add(new Pair(-123, 42));
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(0, 42));
+        pairs.add(new Args(1, 42));
+        pairs.add(new Args(66, 42));
+        pairs.add(new Args(67, 0));
+        pairs.add(new Args(68, 42));
+        pairs.add(new Args(96, 42));
+        pairs.add(new Args(97, 1));
+        pairs.add(new Args(98, 42));
+        pairs.add(new Args(106, 42));
+        pairs.add(new Args(107, 2));
+        pairs.add(new Args(108, 42));
+        pairs.add(new Args(132, 42));
+        pairs.add(new Args(133, 3));
+        pairs.add(new Args(134, 42));
+        pairs.add(new Args(211, 42));
+        pairs.add(new Args(212, 4));
+        pairs.add(new Args(213, 42));
+        pairs.add(new Args(-121, 42));
+        pairs.add(new Args(-122, 42));
+        pairs.add(new Args(-123, 42));
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
-        for (Pair pair : pairs) {
+        for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_lookupswitch02.test(pair.first);
             expectedValues[0] = answer;
@@ -839,31 +851,31 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     public void test_jtt_BC_lookupswitch_3() throws Exception {
-        List<Pair> pairs = new LinkedList<Pair>();
-        pairs.add(new Pair(0, 42));
-        pairs.add(new Pair(1, 42));
-        pairs.add(new Pair(66, 42));
-        pairs.add(new Pair(67, 0));
-        pairs.add(new Pair(68, 42));
-        pairs.add(new Pair(96, 42));
-        pairs.add(new Pair(97, 1));
-        pairs.add(new Pair(98, 42));
-        pairs.add(new Pair(106, 42));
-        pairs.add(new Pair(107, 2));
-        pairs.add(new Pair(108, 42));
-        pairs.add(new Pair(132, 42));
-        pairs.add(new Pair(133, 3));
-        pairs.add(new Pair(134, 42));
-        pairs.add(new Pair(211, 42));
-        pairs.add(new Pair(212, 4));
-        pairs.add(new Pair(213, 42));
-        pairs.add(new Pair(-121, 42));
-        pairs.add(new Pair(-122, 5));
-        pairs.add(new Pair(-123, 42));
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(0, 42));
+        pairs.add(new Args(1, 42));
+        pairs.add(new Args(66, 42));
+        pairs.add(new Args(67, 0));
+        pairs.add(new Args(68, 42));
+        pairs.add(new Args(96, 42));
+        pairs.add(new Args(97, 1));
+        pairs.add(new Args(98, 42));
+        pairs.add(new Args(106, 42));
+        pairs.add(new Args(107, 2));
+        pairs.add(new Args(108, 42));
+        pairs.add(new Args(132, 42));
+        pairs.add(new Args(133, 3));
+        pairs.add(new Args(134, 42));
+        pairs.add(new Args(211, 42));
+        pairs.add(new Args(212, 4));
+        pairs.add(new Args(213, 42));
+        pairs.add(new Args(-121, 42));
+        pairs.add(new Args(-122, 5));
+        pairs.add(new Args(-123, 42));
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd");
-        for (Pair pair : pairs) {
+        for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_lookupswitch03.test(pair.first);
             expectedValues[0] = answer;
@@ -884,31 +896,31 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     public void test_jtt_BC_lookupswitch_4() throws Exception {
-        List<Pair> pairs = new LinkedList<Pair>();
-        pairs.add(new Pair(0, 42));
-        pairs.add(new Pair(1, 42));
-        pairs.add(new Pair(66, 42));
-        pairs.add(new Pair(67, 0));
-        pairs.add(new Pair(68, 42));
-        pairs.add(new Pair(96, 42));
-        pairs.add(new Pair(97, 1));
-        pairs.add(new Pair(98, 42));
-        pairs.add(new Pair(106, 42));
-        pairs.add(new Pair(107, 2));
-        pairs.add(new Pair(108, 42));
-        pairs.add(new Pair(132, 42));
-        pairs.add(new Pair(133, 3));
-        pairs.add(new Pair(134, 42));
-        pairs.add(new Pair(211, 42));
-        pairs.add(new Pair(212, 4));
-        pairs.add(new Pair(213, 42));
-        pairs.add(new Pair(-121, 42));
-        pairs.add(new Pair(-122, 5));
-        pairs.add(new Pair(-123, 42));
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(0, 42));
+        pairs.add(new Args(1, 42));
+        pairs.add(new Args(66, 42));
+        pairs.add(new Args(67, 0));
+        pairs.add(new Args(68, 42));
+        pairs.add(new Args(96, 42));
+        pairs.add(new Args(97, 1));
+        pairs.add(new Args(98, 42));
+        pairs.add(new Args(106, 42));
+        pairs.add(new Args(107, 2));
+        pairs.add(new Args(108, 42));
+        pairs.add(new Args(132, 42));
+        pairs.add(new Args(133, 3));
+        pairs.add(new Args(134, 42));
+        pairs.add(new Args(211, 42));
+        pairs.add(new Args(212, 4));
+        pairs.add(new Args(213, 42));
+        pairs.add(new Args(-121, 42));
+        pairs.add(new Args(-122, 5));
+        pairs.add(new Args(-123, 42));
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd");
-        for (Pair pair : pairs) {
+        for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_lookupswitch04.test(pair.first);
             expectedValues[0] = answer;
@@ -929,12 +941,12 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     public void test_jtt_BC_iinc_1() throws Exception {
-        List<Pair> pairs = new LinkedList<Pair>();
-        pairs.add(new Pair(1, 2));
-        pairs.add(new Pair(2, 3));
-        pairs.add(new Pair(4, 5));
-        pairs.add(new Pair(1, 0));
-        for (Pair pair : pairs) {
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(1, 2));
+        pairs.add(new Args(2, 3));
+        pairs.add(new Args(4, 5));
+        pairs.add(new Args(1, 0));
+        for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_iinc_1.test(pair.first);
             expectedValues[0] = answer;
@@ -956,12 +968,12 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     public void test_jtt_BC_iinc_2() throws Exception {
-        List<Pair> pairs = new LinkedList<Pair>();
-        pairs.add(new Pair(1, 3));
-        pairs.add(new Pair(2, 4));
-        pairs.add(new Pair(4, 6));
-        pairs.add(new Pair(-2, 0));
-        for (Pair pair : pairs) {
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(1, 3));
+        pairs.add(new Args(2, 4));
+        pairs.add(new Args(4, 6));
+        pairs.add(new Args(-2, 0));
+        for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_iinc_2.test(pair.first);
             expectedValues[0] = answer;
@@ -983,12 +995,12 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     public void test_jtt_BC_iinc_3() throws Exception {
-        List<Pair> pairs = new LinkedList<Pair>();
-        pairs.add(new Pair(1, 52));
-        pairs.add(new Pair(2, 53));
-        pairs.add(new Pair(4, 55));
-        pairs.add(new Pair(-1, 50));
-        for (Pair pair : pairs) {
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(1, 52));
+        pairs.add(new Args(2, 53));
+        pairs.add(new Args(4, 55));
+        pairs.add(new Args(-1, 50));
+        for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_iinc_3.test(pair.first);
             expectedValues[0] = answer;
@@ -1010,12 +1022,12 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     public void test_jtt_BC_iinc_4() throws Exception {
-        List<Pair> pairs = new LinkedList<Pair>();
-        pairs.add(new Pair(1, 513));
-        pairs.add(new Pair(2, 514));
-        pairs.add(new Pair(4, 516));
-        pairs.add(new Pair(-1, 511));
-        for (Pair pair : pairs) {
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(1, 513));
+        pairs.add(new Args(2, 514));
+        pairs.add(new Args(4, 516));
+        pairs.add(new Args(-1, 511));
+        for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_iinc_4.test(pair.first);
             expectedValues[0] = answer;
@@ -1037,12 +1049,12 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     public void test_jtt_BC_iload_0() throws Exception {
-        List<Pair> pairs = new LinkedList<Pair>();
-        pairs.add(new Pair(0, 0));
-        pairs.add(new Pair(-1, -1));
-        pairs.add(new Pair(2, 2));
-        pairs.add(new Pair(1000345, 1000345));
-        for (Pair pair : pairs) {
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(0, 0));
+        pairs.add(new Args(-1, -1));
+        pairs.add(new Args(2, 2));
+        pairs.add(new Args(1000345, 1000345));
+        for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_iload_0.test(pair.first);
             expectedValues[0] = answer;
@@ -1064,13 +1076,13 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     public void test_jtt_BC_iload_0_1() throws Exception {
-        List<Pair> pairs = new LinkedList<Pair>();
-        pairs.add(new Pair(0, 1));
-        pairs.add(new Pair(-1, 0));
-        pairs.add(new Pair(2, 3));
-        pairs.add(new Pair(1000345, 1000346));
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(0, 1));
+        pairs.add(new Args(-1, 0));
+        pairs.add(new Args(2, 3));
+        pairs.add(new Args(1000345, 1000346));
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd");
-        for (Pair pair : pairs) {
+        for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_iload_0_1.test(pair.first);
             expectedValues[0] = answer;
@@ -1092,12 +1104,12 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     public void test_jtt_BC_iload_0_2() throws Exception {
-        List<Pair> pairs = new LinkedList<Pair>();
-        pairs.add(new Pair(0, 0));
-        pairs.add(new Pair(-1, -1));
-        pairs.add(new Pair(2, 2));
-        pairs.add(new Pair(1000345, 1000345));
-        for (Pair pair : pairs) {
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(0, 0));
+        pairs.add(new Args(-1, -1));
+        pairs.add(new Args(2, 2));
+        pairs.add(new Args(1000345, 1000345));
+        for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_iload_0_2.test(pair.first);
             expectedValues[0] = answer;
@@ -1109,6 +1121,127 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.push(ConditionFlag.Always, 1); // local slot is argument r0
             masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_0_2");
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            masm.pop(ConditionFlag.Always, 1);
+            int assemblerStatements = masm.codeBuffer.position() / 4;
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            theCompiler.cleanup();
+        }
+    }
+
+    public void test_jtt_BC_iload_1() throws Exception {
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(1, 0));
+        pairs.add(new Args(1, -1));
+        pairs.add(new Args(1, 2));
+        pairs.add(new Args(1, 1000345));
+        for (Args pair : pairs) {
+            MaxineByteCode xx = new MaxineByteCode();
+            int answer = jtt.bytecode.BC_iload_1.test(pair.first, pair.second);
+            expectedValues[0] = answer;
+            byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_iload_1");
+            initialiseFrameForCompilation(code, "(II)I", Modifier.PUBLIC | Modifier.STATIC);
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.mov32BitConstant(ARMV7.r0, pair.first);
+            masm.mov32BitConstant(ARMV7.r1, pair.second);
+            masm.mov32BitConstant(ARMV7.r2, -99);
+            masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+            masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+            masm.push(ConditionFlag.Always, 4); // local slot 1 is argument (r1)
+            t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_1");
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            masm.pop(ConditionFlag.Always, 1);
+            int assemblerStatements = masm.codeBuffer.position() / 4;
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            theCompiler.cleanup();
+        }
+    }
+
+    public void test_jtt_BC_iload_1_1() throws Exception {
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(0, 0));
+        pairs.add(new Args(-1, -1));
+        pairs.add(new Args(2, 2));
+        pairs.add(new Args(1000345, 1000345));
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd");
+        for (Args pair : pairs) {
+            MaxineByteCode xx = new MaxineByteCode();
+            int answer = jtt.bytecode.BC_iload_1_1.test(pair.first);
+            expectedValues[0] = answer;
+            byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_iload_1_1");
+            initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.mov32BitConstant(ARMV7.r0, pair.first);
+            masm.mov32BitConstant(ARMV7.r1, -99);
+            masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+            masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+            t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_1_1");
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            masm.pop(ConditionFlag.Always, 1);
+            int assemblerStatements = masm.codeBuffer.position() / 4;
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            theCompiler.cleanup();
+        }
+    }
+
+    public void test_jtt_BC_iload_2() throws Exception {
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(1, 1, 0));
+        pairs.add(new Args(1, 1, -1));
+        pairs.add(new Args(1, 1, 2));
+        pairs.add(new Args(1, 1, 1000345));
+        for (Args pair : pairs) {
+            MaxineByteCode xx = new MaxineByteCode();
+            int answer = jtt.bytecode.BC_iload_2.test(pair.first, pair.second, pair.third);
+            expectedValues[0] = answer;
+            byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_iload_2");
+            initialiseFrameForCompilation(code, "(III)I", Modifier.PUBLIC | Modifier.STATIC);
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.mov32BitConstant(ARMV7.r0, pair.first);
+            masm.mov32BitConstant(ARMV7.r1, pair.second);
+            masm.mov32BitConstant(ARMV7.r2, pair.third);
+            masm.mov32BitConstant(ARMV7.r3, -99);
+            masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+            masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+            masm.push(ConditionFlag.Always, 4); // local slot 1 is argument (r1)
+            masm.push(ConditionFlag.Always, 8); // local slot 1 is argument (r1)
+            t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_2");
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            masm.pop(ConditionFlag.Always, 1);
+            int assemblerStatements = masm.codeBuffer.position() / 4;
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            theCompiler.cleanup();
+        }
+    }
+
+    public void test_jtt_BC_iload_3() throws Exception {
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(1, 1, 1, 0));
+        pairs.add(new Args(1, 1, 1, -1));
+        pairs.add(new Args(1, 1, 1, 2));
+        pairs.add(new Args(1, 1, 1, 1000345));
+        for (Args pair : pairs) {
+            MaxineByteCode xx = new MaxineByteCode();
+            int answer = jtt.bytecode.BC_iload_3.test(pair.first, pair.second, pair.third, pair.fourth);
+            expectedValues[0] = answer;
+            byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_iload_3");
+            initialiseFrameForCompilation(code, "(IIII)I", Modifier.PUBLIC | Modifier.STATIC);
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.mov32BitConstant(ARMV7.r0, pair.first);
+            masm.mov32BitConstant(ARMV7.r1, pair.second);
+            masm.mov32BitConstant(ARMV7.r2, pair.third);
+            masm.mov32BitConstant(ARMV7.r3, pair.fourth);
+            masm.mov32BitConstant(ARMV7.r4, -99);
+            masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+            masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+            masm.push(ConditionFlag.Always, 4); // local slot 1 is argument (r1)
+            masm.push(ConditionFlag.Always, 8); // local slot 1 is argument (r1)
+            masm.push(ConditionFlag.Always, 16); // local slot 1 is argument (r1
+            t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_3");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
