@@ -1305,7 +1305,7 @@ public class Stubs {
                     case Object:
                         assert args[4].isRegister() == false;
 
-                        arg4 =   new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
+                        arg4 =   new CiAddress(kind, ARMV7.RSP.asValue(CiKind.Int), ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
                         asm.ldr(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
                         asm.mov(ARMV7Assembler.ConditionFlag.Always, false, returnRegister, ARMV7.r12);
@@ -1316,7 +1316,7 @@ public class Stubs {
                                // broken needs TWO registers TODO
                         assert args[4].isRegister() == false;
 
-                        arg4 =   new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
+                        arg4 =   new CiAddress(kind, ARMV7.RSP.asValue(CiKind.Int), ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
                         asm.ldr(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
                         asm.mov(ARMV7Assembler.ConditionFlag.Always, false, returnRegister, ARMV7.r12);
@@ -1366,7 +1366,7 @@ public class Stubs {
             // Copy original return address into arg 0 (i.e. 'ip')
             CiRegister arg0 = args[0].asRegister();
             //asm.movq(arg0, new CiAddress(WordUtil.archKind(), ARMV7.RSP, DEOPT_RETURN_ADDRESS_OFFSET));
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, DEOPT_RETURN_ADDRESS_OFFSET));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP.asValue(CiKind.Int), DEOPT_RETURN_ADDRESS_OFFSET));
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg0, ARMV7.r12);
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
@@ -1383,7 +1383,7 @@ public class Stubs {
 
             // Put original return address into high slot
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.r13, 4), arg0);
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, 4));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP.asValue(CiKind.Int), 4));
             asm.str(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r13, ARMV7.r13, 0, 0); // might be the wrong way round
             // Allocate 2 extra stack slots ? one in ARM?
             asm.subq(ARMV7.r13, 4);
@@ -1396,7 +1396,7 @@ public class Stubs {
             asm.movt(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, 0xffff);
             // APN ok not sure if we have spare registers
             // if we return? who does the restore?
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP.asValue(CiKind.Int)));
 
 
             asm.str(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r8, ARMV7.r8, 0, 0);
@@ -1588,7 +1588,7 @@ public class Stubs {
                     case Object:
                         assert args[4].isRegister() == false;
 
-                        arg4 =   new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
+                        arg4 =   new CiAddress(kind, ARMV7.RSP.asValue(CiKind.Int), ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
                         asm.ldr(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
                         asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, ARMV7.r12);
@@ -1598,7 +1598,7 @@ public class Stubs {
                         assert args[4].isRegister() == false;
 
                         // broken needs TWO registers TODO
-                        arg4 =   new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
+                        arg4 =   new CiAddress(kind, ARMV7.RSP.asValue(CiKind.Int), ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
                         asm.ldr(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
                         asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, ARMV7.r12);
@@ -1670,12 +1670,12 @@ public class Stubs {
             // Copy original return address into arg 0 (i.e. 'ip')
             CiRegister arg0 = args[0].asRegister();
             //asm.movq(arg0, new CiAddress(WordUtil.archKind(), ARMV7.RSP, cfo + DEOPT_RETURN_ADDRESS_OFFSET));
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, cfo + DEOPT_RETURN_ADDRESS_OFFSET));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP.asValue(CiKind.Int), cfo + DEOPT_RETURN_ADDRESS_OFFSET));
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg0, ARMV7.r12);
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
             //asm.leaq(arg1, new CiAddress(WordUtil.archKind(), ARMV7.RSP, cfo));
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, cfo));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP.asValue(CiKind.Int), cfo));
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg1, ARMV7.r12);
 
             // Copy original frame pointer into arg 2 (i.e. 'sp')
@@ -1691,7 +1691,7 @@ public class Stubs {
             // Patch return address of deopt stub frame to look
             // like it was called by frame being deopt'ed.
 
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP.asValue(CiKind.Int), frameSize));
             asm.str(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, arg0, ARMV7.r12, ARMV7.r12, 0, 0);
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize), arg0);
 
