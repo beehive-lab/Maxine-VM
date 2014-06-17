@@ -132,7 +132,7 @@ public abstract class Trap {
     /**
      * Whether to bang on the stack in the method prologue.
      */
-    public static final boolean STACK_BANGING = true;
+    public static final boolean STACK_BANGING = false;
 
     /**
      * The number of bytes reserved in the stack as a guard area.
