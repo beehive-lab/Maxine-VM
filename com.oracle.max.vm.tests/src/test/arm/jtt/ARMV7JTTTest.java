@@ -162,11 +162,13 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_UsageOfStaticMethods() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int value = 99;
         int answer = jtt.bytecode.ARM_BC_test_return1.test(12);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.ARM_BC_test_return1");
-        initialiseFrameForCompilation(code, "(I)I");
+        initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, value);
         masm.mov32BitConstant(ARMV7.r1, 12);
@@ -182,10 +184,12 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_imul() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_imul.test(10, 12);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_imul");
-        initialiseFrameForCompilation(code, "(II)I");
+        initialiseFrameForCompilation(code, "(II)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 10);
         masm.mov32BitConstant(ARMV7.r1, 12);
@@ -204,10 +208,12 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_isub() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_isub.test(100, 50);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_isub");
-        initialiseFrameForCompilation(code, "(II)I");
+        initialiseFrameForCompilation(code, "(II)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 100);
         masm.mov32BitConstant(ARMV7.r1, 50);
@@ -226,10 +232,12 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_ineg() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_ineg.test(100);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_ineg");
-        initialiseFrameForCompilation(code, "(I)I");
+        initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 100);
         masm.mov32BitConstant(ARMV7.r1, -99);
@@ -246,10 +254,12 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_ineg_1() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_ineg.test(-100);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_ineg");
-        initialiseFrameForCompilation(code, "(I)I");
+        initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, -100);
         masm.mov32BitConstant(ARMV7.r1, -99);
@@ -266,10 +276,12 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_iadd() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_iadd.test(50, 50);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_iadd");
-        initialiseFrameForCompilation(code, "(II)I");
+        initialiseFrameForCompilation(code, "(II)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 50);
         masm.mov32BitConstant(ARMV7.r1, 50);
@@ -288,10 +300,12 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_ior() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_ior.test(50, 100);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_ior");
-        initialiseFrameForCompilation(code, "(II)I");
+        initialiseFrameForCompilation(code, "(II)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 50);
         masm.mov32BitConstant(ARMV7.r1, 100);
@@ -310,10 +324,12 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_ixor() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_ixor.test(50, 39);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_ixor");
-        initialiseFrameForCompilation(code, "(II)I");
+        initialiseFrameForCompilation(code, "(II)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 50);
         masm.mov32BitConstant(ARMV7.r1, 39);
@@ -332,10 +348,12 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_iand() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_iand.test(50, 39);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_iand");
-        initialiseFrameForCompilation(code, "(II)I");
+        initialiseFrameForCompilation(code, "(II)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 50);
         masm.mov32BitConstant(ARMV7.r1, 39);
@@ -354,10 +372,12 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_ishl() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_ishl.test(10, 2);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_ishl");
-        initialiseFrameForCompilation(code, "(II)I");
+        initialiseFrameForCompilation(code, "(II)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 10);
         masm.mov32BitConstant(ARMV7.r1, 2);
@@ -376,10 +396,12 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_ishr() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_ishr.test(2048, 2);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_ishr");
-        initialiseFrameForCompilation(code, "(II)I");
+        initialiseFrameForCompilation(code, "(II)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 2048);
         masm.mov32BitConstant(ARMV7.r1, 2);
@@ -398,10 +420,12 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_ishr_1() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_ishr.test(-2147483648, 16);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_ishr");
-        initialiseFrameForCompilation(code, "(II)I");
+        initialiseFrameForCompilation(code, "(II)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, -2147483648);
         masm.mov32BitConstant(ARMV7.r1, 16);
@@ -420,10 +444,12 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_iushr() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_iushr.test(-2147483648, 16);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_iushr");
-        initialiseFrameForCompilation(code, "(II)I");
+        initialiseFrameForCompilation(code, "(II)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, -2147483648);
         masm.mov32BitConstant(ARMV7.r1, 16);
@@ -442,10 +468,12 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_i2b() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_i2b.test(255);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_i2b");
-        initialiseFrameForCompilation(code, "(I)I");
+        initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 255);
         masm.mov32BitConstant(ARMV7.r1, -99);
@@ -462,10 +490,12 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_i2b_1() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_i2b.test(-1);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_i2b");
-        initialiseFrameForCompilation(code, "(I)I");
+        initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, -1);
         masm.mov32BitConstant(ARMV7.r1, -99);
@@ -482,10 +512,12 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_i2b_2() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_i2b.test(128);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_i2b");
-        initialiseFrameForCompilation(code, "(I)I");
+        initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 128);
         masm.mov32BitConstant(ARMV7.r1, -99);
@@ -502,10 +534,12 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_i2s() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_i2s.test(65535);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_i2s");
-        initialiseFrameForCompilation(code, "(I)I");
+        initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 65535);
         masm.mov32BitConstant(ARMV7.r1, -99);
@@ -522,10 +556,12 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_i2s_1() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_i2s.test(32768);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_i2s");
-        initialiseFrameForCompilation(code, "(I)I");
+        initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 32768);
         masm.mov32BitConstant(ARMV7.r1, -99);
@@ -542,10 +578,12 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_i2s_2() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_i2s.test(-1);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_i2s");
-        initialiseFrameForCompilation(code, "(I)I");
+        initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, -1);
         masm.mov32BitConstant(ARMV7.r1, -99);
@@ -562,10 +600,12 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_i2c() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_i2c.test(-1);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_i2c");
-        initialiseFrameForCompilation(code, "(I)I");
+        initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, -1);
         masm.mov32BitConstant(ARMV7.r1, -99);
@@ -582,10 +622,12 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_i2c_1() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         int answer = jtt.bytecode.BC_i2c.test(65535);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_i2c");
-        initialiseFrameForCompilation(code, "(I)I");
+        initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 65535);
         masm.mov32BitConstant(ARMV7.r1, -99);
@@ -602,6 +644,7 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_ireturn() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         int answer = jtt.bytecode.BC_ireturn.test(-1);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_ireturn");
@@ -622,6 +665,7 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_ireturn_1() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         int answer = jtt.bytecode.BC_ireturn.test(256);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_ireturn");
@@ -946,6 +990,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(2, 3));
         pairs.add(new Args(4, 5));
         pairs.add(new Args(1, 0));
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_iinc_1.test(pair.first);
@@ -973,6 +1019,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(2, 4));
         pairs.add(new Args(4, 6));
         pairs.add(new Args(-2, 0));
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_iinc_2.test(pair.first);
@@ -1000,6 +1048,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(2, 53));
         pairs.add(new Args(4, 55));
         pairs.add(new Args(-1, 50));
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_iinc_3.test(pair.first);
@@ -1027,6 +1077,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(2, 514));
         pairs.add(new Args(4, 516));
         pairs.add(new Args(-1, 511));
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_iinc_4.test(pair.first);
@@ -1054,6 +1106,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(-1, -1));
         pairs.add(new Args(2, 2));
         pairs.add(new Args(1000345, 1000345));
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_iload_0.test(pair.first);
@@ -1066,7 +1120,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.push(ConditionFlag.Always, 1); // local slot is argument r0
             masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_0");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length-1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
             int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
@@ -1081,6 +1135,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(-1, 0));
         pairs.add(new Args(2, 3));
         pairs.add(new Args(1000345, 1000346));
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd");
         for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
@@ -1109,6 +1165,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(-1, -1));
         pairs.add(new Args(2, 2));
         pairs.add(new Args(1000345, 1000345));
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_iload_0_2.test(pair.first);
@@ -1133,9 +1191,11 @@ public class ARMV7JTTTest extends MaxTestCase {
     public void test_jtt_BC_iload_1() throws Exception {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 0));
-        pairs.add(new Args(1, -1));
-        pairs.add(new Args(1, 2));
-        pairs.add(new Args(1, 1000345));
+        //pairs.add(new Args(1, -1));
+        //pairs.add(new Args(1, 2));
+        //pairs.add(new Args(1, 1000345));
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_iload_1.test(pair.first, pair.second);
@@ -1149,8 +1209,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.push(ConditionFlag.Always, 1); // local slot is argument r0
             masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
             masm.push(ConditionFlag.Always, 4); // local slot 1 is argument (r1)
-            t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_1");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length-1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
             int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
@@ -1166,6 +1225,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(2, 2));
         pairs.add(new Args(1000345, 1000345));
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_iload_1_1.test(pair.first);
@@ -1193,6 +1254,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(1, 1, -1));
         pairs.add(new Args(1, 1, 2));
         pairs.add(new Args(1, 1, 1000345));
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_iload_2.test(pair.first, pair.second, pair.third);
@@ -1224,6 +1287,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(1, 1, 1, -1));
         pairs.add(new Args(1, 1, 1, 2));
         pairs.add(new Args(1, 1, 1, 1000345));
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_iload_3.test(pair.first, pair.second, pair.third, pair.fourth);
@@ -1273,6 +1338,89 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.push(ConditionFlag.Always, 1); // local slot is argument r0
             masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iconst");
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            masm.pop(ConditionFlag.Always, 1);
+            int assemblerStatements = masm.codeBuffer.position() / 4;
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            theCompiler.cleanup();
+        }
+    }
+
+    public void test_jtt_BC_ifeq() throws Exception {
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(0, 2));
+        pairs.add(new Args(1, -2));
+        pairs.add(new Args(6, 375));
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "add");
+        for (Args pair : pairs) {
+            MaxineByteCode xx = new MaxineByteCode();
+            int answer = jtt.bytecode.BC_ifeq.test(pair.first);
+            expectedValues[0] = answer;
+            byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_ifeq");
+            initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.mov32BitConstant(ARMV7.r0, pair.first);
+            masm.mov32BitConstant(ARMV7.r1, -99);
+            masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+            masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+            t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifeq");
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            masm.pop(ConditionFlag.Always, 1);
+            int assemblerStatements = masm.codeBuffer.position() / 4;
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            theCompiler.cleanup();
+        }
+    }
+
+    public void ignore_jtt_BC_ifeq_2() throws Exception {
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(0, 1));
+        pairs.add(new Args(1, 0));
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
+        for (Args pair : pairs) {
+            MaxineByteCode xx = new MaxineByteCode();
+            boolean answer = jtt.bytecode.BC_ifeq_2.test(pair.first);
+            expectedValues[0] = answer ? 1 : 0;
+            byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_ifeq_2");
+            initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.mov32BitConstant(ARMV7.r0, pair.first);
+            masm.mov32BitConstant(ARMV7.r1, -99);
+            masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+            masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            masm.pop(ConditionFlag.Always, 1);
+            int assemblerStatements = masm.codeBuffer.position() / 4;
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            theCompiler.cleanup();
+        }
+    }
+
+    public void ignore_jtt_BC_ifeq_3() throws Exception {
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(0, 0));
+        pairs.add(new Args(1, 1));
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "add");
+        for (Args pair : pairs) {
+            MaxineByteCode xx = new MaxineByteCode();
+            boolean answer = jtt.bytecode.BC_ifeq_3.test(pair.first);
+            expectedValues[0] = answer ? 1 : 0;
+            byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_ifeq_3");
+            initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.mov32BitConstant(ARMV7.r0, pair.first);
+            masm.mov32BitConstant(ARMV7.r1, -99);
+            masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+            masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+            t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifeq_3");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
