@@ -487,10 +487,6 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected Adapter emitPrologue() {
-        // APN need to understand the semantics of emitPrologue ...
-        // all seems far more complicated than it needs to be for ARM ...
-        // discuss with Christos on how we plan to do this to be
-        // consistent across Graal T1X ...
         Adapter adapter = null;
         if (adapterGenerator != null) {
             adapter = adapterGenerator.adapt(method, asm);
@@ -499,13 +495,14 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         // push frame pointer
         // framepointer = stackpointer
         // stackptr = framepointer -stacksize
+
         int frameSize = frame.frameSize();
-        // asm.enter(frameSize - Word.size(), 0);
         asm.push(ConditionFlag.Always, 1 << 11); // push frame pointer onto STACK
         asm.mov(ConditionFlag.Always, false, ARMV7.r11, ARMV7.r13); // create a new framepointer = stack ptr
         asm.subq(ARMV7.r13, frameSize - Word.size()); // APN is this necessary for  ARM ie push does it anyway?
-
         asm.subq(r11, framePointerAdjustment()); // TODO FP/SP not being set up correctly ...
+
+        //TODO: Fix below
         if (Trap.STACK_BANGING) {
             int pageSize = platform().pageSize;
             int framePages = frameSize / pageSize;
@@ -515,8 +512,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 // Deduct 'frameSize' to handle frames larger than (VmThread.STACK_SHADOW_PAGES * pageSize)
                 offset = offset - frameSize;
                 // RSP is r13!
-                asm.setUpScratch(new CiAddress(WordUtil.archKind(), RSP, -offset));
-                asm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r14, asm.scratchRegister, 0);
+                asm.setUpScratch(new CiAddress(WordUtil.archKind(), RSP.asValue(CiKind.Int), -offset));
+                asm.strImmediate(ConditionFlag.Always, 0, 0, 0, LR, asm.scratchRegister, 0);
                 // APN guessing rax is return address.
                 // asm.movq(new CiAddress(WordUtil.archKind(), RSP, -offset), rax);
             }
@@ -574,7 +571,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         }
 
         // Pop index from stack into scratch
-        asm.setUpScratch(new CiAddress(CiKind.Int, RSP));
+        asm.setUpScratch(new CiAddress(CiKind.Int, RSP.asValue(CiKind.Int)));
         asm.ldr(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, asm.scratchRegister, asm.scratchRegister, 0, 0);
         asm.addq(r13, JVMSFrameLayout.JVMS_SLOT_SIZE);
         asm.push(ConditionFlag.Always, 1 << 10 | 1 << 9);
@@ -654,7 +651,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 asm.jmp(0, true);
             }
         } else {
-            asm.setUpScratch(new CiAddress(CiKind.Int, RSP));
+            asm.setUpScratch(new CiAddress(CiKind.Int, RSP.asValue(CiKind.Int)));
             asm.ldr(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, asm.scratchRegister, asm.scratchRegister, 0, 0);
             asm.addq(ARMV7.r13, JVMSFrameLayout.JVMS_SLOT_SIZE);
             asm.push(ConditionFlag.Always, 1 << 7 | 1 << 9 | 1 << 10);
