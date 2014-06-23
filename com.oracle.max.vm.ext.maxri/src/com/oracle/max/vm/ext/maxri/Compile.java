@@ -1,24 +1,19 @@
 /*
- * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
+ * OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package com.oracle.max.vm.ext.maxri;
 
@@ -67,25 +62,18 @@ public class Compile {
     private static final Map<String, String> compilerAliases = RuntimeCompiler.aliases;
     private static final String compilerAliasNames = compilerAliases.keySet().toString().replaceAll("[\\[\\]]", "");
 
-    private static final Option<String> compilerOption = options.newStringOption("c", null,
-        "The compiler to use " + compilerAliases.keySet() + " chosen from the following list: " + compilerAliasNames + ", or fully qualified class name");
-    private static final Option<Integer> traceOption = options.newIntegerOption("trace", 0,
-        "Set the tracing level of the Maxine VM and runtime.");
-    private static final Option<Integer> verboseOption = options.newIntegerOption("verbose", 1,
-        "Set the verbosity level of the testing framework.");
-    private static final Option<Boolean> reflectionStubsOption = options.newBooleanOption("reflect", false,
-        "Generate and compile reflection stubs for the methods.");
-    private static final Option<Boolean> failFastOption = options.newBooleanOption("fail-fast", false,
-        "Stop compilation upon the first bailout.");
-    private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
-        "Show help message and exit.");
-    private static final Option<Boolean> profOption = options.newBooleanOption("prof", true,
-        "Emit method profiling in baseline compiled methods.");
-    private static final Option<Boolean> validateInline = options.newBooleanOption("validate-inline", true,
-            "Validate INLINE semantics for boot image methods");
+    private static final Option<String> compilerOption = options.newStringOption("c", null, "The compiler to use " + compilerAliases.keySet() + " chosen from the following list: " +
+                    compilerAliasNames + ", or fully qualified class name");
+    private static final Option<Integer> traceOption = options.newIntegerOption("trace", 0, "Set the tracing level of the Maxine VM and runtime.");
+    private static final Option<Integer> verboseOption = options.newIntegerOption("verbose", 1, "Set the verbosity level of the testing framework.");
+    private static final Option<Boolean> reflectionStubsOption = options.newBooleanOption("reflect", false, "Generate and compile reflection stubs for the methods.");
+    private static final Option<Boolean> failFastOption = options.newBooleanOption("fail-fast", false, "Stop compilation upon the first bailout.");
+    private static final Option<Boolean> helpOption = options.newBooleanOption("help", false, "Show help message and exit.");
+    private static final Option<Boolean> profOption = options.newBooleanOption("prof", true, "Emit method profiling in baseline compiled methods.");
+    private static final Option<Boolean> validateInline = options.newBooleanOption("validate-inline", true, "Validate INLINE semantics for boot image methods");
 
     static void addFieldOptions(String prefix, String optionsClassName) {
-        Class<?> optionsClass = Classes.forName(optionsClassName);
+        Class< ? > optionsClass = Classes.forName(optionsClassName);
         try {
             Map<String, String> m = null;
             try {
@@ -123,6 +111,7 @@ public class Compile {
 
     /**
      * Check alias (short form of compiler name).
+     *
      * @param compilerName
      * @return full (aliased) class name or {@code compilerName} if not found
      */
@@ -134,10 +123,71 @@ public class Compile {
         return compilerClassname == null ? compilerName : compilerClassname;
     }
 
+    public static List<TargetMethod> compile(String[] args, String compilerAlias) throws IOException {
+        args = VMOption.extractVMArgs(args);
+
+        VMConfigurator vmConfigurator = new VMConfigurator(options);
+        options.parseArguments(args);
+
+        options.setValuesAgain();
+        final String[] arguments = expandArguments(options.getArguments());
+
+        String compilerName = getCompilerClassname(compilerAlias);
+        if (compilerName == null) {
+            System.out.println("Must specify compiler to use with the -" + compilerOption + " option");
+            System.out.println("Valid values are: " + compilerAliasNames + " or fully qualified class name");
+            return null;
+        }
+        System.out.println(compilerName);
+
+        if (compilerName.contains("T1X")) {
+            RuntimeCompiler.baselineCompilerOption.setValue(compilerName);
+        } else {
+            RuntimeCompiler.optimizingCompilerOption.setValue(compilerName);
+        }
+
+        Trace.on(traceOption.getValue());
+
+        if (profOption.getValue()) {
+            MethodInstrumentation.enable(500);
+        }
+
+        vmConfigurator.create();
+
+        // create the prototype
+        if (verboseOption.getValue() > 0) {
+            out.print("Initializing Java prototype... ");
+        }
+        JavaPrototype.initialize(false);
+        if (verboseOption.getValue() > 0) {
+            out.println("done");
+        }
+
+        CompilationBroker cb = MaxineVM.vm().compilationBroker;
+        final RuntimeCompiler compiler = compilerName.contains("T1X") ? cb.baselineCompiler : cb.optimizingCompiler;
+        cb.optimizingCompiler.initialize(Phase.HOSTED_COMPILING);
+        if (cb.optimizingCompiler != cb.baselineCompiler && compiler == cb.baselineCompiler) {
+            cb.baselineCompiler.initialize(Phase.HOSTED_COMPILING);
+
+        }
+        final Classpath classpath = Classpath.fromSystem();
+        final List<MethodActor> methods = new MyMethodFinder().find(arguments, classpath, Compile.class.getClassLoader(), null);
+        if (methods.size() == 0) {
+            out.println("no methods matched");
+            return null;
+        }
+        List<TargetMethod> targetMethods = doCompile(compiler, methods);
+        compiler.initialize(Phase.TERMINATING);
+        return targetMethods;
+    }
+
     public static void main(String[] args) throws IOException {
 
         args = VMOption.extractVMArgs(args);
 
+        for (String arg : args) {
+            System.out.println(arg);
+        }
         VMConfigurator vmConfigurator = new VMConfigurator(options);
         options.parseArguments(args);
 
@@ -155,7 +205,10 @@ public class Compile {
             return;
         }
 
+        System.out.println(compilerName);
+
         if (compilerName.contains("T1X")) {
+
             RuntimeCompiler.baselineCompilerOption.setValue(compilerName);
         } else {
             RuntimeCompiler.optimizingCompilerOption.setValue(compilerName);
@@ -192,11 +245,11 @@ public class Compile {
             out.println("no methods matched");
             return;
         }
-        //out.println("METHODS tO BE COMPILED " + methods.size());
-        for (MethodActor  actor: methods) {
-            //out.println(actor + " CODE SIZE " + actor.codeSize());
-            for (int i = 0; i < actor.codeSize(); i++)    {
-                //out.println("BYTECODE " + i + " " + actor.code()[i]);
+        out.println("METHODS tO BE COMPILED " + methods.size());
+        for (MethodActor actor : methods) {
+            out.println(actor + " CODE SIZE " + actor.codeSize());
+            for (int i = 0; i < actor.codeSize(); i++) {
+                out.println("BYTECODE " + i + " " + actor.code()[i]);
             }
         }
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
@@ -279,6 +332,35 @@ public class Compile {
         return thrown;
     }
 
+    private static List<TargetMethod> doCompile(RuntimeCompiler compiler, List<MethodActor> methods) {
+        List<TargetMethod> targetMethods = new LinkedList<>();
+        for (MethodActor methodActor : methods) {
+            targetMethods.add(compile(compiler, methodActor));
+        }
+        return targetMethods;
+    }
+
+    private static TargetMethod compile(RuntimeCompiler compiler, MethodActor method) {
+        ClassMethodActor classMethodActor = (ClassMethodActor) method;
+        Throwable thrown = null;
+        CiStatistics stats = new CiStatistics();
+        try {
+            TargetMethod tm = compiler.compile(classMethodActor, false, true, stats);
+            if (validateInline.getValue()) {
+                validateInlining(tm);
+            }
+            return tm;
+        } catch (Throwable t) {
+            thrown = t;
+        }
+        if (thrown != null) {
+            out.println("");
+            out.println(method);
+            thrown.printStackTrace();
+        }
+        return null;
+    }
+
     private static void validateInlining(TargetMethod tm) {
         final Set<MethodActor> directCalls = new HashSet<MethodActor>();
         final Set<MethodActor> virtualCalls = new HashSet<MethodActor>();
@@ -294,7 +376,9 @@ public class Compile {
     }
 
     static class MyMethodFinder extends MethodFinder {
+
         HashSet<PatternMatcher> patterns;
+
         @Override
         protected void addClassToProcess(PatternMatcher classNamePattern, String className, List<String> matchingClasses) {
             boolean added = patterns.add(classNamePattern);
