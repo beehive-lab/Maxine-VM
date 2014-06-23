@@ -11,6 +11,7 @@ import test.arm.asm.*;
 import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
 import com.oracle.max.vm.ext.c1x.*;
+import com.oracle.max.vm.ext.maxri.*;
 import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.t1x.armv7.*;
 import com.sun.cri.ci.*;
@@ -22,6 +23,7 @@ import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 
@@ -36,6 +38,7 @@ public class ARMV7JTTTest extends MaxTestCase {
     private StaticMethodActor anMethod = null;
     private CodeAttribute codeAttr = null;
     private static boolean POST_CLEAN_FILES = true;
+    private static boolean OFFLINE_C1X_COMPILE = true;
 
     public void initialiseFrameForCompilation() {
         // TODO: compute max stack
@@ -103,12 +106,12 @@ public class ARMV7JTTTest extends MaxTestCase {
                     MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits};
 
     private static int[] expectedValues = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    private static boolean[] testvalues = new boolean[17];
+    private static boolean[] IGNOREvalues = new boolean[17];
 
-    private int[] generateAndTest(int assemblerStatements, int[] expected, boolean[] tests, MaxineARMTester.BitsFlag[] masks) throws Exception {
+    private int[] generateAndTest(int assemblerStatements, int[] expected, boolean[] IGNOREs, MaxineARMTester.BitsFlag[] masks) throws Exception {
         ARMCodeWriter code = new ARMCodeWriter(assemblerStatements, theCompiler.getMacroAssembler().codeBuffer);
         code.createCodeFile();
-        MaxineARMTester r = new MaxineARMTester(expected, tests, masks);
+        MaxineARMTester r = new MaxineARMTester(expected, IGNOREs, masks);
         r.cleanFiles();
         r.cleanProcesses();
         r.assembleStartup();
@@ -125,6 +128,16 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     public ARMV7JTTTest() {
+        if (!OFFLINE_C1X_COMPILE) {
+            initTests();
+        }
+    }
+
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(ARMV7JTTTest.class);
+    }
+
+    private void initTests() {
         try {
             String[] args = new String[2];
             args[0] = new String("t1x");
@@ -156,11 +169,15 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(ARMV7JTTTest.class);
+    private static void enableC1XOfflineCompiler() {
+        OFFLINE_C1X_COMPILE = true;
     }
 
-    public void test_jtt_UsageOfStaticMethods() throws Exception {
+    private static void disableC1XOfflineCompiler() {
+        OFFLINE_C1X_COMPILE = false;
+    }
+
+    public void IGNORE_jtt_UsageOfStaticMethods() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -177,12 +194,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_imul() throws Exception {
+    public void IGNORE_jtt_BC_imul() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -201,12 +218,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_isub() throws Exception {
+    public void IGNORE_jtt_BC_isub() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -225,12 +242,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_ineg() throws Exception {
+    public void IGNORE_jtt_BC_ineg() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -247,12 +264,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_ineg_1() throws Exception {
+    public void IGNORE_jtt_BC_ineg_1() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -269,12 +286,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_iadd() throws Exception {
+    public void IGNORE_jtt_BC_iadd() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -293,12 +310,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_ior() throws Exception {
+    public void IGNORE_jtt_BC_ior() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -317,12 +334,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_ixor() throws Exception {
+    public void IGNORE_jtt_BC_ixor() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -341,12 +358,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_iand() throws Exception {
+    public void IGNORE_jtt_BC_iand() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -365,12 +382,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_ishl() throws Exception {
+    public void IGNORE_jtt_BC_ishl() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -389,12 +406,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_ishr() throws Exception {
+    public void IGNORE_jtt_BC_ishr() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -413,12 +430,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_ishr_1() throws Exception {
+    public void IGNORE_jtt_BC_ishr_1() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -437,12 +454,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_iushr() throws Exception {
+    public void IGNORE_jtt_BC_iushr() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -461,12 +478,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_i2b() throws Exception {
+    public void IGNORE_jtt_BC_i2b() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -483,12 +500,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_i2b_1() throws Exception {
+    public void IGNORE_jtt_BC_i2b_1() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -505,12 +522,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_i2b_2() throws Exception {
+    public void IGNORE_jtt_BC_i2b_2() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -527,12 +544,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_i2s() throws Exception {
+    public void IGNORE_jtt_BC_i2s() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -549,12 +566,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_i2s_1() throws Exception {
+    public void IGNORE_jtt_BC_i2s_1() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -571,12 +588,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_i2s_2() throws Exception {
+    public void IGNORE_jtt_BC_i2s_2() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -593,12 +610,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_i2c() throws Exception {
+    public void IGNORE_jtt_BC_i2c() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -615,12 +632,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_i2c_1() throws Exception {
+    public void IGNORE_jtt_BC_i2c_1() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -637,12 +654,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_ireturn() throws Exception {
+    public void IGNORE_jtt_BC_ireturn() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         int answer = jtt.bytecode.BC_ireturn.test(-1);
@@ -658,12 +675,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_ireturn_1() throws Exception {
+    public void IGNORE_jtt_BC_ireturn_1() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         int answer = jtt.bytecode.BC_ireturn.test(256);
@@ -679,12 +696,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
         int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_tableswitch() throws Exception {
+    public void IGNORE_jtt_BC_tableswitch() throws Exception {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1, 42));
         pairs.add(new Args(0, 10));
@@ -710,13 +727,13 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
     }
 
-    public void test_jtt_BC_tableswitch_2() throws Exception {
+    public void IGNORE_jtt_BC_tableswitch_2() throws Exception {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1, 11));
         pairs.add(new Args(0, 11));
@@ -741,13 +758,13 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
     }
 
-    public void test_jtt_BC_tableswitch_3() throws Exception {
+    public void IGNORE_jtt_BC_tableswitch_3() throws Exception {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1, 11));
         pairs.add(new Args(-2, 22));
@@ -772,13 +789,13 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
     }
 
-    public void test_jtt_BC_tableswitch_4() throws Exception {
+    public void IGNORE_jtt_BC_tableswitch_4() throws Exception {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1, 11));
         pairs.add(new Args(0, 11));
@@ -803,13 +820,13 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
     }
 
-    public void test_jtt_BC_lookupswitch_1() throws Exception {
+    public void IGNORE_jtt_BC_lookupswitch_1() throws Exception {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 42));
         pairs.add(new Args(1, 42));
@@ -844,13 +861,13 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
     }
 
-    public void test_jtt_BC_lookupswitch_2() throws Exception {
+    public void IGNORE_jtt_BC_lookupswitch_2() throws Exception {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 42));
         pairs.add(new Args(1, 42));
@@ -888,13 +905,13 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
     }
 
-    public void test_jtt_BC_lookupswitch_3() throws Exception {
+    public void IGNORE_jtt_BC_lookupswitch_3() throws Exception {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 42));
         pairs.add(new Args(1, 42));
@@ -933,13 +950,13 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
     }
 
-    public void test_jtt_BC_lookupswitch_4() throws Exception {
+    public void IGNORE_jtt_BC_lookupswitch_4() throws Exception {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 42));
         pairs.add(new Args(1, 42));
@@ -978,13 +995,13 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
     }
 
-    public void test_jtt_BC_iinc_1() throws Exception {
+    public void IGNORE_jtt_BC_iinc_1() throws Exception {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 2));
         pairs.add(new Args(2, 3));
@@ -1007,13 +1024,13 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
     }
 
-    public void test_jtt_BC_iinc_2() throws Exception {
+    public void IGNORE_jtt_BC_iinc_2() throws Exception {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 3));
         pairs.add(new Args(2, 4));
@@ -1036,13 +1053,13 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
     }
 
-    public void test_jtt_BC_iinc_3() throws Exception {
+    public void IGNORE_jtt_BC_iinc_3() throws Exception {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 52));
         pairs.add(new Args(2, 53));
@@ -1065,13 +1082,13 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
     }
 
-    public void test_jtt_BC_iinc_4() throws Exception {
+    public void IGNORE_jtt_BC_iinc_4() throws Exception {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 513));
         pairs.add(new Args(2, 514));
@@ -1094,13 +1111,13 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
     }
 
-    public void test_jtt_BC_iload_0() throws Exception {
+    public void IGNORE_jtt_BC_iload_0() throws Exception {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
         pairs.add(new Args(-1, -1));
@@ -1120,16 +1137,16 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.push(ConditionFlag.Always, 1); // local slot is argument r0
             masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_0");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length-1);
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
     }
 
-    public void test_jtt_BC_iload_0_1() throws Exception {
+    public void IGNORE_jtt_BC_iload_0_1() throws Exception {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 1));
         pairs.add(new Args(-1, 0));
@@ -1153,13 +1170,13 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
     }
 
-    public void test_jtt_BC_iload_0_2() throws Exception {
+    public void IGNORE_jtt_BC_iload_0_2() throws Exception {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
         pairs.add(new Args(-1, -1));
@@ -1182,18 +1199,18 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
     }
 
-    public void test_jtt_BC_iload_1() throws Exception {
+    public void IGNORE_jtt_BC_iload_1() throws Exception {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 0));
-        //pairs.add(new Args(1, -1));
-        //pairs.add(new Args(1, 2));
-        //pairs.add(new Args(1, 1000345));
+        // pairs.add(new Args(1, -1));
+        // pairs.add(new Args(1, 2));
+        // pairs.add(new Args(1, 1000345));
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
@@ -1209,16 +1226,16 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.push(ConditionFlag.Always, 1); // local slot is argument r0
             masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
             masm.push(ConditionFlag.Always, 4); // local slot 1 is argument (r1)
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length-1);
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
     }
 
-    public void test_jtt_BC_iload_1_1() throws Exception {
+    public void IGNORE_jtt_BC_iload_1_1() throws Exception {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
         pairs.add(new Args(-1, -1));
@@ -1242,13 +1259,13 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
     }
 
-    public void test_jtt_BC_iload_2() throws Exception {
+    public void IGNORE_jtt_BC_iload_2() throws Exception {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 1, 0));
         pairs.add(new Args(1, 1, -1));
@@ -1275,13 +1292,13 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
     }
 
-    public void test_jtt_BC_iload_3() throws Exception {
+    public void IGNORE_jtt_BC_iload_3() throws Exception {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 1, 1, 0));
         pairs.add(new Args(1, 1, 1, -1));
@@ -1310,13 +1327,13 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
     }
 
-    public void test_jtt_BC_iconst() throws Exception {
+    public void IGNORE_jtt_BC_iconst() throws Exception {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
         pairs.add(new Args(2, 2));
@@ -1341,13 +1358,13 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
     }
 
-    public void test_jtt_BC_ifeq() throws Exception {
+    public void IGNORE_jtt_BC_ifeq() throws Exception {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 2));
         pairs.add(new Args(1, -2));
@@ -1370,7 +1387,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1396,7 +1413,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1424,7 +1441,32 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
+            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            theCompiler.cleanup();
+        }
+    }
+
+    public void test_jtt_BC_invokestatic() throws Exception {
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(0, 0));
+        for (Args pair : pairs) {
+            MaxineByteCode xx = new MaxineByteCode();
+            int answer = jtt.bytecode.BC_invokestatic.test(pair.first);
+            expectedValues[0] = answer;
+            String klassName = "jtt.bytecode.BC_invokestatic";
+            List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+            for (TargetMethod m : methods) {
+                System.out.println(m.code().length);
+            }
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.mov32BitConstant(ARMV7.r0, pair.first);
+            masm.mov32BitConstant(ARMV7.r1, -99);
+            masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+            masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+            masm.pop(ConditionFlag.Always, 1);
+            int assemblerStatements = masm.codeBuffer.position() / 4;
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
