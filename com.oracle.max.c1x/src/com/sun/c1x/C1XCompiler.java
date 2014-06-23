@@ -34,6 +34,7 @@ import com.sun.c1x.target.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
+import com.sun.max.vm.compiler.*;
 
 /**
  * This class implements the compiler interface for C1X.
@@ -139,12 +140,14 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
             }
         }
 
-        for (CompilerStub.Id id : CompilerStub.Id.values()) {
-            TTY.Filter suppressor = new TTY.Filter(C1XOptions.PrintFilter, id);
-            try {
-                stubs.put(id, backend.emit(id));
-            } finally {
-                suppressor.remove();
+        if (!CompilationBroker.OFFLINE) {
+            for (CompilerStub.Id id : CompilerStub.Id.values()) {
+                TTY.Filter suppressor = new TTY.Filter(C1XOptions.PrintFilter, id);
+                try {
+                    stubs.put(id, backend.emit(id));
+                } finally {
+                    suppressor.remove();
+                }
             }
         }
 

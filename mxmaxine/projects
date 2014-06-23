@@ -53,7 +53,7 @@ project@com.oracle.max.tele.vm@checkstyle=com.oracle.max.base
 project@com.oracle.max.tele.vm@javaCompliance=1.7
 
 project@com.oracle.max.c1x@sourceDirs=src
-project@com.oracle.max.c1x@dependencies=com.oracle.max.asm
+project@com.oracle.max.c1x@dependencies=com.oracle.max.asm,com.oracle.max.vm
 project@com.oracle.max.c1x@checkstyle=com.oracle.max.base
 project@com.oracle.max.c1x@javaCompliance=1.7
 
