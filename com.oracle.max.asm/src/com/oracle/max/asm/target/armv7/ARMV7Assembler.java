@@ -678,7 +678,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void leave() {
-        assert false;
+
     }
 
     public final void movslq(CiAddress dst, int imm32) {
