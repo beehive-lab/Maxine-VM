@@ -66,4 +66,8 @@ public abstract class AbstractAssembler {
     protected final void emitLong(long x) {
         codeBuffer.emitLong(x);
     }
+    public final void offlineEmitByte(byte x) {
+        // APN hack for method test ...
+        codeBuffer.emitByte(x);
+    }
 }

@@ -1460,11 +1460,25 @@ public class ARMV7JTTTest extends MaxTestCase {
             for (TargetMethod m : methods) {
                 System.out.println(m.code().length);
             }
+            initialised = true; // VM issues ...
+            initTests(); // APN dirty hack ...
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
+            masm.mov32BitConstant(ARMV7.r1, pair.first);
             masm.push(ConditionFlag.Always, 1); // local slot is argument r0
             masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+            for (TargetMethod m : methods) { // CRUDE ATTEMPT TO COPY MACHINE CODE BUFFERS!
+                /*
+                GOT TO GO HOME TO GYM THIS IS WHERE I AM UPTO. ....
+                NOT SURE WHY IT ALL SEEMS BROKEN ... 
+                 */
+                byte []b = m.code();
+                System.out.println("METHOD ");
+                for(int i = 0; i < b.length;i++) {
+                    System.out.println(b[i]);
+                    //masm.offlineEmitByte((byte)b[i]);
+                }
+            }
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
             int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
