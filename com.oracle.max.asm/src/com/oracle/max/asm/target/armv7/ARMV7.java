@@ -17,11 +17,15 @@
  */
 package com.oracle.max.asm.target.armv7;
 
-import static com.oracle.max.cri.intrinsics.MemoryBarriers.*;
-import static com.sun.cri.ci.CiRegister.RegisterFlag.*;
-
-import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiArchitecture;
+import com.sun.cri.ci.CiKind;
+import com.sun.cri.ci.CiRegister;
 import com.sun.cri.ci.CiRegister.RegisterFlag;
+import com.sun.cri.ci.CiRegisterValue;
+
+import static com.oracle.max.cri.intrinsics.MemoryBarriers.LOAD_STORE;
+import static com.oracle.max.cri.intrinsics.MemoryBarriers.STORE_STORE;
+import static com.sun.cri.ci.CiRegister.RegisterFlag.CPU;
 
 /**
  * Represents the ARMv7 architecture.
@@ -117,8 +121,9 @@ public class ARMV7 extends CiArchitecture {
     public ARMV7() {
         super("ARMV7", 4, ByteOrder.BigEndian, allRegisters, LOAD_STORE | STORE_STORE, 1, s31.number + 1, 4);
     }
+    public static final CiRegisterValue RSP = r13.asValue(CiKind.Int);
 
-    public static final CiRegister RSP = r13;
+    //public static final CiRegister RSP = r13;
     public static final CiRegister LR = r14;
     public static final CiRegister PC = r15;
     public static final CiRegister rip = new CiRegister(64, -1, 0, "rip");

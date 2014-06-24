@@ -22,19 +22,25 @@
  */
 package com.sun.c1x;
 
-import java.util.*;
-
-import com.oracle.max.cri.intrinsics.*;
-import com.oracle.max.criutils.*;
-import com.sun.c1x.debug.*;
-import com.sun.c1x.intrinsics.*;
-import com.sun.c1x.observer.*;
-import com.sun.c1x.stub.*;
-import com.sun.c1x.target.*;
+import com.oracle.max.cri.intrinsics.IntrinsicImpl;
+import com.oracle.max.criutils.TTY;
+import com.sun.c1x.debug.CFGPrinterObserver;
+import com.sun.c1x.intrinsics.C1XIntrinsicImplementations;
+import com.sun.c1x.observer.CompilationObserver;
+import com.sun.c1x.observer.ObservableCompiler;
+import com.sun.c1x.stub.CompilerStub;
+import com.sun.c1x.target.Backend;
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
-import com.sun.cri.xir.*;
-import com.sun.max.vm.compiler.*;
+import com.sun.cri.ri.RiRegisterConfig;
+import com.sun.cri.ri.RiResolvedMethod;
+import com.sun.cri.ri.RiRuntime;
+import com.sun.cri.xir.RiXirGenerator;
+import com.sun.cri.xir.XirTemplate;
+import com.sun.max.vm.compiler.CompilationBroker;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class implements the compiler interface for C1X.
@@ -139,6 +145,7 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
                 }
             }
         }
+
 
         if (!CompilationBroker.OFFLINE) {
             for (CompilerStub.Id id : CompilerStub.Id.values()) {

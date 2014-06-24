@@ -852,9 +852,14 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void ret(int imm16) {
-        addq(ARMV7.r13, imm16);
-        movw(ConditionFlag.Always, ARMV7.r0, imm16);
-        ret();
+
+        if(imm16 == 0) {
+            ret();
+        } else {
+            System.out.println("Need to ascertain purpose of ARMV7Assembler::ret(imm16)");
+            ret();
+        }
+
     }
 
     public void enter(short imm16, byte imm8) {
@@ -1020,7 +1025,25 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
         emitInt(instruction);
     }
+    public final void vneg(ConditionFlag cond, CiRegister dest, CiRegister src) {
+        int instruction = (cond.value() & 0xf) << 28;
+        int sz = 0;
+        if(src.number >= 32) {
+            checkConstraint(src.number >= 32 && dest.number >= 32, "vldr dest must both be a FP reg");
+        } else {
+            sz = 1;
+            checkConstraint(src.number >= 16 && src.number <= 31 && dest.number >= 16 && dest.number <=31 , "vldr dest must be a DP reg");
+        }
 
+        instruction |= 0x0eb10a40;
+
+        instruction |= (src.encoding & 0xf) ;
+        instruction |= (src.encoding >> 4) << 5;
+        instruction |= (dest.encoding & 0xf) << 12;
+        instruction |= (dest.encoding >> 4) << 22;
+        instruction |= sz << 8;
+        emitInt(instruction);
+    }
     public final void vldr(ConditionFlag cond, CiRegister dest, CiRegister src, int imm8) {
         int instruction = (cond.value() & 0xf) << 28;
         checkConstraint(dest.number <= 63 && dest.number >= 16, "vldr dest must be a FP/DP reg");

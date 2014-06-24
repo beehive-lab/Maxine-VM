@@ -22,31 +22,39 @@
  */
 package com.sun.c1x.target.armv7;
 
-import static com.sun.cri.ci.CiCallingConvention.Type.*;
-import static com.sun.cri.ci.CiValue.*;
-
-import java.util.*;
-
-import com.oracle.max.asm.*;
-import com.oracle.max.asm.target.armv7.*;
+import com.oracle.max.asm.Buffer;
+import com.oracle.max.asm.Label;
+import com.oracle.max.asm.NumUtil;
+import com.oracle.max.asm.target.armv7.ARMV7;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
-import com.oracle.max.criutils.*;
-import com.sun.c1x.*;
-import com.sun.c1x.asm.*;
+import com.oracle.max.asm.target.armv7.ARMV7MacroAssembler;
+import com.oracle.max.criutils.TTY;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.asm.TargetMethodAssembler;
 import com.sun.c1x.gen.LIRGenerator.DeoptimizationStub;
-import com.sun.c1x.ir.*;
+import com.sun.c1x.ir.BlockBegin;
+import com.sun.c1x.ir.Condition;
+import com.sun.c1x.ir.Infopoint;
 import com.sun.c1x.lir.FrameMap.StackBlock;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.stub.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.stub.CompilerStub;
+import com.sun.c1x.util.Util;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.JumpTable;
 import com.sun.cri.ci.CiTargetMethod.Mark;
-import com.sun.cri.xir.*;
+import com.sun.cri.xir.CiXirAssembler;
 import com.sun.cri.xir.CiXirAssembler.RuntimeCallInformation;
 import com.sun.cri.xir.CiXirAssembler.XirInstruction;
 import com.sun.cri.xir.CiXirAssembler.XirLabel;
 import com.sun.cri.xir.CiXirAssembler.XirMark;
+import com.sun.cri.xir.XirSnippet;
+import com.sun.cri.xir.XirTemplate;
+
+import java.util.Map;
+
+import static com.sun.cri.ci.CiCallingConvention.Type.RuntimeCall;
+import static com.sun.cri.ci.CiValue.IllegalValue;
 
 /**
  * This class implements the x86-specific code generation for LIR.
@@ -144,6 +152,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
     private void moveRegs(CiRegister fromReg, CiRegister toReg) {
         if (fromReg != toReg) {
+            masm.mov(ConditionFlag.Always,false,toReg,fromReg);
            // masm.mov(toReg, fromReg);
         }
     }
@@ -2038,10 +2047,13 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 }
                 case PushFrame: {
                     int frameSize = initialFrameSizeInBytes();
-                   // masm.decrementq(ARMV7.rsp, frameSize); // does not emit code for frameSize == 0
+                    masm.decrementq(ARMV7.r13, frameSize); // does not emit code for frameSize == 0
                     if (C1XOptions.ZapStackOnMethodEntry) {
                         final int intSize = 4;
                         for (int i = 0; i < frameSize / intSize; ++i) {
+                            masm.setUpScratch(new CiAddress(CiKind.Int, ARMV7.r13.asValue(), i * intSize));
+                            masm.mov32BitConstant(ARMV7.r8,0xC1C1C1C1);
+                            masm.str(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, ARMV7.r0, 0, 0);
                        //     masm.movl(new CiAddress(CiKind.Int, ARMV7.rsp.asValue(), i * intSize), 0xC1C1C1C1);
                         }
                     }
@@ -2063,21 +2075,32 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         int frameToCSA = frameMap.offsetToCalleeSaveAreaStart();
                         masm.restore(csl, frameToCSA);
                     }
-
+                    masm.incrementq(ARMV7.r13,frameSize);
                   //  masm.incrementq(ARMV7.rsp, frameSize);
                     break;
                 }
                 case Push: {
                     CiRegisterValue value = assureInRegister(operands[inst.x().index]);
-                 ///   masm.push(value.asRegister());
+                    if (value.asRegister().number < 16) {
+                        masm.push(ConditionFlag.Always, 1 << value.asRegister().number);
+                    } else {
+                        masm.vpush(ConditionFlag.Always,value.asRegister(),value.asRegister());
+                    }
+                 /// masm.push(value.asRegister());
                     break;
                 }
                 case Pop: {
                     CiValue result = operands[inst.result.index];
                     if (result.isRegister()) {
                      //   masm.pop(result.asRegister());
+                        if(result.asRegister().encoding < 16) {
+                            masm.pop(ConditionFlag.Always,1<< result.asRegister().encoding);
+                        } else {
+                            masm.vpop(ConditionFlag.Always,result.asRegister(),result.asRegister());
+                        }
                     } else {
                       //  masm.pop(rscratch1);
+                        masm.pop(ConditionFlag.Always,1<<12);
                         moveOp(rscratch1.asValue(), result, result.kind, null, true);
                     }
                     break;
@@ -2126,6 +2149,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
      *            a slot "up" the stack above RSP).
      */
     private void bangStackWithOffset(int offset) {
+        masm.setUpScratch(new CiAddress(target.wordKind, ARMV7.RSP, -offset));
+        masm.str(ConditionFlag.Always, 0, 0, 0, ARMV7.r14, ARMV7.r12, ARMV7.r0, 0, 0);
+        // assuming rax is the return address register ARMV7.r14
       //  masm.movq(new CiAddress(target.wordKind, ARMV7.RSP, -offset), ARMV7.rax);
     }
 

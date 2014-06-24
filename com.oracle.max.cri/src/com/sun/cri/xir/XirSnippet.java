@@ -22,11 +22,13 @@
  */
 package com.sun.cri.xir;
 
-import java.util.*;
-
-import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiKind;
 import com.sun.cri.ci.CiTargetMethod.Mark;
-import com.sun.cri.xir.CiXirAssembler.*;
+import com.sun.cri.xir.CiXirAssembler.XirMark;
+import com.sun.cri.xir.CiXirAssembler.XirParameter;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Represents a {@link XirTemplate template of XIR} along with the {@link XirArgument arguments} to be passed to the

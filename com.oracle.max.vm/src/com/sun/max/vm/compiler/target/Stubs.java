@@ -22,39 +22,62 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import static com.sun.cri.ci.CiCallingConvention.Type.*;
-import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.VMOptions.*;
-import static com.sun.max.vm.compiler.CallEntryPoint.*;
-import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
-import static com.sun.max.vm.compiler.target.Stub.Type.*;
-import static com.sun.max.vm.thread.VmThreadLocal.*;
-
-import java.util.*;
-
-import com.oracle.max.asm.target.amd64.*;
-import com.oracle.max.asm.target.armv7.*;
+import com.oracle.max.asm.target.amd64.AMD64;
+import com.oracle.max.asm.target.amd64.AMD64MacroAssembler;
+import com.oracle.max.asm.target.armv7.ARMV7;
+import com.oracle.max.asm.target.armv7.ARMV7Assembler;
+import com.oracle.max.asm.target.armv7.ARMV7MacroAssembler;
 import com.sun.cri.ci.*;
-import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.deopt.*;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.annotate.NEVER_INLINE;
+import com.sun.max.annotate.PLATFORM;
+import com.sun.max.lang.ISA;
+import com.sun.max.lang.WordWidth;
+import com.sun.max.unsafe.Address;
+import com.sun.max.unsafe.CodePointer;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.Log;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.actor.holder.DynamicHub;
+import com.sun.max.vm.actor.holder.Hub;
+import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.actor.member.VirtualMethodActor;
+import com.sun.max.vm.code.Code;
+import com.sun.max.vm.code.CodeManager;
+import com.sun.max.vm.compiler.CallEntryPoint;
+import com.sun.max.vm.compiler.WordUtil;
+import com.sun.max.vm.compiler.deopt.Deoptimization;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Info;
 import com.sun.max.vm.compiler.target.Stub.Type;
-import com.sun.max.vm.compiler.target.amd64.*;
-import com.sun.max.vm.compiler.target.arm.*;
-import com.sun.max.vm.intrinsics.*;
-import com.sun.max.vm.object.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.runtime.amd64.*;
-import com.sun.max.vm.runtime.arm.*;
-import com.sun.max.vm.thread.*;
+import com.sun.max.vm.compiler.target.amd64.AMD64TargetMethodUtil;
+import com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil;
+import com.sun.max.vm.intrinsics.Infopoints;
+import com.sun.max.vm.object.ObjectAccess;
+import com.sun.max.vm.runtime.CriticalMethod;
+import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.runtime.Trap;
+import com.sun.max.vm.runtime.amd64.AMD64SafepointPoll;
+import com.sun.max.vm.runtime.amd64.AMD64TrapFrameAccess;
+import com.sun.max.vm.runtime.arm.ARMSafepointPoll;
+import com.sun.max.vm.runtime.arm.ARMTrapFrameAccess;
+import com.sun.max.vm.thread.VmThread;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import static com.sun.cri.ci.CiCallingConvention.Type.JavaCall;
+import static com.sun.cri.ci.CiCallingConvention.Type.JavaCallee;
+import static com.sun.max.platform.Platform.platform;
+import static com.sun.max.platform.Platform.target;
+import static com.sun.max.vm.MaxineVM.isHosted;
+import static com.sun.max.vm.MaxineVM.vm;
+import static com.sun.max.vm.VMOptions.verboseOption;
+import static com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT;
+import static com.sun.max.vm.compiler.CallEntryPoint.VTABLE_ENTRY_POINT;
+import static com.sun.max.vm.compiler.deopt.Deoptimization.DEOPT_RETURN_ADDRESS_OFFSET;
+import static com.sun.max.vm.compiler.target.Stub.Type.*;
+import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 /**
  * Stubs are pieces of hand crafted assembly code for expressing semantics that cannot otherwise be expressed as Java.
@@ -1305,7 +1328,7 @@ public class Stubs {
                     case Object:
                         assert args[4].isRegister() == false;
 
-                        arg4 =   new CiAddress(kind, ARMV7.RSP.asValue(CiKind.Int), ((CiStackSlot) args[4]).index() * 4);
+                        arg4 =   new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
                         asm.ldr(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
                         asm.mov(ARMV7Assembler.ConditionFlag.Always, false, returnRegister, ARMV7.r12);
@@ -1316,7 +1339,7 @@ public class Stubs {
                                // broken needs TWO registers TODO
                         assert args[4].isRegister() == false;
 
-                        arg4 =   new CiAddress(kind, ARMV7.RSP.asValue(CiKind.Int), ((CiStackSlot) args[4]).index() * 4);
+                        arg4 =   new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
                         asm.ldr(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
                         asm.mov(ARMV7Assembler.ConditionFlag.Always, false, returnRegister, ARMV7.r12);
@@ -1366,7 +1389,7 @@ public class Stubs {
             // Copy original return address into arg 0 (i.e. 'ip')
             CiRegister arg0 = args[0].asRegister();
             //asm.movq(arg0, new CiAddress(WordUtil.archKind(), ARMV7.RSP, DEOPT_RETURN_ADDRESS_OFFSET));
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP.asValue(CiKind.Int), DEOPT_RETURN_ADDRESS_OFFSET));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, DEOPT_RETURN_ADDRESS_OFFSET));
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg0, ARMV7.r12);
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
@@ -1383,7 +1406,7 @@ public class Stubs {
 
             // Put original return address into high slot
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.r13, 4), arg0);
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP.asValue(CiKind.Int), 4));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, 4));
             asm.str(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r13, ARMV7.r13, 0, 0); // might be the wrong way round
             // Allocate 2 extra stack slots ? one in ARM?
             asm.subq(ARMV7.r13, 4);
@@ -1396,7 +1419,7 @@ public class Stubs {
             asm.movt(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, 0xffff);
             // APN ok not sure if we have spare registers
             // if we return? who does the restore?
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP.asValue(CiKind.Int)));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP));
 
 
             asm.str(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r8, ARMV7.r8, 0, 0);
@@ -1588,7 +1611,7 @@ public class Stubs {
                     case Object:
                         assert args[4].isRegister() == false;
 
-                        arg4 =   new CiAddress(kind, ARMV7.RSP.asValue(CiKind.Int), ((CiStackSlot) args[4]).index() * 4);
+                        arg4 =   new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
                         asm.ldr(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
                         asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, ARMV7.r12);
@@ -1598,7 +1621,7 @@ public class Stubs {
                         assert args[4].isRegister() == false;
 
                         // broken needs TWO registers TODO
-                        arg4 =   new CiAddress(kind, ARMV7.RSP.asValue(CiKind.Int), ((CiStackSlot) args[4]).index() * 4);
+                        arg4 =   new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
                         asm.ldr(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
                         asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, ARMV7.r12);
@@ -1670,12 +1693,12 @@ public class Stubs {
             // Copy original return address into arg 0 (i.e. 'ip')
             CiRegister arg0 = args[0].asRegister();
             //asm.movq(arg0, new CiAddress(WordUtil.archKind(), ARMV7.RSP, cfo + DEOPT_RETURN_ADDRESS_OFFSET));
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP.asValue(CiKind.Int), cfo + DEOPT_RETURN_ADDRESS_OFFSET));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, cfo + DEOPT_RETURN_ADDRESS_OFFSET));
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg0, ARMV7.r12);
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
             //asm.leaq(arg1, new CiAddress(WordUtil.archKind(), ARMV7.RSP, cfo));
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP.asValue(CiKind.Int), cfo));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, cfo));
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg1, ARMV7.r12);
 
             // Copy original frame pointer into arg 2 (i.e. 'sp')
@@ -1691,7 +1714,7 @@ public class Stubs {
             // Patch return address of deopt stub frame to look
             // like it was called by frame being deopt'ed.
 
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP.asValue(CiKind.Int), frameSize));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize));
             asm.str(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, arg0, ARMV7.r12, ARMV7.r12, 0, 0);
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize), arg0);
 

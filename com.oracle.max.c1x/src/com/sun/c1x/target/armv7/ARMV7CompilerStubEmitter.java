@@ -22,25 +22,25 @@
  */
 package com.sun.c1x.target.armv7;
 
-import static com.sun.cri.ci.CiCallingConvention.Type.*;
-
-import java.util.*;
-
-import com.oracle.max.asm.*;
-import com.oracle.max.asm.target.armv7.*;
-import com.sun.c1x.*;
-import com.sun.c1x.asm.*;
-import com.sun.c1x.stub.*;
+import com.oracle.max.asm.Label;
+import com.oracle.max.asm.target.armv7.ARMV7;
+import com.oracle.max.asm.target.armv7.ARMV7Assembler;
+import com.oracle.max.asm.target.armv7.ARMV7MacroAssembler;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.asm.TargetMethodAssembler;
+import com.sun.c1x.stub.CompilerStub;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiRegister.RegisterFlag;
-import com.sun.cri.ri.*;
-import com.sun.cri.xir.CiXirAssembler.XirConstant;
-import com.sun.cri.xir.CiXirAssembler.XirConstantOperand;
-import com.sun.cri.xir.CiXirAssembler.XirOperand;
-import com.sun.cri.xir.CiXirAssembler.XirParameter;
-import com.sun.cri.xir.CiXirAssembler.XirRegister;
-import com.sun.cri.xir.CiXirAssembler.XirTemp;
-import com.sun.cri.xir.*;
+import com.sun.cri.ri.RiRegisterConfig;
+import com.sun.cri.xir.CiXirAssembler.*;
+import com.sun.cri.xir.XirTemplate;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import static com.sun.cri.ci.CiCallingConvention.Type.JavaCallee;
+import static com.sun.cri.ci.CiCallingConvention.Type.RuntimeCall;
 
 /**
  * An object used to produce a single compiler stub.
@@ -50,10 +50,15 @@ public class ARMV7CompilerStubEmitter {
     //APN BROKEN!!!!
     private static final long FloatSignFlip = 0x8000000080000000L;
     private static final long DoubleSignFlip = 0x8000000000000000L;
-    private static final CiRegister convertArgument = ARMV7.r0;
-    private static final CiRegister convertResult = ARMV7.r0;
-    private static final CiRegister negateArgument = ARMV7.r0;
-    private static final CiRegister negateTemp = ARMV7.r0;
+    private static final CiRegister convertArgument = ARMV7.d0;
+    private static final CiRegister convertResult = ARMV7.d0; // APCS return first arg in d0
+                                                              // are we allowed to destructively update d0?
+    /*
+    The problem we have here is what to do for single precision? Do we use s0 instead?
+
+     */
+    private static final CiRegister negateArgument = ARMV7.d0;
+    private static final CiRegister negateTemp = ARMV7.d1;
 
     /**
      * The slots in which the stub finds its incoming arguments.
@@ -238,23 +243,46 @@ public class ARMV7CompilerStubEmitter {
 
     private void negatePrologue() {
         prologue(new CiCalleeSaveLayout(0, -1, comp.target.wordSize, negateArgument, negateTemp));
+        CiAddress tmp = comp.frameMap().toStackAddress(inArgs[0]);
+        CiAddress fixed = new CiAddress(tmp.kind,ARMV7.r11.asValue(),tmp.index,tmp.scale,tmp.displacement);
+        asm.setUpScratch(fixed);
+        asm.vldr(ARMV7Assembler.ConditionFlag.Always, negateArgument, ARMV7.r12, 0);
        //' asm.movq(negateArgument, comp.frameMap().toStackAddress(inArgs[0]));
     }
 
     private void negateEpilogue() {
        // asm.movq(comp.frameMap().toStackAddress(outResult), negateArgument);
+        CiAddress tmp  = comp.frameMap().toStackAddress(outResult);
+        CiAddress fixed = new CiAddress(tmp.kind,ARMV7.r11.asValue(),tmp.index,tmp.scale,tmp.displacement);
+        asm.setUpScratch(fixed);
+        asm.vstr(ARMV7Assembler.ConditionFlag.Always,negateArgument,ARMV7.r12,0);
         epilogue();
     }
 
     private void emitDNEG() {
+
+        /*
+        Removes the top double-precision float from the operand stack, negates it#
+         (i.e. inverts its sign), and pushes the negated result back onto the stack.
+
+        Note that, in IEEE double precision floating point arithmetic, negation is not
+         quite the same as subtracting from 0. IEEE has two zeros, +0.0 and -0.0, and
+         dneg applied to +0.0 is -0.0, whereas (+0.0 minus +0.0) is +0.0.
+         */
         negatePrologue();
-      //  asm.movsd(negateTemp, tasm.recordDataReferenceInCode(CiConstant.forLong(DoubleSignFlip)));
+        asm.setUpScratch(tasm.recordDataReferenceInCode(CiConstant.forLong(DoubleSignFlip)));
+        asm.vldr(ARMV7Assembler.ConditionFlag.Always, negateTemp, ARMV7.r12, 0);
+        asm.vneg(ARMV7Assembler.ConditionFlag.Always,negateArgument,negateTemp);
+        //asm.movsd(negateTemp, tasm.recordDataReferenceInCode(CiConstant.forLong(DoubleSignFlip)));
        // asm.xorpd(negateArgument, negateTemp);
         negateEpilogue();
     }
 
     private void emitFNEG() {
         negatePrologue();
+        asm.setUpScratch(tasm.recordDataReferenceInCode(CiConstant.forLong(FloatSignFlip)));
+        asm.vldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.s1,ARMV7.r12,0);
+        asm.vneg(ARMV7Assembler.ConditionFlag.Always,ARMV7.s0,ARMV7.s1);
        // asm.movsd(negateTemp, tasm.recordDataReferenceInCode(CiConstant.forLong(FloatSignFlip)));
        // asm.xorps(negateArgument, negateTemp);
         negateEpilogue();
@@ -342,7 +370,7 @@ public class ARMV7CompilerStubEmitter {
             asm.nop(entryCodeOffset);
         }
         final int frameSize = frameSize();
-       // asm.subq(ARMV7.rsp, frameSize);
+        asm.subq(ARMV7.r13, frameSize);
         tasm.setFrameSize(frameSize);
         comp.frameMap().setFrameSize(frameSize);
         asm.save(csl, csl.frameOffsetToCSA);
@@ -357,7 +385,7 @@ public class ARMV7CompilerStubEmitter {
         asm.restore(csl, frameToCSA);
 
         // Restore rsp
-        //asm.addq(ARMV7.rsp, frameSize());
+        asm.addq(ARMV7.r13, frameSize());
         asm.ret(0);
     }
 
@@ -369,7 +397,9 @@ public class ARMV7CompilerStubEmitter {
         // Load arguments
         CiCallingConvention cc = comp.registerConfig.getCallingConvention(RuntimeCall, call.arguments, comp.target, false);
         for (int i = 0; i < cc.locations.length; ++i) {
-            //CiValue location = cc.locations[i];
+            CiValue location = cc.locations[i];
+            asm.setUpScratch(comp.frameMap().toStackAddress(inArgs[i]));
+            asm.ldr(ARMV7Assembler.ConditionFlag.Always,location.asRegister(),ARMV7.r12,0);
             //asm.movq(location.asRegister(), comp.frameMap().toStackAddress(inArgs[i]));
         }
 
@@ -386,7 +416,9 @@ public class ARMV7CompilerStubEmitter {
         tasm.recordDirectCall(before, after - before, comp.runtime.asCallTarget(call), null);
 
         if (call.resultKind != CiKind.Void) {
-            //CiRegister returnRegister = comp.registerConfig.getReturnRegister(call.resultKind);
+            CiRegister returnRegister = comp.registerConfig.getReturnRegister(call.resultKind);
+            asm.setUpScratch(comp.frameMap().toStackAddress(outResult));
+            asm.str(ARMV7Assembler.ConditionFlag.Always,returnRegister,ARMV7.r12,0); //TODO check is the store the correct way round
            // asm.movq(comp.frameMap().toStackAddress(outResult), returnRegister);
         }
     }

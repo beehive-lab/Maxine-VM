@@ -512,7 +512,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 // Deduct 'frameSize' to handle frames larger than (VmThread.STACK_SHADOW_PAGES * pageSize)
                 offset = offset - frameSize;
                 // RSP is r13!
-                asm.setUpScratch(new CiAddress(WordUtil.archKind(), RSP.asValue(CiKind.Int), -offset));
+                asm.setUpScratch(new CiAddress(WordUtil.archKind(), RSP, -offset));
                 asm.strImmediate(ConditionFlag.Always, 0, 0, 0, LR, asm.scratchRegister, 0);
                 // APN guessing rax is return address.
                 // asm.movq(new CiAddress(WordUtil.archKind(), RSP, -offset), rax);
@@ -571,7 +571,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         }
 
         // Pop index from stack into scratch
-        asm.setUpScratch(new CiAddress(CiKind.Int, RSP.asValue(CiKind.Int)));
+        asm.setUpScratch(new CiAddress(CiKind.Int, RSP));
         asm.ldr(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, asm.scratchRegister, asm.scratchRegister, 0, 0);
         asm.addq(r13, JVMSFrameLayout.JVMS_SLOT_SIZE);
         asm.push(ConditionFlag.Always, 1 << 10 | 1 << 9);
@@ -651,7 +651,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 asm.jmp(0, true);
             }
         } else {
-            asm.setUpScratch(new CiAddress(CiKind.Int, RSP.asValue(CiKind.Int)));
+            asm.setUpScratch(new CiAddress(CiKind.Int, RSP));
             asm.ldr(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, asm.scratchRegister, asm.scratchRegister, 0, 0);
             asm.addq(ARMV7.r13, JVMSFrameLayout.JVMS_SLOT_SIZE);
             asm.push(ConditionFlag.Always, 1 << 7 | 1 << 9 | 1 << 10);
