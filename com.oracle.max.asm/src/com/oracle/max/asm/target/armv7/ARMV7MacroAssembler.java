@@ -22,11 +22,12 @@
  */
 package com.oracle.max.asm.target.armv7;
 
-import static com.oracle.max.asm.target.armv7.ARMV7.*;
-
-import com.oracle.max.asm.*;
+import com.oracle.max.asm.AsmOptions;
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
+import com.sun.cri.ri.RiRegisterConfig;
+
+import static com.oracle.max.asm.target.armv7.ARMV7.r1;
+import static com.oracle.max.asm.target.armv7.ARMV7.r12;
 
 /**
  * This class implements commonly used ARM!!!!! code patterns.
@@ -456,8 +457,12 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         int registerList = 0;
         for (CiRegister r : csl.registers) {
             //int offset = csl.offsetOf(r);
-            registerList = 1 << (r.encoding & 0xf); // only storing one register at a time.
-            push(ConditionFlag.Always, registerList); // r13 is the stack po
+            if(r.number < 16) {
+                registerList = 1 << (r.encoding & 0xf); // only storing one register at a time.
+                push(ConditionFlag.Always, registerList); // r13 is the stack po
+            }else {
+                vpush(ConditionFlag.Always,r,r);
+            }
             /*if (first) {
                 //if(offset != 0) System.err.println("off set is " + offset);
                // assert(offset == 0);
@@ -481,12 +486,17 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         int registerList = 0;
         for (CiRegister r : csl.registers) {
             //int offset = csl.offsetOf(r);
-            registerList = 1 << (r.encoding & 0xf);
-            //movq(r, new CiAddress(target.wordKind, frame, frameToCSA + offset));
-            // APN TODO check that it is ok to use the stack pointer here  for ARM
-            // TODO this means seeing if the frameRegister might somehow be used by Stubs
-            // or Adapters in an unusual or unexpected way.
-            pop(ConditionFlag.Always, registerList);
+            if(r.number < 16) {
+                registerList = 1 << (r.encoding & 0xf);
+                //movq(r, new CiAddress(target.wordKind, frame, frameToCSA + offset));
+                // APN TODO check that it is ok to use the stack pointer here  for ARM
+                // TODO this means seeing if the frameRegister might somehow be used by Stubs
+                // or Adapters in an unusual or unexpected way.
+                pop(ConditionFlag.Always, registerList);
+            }else {
+                vpop(ConditionFlag.Always,r,r);
+            }
+
 
         }
     }

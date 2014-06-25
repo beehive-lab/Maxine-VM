@@ -2150,7 +2150,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
      */
     private void bangStackWithOffset(int offset) {
         masm.setUpScratch(new CiAddress(target.wordKind, ARMV7.RSP, -offset));
-        masm.str(ConditionFlag.Always, 0, 0, 0, ARMV7.r14, ARMV7.r12, ARMV7.r0, 0, 0);
+        masm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r14, ARMV7.r12, 0);
         // assuming rax is the return address register ARMV7.r14
       //  masm.movq(new CiAddress(target.wordKind, ARMV7.RSP, -offset), ARMV7.rax);
     }
