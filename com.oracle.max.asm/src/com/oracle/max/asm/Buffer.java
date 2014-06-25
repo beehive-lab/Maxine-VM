@@ -131,6 +131,11 @@ public abstract class Buffer {
 
     public abstract int getInt(int pos);
 
+    public void offlineCopyBuffer(byte []b) {
+        ensureSize(position + b.length);
+        for(int i = 0; i < b.length;i++)
+            data[position++] = b[i];
+    }
     public static final class BigEndian extends Buffer {
         @Override
         public int emitShort(int b, int pos) {
@@ -232,4 +237,6 @@ public abstract class Buffer {
                 (data[pos + 0] & 0xff) << 0;
         }
     }
+
+
 }

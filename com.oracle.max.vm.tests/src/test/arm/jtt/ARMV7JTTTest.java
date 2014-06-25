@@ -1474,10 +1474,9 @@ public class ARMV7JTTTest extends MaxTestCase {
                  */
                 byte []b = m.code();
                 System.out.println("METHOD ");
-                for(int i = 0; (i+3) < b.length;i+=4){
-                    System.out.println(b[i]);
-                    masm.offlineEmitInt((b[i]<< 24) | (b [i+1] << 16) | (b[i+2] << 8)| b[i+3]);
-                }
+
+                masm.offlineAddToBuffer(b);
+
             }
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
