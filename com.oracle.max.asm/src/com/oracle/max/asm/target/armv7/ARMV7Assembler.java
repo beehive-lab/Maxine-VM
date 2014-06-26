@@ -369,6 +369,20 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
+    public void ldrsb(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
+        int instruction = 0x005000d0;
+        P = P & 1;
+        U = U & 1;
+        W = W & 1;
+        instruction |= (P << 24) | (U << 23) | (W << 21);
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (Rn.encoding & 0xf) << 16;
+        instruction |= (Rt.encoding & 0xf) << 12;
+        instruction |= 0xf & imm8;
+        instruction |= (imm8 >> 4) << 8;
+        emitInt(instruction);
+    }
+
     public void ldrb(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm12) {
         int instruction = 0x04500000;
         P = P & 1;
@@ -412,7 +426,12 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     // TODO: Finalize this
     public void movss(final ConditionFlag cond, int P, int U, int W, final CiRegister Rn, final CiRegister Rt, final CiRegister Rm, int imm2Type, int imm5) { // move
-        ldr(cond, P, U, W, Rn, Rt, Rm, imm2Type, imm5);
+        if(Rn.number < 16) {
+            ldr(cond, P, U, W, Rn, Rt, Rm, imm2Type, imm5);
+
+        } else {
+            vldr(ConditionFlag.Always,Rn,Rt,0);
+        }
     }
 
     // TODO: Finalize this

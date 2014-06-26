@@ -22,32 +22,39 @@
  */
 package com.sun.max.vm.compiler.target.arm;
 
-import static com.sun.cri.ci.CiCallingConvention.Type.*;
-import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.compiler.CallEntryPoint.*;
-import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
-import static com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.*;
-
-import java.io.*;
-
-import com.oracle.max.asm.*;
-import com.oracle.max.asm.target.armv7.*;
-import com.oracle.max.cri.intrinsics.*;
+import com.oracle.max.asm.Label;
+import com.oracle.max.asm.target.armv7.ARMV7;
+import com.oracle.max.asm.target.armv7.ARMV7Assembler;
+import com.oracle.max.cri.intrinsics.UnsignedMath;
 import com.sun.cri.ci.*;
-import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
-import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.collect.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.lang.Bytes;
+import com.sun.max.lang.WordWidth;
+import com.sun.max.program.ProgramError;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.collect.ByteArrayBitMap;
+import com.sun.max.vm.compiler.CallEntryPoint;
+import com.sun.max.vm.compiler.WordUtil;
+import com.sun.max.vm.compiler.target.Adapter;
 import com.sun.max.vm.compiler.target.Adapter.Type;
-import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.compiler.target.AdapterGenerator;
+import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.runtime.SafepointPoll;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.type.*;
+import com.sun.max.vm.type.Kind;
+
+import java.io.OutputStream;
+
+import static com.sun.cri.ci.CiCallingConvention.Type.JavaCall;
+import static com.sun.max.platform.Platform.target;
+import static com.sun.max.vm.MaxineVM.vm;
+import static com.sun.max.vm.compiler.CallEntryPoint.BASELINE_ENTRY_POINT;
+import static com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT;
+import static com.sun.max.vm.compiler.deopt.Deoptimization.DEOPT_RETURN_ADDRESS_OFFSET;
+import static com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE;
 
 /**
  * Adapter generators for ARMV7.
@@ -491,23 +498,27 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
         protected void adapt(ARMV7Assembler asm, Kind kind, CiRegister reg, int offset32) {
             switch (kind.asEnum) {
                 case BYTE:      //asm.movsxb(reg, new CiAddress(CiKind.Byte, rsp.asValue(), offset32));
+                    // sign extend
                     asm.setUpScratch(new CiAddress(CiKind.Byte, ARMV7.r13.asValue(), offset32));
-                    asm.ldrb(ARMV7Assembler.ConditionFlag.Always,1,1,0,reg,ARMV7.r12,0);
+                    asm.ldrsb(ARMV7Assembler.ConditionFlag.Always,1,1,0,reg,ARMV7.r12,0);
 
                 break;
 
                 case BOOLEAN:   //asm.movzxb(reg, new CiAddress(CiKind.Boolean, rsp.asValue(), offset32));
+                    // zero extend
                     asm.setUpScratch(new CiAddress(CiKind.Boolean, ARMV7.r13.asValue(), offset32));
                     asm.ldrb(ARMV7Assembler.ConditionFlag.Always,1,1,0, reg, ARMV7.r12, 0);
                 break;
 
                 case SHORT:
+                    // sign extend
                     //asm.movsxw(reg, new CiAddress(CiKind.Short, rsp.asValue(), offset32));
                     asm.setUpScratch( new CiAddress(CiKind.Short, ARMV7.r13.asValue(), offset32));
                     asm.ldrshw(ARMV7Assembler.ConditionFlag.Always,1,1,0, reg, ARMV7.r12,0);
                 break;
 
                 case CHAR:
+                    // zero extend
                     asm.setUpScratch(    new CiAddress(CiKind.Char, ARMV7.r13.asValue(), offset32));
                     asm.ldrb(ARMV7Assembler.ConditionFlag.Always,1,1,0,reg,ARMV7.r12,0);
                             //asm.movzxl(reg, new CiAddress(CiKind.Char, rsp.asValue(), offset32));
@@ -530,6 +541,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 case FLOAT:
                     asm.setUpScratch(new CiAddress(CiKind.Float, ARMV7.r13.asValue(), offset32));
                     asm.movss(ARMV7Assembler.ConditionFlag.Always,0,0,0,reg,ARMV7.r12,ARMV7.r12,0,0);
+
                     //asm.movss(reg, new CiAddress(CiKind.Float, rsp.asValue(), offset32));
                 break;
 
