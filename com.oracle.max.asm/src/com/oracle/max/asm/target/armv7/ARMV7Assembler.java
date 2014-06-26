@@ -608,7 +608,11 @@ public class ARMV7Assembler extends AbstractAssembler {
                 return 3;
             }
         } else {
-            return 1;
+            // APN modification for CompilerStubEmitter ...
+            // movw movt is two instructions ....
+            // TODO sometimes this might be required for a long?
+            // see ARMV7CompilerStubEmitter:: emit FNEG ...
+            return 2;
         }
     }
 

@@ -403,6 +403,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     @Override
     protected void mem2mem(CiValue src, CiValue dest, CiKind kind) {
         if (dest.kind.isInt()) {
+            // we have 32 bit values ..
             //masm.pushl((CiAddress) src);
             //masm.popl((CiAddress) dest);
         } else {

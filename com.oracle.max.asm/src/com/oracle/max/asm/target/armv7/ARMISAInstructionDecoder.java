@@ -23,6 +23,7 @@
 package com.oracle.max.asm.target.armv7;
 
 
+
 public final class ARMISAInstructionDecoder {
 
     private boolean targetIs64Bit;
@@ -74,16 +75,51 @@ public final class ARMISAInstructionDecoder {
     }
 
     private static void patchDisp32(byte[] code, int pos, int offset) {
-        assert pos + 4 <= code.length;
+        int instruction;
 
-        assert code[pos] == 0;
-        assert code[pos + 1] == 0;
-        assert code[pos + 2] == 0;
-        assert code[pos + 3] == 0;
 
-        code[pos++] = (byte) (offset & 0xFF);
-        code[pos++] = (byte) ((offset >> 8) & 0xFF);
-        code[pos++] = (byte) ((offset >> 16) & 0xFF);
-        code[pos++] = (byte) ((offset >> 24) & 0xFF);
+        /*assert code[pos] == 0xe3;
+        assert code[pos + 1] == 0x20;
+        assert code[pos + 2] == 0xf0;
+        assert code[pos + 3] == 0x00;
+        assert code[pos +4] == 0xe3;
+        assert code[pos + 5] == 0x20;
+        assert code[pos + 6] == 0xf0;
+        assert code[pos + 7] == 0x00;*/
+        // TODO sort out irritation from signed Java stuff in bytes causing me a pain in the arse
+        // patches the scratch register r12 to hold an address.
+        // it might be an offset, or it might be relative
+        // TODO this is unknown at the momemt
+        // currently Im assuming an absolute address.
+        // TODO probably wrong as looks like relative
+
+        instruction = movw(offset & 0xffff);
+        code[pos++] = (byte) (instruction & 0xFF);
+        code[pos++] = (byte) ((instruction >> 8) & 0xFF);
+        code[pos++] = (byte) ((instruction >> 16) & 0xFF);
+        code[pos++] = (byte) ((instruction >> 24) & 0xFF);
+        offset = offset >>16;
+        offset = offset & 0xffff;
+        instruction = movt(offset);
+        code[pos++] = (byte) (instruction & 0xFF);
+        code[pos++] = (byte) ((instruction >> 8) & 0xFF);
+        code[pos++] = (byte) ((instruction >> 16) & 0xFF);
+        code[pos++] = (byte) ((instruction >> 24) & 0xFF);
+
+    }
+    private static int movt( final int imm16) {
+        int instruction = 0xe3400000;
+        instruction |= (imm16 >> 12) << 16;
+        instruction |= (12 & 0xf) << 12;
+        instruction |= imm16 & 0xfff;
+        return instruction;
+    }
+
+    private static int movw( final int imm16) {
+        int instruction = 0xe3000000;
+        instruction |= (imm16 >> 12) << 16;
+        instruction |= (12 & 0xf) << 12;
+        instruction |= imm16 & 0xfff;
+        return instruction;
     }
 }

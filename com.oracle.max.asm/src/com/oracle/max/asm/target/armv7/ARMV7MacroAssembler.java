@@ -204,21 +204,39 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void cmpptr(CiRegister src1, CiRegister src2) {
         //cmpq(src1, src2);
+        cmp(ConditionFlag.Always,src1,src2,0,0);
     }
 
     public void cmpptr(CiRegister src1, CiAddress src2) {
+        setUpScratch(src2);
+        assert(ARMV7.r12.number != src1.number);
+        cmp(ConditionFlag.Always,src1,ARMV7.r12,0,0);
         //cmpq(src1, src2);
     }
 
     public void cmpptr(CiRegister src1, int src2) {
         //cmpq(src1, src2);
+        assert(ARMV7.r12.number != src1.number);
+        mov32BitConstant(ARMV7.r12,src2);
+        cmp(ConditionFlag.Always,src1,ARMV7.r12,0,0);
     }
 
     public void cmpptr(CiAddress src1, int src2) {
+        setUpScratch(src1);
+        mov32BitConstant(ARMV7.r8,src2);
+        cmp(ConditionFlag.Always,ARMV7.r12,ARMV7.r8,0,0);
         //cmpq(src1, src2);
     }
 
     public void decrementl(CiRegister reg, int value) {
+        CiRegister tmp;
+        if(reg == ARMV7.r12) {
+            tmp = ARMV7.r8;
+        } else {
+            tmp = ARMV7.r9;
+        }
+        mov32BitConstant(tmp,value);
+        sub(ConditionFlag.Always,false,reg,tmp,0,0);
         /*if (value == Integer.MIN_VALUE) {
             subl(reg, value);
             return;
@@ -238,6 +256,15 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void decrementl(CiAddress dst, int value) {
+        if(value == 0) {
+            return;
+        }
+        setUpScratch(dst);
+        ldr(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
+        mov32BitConstant(ARMV7.r9,value);
+        sub(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r9,0,0);
+        strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,0);
+
         /*if (value == Integer.MIN_VALUE) {
             subl(dst, value);
             return;

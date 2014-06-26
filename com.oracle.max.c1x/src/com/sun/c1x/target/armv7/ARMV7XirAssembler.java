@@ -22,13 +22,17 @@
  */
 package com.sun.c1x.target.armv7;
 
+import com.sun.c1x.util.Util;
+import com.sun.cri.ci.CiKind;
+import com.sun.cri.ci.CiTarget;
+import com.sun.cri.xir.CiXirAssembler;
+import com.sun.cri.xir.XirTemplate;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+
 import static com.sun.cri.xir.XirTemplate.GlobalFlags.*;
-
-import java.util.*;
-
-import com.sun.c1x.util.*;
-import com.sun.cri.ci.*;
-import com.sun.cri.xir.*;
 
 /**
  * ARMV7 version of {@link CiXirAssembler}.
@@ -119,6 +123,7 @@ public class ARMV7XirAssembler extends CiXirAssembler {
 
                 case RepeatMoveWords:
                 case RepeatMoveBytes:
+                    System.out.println("ARMV7XirAssembler RepeatMove Words/Bytes");
                     if (fixedRSI == null) {
                        // fixedRSI = createRegisterTemp("fixedRSI", target.wordKind, ARMV7.rsi);
                     }
