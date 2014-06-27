@@ -41,10 +41,10 @@ import com.sun.cri.ci.*;
 public class ARMV7LIRGenerator extends LIRGenerator {
 
     // APN just hacked to compile
-    private static final CiRegisterValue RAX_I = ARMV7.r14.asValue(CiKind.Int);
-    private static final CiRegisterValue RAX_L = ARMV7.r14.asValue(CiKind.Long);
-    private static final CiRegisterValue RDX_I = ARMV7.r12.asValue(CiKind.Int);
-    private static final CiRegisterValue RDX_L = ARMV7.r12.asValue(CiKind.Long);
+    private static final CiRegisterValue RAX_I = ARMV7.r8.asValue(CiKind.Int);
+    private static final CiRegisterValue RAX_L = ARMV7.r8.asValue(CiKind.Long); // and r9 32bit registers
+    private static final CiRegisterValue RDX_I = ARMV7.r8.asValue(CiKind.Int);
+    private static final CiRegisterValue RDX_L = ARMV7.r8.asValue(CiKind.Long); // and r9 32bit registers
 
     private static final CiRegisterValue LDIV_TMP = RDX_L;
 
@@ -54,7 +54,7 @@ public class ARMV7LIRGenerator extends LIRGenerator {
      */
     private static final CiRegisterValue LMUL_OUT = RAX_L;
 
-    private static final CiRegisterValue SHIFT_COUNT_IN = ARMV7.r1.asValue(CiKind.Int);
+    private static final CiRegisterValue SHIFT_COUNT_IN = ARMV7.r8.asValue(CiKind.Int); // Which reg to choose?
 
     protected static final CiValue ILLEGAL = CiValue.IllegalValue;
 
@@ -324,6 +324,8 @@ public class ARMV7LIRGenerator extends LIRGenerator {
                         }
                     }
                 }
+
+
                 if (!useConstant) {
                     rightArg.loadItem();
                 }

@@ -681,6 +681,7 @@ public class Stubs {
             // undo the frame
             asm.addq(ARMV7.r13, frameSize);
 
+            // TODO will be broken and will be overwriting R12 scratch and callsite need to use r8 r9?
             // patch the return address to re-execute the static call
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
             //asm.movq(callSite, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));

@@ -36,7 +36,6 @@ import com.sun.cri.ri.RiResolvedMethod;
 import com.sun.cri.ri.RiRuntime;
 import com.sun.cri.xir.RiXirGenerator;
 import com.sun.cri.xir.XirTemplate;
-import com.sun.max.vm.compiler.CompilationBroker;
 
 import java.util.HashMap;
 import java.util.List;
@@ -147,7 +146,7 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
         }
 
 
-        if (!CompilationBroker.OFFLINE) {
+        //if (!CompilationBroker.OFFLINE) {
             for (CompilerStub.Id id : CompilerStub.Id.values()) {
                 TTY.Filter suppressor = new TTY.Filter(C1XOptions.PrintFilter, id);
                 try {
@@ -156,7 +155,7 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
                     suppressor.remove();
                 }
             }
-        }
+        //}
 
         if (C1XOptions.PrintCFGToFile) {
             addCompilationObserver(cfgPrinterObserver = new CFGPrinterObserver());

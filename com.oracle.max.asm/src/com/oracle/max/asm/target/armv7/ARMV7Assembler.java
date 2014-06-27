@@ -701,6 +701,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void leave() {
+        mov(ConditionFlag.Always,false,ARMV7.r13,ARMV7.r11); // restore SP that is in the FP
+        pop(ConditionFlag.Always,1<<11); // POP the old FP r11 off the stack.
 
     }
 
@@ -887,6 +889,14 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void enter(short imm16, byte imm8) {
         assert false;
+        /*
+        APN this does a push of the FP,
+        moves the SP onto -> r11
+        subs the SP by imm16 ....
+        DONT KNOW WHAT THE IMM8 IS FOR
+
+         */
+
     }
 
     public void nullCheck(CiRegister r) {

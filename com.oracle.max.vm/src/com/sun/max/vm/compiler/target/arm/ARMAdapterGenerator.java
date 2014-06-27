@@ -278,7 +278,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
          *          +------------------------+     ---
          *          |     OPT main body      |      ^
          *          +------------------------+      |
-         *          |       saved RBP        |      |
+         *          |saved X86-RBP ARM-r11   |      |
          *          +------------------------+  frame size
          *          |        OPT arg N       |      |
          *          +------------------------+      |
@@ -340,7 +340,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             }
         }
 
-        private static final int PROLOGUE_SIZE = 8;
+        private static final int PROLOGUE_SIZE = 12; // setupScratch with movw movt and then the branch?
 
         public Baseline2Opt() {
             super(Adapter.Type.BASELINE2OPT);
@@ -435,7 +435,13 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             //asm.enter(explicitlyAllocatedFrameSize, 0);
             // APN more to be done here ...
-            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.encoding);
+            // I think enter does push rbp (return address?
+            // mv SP -> R11 (rbp)
+            // sub SP by an ammount
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13);
+            asm.addq(ARMV7.r13,-1*(explicitlyAllocatedFrameSize -4)); // TODO check if the -4 is required
+
             // APN what is menat by a RIP slot?
 
             // At this point, the top of the baseline caller's stack (i.e the last arg to the call) is immediately
@@ -466,7 +472,8 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // Args are now copied to the OPT locations; call the OPT main body
             int callPos = asm.codeBuffer.position();
             //asm.call(rax);
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12);
+
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
             int callSize = asm.codeBuffer.position() - callPos;
 
             // Restore RSP and RBP. Given that RBP is never modified by OPT methods and baseline methods always
@@ -480,7 +487,8 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             assert WordWidth.signedEffective(baselineArgsSize).lessEqual(WordWidth.BITS_16);
             // Retract the stack pointer back to its position before the first argument on the caller's stack.
-            asm.ret(/* to make it compile APN removed (short) baselineArgsSize*/);
+            System.err.println("removed ret in ARMAdapterGenerator");
+            // asm.ret(/* to make it compile APN removed (short) baselineArgsSize*/);
 
             final byte[] code = asm.codeBuffer.close(true);
             if (refMap != null) {
