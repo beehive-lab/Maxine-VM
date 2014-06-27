@@ -33,6 +33,6 @@ public class BC_invokestatic {
         return id(tmp);
     }
     public static int id(int i) {
-        return i;
+        return i*3;
     }
 }

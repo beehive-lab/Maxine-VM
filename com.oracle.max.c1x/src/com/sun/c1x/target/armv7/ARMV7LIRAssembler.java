@@ -884,7 +884,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert Util.archKindsEqual(left.kind, right.kind) || (left.kind == CiKind.Long && right.kind == CiKind.Int) : code.toString() + " left arch is " + left.kind + " and right arch is " +  right.kind;
         //assert left.equals(dest) : "left and dest must be equal";
         // APN TODO removed this assert as minor changes to Java code caused C1X to barf ... should be ok as far as I can
-        // tell ... 
+        // tell ...
         CiKind kind = left.kind;
 
         // Checkstyle: off

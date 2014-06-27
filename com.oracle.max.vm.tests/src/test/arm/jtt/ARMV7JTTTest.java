@@ -1450,7 +1450,7 @@ public class ARMV7JTTTest extends MaxTestCase {
     public void test_jtt_BC_invokestatic() throws Exception {
         CompilationBroker.OFFLINE = true;
         List<Args> pairs = new LinkedList<Args>();
-        pairs.add(new Args(0, 0));
+        pairs.add(new Args(1, 1));
         for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_invokestatic.test(pair.first);
