@@ -1457,9 +1457,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             expectedValues[0] = answer;
             String klassName = "jtt.bytecode.BC_invokestatic";
             List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
-            for (TargetMethod m : methods) {
-                System.out.println(m.code().length);
-            }
+
             initialised = true; // VM issues ...
             initTests(); // APN dirty hack ...
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
@@ -1473,7 +1471,6 @@ public class ARMV7JTTTest extends MaxTestCase {
                 NOT SURE WHY IT ALL SEEMS BROKEN ... 
                  */
                 byte []b = m.code();
-                System.out.println("METHOD ");
 
                 masm.offlineAddToBuffer(b);
 
@@ -1481,9 +1478,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
             int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
-            // assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
-            System.out.println(registerValues[0] + " " + expectedValues[0]);
         }
     }
 }
