@@ -40,5 +40,6 @@ void (*pf)() = (0);
 pf  = (void (*)())(code);
  print_uart0("Hello world!\n");
 (*pf)();
+asm("forever: b forever");
 }
 
