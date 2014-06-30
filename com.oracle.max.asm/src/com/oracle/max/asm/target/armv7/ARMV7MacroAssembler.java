@@ -307,6 +307,11 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void incrementl(CiAddress dst, int value) {
         if (value == 0) { return; }
+        setUpScratch(dst);
+        mov32BitConstant(ARMV7.r8,value);
+        ldr(ConditionFlag.Always,ARMV7.r9,r12,0);
+        addRegisters(ConditionFlag.Always,false,ARMV7.r9,ARMV7.r9,ARMV7.r8,0,0);
+        str(ConditionFlag.Always,ARMV7.r9,r12,0);
 
         /*if (value == Integer.MIN_VALUE) {
             addl(dst, value);
@@ -349,20 +354,26 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void movflt(CiRegister dst, CiAddress src) {
-        /*assert dst.isFpu();
-        movss(dst, src);
+        assert dst.isFpu();
+        /*movss(dst, src);
         */
+        setUpScratch(src);
+        vldr(ConditionFlag.Always,dst,r12,0);
+
     }
 
     public void movflt(CiAddress dst, CiRegister src) {
-        /*assert src.isFpu();
-        movss(dst, src);
+        assert src.isFpu();
+        /*movss(dst, src);
         */
+        setUpScratch(dst);
+        vstr(ConditionFlag.Always,r12,src,0);
     }
 
     public void movdbl(CiRegister dst, CiRegister src) {
-        /*assert dst.isFpu() && src.isFpu();
-        if (AsmOptions.UseXmmRegToRegMoveAll) {
+        assert dst.isFpu() && src.isFpu();
+        vmov(ConditionFlag.Always,dst,src);
+        /*if (AsmOptions.UseXmmRegToRegMoveAll) {
             movapd(dst, src);
         } else {
             movsd(dst, src);
@@ -371,8 +382,10 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void movdbl(CiRegister dst, CiAddress src) {
-        /*assert dst.isFpu();
-        if (AsmOptions.UseXmmLoadAndClearUpper) {
+        assert dst.isFpu();
+        setUpScratch(src);
+        vldr(ConditionFlag.Always,dst,r12,0);
+        /*if (AsmOptions.UseXmmLoadAndClearUpper) {
             movsd(dst, src);
         } else {
             movlpd(dst, src);
@@ -382,6 +395,9 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public void movdbl(CiAddress dst, CiRegister src) {
        /* assert src.isFpu();
         movsd(dst, src); */
+        setUpScratch(dst);
+        vstr(ConditionFlag.Always,r12,src,0);
+
     }
 
     /**

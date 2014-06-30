@@ -28,7 +28,7 @@ package jtt.bytecode;
  */
 public class BC_invokestatic {
     public static int test(int a) {
-        int tmp = 10;
+        int tmp = 11;
         tmp = tmp * a;
         return id(tmp);
     }
