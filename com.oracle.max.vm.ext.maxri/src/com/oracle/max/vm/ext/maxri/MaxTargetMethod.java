@@ -48,6 +48,7 @@ import com.sun.max.vm.collect.ByteArrayBitMap;
 import com.sun.max.vm.compiler.CallEntryPoint;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.AMD64TargetMethodUtil;
+import com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil;
 import com.sun.max.vm.object.ObjectAccess;
 import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.runtime.Trap;
@@ -154,6 +155,11 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
             } else {
                 // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
             }
+        }else {
+            System.out.println("this is where I must put my offlineLinkDirectCalls");
+            if(install) {
+                linkDirectCalls();
+            }
         }
     }
 
@@ -234,8 +240,11 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     public boolean isPatchableCallSite(CodePointer callSite) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.isPatchableCallSite(callSite);
+        } else if (platform().isa == ISA.ARM){
+            return ARMTargetMethodUtil.isPatchableCallSite(callSite);
         } else {
-            throw FatalError.unimplemented();
+                throw FatalError.unimplemented();
+
         }
     }
 
@@ -243,6 +252,8 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     public CodePointer fixupCallSite(int callOffset, CodePointer callEntryPoint) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+        } else if (platform().isa == ISA.ARM) {
+            return ARMTargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else {
             throw FatalError.unimplemented();
         }
@@ -252,7 +263,9 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     public CodePointer patchCallSite(int callOffset, CodePointer callEntryPoint) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
-        } else {
+        } else if (platform().isa == ISA.ARM) {
+            return ARMTargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
+        }  else {
             throw FatalError.unimplemented();
         }
     }
@@ -265,9 +278,16 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
                 AMD64TargetMethodUtil.patchWithJump(this, BASELINE_ENTRY_POINT.offset(), BASELINE_ENTRY_POINT.in(tm));
             }
             FatalError.check(Stubs.isJumpToStaticTrampoline(this), "sanity check");
-        } else {
-            throw FatalError.unimplemented();
-        }
+        } else if (platform().isa == ISA.ARM) {
+            ARMTargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(tm));
+            if (vm().compilationBroker.needsAdapters()) {
+                ARMTargetMethodUtil.patchWithJump(this, BASELINE_ENTRY_POINT.offset(), BASELINE_ENTRY_POINT.in(tm));
+            }
+            FatalError.check(Stubs.isJumpToStaticTrampoline(this), "sanity check");
+        }    else {
+                throw FatalError.unimplemented();
+            }
+
     }
 
     @Override
