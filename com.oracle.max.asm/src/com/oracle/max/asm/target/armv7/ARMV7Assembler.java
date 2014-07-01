@@ -326,15 +326,15 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public void strImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm12) {
+    public void strImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rvalue, final CiRegister Rmemory, int imm12) {
         int instruction = 0x04000000;
         assert imm12 == 0; // TODO fix the encoding its an ARM 12 bit
         instruction |= (P & 0x1) << 24;
         instruction |= (U & 0x1) << 23;
         instruction |= (W & 0x1) << 21;
         instruction |= (cond.value() & 0xf) << 28;
-        instruction |= (Rn.encoding & 0xf) << 16;
-        instruction |= (Rt.encoding & 0xf) << 12;
+        instruction |= (Rmemory.encoding & 0xf) << 16;
+        instruction |= (Rvalue.encoding & 0xf) << 12;
         instruction |= imm12 & 0xfff;
         emitInt(instruction);
     }
@@ -616,6 +616,35 @@ public class ARMV7Assembler extends AbstractAssembler {
             }
         }
     }
+    public void setUpRegister(CiRegister dest,CiAddress addr) {
+        CiRegister base = addr.base();
+        CiRegister index = addr.index();
+        CiAddress.Scale scale = addr.scale;
+        int disp = addr.displacement;
+        if (addr == CiAddress.Placeholder) {
+            nop(numInstructions(addr)); // 4 instructions, 2 for mov32, 1 for add and 1 for addclsl
+            return;
+        }
+        assert base.isValid();
+        // APN can we have a memory address --- not handled yet?
+        // APN simple case where we just have a register destination
+        // TODO fix this so it will issue loads when appropriate!
+        if (base.isValid()) {
+            if (disp != 0) {
+                mov32BitConstant(dest, disp);
+                addRegisters(ConditionFlag.Always, false, dest, dest, base, 0, 0);
+                if (index.isValid()) {
+                    addlsl(ConditionFlag.Always, false, dest, dest, index, scale.log2);
+                }
+            } else {
+                if (index.isValid()) {
+                    addlsl(ConditionFlag.Always, false, dest, base, index, scale.log2);
+                } else {
+                    mov(ConditionFlag.Always, false, dest, base);
+                }
+            }
+        }
+    }
 
     private int numInstructions(CiAddress addr) {
         CiRegister index = addr.index();
@@ -873,7 +902,15 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void ret() {
-        mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
+
+        /* TODO ret() implements an X86 return from subroutine this needs to pop the return value of the stack
+        TODO we might need to push the value of r14 onto the stack in order to make this work for a call from the C harness
+         TODO for testing of the methods
+
+         */
+        pop(ConditionFlag.Always,1<<12);
+        // to do normally this would be r14, but we need to pop it off the stack
+        mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12);
     }
 
     public final void ret(int imm16) {
@@ -881,8 +918,9 @@ public class ARMV7Assembler extends AbstractAssembler {
         if(imm16 == 0) {
             ret();
         } else {
-            System.out.println("Need to ascertain purpose of ARMV7Assembler::ret(imm16)");
+            //System.out.println("Need to ascertain purpose of ARMV7Assembler::ret(imm16)");
             ret();
+            addq(ARMV7.r13,imm16); // believe it is used to retract the stack
         }
 
     }
@@ -896,7 +934,10 @@ public class ARMV7Assembler extends AbstractAssembler {
         DONT KNOW WHAT THE IMM8 IS FOR
 
          */
-
+        push(ConditionFlag.Always,1<<11); // push the FP.
+        mov(ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13); // move the SP onto the FP
+        mov32BitConstant(ARMV7.r12,imm16);
+        sub(ConditionFlag.Always,false,ARMV7.r13,ARMV7.r13,ARMV7.r12,0,0);
     }
 
     public void nullCheck(CiRegister r) {

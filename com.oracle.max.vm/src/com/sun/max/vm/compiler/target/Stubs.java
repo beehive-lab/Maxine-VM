@@ -469,7 +469,7 @@ public class Stubs {
             final int frameToCSA = csl.frameOffsetToCSA;
 
             for (int i = 0; i < prologueSize; ++i) {
-                asm.nop();        // APN currently this is mov(r0,r0, );
+                asm.nop();
             }
 
             // now allocate the frame for this method
@@ -502,7 +502,7 @@ public class Stubs {
             // we will need to test this carefully
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize));
             //asm.movq(args[2].asRegister(), new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize));
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, args[2].asRegister(), asm.scratchRegister);
+            asm.ldr(ARMV7Assembler.ConditionFlag.Always, args[2].asRegister(), asm.scratchRegister,0);
 
             asm.alignForPatchableDirectCall(); // insert nops so that the call is in an allowed position
                                             // obeying alignment rules
@@ -523,7 +523,7 @@ public class Stubs {
             CiRegister returnReg = registerConfig.getReturnRegister(WordUtil.archKind());
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize - 8));
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize - 8), returnReg);
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, asm.scratchRegister, returnReg);
+            asm.str(ARMV7Assembler.ConditionFlag.Always, returnReg, asm.scratchRegister, 0);
 
             // Restore all parameter registers before returning
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
@@ -532,10 +532,8 @@ public class Stubs {
             // Adjust RSP as mentioned above and do the 'ret' that lands us in the
             // trampolined-to method.
             asm.addq(ARMV7.r13, frameSize - 8);
-            //asm.ret(0);
+            asm.ret(0);
             // APN ok do I need to do a return or can I merely set the PC to the correct instruction.
-            // We can but try.
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, asm.scratchRegister);
 
             byte[] code = asm.codeBuffer.close(true);
             final Type type = isInterface ? InterfaceTrampoline : VirtualTrampoline;
@@ -638,6 +636,10 @@ public class Stubs {
 
             return new Stub(StaticTrampoline, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else if (platform().isa == ISA.ARM) {
+            /*
+            RIP_CALL means a relative JMP/CALL to the current PC
+            REG_CALL is an absolute JMP/CALL
+             */
             CiRegisterConfig registerConfig = registerConfigs.trampoline;
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
@@ -650,10 +652,17 @@ public class Stubs {
 
             // compute the static trampoline call site
             CiRegister callSite = registerConfig.getScratchRegister();
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP));
             //asm.movq(callSite, new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue()));
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, callSite, asm.scratchRegister);
-            asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
+            asm.ldr(ARMV7Assembler.ConditionFlag.Always,callSite,ARMV7.r12,0); // R12 and call site are the same but it does not matter
+            /*
+            OK as it is a RIP_CALL in X86 this means it is a relative jump from the PC, based on by best udnerstanding of
+            X86
+             */
+            asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE); // this will probably be wrong
+            // we dont have RIP call instructions. ....
+            // we have a branch relative or a mov to PC.
+
 
             // now allocate the frame for this method
             asm.subq(ARMV7.r13, frameSize);
@@ -666,17 +675,18 @@ public class Stubs {
             CiValue[] locations = registerConfig.getCallingConvention(JavaCall, trampolineParameters, target(), false).locations;
 
             // load the static trampoline call site into the first parameter register
+            // APN ie it holds the address of the trampoline call site.
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, locations[0].asRegister(), callSite);
 
-            asm.alignForPatchableDirectCall();
+            asm.alignForPatchableDirectCall(); // we have this but everything is aligned ok for ARM32 bit ARMV7.
             int callPos = asm.codeBuffer.position();
             ClassMethodActor callee = patchStaticTrampoline.classMethodActor;
-            asm.call(); // 3 instructions = 12 bytes on ARMV7
+            asm.call(); // 3 instructions = 12 bytes on ARMV7 ON AMD64-X86 this is an E8 CALL!
             int callSize = asm.codeBuffer.position() - callPos;
 
             // restore all parameter registers before returning
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
-            asm.restore(csl, frameToCSA);
+            asm.restore(csl, frameToCSA); // APN now follows X86 way ....
 
             // undo the frame
             asm.addq(ARMV7.r13, frameSize);
@@ -685,13 +695,13 @@ public class Stubs {
             // patch the return address to re-execute the static call
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
             //asm.movq(callSite, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, callSite, asm.scratchRegister);
+            asm.ldr(ARMV7Assembler.ConditionFlag.Always, callSite, asm.scratchRegister,0);
             asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
+            asm.setUpRegister(ARMV7.r8, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue()), callSite);
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, asm.scratchRegister, callSite);
-            //asm.ret(0);
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, asm.scratchRegister);
+            asm.strImmediate(ARMV7Assembler.ConditionFlag.Always,0,0,0,callSite,ARMV7.r8,0);
+            asm.ret(0); // ret(0) is a C3 in X86
+
             String stubName = "strampoline";
             byte[] code = asm.codeBuffer.close(true);
 
@@ -781,6 +791,7 @@ public class Stubs {
         } else if (platform().isa == ISA.ARM) {
 
             /*
+            DONT EXPECT THIS TO WORK --- PORTED AT AN EARLY STAGE AND NEEDS THE CORRESPONDING C CODE TO BE ALTERED AS WELL
             APN this is going to be a pretty brain damaged attempt
             ...at first I'm only attempting to get this to compile then I will
             check the information on ARM linux regarding what is returned and do
@@ -996,15 +1007,21 @@ public class Stubs {
                 CiKind kind = retValue.kind.stackKind();
                 name = "unwind" + kind.name() + "Stub";
                 switch (kind) {
-                    case Int:
                     case Long:
+                        // TODO fix this we need two registers for a long!!!!
+                        // Therefore it must be on the stack!!!!!?
+                    break;
+                    case Int:
                     case Object:
                         asm.mov(ARMV7Assembler.ConditionFlag.Always, false, registerConfig.getReturnRegister(CiKind.Int), reg);
                         break;
                     case Float:
+                        // TODO does it come from the FPREGS or does it go to core
                         asm.movflt(registerConfig.getReturnRegister(CiKind.Float), reg);
                         break;
                     case Double:
+                        // TODO does it come from the FPREGS or does it go to core
+                        // if it goes to core then will need to go on stack
                         asm.movdbl(registerConfig.getReturnRegister(CiKind.Double), reg);
                         break;
                     default:

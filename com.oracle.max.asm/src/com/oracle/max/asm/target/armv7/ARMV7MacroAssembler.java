@@ -491,53 +491,32 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
      * @param frameToCSA offset from the frame pointer to the CSA
      */
     public void save(CiCalleeSaveLayout csl, int frameToCSA) {
-        //CiRegisterValue frame = frameRegister.asValue();
-        // APN if we assume that the first register is offset ZERO then we can save/restore them using a
-        // single stm/ldm instruction for BASE REGISTERS but what about floating point!!!!!
-        // this will need to be expanded to use VSTM/VLDM as necessary
-       // boolean      first = true;
-        //int oldOffset = -1;
-        int registerList = 0;
+        CiRegisterValue frame = frameRegister.asValue();
         for (CiRegister r : csl.registers) {
-            //int offset = csl.offsetOf(r);
-            if(r.number < 16) {
-                registerList = 1 << (r.encoding & 0xf); // only storing one register at a time.
-                push(ConditionFlag.Always, registerList); // r13 is the stack po
-            }else {
-                vpush(ConditionFlag.Always,r,r);
-            }
-            /*if (first) {
-                //if(offset != 0) System.err.println("off set is " + offset);
-               // assert(offset == 0);
-                // if it fails then we need to add a value to the frame pointer
-                first = false;
-            }else {
-                //System.err.println("New offset is " + offset);
-                //assert(oldOffset == (offset-4));
-                // if it fails then we cannot to stm
-            } */
-
-            //oldOffset = offset;
+            int offset = csl.offsetOf(r);
             //movq(new CiAddress(target.wordKind, frame, frameToCSA + offset), r);
+            setUpScratch(new CiAddress(target.wordKind, frame, frameToCSA + offset));
+            if(r.number < 16) {
+                strImmediate(ConditionFlag.Always,0,0,0,r,r12,0);
+            }else {
+                vstr(ConditionFlag.Always,r,r12,0);
+            }
         }
-        //stm(ConditionFlag.Always,0,0,1,0,ARMV7.r13,registerList);// r13 is the stack pointer
-
     }
 
+
     public void restore(CiCalleeSaveLayout csl, int frameToCSA) {
-       // CiRegisterValue frame = frameRegister.asValue();
+       CiRegisterValue frame = frameRegister.asValue();
         int registerList = 0;
         for (CiRegister r : csl.registers) {
-            //int offset = csl.offsetOf(r);
+            int offset = csl.offsetOf(r);
+            //movq(r, new CiAddress(target.wordKind, frame, frameToCSA + offset));
+            setUpScratch(new CiAddress(target.wordKind, frame, frameToCSA + offset));
             if(r.number < 16) {
-                registerList = 1 << (r.encoding & 0xf);
-                //movq(r, new CiAddress(target.wordKind, frame, frameToCSA + offset));
-                // APN TODO check that it is ok to use the stack pointer here  for ARM
-                // TODO this means seeing if the frameRegister might somehow be used by Stubs
-                // or Adapters in an unusual or unexpected way.
-                pop(ConditionFlag.Always, registerList);
+                ldrImmediate(ConditionFlag.Always,0,0,0,r,r12,0);
+
             }else {
-                vpop(ConditionFlag.Always,r,r);
+                vldr(ConditionFlag.Always,r,r12,0);
             }
 
 
