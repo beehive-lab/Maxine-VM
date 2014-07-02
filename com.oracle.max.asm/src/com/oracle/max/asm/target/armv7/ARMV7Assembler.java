@@ -596,7 +596,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             nop(numInstructions(addr)); // 4 instructions, 2 for mov32, 1 for add and 1 for addclsl
             return;
         }
-        assert base.isValid();
+        assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
         // APN can we have a memory address --- not handled yet?
         // APN simple case where we just have a register destination
         // TODO fix this so it will issue loads when appropriate!
@@ -614,6 +614,14 @@ public class ARMV7Assembler extends AbstractAssembler {
                     mov(ConditionFlag.Always, false, scratchRegister, base);
                 }
             }
+        } else { // ADDED for ARMV7LIRAssembler stack2reg
+            mov32BitConstant(scratchRegister,disp);
+            addRegisters(ConditionFlag.Always,false,scratchRegister,scratchRegister,ARMV7.r11,0,0); // Frame pointer
+
+            if (index.isValid()) {
+                addlsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
+            }
+
         }
     }
     public void setUpRegister(CiRegister dest,CiAddress addr) {

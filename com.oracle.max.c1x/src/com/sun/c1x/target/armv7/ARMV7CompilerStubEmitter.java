@@ -291,10 +291,14 @@ public class ARMV7CompilerStubEmitter {
     private void convertPrologue() {
         prologue(new CiCalleeSaveLayout(0, -1, comp.target.wordSize, convertArgument, convertResult));
        // asm.movq(convertArgument, comp.frameMap().toStackAddress(inArgs[0]));
+        asm.setUpScratch(comp.frameMap().toStackAddress(inArgs[0]));
+        asm.vldr(ARMV7Assembler.ConditionFlag.Always,convertArgument,ARMV7.r12,0);
     }
 
     private void convertEpilogue() {
         //asm.movq(comp.frameMap().toStackAddress(outResult), convertResult);
+        asm.setUpScratch(comp.frameMap().toStackAddress(outResult));
+        asm.vstr(ARMV7Assembler.ConditionFlag.Always,convertResult,ARMV7.r12,0);
         epilogue();
     }
 

@@ -336,8 +336,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert dst.isStackSlot();
         CiAddress addr = frameMap.toStackAddress((CiStackSlot) dst);
 
-        assert 0 == 1 : "reg2stack ARMV7IRAssembler";
-
+        //assert 0 == 1 : "reg2stack ARMV7IRAssembler";
+        masm.setUpScratch(addr);
         // Checkstyle: off
         switch (src.kind) {
             case Boolean :
@@ -345,13 +345,19 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case Char    :
             case Short   :
             case Jsr     :
-            case Int     : //masm.movl(addr, src.asRegister()); break;
             case Object  :
+
+            case Int     : //masm.movl(addr, src.asRegister());
+
+                masm.str(ConditionFlag.Always,src.asRegister(),ARMV7.r12,0);
+             break;
             case Long    : //masm.movq(addr, src.asRegister());
+                masm.strd(ConditionFlag.Always,src.asRegister(),ARMV7.r12,0);
              break;
-            case Float   : //masm.movflt(addr, asXmmFloatReg(src)); break;
-            case Double  : //masm.movsd(addr, asXmmDoubleReg(src));
-             break;
+            case Float   : masm.movflt(addr, asXmmFloatReg(src)); break;
+            case Double  : masm.movsd(ConditionFlag.Always,0,0,0,asXmmDoubleReg(src),ARMV7.r12,ARMV7.r12);
+
+                break;
             default      : throw Util.shouldNotReachHere();
         }
         // Checkstyle: on
