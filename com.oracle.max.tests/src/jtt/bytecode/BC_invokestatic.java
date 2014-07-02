@@ -29,9 +29,31 @@ package jtt.bytecode;
 public class BC_invokestatic {
     public static int test(int a) {
         int tmp = 11;
-        tmp = tmp * a;
-        return id(tmp);
+        a = tmp * a;
+        return id(a);
     }
+    public static int id(int i) {
+        return id1(i+1);
+    }
+    public static int id1(int i) { return id2(i+2); }
+    public static int id2(int i) {
+        return id3(i+3);
+    }
+    public static int id3(int i) { int a;
+        a = i; return a;}//id4(i); }
+    /*public static int id4(int i) {
+        return id5(i);
+    }
+    public static int id5(int i) { return id6(i); }
+    public static int id6(int i) {
+        return id7(i);
+    }
+    public static int id7(int i) { return id8(i); }
+    public static int id8(int i) {
+        return id9(i);
+    }
+    public static int id9(int i) { return id10(i); }
+    public static int id10(int i) { return (i); }
     public static int id(int i) {
         return id1(i);
     }
@@ -53,5 +75,6 @@ public class BC_invokestatic {
     }
     public static int id9(int i) { return id10(i+9); }
     public static int id10(int i) { return (i+10); }
+*/
 
 }

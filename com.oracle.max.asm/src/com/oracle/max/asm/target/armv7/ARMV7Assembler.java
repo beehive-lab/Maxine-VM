@@ -963,7 +963,38 @@ public class ARMV7Assembler extends AbstractAssembler {
             mov(cc, false, ARMV7.r15, scratchRegister);
          }
     }
+    public final void jcc(ConditionFlag cc, Label l) {
+        assert (0 <= cc.value) && (cc.value < 16) : "illegal cc";
+        if (l.isBound()) {
+            jcc(cc, l.position(), false);
+        } else {
+            // Note: could eliminate cond. jumps to this jump if condition
+            // is the same however, seems to be rather unlikely case.
+            // Note: use jccb() if label to be bound is very close to get
+            // an 8-bit displacement
+            l.addPatchAt(codeBuffer.position());
+            nop(3);
+            // TODO decide how to distinguish this from other patches
+            // TODO update wiki on this
+            mov(cc,false,ARMV7.r15,ARMV7.r12);
+        }
 
+    }
+    public final void jmp(Label l) {
+        if (l.isBound()) {
+            jmp(l.position(), false);
+        } else {
+            // By default, forward jumps are always 32-bit displacements, since
+            // we can't yet know where the label will be bound. If you're sure that
+            // the forward jump will not run beyond 256 bytes, use jmpb to
+            // force an 8-bit displacement.
+
+            l.addPatchAt(codeBuffer.position());
+            // TODO fix this it will not work ....
+            emitByte(0xE9);
+            emitInt(0);
+        }
+    }
     public final void jmp(int target, boolean forceDisp32) {
         int disp = target - codeBuffer.position();
         if (disp <= 16777215  && forceDisp32) {

@@ -441,7 +441,8 @@ public class ARMV7LIRGenerator extends LIRGenerator {
         CiValue tempPointer = load(x.pointer());
         CiAddress addr = getAddressForPointerOp(x, dataKind, tempPointer);
 
-        CiValue expectedValue = force(x.expectedValue(), ARMV7.r14.asValue(dataKind));
+        //CiValue expectedValue = force(x.expectedValue(), WAS rax.asValue(dataKind));
+        CiValue expectedValue = force(x.expectedValue(), ARMV7.r0.asValue(dataKind));
         CiValue newValue = load(x.newValue());
         assert Util.archKindsEqual(newValue.kind, dataKind) : "invalid type";
 
@@ -453,7 +454,8 @@ public class ARMV7LIRGenerator extends LIRGenerator {
         CiValue pointer = newVariable(compilation.target.wordKind);
         lir.lea(addr, pointer);
         CiValue result = createResultVariable(x);
-        CiValue resultReg = ARMV7.r14.asValue(dataKind);
+        //CiValue resultReg = WAS rax.asValue(dataKind);
+        CiValue resultReg = ARMV7.r0.asValue(dataKind);
         if (dataKind.isObject()) {
             lir.casObj(pointer, expectedValue, newValue);
         } else if (dataKind.isInt()) {
@@ -493,8 +495,8 @@ public class ARMV7LIRGenerator extends LIRGenerator {
             addr = new CiAddress(kind, obj.result(), offset.result());
         }
 
-        // Compare operand needs to be in RAX.
-        CiValue cmp = force(x.argumentAt(3), ARMV7.r14.asValue(kind));
+        // Compare operand needs to be in RAX. WAS RAX
+        CiValue cmp = force(x.argumentAt(3), ARMV7.r0.asValue(kind));
         val.loadItem();
 
         CiValue pointer = newVariable(compilation.target.wordKind);
