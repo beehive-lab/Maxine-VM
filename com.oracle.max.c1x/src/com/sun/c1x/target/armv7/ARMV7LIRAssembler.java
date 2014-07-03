@@ -62,7 +62,7 @@ import static com.sun.cri.ci.CiValue.IllegalValue;
 public final class ARMV7LIRAssembler extends LIRAssembler {
 
     private static final Object[] NO_PARAMS = new Object[0];
-    private static final CiRegister SHIFTCount = ARMV7.r1;
+    private static final CiRegister SHIFTCount = ARMV7.r8;
 
     private static final long DoubleSignMask = 0x7FFFFFFFFFFFFFFFL;
 

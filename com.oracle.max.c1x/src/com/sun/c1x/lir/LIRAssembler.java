@@ -22,22 +22,28 @@
  */
 package com.sun.c1x.lir;
 
-import java.util.*;
-
-import com.oracle.max.asm.*;
-import com.sun.c1x.*;
-import com.sun.c1x.asm.*;
-import com.oracle.max.criutils.*;
-import com.sun.c1x.gen.*;
+import com.oracle.max.asm.AbstractAssembler;
+import com.oracle.max.asm.Label;
+import com.oracle.max.criutils.TTY;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.asm.ExceptionInfo;
+import com.sun.c1x.asm.TargetMethodAssembler;
+import com.sun.c1x.gen.LIRGenerator;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.ir.ExceptionHandler;
-import com.sun.c1x.lir.FrameMap.*;
-import com.sun.c1x.util.*;
-import com.sun.c1x.value.*;
-import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiTargetMethod.*;
-import com.sun.cri.ri.*;
-import com.sun.cri.xir.CiXirAssembler.*;
+import com.sun.c1x.lir.FrameMap.StackBlock;
+import com.sun.c1x.util.Util;
+import com.sun.c1x.value.FrameState;
+import com.sun.cri.ci.CiConstant;
+import com.sun.cri.ci.CiKind;
+import com.sun.cri.ci.CiTargetMethod.Mark;
+import com.sun.cri.ci.CiValue;
+import com.sun.cri.ri.RiMethod;
+import com.sun.cri.xir.CiXirAssembler.XirMark;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * The {@code LIRAssembler} class definition.
@@ -344,10 +350,13 @@ public abstract class LIRAssembler {
                 break;
 
             case Add:
-            case Sub:
             case Mul:
+
+                assert(op.operand1().equals(op.result()));
+            case Sub:
             case Div:
             case Rem:
+
                 emitArithOp(op.code, op.operand1(), op.operand2(), op.result(), op.info);
                 break;
 

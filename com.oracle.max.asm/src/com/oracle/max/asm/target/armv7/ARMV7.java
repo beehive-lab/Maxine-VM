@@ -132,4 +132,9 @@ public class ARMV7 extends CiArchitecture {
     public boolean isARM() {
         return true;
     }
+
+    @Override
+    public boolean twoOperandMode() {
+        return true;
+    }
 }

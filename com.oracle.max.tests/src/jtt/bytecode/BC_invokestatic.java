@@ -32,7 +32,7 @@ public class BC_invokestatic {
         a = tmp * a;
         return id(a);
     }
-    public static int id(int i) {
+    /*public static int id(int i) {
         return id1(i+1);
     }
     public static int id1(int i) { return id2(i+2); }
@@ -53,7 +53,7 @@ public class BC_invokestatic {
         return id9(i);
     }
     public static int id9(int i) { return id10(i); }
-    public static int id10(int i) { return (i); }
+    public static int id10(int i) { return (i); } */
     public static int id(int i) {
         return id1(i);
     }
@@ -75,6 +75,6 @@ public class BC_invokestatic {
     }
     public static int id9(int i) { return id10(i+9); }
     public static int id10(int i) { return (i+10); }
-*/
+
 
 }
