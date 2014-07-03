@@ -137,19 +137,21 @@ public final class AMD64TargetMethodUtil {
         int oldDisp32;
         FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
         if (MaxineVM.isHosted()) {
+
             final byte[] code = tm.code();
             oldDisp32 =
-                (code[callOffset + 4] & 0xff) << 24 |
-                (code[callOffset + 3] & 0xff) << 16 |
-                (code[callOffset + 2] & 0xff) << 8 |
-                (code[callOffset + 1] & 0xff) << 0;
+               (code[callOffset + 4] & 0xff) << 24 |
+               (code[callOffset + 3] & 0xff) << 16 |
+               (code[callOffset + 2] & 0xff) << 8 |
+               (code[callOffset + 1] & 0xff) << 0;
             if (oldDisp32 != disp32) {
-                code[callOffset] = (byte) RIP_CALL;
-                code[callOffset + 1] = (byte) disp32;
-                code[callOffset + 2] = (byte) (disp32 >> 8);
-                code[callOffset + 3] = (byte) (disp32 >> 16);
-                code[callOffset + 4] = (byte) (disp32 >> 24);
+               code[callOffset] = (byte) RIP_CALL;
+               code[callOffset + 1] = (byte) disp32;
+               code[callOffset + 2] = (byte) (disp32 >> 8);
+               code[callOffset + 3] = (byte) (disp32 >> 16);
+               code[callOffset + 4] = (byte) (disp32 >> 24);
             }
+
         } else {
             final Pointer callSitePointer = callSite.toPointer();
             oldDisp32 =

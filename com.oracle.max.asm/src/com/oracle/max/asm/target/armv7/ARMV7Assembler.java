@@ -246,7 +246,26 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= imm16 & 0xfff;
         emitInt(instruction);
     }
-
+    // helper function
+    public static int movtHelper(final ConditionFlag cond, final CiRegister Rd, final int imm16) {
+        int instruction = 0x03400000;
+        //checkConstraint(0 <= imm16 && imm16 <= 65535, "0<= imm16 && imm16 <= 65535 ");
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (imm16 >> 12) << 16;
+        instruction |= (Rd.encoding & 0xf) << 12;
+        instruction |= imm16 & 0xfff;
+        return instruction;
+    }
+    //helper function
+    public static int movwHelper(final ConditionFlag cond, final CiRegister Rd, final int imm16) {
+        int instruction = 0x03000000;
+        //checkConstraint(0 <= imm16 && imm16 <= 65535, "0<= imm16 && imm16 <= 65535 ");
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (imm16 >> 12) << 16;
+        instruction |= (Rd.encoding & 0xf) << 12;
+        instruction |= imm16 & 0xfff;
+        return instruction;
+    }
     public void movw(final ConditionFlag cond, final CiRegister Rd, final int imm16) {
         int instruction = 0x03000000;
         checkConstraint(0 <= imm16 && imm16 <= 65535, "0<= imm16 && imm16 <= 65535 ");

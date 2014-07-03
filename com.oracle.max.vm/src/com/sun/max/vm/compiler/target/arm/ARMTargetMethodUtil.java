@@ -183,22 +183,40 @@ public final class ARMTargetMethodUtil {
 
         long disp64 = target.toLong() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toLong();
         int disp32 = (int) disp64;
-        int oldDisp32;
+        int oldDisp32 = 0;
         FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
         if (MaxineVM.isHosted()) {
             final byte[] code = tm.code();
-            oldDisp32 =
-                (code[callOffset + 4] & 0xff) << 24 |
-                (code[callOffset + 3] & 0xff) << 16 |
-                (code[callOffset + 2] & 0xff) << 8 |
-                (code[callOffset + 1] & 0xff) << 0;
-            if (oldDisp32 != disp32) {
-                // needs to be rewritten
-                code[callOffset] = (byte) RIP_CALL;
-                code[callOffset + 1] = (byte) disp32;
-                code[callOffset + 2] = (byte) (disp32 >> 8);
-                code[callOffset + 3] = (byte) (disp32 >> 16);
-                code[callOffset + 4] = (byte) (disp32 >> 24);
+            if(CompilationBroker.OFFLINE) {
+                // OK this is where we need to patch
+                disp32 = 25;
+                int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
+                code[callOffset+3 ] = (byte) (instruction&0xff);
+                code[callOffset + 2] = (byte) ((instruction >> 8)&0xff);
+                code[callOffset + 1] = (byte) ((instruction >> 16)&0xff);
+                code[callOffset ] = (byte) ((instruction >> 24)&0xff);
+                int tmp32 = disp32 >> 16;
+                tmp32 = tmp32 & 0xffff;
+                instruction = ARMV7Assembler.movtHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, tmp32 & 0xffff);
+                code[callOffset + 7] = (byte) (instruction&0xff);
+                code[callOffset + 6] = (byte) ((instruction >> 8)&0xff);
+                code[callOffset + 5] = (byte) ((instruction >> 16)&0xff);
+                code[callOffset + 4] = (byte) ((instruction >> 24)&0xff);
+
+            } else {
+                oldDisp32 =
+                        (code[callOffset + 4] & 0xff) << 24 |
+                                (code[callOffset + 3] & 0xff) << 16 |
+                                (code[callOffset + 2] & 0xff) << 8 |
+                                (code[callOffset + 1] & 0xff) << 0;
+                if (oldDisp32 != disp32) {
+                    // needs to be rewritten
+                    code[callOffset] = (byte) RIP_CALL;
+                    code[callOffset + 1] = (byte) disp32;
+                    code[callOffset + 2] = (byte) (disp32 >> 8);
+                    code[callOffset + 3] = (byte) (disp32 >> 16);
+                    code[callOffset + 4] = (byte) (disp32 >> 24);
+                }
             }
         } else {
             final Pointer callSitePointer = callSite.toPointer();
