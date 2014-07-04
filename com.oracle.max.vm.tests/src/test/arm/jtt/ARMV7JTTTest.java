@@ -4,6 +4,8 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.max.vm.classfile.constant.IntegerConstant;
+import com.sun.max.vm.code.CodeCacheValidation;
 import org.objectweb.asm.util.*;
 
 import test.arm.asm.*;
@@ -26,6 +28,8 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.vm.MaxineVM;
+
 
 public class ARMV7JTTTest extends MaxTestCase {
 
@@ -108,6 +112,24 @@ public class ARMV7JTTTest extends MaxTestCase {
     private static int[] expectedValues = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     private static boolean[] IGNOREvalues = new boolean[17];
 
+    private int[] generateAndTestStubs(int assemblerStatements, int[] expected, boolean[] IGNOREs, MaxineARMTester.BitsFlag[] masks) throws Exception {
+        ARMCodeWriter code = new ARMCodeWriter(assemblerStatements, theCompiler.getMacroAssembler().codeBuffer);
+        code.createCodeStubsFile(MaxineVM.vm().stubs.staticTrampoline().code());
+        MaxineARMTester r = new MaxineARMTester(expected, IGNOREs, masks);
+        r.cleanFiles();
+        r.cleanProcesses();
+        r.assembleStartup();
+        r.assembleEntry();
+        r.compile();
+        r.link();
+        r.objcopy();
+        int[] simulatedRegisters = r.runRegisteredSimulation();
+        r.cleanProcesses();
+        if (POST_CLEAN_FILES) {
+            r.cleanFiles();
+        }
+        return simulatedRegisters;
+    }
     private int[] generateAndTest(int assemblerStatements, int[] expected, boolean[] IGNOREs, MaxineARMTester.BitsFlag[] masks) throws Exception {
         ARMCodeWriter code = new ARMCodeWriter(assemblerStatements, theCompiler.getMacroAssembler().codeBuffer);
         code.createCodeFile();
@@ -1465,19 +1487,43 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.mov32BitConstant(ARMV7.r1, pair.first);
             masm.push(ConditionFlag.Always, 1); // local slot is argument r0
             masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+            int minimumValue = Integer.MAX_VALUE;
+            int maximumValue = Integer.MIN_VALUE;
             for (TargetMethod m : methods) { // CRUDE ATTEMPT TO COPY MACHINE CODE BUFFERS!
-                /*
-                GOT TO GO HOME TO GYM THIS IS WHERE I AM UPTO. ....
-                NOT SURE WHY IT ALL SEEMS BROKEN ... 
-                 */
-                byte []b = m.code();
 
+                byte []b = m.code();
+                if((m.codeAt(0)).toInt() < minimumValue) {
+                    minimumValue = m.codeAt(0).toInt();
+                } else {
+                    System.out.println("NON MIN" + m.codeAt(0).toInt());
+                }
+                if ((m.codeAt(0)).toInt() + b.length > maximumValue) {
+                    maximumValue = m.codeAt(0).toInt() + b.length;
+
+                } else {
+                    System.out.println("NON MAX" + (m.codeAt(0).toInt()+ b.length));
+                }
+                System.out.println(" MIN VAL "+ minimumValue + "  " + maximumValue);
                 masm.offlineAddToBuffer(b);
+                m.linkDirectCalls();
+                //CodeCacheValidation.instance.validateSingleMethod(m);
 
             }
+            if (MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() < minimumValue) {
+                minimumValue = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt();
+
+            }
+            if ((MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() +
+                    MaxineVM.vm().stubs.staticTrampoline().code().length) > maximumValue) {
+                maximumValue = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt();
+
+            }
+            System.out.println(" MIN " + minimumValue +  " MAX " + maximumValue + " LEN " + (maximumValue-minimumValue));
+
+            byte []the
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
+            int[] registerValues = generateAndTestStubs(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }

@@ -22,26 +22,34 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.compiler.target.Safepoints.*;
-import static com.sun.max.vm.compiler.target.Stub.Type.*;
-
-import java.util.*;
-
-import com.sun.cri.bytecode.*;
-import com.sun.cri.ci.*;
-import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.code.*;
+import com.sun.cri.bytecode.Bytecodes;
+import com.sun.cri.ci.CiCalleeSaveLayout;
+import com.sun.cri.ci.CiDebugInfo;
+import com.sun.cri.ci.CiTargetMethod;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.lang.ISA;
+import com.sun.max.unsafe.CodePointer;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.actor.member.MethodActor;
+import com.sun.max.vm.code.Code;
 import com.sun.max.vm.code.CodeManager.Lifespan;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.amd64.*;
-import com.sun.max.vm.compiler.target.arm.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.*;
+import com.sun.max.vm.compiler.CallEntryPoint;
+import com.sun.max.vm.compiler.target.amd64.AMD64TargetMethodUtil;
+import com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil;
+import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.stack.FrameReferenceMapVisitor;
+import com.sun.max.vm.stack.StackFrameCursor;
+import com.sun.max.vm.stack.StackFrameVisitor;
+import com.sun.max.vm.stack.VMFrameLayout;
+
+import java.util.Set;
+
+import static com.sun.max.platform.Platform.platform;
+import static com.sun.max.vm.MaxineVM.isHosted;
+import static com.sun.max.vm.MaxineVM.vm;
+import static com.sun.max.vm.compiler.target.Safepoints.DIRECT_CALL;
+import static com.sun.max.vm.compiler.target.Stub.Type.*;
 
 /**
  * Stubs are for manually-assembled target code. Currently, a stub has the maximum of one
@@ -165,6 +173,8 @@ public final class Stub extends TargetMethod {
         }
         if (!isHosted()) {
             linkDirectCalls();
+        } else {
+
         }
     }
 

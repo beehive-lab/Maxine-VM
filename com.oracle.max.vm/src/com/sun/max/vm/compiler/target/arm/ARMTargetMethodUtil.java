@@ -189,7 +189,12 @@ public final class ARMTargetMethodUtil {
             final byte[] code = tm.code();
             if(CompilationBroker.OFFLINE) {
                 // OK this is where we need to patch
+                // BASIC IDEA WE SETUP R12 WITH THE RELATIVE OFFSET
+                // THEN WE ADD IT TO THE PC ...
+                // THIS IS AN INTERWORKING BRANCH, SO IF WE WERE USING THUMB ETC WE WOULD NEED TO ALTER THE ADDRESS OFFSET
+                // IF WE WANTED TO STAY IN THUMB MODE AND/OR TO TRANSITION FORM ARM<->THUMB
                 disp32 = 25;
+                callOffset -= 20; // DIRTY HACK
                 int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
                 code[callOffset+3 ] = (byte) (instruction&0xff);
                 code[callOffset + 2] = (byte) ((instruction >> 8)&0xff);
@@ -202,7 +207,11 @@ public final class ARMTargetMethodUtil {
                 code[callOffset + 6] = (byte) ((instruction >> 8)&0xff);
                 code[callOffset + 5] = (byte) ((instruction >> 16)&0xff);
                 code[callOffset + 4] = (byte) ((instruction >> 24)&0xff);
-
+                instruction = ARMV7Assembler.addRegistersHelper(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r15,ARMV7.r15,ARMV7.r12,0,0);
+                code[callOffset + 11] = (byte) (instruction&0xff);
+                code[callOffset + 10] = (byte) ((instruction >> 8)&0xff);
+                code[callOffset + 9] = (byte) ((instruction >> 16)&0xff);
+                code[callOffset + 8] = (byte) ((instruction >> 24)&0xff);
             } else {
                 oldDisp32 =
                         (code[callOffset + 4] & 0xff) << 24 |

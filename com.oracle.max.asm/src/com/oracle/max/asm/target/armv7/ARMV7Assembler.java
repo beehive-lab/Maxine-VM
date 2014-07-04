@@ -90,7 +90,17 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (rotate_amount / 2 & 0xf) << 8;
         emitInt(instruction);
     }
+    public static int addRegistersHelper(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int imm2Type, final int imm5) {
+        int instruction = 0x00800000;
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (s ? 1 : 0) << 20;
+        instruction |= (Rd.encoding & 0xf) << 12;
+        instruction |= (Rn.encoding & 0xf) << 16;
+        instruction |= (imm5 << 7) | (imm2Type << 5);
+        instruction |= Rm.encoding & 0xf;
+        return instruction;
 
+    }
     public void addRegisters(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int imm2Type, final int imm5) {
         int instruction = 0x00800000;
         checkConstraint(0 <= imm5 && imm5 <= 31, "0 <= imm5 && imm5 <= 31");
@@ -1018,8 +1028,9 @@ public class ARMV7Assembler extends AbstractAssembler {
 
             l.addPatchAt(codeBuffer.position());
             // TODO fix this it will not work ....
-            emitByte(0xE9);
-            emitInt(0);
+            nop(2);
+            //emitByte(0xE9);
+            //emitInt(0);
         }
     }
     public final void jmp(int target, boolean forceDisp32) {

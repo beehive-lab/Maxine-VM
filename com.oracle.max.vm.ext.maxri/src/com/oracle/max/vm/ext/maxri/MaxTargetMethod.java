@@ -156,8 +156,9 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
                 // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
             }
         }else {
-            System.out.println("this is where I must put my offlineLinkDirectCalls");
             if(install) {
+                System.out.println("this is where I must put my offlineLinkDirectCalls");
+
                 linkDirectCalls();
             }
         }

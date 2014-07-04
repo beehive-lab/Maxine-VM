@@ -22,41 +22,55 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.compiler.target.Safepoints.*;
-
-import java.io.*;
-import java.util.*;
-
-import com.oracle.max.asm.target.amd64.*;
-import com.oracle.max.asm.target.armv7.*;
+import com.oracle.max.asm.target.amd64.X86InstructionDecoder;
+import com.oracle.max.asm.target.armv7.ARMISAInstructionDecoder;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.Call;
 import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
 import com.sun.cri.ci.CiTargetMethod.DataPatch;
 import com.sun.cri.ci.CiTargetMethod.Safepoint;
-import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
-import com.sun.max.memory.*;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.annotate.INLINE;
+import com.sun.max.annotate.INSPECTED;
+import com.sun.max.lang.Endianness;
+import com.sun.max.lang.ISA;
+import com.sun.max.memory.MemoryRegion;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.code.*;
+import com.sun.max.vm.Log;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.actor.member.MethodActor;
+import com.sun.max.vm.classfile.CodeAttribute;
+import com.sun.max.vm.code.Code;
+import com.sun.max.vm.code.CodeEviction;
 import com.sun.max.vm.code.CodeManager.Lifespan;
-import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.code.CodeRegion;
+import com.sun.max.vm.compiler.CallEntryPoint;
 import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
-import com.sun.max.vm.compiler.deopt.*;
+import com.sun.max.vm.compiler.deopt.Deoptimization;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Continuation;
 import com.sun.max.vm.compiler.deopt.Deoptimization.Info;
+import com.sun.max.vm.compiler.deopt.InvalidationMarker;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
-import com.sun.max.vm.jni.*;
-import com.sun.max.vm.profile.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.*;
-import com.sun.max.vm.thread.*;
-import com.sun.max.vm.ti.*;
+import com.sun.max.vm.jni.DynamicLinker;
+import com.sun.max.vm.profile.MethodInstrumentation;
+import com.sun.max.vm.profile.MethodProfile;
+import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.stack.FrameReferenceMapVisitor;
+import com.sun.max.vm.stack.StackFrameCursor;
+import com.sun.max.vm.stack.StackFrameVisitor;
+import com.sun.max.vm.stack.VMFrameLayout;
+import com.sun.max.vm.thread.VmThread;
+import com.sun.max.vm.ti.VMTIHandler;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.*;
+
+import static com.sun.max.platform.Platform.platform;
+import static com.sun.max.vm.MaxineVM.isHosted;
+import static com.sun.max.vm.MaxineVM.vm;
+import static com.sun.max.vm.compiler.target.Safepoints.*;
 
 /**
  * Represents machine code produced and managed by the VM. The machine code
@@ -983,6 +997,7 @@ public abstract class TargetMethod extends MemoryRegion {
             FatalError.unexpected(classMethodActor + ": call site calling static trampoline must be patchable: 0x" + callSite.toHexString() +
                             " [0x" + codeStart.toHexString() + "+" + callPos + "]");
         }
+        byte [] stubCode = vm().stubs.staticTrampoline().code(); //APN
         fixupCallSite(callPos, vm().stubs.staticTrampoline().codeAt(offset));
     }
 
