@@ -163,6 +163,7 @@ public class LIRItem {
             loadItem();
         } else if (gen.compilation.target.arch.isARM()) {
             // TODO instantiate code ...
+            loadItem();
         } else {
             Util.shouldNotReachHere();
         }

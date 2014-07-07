@@ -35,11 +35,14 @@ tmpit.code[6] =0x4f;
 tmpit.code[7] = 0xe3;
 tmpit.code[8] = 0x4f;
 */
-
-void (*pf)() = (0);
-pf  = (void (*)())(code);
- print_uart0("Hello world!\n");
-(*pf)();
+/*
+	Apologies, need to pass a parameter to this function, and can no longer do this in the test harness ... will try and fix this prior to pushing 
+ expect this to break some of the other tests 
+*/
+void (*pf)(int) = (0);
+pf  = (void (*))(code);
+ print_uart0("changed test.c!\n");
+(*pf)(0);
 asm("forever: b forever");
 }
 

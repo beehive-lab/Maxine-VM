@@ -52,8 +52,9 @@ public class ARMV7Assembler extends AbstractAssembler {
             // we can't yet know where the label will be bound. If you're sure that
             // the forward jump will not run beyond 24-bits bytes, then its ok
             l.addPatchAt(codeBuffer.position());
-            emitByte(0xE9);
-            emitInt(0);
+            //emitByte(0xE9);
+            //emitInt(0);
+            nop();
         }
     }
 
@@ -740,8 +741,9 @@ public class ARMV7Assembler extends AbstractAssembler {
         // APN proposes we use the scratch register to calculate an address then we do the mov pc
         // looking at Stubs.java we can see that all registers have been saved
         // so we can use whatever registers we want!
-        emitInt(0); // space for setupscratch
-        emitInt(0);
+        //emitInt(0); // space for setupscratch
+        //emitInt(0);
+        nop(2);
         // push(ConditionFlag.Always,1<<11|1<<13|1<<14|1<<15);
         mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12); // mov PC,scratch
         // APN need to update LR14 and do an absolute MOV to a new PC held in scratch
@@ -753,6 +755,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final void call(CiRegister target) {
         // TODO APN believes that Adapters that do the necessary prologue/epilogue
         // to save / restore state ....
+        ldrImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,0);
         mov(ConditionFlag.Always, false, ARMV7.r15, target); // mov PC,scratch
 
     }
@@ -762,6 +765,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             nop(5);
         } else {
             setUpScratch(addr);
+            ldrImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,0);
             mov(ConditionFlag.Always, false, dest, ARMV7.r12);
         }
     }

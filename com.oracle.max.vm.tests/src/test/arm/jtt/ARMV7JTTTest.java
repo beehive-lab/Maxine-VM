@@ -112,9 +112,9 @@ public class ARMV7JTTTest extends MaxTestCase {
     private static int[] expectedValues = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     private static boolean[] IGNOREvalues = new boolean[17];
 
-    private int[] generateAndTestStubs(int assemblerStatements, int[] expected, boolean[] IGNOREs, MaxineARMTester.BitsFlag[] masks) throws Exception {
-        ARMCodeWriter code = new ARMCodeWriter(assemblerStatements, theCompiler.getMacroAssembler().codeBuffer);
-        code.createCodeStubsFile(MaxineVM.vm().stubs.staticTrampoline().code());
+    private int[] generateAndTestStubs(int entryPoint,byte []theCode, int assemblerStatements, int[] expected, boolean[] IGNOREs, MaxineARMTester.BitsFlag[] masks) throws Exception {
+        ARMCodeWriter code = new ARMCodeWriter(assemblerStatements, theCode);
+        code.createCodeStubsFile(theCode,entryPoint);
         MaxineARMTester r = new MaxineARMTester(expected, IGNOREs, masks);
         r.cleanFiles();
         r.cleanProcesses();
@@ -1483,22 +1483,32 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialised = true; // VM issues ...
             initTests(); // APN dirty hack ...
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, pair.first);
-            masm.push(ConditionFlag.Always, 1); // local slot is argument r0
-            masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+            //masm.mov32BitConstant(ARMV7.r0, pair.first); // THIS WILL NOT WORK NOW
+            //masm.mov32BitConstant(ARMV7.r1, pair.first); // THIS WILL NOT WORK NOW
+            /*
+            WE ARE TRYING TO USE A GLOBAL BUFFER CONTAINING ALL COMPILED CODE FOR THE "CLASS"
+            THIS MEANS WE DO NOT HAVE THE ABILITY TO MANUALLY INSERT CODE INTO THE BUFFERS
+             */
+            //masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+            //masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+            // TODO note altered test.c to give a function call argument, this was placed in r0.
             int minimumValue = Integer.MAX_VALUE;
             int maximumValue = Integer.MIN_VALUE;
+            int offset;
+            int entryPoint = -1; // offset in the global array of the method we call from C.
             for (TargetMethod m : methods) { // CRUDE ATTEMPT TO COPY MACHINE CODE BUFFERS!
 
                 byte []b = m.code();
+                if(entryPoint == -1) {
+                    entryPoint = m.codeAt(0).toInt();
+                }
                 if((m.codeAt(0)).toInt() < minimumValue) {
-                    minimumValue = m.codeAt(0).toInt();
+                    minimumValue = m.codeAt(0).toInt(); // UPDATE MINIMUM OFFSET IN ADDRESS SPACE
                 } else {
                     System.out.println("NON MIN" + m.codeAt(0).toInt());
                 }
                 if ((m.codeAt(0)).toInt() + b.length > maximumValue) {
-                    maximumValue = m.codeAt(0).toInt() + b.length;
+                    maximumValue = m.codeAt(0).toInt() + b.length; // UPDATE MAXIMUM OFFSET IN ADDRESS SPACE
 
                 } else {
                     System.out.println("NON MAX" + (m.codeAt(0).toInt()+ b.length));
@@ -1510,20 +1520,37 @@ public class ARMV7JTTTest extends MaxTestCase {
 
             }
             if (MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() < minimumValue) {
-                minimumValue = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt();
+                minimumValue = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt(); // INCLUDE STATIC TRAMPOLINE STUB CODE
 
             }
             if ((MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() +
                     MaxineVM.vm().stubs.staticTrampoline().code().length) > maximumValue) {
-                maximumValue = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt();
+                maximumValue = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() +
+                        MaxineVM.vm().stubs.staticTrampoline().code().length; // INCLUDE STATIC TRAMPOLINE STUB CODE
 
+            }
+            byte []codeBytes = new byte[maximumValue - minimumValue ];
+            for (TargetMethod m : methods) { // CRUDE ATTEMPT TO COPY MACHINE CODE BUFFERS!
+                byte[] b = m.code();
+                offset = m.codeAt(0).toInt() - minimumValue;
+                for(int i = 0; i < b.length;i++) {
+                    codeBytes[offset + i] = b[i];
+                }
+
+            }
+            byte [] b = MaxineVM.vm().stubs.staticTrampoline().code();
+
+            offset = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() -  minimumValue;
+
+            for(int i  = 0; i < b.length; i++) {
+                codeBytes[i+offset] = b[i];
             }
             System.out.println(" MIN " + minimumValue +  " MAX " + maximumValue + " LEN " + (maximumValue-minimumValue));
 
-            byte []the
-            masm.pop(ConditionFlag.Always, 1);
-            int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTestStubs(assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
+            //masm.pop(ConditionFlag.Always, 1); WE CANNOT DO THIS ANYMORE GLOBAL BUFFER
+            int assemblerStatements = codeBytes.length / 4;
+            entryPoint = entryPoint - minimumValue;
+            int[] registerValues = generateAndTestStubs(entryPoint,codeBytes, assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }

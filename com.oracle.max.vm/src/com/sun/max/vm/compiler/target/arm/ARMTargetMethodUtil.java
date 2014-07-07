@@ -193,8 +193,8 @@ public final class ARMTargetMethodUtil {
                 // THEN WE ADD IT TO THE PC ...
                 // THIS IS AN INTERWORKING BRANCH, SO IF WE WERE USING THUMB ETC WE WOULD NEED TO ALTER THE ADDRESS OFFSET
                 // IF WE WANTED TO STAY IN THUMB MODE AND/OR TO TRANSITION FORM ARM<->THUMB
-                disp32 = 25;
-                callOffset -= 20; // DIRTY HACK
+                //disp32 = 25;
+                //callOffset -= 20; // DIRTY HACK
                 int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
                 code[callOffset+3 ] = (byte) (instruction&0xff);
                 code[callOffset + 2] = (byte) ((instruction >> 8)&0xff);

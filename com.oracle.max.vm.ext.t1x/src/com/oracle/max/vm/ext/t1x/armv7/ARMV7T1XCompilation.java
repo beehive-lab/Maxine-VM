@@ -447,7 +447,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
          * APN What is meant by received in this context, do we mean return address?
          */
         if (receiverStackIndex >= 0) {
-            peekObject(r0, receiverStackIndex); // was rdi?
+            peekObject(target, receiverStackIndex); // was rdi?
         }
         int causePos = buf.position();
         asm.call(target);
