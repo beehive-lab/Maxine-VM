@@ -1410,13 +1410,14 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     case Byte    :
                     case Char    :
                     case Short   :
-                    case Int     : //masm.cmpl(reg1, opr2.asRegister()); break;
-                    case Long    :
-                    case Object  :// masm.cmpq(reg1, opr2.asRegister());
+                    case Int     : masm.cmpl(reg1, opr2.asRegister()); break;
+                    case Object  : masm.cmpq(reg1, opr2.asRegister());
                         break;
+                    //long cmp not implemented case Long    :
+
                     case Float   : //masm.ucomiss(reg1, asXmmFloatReg(opr2));
                         break;
-                    case Double  : masm.ucomisd(reg1, asXmmDoubleReg(opr2)); break;
+                    case Double  : //masm.ucomisd(reg1, asXmmDoubleReg(opr2)); break;
                     default      : throw Util.shouldNotReachHere(opr1.kind.toString());
                 }
             } else if (opr2.isStackSlot()) {
@@ -1427,9 +1428,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     case Byte    :
                     case Char    :
                     case Short   :
-                    case Int     : masm.cmpl(reg1, frameMap.toStackAddress(opr2Slot)); break;
+                    case Int     : //masm.cmpl(reg1, frameMap.toStackAddress(opr2Slot)); break;
                     case Long    :
-                    case Object  : masm.cmpptr(reg1, frameMap.toStackAddress(opr2Slot)); break;
+                    case Object  : //masm.cmpptr(reg1, frameMap.toStackAddress(opr2Slot)); break;
                     case Float   : //masm.ucomiss(reg1, frameMap.toStackAddress(opr2Slot));
                         break;
                     case Double  : //masm.ucomisd(reg1, frameMap.toStackAddress(opr2Slot));
@@ -1444,10 +1445,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     case Byte    :
                     case Char    :
                     case Short   :
-                    case Int     : masm.cmpl(reg1, c.asInt()); break;
-                    case Float   : //masm.
-
-                            //ucomiss(reg1, tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) opr2).asFloat())));
+                    case Int     : //masm.cmpl(reg1, c.asInt()); break;
+                    case Float   : //masm.ucomiss(reg1, tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) opr2).asFloat())));
                         break;
                     case Double  : //masm.ucomisd(reg1, tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) opr2).asDouble())));
                         break;
@@ -1455,15 +1454,15 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         if (c.asLong() == 0) {
                            // masm.cmpq(reg1, 0);
                         } else {
-                           // masm.movq(rscratch1, c.asLong());
-                           // masm.cmpq(reg1, rscratch1);
+                            //masm.movq(rscratch1, c.asLong());
+                            masm.cmpq(reg1, rscratch1);
 
                         }
                         break;
                     }
                     case Object  :  {
                         movoop(rscratch1, c);
-                       // masm.cmpq(reg1, rscratch1);
+                        masm.cmpq(reg1, rscratch1);
                         break;
                     }
                     default      : throw Util.shouldNotReachHere();
@@ -1481,11 +1480,11 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     case Byte    :
                     case Char    :
                     case Short   :
-                    case Int     :// masm.cmpl(left, right.asInt()); break;
+                    case Int     : //masm.cmpl(left, right.asInt()); break;
                     case Long    : assert NumUtil.isInt(right.asLong());
-                                 //  masm.cmpq(left, right.asInt()); break;
+                                  // masm.cmpq(left, right.asInt()); break;
                     case Object  : assert right.isNull();
-                                  // masm.cmpq(left, 0); break;
+                                   //masm.cmpq(left, 0); break;
                     default      : throw Util.shouldNotReachHere();
                 }
             } else {

@@ -195,6 +195,7 @@ public final class ARMTargetMethodUtil {
                 // IF WE WANTED TO STAY IN THUMB MODE AND/OR TO TRANSITION FORM ARM<->THUMB
                 //disp32 = 25;
                 //callOffset -= 20; // DIRTY HACK
+                System.out.println("PATCHING STATIC TRAMPOLINE RIP CALL " + disp32);
                 int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
                 code[callOffset+3 ] = (byte) (instruction&0xff);
                 code[callOffset + 2] = (byte) ((instruction >> 8)&0xff);
@@ -213,6 +214,7 @@ public final class ARMTargetMethodUtil {
                 code[callOffset + 9] = (byte) ((instruction >> 16)&0xff);
                 code[callOffset + 8] = (byte) ((instruction >> 24)&0xff);
             } else {
+                assert(0 == 1);
                 oldDisp32 =
                         (code[callOffset + 4] & 0xff) << 24 |
                                 (code[callOffset + 3] & 0xff) << 16 |
@@ -228,6 +230,7 @@ public final class ARMTargetMethodUtil {
                 }
             }
         } else {
+            assert(0 == 1);
             final Pointer callSitePointer = callSite.toPointer();
             oldDisp32 =
                 (callSitePointer.readByte(4) & 0xff) << 24 |

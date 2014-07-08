@@ -22,14 +22,15 @@
  */
 package com.sun.max.vm.hosted;
 
-import static com.sun.max.vm.VMConfiguration.*;
+import com.sun.max.program.ProgramWarning;
+import com.sun.max.program.option.Option;
+import com.sun.max.program.option.OptionSet;
+import com.sun.max.vm.MaxineVM.Phase;
+import com.sun.max.vm.actor.member.MethodActor;
+import com.sun.max.vm.code.Code;
+import com.sun.max.vm.type.ClassRegistry;
 
-import com.sun.max.program.*;
-import com.sun.max.program.option.*;
-import com.sun.max.vm.MaxineVM.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.code.*;
-import com.sun.max.vm.type.*;
+import static com.sun.max.vm.VMConfiguration.vmConfig;
 
 /**
  * Directs and manages the creation of the prototype components, including the

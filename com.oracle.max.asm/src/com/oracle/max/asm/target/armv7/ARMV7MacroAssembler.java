@@ -201,7 +201,9 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         bind(l);
         */
     }
-
+    public void cmpq(CiRegister src1,CiRegister src2) {
+        cmp(ConditionFlag.Always,src1,src2,0,0);
+    }
     public void cmpptr(CiRegister src1, CiRegister src2) {
         //cmpq(src1, src2);
         cmp(ConditionFlag.Always,src1,src2,0,0);

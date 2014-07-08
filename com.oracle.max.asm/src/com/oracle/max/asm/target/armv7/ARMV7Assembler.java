@@ -60,7 +60,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     @Override
     protected void patchJumpTarget(int branch, int target) {
-        // b, bl & bx goes here
+        // b, bl & bx goes here .. could do an ADD PC,reg if too big
         checkConstraint(-0x800000 <= (target - branch) && (target - branch) <= 0x7fffff, "branch must be within  a 24bit offset");
         emitInt(0x06000000 | (target - branch) | ConditionFlag.Always.value() & 0xf);
 
@@ -744,11 +744,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         //emitInt(0); // space for setupscratch
         //emitInt(0);
         nop(2);
-        // push(ConditionFlag.Always,1<<11|1<<13|1<<14|1<<15);
-        mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12); // mov PC,scratch
-        // APN need to update LR14 and do an absolute MOV to a new PC held in scratch
-        // or need to do a BL
-        // WHO/what/where is responsible for stack save/restore and procedure call standard
+        // Target needs to be patched later ...
 
     }
 
@@ -756,7 +752,9 @@ public class ARMV7Assembler extends AbstractAssembler {
         // TODO APN believes that Adapters that do the necessary prologue/epilogue
         // to save / restore state ....
         ldrImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,0);
-        mov(ConditionFlag.Always, false, ARMV7.r15, target); // mov PC,scratch
+        push(ConditionFlag.Always,1<<15);
+        // THIs is an indirect call, assuming the contents of the registers are a memory location we need to load
+        add(ConditionFlag.Always,false,ARMV7.r15,ARMV7.r12,0,0);
 
     }
 
@@ -912,7 +910,56 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
 
     }
+    public final void vcmpZERO(boolean nanExceptions, ConditionFlag cond,CiRegister src1) {
+        int instruction = 0x0eb50a40;
+        int dpOperation = 0;
+        int quietNAN = 1;
 
+        if(nanExceptions) {
+            quietNAN = 0;
+        }
+        assert (src1.number > 15);
+        if(src1.number < 32) {
+            dpOperation = 1;
+            instruction |=  (src1.encoding << 12);
+        }else {
+            instruction |= (src1.encoding & 0x1) << 22;
+            instruction |= (src1.encoding >> 1) << 12;
+        }
+        instruction |= (cond.value() << 28);
+        instruction |= (dpOperation << 8);
+        instruction |= (quietNAN << 7);
+
+
+        emitInt(instruction);
+    }
+    public final void vcmp(boolean nanExceptions, ConditionFlag cond,CiRegister src1, CiRegister src2) {
+        int instruction = 0x0eb40a40;
+        int dpOperation = 0;
+        int quietNAN = 1;
+
+        if(nanExceptions) {
+            quietNAN = 0;
+        }
+
+        assert src1.number > 15 && src2.number > 15;
+        if(src1.number < 32) {
+            assert(src2.number <32);
+            dpOperation = 1;
+            instruction |=  (src1.encoding << 12);
+            instruction |= (src2.encoding);
+        } else {
+            assert(src2.number >= 32);
+            instruction |= (src1.encoding >> 1) << 12;
+            instruction |= (src1.encoding & 0x1) << 22;
+            instruction |= (src2.encoding >> 1);
+            instruction |= (src2.encoding & 0x1) << 5;
+        }
+
+        instruction |= (cond.value() << 28);
+        instruction |= (dpOperation << 8);
+        instruction |= (quietNAN << 7);
+    }
     public final void ucomisd(CiRegister dst, CiRegister src) {
         assert dst.isFpu(); // will this work
         assert src.isFpu();

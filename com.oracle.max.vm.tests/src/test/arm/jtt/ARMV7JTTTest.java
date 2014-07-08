@@ -1504,16 +1504,11 @@ public class ARMV7JTTTest extends MaxTestCase {
                 }
                 if((m.codeAt(0)).toInt() < minimumValue) {
                     minimumValue = m.codeAt(0).toInt(); // UPDATE MINIMUM OFFSET IN ADDRESS SPACE
-                } else {
-                    System.out.println("NON MIN" + m.codeAt(0).toInt());
                 }
                 if ((m.codeAt(0)).toInt() + b.length > maximumValue) {
                     maximumValue = m.codeAt(0).toInt() + b.length; // UPDATE MAXIMUM OFFSET IN ADDRESS SPACE
 
-                } else {
-                    System.out.println("NON MAX" + (m.codeAt(0).toInt()+ b.length));
                 }
-                System.out.println(" MIN VAL "+ minimumValue + "  " + maximumValue);
                 masm.offlineAddToBuffer(b);
                 m.linkDirectCalls();
                 //CodeCacheValidation.instance.validateSingleMethod(m);
@@ -1533,6 +1528,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             for (TargetMethod m : methods) { // CRUDE ATTEMPT TO COPY MACHINE CODE BUFFERS!
                 byte[] b = m.code();
                 offset = m.codeAt(0).toInt() - minimumValue;
+                System.out.println("OFFSETS of method in code buffer " +  offset + " WITH LENGTH " + b.length);
                 for(int i = 0; i < b.length;i++) {
                     codeBytes[offset + i] = b[i];
                 }
@@ -1541,12 +1537,14 @@ public class ARMV7JTTTest extends MaxTestCase {
             byte [] b = MaxineVM.vm().stubs.staticTrampoline().code();
 
             offset = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() -  minimumValue;
+            System.out.println("STUB OFFSETS in code buffer " +  offset + " WITH LENGTH " + b.length);
 
             for(int i  = 0; i < b.length; i++) {
                 codeBytes[i+offset] = b[i];
             }
             System.out.println(" MIN " + minimumValue +  " MAX " + maximumValue + " LEN " + (maximumValue-minimumValue));
-
+            PrototypeGenerator aPrototype = new PrototypeGenerator(new OptionSet());
+            aPrototype.createGraphPrototype();
             //masm.pop(ConditionFlag.Always, 1); WE CANNOT DO THIS ANYMORE GLOBAL BUFFER
             int assemblerStatements = codeBytes.length / 4;
             entryPoint = entryPoint - minimumValue;
