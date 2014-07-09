@@ -36,6 +36,7 @@ import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.actor.member.MethodActor;
 import com.sun.max.vm.compiler.CompilationBroker;
 import com.sun.max.vm.compiler.RuntimeCompiler;
+import com.sun.max.vm.compiler.target.Compilations;
 import com.sun.max.vm.compiler.target.TargetMethod;
 import com.sun.max.vm.hosted.CompiledPrototype;
 import com.sun.max.vm.hosted.JavaPrototype;
@@ -335,7 +336,14 @@ public class Compile {
     private static List<TargetMethod> doCompile(RuntimeCompiler compiler, List<MethodActor> methods) {
         List<TargetMethod> targetMethods = new LinkedList<>();
         for (MethodActor methodActor : methods) {
-            targetMethods.add(compile(compiler, methodActor));
+            TargetMethod newTarget = null;
+            newTarget = compile(compiler, methodActor);
+            targetMethods.add(newTarget);
+            //targetMethods.add(compile(compiler, methodActor));
+            if(CompilationBroker.OFFLINE) {
+                ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
+                classMethodActor.compiledState = new Compilations(null,newTarget);
+            }
         }
         return targetMethods;
     }

@@ -1482,6 +1482,8 @@ public class ARMV7JTTTest extends MaxTestCase {
 
             initialised = true; // VM issues ...
             initTests(); // APN dirty hack ...
+            //PrototypeGenerator aPrototype = new PrototypeGenerator(new OptionSet());
+            //aPrototype.createGraphPrototype();
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             //masm.mov32BitConstant(ARMV7.r0, pair.first); // THIS WILL NOT WORK NOW
             //masm.mov32BitConstant(ARMV7.r1, pair.first); // THIS WILL NOT WORK NOW
@@ -1510,7 +1512,6 @@ public class ARMV7JTTTest extends MaxTestCase {
 
                 }
                 masm.offlineAddToBuffer(b);
-                m.linkDirectCalls();
                 //CodeCacheValidation.instance.validateSingleMethod(m);
 
             }
@@ -1526,6 +1527,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             }
             byte []codeBytes = new byte[maximumValue - minimumValue ];
             for (TargetMethod m : methods) { // CRUDE ATTEMPT TO COPY MACHINE CODE BUFFERS!
+                                m.linkDirectCalls();
                 byte[] b = m.code();
                 offset = m.codeAt(0).toInt() - minimumValue;
                 System.out.println("OFFSETS of method in code buffer " +  offset + " WITH LENGTH " + b.length);
@@ -1543,8 +1545,8 @@ public class ARMV7JTTTest extends MaxTestCase {
                 codeBytes[i+offset] = b[i];
             }
             System.out.println(" MIN " + minimumValue +  " MAX " + maximumValue + " LEN " + (maximumValue-minimumValue));
-            PrototypeGenerator aPrototype = new PrototypeGenerator(new OptionSet());
-            aPrototype.createGraphPrototype();
+            //PrototypeGenerator aPrototype = new PrototypeGenerator(new OptionSet());
+            //aPrototype.createGraphPrototype();
             //masm.pop(ConditionFlag.Always, 1); WE CANNOT DO THIS ANYMORE GLOBAL BUFFER
             int assemblerStatements = codeBytes.length / 4;
             entryPoint = entryPoint - minimumValue;

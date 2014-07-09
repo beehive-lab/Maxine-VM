@@ -136,7 +136,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public void cmpsd2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
         assert opr1.isFpu() && opr2.isFpu();
         ucomisd(opr1, opr2);
-        assert !opr1.isFpu(); //force crash as not implemented yet.
+       // assert !opr1.isFpu(); //force crash as not implemented yet.
         // get condition codes. don't set
         // FPSCR register  flags
         // [31] N Set to 1 if a comparison operation produces a less than result.
@@ -179,7 +179,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public void cmpss2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
         assert opr1.isFpu();
         assert opr2.isFpu();
-        assert !opr1.isFpu(); // APN force crash as not yet implemented
+      //  assert !opr1.isFpu(); // APN force crash as not yet implemented
         /*ucomiss(opr1, opr2);
 
         Label l = new Label();
@@ -369,7 +369,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         /*movss(dst, src);
         */
         setUpScratch(dst);
-        vstr(ConditionFlag.Always,r12,src,0);
+        vstr(ConditionFlag.Always,src,ARMV7.r12,0);
     }
 
     public void movdbl(CiRegister dst, CiRegister src) {

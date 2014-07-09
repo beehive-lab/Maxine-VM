@@ -699,6 +699,8 @@ public class Stubs {
             asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
             asm.setUpRegister(ARMV7.r8, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue()), callSite);
+
+            // ok so this should patch the call site address?
             asm.strImmediate(ARMV7Assembler.ConditionFlag.Always,0,0,0,callSite,ARMV7.r8,0);
             asm.ret(0); // ret(0) is a C3 in X86
 

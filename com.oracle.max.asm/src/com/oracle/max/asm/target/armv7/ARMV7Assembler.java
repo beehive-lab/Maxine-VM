@@ -966,7 +966,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         // Assuming this is a single precision load
         // vcmp(ConditionFlag.Always,dst,fpScratch);
         // set FPSCR flags these need to be accessed using a VMRS to transfer them to arm flags
-        assert !dst.isFpu(); // force a crash one way or another as this is notimplemented yet
+       // assert !dst.isFpu(); // force a crash one way or another as this is notimplemented yet
 
     }
 

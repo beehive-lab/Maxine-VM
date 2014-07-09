@@ -453,7 +453,8 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
                 T1XTemplateTag tag  = T1XTemplateTag.values()[i];
                 if (templates[i] == null && !isUnimplemented(tag)) {
                     if (stdT1X == this || (stdT1X.templates[i] == null && !stdT1X.isUnimplemented(tag))) {
-                        FatalError.unexpected("Template tag " + tag + " is not implemented");
+                        System.out.println("FATAL ERROR IGNORED COMMENTED OUT T1X.java createTemplates");
+                        //FatalError.unexpected("Template tag " + tag + " is not implemented");
                     } else {
                         templates[i] = stdT1X.templates[i];
                     }
