@@ -91,6 +91,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (rotate_amount / 2 & 0xf) << 8;
         emitInt(instruction);
     }
+
     public static int addRegistersHelper(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int imm2Type, final int imm5) {
         int instruction = 0x00800000;
         instruction |= (cond.value() & 0xf) << 28;
@@ -100,8 +101,15 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (imm5 << 7) | (imm2Type << 5);
         instruction |= Rm.encoding & 0xf;
         return instruction;
-
     }
+
+    public static int blxHelper(final ConditionFlag cond, final CiRegister Rm) {
+        int instruction = 0x12FFF30;
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= Rm.encoding & 0xf;
+        return instruction;
+    }
+
     public void addRegisters(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int imm2Type, final int imm5) {
         int instruction = 0x00800000;
         checkConstraint(0 <= imm5 && imm5 <= 31, "0 <= imm5 && imm5 <= 31");
@@ -743,7 +751,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         // so we can use whatever registers we want!
         //emitInt(0); // space for setupscratch
         //emitInt(0);
-        nop(2);
+        nop(4);
         // Target needs to be patched later ...
 
     }

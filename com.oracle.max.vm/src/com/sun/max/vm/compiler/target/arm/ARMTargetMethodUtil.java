@@ -109,6 +109,7 @@ public final class ARMTargetMethodUtil {
      * ARM I think we need to insert an isb instruction.
      */
     private static final Object PatchingLock = new Object(); // JavaMonitorManager.newVmLock("PATCHING_LOCK");
+    private static final boolean JUMP_WITH_LINK = true;
 
     public static int registerReferenceMapSize() {
         return UnsignedMath.divide(ARMV7.cpuRegisters.length, Bytes.WIDTH);
@@ -175,51 +176,76 @@ public final class ARMTargetMethodUtil {
     public static CodePointer fixupCall32Site(TargetMethod tm, int callOffset, CodePointer target) {
         CodePointer callSite = tm.codeAt(callOffset);
         if (!isPatchableCallSite(callSite)) {
-            // Every call site that is fixed up here might also be patched later.  To avoid failed patching,
+            // Every call site that is fixed up here might also be patched later. To avoid failed patching,
             // check for alignment of call site also here.
-            // TODO(cwi): This is a check that I would like to have, however, T1X does not ensure proper alignment yet when it stitches together templates that contain calls.
-            // FatalError.unexpected(" invalid patchable call site:  " + targetMethod + "+" + offset + " " + callSite.toHexString());
+            // TODO(cwi): This is a check that I would like to have, however, T1X does not ensure proper alignment yet
+// when it stitches together templates that contain calls.
+            // FatalError.unexpected(" invalid patchable call site:  " + targetMethod + "+" + offset + " " +
+// callSite.toHexString());
         }
 
-        long disp64 = target.toLong() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toLong();
-        int disp32 = (int) disp64;
+        int disp32 = target.toInt() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toInt();
+        Log.println("Target: " + target.toInt() + " hex: " + Integer.toHexString(target.toInt()));
+        Log.println("callsite: " + callSite.toInt() +" hex: " + Integer.toHexString(callSite.toInt()));
+        Log.println("RIP_CALL_INSTRUCTION_LENGTH: " + RIP_CALL_INSTRUCTION_LENGTH + " hex: " + Integer.toHexString(RIP_CALL_INSTRUCTION_LENGTH));
+        Log.println("Patching with disp32: " + disp32 + " hex: " + Integer.toHexString(disp32));
+
+
         int oldDisp32 = 0;
-        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
         if (MaxineVM.isHosted()) {
             final byte[] code = tm.code();
-            if(CompilationBroker.OFFLINE) {
-                // OK this is where we need to patch
-                // BASIC IDEA WE SETUP R12 WITH THE RELATIVE OFFSET
-                // THEN WE ADD IT TO THE PC ...
-                // THIS IS AN INTERWORKING BRANCH, SO IF WE WERE USING THUMB ETC WE WOULD NEED TO ALTER THE ADDRESS OFFSET
-                // IF WE WANTED TO STAY IN THUMB MODE AND/OR TO TRANSITION FORM ARM<->THUMB
-                //disp32 = 25;
-                //callOffset -= 20; // DIRTY HACK
-                System.out.println("PATCHING STATIC TRAMPOLINE RIP CALL " + disp32);
-                int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
-                code[callOffset+3 ] = (byte) (instruction&0xff);
-                code[callOffset + 2] = (byte) ((instruction >> 8)&0xff);
-                code[callOffset + 1] = (byte) ((instruction >> 16)&0xff);
-                code[callOffset ] = (byte) ((instruction >> 24)&0xff);
-                int tmp32 = disp32 >> 16;
-                tmp32 = tmp32 & 0xffff;
-                instruction = ARMV7Assembler.movtHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, tmp32 & 0xffff);
-                code[callOffset + 7] = (byte) (instruction&0xff);
-                code[callOffset + 6] = (byte) ((instruction >> 8)&0xff);
-                code[callOffset + 5] = (byte) ((instruction >> 16)&0xff);
-                code[callOffset + 4] = (byte) ((instruction >> 24)&0xff);
-                instruction = ARMV7Assembler.addRegistersHelper(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r15,ARMV7.r15,ARMV7.r12,0,0);
-                code[callOffset + 11] = (byte) (instruction&0xff);
-                code[callOffset + 10] = (byte) ((instruction >> 8)&0xff);
-                code[callOffset + 9] = (byte) ((instruction >> 16)&0xff);
-                code[callOffset + 8] = (byte) ((instruction >> 24)&0xff);
+            if (CompilationBroker.OFFLINE) {
+                if (JUMP_WITH_LINK) {
+                    int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
+                    code[callOffset + 3] = (byte) (instruction & 0xff);
+                    code[callOffset + 2] = (byte) ((instruction >> 8) & 0xff);
+                    code[callOffset + 1] = (byte) ((instruction >> 16) & 0xff);
+                    code[callOffset] = (byte) ((instruction >> 24) & 0xff);
+                    int tmp32 = disp32 >> 16;
+                    instruction = ARMV7Assembler.movtHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, tmp32 & 0xffff);
+                    code[callOffset + 7] = (byte) (instruction & 0xff);
+                    code[callOffset + 6] = (byte) ((instruction >> 8) & 0xff);
+                    code[callOffset + 5] = (byte) ((instruction >> 16) & 0xff);
+                    code[callOffset + 4] = (byte) ((instruction >> 24) & 0xff);
+                    instruction = ARMV7Assembler.addRegistersHelper(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r15, ARMV7.r12, 0, 0);
+                    code[callOffset + 11] = (byte) (instruction & 0xff);
+                    code[callOffset + 10] = (byte) ((instruction >> 8) & 0xff);
+                    code[callOffset + 9] = (byte) ((instruction >> 16) & 0xff);
+                    code[callOffset + 8] = (byte) ((instruction >> 24) & 0xff);
+                    instruction = ARMV7Assembler.blxHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12);
+                    code[callOffset + 15] = (byte) (instruction & 0xff);
+                    code[callOffset + 14] = (byte) ((instruction >> 8) & 0xff);
+                    code[callOffset + 13] = (byte) ((instruction >> 16) & 0xff);
+                    code[callOffset + 12] = (byte) ((instruction >> 24) & 0xff);
+                } else {
+                    // OK this is where we need to patch
+                    // BASIC IDEA WE SETUP R12 WITH THE RELATIVE OFFSET
+                    // THEN WE ADD IT TO THE PC ...
+                    // THIS IS AN INTERWORKING BRANCH, SO IF WE WERE USING THUMB ETC WE WOULD NEED TO ALTER THE ADDRESS OFFSET
+                    // IF WE WANTED TO STAY IN THUMB MODE AND/OR TO TRANSITION FORM ARM<->THUMB
+                    // disp32 = 25;
+                    // callOffset -= 20; // DIRTY HACK
+                    int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
+                    code[callOffset + 3] = (byte) (instruction & 0xff);
+                    code[callOffset + 2] = (byte) ((instruction >> 8) & 0xff);
+                    code[callOffset + 1] = (byte) ((instruction >> 16) & 0xff);
+                    code[callOffset] = (byte) ((instruction >> 24) & 0xff);
+                    int tmp32 = disp32 >> 16;
+                    tmp32 = tmp32 & 0xffff;
+                    instruction = ARMV7Assembler.movtHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, tmp32 & 0xffff);
+                    code[callOffset + 7] = (byte) (instruction & 0xff);
+                    code[callOffset + 6] = (byte) ((instruction >> 8) & 0xff);
+                    code[callOffset + 5] = (byte) ((instruction >> 16) & 0xff);
+                    code[callOffset + 4] = (byte) ((instruction >> 24) & 0xff);
+                    instruction = ARMV7Assembler.addRegistersHelper(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r15, ARMV7.r12, 0, 0);
+                    code[callOffset + 11] = (byte) (instruction & 0xff);
+                    code[callOffset + 10] = (byte) ((instruction >> 8) & 0xff);
+                    code[callOffset + 9] = (byte) ((instruction >> 16) & 0xff);
+                    code[callOffset + 8] = (byte) ((instruction >> 24) & 0xff);
+                }
             } else {
-                assert(0 == 1);
-                oldDisp32 =
-                        (code[callOffset + 4] & 0xff) << 24 |
-                                (code[callOffset + 3] & 0xff) << 16 |
-                                (code[callOffset + 2] & 0xff) << 8 |
-                                (code[callOffset + 1] & 0xff) << 0;
+                assert (0 == 1);
+                oldDisp32 = (code[callOffset + 4] & 0xff) << 24 | (code[callOffset + 3] & 0xff) << 16 | (code[callOffset + 2] & 0xff) << 8 | (code[callOffset + 1] & 0xff) << 0;
                 if (oldDisp32 != disp32) {
                     // needs to be rewritten
                     code[callOffset] = (byte) RIP_CALL;
@@ -230,13 +256,9 @@ public final class ARMTargetMethodUtil {
                 }
             }
         } else {
-            assert(0 == 1);
+            assert (0 == 1);
             final Pointer callSitePointer = callSite.toPointer();
-            oldDisp32 =
-                (callSitePointer.readByte(4) & 0xff) << 24 |
-                (callSitePointer.readByte(3) & 0xff) << 16 |
-                (callSitePointer.readByte(2) & 0xff) << 8 |
-                (callSitePointer.readByte(1) & 0xff) << 0;
+            oldDisp32 = (callSitePointer.readByte(4) & 0xff) << 24 | (callSitePointer.readByte(3) & 0xff) << 16 | (callSitePointer.readByte(2) & 0xff) << 8 | (callSitePointer.readByte(1) & 0xff) << 0;
             if (oldDisp32 != disp32) {
                 callSitePointer.writeByte(0, (byte) RIP_CALL);
                 callSitePointer.writeByte(1, (byte) disp32);
@@ -248,7 +270,7 @@ public final class ARMTargetMethodUtil {
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);
     }
 
-    private static final int RIP_CALL_INSTRUCTION_LENGTH = 8; // ARM it's two instructions
+    private static final int RIP_CALL_INSTRUCTION_LENGTH = 4; // ARM it's two instructions
                                                                // STMFD and the B branch
 
     private static final int RIP_JMP_INSTRUCTION_LENGTH = 4;  // ARM it's one instruction the B branch

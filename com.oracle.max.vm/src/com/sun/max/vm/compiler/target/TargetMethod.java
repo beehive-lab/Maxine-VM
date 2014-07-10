@@ -957,6 +957,7 @@ public abstract class TargetMethod extends MemoryRegion {
                 if (currentDirectCallee == null) {
                     // template call
                     assert classMethodActor.isTemplate();
+                    Log.println("Patch template call");
                 } else if (MaxineVM.isHosted()) {
                     final TargetMethod callee = getTargetMethod(currentDirectCallee);
                     if (callee == null) {    // APN this means the code is not yet available
@@ -964,13 +965,20 @@ public abstract class TargetMethod extends MemoryRegion {
                         if (classMethodActor.isTemplate()) {
                             assert currentDirectCallee == classMethodActor : "unlinkable call in a template must be a template call";
                             // leave call site unpatched
+                            Log.println("Callee==null Patch template call");
                         } else {
                             linkedAll = false;
                             patchStaticTrampoline(safepointIndex, offset);
+                            Log.print("Callee==null Patch static trampoline safepoint: ");
+                            Log.print(safepointIndex);
+                            Log.print(" offset ");
+                            Log.println(offset);
+
                         }
                     } else {
                         int callPos = safepoints.causePosAt(safepointIndex);
                         fixupCallSite(callPos, callee.codeAt(offset));
+                        Log.println("Callee!=null Fixup call site");
                     }
                 } else {
                     FatalError.breakpoint();

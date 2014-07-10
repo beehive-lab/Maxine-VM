@@ -1551,6 +1551,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             int assemblerStatements = codeBytes.length / 4;
             entryPoint = entryPoint - minimumValue;
             int[] registerValues = generateAndTestStubs(entryPoint,codeBytes, assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
+            System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValues[0]);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
