@@ -114,7 +114,8 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     private int[] generateAndTestStubs(int entryPoint,byte []theCode, int assemblerStatements, int[] expected, boolean[] IGNOREs, MaxineARMTester.BitsFlag[] masks) throws Exception {
         ARMCodeWriter code = new ARMCodeWriter(assemblerStatements, theCode);
-        code.createCodeStubsFile(theCode,entryPoint);
+        //code.createCodeStubsFile(theCode,entryPoint);
+        code.createStaticCodeStubsFile(theCode,entryPoint);
         MaxineARMTester r = new MaxineARMTester(expected, IGNOREs, masks);
         r.cleanFiles();
         r.cleanProcesses();

@@ -91,6 +91,14 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (rotate_amount / 2 & 0xf) << 8;
         emitInt(instruction);
     }
+    public static int movRegistersHelper(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rm) {
+        int instruction = 0x01a00000;
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (s ? 1 : 0) << 20;
+        instruction |= (Rd.encoding & 0xf) << 12;
+        instruction |= Rm.encoding & 0xf;
+        return instruction;
+    }
 
     public static int addRegistersHelper(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int imm2Type, final int imm5) {
         int instruction = 0x00800000;
@@ -751,6 +759,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         // so we can use whatever registers we want!
         //emitInt(0); // space for setupscratch
         //emitInt(0);
+
         nop(4);
         // Target needs to be patched later ...
 
@@ -759,8 +768,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final void call(CiRegister target) {
         // TODO APN believes that Adapters that do the necessary prologue/epilogue
         // to save / restore state ....
-        ldrImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,0);
-        push(ConditionFlag.Always,1<<15);
+        ldrImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,0); //
+        push(ConditionFlag.Always,1<<15); // PUSH the PC onto the stack
         // THIs is an indirect call, assuming the contents of the registers are a memory location we need to load
         add(ConditionFlag.Always,false,ARMV7.r15,ARMV7.r12,0,0);
 
@@ -1004,9 +1013,12 @@ public class ARMV7Assembler extends AbstractAssembler {
          TODO for testing of the methods
 
          */
-        pop(ConditionFlag.Always,1<<12);
+        /*pop(ConditionFlag.Always,1<<12);
         // to do normally this would be r14, but we need to pop it off the stack
         mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12);
+        */
+        mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
+
     }
 
     public final void ret(int imm16) {

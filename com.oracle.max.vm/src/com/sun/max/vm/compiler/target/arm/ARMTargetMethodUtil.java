@@ -120,15 +120,15 @@ public final class ARMTargetMethodUtil {
         // The compiler(s) ensure that disp of the call be aligned to a word boundary.
         // This may cause up to 7 nops to be inserted before a call.
 
-        // For ARM we do not have such difficulty relative PC (instruction pointer)
-        // calls are merely a STMFD branch/mov PC, address
+        // For ARM we Cmimic X86 but dont have all the alignment restrictions
         //All instructions are 32bits so we do not
         // need to do insertion of nops etc
         // presumably we need to update the 24bit immediate displacement of the branch
         // and/or patch a movw movt sequence with an absolute address.
         // currently this will be a patch of the movw movt
+        // an push of the PC and an add to the PC with the disp.
         final Address callSiteAddress = callSite.toAddress();
-        //final Address endOfCallSite = callSiteAddress.plus(RIP_CALL_INSTRUCTION_LENGTH - 1);
+        final Address endOfCallSite = callSiteAddress.plus(RIP_CALL_INSTRUCTION_LENGTH - 1);
         return callSiteAddress.isWordAligned();
         //return callSiteAddress.plus(1).isWordAligned() ? true :
         // last byte of call site:
@@ -164,6 +164,14 @@ public final class ARMTargetMethodUtil {
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(disp32);
     }
 
+    private static void manipulateBuffer(byte []code, int callOffset,int instruction)  {
+
+        code[callOffset + 3] = (byte) (instruction&0xff);
+        code[callOffset + 2] = (byte) ((instruction >> 8)&0xff);
+        code[callOffset + 1] = (byte) ((instruction >> 16)&0xff);
+        code[callOffset] = (byte) ((instruction >> 24)&0xff);
+
+    }
 
     /**
      * Patches the offset operand of a 32-bit relative CALL instruction.
@@ -184,7 +192,8 @@ public final class ARMTargetMethodUtil {
 // callSite.toHexString());
         }
 
-        int disp32 = target.toInt() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toInt();
+
+        int disp32 = target.toInt() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toInt() - 8; //
         Log.println("Target: " + target.toInt() + " hex: " + Integer.toHexString(target.toInt()));
         Log.println("callsite: " + callSite.toInt() +" hex: " + Integer.toHexString(callSite.toInt()));
         Log.println("RIP_CALL_INSTRUCTION_LENGTH: " + RIP_CALL_INSTRUCTION_LENGTH + " hex: " + Integer.toHexString(RIP_CALL_INSTRUCTION_LENGTH));
@@ -192,8 +201,13 @@ public final class ARMTargetMethodUtil {
 
 
         int oldDisp32 = 0;
+/*        callOffset = callOffset - RIP_CALL_INSTRUCTION_LENGTH;
+        disp32 += RIP_CALL_INSTRUCTION_LENGTH;
+        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
+*/
         if (MaxineVM.isHosted()) {
             final byte[] code = tm.code();
+
             if (CompilationBroker.OFFLINE) {
                 if (JUMP_WITH_LINK) {
                     int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
@@ -270,7 +284,8 @@ public final class ARMTargetMethodUtil {
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);
     }
 
-    private static final int RIP_CALL_INSTRUCTION_LENGTH = 4; // ARM it's two instructions
+
+    private static final int RIP_CALL_INSTRUCTION_LENGTH = 16; // ARM it's two instructions
                                                                // STMFD and the B branch
 
     private static final int RIP_JMP_INSTRUCTION_LENGTH = 4;  // ARM it's one instruction the B branch

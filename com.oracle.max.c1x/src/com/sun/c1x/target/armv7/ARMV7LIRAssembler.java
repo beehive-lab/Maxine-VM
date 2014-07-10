@@ -2206,6 +2206,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         // Deduct 'frameSize' to handle frames larger than the shadow
                         bangStackWithOffset(offset - frameSize);
                     }
+
+
                     break;
                 }
                 case PushFrame: {
