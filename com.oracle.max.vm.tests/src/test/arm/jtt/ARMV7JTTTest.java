@@ -43,6 +43,9 @@ public class ARMV7JTTTest extends MaxTestCase {
     private CodeAttribute codeAttr = null;
     private static boolean POST_CLEAN_FILES = true;
     private static boolean OFFLINE_C1X_COMPILE = true;
+    private int bufferSize = -1;
+    private int entryPoint =  -1;
+    private byte []codeBytes = null;
 
     public void initialiseFrameForCompilation() {
         // TODO: compute max stack
@@ -1470,9 +1473,79 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
+    private  void initialiseCodeBuffers(List <TargetMethod> methods) {
+
+         int minimumValue = Integer.MAX_VALUE;
+         int maximumValue = Integer.MIN_VALUE;
+         int offset;
+         entryPoint = -1; // offset in the global array of the method we call from C.
+         for (TargetMethod m : methods) { // CRUDE WORKING ATTEMPT TO COPY MACHINE CODE BUFFERS!
+
+             byte []b = m.code();
+             if(entryPoint == -1) {
+                entryPoint = m.codeAt(0).toInt();
+             }
+             if((m.codeAt(0)).toInt() < minimumValue) {
+                minimumValue = m.codeAt(0).toInt(); // UPDATE MINIMUM OFFSET IN ADDRESS SPACE
+             }
+             if ((m.codeAt(0)).toInt() + b.length > maximumValue) {
+                maximumValue = m.codeAt(0).toInt() + b.length; // UPDATE MAXIMUM OFFSET IN ADDRESS SPACE
+             }
+                  //masm.offlineAddToBuffer(b);
+         }
+         if (MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() < minimumValue) {
+             minimumValue = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt(); // INCLUDE STATIC TRAMPOLINE STUB CODE
+         }
+         if ((MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() +
+             MaxineVM.vm().stubs.staticTrampoline().code().length) > maximumValue) {
+             maximumValue = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() +
+             MaxineVM.vm().stubs.staticTrampoline().code().length; // INCLUDE STATIC TRAMPOLINE STUB CODE
+
+         }
+         codeBytes = new byte[maximumValue - minimumValue ];
+         for (TargetMethod m : methods) { // CRUDE ATTEMPT TO COPY MACHINE CODE BUFFERS!
+             m.linkDirectCalls();
+             byte[] b = m.code();
+             offset = m.codeAt(0).toInt() - minimumValue;
+             System.out.println("OFFSETS of method in code buffer " +  offset + " WITH LENGTH " + b.length);
+             for(int i = 0; i < b.length;i++) {
+                 codeBytes[offset + i] = b[i];
+             }
+
+         }
+         byte [] b = MaxineVM.vm().stubs.staticTrampoline().code();
+
+         offset = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() -  minimumValue;
+         System.out.println("STUB OFFSETS in code buffer " +  offset + " WITH LENGTH " + b.length);
+
+         for(int i  = 0; i < b.length; i++) {
+              codeBytes[i+offset] = b[i];
+         }
+         entryPoint = entryPoint - minimumValue;
+
+                  //System.out.println(" MIN " + minimumValue +  " MAX " + maximumValue + " LEN " + (maximumValue-minimumValue));
+
+
+
+
+    }
+
     public void test_jtt_BC_invokestatic() throws Exception {
         CompilationBroker.OFFLINE = true;
         List<Args> pairs = new LinkedList<Args>();
+        String klassName = "jtt.bytecode.BC_invokestatic";
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        initialised = true; // VM issues ..
+        initTests(); // APN dirty hack for VM initialisation ...
+
+        ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+        /*
+        WE NEED A CLEANED UP WAY TO .. COPY THE CODE INTO AN ALIGNED BUFFER, WE NEED TO BE ABLE TO MATCH
+        THE MaxTargetMethod with the one we want to call, and then to extract its entry point ... IVE CHEATED HERE AND
+        JUST USED THE FIRST ONE AS I KNOW THAT IS "test" IN THIS INSTANCE
+         */
+
+        initialiseCodeBuffers(methods);
 
 
 
@@ -1480,80 +1553,11 @@ public class ARMV7JTTTest extends MaxTestCase {
 
 
 
-            String klassName = "jtt.bytecode.BC_invokestatic";
-            List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
-             initialised = true; // VM issues ..
-             initTests(); // APN dirty hack ...
-             // PrototypeGenerator aPrototype = new PrototypeGenerator(new OptionSet());
-            //aPrototype.createGraphPrototype();
 
-            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
 
-            // TODO note altered test.c to give a function call argument, this was placed in r0.
-            int minimumValue = Integer.MAX_VALUE;
-            int maximumValue = Integer.MIN_VALUE;
-            int offset;
-            int entryPoint = -1; // offset in the global array of the method we call from C.
-            for (TargetMethod m : methods) { // CRUDE ATTEMPT TO COPY MACHINE CODE BUFFERS!
-
-                byte []b = m.code();
-                if(entryPoint == -1) {
-                    entryPoint = m.codeAt(0).toInt();
-                }
-                if((m.codeAt(0)).toInt() < minimumValue) {
-                    minimumValue = m.codeAt(0).toInt(); // UPDATE MINIMUM OFFSET IN ADDRESS SPACE
-                }
-                if ((m.codeAt(0)).toInt() + b.length > maximumValue) {
-                    maximumValue = m.codeAt(0).toInt() + b.length; // UPDATE MAXIMUM OFFSET IN ADDRESS SPACE
-
-                }
-                masm.offlineAddToBuffer(b);
-                //CodeCacheValidation.instance.validateSingleMethod(m);
-
-            }
-            if (MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() < minimumValue) {
-                minimumValue = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt(); // INCLUDE STATIC TRAMPOLINE STUB CODE
-
-            }
-            if ((MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() +
-                    MaxineVM.vm().stubs.staticTrampoline().code().length) > maximumValue) {
-                maximumValue = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() +
-                        MaxineVM.vm().stubs.staticTrampoline().code().length; // INCLUDE STATIC TRAMPOLINE STUB CODE
-
-            }
-            byte []codeBytes = new byte[maximumValue - minimumValue ];
-            for (TargetMethod m : methods) { // CRUDE ATTEMPT TO COPY MACHINE CODE BUFFERS!
-                                m.linkDirectCalls();
-                byte[] b = m.code();
-                offset = m.codeAt(0).toInt() - minimumValue;
-                System.out.println("OFFSETS of method in code buffer " +  offset + " WITH LENGTH " + b.length);
-                for(int i = 0; i < b.length;i++) {
-                    codeBytes[offset + i] = b[i];
-                }
-
-            }
-            byte [] b = MaxineVM.vm().stubs.staticTrampoline().code();
-
-            offset = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() -  minimumValue;
-            System.out.println("STUB OFFSETS in code buffer " +  offset + " WITH LENGTH " + b.length);
-
-            for(int i  = 0; i < b.length; i++) {
-                codeBytes[i+offset] = b[i];
-            }
-            System.out.println(" MIN " + minimumValue +  " MAX " + maximumValue + " LEN " + (maximumValue-minimumValue));
-            //PrototypeGenerator aPrototype = new PrototypeGenerator(new OptionSet());
-            //aPrototype.createGraphPrototype();
-            //masm.pop(ConditionFlag.Always, 1); WE CANNOT DO THIS ANYMORE GLOBAL BUFFER
-            int assemblerStatements = codeBytes.length / 4;
-            entryPoint = entryPoint - minimumValue;
-
-            /*void (*pf)(int) = (void (*))(code);
-            print_uart0("changed test.c!\n");
-            (*pf)(1); // Need to change this to something related to the test itself
-            asm volatile("forever: b forever");*/
-
+        int assemblerStatements = codeBytes.length / 4;
         pairs.add(new Args(1, 1));
-        pairs.add(new Args(2,2));
+        pairs.add(new Args(2, 2));
         pairs.add(new Args(-2,-2));
 
         for (Args pair : pairs) {
@@ -1561,6 +1565,15 @@ public class ARMV7JTTTest extends MaxTestCase {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_invokestatic.test(pair.first);
             expectedValues[0] = answer;
+
+
+                 /*SEE BELOW, WE NEED TO PROVIDE A COMMA SEPARATED LIST OF TYPES "int" void (*pf)(***int***) = (void (*))(code);
+                 print_uart0("changed test.c!\n");
+                           AND WE NEED TO PROVIDE A COMMA SEPARATED LIST OF FUNCTION ARGUMENT VALUES / VARIABLES
+                 (*pf)(****1*****); // Need to change this to something related to the test itself
+                 asm volatile("forever: b forever");*/
+
+
 
 
             String functionPrototype = ARMCodeWriter.preAmble("int",Integer.toString(pair.first));
