@@ -88,6 +88,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
+
     private static final OptionSet options = new OptionSet(false);
     private static VMConfigurator vmConfigurator = null;
     private static boolean initialised = false;
@@ -1530,7 +1531,7 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     }
 
-    public void test_jtt_BC_invokestatic() throws Exception {
+    public void IGNOREtest_jtt_BC_invokestatic() throws Exception {
         CompilationBroker.OFFLINE = true;
         List<Args> pairs = new LinkedList<Args>();
         String klassName = "jtt.bytecode.BC_invokestatic";
@@ -1544,16 +1545,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         THE MaxTargetMethod with the one we want to call, and then to extract its entry point ... IVE CHEATED HERE AND
         JUST USED THE FIRST ONE AS I KNOW THAT IS "test" IN THIS INSTANCE
          */
-
         initialiseCodeBuffers(methods);
-
-
-
-
-
-
-
-
 
         int assemblerStatements = codeBytes.length / 4;
         pairs.add(new Args(1, 1));
@@ -1561,22 +1553,15 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(-2,-2));
 
         for (Args pair : pairs) {
-            System.out.println("---------------------------------------------------------------------------------");
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_invokestatic.test(pair.first);
             expectedValues[0] = answer;
-
-
                  /*SEE BELOW, WE NEED TO PROVIDE A COMMA SEPARATED LIST OF TYPES "int" void (*pf)(***int***) = (void (*))(code);
                  print_uart0("changed test.c!\n");
                            AND WE NEED TO PROVIDE A COMMA SEPARATED LIST OF FUNCTION ARGUMENT VALUES / VARIABLES
                  (*pf)(****1*****); // Need to change this to something related to the test itself
                  asm volatile("forever: b forever");*/
-
-
-
-
-            String functionPrototype = ARMCodeWriter.preAmble("int",Integer.toString(pair.first));
+            String functionPrototype = ARMCodeWriter.preAmble("void","int",Integer.toString(pair.first));
             System.out.println(functionPrototype);
             int[] registerValues = generateAndTestStubs(functionPrototype,entryPoint,codeBytes, assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             if(registerValues[0] != expectedValues[0]) {
@@ -1586,4 +1571,45 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+    public void test_jtt_BC_d2f() throws Exception {
+        CompilationBroker.OFFLINE = true;
+        List<Args> pairs = new LinkedList<Args>();
+        String klassName = "jtt.bytecode.BC_d2f";
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        initialised = true; // VM issues ..
+        initTests(); // APN dirty hack for VM initialisation ...
+
+        /*
+        WE NEED A CLEANED UP WAY TO .. COPY THE CODE INTO AN ALIGNED BUFFER, WE NEED TO BE ABLE TO MATCH
+        THE MaxTargetMethod with the one we want to call, and then to extract its entry point ... IVE CHEATED HERE AND
+        JUST USED THE FIRST ONE AS I KNOW THAT IS "test" IN THIS INSTANCE
+         */
+        initialiseCodeBuffers(methods);
+
+        int assemblerStatements = codeBytes.length / 4;
+        double []arguments = {-2.2d,0.0d,1.0d,01.06d};
+        float expectedFloat = -9;
+        for (int i = 0; i < arguments.length;i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            float answer = jtt.bytecode.BC_d2f.test(arguments[i]);
+            expectedFloat = answer;
+                 /*SEE BELOW, WE NEED TO PROVIDE A COMMA SEPARATED LIST OF TYPES "int" void (*pf)(***int***) = (void (*))(code);
+                 print_uart0("changed test.c!\n");
+                           AND WE NEED TO PROVIDE A COMMA SEPARATED LIST OF FUNCTION ARGUMENT VALUES / VARIABLES
+                 (*pf)(****1*****); // Need to change this to something related to the test itself
+                 asm volatile("forever: b forever");*/
+            String functionPrototype = ARMCodeWriter.preAmble("float","double",Double.toString(arguments[i]));
+            System.out.println(functionPrototype);
+            // good question here ... is the value returned in the float s0 or the core s0 register
+            int[] registerValues = generateAndTestStubs(functionPrototype,entryPoint,codeBytes, assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
+            if(Float.intBitsToFloat(registerValues[0]) != expectedFloat) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValues[0]);
+            }
+            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            theCompiler.cleanup();
+        }
+        MaxineVM.exit(0);
+    }
+
+
 }

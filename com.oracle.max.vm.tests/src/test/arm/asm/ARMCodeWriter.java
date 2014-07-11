@@ -40,10 +40,10 @@ public class ARMCodeWriter {
         }
     }
 
-    public static String preAmble(String listOfTypes,String listOfValues)
+    public static String preAmble(String returnType,String listOfTypes,String listOfValues)
     {
-        String val = new String("void (*pf)(");
-        val += listOfTypes + ") = (void (*))(code);\n";
+        String val = new String(returnType + " (*pf)(");
+        val += listOfTypes + ") = (" + returnType +  "(*))(code);\n";
         val += "print_uart0(\"Changed!\");\n";
         val += "(*pf)(" + listOfValues + ");\n";
         val += "asm volatile(\"forever: b forever\");\n";

@@ -472,17 +472,25 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     // TODO: Finalize this
     public void movss(final ConditionFlag cond, int P, int U, int W, final CiRegister Rn, final CiRegister Rt, final CiRegister Rm, int imm2Type, int imm5) { // move
+        assert(Rt.number < 16);
         if(Rn.number < 16) {
             ldr(cond, P, U, W, Rn, Rt, Rm, imm2Type, imm5);
 
         } else {
-            vldr(ConditionFlag.Always,Rn,Rt,0);
+            assert(Rn.number > 31);
+            vldr(cond,Rn,Rt,0);
         }
     }
 
     // TODO: Finalize this
     public void movsd(final ConditionFlag cond, int P, int U, int W, final CiRegister Rn, final CiRegister Rt, final CiRegister Rm) {
-        ldrd(cond, P, U, W, Rn, Rt, Rm);
+
+        if(Rn.number < 16) {
+            ldrd(cond, P, U, W, Rn, Rt, Rm);
+        } else {
+            assert(Rn.number < 31);
+            vldr(cond,Rn,Rt,0);
+        }
     }
 
     public void ldrd(final ConditionFlag cond, int P, int U, int W, final CiRegister Rn, final CiRegister Rt, final CiRegister Rm) {
