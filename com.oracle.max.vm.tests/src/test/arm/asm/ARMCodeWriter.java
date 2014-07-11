@@ -39,7 +39,21 @@ public class ARMCodeWriter {
             System.out.println(msg);
         }
     }
-    public void createStaticCodeStubsFile(byte []stubs,int entryPoint) {
+
+    public static String preAmble(String listOfTypes,String listOfValues)
+    {
+        String val = new String("void (*pf)(");
+        val += listOfTypes + ") = (void (*))(code);\n";
+        val += "print_uart0(\"Changed!\");\n";
+        val += "(*pf)(" + listOfValues + ");\n";
+        val += "asm volatile(\"forever: b forever\");\n";
+        return val;
+
+    }/*void (*pf)(int) = (void (*))(code);
+            print_uart0("changed test.c!\n");
+            (*pf)(1); // Need to change this to something related to the test itself
+            asm volatile("forever: b forever");*/
+    public void createStaticCodeStubsFile(String functionPrototype,byte []stubs,int entryPoint) {
         try {
 
             PrintWriter writer = new PrintWriter("codebuffer.c", "UTF-8");
@@ -58,7 +72,7 @@ public class ARMCodeWriter {
                 writer.println("codeArray[" + i + " + 0] = " + stubs[i+3] + ";");
                */
 
-                writer.println(Integer.toHexString(stubs[i+3]) + ", " + Integer.toHexString(stubs[i+2]) + ", " + Integer.toHexString(stubs[i+1]) + ", " + Integer.toHexString(stubs[i]) + ",\n");
+                writer.println("0x" + Integer.toHexString(stubs[i+3]) + ", " + "0x" + Integer.toHexString(stubs[i+2]) + ", " + "0x" + Integer.toHexString(stubs[i+1]) + ", " + "0x" + Integer.toHexString(stubs[i]) + ",\n");
 
             }
             writer.println("0xfe, 0xff, 0xff, 0xea };\n");
@@ -83,6 +97,7 @@ public class ARMCodeWriter {
             writer.println("codeArray[" + stubs.length + "+3] = " + 0xea + ";");*/
             writer.println("unsigned char *code = codeArray + " + entryPoint + ";");
             writer.println("void c_entry() {");
+            writer.print(functionPrototype);
             writer.close();
         } catch (Exception e) {
             System.err.println(e);

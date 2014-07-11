@@ -112,10 +112,10 @@ public class ARMV7JTTTest extends MaxTestCase {
     private static int[] expectedValues = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     private static boolean[] IGNOREvalues = new boolean[17];
 
-    private int[] generateAndTestStubs(int entryPoint,byte []theCode, int assemblerStatements, int[] expected, boolean[] IGNOREs, MaxineARMTester.BitsFlag[] masks) throws Exception {
+    private int[] generateAndTestStubs(String functionPrototype,int entryPoint,byte []theCode, int assemblerStatements, int[] expected, boolean[] IGNOREs, MaxineARMTester.BitsFlag[] masks) throws Exception {
         ARMCodeWriter code = new ARMCodeWriter(assemblerStatements, theCode);
         //code.createCodeStubsFile(theCode,entryPoint);
-        code.createStaticCodeStubsFile(theCode,entryPoint);
+        code.createStaticCodeStubsFile(functionPrototype,theCode,entryPoint);
         MaxineARMTester r = new MaxineARMTester(expected, IGNOREs, masks);
         r.cleanFiles();
         r.cleanProcesses();
@@ -1473,27 +1473,22 @@ public class ARMV7JTTTest extends MaxTestCase {
     public void test_jtt_BC_invokestatic() throws Exception {
         CompilationBroker.OFFLINE = true;
         List<Args> pairs = new LinkedList<Args>();
-        pairs.add(new Args(1, 1));
-        for (Args pair : pairs) {
-            MaxineByteCode xx = new MaxineByteCode();
-            int answer = jtt.bytecode.BC_invokestatic.test(pair.first);
-            expectedValues[0] = answer;
+
+
+
+
+
+
+
             String klassName = "jtt.bytecode.BC_invokestatic";
             List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
-
-            initialised = true; // VM issues ...
-            initTests(); // APN dirty hack ...
-            //PrototypeGenerator aPrototype = new PrototypeGenerator(new OptionSet());
+             initialised = true; // VM issues ..
+             initTests(); // APN dirty hack ...
+             // PrototypeGenerator aPrototype = new PrototypeGenerator(new OptionSet());
             //aPrototype.createGraphPrototype();
+
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-            //masm.mov32BitConstant(ARMV7.r0, pair.first); // THIS WILL NOT WORK NOW
-            //masm.mov32BitConstant(ARMV7.r1, pair.first); // THIS WILL NOT WORK NOW
-            /*
-            WE ARE TRYING TO USE A GLOBAL BUFFER CONTAINING ALL COMPILED CODE FOR THE "CLASS"
-            THIS MEANS WE DO NOT HAVE THE ABILITY TO MANUALLY INSERT CODE INTO THE BUFFERS
-             */
-            //masm.push(ConditionFlag.Always, 1); // local slot is argument r0
-            //masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+
             // TODO note altered test.c to give a function call argument, this was placed in r0.
             int minimumValue = Integer.MAX_VALUE;
             int maximumValue = Integer.MIN_VALUE;
@@ -1551,8 +1546,29 @@ public class ARMV7JTTTest extends MaxTestCase {
             //masm.pop(ConditionFlag.Always, 1); WE CANNOT DO THIS ANYMORE GLOBAL BUFFER
             int assemblerStatements = codeBytes.length / 4;
             entryPoint = entryPoint - minimumValue;
-            int[] registerValues = generateAndTestStubs(entryPoint,codeBytes, assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
-            System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValues[0]);
+
+            /*void (*pf)(int) = (void (*))(code);
+            print_uart0("changed test.c!\n");
+            (*pf)(1); // Need to change this to something related to the test itself
+            asm volatile("forever: b forever");*/
+
+        pairs.add(new Args(1, 1));
+        pairs.add(new Args(2,2));
+        pairs.add(new Args(-2,-2));
+
+        for (Args pair : pairs) {
+            System.out.println("---------------------------------------------------------------------------------");
+            MaxineByteCode xx = new MaxineByteCode();
+            int answer = jtt.bytecode.BC_invokestatic.test(pair.first);
+            expectedValues[0] = answer;
+
+
+            String functionPrototype = ARMCodeWriter.preAmble("int",Integer.toString(pair.first));
+            System.out.println(functionPrototype);
+            int[] registerValues = generateAndTestStubs(functionPrototype,entryPoint,codeBytes, assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
+            if(registerValues[0] != expectedValues[0]) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValues[0]);
+            }
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
