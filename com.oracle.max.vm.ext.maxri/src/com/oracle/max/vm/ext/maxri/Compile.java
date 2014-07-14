@@ -139,8 +139,6 @@ public class Compile {
             System.out.println("Valid values are: " + compilerAliasNames + " or fully qualified class name");
             return null;
         }
-        System.out.println(compilerName);
-
         if (compilerName.contains("T1X")) {
             RuntimeCompiler.baselineCompilerOption.setValue(compilerName);
         } else {
@@ -153,17 +151,18 @@ public class Compile {
             MethodInstrumentation.enable(500);
         }
 
-        vmConfigurator.create();
+        if (!CompilationBroker.OFFLINE) {
+            vmConfigurator.create();
 
-        // create the prototype
-        if (verboseOption.getValue() > 0) {
-            out.print("Initializing Java prototype... ");
+            // create the prototype
+            if (verboseOption.getValue() > 0) {
+                out.print("Initializing Java prototype... ");
+            }
+            JavaPrototype.initialize(false);
+            if (verboseOption.getValue() > 0) {
+                out.println("done");
+            }
         }
-        JavaPrototype.initialize(false);
-        if (verboseOption.getValue() > 0) {
-            out.println("done");
-        }
-
         CompilationBroker cb = MaxineVM.vm().compilationBroker;
         final RuntimeCompiler compiler = compilerName.contains("T1X") ? cb.baselineCompiler : cb.optimizingCompiler;
         cb.optimizingCompiler.initialize(Phase.HOSTED_COMPILING);
