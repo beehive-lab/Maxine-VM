@@ -102,10 +102,23 @@ public class MaxineARMTester {
             e.printStackTrace();
         }
     }
-
-    public void compile() {
+    public void newcompile() {
         final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.bin", "test.elf");
         final ProcessBuilder compile = new ProcessBuilder("arm-unknown-eabi-gcc", "-c", "-march=armv7-a", "-g", "test.c", "-o", "test.o");
+        compile.redirectOutput(gccOutput);
+        compile.redirectError(gccErrors);
+        try {
+            removeFiles.start().waitFor();
+            gcc = compile.start();
+            gcc.waitFor();
+        } catch (Exception e) {
+            System.err.println(e);
+            e.printStackTrace();
+        }
+    }
+    public void compile() {
+        final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.bin", "test.elf");
+        final ProcessBuilder compile = new ProcessBuilder("arm-unknown-eabi-gcc", "-c","-DOLDCOMPILE", "-march=armv7-a", "-g", "test.c", "-o", "test.o");
         compile.redirectOutput(gccOutput);
         compile.redirectError(gccErrors);
         try {

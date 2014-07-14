@@ -1,8 +1,8 @@
 package test.arm.asm;
 
-import java.io.*;
+import com.oracle.max.asm.Buffer;
 
-import com.oracle.max.asm.*;
+import java.io.PrintWriter;
 
 public class ARMCodeWriter {
 
