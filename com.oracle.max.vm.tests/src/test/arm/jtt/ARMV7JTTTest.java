@@ -177,8 +177,13 @@ public class ARMV7JTTTest extends MaxTestCase {
             }
             String baselineCompilerName = new String("com.oracle.max.vm.ext.t1x.T1X");
             String optimizingCompilerName = new String("com.oracle.max.vm.ext.c1x.C1X");
-            RuntimeCompiler.baselineCompilerOption.setValue(baselineCompilerName);
-            RuntimeCompiler.optimizingCompilerOption.setValue(optimizingCompilerName);
+
+            if(!RuntimeCompiler.baselineCompilerOption.isAssigned()) {
+
+                RuntimeCompiler.baselineCompilerOption.setValue(baselineCompilerName);
+                RuntimeCompiler.optimizingCompilerOption.setValue(optimizingCompilerName);
+
+            }
             if (initialised == false) {
                 vmConfigurator.create();
                 CompilationBroker.OFFLINE = true;
