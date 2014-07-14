@@ -854,6 +854,7 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     public void test_jtt_BC_lookupswitch_1() throws Exception {
+        enableC1XOfflineCompiler();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 42));
         pairs.add(new Args(1, 42));
@@ -891,6 +892,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
+            disableC1XOfflineCompiler();
         }
     }
 

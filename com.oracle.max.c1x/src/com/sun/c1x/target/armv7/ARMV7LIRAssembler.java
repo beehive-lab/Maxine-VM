@@ -1181,8 +1181,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     @Override
     protected void emitLogicOp(LIROpcode code, CiValue left, CiValue right, CiValue dst) {
         assert left.isRegister();
-
-        assert 0 == 1 : "emitLogicOp";
         // Checkstyle: off
         if (left.kind.isInt()) {
             CiRegister reg = left.asRegister();
@@ -1651,7 +1649,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert tmp.isIllegal() : "wasting a register if tmp is allocated";
         assert left.isRegister();
 
-        assert 0 == 1 : "emitShiftOp";
         if (left.kind.isInt()) {
             CiRegister value = left.asRegister();
             assert value != SHIFTCount : "left cannot be r1";
