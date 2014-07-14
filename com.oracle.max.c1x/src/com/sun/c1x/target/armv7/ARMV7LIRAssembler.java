@@ -199,7 +199,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     @Override
     public void emitTraps() {
         //assert 0 == 1 : "emitTraps ARMV7IRAssembler";
-        System.out.println("WARNING emitTraps ARMV7LIRAssembler not implemented at present");
         for (int i = 0; i < C1XOptions.MethodEndBreakpointGuards; ++i) {
             //masm.int3();
         }

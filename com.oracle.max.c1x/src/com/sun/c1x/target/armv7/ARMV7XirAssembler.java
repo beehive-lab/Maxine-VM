@@ -83,15 +83,15 @@ public class ARMV7XirAssembler extends CiXirAssembler {
                     // Convert to two operand form
                     XirOperand xOp = i.x();
                     if (i.op == XirOp.Div || i.op == XirOp.Mod) {
-                        System.out.println("ARMV7XirAssembler createRegisterTemp stuff");
+                        //System.out.println("ARMV7XirAssembler createRegisterTemp stuff");
 
                         if (fixedRDX == null) {
-                            System.out.println("ARMV7XirAssembler RDX was null");
+                            //System.out.println("ARMV7XirAssembler RDX was null");
                             //fixedRDX = createRegisterTemp("divModTemp", CiKind.Int, ARMV7.rdx);
                         }
                         // Special treatment to make sure that the left input of % and / is in RAX
                         if (fixedRAX == null) {
-                            System.out.println("ARMV7XirAssembler RAX was null");
+                            //System.out.println("ARMV7XirAssembler RAX was null");
                             //fixedRAX = createRegisterTemp("divModLeftInput", CiKind.Int, ARMV7.rax);
                         }
                         currentList.add(new XirInstruction(i.x().kind, XirOp.Mov, fixedRAX, i.x()));
@@ -107,7 +107,7 @@ public class ARMV7XirAssembler extends CiXirAssembler {
                     if ((i.op == XirOp.Shl || i.op == XirOp.Shr) && (!(i.y() instanceof XirConstantOperand))) {
                         // Special treatment to make sure that the shift count is always in RCX
                         if (fixedRCX == null) {
-                           System.out.println("ARMV7XirAssembler RCX was null");
+                           //System.out.println("ARMV7XirAssembler RCX was null");
 
                          //   fixedRCX = createRegisterTemp("fixedShiftCount", i.y().kind, ARMV7.rcx);
                         }
@@ -129,7 +129,7 @@ public class ARMV7XirAssembler extends CiXirAssembler {
 
                 case RepeatMoveWords:
                 case RepeatMoveBytes:
-                    System.out.println("ARMV7XirAssembler RepeatMove Words/Bytes");
+                    //System.out.println("ARMV7XirAssembler RepeatMove Words/Bytes");
                     if (fixedRSI == null) {
                        // fixedRSI = createRegisterTemp("fixedRSI", target.wordKind, ARMV7.rsi);
                     }
@@ -154,7 +154,7 @@ public class ARMV7XirAssembler extends CiXirAssembler {
                 case PointerStoreDisp:
                     break;
                 case PointerCAS:
-                    System.out.println("ARMV7XirAssembler PointerCAS");
+                    //System.out.println("ARMV7XirAssembler PointerCAS");
 
                     if (fixedRAX == null) {
                     //    fixedRAX = createRegisterTemp("fixedRAX", target.wordKind, ARMV7.rax);
