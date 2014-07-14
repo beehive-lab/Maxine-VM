@@ -52,8 +52,8 @@ public class ARMV7Assembler extends AbstractAssembler {
             // we can't yet know where the label will be bound. If you're sure that
             // the forward jump will not run beyond 24-bits bytes, then its ok
             l.addPatchAt(codeBuffer.position());
-            //emitByte(0xE9);
-            //emitInt(0);
+            // emitByte(0xE9);
+            // emitInt(0);
             nop();
         }
     }
@@ -91,6 +91,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (rotate_amount / 2 & 0xf) << 8;
         emitInt(instruction);
     }
+
     public static int movRegistersHelper(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rm) {
         int instruction = 0x01a00000;
         instruction |= (cond.value() & 0xf) << 28;
@@ -214,7 +215,6 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-
     public void eor(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int imm5, final int imm2) {
         int instruction = 0x00200000;
         // type ie imm2 refers to 00 LSL
@@ -273,26 +273,27 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= imm16 & 0xfff;
         emitInt(instruction);
     }
-    // helper function
+
     public static int movtHelper(final ConditionFlag cond, final CiRegister Rd, final int imm16) {
         int instruction = 0x03400000;
-        //checkConstraint(0 <= imm16 && imm16 <= 65535, "0<= imm16 && imm16 <= 65535 ");
+        // checkConstraint(0 <= imm16 && imm16 <= 65535, "0<= imm16 && imm16 <= 65535 ");
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (imm16 >> 12) << 16;
         instruction |= (Rd.encoding & 0xf) << 12;
         instruction |= imm16 & 0xfff;
         return instruction;
     }
-    //helper function
+
     public static int movwHelper(final ConditionFlag cond, final CiRegister Rd, final int imm16) {
         int instruction = 0x03000000;
-        //checkConstraint(0 <= imm16 && imm16 <= 65535, "0<= imm16 && imm16 <= 65535 ");
+        // checkConstraint(0 <= imm16 && imm16 <= 65535, "0<= imm16 && imm16 <= 65535 ");
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (imm16 >> 12) << 16;
         instruction |= (Rd.encoding & 0xf) << 12;
         instruction |= imm16 & 0xfff;
         return instruction;
     }
+
     public void movw(final ConditionFlag cond, final CiRegister Rd, final int imm16) {
         int instruction = 0x03000000;
         checkConstraint(0 <= imm16 && imm16 <= 65535, "0<= imm16 && imm16 <= 65535 ");
@@ -384,6 +385,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= imm12 & 0xfff;
         emitInt(instruction);
     }
+
     public void strDualImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
         int instruction = 0x040000f0;
         assert imm8 == 0; // TODO fix the encoding its an ARM 8 bit
@@ -472,24 +474,22 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     // TODO: Finalize this
     public void movss(final ConditionFlag cond, int P, int U, int W, final CiRegister Rn, final CiRegister Rt, final CiRegister Rm, int imm2Type, int imm5) { // move
-        assert(Rt.number < 16);
-        if(Rn.number < 16) {
+        assert (Rt.number < 16);
+        if (Rn.number < 16) {
             ldr(cond, P, U, W, Rn, Rt, Rm, imm2Type, imm5);
-
         } else {
-            assert(Rn.number > 31);
-            vldr(cond,Rn,Rt,0);
+            assert (Rn.number > 31);
+            vldr(cond, Rn, Rt, 0);
         }
     }
 
     // TODO: Finalize this
     public void movsd(final ConditionFlag cond, int P, int U, int W, final CiRegister Rn, final CiRegister Rt, final CiRegister Rm) {
-
-        if(Rn.number < 16) {
+        if (Rn.number < 16) {
             ldrd(cond, P, U, W, Rn, Rt, Rm);
         } else {
-            assert(Rn.number < 31);
-            vldr(cond,Rn,Rt,0);
+            assert (Rn.number < 31);
+            vldr(cond, Rn, Rt, 0);
         }
     }
 
@@ -606,7 +606,6 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (baseRegister.encoding & 0xf) << 12;
         instruction |= offset12 & 0xfff;
         emitInt(instruction);
-
     }
 
     public void cmp(final ConditionFlag flag, final CiRegister Rn, final CiRegister Rm, int imm5, int imm2Type) {
@@ -617,9 +616,8 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (Rn.encoding & 0xf) << 16;
         instruction |= imm5 << 7;
         instruction |= imm2Type << 5;
-        instruction |= (Rm.encoding&0xf);
+        instruction |= (Rm.encoding & 0xf);
         emitInt(instruction);
-
     }
 
     protected void checkConstraint(boolean passed, String expression) {
@@ -669,16 +667,17 @@ public class ARMV7Assembler extends AbstractAssembler {
                 }
             }
         } else { // ADDED for ARMV7LIRAssembler stack2reg
-            mov32BitConstant(scratchRegister,disp);
-            addRegisters(ConditionFlag.Always,false,scratchRegister,scratchRegister,ARMV7.r11,0,0); // Frame pointer
+            mov32BitConstant(scratchRegister, disp);
+            addRegisters(ConditionFlag.Always, false, scratchRegister, scratchRegister, ARMV7.r11, 0, 0); // Frame
+// pointer
 
             if (index.isValid()) {
                 addlsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
             }
-
         }
     }
-    public void setUpRegister(CiRegister dest,CiAddress addr) {
+
+    public void setUpRegister(CiRegister dest, CiAddress addr) {
         CiRegister base = addr.base();
         CiRegister index = addr.index();
         CiAddress.Scale scale = addr.scale;
@@ -755,7 +754,6 @@ public class ARMV7Assembler extends AbstractAssembler {
         if ((dispStart & ~mask) != ((dispStart + 3) & ~mask)) {
             nop(target.wordSize - (dispStart & mask));
         }
-
     }
 
     public final void call() {
@@ -765,22 +763,19 @@ public class ARMV7Assembler extends AbstractAssembler {
         // APN proposes we use the scratch register to calculate an address then we do the mov pc
         // looking at Stubs.java we can see that all registers have been saved
         // so we can use whatever registers we want!
-        //emitInt(0); // space for setupscratch
-        //emitInt(0);
-
+        // emitInt(0); // space for setupscratch
+        // emitInt(0);
         nop(4);
         // Target needs to be patched later ...
-
     }
 
     public final void call(CiRegister target) {
         // TODO APN believes that Adapters that do the necessary prologue/epilogue
         // to save / restore state ....
-        ldrImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,0); //
-        push(ConditionFlag.Always,1<<15); // PUSH the PC onto the stack
+        ldrImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, 0); //
+        push(ConditionFlag.Always, 1 << 15); // PUSH the PC onto the stack
         // THIs is an indirect call, assuming the contents of the registers are a memory location we need to load
-        add(ConditionFlag.Always,false,ARMV7.r15,ARMV7.r12,0,0);
-
+        add(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12, 0, 0);
     }
 
     public final void leaq(CiRegister dest, CiAddress addr) {
@@ -788,14 +783,14 @@ public class ARMV7Assembler extends AbstractAssembler {
             nop(5);
         } else {
             setUpScratch(addr);
-            ldrImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,0);
+            ldrImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, 0);
             mov(ConditionFlag.Always, false, dest, ARMV7.r12);
         }
     }
 
     public final void leave() {
-        mov(ConditionFlag.Always,false,ARMV7.r13,ARMV7.r11); // restore SP that is in the FP
-        pop(ConditionFlag.Always,1<<11); // POP the old FP r11 off the stack.
+        mov(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r11); // restore SP that is in the FP
+        pop(ConditionFlag.Always, 1 << 11); // POP the old FP r11 off the stack.
 
     }
 
@@ -881,7 +876,6 @@ public class ARMV7Assembler extends AbstractAssembler {
                 addlsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
             }
             pop(ConditionFlag.Always, 1 << encode(scratchRegister));
-
         }
     }
 
@@ -933,21 +927,21 @@ public class ARMV7Assembler extends AbstractAssembler {
             }
             push(ConditionFlag.Always, 1 << encode(scratchRegister)); // r13 is the stack pointer
         }
-
     }
-    public final void vcmpZERO(boolean nanExceptions, ConditionFlag cond,CiRegister src1) {
+
+    public final void vcmpZERO(boolean nanExceptions, ConditionFlag cond, CiRegister src1) {
         int instruction = 0x0eb50a40;
         int dpOperation = 0;
         int quietNAN = 1;
 
-        if(nanExceptions) {
+        if (nanExceptions) {
             quietNAN = 0;
         }
         assert (src1.number > 15);
-        if(src1.number < 32) {
+        if (src1.number < 32) {
             dpOperation = 1;
-            instruction |=  (src1.encoding << 12);
-        }else {
+            instruction |= (src1.encoding << 12);
+        } else {
             instruction |= (src1.encoding & 0x1) << 22;
             instruction |= (src1.encoding >> 1) << 12;
         }
@@ -955,26 +949,26 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (dpOperation << 8);
         instruction |= (quietNAN << 7);
 
-
         emitInt(instruction);
     }
-    public final void vcmp(boolean nanExceptions, ConditionFlag cond,CiRegister src1, CiRegister src2) {
+
+    public final void vcmp(boolean nanExceptions, ConditionFlag cond, CiRegister src1, CiRegister src2) {
         int instruction = 0x0eb40a40;
         int dpOperation = 0;
         int quietNAN = 1;
 
-        if(nanExceptions) {
+        if (nanExceptions) {
             quietNAN = 0;
         }
 
         assert src1.number > 15 && src2.number > 15;
-        if(src1.number < 32) {
-            assert(src2.number <32);
+        if (src1.number < 32) {
+            assert (src2.number < 32);
             dpOperation = 1;
-            instruction |=  (src1.encoding << 12);
+            instruction |= (src1.encoding << 12);
             instruction |= (src2.encoding);
         } else {
-            assert(src2.number >= 32);
+            assert (src2.number >= 32);
             instruction |= (src1.encoding >> 1) << 12;
             instruction |= (src1.encoding & 0x1) << 22;
             instruction |= (src2.encoding >> 1);
@@ -984,14 +978,16 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (cond.value() << 28);
         instruction |= (dpOperation << 8);
         instruction |= (quietNAN << 7);
+        emitInt(instruction);
     }
+
     public final void ucomisd(CiRegister dst, CiRegister src) {
         assert dst.isFpu(); // will this work
         assert src.isFpu();
         // Assuming this is a single precision load
         // vcmp(ConditionFlag.Always,dst,fpScratch);
         // set FPSCR flags these need to be accessed using a VMRS to transfer them to arm flags
-       // assert !dst.isFpu(); // force a crash one way or another as this is notimplemented yet
+        // assert !dst.isFpu(); // force a crash one way or another as this is notimplemented yet
 
     }
 
@@ -1015,45 +1011,32 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void ret() {
-
-        /* TODO ret() implements an X86 return from subroutine this needs to pop the return value of the stack
-        TODO we might need to push the value of r14 onto the stack in order to make this work for a call from the C harness
-         TODO for testing of the methods
-
-         */
-        /*pop(ConditionFlag.Always,1<<12);
-        // to do normally this would be r14, but we need to pop it off the stack
-        mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12);
-        */
+        // TODO ret() implements an X86 return from subroutine this needs to pop the return value of the stack TODO we
+        // might need to push the value of r14 onto the stack in order to make this work for a call from the C harness
+        // TODO for testing of the methods
         mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
-
     }
 
     public final void ret(int imm16) {
-
-        if(imm16 == 0) {
+        if (imm16 == 0) {
             ret();
         } else {
-            //System.out.println("Need to ascertain purpose of ARMV7Assembler::ret(imm16)");
+            // System.out.println("Need to ascertain purpose of ARMV7Assembler::ret(imm16)");
             ret();
-            addq(ARMV7.r13,imm16); // believe it is used to retract the stack
+            addq(ARMV7.r13, imm16); // believe it is used to retract the stack
         }
-
     }
 
     public void enter(short imm16, byte imm8) {
         assert false;
         /*
-        APN this does a push of the FP,
-        moves the SP onto -> r11
-        subs the SP by imm16 ....
-        DONT KNOW WHAT THE IMM8 IS FOR
-
+         * APN this does a push of the FP, moves the SP onto -> r11 subs the SP by imm16 .... DONT KNOW WHAT THE IMM8 IS
+         * FOR
          */
-        push(ConditionFlag.Always,1<<11); // push the FP.
-        mov(ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13); // move the SP onto the FP
-        mov32BitConstant(ARMV7.r12,imm16);
-        sub(ConditionFlag.Always,false,ARMV7.r13,ARMV7.r13,ARMV7.r12,0,0);
+        push(ConditionFlag.Always, 1 << 11); // push the FP.
+        mov(ConditionFlag.Always, false, ARMV7.r11, ARMV7.r13); // move the SP onto the FP
+        mov32BitConstant(ARMV7.r12, imm16);
+        sub(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
     }
 
     public void nullCheck(CiRegister r) {
@@ -1073,12 +1056,14 @@ public class ARMV7Assembler extends AbstractAssembler {
             disp = (disp / 4) - 2;
             emitInt((cc.value & 0xf) << 28 | (0xa << 24) | (disp & 0xffffff));
         } else {
-            if (disp > 0) disp -= 16;
+            if (disp > 0)
+                disp -= 16;
             mov32BitConstant(scratchRegister, disp);
             addRegisters(ConditionFlag.Always, false, scratchRegister, ARMV7.r15, scratchRegister, 0, 0);
             mov(cc, false, ARMV7.r15, scratchRegister);
-         }
+        }
     }
+
     public final void jcc(ConditionFlag cc, Label l) {
         assert (0 <= cc.value) && (cc.value < 16) : "illegal cc";
         if (l.isBound()) {
@@ -1092,10 +1077,11 @@ public class ARMV7Assembler extends AbstractAssembler {
             nop(3);
             // TODO decide how to distinguish this from other patches
             // TODO update wiki on this
-            mov(cc,false,ARMV7.r15,ARMV7.r12);
+            mov(cc, false, ARMV7.r15, ARMV7.r12);
         }
 
     }
+
     public final void jmp(Label l) {
         if (l.isBound()) {
             jmp(l.position(), false);
@@ -1108,17 +1094,19 @@ public class ARMV7Assembler extends AbstractAssembler {
             l.addPatchAt(codeBuffer.position());
             // TODO fix this it will not work ....
             nop(2);
-            //emitByte(0xE9);
-            //emitInt(0);
+            // emitByte(0xE9);
+            // emitInt(0);
         }
     }
+
     public final void jmp(int target, boolean forceDisp32) {
         int disp = target - codeBuffer.position();
-        if (disp <= 16777215  && forceDisp32) {
+        if (disp <= 16777215 && forceDisp32) {
             disp = (disp / 4) - 2;
             emitInt((0xe << 28) | (0xa << 24) | (disp & 0xffffff));
         } else {
-            if (disp > 0) disp -= 16;
+            if (disp > 0)
+                disp -= 16;
             mov32BitConstant(scratchRegister, disp);
             addRegisters(ConditionFlag.Always, false, scratchRegister, ARMV7.r15, scratchRegister, 0, 0);
             mov(ConditionFlag.Always, false, ARMV7.r15, scratchRegister); // UPDATE the PC to the target
@@ -1247,25 +1235,27 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
         emitInt(instruction);
     }
+
     public final void vneg(ConditionFlag cond, CiRegister dest, CiRegister src) {
         int instruction = (cond.value() & 0xf) << 28;
         int sz = 0;
-        if(src.number >= 32) {
+        if (src.number >= 32) {
             checkConstraint(src.number >= 32 && dest.number >= 32, "vldr dest must both be a FP reg");
         } else {
             sz = 1;
-            checkConstraint(src.number >= 16 && src.number <= 31 && dest.number >= 16 && dest.number <=31 , "vldr dest must be a DP reg");
+            checkConstraint(src.number >= 16 && src.number <= 31 && dest.number >= 16 && dest.number <= 31, "vldr dest must be a DP reg");
         }
 
         instruction |= 0x0eb10a40;
 
-        instruction |= (src.encoding & 0xf) ;
+        instruction |= (src.encoding & 0xf);
         instruction |= (src.encoding >> 4) << 5;
         instruction |= (dest.encoding & 0xf) << 12;
         instruction |= (dest.encoding >> 4) << 22;
         instruction |= sz << 8;
         emitInt(instruction);
     }
+
     public final void vldr(ConditionFlag cond, CiRegister dest, CiRegister src, int imm8) {
         int instruction = (cond.value() & 0xf) << 28;
         checkConstraint(dest.number <= 63 && dest.number >= 16, "vldr dest must be a FP/DP reg");

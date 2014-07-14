@@ -30,7 +30,6 @@ import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.MaxineVM;
 
-
 public class ARMV7JTTTest extends MaxTestCase {
 
     private ARMV7Assembler asm;
@@ -44,8 +43,8 @@ public class ARMV7JTTTest extends MaxTestCase {
     private static boolean POST_CLEAN_FILES = true;
     private static boolean OFFLINE_C1X_COMPILE = true;
     private int bufferSize = -1;
-    private int entryPoint =  -1;
-    private byte []codeBytes = null;
+    private int entryPoint = -1;
+    private byte[] codeBytes = null;
 
     public void initialiseFrameForCompilation() {
         // TODO: compute max stack
@@ -88,7 +87,6 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-
     private static final OptionSet options = new OptionSet(false);
     private static VMConfigurator vmConfigurator = null;
     private static boolean initialised = false;
@@ -116,10 +114,11 @@ public class ARMV7JTTTest extends MaxTestCase {
     private static int[] expectedValues = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     private static boolean[] IGNOREvalues = new boolean[17];
 
-    private int[] generateAndTestStubs(String functionPrototype,int entryPoint,byte []theCode, int assemblerStatements, int[] expected, boolean[] IGNOREs, MaxineARMTester.BitsFlag[] masks) throws Exception {
+    private int[] generateAndTestStubs(String functionPrototype, int entryPoint, byte[] theCode, int assemblerStatements, int[] expected, boolean[] IGNOREs, MaxineARMTester.BitsFlag[] masks)
+                    throws Exception {
         ARMCodeWriter code = new ARMCodeWriter(assemblerStatements, theCode);
-        //code.createCodeStubsFile(theCode,entryPoint);
-        code.createStaticCodeStubsFile(functionPrototype,theCode,entryPoint);
+        // code.createCodeStubsFile(theCode,entryPoint);
+        code.createStaticCodeStubsFile(functionPrototype, theCode, entryPoint);
         MaxineARMTester r = new MaxineARMTester(expected, IGNOREs, masks);
         r.cleanFiles();
         r.cleanProcesses();
@@ -135,6 +134,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
         return simulatedRegisters;
     }
+
     private int[] generateAndTest(int assemblerStatements, int[] expected, boolean[] IGNOREs, MaxineARMTester.BitsFlag[] masks) throws Exception {
         ARMCodeWriter code = new ARMCodeWriter(assemblerStatements, theCompiler.getMacroAssembler().codeBuffer);
         code.createCodeFile();
@@ -1474,61 +1474,47 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    private  void initialiseCodeBuffers(List <TargetMethod> methods) {
-
-         int minimumValue = Integer.MAX_VALUE;
-         int maximumValue = Integer.MIN_VALUE;
-         int offset;
-         entryPoint = -1; // offset in the global array of the method we call from C.
-         for (TargetMethod m : methods) { // CRUDE WORKING ATTEMPT TO COPY MACHINE CODE BUFFERS!
-
-             byte []b = m.code();
-             if(entryPoint == -1) {
+    private void initialiseCodeBuffers(List<TargetMethod> methods) {
+        int minimumValue = Integer.MAX_VALUE;
+        int maximumValue = Integer.MIN_VALUE;
+        int offset;
+        entryPoint = -1; // offset in the global array of the method we call from C.
+        for (TargetMethod m : methods) {
+            byte[] b = m.code();
+            if (entryPoint == -1) {
                 entryPoint = m.codeAt(0).toInt();
-             }
-             if((m.codeAt(0)).toInt() < minimumValue) {
+            }
+            if ((m.codeAt(0)).toInt() < minimumValue) {
                 minimumValue = m.codeAt(0).toInt(); // UPDATE MINIMUM OFFSET IN ADDRESS SPACE
-             }
-             if ((m.codeAt(0)).toInt() + b.length > maximumValue) {
+            }
+            if ((m.codeAt(0)).toInt() + b.length > maximumValue) {
                 maximumValue = m.codeAt(0).toInt() + b.length; // UPDATE MAXIMUM OFFSET IN ADDRESS SPACE
-             }
-                  //masm.offlineAddToBuffer(b);
-         }
-         if (MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() < minimumValue) {
-             minimumValue = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt(); // INCLUDE STATIC TRAMPOLINE STUB CODE
-         }
-         if ((MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() +
-             MaxineVM.vm().stubs.staticTrampoline().code().length) > maximumValue) {
-             maximumValue = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() +
-             MaxineVM.vm().stubs.staticTrampoline().code().length; // INCLUDE STATIC TRAMPOLINE STUB CODE
+            }
+        }
 
-         }
-         codeBytes = new byte[maximumValue - minimumValue ];
-         for (TargetMethod m : methods) { // CRUDE ATTEMPT TO COPY MACHINE CODE BUFFERS!
-             m.linkDirectCalls();
-             byte[] b = m.code();
-             offset = m.codeAt(0).toInt() - minimumValue;
-             System.out.println("OFFSETS of method in code buffer " +  offset + " WITH LENGTH " + b.length);
-             for(int i = 0; i < b.length;i++) {
-                 codeBytes[offset + i] = b[i];
-             }
+        if (MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() < minimumValue) {
+            minimumValue = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt();
+        }
 
-         }
-         byte [] b = MaxineVM.vm().stubs.staticTrampoline().code();
+        if ((MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() + MaxineVM.vm().stubs.staticTrampoline().code().length) > maximumValue) {
+            maximumValue = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() + MaxineVM.vm().stubs.staticTrampoline().code().length;
+        }
 
-         offset = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() -  minimumValue;
-         System.out.println("STUB OFFSETS in code buffer " +  offset + " WITH LENGTH " + b.length);
-
-         for(int i  = 0; i < b.length; i++) {
-              codeBytes[i+offset] = b[i];
-         }
-         entryPoint = entryPoint - minimumValue;
-
-                  //System.out.println(" MIN " + minimumValue +  " MAX " + maximumValue + " LEN " + (maximumValue-minimumValue));
-
-
-
-
+        codeBytes = new byte[maximumValue - minimumValue];
+        for (TargetMethod m : methods) { // CRUDE ATTEMPT TO COPY MACHINE CODE BUFFERS!
+            m.linkDirectCalls();
+            byte[] b = m.code();
+            offset = m.codeAt(0).toInt() - minimumValue;
+            for (int i = 0; i < b.length; i++) {
+                codeBytes[offset + i] = b[i];
+            }
+        }
+        byte[] b = MaxineVM.vm().stubs.staticTrampoline().code();
+        offset = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() - minimumValue;
+        for (int i = 0; i < b.length; i++) {
+            codeBytes[i + offset] = b[i];
+        }
+        entryPoint = entryPoint - minimumValue;
     }
 
     public void IGNOREtest_jtt_BC_invokestatic() throws Exception {
@@ -1536,73 +1522,68 @@ public class ARMV7JTTTest extends MaxTestCase {
         List<Args> pairs = new LinkedList<Args>();
         String klassName = "jtt.bytecode.BC_invokestatic";
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
-        initialised = true; // VM issues ..
-        initTests(); // APN dirty hack for VM initialisation ...
-
+        initialised = true;
+        initTests();
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         /*
-        WE NEED A CLEANED UP WAY TO .. COPY THE CODE INTO AN ALIGNED BUFFER, WE NEED TO BE ABLE TO MATCH
-        THE MaxTargetMethod with the one we want to call, and then to extract its entry point ... IVE CHEATED HERE AND
-        JUST USED THE FIRST ONE AS I KNOW THAT IS "test" IN THIS INSTANCE
+         * WE NEED A CLEANED UP WAY TO .. COPY THE CODE INTO AN ALIGNED BUFFER, WE NEED TO BE ABLE TO MATCH THE
+         * MaxTargetMethod with the one we want to call, and then to extract its entry point ... IVE CHEATED HERE AND
+         * JUST USED THE FIRST ONE AS I KNOW THAT IS "test" IN THIS INSTANCE
          */
         initialiseCodeBuffers(methods);
-
         int assemblerStatements = codeBytes.length / 4;
         pairs.add(new Args(1, 1));
         pairs.add(new Args(2, 2));
-        pairs.add(new Args(-2,-2));
+        pairs.add(new Args(-2, -2));
 
         for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_invokestatic.test(pair.first);
             expectedValues[0] = answer;
-                 /*SEE BELOW, WE NEED TO PROVIDE A COMMA SEPARATED LIST OF TYPES "int" void (*pf)(***int***) = (void (*))(code);
-                 print_uart0("changed test.c!\n");
-                           AND WE NEED TO PROVIDE A COMMA SEPARATED LIST OF FUNCTION ARGUMENT VALUES / VARIABLES
-                 (*pf)(****1*****); // Need to change this to something related to the test itself
-                 asm volatile("forever: b forever");*/
-            String functionPrototype = ARMCodeWriter.preAmble("void","int",Integer.toString(pair.first));
-            System.out.println(functionPrototype);
-            int[] registerValues = generateAndTestStubs(functionPrototype,entryPoint,codeBytes, assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
-            if(registerValues[0] != expectedValues[0]) {
-                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValues[0]);
-            }
+            /*
+             * SEE BELOW, WE NEED TO PROVIDE A COMMA SEPARATED LIST OF TYPES "int" void (*pf)(***int***) = (void
+             * (*))(code); print_uart0("changed test.c!\n"); AND WE NEED TO PROVIDE A COMMA SEPARATED LIST OF FUNCTION
+             * ARGUMENT VALUES / VARIABLES (*pf)(****1*****); // Need to change this to something related to the test
+             * itself asm volatile("forever: b forever");
+             */
+            String functionPrototype = ARMCodeWriter.preAmble("void", "int", Integer.toString(pair.first));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
     }
+
     public void test_jtt_BC_d2f() throws Exception {
         CompilationBroker.OFFLINE = true;
         List<Args> pairs = new LinkedList<Args>();
         String klassName = "jtt.bytecode.BC_d2f";
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
-        initialised = true; // VM issues ..
-        initTests(); // APN dirty hack for VM initialisation ...
-
+        initialised = true;
+        initTests();
         /*
-        WE NEED A CLEANED UP WAY TO .. COPY THE CODE INTO AN ALIGNED BUFFER, WE NEED TO BE ABLE TO MATCH
-        THE MaxTargetMethod with the one we want to call, and then to extract its entry point ... IVE CHEATED HERE AND
-        JUST USED THE FIRST ONE AS I KNOW THAT IS "test" IN THIS INSTANCE
+         * WE NEED A CLEANED UP WAY TO .. COPY THE CODE INTO AN ALIGNED BUFFER, WE NEED TO BE ABLE TO MATCH THE
+         * MaxTargetMethod with the one we want to call, and then to extract its entry point ... IVE CHEATED HERE AND
+         * JUST USED THE FIRST ONE AS I KNOW THAT IS "test" IN THIS INSTANCE
          */
         initialiseCodeBuffers(methods);
-
         int assemblerStatements = codeBytes.length / 4;
-        double []arguments = {-2.2d,0.0d,1.0d,01.06d};
+        double[] arguments = { -2.2d, 0.0d, 1.0d, 01.06d};
         float expectedFloat = -9;
-        for (int i = 0; i < arguments.length;i++) {
+        for (int i = 0; i < arguments.length; i++) {
             MaxineByteCode xx = new MaxineByteCode();
             float answer = jtt.bytecode.BC_d2f.test(arguments[i]);
             expectedFloat = answer;
-                 /*SEE BELOW, WE NEED TO PROVIDE A COMMA SEPARATED LIST OF TYPES "int" void (*pf)(***int***) = (void (*))(code);
-                 print_uart0("changed test.c!\n");
-                           AND WE NEED TO PROVIDE A COMMA SEPARATED LIST OF FUNCTION ARGUMENT VALUES / VARIABLES
-                 (*pf)(****1*****); // Need to change this to something related to the test itself
-                 asm volatile("forever: b forever");*/
-            String functionPrototype = ARMCodeWriter.preAmble("float","double",Double.toString(arguments[i]));
+            /*
+             * SEE BELOW, WE NEED TO PROVIDE A COMMA SEPARATED LIST OF TYPES "int" void (*pf)(***int***) = (void
+             * (*))(code); print_uart0("changed test.c!\n"); AND WE NEED TO PROVIDE A COMMA SEPARATED LIST OF FUNCTION
+             * ARGUMENT VALUES / VARIABLES (*pf)(****1*****); // Need to change this to something related to the test
+             * itself asm volatile("forever: b forever");
+             */
+            String functionPrototype = ARMCodeWriter.preAmble("float", "double", Double.toString(arguments[i]));
             System.out.println(functionPrototype);
             // good question here ... is the value returned in the float s0 or the core s0 register
-            int[] registerValues = generateAndTestStubs(functionPrototype,entryPoint,codeBytes, assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
-            if(Float.intBitsToFloat(registerValues[0]) != expectedFloat) {
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, IGNOREvalues, bitmasks);
+            if (Float.intBitsToFloat(registerValues[0]) != expectedFloat) {
                 System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValues[0]);
             }
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
@@ -1610,6 +1591,4 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
         MaxineVM.exit(0);
     }
-
-
 }
