@@ -1760,20 +1760,17 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.movflt(asXmmFloatReg(dest), asXmmFloatReg(left));
             }
             callStub(op.stub, null, asXmmFloatReg(dest), dest);
-
         } else if (dest.kind.isDouble()) {
             if (asXmmDoubleReg(left) != asXmmDoubleReg(dest)) {
                 masm.movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(left));
             }
-
             callStub(op.stub, null, asXmmDoubleReg(dest), dest);
         } else {
             CiRegister lreg = left.asRegister();
             CiRegister dreg = dest.asRegister();
-            assert 0 == 1 : "emitNegate ARMV7IRAssembler";
-
+            assert false : "emitNegate ARMV7IRAssembler";
             // masm.movq(dreg, lreg);
-         //   masm.negq(dreg);
+            // masm.negq(dreg);
         }
     }
 
