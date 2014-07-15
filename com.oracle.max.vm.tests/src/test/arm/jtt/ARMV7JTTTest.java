@@ -194,6 +194,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
+
     public void IGNORE_jtt_UsageOfStaticMethods() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
@@ -1557,7 +1558,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         CompilationBroker.OFFLINE = initialised;
         List<Args> pairs = new LinkedList<Args>();
         String klassName = "jtt.bytecode.BC_invokestatic";
+
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+
         CompilationBroker.OFFLINE = true;
         //initialised = true;
         //initTests();
@@ -1592,8 +1595,12 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     public void ignore_jtt_BC_d2f() throws Exception {
+
         List<Args> pairs = new LinkedList<Args>();
         String klassName = "jtt.bytecode.BC_d2f";
+
+
+
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         /*
          * WE NEED A CLEANED UP WAY TO .. COPY THE CODE INTO AN ALIGNED BUFFER, WE NEED TO BE ABLE TO MATCH THE

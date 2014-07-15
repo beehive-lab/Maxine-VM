@@ -2,7 +2,7 @@ file test.elf
 break c_entry
 target remote localhost:1234
 continue
-stepi 2000
+stepi 12000
 info registers
 quit
 break print_uart0

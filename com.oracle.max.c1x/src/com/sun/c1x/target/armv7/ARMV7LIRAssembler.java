@@ -1198,15 +1198,23 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             } else if (right.isStackSlot()) {
                 // added support for stack operands
                 CiAddress raddr = frameMap.toStackAddress(((CiStackSlot) right));
+                masm.setUpScratch(raddr);
+                masm.ldrImmediate(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,0);
+                assert(reg != ARMV7.r12);
                 switch (code) {
-                    case LogicAnd : //masm.andl(reg, raddr);
+                    case LogicAnd :// masm.andl(reg, raddr);
+                        masm.iand(ARMV7.r8, reg, ARMV7.r8);
                      break;
                     case LogicOr  : //masm.orl(reg, raddr);
+                        masm.ior(ARMV7.r8, reg, ARMV7.r8);
                      break;
                     case LogicXor : //masm.xorl(reg, raddr);
+                        masm.ixor(ARMV7.r8, reg,ARMV7.r8);
                      break;
                     default       : throw Util.shouldNotReachHere();
                 }
+                masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,0);
+
             } else {
                 CiRegister rright = right.asRegister();
                 switch (code) {
