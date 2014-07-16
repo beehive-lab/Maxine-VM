@@ -257,6 +257,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void mov(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rm) {
         int instruction = 0x01a00000;
+        assert(Rd.encoding < 16 && Rm.encoding < 16); // CORE Register move only!
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (s ? 1 : 0) << 20;
         instruction |= (Rd.encoding & 0xf) << 12;
@@ -982,10 +983,12 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final void ucomisd(CiRegister dst, CiRegister src) {
         assert dst.isFpu(); // will this work
         assert src.isFpu();
+        assert ((src.number > 15 && dst.number > 15) || ( src.number > 31 && dst.number > 31)); // Either FP FP or DP DP compare
         // Assuming this is a single precision load
-        // vcmp(ConditionFlag.Always,dst,fpScratch);
+        vcmp(true,ConditionFlag.Always,dst,src);
         // set FPSCR flags these need to be accessed using a VMRS to transfer them to arm flags
         // assert !dst.isFpu(); // force a crash one way or another as this is notimplemented yet
+        vmrs(ConditionFlag.Always,ARMV7.r15);
 
     }
 
@@ -1110,6 +1113,13 @@ public class ARMV7Assembler extends AbstractAssembler {
             mov(ConditionFlag.Always, false, ARMV7.r15, scratchRegister); // UPDATE the PC to the target
         }
     }
+
+    public final void vmrs(ConditionFlag cond, CiRegister dest) {
+        int instruction = (cond.value() & 0xf) << 28;
+        instruction |= 0x0ef10a10;
+        instruction |= dest.encoding << 12;
+        emitInt(instruction);
+        }
 
     public final void vmul(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
         int instruction = (cond.value() & 0xf) << 28;

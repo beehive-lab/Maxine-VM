@@ -939,7 +939,6 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 int disp = target - jumpTablePos;
                 buf.setPosition(pos);
                 buf.emitInt(disp);
-                System.out.println("Emit disp " + disp);
             } else if (tag == PatchInfoARMV7.LOOKUP_TABLE_ENTRY) {
                 int pos = data[i++];
                 int key = data[i++];
@@ -958,7 +957,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 buf.setPosition(dispPos);
                 int dispFromCodeStart = dispFromCodeStart(objectLiterals.size(), 0, index, true);
                 int disp = movqDisp(dispPos, dispFromCodeStart);
-             } else {
+                // buf.emitInt(disp);
+            } else {
                 throw FatalError.unexpected(String.valueOf(tag));
             }
         }

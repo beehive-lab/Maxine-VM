@@ -6,6 +6,12 @@ void print_uart0(const char *s) {
  s++; /* Next char */
  }
 }
+
+/*int testme(double a, double b) {
+// to compile with me in use gcc to link and -nostartupfiles
+	return (a<b);
+}*/
+
 #include "./codebuffer.c"
 
 /*unsigned char  code[12] __attribute__((aligned(0x1000))) ;
