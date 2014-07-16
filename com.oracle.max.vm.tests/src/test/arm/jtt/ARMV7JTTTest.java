@@ -1455,7 +1455,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_ifeq_2() throws Exception {
+    public void test_jtt_BC_ifeq_2() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 1));
@@ -1482,7 +1482,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_ifeq_3() throws Exception {
+    public void test_jtt_BC_ifeq_3() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));

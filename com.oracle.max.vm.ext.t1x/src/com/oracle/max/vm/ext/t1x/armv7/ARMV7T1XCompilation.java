@@ -659,7 +659,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
             // Set r10 to address of lookup table
             int leaPos = buf.position();
-            asm.leaq(r10, CiAddress.Placeholder);
+            asm.leaq(r6, CiAddress.Placeholder);
             int afterLea = buf.position();
 
             // Initialize r7 to index of last entry
@@ -668,7 +668,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             int loopPos = buf.position();
 
             // Compare the value against the key
-            asm.setUpScratch(new CiAddress(CiKind.Int, r10.asValue(), r7.asValue(), Scale.Times4, 0));
+            asm.setUpScratch(new CiAddress(CiKind.Int, r6.asValue(), r7.asValue(), Scale.Times4, 0));
             asm.ldrImmediate(ConditionFlag.Always, 0, 0, 0, r12, r12, 0);
             asm.cmpl(ARMV7.r9, ARMV7.r12);
 
@@ -695,7 +695,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             buf.setPosition(matchPos);
 
             // Load jump table entry into r15 and jump to it
-            asm.setUpScratch(new CiAddress(CiKind.Int, r10.asValue(), r7.asValue(), Scale.Times4, 4));
+            asm.setUpScratch(new CiAddress(CiKind.Int, r6.asValue(), r7.asValue(), Scale.Times4, 4));
             asm.ldrImmediate(ConditionFlag.Always, 0, 0, 0, r12, r12, 0);
             asm.addRegisters(ConditionFlag.Always, false, r12, r15, r12, 0, 0);
             asm.add(ConditionFlag.Always, false, r12, r12, 8, 0);
@@ -710,7 +710,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             // Patch the LEA instruction above now that we know the position of the lookup table
             int lookupTablePos = buf.position();
             buf.setPosition(leaPos);
-            asm.leaq(r10, new CiAddress(WordUtil.archKind(), rip.asValue(), (lookupTablePos - afterLea) + 4));
+            asm.leaq(r6, new CiAddress(WordUtil.archKind(), rip.asValue(), (lookupTablePos - afterLea)));
             buf.setPosition(lookupTablePos);
 
             // Emit lookup table entries
