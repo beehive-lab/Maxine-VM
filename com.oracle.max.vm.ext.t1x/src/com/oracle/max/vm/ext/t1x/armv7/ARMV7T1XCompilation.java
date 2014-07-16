@@ -593,13 +593,13 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         patchInfo.addJCC(ConditionFlag.SignedGreater, pos, ts.defaultTarget());
         asm.jcc(ConditionFlag.SignedGreater, 0, true);
 
-        // Set r10 to address of jump table
+        // Set r9 to address of jump table
         int leaPos = buf.position();
-        asm.leaq(r10, CiAddress.Placeholder);
+        asm.leaq(r7, CiAddress.Placeholder);
         int afterLea = buf.position();
 
         // Load jump table entry into r15 and jump to it
-        asm.setUpScratch(new CiAddress(CiKind.Int, r10.asValue(), r9.asValue(), Scale.Times4, 0));
+        asm.setUpScratch(new CiAddress(CiKind.Int, r7.asValue(), r9.asValue(), Scale.Times4, 0));
         asm.ldrImmediate(ConditionFlag.Always, 0, 0, 0, r12, ARMV7.r12, 0);
         asm.addRegisters(ConditionFlag.Always, false, r12, ARMV7.r15, r12, 0, 0); // need to be careful are we using the right add!
         asm.add(ConditionFlag.Always, false, r12, r12, 8, 0);
@@ -614,7 +614,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         // Patch LEA instruction above now that we know the position of the jump table
         int jumpTablePos = buf.position();
         buf.setPosition(leaPos); // move the asm buffer position to where the leaq was added
-        asm.leaq(r10, new CiAddress(WordUtil.archKind(), rip.asValue(), jumpTablePos - afterLea + 4)); // patch it
+        asm.leaq(r7, new CiAddress(WordUtil.archKind(), rip.asValue(), jumpTablePos - afterLea)); // patch it
         buf.setPosition(jumpTablePos); // reposition back to the correct place
 
         // Emit jump table entries
@@ -939,6 +939,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 int disp = target - jumpTablePos;
                 buf.setPosition(pos);
                 buf.emitInt(disp);
+                System.out.println("Emit disp " + disp);
             } else if (tag == PatchInfoARMV7.LOOKUP_TABLE_ENTRY) {
                 int pos = data[i++];
                 int key = data[i++];
@@ -957,8 +958,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 buf.setPosition(dispPos);
                 int dispFromCodeStart = dispFromCodeStart(objectLiterals.size(), 0, index, true);
                 int disp = movqDisp(dispPos, dispFromCodeStart);
-                // buf.emitInt(disp);
-            } else {
+             } else {
                 throw FatalError.unexpected(String.valueOf(tag));
             }
         }

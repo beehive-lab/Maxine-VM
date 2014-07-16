@@ -734,7 +734,6 @@ public class ARMV7Assembler extends AbstractAssembler {
         assert dst.isValid();
         mov32BitConstant(scratchRegister, imm32);
         sub(ConditionFlag.Always, false, dst, dst, scratchRegister, 0, 0);
-
     }
 
     public final void mov32BitConstant(CiRegister dst, int imm32) { // crude way to load a 32 bit immediate
@@ -780,10 +779,9 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void leaq(CiRegister dest, CiAddress addr) {
         if (addr == CiAddress.Placeholder) {
-            nop(5);
+            nop(4);
         } else {
             setUpScratch(addr);
-            ldrImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, 0);
             mov(ConditionFlag.Always, false, dest, ARMV7.r12);
         }
     }

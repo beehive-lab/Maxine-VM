@@ -746,13 +746,13 @@ public class ARMV7JTTTest extends MaxTestCase {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1, 42));
-        //pairs.add(new Args(0, 10));
-        //pairs.add(new Args(1, 20));
-        //pairs.add(new Args(2, 30));
-        //pairs.add(new Args(3, 42));
-        //pairs.add(new Args(4, 40));
-        //pairs.add(new Args(5, 50));
-        //pairs.add(new Args(6, 42));
+        pairs.add(new Args(0, 10));
+        pairs.add(new Args(1, 20));
+        pairs.add(new Args(2, 30));
+        pairs.add(new Args(3, 42));
+        pairs.add(new Args(4, 40));
+        pairs.add(new Args(5, 50));
+        pairs.add(new Args(6, 42));
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
