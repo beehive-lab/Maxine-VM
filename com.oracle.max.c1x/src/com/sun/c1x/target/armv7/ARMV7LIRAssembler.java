@@ -335,8 +335,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert dst.isStackSlot();
         CiAddress addr = frameMap.toStackAddress((CiStackSlot) dst);
 
-        //assert 0 == 1 : "reg2stack ARMV7IRAssembler";
-        masm.setUpScratch(addr);
         // Checkstyle: off
         switch (src.kind) {
             case Boolean :
@@ -347,14 +345,15 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case Object  :
 
             case Int     : //masm.movl(addr, src.asRegister());
-
+                masm.setUpScratch(addr);
                 masm.str(ConditionFlag.Always,src.asRegister(),ARMV7.r12,0);
              break;
             case Long    : //masm.movq(addr, src.asRegister());
+                masm.setUpScratch(addr);
                 masm.strd(ConditionFlag.Always,src.asRegister(),ARMV7.r12,0);
              break;
             case Float   : masm.movflt(addr, asXmmFloatReg(src)); break;
-            case Double  : masm.movsd(ConditionFlag.Always,0,0,0,asXmmDoubleReg(src),ARMV7.r12,ARMV7.r12);
+            case Double  : masm.movdbl(addr,asXmmDoubleReg(src));
 
                 break;
             default      : throw Util.shouldNotReachHere();
@@ -627,7 +626,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     protected void emitBranch(LIRBranch op) {
 
         assert assertEmitBranch(op);
-        assert 0 == 1 : "emitBranch ARMV7IRAssembler";
+        //assert 0 == 1 : "emitBranch ARMV7IRAssembler";
 
         if (op.cond() == Condition.TRUE) {
             if (op.info != null) {
@@ -640,38 +639,49 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 assert op.unorderedBlock() != null : "must have unordered successor";
                 //masm.jcc(ConditionFlag.parity, op.unorderedBlock().label());
                 // TODO how to encode the parity condition bit for X86??? masm.jcc(ConditionFlag., op.unorderedBlock().label());
-                assert 0 == 1 : "parity flag ARMV7IRAssembler";
+                //assert 0 == 1 : "parity flag ARMV7IRAssembler";
 
                 // Checkstyle: off
                 switch (op.cond()) {
                     case EQ : //acond = ConditionFlag.equal;
+                        acond = ConditionFlag.Equal;
                         break;
-                    case NE : //acond = ConditionFlag.notEqual;
+                    case NE :
+                        acond = ConditionFlag.NotEqual;
+                        //acond = ConditionFlag.notEqual;
                         break;
-                    case LT : //acond = ConditionFlag.below;
+                    case LT :
+                        acond = ConditionFlag.SignedLesser;
+                        //acond = ConditionFlag.below;
                         break;
-                    case LE : //acond = ConditionFlag.belowEqual;
+                    case LE :
+                        acond = ConditionFlag.SignedLowerOrEqual;
+                        //acond = ConditionFlag.belowEqual;
                         break;
-                    case GE : //acond = ConditionFlag.aboveEqual;
+                    case GE :
+                        acond = ConditionFlag.SignedGreaterOrEqual;
+                        //acond = ConditionFlag.aboveEqual;
                         break;
-                    case GT : //acond = ConditionFlag.above;
+                    case GT :
+                        acond = ConditionFlag.SignedGreater;
+                        //acond = ConditionFlag.above;
                         break;
                     default : throw Util.shouldNotReachHere();
                 }
             } else {
-                /*switch (op.cond()) {
-                    case EQ : acond = ConditionFlag.equal; break;
-                    case NE : acond = ConditionFlag.notEqual; break;
-                    case LT : acond = ConditionFlag.less; break;
-                    case LE : acond = ConditionFlag.lessEqual; break;
-                    case GE : acond = ConditionFlag.greaterEqual; break;
-                    case GT : acond = ConditionFlag.greater; break;
-                    case BE : acond = ConditionFlag.belowEqual; break;
-                    case AE : acond = ConditionFlag.aboveEqual; break;
-                    case BT : acond = ConditionFlag.below; break;
-                    case AT : acond = ConditionFlag.above; break;
+                switch (op.cond()) {
+                    case EQ : acond = ConditionFlag.Equal; /*ConditionFlag.equal;*/ break;
+                    case NE : acond = ConditionFlag.NotEqual; /*notEqual;*/ break;
+                    case LT : acond = ConditionFlag.SignedLesser; /*less;*/ break;
+                    case LE : acond = ConditionFlag.SignedLowerOrEqual; /*lessEqual;*/ break;
+                    case GE : acond = ConditionFlag.SignedGreaterOrEqual; /*greaterEqual;*/ break;
+                    case GT : acond = ConditionFlag.SignedGreater; /*greater;*/ break;
+                    case BE : acond = ConditionFlag.UnsignedLowerOrEqual; /*belowEqual;*/ break;
+                    case AE : acond = ConditionFlag.SignedGreaterOrEqual; /*aboveEqual;*/ break;
+                    case BT : acond = ConditionFlag.SignedLesser; /*below;*/ break;
+                    case AT : acond = ConditionFlag.UnsignedHigher; /*above;*/ break;
                     default : throw Util.shouldNotReachHere();
-                } */
+                }
                 // Checkstyle: on
             }
             masm.jcc(acond, op.label());
@@ -1460,7 +1470,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             const2reg(opr1, newOpr1, null);
             opr1 = newOpr1;
         }
-        assert 0 == 1 : "emitCompare ARMV7IRAssembler";
 
         if (opr1.isRegister()) {
             CiRegister reg1 = opr1.asRegister();
@@ -1478,13 +1487,17 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         break;
                     //long cmp not implemented case Long    :
 
-                    case Float   : //masm.ucomiss(reg1, asXmmFloatReg(opr2));
+                    case Float   : masm.ucomisd(reg1, asXmmFloatReg(opr2)); // was ucomiss but our encoding can handle single or double precision
+                                            // as long as the FP regs s0 d0 usage is fixed.
                         break;
-                    case Double  : //masm.ucomisd(reg1, asXmmDoubleReg(opr2)); break;
+                    case Double  : masm.ucomisd(reg1, asXmmDoubleReg(opr2));
+                     break;
                     default      : throw Util.shouldNotReachHere(opr1.kind.toString());
                 }
             } else if (opr2.isStackSlot()) {
                 // register - stack
+                assert 0 == 1 : "emitCompare ARMV7IRAssembler opr2stackslot";
+
                 CiStackSlot opr2Slot = (CiStackSlot) opr2;
                 switch (opr1.kind) {
                     case Boolean :
@@ -1503,6 +1516,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             } else if (opr2.isConstant()) {
                 // register - constant
                 CiConstant c = (CiConstant) opr2;
+                assert 0 == 1 : "emitCompare ARMV7IRAssembler opr2constant";
+
                 switch (opr1.kind) {
                     case Boolean :
                     case Byte    :
@@ -1935,10 +1950,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     break;
 
                 case Mov: {
-                    if(inst.result == null) {
+                    /*if(inst.result == null) {
                         System.out.println("ARMV7LIRAssembler:emitXirInstructions case Mov BODGE remove null check");
                         return;
-                    }
+                    }*/
                     CiValue result = operands[inst.result.index];
 
                     CiValue source = operands[inst.x().index];
@@ -2431,6 +2446,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     private void storeParameter(CiValue registerOrConstant, CiStackSlot outArg) {
         CiAddress dst = compilation.frameMap().toStackAddress(outArg);
         CiKind k = registerOrConstant.kind;
+        assert 0 == 1 : "storePArameter ARMV7IRAssembler";
+
         if (registerOrConstant.isConstant()) {
             CiConstant c = (CiConstant) registerOrConstant;
             if (c.kind == CiKind.Object) {
@@ -2483,7 +2500,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
     public void directJmp(Object target) {
         int before = masm.codeBuffer.position();
-     //   masm.jmp(0, true);
+        masm.jmp(0, true);
         int after = masm.codeBuffer.position();
         if (C1XOptions.EmitNopAfterCall) {
             masm.nop();
@@ -2493,7 +2510,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
     public void indirectCall(CiRegister src, Object target, LIRDebugInfo info) {
         int before = masm.codeBuffer.position();
-       // masm.call(src);
+        masm.call(src);
         int after = masm.codeBuffer.position();
         if (C1XOptions.EmitNopAfterCall) {
             masm.nop();

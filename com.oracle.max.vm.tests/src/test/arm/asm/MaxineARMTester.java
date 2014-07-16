@@ -91,7 +91,9 @@ public class MaxineARMTester {
     }
 
     public void objcopy() {
-        final ProcessBuilder objcopy = new ProcessBuilder("arm-unknown-eabi-objcopy", "-O", "binary", "test.elf", "test.bin");
+        //final ProcessBuilder objcopy = new ProcessBuilder("arm-unknown-eabi-objcopy", "-O", "binary", "test.elf", "test.bin");
+        final ProcessBuilder objcopy = new ProcessBuilder("arm-none-eabi-objcopy", "-O", "binary", "test.elf", "test.bin");
+
         objcopy.redirectOutput(objCopyOutput);
         objcopy.redirectError(objCopyErrors);
         try {
@@ -104,7 +106,9 @@ public class MaxineARMTester {
     }
     public void newcompile() {
         final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.bin", "test.elf");
-        final ProcessBuilder compile = new ProcessBuilder("arm-unknown-eabi-gcc", "-c", "-march=armv7-a", "-g", "test.c", "-o", "test.o");
+        //final ProcessBuilder compile = new ProcessBuilder("arm-unknown-eabi-gcc", "-c", "-march=armv7-a", "-g", "test.c", "-o", "test.o");
+        final ProcessBuilder compile = new ProcessBuilder("arm-none-eabi-gcc", "-c", "-march=armv7-a",  "-mfloat-abi=hard","-mfpu=vfpv3-d16","-g", "test.c", "-o", "test.o");
+
         compile.redirectOutput(gccOutput);
         compile.redirectError(gccErrors);
         try {
@@ -118,7 +122,9 @@ public class MaxineARMTester {
     }
     public void compile() {
         final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.bin", "test.elf");
-        final ProcessBuilder compile = new ProcessBuilder("arm-unknown-eabi-gcc", "-c","-DOLDCOMPILE", "-march=armv7-a", "-g", "test.c", "-o", "test.o");
+        //final ProcessBuilder compile = new ProcessBuilder("arm-unknown-eabi-gcc", "-c","-DOLDCOMPILE", "-march=armv7-a", "-g", "test.c", "-o", "test.o");
+
+        final ProcessBuilder compile = new ProcessBuilder("arm-none-eabi-gcc", "-c","-DOLDCOMPILE", "-mfloat-abi=hard","-mfpu=vfpv3-d16", "-march=armv7-a", "-g", "test.c", "-o", "test.o");
         compile.redirectOutput(gccOutput);
         compile.redirectError(gccErrors);
         try {
@@ -130,9 +136,9 @@ public class MaxineARMTester {
             e.printStackTrace();
         }
     }
-
     public void assembleStartup() {
-        final ProcessBuilder assemble = new ProcessBuilder("arm-unknown-eabi-as", "-mcpu=cortex-a9", "-g", "startup.s", "-o", "startup.o");
+        //final ProcessBuilder assemble = new ProcessBuilder("arm-unknown-eabi-as", "-mcpu=cortex-a9", "-g", "startup.s", "-o", "startup.o");
+        final ProcessBuilder assemble = new ProcessBuilder("arm-none-eabi-as", "-mcpu=cortex-a9", "-mfloat-abi=hard","-mfpu=vfpv3-d16","-g", "startup.s", "-o", "startup.o");
         assemble.redirectOutput(new File("as_output"));
         assemble.redirectError(new File("as_errors"));
         try {
@@ -145,7 +151,8 @@ public class MaxineARMTester {
     }
 
     public void assembleEntry() {
-        final ProcessBuilder assemble = new ProcessBuilder("arm-unknown-eabi-as", "-mcpu=cortex-a9", "-g", "asm_entry.s", "-o", "asm_entry.o");
+        //final ProcessBuilder assemble = new ProcessBuilder("arm-unknown-eabi-as", "-mcpu=cortex-a9", "-g", "asm_entry.s", "-o", "asm_entry.o");
+        final ProcessBuilder assemble = new ProcessBuilder("arm-none-eabi-as", "-mcpu=cortex-a9", "-mfloat-abi=hard","-mfpu=vfpv3-d16", "-g", "asm_entry.s", "-o", "asm_entry.o");
         assemble.redirectOutput(asOutput);
         assemble.redirectError(asErrors);
         try {
@@ -158,7 +165,9 @@ public class MaxineARMTester {
     }
 
     public void link() {
-        final ProcessBuilder link = new ProcessBuilder("arm-unknown-eabi-ld", "-T", "test.ld", "test.o", "startup.o", "asm_entry.o", "-o", "test.elf");
+        //final ProcessBuilder link = new ProcessBuilder("arm-unknown-eabi-ld", "-T", "test.ld", "test.o", "startup.o", "asm_entry.o", "-o", "test.elf");
+        final ProcessBuilder link = new ProcessBuilder("arm-none-eabi-ld", "-T", "test.ld", "test.o", "startup.o", "asm_entry.o", "-o", "test.elf");
+
         link.redirectOutput(linkOutput);
         link.redirectError(linkErrors);
         try {
@@ -187,7 +196,9 @@ public class MaxineARMTester {
     }
 
     public int[] runRegisteredSimulation() throws Exception {
-        ProcessBuilder gdbProcess = new ProcessBuilder("arm-unknown-eabi-gdb");
+        //ProcessBuilder gdbProcess = new ProcessBuilder("arm-unknown-eabi-gdb");
+        ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb");
+
         gdbProcess.redirectInput(gdbInput);
         gdbProcess.redirectOutput(gdbOutput);
         gdbProcess.redirectError(gdbErrors);
@@ -225,7 +236,9 @@ public class MaxineARMTester {
 
     public void runSimulation() throws Exception {
         cleanFiles();
-        ProcessBuilder gdbProcess = new ProcessBuilder("arm-unknown-eabi-gdb");
+        //ProcessBuilder gdbProcess = new ProcessBuilder("arm-unknown-eabi-gdb");
+
+        ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb");
         gdbProcess.redirectInput(gdbInput);
         gdbProcess.redirectOutput(gdbOutput);
         gdbProcess.redirectError(gdbErrors);
