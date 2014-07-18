@@ -737,11 +737,21 @@ public class ARMV7Assembler extends AbstractAssembler {
         sub(ConditionFlag.Always, false, dst, dst, scratchRegister, 0, 0);
     }
 
-    public final void mov32BitConstant(CiRegister dst, int imm32) { // crude way to load a 32 bit immediate
+    public final void mov32BitConstant(CiRegister dst, int imm32) {
         movw(ConditionFlag.Always, dst, imm32 & 0xffff);
         imm32 = imm32 >> 16;
         imm32 = imm32 & 0xffff;
         movt(ConditionFlag.Always, dst, imm32 & 0xffff);
+    }
+
+    public final void mov64BitConstant(CiRegister dstUpper, CiRegister dstLow, long imm64) {
+        int low32 = (int) (imm64 & 0xffffffff);
+        int high32 = (int) ((imm64 >> 32) & 0xffffffff);
+        System.out.println("High32 " + high32);
+        System.out.println("low32 " + low32);
+
+        mov32BitConstant(dstLow, low32);
+        mov32BitConstant(dstUpper, high32);
     }
 
     public final void alignForPatchableDirectCall() {

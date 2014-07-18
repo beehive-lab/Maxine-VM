@@ -104,7 +104,7 @@ public class MaxineARMTester {
             e.printStackTrace();
         }
     }
-    public void newcompile() {
+    public void newCompile() {
         final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.bin", "test.elf");
         //final ProcessBuilder compile = new ProcessBuilder("arm-unknown-eabi-gcc", "-c", "-march=armv7-a", "-g", "test.c", "-o", "test.o");
         final ProcessBuilder compile = new ProcessBuilder("arm-none-eabi-gcc", "-c", "-march=armv7-a",  "-mfloat-abi=hard","-mfpu=vfpv3-d16","-g", "test.c", "-o", "test.o");
@@ -308,6 +308,20 @@ public class MaxineARMTester {
         for (int i = 0; i < NUM_REGS; i++) {
             expectRegs[i] = expected[i];
             testRegs[i] = test[i];
+        }
+    }
+
+    public MaxineARMTester(long[] expected, boolean[] test, BitsFlag[] range) {
+        initializeQemu();
+        bitMasks = range;
+        int j = 0;
+        for (int i = 0; i < NUM_REGS; i++) {
+            if (test[i]) {
+                expectRegs[j] = (int) ((expected[i] >> 32) & 0xffffffff);
+                expectRegs[j + 1] = (int) (expected[i] & 0xffffffff);
+                testRegs[j] = testRegs[j + 1] = test[i];
+                j =+ 2;
+            }
         }
     }
 

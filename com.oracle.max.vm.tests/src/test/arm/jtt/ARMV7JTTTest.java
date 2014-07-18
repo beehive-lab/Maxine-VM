@@ -121,7 +121,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         r.cleanProcesses();
         r.assembleStartup();
         r.assembleEntry();
-        r.newcompile();
+        r.newCompile();
         r.link();
         r.objcopy();
         int[] simulatedRegisters = r.runRegisteredSimulation();
