@@ -1,6 +1,7 @@
 package test.arm.asm;
 
 import com.oracle.max.asm.target.armv7.*;
+import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
 import com.sun.cri.ci.*;
 import com.sun.max.ide.*;
 
@@ -31,19 +32,19 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         junit.textui.TestRunner.run(ARMV7AssemblerTest.class);
     }
 
-    private static int []valueTestSet = {0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
-    private static int []scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x7fffffff};
-    private static boolean []testValues = new boolean[MaxineARMTester.NUM_REGS];
+    private static int[] valueTestSet = { 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
+    private static int[] scratchTestSet = { 0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x7fffffff};
+    private static boolean[] testValues = new boolean[MaxineARMTester.NUM_REGS];
 
     // Each test should set the contents of this array appropriately,
     // it enables the instruction under test to select the specific bit values for
     // comparison i.e. for example ignoring upper or lower 16bits for movt, movw
     // and for ignoring specific bits in the status register etc
     // concerning whether a carry has been set
-    private static MaxineARMTester.BitsFlag []bitmasks = {MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-        MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-        MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-        MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits};
+    private static MaxineARMTester.BitsFlag[] bitmasks = { MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
+                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
+                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
+                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits};
 
     private static void setBitMask(int i, MaxineARMTester.BitsFlag mask) {
         bitmasks[i] = mask;
@@ -67,9 +68,9 @@ public class ARMV7AssemblerTest extends MaxTestCase {
 
     // The following values will be updated
     // to those expected to be found in a register after simulated execution of code.
-    private static int []expectedValues = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    private static int[] expectedValues = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
-    private static long []expectedLongValues = {Long.MAX_VALUE-100, Long.MAX_VALUE};
+    private static long[] expectedLongValues = { Long.MAX_VALUE - 100, Long.MAX_VALUE};
 
     private static void initialiseExpectedValues() {
         for (int i = 0; i < MaxineARMTester.NUM_REGS; i++) {
@@ -83,7 +84,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         }
     }
 
-    private void generateAndTest(int assemblerStatements, int []expected, boolean []tests, MaxineARMTester.BitsFlag []masks) throws Exception {
+    private void generateAndTest(int assemblerStatements, int[] expected, boolean[] tests, MaxineARMTester.BitsFlag[] masks) throws Exception {
         ARMCodeWriter code = new ARMCodeWriter(assemblerStatements, asm.codeBuffer);
         code.createCodeFile();
         MaxineARMTester r = new MaxineARMTester(expected, tests, masks);
@@ -100,13 +101,9 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         r.reset();
     }
 
-    private void generateAndTest(int assemblerStatements, long []expected, boolean []tests, MaxineARMTester.BitsFlag []masks) throws Exception {
-        System.out.println("Finished initializing MaxineARM Tester -1");
-
+    private void generateAndTest(int assemblerStatements, long[] expected, boolean[] tests, MaxineARMTester.BitsFlag[] masks) throws Exception {
         ARMCodeWriter code = new ARMCodeWriter(assemblerStatements, asm.codeBuffer);
         code.createCodeFile();
-        System.out.println("Finished initializing MaxineARM Tester -2");
-
         MaxineARMTester r = new MaxineARMTester(expected, tests, masks);
         if (!MaxineARMTester.ENABLE_SIMULATOR) {
             System.out.println("Code Generation is disabled!");
@@ -117,15 +114,13 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         r.compile();
         r.link();
         r.objcopy();
-        System.out.println("Finished initializing MaxineARM Tester 2");
         r.runSimulation();
-        System.out.println("Finished initializing MaxineARM Tester 3");
         r.reset();
     }
 
     public void testLdrb() throws Exception {
         int assemblerStatements = 13;
-        int []testval = {0x03020100, 0xffedcba9};
+        int[] testval = { 0x03020100, 0xffedcba9};
         int mask = 0xff;
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
@@ -147,9 +142,9 @@ public class ARMV7AssemblerTest extends MaxTestCase {
 
             expectedValues[i] = expectedValues[i] >> 8 * (i % 4);
             if (expectedValues[i] < 0) {
-                expectedValues[i] =  0x100 + expectedValues[i];
+                expectedValues[i] = 0x100 + expectedValues[i];
             }
-            // Bytes do not have a sign! So we need to make sure the  expectedValues are
+            // Bytes do not have a sign! So we need to make sure the expectedValues are
             // not affected by sign extension side effects when we take the MSByte of
             // an integer.
         }
@@ -158,7 +153,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     }
 
     public void testAddConstant() throws Exception {
-        int []instructions = new int[3];
+        int[] instructions = new int[3];
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         initialiseExpectedValues();
         resetIgnoreValues();
@@ -574,15 +569,14 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         generateAndTest(assemblerStatements, expectedValues, testValues, bitmasks);
     }
 
-
     public void testLdrsh() throws Exception {
-        /* A8.8.88 ldrsh (immediate)  calculates an address from a base register value
-        and an immediate offset, loads a halfword from memory and sign-extends it to
-        form a 32bit word and writes it to a register.
-        */
+        /*
+         * A8.8.88 ldrsh (immediate) calculates an address from a base register value and an immediate offset, loads a
+         * halfword from memory and sign-extends it to form a 32bit word and writes it to a register.
+         */
 
         int assemblerStatements = 9;
-        int []testval = {0x03020100, 0x8fed9ba9};
+        int[] testval = { 0x03020100, 0x8fed9ba9};
         int mask = 0xffff;
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
@@ -613,20 +607,17 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         generateAndTest(assemblerStatements, expectedValues, testValues, bitmasks);
     }
 
-
     public void testStrdAndLdrd() throws Exception {
         MaxineARMTester.disableDebug();
-
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         resetIgnoreValues();
         for (int i = 0; i < 10; i += 2) {
             asm.codeBuffer.reset();
             asm.mov32BitConstant(ARMV7.cpuRegisters[i], expectedValues[i]);
-            asm.mov32BitConstant(ARMV7.cpuRegisters[i + 1], expectedValues[i + 1]); // load a vlaue into 2 registers
-            asm.strd(ARMV7Assembler.ConditionFlag.Always, ARMV7.cpuRegisters[i], ARMV7.r13, 0); // put them on the stack
-// on the stack!
-            asm.mov32BitConstant(ARMV7.cpuRegisters[i], 0); // zero the value in the registers
+            asm.mov32BitConstant(ARMV7.cpuRegisters[i + 1], expectedValues[i + 1]);
+            asm.strd(ARMV7Assembler.ConditionFlag.Always, ARMV7.cpuRegisters[i], ARMV7.r13, 0);
+            asm.mov32BitConstant(ARMV7.cpuRegisters[i], 0);
             asm.mov32BitConstant(ARMV7.cpuRegisters[i + 1], 0);
             asm.ldrd(ARMV7Assembler.ConditionFlag.Always, ARMV7.cpuRegisters[i], ARMV7.r13, 0);
             testValues[i] = true;
@@ -779,19 +770,20 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
-        int j = 0;
         for (int i = 0; i < expectedLongValues.length; i++) {
-            System.out.println(i +" " +  expectedLongValues[i]);
-            asm.mov64BitConstant(ARMV7.cpuRegisters[i*2], ARMV7.cpuRegisters[(i*2)+1], expectedLongValues[i]);
+            System.out.println(i + " " + expectedLongValues[i]);
+            asm.mov64BitConstant(ARMV7.cpuRegisters[i * 2], ARMV7.cpuRegisters[(i * 2) + 1], expectedLongValues[i]);
             testValues[i] = true;
         }
-       // asm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
-       // for (int i = 0; i < 10; i++) {
-       //     asm.add(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.cpuRegisters[i], ARMV7.cpuRegisters[i], i * 2, 0);
-       //     asm.movw(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, i * 4);
-       //     asm.movt(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, 0);
-       //     asm.ldr(ARMV7Assembler.ConditionFlag.Always, 1, 1, 0, ARMV7.cpuRegisters[i], ARMV7.cpuRegisters[13], ARMV7.cpuRegisters[12], 0, 0);
-       // }
+        asm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8);
+        for (int i = 0; i < expectedLongValues.length * 2; i++) {
+             asm.mov32BitConstant(ARMV7.cpuRegisters[i],0);
+        }
+        for (int i = 0; i < expectedLongValues.length; i++) {
+            asm.movw(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, i * 8);
+            asm.movt(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, 0);
+            asm.ldrd(ConditionFlag.Always, 0, 0, 0, ARMV7.RSP.asRegister(), ARMV7.cpuRegisters[i * 2], ARMV7.r12);
+        }
         generateAndTest(assemblerStatements, expectedLongValues, testValues, bitmasks);
     }
 

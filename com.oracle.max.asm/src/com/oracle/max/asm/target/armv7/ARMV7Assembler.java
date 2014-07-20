@@ -747,9 +747,6 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final void mov64BitConstant(CiRegister dstUpper, CiRegister dstLow, long imm64) {
         int low32 = (int) (imm64 & 0xffffffff);
         int high32 = (int) ((imm64 >> 32) & 0xffffffff);
-        System.out.println("High32 " + high32);
-        System.out.println("low32 " + low32);
-
         mov32BitConstant(dstLow, low32);
         mov32BitConstant(dstUpper, high32);
     }

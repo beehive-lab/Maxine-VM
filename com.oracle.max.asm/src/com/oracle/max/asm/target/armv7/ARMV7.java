@@ -122,8 +122,6 @@ public class ARMV7 extends CiArchitecture {
         super("ARMV7", 4, ByteOrder.BigEndian, allRegisters, LOAD_STORE | STORE_STORE, 1, s31.number + 1, 4);
     }
     public static final CiRegisterValue RSP = r13.asValue(CiKind.Int);
-
-    //public static final CiRegister RSP = r13;
     public static final CiRegister LR = r14;
     public static final CiRegister PC = r15;
     public static final CiRegister rip = new CiRegister(32, -1, 0, "rip");
