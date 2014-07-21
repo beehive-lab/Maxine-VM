@@ -101,18 +101,18 @@ public class ARMV7JTTTest extends MaxTestCase {
         return result.toArray(new String[result.size()]);
     }
 
-    private static int[] valueTestSet = {0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
-    private static long[] scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x00000000ffffffffL};
-    private static MaxineARMTester.BitsFlag[] bitmasks = {MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-            MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-            MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-            MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits};
+    private static int[] valueTestSet = { 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
+    private static long[] scratchTestSet = { 0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x00000000ffffffffL};
+    private static MaxineARMTester.BitsFlag[] bitmasks = { MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
+                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
+                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
+                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits};
 
-    private static int[] expectedValues = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    private static int[] expectedValues = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     private static boolean[] testvalues = new boolean[17];
 
     private int[] generateAndTestStubs(String functionPrototype, int entryPoint, byte[] theCode, int assemblerStatements, int[] expected, boolean[] tests, MaxineARMTester.BitsFlag[] masks)
-            throws Exception {
+                    throws Exception {
         ARMCodeWriter code = new ARMCodeWriter(assemblerStatements, theCode);
         // code.createCodeStubsFile(theCode,entryPoint);
         code.createStaticCodeStubsFile(functionPrototype, theCode, entryPoint);
@@ -1473,7 +1473,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1); // local slot is argument r0
             masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
             int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
@@ -1502,7 +1502,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.push(ConditionFlag.Always, 1); // local slot is argument r0
             masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifeq_3");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
             int assemblerStatements = masm.codeBuffer.position() / 4;
             int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
@@ -1559,13 +1559,13 @@ public class ARMV7JTTTest extends MaxTestCase {
         List<Args> pairs = new LinkedList<Args>();
         String klassName = "jtt.bytecode.BC_invokestatic";
 
-        List<TargetMethod> methods = Compile.compile(new String[]{klassName}, "C1X");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
 
         CompilationBroker.OFFLINE = true;
-        //initialised = true;
-        //initTests();
+        // initialised = true;
+        // initTests();
 
-        //ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+        // ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         /*
          * WE NEED A CLEANED UP WAY TO .. COPY THE CODE INTO AN ALIGNED BUFFER, WE NEED TO BE ABLE TO MATCH THE
          * MaxTargetMethod with the one we want to call, and then to extract its entry point ... IVE CHEATED HERE AND
@@ -1578,7 +1578,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(-2, -2));
 
         for (Args pair : pairs) {
-            //MaxineByteCode xx = new MaxineByteCode();
+            // MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_invokestatic.test(pair.first);
             expectedValues[0] = answer;
             /*
@@ -1590,7 +1590,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             String functionPrototype = ARMCodeWriter.preAmble("void", "int", Integer.toString(pair.first));
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
-            //theCompiler.cleanup();
+            // theCompiler.cleanup();
         }
     }
 
@@ -1599,8 +1599,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         List<Args> pairs = new LinkedList<Args>();
         String klassName = "jtt.bytecode.BC_d2f";
 
-
-        List<TargetMethod> methods = Compile.compile(new String[]{klassName}, "C1X");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         /*
          * WE NEED A CLEANED UP WAY TO .. COPY THE CODE INTO AN ALIGNED BUFFER, WE NEED TO BE ABLE TO MATCH THE
          * MaxTargetMethod with the one we want to call, and then to extract its entry point ... IVE CHEATED HERE AND
@@ -1608,7 +1607,7 @@ public class ARMV7JTTTest extends MaxTestCase {
          */
         initialiseCodeBuffers(methods);
         int assemblerStatements = codeBytes.length / 4;
-        double[] arguments = {-2.2d, 0.0d, 1.0d, 01.06d};
+        double[] arguments = { -2.2d, 0.0d, 1.0d, 01.06d};
         float expectedFloat = -9;
         for (int i = 0; i < arguments.length; i++) {
             MaxineByteCode xx = new MaxineByteCode();
@@ -1633,16 +1632,14 @@ public class ARMV7JTTTest extends MaxTestCase {
         MaxineVM.exit(0);
     }
 
-
-    public void test_jtt_BC_dcmp01() throws Exception {
+    public void ignore_jtt_BC_dcmp01() throws Exception {
         initTests();
-        //double argOne[] =  {0.0d, -0.1};
-        double argOne[] =  {5.0d, -3.1};
-        double argTwo[] = {78.00d, 78.01d};
+        // double argOne[] = {0.0d, -0.1};
+        double argOne[] = { 5.0d, -3.1};
+        double argTwo[] = { 78.00d, 78.01d};
 
         List<Args> pairs = new LinkedList<Args>();
         String klassName = "jtt.bytecode.BC_dcmp01";
-
 
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
 
@@ -1650,27 +1647,25 @@ public class ARMV7JTTTest extends MaxTestCase {
         int assemblerStatements = codeBytes.length / 4;
         int expectedValue = 0;
         for (int i = 0; i < argOne.length; i++) {
-             MaxineByteCode xx = new MaxineByteCode();
-             boolean answer = jtt.bytecode.BC_dcmp01.test(argOne[i],argTwo[i]);
-             if(answer) {
-                 expectedValue = 1;
-             } else {
-                 expectedValue = 0;
-             }
+            MaxineByteCode xx = new MaxineByteCode();
+            boolean answer = jtt.bytecode.BC_dcmp01.test(argOne[i], argTwo[i]);
+            if (answer) {
+                expectedValue = 1;
+            } else {
+                expectedValue = 0;
+            }
 
-             String functionPrototype = ARMCodeWriter.preAmble("int", "double , double", Double.toString(argOne[i]) + new String(", ") + Double.toString(argTwo[i]));
-             System.out.println(functionPrototype);
-        // good question here ... is the value returned in the float s0 or the core s0 register
-        int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
-        if (registerValues[0] != expectedValue) {
-            System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            String functionPrototype = ARMCodeWriter.preAmble("int", "double , double", Double.toString(argOne[i]) + new String(", ") + Double.toString(argTwo[i]));
+            System.out.println(functionPrototype);
+            // good question here ... is the value returned in the float s0 or the core s0 register
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (registerValues[0] != expectedValue) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            }
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
         }
-        assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
-        theCompiler.cleanup();
+        MaxineVM.exit(0);
     }
-    MaxineVM.exit(0);
-
-    }
-
 
 }
