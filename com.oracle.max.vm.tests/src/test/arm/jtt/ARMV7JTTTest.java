@@ -1634,9 +1634,10 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void ignore_jtt_BC_dcmp01() throws Exception {
         initTests();
-        // double argOne[] = {0.0d, -0.1};
-        double argOne[] = { 5.0d, -3.1};
-        double argTwo[] = { 78.00d, 78.01d};
+
+        //double argOne[] =  {0.0d, -0.1};
+        double argOne[] =  {5.0d, -3.1d, 5.0d, -5.0d};
+        double argTwo[] = {78.00d, 78.01d, 3.3d, -7.2d};
 
         List<Args> pairs = new LinkedList<Args>();
         String klassName = "jtt.bytecode.BC_dcmp01";
@@ -1655,17 +1656,21 @@ public class ARMV7JTTTest extends MaxTestCase {
                 expectedValue = 0;
             }
 
-            String functionPrototype = ARMCodeWriter.preAmble("int", "double , double", Double.toString(argOne[i]) + new String(", ") + Double.toString(argTwo[i]));
-            System.out.println(functionPrototype);
+
+             String functionPrototype = ARMCodeWriter.preAmble("int", "double , double", Double.toString(argOne[i]) + new String(", ") + Double.toString(argTwo[i]));
+             System.out.println(functionPrototype);
             // good question here ... is the value returned in the float s0 or the core s0 register
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
             if (registerValues[0] != expectedValue) {
                 System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
             }
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
-            theCompiler.cleanup();
-        }
-        MaxineVM.exit(0);
+
+            Log.println("DCMP less than passed test" + i);
+    }
+        theCompiler.cleanup();
+        //MaxineVM.exit(0);
+
     }
 
 }
