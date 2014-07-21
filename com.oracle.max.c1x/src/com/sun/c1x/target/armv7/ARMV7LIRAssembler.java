@@ -744,7 +744,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
             case F2I: {
                 assert srcRegister.isFpu() && dest.isRegister() : "must both be XMM register (no fpu stack)";
-
+                assert 0 == 1 : " F2I ARMV7LIRAssembler bind commented out";
                 masm.vcvt(ConditionFlag.Always,dest.asRegister(),true,true,srcRegister);
                 // masm.cvttss2sil(dest.asRegister(), srcRegister);
                /* masm.cmp32(dest.asRegister(), Integer.MIN_VALUE);
