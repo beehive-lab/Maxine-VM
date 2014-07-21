@@ -127,10 +127,16 @@ public class Compile {
     public static List<TargetMethod> compile(String[] args, String compilerAlias) throws IOException {
         args = VMOption.extractVMArgs(args);
 
-        VMConfigurator vmConfigurator = new VMConfigurator(options);
-        options.parseArguments(args);
+        VMConfigurator vmConfigurator = null;
+        if (!CompilationBroker.OFFLINE) {
+            vmConfigurator = new VMConfigurator(options);
 
+        } else {
+            vmConfigurator = new VMConfigurator(null);
+        }
+        options.parseArguments(args);
         options.setValuesAgain();
+
         final String[] arguments = expandArguments(options.getArguments());
 
         String compilerName = getCompilerClassname(compilerAlias);
