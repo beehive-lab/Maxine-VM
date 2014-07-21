@@ -1665,8 +1665,8 @@ public class ARMV7JTTTest extends MaxTestCase {
                 System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
             }
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            Log.println("DCMP less than passed test" + argOne[i] + " " + argTwo[i]);
 
-            Log.println("DCMP less than passed test" + i);
     }
         theCompiler.cleanup();
         //MaxineVM.exit(0);
