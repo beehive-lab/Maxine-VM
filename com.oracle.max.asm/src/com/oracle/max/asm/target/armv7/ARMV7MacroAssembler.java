@@ -22,6 +22,7 @@
  */
 package com.oracle.max.asm.target.armv7;
 
+import com.oracle.max.asm.*;
 import com.oracle.max.asm.AsmOptions;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.RiRegisterConfig;
@@ -148,38 +149,41 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
 
         // dont need it in ARM?
-        // Label l = new Label();
+        Label l = new Label();
         /*
         APN please bear in mind I am a novice x86er
         My reading is that this code jumps to the label if the conditions are true
         dst is given the value -1 iff opr1 <- opr2
         0 -ff opr1 == opr2
         1 iff opr1 > opr2
-
+        */
         if (unorderedIsLess) {
-            movl(dst, -1);
-            jcc(ARMV7Assembler.ConditionFlag.parity, l);
-            jcc(ARMV7Assembler.ConditionFlag.below, l);
-            movl(dst, 0);
-            jcc(ARMV7Assembler.ConditionFlag.equal, l);
+            mov32BitConstant(dst, -1);
+            //jcc(ARMV7Assembler.ConditionFlag.parity, l);
+            //jcc(ARMV7Assembler.ConditionFlag.below, l);
+            jcc(ConditionFlag.SignedOverflow,l);
+            mov32BitConstant(dst, 0);
+            //jcc(ARMV7Assembler.ConditionFlag.equal, l);
             incrementl(dst, 1);
         } else { // unordered is greater
-            movl(dst, 1);
-            jcc(ARMV7Assembler.ConditionFlag.parity, l);
-            jcc(ARMV7Assembler.ConditionFlag.above, l);
-            movl(dst, 0);
-            jcc(ARMV7Assembler.ConditionFlag.equal, l);
+            mov32BitConstant(dst, 1);
+            //jcc(ARMV7Assembler.ConditionFlag.parity, l);
+            //jcc(ARMV7Assembler.ConditionFlag.above, l);
+            jcc(ConditionFlag.SignedOverflow, l);
+            mov32BitConstant(dst, 0);
+            //jcc(ARMV7Assembler.ConditionFlag.equal, l);
+
             decrementl(dst, 1);
         }
-        */
+
         // don't need it in ARM
-        // bind(l);
+        bind(l);
     }
 
     public void cmpss2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
         assert opr1.isFpu();
         assert opr2.isFpu();
-      //  assert !opr1.isFpu(); // APN force crash as not yet implemented
+       assert !opr1.isFpu(); // APN force crash as not yet implemented
         /*ucomiss(opr1, opr2);
 
         Label l = new Label();

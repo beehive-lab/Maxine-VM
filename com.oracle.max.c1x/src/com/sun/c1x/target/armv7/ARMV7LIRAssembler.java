@@ -638,6 +638,11 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             if (op.code == LIROpcode.CondFloatBranch) {
                 assert op.unorderedBlock() != null : "must have unordered successor";
                 //masm.jcc(ConditionFlag.parity, op.unorderedBlock().label());
+                masm.jcc(ConditionFlag.SignedOverflow,op.unorderedBlock().label());
+                /* http://community.arm.com/groups/processors/blog/2013/09/25/condition-codes-4-floating-point-comparisons-using-vfp
+                See link,  table explains the ARM way of determining if one or more arguments was a NaN
+                 */
+                // parityset in X86 test for FP compares means that a NaN has occurred
                 // TODO how to encode the parity condition bit for X86??? masm.jcc(ConditionFlag., op.unorderedBlock().label());
                 //assert 0 == 1 : "parity flag ARMV7IRAssembler";
 
