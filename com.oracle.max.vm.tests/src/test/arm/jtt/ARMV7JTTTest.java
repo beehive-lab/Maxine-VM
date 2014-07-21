@@ -1632,7 +1632,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         MaxineVM.exit(0);
     }
 
-    public void ignore_jtt_BC_dcmp01() throws Exception {
+    public void test_jtt_BC_dcmp01() throws Exception {
         initTests();
 
         //double argOne[] =  {0.0d, -0.1};
