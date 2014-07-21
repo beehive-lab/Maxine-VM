@@ -35,6 +35,7 @@ import com.sun.cri.ci.CiTargetMethod.JumpTable;
 import com.sun.cri.ci.CiTargetMethod.LookupTable;
 import com.sun.max.annotate.HOSTED_ONLY;
 import com.sun.max.unsafe.Word;
+import com.sun.max.vm.Log;
 import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.actor.member.FieldActor;
 import com.sun.max.vm.classfile.CodeAttribute;
@@ -957,6 +958,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 buf.setPosition(dispPos);
                 int dispFromCodeStart = dispFromCodeStart(objectLiterals.size(), 0, index, true);
                 int disp = movqDisp(dispPos, dispFromCodeStart);
+                Log.println("ARMV7T1XCompilation ... OBJECT LITERAL PAtchInfo needs to be allowed to emitInt");
                 // buf.emitInt(disp);
             } else {
                 throw FatalError.unexpected(String.valueOf(tag));

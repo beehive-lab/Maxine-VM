@@ -1108,11 +1108,16 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         // register - stack
                         CiAddress raddr = frameMap.toStackAddress(((CiStackSlot) right));
                         masm.setUpScratch(raddr);
-                        //masm.ldrImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,0);
-                        // TODO were addq subq so might be longs
+                        masm.ldrImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,0);
+                        // TODO what if addq subq so might be longs
                         switch (code) {
-                            //case Add : masm.addq(ConditionFlag.Always,false,lreg,ARMV7.r12,0,0); break;
-                            //case Sub : masm.subq(ConditionFlag.Always,false,lreg, ARMV7.r12,0,0); break;
+                            case Add : //masm.addq(ConditionFlag.Always,false,lreg,ARMV7.r12,0,0);
+                                masm.add(ConditionFlag.Always, false, lreg, ARMV7.r12, 0, 0);
+                                break;
+                            case Sub :
+                                    masm.sub(ConditionFlag.Always,false,lreg,ARMV7.r12,0,0);
+                                //masm.subq(ConditionFlag.Always,false,lreg, ARMV7.r12,0,0);
+                                break;
                             default  : throw Util.shouldNotReachHere();
                         }
                     } else {
@@ -1129,6 +1134,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                             assert 0 == 1 : "mov long into scratch1 ARMV7IRAssembler";
 
                             // masm.movq(rscratch1, c);
+                            //masm.mov32BitConstant();
                             switch (code) {
                                 case Add : //masm.addq(lreg, rscratch1);
                                     break;
@@ -1146,13 +1152,19 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
             if (right.isRegister()) {
                 CiRegister rreg = right.asRegister();
+                masm.setUpScratch(laddr);
+                masm.ldr(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
                 switch (code) {
                     case Add : //masm.addl(laddr, rreg);
+                            masm.addRegisters(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r8,rreg,0,0);
                         break;
                     case Sub : //masm.subl(laddr, rreg);
+                            masm.sub(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r8,rreg,0,0);
                         break;
                     default  : throw Util.shouldNotReachHere();
+
                 }
+                masm.str(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
             } else {
                 assert right.isConstant();
                 int c = ((CiConstant) right).asInt();
@@ -1594,15 +1606,17 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             Label done = new Label();
             Label isEqual = new Label();
             masm.cmpptr(left.asRegister(), right.asRegister());
-          //  masm.jcc(ConditionFlag.equal, isEqual);
+            //masm.jcc(ConditionFlag.equal, isEqual);
+            masm.jcc(ConditionFlag.Equal,isEqual);
            // masm.jcc(ConditionFlag.greater, high);
+            masm.jcc(ConditionFlag.SignedGreater,high); // unsigned Greater?
             masm.xorptr(dest, dest);
             masm.decrementl(dest, 1);
-           // masm.jmp(done);
+            masm.jmp(done);
             masm.bind(high);
             masm.xorptr(dest, dest);
             masm.incrementl(dest, 1);
-          //  masm.jmp(done);
+            masm.jmp(done);
             masm.bind(isEqual);
             masm.xorptr(dest, dest);
             masm.bind(done);
@@ -1810,7 +1824,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             masm.nop();
         }
         tasm.recordImplicitException(codePos(), info);
-     //   masm.nullCheck(src.asRegister());
+         masm.nullCheck(src.asRegister());
        // assert 0 == 1 : "emitNullCheck ARMV7IRAssembler";
 
     }

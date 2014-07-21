@@ -46,7 +46,9 @@ public class ARMV7Assembler extends AbstractAssembler {
             // or I need to compute an absolute address and do a MOV PC,absolute.
             // branch(l.position(), false);
             checkConstraint(-0x800000 <= (l.position() - codeBuffer.position()) && (l.position() - codeBuffer.position()) <= 0x7fffff, "branch must be within  a 24bit offset");
-            emitInt(0x06000000 | (l.position() - codeBuffer.position()) | ConditionFlag.Always.value() & 0xf);
+            //emitInt(0x06000000 | (l.position() - codeBuffer.position()) | ConditionFlag.Always.value() & 0xf);
+            emitInt(0x0a000000 | (l.position() - codeBuffer.position()) | ((ConditionFlag.Always.value() & 0xf) << 28));
+
         } else {
             // By default, forward jumps are always 24-bit displacements, since
             // we can't yet know where the label will be bound. If you're sure that
@@ -62,7 +64,9 @@ public class ARMV7Assembler extends AbstractAssembler {
     protected void patchJumpTarget(int branch, int target) {
         // b, bl & bx goes here .. could do an ADD PC,reg if too big
         checkConstraint(-0x800000 <= (target - branch) && (target - branch) <= 0x7fffff, "branch must be within  a 24bit offset");
-        emitInt(0x06000000 | (target - branch) | ConditionFlag.Always.value() & 0xf);
+        //emitInt(0x06000000 | (target - branch) | ConditionFlag.Always.value() & 0xf);
+        emitInt(0x0a000000 | (target - branch) | ((ConditionFlag.Always.value() & 0xf) << 28));
+
 
     }
 
@@ -600,9 +604,14 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldr(final ConditionFlag flag, final CiRegister destReg, final CiRegister baseRegister, final int offset12) {
+        /*
+        P,U,W are set to always add at the moment,
+        P = 1, U = 1, W = 0
+
+         */
         int instruction;
         instruction = 0x05900000;
-        instruction = (flag.value() & 0xf) << 28;
+        instruction |= (flag.value() & 0xf) << 28;
         instruction |= (destReg.encoding & 0xf) << 16;
         instruction |= (baseRegister.encoding & 0xf) << 12;
         instruction |= offset12 & 0xfff;
@@ -1083,8 +1092,11 @@ public class ARMV7Assembler extends AbstractAssembler {
             // an 8-bit displacement
             l.addPatchAt(codeBuffer.position());
             nop(3);
+
             // TODO decide how to distinguish this from other patches
             // TODO update wiki on this
+            ldr(ConditionFlag.Always,ARMV7.r12,ARMV7.r12,0);
+            //ldr(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
             mov(cc, false, ARMV7.r15, ARMV7.r12);
         }
 
