@@ -22,8 +22,8 @@
  */
 package com.oracle.max.asm.target.armv7;
 
-import com.oracle.max.asm.*;
 import com.oracle.max.asm.AsmOptions;
+import com.oracle.max.asm.Label;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.RiRegisterConfig;
 
@@ -183,7 +183,9 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public void cmpss2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
         assert opr1.isFpu();
         assert opr2.isFpu();
-       assert !opr1.isFpu(); // APN force crash as not yet implemented
+        System.out.println("ARMV7MAcroAssembler floating point compares PARITY NOT IMPLEMENTED");
+        assert !opr1.isFpu(); // APN force crash as not yet implemented
+
         /*ucomiss(opr1, opr2);
 
         Label l = new Label();

@@ -1633,7 +1633,8 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     public void test_jtt_BC_dcmp01() throws Exception {
-        initTests();
+        //initTests();
+        CompilationBroker.OFFLINE = initialised;
 
         //double argOne[] =  {0.0d, -0.1}; * @Runs: (0d, -0.1d) = false; (78.00d, 78.001d) = true
 
@@ -1645,6 +1646,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         String klassName = "jtt.bytecode.BC_dcmp01";
 
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
 
         initialiseCodeBuffers(methods);
         int assemblerStatements = codeBytes.length / 4;
@@ -1660,19 +1662,65 @@ public class ARMV7JTTTest extends MaxTestCase {
 
 
              String functionPrototype = ARMCodeWriter.preAmble("int", "double , double", Double.toString(argOne[i]) + new String(", ") + Double.toString(argTwo[i]));
-             System.out.println(functionPrototype);
             // good question here ... is the value returned in the float s0 or the core s0 register
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
             if (registerValues[0] != expectedValue) {
                 System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
             }
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
-            Log.println("DCMP less than passed test" + argOne[i] + " " + argTwo[i]);
+            //Log.println("DCMP less than passed test" + argOne[i] + " " + argTwo[i]);
 
     }
         theCompiler.cleanup();
-        //MaxineVM.exit(0);
 
     }
+
+    public void test_jtt_BC_dcmp02() throws Exception {
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+
+        //double argOne[] =  {0.0d, -0.1}; * @Runs: (0d, -0.1d) = false; (78.00d, 78.001d) = true
+
+    /*
+     * @Harness: java
+     * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
+     */
+
+
+        double argOne[] =  {-1.0d, -1.0d, 0.0d, -0.0d};
+
+        String klassName = "jtt.bytecode.BC_dcmp02";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+
+        initialiseCodeBuffers(methods);
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < argOne.length; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            boolean answer = jtt.bytecode.BC_dcmp02.test(argOne[i]);
+            if (answer) {
+                expectedValue = 1;
+            } else {
+                expectedValue = 0;
+            }
+
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
+            System.out.println(functionPrototype);
+            // good question here ... is the value returned in the float s0 or the core s0 register
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (registerValues[0] != expectedValue) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            }
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            Log.println("DCMP02  passed test " + argOne[i]);
+
+        }
+        theCompiler.cleanup();
+
+    }
+
 
 }
