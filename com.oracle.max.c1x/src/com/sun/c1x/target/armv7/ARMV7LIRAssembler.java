@@ -205,24 +205,30 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     }
 
     private void const2reg(CiRegister dst, float constant) {
-        assert 0 == 1 : "const2reg floats ARMV7IRAssembler";
 
         // This is *not* the same as 'constant == 0.0f' in the case where constant is -0.0f
         if (Float.floatToRawIntBits(constant) == Float.floatToRawIntBits(0.0f)) {
             //masm.xorps(dst, dst);
+            masm.eor(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
+            masm.vmov(ConditionFlag.Always,dst,ARMV7.r12);
         } else {
             masm.mov32BitConstant(rscratch1, Float.floatToRawIntBits(constant));
+            masm.vmov(ConditionFlag.Always,dst,rscratch1);
             //masm.movdl(dst, rscratch1);
         }
     }
 
     private void const2reg(CiRegister dst, double constant) {
-        assert 0 == 1 : "const2reg doubles ARMV7IRAssembler";
 
         // This is *not* the same as 'constant == 0.0d' in the case where constant is -0.0d
         if (Double.doubleToRawLongBits(constant) == Double.doubleToRawLongBits(0.0d)) {
             //masm.xorpd(dst, dst);
+            masm.eor(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r8,ARMV7.r8,0,0);
+            masm.mov(ConditionFlag.Always,false,ARMV7.r9,ARMV7.r8);
+            masm.vmov(ConditionFlag.Always,dst,ARMV7.r8);
         } else {
+            masm.movlong(dst, Double.doubleToRawLongBits(constant));
+
             //masm.movq(rscratch1, Double.doubleToRawLongBits(constant));
             //masm.movdq(dst, rscratch1);
         }
@@ -1011,6 +1017,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     }
                 } else if (kind.isFloat()) {
                     assert rreg.isFpu() : "must be xmm";
+                    assert 0==1 : "Float arithmetic";
                     switch (code) {
                         case Add : //masm.addss(lreg, rreg);
                             break;
@@ -1019,24 +1026,31 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         case Mul : //masm.mulss(lreg, rreg);
                             break;
                         case Div : //masm.divss(lreg, rreg);
+                            assert(0==1);
                             break;
                         default  : throw Util.shouldNotReachHere();
                     }
                 } else if (kind.isDouble()) {
+
                     assert rreg.isFpu();
                     switch (code) {
                        case Add : //masm.addsd(lreg, rreg);
+                           masm.vadd(ConditionFlag.Always,lreg,lreg,rreg);
                            break;
                        case Sub : //masm.subsd(lreg, rreg);
+                            masm.vsub(ConditionFlag.Always,lreg,lreg,rreg);
                            break;
                         case Mul : //masm.mulsd(lreg, rreg);
+                            masm.vmul(ConditionFlag.Always,lreg,lreg,rreg);
                             break;
                         case Div : //masm.divsd(lreg, rreg);
+                            masm.vdiv(ConditionFlag.Always,lreg,lreg,rreg);
                             break;
                         default  : throw Util.shouldNotReachHere();
                     }
                 } else {
                     assert target.sizeInBytes(kind) == 8;
+                    assert 0 == 1 : "another arithmetic";
                    switch (code) {
                         case Add : //masm.addq(lreg, rreg);
                             break;
@@ -1076,6 +1090,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         assert right.isConstant();
                         raddr = tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) right).asFloat()));
                     }
+                    assert 0 ==1 : " const float arithmetic";
                     switch (code) {
                         case Add : //masm.addss(lreg, raddr);
                             break;
@@ -1096,6 +1111,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         assert right.isConstant();
                         raddr = tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) right).asDouble()));
                     }
+
+                    assert 0 == 1 : "double const arithmetic";
                     switch (code) {
                         case Add : //masm.addsd(lreg, raddr);
                             break;

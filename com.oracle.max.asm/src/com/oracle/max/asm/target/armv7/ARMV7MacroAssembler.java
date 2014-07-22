@@ -408,6 +408,18 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     }
 
+    public void movlong(CiRegister dst, long src) {
+        if(dst.number < 16) { // move to ARM CORE register
+            mov32BitConstant(dst, (int) (0xffffffffL & src));
+            mov32BitConstant(ARMV7.cpuRegisters[dst.encoding+1], (int) ((src >> 32) & 0xffffffffL));
+        } else {
+            assert dst.number < 32 : "ERROR movlong in ARMV7MacroAssembler movlong to FPRegs";
+            System.out.println("movlong " + Long.toHexString(src));
+            mov32BitConstant(ARMV7.r8, (int) (0xffffffffL & src));
+            mov32BitConstant(ARMV7.r9, (int) ((src >> 32) & 0xffffffffL));
+            vmov(ConditionFlag.Always,dst,ARMV7.r8);
+        }
+    }
     /**
      * Non-atomic write of a 64-bit constant to memory. Do not use
      * if the address might be a volatile field!
