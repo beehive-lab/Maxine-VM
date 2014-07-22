@@ -443,6 +443,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
             //masm.pushl((CiAddress) src);
             //masm.popl((CiAddress) dest);
+
         } else {
             masm.pushptr((CiAddress) src);
             masm.popptr((CiAddress) dest);
@@ -662,15 +663,15 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         //acond = ConditionFlag.notEqual;
                         break;
                     case LT :
-                        acond = ConditionFlag.SignedLesser;
+                        acond = ConditionFlag.Minus;
                         //acond = ConditionFlag.below;
                         break;
                     case LE :
-                        acond = ConditionFlag.SignedLowerOrEqual;
+                        acond = ConditionFlag.UnsignedLowerOrEqual;
                         //acond = ConditionFlag.belowEqual;
                         break;
                     case GE :
-                        acond = ConditionFlag.SignedGreaterOrEqual;
+                        acond = ConditionFlag.Positive;
                         //acond = ConditionFlag.aboveEqual;
                         break;
                     case GT :
@@ -997,8 +998,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert info == null : "should never be used :  idiv/irem and ldiv/lrem not handled by this method";
         assert Util.archKindsEqual(left.kind, right.kind) || (left.kind == CiKind.Long && right.kind == CiKind.Int) : code.toString() + " left arch is " + left.kind + " and right arch is " +  right.kind;
         assert left.equals(dest) : "left and dest must be equal";
-        // APN TODO removed this assert as minor changes to Java code caused C1X to barf ... should be ok as far as I can
-        // tell ...
         CiKind kind = left.kind;
 
         // Checkstyle: off
@@ -1230,6 +1229,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             CiRegister reg = left.asRegister();
             if (right.isConstant()) {
                 int val = ((CiConstant) right).asInt();
+                assert 0 == 1 : "emitLogicOp ";
                 switch (code) {
                   case LogicAnd : //masm.andl(reg, val);
                       break;
@@ -1275,7 +1275,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             if (right.isConstant()) {
                 CiConstant rightConstant = (CiConstant) right;
             //    masm.movq(rscratch1, rightConstant.asLong());
-                //assert 0 == 1 : "mov long again ARMV7IRAssembler";
+                assert 0 == 1 : "mov long again ARMV7IRAssembler";
 
                 switch (code) {
                     case LogicAnd :// masm.andq(lreg, rscratch1);
@@ -1287,6 +1287,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 }
             } else {
                 CiRegister rreg = right.asRegister();
+                assert 0 == 1 : "masm long logic";
                 switch (code) {
                     case LogicAnd : //masm.andq(lreg, rreg);
                         break;
@@ -1518,6 +1519,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     case Object  : masm.cmpq(reg1, opr2.asRegister());
                         break;
                     case Long:
+                        assert 0 == 1 : "long cmp not impl";
                         break;
                     //long cmp not implemented case Long    :
 
@@ -1587,6 +1589,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             if (opr2.isConstant()) {
                 CiConstant right = (CiConstant) opr2;
                 // stack - constant
+                assert  0 == 1 : "stack constant ";
                 switch (opr1.kind) {
                     case Boolean :
                     case Byte    :
@@ -1631,7 +1634,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             //masm.jcc(ConditionFlag.equal, isEqual);
             masm.jcc(ConditionFlag.Equal,isEqual);
            // masm.jcc(ConditionFlag.greater, high);
-            masm.jcc(ConditionFlag.SignedGreater,high); // unsigned Greater?
+            masm.jcc(ConditionFlag.UnsignedHigher,high); // unsigned Greater?
             masm.xorptr(dest, dest);
             masm.decrementl(dest, 1);
             masm.jmp(done);
@@ -1722,7 +1725,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         } else {
             CiRegister lreg = left.asRegister();
             assert lreg != SHIFTCount : "left cannot be r1";
-
+            assert 0 == 1: "emit shifOp";
             switch (code) {
                 case Shl  : //masm.shlq(lreg);
                     break;
