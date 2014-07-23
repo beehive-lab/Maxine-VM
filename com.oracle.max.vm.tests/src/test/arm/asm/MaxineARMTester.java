@@ -8,6 +8,7 @@ public class MaxineARMTester {
     public static final String ENABLE_QEMU = "max.arm.qemu";
     public static boolean ENABLE_SIMULATOR = false;
     public static final int NUM_REGS = 17;
+    public static final int NUM_DP_REGS = 16;
 
     public enum BitsFlag {
         Bit0(0x1), Bit1(0x2), Bit2(0x4), Bit3(0x8), Bit4(0x10), Bit5(0x20), Bit6(0x40), Bit7(0x80), Bit8(0x100), Bit9(0x200), Bit10(0x400), Bit11(0x800), Bit12(0x1000), Bit13(0x2000), Bit14(0x4000), Bit15(
@@ -32,6 +33,7 @@ public class MaxineARMTester {
     private static final File bindOutput = new File("bind_output");
     private static final File gdbOutput = new File("gdb_output");
     private static final File gdbInput = new File("gdb_input");
+    private static final File gdbInputFPREGS = new File("gdb_inputFPREGS");
     private static final File gdbErrors = new File("gdb_errors");
     private static final File objCopyOutput = new File("obj_copy_output");
     private static final File objCopyErrors = new File("obj_copy_errors");
@@ -194,7 +196,51 @@ public class MaxineARMTester {
             process.destroy();
         }
     }
+    private void  runSimulationRefactored(boolean captureFPREGs) throws Exception {
+        //ProcessBuilder gdbProcess = new ProcessBuilder("arm-unknown-eabi-gdb");
+        ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb");
 
+        if (captureFPREGs) {
+            gdbProcess.redirectInput(gdbInputFPREGS);
+        } else {
+            gdbProcess.redirectInput(gdbInput);
+        }
+        gdbProcess.redirectOutput(gdbOutput);
+        gdbProcess.redirectError(gdbErrors);
+        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a9", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.bin");
+        qemuProcess.redirectOutput(qemuOutput);
+        qemuProcess.redirectError(qemuErrors);
+        try {
+            qemu = qemuProcess.start();
+            while (!qemuOutput.exists()) {
+                Thread.sleep(500);
+            }
+            do {
+                ProcessBuilder bindTest = new ProcessBuilder("lsof", "-i", "TCP:1234");
+                bindTest.redirectOutput(bindOutput);
+                bindTest.start().waitFor();
+                FileInputStream inputStream = new FileInputStream(bindOutput);
+                if (inputStream.available() != 0) {
+                    log("MaxineARMTester:: qemu ready");
+                    break;
+                } else {
+                    log("MaxineARMTester: gemu not ready");
+                    Thread.sleep(500);
+                }
+            } while (true);
+            gdbProcess.start().waitFor();
+        } catch (Exception e) {
+            System.out.println(e);
+            e.printStackTrace();
+            cleanProcesses();
+            System.exit(-1);
+        }
+    }
+    public Object[] runObjectRegisteredSimulation() throws Exception {
+        runSimulationRefactored(true);
+        Object[] simulatedRegisters = parseObjectRegistersToFile(gdbOutput.getName());
+        return simulatedRegisters;
+    }
     public int[] runRegisteredSimulation() throws Exception {
         //ProcessBuilder gdbProcess = new ProcessBuilder("arm-unknown-eabi-gdb");
         ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb");
@@ -339,6 +385,61 @@ public class MaxineARMTester {
     private void initializeQemu() {
         ENABLE_SIMULATOR = Integer.getInteger(ENABLE_QEMU) != null && Integer.getInteger(ENABLE_QEMU) > 0 ? true : false;
     }
+
+
+    private Object[] parseObjectRegistersToFile(String file) throws IOException {
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        String line = null;
+        boolean enabled = false;
+        boolean fpregs = false;
+        int i = 0;
+        Object[] expectedValues = new Object[16 + 16];
+        while ((line = reader.readLine()) != null) {
+            if (line.contains("r0")) {
+                enabled = true;
+                line = line.substring(6, line.length());
+            }
+            if (!enabled) {
+                continue;
+            }
+            String value = line.split("\\s+")[1];
+            expectedValues[i] = new Integer ((int) Long.parseLong(value.substring(2, value.length()).toString(), 16));
+            i++;
+            if (line.contains("cpsr")) {
+                enabled = false;
+                // might want to get cpsr but we dont need it right now
+                expectedValues[i] = null;
+                //i++;
+                fpregs = true;
+                break;
+            }
+        }
+        while ((line = reader.readLine()) != null) {
+            if(line.contains("u64")) {
+                enabled = true;
+            } else {
+                enabled = false;
+            }
+            if(!enabled) {
+                continue;
+            }
+            if(i >= (16+16))  {
+                break;
+            }
+            String values[] = line.split("\\s+");
+            for(int j = 0; j < values.length;j++) {
+                //System.out.println(values[j]);
+
+                if(values[j].equals("u64")) {
+                    String doubleVal = values[j+2];
+                    expectedValues[i++] = new Double((double) Double.longBitsToDouble(Long.parseLong(doubleVal.substring(2,doubleVal.length()-1),16)));
+                }
+            }
+
+        }
+        return expectedValues;
+    }
+
 
     private int[] parseRegistersToFile(String file) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(file));

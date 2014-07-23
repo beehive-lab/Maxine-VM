@@ -648,6 +648,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.jcc(ConditionFlag.SignedOverflow,op.unorderedBlock().label());
                 /* http://community.arm.com/groups/processors/blog/2013/09/25/condition-codes-4-floating-point-comparisons-using-vfp
                 See link,  table explains the ARM way of determining if one or more arguments was a NaN
+                floating-point logical relationships after a compare must use integer codes, that do not map one-to-one
+                SignedOverflow means one or more arguments were NaN
                  */
                 // parityset in X86 test for FP compares means that a NaN has occurred
                 // TODO how to encode the parity condition bit for X86??? masm.jcc(ConditionFlag., op.unorderedBlock().label());
@@ -663,7 +665,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         //acond = ConditionFlag.notEqual;
                         break;
                     case LT :
-                        acond = ConditionFlag.Minus;
+                        acond = ConditionFlag.CarryClearUnsignedLower;
                         //acond = ConditionFlag.below;
                         break;
                     case LE :
@@ -671,7 +673,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         //acond = ConditionFlag.belowEqual;
                         break;
                     case GE :
-                        acond = ConditionFlag.Positive;
+                        acond = ConditionFlag.SignedGreaterOrEqual;
                         //acond = ConditionFlag.aboveEqual;
                         break;
                     case GT :

@@ -19,7 +19,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public enum ConditionFlag {
-        Equal(0x0, "="), NotEqual(0x1, "!="), CarrySet(0x2, "|carry|"), CarryClear(0x3, "|ncarry|"), Minus(0x4, "|neg|"), Positive(0x5, "|pos|"), SignedOverflow(0x6, ".of."), NoSignedOverflow(0x7,
+        Equal(0x0, "="), NotEqual(0x1, "!="), CarrySetUnsignedHigherEqual(0x2, "|carry|"), CarryClearUnsignedLower(0x3, "|ncarry|"), Minus(0x4, "|neg|"), Positive(0x5, "|pos|"), SignedOverflow(0x6, ".of."), NoSignedOverflow(0x7,
                         "|nof|"), UnsignedHigher(0x8, "|>|"), UnsignedLowerOrEqual(0x9, "|<=|"), SignedGreaterOrEqual(0xA, ".>=."), SignedLesser(0xB, ".<."), SignedGreater(0xC, ".>."), SignedLowerOrEqual(
                         0xD, ".<=."), Always(0xE, "al");
 
