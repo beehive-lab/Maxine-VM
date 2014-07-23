@@ -1534,7 +1534,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 }
             } else if (opr2.isStackSlot()) {
                 // register - stack
-                assert 0 == 1 : "emitCompare ARMV7IRAssembler opr2stackslot";
 
                 CiStackSlot opr2Slot = (CiStackSlot) opr2;
                 switch (opr1.kind) {
@@ -1543,30 +1542,46 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     case Char    :
                     case Short   :
                     case Int     : //masm.cmpl(reg1, frameMap.toStackAddress(opr2Slot)); break;
-                    case Long    :
-                    case Object  : //masm.cmpptr(reg1, frameMap.toStackAddress(opr2Slot)); break;
-                    case Float   : //masm.ucomiss(reg1, frameMap.toStackAddress(opr2Slot));
+                        masm.cmpl(reg1,frameMap.toStackAddress(opr2Slot));
                         break;
-                    case Double  : //masm.ucomisd(reg1, frameMap.toStackAddress(opr2Slot));
+                    case Long    :
+                        assert 0 == 1;
+                        break;
+                    case Object  : masm.cmpptr(reg1, frameMap.toStackAddress(opr2Slot)); break;
+                    case Float   : //masm.ucomiss(reg1, frameMap.toStackAddress(opr2Slot));
+                        masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
+                        masm.vldr(ConditionFlag.Always,ARMV7.s30,ARMV7.r12,0);
+                        masm.ucomisd(reg1, ARMV7.s30);
+                        break;
+                    case Double:
+                        masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
+                        masm.vldr(ConditionFlag.Always,ARMV7.d15,ARMV7.r12,0);
+                        masm.ucomisd(reg1, ARMV7.d15);
                      break;
                     default      : throw Util.shouldNotReachHere();
                 }
             } else if (opr2.isConstant()) {
                 // register - constant
                 CiConstant c = (CiConstant) opr2;
-                assert 0 == 1 : "emitCompare ARMV7IRAssembler opr2constant";
 
                 switch (opr1.kind) {
                     case Boolean :
                     case Byte    :
                     case Char    :
                     case Short   :
-                    case Int     : //masm.cmpl(reg1, c.asInt()); break;
+                    case Int     : masm.cmpl(reg1, c.asInt()); break;
                     case Float   : //masm.ucomiss(reg1, tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) opr2).asFloat())));
+                        masm.setUpScratch(tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) opr2).asFloat())));
+                        masm.vldr(ConditionFlag.Always,ARMV7.s30,ARMV7.r12,0);
+                        masm.ucomisd(reg1, ARMV7.s30);
+
                         break;
                     case Double  : //masm.ucomisd(reg1, tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) opr2).asDouble())));
+                        masm.setUpScratch(tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) opr2).asDouble())));
+                        masm.vldr(ConditionFlag.Always,ARMV7.d15,ARMV7.r12,0);
+                        masm.ucomisd(reg1, ARMV7.d15);
                         break;
-                    case Long    : {
+                    case Long    : { assert 0 == 1;
                         if (c.asLong() == 0) {
                            // masm.cmpq(reg1, 0);
                         } else {

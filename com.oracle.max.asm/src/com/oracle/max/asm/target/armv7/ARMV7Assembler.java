@@ -835,6 +835,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final void cmpl(CiRegister src1, CiAddress src2) {
         assert src1.isValid();
         setUpScratch(src2); // APN not sure if this requires a load!
+        ldr(ConditionFlag.Always,ARMV7.r12,ARMV7.r12,0);
         cmp(ConditionFlag.Always, src1, scratchRegister, 0, 0);
     }
 
