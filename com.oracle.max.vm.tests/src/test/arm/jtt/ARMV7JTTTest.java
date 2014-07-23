@@ -1710,8 +1710,8 @@ public class ARMV7JTTTest extends MaxTestCase {
          * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
          */
 
-        double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d};
-
+        double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
+        Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
         String klassName = "jtt.bytecode.BC_dcmp02";
 
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -1736,9 +1736,92 @@ public class ARMV7JTTTest extends MaxTestCase {
             }
             Log.println("DCMP02 test " + argOne[i] +  " returned " + registerValues[0] + " expected " + expectedValue);
 
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+    public void test_jtt_BC_fcmp01() throws Exception {
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+
+
+        /*
+         * @Harness: java
+         *
+         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
+         */
+        float argOne[] = { 5.0f, -3.0f, 5.0f, -5.0f, 0f, -0.1f};
+        float argTwo[] = { 78.00f, 78.01f, 3.3f, -7.2f, 78.00f, 78.001f};
+        String klassName = "jtt.bytecode.BC_fcmp01";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+
+        initialiseCodeBuffers(methods);
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < argOne.length; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            boolean answer = jtt.bytecode.BC_fcmp01.test(argOne[i],argTwo[i]);
+            if (answer) {
+                expectedValue = 1;
+            } else {
+                expectedValue = 0;
+            }
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "float, float", Float.toString(argOne[i])+ new String( ",") + Float.toString(argTwo[i]));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (registerValues[0] != expectedValue) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            }
+            Log.println("FCMP01 test " + argOne[i] +  " " + argTwo[i] + " returned " + registerValues[0] + " expected " + expectedValue);
+
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+    public void test_jtt_BC_fcmp10() throws Exception {
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+        boolean failed = false;
+
+
+        /*
+         * @Harness: java
+         *
+         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
+         */
+
+        String klassName = "jtt.bytecode.BC_fcmp01";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+
+        initialiseCodeBuffers(methods);
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < 9; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            boolean answer = jtt.bytecode.BC_fcmp10.test(i);
+            if (answer) {
+                expectedValue = 1;
+            } else {
+                expectedValue = 0;
+            }
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "int", Integer.toString(i));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (registerValues[0] != expectedValue) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            }
+            Log.println("FCMP10 test " + i + " returned " + registerValues[0] + " expected " + expectedValue);
+            if(registerValues[0] != expectedValue) {
+                failed = true;
+            }
             //assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
+        assert failed == false;
     }
 
     public void test_jtt_BC_lload_0() throws Exception {

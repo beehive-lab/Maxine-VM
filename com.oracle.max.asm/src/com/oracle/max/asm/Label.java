@@ -72,6 +72,7 @@ public final class Label {
         int target = position;
         for (int i = 0; i < patchPositions.size(); ++i) {
             int pos = patchPositions.get(i);
+            System.out.println("pathJumpTarget " + pos + " " + target);
             masm.patchJumpTarget(pos, target);
         }
     }

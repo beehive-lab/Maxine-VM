@@ -1092,12 +1092,14 @@ public class ARMV7Assembler extends AbstractAssembler {
             // an 8-bit displacement
             l.addPatchAt(codeBuffer.position());
             nop(3);
-
+            // TODO issues exist here ... what happens if R12 is loaded twice?
+            // TODO or used as scratch inbetween the setup of its value and
+            // this point?
             // TODO decide how to distinguish this from other patches
             // TODO update wiki on this
-            ldr(ConditionFlag.Always,ARMV7.r12,ARMV7.r12,0);
+            ldr(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
             //ldr(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
-            mov(cc, false, ARMV7.r15, ARMV7.r12);
+            mov(cc, false, ARMV7.r15, ARMV7.r8);
         }
 
     }
