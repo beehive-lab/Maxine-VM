@@ -1963,6 +1963,57 @@ public class ARMV7JTTTest extends MaxTestCase {
 
 
 
+
+    public void test_jtt_BC_dneg() throws Exception {
+        initTests();
+        boolean failed = false;
+  /*
+     * @Harness: java
+     * @Runs: (0.0d, 1.0d, 0) = -0.0d; (-1.01d, -2.01d, 0) = 1.01d; (7263.8734d, 8263.8734d, 0) = -7263.8734d; (0.0d, 1.0d, 1) = -1.0d;
+     * (-1.01d, -2.01d, 1) = 2.01d; (7263.8734d, 8263.8734d, 1) = -8263.8734d
+
+    public class BC_dneg {
+        public static double test(double a, double b, int which) {
+            double result1 = -a;
+            double result2 = -b;
+            double result = 0.0;
+            if (which == 0) {
+                result = result1;
+            } else {
+                result = result2;
+            }
+            return result;
+        }
+    }*/
+        double argsOne[] = {0.0D, -1.01D,7263.8734d, 0.0d, -1.01d, 7263.8743d};
+        double argsTwo[] = {1.0d, -2.01D,8263.8734d, 1.0d, -2.01d,  8263.8734d};
+        int argsThree[]= {0,       0,     0,          1,  1,1};
+
+        String klassName = "jtt.bytecode.BC_dneg";
+        List<TargetMethod> methods = Compile.compile(new String[]{klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        initialiseCodeBuffers(methods);
+        int assemblerStatements = codeBytes.length / 4;
+        double expectedValue = 0;
+        for (int i = 0; i < argsOne.length; i++) {
+            double doubleValue = jtt.bytecode.BC_dneg.test(argsOne[i], argsTwo[i],argsThree[i]);
+
+            String functionPrototype = ARMCodeWriter.preAmble("double", "double , double, int", Double.toString(argsOne[i]) + "," + Double.toString(argsTwo[i])+ ","
+            + Integer.toString(argsThree[i]));
+            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (!registerValues[17].equals(new Double(doubleValue))) { // r0.r15 + APSR then FPREGS
+                failed = true;
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + doubleValue);
+            }
+            Log.println("DNEG test " + i + " returned " + ((Double) registerValues[17]).doubleValue() + " expected " + doubleValue);
+            //assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+        assert failed == false;
+    }
+
+
+
     public void test_jtt_BC_lload_0() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = "jtt.bytecode.BC_lload_0";

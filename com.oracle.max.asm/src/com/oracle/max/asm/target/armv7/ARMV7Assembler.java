@@ -1247,6 +1247,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         int instruction = (cond.value() & 0xf) << 28;
         checkConstraint(dest.number <= 63 && dest.number >= 16, "vstr dest must be a FP/DP reg");
         checkConstraint(-255 <= imm8 && imm8 <= 255, "vmov offset greater than +/- 255 ");
+        checkConstraint(src.number <= 15, "vstr base src address register must be core");
         if (imm8 >= 0) {
             instruction |= 1 << 23;
         } else {

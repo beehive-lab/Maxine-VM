@@ -2474,6 +2474,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert 0 == 1 : "loadResult ARMV7IRAssembler";
 
         if (kind == CiKind.Int || kind == CiKind.Boolean) {
+            
         //    masm.movl(dst, src);
         } else if (kind == CiKind.Float) {
          //   masm.movss(dst, src);
@@ -2487,7 +2488,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     private void storeParameter(CiValue registerOrConstant, CiStackSlot outArg) {
         CiAddress dst = compilation.frameMap().toStackAddress(outArg);
         CiKind k = registerOrConstant.kind;
-        assert 0 == 1 : "storePArameter ARMV7IRAssembler";
 
         if (registerOrConstant.isConstant()) {
             CiConstant c = (CiConstant) registerOrConstant;
@@ -2497,12 +2497,19 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.movptr(dst, c.asInt());
             }
         } else if (registerOrConstant.isRegister()) {
+            masm.setUpScratch(dst);
             if (k.isFloat()) {
+                masm.vstr(ConditionFlag.Always,registerOrConstant.asRegister(),ARMV7.r12,0);
             //    masm.movss(dst, registerOrConstant.asRegister());
             } else if (k.isDouble()) {
-             //   masm.movsd(dst, registerOrConstant.asRegister());
-            } else {
+                masm.vstr(ConditionFlag.Always,registerOrConstant.asRegister(),ARMV7.r12,0);
+
+                //   masm.movsd(dst, registerOrConstant.asRegister());
+            } else if (k.isLong()) {
+                masm.strd(ConditionFlag.Always,registerOrConstant.asRegister(),ARMV7.r12,0);
                // masm.movq(dst, registerOrConstant.asRegister());
+            } else {
+                masm.str(ConditionFlag.Always,registerOrConstant.asRegister(),ARMV7.r12,0);
             }
         } else {
             throw new InternalError("should not reach here");
