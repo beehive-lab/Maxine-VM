@@ -1878,6 +1878,88 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert failed == false;
     }
 
+    public void test_jtt_BC_dadd() throws Exception {
+        initTests();
+        boolean failed = false;
+
+
+    /*
+     * @Harness: java
+     * @Runs: (0.0d, 0.0d) = 0.0d; (1.0d, 1.0d) = 2.0d; (253.11d, 54.43d) = 307.54d
+        public class BC_dadd {
+            public static double test(double a, double b) {
+                return a + b;
+            }
+        }
+
+ */
+
+        double argsOne[] = {0.0D, 1.0D, 253.11d};
+        double argsTwo[] = {0.0D, 1.0D, 54.43D};
+
+        String klassName = "jtt.bytecode.BC_dadd";
+        List<TargetMethod> methods = Compile.compile(new String[]{klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        initialiseCodeBuffers(methods);
+        int assemblerStatements = codeBytes.length / 4;
+        double expectedValue = 0;
+        for (int i = 0; i < argsOne.length; i++) {
+            double doubleValue = jtt.bytecode.BC_dadd.test(argsOne[i], argsTwo[i]);
+
+            String functionPrototype = ARMCodeWriter.preAmble("double", "double , double ", Double.toString(argsOne[i]) + "," + Double.toString(argsTwo[i]));
+            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (!registerValues[17].equals(new Double(doubleValue))) { // r0.r15 + APSR then FPREGS
+                failed = true;
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + doubleValue);
+            }
+            Log.println("DADD test " + i + " returned " + ((Double) registerValues[17]).doubleValue() + " expected " + doubleValue);
+            //assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+        assert failed == false;
+    }
+
+
+
+    public void test_jtt_BC_dmul() throws Exception {
+        initTests();
+        boolean failed = false;
+
+    /*
+     * @Harness: java
+     * @Runs: (311.0D, 10D) = 3110.0D; (11.2D, 2.0D) = 22.4D
+
+        public class BC_dmul {
+            public static double test(double a, double b) {
+                return a * b;
+            }
+        }
+ */
+
+        double argsOne[] = {311.0D, 11.2D};
+        double argsTwo[] = {10D, 2.0D};
+
+        String klassName = "jtt.bytecode.BC_dmul";
+        List<TargetMethod> methods = Compile.compile(new String[]{klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        initialiseCodeBuffers(methods);
+        int assemblerStatements = codeBytes.length / 4;
+        double expectedValue = 0;
+        for (int i = 0; i < argsOne.length; i++) {
+            double doubleValue = jtt.bytecode.BC_dmul.test(argsOne[i], argsTwo[i]);
+
+            String functionPrototype = ARMCodeWriter.preAmble("double", "double , double ", Double.toString(argsOne[i]) + "," + Double.toString(argsTwo[i]));
+            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (!registerValues[17].equals(new Double(doubleValue))) { // r0.r15 + APSR then FPREGS
+                failed = true;
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + doubleValue);
+            }
+            Log.println("DMUL test " + i + " returned " + ((Double) registerValues[17]).doubleValue() + " expected " + doubleValue);
+            //assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+        assert failed == false;
+    }
 
 
 
