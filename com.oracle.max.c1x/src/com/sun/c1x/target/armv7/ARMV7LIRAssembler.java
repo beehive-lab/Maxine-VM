@@ -174,10 +174,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         // Do not optimize with an XOR as this instruction may be between
         // a CMP and a Jcc in which case the XOR will modify the condition
         // flags and interfere with the Jcc.
-        //masm.movq(dst, constant);
-        assert 0 == 1 : "const2Reg ARMV7IRAssembler";
-
-    }
+        //System.out.println("Constant " + constant);
+        masm.movlong(dst, constant);
+     }
 
     private void const2reg(CiRegister dst, CiConstant constant) {
         assert constant.kind == CiKind.Object;
@@ -408,7 +407,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     protected void stack2reg(CiValue src, CiValue dest, CiKind kind) {
         assert src.isStackSlot();
         assert dest.isRegister();
-        //assert 0 == 1 : "stack2reg ARMV7IRAssembler";
 
         CiAddress addr = frameMap.toStackAddress((CiStackSlot) src);
         // TODO what does movl do ... it thebase register is illegal but it
@@ -425,8 +423,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case Int     :
             case Object  : // Object was movq but we are 32bit address space
                 masm.ldrImmediate(ConditionFlag.Always,0,0,0,dest.asRegister(),ARMV7.r12,0);
-                break;// masm.movl(dest.asRegister(), addr); break;
-            case Long    : masm.ldrd(ConditionFlag.Always,dest.asRegister(),ARMV7.r12,0); //masm.movq(dest.asRegister(), addr);
+                break;
+            case Long    :
+                //System.out.println("LONG dst as register " + dest.asRegister().encoding);
+                masm.ldrd(ConditionFlag.Always,dest.asRegister(),ARMV7.r12,0);
                  break;
             case Float   : masm.movflt(asXmmFloatReg(dest), addr); break;
             case Double  : masm.movdbl(asXmmDoubleReg(dest), addr); break;

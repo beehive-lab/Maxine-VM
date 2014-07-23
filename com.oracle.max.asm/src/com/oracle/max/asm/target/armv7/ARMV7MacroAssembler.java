@@ -410,8 +410,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void movlong(CiRegister dst, long src) {
         if(dst.number < 16) { // move to ARM CORE register
-            mov32BitConstant(dst, (int) (0xffffffffL & src));
-            mov32BitConstant(ARMV7.cpuRegisters[dst.encoding+1], (int) ((src >> 32) & 0xffffffffL));
+            //System.out.println("Register: " + dst.encoding);
+            mov64BitConstant(dst, ARMV7.cpuRegisters[dst.encoding+1], src);
         } else {
             assert dst.number < 32 : "ERROR movlong in ARMV7MacroAssembler movlong to FPRegs";
             System.out.println("movlong " + Long.toHexString(src));

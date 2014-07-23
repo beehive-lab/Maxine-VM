@@ -965,20 +965,20 @@ public abstract class TargetMethod extends MemoryRegion {
                         if (classMethodActor.isTemplate()) {
                             assert currentDirectCallee == classMethodActor : "unlinkable call in a template must be a template call";
                             // leave call site unpatched
-                            Log.println("Callee==null Patch template call");
+                            //Log.println("Callee==null Patch template call");
                         } else {
                             linkedAll = false;
                             patchStaticTrampoline(safepointIndex, offset);
-                            Log.print("Callee==null Patch static trampoline safepoint: ");
-                            Log.print(safepointIndex);
-                            Log.print(" offset ");
-                            Log.println(offset);
+                            //Log.print("Callee==null Patch static trampoline safepoint: ");
+                            //Log.print(safepointIndex);
+                            //Log.print(" offset ");
+                            //Log.println(offset);
 
                         }
                     } else {
                         int callPos = safepoints.causePosAt(safepointIndex);
                         fixupCallSite(callPos, callee.codeAt(offset));
-                        Log.println("Callee!=null Fixup call site");
+                        //Log.println("Callee!=null Fixup call site");
                     }
                 } else {
                     FatalError.breakpoint();
