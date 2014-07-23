@@ -2471,17 +2471,25 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
     private void loadResult(CiRegister dst, CiAddress src) {
         final CiKind kind = src.kind;
-        assert 0 == 1 : "loadResult ARMV7IRAssembler";
+
+        masm.setUpScratch(src);
 
         if (kind == CiKind.Int || kind == CiKind.Boolean) {
-            
         //    masm.movl(dst, src);
+            masm.ldrImmediate(ConditionFlag.Always,0,0,0,dst,ARMV7.r12,0);
         } else if (kind == CiKind.Float) {
+            masm.vldr(ConditionFlag.Always,dst,ARMV7.r12,0);
          //   masm.movss(dst, src);
         } else if (kind == CiKind.Double) {
-        //    masm.movsd(dst, src);
-        } else {
+            masm.vldr(ConditionFlag.Always,dst,ARMV7.r12,0);
+
+            //    masm.movsd(dst, src);
+        } else if (kind == CiKind.Long) {
+            masm.ldrd(ConditionFlag.Always,dst,ARMV7.r12,0);
           //  masm.movq(dst, src);
+        } else { // Additional clause added by APN
+            masm.ldrImmediate(ConditionFlag.Always,0,0,0,dst,ARMV7.r12,0);
+
         }
     }
 
