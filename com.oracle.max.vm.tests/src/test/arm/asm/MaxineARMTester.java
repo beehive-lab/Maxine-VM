@@ -385,15 +385,13 @@ public class MaxineARMTester {
     private void initializeQemu() {
         ENABLE_SIMULATOR = Integer.getInteger(ENABLE_QEMU) != null && Integer.getInteger(ENABLE_QEMU) > 0 ? true : false;
     }
-
-
     private Object[] parseObjectRegistersToFile(String file) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(file));
         String line = null;
         boolean enabled = false;
         boolean fpregs = false;
         int i = 0;
-        Object[] expectedValues = new Object[16 + 16];
+        Object[] expectedValues = new Object[16 +1+ 16+32];
         while ((line = reader.readLine()) != null) {
             if (line.contains("r0")) {
                 enabled = true;
@@ -414,8 +412,44 @@ public class MaxineARMTester {
                 break;
             }
         }
+        //System.out.println("DOUBLE I is " + i);
         while ((line = reader.readLine()) != null) {
-            if(line.contains("u64")) {
+            if(line.contains("f64")) {
+                enabled = true;
+            } else {
+                enabled = false;
+            }
+            if(i >= (16+16+1))  {
+                break;
+            }
+            if(!enabled) {
+                continue;
+            }
+            //System.out.println("DOUBLE");
+            String values[] = line.split("\\s+");
+            for(int j = 0; j < values.length;j++) {
+
+                if(values[j].equals("f64")) {
+                    String doubleVal = values[j+2];
+                    //System.out.println(doubleVal);
+                    String str = doubleVal.substring(0,doubleVal.length()-1);
+                    //System.out.println(str);
+                    try {
+                        Double tmp = new Double (str);
+                        expectedValues[i++] = tmp;
+                    } catch (Exception e) {
+                        System.err.println(e);
+                        e.printStackTrace();
+                        expectedValues[i++] = null;
+                    }
+                }
+            }
+
+        }
+        //System.out.println("FLOAT I is " + i);
+        while ((line = reader.readLine()) != null) {
+            //System.out.println("F32s");
+            if(line.contains("=")) {
                 enabled = true;
             } else {
                 enabled = false;
@@ -423,22 +457,44 @@ public class MaxineARMTester {
             if(!enabled) {
                 continue;
             }
-            if(i >= (16+16))  {
-                break;
-            }
+            //System.out.println("FLOAT");
             String values[] = line.split("\\s+");
             for(int j = 0; j < values.length;j++) {
-                //System.out.println(values[j]);
 
-                if(values[j].equals("u64")) {
-                    String doubleVal = values[j+2];
-                    expectedValues[i++] = new Double((double) Double.longBitsToDouble(Long.parseLong(doubleVal.substring(2,doubleVal.length()-1),16)));
+                if(values[j].equals("=")) {
+                    String doubleVal = values[j+1];
+                    //System.out.println(doubleVal);
+                    //System.out.println(doubleVal);
+                    try {
+                        Float tmp = new Float (doubleVal);
+                        expectedValues[i++] = tmp;
+                    } catch (Exception e) {
+                        System.err.println(e);
+                        e.printStackTrace();
+                        expectedValues[i++] = null;
+                    }
                 }
             }
 
         }
+        /*for(int  j = 0; j < (16+16+32+1);j++) {
+            if(expectedValues[j] != null) {
+                if(j <= 16) {
+                    System.out.println(j + " INT " + ((Integer)expectedValues[j]).intValue());
+                } else if (j < 33) {
+                    System.out.println(j + " DOUBLE " + ((Double)expectedValues[j]).doubleValue());
+                } else {
+                    System.out.println(j + " FLOAT " + ((Float)expectedValues[j]).floatValue());
+                }
+            } else {
+                System.out.println(j + " NULL");
+            }
+        }*/
+
         return expectedValues;
     }
+
+    
 
 
     private int[] parseRegistersToFile(String file) throws IOException {
