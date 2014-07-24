@@ -1179,9 +1179,13 @@ public class ARMV7Assembler extends AbstractAssembler {
         int sz = 0;
         int op = 0;
         int opc2;
-        checkConstraint(dest.number >= 16 && src.number >= 16, "vcvt must be FP/DP regs");
-        checkConstraint(!(dest.number <= 31 && src.number <= 31), "vcvt one reg mus be FP another DP");
-        checkConstraint(!(dest.number >= 32 && src.number >= 32), "vcvt one reg mus be FP another DP");
+        System.out.println("VCVT " + dest.number + " " + src.number);
+        if (toInt == false) {
+            checkConstraint(dest.number >= 16 && src.number >= 16, "vcvt must be FP/DP regs");
+
+            checkConstraint(!(dest.number <= 31 && src.number <= 31), "vcvt one reg mus be FP another DP");
+            checkConstraint(!(dest.number >= 32 && src.number >= 32), "vcvt one reg mus be FP another DP");
+        }
         if (dest.number <= 31 || src.number <= 31) {
             sz = 1;
         }

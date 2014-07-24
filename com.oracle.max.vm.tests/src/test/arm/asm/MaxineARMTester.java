@@ -494,7 +494,7 @@ public class MaxineARMTester {
         return expectedValues;
     }
 
-    
+
 
 
     private int[] parseRegistersToFile(String file) throws IOException {

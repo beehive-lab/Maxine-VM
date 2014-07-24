@@ -751,14 +751,16 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 //masm.cvtsi2ssl(asXmmFloatReg(dest), srcRegister);
                 break;
             case I2D:
-                masm.vcvt(ConditionFlag.Always,asXmmDoubleReg(dest),false,false,srcRegister);
+
+                masm.vcvt(ConditionFlag.Always,asXmmDoubleReg(dest),true,true,srcRegister);
 
                 // masm.cvtsi2sdl(asXmmDoubleReg(dest), srcRegister);
                 break;
 
             case F2I: {
                 assert srcRegister.isFpu() && dest.isRegister() : "must both be XMM register (no fpu stack)";
-                assert 0 == 1 : " F2I ARMV7LIRAssembler bind commented out";
+                //assert 0 == 1 : " F2I ARMV7LIRAssembler bind commented out";
+                System.out.println("F2I: ARMVLIRAssembler over simplification? replaced with vcvt");
                 masm.vcvt(ConditionFlag.Always,dest.asRegister(),true,true,srcRegister);
                 // masm.cvttss2sil(dest.asRegister(), srcRegister);
                /* masm.cmp32(dest.asRegister(), Integer.MIN_VALUE);

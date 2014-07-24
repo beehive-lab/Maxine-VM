@@ -1644,7 +1644,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_d2f() throws Exception {
+    public void test_jtt_BC_d2f() throws Exception {
 
         List<Args> pairs = new LinkedList<Args>();
         String klassName = "jtt.bytecode.BC_d2f";
@@ -1670,19 +1670,97 @@ public class ARMV7JTTTest extends MaxTestCase {
              * itself asm volatile("forever: b forever");
              */
             String functionPrototype = ARMCodeWriter.preAmble("float", "double", Double.toString(arguments[i]));
-            System.out.println(functionPrototype);
             // good question here ... is the value returned in the float s0 or the core s0 register
-            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
-            if (Float.intBitsToFloat(registerValues[0]) != expectedFloat) {
-                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValues[0]);
+            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (((Float)registerValues[33]).floatValue() != expectedFloat) {
+                System.out.println("Failed incorrect value " + ((Float)registerValues[33]).floatValue() + " " + expectedFloat);
             }
-            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            assert ((Float)registerValues[33]).floatValue() == expectedFloat : "Failed incorrect value " + ((Float)registerValues[33]).floatValue() + " " + expectedFloat;
+            theCompiler.cleanup();
+        }
+
+    }
+    public void test_jtt_BC_d2i01() throws Exception {
+
+        List<Args> pairs = new LinkedList<Args>();
+        String klassName = "jtt.bytecode.BC_d2i01";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+
+        initialiseCodeBuffers(methods);
+        int assemblerStatements = codeBytes.length / 4;
+        double[] arguments = { -2.2d, 0.0d, 1.0d, 01.06d};
+        int expectedInt = -9;
+        for (int i = 0; i < arguments.length; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            int answer = jtt.bytecode.BC_d2i01.test(arguments[i]);
+            expectedInt = answer;
+            /*
+             * SEE BELOW, WE NEED TO PROVIDE A COMMA SEPARATED LIST OF TYPES "int" void (*pf)(***int***) = (void
+             * (*))(code); print_uart0("changed test.c!\n"); AND WE NEED TO PROVIDE A COMMA SEPARATED LIST OF FUNCTION
+             * ARGUMENT VALUES / VARIABLES (*pf)(****1*****); // Need to change this to something related to the test
+             * itself asm volatile("forever: b forever");
+             */
+            String functionPrototype = ARMCodeWriter.preAmble("int", "double", Double.toString(arguments[i]));
+            // good question here ... is the value returned in the float s0 or the core s0 register
+            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+
+            assert ((Integer)registerValues[0]).intValue() == expectedInt : "Failed incorrect value " + ((Integer)registerValues[0]).intValue() + " " + expectedInt;
+            theCompiler.cleanup();
+        }
+
+    }
+    public void test_jtt_BC_f2i01() throws Exception {
+
+        List<Args> pairs = new LinkedList<Args>();
+        String klassName = "jtt.bytecode.BC_f2i01";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+
+        initialiseCodeBuffers(methods);
+        int assemblerStatements = codeBytes.length / 4;
+        float[] arguments = { -2.2f, 0.0f, 1.0f, 1.06f};
+        int expectedInt = -9;
+        for (int i = 0; i < arguments.length; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            int answer = jtt.bytecode.BC_f2i01.test(arguments[i]);
+            expectedInt = answer;
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "float", Float.toString(arguments[i]));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+
+            assert registerValues[0] == expectedInt : "Failed incorrect value " + registerValues[0] + " " + expectedInt;
+            theCompiler.cleanup();
+        }
+
+    }
+    public void test_jtt_BC_i2d() throws Exception {
+
+        List<Args> pairs = new LinkedList<Args>();
+        String klassName = "jtt.bytecode.BC_i2d";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+
+        initialiseCodeBuffers(methods);
+        int assemblerStatements = codeBytes.length / 4;
+        int[] arguments = { -2, 0 ,1,2 ,99};
+        double expectedDouble = -9;
+        for (int i = 0; i < arguments.length; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            double answer = jtt.bytecode.BC_i2d.test(arguments[i]);
+            expectedDouble = answer;
+
+            String functionPrototype = ARMCodeWriter.preAmble("double", "int", Integer.toString(arguments[i]));
+            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+
+            assert ((Double)registerValues[17]).doubleValue() == expectedDouble : "Failed incorrect value " + ((Double)registerValues[17]).doubleValue() + " " + expectedDouble;
             theCompiler.cleanup();
         }
 
     }
 
-    public void ignore_jtt_BC_dcmp01() throws Exception {
+
+    public void test_jtt_BC_dcmp01() throws Exception {
 
         CompilationBroker.OFFLINE = initialised;
 
@@ -1721,7 +1799,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_dcmp02() throws Exception {
+    public void test_jtt_BC_dcmp02() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -1845,7 +1923,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
         assert failed == false;
     }
-    public void test_jtt_BC_gdiv() throws Exception {
+    public void IGNORE_jtt_BC_gdiv() throws Exception {
         initTests();
         boolean failed = false;
 
@@ -1878,7 +1956,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert failed == false;
     }
 
-    public void test_jtt_BC_dadd() throws Exception {
+    public void IGNORE_jtt_BC_dadd() throws Exception {
         initTests();
         boolean failed = false;
 
@@ -1921,7 +1999,7 @@ public class ARMV7JTTTest extends MaxTestCase {
 
 
 
-    public void test_jtt_BC_dmul() throws Exception {
+    public void IGNORE_jtt_BC_dmul() throws Exception {
         initTests();
         boolean failed = false;
 
@@ -1961,7 +2039,45 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert failed == false;
     }
 
+    public void test_jtt_BC_dsub() throws Exception {
+        initTests();
+        boolean failed = false;
 
+/*
+ * @Harness: java
+ * @Runs: (0.0d, 0.0d) = 0.0d; (1.0d, 1.0d) = 0.0d; (253.11d, 54.43d) = 198.68d
+        public class BC_dsub {
+            public static double test(double a, double b) {
+                return a - b;
+            }
+        }
+ */
+
+
+        double argsOne[] = {0.0D, 1.0D,253.11d};
+        double argsTwo[] = {0.0D, 1.0D, 54.43d};
+
+        String klassName = "jtt.bytecode.BC_dsub";
+        List<TargetMethod> methods = Compile.compile(new String[]{klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        initialiseCodeBuffers(methods);
+        int assemblerStatements = codeBytes.length / 4;
+        double expectedValue = 0;
+        for (int i = 0; i < argsOne.length; i++) {
+            double doubleValue = jtt.bytecode.BC_dsub.test(argsOne[i], argsTwo[i]);
+
+            String functionPrototype = ARMCodeWriter.preAmble("double", "double , double ", Double.toString(argsOne[i]) + "," + Double.toString(argsTwo[i]));
+            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (!registerValues[17].equals(new Double(doubleValue))) { // r0.r15 + APSR then FPREGS
+                failed = true;
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + doubleValue);
+            }
+            Log.println("DSUB test " + i + " returned " + ((Double) registerValues[17]).doubleValue() + " expected " + doubleValue);
+            //assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+        assert failed == false;
+    }
 
 
     public void test_jtt_BC_XXdneg9() throws Exception {
@@ -2014,7 +2130,7 @@ public class ARMV7JTTTest extends MaxTestCase {
 
 
 
-    public void IGNORE_jtt_BC_lload_0() throws Exception {
+    public void test_jtt_BC_lload_0() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = "jtt.bytecode.BC_lload_0";
         List<TargetMethod> methods = Compile.compile(new String[]{klassName}, "C1X");

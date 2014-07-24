@@ -416,8 +416,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         } else {
             assert dst.number < 32 : "ERROR movlong in ARMV7MacroAssembler movlong to FPRegs";
             System.out.println("movlong " + Long.toHexString(src));
-            mov32BitConstant(ARMV7.r8, (int) (0xffffffffL & src));
-            mov32BitConstant(ARMV7.r9, (int) ((src >> 32) & 0xffffffffL));
+            mov32BitConstant(ARMV7.r9, (int) (0xffffffffL & src));
+            mov32BitConstant(ARMV7.r8, (int) ((src >> 32) & 0xffffffffL));
             vmov(ConditionFlag.Always,dst,ARMV7.r8);
         }
     }
