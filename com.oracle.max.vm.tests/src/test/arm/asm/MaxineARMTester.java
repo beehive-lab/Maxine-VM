@@ -5,6 +5,7 @@ import java.io.*;
 public class MaxineARMTester {
 
     public static boolean DEBUG = false;
+    public static boolean DEBUGOBJECTS = false;
     public static final String ENABLE_QEMU = "max.arm.qemu";
     public static boolean ENABLE_SIMULATOR = false;
     public static final int NUM_REGS = 17;
@@ -402,6 +403,9 @@ public class MaxineARMTester {
             }
             String value = line.split("\\s+")[1];
             expectedValues[i] = new Integer ((int) Long.parseLong(value.substring(2, value.length()).toString(), 16));
+            if(DEBUGOBJECTS) {
+                System.out.println(" CORE " + i + " "+ ((Integer)expectedValues[i]).intValue());
+            }
             i++;
             if (line.contains("cpsr")) {
                 enabled = false;
@@ -442,7 +446,15 @@ public class MaxineARMTester {
                         e.printStackTrace();
                         expectedValues[i++] = null;
                     }
+
+                    break;
                 }
+            }
+            if(DEBUGOBJECTS) {
+                System.out.println(" DOUBLE " + (i-1) + " "+ ((Double)expectedValues[i-1]).doubleValue());
+            }
+            if(i >= (16+16+1))  {
+                break;
             }
 
         }
@@ -473,8 +485,17 @@ public class MaxineARMTester {
                         e.printStackTrace();
                         expectedValues[i++] = null;
                     }
+                    break;
                 }
             }
+            if( i == expectedValues.length) break;
+
+
+            if(DEBUGOBJECTS) {
+                System.out.println(" FLOAT " + (i-1) + " "+ ((Float)expectedValues[i-1]).floatValue());
+            }
+
+
 
         }
         /*for(int  j = 0; j < (16+16+32+1);j++) {

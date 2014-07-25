@@ -50,6 +50,7 @@ import com.sun.cri.xir.CiXirAssembler.XirLabel;
 import com.sun.cri.xir.CiXirAssembler.XirMark;
 import com.sun.cri.xir.XirSnippet;
 import com.sun.cri.xir.XirTemplate;
+import com.sun.max.vm.Log;
 
 import java.util.Map;
 
@@ -395,10 +396,26 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         */
         // Checkstyle: on
     }
-
+    private static boolean FLOATDOUBLEREGISTERS = true;
+    private static CiRegister getFloatRegister(CiRegister val) {
+        int offset = 0;
+        if(FLOATDOUBLEREGISTERS) {
+            if(val.number > 31) {
+                offset = 16;
+            } else {
+                offset = 16 + val.encoding;
+            }
+        }else {
+            offset = 0;
+        }
+        return ARMV7.floatRegisters[offset+ val.encoding];
+    }
     private static CiRegister asXmmFloatReg(CiValue src) {
+
+
         assert src.kind.isFloat() : "must be float, actual kind: " + src.kind;
-        CiRegister result = src.asRegister();
+        //CiRegister result = src.asRegister();
+        CiRegister result = getFloatRegister(src.asRegister());
         assert result.isFpu() : "must be xmm, actual type: " + result;
         return result;
     }
@@ -774,11 +791,13 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case D2I: {
                 assert srcRegister.isFpu() && dest.isRegister() : "must both be XMM register (no fpu stack)";
                 //masm.cvttsd2sil(dest.asRegister(), asXmmDoubleReg(src));
-                masm.cmp32(dest.asRegister(), Integer.MIN_VALUE);
+                masm.vcvt(ConditionFlag.Always,dest.asRegister(),true,true,asXmmDoubleReg(src));
+                Log.println("ARMV7LIRAssembler D2I hack replaced stub with vcvt for quick test");
+                /*masm.cmp32(dest.asRegister(), Integer.MIN_VALUE);
                 masm.jcc(ConditionFlag.NotEqual, endLabel);
                 callStub(op.stub, null, dest.asRegister(), src);
                 // cannot cause an exception
-                masm.bind(endLabel);
+                masm.bind(endLabel);*/
                 break;
             }
             case L2F:
@@ -1028,7 +1047,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                             masm.vsub(ConditionFlag.Always,lreg,lreg,rreg);
                             break;
                         case Mul : //masm.mulss(lreg, rreg);
-                            masm.vmul(ConditionFlag.Always,lreg,lreg,rreg);
+                            masm.vmul(ConditionFlag.Always, lreg, lreg, rreg);
                             break;
                         case Div : //masm.divss(lreg, rreg);
                             masm.vdiv(ConditionFlag.Always,lreg,lreg,rreg);

@@ -206,6 +206,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     public void pokeFloat(CiRegister src, int index) {
         assert src.isFpu();
+        src = getFloatRegister(src);
+
         assert (src.number <= ARMV7.s31.number) && (src.number >= ARMV7.s0.number);
         asm.setUpScratch(spInt(index));
         asm.vstr(ConditionFlag.Always, src, asm.scratchRegister, 0);
@@ -338,6 +340,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignFloat(CiRegister dst, float value) {
+        dst = getFloatRegister(dst);
+
         assert dst.number >= ARMV7.s0.number && dst.number <= ARMV7.s31.number;
         asm.mov32BitConstant(ARMV7.r12, Float.floatToRawIntBits(value));
         asm.vmov(ConditionFlag.Always, dst, ARMV7.r12);
@@ -975,8 +979,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 buf.setPosition(dispPos);
                 int dispFromCodeStart = dispFromCodeStart(objectLiterals.size(), 0, index, true);
                 int disp = movqDisp(dispPos, dispFromCodeStart);
-                Log.println("ARMV7T1XCompilation ... OBJECT LITERAL PAtchInfo needs to be allowed to emitInt");
-                // buf.emitInt(disp);
+
+                Log.println("ARMV7T1XCompilation ... OBJECT LITERAL PAtchInfo HAS BEEN allowed to emitInt");
+                buf.emitInt(disp);
             } else {
                 throw FatalError.unexpected(String.valueOf(tag));
             }

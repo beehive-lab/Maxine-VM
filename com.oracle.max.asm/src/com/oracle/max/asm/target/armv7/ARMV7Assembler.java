@@ -1185,10 +1185,15 @@ public class ARMV7Assembler extends AbstractAssembler {
         int sz = 0;
         int op = 0;
         int opc2;
+        boolean double2Float = false;
+        boolean floatConversion = false;
         System.out.println("VCVT " + dest.number + " " + src.number);
         if (toInt == false) {
             checkConstraint(dest.number >= 16 && src.number >= 16, "vcvt must be FP/DP regs");
-
+            if(dest.number > src.number ) {
+                double2Float = true;
+            }
+            floatConversion = true;
             checkConstraint(!(dest.number <= 31 && src.number <= 31), "vcvt one reg mus be FP another DP");
             checkConstraint(!(dest.number >= 32 && src.number >= 32), "vcvt one reg mus be FP another DP");
         }
@@ -1210,31 +1215,54 @@ public class ARMV7Assembler extends AbstractAssembler {
                 op = 0;
             }
         }
-        if (toInt) {
-            instruction |= (dest.encoding >> 1) << 12; // LSB in bit 22
-            instruction |= (dest.encoding & 0x1) << 22;
-            if (sz == 1) {
-                instruction |= src.encoding & 0xf; //
-                instruction |= (src.encoding >> 4) << 5;
+        if(!floatConversion) {
+            if (toInt) {
+                instruction |= (dest.encoding >> 1) << 12; // LSB in bit 22
+                instruction |= (dest.encoding & 0x1) << 22;
+                if (sz == 1) {
+                    instruction |= src.encoding & 0xf; //
+                    instruction |= (src.encoding >> 4) << 5;
 
+                } else {
+                    instruction |= src.encoding >> 1;
+                    instruction |= (src.encoding & 0x1) << 5;
+                }
             } else {
                 instruction |= src.encoding >> 1;
                 instruction |= (src.encoding & 0x1) << 5;
+                if (sz == 0) {
+                    instruction |= (dest.encoding >> 1) << 12;
+                    instruction |= (dest.encoding & 0x1) << 22;
+                } else {
+                    instruction |= (dest.encoding & 0xf) << 12;
+                    instruction |= (dest.encoding >> 4) << 22;
+                }
             }
+            instruction |= opc2 << 16;
+            instruction |= op << 7;
+            instruction |= sz << 8;
         } else {
-            instruction |= src.encoding >> 1;
-            instruction |= (src.encoding & 0x1) << 5;
-            if (sz == 0) {
-                instruction |= (dest.encoding >> 1) << 12;
-                instruction |= (dest.encoding & 0x1) << 22;
+            instruction = cond.value << 28;
+            instruction |= 0xeb70ac0;
+            if(double2Float) {
+                instruction |= 1<<8;
+                // d is dest and dest is FLOAT SINGLE
+
+                instruction |= (dest.encoding >>1) << 12;
+                instruction |= (dest.encoding & 1) << 22;
+
+                instruction |= (src.encoding & 0xf);
+                instruction |= (src.encoding >> 4) << 5;
+
             } else {
                 instruction |= (dest.encoding & 0xf) << 12;
                 instruction |= (dest.encoding >> 4) << 22;
+
+                instruction |= (src.encoding >> 1) << 5;
+                instruction |= (src.encoding >> 4);
+
             }
         }
-        instruction |= opc2 << 16;
-        instruction |= op << 7;
-        instruction |= sz << 8;
         emitInt(instruction);
         /*
          * VCVT{R}{<c>}{<q>}.S32.F64 <Sd>, <Dm> Encoded as opc2 = 0b101, sz = 1
