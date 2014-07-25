@@ -856,7 +856,35 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+    public void test_jtt_BC_fdiv() throws Exception {
+        boolean failed = false;
+        initTests();
+        MaxineByteCode xx = new MaxineByteCode();
+        float argOne[] = {14.0f};
+        float argTwo[] = {7.0f};
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
+        byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_fdiv");
 
+        for(int i = 0; i < argOne.length;i++) {
+            float answer = jtt.bytecode.BC_fdiv.test(argOne[i], argTwo[i]);
+            initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.mov32BitConstant(ARMV7.s0, Float.floatToRawIntBits(argOne[i]));
+            masm.mov32BitConstant(ARMV7.s1, -Float.floatToRawIntBits(argTwo[i]));
+            masm.vpush(ConditionFlag.Always,ARMV7.s0,ARMV7.s1); /// MIGHT need to do this as two pushes?
+            t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "fdiv");
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            masm.vpop(ConditionFlag.Always, ARMV7.s0,ARMV7.s0);
+            int assemblerStatements = masm.codeBuffer.position() / 4;
+
+            String functionPrototype = ARMCodeWriter.preAmble("float", "float , float", Float.toString(argOne[i])+ Float.toString(argTwo[i]));
+            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, 0, masm.codeBuffer.close(false), assemblerStatements, null, null, null);
+            System.out.println(" FDIV T1X " + ((Float)registerValues[33]).floatValue());
+        }
+        //assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+        theCompiler.cleanup();
+    }
     public void IGNORE_jtt_BC_tableswitch_3() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();

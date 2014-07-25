@@ -49,6 +49,8 @@ public class ARMV7 extends CiArchitecture {
     public static final CiRegister r14 = new CiRegister(14, 14, 4, "r14", CPU, RegisterFlag.Byte);
     public static final CiRegister r15 = new CiRegister(15, 15, 4, "r15", CPU, RegisterFlag.Byte);
 
+    // TODO Ive missed off the APSR but it's not accessible directly anyway?
+
     // TODO: CiArchitecture doesn't allow mixed-size registers (pretending we have 4 byte FP regs)
     // TODO: Might be something to do with the spillSlotSize the size of the stack slot used to spill
     // TODO the value of the register

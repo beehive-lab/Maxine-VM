@@ -65,6 +65,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     protected final ARMV7MacroAssembler asm;
     final PatchInfoARMV7 patchInfo;
+    public static boolean FLOATDOUBLEREGISTERS = true;
 
     public ARMV7T1XCompilation(T1X compiler) {
         super(compiler);
@@ -177,10 +178,26 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
         asm.vstr(ARMV7Assembler.ConditionFlag.Always, src, asm.scratchRegister, 0);
     }
-
+    /*
+    HUGE HACK TO GET THE CORRECT FLOLATING POINT REGISTER
+     */
+    private CiRegister getFloatRegister(CiRegister val) {
+        int offset = 0;
+        if(FLOATDOUBLEREGISTERS) {
+            if(val.number > 31) {
+                offset = 16;
+            } else {
+                offset = 16 + val.encoding;
+            }
+        }else {
+            offset = 0;
+        }
+        return ARMV7.floatRegisters[offset+ val.encoding];
+    }
     @Override
     public void peekFloat(CiRegister dst, int index) {
         assert dst.isFpu();
+        dst = getFloatRegister(dst);
         assert (dst.number <= ARMV7.s31.number) && (dst.number >= ARMV7.s0.number); // must be FLOAT!
         asm.setUpScratch(spInt(index));
         asm.vldr(ConditionFlag.Always, dst, asm.scratchRegister, 0);

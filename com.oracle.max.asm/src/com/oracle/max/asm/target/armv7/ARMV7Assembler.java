@@ -747,10 +747,16 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void mov32BitConstant(CiRegister dst, int imm32) {
-        movw(ConditionFlag.Always, dst, imm32 & 0xffff);
-        imm32 = imm32 >> 16;
-        imm32 = imm32 & 0xffff;
-        movt(ConditionFlag.Always, dst, imm32 & 0xffff);
+        if(dst.number < 16) {
+            movw(ConditionFlag.Always, dst, imm32 & 0xffff);
+            imm32 = imm32 >> 16;
+            imm32 = imm32 & 0xffff;
+            movt(ConditionFlag.Always, dst, imm32 & 0xffff);
+        }else { // initialise a float with a constant
+
+            mov32BitConstant(ARMV7.r12,imm32);
+            vmov(ConditionFlag.Always,dst,ARMV7.r12);
+        }
     }
 
     public final void mov64BitConstant(CiRegister dstUpper, CiRegister dstLow, long imm64) {

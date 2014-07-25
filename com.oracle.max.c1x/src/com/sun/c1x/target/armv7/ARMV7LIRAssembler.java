@@ -1020,16 +1020,18 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     }
                 } else if (kind.isFloat()) {
                     assert rreg.isFpu() : "must be xmm";
-                    assert 0==1 : "Float arithmetic";
                     switch (code) {
                         case Add : //masm.addss(lreg, rreg);
+                            masm.vadd(ConditionFlag.Always,lreg,lreg,rreg);
                             break;
                         case Sub : //masm.subss(lreg, rreg);
+                            masm.vsub(ConditionFlag.Always,lreg,lreg,rreg);
                             break;
                         case Mul : //masm.mulss(lreg, rreg);
+                            masm.vmul(ConditionFlag.Always,lreg,lreg,rreg);
                             break;
                         case Div : //masm.divss(lreg, rreg);
-                            assert(0==1);
+                            masm.vdiv(ConditionFlag.Always,lreg,lreg,rreg);
                             break;
                         default  : throw Util.shouldNotReachHere();
                     }
