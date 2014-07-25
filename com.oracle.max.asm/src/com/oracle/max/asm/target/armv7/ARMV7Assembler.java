@@ -1258,8 +1258,8 @@ public class ARMV7Assembler extends AbstractAssembler {
                 instruction |= (dest.encoding & 0xf) << 12;
                 instruction |= (dest.encoding >> 4) << 22;
 
-                instruction |= (src.encoding >> 1) << 5;
-                instruction |= (src.encoding >> 4);
+                instruction |= (src.encoding & 1) << 5;
+                instruction |= (src.encoding >>1);
 
             }
         }

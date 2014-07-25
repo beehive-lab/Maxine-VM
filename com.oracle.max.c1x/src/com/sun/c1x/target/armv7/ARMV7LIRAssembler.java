@@ -399,16 +399,19 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     private static boolean FLOATDOUBLEREGISTERS = true;
     private static CiRegister getFloatRegister(CiRegister val) {
         int offset = 0;
+        System.out.print(" val.encoding "+ val.encoding + " val.number "+ val.number);
         if(FLOATDOUBLEREGISTERS) {
             if(val.number > 31) {
-                offset = 16;
-            } else {
                 offset = 16 + val.encoding;
+            } else {
+                offset = 16 + 2*val.encoding;
             }
+            System.out.println(" OFFSET " + offset);
+            return ARMV7.floatRegisters[offset];
+
         }else {
-            offset = 0;
+            return val;
         }
-        return ARMV7.floatRegisters[offset+ val.encoding];
     }
     private static CiRegister asXmmFloatReg(CiValue src) {
 
