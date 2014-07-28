@@ -197,9 +197,10 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         }
     }
      */
-    private CiRegister getFloatRegister(CiRegister val) {
+    public static CiRegister getFloatRegister(CiRegister val) {
         int offset = 0;
-        if(FLOATDOUBLEREGISTERS) {
+        System.out.println("ARMV7T1XCompilation number " + val.number + " encoding " + val.encoding);
+        //if(FLOATDOUBLEREGISTERS) {
             if(val.number > 31) {
                 offset = 16 + val.encoding;
             } else {
@@ -207,9 +208,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             }
             return ARMV7.floatRegisters[offset];
 
-        }else {
-            return val;
-        }
+       // }else {
+          //  return val;
+        //}
     }
     @Override
     public void peekFloat(CiRegister dst, int index) {

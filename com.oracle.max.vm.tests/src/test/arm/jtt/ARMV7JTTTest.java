@@ -1715,7 +1715,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert(failed == false);
 
     }
-    public void IGNORE_jtt_BC_d2f() throws Exception {
+    public void test_jtt_BC_d2f() throws Exception {
 
         boolean failed = false;
         List<Args> pairs = new LinkedList<Args>();

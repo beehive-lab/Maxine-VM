@@ -328,6 +328,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
         if (dest.kind.isFloat()) {
             masm.movflt(asXmmFloatReg(dest), asXmmFloatReg(src));
+
         } else if (dest.kind.isDouble()) {
             masm.movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(src));
         } else {
@@ -399,14 +400,14 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     private static boolean FLOATDOUBLEREGISTERS = true;
     private static CiRegister getFloatRegister(CiRegister val) {
         int offset = 0;
-        System.out.print(" val.encoding "+ val.encoding + " val.number "+ val.number);
+        //System.out.println("LIRAgetFloatRegister val.encoding "+ val.encoding + " val.number "+ val.number);
         if(FLOATDOUBLEREGISTERS) {
             if(val.number > 31) {
                 offset = 16 + val.encoding;
             } else {
                 offset = 16 + 2*val.encoding;
             }
-            System.out.println(" OFFSET " + offset);
+            //System.out.println(" OFFSET " + offset);
             return ARMV7.floatRegisters[offset];
 
         }else {
@@ -415,7 +416,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     }
     private static CiRegister asXmmFloatReg(CiValue src) {
 
-
+        //System.out.println("LIRAasXmmFloatReg val.encoding "+ src.asRegister().encoding + " val.number "+ src.asRegister().number);
         assert src.kind.isFloat() : "must be float, actual kind: " + src.kind;
         //CiRegister result = src.asRegister();
         CiRegister result = getFloatRegister(src.asRegister());

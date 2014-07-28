@@ -1539,9 +1539,11 @@ public class ARMV7Assembler extends AbstractAssembler {
             instruction |= dest.encoding << 12;
             instruction |= src.encoding;
         } else if (src.number >= 32 && dest.number >= 32) {
+            // dest LSB bit 22, and 12-15
+            // src LSB 5 and 0-3
             instruction |= vmovSameType;
-            instruction |= (dest.encoding & 0xf << 12) | ((dest.encoding & 0x10) << 22);
-            instruction |= (src.encoding & 0xf) | ((src.encoding >> 4) << 7);
+            instruction |= ((dest.encoding >>1) << 12) | ((dest.encoding & 0x1) << 22);
+            instruction |= (src.encoding >> 1) | ((src.encoding & 0x1) << 5);
         } else if ((dest.number <= 15 || src.number <= 15) && (src.number >= 32 || dest.number >= 32)) {
             instruction |= vmovSingleCore;
             if (dest.number <= 15) {
