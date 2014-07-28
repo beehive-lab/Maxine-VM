@@ -181,18 +181,24 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
     private void const2reg(CiRegister dst, CiConstant constant) {
         assert constant.kind == CiKind.Object;
-        assert 0 == 1 : "const2reg object ARMV7IRAssembler";
-
+        /*
+        Constant is an object therefore it is a 32 bit quantity on ARM
+         */
         // Do not optimize with an XOR as this instruction may be between
         // a CMP and a Jcc in which case the XOR will modify the condition
         // flags and interfere with the Jcc.
         if (constant.isNull()) {
           //  masm.movq(dst, 0x0L);
+            masm.mov32BitConstant(dst,0x0);
+
         } else if (target.inlineObjects) {
             tasm.recordDataReferenceInCode(constant);
             //masm.movq(dst, 0xDEADDEADDEADDEADL);
+            masm.mov32BitConstant(dst,0xDEADDEAD);
         } else {
-            //masm.movq(dst, tasm.recordDataReferenceInCode(constant));
+            masm.setUpScratch(tasm.recordDataReferenceInCode(constant));
+            masm.ldr(ConditionFlag.Always,dst,ARMV7.r12,0);
+             //masm.movq(dst, tasm.recordDataReferenceInCode(constant));
         }
     }
 
@@ -502,31 +508,44 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert src.isAddress();
         assert dest.isRegister() : "dest=" + dest;
 
-        assert 0 == 1 : "mem2reg ARMV7IRAssembler";
 
         CiAddress addr = (CiAddress) src;
         if (info != null) {
             tasm.recordImplicitException(codePos(), info);
         }
-           /*
+
         // Checkstyle: off
+        masm.setUpScratch(addr);
         switch (kind) {
-            case Float   : masm.movflt(asXmmFloatReg(dest), addr); break;
-            case Double  : masm.movdbl(asXmmDoubleReg(dest), addr); break;
-            case Object  :// masm.movq(dest.asRegister(), addr);
+            case Float   :
+               // masm.movflt(asXmmFloatReg(dest), addr);
+               masm.vldr(ConditionFlag.Always,asXmmFloatReg(dest),ARMV7.r12,0);
                 break;
-            case Int     : masm.movslq(dest.asRegister(), addr); break;
+            case Double  ://
+                masm.vldr(ConditionFlag.Always,asXmmDoubleReg(dest),ARMV7.r12,0);
+
+                // masm.movdbl(asXmmDoubleReg(dest), addr);
+            break;
+            case Object  :// masm.movq(dest.asRegister(), addr);
+            case Int:
+                masm.ldr(ConditionFlag.Always,dest.asRegister(),ARMV7.r12,0);
+                break;
+            //case Int     : masm.movslq(dest.asRegister(), addr); break;
             case Long    : //masm.movq(dest.asRegister(), addr);
+                    masm.ldrd(ConditionFlag.Always,dest.asRegister(),ARMV7.r12,0);
                 break;
             case Boolean :
             case Byte    :// masm.movsxb(dest.asRegister(), addr);
+                    masm.ldrsb(ConditionFlag.Always,0,0,0,dest.asRegister(),ARMV7.r12,0);
                 break;
             case Char    : //masm.movzxl(dest.asRegister(), addr);
+                masm.ldrsb(ConditionFlag.Always,0,0,0,dest.asRegister(),ARMV7.r12,0);
                 break;
             case Short   : //masm.movswl(dest.asRegister(), addr);
+                masm.ldrshw(ConditionFlag.Always,0,0,0,dest.asRegister(),ARMV7.r12,0);
                 break;
             default      : throw Util.shouldNotReachHere();
-        }    */
+        }
         // Checkstyle: on
     }
 
@@ -1066,10 +1085,11 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                             masm.vsub(ConditionFlag.Always,lreg,lreg,rreg);
                             break;
                         case Mul : //masm.mulss(lreg, rreg);
-                            masm.vmul(ConditionFlag.Always, lreg, lreg, rreg);
+                            masm.vmul(ConditionFlag.Always, asXmmFloatReg(dest), asXmmFloatReg(left), asXmmFloatReg(right));
                             break;
                         case Div : //masm.divss(lreg, rreg);
-                            masm.vdiv(ConditionFlag.Always,lreg,lreg,rreg);
+                            //masm.vdiv(ConditionFlag.Always,lreg,lreg,rreg);
+                            masm.vdiv(ConditionFlag.Always, asXmmFloatReg(dest), asXmmFloatReg(left), asXmmFloatReg(right));
                             break;
                         default  : throw Util.shouldNotReachHere();
                     }
@@ -2282,7 +2302,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 case Jugteq: {
                     Label label = labels[((XirLabel) inst.extra).index];
                    //emitXirCompare(inst, Condition.AE, ConditionFlag.aboveEqual, operands, label);
-                   assert 0 == 1 : "jugteq ARMV7LIRAssembler";
+
                     emitXirCompare(inst, Condition.AE, ConditionFlag.UnsignedLowerOrEqual, operands, label);  // negation in the XirCompare?
 
                     break;
@@ -2477,6 +2497,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         CiValue y = ops[inst.y().index];
         emitCompare(condition, x, y, null);
         masm.jcc(cflag, label);
+        masm.nop(3); // TODO no necessary f2i01 overflows buffer on patchJumpTarget
     }
 
     @Override
