@@ -772,8 +772,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 //masm.cvtsi2ssl(asXmmFloatReg(dest), srcRegister);
                 break;
             case I2D:
-
-                masm.vcvt(ConditionFlag.Always,asXmmDoubleReg(dest),true,true,srcRegister);
+                /* vcvt only works on FP regs so need to do a vmov first to FP scratch */
+                masm.vmov(ConditionFlag.Always,ARMV7.s30,srcRegister);
+                masm.vcvt(ConditionFlag.Always,asXmmDoubleReg(dest),true,true,ARMV7.s30);
 
                 // masm.cvtsi2sdl(asXmmDoubleReg(dest), srcRegister);
                 break;
@@ -782,7 +783,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 assert srcRegister.isFpu() && dest.isRegister() : "must both be XMM register (no fpu stack)";
                 //assert 0 == 1 : " F2I ARMV7LIRAssembler bind commented out";
                 System.out.println("F2I: ARMVLIRAssembler over simplification? replaced with vcvt");
-                masm.vcvt(ConditionFlag.Always,dest.asRegister(),true,true,srcRegister);
+                masm.vcvt(ConditionFlag.Always,ARMV7.s30,true,true,asXmmFloatReg(src));
+                masm.vmov(ConditionFlag.Always,dest.asRegister(),ARMV7.s30);
+
                 // masm.cvttss2sil(dest.asRegister(), srcRegister);
                /* masm.cmp32(dest.asRegister(), Integer.MIN_VALUE);
                 masm.jcc(ConditionFlag.NotEqual, endLabel);
@@ -795,7 +798,19 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case D2I: {
                 assert srcRegister.isFpu() && dest.isRegister() : "must both be XMM register (no fpu stack)";
                 //masm.cvttsd2sil(dest.asRegister(), asXmmDoubleReg(src));
-                masm.vcvt(ConditionFlag.Always,dest.asRegister(),true,true,asXmmDoubleReg(src));
+
+                //masm.vcvt(ConditionFlag.Always,dest.asRegister(),true,true,asXmmDoubleReg(src));
+                /*
+                VCVT can convert to from only in the SP DP regs so we must use the SP/DP scratch and then
+                vmov to the core registers!
+                 */
+                if(dest.asRegister().isFpu()) {
+                    masm.vcvt(ConditionFlag.Always,asXmmFloatReg(dest),true,true,asXmmDoubleReg(src));
+                }else {
+                    masm.vcvt(ConditionFlag.Always,ARMV7.s30,true,true,asXmmDoubleReg(src));
+                    masm.vmov(ConditionFlag.Always,dest.asRegister(),ARMV7.s30);
+
+                }
                 Log.println("ARMV7LIRAssembler D2I hack replaced stub with vcvt for quick test");
                 /*masm.cmp32(dest.asRegister(), Integer.MIN_VALUE);
                 masm.jcc(ConditionFlag.NotEqual, endLabel);

@@ -1756,7 +1756,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert(failed == false);
 
     }
-    public void IGNOREFAIL_jtt_BC_d2i01() throws Exception {
+    public void test_jtt_BC_d2i01() throws Exception {
 
         List<Args> pairs = new LinkedList<Args>();
         String klassName = "jtt.bytecode.BC_d2i01";
@@ -1786,7 +1786,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
 
     }
-    public void IGNOREFAIL_jtt_BC_f2i01() throws Exception {
+    public void test_jtt_BC_f2i01() throws Exception {
 
         List<Args> pairs = new LinkedList<Args>();
         String klassName = "jtt.bytecode.BC_f2i01";
@@ -1810,7 +1810,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
 
     }
-    public void IGNOREFAIL_jtt_BC_i2d() throws Exception {
+    public void test_jtt_BC_i2d() throws Exception {
 
         List<Args> pairs = new LinkedList<Args>();
         String klassName = "jtt.bytecode.BC_i2d";
