@@ -774,7 +774,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case I2D:
                 /* vcvt only works on FP regs so need to do a vmov first to FP scratch */
                 masm.vmov(ConditionFlag.Always,ARMV7.s30,srcRegister);
-                masm.vcvt(ConditionFlag.Always,asXmmDoubleReg(dest),true,true,ARMV7.s30);
+                masm.vcvt(ConditionFlag.Always,asXmmDoubleReg(dest),false,true,ARMV7.s30);
 
                 // masm.cvtsi2sdl(asXmmDoubleReg(dest), srcRegister);
                 break;

@@ -1188,7 +1188,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         boolean double2Float = false;
         boolean floatConversion = false;
         System.out.println("VCVT " + dest.number + " " + src.number);
-        if (toInt == false) {
+        if (toInt == false && signed == false) {
             checkConstraint(dest.number >= 16 && src.number >= 16, "vcvt must be FP/DP regs");
             if(dest.number > src.number ) {
                 double2Float = true;
