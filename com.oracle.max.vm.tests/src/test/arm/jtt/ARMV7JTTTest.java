@@ -2461,7 +2461,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert failed == false;
     }
 
-    public void IGNOREFAIL_jtt_BC_dsub() throws Exception {
+    public void test_jtt_BC_dsub() throws Exception {
         initTests();
         boolean failed = false;
 
@@ -2482,7 +2482,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         String klassName = "jtt.bytecode.BC_dsub";
         List<TargetMethod> methods = Compile.compile(new String[]{klassName}, "C1X");
         CompilationBroker.OFFLINE = true;
-        initialiseCodeBuffers(methods);
+        initialiseCodeBuffers(methods,"BC_dsub.java","double test(double, double)");
         int assemblerStatements = codeBytes.length / 4;
         double expectedValue = 0;
         for (int i = 0; i < argsOne.length; i++) {
