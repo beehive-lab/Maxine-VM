@@ -2461,7 +2461,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert failed == false;
     }
 
-    public void test_jtt_BC_dsub() throws Exception {
+    public void IGNORE_jtt_BC_dsub() throws Exception {
         initTests();
         boolean failed = false;
 

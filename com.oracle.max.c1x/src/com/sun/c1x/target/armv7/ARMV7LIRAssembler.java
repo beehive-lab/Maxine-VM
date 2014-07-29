@@ -2374,8 +2374,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     int frameSize = initialFrameSizeInBytes();
                     masm.decrementq(ARMV7.r13, frameSize); // does not emit code for frameSize == 0
                     //masm.vmov(ConditionFlag.Always,ARMV7.s6,ARMV7.s3);
-                    //masm.vmov(ConditionFlag.Always,ARMV7.s4,ARMV7.s2);
-                    //masm.vmov(ConditionFlag.Always,ARMV7.s2,ARMV7.s1);
+                   // masm.vmov(ConditionFlag.Always,ARMV7.s4,ARMV7.s2);
+                   // masm.vmov(ConditionFlag.Always,ARMV7.s2,ARMV7.s1);
 
                     if (C1XOptions.ZapStackOnMethodEntry) {
                         final int intSize = 4;
