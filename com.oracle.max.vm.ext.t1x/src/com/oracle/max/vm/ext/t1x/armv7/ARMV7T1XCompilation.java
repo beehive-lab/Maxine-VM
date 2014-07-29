@@ -998,8 +998,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 int dispFromCodeStart = dispFromCodeStart(objectLiterals.size(), 0, index, true);
                 int disp = movqDisp(dispPos, dispFromCodeStart);
 
-                Log.println("ARMV7T1XCompilation ... OBJECT LITERAL PAtchInfo HAS BEEN allowed to emitInt");
-                buf.emitInt(disp);
+                Log.println("ARMV7T1XCompilation ... OBJECT LITERAL PAtchInfo HAS NOT BEEN allowed to emitInt");
+               // buf.emitInt(disp);
             } else {
                 throw FatalError.unexpected(String.valueOf(tag));
             }
