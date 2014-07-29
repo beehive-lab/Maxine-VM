@@ -1079,10 +1079,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     assert rreg.isFpu() : "must be xmm";
                     switch (code) {
                         case Add : //masm.addss(lreg, rreg);
-                            masm.vadd(ConditionFlag.Always,lreg,lreg,rreg);
+                            masm.vadd(ConditionFlag.Always,asXmmFloatReg(dest),asXmmFloatReg(left),asXmmFloatReg(right));
                             break;
                         case Sub : //masm.subss(lreg, rreg);
-                            masm.vsub(ConditionFlag.Always,lreg,lreg,rreg);
+                            masm.vsub(ConditionFlag.Always,asXmmFloatReg(dest),asXmmFloatReg(left),asXmmFloatReg(right));
                             break;
                         case Mul : //masm.mulss(lreg, rreg);
                             masm.vmul(ConditionFlag.Always, asXmmFloatReg(dest), asXmmFloatReg(left), asXmmFloatReg(right));
