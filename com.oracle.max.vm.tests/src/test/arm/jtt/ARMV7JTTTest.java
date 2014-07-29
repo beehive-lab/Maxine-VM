@@ -1591,16 +1591,69 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-
     private void initialiseCodeBuffers(List<TargetMethod> methods) {
         int minimumValue = Integer.MAX_VALUE;
         int maximumValue = Integer.MIN_VALUE;
         int offset;
         entryPoint = -1; // offset in the global array of the method we call from C.
         for (TargetMethod m : methods) {
+
+            System.out.println(m.classMethodActor().simpleName());
+            System.out.println(m.classMethodActor().sourceFileName());
+
             byte[] b = m.code();
             if (entryPoint == -1) {
-                entryPoint = m.codeAt(0).toInt();
+                    entryPoint = m.codeAt(0).toInt();
+            }
+            if ((m.codeAt(0)).toInt() < minimumValue) {
+                minimumValue = m.codeAt(0).toInt(); // UPDATE MINIMUM OFFSET IN ADDRESS SPACE
+            }
+            if ((m.codeAt(0)).toInt() + b.length > maximumValue) {
+                maximumValue = m.codeAt(0).toInt() + b.length; // UPDATE MAXIMUM OFFSET IN ADDRESS SPACE
+            }
+        }
+
+        if (MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() < minimumValue) {
+            minimumValue = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt();
+        }
+
+        if ((MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() + MaxineVM.vm().stubs.staticTrampoline().code().length) > maximumValue) {
+            maximumValue = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() + MaxineVM.vm().stubs.staticTrampoline().code().length;
+        }
+
+        codeBytes = new byte[maximumValue - minimumValue];
+        for (TargetMethod m : methods) { // CRUDE ATTEMPT TO COPY MACHINE CODE BUFFERS!
+            m.linkDirectCalls();
+            byte[] b = m.code();
+            offset = m.codeAt(0).toInt() - minimumValue;
+            for (int i = 0; i < b.length; i++) {
+                codeBytes[offset + i] = b[i];
+            }
+        }
+        byte[] b = MaxineVM.vm().stubs.staticTrampoline().code();
+        offset = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() - minimumValue;
+        for (int i = 0; i < b.length; i++) {
+            codeBytes[i + offset] = b[i];
+        }
+        entryPoint = entryPoint - minimumValue;
+    }
+    private void initialiseCodeBuffers(List<TargetMethod> methods,String fileName,String methodName) {
+        int minimumValue = Integer.MAX_VALUE;
+        int maximumValue = Integer.MIN_VALUE;
+        int offset;
+        entryPoint = -1; // offset in the global array of the method we call from C.
+        for (TargetMethod m : methods) {
+            if(!fileName.equals(m.classMethodActor.sourceFileName())) {
+                continue;
+            }
+            System.out.println(m.classMethodActor().simpleName());
+            System.out.println(m.classMethodActor().sourceFileName());
+
+            byte[] b = m.code();
+            if (entryPoint == -1) {
+                if(methodName.equals(m.classMethodActor().simpleName())) {
+                    entryPoint = m.codeAt(0).toInt();
+                }
             }
             if ((m.codeAt(0)).toInt() < minimumValue) {
                 minimumValue = m.codeAt(0).toInt(); // UPDATE MINIMUM OFFSET IN ADDRESS SPACE
@@ -1786,7 +1839,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
 
     }
-    public void test_jtt_BC_new() throws Exception {
+    public void IGNORE_jtt_BC_new() throws Exception {
 
         List<Args> pairs = new LinkedList<Args>();
         String klassName = "jtt.bytecode.BC_new";
@@ -1810,7 +1863,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
 
     }
-    public void test_jtt_BC_f2i01() throws Exception {
+    public void IGNORE_jtt_BC_f2i01() throws Exception {
 
         List<Args> pairs = new LinkedList<Args>();
         String klassName = "jtt.bytecode.BC_f2i01";
@@ -1834,7 +1887,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
 
     }
-    public void test_jtt_BC_f2i02() throws Exception {
+    public void IGNORE_jtt_BC_f2i02() throws Exception {
 
         List<Args> pairs = new LinkedList<Args>();
         String klassName = "jtt.bytecode.BC_f2i02";
@@ -2051,7 +2104,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
         assert failed == false;
     }
-    public void test_jtt_BC_fdiv() throws Exception {
+    public void IGNORE_jtt_BC_fdiv() throws Exception {
         initTests();
         boolean failed = false;
 
@@ -2157,7 +2210,44 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
         assert failed == false;
     }
-    public void test_jtt_BC_freturn() throws Exception {
+    public void test_jtt_BC_fload() throws Exception {
+        initTests();
+        boolean failed = false;
+
+    /*
+     * @Harness: java
+     * @Runs: 0.0f = 0.0f; 1.1f = 1.1f; -1.4f = -1.4f;
+    * @Runs: 256.33f = 256.33f; 1000.001f = 1000.001f
+
+     *
+
+ */
+
+        float argsOne[] = {0.0f, 1.1f, -1.4f, 256.33f, 1000.001f};
+
+        String klassName = "jtt.bytecode.BC_fload";
+        List<TargetMethod> methods = Compile.compile(new String[]{klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        initialiseCodeBuffers(methods,"BC_fload.java","float test(float)");
+        int assemblerStatements = codeBytes.length / 4;
+        float expectedValue = 0;
+        for (int i = 0; i < argsOne.length; i++) {
+            float floatValue = jtt.bytecode.BC_fload.test(argsOne[i]);
+
+            String functionPrototype = ARMCodeWriter.preAmble("float", " float ", Float.toString(argsOne[i]));
+            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (!registerValues[33].equals(new Float(floatValue))) { // r0.r15 + APSR then FPREGS
+                failed = true;
+                System.out.println("Failed incorrect value " + ((Float)registerValues[33]).floatValue() + " " + floatValue);
+            }
+            Log.println("FLOAD test " + i + " returned " + ((Float) registerValues[33]).floatValue() + " expected " + floatValue);
+            //assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+        assert failed == false;
+    }
+
+    public void IGNORE_jtt_BC_freturn() throws Exception {
         initTests();
         boolean failed = false;
 
@@ -2185,7 +2275,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
             if (!registerValues[33].equals(new Float(floatValue))) { // r0.r15 + APSR then FPREGS
                 failed = true;
-                System.out.println("Failed incorrect value " + registerValues[0] + " " + floatValue);
+                System.out.println("Failed incorrect value " + ((Float)registerValues[33]).floatValue() + " " + floatValue);
             }
             Log.println("FRETURN test " + i + " returned " + ((Float) registerValues[33]).floatValue() + " expected " + floatValue);
             //assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
@@ -2196,7 +2286,7 @@ public class ARMV7JTTTest extends MaxTestCase {
 
 
 
-    public void test_jtt_BC_dreturn() throws Exception {
+    public void IGNORE_jtt_BC_dreturn() throws Exception {
         initTests();
         boolean failed = false;
 
