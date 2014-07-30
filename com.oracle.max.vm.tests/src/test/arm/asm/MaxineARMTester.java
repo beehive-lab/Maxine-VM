@@ -386,7 +386,7 @@ public class MaxineARMTester {
     private void initializeQemu() {
         ENABLE_SIMULATOR = Integer.getInteger(ENABLE_QEMU) != null && Integer.getInteger(ENABLE_QEMU) > 0 ? true : false;
     }
-    private Object[] parseObjectRegistersToFile(String file) throws IOException {
+    private Object[] parseObjectRegistersToFile(String file) throws Exception {
         BufferedReader reader = new BufferedReader(new FileReader(file));
         String line = null;
         boolean enabled = false;
@@ -442,9 +442,11 @@ public class MaxineARMTester {
                         Double tmp = new Double (str);
                         expectedValues[i++] = tmp;
                     } catch (Exception e) {
-                        System.err.println(e);
-                        e.printStackTrace();
-                        expectedValues[i++] = null;
+                        // we get exceptions when there is a NaN
+                        // currently we just set them to null
+                        //System.err.println(e);
+                        //e.printStackTrace();
+                        expectedValues[i++] = new Double("NaN");
                     }
 
                     break;
@@ -481,9 +483,9 @@ public class MaxineARMTester {
                         Float tmp = new Float (doubleVal);
                         expectedValues[i++] = tmp;
                     } catch (Exception e) {
-                        System.err.println(e);
-                        e.printStackTrace();
-                        expectedValues[i++] = null;
+                        //System.err.println(e);
+                        //e.printStackTrace();
+                        expectedValues[i++] = new Float("NaN");
                     }
                     break;
                 }

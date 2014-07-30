@@ -422,7 +422,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     }
     private static CiRegister asXmmFloatReg(CiValue src) {
 
-        System.out.println("LIRAasXmmFloatReg val.encoding "+ src.asRegister().encoding + " val.number "+ src.asRegister().number);
+       // System.out.println("LIRAasXmmFloatReg val.encoding "+ src.asRegister().encoding + " val.number "+ src.asRegister().number);
         assert src.kind.isFloat() : "must be float, actual kind: " + src.kind;
         //CiRegister result = src.asRegister();
         CiRegister result = getFloatRegister(src.asRegister());

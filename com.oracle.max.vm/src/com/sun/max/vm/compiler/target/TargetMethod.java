@@ -997,6 +997,168 @@ public abstract class TargetMethod extends MemoryRegion {
 
         return linkedAll;
     }
+    public final int  offlineMinDirectCalls() {
+        boolean linkedAll = true;
+        int minimumValue = Integer.MAX_VALUE;
+
+        if (directCallees.length != 0) {
+            int dcIndex = 0;
+            for (int safepointIndex = safepoints.nextDirectCall(0); safepointIndex >= 0; safepointIndex = safepoints.nextDirectCall(safepointIndex + 1)) {
+                Object currentDirectCallee = directCallees[dcIndex];
+                final int offset = getCallEntryOffset(currentDirectCallee, safepointIndex);
+                if (currentDirectCallee == null) {
+                    // template call
+                    assert classMethodActor.isTemplate();
+                    Log.println("Patch template call");
+                } else if (MaxineVM.isHosted()) {
+                    final TargetMethod callee = getTargetMethod(currentDirectCallee);
+                    if (callee == null) {    // APN this means the code is not yet available
+                        // ie it has not been compiled or it has been evicted from the code cache.
+                        if (classMethodActor.isTemplate()) {
+                            assert currentDirectCallee == classMethodActor : "unlinkable call in a template must be a template call";
+                            // leave call site unpatched
+                            //Log.println("Callee==null Patch template call");
+                        } else {
+                            linkedAll = false;
+                            //Log.print("Callee==null Patch static trampoline safepoint: ");
+                            //Log.print(safepointIndex);
+                            //Log.print(" offset ");
+                            //Log.println(offset);
+
+                        }
+                    } else {
+                        if(callee.codeAt(offset).toInt()< minimumValue) {
+                            minimumValue = callee.codeAt(offset).toInt();
+                        }
+                        int tmp = callee.offlineMinDirectCalls();
+                        if(tmp < minimumValue) {
+                            minimumValue = tmp;
+                        }
+                        //Log.println("Callee!=null Fixup call site");
+                    }
+                } else {
+                    FatalError.breakpoint();
+                    final TargetMethod callee = getTargetMethod(currentDirectCallee);
+                    if (callee == null || (!Code.bootCodeRegion().contains(callee.codeStart) && !(callee instanceof Adapter))) {
+                        linkedAll = false;
+                    } else {
+                        int callPos = safepoints.causePosAt(safepointIndex);
+                    }
+                }
+                dcIndex++;
+            }
+        }
+
+        return minimumValue;
+    }
+    public final int  offlineMaxDirectCalls() {
+        boolean linkedAll = true;
+        int maxValue = Integer.MIN_VALUE;
+
+        if (directCallees.length != 0) {
+            int dcIndex = 0;
+            for (int safepointIndex = safepoints.nextDirectCall(0); safepointIndex >= 0; safepointIndex = safepoints.nextDirectCall(safepointIndex + 1)) {
+                Object currentDirectCallee = directCallees[dcIndex];
+                final int offset = getCallEntryOffset(currentDirectCallee, safepointIndex);
+                if (currentDirectCallee == null) {
+                    // template call
+                    assert classMethodActor.isTemplate();
+                    Log.println("Patch template call");
+                } else if (MaxineVM.isHosted()) {
+                    final TargetMethod callee = getTargetMethod(currentDirectCallee);
+                    if (callee == null) {    // APN this means the code is not yet available
+                        // ie it has not been compiled or it has been evicted from the code cache.
+                        if (classMethodActor.isTemplate()) {
+                            assert currentDirectCallee == classMethodActor : "unlinkable call in a template must be a template call";
+                            // leave call site unpatched
+                            //Log.println("Callee==null Patch template call");
+                        } else {
+                            linkedAll = false;
+                            //Log.print("Callee==null Patch static trampoline safepoint: ");
+                            //Log.print(safepointIndex);
+                            //Log.print(" offset ");
+                            //Log.println(offset);
+
+                        }
+                    } else {
+                        if(callee.codeAt(callee.codeLength()-1).toInt()  > maxValue) {
+                            maxValue = callee.codeAt(callee.codeLength()-1).toInt();
+                        }
+                        int tmp = callee.offlineMaxDirectCalls();
+                        if(tmp > maxValue) {
+                            maxValue = tmp;
+                        }
+                        //Log.println("Callee!=null Fixup call site");
+                    }
+                } else {
+                    FatalError.breakpoint();
+                    final TargetMethod callee = getTargetMethod(currentDirectCallee);
+                    if (callee == null || (!Code.bootCodeRegion().contains(callee.codeStart) && !(callee instanceof Adapter))) {
+                        linkedAll = false;
+                    } else {
+                        int callPos = safepoints.causePosAt(safepointIndex);
+                    }
+                }
+                dcIndex++;
+            }
+        }
+
+        return maxValue;
+    }
+    public final void  offlineCopyCode(int minimumValue,byte []codeBytes ) {
+        boolean linkedAll = true;
+
+        if (directCallees.length != 0) {
+            int dcIndex = 0;
+            for (int safepointIndex = safepoints.nextDirectCall(0); safepointIndex >= 0; safepointIndex = safepoints.nextDirectCall(safepointIndex + 1)) {
+                Object currentDirectCallee = directCallees[dcIndex];
+                final int offset = getCallEntryOffset(currentDirectCallee, safepointIndex);
+                if (currentDirectCallee == null) {
+                    // template call
+                    assert classMethodActor.isTemplate();
+                    Log.println("Patch template call");
+                } else if (MaxineVM.isHosted()) {
+                    final TargetMethod callee = getTargetMethod(currentDirectCallee);
+                    if (callee == null) {    // APN this means the code is not yet available
+                        // ie it has not been compiled or it has been evicted from the code cache.
+                        if (classMethodActor.isTemplate()) {
+                            assert currentDirectCallee == classMethodActor : "unlinkable call in a template must be a template call";
+                            // leave call site unpatched
+                            //Log.println("Callee==null Patch template call");
+                        } else {
+                            linkedAll = false;
+                            //Log.print("Callee==null Patch static trampoline safepoint: ");
+                            //Log.print(safepointIndex);
+                            //Log.print(" offset ");
+                            //Log.println(offset);
+
+                        }
+                    } else {
+                        byte[] b = callee.code();
+                        int myoffset = callee.codeAt(0).toInt() - minimumValue;
+                        for (int i = 0; i < b.length; i++) {
+                            codeBytes[myoffset + i] = b[i];
+                        }
+                        callee.offlineCopyCode(minimumValue,codeBytes);
+
+                    }
+                } else {
+                    FatalError.breakpoint();
+                    final TargetMethod callee = getTargetMethod(currentDirectCallee);
+                    if (callee == null || (!Code.bootCodeRegion().contains(callee.codeStart) && !(callee instanceof Adapter))) {
+                        linkedAll = false;
+                    } else {
+                        int callPos = safepoints.causePosAt(safepointIndex);
+                    }
+                }
+                dcIndex++;
+            }
+        }
+
+    }
+
+
+
 
     private void patchStaticTrampoline(final int safepointIndex, final int offset) {
         final int callPos = safepoints.causePosAt(safepointIndex);
