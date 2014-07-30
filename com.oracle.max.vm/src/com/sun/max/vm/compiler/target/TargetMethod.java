@@ -1014,18 +1014,7 @@ public abstract class TargetMethod extends MemoryRegion {
                     final TargetMethod callee = getTargetMethod(currentDirectCallee);
                     if (callee == null) {    // APN this means the code is not yet available
                         // ie it has not been compiled or it has been evicted from the code cache.
-                        if (classMethodActor.isTemplate()) {
-                            assert currentDirectCallee == classMethodActor : "unlinkable call in a template must be a template call";
-                            // leave call site unpatched
-                            //Log.println("Callee==null Patch template call");
-                        } else {
-                            linkedAll = false;
-                            //Log.print("Callee==null Patch static trampoline safepoint: ");
-                            //Log.print(safepointIndex);
-                            //Log.print(" offset ");
-                            //Log.println(offset);
-
-                        }
+                        continue;
                     } else {
                         if(callee.codeAt(offset).toInt()< minimumValue) {
                             minimumValue = callee.codeAt(offset).toInt();
@@ -1067,19 +1056,7 @@ public abstract class TargetMethod extends MemoryRegion {
                 } else if (MaxineVM.isHosted()) {
                     final TargetMethod callee = getTargetMethod(currentDirectCallee);
                     if (callee == null) {    // APN this means the code is not yet available
-                        // ie it has not been compiled or it has been evicted from the code cache.
-                        if (classMethodActor.isTemplate()) {
-                            assert currentDirectCallee == classMethodActor : "unlinkable call in a template must be a template call";
-                            // leave call site unpatched
-                            //Log.println("Callee==null Patch template call");
-                        } else {
-                            linkedAll = false;
-                            //Log.print("Callee==null Patch static trampoline safepoint: ");
-                            //Log.print(safepointIndex);
-                            //Log.print(" offset ");
-                            //Log.println(offset);
-
-                        }
+                        continue;
                     } else {
                         if(callee.codeAt(callee.codeLength()-1).toInt()  > maxValue) {
                             maxValue = callee.codeAt(callee.codeLength()-1).toInt();

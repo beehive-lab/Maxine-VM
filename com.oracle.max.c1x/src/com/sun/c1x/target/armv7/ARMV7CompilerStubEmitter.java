@@ -276,7 +276,7 @@ public class ARMV7CompilerStubEmitter {
          */
         negatePrologue();
         asm.nop();
-        asm.setUpScratch(tasm.recordDataReferenceInCode(CiConstant.forLong(DoubleSignFlip)));
+        //asm.setUpScratch(tasm.recordDataReferenceInCode(CiConstant.forLong(DoubleSignFlip)));
         asm.nop();
         asm.vldr(ARMV7Assembler.ConditionFlag.Always, negateTemp, ARMV7.r12, 0);
         asm.vneg(ARMV7Assembler.ConditionFlag.Always,negateArgument,negateTemp);
