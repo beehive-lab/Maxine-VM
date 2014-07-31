@@ -2758,6 +2758,46 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
         assert failed == false;
     }
+
+
+
+    public void test_C1X_jtt_BC_iadd3() throws Exception {
+        initTests();
+        boolean failed = false;
+
+  /*
+ * @Harness: java
+ * @Runs: (1s,2s)=3; (0s,-1s)=-1; (33s,67s)=100; (1s, -1s)=0;
+ * @Runs: (-128s,1s)=-127; (127s,1s)=128;
+ * @Runs: (-32768s,1s)=-32767; (32767s,1s)=32768;
+ */
+
+
+        short argsOne[] = {1, 0, 33, 1,-128,127, -32768, 32767};
+        short argsTwo[] = {2, -1, 67,-1, 1,   1,    1,  1    };
+
+        String klassName = "jtt.bytecode.BC_iadd";
+        List<TargetMethod> methods = Compile.compile(new String[]{klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        initialiseCodeBuffers(methods,"BC_iadd3.java","int test(short, short)");
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < argsOne.length; i++) {
+            expectedValue = jtt.bytecode.BC_iadd.test(argsOne[i], argsTwo[i]);
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "short , short ", Short.toString(argsOne[i]) + "," + Short.toString(argsTwo[i]));
+            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (!registerValues[0].equals(new Integer(expectedValue))) { // r0.r15 + APSR then FPREGS
+                failed = true;
+                System.out.println("Failed incorrect value " + ((Integer)registerValues[0]).intValue() + " " + expectedValue);
+            }
+            Log.println("IADD3 test " + i + " returned " + ((Integer) registerValues[0]).intValue() + " expected " + expectedValue);
+            //assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+        assert failed == false;
+    }
+
     public void IGNORE_C1X_jtt_BC_iadd() throws Exception {
         initTests();
         boolean failed = false;
