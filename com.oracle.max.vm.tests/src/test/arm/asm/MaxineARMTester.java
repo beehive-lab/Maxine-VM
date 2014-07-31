@@ -446,7 +446,14 @@ public class MaxineARMTester {
                         // currently we just set them to null
                         //System.err.println(e);
                         //e.printStackTrace();
-                        expectedValues[i++] = new Double("NaN");
+                        if(str.equals("inf")) {
+                            expectedValues[i++] = new Double(Double.POSITIVE_INFINITY);
+                        } else if(str.equals("-inf")) {
+                            expectedValues[i++] = new Double(Double.NEGATIVE_INFINITY);
+                        } else {
+                            expectedValues[i++] = new Double(Double.NaN);
+                        }
+                        //expectedValues[i++] = new Double("NaN");
                     }
 
                     break;
@@ -485,7 +492,14 @@ public class MaxineARMTester {
                     } catch (Exception e) {
                         //System.err.println(e);
                         //e.printStackTrace();
-                        expectedValues[i++] = new Float("NaN");
+                        if(doubleVal.equals("inf")) {
+                            expectedValues[i++] = new Float(Float.POSITIVE_INFINITY);
+                        } else if(doubleVal.equals("-inf")) {
+                            expectedValues[i++] = new Float(Float.NEGATIVE_INFINITY);
+                        } else {
+                            expectedValues[i++] = new Float(Float.NaN);
+                        }
+                        //expectedValues[i++] = new Float("NaN");
                     }
                     break;
                 }

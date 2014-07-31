@@ -3197,7 +3197,9 @@ public class ARMV7JTTTest extends MaxTestCase {
  */
 
 
-        double argsOne[] = {0.0D, 1.0D,2.0d};
+
+
+        double argsOne[] = { 1.0D,2.0d,0.0d};
 
         String klassName = "jtt.bytecode.BC_dsub";
         List<TargetMethod> methods = Compile.compile(new String[]{klassName}, "C1X");
