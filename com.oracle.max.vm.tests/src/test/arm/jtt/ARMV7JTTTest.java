@@ -2758,7 +2758,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
         assert failed == false;
     }
-    public void testC1X_jtt_BC_iadd() throws Exception {
+    public void IGNORE_C1X_jtt_BC_iadd() throws Exception {
         initTests();
         boolean failed = false;
 
@@ -2806,17 +2806,17 @@ public class ARMV7JTTTest extends MaxTestCase {
  * @Runs: (-128b,1b)=-127; (127b,1b)=128;
  */
 
-        byte argsOne[] = {};
-        byte argsTwo[] = {};
+        byte argsOne[] = {1,0,33,1,-128,127};
+        byte argsTwo[] = {2,-1,67,-1 ,1,1};
 
         String klassName = "jtt.bytecode.BC_iadd";
         List<TargetMethod> methods = Compile.compile(new String[]{klassName}, "C1X");
         CompilationBroker.OFFLINE = true;
-        initialiseCodeBuffers(methods,"BC_iadd.java","int test(byte, byte)");
+        initialiseCodeBuffers(methods,"BC_iadd2.java","int test(byte, byte)");
         int assemblerStatements = codeBytes.length / 4;
         int expectedValue = 0;
         for (int i = 0; i < argsOne.length; i++) {
-            expectedValue = jtt.bytecode.BC_iadd.test(argsOne[i], argsTwo[i]);
+            expectedValue = jtt.bytecode.BC_iadd2.test(argsOne[i], argsTwo[i]);
 
             String functionPrototype = ARMCodeWriter.preAmble("int", "int , int ", Integer.toString(argsOne[i]) + "," + Integer.toString(argsTwo[i]));
             Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
@@ -2824,7 +2824,7 @@ public class ARMV7JTTTest extends MaxTestCase {
                 failed = true;
                 System.out.println("Failed incorrect value " + ((Integer)registerValues[0]).intValue() + " " + expectedValue);
             }
-            Log.println("IADD test " + i + " returned " + ((Integer) registerValues[0]).intValue() + " expected " + expectedValue);
+            Log.println("IADD2 test " + i + " returned " + ((Integer) registerValues[0]).intValue() + " expected " + expectedValue);
             //assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -2907,7 +2907,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert failed == false;
     }
 
-    public void test_jtt_BC_fload2() throws Exception {
+    public void IGNORE_jtt_BC_fload2() throws Exception {
         initTests();
         boolean failed = false;
 
