@@ -1098,7 +1098,7 @@ public abstract class TargetMethod extends MemoryRegion {
                     final TargetMethod callee = getTargetMethod(currentDirectCallee);
                     if (callee == null) {    // APN this means the code is not yet available
                         // ie it has not been compiled or it has been evicted from the code cache.
-                        if (classMethodActor.isTemplate()) {
+                        /*if (classMethodActor.isTemplate()) {
                             assert currentDirectCallee == classMethodActor : "unlinkable call in a template must be a template call";
                             // leave call site unpatched
                             //Log.println("Callee==null Patch template call");
@@ -1109,7 +1109,7 @@ public abstract class TargetMethod extends MemoryRegion {
                             //Log.print(" offset ");
                             //Log.println(offset);
 
-                        }
+                        }*/
                     } else {
                         byte[] b = callee.code();
                         int myoffset = callee.codeAt(0).toInt() - minimumValue;
