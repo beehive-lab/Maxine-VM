@@ -788,7 +788,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 break;
 
             case I2F:
-                masm.vcvt(ConditionFlag.Always,asXmmFloatReg(dest),false,true,srcRegister);
+                masm.vmov(ConditionFlag.Always,ARMV7.s30,srcRegister);
+                masm.vcvt(ConditionFlag.Always,asXmmFloatReg(dest),false,true,ARMV7.s30);
                 //masm.cvtsi2ssl(asXmmFloatReg(dest), srcRegister);
                 break;
             case I2D:

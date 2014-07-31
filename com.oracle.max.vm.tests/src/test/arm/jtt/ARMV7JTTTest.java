@@ -2106,6 +2106,47 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert(failed == false);
 
     }
+    public void test_jtt_BC_i2f() throws Exception {
+
+        boolean failed = false;
+        List<Args> pairs = new LinkedList<Args>();
+        String klassName = "jtt.bytecode.BC_i2f";
+        MaxineARMTester.DEBUGOBJECTS = false;
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        /*
+         * WE NEED A CLEANED UP WAY TO .. COPY THE CODE INTO AN ALIGNED BUFFER, WE NEED TO BE ABLE TO MATCH THE
+         * MaxTargetMethod with the one we want to call, and then to extract its entry point ... IVE CHEATED HERE AND
+         * JUST USED THE FIRST ONE AS I KNOW THAT IS "test" IN THIS INSTANCE
+         */
+        initialiseCodeBuffers(methods,"BC_i2f.java","float test(int)");
+        int assemblerStatements = codeBytes.length / 4;
+        int[] arguments = { -2, 0, 1, -1 , -99};
+        float expectedFloat = -9;
+        for (int i = 0; i < arguments.length; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            float answer = jtt.bytecode.BC_i2f.test(arguments[i]);
+            expectedFloat = answer;
+            /*
+             * SEE BELOW, WE NEED TO PROVIDE A COMMA SEPARATED LIST OF TYPES "int" void (*pf)(***int***) = (void
+             * (*))(code); print_uart0("changed test.c!\n"); AND WE NEED TO PROVIDE A COMMA SEPARATED LIST OF FUNCTION
+             * ARGUMENT VALUES / VARIABLES (*pf)(****1*****); // Need to change this to something related to the test
+             * itself asm volatile("forever: b forever");
+             */
+            MaxineARMTester.DEBUGOBJECTS = false;
+            String functionPrototype = ARMCodeWriter.preAmble("float", "int", Integer.toString(arguments[i]));
+            // good question here ... is the value returned in the float s0 or the core s0 register
+            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (((Float)registerValues[33]).floatValue() != expectedFloat) {
+                System.out.println("Failed incorrect value " + ((Float)registerValues[33]).floatValue() + " " + expectedFloat);
+            }        MaxineARMTester.DEBUGOBJECTS = false;
+            if(!failed) {
+                failed = ((Float) registerValues[33]).floatValue() != expectedFloat;
+            }
+            theCompiler.cleanup();
+        }
+        assert(failed == false);
+
+    }
     public void IGNORE_jtt_BC_d2f() throws Exception {
 
         boolean failed = false;
@@ -2761,7 +2802,7 @@ public class ARMV7JTTTest extends MaxTestCase {
 
 
 
-    public void test_C1X_jtt_BC_iadd3() throws Exception {
+    public void IGNORE_C1X_jtt_BC_iadd3() throws Exception {
         initTests();
         boolean failed = false;
 
@@ -2835,7 +2876,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
         assert failed == false;
     }
-    public void testC1X_jtt_BC_iadd2() throws Exception {
+    public void IGNORE_C1X_jtt_BC_iadd2() throws Exception {
         initTests();
         boolean failed = false;
 
