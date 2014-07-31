@@ -352,7 +352,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     // Support optimal SSE move instructions.
     public void movflt(CiRegister dst, CiRegister src) {
-        System.out.println("movflt dst " + dst.number + " src " + src.number);
+        //System.out.println("movflt dst " + dst.number + " src " + src.number);
         vmov(ConditionFlag.Always,dst,src);
        /* assert dst.isFpu() && src.isFpu();
         if (AsmOptions.UseXmmRegToRegMoveAll) {
@@ -410,7 +410,11 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
        /* assert src.isFpu();
         movsd(dst, src); */
         setUpScratch(dst);
-        vstr(ConditionFlag.Always,r12,src,0);
+        if(src.number > 15) {
+            vstr(ConditionFlag.Always, r12, src, 0);
+        } else {
+
+        }
 
     }
 

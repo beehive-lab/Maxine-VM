@@ -612,8 +612,8 @@ public class ARMV7Assembler extends AbstractAssembler {
         int instruction;
         instruction = 0x05900000;
         instruction |= (flag.value() & 0xf) << 28;
-        instruction |= (destReg.encoding & 0xf) << 16;
-        instruction |= (baseRegister.encoding & 0xf) << 12;
+        instruction |= (destReg.encoding & 0xf) << 12;
+        instruction |= (baseRegister.encoding & 0xf) << 16;
         instruction |= offset12 & 0xfff;
         emitInt(instruction);
     }

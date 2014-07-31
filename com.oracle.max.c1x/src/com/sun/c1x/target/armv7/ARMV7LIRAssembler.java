@@ -208,6 +208,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         for (int i = 0; i < C1XOptions.MethodEndBreakpointGuards; ++i) {
             //masm.int3();
         }
+        masm.nop(8); // BUGFIX for overflowing buffer on patch call ...
     }
 
     private void const2reg(CiRegister dst, float constant) {
@@ -528,7 +529,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             break;
             case Object  :// masm.movq(dest.asRegister(), addr);
             case Int:
-                masm.ldr(ConditionFlag.Always,dest.asRegister(),ARMV7.r12,0);
+                masm.ldrImmediate(ConditionFlag.Always,0,0,0,dest.asRegister(),ARMV7.r12,0);
                 break;
             //case Int     : masm.movslq(dest.asRegister(), addr); break;
             case Long    : //masm.movq(dest.asRegister(), addr);
@@ -1587,7 +1588,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         break;
                     //long cmp not implemented case Long    :
 
-                    case Float   : masm.ucomisd(reg1, asXmmFloatReg(opr2)); // was ucomiss but our encoding can handle single or double precision
+                    case Float   :
+                        // was reg1 but need to hack it to use the correct float reg!!
+                        masm.ucomisd(asXmmFloatReg(opr1), asXmmFloatReg(opr2)); // was ucomiss but our encoding can handle single or double precision
                                             // as long as the FP regs s0 d0 usage is fixed.
                         break;
                     case Double  : masm.ucomisd(reg1, asXmmDoubleReg(opr2));
