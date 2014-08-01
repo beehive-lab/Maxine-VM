@@ -301,6 +301,100 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert failed == false;
 
     }
+    public void test_T1Xjtt_BC_iadd2() throws Exception {
+
+/*
+ * @Harness: java
+ * @Runs: (1b,2b)=3; (0b,-1b)=-1; (33b,67b)=100; (1b, -1b)=0;
+ * @Runs: (-128b,1b)=-127; (127b,1b)=128;
+ */
+        boolean failed = false;
+        byte argsOne[] = {1,0,33,1,-128,127};
+        byte argsTwo[] = {2,-1,67,-1 ,1,1};
+        initTests();
+        MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd");
+
+        byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_iadd2");
+
+        for(int i = 0; i < argsOne.length;i++) {
+            int answer = jtt.bytecode.BC_iadd2.test(argsOne[i],argsTwo[i]);
+            expectedValues[0] = answer;
+            // TODO is this really right?
+            initialiseFrameForCompilation(code, "(BB)I", Modifier.PUBLIC | Modifier.STATIC);
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.mov32BitConstant(ARMV7.r0, (int)argsOne[i]);
+            masm.mov32BitConstant(ARMV7.r1, (int)argsTwo[i]);
+            masm.mov32BitConstant(ARMV7.r2, -99);
+            masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+            masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+            masm.push(ConditionFlag.Always, 4); // local slot 0 is return (int is one slot) last push to stack is
+           // t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd2");
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            masm.pop(ConditionFlag.Always, 1);
+            int assemblerStatements = masm.codeBuffer.position() / 4;
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            theCompiler.cleanup();
+            if(registerValues[0] != answer) {
+                failed = true;
+            }
+            Log.println("T1X iadd " + registerValues[0] + " " + answer);
+        }
+        assert(failed == false);
+
+    }
+    public void test_T1X_jtt_BC_iadd3() throws Exception {
+        initTests();
+        boolean failed = false;
+
+  /*
+ * @Harness: java
+ * @Runs: (1s,2s)=3; (0s,-1s)=-1; (33s,67s)=100; (1s, -1s)=0;
+ * @Runs: (-128s,1s)=-127; (127s,1s)=128;
+ * @Runs: (-32768s,1s)=-32767; (32767s,1s)=32768;
+ */
+
+
+        short argsOne[] = {1, 0, 33, 1,-128,127, -32768, 32767};
+        short argsTwo[] = {2, -1, 67,-1, 1,   1,    1,  1    };
+        initTests();
+        MaxineByteCode xx = new MaxineByteCode();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd");
+
+        byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_iadd3");
+
+       int expectedValue =0;
+        for (int i = 0; i < argsOne.length; i++) {
+            expectedValue = jtt.bytecode.BC_iadd3.test(argsOne[i], argsTwo[i]);
+            initialiseFrameForCompilation(code, "(SS)I", Modifier.PUBLIC | Modifier.STATIC);
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.mov32BitConstant(ARMV7.r0, (int)argsOne[i]);
+            masm.mov32BitConstant(ARMV7.r1, (int)argsTwo[i]);
+            masm.mov32BitConstant(ARMV7.r2, -99);
+            masm.push(ConditionFlag.Always, 1); // local slot is argument r0
+            masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
+            masm.push(ConditionFlag.Always, 4); // local slot 0 is return (int is one slot) last push to stack is
+            // t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd2");
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            masm.pop(ConditionFlag.Always, 1);
+            int assemblerStatements = masm.codeBuffer.position() / 4;
+            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+            theCompiler.cleanup();
+            if(registerValues[0] != expectedValue) {
+                failed = true;
+            }
+
+            Log.println("T1X IADD3 test " + i + " returned " + registerValues[0] + " expected " + expectedValue);
+            //assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+        assert failed == false;
+    }
+
     public void test_jtt_BC_imul() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
@@ -2948,7 +3042,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         int assemblerStatements = codeBytes.length / 4;
         int expectedValue = 0;
         for (int i = 0; i < argsOne.length; i++) {
-            expectedValue = jtt.bytecode.BC_iadd.test(argsOne[i], argsTwo[i]);
+            expectedValue = jtt.bytecode.BC_iadd3.test(argsOne[i], argsTwo[i]);
 
             String functionPrototype = ARMCodeWriter.preAmble("int", "short , short ", Short.toString(argsOne[i]) + "," + Short.toString(argsTwo[i]));
             Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
@@ -2963,7 +3057,39 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert failed == false;
     }
 
-    public void IGNORE_C1X_jtt_BC_iadd() throws Exception {
+    public void test_C1X_jtt_BC_i2s() throws Exception {
+        initTests();
+        boolean failed = false;
+
+/*
+ * @Harness: java
+ * @Runs: -1 = -1s; 34 = 34s; 65535 = -1s; 32768 = -32768s
+ */
+
+
+        int argsOne[] = {1, -1, 34, 1,65535,32768,-32768};
+
+        String klassName = "jtt.bytecode.BC_i2s";
+        List<TargetMethod> methods = Compile.compile(new String[]{klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        initialiseCodeBuffers(methods,"BC_i2s.java","short test(int)");
+        int assemblerStatements = codeBytes.length / 4;
+        short expectedValue = 0;
+        for (int i = 0; i < argsOne.length; i++) {
+            expectedValue = jtt.bytecode.BC_i2s.test(argsOne[i]);
+
+            String functionPrototype = ARMCodeWriter.preAmble("short", "int  ", Integer.toString(argsOne[i]));
+            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (((Integer)registerValues[0]).shortValue() != expectedValue) { // r0.r15 + APSR then FPREGS
+                failed = true;
+            }
+            Log.println("C1X I2S test " + i + " returned " + ((Integer) registerValues[0]).shortValue() + " expected " + expectedValue);
+            //assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+        assert failed == false;
+    }
+    public void test_C1X_jtt_BC_iadd() throws Exception {
         initTests();
         boolean failed = false;
 
