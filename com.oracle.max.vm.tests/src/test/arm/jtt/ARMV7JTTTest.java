@@ -267,7 +267,40 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
+    public void test_C1X_jtt_BC_imul() throws Exception {
+        initTests();
+        boolean failed = false;
+/*
+ * @Harness: java
+ * @Runs: (1,2)=2; (0,-1)=0; (33,67)=2211; (1,-1)=-1;
+ * @Runs: (-2147483648,1)=-2147483648; (2147483647,-1)=-2147483647;
+ * @Runs: (-2147483648,-1)=-2147483648
+ */
 
+        int argsOne[] = {1, 0, 33, 1   , -2147483648, 2147483647, -2147483648};
+        int argsTwo[] = {12, -1, 67, -1, 1,         -1,           -1};
+
+        String klassName = "jtt.bytecode.BC_imul";
+        List<TargetMethod> methods = Compile.compile(new String[]{klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        initialiseCodeBuffers(methods,"BC_imul.java","int test(int, int)");
+        int assemblerStatements = codeBytes.length / 4;
+        int  expectedValue = 0;
+        for (int i = 0; i < argsOne.length; i++) {
+            expectedValue = jtt.bytecode.BC_imul.test(argsOne[i], argsTwo[i]);
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "int , int ", Integer.toString(argsOne[i]) + "," + Integer.toString(argsTwo[i]));
+            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (!registerValues[0].equals(new Integer(expectedValue))) { // r0.r15 + APSR then FPREGS
+                failed = true;
+            }
+            Log.println("IMUL test " + i + " returned " + ((Integer) registerValues[0]).intValue() + " expected " + expectedValue);
+            //assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+        assert failed == false;
+
+    }
     public void test_jtt_BC_imul() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
@@ -2467,7 +2500,7 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
 
-    public void IGNORE_jtt_BC_dcmp01() throws Exception {
+    public void test_jtt_BC_dcmp01() throws Exception {
 
         CompilationBroker.OFFLINE = initialised;
 
