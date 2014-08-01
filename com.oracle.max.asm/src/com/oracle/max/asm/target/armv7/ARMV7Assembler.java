@@ -1076,7 +1076,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void jcc(ConditionFlag cc, int target, boolean forceDisp32) {
         int disp = (target - codeBuffer.position());
-        if (disp <= 16777215 && forceDisp32) {
+        if (disp <= 16777215 && !forceDisp32) { // TODO check ok to make this false
             disp = (disp / 4) - 2;
             emitInt((cc.value & 0xf) << 28 | (0xa << 24) | (disp & 0xffffff));
         } else {
@@ -1098,6 +1098,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             // Note: use jccb() if label to be bound is very close to get
             // an 8-bit displacement
             l.addPatchAt(codeBuffer.position());
+            System.out.println("ADDED JCC PATCH AT" + codeBuffer.position());
             nop(3);
             // TODO issues exist here ... what happens if R12 is loaded twice?
             // TODO or used as scratch inbetween the setup of its value and
@@ -1121,6 +1122,8 @@ public class ARMV7Assembler extends AbstractAssembler {
             // force an 8-bit displacement.
 
             l.addPatchAt(codeBuffer.position());
+            System.out.println("ADDED JMP PATCH AT" + codeBuffer.position());
+
             // TODO fix this it will not work ....
             nop(2);
             // emitByte(0xE9);

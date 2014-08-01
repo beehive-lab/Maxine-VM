@@ -35,7 +35,6 @@ import com.sun.cri.ci.CiTargetMethod.JumpTable;
 import com.sun.cri.ci.CiTargetMethod.LookupTable;
 import com.sun.max.annotate.HOSTED_ONLY;
 import com.sun.max.unsafe.Word;
-import com.sun.max.vm.Log;
 import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.actor.member.FieldActor;
 import com.sun.max.vm.classfile.CodeAttribute;
@@ -540,7 +539,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         asm.push(ConditionFlag.Always, 1 << 11); // push frame pointer onto STACK
         asm.mov(ConditionFlag.Always, false, ARMV7.r11, ARMV7.r13); // create a new framepointer = stack ptr
         asm.subq(ARMV7.r13, frameSize - Word.size()); // APN is this necessary for  ARM ie push does it anyway?
-        asm.subq(r11, framePointerAdjustment()); // TODO FP/SP not being set up correctly ...
+        asm.subq(ARMV7.r11, framePointerAdjustment()); // TODO FP/SP not being set up correctly ...
 
         //TODO: Fix below
         if (Trap.STACK_BANGING) {
@@ -565,14 +564,18 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     protected void emitUnprotectMethod() {
         protectionLiteralIndex = objectLiterals.size();
         objectLiterals.add(T1XTargetMethod.PROTECTED);
-        asm.xorq(scratch, scratch);
+        asm.xorq(ARMV7.r8, ARMV7.r8);
+        System.out.println("emitUnProtect partially commented out ... OBJECT LITERALS");
+       // asm.setUpScratch(CiAddress.Placeholder);
+       // asm.str(ConditionFlag.Always,ARMV7.r8,scratch,0);
         // asm.movq(CiAddress.Placeholder, scratch);
         // TODO store the value ZERO at a Placeholder address
         // TODO buf.emitInt(0);
         // TODO buf.emitInt(0);
         // TODO
-        int dispPos = buf.position() - 8;
-        patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
+        //int dispPos = buf.position() - 8;
+      //  int dispPos = buf.position() - 12;
+       // patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
     }
 
     @Override
@@ -968,6 +971,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 int targetBCI = data[i++];
                 int target = bciToPos[targetBCI];
                 assert target != 0;
+                //Log.println("assert commented out in ARMV7T1XCompilaton");
                 buf.setPosition(pos);
                 asm.jmp(target, true);
             } else if (tag == PatchInfoARMV7.JUMP_TABLE_ENTRY) {
@@ -998,7 +1002,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 int dispFromCodeStart = dispFromCodeStart(objectLiterals.size(), 0, index, true);
                 int disp = movqDisp(dispPos, dispFromCodeStart);
 
-                Log.println("ARMV7T1XCompilation ... OBJECT LITERAL PAtchInfo HAS NOT BEEN allowed to emitInt");
+                //Log.println("ARMV7T1XCompilation ... OBJECT LITERAL PAtchInfo HAS NOT BEEN allowed to emitInt");
                 buf.emitInt(disp);
             } else {
                 throw FatalError.unexpected(String.valueOf(tag));

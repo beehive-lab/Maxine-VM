@@ -556,7 +556,7 @@ public abstract class T1XCompilation {
         // initialize the adapter / prologues.This might not be possible until we take in a
         // "real" java compiled class method.
         emitPrologue();
-        emitUnprotectMethod();
+        emitUnprotectMethod(); // partially removed causing an issue with an OBJECT_LITERAL pointing to before the codebuffer
         // do_profileMethodEntry();
         do_methodTraceEntry();
         // do_synchronizedMethodAcquire();
