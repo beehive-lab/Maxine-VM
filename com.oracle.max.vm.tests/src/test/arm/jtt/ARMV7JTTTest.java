@@ -267,7 +267,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
-    public void test_C1X_jtt_BC_imul() throws Exception {
+    public void IGNORE_C1X_jtt_BC_imul() throws Exception {
         initTests();
         boolean failed = false;
 /*
@@ -301,7 +301,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert failed == false;
 
     }
-    public void test_T1Xjtt_BC_iadd2() throws Exception {
+    public void IGNORE_T1Xjtt_BC_iadd2() throws Exception {
 
 /*
  * @Harness: java
@@ -345,7 +345,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert(failed == false);
 
     }
-    public void test_T1X_jtt_BC_iadd3() throws Exception {
+    public void IGNORE_T1X_jtt_BC_iadd3() throws Exception {
         initTests();
         boolean failed = false;
 
@@ -395,7 +395,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert failed == false;
     }
 
-    public void test_jtt_BC_imul() throws Exception {
+    public void IGNORE_jtt_BC_imul() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -1982,7 +1982,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_jtt_BC_ifge_3() throws Exception {
+    public void IGNORE_jtt_BC_ifge_3() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 1));
@@ -2018,7 +2018,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_jtt_BC_ifge_2() throws Exception {
+    public void IGNORE_jtt_BC_ifge_2() throws Exception {
         boolean failed = false;
         initTests();
         List<Args> pairs = new LinkedList<Args>();
@@ -2597,11 +2597,11 @@ public class ARMV7JTTTest extends MaxTestCase {
     public void test_jtt_BC_dcmp01() throws Exception {
 
         CompilationBroker.OFFLINE = initialised;
-
+        boolean failed = false;
         // double argOne[] = {0.0d, -0.1}; * @Runs: (0d, -0.1d) = false; (78.00d, 78.001d) = true
 
-        double argOne[] = { 5.0d, -3.1d, 5.0d, -5.0d, 0d, -0.1d};
-        double argTwo[] = { 78.00d, 78.01d, 3.3d, -7.2d, 78.00d, 78.001d};
+        double argOne[] = { 5.0d, -3.1d, 5.0d, -5.0d, 0d, -0.1d, -5.0d,      25.5d  ,  0.5d};
+        double argTwo[] = { 78.00d, 78.01d, 3.3d, -7.2d, 78.00d, 78.001d, -3.2d, 25.5d, 1.0d};
 
         List<Args> pairs = new LinkedList<Args>();
         String klassName = "jtt.bytecode.BC_dcmp01";
@@ -2609,7 +2609,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         CompilationBroker.OFFLINE = true;
 
-        initialiseCodeBuffers(methods);
+        initialiseCodeBuffers(methods,"BC_dcmp01.java","boolean test(double, double)");
         int assemblerStatements = codeBytes.length / 4;
         int expectedValue = 0;
         for (int i = 0; i < argOne.length; i++) {
@@ -2625,12 +2625,12 @@ public class ARMV7JTTTest extends MaxTestCase {
             // good question here ... is the value returned in the float s0 or the core s0 register
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
             if (registerValues[0] != expectedValue) {
-                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+                failed = true;
             }
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
-            // Log.println("DCMP less than passed test" + argOne[i] + " " + argTwo[i]);
+            Log.println("DCMP01 LESS THAN  " + argOne[i] + " " + argTwo[i] + " returned " + registerValues[0] + " expected " + expectedValue + " broken " + failed);
             theCompiler.cleanup();
         }
+        assert(failed== false);
     }
 
     public void IGNOREFAIL_jtt_BC_dcmp02() throws Exception {
@@ -3057,7 +3057,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert failed == false;
     }
 
-    public void test_C1X_jtt_BC_i2s() throws Exception {
+    public void IGNORE_C1X_jtt_BC_i2s() throws Exception {
         initTests();
         boolean failed = false;
 
@@ -3089,7 +3089,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
         assert failed == false;
     }
-    public void test_C1X_jtt_BC_iadd() throws Exception {
+    public void IGNORE_C1X_jtt_BC_iadd() throws Exception {
         initTests();
         boolean failed = false;
 

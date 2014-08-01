@@ -21,7 +21,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public enum ConditionFlag {
         Equal(0x0, "="), NotEqual(0x1, "!="), CarrySetUnsignedHigherEqual(0x2, "|carry|"), CarryClearUnsignedLower(0x3, "|ncarry|"), Minus(0x4, "|neg|"), Positive(0x5, "|pos|"), SignedOverflow(0x6, ".of."), NoSignedOverflow(0x7,
                         "|nof|"), UnsignedHigher(0x8, "|>|"), UnsignedLowerOrEqual(0x9, "|<=|"), SignedGreaterOrEqual(0xA, ".>=."), SignedLesser(0xB, ".<."), SignedGreater(0xC, ".>."), SignedLowerOrEqual(
-                        0xD, ".<=."), Always(0xE, "al");
+                        0xD, ".<=."), Always(0xE, "al"), NeverUse (0xF,"NEVER");
 
         public static final ConditionFlag[] values = values();
 
@@ -63,9 +63,29 @@ public class ARMV7Assembler extends AbstractAssembler {
     @Override
     protected void patchJumpTarget(int branch, int target) {
         // b, bl & bx goes here .. could do an ADD PC,reg if too big
+        //if(branch == 76) return; // hack for dcmp01 to see what happens
         checkConstraint(-0x800000 <= (target - branch) && (target - branch) <= 0x7fffff, "branch must be within  a 24bit offset");
         //emitInt(0x06000000 | (target - branch) | ConditionFlag.Always.value() & 0xf);
-        emitInt(0x0a000000 | (target - branch) | ((ConditionFlag.Always.value() & 0xf) << 28));
+        int disp = target - branch - 16;
+        int instruction = 0;
+        int operation = codeBuffer.getInt(branch);
+        if(operation == (ConditionFlag.NeverUse.value() << 28 | 0xdead)) { // JCC
+           //
+            System.out.println("MATCHED JCC");
+            disp -= 4;
+            instruction = movwHelper(ConditionFlag.Always,ARMV7.r12,disp & 0xffff);
+            codeBuffer.emitInt(instruction,branch);
+            instruction = movtHelper(ConditionFlag.Always,ARMV7.r12,(disp >> 16) & 0xffff);
+            codeBuffer.emitInt(instruction,branch+4);
+        } else if (operation == (ConditionFlag.NeverUse.value() << 28 | 0xbeef)) { // JMP
+            disp += 8;
+            codeBuffer.emitInt(0x0a000000 | disp | ((ConditionFlag.Always.value() & 0xf) << 28),branch);
+            System.out.println("MATCHED JMP");
+
+        }
+
+
+        //codeBuffer.emitInt(0x0a000000 | (target - branch) | ((ConditionFlag.Always.value() & 0xf) << 28),branch);
 
 
     }
@@ -1091,6 +1111,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final void jcc(ConditionFlag cc, Label l) {
         assert (0 <= cc.value) && (cc.value < 16) : "illegal cc";
         if (l.isBound()) {
+            System.out.println("LABEL bound jcc no need to patch");
             jcc(cc, l.position(), false);
         } else {
             // Note: could eliminate cond. jumps to this jump if condition
@@ -1099,21 +1120,22 @@ public class ARMV7Assembler extends AbstractAssembler {
             // an 8-bit displacement
             l.addPatchAt(codeBuffer.position());
             System.out.println("ADDED JCC PATCH AT" + codeBuffer.position());
-            nop(3);
+            emitInt(ConditionFlag.NeverUse.value() << 28 | 0xdead ); // JCC CODE for the PATCH
+            nop(2);
             // TODO issues exist here ... what happens if R12 is loaded twice?
             // TODO or used as scratch inbetween the setup of its value and
             // this point?
             // TODO decide how to distinguish this from other patches
             // TODO update wiki on this
-            ldr(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
             //ldr(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
-            mov(cc, false, ARMV7.r15, ARMV7.r8);
+            addRegisters(cc, false, ARMV7.r15, ARMV7.r12, ARMV7.r15, 0, 0);
         }
 
     }
 
     public final void jmp(Label l) {
         if (l.isBound()) {
+            System.out.println("PATCHNING JMP AT " + l.position() );
             jmp(l.position(), false);
         } else {
             // By default, forward jumps are always 32-bit displacements, since
@@ -1123,9 +1145,10 @@ public class ARMV7Assembler extends AbstractAssembler {
 
             l.addPatchAt(codeBuffer.position());
             System.out.println("ADDED JMP PATCH AT" + codeBuffer.position());
+            emitInt(ConditionFlag.NeverUse.value() << 28 | 0xbeef); // JMP CODE for the PATCH
 
             // TODO fix this it will not work ....
-            nop(2);
+            nop(1);
             // emitByte(0xE9);
             // emitInt(0);
         }

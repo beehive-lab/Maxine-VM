@@ -77,6 +77,13 @@ public final class Label {
         }
     }
 
+    public void offlineVerify() {
+        System.out.println(isBound() + " " + position);
+        for(int i = 0; i < patchPositions.size(); ++i) {
+            System.out.println("patchable positions " + patchPositions.get(i));
+
+        }
+    }
     @Override
     public String toString() {
         return isBound() ? String.valueOf(position()) : "?";

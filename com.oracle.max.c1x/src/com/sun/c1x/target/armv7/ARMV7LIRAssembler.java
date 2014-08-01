@@ -1717,7 +1717,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             //masm.jcc(ConditionFlag.equal, isEqual);
             masm.jcc(ConditionFlag.Equal,isEqual);
            // masm.jcc(ConditionFlag.greater, high);
-            masm.jcc(ConditionFlag.UnsignedHigher,high); // unsigned Greater?
+            masm.jcc(ConditionFlag.SignedGreater,high); // unsigned Greater?
             masm.xorptr(dest, dest);
             masm.decrementl(dest, 1);
             masm.jmp(done);
