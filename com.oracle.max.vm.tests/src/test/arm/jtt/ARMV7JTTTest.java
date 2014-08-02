@@ -2633,7 +2633,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert(failed== false);
     }
 
-    public void IGNOREFAIL_jtt_BC_dcmp02() throws Exception {
+    public void test_C1Xjtt_BC_dcmp02() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -2651,7 +2651,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         CompilationBroker.OFFLINE = true;
 
-        initialiseCodeBuffers(methods);
+        initialiseCodeBuffers(methods,"BC_dcmp02.java","boolean test(double)");
         int assemblerStatements = codeBytes.length / 4;
         int expectedValue = 0;
         for (int i = 0; i < argOne.length; i++) {
@@ -2674,7 +2674,334 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void IGNOREFAIL_jtt_BC_fcmp01() throws Exception {
+    public void test_C1Xjtt_BC_dcmp03() throws Exception {
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+
+
+        /*
+         * @Harness: java
+         *
+         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
+         */
+
+        double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
+        Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
+        String klassName = "jtt.bytecode.BC_dcmp03";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+
+        initialiseCodeBuffers(methods,"BC_dcmp03.java","boolean test(double)");
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < argOne.length; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            boolean answer = jtt.bytecode.BC_dcmp03.test(argOne[i]);
+            if (answer) {
+                expectedValue = 1;
+            } else {
+                expectedValue = 0;
+            }
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (registerValues[0] != expectedValue) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            }
+            Log.println("DCMP03 test " + argOne[i] +  " returned " + registerValues[0] + " expected " + expectedValue);
+
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+    public void test_C1Xjtt_BC_dcmp04() throws Exception {
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+
+
+        /*
+         * @Harness: java
+         *
+         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
+         */
+
+        double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
+        Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
+        String klassName = "jtt.bytecode.BC_dcmp04";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+
+        initialiseCodeBuffers(methods,"BC_dcmp04.java","boolean test(double)");
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < argOne.length; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            boolean answer = jtt.bytecode.BC_dcmp04.test(argOne[i]);
+            if (answer) {
+                expectedValue = 1;
+            } else {
+                expectedValue = 0;
+            }
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (registerValues[0] != expectedValue) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            }
+            Log.println("DCMP04 test " + argOne[i] +  " returned " + registerValues[0] + " expected " + expectedValue);
+
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+    public void test_C1Xjtt_BC_dcmp05() throws Exception {
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+
+
+        /*
+         * @Harness: java
+         *
+         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
+         */
+
+        double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
+        Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
+        String klassName = "jtt.bytecode.BC_dcmp05";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+
+        initialiseCodeBuffers(methods,"BC_dcmp05.java","boolean test(double)");
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < argOne.length; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            boolean answer = jtt.bytecode.BC_dcmp05.test(argOne[i]);
+            if (answer) {
+                expectedValue = 1;
+            } else {
+                expectedValue = 0;
+            }
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (registerValues[0] != expectedValue) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            }
+            Log.println("DCMP05 test " + argOne[i] +  " returned " + registerValues[0] + " expected " + expectedValue);
+
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+    public void test_C1Xjtt_BC_dcmp06() throws Exception {
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+
+
+        /*
+         * @Harness: java
+         *
+         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
+         */
+
+        double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
+        Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
+        String klassName = "jtt.bytecode.BC_dcmp06";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+
+        initialiseCodeBuffers(methods,"BC_dcmp06.java","boolean test(double)");
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < argOne.length; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            boolean answer = jtt.bytecode.BC_dcmp06.test(argOne[i]);
+            if (answer) {
+                expectedValue = 1;
+            } else {
+                expectedValue = 0;
+            }
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (registerValues[0] != expectedValue) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            }
+            Log.println("DCMP06 test " + argOne[i] +  " returned " + registerValues[0] + " expected " + expectedValue);
+
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+    public void test_C1Xjtt_BC_dcmp07() throws Exception {
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+
+
+        /*
+         * @Harness: java
+         *
+         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
+         */
+
+        double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
+        Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
+        String klassName = "jtt.bytecode.BC_dcmp07";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+
+        initialiseCodeBuffers(methods,"BC_dcmp07.java","boolean test(double)");
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < argOne.length; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            boolean answer = jtt.bytecode.BC_dcmp07.test(argOne[i]);
+            if (answer) {
+                expectedValue = 1;
+            } else {
+                expectedValue = 0;
+            }
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (registerValues[0] != expectedValue) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            }
+            Log.println("DCMP07 test " + argOne[i] +  " returned " + registerValues[0] + " expected " + expectedValue);
+
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+    public void test_C1Xjtt_BC_dcmp08() throws Exception {
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+
+
+        /*
+         * @Harness: java
+         *
+         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
+         */
+
+        double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
+        Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
+        String klassName = "jtt.bytecode.BC_dcmp08";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+
+        initialiseCodeBuffers(methods,"BC_dcmp08.java","boolean test(double)");
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < argOne.length; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            boolean answer = jtt.bytecode.BC_dcmp08.test(argOne[i]);
+            if (answer) {
+                expectedValue = 1;
+            } else {
+                expectedValue = 0;
+            }
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (registerValues[0] != expectedValue) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            }
+            Log.println("DCMP08 test " + argOne[i] +  " returned " + registerValues[0] + " expected " + expectedValue);
+
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+    public void test_C1Xjtt_BC_dcmp09() throws Exception {
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+
+
+        /*
+         * @Harness: java
+         *
+         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
+         */
+
+        double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
+        Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
+        String klassName = "jtt.bytecode.BC_dcmp09";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+
+        initialiseCodeBuffers(methods,"BC_dcmp09.java","boolean test(double)");
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < argOne.length; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            boolean answer = jtt.bytecode.BC_dcmp09.test(argOne[i]);
+            if (answer) {
+                expectedValue = 1;
+            } else {
+                expectedValue = 0;
+            }
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (registerValues[0] != expectedValue) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            }
+            Log.println("DCMP09 test " + argOne[i] +  " returned " + registerValues[0] + " expected " + expectedValue);
+
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+    public void test_C1Xjtt_BC_dcmp10() throws Exception {
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+
+
+        /*
+         * @Harness: java
+         *
+         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
+         */
+
+        Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
+        String klassName = "jtt.bytecode.BC_dcmp10";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+
+        initialiseCodeBuffers(methods,"BC_dcmp10.java","boolean test(int)");
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < 9; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            boolean answer = jtt.bytecode.BC_dcmp10.test(i);
+            if (answer) {
+                expectedValue = 1;
+            } else {
+                expectedValue = 0;
+            }
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "int", Integer.toString(i));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (registerValues[0] != expectedValue) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            }
+            Log.println("DCMP10 test " + i +  " returned " + registerValues[0] + " expected " + expectedValue);
+
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+    public void test_C1Xjtt_BC_fcmp01() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -2691,7 +3018,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         CompilationBroker.OFFLINE = true;
 
-        initialiseCodeBuffers(methods);
+        initialiseCodeBuffers(methods,"BC_fcmp01.java","boolean test(float, float)");
         int assemblerStatements = codeBytes.length / 4;
         int expectedValue = 0;
         for (int i = 0; i < argOne.length; i++) {
@@ -2714,7 +3041,335 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void IGNOREFAIL_jtt_BC_fcmp10() throws Exception {
+    public void test_C1Xjtt_BC_fcmp02() throws Exception {
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+
+
+        /*
+         * @Harness: java
+         *
+         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
+         */
+
+       float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
+        Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
+        String klassName = "jtt.bytecode.BC_fcmp02";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+
+        initialiseCodeBuffers(methods,"BC_fcmp02.java","boolean test(float)");
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < argOne.length; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            boolean answer = jtt.bytecode.BC_fcmp02.test(argOne[i]);
+            if (answer) {
+                expectedValue = 1;
+            } else {
+                expectedValue = 0;
+            }
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (registerValues[0] != expectedValue) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            }
+            Log.println("fCMP02 test " + argOne[i] +  " returned " + registerValues[0] + " expected " + expectedValue);
+
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+    public void test_C1Xjtt_BC_fcmp03() throws Exception {
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+
+
+        /*
+         * @Harness: java
+         *
+         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
+         */
+
+        float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
+        Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
+        String klassName = "jtt.bytecode.BC_fcmp03";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+
+        initialiseCodeBuffers(methods,"BC_fcmp03.java","boolean test(float)");
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < argOne.length; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            boolean answer = jtt.bytecode.BC_fcmp03.test(argOne[i]);
+            if (answer) {
+                expectedValue = 1;
+            } else {
+                expectedValue = 0;
+            }
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (registerValues[0] != expectedValue) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            }
+            Log.println("FCMP03 test " + argOne[i] +  " returned " + registerValues[0] + " expected " + expectedValue);
+
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+    public void test_C1Xjtt_BC_fcmp04() throws Exception {
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+
+
+        /*
+         * @Harness: java
+         *
+         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
+         */
+
+        float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
+        Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
+        String klassName = "jtt.bytecode.BC_fcmp04";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+
+        initialiseCodeBuffers(methods,"BC_fcmp04.java","boolean test(float)");
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < argOne.length; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            boolean answer = jtt.bytecode.BC_fcmp04.test(argOne[i]);
+            if (answer) {
+                expectedValue = 1;
+            } else {
+                expectedValue = 0;
+            }
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (registerValues[0] != expectedValue) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            }
+            Log.println("FCMP04 test " + argOne[i] +  " returned " + registerValues[0] + " expected " + expectedValue);
+
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+    public void test_C1Xjtt_BC_fcmp05() throws Exception {
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+
+
+        /*
+         * @Harness: java
+         *
+         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
+         */
+
+        float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
+        Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
+        String klassName = "jtt.bytecode.BC_fcmp05";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+
+        initialiseCodeBuffers(methods,"BC_fcmp05.java","boolean test(float)");
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < argOne.length; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            boolean answer = jtt.bytecode.BC_fcmp05.test(argOne[i]);
+            if (answer) {
+                expectedValue = 1;
+            } else {
+                expectedValue = 0;
+            }
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (registerValues[0] != expectedValue) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            }
+            Log.println("FCMP05 test " + argOne[i] +  " returned " + registerValues[0] + " expected " + expectedValue);
+
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+    public void test_C1Xjtt_BC_fcmp06() throws Exception {
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+
+
+        /*
+         * @Harness: java
+         *
+         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
+         */
+
+        float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
+        Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
+        String klassName = "jtt.bytecode.BC_fcmp06";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+
+        initialiseCodeBuffers(methods,"BC_fcmp06.java","boolean test(float)");
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < argOne.length; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            boolean answer = jtt.bytecode.BC_fcmp06.test(argOne[i]);
+            if (answer) {
+                expectedValue = 1;
+            } else {
+                expectedValue = 0;
+            }
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (registerValues[0] != expectedValue) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            }
+            Log.println("FCMP06 test " + argOne[i] +  " returned " + registerValues[0] + " expected " + expectedValue);
+
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+    public void test_C1Xjtt_BC_fcmp07() throws Exception {
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+
+
+        /*
+         * @Harness: java
+         *
+         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
+         */
+
+        float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
+        Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
+        String klassName = "jtt.bytecode.BC_fcmp07";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+
+        initialiseCodeBuffers(methods,"BC_fcmp07.java","boolean test(float)");
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < argOne.length; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            boolean answer = jtt.bytecode.BC_fcmp07.test(argOne[i]);
+            if (answer) {
+                expectedValue = 1;
+            } else {
+                expectedValue = 0;
+            }
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (registerValues[0] != expectedValue) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            }
+            Log.println("FCMP07 test " + argOne[i] +  " returned " + registerValues[0] + " expected " + expectedValue);
+
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+    public void test_C1Xjtt_BC_fcmp08() throws Exception {
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+
+
+        /*
+         * @Harness: java
+         *
+         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
+         */
+
+        float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
+        Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
+        String klassName = "jtt.bytecode.BC_fcmp08";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+
+        initialiseCodeBuffers(methods,"BC_fcmp08.java","boolean test(float)");
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < argOne.length; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            boolean answer = jtt.bytecode.BC_fcmp08.test(argOne[i]);
+            if (answer) {
+                expectedValue = 1;
+            } else {
+                expectedValue = 0;
+            }
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (registerValues[0] != expectedValue) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            }
+            Log.println("FCMP08 test " + argOne[i] +  " returned " + registerValues[0] + " expected " + expectedValue);
+
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+    public void test_C1Xjtt_BC_fcmp09() throws Exception {
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+
+
+        /*
+         * @Harness: java
+         *
+         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
+         */
+
+        float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
+        Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
+        String klassName = "jtt.bytecode.BC_fcmp09";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+
+        initialiseCodeBuffers(methods,"BC_fcmp09.java","boolean test(float)");
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < argOne.length; i++) {
+            MaxineByteCode xx = new MaxineByteCode();
+            boolean answer = jtt.bytecode.BC_fcmp09.test(argOne[i]);
+            if (answer) {
+                expectedValue = 1;
+            } else {
+                expectedValue = 0;
+            }
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (registerValues[0] != expectedValue) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            }
+            Log.println("FCMP09 test " + argOne[i] +  " returned " + registerValues[0] + " expected " + expectedValue);
+
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+    public void test_C1Xjtt_BC_fcmp10() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
@@ -2726,12 +3381,12 @@ public class ARMV7JTTTest extends MaxTestCase {
          * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
          */
 
-        String klassName = "jtt.bytecode.BC_fcmp01";
+        String klassName = "jtt.bytecode.BC_fcmp10";
 
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         CompilationBroker.OFFLINE = true;
 
-        initialiseCodeBuffers(methods);
+        initialiseCodeBuffers(methods,"BC_fcmp10.java","boolean test(int)");
         int assemblerStatements = codeBytes.length / 4;
         int expectedValue = 0;
         for (int i = 0; i < 9; i++) {
