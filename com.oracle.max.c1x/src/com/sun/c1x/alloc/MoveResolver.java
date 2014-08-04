@@ -113,6 +113,10 @@ final class MoveResolver {
                 if (interval != null) {
                     boolean unique = usedRegs.add(interval.location());
                     assert unique : "cannot read from same register twice";
+                    if (interval.locationHigh() != null){
+                        unique = usedRegs.add(interval.locationHigh());
+                        assert unique : "cannot read from same register twice";
+                    }
                 }
             }
         }
@@ -122,6 +126,10 @@ final class MoveResolver {
             Interval interval = mappingTo.get(i);
             boolean unique = usedRegs.add(interval.location());
             assert unique : "cannot write to same register twice";
+            if (interval.locationHigh() != null){
+                unique = usedRegs.add(interval.locationHigh());
+                assert unique : "cannot read from same register twice";
+            }
         }
 
         usedRegs.clear();
@@ -147,6 +155,12 @@ final class MoveResolver {
             assert multipleReadsAllowed || registerBlocked(reg) == 0 : "register already marked as used";
             setRegisterBlocked(reg, 1);
         }
+        CiValue locationHigh = interval.locationHigh();
+        if (locationHigh != null && locationHigh.isRegister()) {
+            int reg = locationHigh.asRegister().number;
+            assert multipleReadsAllowed || registerBlocked(reg) == 0 : "register already marked as used";
+            setRegisterBlocked(reg, 1);
+        }
     }
 
     // mark assignedReg and assignedRegHi of the interval as unblocked
@@ -154,6 +168,12 @@ final class MoveResolver {
         CiValue location = interval.location();
         if (location.isRegister()) {
             int reg = location.asRegister().number;
+            assert registerBlocked(reg) > 0 : "register already marked as unused";
+            setRegisterBlocked(reg, -1);
+        }
+        CiValue locationHigh = interval.locationHigh();
+        if (locationHigh != null && locationHigh.isRegister()) {
+            int reg = locationHigh.asRegister().number;
             assert registerBlocked(reg) > 0 : "register already marked as unused";
             setRegisterBlocked(reg, -1);
         }
@@ -165,14 +185,19 @@ final class MoveResolver {
      */
     private boolean safeToProcessMove(Interval from, Interval to) {
         CiValue fromReg = from != null ? from.location() : null;
-
+        CiValue fromRegHigh = from != null ? from.locationHigh() : null;
         CiValue reg = to.location();
         if (reg.isRegister()) {
-            if (registerBlocked(reg.asRegister().number) > 1 || (registerBlocked(reg.asRegister().number) == 1 && reg != fromReg)) {
+            if (registerBlocked(reg.asRegister().number) > 1 || (registerBlocked(reg.asRegister().number) == 1 && reg != fromReg && reg != fromRegHigh)) {
                 return false;
             }
         }
-
+        reg = to.locationHigh();
+        if (reg != null && reg.isRegister()) {
+            if (registerBlocked(reg.asRegister().number) > 1 || (registerBlocked(reg.asRegister().number) == 1 && reg != fromReg && reg != fromRegHigh)) {
+                return false;
+            }
+        }
         return true;
     }
 
@@ -203,7 +228,7 @@ final class MoveResolver {
         insertionBuffer.move(insertIdx, fromOpr, toOpr, null);
 
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            TTY.println("MoveResolver: inserted move from %d (%s) to %d (%s)", fromInterval.operandNumber, fromInterval.location(), toInterval.operandNumber, toInterval.location());
+            TTY.println("MoveResolver: inserted move from %d (%s %s) to %d (%s %s)", fromInterval.operandNumber, fromInterval.location(), fromInterval.locationHigh(), toInterval.operandNumber, toInterval.location(), toInterval.locationHigh());
         }
     }
 
@@ -216,7 +241,7 @@ final class MoveResolver {
         insertionBuffer.move(insertIdx, fromOpr, toOpr, null);
 
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            TTY.print("MoveResolver: inserted move from constant %s to %d (%s)", fromOpr, toInterval.operandNumber, toInterval.location());
+            TTY.print("MoveResolver: inserted move from constant %s to %d (%s %s)", fromOpr, toInterval.operandNumber, toInterval.location(), toInterval.locationHigh());
         }
     }
 
@@ -335,7 +360,7 @@ final class MoveResolver {
 
     void addMapping(Interval fromInterval, Interval toInterval) {
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            TTY.println("MoveResolver: adding mapping from interval %d (%s) to interval %d (%s)", fromInterval.operandNumber, fromInterval.location(), toInterval.operandNumber, toInterval.location());
+            TTY.println("MoveResolver: adding mapping from interval %d (%s %s) to interval %d (%s %s)", fromInterval.operandNumber, fromInterval.location(), fromInterval.locationHigh(), toInterval.operandNumber, toInterval.location(), toInterval.locationHigh());
         }
 
         assert fromInterval.operand != toInterval.operand : "from and to interval equal: " + fromInterval;
@@ -347,7 +372,7 @@ final class MoveResolver {
 
     void addMapping(CiValue fromOpr, Interval toInterval) {
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            TTY.println("MoveResolver: adding mapping from %s to %d (%s)", fromOpr, toInterval.operandNumber, toInterval.location());
+            TTY.println("MoveResolver: adding mapping from %s to %d (%s %s)", fromOpr, toInterval.operandNumber, toInterval.location(), toInterval.locationHigh());
         }
         assert fromOpr.isConstant() : "only for constants";
 

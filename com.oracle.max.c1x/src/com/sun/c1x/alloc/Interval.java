@@ -409,6 +409,7 @@ public final class Interval {
      * The {@linkplain CiRegisterValue register}, {@linkplain CiStackSlot spill slot} or {@linkplain CiAddress address} assigned to this interval.
      */
     private CiValue location;
+    private CiValue locationHigh;
 
     /**
      * The stack slot to which all splits of this interval are spilled if necessary.
@@ -482,6 +483,7 @@ public final class Interval {
      * This interval should be assigned the same location as the hint interval.
      */
     private Interval locationHint;
+    private Interval locationHintHigh;
 
     void assignLocation(CiValue location) {
         if (location.isRegister()) {
@@ -502,11 +504,34 @@ public final class Interval {
         this.location = location;
     }
 
+    void assignLocationHigh(CiValue locationHigh) {
+        if (locationHigh.isRegister()) {
+            assert this.locationHigh == null : "cannot re-assign location for " + this;
+            if (locationHigh.kind == CiKind.Illegal && kind != CiKind.Illegal) {
+                locationHigh = locationHigh.asRegister().asValue(kind);
+            }
+        } else {
+            assert this.locationHigh == null || this.locationHigh.isRegister() : "cannot re-assign location for " + this;
+            assert locationHigh.isStackSlot();
+            assert locationHigh.kind != CiKind.Illegal;
+            if(locationHigh.kind != this.kind) {
+                System.out.println("MANUAL BODGE com.sun.c1x.alloc.Interval.java");
+
+            } else
+            assert locationHigh.kind == this.kind;
+        }
+        this.locationHigh = locationHigh;
+    }
+
     /**
      * Gets the {@linkplain CiRegisterValue register}, {@linkplain CiStackSlot spill slot} or {@linkplain CiAddress address} assigned to this interval.
      */
     public CiValue location() {
         return location;
+    }
+
+    public CiValue locationHigh() {
+        return locationHigh;
     }
 
     public CiKind kind() {
@@ -751,6 +776,33 @@ public final class Interval {
         // no hint interval found that has a register assigned
         return null;
     }
+
+    public Interval locationHintHigh(boolean searchSplitChild, LinearScan allocator) {
+        if (!searchSplitChild) {
+            return locationHintHigh;
+        }
+
+        if (locationHintHigh != null) {
+            assert locationHintHigh.isSplitParent() : "ony split parents are valid hint registers";
+
+            if (locationHintHigh.location != null && locationHintHigh.location.isRegister()) {
+                return locationHintHigh;
+            } else if (!locationHintHigh.splitChildren.isEmpty()) {
+                // search the first split child that has a register assigned
+                int len = locationHintHigh.splitChildren.size();
+                for (int i = 0; i < len; i++) {
+                    Interval interval = locationHintHigh.splitChildren.get(i);
+                    if (interval.locationHigh != null && interval.locationHigh.isRegister()) {
+                        return interval;
+                    }
+                }
+            }
+        }
+
+        // no hint interval found that has a register assigned
+        return null;
+    }
+
 
     Interval getSplitChildAtOpId(int opId, LIRInstruction.OperandMode mode, LinearScan allocator) {
         assert isSplitParent() : "can only be called for split parents";

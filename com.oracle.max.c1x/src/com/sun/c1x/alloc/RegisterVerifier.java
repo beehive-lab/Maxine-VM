@@ -84,7 +84,10 @@ final class RegisterVerifier {
             if (operand.isRegister()) {
                 CiValue reg = operand;
                 Interval interval = intervalAt(reg);
-                inputState[reg.asRegister().number] = interval;
+                inputState[interval.location().asRegister().number] = interval;
+                if (interval.locationHigh() != null) {
+                    inputState[interval.locationHigh().asRegister().number] = interval;
+                }
             }
         }
 
@@ -247,6 +250,7 @@ final class RegisterVerifier {
                     }
 
                     assert checkState(inputState, interval.location(), interval.splitParent());
+                    assert checkState(inputState, interval.locationHigh(), interval.splitParent());
                 }
             }
 
@@ -276,6 +280,8 @@ final class RegisterVerifier {
                     }
 
                     statePut(inputState, interval.location(), interval.splitParent());
+                    statePut(inputState, interval.locationHigh(), interval.splitParent());
+
                 }
             }
 
@@ -290,6 +296,7 @@ final class RegisterVerifier {
                     }
 
                     statePut(inputState, interval.location(), interval.splitParent());
+                    statePut(inputState, interval.locationHigh(), interval.splitParent());
                 }
             }
         }

@@ -1571,7 +1571,7 @@ public final class LinearScan {
             Interval fromInterval = intervalAtBlockEnd(fromBlock, liveOperand);
             Interval toInterval = intervalAtBlockBegin(toBlock, liveOperand);
 
-            if (fromInterval != toInterval && (fromInterval.location() != toInterval.location())) {
+            if (fromInterval != toInterval && ((fromInterval.location() != toInterval.location()) || (fromInterval.locationHigh() != toInterval.locationHigh()))) {
                 // need to insert move instruction
                 moveResolver.addMapping(fromInterval, toInterval);
             }
@@ -1696,6 +1696,7 @@ public final class LinearScan {
 
         Interval interval = intervalAtBlockBegin(block, operand);
         CiValue location = interval.location();
+        CiValue locationHigh = interval.locationHigh();
 
         if (location.isRegister() && interval.alwaysInMemory()) {
             // the interval is split to get a short range that is located on the stack
@@ -1715,6 +1716,7 @@ public final class LinearScan {
                 // the part before fromOpId is unchanged
                 interval = interval.split(fromOpId, this);
                 interval.assignLocation(location);
+                interval.assignLocationHigh(locationHigh);
             }
             assert interval.from() == fromOpId : "must be true now";
 
@@ -2430,6 +2432,12 @@ public final class LinearScan {
                 throw new CiBailout("");
             }
 
+            if (i1.location() == i1.locationHigh()) {
+                TTY.println("Interval %d low and high register equal", i1.operandNumber);
+                TTY.println(i1.logString(this));
+                throw new CiBailout("");
+            }
+
             if (!isProcessed(i1.location())) {
                 TTY.println("Can not have an Interval for an ignored register " + i1.location());
                 TTY.println(i1.logString(this));
@@ -2465,8 +2473,11 @@ public final class LinearScan {
                     continue;
                 }
                 CiValue l1 = i1.location();
+                CiValue l1High = i1.locationHigh();
                 CiValue l2 = i2.location();
-                if (i1.intersects(i2) && (l1.equals(l2))) {
+                CiValue l2High = i2.locationHigh();
+
+                if (i1.intersects(i2) && (l1.equals(l2) || l1.equals(l2High) || (l1High != null && (l1High.equals(l2) || l1High.equals(l2High))))) {
                     if (C1XOptions.DetailedAsserts) {
                         TTY.println("Intervals %d and %d overlap and have the same register assigned", i1.operandNumber, i2.operandNumber);
                         TTY.println(i1.logString(this));
