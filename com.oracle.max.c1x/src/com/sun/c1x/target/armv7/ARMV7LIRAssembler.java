@@ -152,10 +152,14 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         masm.leaq(dst.asRegister(), compilation.frameMap().toStackAddress(stackBlock));
     }
 
-    private void moveRegs(CiRegister fromReg, CiRegister toReg) {
+    private void moveRegs(CiRegister fromReg, CiRegister toReg, CiKind kind) {
         if (fromReg != toReg) {
-            masm.mov(ConditionFlag.Always,false,toReg,fromReg);
-           // masm.mov(toReg, fromReg);
+            if (kind == CiKind.Long) {
+                masm.mov(ConditionFlag.Always, false, toReg, fromReg);
+                masm.mov(ConditionFlag.Always, false, compilation.registerConfig.getAllocatableRegisters()[toReg.number+1], compilation.registerConfig.getAllocatableRegisters()[fromReg.number+1]);
+            } else {
+                masm.mov(ConditionFlag.Always, false, toReg, fromReg);
+            }
         }
     }
 
@@ -174,7 +178,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         // Do not optimize with an XOR as this instruction may be between
         // a CMP and a Jcc in which case the XOR will modify the condition
         // flags and interfere with the Jcc.
-        //System.out.println("Constant " + constant);
         masm.movlong(dst, constant);
      }
 
@@ -330,7 +333,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         } else if (dest.kind.isDouble()) {
             masm.movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(src));
         } else {
-            moveRegs(src.asRegister(), dest.asRegister());
+            moveRegs(src.asRegister(), dest.asRegister(), src.kind);
         }
     }
 
@@ -425,9 +428,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.ldrImmediate(ConditionFlag.Always,0,0,0,dest.asRegister(),ARMV7.r12,0);
                 break;
             case Long    :
-                //System.out.println("LONG dst as register " + dest.asRegister().encoding);
                 masm.ldrd(ConditionFlag.Always,dest.asRegister(),ARMV7.r12,0);
-                 break;
+                break;
             case Float   : masm.movflt(asXmmFloatReg(dest), addr); break;
             case Double  : masm.movdbl(asXmmDoubleReg(dest), addr); break;
             default      : throw Util.shouldNotReachHere();
@@ -719,7 +721,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
                 assert(0 == 1) : "Long to integer in convert";
 
-                moveRegs(srcRegister, dest.asRegister());
+                moveRegs(srcRegister, dest.asRegister(), src.kind);
               //  masm.andl(dest.asRegister(), 0xFFFFFFFF);
                 break;
 
@@ -1270,7 +1272,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     default       : throw Util.shouldNotReachHere();
                 }
             }
-            moveRegs(reg, dst.asRegister());
+            moveRegs(reg, dst.asRegister(), left.kind);
         } else {
             assert target.sizeInBytes(left.kind) == 8;
             CiRegister lreg = left.asRegister();
@@ -1301,7 +1303,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             }
 
             CiRegister dreg = dst.asRegister();
-            moveRegs(lreg, dreg);
+            moveRegs(lreg, dreg, left.kind);
         }
         // Checkstyle: on
     }
@@ -1330,7 +1332,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
              //       masm.addl(lreg, ARMV7.rdx);
                 }
            //     masm.sarl(lreg, CiUtil.log2(divisor));
-                moveRegs(lreg, dreg);
+                moveRegs(lreg, dreg, left.kind);
             } else {
                 assert code == LIROpcode.Irem;
                 Label done = new Label();
@@ -1767,7 +1769,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             CiRegister value = dest.asRegister();
             count = count & 0x1F; // Java spec
 
-            moveRegs(left.asRegister(), value);
+            moveRegs(left.asRegister(), value, left.kind);
             switch (code) {
                 case Shl  : //masm.shlq(value, count);
                     break;
@@ -2371,7 +2373,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     break;
                 }
                 case RawBytes: {
-                    System.out.println("ARMV7LIRAssembler:: RawBytes ---- bound to be wrong");
                     for (byte b : (byte[]) inst.extra) {
                         masm.codeBuffer.emitByte(b & 0xff);
                     }
