@@ -21,7 +21,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public enum ConditionFlag {
         Equal(0x0, "="), NotEqual(0x1, "!="), CarrySetUnsignedHigherEqual(0x2, "|carry|"), CarryClearUnsignedLower(0x3, "|ncarry|"), Minus(0x4, "|neg|"), Positive(0x5, "|pos|"), SignedOverflow(0x6, ".of."), NoSignedOverflow(0x7,
                         "|nof|"), UnsignedHigher(0x8, "|>|"), UnsignedLowerOrEqual(0x9, "|<=|"), SignedGreaterOrEqual(0xA, ".>=."), SignedLesser(0xB, ".<."), SignedGreater(0xC, ".>."), SignedLowerOrEqual(
-                        0xD, ".<=."), Always(0xE, "al");
+                        0xD, ".<=."), Always(0xE, "al"), NeverUse (0xF,"NEVER");
 
         public static final ConditionFlag[] values = values();
 
@@ -63,9 +63,29 @@ public class ARMV7Assembler extends AbstractAssembler {
     @Override
     protected void patchJumpTarget(int branch, int target) {
         // b, bl & bx goes here .. could do an ADD PC,reg if too big
+        //if(branch == 76) return; // hack for dcmp01 to see what happens
         checkConstraint(-0x800000 <= (target - branch) && (target - branch) <= 0x7fffff, "branch must be within  a 24bit offset");
         //emitInt(0x06000000 | (target - branch) | ConditionFlag.Always.value() & 0xf);
-        emitInt(0x0a000000 | (target - branch) | ((ConditionFlag.Always.value() & 0xf) << 28));
+        int disp = target - branch - 16;
+        int instruction = 0;
+        int operation = codeBuffer.getInt(branch);
+        if(operation == (ConditionFlag.NeverUse.value() << 28 | 0xdead)) { // JCC
+           //
+            System.out.println("MATCHED JCC");
+            disp -= 4;
+            instruction = movwHelper(ConditionFlag.Always,ARMV7.r12,disp & 0xffff);
+            codeBuffer.emitInt(instruction,branch);
+            instruction = movtHelper(ConditionFlag.Always,ARMV7.r12,(disp >> 16) & 0xffff);
+            codeBuffer.emitInt(instruction,branch+4);
+        } else if (operation == (ConditionFlag.NeverUse.value() << 28 | 0xbeef)) { // JMP
+            disp += 8;
+            codeBuffer.emitInt(0x0a000000 | disp | ((ConditionFlag.Always.value() & 0xf) << 28),branch);
+            System.out.println("MATCHED JMP");
+
+        }
+
+
+        //codeBuffer.emitInt(0x0a000000 | (target - branch) | ((ConditionFlag.Always.value() & 0xf) << 28),branch);
 
 
     }
@@ -612,8 +632,8 @@ public class ARMV7Assembler extends AbstractAssembler {
         int instruction;
         instruction = 0x05900000;
         instruction |= (flag.value() & 0xf) << 28;
-        instruction |= (destReg.encoding & 0xf) << 16;
-        instruction |= (baseRegister.encoding & 0xf) << 12;
+        instruction |= (destReg.encoding & 0xf) << 12;
+        instruction |= (baseRegister.encoding & 0xf) << 16;
         instruction |= offset12 & 0xfff;
         emitInt(instruction);
     }
@@ -747,10 +767,16 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void mov32BitConstant(CiRegister dst, int imm32) {
-        movw(ConditionFlag.Always, dst, imm32 & 0xffff);
-        imm32 = imm32 >> 16;
-        imm32 = imm32 & 0xffff;
-        movt(ConditionFlag.Always, dst, imm32 & 0xffff);
+        if(dst.number < 16) {
+            movw(ConditionFlag.Always, dst, imm32 & 0xffff);
+            imm32 = imm32 >> 16;
+            imm32 = imm32 & 0xffff;
+            movt(ConditionFlag.Always, dst, imm32 & 0xffff);
+        }else { // initialise a float with a constant
+
+            mov32BitConstant(ARMV7.r12,imm32);
+            vmov(ConditionFlag.Always,dst,ARMV7.r12);
+        }
     }
 
     public final void mov64BitConstant(CiRegister dstUpper, CiRegister dstLow, long imm64) {
@@ -835,6 +861,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final void cmpl(CiRegister src1, CiAddress src2) {
         assert src1.isValid();
         setUpScratch(src2); // APN not sure if this requires a load!
+        ldr(ConditionFlag.Always,ARMV7.r12,ARMV7.r12,0);
         cmp(ConditionFlag.Always, src1, scratchRegister, 0, 0);
     }
 
@@ -1069,7 +1096,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void jcc(ConditionFlag cc, int target, boolean forceDisp32) {
         int disp = (target - codeBuffer.position());
-        if (disp <= 16777215 && forceDisp32) {
+        if (disp <= 16777215 && !forceDisp32) { // TODO check ok to make this false
             disp = (disp / 4) - 2;
             emitInt((cc.value & 0xf) << 28 | (0xa << 24) | (disp & 0xffffff));
         } else {
@@ -1084,6 +1111,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final void jcc(ConditionFlag cc, Label l) {
         assert (0 <= cc.value) && (cc.value < 16) : "illegal cc";
         if (l.isBound()) {
+            System.out.println("LABEL bound jcc no need to patch");
             jcc(cc, l.position(), false);
         } else {
             // Note: could eliminate cond. jumps to this jump if condition
@@ -1091,21 +1119,23 @@ public class ARMV7Assembler extends AbstractAssembler {
             // Note: use jccb() if label to be bound is very close to get
             // an 8-bit displacement
             l.addPatchAt(codeBuffer.position());
-            nop(3);
+            System.out.println("ADDED JCC PATCH AT" + codeBuffer.position());
+            emitInt(ConditionFlag.NeverUse.value() << 28 | 0xdead ); // JCC CODE for the PATCH
+            nop(2);
             // TODO issues exist here ... what happens if R12 is loaded twice?
             // TODO or used as scratch inbetween the setup of its value and
             // this point?
             // TODO decide how to distinguish this from other patches
             // TODO update wiki on this
-            ldr(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
             //ldr(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
-            mov(cc, false, ARMV7.r15, ARMV7.r8);
+            addRegisters(cc, false, ARMV7.r15, ARMV7.r12, ARMV7.r15, 0, 0);
         }
 
     }
 
     public final void jmp(Label l) {
         if (l.isBound()) {
+            System.out.println("PATCHNING JMP AT " + l.position() );
             jmp(l.position(), false);
         } else {
             // By default, forward jumps are always 32-bit displacements, since
@@ -1114,8 +1144,11 @@ public class ARMV7Assembler extends AbstractAssembler {
             // force an 8-bit displacement.
 
             l.addPatchAt(codeBuffer.position());
+            System.out.println("ADDED JMP PATCH AT" + codeBuffer.position());
+            emitInt(ConditionFlag.NeverUse.value() << 28 | 0xbeef); // JMP CODE for the PATCH
+
             // TODO fix this it will not work ....
-            nop(2);
+            nop(1);
             // emitByte(0xE9);
             // emitInt(0);
         }
@@ -1178,9 +1211,18 @@ public class ARMV7Assembler extends AbstractAssembler {
         int sz = 0;
         int op = 0;
         int opc2;
-        checkConstraint(dest.number >= 16 && src.number >= 16, "vcvt must be FP/DP regs");
-        checkConstraint(!(dest.number <= 31 && src.number <= 31), "vcvt one reg mus be FP another DP");
-        checkConstraint(!(dest.number >= 32 && src.number >= 32), "vcvt one reg mus be FP another DP");
+        boolean double2Float = false;
+        boolean floatConversion = false;
+        System.out.println("VCVT " + dest.number + " " + src.number);
+        if (toInt == false && signed == false) {
+            checkConstraint(dest.number >= 16 && src.number >= 16, "vcvt must be FP/DP regs");
+            if(dest.number > src.number ) {
+                double2Float = true;
+            }
+            floatConversion = true;
+            checkConstraint(!(dest.number <= 31 && src.number <= 31), "vcvt one reg mus be FP another DP");
+            checkConstraint(!(dest.number >= 32 && src.number >= 32), "vcvt one reg mus be FP another DP");
+        }
         if (dest.number <= 31 || src.number <= 31) {
             sz = 1;
         }
@@ -1199,31 +1241,54 @@ public class ARMV7Assembler extends AbstractAssembler {
                 op = 0;
             }
         }
-        if (toInt) {
-            instruction |= (dest.encoding >> 1) << 12; // LSB in bit 22
-            instruction |= (dest.encoding & 0x1) << 22;
-            if (sz == 1) {
-                instruction |= src.encoding & 0xf; //
-                instruction |= (src.encoding >> 4) << 5;
+        if(!floatConversion) {
+            if (toInt) {
+                instruction |= (dest.encoding >> 1) << 12; // LSB in bit 22
+                instruction |= (dest.encoding & 0x1) << 22;
+                if (sz == 1) {
+                    instruction |= src.encoding & 0xf; //
+                    instruction |= (src.encoding >> 4) << 5;
 
+                } else {
+                    instruction |= src.encoding >> 1;
+                    instruction |= (src.encoding & 0x1) << 5;
+                }
             } else {
                 instruction |= src.encoding >> 1;
                 instruction |= (src.encoding & 0x1) << 5;
+                if (sz == 0) {
+                    instruction |= (dest.encoding >> 1) << 12;
+                    instruction |= (dest.encoding & 0x1) << 22;
+                } else {
+                    instruction |= (dest.encoding & 0xf) << 12;
+                    instruction |= (dest.encoding >> 4) << 22;
+                }
             }
+            instruction |= opc2 << 16;
+            instruction |= op << 7;
+            instruction |= sz << 8;
         } else {
-            instruction |= src.encoding >> 1;
-            instruction |= (src.encoding & 0x1) << 5;
-            if (sz == 0) {
-                instruction |= (dest.encoding >> 1) << 12;
-                instruction |= (dest.encoding & 0x1) << 22;
+            instruction = cond.value << 28;
+            instruction |= 0xeb70ac0;
+            if(double2Float) {
+                instruction |= 1<<8;
+                // d is dest and dest is FLOAT SINGLE
+
+                instruction |= (dest.encoding >>1) << 12;
+                instruction |= (dest.encoding & 1) << 22;
+
+                instruction |= (src.encoding & 0xf);
+                instruction |= (src.encoding >> 4) << 5;
+
             } else {
                 instruction |= (dest.encoding & 0xf) << 12;
                 instruction |= (dest.encoding >> 4) << 22;
+
+                instruction |= (src.encoding & 1) << 5;
+                instruction |= (src.encoding >>1);
+
             }
         }
-        instruction |= opc2 << 16;
-        instruction |= op << 7;
-        instruction |= sz << 8;
         emitInt(instruction);
         /*
          * VCVT{R}{<c>}{<q>}.S32.F64 <Sd>, <Dm> Encoded as opc2 = 0b101, sz = 1
@@ -1247,6 +1312,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         int instruction = (cond.value() & 0xf) << 28;
         checkConstraint(dest.number <= 63 && dest.number >= 16, "vstr dest must be a FP/DP reg");
         checkConstraint(-255 <= imm8 && imm8 <= 255, "vmov offset greater than +/- 255 ");
+        checkConstraint(src.number <= 15, "vstr base src address register must be core");
         if (imm8 >= 0) {
             instruction |= 1 << 23;
         } else {
@@ -1499,9 +1565,11 @@ public class ARMV7Assembler extends AbstractAssembler {
             instruction |= dest.encoding << 12;
             instruction |= src.encoding;
         } else if (src.number >= 32 && dest.number >= 32) {
+            // dest LSB bit 22, and 12-15
+            // src LSB 5 and 0-3
             instruction |= vmovSameType;
-            instruction |= (dest.encoding & 0xf << 12) | ((dest.encoding & 0x10) << 22);
-            instruction |= (src.encoding & 0xf) | ((src.encoding >> 4) << 7);
+            instruction |= ((dest.encoding >>1) << 12) | ((dest.encoding & 0x1) << 22);
+            instruction |= (src.encoding >> 1) | ((src.encoding & 0x1) << 5);
         } else if ((dest.number <= 15 || src.number <= 15) && (src.number >= 32 || dest.number >= 32)) {
             instruction |= vmovSingleCore;
             if (dest.number <= 15) {

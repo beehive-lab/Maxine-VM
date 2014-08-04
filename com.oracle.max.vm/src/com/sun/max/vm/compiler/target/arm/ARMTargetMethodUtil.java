@@ -210,6 +210,9 @@ public final class ARMTargetMethodUtil {
 
             if (CompilationBroker.OFFLINE) {
                 if (JUMP_WITH_LINK) {
+                    if((callOffset +16) >= code.length) {
+
+                    }
                     int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
                     code[callOffset + 3] = (byte) (instruction & 0xff);
                     code[callOffset + 2] = (byte) ((instruction >> 8) & 0xff);

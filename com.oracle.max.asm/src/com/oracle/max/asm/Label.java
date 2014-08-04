@@ -72,11 +72,18 @@ public final class Label {
         int target = position;
         for (int i = 0; i < patchPositions.size(); ++i) {
             int pos = patchPositions.get(i);
-            System.out.println("pathJumpTarget " + pos + " " + target);
+            System.out.println("patchJumpTarget " + pos + " " + target);
             masm.patchJumpTarget(pos, target);
         }
     }
 
+    public void offlineVerify() {
+        System.out.println(isBound() + " " + position);
+        for(int i = 0; i < patchPositions.size(); ++i) {
+            System.out.println("patchable positions " + patchPositions.get(i));
+
+        }
+    }
     @Override
     public String toString() {
         return isBound() ? String.valueOf(position()) : "?";

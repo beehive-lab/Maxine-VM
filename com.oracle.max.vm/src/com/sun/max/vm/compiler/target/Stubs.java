@@ -1019,7 +1019,7 @@ public class Stubs {
                         break;
                     case Float:
                         // TODO does it come from the FPREGS or does it go to core
-                        asm.movflt(registerConfig.getReturnRegister(CiKind.Float), reg);
+                        asm.movflt( registerConfig.getReturnRegister(CiKind.Float), reg);
                         break;
                     case Double:
                         // TODO does it come from the FPREGS or does it go to core

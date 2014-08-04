@@ -348,6 +348,7 @@ public class Compile {
             if(CompilationBroker.OFFLINE) {
                 ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
                 classMethodActor.compiledState = new Compilations(null,newTarget);
+                offlineAddCalls(newTarget);
             }
         }
         return targetMethods;
@@ -386,6 +387,16 @@ public class Compile {
         CompiledPrototype.checkInliningCorrect(virtualCalls, null, false, true);
         CompiledPrototype.checkInliningCorrect(interfaceCalls, null, false, true);
         CompiledPrototype.checkInliningCorrect(inlinedMethods, tm.classMethodActor(), true, false);
+    }
+    private static void offlineAddCalls(TargetMethod tm) {
+        final Set<MethodActor> directCalls = new HashSet<MethodActor>();
+        final Set<MethodActor> virtualCalls = new HashSet<MethodActor>();
+        final Set<MethodActor> interfaceCalls = new HashSet<MethodActor>();
+        final Set<MethodActor> inlinedMethods = new HashSet<MethodActor>();
+        // gather all direct, virtual, and interface calls and add them
+        tm.gatherCalls(directCalls, virtualCalls, interfaceCalls, inlinedMethods);
+
+
     }
 
     static class MyMethodFinder extends MethodFinder {

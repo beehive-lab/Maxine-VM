@@ -35,7 +35,6 @@ import com.sun.cri.ci.CiTargetMethod.JumpTable;
 import com.sun.cri.ci.CiTargetMethod.LookupTable;
 import com.sun.max.annotate.HOSTED_ONLY;
 import com.sun.max.unsafe.Word;
-import com.sun.max.vm.Log;
 import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.actor.member.FieldActor;
 import com.sun.max.vm.classfile.CodeAttribute;
@@ -65,6 +64,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     protected final ARMV7MacroAssembler asm;
     final PatchInfoARMV7 patchInfo;
+    public static boolean FLOATDOUBLEREGISTERS = true;
 
     public ARMV7T1XCompilation(T1X compiler) {
         super(compiler);
@@ -177,10 +177,44 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
         asm.vstr(ARMV7Assembler.ConditionFlag.Always, src, asm.scratchRegister, 0);
     }
+    /*
+    HUGE HACK TO GET THE CORRECT FLOLATING POINT REGISTER
+    private static CiRegister getFloatRegister(CiRegister val) {
+        int offset = 0;
+        System.out.print(" val.encoding "+ val.encoding + " val.number "+ val.number);
+        if(FLOATDOUBLEREGISTERS) {
+            if(val.number > 31) {
+                offset = 16 + val.encoding;
+            } else {
+                offset = 16 + 2*val.encoding;
+            }
+            System.out.println(" OFFSET " + offset);
+            return ARMV7.floatRegisters[offset];
 
+        }else {
+            return val;
+        }
+    }
+     */
+    public static CiRegister getFloatRegister(CiRegister val) {
+        int offset = 0;
+        System.out.println("ARMV7T1XCompilation number " + val.number + " encoding " + val.encoding);
+        //if(FLOATDOUBLEREGISTERS) {
+            if(val.number > 31) {
+                offset = 16 + val.encoding;
+            } else {
+                offset = 16 + 2*val.encoding;
+            }
+            return ARMV7.floatRegisters[offset];
+
+       // }else {
+          //  return val;
+        //}
+    }
     @Override
     public void peekFloat(CiRegister dst, int index) {
         assert dst.isFpu();
+        dst = getFloatRegister(dst);
         assert (dst.number <= ARMV7.s31.number) && (dst.number >= ARMV7.s0.number); // must be FLOAT!
         asm.setUpScratch(spInt(index));
         asm.vldr(ConditionFlag.Always, dst, asm.scratchRegister, 0);
@@ -189,6 +223,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     public void pokeFloat(CiRegister src, int index) {
         assert src.isFpu();
+        src = getFloatRegister(src);
+
         assert (src.number <= ARMV7.s31.number) && (src.number >= ARMV7.s0.number);
         asm.setUpScratch(spInt(index));
         asm.vstr(ConditionFlag.Always, src, asm.scratchRegister, 0);
@@ -321,6 +357,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignFloat(CiRegister dst, float value) {
+        dst = getFloatRegister(dst);
+
         assert dst.number >= ARMV7.s0.number && dst.number <= ARMV7.s31.number;
         asm.mov32BitConstant(ARMV7.r12, Float.floatToRawIntBits(value));
         asm.vmov(ConditionFlag.Always, dst, ARMV7.r12);
@@ -501,7 +539,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         asm.push(ConditionFlag.Always, 1 << 11); // push frame pointer onto STACK
         asm.mov(ConditionFlag.Always, false, ARMV7.r11, ARMV7.r13); // create a new framepointer = stack ptr
         asm.subq(ARMV7.r13, frameSize - Word.size()); // APN is this necessary for  ARM ie push does it anyway?
-        asm.subq(r11, framePointerAdjustment()); // TODO FP/SP not being set up correctly ...
+        asm.subq(ARMV7.r11, framePointerAdjustment()); // TODO FP/SP not being set up correctly ...
 
         //TODO: Fix below
         if (Trap.STACK_BANGING) {
@@ -526,14 +564,18 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     protected void emitUnprotectMethod() {
         protectionLiteralIndex = objectLiterals.size();
         objectLiterals.add(T1XTargetMethod.PROTECTED);
-        asm.xorq(scratch, scratch);
+        asm.xorq(ARMV7.r8, ARMV7.r8);
+        System.out.println("emitUnProtect partially commented out ... OBJECT LITERALS");
+       // asm.setUpScratch(CiAddress.Placeholder);
+       // asm.str(ConditionFlag.Always,ARMV7.r8,scratch,0);
         // asm.movq(CiAddress.Placeholder, scratch);
         // TODO store the value ZERO at a Placeholder address
         // TODO buf.emitInt(0);
         // TODO buf.emitInt(0);
         // TODO
-        int dispPos = buf.position() - 8;
-        patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
+        //int dispPos = buf.position() - 8;
+      //  int dispPos = buf.position() - 12;
+       // patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
     }
 
     @Override
@@ -929,6 +971,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 int targetBCI = data[i++];
                 int target = bciToPos[targetBCI];
                 assert target != 0;
+                //Log.println("assert commented out in ARMV7T1XCompilaton");
                 buf.setPosition(pos);
                 asm.jmp(target, true);
             } else if (tag == PatchInfoARMV7.JUMP_TABLE_ENTRY) {
@@ -958,8 +1001,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 buf.setPosition(dispPos);
                 int dispFromCodeStart = dispFromCodeStart(objectLiterals.size(), 0, index, true);
                 int disp = movqDisp(dispPos, dispFromCodeStart);
-                Log.println("ARMV7T1XCompilation ... OBJECT LITERAL PAtchInfo needs to be allowed to emitInt");
-                // buf.emitInt(disp);
+
+                //Log.println("ARMV7T1XCompilation ... OBJECT LITERAL PAtchInfo HAS NOT BEEN allowed to emitInt");
+                buf.emitInt(disp);
             } else {
                 throw FatalError.unexpected(String.valueOf(tag));
             }

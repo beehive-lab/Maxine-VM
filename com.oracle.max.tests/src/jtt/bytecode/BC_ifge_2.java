@@ -32,6 +32,7 @@ package jtt.bytecode;
  */
 public class BC_ifge_2 {
     public static boolean test(int a, int b) {
-        return a >= b;
+        return a>= b;
+
     }
 }

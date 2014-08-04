@@ -242,10 +242,14 @@ public class ARMV7CompilerStubEmitter {
     }
 
     private void negatePrologue() {
+        /*
+        prologue(new CiCalleeSaveLayout(0, -1, comp.target.wordSize, negateArgument, negateTemp));
+        asm.movq(negateArgument, comp.frameMap().toStackAddress(inArgs[0]));
+        */
         prologue(new CiCalleeSaveLayout(0, -1, comp.target.wordSize, negateArgument, negateTemp));
         CiAddress tmp = comp.frameMap().toStackAddress(inArgs[0]);
-        CiAddress fixed = new CiAddress(tmp.kind,ARMV7.r11.asValue(),tmp.index,tmp.scale,tmp.displacement);
-        asm.setUpScratch(fixed);
+        //CiAddress fixed = new CiAddress(tmp.kind,ARMV7.r11.asValue(),tmp.index,tmp.scale,tmp.displacement);
+        asm.setUpScratch(tmp);
         asm.vldr(ARMV7Assembler.ConditionFlag.Always, negateArgument, ARMV7.r12, 0);
        //' asm.movq(negateArgument, comp.frameMap().toStackAddress(inArgs[0]));
     }
@@ -253,11 +257,12 @@ public class ARMV7CompilerStubEmitter {
     private void negateEpilogue() {
        // asm.movq(comp.frameMap().toStackAddress(outResult), negateArgument);
         CiAddress tmp  = comp.frameMap().toStackAddress(outResult);
-        CiAddress fixed = new CiAddress(tmp.kind,ARMV7.r11.asValue(),tmp.index,tmp.scale,tmp.displacement);
-        asm.setUpScratch(fixed);
+        //CiAddress fixed = new CiAddress(tmp.kind,ARMV7.r11.asValue(),tmp.index,tmp.scale,tmp.displacement);
+        asm.setUpScratch(tmp);
         asm.vstr(ARMV7Assembler.ConditionFlag.Always,negateArgument,ARMV7.r12,0);
         epilogue();
     }
+
 
     private void emitDNEG() {
 
@@ -270,7 +275,9 @@ public class ARMV7CompilerStubEmitter {
          dneg applied to +0.0 is -0.0, whereas (+0.0 minus +0.0) is +0.0.
          */
         negatePrologue();
-        asm.setUpScratch(tasm.recordDataReferenceInCode(CiConstant.forLong(DoubleSignFlip)));
+        asm.nop();
+        //asm.setUpScratch(tasm.recordDataReferenceInCode(CiConstant.forLong(DoubleSignFlip)));
+        asm.nop();
         asm.vldr(ARMV7Assembler.ConditionFlag.Always, negateTemp, ARMV7.r12, 0);
         asm.vneg(ARMV7Assembler.ConditionFlag.Always,negateArgument,negateTemp);
         //asm.movsd(negateTemp, tasm.recordDataReferenceInCode(CiConstant.forLong(DoubleSignFlip)));

@@ -22,13 +22,17 @@
  */
 package com.sun.c1x.alloc;
 
-import java.util.*;
-
-import com.sun.c1x.*;
-import com.oracle.max.criutils.*;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
+import com.oracle.max.criutils.TTY;
+import com.sun.c1x.C1XMetrics;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.lir.LIRInstruction;
+import com.sun.c1x.util.IntList;
+import com.sun.c1x.util.Util;
 import com.sun.cri.ci.*;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Represents an interval in the {@linkplain LinearScan linear scan register allocator}.
@@ -495,10 +499,10 @@ public final class Interval {
             assert this.location == null || this.location.isRegister() : "cannot re-assign location for " + this;
             assert location.isStackSlot();
             assert location.kind != CiKind.Illegal;
-            if(location.kind != this.kind) {
-                System.out.println("MANUAL BODGE com.sun.c1x.alloc.Interval.java");
+           // if(location.kind != this.kind) {
+              //  System.out.println("MANUAL BODGE com.sun.c1x.alloc.Interval.java");
 
-            } else
+           // } else
             assert location.kind == this.kind;
         }
         this.location = location;
