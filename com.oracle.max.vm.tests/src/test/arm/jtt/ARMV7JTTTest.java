@@ -4265,17 +4265,15 @@ public class ARMV7JTTTest extends MaxTestCase {
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         CompilationBroker.OFFLINE = true;
         List<Args> pairs = new LinkedList<Args>();
-        // pairs.add(new Args(1L, 1L));
-        // pairs.add(new Args(-3L, -3L));
-        // pairs.add(new Args(10000L, 10000L));
+        pairs.add(new Args(1L, 1L));
+        pairs.add(new Args(-3L, -3L));
+        pairs.add(new Args(10000L, 10000L));
         pairs.add(new Args(549755814017L, 549755814017L));
         initialiseCodeBuffers(methods, "BC_lload_0.java","long test(long)");
         int assemblerStatements = codeBytes.length / 4;
         for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             long expectedValue = jtt.bytecode.BC_lload_0.test(pair.lfirst);
-            //String value = Long.toString(pair.lfirst);
-            //String value1 = value.substring(0, value.length());
             String functionPrototype = ARMCodeWriter.preAmble("long long", "long long", Long.toString(pair.lfirst));
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
             long returnValue = 0xffffffffL & registerValues[0];
