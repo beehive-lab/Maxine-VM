@@ -499,10 +499,6 @@ public final class Interval {
             assert this.location == null || this.location.isRegister() : "cannot re-assign location for " + this;
             assert location.isStackSlot();
             assert location.kind != CiKind.Illegal;
-           // if(location.kind != this.kind) {
-              //  System.out.println("MANUAL BODGE com.sun.c1x.alloc.Interval.java");
-
-           // } else
             assert location.kind == this.kind;
         }
         this.location = location;
