@@ -4269,9 +4269,9 @@ public class ARMV7JTTTest extends MaxTestCase {
          * result2 = -b; double result = 0.0; if (which == 0) { result = result1; } else { result = result2; } return
          * result; } }
          */
-        double argsOne[] = { 0.0D, -1.01D, 7263.8734d, 0.0d, -1.01d, 7263.8743d};
-        double argsTwo[] = { 1.0d, -2.01D, 8263.8734d, 1.0d, -2.01d, 8263.8734d};
-        int argsThree[] = { 0, 0, 0, 1, 1, 1};
+        double argsOne[] = { 0.0D, -1.01D, 7263.8734d, 0.0d, -1.01d, 7263.8743d,0.0d};
+        double argsTwo[] = { 1.0d, -2.01D, 8263.8734d, 1.0d, -2.01d, 8263.8734d,1.0d};
+        int argsThree[] = { 0, 0, 0, 1, 1, 1,0};
 
         String klassName = "jtt.bytecode.BC_dneg";
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");

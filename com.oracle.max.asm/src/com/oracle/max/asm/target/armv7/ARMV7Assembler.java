@@ -78,11 +78,17 @@ public class ARMV7Assembler extends AbstractAssembler {
             instruction = movtHelper(ConditionFlag.Always,ARMV7.r12,(disp >> 16) & 0xffff);
             codeBuffer.emitInt(instruction,branch+4);
         } else if (operation == (ConditionFlag.NeverUse.value() << 28 | 0xbeef)) { // JMP
-            disp += 8;
-            codeBuffer.emitInt(0x0a000000 | disp | ((ConditionFlag.Always.value() & 0xf) << 28),branch);
-            System.out.println("MATCHED JMP");
+            //disp += 8;
+            disp +=8;
 
-        }
+            disp = disp/4;
+            if (disp < 0) {
+                System.out.println("NEGATIVE DISP " + disp);
+            }
+            codeBuffer.emitInt(0x0a000000 | disp | ((ConditionFlag.Always.value() & 0xf) << 28),branch);
+            System.out.println("MATCHED JMP branch " + branch + " DISP " + disp + " target "+ target );
+
+        } else assert 0 ==1;
 
 
         //codeBuffer.emitInt(0x0a000000 | (target - branch) | ((ConditionFlag.Always.value() & 0xf) << 28),branch);
