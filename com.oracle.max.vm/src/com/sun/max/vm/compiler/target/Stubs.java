@@ -934,6 +934,7 @@ public class Stubs {
         FatalError.unexpected("stub should be overwritten");
     }
 
+    //TODO: Fix ARM version of it
     @HOSTED_ONLY
     private Stub genUnwind(CiValue[] unwindArgs) {
         if (platform().isa == ISA.AMD64) {
@@ -1005,7 +1006,7 @@ public class Stubs {
             String name = "unwindStub";
             if (args.length == 4) {
                 CiValue retValue = args[3];
-                CiRegister reg = retValue.asRegister();
+                //CiRegister reg = retValue.asRegister();
                 CiKind kind = retValue.kind.stackKind();
                 name = "unwind" + kind.name() + "Stub";
                 switch (kind) {
@@ -1015,16 +1016,16 @@ public class Stubs {
                     break;
                     case Int:
                     case Object:
-                        asm.mov(ARMV7Assembler.ConditionFlag.Always, false, registerConfig.getReturnRegister(CiKind.Int), reg);
+                     //   asm.mov(ARMV7Assembler.ConditionFlag.Always, false, registerConfig.getReturnRegister(CiKind.Int), reg);
                         break;
                     case Float:
                         // TODO does it come from the FPREGS or does it go to core
-                        asm.movflt( registerConfig.getReturnRegister(CiKind.Float), reg);
+                    //    asm.movflt( registerConfig.getReturnRegister(CiKind.Float), reg);
                         break;
                     case Double:
                         // TODO does it come from the FPREGS or does it go to core
                         // if it goes to core then will need to go on stack
-                        asm.movdbl(registerConfig.getReturnRegister(CiKind.Double), reg);
+               //         asm.movdbl(registerConfig.getReturnRegister(CiKind.Double), reg);
                         break;
                     default:
                         FatalError.unexpected("unexpected kind: " + kind);
