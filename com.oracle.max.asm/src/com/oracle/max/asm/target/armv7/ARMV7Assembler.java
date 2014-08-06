@@ -679,6 +679,9 @@ public class ARMV7Assembler extends AbstractAssembler {
             return;
         }
         assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
+        if(base == CiRegister.Frame) {
+            base = frameRegister;
+        }
         // APN can we have a memory address --- not handled yet?
         // APN simple case where we just have a register destination
         // TODO fix this so it will issue loads when appropriate!
@@ -1059,6 +1062,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         // might need to push the value of r14 onto the stack in order to make this work for a call from the C harness
         // TODO for testing of the methods
         mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
+
     }
 
     public final void ret(int imm16) {

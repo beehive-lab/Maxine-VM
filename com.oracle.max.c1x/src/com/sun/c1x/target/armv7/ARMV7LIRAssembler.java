@@ -99,6 +99,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     @Override
     protected void emitReturn(CiValue result) {
         // TODO: Consider adding safepoint polling at return!
+        masm.setUpScratch(new CiAddress(target.wordKind, ARMV7.RSP, 0));
+        masm.ldrImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r14, ARMV7.r12, 0);
         masm.ret(0);
     }
 

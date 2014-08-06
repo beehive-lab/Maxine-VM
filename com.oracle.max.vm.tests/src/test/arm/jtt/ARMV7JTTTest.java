@@ -4256,7 +4256,7 @@ public class ARMV7JTTTest extends MaxTestCase {
 
 
 
-    public void IGNORE_jtt_BC_XXdneg9() throws Exception {
+    public void test_jtt_BC_XXdneg9() throws Exception {
         initTests();
         boolean failed = false;
         /*
@@ -4285,11 +4285,17 @@ public class ARMV7JTTTest extends MaxTestCase {
 
             String functionPrototype = ARMCodeWriter.preAmble("double", "double , double, int", Double.toString(argsOne[i]) + "," + Double.toString(argsTwo[i]) + "," + Integer.toString(argsThree[i]));
             Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
-            if (!registerValues[17].equals(new Double(doubleValue))) { // r0.r15 + APSR then FPREGS
+            if(registerValues[17] == null ) {
                 failed = true;
-                System.out.println("Failed incorrect value " + registerValues[0] + " " + doubleValue);
+                Log.println("QEMU crashed ... null registverValues");
+            } else {
+                if (!registerValues[17].equals(new Double(doubleValue))) { // r0.r15 + APSR then FPREGS
+                    failed = true;
+                    System.out.println("Failed incorrect value " + registerValues[0] + " " + doubleValue);
+                }
+                Log.println("DNEG test " + i + " returned " + ((Double) registerValues[17]).doubleValue() + " expected " + doubleValue);
+
             }
-            Log.println("DNEG test " + i + " returned " + ((Double) registerValues[17]).doubleValue() + " expected " + doubleValue);
             // assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " +
 // expectedValue;
             theCompiler.cleanup();

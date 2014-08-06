@@ -247,9 +247,9 @@ public class ARMV7CompilerStubEmitter {
         asm.movq(negateArgument, comp.frameMap().toStackAddress(inArgs[0]));
         */
         if (isDNEG) {
-            prologue(new CiCalleeSaveLayout(0, -1, comp.target.wordSize, negateArgument));
+            prologue(new CiCalleeSaveLayout(0, -1, comp.target.wordSize, negateArgument,ARMV7.r14));
         } else {
-            prologue(new CiCalleeSaveLayout(0, -1, comp.target.wordSize, ARMV7.s0));
+            prologue(new CiCalleeSaveLayout(0, -1, comp.target.wordSize, ARMV7.s0,ARMV7.r14));
         }
 
         /*
@@ -261,9 +261,9 @@ public class ARMV7CompilerStubEmitter {
         asm.setUpScratch(tmp);
 
         if (isDNEG) {
-            asm.vldr(ARMV7Assembler.ConditionFlag.Always, negateArgument, ARMV7.r12, -2); //(-2 becomes -8)
+            asm.vldr(ARMV7Assembler.ConditionFlag.Always, negateArgument, ARMV7.r12, -1); //(-1 becomes -4)
         } else {
-            asm.vldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.s0, ARMV7.r12,-2);//(-2 becomes -8)
+            asm.vldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.s0, ARMV7.r12,-1);//(-2 becomes -8)
         }
         //asm.vpop(ARMV7Assembler.ConditionFlag.Always,negateArgument,negateArgument);
        //' asm.movq(negateArgument, comp.frameMap().toStackAddress(inArgs[0]));
@@ -275,9 +275,9 @@ public class ARMV7CompilerStubEmitter {
         //CiAddress fixed = new CiAddress(tmp.kind,ARMV7.r11.asValue(),tmp.index,tmp.scale,tmp.displacement);
         asm.setUpScratch(tmp);
         if (isDNEG) {
-            asm.vstr(ARMV7Assembler.ConditionFlag.Always, negateArgument, ARMV7.r12, -2);//(-2 becomes -8)
+            asm.vstr(ARMV7Assembler.ConditionFlag.Always, negateArgument, ARMV7.r12, -1);//(-1 becomes -4)
         }else {
-            asm.vstr(ARMV7Assembler.ConditionFlag.Always,ARMV7.s0,ARMV7.r12,-2);//(-2 becomes -8)
+            asm.vstr(ARMV7Assembler.ConditionFlag.Always,ARMV7.s0,ARMV7.r12,-1);//(-2 becomes -8)
         }
         //asm.vpush(ARMV7Assembler.ConditionFlag.Always,negateArgument,negateArgument);
         epilogue();
