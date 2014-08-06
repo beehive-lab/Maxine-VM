@@ -1318,7 +1318,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         } else {
             imm8 = -1 * imm8;
         }
-        instruction |= imm8;
+        instruction |= (imm8 & 0xff);
         instruction |= (src.encoding & 0xf) << 16;
         if (dest.number <= 31) {
             instruction |= 0x0d000b00;
@@ -1360,7 +1360,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         } else {
             imm8 = -1 * imm8;
         }
-        instruction |= imm8;
+        instruction |= (imm8 & 0xff);
         instruction |= src.encoding << 16;
         if (dest.number <= 31) {
             instruction |= 0x0d100b00;

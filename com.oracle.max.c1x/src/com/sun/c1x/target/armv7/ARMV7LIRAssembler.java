@@ -2535,12 +2535,15 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             CiStackSlot inArg = stub.inArgs[i];
             assert inArg.inCallerFrame();
             CiStackSlot outArg = inArg.asOutArg();
+            System.out.print("CALL STUB STORE ");
             storeParameter(args[i], outArg);
         }
 
         directCall(stub.stubObject, info);
 
         if (result != CiRegister.None) {
+            System.out.print("CALL STUB RESULT ");
+
             final CiAddress src = compilation.frameMap().toStackAddress(stub.outResult.asOutArg());
             loadResult(result, src);
         }
@@ -2594,8 +2597,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         } else if (registerOrConstant.isRegister()) {
             masm.setUpScratch(dst);
             if (k.isFloat()) {
-                masm.vstr(ConditionFlag.Always,registerOrConstant.asRegister(),ARMV7.r12,0);
-            //    masm.movss(dst, registerOrConstant.asRegister());
+
+                // TODO manipulate for use of s0..s31 registers
+                masm.vstr(ConditionFlag.Always,asXmmFloatReg(registerOrConstant),ARMV7.r12,0);
+                //masm.movss(dst, registerOrConstastoreParameternt.asRegister());
             } else if (k.isDouble()) {
                 masm.vstr(ConditionFlag.Always,registerOrConstant.asRegister(),ARMV7.r12,0);
 
@@ -2639,6 +2644,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         }
         tasm.recordDirectCall(before, after - before, asCallTarget(target), info);
         tasm.recordExceptionHandlers(after, info);
+        masm.nop(4);
     }
 
     public void directJmp(Object target) {

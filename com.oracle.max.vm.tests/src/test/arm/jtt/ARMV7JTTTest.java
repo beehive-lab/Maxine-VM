@@ -4,6 +4,7 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.max.asm.sparc.FPR;
 import com.sun.max.vm.Log;
 import org.objectweb.asm.util.*;
 
@@ -2629,7 +2630,9 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     }
 
-    public void ignore_jtt_BC_dcmp01() throws Exception {
+
+    public void IGNORE_jtt_BC_dcmp01() throws Exception {
+
 
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
@@ -2668,7 +2671,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert (failed == false);
     }
 
-    public void ignore_C1Xjtt_BC_dcmp02() throws Exception {
+    public void IGNORE_C1Xjtt_BC_dcmp02() throws Exception {
+
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -2708,8 +2712,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+    public void IGNORE_C1Xjtt_BC_dcmp03() throws Exception {
 
-    public void ignore_C1Xjtt_BC_dcmp03() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -2749,8 +2753,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+    public void IGNORE_C1Xjtt_BC_dcmp04() throws Exception {
 
-    public void ignore_C1Xjtt_BC_dcmp04() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -2790,8 +2794,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+    public void IGNORE_C1Xjtt_BC_dcmp05() throws Exception {
 
-    public void ignore_C1Xjtt_BC_dcmp05() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -2831,8 +2835,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-
-    public void ignore_C1Xjtt_BC_dcmp06() throws Exception {
+    public void IGNORE_C1Xjtt_BC_dcmp06() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -2872,8 +2875,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+    public void IGNORE_C1Xjtt_BC_dcmp07() throws Exception {
 
-    public void ignore_C1Xjtt_BC_dcmp07() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -2913,8 +2916,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-
-    public void ignore_C1Xjtt_BC_dcmp08() throws Exception {
+    public void IGNORE_C1Xjtt_BC_dcmp08() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -2954,8 +2956,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+    public void IGNORE_C1Xjtt_BC_dcmp09() throws Exception {
 
-    public void ignore_C1Xjtt_BC_dcmp09() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -2995,8 +2997,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+    public void IGNORE_C1Xjtt_BC_dcmp10() throws Exception {
 
-    public void ignore_C1Xjtt_BC_dcmp10() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -3035,8 +3037,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+    public void IGNORE_C1Xjtt_BC_fcmp01() throws Exception {
 
-    public void ignore_C1Xjtt_BC_fcmp01() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -3075,8 +3077,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+    public void IGNORE_C1Xjtt_BC_fcmp02() throws Exception {
 
-    public void ignore_C1Xjtt_BC_fcmp02() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -3116,8 +3118,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+    public void IGNORE_C1Xjtt_BC_fcmp03() throws Exception {
 
-    public void ignore_C1Xjtt_BC_fcmp03() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -3157,8 +3159,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+    public void IGNORE_C1Xjtt_BC_fcmp04() throws Exception {
 
-    public void ignore_C1Xjtt_BC_fcmp04() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -3198,8 +3200,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+    public void IGNORE_C1Xjtt_BC_fcmp05() throws Exception {
 
-    public void ignore_C1Xjtt_BC_fcmp05() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -3239,8 +3241,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+    public void IGNORE_C1Xjtt_BC_fcmp06() throws Exception {
 
-    public void ignore_C1Xjtt_BC_fcmp06() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -3280,8 +3282,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+    public void IGNORE_C1Xjtt_BC_fcmp07() throws Exception {
 
-    public void ignore_C1Xjtt_BC_fcmp07() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -3321,8 +3323,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-
-    public void ignore_C1Xjtt_BC_fcmp08() throws Exception {
+    public void IGNORE_C1Xjtt_BC_fcmp08() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -3362,8 +3363,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+    public void IGNORE_C1Xjtt_BC_fcmp09() throws Exception {
 
-    public void ignore_C1Xjtt_BC_fcmp09() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -3403,8 +3404,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+    public void IGNORE_C1Xjtt_BC_fcmp10() throws Exception {
 
-    public void ignore_C1Xjtt_BC_fcmp10() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
@@ -4177,7 +4178,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert failed == false;
     }
 
-    public void IGNORE_jtt_BC_fneg() throws Exception {
+    public void test_jtt_BC_fneg() throws Exception {
         initTests();
         boolean failed = false;
         /*
@@ -4217,6 +4218,43 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
         assert failed == false;
     }
+
+
+    public void test_C1Xjtt_BC_dneg2() throws Exception {
+        initTests();
+        boolean failed = false;
+/*
+ * @Harness: java
+ * @Runs: -0.0d = `java.lang.Double.POSITIVE_INFINITY; 0.0d = `java.lang.Double.NEGATIVE_INFINITY
+ */
+
+        double argsOne[] = {1.0d,-1.0d, -0.0D, 0.0d ,-2.0d, 2.0d};
+
+
+        String klassName = "jtt.bytecode.BC_dneg2";
+        List<TargetMethod> methods = Compile.compile(new String[]{klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        initialiseCodeBuffers(methods,"BC_dneg2.java","double test(double)");
+        assert(entryPoint != -1);
+        int assemblerStatements = codeBytes.length / 4;
+        double expectedValue = 0;
+        for (int i = 0; i < argsOne.length; i++) {
+            double doubleValue = jtt.bytecode.BC_dneg2.test(argsOne[i]);
+
+            String functionPrototype = ARMCodeWriter.preAmble("double", " double ", Double.toString(argsOne[i]));
+            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (!registerValues[17].equals(new Double(doubleValue))) { // r0.r15 + APSR then FPREGS
+                failed = true;
+                System.out.println("Failed incorrect value " + ((Double)registerValues[17]).doubleValue() + " " + doubleValue);
+            }
+            Log.println("DNEG2 test " + i + " returned " + ((Double) registerValues[17]).doubleValue() + " expected " + doubleValue);
+            //assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+        assert failed == false;
+    }
+
+
 
     public void IGNORE_jtt_BC_XXdneg9() throws Exception {
         initTests();
@@ -4259,7 +4297,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert failed == false;
     }
 
-    public void test_jtt_BC_lload_0() throws Exception {
+    public void IGNOREtest_jtt_BC_lload_0() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = "jtt.bytecode.BC_lload_0";
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");

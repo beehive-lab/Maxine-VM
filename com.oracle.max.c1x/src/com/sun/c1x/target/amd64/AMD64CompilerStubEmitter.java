@@ -22,26 +22,25 @@
  */
 package com.sun.c1x.target.amd64;
 
-import static com.sun.cri.ci.CiCallingConvention.Type.*;
-
-import java.util.*;
-
-import com.oracle.max.asm.*;
-import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.asm.Label;
+import com.oracle.max.asm.target.amd64.AMD64;
 import com.oracle.max.asm.target.amd64.AMD64Assembler.ConditionFlag;
-import com.sun.c1x.*;
-import com.sun.c1x.asm.*;
-import com.sun.c1x.stub.*;
+import com.oracle.max.asm.target.amd64.AMD64MacroAssembler;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.asm.TargetMethodAssembler;
+import com.sun.c1x.stub.CompilerStub;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiRegister.RegisterFlag;
-import com.sun.cri.ri.*;
-import com.sun.cri.xir.CiXirAssembler.XirConstant;
-import com.sun.cri.xir.CiXirAssembler.XirConstantOperand;
-import com.sun.cri.xir.CiXirAssembler.XirOperand;
-import com.sun.cri.xir.CiXirAssembler.XirParameter;
-import com.sun.cri.xir.CiXirAssembler.XirRegister;
-import com.sun.cri.xir.CiXirAssembler.XirTemp;
-import com.sun.cri.xir.*;
+import com.sun.cri.ri.RiRegisterConfig;
+import com.sun.cri.xir.CiXirAssembler.*;
+import com.sun.cri.xir.XirTemplate;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import static com.sun.cri.ci.CiCallingConvention.Type.JavaCallee;
+import static com.sun.cri.ci.CiCallingConvention.Type.RuntimeCall;
 
 /**
  * An object used to produce a single compiler stub.
