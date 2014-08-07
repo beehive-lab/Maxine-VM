@@ -294,7 +294,7 @@ public class ARMV7CompilerStubEmitter {
          quite the same as subtracting from 0. IEEE has two zeros, +0.0 and -0.0, and
          dneg applied to +0.0 is -0.0, whereas (+0.0 minus +0.0) is +0.0.
          */
-        System.out.println("DOING DNEG");
+        //System.out.println("DOING DNEG");
         negatePrologue(true);
         asm.nop();
         /* On ARMV7 we can use the vneg function tested that vneg of +0.0 gives -0.0 */
@@ -304,7 +304,7 @@ public class ARMV7CompilerStubEmitter {
 
         asm.vneg(ARMV7Assembler.ConditionFlag.Always,negateArgument,negateArgument);
         negateEpilogue(true);
-        System.out.println("DONE DNEG");
+        //System.out.println("DONE DNEG");
     }
 
     private void emitFNEG() {

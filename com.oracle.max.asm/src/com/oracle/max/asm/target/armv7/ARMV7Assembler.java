@@ -623,8 +623,8 @@ public class ARMV7Assembler extends AbstractAssembler {
         int instruction;
         instruction = 0x05800000;
         instruction |= (flag.value() & 0xf) << 28;
-        instruction |= (valueReg.encoding & 0xf) << 16;
-        instruction |= (baseRegister.encoding & 0xf) << 12;
+        instruction |= (valueReg.encoding & 0xf) << 12;
+        instruction |= (baseRegister.encoding & 0xf) << 16;
         instruction |= offset12 & 0xfff;
         emitInt(instruction);
     }
@@ -1076,8 +1076,9 @@ public class ARMV7Assembler extends AbstractAssembler {
             ret();
         } else {
             // System.out.println("Need to ascertain purpose of ARMV7Assembler::ret(imm16)");
-            ret();
             addq(ARMV7.r13, imm16); // believe it is used to retract the stack
+            ret();
+
         }
     }
 

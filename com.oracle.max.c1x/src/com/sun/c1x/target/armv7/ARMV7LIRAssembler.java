@@ -99,8 +99,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     @Override
     protected void emitReturn(CiValue result) {
         // TODO: Consider adding safepoint polling at return!
-        masm.setUpScratch(new CiAddress(target.wordKind, ARMV7.RSP, 0));
-        masm.ldrImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r14, ARMV7.r12, 0);
+
         masm.ret(0);
     }
 
@@ -2384,6 +2383,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     //masm.vmov(ConditionFlag.Always,ARMV7.s6,ARMV7.s3);
                    // masm.vmov(ConditionFlag.Always,ARMV7.s4,ARMV7.s2);
                    // masm.vmov(ConditionFlag.Always,ARMV7.s2,ARMV7.s1);
+                    masm.str(ConditionFlag.Always,ARMV7.r14,ARMV7.r13,0); // save the return value!!!!!
 
                     if (C1XOptions.ZapStackOnMethodEntry) {
                         final int intSize = 4;
@@ -2412,6 +2412,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         int frameToCSA = frameMap.offsetToCalleeSaveAreaStart();
                         masm.restore(csl, frameToCSA);
                     }
+                    masm.ldr(ConditionFlag.Always,ARMV7.r14,ARMV7.r13,0); // restore LR prior to adjusting stack?
                     masm.incrementq(ARMV7.r13,frameSize);
                   //  masm.incrementq(ARMV7.rsp, frameSize);
                     break;
