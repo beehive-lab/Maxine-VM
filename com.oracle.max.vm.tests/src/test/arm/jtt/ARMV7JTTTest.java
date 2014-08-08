@@ -253,7 +253,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         int value = 99;
         int answer = jtt.bytecode.ARM_BC_test_return1.test(12);
         expectedValues[0] = answer;
-        byte[] code = xx.getByteArray("test", "jtt.bytecode.ARM_BC_ignore_return1");
+        byte[] code = xx.getByteArray("test", "jtt.bytecode.ARM_BC_test_return1");
         initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, value);
@@ -268,7 +268,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void test_C1X_jtt_BC_imul() throws Exception {
+    public void IGNORE_C1X_jtt_BC_imul() throws Exception {
         initTests();
         boolean failed = false;
 /*
@@ -931,6 +931,43 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
+    public void test_C1X_jtt_BC_tableswitch() throws Exception {
+        boolean failed = false;
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+
+/*
+ * @Harness: java
+ * @Runs: -1 = 42; 0 = 10; 1 = 20; 2 = 30; 3 = 42; 4 = 40; 5 = 50; 6 = 42
+ */
+        int argOne [] = {7, -1,  0,  1,  2,  3,  4,  5,  6,0};
+
+        String klassName = "jtt.bytecode.BC_tableswitch";
+
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+
+        initialiseCodeBuffers(methods, "BC_tableswitch.java", "int test(int)");
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < argOne.length; i++) {
+            expectedValue = jtt.bytecode.BC_tableswitch.test(argOne[i]);
+
+
+            String functionPrototype = ARMCodeWriter.preAmble("int", "int", Integer.toString( argOne[i]));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (registerValues[0] != expectedValue) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            }
+            Log.println("BC_tableswitch test " + argOne[i] + " returned " + registerValues[0] + " expected " + expectedValue);
+            if (registerValues[0] != expectedValue) {
+                failed = true;
+            }
+            theCompiler.cleanup();
+        }
+        assert(failed == false);
+    }
+
     public void IGNORE_jtt_BC_tableswitch() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
@@ -998,7 +1035,7 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void IGNOREignore_jtt_BC_XXXXfdiv() throws Exception {
         boolean failed = false;
-        MaxineARMTester.DEBUGOBJECTS = true;
+        MaxineARMTester.DEBUGOBJECTS = false;
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         float argOne[] = { 14.0f};
@@ -2345,7 +2382,7 @@ public class ARMV7JTTTest extends MaxTestCase {
              * ARGUMENT VALUES / VARIABLES (*pf)(****1*****); // Need to change this to something related to the test
              * itself asm volatile("forever: b forever");
              */
-            MaxineARMTester.DEBUGOBJECTS = true;
+            MaxineARMTester.DEBUGOBJECTS = false;
             String functionPrototype = ARMCodeWriter.preAmble("float", "double", Double.toString(arguments[i]));
             // good question here ... is the value returned in the float s0 or the core s0 register
             Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
@@ -2587,7 +2624,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_BC_ifge_2() throws Exception {
+    public void IGNORE_C1X_jtt_BC_ifge_2() throws Exception {
 
         boolean failed = false;
         CompilationBroker.OFFLINE = initialised;
@@ -2631,7 +2668,7 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
 
-    public void IGNORE_jtt_BC_dcmp01() throws Exception {
+    public void IGNORE_C1X_jtt_BC_dcmp01() throws Exception {
 
 
         CompilationBroker.OFFLINE = initialised;
@@ -2671,7 +2708,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert (failed == false);
     }
 
-    public void test_C1X_jtt_BC_dcmp02() throws Exception {
+    public void IGNORE_C1X_jtt_BC_dcmp02() throws Exception {
 
         initTests();
         CompilationBroker.OFFLINE = initialised;
@@ -2712,7 +2749,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_dcmp03() throws Exception {
+    public void IGNORE_C1X_jtt_BC_dcmp03() throws Exception {
 
         initTests();
         CompilationBroker.OFFLINE = initialised;
@@ -2753,7 +2790,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_dcmp04() throws Exception {
+    public void IGNORE_C1X_jtt_BC_dcmp04() throws Exception {
 
         initTests();
         CompilationBroker.OFFLINE = initialised;
@@ -2794,7 +2831,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_dcmp05() throws Exception {
+    public void IGNORE_C1X_jtt_BC_dcmp05() throws Exception {
 
         initTests();
         CompilationBroker.OFFLINE = initialised;
@@ -2835,7 +2872,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_dcmp06() throws Exception {
+    public void IGNORE_C1X_jtt_BC_dcmp06() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -2875,7 +2912,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_dcmp07() throws Exception {
+    public void IGNORE_C1X_jtt_BC_dcmp07() throws Exception {
 
         initTests();
         CompilationBroker.OFFLINE = initialised;
@@ -2916,7 +2953,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_dcmp08() throws Exception {
+    public void IGNORE_C1X_jtt_BC_dcmp08() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -2956,7 +2993,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_dcmp09() throws Exception {
+    public void IGNORE_C1X_jtt_BC_dcmp09() throws Exception {
 
         initTests();
         CompilationBroker.OFFLINE = initialised;
@@ -2997,7 +3034,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_dcmp10() throws Exception {
+    public void IGNORE_C1X_jtt_BC_dcmp10() throws Exception {
 
         initTests();
         CompilationBroker.OFFLINE = initialised;
@@ -3037,7 +3074,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_fcmp01() throws Exception {
+    public void IGNORE_C1X_jtt_BC_fcmp01() throws Exception {
 
         initTests();
         CompilationBroker.OFFLINE = initialised;
@@ -3077,7 +3114,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_fcmp02() throws Exception {
+    public void IGNORE_C1X_jtt_BC_fcmp02() throws Exception {
 
         initTests();
         CompilationBroker.OFFLINE = initialised;
@@ -3118,7 +3155,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_fcmp03() throws Exception {
+    public void IGNORE_C1X_jtt_BC_fcmp03() throws Exception {
 
         initTests();
         CompilationBroker.OFFLINE = initialised;
@@ -3159,7 +3196,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_fcmp04() throws Exception {
+    public void IGNORE_C1X_jtt_BC_fcmp04() throws Exception {
 
         initTests();
         CompilationBroker.OFFLINE = initialised;
@@ -3200,7 +3237,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_fcmp05() throws Exception {
+    public void IGNORE_C1X_jtt_BC_fcmp05() throws Exception {
 
         initTests();
         CompilationBroker.OFFLINE = initialised;
@@ -3241,7 +3278,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_fcmp06() throws Exception {
+    public void IGNORE_C1X_jtt_BC_fcmp06() throws Exception {
 
         initTests();
         CompilationBroker.OFFLINE = initialised;
@@ -3282,7 +3319,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_fcmp07() throws Exception {
+    public void IGNORE_C1X_jtt_BC_fcmp07() throws Exception {
 
         initTests();
         CompilationBroker.OFFLINE = initialised;
@@ -3323,7 +3360,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_fcmp08() throws Exception {
+    public void IGNORE_C1X_jtt_BC_fcmp08() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -3363,7 +3400,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_fcmp09() throws Exception {
+    public void IGNORE_C1X_jtt_BC_fcmp09() throws Exception {
 
         initTests();
         CompilationBroker.OFFLINE = initialised;
@@ -3404,7 +3441,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_fcmp10() throws Exception {
+    public void IGNORE_C1X_jtt_BC_fcmp10() throws Exception {
 
         initTests();
         CompilationBroker.OFFLINE = initialised;
@@ -3591,7 +3628,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert failed == false;
     }
 
-    public void IGNORE_jtt_BC_frem() throws Exception {
+    public void IGNORE_C1X_jtt_BC_frem() throws Exception {
         initTests();
         boolean failed = false;
 
@@ -3606,7 +3643,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         String klassName = "jtt.bytecode.BC_frem";
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         CompilationBroker.OFFLINE = true;
-        initialiseCodeBuffers(methods);
+        initialiseCodeBuffers(methods,"BC_frem.java","float test(float, float)");
         int assemblerStatements = codeBytes.length / 4;
         float expectedValue = 0;
         for (int i = 0; i < argsOne.length; i++) {
@@ -3731,7 +3768,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert failed == false;
     }
 
-    public void test_C1X_jtt_BC_iadd3() throws Exception {
+    public void IGNORE_C1X_jtt_BC_iadd3() throws Exception {
         initTests();
         boolean failed = false;
 
@@ -3771,7 +3808,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert failed == false;
     }
 
-    public void test_C1X_jtt_BC_i2s() throws Exception {
+    public void IGNORE_C1X_jtt_BC_i2s() throws Exception {
         initTests();
         boolean failed = false;
 
@@ -3805,7 +3842,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert failed == false;
     }
 
-    public void test_C1X_jtt_BC_iadd() throws Exception {
+    public void IGNORE_C1X_jtt_BC_iadd() throws Exception {
         initTests();
         boolean failed = false;
 
@@ -3845,7 +3882,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert failed == false;
     }
 
-    public void test_C1X_jtt_BC_iadd2() throws Exception {
+    public void IGNORE_C1X_jtt_BC_iadd2() throws Exception {
         initTests();
         boolean failed = false;
 
@@ -4220,7 +4257,7 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
 
-    public void test_C1X_jtt_BC_dneg2() throws Exception {
+    public void IGNORE_C1X_jtt_BC_dneg2() throws Exception {
         initTests();
         boolean failed = false;
 /*
