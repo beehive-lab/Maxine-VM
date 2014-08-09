@@ -224,7 +224,13 @@ final class RegisterVerifier {
     boolean checkState(Interval[] inputState, CiValue reg, Interval interval) {
         if (reg != null && reg.isRegister()) {
             if (inputState[reg.asRegister().number] != interval) {
-                throw new CiBailout("!! Error in register allocation: register " + reg + " does not contain interval " + interval.operand + " but interval " + inputState[reg.asRegister().number]);
+                if (reg.highPart) {
+                    if (C1XOptions.TraceLinearScanLevel >= 4) {
+                        TTY.println("!! Warning: Skip Register Verificaton Error for high part");
+                    }
+                } else {
+                    throw new CiBailout("!! Error in register allocation: register " + reg + " does not contain interval " + interval.operand + " but interval " + inputState[reg.asRegister().number]);
+                }
             }
         }
         return true;
