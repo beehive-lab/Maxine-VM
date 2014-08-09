@@ -70,6 +70,8 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
      */
     private final int flags;
 
+    public final RegisterFlag[] originalFlags;
+
     /**
      * An array of {@link CiRegisterValue} objects, for this register, with one entry
      * per {@link CiKind}, indexed by {@link CiKind#ordinal}.
@@ -113,6 +115,7 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
         this.name = name;
         this.spillSlotSize = spillSlotSize;
         this.flags = createMask(flags);
+        this.originalFlags = flags;
         this.encoding = encoding;
 
         values = new CiRegisterValue[CiKind.VALUES.length];

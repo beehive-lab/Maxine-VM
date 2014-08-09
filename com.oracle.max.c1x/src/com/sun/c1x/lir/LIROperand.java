@@ -35,9 +35,11 @@ public class LIROperand {
      * The value of the operand.
      */
     CiValue value;
+    CiValue valueHigh;
 
-    LIROperand(CiValue value) {
+    LIROperand(CiValue value, CiValue valueHigh) {
         this.value = value;
+        this.valueHigh = valueHigh;
     }
 
     /**
@@ -48,6 +50,10 @@ public class LIROperand {
      */
     public CiValue value(LIRInstruction inst) {
         return value;
+    }
+
+    public CiValue valueHigh(LIRInstruction inst) {
+        return valueHigh;
     }
 
     @Override
@@ -62,7 +68,7 @@ public class LIROperand {
         final int index;
 
         LIRVariableOperand(int index) {
-            super(null);
+            super(null, null);
             this.index = index;
         }
 
@@ -95,7 +101,7 @@ public class LIROperand {
         int index;
 
         LIRAddressOperand(int base, int index, CiAddress address) {
-            super(address);
+            super(address, null);
             assert base != -1 || index != -1 : "address should have at least one variable part";
             this.base = base;
             this.index = index;
