@@ -669,23 +669,36 @@ final class LinearScanWalker extends IntervalWalker {
         CiRegister minFullReg = null;
         CiRegister maxPartialReg = null;
 
-        for (int i = 0; i < availableRegs.length; ++i) {
-            CiRegister availableReg = availableRegs[i];
-            int number = availableReg.number;
-            if (usePos[number] >= intervalTo) {
-                // this register is free for the full interval
-                if (minFullReg == null || availableReg == hint || (usePos[number] < usePos[minFullReg.number] && minFullReg != hint)) {
-                    minFullReg = availableReg;
-                    if (adjacentRegs) {
-                        i++;
+        if (adjacentRegs) {
+            for (int i = 0; i < availableRegs.length; i+=2) {
+                CiRegister availableReg = availableRegs[i];
+                int number = availableReg.number;
+                if (usePos[number] >= intervalTo && usePos[number+1] >= intervalTo) {
+                    // this register is free for the full interval
+                    if (minFullReg == null || availableReg == hint || (usePos[number] < usePos[minFullReg.number] && minFullReg != hint)) {
+                        minFullReg = availableReg;
+                    }
+                } else if (usePos[number] > regNeededUntil && usePos[number+1] > regNeededUntil) {
+                    // this register is at least free until regNeededUntil
+                    if (maxPartialReg == null || availableReg == hint || (usePos[number] > usePos[maxPartialReg.number] && maxPartialReg != hint)) {
+                        maxPartialReg = availableReg;
                     }
                 }
-            } else if (usePos[number] > regNeededUntil) {
-                // this register is at least free until regNeededUntil
-                if (maxPartialReg == null || availableReg == hint || (usePos[number] > usePos[maxPartialReg.number] && maxPartialReg != hint)) {
-                    maxPartialReg = availableReg;
-                    if (adjacentRegs) {
-                        i++;
+            }
+
+        } else {
+            for (int i = 0; i < availableRegs.length; ++i) {
+                CiRegister availableReg = availableRegs[i];
+                int number = availableReg.number;
+                if (usePos[number] >= intervalTo) {
+                    // this register is free for the full interval
+                    if (minFullReg == null || availableReg == hint || (usePos[number] < usePos[minFullReg.number] && minFullReg != hint)) {
+                        minFullReg = availableReg;
+                    }
+                } else if (usePos[number] > regNeededUntil) {
+                    // this register is at least free until regNeededUntil
+                    if (maxPartialReg == null || availableReg == hint || (usePos[number] > usePos[maxPartialReg.number] && maxPartialReg != hint)) {
+                        maxPartialReg = availableReg;
                     }
                 }
             }
@@ -702,8 +715,7 @@ final class LinearScanWalker extends IntervalWalker {
         if (adjacentRegs) {
             regHigh = availableRegs[reg.number + 1];
             splitPos = Math.min(usePos[reg.number], usePos[regHigh.number]);
-            System.out.println("Reg " + reg.number +" RegHigh " + regHigh.number);
-        } else {
+         } else {
             splitPos = usePos[reg.number];
         }
         interval.assignLocation(reg.asValue(interval.kind()));
@@ -798,16 +810,27 @@ final class LinearScanWalker extends IntervalWalker {
         CiRegister regHigh = null;
 
         CiRegister ignore = interval.location() != null && interval.location().isRegister() ? interval.location().asRegister() : null;
-        for (int i = 0; i < availableRegs.length; ++i) {
-            CiRegister availableReg = availableRegs[i];
-            int number = availableReg.number;
-              if (availableReg == ignore) {
-                // this register must be ignored
-            } else if (usePos[number] > regNeededUntil) {
-                if (reg == null || (usePos[number] > usePos[reg.number])) {
-                    reg = availableReg;
-                    if (adjacentRegs) {
-                        i++;
+        if (adjacentRegs) {
+            for (int i = 0; i < availableRegs.length; i+=2) {
+                CiRegister availableReg = availableRegs[i];
+                int number = availableReg.number;
+                if (availableReg == ignore) {
+                    // this register must be ignored
+                } else if (usePos[number] > regNeededUntil && usePos[number+1] > regNeededUntil) {
+                    if (reg == null || (usePos[number] > usePos[reg.number])) {
+                        reg = availableReg;
+                    }
+                }
+            }
+        } else {
+            for (int i = 0; i < availableRegs.length; ++i) {
+                CiRegister availableReg = availableRegs[i];
+                int number = availableReg.number;
+                if (availableReg == ignore) {
+                    // this register must be ignored
+                } else if (usePos[number] > regNeededUntil) {
+                    if (reg == null || (usePos[number] > usePos[reg.number])) {
+                        reg = availableReg;
                     }
                 }
             }
@@ -815,11 +838,7 @@ final class LinearScanWalker extends IntervalWalker {
         int usePosition = (reg != null ? usePos[reg.number] : -1);
         int splitPos = (reg != null ? blockPos[reg.number] : -1);
 
-        if (adjacentRegs) {
-            regHigh = availableRegs[reg.number + 1];
-            usePosition = Math.min(usePos[reg.number], usePos[regHigh.number]);
-            splitPos = Math.min(blockPos[reg.number], blockPos[regHigh.number]);
-        }
+
         if (reg == null || usePosition <= firstUsage) {
 
             // the first use of cur is later than the spilling position -> spill cur
@@ -837,8 +856,18 @@ final class LinearScanWalker extends IntervalWalker {
             splitAndSpillInterval(interval);
             return;
         }
+        if (adjacentRegs) {
+            regHigh = availableRegs[reg.number + 1];
+            usePosition = Math.min(usePos[reg.number], usePos[regHigh.number]);
+            splitPos = Math.min(blockPos[reg.number], blockPos[regHigh.number]);
+        }
 
-        boolean needSplit = blockPos[reg.number] <= intervalTo;
+        boolean needSplit = false;
+        if (adjacentRegs) {
+            needSplit = blockPos[reg.number] <= intervalTo || blockPos[reg.number+1] <= intervalTo;
+        } else {
+            needSplit = blockPos[reg.number] <= intervalTo;
+        }
 
         if (C1XOptions.TraceLinearScanLevel >= 4) {
             TTY.println("decided to use register %d", reg.number);

@@ -737,7 +737,8 @@ public final class LinearScan {
         // values in registers, which is ok.
         if (!operand.isVariable() && block != ir.startBlock) {
             if (isProcessed(operand)) {
-                assert liveKill.get(operandNumber(operand)) : "using fixed register that is not defined in this block";
+                //TODO: restore this assertion for 32bit.
+                //assert liveKill.get(operandNumber(operand)) : "using fixed register that is not defined in this block";
             }
         }
     }
@@ -1202,7 +1203,6 @@ public final class LinearScan {
                 }
 
                 addUse(operand, blockFrom, blockTo + 2, RegisterPriority.None, CiKind.Illegal);
-
                 // add special use positions for loop-end blocks when the
                 // interval is used anywhere inside this loop. It's possible
                 // that the block was part of a non-natural loop, so it might
@@ -1262,6 +1262,7 @@ public final class LinearScan {
                     assert operand.isVariableOrRegister();
                     RegisterPriority p = registerPriorityOfInputOperand(op, operand);
                     Interval interval = addUse(operand, blockFrom, opId, p, null);
+
                     if (interval != null && op instanceof LIRXirInstruction) {
                         Range range = interval.first();
                         // (tw) Increase range by 1 in order to overlap the input with the temp and the output operand.
