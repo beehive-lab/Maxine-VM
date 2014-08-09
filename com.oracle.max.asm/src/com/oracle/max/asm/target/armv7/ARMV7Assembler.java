@@ -696,11 +696,9 @@ public class ARMV7Assembler extends AbstractAssembler {
                     mov(ConditionFlag.Always, false, scratchRegister, base);
                 }
             }
-        } else { // ADDED for ARMV7LIRAssembler stack2reg
-            mov32BitConstant(scratchRegister, disp);
-            addRegisters(ConditionFlag.Always, false, scratchRegister, scratchRegister, ARMV7.r11, 0, 0); // Frame
-// pointer
-
+        } else {
+            mov32BitConstant(scratchRegister, addr.kind.isLong() ? disp + 4 : disp);
+            sub(ConditionFlag.Always, false, scratchRegister, ARMV7.r11, scratchRegister, 0, 0);
             if (index.isValid()) {
                 addlsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
             }
