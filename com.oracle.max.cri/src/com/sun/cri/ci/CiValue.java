@@ -29,7 +29,7 @@ import java.io.*;
 /**
  * Abstract base class for values manipulated by the compiler. All values have a {@linkplain CiKind kind} and are immutable.
  */
-public abstract class CiValue implements Serializable {
+public abstract class CiValue implements Serializable, Cloneable {
 
     public static CiValue IllegalValue = new CiValue(CiKind.Illegal) {
         @Override
@@ -59,6 +59,8 @@ public abstract class CiValue implements Serializable {
      */
     public final CiKind kind;
 
+    public boolean highPart;
+
     /**
      * Initializes a new value of the specified kind.
      * @param kind the kind
@@ -81,6 +83,10 @@ public abstract class CiValue implements Serializable {
 
     public final boolean isLegal() {
         return this != IllegalValue;
+    }
+
+    public CiValue getClone() {
+        return null;
     }
 
     /**

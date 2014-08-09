@@ -22,6 +22,7 @@
  */
 package com.sun.cri.ci;
 
+
 /**
  * Denotes a register that stores a value of a fixed kind. There is exactly one (canonical) instance of {@code
  * CiRegisterValue} for each ({@link CiRegister}, {@link CiKind}) pair. Use {@link CiRegister#asValue(CiKind)} to
@@ -42,6 +43,14 @@ public final class CiRegisterValue extends CiValue {
         this.reg = register;
     }
 
+    CiRegisterValue(CiRegisterValue regValue) {
+        super(regValue.kind);
+        assert regValue.kind.isLong() : regValue.kind;
+        String name = regValue.reg.name.substring(0, 1) + (new Integer(regValue.reg.name.substring(1, 2)) + 1);
+        this.reg = new CiRegister(regValue.reg.number + 1, regValue.reg.encoding, regValue.reg.spillSlotSize, name, regValue.reg.originalFlags);
+        highPart = true;
+    }
+
     @Override
     public int hashCode() {
         return kind.ordinal() ^ reg.number;
@@ -58,6 +67,15 @@ public final class CiRegisterValue extends CiValue {
             return ((CiRegisterValue) other).reg == reg;
         }
         return false;
+    }
+
+    @Override
+    public CiRegisterValue getClone() {
+        if (kind.isLong()) {
+            return new CiRegisterValue(this);
+        } else {
+            return null;
+        }
     }
 
     @Override
