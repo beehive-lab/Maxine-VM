@@ -563,7 +563,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected void emitUnprotectMethod() {
         protectionLiteralIndex = objectLiterals.size();
-        objectLiterals.add(T1XTargetMethod.PROTECTED);
+        //objectLiterals.add(T1XTargetMethod.PROTECTED);
         asm.xorq(ARMV7.r8, ARMV7.r8);
         System.out.println("emitUnProtect partially commented out ... OBJECT LITERALS");
        // asm.setUpScratch(CiAddress.Placeholder);

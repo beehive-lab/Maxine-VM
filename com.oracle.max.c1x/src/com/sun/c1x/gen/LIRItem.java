@@ -190,9 +190,10 @@ public class LIRItem {
             } else {
                 loadItem();
             }
-        } else if (gen.compilation.target.arch.isARM()) {
+        } /*else if (gen.compilation.target.arch.isARM()) {
             // TODO instantiate code
-        } else {
+
+        } */ else {
             Util.shouldNotReachHere();
         }
     }

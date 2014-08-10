@@ -4,6 +4,7 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.sun.max.asm.sparc.FPR;
 import com.sun.max.vm.Log;
 import org.objectweb.asm.util.*;
 
@@ -262,7 +263,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_UsageOfStaticMethods() throws Exception {
+    public void ignore_jtt_UsageOfStaticMethods() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -948,6 +949,35 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
+    public void test_C1X_jtt_BC_tableswitch() throws Exception {
+        boolean failed = false;
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+
+        int argOne[] = { 7, -1, 0, 1, 2, 3, 4, 5, 6, 0};
+        String klassName = "jtt.bytecode.BC_tableswitch";
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+
+        initialiseCodeBuffers(methods, "BC_tableswitch.java", "int test(int)");
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < argOne.length; i++) {
+            expectedValue = jtt.bytecode.BC_tableswitch.test(argOne[i]);
+            String functionPrototype = ARMCodeWriter.preAmble("int", "int", Integer.toString(argOne[i]));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (registerValues[0] != expectedValue) {
+                System.out.println("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            }
+            Log.println("BC_tableswitch test " + argOne[i] + " returned " + registerValues[0] + " expected " + expectedValue);
+            if (registerValues[0] != expectedValue) {
+                failed = true;
+            }
+            theCompiler.cleanup();
+        }
+        assert (failed == false);
+    }
+
     public void test_jtt_BC_tableswitch() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
@@ -1013,9 +1043,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_XXXXfdiv() throws Exception {
+    public void test_jtt_BC_XXXXfdiv() throws Exception {
         boolean failed = false;
-        MaxineARMTester.DEBUGOBJECTS = true;
+        MaxineARMTester.DEBUGOBJECTS = false;
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         float argOne[] = { 14.0f};
@@ -2156,8 +2186,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             if (!fileName.equals(m.classMethodActor.sourceFileName())) {
                 continue;
             }
-            //System.out.println(m.classMethodActor().simpleName());
-            //System.out.println(m.classMethodActor().sourceFileName());
+            // System.out.println(m.classMethodActor().simpleName());
+            // System.out.println(m.classMethodActor().sourceFileName());
 
             byte[] b = m.code();
             if (entryPoint == -1) {
@@ -2362,7 +2392,7 @@ public class ARMV7JTTTest extends MaxTestCase {
              * ARGUMENT VALUES / VARIABLES (*pf)(****1*****); // Need to change this to something related to the test
              * itself asm volatile("forever: b forever");
              */
-            MaxineARMTester.DEBUGOBJECTS = true;
+            MaxineARMTester.DEBUGOBJECTS = false;
             String functionPrototype = ARMCodeWriter.preAmble("float", "double", Double.toString(arguments[i]));
             // good question here ... is the value returned in the float s0 or the core s0 register
             Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
@@ -2647,8 +2677,7 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     }
 
-    public void test_jtt_BC_dcmp01() throws Exception {
-
+    public void test_C1X_jtt_BC_dcmp01() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         // double argOne[] = {0.0d, -0.1}; * @Runs: (0d, -0.1d) = false; (78.00d, 78.001d) = true
@@ -2686,16 +2715,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert (failed == false);
     }
 
-    public void test_C1Xjtt_BC_dcmp02() throws Exception {
-        initTests();
-        CompilationBroker.OFFLINE = initialised;
-
-        /*
-         * @Harness: java
-         *
-         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
-         */
-
+    public void test_C1X_jtt_BC_dcmp02() throws Exception {
         double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
         String klassName = "jtt.bytecode.BC_dcmp02";
@@ -2727,16 +2747,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1Xjtt_BC_dcmp03() throws Exception {
+    public void test_C1X_jtt_BC_dcmp03() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
-
-        /*
-         * @Harness: java
-         *
-         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
-         */
-
         double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
         String klassName = "jtt.bytecode.BC_dcmp03";
@@ -2768,16 +2781,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1Xjtt_BC_dcmp04() throws Exception {
+    public void test_C1X_jtt_BC_dcmp04() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
-
-        /*
-         * @Harness: java
-         *
-         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
-         */
-
         double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
         String klassName = "jtt.bytecode.BC_dcmp04";
@@ -2809,16 +2815,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1Xjtt_BC_dcmp05() throws Exception {
+    public void test_C1X_jtt_BC_dcmp05() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
-
-        /*
-         * @Harness: java
-         *
-         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
-         */
-
         double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
         String klassName = "jtt.bytecode.BC_dcmp05";
@@ -2850,16 +2849,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1Xjtt_BC_dcmp06() throws Exception {
+    public void test_C1X_jtt_BC_dcmp06() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
-
-        /*
-         * @Harness: java
-         *
-         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
-         */
-
         double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
         String klassName = "jtt.bytecode.BC_dcmp06";
@@ -2891,16 +2883,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1Xjtt_BC_dcmp07() throws Exception {
+    public void test_C1X_jtt_BC_dcmp07() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
-
-        /*
-         * @Harness: java
-         *
-         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
-         */
-
         double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
         String klassName = "jtt.bytecode.BC_dcmp07";
@@ -2932,16 +2917,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1Xjtt_BC_dcmp08() throws Exception {
+    public void test_C1X_jtt_BC_dcmp08() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
-
-        /*
-         * @Harness: java
-         *
-         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
-         */
-
         double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
         String klassName = "jtt.bytecode.BC_dcmp08";
@@ -2973,16 +2951,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1Xjtt_BC_dcmp09() throws Exception {
+    public void test_C1X_jtt_BC_dcmp09() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
-
-        /*
-         * @Harness: java
-         *
-         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
-         */
-
         double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
         String klassName = "jtt.bytecode.BC_dcmp09";
@@ -3014,15 +2985,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1Xjtt_BC_dcmp10() throws Exception {
+    public void test_C1X_jtt_BC_dcmp10() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
-
-        /*
-         * @Harness: java
-         *
-         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
-         */
 
         Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
         String klassName = "jtt.bytecode.BC_dcmp10";
@@ -3054,7 +3019,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1Xjtt_BC_fcmp01() throws Exception {
+    public void test_C1X_jtt_BC_fcmp01() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -3094,7 +3059,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1Xjtt_BC_fcmp02() throws Exception {
+    public void test_C1X_jtt_BC_fcmp02() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -3135,16 +3100,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1Xjtt_BC_fcmp03() throws Exception {
+    public void test_C1X_jtt_BC_fcmp03() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
-
-        /*
-         * @Harness: java
-         *
-         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
-         */
-
         float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
         String klassName = "jtt.bytecode.BC_fcmp03";
@@ -3176,16 +3134,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1Xjtt_BC_fcmp04() throws Exception {
+    public void test_C1X_jtt_BC_fcmp04() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
-
-        /*
-         * @Harness: java
-         *
-         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
-         */
-
         float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
         String klassName = "jtt.bytecode.BC_fcmp04";
@@ -3217,16 +3168,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1Xjtt_BC_fcmp05() throws Exception {
+    public void test_C1X_jtt_BC_fcmp05() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
-
-        /*
-         * @Harness: java
-         *
-         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
-         */
-
         float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
         String klassName = "jtt.bytecode.BC_fcmp05";
@@ -3258,16 +3202,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1Xjtt_BC_fcmp06() throws Exception {
+    public void test_C1X_jtt_BC_fcmp06() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
-
-        /*
-         * @Harness: java
-         *
-         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
-         */
-
         float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
         String klassName = "jtt.bytecode.BC_fcmp06";
@@ -3299,16 +3236,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1Xjtt_BC_fcmp07() throws Exception {
+    public void test_C1X_jtt_BC_fcmp07() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
-
-        /*
-         * @Harness: java
-         *
-         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
-         */
-
         float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
         String klassName = "jtt.bytecode.BC_fcmp07";
@@ -3340,16 +3270,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1Xjtt_BC_fcmp08() throws Exception {
+    public void test_C1X_jtt_BC_fcmp08() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
-
-        /*
-         * @Harness: java
-         *
-         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
-         */
-
         float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
         String klassName = "jtt.bytecode.BC_fcmp08";
@@ -3381,16 +3304,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1Xjtt_BC_fcmp09() throws Exception {
+    public void test_C1X_jtt_BC_fcmp09() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
-
-        /*
-         * @Harness: java
-         *
-         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
-         */
-
         float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
         Log.println("dcmp seems to fail on comparisons involving NaN -- incorrect return values r0 not initialised");
         String klassName = "jtt.bytecode.BC_fcmp09";
@@ -3422,16 +3338,10 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1Xjtt_BC_fcmp10() throws Exception {
+    public void test_C1X_jtt_BC_fcmp10() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
-
-        /*
-         * @Harness: java
-         *
-         * @Runs: -1.0d = false; 1.0d = false; 0.0d = false; -0.0d = false
-         */
 
         String klassName = "jtt.bytecode.BC_fcmp10";
 
@@ -3608,22 +3518,16 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert failed == false;
     }
 
-    public void test_jtt_BC_frem() throws Exception {
+    public void test_C1X_jtt_BC_frem() throws Exception {
         initTests();
         boolean failed = false;
-
-/*
- * @Harness: java
- *
- * @Runs: (311.0D, 10D) = 31.1D
- */
         float argsOne[] = { 311.0f, 2f};
         float argsTwo[] = { 10f, 20.1f};
 
         String klassName = "jtt.bytecode.BC_frem";
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         CompilationBroker.OFFLINE = true;
-        initialiseCodeBuffers(methods);
+        initialiseCodeBuffers(methods, "BC_frem.java", "float test(float, float)");
         int assemblerStatements = codeBytes.length / 4;
         float expectedValue = 0;
         for (int i = 0; i < argsOne.length; i++) {
@@ -3941,14 +3845,6 @@ public class ARMV7JTTTest extends MaxTestCase {
         initTests();
         boolean failed = false;
 
-        /*
-         * @Harness: java
-         *
-         * @Runs: 0.0f = 0.0f; 1.1f = 1.1f; -1.4f = -1.4f;
-         *
-         * @Runs: 256.33f = 256.33f; 1000.001f = 1000.001f
-         */
-
         float argsOne[] = { 0.0f, 1.1f, -1.4f, 256.33f, 1000.001f};
 
         String klassName = "jtt.bytecode.BC_fload";
@@ -4236,6 +4132,41 @@ public class ARMV7JTTTest extends MaxTestCase {
         assert failed == false;
     }
 
+    public void test_C1X_jtt_BC_dneg2() throws Exception {
+        initTests();
+        boolean failed = false;
+/*
+ * @Harness: java
+ *
+ * @Runs: -0.0d = `java.lang.Double.POSITIVE_INFINITY; 0.0d = `java.lang.Double.NEGATIVE_INFINITY
+ */
+
+        double argsOne[] = { 1.0d, -1.0d, -0.0D, 0.0d, -2.0d, 2.0d};
+
+        String klassName = "jtt.bytecode.BC_dneg2";
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        initialiseCodeBuffers(methods, "BC_dneg2.java", "double test(double)");
+        assert (entryPoint != -1);
+        int assemblerStatements = codeBytes.length / 4;
+        double expectedValue = 0;
+        for (int i = 0; i < argsOne.length; i++) {
+            double doubleValue = jtt.bytecode.BC_dneg2.test(argsOne[i]);
+
+            String functionPrototype = ARMCodeWriter.preAmble("double", " double ", Double.toString(argsOne[i]));
+            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            if (!registerValues[17].equals(new Double(doubleValue))) { // r0.r15 + APSR then FPREGS
+                failed = true;
+                System.out.println("Failed incorrect value " + ((Double) registerValues[17]).doubleValue() + " " + doubleValue);
+            }
+            Log.println("DNEG2 test " + i + " returned " + ((Double) registerValues[17]).doubleValue() + " expected " + doubleValue);
+            // assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " +
+// expectedValue;
+            theCompiler.cleanup();
+        }
+        assert failed == false;
+    }
+
     public void test_jtt_BC_XXdneg9() throws Exception {
         initTests();
         boolean failed = false;
@@ -4249,9 +4180,9 @@ public class ARMV7JTTTest extends MaxTestCase {
          * result2 = -b; double result = 0.0; if (which == 0) { result = result1; } else { result = result2; } return
          * result; } }
          */
-        double argsOne[] = { 0.0D, -1.01D, 7263.8734d, 0.0d, -1.01d, 7263.8743d};
-        double argsTwo[] = { 1.0d, -2.01D, 8263.8734d, 1.0d, -2.01d, 8263.8734d};
-        int argsThree[] = { 0, 0, 0, 1, 1, 1};
+        double argsOne[] = { 0.0D, -1.01D, 7263.8734d, 0.0d, -1.01d, 7263.8743d, 0.0d};
+        double argsTwo[] = { 1.0d, -2.01D, 8263.8734d, 1.0d, -2.01d, 8263.8734d, 1.0d};
+        int argsThree[] = { 0, 0, 0, 1, 1, 1, 0};
 
         String klassName = "jtt.bytecode.BC_dneg";
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -4265,11 +4196,17 @@ public class ARMV7JTTTest extends MaxTestCase {
 
             String functionPrototype = ARMCodeWriter.preAmble("double", "double , double, int", Double.toString(argsOne[i]) + "," + Double.toString(argsTwo[i]) + "," + Integer.toString(argsThree[i]));
             Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
-            if (!registerValues[17].equals(new Double(doubleValue))) { // r0.r15 + APSR then FPREGS
+            if (registerValues[17] == null) {
                 failed = true;
-                System.out.println("Failed incorrect value " + registerValues[0] + " " + doubleValue);
+                Log.println("QEMU crashed ... null registverValues");
+            } else {
+                if (!registerValues[17].equals(new Double(doubleValue))) { // r0.r15 + APSR then FPREGS
+                    failed = true;
+                    System.out.println("Failed incorrect value " + registerValues[0] + " " + doubleValue);
+                }
+                Log.println("DNEG test " + i + " returned " + ((Double) registerValues[17]).doubleValue() + " expected " + doubleValue);
+
             }
-            Log.println("DNEG test " + i + " returned " + ((Double) registerValues[17]).doubleValue() + " expected " + doubleValue);
             // assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " +
 // expectedValue;
             theCompiler.cleanup();
@@ -4287,7 +4224,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(-3L, -3L));
         pairs.add(new Args(10000L, 10000L));
         pairs.add(new Args(549755814017L, 549755814017L));
-        initialiseCodeBuffers(methods, "BC_lload_0.java","long test(long)");
+        initialiseCodeBuffers(methods, "BC_lload_0.java", "long test(long)");
         int assemblerStatements = codeBytes.length / 4;
         for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
@@ -4301,8 +4238,6 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-
-
     public void test_jtt_BC_lload_1() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = "jtt.bytecode.BC_lload_1";
@@ -4312,16 +4247,16 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(1, 1L));
         pairs.add(new Args(1, -3L));
         pairs.add(new Args(1, 10000L));
-        initialiseCodeBuffers(methods, "BC_lload_1.java","long test(int, long)");
+        initialiseCodeBuffers(methods, "BC_lload_1.java", "long test(int, long)");
         int assemblerStatements = codeBytes.length / 4;
         for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             long expectedValue = jtt.bytecode.BC_lload_1.test(pair.first, pair.lfirst);
-            String functionPrototype = ARMCodeWriter.preAmble("long long", "int, long long", Integer.toString(pair.first)+","+Long.toString(pair.lfirst));
+            String functionPrototype = ARMCodeWriter.preAmble("long long", "int, long long", Integer.toString(pair.first) + "," + Long.toString(pair.lfirst));
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
             long returnValue = 0xffffffffL & registerValues[0];
             returnValue |= (0xffffffffL & registerValues[1]) << 32;
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1]+ " r2 " + registerValues[2] + " " + expectedValue;
+            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " r2 " + registerValues[2] + " " + expectedValue;
             theCompiler.cleanup();
         }
     }
@@ -4364,8 +4299,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             long expectedValue = jtt.bytecode.BC_lload_3.test(pair.first, pair.second, pair.third, pair.lfirst);
-            String functionPrototype = ARMCodeWriter
-                            .preAmble("long long", "int, int, int, long long", Integer.toString(pair.first) + "," + Integer.toString(pair.second) + ","+ Integer.toString(pair.third) + "," + Long.toString(pair.lfirst));
+            String functionPrototype = ARMCodeWriter.preAmble("long long", "int, int, int, long long",
+                            Integer.toString(pair.first) + "," + Integer.toString(pair.second) + "," + Integer.toString(pair.third) + "," + Long.toString(pair.lfirst));
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
             long returnValue = 0xffffffffL & registerValues[0];
             returnValue |= (0xffffffffL & registerValues[1]) << 32;

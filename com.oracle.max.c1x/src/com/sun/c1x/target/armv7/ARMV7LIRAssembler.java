@@ -99,6 +99,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     @Override
     protected void emitReturn(CiValue result) {
         // TODO: Consider adding safepoint polling at return!
+
         masm.ret(0);
     }
 
@@ -612,8 +613,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     protected void emitTableSwitch(LIRTableSwitch op) {
 
         assert assertEmitTableSwitch(op);
-        assert 0 == 1 : "emitTableSwitch ARMV7IRAssembler";
-
+        //assert 0 == 1 : "emitTableSwitch ARMV7IRAssembler";
+        Log.println("C1X ARMV7LIRAssembler tableswitch debug");
         CiRegister value = op.value().asRegister();
         final Buffer buf = masm.codeBuffer;
 
@@ -628,8 +629,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         }
 
         // Jump to default target if index is not within the jump table
-       // masm.jcc(ConditionFlag.above, op.defaultTarget.label());
+       //masm.jcc(ConditionFlag.above, op.defaultTarget.label());
         masm.jcc(ConditionFlag.SignedGreater,op.defaultTarget.label());
+        masm.cmpl(value,op.lowKey); // added
+        masm.jcc(ConditionFlag.SignedLesser,op.defaultTarget.label());
 
         // Set scratch to address of jump table
         int leaPos = buf.position();
@@ -638,8 +641,13 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
         // Load jump table entry into scratch and jump to it
         //masm.movslq(value, new CiAddress(CiKind.Int, rscratch1.asValue(), value.asValue(), Scale.Times4, 0));
-        //masm.addq(rscratch1, value);
-        //masm.jmp(rscratch1);
+        masm.setUpRegister(value, new CiAddress(CiKind.Int, rscratch1.asValue(), value.asValue(), CiAddress.Scale.Times4, 0));
+        //masm.ldr(ConditionFlag.Always,value,value,0);
+        // TODO do we need to load the value stored at the address done above but might be wrong
+       //masm.addq(rscratch1, value);
+        masm.add(ConditionFlag.Always,false,rscratch1,value,0,0);
+        //masm.ldr(ConditionFlag.Always,rscratch1,rscratch1,0);
+        masm.jmp(rscratch1);
 
         // Inserting padding so that jump table address is 4-byte aligned
         if ((buf.position() & 0x3) != 0) {
@@ -661,15 +669,18 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 buf.emitInt(imm32);
             } else {
                 label.addPatchAt(buf.position());
-
-                buf.emitByte(0); // psuedo-opcode for jump table entry
-                buf.emitShort(offsetToJumpTableBase);
-                buf.emitByte(0); // padding to make jump table entry 4 bytes wide
+                buf.emitInt((ConditionFlag.NeverUse.value() << 28)|(offsetToJumpTableBase<< 12)|0x0d0);
+                Log.println("PATCH at " + buf.position() + " " + offsetToJumpTableBase + " " +Integer.toHexString(offsetToJumpTableBase));
+                //buf.emitByte(0); // psuedo-opcode for jump table entry
+                //buf.emitShort(offsetToJumpTableBase);
+                //buf.emitByte(0); // padding to make jump table entry 4 bytes wide
             }
         }
 
         JumpTable jt = new JumpTable(jumpTablePos, op.lowKey, highKey, 4);
         tasm.targetMethod.addAnnotation(jt);
+
+        Log.println("tableswitch emitted");
     }
 
     @Override
@@ -2382,6 +2393,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     //masm.vmov(ConditionFlag.Always,ARMV7.s6,ARMV7.s3);
                    // masm.vmov(ConditionFlag.Always,ARMV7.s4,ARMV7.s2);
                    // masm.vmov(ConditionFlag.Always,ARMV7.s2,ARMV7.s1);
+                    masm.str(ConditionFlag.Always,ARMV7.r14,ARMV7.r13,0); // save the return value!!!!!
 
                     if (C1XOptions.ZapStackOnMethodEntry) {
                         final int intSize = 4;
@@ -2410,6 +2422,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         int frameToCSA = frameMap.offsetToCalleeSaveAreaStart();
                         masm.restore(csl, frameToCSA);
                     }
+                    masm.ldr(ConditionFlag.Always,ARMV7.r14,ARMV7.r13,0); // restore LR prior to adjusting stack?
                     masm.incrementq(ARMV7.r13,frameSize);
                   //  masm.incrementq(ARMV7.rsp, frameSize);
                     break;
@@ -2535,12 +2548,15 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             CiStackSlot inArg = stub.inArgs[i];
             assert inArg.inCallerFrame();
             CiStackSlot outArg = inArg.asOutArg();
+            System.out.print("CALL STUB STORE ");
             storeParameter(args[i], outArg);
         }
 
         directCall(stub.stubObject, info);
 
         if (result != CiRegister.None) {
+            System.out.print("CALL STUB RESULT ");
+
             final CiAddress src = compilation.frameMap().toStackAddress(stub.outResult.asOutArg());
             loadResult(result, src);
         }
@@ -2594,8 +2610,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         } else if (registerOrConstant.isRegister()) {
             masm.setUpScratch(dst);
             if (k.isFloat()) {
-                masm.vstr(ConditionFlag.Always,registerOrConstant.asRegister(),ARMV7.r12,0);
-            //    masm.movss(dst, registerOrConstant.asRegister());
+
+                // TODO manipulate for use of s0..s31 registers
+                masm.vstr(ConditionFlag.Always,asXmmFloatReg(registerOrConstant),ARMV7.r12,0);
+                //masm.movss(dst, registerOrConstastoreParameternt.asRegister());
             } else if (k.isDouble()) {
                 masm.vstr(ConditionFlag.Always,registerOrConstant.asRegister(),ARMV7.r12,0);
 
@@ -2639,6 +2657,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         }
         tasm.recordDirectCall(before, after - before, asCallTarget(target), info);
         tasm.recordExceptionHandlers(after, info);
+        masm.nop(4);
     }
 
     public void directJmp(Object target) {

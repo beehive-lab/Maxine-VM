@@ -22,15 +22,16 @@
  */
 package com.sun.c1x.lir;
 
-import static com.sun.cri.ci.CiCallingConvention.Type.*;
-
-import com.sun.c1x.*;
-import com.sun.c1x.stub.*;
-import com.sun.c1x.util.*;
-import com.sun.cri.bytecode.*;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.stub.CompilerStub;
+import com.sun.c1x.util.Util;
+import com.sun.cri.bytecode.Bytecodes;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
-import com.sun.cri.ri.*;
+import com.sun.cri.ri.RiResolvedMethod;
+
+import static com.sun.cri.ci.CiCallingConvention.Type.JavaCallee;
+import static com.sun.cri.ci.CiCallingConvention.Type.RuntimeCall;
 
 /**
  * This class is used to build the stack frame layout for a compiled method.
@@ -217,6 +218,8 @@ public final class FrameMap {
      * @param stub the compiler stub
      */
     public void usesStub(CompilerStub stub) {
+        // TODO APN  could this underestimate the size on 32bit targets!!! as we need two spill slots for a long/double
+        // APN hack multiply spillslotsize by 2x
         int argsSize = stub.inArgs.length * compilation.target.spillSlotSize;
         int resultSize = stub.resultKind.isVoid() ? 0 : compilation.target.spillSlotSize;
         reserveOutgoing(Math.max(argsSize, resultSize));
@@ -230,13 +233,29 @@ public final class FrameMap {
      */
     public CiAddress toStackAddress(CiStackSlot slot) {
         int size = compilation.target.sizeInBytes(slot.kind);
+        /*System.out.print(" KIND is ");
+        if(slot.kind == CiKind.Double)  System.out.print("Dobule ");
+        else if(slot.kind == CiKind.Long) System.out.print("Long ");
+        else if(slot.kind == CiKind.Float)
+                     System.out.print("Float ");
+        else if(slot.kind ==  CiKind.Int)
+                    System.out.print("Int ");
+        else if(slot.kind == CiKind.Object)
+                    System.out.print("Object ");
+        else
+                System.out.print("other ");*/
+        
         if (slot.inCallerFrame()) {
             int callerFrame = frameSize() + compilation.target.arch.returnAddressSize;
             final int callerFrameOffset = slot.index() * compilation.target.spillSlotSize;
             int offset = callerFrame + callerFrameOffset;
+            //System.out.println("INCALLER " +  offset + " SIZE " + size + " index " + slot.index() + " callerFrame " + callerFrame + " callerFoffset " + callerFrameOffset );
+
+            //return new CiAddress(slot.kind, CiRegister.Frame.asValue(), offset);
             return new CiAddress(slot.kind, CiRegister.Frame.asValue(), offset);
         } else {
             int offset = offsetForOutgoingOrSpillSlot(slot.index(), size);
+            //System.out.println("NOTINCALLER " +  offset + " SIZE " + size + " index " + slot.index());
             return new CiAddress(slot.kind, CiRegister.Frame.asValue(), offset);
         }
     }

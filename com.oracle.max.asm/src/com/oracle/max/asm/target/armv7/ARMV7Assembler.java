@@ -71,19 +71,40 @@ public class ARMV7Assembler extends AbstractAssembler {
         int operation = codeBuffer.getInt(branch);
         if(operation == (ConditionFlag.NeverUse.value() << 28 | 0xdead)) { // JCC
            //
-            System.out.println("MATCHED JCC");
+            System.out.println("MATCHED JCC " + branch);
             disp -= 4;
             instruction = movwHelper(ConditionFlag.Always,ARMV7.r12,disp & 0xffff);
             codeBuffer.emitInt(instruction,branch);
             instruction = movtHelper(ConditionFlag.Always,ARMV7.r12,(disp >> 16) & 0xffff);
             codeBuffer.emitInt(instruction,branch+4);
         } else if (operation == (ConditionFlag.NeverUse.value() << 28 | 0xbeef)) { // JMP
-            disp += 8;
-            codeBuffer.emitInt(0x0a000000 | disp | ((ConditionFlag.Always.value() & 0xf) << 28),branch);
-            System.out.println("MATCHED JMP");
+            //disp += 8;
+            disp +=8;
+
+            disp = disp/4;
+            if (disp < 0) {
+                System.out.println("NEGATIVE DISP " + disp);
+            }
+            codeBuffer.emitInt(0x0a000000 | (disp & 0xffffff) | ((ConditionFlag.Always.value() & 0xf) << 28),branch);
+            System.out.println("MATCHED JMP branch " + branch + " DISP " + disp + " target "+ target );
+
+        } else if ((operation & 0xf0000fff) == (ConditionFlag.NeverUse.value() << 28 | 0x0d0)) {
+            disp = disp + 8;
+            disp = disp/4;
+            codeBuffer.emitInt(0x0a000000 | (disp & 0xffffff) | ((ConditionFlag.Always.value() & 0xf) << 28),branch);
+
+            /*code[callOffset + 7] = (byte) (instruction & 0xff);
+            code[callOffset + 6] = (byte) ((instruction >> 8) & 0xff);
+            code[callOffset + 5] = (byte) ((instruction >> 16) & 0xff);
+            code[callOffset + 4] = (byte) ((instruction >> 24) & 0xff);
+            */
+
+        } else {
+
+                System.out.println("patchjumpTarget NOT MATCHED " + branch + " " + target);
+                assert 0 == 1;
 
         }
-
 
         //codeBuffer.emitInt(0x0a000000 | (target - branch) | ((ConditionFlag.Always.value() & 0xf) << 28),branch);
 
@@ -617,8 +638,8 @@ public class ARMV7Assembler extends AbstractAssembler {
         int instruction;
         instruction = 0x05800000;
         instruction |= (flag.value() & 0xf) << 28;
-        instruction |= (valueReg.encoding & 0xf) << 16;
-        instruction |= (baseRegister.encoding & 0xf) << 12;
+        instruction |= (valueReg.encoding & 0xf) << 12;
+        instruction |= (baseRegister.encoding & 0xf) << 16;
         instruction |= offset12 & 0xfff;
         emitInt(instruction);
     }
@@ -679,6 +700,9 @@ public class ARMV7Assembler extends AbstractAssembler {
             return;
         }
         assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
+        if(base == CiRegister.Frame) {
+            base = frameRegister;
+        }
         // APN can we have a memory address --- not handled yet?
         // APN simple case where we just have a register destination
         // TODO fix this so it will issue loads when appropriate!
@@ -837,16 +861,9 @@ public class ARMV7Assembler extends AbstractAssembler {
         // TODO APN ok Im assuming this is just as simple mov rather than an actual sign extend?
         // it might be used in 64 bit mode, but ARMV7 is only 32 bit anyway.
         // if it transpires that this is necessary for 64bit values in a 32bit processor
-        // -- we should be able to see this in the lowering phases AND/OR testing of bytecodes involving longs
-        // then we will need to modify the function
-        // to account for this ....
-        // NOt sure how to work this, if dst is an address do we need to load the value of the
-        // immediate into a 32bit address memory location??
-        // not going to dwell on this for now but Im not confident that the code
-        // below will be sensible
-        // probable errors ... needs to use 2x32bit registers and do a sign extend
-        // possibly needs to store result of sign extension in memory.
-        mov32BitConstant(dst.base(), imm32);
+        setUpScratch(dst);
+        mov32BitConstant(ARMV7.r8, imm32);
+        str(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
     }
 
     public final void cmpl(CiRegister src, int imm32) {
@@ -1057,6 +1074,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         // might need to push the value of r14 onto the stack in order to make this work for a call from the C harness
         // TODO for testing of the methods
         mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
+
     }
 
     public final void ret(int imm16) {
@@ -1064,8 +1082,9 @@ public class ARMV7Assembler extends AbstractAssembler {
             ret();
         } else {
             // System.out.println("Need to ascertain purpose of ARMV7Assembler::ret(imm16)");
-            ret();
             addq(ARMV7.r13, imm16); // believe it is used to retract the stack
+            ret();
+
         }
     }
 
@@ -1131,6 +1150,16 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     }
 
+    public final void jmp(CiRegister absoluteAddress) {
+        /* branch to absolute address in register */
+        bx(ConditionFlag.Always,absoluteAddress);
+    }
+    public final void bx(ConditionFlag cond, CiRegister target) {
+        int instruction = 0x012fff10;
+        instruction |= (cond.value() << 28);
+        instruction |= target.encoding;
+        emitInt(instruction);
+    }
     public final void jmp(Label l) {
         if (l.isBound()) {
             System.out.println("PATCHNING JMP AT " + l.position() );
@@ -1316,7 +1345,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         } else {
             imm8 = -1 * imm8;
         }
-        instruction |= imm8;
+        instruction |= (imm8 & 0xff);
         instruction |= (src.encoding & 0xf) << 16;
         if (dest.number <= 31) {
             instruction |= 0x0d000b00;
@@ -1358,7 +1387,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         } else {
             imm8 = -1 * imm8;
         }
-        instruction |= imm8;
+        instruction |= (imm8 & 0xff);
         instruction |= src.encoding << 16;
         if (dest.number <= 31) {
             instruction |= 0x0d100b00;

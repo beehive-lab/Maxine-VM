@@ -150,7 +150,7 @@ public class RegisterConfigs {
                 roleMap.put(CPU_SP, com.oracle.max.asm.target.armv7.ARMV7.r13);
                 roleMap.put(CPU_FP, com.oracle.max.asm.target.armv7.ARMV7.r11); // TODO CHECK
                 roleMap.put(ABI_SP, com.oracle.max.asm.target.armv7.ARMV7.r13);
-                roleMap.put(ABI_FP, com.oracle.max.asm.target.armv7.ARMV7.r11);
+                roleMap.put(ABI_FP, com.oracle.max.asm.target.armv7.ARMV7.r13); // ALTERED Aug14
                 //ARM PCS suggest that r11 is used as a frame pointer, not sure how this is set up for each new java frame
 
 
@@ -165,7 +165,7 @@ public class RegisterConfigs {
                  *
                  * as inlining is expected to reduce the call overhead sufficiently.
                  */
-                standard = new CiRegisterConfig(com.oracle.max.asm.target.armv7.ARMV7.r11, // frame
+                standard = new CiRegisterConfig(com.oracle.max.asm.target.armv7.ARMV7.r13, // frame BUT ITS THE STACK POINTER????
                     r0, // integral return value
                     d0, // APN TODO floating point return value for simplicity ALWAYS return a double
 

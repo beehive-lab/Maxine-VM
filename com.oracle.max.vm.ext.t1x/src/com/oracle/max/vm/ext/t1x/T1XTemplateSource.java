@@ -1484,12 +1484,12 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(DNEG)
-    public static double dneg(@Slot(0) double value, double zero) {
+    public static double dneg(@Slot(0) double value) {
         double res;
-        if (Double.doubleToRawLongBits(value) == Double.doubleToRawLongBits(zero)) {
+        if (Double.doubleToRawLongBits(value) == Double.doubleToRawLongBits(0.0d)) {
             res = -0.0d;
         } else {
-            res = zero - value;
+            res = 0.0d - value;
         }
         return res;
     }

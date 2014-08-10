@@ -532,6 +532,7 @@ public class Stubs {
             // Adjust RSP as mentioned above and do the 'ret' that lands us in the
             // trampolined-to method.
             asm.addq(ARMV7.r13, frameSize - 8);
+
             asm.ret(0);
             // APN ok do I need to do a return or can I merely set the PC to the correct instruction.
 
@@ -1100,6 +1101,7 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
+            asm.sub(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r13, ARMV7.r13,ARMV7.r1,0,0); // rsi is argument (second)?
             //asm.subq(ARMV7.rsp, ARMV7.rsi);
             // APN no idea what rsi is used for on X86
 
