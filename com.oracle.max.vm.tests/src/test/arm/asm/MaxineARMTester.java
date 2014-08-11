@@ -34,7 +34,7 @@ public class MaxineARMTester {
     private static final File bindOutput = new File("bind_output");
     private static final File gdbOutput = new File("gdb_output");
     private static final File gdbInput = new File("gdb_input");
-    private static final File gdbInputFPREGS = new File("gdb_inputFPREGS");
+    private static final File gdbInputFPREGS = new File("gdb_input_fpregs");
     private static final File gdbErrors = new File("gdb_errors");
     private static final File objCopyOutput = new File("obj_copy_output");
     private static final File objCopyErrors = new File("obj_copy_errors");
@@ -52,8 +52,8 @@ public class MaxineARMTester {
     private Process linker;
     private Process qemu;
     private Process gdb;
-    private BitsFlag []bitMasks;
-    private char []chars;
+    private BitsFlag[] bitMasks;
+    private char[] chars;
     private int[] expectRegs = new int[NUM_REGS];
     private int[] gotRegs = new int[NUM_REGS];
     private boolean[] testRegs = new boolean[NUM_REGS];
@@ -94,9 +94,7 @@ public class MaxineARMTester {
     }
 
     public void objcopy() {
-        //final ProcessBuilder objcopy = new ProcessBuilder("arm-unknown-eabi-objcopy", "-O", "binary", "test.elf", "test.bin");
         final ProcessBuilder objcopy = new ProcessBuilder("arm-none-eabi-objcopy", "-O", "binary", "test.elf", "test.bin");
-
         objcopy.redirectOutput(objCopyOutput);
         objcopy.redirectError(objCopyErrors);
         try {
@@ -107,11 +105,10 @@ public class MaxineARMTester {
             e.printStackTrace();
         }
     }
+
     public void newCompile() {
         final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.bin", "test.elf");
-        //final ProcessBuilder compile = new ProcessBuilder("arm-unknown-eabi-gcc", "-c", "-march=armv7-a", "-g", "test.c", "-o", "test.o");
-        final ProcessBuilder compile = new ProcessBuilder("arm-none-eabi-gcc", "-c", "-march=armv7-a",  "-mfloat-abi=hard","-mfpu=vfpv3-d16","-g", "test.c", "-o", "test.o");
-
+        final ProcessBuilder compile = new ProcessBuilder("arm-none-eabi-gcc", "-c", "-march=armv7-a", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-g", "test.c", "-o", "test.o");
         compile.redirectOutput(gccOutput);
         compile.redirectError(gccErrors);
         try {
@@ -123,11 +120,10 @@ public class MaxineARMTester {
             e.printStackTrace();
         }
     }
+
     public void compile() {
         final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.bin", "test.elf");
-        //final ProcessBuilder compile = new ProcessBuilder("arm-unknown-eabi-gcc", "-c","-DOLDCOMPILE", "-march=armv7-a", "-g", "test.c", "-o", "test.o");
-
-        final ProcessBuilder compile = new ProcessBuilder("arm-none-eabi-gcc", "-c","-DOLDCOMPILE", "-mfloat-abi=hard","-mfpu=vfpv3-d16", "-march=armv7-a", "-g", "test.c", "-o", "test.o");
+        final ProcessBuilder compile = new ProcessBuilder("arm-none-eabi-gcc", "-c", "-DOLDCOMPILE", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-march=armv7-a", "-g", "test.c", "-o", "test.o");
         compile.redirectOutput(gccOutput);
         compile.redirectError(gccErrors);
         try {
@@ -139,9 +135,9 @@ public class MaxineARMTester {
             e.printStackTrace();
         }
     }
+
     public void assembleStartup() {
-        //final ProcessBuilder assemble = new ProcessBuilder("arm-unknown-eabi-as", "-mcpu=cortex-a9", "-g", "startup.s", "-o", "startup.o");
-        final ProcessBuilder assemble = new ProcessBuilder("arm-none-eabi-as", "-mcpu=cortex-a9", "-mfloat-abi=hard","-mfpu=vfpv3-d16","-g", "startup.s", "-o", "startup.o");
+        final ProcessBuilder assemble = new ProcessBuilder("arm-none-eabi-as", "-mcpu=cortex-a9", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-g", "startup.s", "-o", "startup.o");
         assemble.redirectOutput(new File("as_output"));
         assemble.redirectError(new File("as_errors"));
         try {
@@ -154,8 +150,7 @@ public class MaxineARMTester {
     }
 
     public void assembleEntry() {
-        //final ProcessBuilder assemble = new ProcessBuilder("arm-unknown-eabi-as", "-mcpu=cortex-a9", "-g", "asm_entry.s", "-o", "asm_entry.o");
-        final ProcessBuilder assemble = new ProcessBuilder("arm-none-eabi-as", "-mcpu=cortex-a9", "-mfloat-abi=hard","-mfpu=vfpv3-d16", "-g", "asm_entry.s", "-o", "asm_entry.o");
+        final ProcessBuilder assemble = new ProcessBuilder("arm-none-eabi-as", "-mcpu=cortex-a9", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-g", "asm_entry.s", "-o", "asm_entry.o");
         assemble.redirectOutput(asOutput);
         assemble.redirectError(asErrors);
         try {
@@ -168,9 +163,7 @@ public class MaxineARMTester {
     }
 
     public void link() {
-        //final ProcessBuilder link = new ProcessBuilder("arm-unknown-eabi-ld", "-T", "test.ld", "test.o", "startup.o", "asm_entry.o", "-o", "test.elf");
         final ProcessBuilder link = new ProcessBuilder("arm-none-eabi-ld", "-T", "test.ld", "test.o", "startup.o", "asm_entry.o", "-o", "test.elf");
-
         link.redirectOutput(linkOutput);
         link.redirectError(linkErrors);
         try {
@@ -197,10 +190,9 @@ public class MaxineARMTester {
             process.destroy();
         }
     }
-    private void  runSimulationRefactored(boolean captureFPREGs) throws Exception {
-        //ProcessBuilder gdbProcess = new ProcessBuilder("arm-unknown-eabi-gdb");
-        ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb");
 
+    private void runSimulationRefactored(boolean captureFPREGs) throws Exception {
+        ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb");
         if (captureFPREGs) {
             gdbProcess.redirectInput(gdbInputFPREGS);
         } else {
@@ -237,15 +229,15 @@ public class MaxineARMTester {
             System.exit(-1);
         }
     }
+
     public Object[] runObjectRegisteredSimulation() throws Exception {
         runSimulationRefactored(true);
         Object[] simulatedRegisters = parseObjectRegistersToFile(gdbOutput.getName());
         return simulatedRegisters;
     }
-    public int[] runRegisteredSimulation() throws Exception {
-        //ProcessBuilder gdbProcess = new ProcessBuilder("arm-unknown-eabi-gdb");
-        ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb");
 
+    public int[] runRegisteredSimulation() throws Exception {
+        ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb");
         gdbProcess.redirectInput(gdbInput);
         gdbProcess.redirectOutput(gdbOutput);
         gdbProcess.redirectError(gdbErrors);
@@ -283,8 +275,6 @@ public class MaxineARMTester {
 
     public void runSimulation() throws Exception {
         cleanFiles();
-        //ProcessBuilder gdbProcess = new ProcessBuilder("arm-unknown-eabi-gdb");
-
         ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb");
         gdbProcess.redirectInput(gdbInput);
         gdbProcess.redirectOutput(gdbOutput);
@@ -349,7 +339,7 @@ public class MaxineARMTester {
         return result;
     }
 
-    public MaxineARMTester(int []expected, boolean []test, BitsFlag []range) {
+    public MaxineARMTester(int[] expected, boolean[] test, BitsFlag[] range) {
         initializeQemu();
         bitMasks = range;
         for (int i = 0; i < NUM_REGS; i++) {
@@ -367,12 +357,12 @@ public class MaxineARMTester {
                 expectRegs[j] = (int) ((expected[i] >> 32) & 0xffffffff);
                 expectRegs[j + 1] = (int) (expected[i] & 0xffffffff);
                 testRegs[j] = testRegs[j + 1] = test[i];
-                j =+ 2;
+                j = +2;
             }
         }
     }
 
-    public MaxineARMTester(String []args) {
+    public MaxineARMTester(String[] args) {
         initializeQemu();
         for (int i = 0; i < NUM_REGS; i++) {
             testRegs[i] = false;
@@ -386,13 +376,13 @@ public class MaxineARMTester {
     private void initializeQemu() {
         ENABLE_SIMULATOR = Integer.getInteger(ENABLE_QEMU) != null && Integer.getInteger(ENABLE_QEMU) > 0 ? true : false;
     }
+
     private Object[] parseObjectRegistersToFile(String file) throws Exception {
         BufferedReader reader = new BufferedReader(new FileReader(file));
         String line = null;
         boolean enabled = false;
-        boolean fpregs = false;
         int i = 0;
-        Object[] expectedValues = new Object[16 +1+ 16+32];
+        Object[] expectedValues = new Object[16 + 1 + 16 + 32];
         while ((line = reader.readLine()) != null) {
             if (line.contains("r0")) {
                 enabled = true;
@@ -402,137 +392,97 @@ public class MaxineARMTester {
                 continue;
             }
             String value = line.split("\\s+")[1];
-            expectedValues[i] = new Integer ((int) Long.parseLong(value.substring(2, value.length()).toString(), 16));
-            if(DEBUGOBJECTS) {
-                System.out.println(" CORE " + i + " "+ ((Integer)expectedValues[i]).intValue());
+            expectedValues[i] = new Integer((int) Long.parseLong(value.substring(2, value.length()).toString(), 16));
+            if (DEBUGOBJECTS) {
+                System.out.println(" CORE " + i + " " + ((Integer) expectedValues[i]).intValue());
             }
             i++;
             if (line.contains("cpsr")) {
                 enabled = false;
                 // might want to get cpsr but we dont need it right now
                 expectedValues[i] = null;
-                //i++;
-                fpregs = true;
                 break;
             }
         }
-        //System.out.println("DOUBLE I is " + i);
         while ((line = reader.readLine()) != null) {
-            if(line.contains("f64")) {
+            if (line.contains("f64")) {
                 enabled = true;
             } else {
                 enabled = false;
             }
-            if(i >= (16+16+1))  {
+            if (i >= (16 + 16 + 1)) {
                 break;
             }
-            if(!enabled) {
+            if (!enabled) {
                 continue;
             }
-            //System.out.println("DOUBLE");
             String values[] = line.split("\\s+");
-            for(int j = 0; j < values.length;j++) {
-
-                if(values[j].equals("f64")) {
-                    String doubleVal = values[j+2];
-                    //System.out.println(doubleVal);
-                    String str = doubleVal.substring(0,doubleVal.length()-1);
-                    //System.out.println(str);
+            for (int j = 0; j < values.length; j++) {
+                if (values[j].equals("f64")) {
+                    String doubleVal = values[j + 2];
+                    String str = doubleVal.substring(0, doubleVal.length() - 1);
                     try {
-                        Double tmp = new Double (str);
+                        Double tmp = new Double(str);
                         expectedValues[i++] = tmp;
                     } catch (Exception e) {
                         // we get exceptions when there is a NaN
                         // currently we just set them to null
-                        //System.err.println(e);
-                        //e.printStackTrace();
-                        if(str.equals("inf")) {
+                        if (str.equals("inf")) {
                             expectedValues[i++] = new Double(Double.POSITIVE_INFINITY);
-                        } else if(str.equals("-inf")) {
+                        } else if (str.equals("-inf")) {
                             expectedValues[i++] = new Double(Double.NEGATIVE_INFINITY);
                         } else {
                             expectedValues[i++] = new Double(Double.NaN);
                         }
-                        //expectedValues[i++] = new Double("NaN");
                     }
-
                     break;
                 }
             }
-            if(DEBUGOBJECTS) {
-                System.out.println(" DOUBLE " + (i-1) + " "+ ((Double)expectedValues[i-1]).doubleValue());
+            if (DEBUGOBJECTS) {
+                System.out.println(" DOUBLE " + (i - 1) + " " + ((Double) expectedValues[i - 1]).doubleValue());
             }
-            if(i >= (16+16+1))  {
+            if (i >= (16 + 16 + 1)) {
                 break;
             }
-
         }
-        //System.out.println("FLOAT I is " + i);
         while ((line = reader.readLine()) != null) {
-            //System.out.println("F32s");
-            if(line.contains("=")) {
+            if (line.contains("=")) {
                 enabled = true;
             } else {
                 enabled = false;
             }
-            if(!enabled) {
+            if (!enabled) {
                 continue;
             }
-            //System.out.println("FLOAT");
             String values[] = line.split("\\s+");
-            for(int j = 0; j < values.length;j++) {
+            for (int j = 0; j < values.length; j++) {
 
-                if(values[j].equals("=")) {
-                    String doubleVal = values[j+1];
-                    //System.out.println(doubleVal);
-                    //System.out.println(doubleVal);
+                if (values[j].equals("=")) {
+                    String doubleVal = values[j + 1];
                     try {
-                        Float tmp = new Float (doubleVal);
+                        Float tmp = new Float(doubleVal);
                         expectedValues[i++] = tmp;
                     } catch (Exception e) {
-                        //System.err.println(e);
-                        //e.printStackTrace();
-                        if(doubleVal.equals("inf")) {
+                        if (doubleVal.equals("inf")) {
                             expectedValues[i++] = new Float(Float.POSITIVE_INFINITY);
-                        } else if(doubleVal.equals("-inf")) {
+                        } else if (doubleVal.equals("-inf")) {
                             expectedValues[i++] = new Float(Float.NEGATIVE_INFINITY);
                         } else {
                             expectedValues[i++] = new Float(Float.NaN);
                         }
-                        //expectedValues[i++] = new Float("NaN");
                     }
                     break;
                 }
             }
-            if( i == expectedValues.length) break;
-
-
-            if(DEBUGOBJECTS) {
-                System.out.println(" FLOAT " + (i-1) + " "+ ((Float)expectedValues[i-1]).floatValue());
+            if (i == expectedValues.length) {
+                break;
             }
-
-
-
+            if (DEBUGOBJECTS) {
+                System.out.println(" FLOAT " + (i - 1) + " " + ((Float) expectedValues[i - 1]).floatValue());
+            }
         }
-        /*for(int  j = 0; j < (16+16+32+1);j++) {
-            if(expectedValues[j] != null) {
-                if(j <= 16) {
-                    System.out.println(j + " INT " + ((Integer)expectedValues[j]).intValue());
-                } else if (j < 33) {
-                    System.out.println(j + " DOUBLE " + ((Double)expectedValues[j]).doubleValue());
-                } else {
-                    System.out.println(j + " FLOAT " + ((Float)expectedValues[j]).floatValue());
-                }
-            } else {
-                System.out.println(j + " NULL");
-            }
-        }*/
-
         return expectedValues;
     }
-
-
-
 
     private int[] parseRegistersToFile(String file) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(file));
