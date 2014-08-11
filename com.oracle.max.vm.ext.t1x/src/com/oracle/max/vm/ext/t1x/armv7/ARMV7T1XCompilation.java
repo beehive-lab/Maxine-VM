@@ -718,12 +718,12 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             // If equal, exit loop
             int matchTestPos = buf.position();
             final int placeholderForShortJumpDisp = matchTestPos + 4;
-            asm.jcc(ConditionFlag.Equal, placeholderForShortJumpDisp, true);
+            asm.jcc(ConditionFlag.Equal, placeholderForShortJumpDisp, false);
             assert buf.position() - matchTestPos == 4;
 
             // Decrement loop var and jump to top of loop if it did not go below zero (i.e. carry flag was not set)
             asm.sub(ConditionFlag.Always, true, r7, r7, 2, 0);
-            asm.jcc(ConditionFlag.Positive, loopPos, true);
+            asm.jcc(ConditionFlag.Positive, loopPos, false);
 
             // Jump to default target
             startBlock(ls.defaultTarget());
@@ -734,7 +734,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             // Patch the first conditional branch instruction above now that we know where's it's going
             int matchPos = buf.position();
             buf.setPosition(matchTestPos);
-            asm.jcc(ConditionFlag.Equal, matchPos, true);
+            asm.jcc(ConditionFlag.Equal, matchPos, false);
             buf.setPosition(matchPos);
 
             // Load jump table entry into r15 and jump to it
