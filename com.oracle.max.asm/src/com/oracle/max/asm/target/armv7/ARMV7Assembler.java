@@ -11,9 +11,12 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final CiRegister frameRegister;
     public final CiRegister scratchRegister;
+    public final RiRegisterConfig registerConfig;
+
 
     public ARMV7Assembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target);
+        this.registerConfig = registerConfig;
         this.scratchRegister = registerConfig == null ? ARMV7.r12 : registerConfig.getScratchRegister();
         this.frameRegister = registerConfig == null ? null : registerConfig.getFrameRegister();
     }
@@ -166,6 +169,20 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void addRegisters(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int imm2Type, final int imm5) {
         int instruction = 0x00800000;
+        checkConstraint(0 <= imm5 && imm5 <= 31, "0 <= imm5 && imm5 <= 31");
+        checkConstraint(0 <= imm2Type && imm2Type <= 3, "0 <= imm2Type && imm2Type <= 3");
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (s ? 1 : 0) << 20;
+        instruction |= (Rd.encoding & 0xf) << 12;
+        instruction |= (Rn.encoding & 0xf) << 16;
+        instruction |= (imm5 << 7) | (imm2Type << 5);
+        instruction |= Rm.encoding & 0xf;
+        emitInt(instruction);
+
+    }
+
+    public void addCRegisters(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int imm2Type, final int imm5) {
+        int instruction = 0xA00000;
         checkConstraint(0 <= imm5 && imm5 <= 31, "0 <= imm5 && imm5 <= 31");
         checkConstraint(0 <= imm2Type && imm2Type <= 3, "0 <= imm2Type && imm2Type <= 3");
         instruction |= (cond.value() & 0xf) << 28;
@@ -893,6 +910,12 @@ public class ARMV7Assembler extends AbstractAssembler {
         assert dst.isValid();
         mov32BitConstant(scratchRegister, imm32);
         addRegisters(ConditionFlag.Always, false, dst, dst, scratchRegister, 0, 0);
+    }
+
+    public final void addLong(CiRegister dst, CiRegister src1, CiRegister src2) {
+        addRegisters(ConditionFlag.Always, true, dst, src1, src2, 0, 0);
+        addCRegisters(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dst.number + 1], registerConfig.getAllocatableRegisters()[dst.number + 1],
+                        registerConfig.getAllocatableRegisters()[src2.number + 1], 0, 0);
     }
 
     public void xorq(CiRegister dest, CiAddress src) {

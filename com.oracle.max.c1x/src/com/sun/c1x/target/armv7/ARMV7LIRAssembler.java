@@ -1072,7 +1072,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     @Override
     protected void emitArithOp(LIROpcode code, CiValue left, CiValue right, CiValue dest, LIRDebugInfo info) {
         assert info == null : "should never be used :  idiv/irem and ldiv/lrem not handled by this method";
-        assert Util.archKindsEqual(left.kind, right.kind) || (left.kind == CiKind.Long && right.kind == CiKind.Int) : code.toString() + " left arch is " + left.kind + " and right arch is " +  right.kind;
+        assert Util.archKindsEqual(left.kind, right.kind) || (left.kind == CiKind.Long && right.kind == CiKind.Int) : code.toString() + " left arch is " + left.kind + " and right arch is " +
+                        right.kind;
         assert left.equals(dest) : "left and dest must be equal";
         CiKind kind = left.kind;
 
@@ -1085,58 +1086,66 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 CiRegister rreg = right.asRegister();
                 if (kind.isInt()) {
                     switch (code) {
-                        case Add : masm.iadd(dest.asRegister(), lreg, rreg); break;
-                        case Sub : masm.isub(dest.asRegister(), lreg, rreg); break;
-                        case Mul : masm.imul(dest.asRegister(), lreg, rreg); break;
-                        default  : throw Util.shouldNotReachHere();
+                        case Add:
+                            masm.iadd(dest.asRegister(), lreg, rreg);
+                            break;
+                        case Sub:
+                            masm.isub(dest.asRegister(), lreg, rreg);
+                            break;
+                        case Mul:
+                            masm.imul(dest.asRegister(), lreg, rreg);
+                            break;
+                        default:
+                            throw Util.shouldNotReachHere();
                     }
                 } else if (kind.isFloat()) {
                     assert rreg.isFpu() : "must be xmm";
                     switch (code) {
-                        case Add : //masm.addss(lreg, rreg);
-                            masm.vadd(ConditionFlag.Always,asXmmFloatReg(dest),asXmmFloatReg(left),asXmmFloatReg(right));
+                        case Add: // masm.addss(lreg, rreg);
+                            masm.vadd(ConditionFlag.Always, asXmmFloatReg(dest), asXmmFloatReg(left), asXmmFloatReg(right));
                             break;
-                        case Sub : //masm.subss(lreg, rreg);
-                            masm.vsub(ConditionFlag.Always,asXmmFloatReg(dest),asXmmFloatReg(left),asXmmFloatReg(right));
+                        case Sub: // masm.subss(lreg, rreg);
+                            masm.vsub(ConditionFlag.Always, asXmmFloatReg(dest), asXmmFloatReg(left), asXmmFloatReg(right));
                             break;
-                        case Mul : //masm.mulss(lreg, rreg);
+                        case Mul: // masm.mulss(lreg, rreg);
                             masm.vmul(ConditionFlag.Always, asXmmFloatReg(dest), asXmmFloatReg(left), asXmmFloatReg(right));
                             break;
-                        case Div : //masm.divss(lreg, rreg);
-                            //masm.vdiv(ConditionFlag.Always,lreg,lreg,rreg);
+                        case Div: // masm.divss(lreg, rreg);
+                            // masm.vdiv(ConditionFlag.Always,lreg,lreg,rreg);
                             masm.vdiv(ConditionFlag.Always, asXmmFloatReg(dest), asXmmFloatReg(left), asXmmFloatReg(right));
                             break;
-                        default  : throw Util.shouldNotReachHere();
+                        default:
+                            throw Util.shouldNotReachHere();
                     }
                 } else if (kind.isDouble()) {
-
                     assert rreg.isFpu();
                     switch (code) {
-                       case Add : //masm.addsd(lreg, rreg);
-                           masm.vadd(ConditionFlag.Always,lreg,lreg,rreg);
-                           break;
-                       case Sub : //masm.subsd(lreg, rreg);
-                            masm.vsub(ConditionFlag.Always,lreg,lreg,rreg);
-                           break;
-                        case Mul : //masm.mulsd(lreg, rreg);
-                            masm.vmul(ConditionFlag.Always,lreg,lreg,rreg);
+                        case Add: // masm.addsd(lreg, rreg);
+                            masm.vadd(ConditionFlag.Always, lreg, lreg, rreg);
                             break;
-                        case Div : //masm.divsd(lreg, rreg);
-                            masm.vdiv(ConditionFlag.Always,lreg,lreg,rreg);
+                        case Sub: // masm.subsd(lreg, rreg);
+                            masm.vsub(ConditionFlag.Always, lreg, lreg, rreg);
                             break;
-                        default  : throw Util.shouldNotReachHere();
+                        case Mul: // masm.mulsd(lreg, rreg);
+                            masm.vmul(ConditionFlag.Always, lreg, lreg, rreg);
+                            break;
+                        case Div: // masm.divsd(lreg, rreg);
+                            masm.vdiv(ConditionFlag.Always, lreg, lreg, rreg);
+                            break;
+                        default:
+                            throw Util.shouldNotReachHere();
                     }
                 } else {
-                    assert target.sizeInBytes(kind) == 8;
-                    assert 0 == 1 : "another arithmetic";
-                   switch (code) {
-                        case Add : //masm.addq(lreg, rreg);
+                    assert kind.isLong();
+                    switch (code) {
+                        case Add: masm.addLong(dest.asRegister(), lreg, rreg);
                             break;
-                        case Sub : //masm.subq(lreg, rreg);
+                        case Sub: // masm.subq(lreg, rreg);
                             break;
-                        case Mul : //masm.imulq(lreg, rreg);
+                        case Mul: // masm.imulq(lreg, rreg);
                             break;
-                        default  : throw Util.shouldNotReachHere();
+                        default:
+                            throw Util.shouldNotReachHere();
                     }
                 }
             } else {
@@ -1145,18 +1154,28 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         // register - stack
                         CiAddress raddr = frameMap.toStackAddress(((CiStackSlot) right));
                         switch (code) {
-                            case Add : masm.iadd(dest.asRegister(), lreg, raddr); break;
-                            case Sub : masm.isub(dest.asRegister(), lreg, raddr); break;
-                            default  : throw Util.shouldNotReachHere();
+                            case Add:
+                                masm.iadd(dest.asRegister(), lreg, raddr);
+                                break;
+                            case Sub:
+                                masm.isub(dest.asRegister(), lreg, raddr);
+                                break;
+                            default:
+                                throw Util.shouldNotReachHere();
                         }
                     } else if (right.isConstant()) {
                         // register - constant
                         assert kind.isInt();
                         int delta = ((CiConstant) right).asInt();
                         switch (code) {
-                            case Add : masm.incrementl(lreg, delta); break;
-                            case Sub : masm.decrementl(lreg, delta); break;
-                            default  : throw Util.shouldNotReachHere();
+                            case Add:
+                                masm.incrementl(lreg, delta);
+                                break;
+                            case Sub:
+                                masm.decrementl(lreg, delta);
+                                break;
+                            default:
+                                throw Util.shouldNotReachHere();
                         }
                     }
                 } else if (kind.isFloat()) {
@@ -1168,17 +1187,18 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         assert right.isConstant();
                         raddr = tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) right).asFloat()));
                     }
-                    assert 0 ==1 : " const float arithmetic";
+                    assert 0 == 1 : " const float arithmetic";
                     switch (code) {
-                        case Add : //masm.addss(lreg, raddr);
+                        case Add: // masm.addss(lreg, raddr);
                             break;
-                        case Sub : //masm.subss(lreg, raddr);
+                        case Sub: // masm.subss(lreg, raddr);
                             break;
-                        case Mul : //masm.mulss(lreg, raddr);
+                        case Mul: // masm.mulss(lreg, raddr);
                             break;
-                        case Div : //masm.divss(lreg, raddr);
+                        case Div: // masm.divss(lreg, raddr);
                             break;
-                        default  : throw Util.shouldNotReachHere();
+                        default:
+                            throw Util.shouldNotReachHere();
                     }
                 } else if (kind.isDouble()) {
                     // register - stack/constant
@@ -1192,15 +1212,16 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
                     assert 0 == 1 : "double const arithmetic";
                     switch (code) {
-                        case Add : //masm.addsd(lreg, raddr);
+                        case Add: // masm.addsd(lreg, raddr);
                             break;
-                        case Sub : //masm.subsd(lreg, raddr);
+                        case Sub: // masm.subsd(lreg, raddr);
                             break;
-                        case Mul : //masm.mulsd(lreg, raddr);
+                        case Mul: // masm.mulsd(lreg, raddr);
                             break;
-                        case Div :// masm.divsd(lreg, raddr);
+                        case Div:// masm.divsd(lreg, raddr);
                             break;
-                        default  : throw Util.shouldNotReachHere();
+                        default:
+                            throw Util.shouldNotReachHere();
                     }
                 } else {
                     assert target.sizeInBytes(kind) == 8;
@@ -1208,17 +1229,18 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         // register - stack
                         CiAddress raddr = frameMap.toStackAddress(((CiStackSlot) right));
                         masm.setUpScratch(raddr);
-                        masm.ldrImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,0);
+                        masm.ldrImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, 0);
                         // TODO what if addq subq so might be longs
                         switch (code) {
-                            case Add : //masm.addq(ConditionFlag.Always,false,lreg,ARMV7.r12,0,0);
+                            case Add: // masm.addq(ConditionFlag.Always,false,lreg,ARMV7.r12,0,0);
                                 masm.add(ConditionFlag.Always, false, lreg, ARMV7.r12, 0, 0);
                                 break;
-                            case Sub :
-                                    masm.sub(ConditionFlag.Always,false,lreg,ARMV7.r12,0,0);
-                                //masm.subq(ConditionFlag.Always,false,lreg, ARMV7.r12,0,0);
+                            case Sub:
+                                masm.sub(ConditionFlag.Always, false, lreg, ARMV7.r12, 0, 0);
+                                // masm.subq(ConditionFlag.Always,false,lreg, ARMV7.r12,0,0);
                                 break;
-                            default  : throw Util.shouldNotReachHere();
+                            default:
+                                throw Util.shouldNotReachHere();
                         }
                     } else {
                         // register - constant
@@ -1226,21 +1248,27 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         long c = ((CiConstant) right).asLong();
                         if (NumUtil.isInt(c)) {
                             switch (code) {
-                                case Add : masm.addq(lreg, (int) c); break;
-                                case Sub : masm.subq(lreg, (int) c); break;
-                                default  : throw Util.shouldNotReachHere();
+                                case Add:
+                                    masm.addq(lreg, (int) c);
+                                    break;
+                                case Sub:
+                                    masm.subq(lreg, (int) c);
+                                    break;
+                                default:
+                                    throw Util.shouldNotReachHere();
                             }
                         } else {
                             assert 0 == 1 : "mov long into scratch1 ARMV7IRAssembler";
 
                             // masm.movq(rscratch1, c);
-                            //masm.mov32BitConstant();
+                            // masm.mov32BitConstant();
                             switch (code) {
-                                case Add : //masm.addq(lreg, rscratch1);
+                                case Add: // masm.addq(lreg, rscratch1);
                                     break;
-                                case Sub : //masm.subq(lreg, rscratch1);
+                                case Sub: // masm.subq(lreg, rscratch1);
                                     break;
-                                default  : throw Util.shouldNotReachHere();
+                                default:
+                                    throw Util.shouldNotReachHere();
                             }
                         }
                     }
@@ -1253,25 +1281,31 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             if (right.isRegister()) {
                 CiRegister rreg = right.asRegister();
                 masm.setUpScratch(laddr);
-                masm.ldr(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
+                masm.ldr(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
                 switch (code) {
-                    case Add : //masm.addl(laddr, rreg);
-                            masm.addRegisters(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r8,rreg,0,0);
+                    case Add: // masm.addl(laddr, rreg);
+                        masm.addRegisters(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, rreg, 0, 0);
                         break;
-                    case Sub : //masm.subl(laddr, rreg);
-                            masm.sub(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r8,rreg,0,0);
+                    case Sub: // masm.subl(laddr, rreg);
+                        masm.sub(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, rreg, 0, 0);
                         break;
-                    default  : throw Util.shouldNotReachHere();
+                    default:
+                        throw Util.shouldNotReachHere();
 
                 }
-                masm.str(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
+                masm.str(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
             } else {
                 assert right.isConstant();
                 int c = ((CiConstant) right).asInt();
                 switch (code) {
-                    case Add : masm.incrementl(laddr, c); break;
-                    case Sub : masm.decrementl(laddr, c); break;
-                    default  : throw Util.shouldNotReachHere();
+                    case Add:
+                        masm.incrementl(laddr, c);
+                        break;
+                    case Sub:
+                        masm.decrementl(laddr, c);
+                        break;
+                    default:
+                        throw Util.shouldNotReachHere();
                 }
             }
         }
