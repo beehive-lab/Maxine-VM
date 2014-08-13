@@ -595,6 +595,12 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         eor(ConditionFlag.Always, true, dest, left, right, 0, 0);
     }
 
+    public void lxor(CiRegister dest, CiRegister left, CiRegister right) {
+        eor(ConditionFlag.Always, true, dest, left, right, 0, 0);
+        eor(ConditionFlag.Always, true, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[left.number + 1],
+                        registerConfig.getAllocatableRegisters()[right.number + 1], 0, 0);
+    }
+
     public void iand(CiRegister dest, CiRegister left, CiRegister right) {
         and(ConditionFlag.Always, true, dest, left, right, 0, 0);
     }

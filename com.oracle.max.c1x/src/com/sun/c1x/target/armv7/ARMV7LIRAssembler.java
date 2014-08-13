@@ -1404,7 +1404,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         break;
                     case LogicOr  : masm.lor(dst.asRegister(), lreg, rreg);
                      break;
-                    case LogicXor : //masm.xorptr(lreg, rreg); break;
+                    case LogicXor : masm.lxor(dst.asRegister(), lreg, rreg); break;
                     default       : throw Util.shouldNotReachHere();
                 }
             }
