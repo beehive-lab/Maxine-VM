@@ -645,7 +645,7 @@ final class LinearScanWalker extends IntervalWalker {
         if (locationHint != null && locationHint.location() != null && locationHint.location().isRegister()) {
             hint = locationHint.location().asRegister();
             hintHigh = locationHintHigh !=null ? locationHintHigh.location().asRegister() : null;
-            if (hint.isCpu()) {
+            if (hint.isCpu() && hint.number < availableRegs.length-1) {
                 assert hint != null && hintHigh == null : "must be for fixed intervals";
                 hintHigh = availableRegs[hint.number + 1];  // connect e.g. eax-edx
             }

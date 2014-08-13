@@ -2142,7 +2142,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_invokestatic() throws Exception {
+    public void test_jtt_BC_invokestatic() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         List<Args> pairs = new LinkedList<Args>();
         String klassName = getKlassName("jtt.bytecode.BC_invokestatic");
@@ -3255,7 +3255,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_ladd() throws Exception {
+    public void ignore_jtt_BC_ladd() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_ladd");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -3282,7 +3282,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lor() throws Exception {
+    public void ignore_jtt_BC_lor() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_lor");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -3307,7 +3307,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lxor() throws Exception {
+    public void ignore_jtt_BC_lxor() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_lxor");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -3332,7 +3332,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_land() throws Exception {
+    public void ignore_jtt_BC_land() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_land");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
