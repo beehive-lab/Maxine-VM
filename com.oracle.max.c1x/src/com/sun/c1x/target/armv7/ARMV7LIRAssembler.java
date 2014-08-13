@@ -1853,11 +1853,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         } else {
             CiRegister lreg = left.asRegister();
             assert lreg != SHIFTCount : "left cannot be r1";
-            assert 0 == 1: "emit shifOp";
             switch (code) {
-                case Shl  : //masm.shlq(lreg);
+                case Shl  : masm.lshl(dest.asRegister(), lreg, count.asRegister());
                     break;
-                case Shr  : //masm.sarq(lreg);
+                case Shr  : masm.lushr(dest.asRegister(), lreg, count.asRegister());
                     break;
                 case Ushr : //masm.shrq(lreg);
                     break;
