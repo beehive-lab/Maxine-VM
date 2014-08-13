@@ -3192,6 +3192,30 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
+    public void test_jtt_BC_lload_4() throws Exception {
+        CompilationBroker.OFFLINE = initialised;
+        String klassName = getKlassName("jtt.bytecode.BC_lload_4");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(1L, 1));
+        pairs.add(new Args(-3L, 1));
+        pairs.add(new Args(10000L, 1));
+        pairs.add(new Args(549755814017L, 1));
+        initialiseCodeBuffers(methods, "BC_lload_4.java", "long test(long, int)");
+        int assemblerStatements = codeBytes.length / 4;
+        for (Args pair : pairs) {
+            long expectedValue = jtt.bytecode.BC_lload_4.test(pair.lfirst, pair.second);
+            String functionPrototype = ARMCodeWriter.preAmble("long long", "long long, int", Long.toString(pair.lfirst) +"," +Long.toString(pair.second));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            long returnValue = 0xffffffffL & registerValues[0];
+            returnValue |= (0xffffffffL & registerValues[1]) << 32;
+            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+
+
     public void ignore_jtt_BC_lload_1() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_lload_1");
@@ -3389,7 +3413,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(67L, 2));
         pairs.add(new Args(31L, 1));
         pairs.add(new Args(6L, 4));
-        pairs.add(new Args(-2147483648L, 16);
+        pairs.add(new Args(-2147483648L, 16));
         initialiseCodeBuffers(methods, "BC_lshr.java", "long test(long, int)");
         int assemblerStatements = codeBytes.length / 4;
         for (Args pair : pairs) {

@@ -1858,7 +1858,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     break;
                 case Shr  : masm.lushr(dest.asRegister(), lreg, count.asRegister());
                     break;
-                case Ushr : //masm.shrq(lreg);
+                case Ushr : masm.lshr(dest.asRegister(), lreg, count.asRegister());
                     break;
                 default   : throw Util.shouldNotReachHere();
             }
