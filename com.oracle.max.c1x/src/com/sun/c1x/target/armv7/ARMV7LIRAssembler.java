@@ -1400,7 +1400,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             } else {
                 CiRegister rreg = right.asRegister();
                 switch (code) {
-                    case LogicAnd : //masm.andq(lreg, rreg);
+                    case LogicAnd : masm.land(dst.asRegister(), lreg, rreg);
                         break;
                     case LogicOr  : masm.lor(dst.asRegister(), lreg, rreg);
                      break;

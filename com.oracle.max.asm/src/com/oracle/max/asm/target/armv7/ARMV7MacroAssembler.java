@@ -534,22 +534,17 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         }
     }
 
-
     public void restore(CiCalleeSaveLayout csl, int frameToCSA) {
-       CiRegisterValue frame = frameRegister.asValue();
-        int registerList = 0;
+        CiRegisterValue frame = frameRegister.asValue();
         for (CiRegister r : csl.registers) {
             int offset = csl.offsetOf(r);
-            //movq(r, new CiAddress(target.wordKind, frame, frameToCSA + offset));
+            // movq(r, new CiAddress(target.wordKind, frame, frameToCSA + offset));
             setUpScratch(new CiAddress(target.wordKind, frame, frameToCSA + offset));
-            if(r.number < 16) {
-                ldrImmediate(ConditionFlag.Always,0,0,0,r,r12,0);
-
-            }else {
-                vldr(ConditionFlag.Always,r,r12,0);
+            if (r.number < 16) {
+                ldrImmediate(ConditionFlag.Always, 0, 0, 0, r, r12, 0);
+            } else {
+                vldr(ConditionFlag.Always, r, r12, 0);
             }
-
-
         }
     }
 
@@ -603,6 +598,12 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void iand(CiRegister dest, CiRegister left, CiRegister right) {
         and(ConditionFlag.Always, true, dest, left, right, 0, 0);
+    }
+
+    public void land(CiRegister dest, CiRegister left, CiRegister right) {
+        and(ConditionFlag.Always, true, dest, left, right, 0, 0);
+        and(ConditionFlag.Always, true, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[left.number + 1],
+                        registerConfig.getAllocatableRegisters()[right.number + 1], 0, 0);
     }
 
     public void ishl(CiRegister dest, CiRegister left, int amount) {
