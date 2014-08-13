@@ -1383,11 +1383,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             }
             moveRegs(reg, dst.asRegister(), left.kind);
         } else {
-            assert target.sizeInBytes(left.kind) == 8;
             CiRegister lreg = left.asRegister();
             if (right.isConstant()) {
                 CiConstant rightConstant = (CiConstant) right;
-            //    masm.movq(rscratch1, rightConstant.asLong());
+                //masm.movq(rscratch1, rightConstant.asLong());
                 assert 0 == 1 : "mov long again ARMV7IRAssembler";
 
                 switch (code) {
@@ -1400,13 +1399,12 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 }
             } else {
                 CiRegister rreg = right.asRegister();
-                assert 0 == 1 : "masm long logic";
                 switch (code) {
                     case LogicAnd : //masm.andq(lreg, rreg);
                         break;
-                    case LogicOr  : //masm.orq(lreg, rreg);
+                    case LogicOr  : masm.lor(dst.asRegister(), lreg, rreg);
                      break;
-                    case LogicXor : masm.xorptr(lreg, rreg); break;
+                    case LogicXor : //masm.xorptr(lreg, rreg); break;
                     default       : throw Util.shouldNotReachHere();
                 }
             }

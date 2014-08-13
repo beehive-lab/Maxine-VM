@@ -3281,4 +3281,29 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+
+    public void test_jtt_BC_lor() throws Exception {
+        CompilationBroker.OFFLINE = initialised;
+        String klassName = getKlassName("jtt.bytecode.BC_lor");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(1L, 2L));
+        pairs.add(new Args(0L, -1L));
+        pairs.add(new Args(31L, 67L));
+        pairs.add(new Args(6L, 4L));
+        pairs.add(new Args(-2147483648L, 1L));
+        initialiseCodeBuffers(methods, "BC_lor.java", "long test(long, long)");
+        int assemblerStatements = codeBytes.length / 4;
+        for (Args pair : pairs) {
+            long expectedValue = jtt.bytecode.BC_lor.test(pair.lfirst, pair.lsecond);
+            String functionPrototype = ARMCodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "," + Long.toString(pair.lsecond));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            long returnValue = registerValues[0] | ((0xffffffffL & registerValues[1]) << 32);
+            // System.out.println("Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " +
+// expectedValue);
+            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            theCompiler.cleanup();
+        }
+    }
 }
