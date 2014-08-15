@@ -1008,8 +1008,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 buf.emitInt(val);
                 val = asm.movtHelper(ConditionFlag.Always,ARMV7.r12,disp>>16);
                 buf.emitInt(val);
-                // now emit code to store the value in r8 at the PC + r12?
-
+                val = asm.strHelper(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r15,ARMV7.r12,0,0);
+                buf.emitInt(val);
 
                 System.out.println("ARMV7T1XCompilation ... OBJECT LITERAL PAtchInfo HAS BEEN allowed to emitInt need to emit store of r8? to  pc+disp " + disp);
 
