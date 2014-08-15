@@ -563,7 +563,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected void emitUnprotectMethod() {
         protectionLiteralIndex = objectLiterals.size();
-        //objectLiterals.add(T1XTargetMethod.PROTECTED);
+        objectLiterals.add(T1XTargetMethod.PROTECTED);
         asm.xorq(ARMV7.r8, ARMV7.r8);
         System.out.println("emitUnProtect partially commented out ... OBJECT LITERALS");
        // asm.setUpScratch(CiAddress.Placeholder);
@@ -573,9 +573,10 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         // TODO buf.emitInt(0);
         // TODO buf.emitInt(0);
         // TODO
-        //int dispPos = buf.position() - 8;
+        asm.nop(2);
+        int dispPos = buf.position() - 8;
       //  int dispPos = buf.position() - 12;
-       // patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
+        patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
     }
 
     @Override
@@ -1002,8 +1003,16 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 int dispFromCodeStart = dispFromCodeStart(objectLiterals.size(), 0, index, true);
                 int disp = movqDisp(dispPos, dispFromCodeStart);
 
-                //Log.println("ARMV7T1XCompilation ... OBJECT LITERAL PAtchInfo HAS NOT BEEN allowed to emitInt");
-                buf.emitInt(disp);
+                // store  the value in r8 at the PC+ disp.
+                int val = asm.movwHelper(ConditionFlag.Always,ARMV7.r12,disp&0xffff);
+                buf.emitInt(val);
+                val = asm.movtHelper(ConditionFlag.Always,ARMV7.r12,disp>>16);
+                buf.emitInt(val);
+                // now emit code to store the value in r8 at the PC + r12?
+
+
+                System.out.println("ARMV7T1XCompilation ... OBJECT LITERAL PAtchInfo HAS BEEN allowed to emitInt need to emit store of r8? to  pc+disp " + disp);
+
             } else {
                 throw FatalError.unexpected(String.valueOf(tag));
             }
