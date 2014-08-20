@@ -298,7 +298,7 @@ public abstract class LIRInstruction {
                 }
 
                 if (valueHigh != null && C1XCompilation.compilation().compiler.target.arch.is32bit()) {
-                return new LIRVariableOperand(allocatorOperands.size() - 2);
+                    return new LIRVariableOperand(allocatorOperands.size() - 2);
                 } else {
                     return new LIRVariableOperand(allocatorOperands.size() - 1);
                 }
