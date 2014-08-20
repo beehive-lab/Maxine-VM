@@ -723,7 +723,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         // APN can we have a memory address --- not handled yet?
         // APN simple case where we just have a register destination
         // TODO fix this so it will issue loads when appropriate!
-        if (base.isValid()) {
+        if (base.isValid() && base != frameRegister) {
             if (disp != 0) {
                 mov32BitConstant(scratchRegister, disp);
                 addRegisters(ConditionFlag.Always, false, scratchRegister, scratchRegister, base, 0, 0);
