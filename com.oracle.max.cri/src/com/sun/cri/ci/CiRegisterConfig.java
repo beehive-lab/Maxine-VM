@@ -192,7 +192,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
                 case Long:
                 case Object:
                     if (!stackOnly && currentGeneral < cpuParameters.length) {
-                        if (kind == CiKind.Long) {
+                        if (kind.isLong()) {
                             if ((cpuParameters.length - currentGeneral) < 2) {
                                 break;
                             }
@@ -202,6 +202,9 @@ public class CiRegisterConfig implements RiRegisterConfig {
                         }
                         CiRegister register = cpuParameters[currentGeneral++];
                         locations[i] = register.asValue(kind);
+                        if (kind.isLong()) {
+                            currentGeneral++;
+                        }
                     }
                     break;
                 // case Long:
