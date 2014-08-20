@@ -435,6 +435,19 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (imm2Type & 0x3) << 5;
         emitInt(instruction);
     }
+    public static int  strHelper(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, final CiRegister Rm, int imm5, int imm2Type) {
+        int instruction = 0x06000000;
+        instruction |= (P & 0x1) << 24;
+        instruction |= (U & 0x1) << 23;
+        instruction |= (W & 0x1) << 21;
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (Rn.encoding & 0xf) << 16;
+        instruction |= (Rt.encoding & 0xf) << 12;
+        instruction |= Rm.encoding & 0xf;
+        instruction |= (imm5 & 0x1f) << 7;
+        instruction |= (imm2Type & 0x3) << 5;
+        return instruction;
+    }
 
     public void strImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rvalue, final CiRegister Rmemory, int imm12) {
         int instruction = 0x04000000;
