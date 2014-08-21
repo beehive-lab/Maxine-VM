@@ -244,18 +244,14 @@ public final class FrameMap {
                     System.out.print("Object ");
         else
                 System.out.print("other ");*/
-        
+
         if (slot.inCallerFrame()) {
             int callerFrame = frameSize() + compilation.target.arch.returnAddressSize;
             final int callerFrameOffset = slot.index() * compilation.target.spillSlotSize;
             int offset = callerFrame + callerFrameOffset;
-            //System.out.println("INCALLER " +  offset + " SIZE " + size + " index " + slot.index() + " callerFrame " + callerFrame + " callerFoffset " + callerFrameOffset );
-
-            //return new CiAddress(slot.kind, CiRegister.Frame.asValue(), offset);
-            return new CiAddress(slot.kind, CiRegister.Frame.asValue(), offset);
+            return new CiAddress(slot.kind, CiRegister.CallerFrame.asValue(), offset);
         } else {
             int offset = offsetForOutgoingOrSpillSlot(slot.index(), size);
-            //System.out.println("NOTINCALLER " +  offset + " SIZE " + size + " index " + slot.index());
             return new CiAddress(slot.kind, CiRegister.Frame.asValue(), offset);
         }
     }

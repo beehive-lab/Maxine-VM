@@ -2861,7 +2861,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_getstatic_i() throws Exception {
+    public void ignores_C1X_jtt_BC_getstatic_i() throws Exception {
         boolean failed = false;
         initTests();
         int argsOne[] = { 0, -1 , 2 ,4 };
@@ -2882,7 +2882,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
         assert(failed == false);
     }
-    public void test_T1X_jtt_BC_getstatic_i() throws Exception {
+    public void ignore_T1X_jtt_BC_getstatic_i() throws Exception {
         int argsOne[] = {0,-1,2,4};
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
@@ -2911,7 +2911,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
 
     }
-    public void test_C1X_jtt_BC_frem() throws Exception {
+    public void ignore_C1X_jtt_BC_frem() throws Exception {
         initTests();
         float argsOne[] = { 311.0f, 2f};
         float argsTwo[] = { 10f, 20.1f};
@@ -3218,7 +3218,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_C1X_jtt_BC_dneg2() throws Exception {
+    public void test_C1X_jtt_BC_dneg2() throws Exception {
         initTests();
         double argsOne[] = { 1.0d, -1.0d, -0.0D, 0.0d, -2.0d, 2.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dneg2");

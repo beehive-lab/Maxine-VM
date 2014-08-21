@@ -729,14 +729,17 @@ public class ARMV7Assembler extends AbstractAssembler {
             nop(numInstructions(addr)); // 4 instructions, 2 for mov32, 1 for add and 1 for addclsl
             return;
         }
-        assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
-        if(base == CiRegister.Frame) {
-            base = frameRegister;
-        }
+        assert base.isValid() || base.compareTo(CiRegister.Frame) == 0 || base.compareTo(CiRegister.CallerFrame) == 0;
+        //if(base == CiRegister.Frame) {
+        //    base = frameRegister;
+        //}
         // APN can we have a memory address --- not handled yet?
         // APN simple case where we just have a register destination
         // TODO fix this so it will issue loads when appropriate!
-        if (base.isValid() && base != frameRegister) {
+        if (base.isValid() || base.compareTo(CiRegister.Frame) == 0) {
+            if(base == CiRegister.Frame) {
+                base = frameRegister;
+            }
             if (disp != 0) {
                 mov32BitConstant(scratchRegister, disp);
                 addRegisters(ConditionFlag.Always, false, scratchRegister, scratchRegister, base, 0, 0);
@@ -751,6 +754,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                 }
             }
         } else {
+            base = frameRegister;
             mov32BitConstant(scratchRegister, addr.kind.isLong() ? disp + 4 : disp);
             sub(ConditionFlag.Always, false, scratchRegister, ARMV7.r11, scratchRegister, 0, 0);
             if (index.isValid()) {
