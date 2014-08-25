@@ -302,7 +302,39 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (Rd.encoding & 0xf) << 12;
         instruction |= (imm5 & 0x1f) << 7;
         instruction |= (imm2 & 0x3) << 5;
-        instruction |= Rm.encoding & 0xf;
+        instruction |= Rm.encoding & 0xfff;
+        emitInt(instruction);
+    }
+
+    public void orsr(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final CiRegister Rs,final int type) {
+        int instruction = 0x1800010;
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (s ? 1 : 0) << 20;
+        instruction |= (Rn.encoding & 0xf) << 16;
+        instruction |= (Rd.encoding & 0xf) << 12;
+        instruction |= (Rs.encoding & 0xf) << 8;
+        instruction |= (type & 0x3) << 5;
+        instruction |= Rm.encoding & 0xfff;
+        emitInt(instruction);
+    }
+
+    public void or(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int imm12) {
+        int instruction = 0x3800000;
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (s ? 1 : 0) << 20;
+        instruction |= (Rn.encoding & 0xf) << 16;
+        instruction |= (Rd.encoding & 0xf) << 12;
+        instruction |= imm12 & 0xf;
+        emitInt(instruction);
+    }
+
+    public void asr(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rm, final int imm5) {
+        int instruction = 0x1A00040;
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (s ? 1 : 0) << 20;
+        instruction |= (Rd.encoding & 0xf) << 12;
+        instruction |= (imm5 & 0x1f) << 7;
+        instruction |= Rm.encoding & 0xfff;
         emitInt(instruction);
     }
 
@@ -385,6 +417,19 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void sub(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int immed_8, final int rotate_amount) {
         int instruction = 0x02400000; // subract of an immediate
+        checkConstraint(0 <= immed_8 && immed_8 <= 255, "0 <= immed_8 && immed_8 <= 255");
+        checkConstraint(0 <= rotate_amount && rotate_amount <= 15, "0 <= rotate_amount && rotate_amount  <= 15");
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (s ? 1 : 0) << 20;
+        instruction |= (Rd.encoding & 0xf) << 12;
+        instruction |= (Rn.encoding & 0xf) << 16;
+        instruction |= immed_8 & 0xff;
+        instruction |= (rotate_amount / 2 & 0xf) << 8;
+        emitInt(instruction);
+    }
+
+    public void rsb(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int immed_8, final int rotate_amount) {
+        int instruction = 0x2600000;
         checkConstraint(0 <= immed_8 && immed_8 <= 255, "0 <= immed_8 && immed_8 <= 255");
         checkConstraint(0 <= rotate_amount && rotate_amount <= 15, "0 <= rotate_amount && rotate_amount  <= 15");
         instruction |= (cond.value() & 0xf) << 28;
