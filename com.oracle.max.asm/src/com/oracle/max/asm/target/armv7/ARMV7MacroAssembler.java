@@ -615,8 +615,13 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void lshl(CiRegister dest, CiRegister left, CiRegister right) {
-        lsl(ConditionFlag.Always, true, dest, right, left);
-        lsl(ConditionFlag.Always, true, registerConfig.getAllocatableRegisters()[dest.number + 1], right, registerConfig.getAllocatableRegisters()[left.number + 1]);
+
+        sub(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[9], right, 32, 0);
+        rsb(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[10], right, 32, 0);
+        lsl(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number +1],  right, registerConfig.getAllocatableRegisters()[left.number +1]);
+        orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number +1], registerConfig.getAllocatableRegisters()[dest.number +1], left,  registerConfig.getAllocatableRegisters()[9], 0);
+        orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number +1], registerConfig.getAllocatableRegisters()[dest.number +1], left,  registerConfig.getAllocatableRegisters()[10], 1);
+        lsl(ConditionFlag.Always, false, dest, right, registerConfig.getAllocatableRegisters()[left.number]);
     }
 
     public void ishr(CiRegister dest, CiRegister left, int amount) {
