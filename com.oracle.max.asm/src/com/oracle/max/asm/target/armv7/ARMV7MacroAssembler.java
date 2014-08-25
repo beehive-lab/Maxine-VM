@@ -615,12 +615,13 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void lshl(CiRegister dest, CiRegister left, CiRegister right) {
-
         sub(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[9], right, 32, 0);
         rsb(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[10], right, 32, 0);
-        lsl(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number +1],  right, registerConfig.getAllocatableRegisters()[left.number +1]);
-        orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number +1], registerConfig.getAllocatableRegisters()[dest.number +1], left,  registerConfig.getAllocatableRegisters()[9], 0);
-        orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number +1], registerConfig.getAllocatableRegisters()[dest.number +1], left,  registerConfig.getAllocatableRegisters()[10], 1);
+        lsl(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], right, registerConfig.getAllocatableRegisters()[left.number + 1]);
+        orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[dest.number + 1], left,
+                        registerConfig.getAllocatableRegisters()[9], 0);
+        orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[dest.number + 1], left,
+                        registerConfig.getAllocatableRegisters()[10], 1);
         lsl(ConditionFlag.Always, false, dest, right, registerConfig.getAllocatableRegisters()[left.number]);
     }
 
@@ -633,9 +634,18 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void lshr(CiRegister dest, CiRegister left, CiRegister right) {
-        lsr(ConditionFlag.Always, true, dest, right, left);
-        lsr(ConditionFlag.Always, true, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[left.number + 1],
-                        registerConfig.getAllocatableRegisters()[right.number + 1]);
+        Label l = new Label();
+        rsb(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[10], right, 32, 0);
+        sub(ConditionFlag.Always, true, registerConfig.getAllocatableRegisters()[9], right, 32, 0);
+
+        lsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], right, registerConfig.getAllocatableRegisters()[left.number + 1]);
+        orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[dest.number + 1], left,
+                        registerConfig.getAllocatableRegisters()[9], 0);
+        jcc(ConditionFlag.Minus, l);
+        orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[dest.number + 1], left,
+                        registerConfig.getAllocatableRegisters()[9], 2);
+        bind(l);
+        asrr(ConditionFlag.Always, false, dest, right, registerConfig.getAllocatableRegisters()[left.number]);
     }
 
     public void iushr(CiRegister dest, CiRegister left, int amount) {
@@ -647,8 +657,17 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void lushr(CiRegister dest, CiRegister left, CiRegister right) {
-        lusr(ConditionFlag.Always, true, dest, left, right);
-        lusr(ConditionFlag.Always, true, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[left.number + 1],
-                        registerConfig.getAllocatableRegisters()[right.number + 1]);
+        Label l = new Label();
+        rsb(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[10], right, 32, 0);
+        sub(ConditionFlag.Always, true, registerConfig.getAllocatableRegisters()[9], right, 32, 0);
+
+        lsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], right, registerConfig.getAllocatableRegisters()[left.number + 1]);
+        orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[dest.number + 1], left,
+                        registerConfig.getAllocatableRegisters()[9], 0);
+        jcc(ConditionFlag.Minus, l);
+        orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[dest.number + 1], left,
+                        registerConfig.getAllocatableRegisters()[9], 2);
+        bind(l);
+        asrr(ConditionFlag.Always, false, dest, right, registerConfig.getAllocatableRegisters()[left.number]);
     }
 }
