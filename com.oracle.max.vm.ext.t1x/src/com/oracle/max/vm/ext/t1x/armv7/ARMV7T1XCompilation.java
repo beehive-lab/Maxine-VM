@@ -574,9 +574,11 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         // TODO buf.emitInt(0);
         // TODO
         asm.nop(2);
+
         int dispPos = buf.position() - 8;
       //  int dispPos = buf.position() - 12;
-        //patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
+        patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
+        asm.str(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
     }
 
     @Override
@@ -1002,11 +1004,11 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 buf.setPosition(dispPos);
                 int dispFromCodeStart = dispFromCodeStart(objectLiterals.size(), 0, index, true);
                 int disp = movqDisp(dispPos, dispFromCodeStart);
-
-                // store  the value in r8 at the PC+ disp.
+                buf.setPosition(dispPos);
+                // store  the value in r8 at the PC+ disp.(done at the patch insertion!!!! NOT HERE see emitUnProtectMethod)
                 int val = asm.movwHelper(ConditionFlag.Always,ARMV7.r12,disp&0xffff);
                 buf.emitInt(val);
-                val = asm.movtHelper(ConditionFlag.Always,ARMV7.r12,disp>>16);
+                val = asm.movtHelper(ConditionFlag.Always,ARMV7.r12,(disp>>16)&0xffff);
                 buf.emitInt(val);
                // val = asm.strHelper(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r15,ARMV7.r12,0,0);
                 //buf.emitInt(val);

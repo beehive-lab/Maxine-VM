@@ -586,7 +586,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void ignore_jtt_BC_iadd() throws Exception {
+    public void test_jtt_BC_iadd() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -2861,7 +2861,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_getstatic_i() throws Exception {
+    public void ignore_C1X_jtt_BC_getstatic_i() throws Exception {
         boolean failed = false;
         initTests();
         int argsOne[] = { 0, -1 , 2 ,4 };
