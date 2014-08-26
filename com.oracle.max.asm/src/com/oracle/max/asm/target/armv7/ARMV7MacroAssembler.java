@@ -22,13 +22,11 @@
  */
 package com.oracle.max.asm.target.armv7;
 
-import com.oracle.max.asm.AsmOptions;
-import com.oracle.max.asm.Label;
-import com.sun.cri.ci.*;
-import com.sun.cri.ri.RiRegisterConfig;
+import static com.oracle.max.asm.target.armv7.ARMV7.*;
 
-import static com.oracle.max.asm.target.armv7.ARMV7.r1;
-import static com.oracle.max.asm.target.armv7.ARMV7.r12;
+import com.oracle.max.asm.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * This class implements commonly used ARM!!!!! code patterns.
@@ -634,18 +632,15 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void lshr(CiRegister dest, CiRegister left, CiRegister right) {
-        Label l = new Label();
         rsb(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[10], right, 32, 0);
-        sub(ConditionFlag.Always, true, registerConfig.getAllocatableRegisters()[9], right, 32, 0);
+        sub(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[9], right, 32, 0);
 
+        lsr(ConditionFlag.Always, false, dest, right, registerConfig.getAllocatableRegisters()[left.number]);
+        orsr(ConditionFlag.Always, false, dest, left, registerConfig.getAllocatableRegisters()[left.number + 1],
+                        registerConfig.getAllocatableRegisters()[10], 0);
+        orsr(ConditionFlag.Always, false, dest, left, registerConfig.getAllocatableRegisters()[left.number + 1],
+                        registerConfig.getAllocatableRegisters()[9], 1);
         lsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], right, registerConfig.getAllocatableRegisters()[left.number + 1]);
-        orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[dest.number + 1], left,
-                        registerConfig.getAllocatableRegisters()[9], 0);
-        jcc(ConditionFlag.Minus, l);
-        orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[dest.number + 1], left,
-                        registerConfig.getAllocatableRegisters()[9], 2);
-        bind(l);
-        asrr(ConditionFlag.Always, false, dest, right, registerConfig.getAllocatableRegisters()[left.number]);
     }
 
     public void iushr(CiRegister dest, CiRegister left, int amount) {
