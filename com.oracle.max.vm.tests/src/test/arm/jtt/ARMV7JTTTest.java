@@ -3532,9 +3532,6 @@ public class ARMV7JTTTest extends MaxTestCase {
             long expectedValue = jtt.bytecode.BC_lushr.test(pair.lfirst, pair.second);
             String functionPrototype = ARMCodeWriter.preAmble("unsigned long long", "unsigned long long, int", asUnsignedDecimalString(pair.lfirst) + "," + Integer.toString(pair.second));
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
-            //String r0 = Integer.toBinaryString(0xffffffff & registerValues[0]);
-            //String r1 = Long.toBinaryString((0xffffffff & registerValues[1]));
-            //String ret = r1.concat(r0);
             long returnValue = connectRegs(registerValues[0], registerValues[1]);
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
