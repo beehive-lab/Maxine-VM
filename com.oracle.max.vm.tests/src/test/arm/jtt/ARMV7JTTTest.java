@@ -586,7 +586,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void ignore_jtt_BC_iadd() throws Exception {
+    public void test_jtt_BC_iadd() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -711,7 +711,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void ignore_jtt_BC_ishr() throws Exception {
+    public void test_jtt_BC_ishr() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -2866,6 +2866,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         initTests();
         int argsOne[] = { 0, -1 , 2 ,4 };
         String klassName = getKlassName("jtt.bytecode.BC_getstatic_i");
+        CompilationBroker.OFFLINE = true;
+
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         CompilationBroker.OFFLINE = true;
         initialiseCodeBuffers(methods, "BC_getstatic_i.java", "int test(int)");
