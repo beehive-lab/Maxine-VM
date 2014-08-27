@@ -1622,26 +1622,31 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             if (opr2.isRegister()) {
                 // register - register
                 switch (opr1.kind) {
-                    case Boolean :
-                    case Byte    :
-                    case Char    :
-                    case Short   :
-                    case Int     : masm.cmpl(reg1, opr2.asRegister()); break;
-                    case Object  : masm.cmpq(reg1, opr2.asRegister());
+                    case Boolean:
+                    case Byte:
+                    case Char:
+                    case Short:
+                    case Int:
+                        masm.cmpl(reg1, opr2.asRegister());
+                        break;
+                    case Object:
+                        masm.cmpq(reg1, opr2.asRegister());
                         break;
                     case Long:
-                        assert 0 == 1 : "long cmp not impl";
+                        masm.lcmpl(reg1, opr2.asRegister());
                         break;
-                    //long cmp not implemented case Long    :
-
-                    case Float   :
+                    case Float:
                         // was reg1 but need to hack it to use the correct float reg!!
-                        masm.ucomisd(asXmmFloatReg(opr1), asXmmFloatReg(opr2)); // was ucomiss but our encoding can handle single or double precision
-                                            // as long as the FP regs s0 d0 usage is fixed.
+                        masm.ucomisd(asXmmFloatReg(opr1), asXmmFloatReg(opr2));
+                        // was ucomiss but our encoding can
+                        // handle single or double precision
+                        // as long as the FP regs s0 d0 usage is fixed.
                         break;
-                    case Double  : masm.ucomisd(reg1, asXmmDoubleReg(opr2));
-                     break;
-                    default      : throw Util.shouldNotReachHere(opr1.kind.toString());
+                    case Double:
+                        masm.ucomisd(reg1, asXmmDoubleReg(opr2));
+                        break;
+                    default:
+                        throw Util.shouldNotReachHere(opr1.kind.toString());
                 }
             } else if (opr2.isStackSlot()) {
                 // register - stack
