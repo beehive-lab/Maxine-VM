@@ -987,7 +987,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void addLong(CiRegister dst, CiRegister src1, CiRegister src2) {
         addRegisters(ConditionFlag.Always, true, dst, src1, src2, 0, 0);
-        addCRegisters(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dst.number + 1], registerConfig.getAllocatableRegisters()[dst.number + 1],
+        addCRegisters(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dst.number + 1], registerConfig.getAllocatableRegisters()[src1.number + 1],
                         registerConfig.getAllocatableRegisters()[src2.number + 1], 0, 0);
     }
 
