@@ -2,9 +2,7 @@ package com.oracle.max.asm.target.armv7;
 
 import com.oracle.max.asm.AbstractAssembler;
 import com.oracle.max.asm.Label;
-import com.sun.cri.ci.CiAddress;
-import com.sun.cri.ci.CiRegister;
-import com.sun.cri.ci.CiTarget;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.RiRegisterConfig;
 
 public class ARMV7Assembler extends AbstractAssembler {
@@ -451,6 +449,18 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
+    public void sbc(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int immed_5, final int type) {
+        int instruction = 0xC00000;
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (s ? 1 : 0) << 20;
+        instruction |= (Rd.encoding & 0xf) << 12;
+        instruction |= (Rn.encoding & 0xf) << 16;
+        instruction |= (immed_5 & 0x1f) << 7;
+        instruction |= (type & 0x3) << 5;
+        instruction |= (Rm.encoding & 0xf);
+        emitInt(instruction);
+    }
+
     public void sub(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int imm5, final int imm2Type) {
         int instruction = 0x00400000;
         checkConstraint(0 <= imm5 && imm5 <= 31, "0 <= imm5 && imm5 <= 31");
@@ -885,10 +895,13 @@ public class ARMV7Assembler extends AbstractAssembler {
             imm32 = imm32 & 0xffff;
             movt(ConditionFlag.Always, dst, imm32 & 0xffff);
         }else { // initialise a float with a constant
-
             mov32BitConstant(ARMV7.r12,imm32);
             vmov(ConditionFlag.Always,dst,ARMV7.r12);
         }
+    }
+
+    public final void mov16BitConstant(ConditionFlag cond, CiRegister dst, int imm16) {
+        movw(cond, dst, imm16);
     }
 
     public final void mov64BitConstant(CiRegister dstUpper, CiRegister dstLow, long imm64) {
@@ -972,6 +985,13 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void cmpl(CiRegister src1, CiRegister src2) {
         cmp(ConditionFlag.Always, src1, src2, 0, 0);
+    }
+
+    public final void lcmpl(CiRegister src1, CiRegister src2) {
+        cmp(ConditionFlag.Always, src1, src2, 0, 0);
+        sbc(ConditionFlag.Always, true, scratchRegister,  registerConfig.getAllocatableRegisters()[src1.number + 1],  registerConfig.getAllocatableRegisters()[src2.number + 1], 0, 0);
+        mov16BitConstant(ConditionFlag.SignedGreaterOrEqual, registerConfig.getReturnRegister(CiKind.Int), 0);
+        mov16BitConstant(ConditionFlag.SignedLesser, registerConfig.getReturnRegister(CiKind.Int), 1);
     }
 
     public final void incq(CiRegister dst) {
