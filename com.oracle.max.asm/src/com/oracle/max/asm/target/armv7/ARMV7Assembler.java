@@ -1016,28 +1016,14 @@ public class ARMV7Assembler extends AbstractAssembler {
         mul(ConditionFlag.Always, false, src2, src2, registerConfig.getAllocatableRegisters()[src1.number + 1]);
         mul(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[src2.number + 1], src1, registerConfig.getAllocatableRegisters()[src2.number + 1]);
         addRegisters(ConditionFlag.Always, false, scratchRegister, src2, registerConfig.getAllocatableRegisters()[src2.number+1], 0, 0);
-
         umull(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[src2.number], dst,
                         registerConfig.getAllocatableRegisters()[scratchRegister.number+1], src1);
 
         addRegisters(ConditionFlag.Always, false, scratchRegister, scratchRegister,
                         src2, 0, 0);
-
         mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dst.number+1], scratchRegister);
 
     }
-
-    //public final void mulLong(CiRegister dst, CiRegister src1, CiRegister src2) {
-    //    mul(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[src2.number + 1], registerConfig.getAllocatableRegisters()[src2.number + 1], src1);
-    //    mul(ConditionFlag.Always, false, src2, registerConfig.getAllocatableRegisters()[src1.number + 1], src2);
-    //    addRegisters(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[src1.number + 1], registerConfig.getAllocatableRegisters()[src2.number + 1], src2, 0, 0);
-    //    umull(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[src2.number + 1], registerConfig.getAllocatableRegisters()[src1.number + 1],
-    //                    registerConfig.getAllocatableRegisters()[src2.number + 1], registerConfig.getAllocatableRegisters()[src1.number + 1]);
-    //    addRegisters(ConditionFlag.Always, false, scratchRegister, registerConfig.getAllocatableRegisters()[src1.number + 1],
-    //                    registerConfig.getAllocatableRegisters()[src2.number + 1], 0, 0);
-    //    mov(ConditionFlag.Always, true, dst, registerConfig.getAllocatableRegisters()[src1.number + 1]);
-    //    mov(ConditionFlag.Always, true, registerConfig.getAllocatableRegisters()[dst.number + 1], scratchRegister);
-    //}
 
     public void xorq(CiRegister dest, CiAddress src) {
         assert dest.isValid();
