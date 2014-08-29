@@ -1011,6 +1011,34 @@ public class ARMV7Assembler extends AbstractAssembler {
                         registerConfig.getAllocatableRegisters()[src2.number + 1], 0, 0);
     }
 
+    public final void mulLong(CiRegister dst, CiRegister src1, CiRegister src2) {
+        mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratchRegister.number+1], registerConfig.getAllocatableRegisters()[src2.number]);
+        mul(ConditionFlag.Always, false, src2, src2, registerConfig.getAllocatableRegisters()[src1.number + 1]);
+        mul(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[src2.number + 1], src1, registerConfig.getAllocatableRegisters()[src2.number + 1]);
+        addRegisters(ConditionFlag.Always, false, scratchRegister, src2, registerConfig.getAllocatableRegisters()[src2.number+1], 0, 0);
+
+        umull(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[src2.number], dst,
+                        registerConfig.getAllocatableRegisters()[scratchRegister.number+1], src1);
+
+        addRegisters(ConditionFlag.Always, false, scratchRegister, scratchRegister,
+                        src2, 0, 0);
+
+        mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dst.number+1], scratchRegister);
+
+    }
+
+    //public final void mulLong(CiRegister dst, CiRegister src1, CiRegister src2) {
+    //    mul(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[src2.number + 1], registerConfig.getAllocatableRegisters()[src2.number + 1], src1);
+    //    mul(ConditionFlag.Always, false, src2, registerConfig.getAllocatableRegisters()[src1.number + 1], src2);
+    //    addRegisters(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[src1.number + 1], registerConfig.getAllocatableRegisters()[src2.number + 1], src2, 0, 0);
+    //    umull(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[src2.number + 1], registerConfig.getAllocatableRegisters()[src1.number + 1],
+    //                    registerConfig.getAllocatableRegisters()[src2.number + 1], registerConfig.getAllocatableRegisters()[src1.number + 1]);
+    //    addRegisters(ConditionFlag.Always, false, scratchRegister, registerConfig.getAllocatableRegisters()[src1.number + 1],
+    //                    registerConfig.getAllocatableRegisters()[src2.number + 1], 0, 0);
+    //    mov(ConditionFlag.Always, true, dst, registerConfig.getAllocatableRegisters()[src1.number + 1]);
+    //    mov(ConditionFlag.Always, true, registerConfig.getAllocatableRegisters()[dst.number + 1], scratchRegister);
+    //}
+
     public void xorq(CiRegister dest, CiAddress src) {
         assert dest.isValid();
         setUpScratch(src);
@@ -1264,22 +1292,21 @@ public class ARMV7Assembler extends AbstractAssembler {
             //ldr(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
             addRegisters(cc, false, ARMV7.r15, ARMV7.r12, ARMV7.r15, 0, 0);
         }
-
     }
 
     public final void jmp(CiRegister absoluteAddress) {
-        /* branch to absolute address in register */
-        bx(ConditionFlag.Always,absoluteAddress);
+        bx(ConditionFlag.Always, absoluteAddress);
     }
+
     public final void bx(ConditionFlag cond, CiRegister target) {
         int instruction = 0x012fff10;
         instruction |= (cond.value() << 28);
         instruction |= target.encoding;
         emitInt(instruction);
     }
+
     public final void jmp(Label l) {
         if (l.isBound()) {
-            System.out.println("PATCHNING JMP AT " + l.position() );
             jmp(l.position(), false);
         } else {
             // By default, forward jumps are always 32-bit displacements, since
@@ -1288,9 +1315,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             // force an 8-bit displacement.
 
             l.addPatchAt(codeBuffer.position());
-            System.out.println("ADDED JMP PATCH AT" + codeBuffer.position());
             emitInt(ConditionFlag.NeverUse.value() << 28 | 0xbeef); // JMP CODE for the PATCH
-
             // TODO fix this it will not work ....
             nop(1);
             // emitByte(0xE9);
@@ -1609,6 +1634,17 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
         instruction |= (rm.encoding & 0xf) << 8;
         instruction |= (dest.encoding & 0xf) << 16;
+        instruction |= rn.encoding & 0xf;
+        emitInt(instruction);
+    }
+
+    public final void umull(ConditionFlag cond, boolean s, CiRegister rdHigh, CiRegister rdLow, CiRegister rm, CiRegister rn) {
+        int instruction = (cond.value() & 0xf) << 28;
+        instruction |= 0x800090;
+        instruction |= (s ? 1 : 0) << 20;
+        instruction |= (rdHigh.encoding & 0xf) << 16;
+        instruction |= (rdLow.encoding & 0xf) << 12;
+        instruction |= (rm.encoding & 0xf) << 8;
         instruction |= rn.encoding & 0xf;
         emitInt(instruction);
     }

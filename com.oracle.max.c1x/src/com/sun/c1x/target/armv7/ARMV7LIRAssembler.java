@@ -1142,7 +1142,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                             break;
                         case Sub: // masm.subq(lreg, rreg);
                             break;
-                        case Mul: // masm.imulq(lreg, rreg);
+                        case Mul:  masm.mulLong(dest.asRegister(), lreg, rreg);
                             break;
                         default:
                             throw Util.shouldNotReachHere();
