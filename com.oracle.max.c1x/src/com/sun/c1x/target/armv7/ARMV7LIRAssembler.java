@@ -1960,11 +1960,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             }
             callStub(op.stub, null, asXmmDoubleReg(dest), dest);
         } else {
-            CiRegister lreg = left.asRegister();
-            CiRegister dreg = dest.asRegister();
-            assert false : "emitNegate ARMV7IRAssembler";
-            // masm.movq(dreg, lreg);
-            // masm.negq(dreg);
+            masm.lneg(dest.asRegister(), left.asRegister());
         }
     }
 
