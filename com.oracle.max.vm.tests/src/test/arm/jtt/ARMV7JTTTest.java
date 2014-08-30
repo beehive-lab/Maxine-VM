@@ -3542,12 +3542,6 @@ public class ARMV7JTTTest extends MaxTestCase {
         return returnVal;
     }
 
-    // TODO: Figure out why -2147483648L and 2147483648L have
-    // the same reg0,reg1 values
-    public long unsignMinInt(long val) {
-        return val == -2147483648L ? 2147483648L : val;
-    }
-
     public void test_jtt_BC_lushr() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_lushr");
@@ -3592,6 +3586,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
+    // TODO: Figure out why -2147483648L and 2147483648L have
+    // the same reg0,reg1 values
     public void test_jtt_BC_lmul() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_lmul");
