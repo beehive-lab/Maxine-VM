@@ -26,7 +26,8 @@
 # N.B. There are no doubt still assumptions in the code that host and target word size are the same. 
 # These should be fixed.
 
-TARGET_WORD_SIZE := w64
+#TARGET_WORD_SIZE := w64
+TARGET_WORD_SIZE := w32
 
 ifeq ($(LIB), hosted)
     TARGET := HOSTED
@@ -97,6 +98,7 @@ ifeq ($(TARGETOS),Linux)
             $(shell echo $ISA)
         else
             ISA := $a
+            ISA := arm
         endif
     endif
 endif

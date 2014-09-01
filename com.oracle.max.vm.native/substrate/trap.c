@@ -154,7 +154,7 @@ static Address getInstructionPointer(UContext *ucontext) {
 #   elif isa_IA32
     return ucontext->uc_mcontext.gregs[REG_EIP];
 #elif isa_ARM
-	return ucontext->uc_mcontext.gregs[REG_RIP];
+	return ucontext->uc_mcontext.arm_pc;
 #   endif
 #elif os_DARWIN
     return ucontext->uc_mcontext->__ss.__rip;

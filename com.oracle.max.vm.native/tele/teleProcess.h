@@ -50,8 +50,9 @@ typedef struct {
     pid_t tgid;
     pid_t tid;
 } ProcessHandleStruct, *ProcessHandle;
-#define readProcessMemory(ph, src, dst, size) task_read(ph->tgid, ph->tid, (const void *) src, (void *) dst, (size_t) size)
-#define writeProcessMemory(ph, dst, src, size) task_write(ph->tgid, ph->tid, (void *) dst, (const void *) src, (size_t) size)
+#include <stdint.h>
+#define readProcessMemory(ph, src, dst, size) task_read(ph->tgid, ph->tid, (const void *) (intptr_t)src, (void *) (intptr_t)dst, (size_t) size)
+#define writeProcessMemory(ph, dst, src, size) task_write(ph->tgid, ph->tid, (void *)(intptr_t) dst, (const void *)(intptr_t) src, (size_t) size)
 #elif os_DARWIN
 #include <mach/mach.h>
 int task_read(task_t task, vm_address_t src, void *dst, size_t size);

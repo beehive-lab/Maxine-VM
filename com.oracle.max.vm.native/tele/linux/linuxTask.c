@@ -42,6 +42,14 @@
 #include "teleProcess.h"
 #include "linuxTask.h"
 
+#ifdef __arm__
+typedef struct user_fpregs user_fpregs_structure;
+typedef struct user_regs user_regs_structure;
+#else
+typedef struct user_fpregs_struct user_fpregs_structure;
+tyepdef struct user_regs_struct user_regs_structure;
+#endif
+
 /* The set of signals intercepted by the debugger to implement breakpoints,
  * task stopping/suspension. */
 static sigset_t _caughtSignals;
@@ -639,10 +647,10 @@ int process_wait_all_threads_stopped_alternative(pid_t pid) {
         return mTasks;
     }
 }
-
+#include <stdint.h>
 JNIEXPORT jint JNICALL
 Java_com_sun_max_tele_debug_linux_LinuxTask_nativeCreateChildProcess(JNIEnv *env, jclass c, jlong commandLineArgumentArray, jint vmAgentPort) {
-    char **argv = (char**) commandLineArgumentArray;
+    char **argv = (char**) (intptr_t) commandLineArgumentArray;
 
     /* Configure the debugging related signals we want to intercept. */
     sigemptyset(&_caughtSignals);
@@ -770,7 +778,9 @@ int task_memory_read_fd(int tgid, const void *address) {
         return fd;
     }
     free(memoryFileName);
-    off64_t fdOffset = (off64_t) address;
+   /* might need to use an off32_t? */
+
+    off64_t fdOffset = (off64_t) (intptr_t)address;
     if (lseek64(fd, fdOffset, SEEK_SET) != fdOffset) {
         log_println("Error seeking memory file for process %d to %p [%ul]: %s", tgid, address, fdOffset, strerror(errno));
         close(fd);
@@ -897,12 +907,17 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeReadBytes(JNIEnv *env, jclass 
 
 JNIEXPORT jboolean JNICALL
 Java_com_sun_max_tele_debug_linux_LinuxTask_nativeSetInstructionPointer(JNIEnv *env, jclass c, jint tid, jlong instructionPointer) {
-    struct user_regs_struct registers;
+    user_regs_structure registers;
 
     if (ptrace(PT_GETREGS, tid, 0, &registers) != 0) {
         return false;
     }
+#ifndef __arm__
     registers.rip = instructionPointer;
+#else 
+       registers.uregs[13] = instructionPointer;
+
+#endif
     return ptrace(PT_SETREGS, tid, 0, &registers) == 0;
 }
 
@@ -912,7 +927,7 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeSetInstructionPointer(JNIEnv *
  * 2. Canonicalizes the native register data structures
  * 3. Copies the canonicalized structures into the byte arrays
  */
-static jboolean copyRegisters(JNIEnv *env, jobject  this, struct user_regs_struct *osRegisters, struct user_fpregs_struct  *osFloatingPointRegisters,
+static jboolean copyRegisters(JNIEnv *env, jobject  this, user_regs_structure *osRegisters, user_fpregs_structure  *osFloatingPointRegisters,
         jbyteArray integerRegisters, jint integerRegistersLength,
         jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
         jbyteArray stateRegisters, jint stateRegistersLength) {
@@ -951,12 +966,12 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeReadRegisters(JNIEnv *env, jcl
                 jbyteArray floatingPointRegisters, jint floatingPointRegistersLength,
                 jbyteArray stateRegisters, jint stateRegistersLength) {
 
-    struct user_regs_struct osRegisters;
+    user_regs_structure osRegisters;
     if (ptrace(PT_GETREGS, tid, 0, &osRegisters) != 0) {
         return false;
     }
 
-    struct user_fpregs_struct osFloatRegisters;
+    user_fpregs_structure osFloatRegisters;
     if (ptrace(PT_GETFPREGS, tid, 0, &osFloatRegisters) != 0) {
         return false;
     }
@@ -991,7 +1006,7 @@ Java_com_sun_max_tele_debug_linux_LinuxDumpThreadAccess_taskRegisters(JNIEnv *en
                 jbyteArray stateRegisters, jint stateRegistersLength) {
     prstatus_t * prstatus = (prstatus_t *) ((*env)->GetDirectBufferAddress(env, bytebuffer_status));
     elf_fpregset_t *fpregset = (elf_fpregset_t *) ((*env)->GetDirectBufferAddress(env, bytebuffer_fpreg));
-    return copyRegisters(env, class, (struct user_regs_struct *) &prstatus->pr_reg[0], fpregset,
+    return copyRegisters(env, class, (user_regs_structure *) &prstatus->pr_reg[0], fpregset,
                     integerRegisters, integerRegistersLength,
                     floatingPointRegisters, floatingPointRegistersLength,
                     stateRegisters, stateRegistersLength);

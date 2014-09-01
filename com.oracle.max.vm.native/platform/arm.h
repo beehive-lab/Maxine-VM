@@ -20,28 +20,29 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#ifndef __arm__
-#define __arm__ 1
+#ifndef __arm_h__
+#define __arm_h__ 1
 
 #include "word.h"
-
+#ifndef __arm__
+#define __arm__
+#endif
 #if os_DARWIN
 #   include <sys/ucontext.h>
+/*
     typedef _STRUCT_X86_THREAD_STATE64 *amd64_OsTeleIntegerRegisters;
     typedef _STRUCT_X86_THREAD_STATE64 *amd64_OsTeleStateRegisters;
     typedef _STRUCT_X86_FLOAT_STATE64 *amd64_OsTeleFloatingPointRegisters;
+*/
+    typedef _STRUCT_X86_THREAD_STATE64 *arm_OsTeleIntegerRegisters;
+    typedef _STRUCT_X86_THREAD_STATE64 *arm_OsTeleStateRegisters;
+    typedef _STRUCT_X86_FLOAT_STATE64 *arm_OsTeleFloatingPointRegisters;
 #elif os_LINUX
 #   include <sys/ucontext.h>
 #   include <sys/user.h>
-#ifdef __arm__
-    typedef struct user_regs_struct *arm_OsTeleIntegerRegisters;
-    typedef struct user_fpregs_struct *arm_OsTeleFloatingPointRegisters;
-    typedef struct user_regs_struct *arm_OsTeleStateRegisters;
-#else
-    typedef struct user_regs_struct *amd64_OsTeleIntegerRegisters;
-    typedef struct user_fpregs_struct *amd64_OsTeleFloatingPointRegisters;
-    typedef struct user_regs_struct *amd64_OsTeleStateRegisters;
-#endif
+    typedef struct user_regs *arm_OsTeleIntegerRegisters;
+    typedef struct user_fpregs *arm_OsTeleFloatingPointRegisters;
+    typedef struct user_regs *arm_OsTeleStateRegisters;
     typedef struct {
         Word low;
         Word high;
@@ -107,7 +108,7 @@ typedef struct arm_CanonicalStateRegisters {
         Word flags;
 } arm_CanonicalStateRegistersAggregate, *arm_CanonicalStateRegisters;
 
-typedef struct amd64_CanonicalIntegerRegisters {
+/*typedef struct amd64_CanonicalIntegerRegisters {
 	Word rax;
 	Word rcx;
 	Word rdx;
@@ -149,30 +150,19 @@ typedef struct amd64_CanonicalStateRegisters {
 	Word rip;
 	Word flags;
 } amd64_CanonicalStateRegistersAggregate, *amd64_CanonicalStateRegisters;
-ifdef __arm__
-extern void arm_canonicalizeTeleIntegerRegisters(amd64_OsTeleIntegerRegisters osTeleIntegerRegisters, amd64_CanonicalIntegerRegisters canonicalIntegerRegisters);
+*/
+#ifdef __arm__
+extern void arm_canonicalizeTeleIntegerRegisters(arm_OsTeleIntegerRegisters, arm_CanonicalIntegerRegisters);
 
-extern void arm_canonicalizeTeleFloatingPointRegisters(amd64_OsTeleFloatingPointRegisters osTeleFloatingPointRegisters, amd64_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
+extern void arm_canonicalizeTeleFloatingPointRegisters(arm_OsTeleFloatingPointRegisters, arm_CanonicalFloatingPointRegisters);
 
-extern void arm_canonicalizeTeleStateRegisters(amd64_OsTeleStateRegisters osTeleStateRegisters, amd64_CanonicalStateRegisters canonicalStateRegisters);
+extern void arm_canonicalizeTeleStateRegisters(arm_OsTeleStateRegisters osTeleStateRegisters, arm_CanonicalStateRegisters canonicalStateRegisters);
 
-extern void arm_printCanonicalIntegerRegisters(amd64_CanonicalIntegerRegisters canonicalIntegerRegisters);
+extern void arm_printCanonicalIntegerRegisters(arm_CanonicalIntegerRegisters canonicalIntegerRegisters);
 
 
-extern void arm_printCanonicalFloatingPointRegisters(amd64_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
+extern void arm_printCanonicalFloatingPointRegisters(arm_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
 
-extern void arm_printCanonicalStateRegisters(amd64_CanonicalStateRegisters canonicalStateRegisters);
-#else
-extern void amd64_canonicalizeTeleIntegerRegisters(amd64_OsTeleIntegerRegisters osTeleIntegerRegisters, amd64_CanonicalIntegerRegisters canonicalIntegerRegisters);
-
-extern void amd64_canonicalizeTeleFloatingPointRegisters(amd64_OsTeleFloatingPointRegisters osTeleFloatingPointRegisters, amd64_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
-
-extern void amd64_canonicalizeTeleStateRegisters(amd64_OsTeleStateRegisters osTeleStateRegisters, amd64_CanonicalStateRegisters canonicalStateRegisters);
-
-extern void amd64_printCanonicalIntegerRegisters(amd64_CanonicalIntegerRegisters canonicalIntegerRegisters);
-
-extern void amd64_printCanonicalFloatingPointRegisters(amd64_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
-
-extern void amd64_printCanonicalStateRegisters(amd64_CanonicalStateRegisters canonicalStateRegisters);
+extern void arm_printCanonicalStateRegisters(arm_CanonicalStateRegisters canonicalStateRegisters);
 #endif
-#endif /*__amd64_h__*/
+#endif /*__arm__*/
