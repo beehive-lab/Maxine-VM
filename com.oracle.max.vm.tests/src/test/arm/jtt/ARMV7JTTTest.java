@@ -654,7 +654,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void ignore_jtt_BC_iand() throws Exception {
+    public void test_T1X_jtt_BC_iand() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -677,6 +677,29 @@ public class ARMV7JTTTest extends MaxTestCase {
         int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
+    }
+
+    public void test_C1X_jtt_BC_iand() throws Exception {
+        CompilationBroker.OFFLINE = initialised;
+        String klassName = getKlassName("jtt.bytecode.BC_iand");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(1, 2));
+        pairs.add(new Args(0, -1));
+        pairs.add(new Args(3, 63));
+        pairs.add(new Args(6, 4));
+        pairs.add(new Args(-2147483648, 1));
+        initialiseCodeBuffers(methods, "BC_iand.java", "int test(int, int)");
+        int assemblerStatements = codeBytes.length / 4;
+        for (Args pair : pairs) {
+            long expectedValue = jtt.bytecode.BC_iand.test(pair.first, pair.second);
+            String functionPrototype = ARMCodeWriter.preAmble("int", "int, int", Integer.toString(pair.first) + "," + Integer.toString(pair.second));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            int returnValue = registerValues[0];
+            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            theCompiler.cleanup();
+        }
     }
 
     public void ignore_jtt_BC_ishl() throws Exception {

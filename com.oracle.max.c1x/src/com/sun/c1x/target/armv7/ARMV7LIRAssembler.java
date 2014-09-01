@@ -1344,41 +1344,49 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 int val = ((CiConstant) right).asInt();
                 assert 0 == 1 : "emitLogicOp ";
                 switch (code) {
-                  case LogicAnd : //masm.andl(reg, val);
-                      break;
-                   case LogicOr  : //masm.orl(reg, val);
-                       break;
-                  case LogicXor : //masm.xorl(reg, val);
-                      break;
-                    default       : throw Util.shouldNotReachHere();
+                    case LogicAnd: // masm.andl(reg, val);
+                        break;
+                    case LogicOr: // masm.orl(reg, val);
+                        break;
+                    case LogicXor: // masm.xorl(reg, val);
+                        break;
+                    default:
+                        throw Util.shouldNotReachHere();
                 }
             } else if (right.isStackSlot()) {
                 // added support for stack operands
                 CiAddress raddr = frameMap.toStackAddress(((CiStackSlot) right));
                 masm.setUpScratch(raddr);
-                masm.ldrImmediate(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,0);
-                assert(reg != ARMV7.r12);
+                masm.ldrImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, 0);
+                assert (reg != ARMV7.r12);
                 switch (code) {
-                    case LogicAnd :// masm.andl(reg, raddr);
+                    case LogicAnd:// masm.andl(reg, raddr);
                         masm.iand(ARMV7.r8, reg, ARMV7.r8);
-                     break;
-                    case LogicOr  : //masm.orl(reg, raddr);
+                        break;
+                    case LogicOr: // masm.orl(reg, raddr);
                         masm.ior(ARMV7.r8, reg, ARMV7.r8);
-                     break;
-                    case LogicXor : //masm.xorl(reg, raddr);
-                        masm.ixor(ARMV7.r8, reg,ARMV7.r8);
-                     break;
-                    default       : throw Util.shouldNotReachHere();
+                        break;
+                    case LogicXor: // masm.xorl(reg, raddr);
+                        masm.ixor(ARMV7.r8, reg, ARMV7.r8);
+                        break;
+                    default:
+                        throw Util.shouldNotReachHere();
                 }
-                masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,0);
-
+                masm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, 0);
             } else {
                 CiRegister rright = right.asRegister();
                 switch (code) {
-                      case LogicAnd : masm.iand(dst.asRegister(), reg, rright); break;
-                      case LogicOr  : masm.ior(dst.asRegister(), reg, rright); break;
-                      case LogicXor : masm.ixor(dst.asRegister(), reg, rright); break;
-                    default       : throw Util.shouldNotReachHere();
+                    case LogicAnd:
+                        masm.iand(dst.asRegister(), reg, rright);
+                        break;
+                    case LogicOr:
+                        masm.ior(dst.asRegister(), reg, rright);
+                        break;
+                    case LogicXor:
+                        masm.ixor(dst.asRegister(), reg, rright);
+                        break;
+                    default:
+                        throw Util.shouldNotReachHere();
                 }
             }
             moveRegs(reg, dst.asRegister(), left.kind);
@@ -1386,29 +1394,35 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             CiRegister lreg = left.asRegister();
             if (right.isConstant()) {
                 CiConstant rightConstant = (CiConstant) right;
-                //masm.movq(rscratch1, rightConstant.asLong());
+                // masm.movq(rscratch1, rightConstant.asLong());
                 assert 0 == 1 : "mov long again ARMV7IRAssembler";
-
                 switch (code) {
-                    case LogicAnd :// masm.andq(lreg, rscratch1);
-                     break;
-                   case LogicOr  : //masm.orq(lreg, rscratch1);
-                    break;
-                    case LogicXor : masm.xorq(lreg, rscratch1); break;
-                    default       : throw Util.shouldNotReachHere();
+                    case LogicAnd:// masm.andq(lreg, rscratch1);
+                        break;
+                    case LogicOr: // masm.orq(lreg, rscratch1);
+                        break;
+                    case LogicXor:
+                        masm.xorq(lreg, rscratch1);
+                        break;
+                    default:
+                        throw Util.shouldNotReachHere();
                 }
             } else {
                 CiRegister rreg = right.asRegister();
                 switch (code) {
-                    case LogicAnd : masm.land(dst.asRegister(), lreg, rreg);
+                    case LogicAnd:
+                        masm.land(dst.asRegister(), lreg, rreg);
                         break;
-                    case LogicOr  : masm.lor(dst.asRegister(), lreg, rreg);
-                     break;
-                    case LogicXor : masm.lxor(dst.asRegister(), lreg, rreg); break;
-                    default       : throw Util.shouldNotReachHere();
+                    case LogicOr:
+                        masm.lor(dst.asRegister(), lreg, rreg);
+                        break;
+                    case LogicXor:
+                        masm.lxor(dst.asRegister(), lreg, rreg);
+                        break;
+                    default:
+                        throw Util.shouldNotReachHere();
                 }
             }
-
             CiRegister dreg = dst.asRegister();
             moveRegs(lreg, dreg, left.kind);
         }
