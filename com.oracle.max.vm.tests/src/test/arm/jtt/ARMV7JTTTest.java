@@ -985,7 +985,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void ignore_jtt_BC_ireturn_1() throws Exception {
+    public void test_T1X_jtt_BC_ireturn() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -1005,6 +1005,25 @@ public class ARMV7JTTTest extends MaxTestCase {
         int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
+    }
+
+    public void test_C1X_jtt_BC_ireturn() throws Exception {
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+        int argOne[] = { 0, 1, -1, 256};
+        String klassName = getKlassName("jtt.bytecode.BC_ireturn");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        initialiseCodeBuffers(methods, "BC_ireturn.java", "int test(int)");
+        int assemblerStatements = codeBytes.length / 4;
+        int expectedValue = 0;
+        for (int i = 0; i < argOne.length; i++) {
+            expectedValue = jtt.bytecode.BC_ireturn.test(argOne[i]);
+            String functionPrototype = ARMCodeWriter.preAmble("int", "int", Integer.toString(argOne[i]));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            assert registerValues[0] == expectedValue : ("Failed incorrect value " + registerValues[0] + " " + expectedValue);
+            theCompiler.cleanup();
+        }
     }
 
     public void ignore_C1X_jtt_BC_tableswitch() throws Exception {
@@ -3358,7 +3377,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_ladd() throws Exception {
+    public void ignore_jtt_BC_ladd() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_ladd");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -3542,7 +3561,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         return returnVal;
     }
 
-    public void test_jtt_BC_lushr() throws Exception {
+    public void ignore_jtt_BC_lushr() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_lushr");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -3588,7 +3607,7 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     // TODO: Figure out why -2147483648L and 2147483648L have
     // the same reg0,reg1 values
-    public void test_jtt_BC_lmul() throws Exception {
+    public void ignore_jtt_BC_lmul() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_lmul");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -3614,7 +3633,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lneg() throws Exception {
+    public void ignore_jtt_BC_lneg() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_lneg");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -3636,7 +3655,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lreturn() throws Exception {
+    public void ignore_jtt_BC_lreturn() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_lreturn");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -3659,7 +3678,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lsub() throws Exception {
+    public void ignore_jtt_BC_lsub() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_lsub");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
