@@ -20,8 +20,8 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-#ifndef __amd64_h__
-#define __amd64_h__ 1
+#ifndef __arm__
+#define __arm__ 1
 
 #include "word.h"
 
@@ -33,9 +33,15 @@
 #elif os_LINUX
 #   include <sys/ucontext.h>
 #   include <sys/user.h>
+#ifdef __arm__
+    typedef struct user_regs_struct *arm_OsTeleIntegerRegisters;
+    typedef struct user_fpregs_struct *arm_OsTeleFloatingPointRegisters;
+    typedef struct user_regs_struct *arm_OsTeleStateRegisters;
+#else
     typedef struct user_regs_struct *amd64_OsTeleIntegerRegisters;
     typedef struct user_fpregs_struct *amd64_OsTeleFloatingPointRegisters;
     typedef struct user_regs_struct *amd64_OsTeleStateRegisters;
+#endif
     typedef struct {
         Word low;
         Word high;
@@ -54,6 +60,52 @@
 #else
 #   error
 #endif
+typedef struct arm_CanonicalIntegerRegisters {
+        Word r0;
+        Word r1;
+        Word r2;
+        Word r3;
+        Word r4;
+        Word r5;
+        Word r6;
+        Word r7;
+        Word r8;
+        Word r9;
+        Word r10;
+        Word r11;
+        Word r12;
+        Word r13;
+        Word r14;
+        Word r15;
+} arm_CanonicalIntegerRegistersAggregate, *arm_CanonicalIntegerRegisters;
+typedef struct arm_CanonicalFloatingPointRegisters {
+        Word xmm0;
+        Word xmm1;
+        Word xmm2;
+        Word xmm3;
+        Word xmm4;
+        Word xmm5;
+        Word xmm6;
+        Word xmm7;
+        Word xmm8;
+        Word xmm9;
+        Word xmm10;
+        Word xmm11;
+        Word xmm12;
+        Word xmm13;
+        Word xmm14;
+        Word xmm15;
+} arm_CanonicalFloatingRegistersAggregate, *arm_CanonicalFloatingPointRegisters;
+
+
+typedef struct arm_CanonicalStateRegisters {
+/*
+        Word rip;
+        Word flags;
+*/
+        Word rip;
+        Word flags;
+} arm_CanonicalStateRegistersAggregate, *arm_CanonicalStateRegisters;
 
 typedef struct amd64_CanonicalIntegerRegisters {
 	Word rax;
@@ -97,7 +149,20 @@ typedef struct amd64_CanonicalStateRegisters {
 	Word rip;
 	Word flags;
 } amd64_CanonicalStateRegistersAggregate, *amd64_CanonicalStateRegisters;
+ifdef __arm__
+extern void arm_canonicalizeTeleIntegerRegisters(amd64_OsTeleIntegerRegisters osTeleIntegerRegisters, amd64_CanonicalIntegerRegisters canonicalIntegerRegisters);
 
+extern void arm_canonicalizeTeleFloatingPointRegisters(amd64_OsTeleFloatingPointRegisters osTeleFloatingPointRegisters, amd64_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
+
+extern void arm_canonicalizeTeleStateRegisters(amd64_OsTeleStateRegisters osTeleStateRegisters, amd64_CanonicalStateRegisters canonicalStateRegisters);
+
+extern void arm_printCanonicalIntegerRegisters(amd64_CanonicalIntegerRegisters canonicalIntegerRegisters);
+
+
+extern void arm_printCanonicalFloatingPointRegisters(amd64_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
+
+extern void arm_printCanonicalStateRegisters(amd64_CanonicalStateRegisters canonicalStateRegisters);
+#else
 extern void amd64_canonicalizeTeleIntegerRegisters(amd64_OsTeleIntegerRegisters osTeleIntegerRegisters, amd64_CanonicalIntegerRegisters canonicalIntegerRegisters);
 
 extern void amd64_canonicalizeTeleFloatingPointRegisters(amd64_OsTeleFloatingPointRegisters osTeleFloatingPointRegisters, amd64_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
@@ -109,5 +174,5 @@ extern void amd64_printCanonicalIntegerRegisters(amd64_CanonicalIntegerRegisters
 extern void amd64_printCanonicalFloatingPointRegisters(amd64_CanonicalFloatingPointRegisters canonicalFloatingPointRegisters);
 
 extern void amd64_printCanonicalStateRegisters(amd64_CanonicalStateRegisters canonicalStateRegisters);
-
+#endif
 #endif /*__amd64_h__*/
