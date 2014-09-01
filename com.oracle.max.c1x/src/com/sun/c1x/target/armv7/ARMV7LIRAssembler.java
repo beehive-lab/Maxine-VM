@@ -1345,6 +1345,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 assert 0 == 1 : "emitLogicOp ";
                 switch (code) {
                     case LogicAnd: // masm.andl(reg, val);
+                        masm.mov32BitConstant(ARMV7.r12, val);
+                        // masm.and(ConditionFlag.Always,reg,ARMV7.r12);
+                        System.out.println("LogicAnd ARMV7LIRAssembler");
                         break;
                     case LogicOr: // masm.orl(reg, val);
                         break;

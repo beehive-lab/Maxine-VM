@@ -28,13 +28,18 @@ void isa_canonicalizeTeleIntegerRegisters(isa_OsTeleIntegerRegisters os, isa_Can
 #if os_DARWIN
 #define CANONICALIZE(reg, ucReg) c->reg = (Word) os->__##reg
 #elif os_LINUX || os_MAXVE
+#ifdef __arm__
+#define CANONICALIZE(reg, intpos) c->reg = (Word) os->uregs[intpos]
+#else
 #define CANONICALIZE(reg, ucReg) c->reg = (Word) os->reg
+#endif
 #elif os_SOLARIS
 #define CANONICALIZE(reg, ucReg) c->reg = (Word) os[REG_##ucReg]
 #else
 #define CANONICALIZE(reg, ucReg) c_UNIMPLEMENTED()
 #endif
 
+#ifndef __arm__
     CANONICALIZE(rax, RAX);
     CANONICALIZE(rcx, RCX);
     CANONICALIZE(rdx, RDX);
@@ -51,7 +56,25 @@ void isa_canonicalizeTeleIntegerRegisters(isa_OsTeleIntegerRegisters os, isa_Can
     CANONICALIZE(r13, R13);
     CANONICALIZE(r14, R14);
     CANONICALIZE(r15, R15);
+#else
+   CANONICALIZE(r0,0);
+    CANONICALIZE(r1, 1);
+    CANONICALIZE(r2, 2);
+    CANONICALIZE(r3, 3);
+    CANONICALIZE(r4, 4);
+    CANONICALIZE(r5, 5);
+    CANONICALIZE(r6, 6);
+    CANONICALIZE(r7, 7);
+    CANONICALIZE(r8, 8);
+    CANONICALIZE(r9, 9);
+    CANONICALIZE(r10,10);
+    CANONICALIZE(r11,11);
+    CANONICALIZE(r12, 12);
+    CANONICALIZE(r13, 13);
+    CANONICALIZE(r14, 14);
+    CANONICALIZE(r15, 15);
 
+#endif
 #undef CANONICALIZE
 }
 
@@ -67,7 +90,7 @@ void isa_canonicalizeTeleFloatingPointRegisters(isa_OsTeleFloatingPointRegisters
 #else
 #define CANONICALIZE(reg, ucReg) c_UNIMPLEMENTED()
 #endif
-
+#ifndef __arm__
     CANONICALIZE(0);
     CANONICALIZE(1);
     CANONICALIZE(2);
@@ -85,6 +108,11 @@ void isa_canonicalizeTeleFloatingPointRegisters(isa_OsTeleFloatingPointRegisters
     CANONICALIZE(14);
     CANONICALIZE(15);
 
+#else
+log_println("arm substrate isa_canonicalizeTeleFloatingPointRegisters is broken\nd not implementedn");
+/*     c->xmm0 = *((Word *) &(os->fpregs[0..7]));
+ something like this but need to get rid of xmm0*/
+#endif
 #undef CANONICALIZE
 }
 
@@ -93,8 +121,13 @@ void isa_canonicalizeTeleStateRegisters(isa_OsTeleStateRegisters os, isa_Canonic
     c->rip = (Word) os->__rip;
     c->flags = (Word) os->__rflags;
 #elif os_LINUX
+#ifdef __arm__
+   log_println("isa_canonicalizeTeleStateRegisters arm substrate broken and not implemented");
+
+#else
     c->rip = (Word) os->rip;
     c->flags = (Word) os->eflags;
+#endif
 #elif os_SOLARIS
     c->rip = (Word) os[REG_RIP];
     c->flags = (Word) os[REG_RFL];
@@ -108,6 +141,26 @@ void isa_canonicalizeTeleStateRegisters(isa_OsTeleStateRegisters os, isa_Canonic
 
 void isa_printCanonicalIntegerRegisters(isa_CanonicalIntegerRegisters c) {
 #define PRINT_REG(name, field) log_println(name " = %p [%ld]", c->field, c->field)
+
+#ifdef __arm__
+    PRINT_REG("R0", r0);
+    PRINT_REG("R1", r1);
+    PRINT_REG("R2", r2);
+    PRINT_REG("R3", r3);
+    PRINT_REG("R4", r4);
+    PRINT_REG("R5", r5);
+    PRINT_REG("R6", r6);
+    PRINT_REG("R7", r7);
+    PRINT_REG("R8 ", r8);
+    PRINT_REG("R9 ", r9);
+    PRINT_REG("R10", r10);
+    PRINT_REG("R11", r11);
+    PRINT_REG("R12", r12);
+    PRINT_REG("R13", r13);
+    PRINT_REG("R14", r14);
+    PRINT_REG("R15", r15);
+
+#else
     PRINT_REG("RAX", rax);
     PRINT_REG("RCX", rcx);
     PRINT_REG("RDX", rdx);
@@ -122,6 +175,7 @@ void isa_printCanonicalIntegerRegisters(isa_CanonicalIntegerRegisters c) {
     PRINT_REG("R13", r13);
     PRINT_REG("R14", r14);
     PRINT_REG("R15", r15);
+#endif
 #undef PRINT_REG
 }
 

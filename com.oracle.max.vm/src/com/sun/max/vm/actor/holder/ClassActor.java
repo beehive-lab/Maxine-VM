@@ -702,9 +702,9 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
                 //for(int i = 0; i < methods.length;i++) {
                     //System.out.println("NAME " + methods[i].qualifiedName());
                 //}
-               // for (FieldActor fieldActor : classActor.localStaticFieldActors()) {
+                //for (FieldActor fieldActor : classActor.localStaticFieldActors()) {
                     //System.out.println("Field ACTOR HAS CLINIT " + fieldActor.holder().hasClassInitializer());
-
+                    // causes crash System.out.println("Klass " + classActor +" fieldActor " + fieldActor + " val " + fieldActor.getInt(null));
                     //final Value constantValue = fieldActor.constantValue();
                     //if (constantValue != null) {
                        // if(constantValue.kind() == Kind.INT) {

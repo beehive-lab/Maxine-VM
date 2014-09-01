@@ -175,7 +175,7 @@ def image(args):
     Name            | Description                   | Example values
     ================+===============================+================
     max.platform    | name of a preset platform     | solaris-amd64 linux-amd64 darwin-amd64
-    max.cpu         | processor model               | AMD64 IA32 SPARCV9
+    max.cpu         | processor model               | AMD64 IA32 SPARCV9 ARMV7
     max.isa         | instruction set architecture  | AMD64 ARM PPC SPARC
     max.os          | operating system              | Darwin Linux Solaris
     max.endianness  | endianness                    | BIG LITTLE

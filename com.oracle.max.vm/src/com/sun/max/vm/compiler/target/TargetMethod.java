@@ -738,8 +738,12 @@ public abstract class TargetMethod extends MemoryRegion {
             // APN not really sure if this is required it appears to reorder code in the code
             // buffer so I will keep it in and produce a stripped down ARMISAInstructionDecoder that gets rid of all
             // the unnecessary X86 functionality                       com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMISAInstructionDecoder.java
-            //
+
+            for(Object j : referenceLiterals)
+            //System.out.println("Klass " + classMethodActor +" + ((FieldActor)j).getInt(null));
+
             ARMISAInstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);
+
         } else {
             throw FatalError.unimplemented();
         }

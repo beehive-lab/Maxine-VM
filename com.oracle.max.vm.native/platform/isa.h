@@ -110,9 +110,9 @@
     typedef struct arm_CanonicalIntegerRegisters isa_CanonicalIntegerRegistersStruct;
     typedef arm_CanonicalIntegerRegisters isa_CanonicalIntegerRegisters;
 
-    typedef arm_OsTeleFloatingRegisters isa_OsTeleFloatingPointRegisters;
-    typedef struct arm_CanonicalFloatingRegisters isa_CanonicalFloatingPointRegistersStruct;
-    typedef arm_CanonicalFloatingRegisters isa_CanonicalFloatingPointRegisters;
+    typedef arm_OsTeleFloatingPointRegisters isa_OsTeleFloatingPointRegisters;
+    typedef struct arm_CanonicalFloatingPointRegisters isa_CanonicalFloatingPointRegistersStruct;
+    typedef arm_CanonicalFloatingPointRegisters isa_CanonicalFloatingPointRegisters;
 
     typedef arm_OsTeleStateRegisters isa_OsTeleStateRegisters;
     typedef struct arm_CanonicalStateRegisters isa_CanonicalStateRegistersStruct;

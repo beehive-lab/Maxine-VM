@@ -54,6 +54,8 @@ public enum CPU {
     public static CPU defaultForInstructionSet(ISA isa) {
         if (isa.equals(ISA.SPARC)) {
             return SPARCV9;
+        } else if (isa.equals(ISA.ARM)) {
+            return ARMV7;
         }
         return valueOf(isa.name());
     }
