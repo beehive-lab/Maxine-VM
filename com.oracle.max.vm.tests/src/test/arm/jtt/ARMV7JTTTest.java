@@ -3635,4 +3635,27 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+
+    public void test_jtt_BC_lreturn() throws Exception {
+        CompilationBroker.OFFLINE = initialised;
+        String klassName = getKlassName("jtt.bytecode.BC_lreturn");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(0L, 0L));
+        pairs.add(new Args(1L, 1L));
+        pairs.add(new Args(-1L, -1L));
+        pairs.add(new Args(256L, 256L));
+        pairs.add(new Args(1000000000000L, 1000000000000L));
+        initialiseCodeBuffers(methods, "BC_lreturn.java", "long test(long)");
+        int assemblerStatements = codeBytes.length / 4;
+        for (Args pair : pairs) {
+            long expectedValue = jtt.bytecode.BC_lreturn.test(pair.lfirst);
+            String functionPrototype = ARMCodeWriter.preAmble("long long", "long long", Long.toString(pair.lfirst));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            long returnValue = connectRegs(registerValues[0], registerValues[1]);
+            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            theCompiler.cleanup();
+        }
+    }
 }
