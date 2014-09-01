@@ -802,7 +802,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void ignore_jtt_BC_i2b() throws Exception {
+    public void test_T1X_jtt_BC_i2b() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -823,6 +823,24 @@ public class ARMV7JTTTest extends MaxTestCase {
         int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
+    }
+
+    public void test_C1X_jtt_BC_i2b() throws Exception {
+        initTests();
+        int argsOne[] = { -1, 2, 255, 128};
+        String klassName = getKlassName("jtt.bytecode.BC_i2b");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        initialiseCodeBuffers(methods, "BC_i2b.java", "byte test(int)");
+        int assemblerStatements = codeBytes.length / 4;
+        short expectedValue = 0;
+        for (int i = 0; i < argsOne.length; i++) {
+            expectedValue = jtt.bytecode.BC_i2b.test(argsOne[i]);
+            String functionPrototype = ARMCodeWriter.preAmble("char", "int", Integer.toString(argsOne[i]));
+            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            assert ((Integer) registerValues[0]).byteValue() == expectedValue : "Failed incorrect value " + ((Integer) registerValues[0]).byteValue() + " " + expectedValue;
+            theCompiler.cleanup();
+        }
     }
 
     public void ignore_jtt_BC_i2b_1() throws Exception {
@@ -1755,7 +1773,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_T1X_jtt_BC_iconst() throws Exception {
+    public void ignore_T1X_jtt_BC_iconst() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
@@ -1787,7 +1805,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_BC_iconst() throws Exception {
+    public void ignore_C1X_jtt_BC_iconst() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_iconst");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
