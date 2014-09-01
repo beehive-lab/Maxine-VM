@@ -1033,6 +1033,12 @@ public class ARMV7Assembler extends AbstractAssembler {
                         registerConfig.getAllocatableRegisters()[src2.number + 1], 0, 0);
     }
 
+    public final void subLong(CiRegister dst, CiRegister src1, CiRegister src2) {
+        sub(ConditionFlag.Always, true, dst, src1, src2, 0, 0);
+        sbc(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dst.number + 1], registerConfig.getAllocatableRegisters()[src1.number + 1],
+                        registerConfig.getAllocatableRegisters()[src2.number + 1], 0, 0);
+    }
+
     public final void mulLong(CiRegister dst, CiRegister src1, CiRegister src2) {
         mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratchRegister.number+1], registerConfig.getAllocatableRegisters()[src2.number]);
         mul(ConditionFlag.Always, false, src2, src2, registerConfig.getAllocatableRegisters()[src1.number + 1]);

@@ -1140,7 +1140,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     switch (code) {
                         case Add: masm.addLong(dest.asRegister(), lreg, rreg);
                             break;
-                        case Sub: // masm.subq(lreg, rreg);
+                        case Sub: masm.subLong(dest.asRegister(), lreg, rreg);
                             break;
                         case Mul:  masm.mulLong(dest.asRegister(), lreg, rreg);
                             break;
