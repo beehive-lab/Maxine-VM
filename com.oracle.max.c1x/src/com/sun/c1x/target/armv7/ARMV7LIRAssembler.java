@@ -1402,14 +1402,15 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             if (right.isConstant()) {
                 CiConstant rightConstant = (CiConstant) right;
                 // masm.movq(rscratch1, rightConstant.asLong());
-                assert 0 == 1 : "mov long again ARMV7IRAssembler";
+	        masm.movlong(ARMV7.r8,rightConstant.asLong());
                 switch (code) {
                     case LogicAnd:// masm.andq(lreg, rscratch1);
+                        masm.land(dst.asRegister(),lreg,ARMV7.r8);
                         break;
-                    case LogicOr: // masm.orq(lreg, rscratch1);
+                    case LogicOr: masm.lor(dst.asRegister(),lreg, ARMV7.r8);
                         break;
                     case LogicXor:
-                        masm.xorq(lreg, rscratch1);
+                        masm.lxor(dst.asRegister(),lreg, ARMV7.r8);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
