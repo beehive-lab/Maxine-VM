@@ -68,6 +68,25 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public void popptr(CiAddress src) {
         popq(src);
     }
+    public final void cmpswapInt(CiRegister newValue, CiAddress address) {
+	/* we will use ldrex strex to implement the compare and swap
+        */
+	setUpScratch(address);
+        ldrex(ConditionFlag.Always,ARMV7.r8,ARMV7.r12);
+	strex(ConditionFlag.Always,ARMV7.r8,newValue,ARMV7.r12);
+	System.out.println("cmpswapInt not implemented");
+        
+        
+    }
+    public final void cmpswapLong(CiRegister newValue, CiAddress address) {
+	/*
+        largely the same as above except we will use ldrexd (dual) and strexd (dual)
+        to be able to compare and swap the new value!
+        */
+	setUpScratch(address);
+	System.out.println("cmpswapLong not implemented");
+        
+    }
 
     public void xorptr(CiRegister dst, CiRegister src) {
         xorq(dst, src);

@@ -504,6 +504,21 @@ public class T1XTemplate {
         this.code = source.code();
         this.tag = tag;
         int nSafepoints = source.safepoints().size();
+        System.out.println("T1XTemplate " + method.qualifiedName() + " " + nSafepoints );
+	if(source.referenceLiterals() != null) {
+		System.out.println( " REFLITS " + source.referenceLiterals().length);
+	}
+        if(method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.monitorexit") == 0 ||
+        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.loadException") == 0 ||
+	method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.monitorenter") == 0) {
+               System.out.println("Avoiding cmpswapInt crash");
+	       safepoints = NO_SAFEPOINTS; // remove this debugging
+               objectLiterals = null;
+               sig = initSig(method);
+	       return;
+        }
+	
+
 
         if (nSafepoints == 0) {
             safepoints = NO_SAFEPOINTS;

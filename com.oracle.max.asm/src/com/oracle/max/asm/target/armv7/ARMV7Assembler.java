@@ -562,6 +562,22 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (imm8 & 0xf0) << 4;
         emitInt(instruction);
     }
+ public void ldrex(final ConditionFlag cond, final CiRegister Rdest, final CiRegister Raddr) {
+        int instruction = 0x01900f9f;
+        instruction |= ((cond.value() & 0xf) << 28);
+        instruction |= ((Rdest.encoding & 0xf) << 12);
+        instruction |= ((Raddr.encoding & 0xf) << 16);
+        emitInt(instruction);
+    }
+    public void strex(final ConditionFlag cond, final CiRegister Rdest, final CiRegister Rnewval,final CiRegister Raddr) {
+        int instruction = 0x01800f90;
+        instruction |= ((cond.value() & 0xf) << 28);
+        instruction |= ((Rdest.encoding & 0xf) << 12);
+        instruction |= ((Raddr.encoding & 0xf) << 16);
+        instruction |= ((Rnewval.encoding & 0xf) << 0);
+
+        emitInt(instruction);
+    }
 
     public void ldrshw(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
         int instruction = 0x005000f0;
@@ -1256,6 +1272,10 @@ public class ARMV7Assembler extends AbstractAssembler {
         mov(ConditionFlag.Always, false, ARMV7.r11, ARMV7.r13); // move the SP onto the FP
         mov32BitConstant(ARMV7.r12, imm16);
         sub(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
+    }
+    public final void lock() {
+        System.out.println("ARMV7Assembler lock not implemented\n");
+	    nop();
     }
 
     public void nullCheck(CiRegister r) {

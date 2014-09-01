@@ -927,15 +927,17 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert cmpval != address.index() : "cmp and addr must be in different registers";
         assert newval != address.index() : "new value and addr must be in different registers";
 
-        assert 0 == 1 : "emitCompareAndSwap ARMV7IRAssembler";
 
         if (compilation.target.isMP) {
-           // masm.lock();
+            masm.lock();
         }
-        if (op.code == LIROpcode.CasInt) {
+        if (op.code == LIROpcode.CasInt || op.code == LIROpcode.CasObj) {
            // masm.cmpxchgl(newval, address);
+	  masm.cmpswapInt(newval,address);
         } else {
-            assert op.code == LIROpcode.CasObj || op.code == LIROpcode.CasLong;
+            //assert op.code == LIROpcode.CasObj || op.code == LIROpcode.CasLong;
+            assert op.code == LIROpcode.CasLong;
+	    masm.cmpswapLong(newval,address);
           //  masm.cmpxchgq(newval, address);
         }
     }
@@ -1342,16 +1344,19 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             CiRegister reg = left.asRegister();
             if (right.isConstant()) {
                 int val = ((CiConstant) right).asInt();
-                assert 0 == 1 : "emitLogicOp ";
+                masm.mov32BitConstant(ARMV7.r12,val);
+
                 switch (code) {
                   case LogicAnd : //masm.andl(reg, val);
-                      masm.mov32BitConstant(ARMV7.r12,val);
+                      masm.iand(reg,reg,ARMV7.r12);
+
                       //masm.and(ConditionFlag.Always,reg,ARMV7.r12);
-                      System.out.println("LogicAnd ARMV7LIRAssembler");
                       break;
                    case LogicOr  : //masm.orl(reg, val);
+                      masm.ior(reg,reg,ARMV7.r12);
                        break;
                   case LogicXor : //masm.xorl(reg, val);
+                      masm.ixor(reg,reg,ARMV7.r12);
                       break;
                     default       : throw Util.shouldNotReachHere();
                 }
@@ -1877,21 +1882,25 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     @Override
     protected void emitShiftOp(LIROpcode code, CiValue left, int count, CiValue dest) {
         assert dest.isRegister();
-        assert 0 == 1 : "emitShiftOp";
         if (dest.kind.isInt()) {
             // first move left into dest so that left is not destroyed by the shift
             CiRegister value = dest.asRegister();
             count = count & 0x1F; // Java spec
+            
 
-
-            //moveRegs(left.asRegister(), value);
+            masm.mov(ConditionFlag.Always,false,dest.asRegister(),left.asRegister());
             // Checkstyle: off
+            masm.mov32BitConstant(ARMV7.r12,count);
+	    System.out.println("emitShiftOp DEST is " + dest.asRegister().encoding);
             switch (code) {
-                case Shl  : masm.ishl(dest.asRegister(), value, count); break;
+                case Shl  : masm.ishl(dest.asRegister(), value, ARMV7.r12); break;
                 case Shr  : //masm.sarl(value, count);
+                            masm.iushr(dest.asRegister(),value,ARMV7.r12);
                  break;
                 case Ushr : //masm.shrl(value, count);
+                          masm.ishr(dest.asRegister(),value,ARMV7.r12);
                  break;
+
                 default   : throw Util.shouldNotReachHere();
             }
         } else {
@@ -1901,12 +1910,16 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             count = count & 0x1F; // Java spec
 
             moveRegs(left.asRegister(), value, left.kind);
+            masm.mov32BitConstant(ARMV7.r12,count);
             switch (code) {
                 case Shl  : //masm.shlq(value, count);
+                           masm.lshl(value, left.asRegister(), ARMV7.r12);
                     break;
                 case Shr  : //masm.sarq(value, count);
+			   masm.lushr(value, left.asRegister(), ARMV7.r12);
                     break;
                case Ushr : //masm.shrq(value, count);
+                          masm.lshr(value, left.asRegister(), ARMV7.r12);
                    break;
                 default   : throw Util.shouldNotReachHere();
             }

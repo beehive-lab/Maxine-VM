@@ -556,6 +556,23 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
+    public void ldrex(final ConditionFlag cond, final CiRegister Rdest, final CiRegister Raddr) {
+        int instruction = 0x01900f9f;
+        instruction |= ((cond.value() & 0xf) << 28);
+        instruction |= ((Rdest.encoding & 0xf) << 12);
+        instruction |= ((Raddr.encoding & 0xf) << 16);
+        emitInt(instruction);
+    }
+    public void strex(final ConditionFlag cond, final CiRegister Rdest, final CiRegister Rnewval,final CiRegister Raddr) {
+        int instruction = 0x01800f90;
+        instruction |= ((cond.value() & 0xf) << 28);
+        instruction |= ((Rdest.encoding & 0xf) << 12);
+        instruction |= ((Raddr.encoding & 0xf) << 16);
+        instruction |= ((Rnewval.encoding & 0xf) << 0);
+
+        emitInt(instruction);
+    }
+
     /**
      * Pseudo-external assembler syntax: {@code ldr[eq|ne|cs|hs|cc|lo|mi|pl|vs|vc|hi|ls|ge|lt|gt|le|al|nv]  }<i>Rd</i>, <i>Rn</i>, <i>offset_12</i>
      * Example disassembly syntax: {@code ldreq         r0, [r0, #-0x0]!}
