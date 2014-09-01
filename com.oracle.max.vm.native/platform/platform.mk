@@ -25,9 +25,10 @@
 # This is where you might change that for the native code; TARGET_WORD_SIZE is interpreted in word.h
 # N.B. There are no doubt still assumptions in the code that host and target word size are the same. 
 # These should be fixed.
+# ARM is now 32 bit (ARMv7) the target word size is hard coded to w32 when building on arm natively
 
-#TARGET_WORD_SIZE := w64
-TARGET_WORD_SIZE := w32
+TARGET_WORD_SIZE := w64
+#TARGET_WORD_SIZE := w32
 
 ifeq ($(LIB), hosted)
     TARGET := HOSTED
@@ -99,6 +100,7 @@ ifeq ($(TARGETOS),Linux)
         else
             ISA := $a
             ISA := arm
+            TARGET_WORD_SIZE := w32
         endif
     endif
 endif

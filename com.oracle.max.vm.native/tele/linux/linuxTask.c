@@ -47,7 +47,7 @@ typedef struct user_fpregs user_fpregs_structure;
 typedef struct user_regs user_regs_structure;
 #else
 typedef struct user_fpregs_struct user_fpregs_structure;
-tyepdef struct user_regs_struct user_regs_structure;
+typedef struct user_regs_struct user_regs_structure;
 #endif
 
 /* The set of signals intercepted by the debugger to implement breakpoints,
