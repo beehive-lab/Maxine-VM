@@ -274,9 +274,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert dst.isStackSlot();
         CiStackSlot slot = (CiStackSlot) dst;
         CiConstant c = (CiConstant) src;
-        assert 0 == 1 : "const2stack ARMV7IRAssembler";
 
         // Checkstyle: off
+	masm.setUpScratch(frameMap.toStackAddress(slot));
         switch (c.kind) {
             case Boolean :
             case Byte    :
@@ -284,11 +284,24 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case Short   :
             case Jsr     :
             case Int     : //masm.movl(frameMap.toStackAddress(slot), c.asInt()); break;
-            case Float   : //masm.movl(frameMap.toStackAddress(slot), floatToRawIntBits(c.asFloat())); break;
-            case Object  : //movoop(frameMap.toStackAddress(slot), c); break;
+                         masm.mov32BitConstant(ARMV7.r8, c.asInt());
+			 masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,0);
+                          break;
+
+            case Float   : ////masm.movl(frameMap.toStackAddress(slot), floatToRawIntBits(c.asFloat())); break;
+			 masm.mov32BitConstant(ARMV7.r8, Float.floatToRawIntBits(c.asFloat()));
+			 masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,0);
+			break;
+            case Object  : movoop(frameMap.toStackAddress(slot), c); break;
             case Long    : //masm.movq(rscratch1, c.asLong());
+			   masm.movlong(ARMV7.r8,c.asLong());
+			   masm.strd(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
+			  break; 
                            //masm.movq(frameMap.toStackAddress(slot), rscratch1); break;
             case Double  : //masm.movq(rscratch1, doubleToRawLongBits(c.asDouble()));
+                           masm.movlong(ARMV7.r8,Double.doubleToRawLongBits(c.asDouble()));
+			   masm.strd(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
+
                            //masm.movq(frameMap.toStackAddress(slot), rscratch1); break;
                             break;
             default      : throw Util.shouldNotReachHere("Unknown constant kind for const2stack: " + c.kind);
@@ -2187,10 +2200,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     break;
 
                 case Mov: {
-                    /*if(inst.result == null) {
+                    if(inst.result == null) {
                         System.out.println("ARMV7LIRAssembler:emitXirInstructions case Mov BODGE remove null check");
                         return;
-                    }*/
+                    }
                     CiValue result = operands[inst.result.index];
 
                     CiValue source = operands[inst.x().index];
@@ -2738,15 +2751,21 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         } else {
             if (target.inlineObjects) {
                 tasm.recordDataReferenceInCode(obj);
+		masm.mov32BitConstant(ARMV7.r12,0xdeaddead);
+		masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,dst,0);
              //   masm.movq(dst, 0xDEADDEADDEADDEADL);
             } else {
+		masm.setUpScratch(tasm.recordDataReferenceInCode(obj));
+                masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,dst,0);
+
              //   masm.movq(dst, tasm.recordDataReferenceInCode(obj));
             }//
         }
     }
 
     public void movoop(CiAddress dst, CiConstant obj) {
-        movoop(rscratch1, obj);
+       
+        movoop(ARMV7.r8, obj); // was rscratch1
      //   masm.movq(dst, rscratch1);
     }
 
