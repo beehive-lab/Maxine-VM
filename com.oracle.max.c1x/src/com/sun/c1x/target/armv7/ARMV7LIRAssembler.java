@@ -589,8 +589,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case Iurem : arithmeticIudiv(op.code, op.opr1(), op.opr2(), op.result(), op.info); break;
             case Ldiv  :
             case Lrem  : arithmeticLdiv(op.code, op.opr1(), op.opr2(), op.result(), op.info); break;
-            case Ludiv :
-            case Lurem : arithmeticLudiv(op.code, op.opr1(), op.opr2(), op.result(), op.info); break;
+            case Ludiv:
+            case Lurem:
+                 arithmeticLudiv(op.code, op.opr1(), op.opr2(), op.result(), op.info); break;
             default    : throw Util.shouldNotReachHere();
         }
         // Checkstyle: on
@@ -1575,11 +1576,11 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         //assert 0 == 1 : "arithmeticLdiv ARMV7IRAssembler";
 
         //   assert lreg == ARMV7.rax : "left register must be rax";
-        assert lreg == ARMV7.r0 : "left register must be r0 was rax";
+        //assert lreg == ARMV7.r0 : "left register must be r0 was rax";
 
         //  assert rreg != ARMV7.rdx : "right register must not be rdx";
-        masm.mov(ConditionFlag.Always, false, ARMV7.r0, lreg);
-        masm.mov(ConditionFlag.Always, false, ARMV7.r1, ARMV7.cpuRegisters[lreg.encoding+1]);
+        //masm.mov(ConditionFlag.Always, false, ARMV7.r0, lreg);
+        //masm.mov(ConditionFlag.Always, false, ARMV7.r1, ARMV7.cpuRegisters[lreg.encoding+1]);
 
         //   moveRegs(lreg, ARMV7.rax);
 
@@ -1632,7 +1633,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         CiRegister dreg = result.asRegister();
         CiRegister rreg = right.asRegister();
 
-        assert 0 == 1 : "arithmeticLudiv ARMV7IRAssembler";
+        //assert 0 == 1 : "arithmeticLudiv ARMV7IRAssembler";
 
         //   assert lreg == ARMV7.rax : "left register must be rax";
       //  assert rreg != ARMV7.rdx : "right register must not be rdx";
