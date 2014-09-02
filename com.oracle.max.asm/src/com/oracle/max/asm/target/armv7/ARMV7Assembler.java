@@ -622,7 +622,31 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= 0xfff & imm12;
         emitInt(instruction);
     }
-
+    public void strbImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm12) {
+        int instruction  = 0x04400000;
+        P = P & 1;
+        U = U & 1;
+        W = W & 1;
+        instruction |= (P << 24) | (U << 23) | (W << 21);
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (Rn.encoding & 0xf) << 16;
+        instruction |= (Rt.encoding & 0xf) << 12;
+        instruction |= 0xfff & imm12;
+        emitInt(instruction);
+    }
+    public void strHImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
+        int instruction  = 0x004000b0;
+        P = P & 1;
+        U = U & 1;
+        W = W & 1;
+        instruction |= (P << 24) | (U << 23) | (W << 21);
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (Rn.encoding & 0xf) << 16;
+        instruction |= (Rt.encoding & 0xf) << 12;
+        instruction |= 0xf & imm8;
+        instruction |= ((imm8 &0xff) >> 4) << 8;
+        emitInt(instruction);
+    }
     public void ldrImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm12) {
         int instruction = 0x04100000;
         P = P & 1;

@@ -383,29 +383,36 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     protected void reg2mem(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
         CiAddress toAddr = (CiAddress) dest;
 
-        assert 0 == 1 : "reg2mem ARMV7IRAssembler";
 
         if (info != null) {
             tasm.recordImplicitException(codePos(), info);
         }
-                             /*
+
         // Checkstyle: off
         switch (kind) {
-            case Float   : //masm.movflt(toAddr, asXmmFloatReg(src)); break;
-            case Double  : masm.movsd(toAddr, asXmmDoubleReg(src)); break;
+            case Double  :
+            case Float   : masm.movflt(toAddr, asXmmFloatReg(src)); break;
             case Jsr     :
-            case Int     : masm.movl(toAddr, src.asRegister()); break;
+            case Object  :
+            case Int     : //masm.movl(toAddr, src.asRegister()); break;
+                          masm.setUpScratch(toAddr); masm.strImmediate(ConditionFlag.Always,0,0,0,src.asRegister(),ARMV7.r12,0);break;
             case Long    :
-            case Object  : //masm.movq(toAddr, src.asRegister());
+                          masm.setUpScratch(toAddr);masm.strDualImmediate(ConditionFlag.Always,0,0,0,src.asRegister(),ARMV7.r12,0);
+                          //masm.movq(toAddr, src.asRegister());
             break;
             case Char    :
-            case Short   : masm.movw(toAddr, src.asRegister()); break;
+            case Short   : masm.setUpScratch(toAddr);
+                           masm.strHImmediate(ConditionFlag.Always,0,0,0,src.asRegister(),ARMV7.r12,0);
+                           //masm.str, src.asRegister()); break;
+                          break;
             case Byte    :
             case Boolean : //masm.movb(toAddr, src.asRegister());
+                           masm.setUpScratch(toAddr);
+                           masm.strbImmediate(ConditionFlag.Always,0,0,0,src.asRegister(),ARMV7.r12,0);
              break;
             default      : throw Util.shouldNotReachHere();
         }
-        */
+
         // Checkstyle: on
     }
     private static boolean FLOATDOUBLEREGISTERS = true;
