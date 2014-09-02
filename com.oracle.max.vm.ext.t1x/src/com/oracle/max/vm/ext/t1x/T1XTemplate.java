@@ -528,6 +528,22 @@ method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.in
 method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticFloat") == 0 ||
  method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialLong") == 0 ||
  method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticLong") == 0 ||
+method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialDouble") == 0 ||
+method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticDouble") == 0 ||
+method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialObject") == 0 ||
+method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticObject") == 0 ||
+method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialWord") == 0 ||
+method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticWord") == 0 ||
+method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialVoid") == 0 ||
+method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticVoid") == 0 ||
+method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.new_") == 0 ||
+ method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.new_hybrid") == 0||
+method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.lock") == 0||
+method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.unlock") == 0||
+
+
+
+
 
 
                 method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.aastore") == 0) {

@@ -450,7 +450,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         movsd(dst, src); */
         setUpScratch(dst);
         if(src.number > 15) {
-            vstr(ConditionFlag.Always, r12, src, 0);
+            vstr(ConditionFlag.Always, src, r12,  0);
         } else {
 
         }
