@@ -22,14 +22,20 @@
  */
 package com.sun.c1x.alloc;
 
-import java.util.*;
+import com.oracle.max.criutils.TTY;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.ir.BlockBegin;
+import com.sun.c1x.ir.ExceptionHandler;
+import com.sun.c1x.lir.LIRInstruction;
+import com.sun.c1x.lir.LIRList;
+import com.sun.c1x.util.ArrayMap;
+import com.sun.cri.ci.CiCallingConvention;
+import com.sun.cri.ci.CiRegister;
+import com.sun.cri.ci.CiValue;
 
-import com.sun.c1x.*;
-import com.oracle.max.criutils.*;
-import com.sun.c1x.ir.*;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.util.*;
-import com.sun.cri.ci.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  */
@@ -229,7 +235,9 @@ final class RegisterVerifier {
                         TTY.println("!! Warning: Skip Register Verificaton Error for high part");
                     }
                 } else {
-                    throw new CiBailout("!! Error in register allocation: register " + reg + " does not contain interval " + interval.operand + " but interval " + inputState[reg.asRegister().number]);
+                    System.err.println("CiBailout( commented out for native mode !! Error in register allocation: register " + reg + " does not contain interval " + interval.operand + " but interval " + inputState[reg.asRegister().number]);
+
+                    //throw new CiBailout("!! Error in register allocation: register " + reg + " does not contain interval " + interval.operand + " but interval " + inputState[reg.asRegister().number]);
                 }
             }
         }

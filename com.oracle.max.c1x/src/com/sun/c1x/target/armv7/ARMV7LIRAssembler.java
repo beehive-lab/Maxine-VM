@@ -390,8 +390,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
         // Checkstyle: off
         switch (kind) {
-            case Double  :
             case Float   : masm.movflt(toAddr, asXmmFloatReg(src)); break;
+            case Double  : masm.movflt(toAddr, asXmmDoubleReg(src)); break;
+
             case Jsr     :
             case Object  :
             case Int     : //masm.movl(toAddr, src.asRegister()); break;
@@ -408,7 +409,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case Byte    :
             case Boolean : //masm.movb(toAddr, src.asRegister());
                            masm.setUpScratch(toAddr);
-                           masm.strbImmediate(ConditionFlag.Always,0,0,0,src.asRegister(),ARMV7.r12,0);
+                           masm.strbImmediate(ConditionFlag.Always, 0, 0, 0, src.asRegister(), ARMV7.r12, 0);
              break;
             default      : throw Util.shouldNotReachHere();
         }
@@ -1485,8 +1486,11 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             CiRegister rreg = right.asRegister();
         //    assert lreg == ARMV7.rax : "left register must be rax";
           //  assert rreg != ARMV7.rdx : "right register must not be rdx";
+              assert lreg != ARMV7.r0 : "left register must not be r0 (was rax in X86)";
+              assert rreg != ARMV7.r1 : "right register must not be r1 (was rdx in X86)";
 
          //   moveRegs(lreg, ARMV7.rax);
+              masm.mov(ConditionFlag.Always, false, ARMV7.r0, lreg);
 
             Label continuation = new Label();
 
@@ -1494,10 +1498,12 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 // check for special case of Integer.MIN_VALUE / -1
                 Label normalCase = new Label();
          //       masm.cmpl(ARMV7.rax, Integer.MIN_VALUE);
+
+                masm.cmpl(ARMV7.r0, Integer.MIN_VALUE);
                 masm.jcc(ConditionFlag.NotEqual, normalCase);
                 if (code == LIROpcode.Irem) {
                     // prepare X86Register.rdx for possible special case where remainder = 0
-          //          masm.xorl(ARMV7.rdx, ARMV7.rdx);
+                    masm.eor(ConditionFlag.Always,false,ARMV7.r1,ARMV7.r1,ARMV7.r1,0,0);
                 }
                 masm.cmpl(rreg, -1);
                 masm.jcc(ConditionFlag.Equal, continuation);
@@ -1506,18 +1512,22 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.bind(normalCase);
             }
            // masm.cdql();
+              // APN do we really need to signe extend? cdql?
             int offset = masm.codeBuffer.position();
           //  masm.idivl(rreg);
+            Log.println("idic and cdq arithmeticIdiv not implemented/called");
 
             // normal and special case exit
             masm.bind(continuation);
 
             tasm.recordImplicitException(offset, info);
             if (code == LIROpcode.Irem) {
+                masm.mov(ConditionFlag.Always, false, dreg, ARMV7.r1);
          //       moveRegs(ARMV7.rdx, dreg); // result is in rdx
             } else {
                 assert code == LIROpcode.Idiv;
          //       moveRegs(ARMV7.rax, dreg);
+                  masm.mov(ConditionFlag.Always,false,dreg,ARMV7.r0);
             }
         }
     }
