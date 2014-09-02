@@ -523,7 +523,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
 
     private MaxTargetMethod compileTemplate(RuntimeCompiler bootCompiler, ClassMethodActor templateSource) {
         FatalError.check(templateSource.isTemplate(), "Method with " + T1X_TEMPLATE.class.getSimpleName() + " annotation should be a template: " + templateSource);
-        FatalError.check(!hasStackParameters(templateSource), "Template must not have *any* stack parameters: " + templateSource);
+        //FatalError.check(!hasStackParameters(templateSource), "Template must not have *any* stack parameters: " + templateSource);
         FatalError.check(templateSource.resultKind().stackKind == templateSource.resultKind(), "Template return type must be a stack kind: " + templateSource);
         for (int i = 0; i < templateSource.getParameterKinds().length; i++) {
             Kind k = templateSource.getParameterKinds()[i];
