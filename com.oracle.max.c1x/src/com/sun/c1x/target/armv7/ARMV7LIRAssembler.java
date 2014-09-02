@@ -1453,7 +1453,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
 
-        assert 0 == 1 : "arithmeticIdiv ARMV7IRAssembler";
+        //assert 0 == 1 : "arithmeticIdiv ARMV7IRAssembler";
         if (right.isConstant()) {
             Util.shouldNotReachHere("cwi: I assume this is dead code, notify me if I'm wrong...");
 
@@ -1487,7 +1487,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         //    assert lreg == ARMV7.rax : "left register must be rax";
           //  assert rreg != ARMV7.rdx : "right register must not be rdx";
               assert lreg != ARMV7.r0 : "left register must not be r0 (was rax in X86)";
-              assert rreg != ARMV7.r1 : "right register must not be r1 (was rdx in X86)";
+             // assert rreg != ARMV7.r1 : "right register must not be r1 (was rdx in X86)";
 
          //   moveRegs(lreg, ARMV7.rax);
               masm.mov(ConditionFlag.Always, false, ARMV7.r0, lreg);
@@ -1572,27 +1572,37 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         CiRegister dreg = result.asRegister();
         CiRegister rreg = right.asRegister();
 
-        assert 0 == 1 : "arithmeticLdiv ARMV7IRAssembler";
+        //assert 0 == 1 : "arithmeticLdiv ARMV7IRAssembler";
 
         //   assert lreg == ARMV7.rax : "left register must be rax";
-      //  assert rreg != ARMV7.rdx : "right register must not be rdx";
+        assert lreg == ARMV7.r0 : "left register must be r0 was rax";
 
-     //   moveRegs(lreg, ARMV7.rax);
+        //  assert rreg != ARMV7.rdx : "right register must not be rdx";
+        masm.mov(ConditionFlag.Always, false, ARMV7.r0, lreg);
+        masm.mov(ConditionFlag.Always, false, ARMV7.r1, ARMV7.cpuRegisters[lreg.encoding+1]);
+
+        //   moveRegs(lreg, ARMV7.rax);
 
         Label continuation = new Label();
 
         if (C1XOptions.GenSpecialDivChecks) {
             // check for special case of Long.MIN_VALUE / -1
             Label normalCase = new Label();
+            masm.movlong(rreg,java.lang.Long.MIN_VALUE);
      //       masm.movq(ARMV7.rdx, java.lang.Long.MIN_VALUE);
        //     masm.cmpq(ARMV7.rax, ARMV7.rdx);
+            System.out.println("64bit long compares not implemented? arithmeticLDiv");
               masm.jcc(ConditionFlag.NotEqual, normalCase);
             if (code == LIROpcode.Lrem) {
                 // prepare X86Register.rdx for possible special case (where remainder = 0)
           //      masm.xorq(ARMV7.rdx, ARMV7.rdx);
+                masm.eor(ConditionFlag.Always,false,rreg,rreg,rreg,0,0);
+                masm.eor(ConditionFlag.Always,false,ARMV7.cpuRegisters[rreg.encoding+1],
+                        ARMV7.cpuRegisters[rreg.encoding+1],ARMV7.cpuRegisters[rreg.encoding+1],0,0);
+
             }
             masm.cmpl(rreg, -1);
-           // masm.jcc(ConditionFlag.equal, continuation);
+           masm.jcc(ConditionFlag.Equal, continuation);
 
             // handle normal case
             masm.bind(normalCase);

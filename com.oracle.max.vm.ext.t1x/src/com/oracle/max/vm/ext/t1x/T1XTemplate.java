@@ -520,7 +520,8 @@ public class T1XTemplate {
         method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.loadException") == 0 ||
         method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.rethrowException") == 0 ||
 	method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.monitorenter") == 0 ||
-                method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.iastore") == 0 ) {
+                method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.iastore") == 0 ||
+                method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.aastore") == 0) {
                System.out.println("Avoiding cmpswapInt crash");
 	       safepoints = NO_SAFEPOINTS; // remove this debugging
                objectLiterals = null;
