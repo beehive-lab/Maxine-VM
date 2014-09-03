@@ -562,6 +562,21 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (imm8 & 0xf0) << 4;
         emitInt(instruction);
     }
+  public void clz(final ConditionFlag cond, final CiRegister Rdest, final CiRegister Rval) {
+        int instruction = 0x016f0f10;
+        instruction |= ((cond.value() & 0xf) << 28);
+        instruction |= ((Rdest.encoding & 0xf) << 12);
+        instruction |= ((Rval.encoding & 0xf) );
+        emitInt(instruction);
+    }
+    public void rbit(final ConditionFlag cond, final CiRegister Rdest, final CiRegister Rval) {
+        int instruction = 0x06ff0f30;
+        instruction |= ((cond.value() & 0xf) << 28);
+        instruction |= ((Rdest.encoding & 0xf) << 12);
+        instruction |= ((Rval.encoding & 0xf) );
+        emitInt(instruction);
+    }
+
  public void ldrex(final ConditionFlag cond, final CiRegister Rdest, final CiRegister Raddr) {
         int instruction = 0x01900f9f;
         instruction |= ((cond.value() & 0xf) << 28);

@@ -154,6 +154,13 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         masm.leaq(dst.asRegister(), compilation.frameMap().toStackAddress(stackBlock));
     }
 
+    private void moveRegs(CiRegister fromReg, CiRegister toReg) {
+        if (fromReg != toReg) {
+            masm.mov(ConditionFlag.Always, false, toReg, fromReg);
+
+        }
+    }
+
     private void moveRegs(CiRegister fromReg, CiRegister toReg, CiKind kind) {
         if (fromReg != toReg) {
             if (kind == CiKind.Long) {
@@ -1575,22 +1582,31 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
       //  assert lreg == ARMV7.rax : "left register must be rax";
       //  assert rreg != ARMV7.rdx : "right register must not be rdx";
 
-        assert 0 == 1 : "arithmeticIudiv ARMV7IRAssembler";
+        //assert 0 == 1 : "arithmeticIudiv ARMV7IRAssembler";
 
         // Must zero the high 64-bit word (in RDX) of the dividend
       //  masm.xorq(ARMV7.rdx, ARMV7.rdx);
 
+/* 
+	is rax rdx relarted to r0 r1 function args?
+THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
+*/
+                masm.eor(ConditionFlag.Always,false,rreg,rreg,rreg,0,0);
+                moveRegs(lreg,ARMV7.r0);
+
+
       //  moveRegs(lreg, ARMV7.rax);
 
         int offset = masm.codeBuffer.position();
+	System.err.println("ARMV divl not implemented  + rax/rdx as r0 r1 is GUESSED/WRONG... arithmeticIudiv");
        // masm.divl(rreg);
 
         tasm.recordImplicitException(offset, info);
         if (code == LIROpcode.Iurem) {
-          //  moveRegs(ARMV7.rdx, dreg);
+            moveRegs(ARMV7.r1, dreg);
         } else {
             assert code == LIROpcode.Iudiv;
-           // moveRegs(ARMV7.rax, dreg);
+            moveRegs(ARMV7.r0, dreg);
         }
     }
 
@@ -2005,23 +2021,34 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert dst.isRegister();
         CiRegister result = dst.asRegister();
         masm.xorq(result, result);
-        assert 0 == 1 : "emitSignificantBitOp ARMV7IRAssembler";
+        //assert 0 == 1 : "emitSignificantBitOp ARMV7IRAssembler";
 
         //   masm.notq(result);
         if (src.isRegister()) {
             CiRegister value = src.asRegister();
             assert value != result;
+	    System.out.println("CHECK Semantics of clz versus bsrq concerning reutrn value  BITOPS emitSignificantBitOp");
             if (most) {
+		
+                  masm.clz(ConditionFlag.Always,result,value);
+		// NOTE wILL RETURN 32 if zero!!!
        //         masm.bsrq(result, value);
             } else {
+                  masm.rbit(ConditionFlag.Always,ARMV7.r12,value);
+                  masm.clz(ConditionFlag.Always,result,ARMV7.r12);
         //        masm.bsfq(result, value);
             }
         } else {
             CiAddress laddr = asAddress(src);
+	    masm.setUpScratch(laddr);
+            masm.ldrImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,0);
             if (most) {
+                  masm.clz(ConditionFlag.Always,result,ARMV7.r12);
         //        masm.bsrq(result, laddr);
             } else {
         //        masm.bsfq(result, laddr);
+                  masm.rbit(ConditionFlag.Always,ARMV7.r12,ARMV7.r12);
+                  masm.clz(ConditionFlag.Always,result,ARMV7.r12);
             }
         }
     }
