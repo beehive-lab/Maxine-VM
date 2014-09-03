@@ -1068,24 +1068,30 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             const2reg(def, result, null);
         }
 
-        assert 0 == 1 : "emitConditionalMove ARMV7IRAssembler";
+        //assert 0 == 1 : "emitConditionalMove ARMV7IRAssembler";
 
         if (!other.isConstant()) {
             // optimized version that does not require a branch
             if (other.isRegister()) {
                 assert other.asRegister() != result.asRegister() : "other already overwritten by previous move";
                 if (other.kind.isInt()) {
+			masm.mov(ncond,false,result.asRegister(), other.asRegister()); 
                    // masm.cmovq(ncond, result.asRegister(), other.asRegister());
                 } else {
+			masm.mov(ncond,false,result.asRegister(), other.asRegister());
                    // masm.cmovq(ncond, result.asRegister(), other.asRegister());
                 }
             } else {
                 assert other.isStackSlot();
                 CiStackSlot otherSlot = (CiStackSlot) other;
+		masm.setUpScratch(frameMap.toStackAddress(otherSlot));
+                masm.ldrImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,0);
                 if (other.kind.isInt()) {
+			masm.mov(ncond,false, result.asRegister(),ARMV7.r12);
                    // masm.cmovl(ncond, result.asRegister(), frameMap.toStackAddress(otherSlot));
                 } else {
                    // masm.cmovq(ncond, result.asRegister(), frameMap.toStackAddress(otherSlot));
+			masm.mov(ncond,false, result.asRegister(),ARMV7.r12);
                 }
             }
 

@@ -30,6 +30,7 @@ import com.sun.c1x.ir.ExceptionHandler;
 import com.sun.c1x.lir.LIRInstruction;
 import com.sun.c1x.lir.LIRList;
 import com.sun.c1x.util.ArrayMap;
+import com.sun.cri.ci.CiBailout;
 import com.sun.cri.ci.CiCallingConvention;
 import com.sun.cri.ci.CiRegister;
 import com.sun.cri.ci.CiValue;
@@ -235,7 +236,7 @@ final class RegisterVerifier {
                         TTY.println("!! Warning: Skip Register Verificaton Error for high part");
                     }
                 } else {
-                    System.err.println("CiBailout( commented out for native mode !! Error in register allocation: register " + reg + " does not contain interval " + interval.operand + " but interval " + inputState[reg.asRegister().number]);
+                    //System.err.println("CiBailout( commented out for native mode !! Error in register allocation: register " + reg + " does not contain interval " + interval.operand + " but interval " + inputState[reg.asRegister().number]);
 
                     //throw new CiBailout("!! Error in register allocation: register " + reg + " does not contain interval " + interval.operand + " but interval " + inputState[reg.asRegister().number]);
                 }
