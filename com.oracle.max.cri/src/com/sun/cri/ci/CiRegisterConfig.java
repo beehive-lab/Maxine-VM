@@ -191,6 +191,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
                 case Int:
                 case Long:
                 case Object:
+                    System.out.println("Parameter " + i + " kind " + kind +" stackOnly " + stackOnly +" currentGeneral " + currentGeneral);
                     if (!stackOnly && currentGeneral < cpuParameters.length) {
                         if (kind.isLong()) {
                             if ((cpuParameters.length - currentGeneral) < 2) {
@@ -244,6 +245,9 @@ public class CiRegisterConfig implements RiRegisterConfig {
                 locations[i] = CiStackSlot.get(kind.stackKind(), currentStackIndex, !type.out);
                 currentStackIndex += target.spillSlots(kind);
             }
+        }
+        for (int i=0;i<locations.length;i++) {
+            System.out.println("Location " +i +" "+ locations[i]);
         }
         return new CiCallingConvention(locations, (currentStackIndex - firstStackIndex) * target.spillSlotSize);
     }

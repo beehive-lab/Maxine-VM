@@ -512,7 +512,7 @@ public class T1XTemplate {
         this.code = source.code();
         this.tag = tag;
         int nSafepoints = source.safepoints().size();
-        System.out.println("T1XTemplate " + method.qualifiedName() + " " + nSafepoints );
+        System.out.println("T1XTemplate End " + method.qualifiedName() + " " + nSafepoints +" tag " + tag.toString());
 	if(source.referenceLiterals() != null) {
 		System.out.println( " REFLITS " + source.referenceLiterals().length);
 	}
@@ -540,7 +540,7 @@ method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.ne
  method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.new_hybrid") == 0||
 method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.lock") == 0||
 method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.unlock") == 0||
-                method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.aastore") == 0) 
+                method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.aastore") == 0)
 // end of issues with normal templates ...
 /// problems with intrinsictemplates
 
