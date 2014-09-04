@@ -894,6 +894,10 @@ public final class LinearScan {
             interval = createInterval(operand);
         }
 
+        if (operand.highPart && interval !=null && !interval.location().highPart) {
+            interval.location().highPart = true;
+        }
+
         if (kind != CiKind.Illegal) {
             interval.setKind(kind);
         }
