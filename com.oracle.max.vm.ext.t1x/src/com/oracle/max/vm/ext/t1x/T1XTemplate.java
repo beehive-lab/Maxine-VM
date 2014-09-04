@@ -512,7 +512,9 @@ public class T1XTemplate {
         this.code = source.code();
         this.tag = tag;
         int nSafepoints = source.safepoints().size();
-        System.out.println("T1XTemplate End " + method.qualifiedName() + " " + nSafepoints +" tag " + tag.toString());
+	if(tag == null) System.out.println("tag null");
+	System.out.println("T1XTemplate End " + method.qualifiedName() );
+        //System.out.println("T1XTemplate End " + method.qualifiedName() + " " + nSafepoints +" tag " + tag.toString());
 	if(source.referenceLiterals() != null) {
 		System.out.println( " REFLITS " + source.referenceLiterals().length);
 	}

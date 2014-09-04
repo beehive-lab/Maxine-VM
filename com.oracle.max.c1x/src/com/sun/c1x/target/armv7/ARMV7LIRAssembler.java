@@ -323,26 +323,53 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         CiConstant constant = (CiConstant) src;
         CiAddress addr = asAddress(dst);
 
-        assert 0 == 1 : "const2mem ARMV7IRAssembler";
+        //assert 0 == 1 : "const2mem ARMV7IRAssembler";
 
         int nullCheckHere = codePos();
+	masm.setUpScratch(addr);
         // Checkstyle: off
         switch (kind) {
             case Boolean :
             case Byte    :// masm.movb(addr, constant.asInt() & 0xFF); break;
+			masm.mov32BitConstant(ARMV7.r8, constant.asInt() & 0xFF);
+                        masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,0);
+
+			break;
+
             case Char    :
             case Short   : //masm.movw(addr, constant.asInt() & 0xFFFF); break;
+			masm.mov32BitConstant(ARMV7.r8,constant.asInt() & 0xFFFF);
+			masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,0);
+                        break;
+
             case Jsr     :
             case Int     : //masm.movl(addr, constant.asInt()); break;
+			masm.mov32BitConstant(ARMV7.r8,constant.asInt());
+                        masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,0);
+                        break;
+
             case Float   : //masm.movl(addr, floatToRawIntBits(constant.asFloat())); break;
-            case Object  : //movoop(addr, constant); break;
+                         masm.mov32BitConstant(ARMV7.r8,Float.floatToRawIntBits(constant.asFloat()));
+                         masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,0);
+			 break;
+
+            case Object  : movoop(addr, constant); break;
             case Long    : //masm.movq(rscratch1, constant.asLong());
+                         masm.movlong(ARMV7.r8,constant.asLong());
+
                            nullCheckHere = codePos();
+                masm.strd(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
+                          
                            //masm.movq(addr, rscratch1); break;
+                         break;
             case Double  : //masm.movq(rscratch1, doubleToRawLongBits(constant.asDouble()));
+                         masm.movlong(ARMV7.r8,Double.doubleToRawLongBits(constant.asDouble()));
+
                            nullCheckHere = codePos();
                            //masm.movq(addr, rscratch1); break;
-                break;
+                masm.strd(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
+                        break;
+                          
             default      : throw Util.shouldNotReachHere();
         }
         // Checkstyle: on
@@ -524,11 +551,14 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
     @Override
     protected void stack2stack(CiValue src, CiValue dest, CiKind kind) {
-        assert 0 == 1 : "stack2stack ARMV7IRAssembler";
+        //assert 0 == 1 : "stack2stack ARMV7IRAssembler";
 
         if (src.kind.isInt()) {
            // masm.pushl(frameMap.toStackAddress((CiStackSlot) src));
             //masm.popl(frameMap.toStackAddress((CiStackSlot) dest));
+	   System.out.println("stack2stack check functionality pushq popq should they load/str the values at the address prior/post push/pop");
+            masm.pushq(frameMap.toStackAddress((CiStackSlot) src));
+            masm.popq(frameMap.toStackAddress((CiStackSlot) dest));
         } else {
             masm.pushptr(frameMap.toStackAddress((CiStackSlot) src));
             masm.popptr(frameMap.toStackAddress((CiStackSlot) dest));
