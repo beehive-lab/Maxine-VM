@@ -22,11 +22,13 @@
  */
 package com.oracle.max.asm.target.armv7;
 
-import static com.oracle.max.asm.target.armv7.ARMV7.*;
-
-import com.oracle.max.asm.*;
+import com.oracle.max.asm.AsmOptions;
+import com.oracle.max.asm.Label;
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
+import com.sun.cri.ri.RiRegisterConfig;
+
+import static com.oracle.max.asm.target.armv7.ARMV7.r1;
+import static com.oracle.max.asm.target.armv7.ARMV7.r12;
 
 /**
  * This class implements commonly used ARM!!!!! code patterns.
@@ -200,9 +202,29 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public void cmpss2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
         assert opr1.isFpu();
         assert opr2.isFpu();
-        System.out.println("ARMV7MAcroAssembler floating point compares PARITY NOT IMPLEMENTED");
-        assert !opr1.isFpu(); // APN force crash as not yet implemented
+        System.out.println("ARMV7MAcroAssembler cmpss2int not tested");
+        ucomisd(opr1, opr2);
+        //assert !opr1.isFpu(); // APN force crash as not yet implemented
+        Label l = new Label();
+        if (unorderedIsLess) {
+            mov32BitConstant(dst, -1);
+            //jcc(ARMV7Assembler.ConditionFlag.parity, l);
+            //jcc(ARMV7Assembler.ConditionFlag.below, l);
+            jcc(ConditionFlag.SignedOverflow,l);
+            mov32BitConstant(dst, 0);
+            //jcc(ARMV7Assembler.ConditionFlag.equal, l);
+            incrementl(dst, 1);
+        } else { // unordered is greater
+            mov32BitConstant(dst, 1);
+            //jcc(ARMV7Assembler.ConditionFlag.parity, l);
+            //jcc(ARMV7Assembler.ConditionFlag.above, l);
+            jcc(ConditionFlag.SignedOverflow, l);
+            mov32BitConstant(dst, 0);
+            //jcc(ARMV7Assembler.ConditionFlag.equal, l);
 
+            decrementl(dst, 1);
+        }
+        bind(l);
         /*ucomiss(opr1, opr2);
 
         Label l = new Label();
@@ -428,7 +450,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         movsd(dst, src); */
         setUpScratch(dst);
         if(src.number > 15) {
-            vstr(ConditionFlag.Always, r12, src, 0);
+            vstr(ConditionFlag.Always, src, r12,  0);
         } else {
 
         }

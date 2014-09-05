@@ -340,7 +340,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             }
         }
 
-        private static final int PROLOGUE_SIZE = 12; // setupScratch with movw movt and then the branch?
+        private static final int PROLOGUE_SIZE = 16; /// determined experimentally12; // setupScratch with movw movt and then the branch?
 
         public Baseline2Opt() {
             super(Adapter.Type.BASELINE2OPT);
@@ -371,9 +371,14 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 asm.nop(PROLOGUE_SIZE);
             } else {
                 asm.call();
+		System.out.println("SIZE " + asm.codeBuffer.position());
                 asm.align(PROLOGUE_SIZE);
+		System.out.println("SIZEAFTER " + asm.codeBuffer.position());
             }
             int size = asm.codeBuffer.position();
+            if (size != PROLOGUE_SIZE ) {
+		System.out.println("ARMAdapterGenerator ... going to crach " + size + " PROLOGUE_SIZE " + PROLOGUE_SIZE);
+	    }
             assert size == PROLOGUE_SIZE;
             copyIfOutputStream(asm.codeBuffer, out);
             return size;
@@ -718,8 +723,8 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             }
         }
 
-        static final int PROLOGUE_SIZE = 29; // calculated by running APN ...
-        static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = 8;
+        static final int PROLOGUE_SIZE = 36; //29; // calculated by running APN ...
+        static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = 32;// calculated by running 8;
 
         Opt2Baseline() {
             super(Adapter.Type.OPT2BASELINE);
@@ -755,6 +760,9 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             ARMV7Assembler asm = out instanceof OutputStream ? new ARMV7Assembler(target(), null) : (ARMV7Assembler) out;
             if (adapter == null) {
                 asm.nop(OPTIMIZED_ENTRY_POINT.offset());
+                if(asm.codeBuffer.position() != PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE) {
+			System.out.println("GOING TO CRASH mismatch  PROLOGUE SIZE NOARGS ARMAdapterGenerator " +  asm.codeBuffer.position() + " " + PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE);
+		} 
                 assert asm.codeBuffer.position() == PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;
                 copyIfOutputStream(asm.codeBuffer, out);
                 return PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;

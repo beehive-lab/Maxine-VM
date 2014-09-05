@@ -1,5 +1,7 @@
 package test.arm.jtt;
 
+import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.math.*;
@@ -802,7 +804,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void test_T1X_jtt_BC_i2b() throws Exception {
+    public void ignore_T1X_jtt_BC_i2b() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -825,7 +827,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void test_C1X_jtt_BC_i2b() throws Exception {
+    public void ignore_C1X_jtt_BC_i2b() throws Exception {
         initTests();
         int argsOne[] = { -1, 2, 255, 128};
         String klassName = getKlassName("jtt.bytecode.BC_i2b");
@@ -1773,7 +1775,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_T1X_jtt_BC_iconst() throws Exception {
+    public void test_T1X_jtt_BC_iconst() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
@@ -1784,6 +1786,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(6, 375));
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "putfieldLong");
+        t1x.createOfflineIntrinsicTemplate(c1x, T1XIntrinsicTemplateSource.class, t1x.intrinsicTemplates, "com_sun_max_unsafe_Pointer$setLong$IIJ");
+
         for (Args pair : pairs) {
             MaxineByteCode xx = new MaxineByteCode();
             int answer = jtt.bytecode.BC_iconst.test(pair.first);

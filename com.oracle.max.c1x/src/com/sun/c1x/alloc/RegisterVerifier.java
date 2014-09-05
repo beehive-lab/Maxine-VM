@@ -22,10 +22,11 @@
  */
 package com.sun.c1x.alloc;
 
+
 import java.util.*;
 
-import com.sun.c1x.*;
 import com.oracle.max.criutils.*;
+import com.sun.c1x.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
@@ -229,6 +230,8 @@ final class RegisterVerifier {
                         TTY.println("!! Warning: Skip Register Verificaton Error for high part");
                     }
                 } else {
+                    //System.err.println("CiBailout( commented out for native mode !! Error in register allocation: register " + reg + " does not contain interval " + interval.operand + " but interval " + inputState[reg.asRegister().number]);
+
                     throw new CiBailout("!! Error in register allocation: register " + reg + " does not contain interval " + interval.operand + " but interval " + inputState[reg.asRegister().number]);
                 }
             }

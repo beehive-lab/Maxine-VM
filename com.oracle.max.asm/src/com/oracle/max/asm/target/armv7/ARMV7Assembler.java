@@ -102,9 +102,11 @@ public class ARMV7Assembler extends AbstractAssembler {
 
         } else {
 
-                System.out.println("patchjumpTarget NOT MATCHED " + branch + " " + target);
-                assert 0 == 1;
-
+System.out.println("ASSUMING JMP: check this came from an emitPrologue as a result of hosted mode ARM ..patchjumpTarget NOT MATCHED " + branch + " " + target);
+                disp+=8;
+                disp = disp/4;
+                codeBuffer.emitInt(0x0a000000 | (disp & 0xffffff) | ((ConditionFlag.Always.value() & 0xf) << 28),branch);
+                //assert 0 == 1;
         }
 
         //codeBuffer.emitInt(0x0a000000 | (target - branch) | ((ConditionFlag.Always.value() & 0xf) << 28),branch);
@@ -126,6 +128,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void add(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int immed_8, final int rotate_amount) {
         int instruction = 0x02800000;
+        //System.out.println("MEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE\n");
         checkConstraint(0 <= immed_8 && immed_8 <= 255, "0 <= immed_8 && immed_8 <= 255");
         checkConstraint((rotate_amount % 2) == 0, "(rotate_amount % 2) == 0");
         checkConstraint(0 <= rotate_amount / 2 && rotate_amount / 2 <= 15, "0 <= rotate_amount / 2 && rotate_amount / 2 <= 15");
@@ -562,6 +565,21 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (imm8 & 0xf0) << 4;
         emitInt(instruction);
     }
+  public void clz(final ConditionFlag cond, final CiRegister Rdest, final CiRegister Rval) {
+        int instruction = 0x016f0f10;
+        instruction |= ((cond.value() & 0xf) << 28);
+        instruction |= ((Rdest.encoding & 0xf) << 12);
+        instruction |= ((Rval.encoding & 0xf) );
+        emitInt(instruction);
+    }
+    public void rbit(final ConditionFlag cond, final CiRegister Rdest, final CiRegister Rval) {
+        int instruction = 0x06ff0f30;
+        instruction |= ((cond.value() & 0xf) << 28);
+        instruction |= ((Rdest.encoding & 0xf) << 12);
+        instruction |= ((Rval.encoding & 0xf) );
+        emitInt(instruction);
+    }
+
  public void ldrex(final ConditionFlag cond, final CiRegister Rdest, final CiRegister Raddr) {
         int instruction = 0x01900f9f;
         instruction |= ((cond.value() & 0xf) << 28);
@@ -1685,6 +1703,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void mul(ConditionFlag cond, boolean setFlags, CiRegister dest, CiRegister rn, CiRegister rm) {
+        //add(ConditionFlag.Always, false, dest, rm,0,  0);
+
         int instruction = (cond.value() & 0xf) << 28;
         instruction |= 0x00000090;
         if (setFlags) {
@@ -1694,6 +1714,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (dest.encoding & 0xf) << 16;
         instruction |= rn.encoding & 0xf;
         emitInt(instruction);
+
     }
 
     public final void umull(ConditionFlag cond, boolean s, CiRegister rdHigh, CiRegister rdLow, CiRegister rm, CiRegister rn) {

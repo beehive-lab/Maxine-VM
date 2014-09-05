@@ -207,17 +207,6 @@ public class CiRegisterConfig implements RiRegisterConfig {
                         }
                     }
                     break;
-                // case Long:
-                // if (!stackOnly) {
-                // if(currentGeneral < (cpuParameters.length)) {
-                // CiRegister register = cpuParameters[currentGeneral++];
-                // locations[i] = register.asValue(kind);
-                // currentGeneral++;
-                // }
-                // else throw new InternalError("long requires two registers");
-                // }
-                // break;
-
                 case Float:
                 case Double:
                     // TODO fix for float and double

@@ -888,12 +888,18 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(FNEG)
-    public static float fneg(@Slot(0) float value, float zero) {
+    public static float fneg(@Slot(0) float value ) {
+/*
+	at com.oracle.max.vm.ext.maxri.Compile.main(Compile.java:244)
+Caused by: java.lang.AssertionError:  double to long mov compare
+	at com.sun.c1x.target.armv7.ARMV7LIRAssembler.emitConvert(ARMV7LIRAssembler.java:917)
+removal of the zero argument got rid of this error?
+*/
         float res;
-        if (Float.floatToRawIntBits(value) == Float.floatToRawIntBits(zero)) {
+        if (Float.floatToRawIntBits(value) == Float.floatToRawIntBits(0.0f)) {
             res = -0.0f;
         } else {
-            res = zero - value;
+            res = 0.0f - value;
         }
         return res;
     }

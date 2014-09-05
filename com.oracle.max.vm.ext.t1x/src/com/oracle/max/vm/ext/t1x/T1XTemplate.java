@@ -1,31 +1,26 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR
+ * THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package com.oracle.max.vm.ext.t1x;
 
-import static com.oracle.max.vm.ext.t1x.T1X.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
+import static com.oracle.max.vm.ext.t1x.T1X.dispFromCodeStart;
 
 import java.lang.annotation.*;
 import java.util.*;
@@ -47,13 +42,13 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
- * A T1X template is a piece of machine code (and its associated metadata) that
- * is used by the T1X compiler to quickly translate a bytecode instruction
- * to native code.
+ * A T1X template is a piece of machine code (and its associated metadata) that is used by the T1X compiler to quickly
+ * translate a bytecode instruction to native code.
  */
 public class T1XTemplate {
 
     public static class T1XSafepoint {
+
         public static final int NO_BSM_INDEX = Integer.MIN_VALUE;
 
         public T1XSafepoint() {
@@ -99,8 +94,6 @@ public class T1XTemplate {
         CiBitMap frameRefMap;
         CiBitMap regRefMap;
 
-
-
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
@@ -109,10 +102,7 @@ public class T1XTemplate {
                     sb.append(f.name).append(' ');
                 }
             }
-            sb.append("@ ").
-                append(pos()).
-                append(" [bci: ").
-                append(bci);
+            sb.append("@ ").append(pos()).append(" [bci: ").append(bci);
             if (frameRefMap != null) {
                 sb.append(", frameRefMap:").append(frameRefMap);
             }
@@ -149,10 +139,11 @@ public class T1XTemplate {
      * An object literal and the patch positions of the instructions that load it.
      */
     public static class ObjectLiteral {
+
         public final Object value;
         /**
-         * The interpretation of the position is platform dependent.
-         * For example, on AMD64, it is the displacement operand of a MOVQ instruction.
+         * The interpretation of the position is platform dependent. For example, on AMD64, it is the displacement
+         * operand of a MOVQ instruction.
          */
         public final int[] patchPosns;
 
@@ -169,8 +160,8 @@ public class T1XTemplate {
     public final ObjectLiteral[] objectLiterals;
 
     /**
-     * Describes the signature of a {@linkplain T1X_TEMPLATE template}
-     * in terms of register mapping for the parameters and stack usage.
+     * Describes the signature of a {@linkplain T1X_TEMPLATE template} in terms of register mapping for the parameters
+     * and stack usage.
      */
     public final Sig sig;
 
@@ -180,6 +171,7 @@ public class T1XTemplate {
     }
 
     static final class SafepointArray {
+
         T1XSafepoint[] data = new T1XSafepoint[10];
         int size;
 
@@ -222,6 +214,7 @@ public class T1XTemplate {
     }
 
     public static class SafepointsBuilder {
+
         SafepointArray safepointsArray;
         Safepoints safepoints;
         int directCalls;
@@ -259,9 +252,8 @@ public class T1XTemplate {
         }
 
         /**
-         * Adds a safepoint for non-template code. Such a safepoint must come
-         * after all template code safepoints. This way we know that the
-         * template slots are dead and so can be ignored in the gc maps.
+         * Adds a safepoint for non-template code. Such a safepoint must come after all template code safepoints. This
+         * way we know that the template slots are dead and so can be ignored in the gc maps.
          *
          * @param bci
          * @param safepoint
@@ -394,6 +386,7 @@ public class T1XTemplate {
      * Describes an argument or return value of a {@linkplain T1X_TEMPLATE template} method.
      */
     public static class Arg {
+
         /**
          * The kind of this arg.
          */
@@ -409,8 +402,9 @@ public class T1XTemplate {
         public final CiStackSlot stackSlot;
 
         /**
-         * The operand stack index of the slot(s) holding this arg's value.
-         * This will be -1 if this arg does not get its value from the operand stack.
+         * The operand stack index of the slot(s) holding this arg's value. This will be -1 if this arg does not get its
+         * value from the operand stack.
+         *
          * @see Slot
          */
         public final int slot;
@@ -432,17 +426,16 @@ public class T1XTemplate {
         }
 
         /**
-         * Determines if this arg gets its value from the operand stack.
-         * If this arg represents the return value, then this method
-         * determines if the result is written to the stack.
+         * Determines if this arg gets its value from the operand stack. If this arg represents the return value, then
+         * this method determines if the result is written to the stack.
          */
         public boolean isStack() {
             return slot >= 0;
         }
 
         /**
-         * Gets the number of stack slots holding this arg's value.
-         * This will be 0 if this arg does not get its value from the stack.
+         * Gets the number of stack slots holding this arg's value. This will be 0 if this arg does not get its value
+         * from the stack.
          */
         public int stackSlots() {
             if (slot < 0) {
@@ -459,10 +452,11 @@ public class T1XTemplate {
     }
 
     /**
-     * Describes the signature of a {@linkplain T1X_TEMPLATE template}
-     * in terms of register mapping for the parameters and stack usage.
+     * Describes the signature of a {@linkplain T1X_TEMPLATE template} in terms of register mapping for the parameters
+     * and stack usage.
      */
     public static class Sig {
+
         /**
          * The parameters of the template method.
          */
@@ -474,8 +468,8 @@ public class T1XTemplate {
         public final Arg out;
 
         /**
-         * The net adjustment in terms of slots to the operand stack based on
-         * the stack-based parameters and stack-based result of the template.
+         * The net adjustment in terms of slots to the operand stack based on the stack-based parameters and stack-based
+         * result of the template.
          */
         public final int stackDelta;
 
@@ -515,22 +509,49 @@ public class T1XTemplate {
         this.code = source.code();
         this.tag = tag;
         int nSafepoints = source.safepoints().size();
-        System.out.println("T1XTemplate " + method.qualifiedName() + " " + nSafepoints );
-	if(source.referenceLiterals() != null) {
-		System.out.println( " REFLITS " + source.referenceLiterals().length);
-	}
-        if(method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.monitorexit") == 0 ||
-        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.loadException") == 0 ||
-        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.rethrowException") == 0 ||
-	method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.monitorenter") == 0) {
-               System.out.println("Avoiding cmpswapInt crash");
-	       safepoints = NO_SAFEPOINTS; // remove this debugging
-               objectLiterals = null;
-               sig = initSig(method);
-	       return;
+        if (tag == null)
+            System.out.println("tag null");
+        System.out.println("T1XTemplate End " + method.qualifiedName());
+        // System.out.println("T1XTemplate End " + method.qualifiedName() + " " + nSafepoints +" tag " +
+// tag.toString());
+        if (source.referenceLiterals() != null) {
+            System.out.println(" REFLITS " + source.referenceLiterals().length);
         }
+        if (method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.monitorexit") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.loadException") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.rethrowException") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.monitorenter") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.iastore") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.newarray") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.anewarray") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.athrow") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialFloat") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticFloat") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialLong") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticLong") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialDouble") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticDouble") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialObject") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticObject") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialWord") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticWord") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialVoid") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticVoid") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.new_") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.new_hybrid") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.lock") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.unlock") == 0 ||
+                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.aastore") == 0)
+// end of issues with normal templates ...
+// / problems with intrinsictemplates
 
-
+        {
+            System.out.println("Avoiding cmpswapInt crash");
+            safepoints = NO_SAFEPOINTS; // remove this debugging
+            objectLiterals = null;
+            sig = initSig(method);
+            return;
+        }
 
         if (nSafepoints == 0) {
             safepoints = NO_SAFEPOINTS;
@@ -590,8 +611,8 @@ public class T1XTemplate {
     }
 
     /**
-     * Finds the platform dependent positions needed to patch instructions that load
-     * an object from the object literals array immediately preceding the code array in memory.
+     * Finds the platform dependent positions needed to patch instructions that load an object from the object literals
+     * array immediately preceding the code array in memory.
      */
     @HOSTED_ONLY
     static int[] findDataPatchPosns(MaxTargetMethod source, int dispFromCodeStart) {
@@ -663,7 +684,8 @@ public class T1XTemplate {
                 }
             }
             if (s != null) {
-                assert !slots.containsValue(s.value()) : "operand stack index of " + sig.parameterDescriptorAt(i).toKind() + " parameter " + i + " of " + template + " conflicts with another parameter";
+                assert !slots.containsValue(s.value()) : "operand stack index of " + sig.parameterDescriptorAt(i).toKind() + " parameter " + i + " of " + template +
+                                " conflicts with another parameter";
                 slots.put(i, s.value());
             }
         }
