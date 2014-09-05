@@ -503,6 +503,36 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         }
         return template;
     }
+
+    @HOSTED_ONLY
+    public T1XTemplate createOfflineIntrinsicTemplate(RuntimeCompiler compiler, Class<?> templateSourceClass, Map<RiMethod, T1XTemplate> templates, String name) {
+        if (templates == null) {
+            templates = new HashMap<RiMethod, T1XTemplate>();
+        }
+
+        ClassActor.fromJava(T1XRuntime.class);
+        final Method[] templateMethods = templateSourceClass.getDeclaredMethods();
+        T1XTemplate template =null;
+        for (Method method : templateMethods) {
+            if (!method.getName().equals(name)) {
+                continue;
+            }
+            if (Platform.platform().isAcceptedBy(method.getAnnotation(PLATFORM.class))) {
+                T1X_INTRINSIC_TEMPLATE anno = method.getAnnotation(T1X_INTRINSIC_TEMPLATE.class);
+                if (anno != null) {
+                    ClassActor source = ClassActor.fromJava(T1XIntrinsicTemplateSource.class);
+                    for (ClassMethodActor intrinsicMethod : intrinsicTemplateMethods()) {
+                        ClassMethodActor templateSource = source.findLocalStaticMethodActor(SymbolTable.makeSymbol(T1XIntrinsicTemplateGenerator.templateInvokerName(intrinsicMethod)));
+                        MaxTargetMethod templateCode = compileTemplate(compiler, templateSource);
+                        template =  new T1XTemplate(templateCode, null, templateSource);
+                        templates.put(intrinsicMethod, template);
+                    }
+
+                }
+            }
+        }
+        return template;
+    }
     /**
      * These templates are not used by T1X, but may be used by the variants (e.g., VMA). Since enums cannot be
      * subclassed, it is convenient to keep them in {@link T1XTemplateTag} and just avoid checking
@@ -523,7 +553,8 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
 
     private MaxTargetMethod compileTemplate(RuntimeCompiler bootCompiler, ClassMethodActor templateSource) {
         FatalError.check(templateSource.isTemplate(), "Method with " + T1X_TEMPLATE.class.getSimpleName() + " annotation should be a template: " + templateSource);
-        FatalError.check(!hasStackParameters(templateSource), "Template must not have *any* stack parameters: " + templateSource);
+        FatalError.check((!hasStackParameters(templateSource) && isAMD64()) || (hasStackParameters(templateSource) && isARM() && hasLongValues(templateSource)) ||
+                        (!hasStackParameters(templateSource) && isARM()), "Template must not have *any* stack parameters: " + templateSource);
         FatalError.check(templateSource.resultKind().stackKind == templateSource.resultKind(), "Template return type must be a stack kind: " + templateSource);
         for (int i = 0; i < templateSource.getParameterKinds().length; i++) {
             Kind k = templateSource.getParameterKinds()[i];
@@ -536,7 +567,6 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         if (frameSlots > T1XTargetMethod.templateSlots) {
             T1XTargetMethod.templateSlots = frameSlots;
         }
-
 
         return templateCode;
     }
@@ -650,6 +680,16 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     private static boolean hasStackParameters(ClassMethodActor classMethodActor) {
         for (CiValue arg : vm().registerConfigs.standard.getCallingConvention(Type.JavaCall, CiUtil.signatureToKinds(classMethodActor), target(), false).locations) {
             if (!arg.isRegister()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @HOSTED_ONLY
+    private static boolean hasLongValues(ClassMethodActor classMethodActor) {
+        for (CiValue arg : vm().registerConfigs.standard.getCallingConvention(Type.JavaCall, CiUtil.signatureToKinds(classMethodActor), target(), false).locations) {
+            if (arg.kind == CiKind.Long) {
                 return true;
             }
         }

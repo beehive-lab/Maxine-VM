@@ -406,6 +406,8 @@ public class T1XTemplate {
          */
         public final CiRegister reg;
 
+        public final CiStackSlot stackSlot;
+
         /**
          * The operand stack index of the slot(s) holding this arg's value.
          * This will be -1 if this arg does not get its value from the operand stack.
@@ -418,6 +420,15 @@ public class T1XTemplate {
             this.name = name;
             this.reg = reg;
             this.slot = slot;
+            this.stackSlot = null;
+        }
+
+        public Arg(Kind kind, CiStackSlot stackSlot, String name, int slot) {
+            this.kind = kind;
+            this.name = name;
+            this.stackSlot = stackSlot;
+            this.slot = slot;
+            this.reg = null;
         }
 
         /**
@@ -518,7 +529,7 @@ public class T1XTemplate {
                sig = initSig(method);
 	       return;
         }
-	
+
 
 
         if (nSafepoints == 0) {
@@ -607,9 +618,16 @@ public class T1XTemplate {
             Kind kind = kinds[i];
             Integer slotObj = slots.get(i);
             int slot = slotObj == null ? -1 : slotObj;
-            assert cc.locations[i].isRegister() : "templates with non-reg args are not supported: " + method;
-            CiRegister reg = cc.locations[i].asRegister();
-            in[i] = new Arg(kind, reg, localVarName(method, localVarIndex, kind), slot);
+            assert cc.locations[i].isRegister() || (cc.locations[i].isStackSlot() && hasLongValues(cc) && T1X.isARM()) : "templates with non-reg args are not supported: " + method;
+
+            if (cc.locations[i].isRegister()) {
+                CiRegister reg = cc.locations[i].asRegister();
+                in[i] = new Arg(kind, reg, localVarName(method, localVarIndex, kind), slot);
+            } else {
+                assert cc.locations[i].isStackSlot();
+                CiStackSlot reg = (CiStackSlot) cc.locations[i];
+                in[i] = new Arg(kind, reg, localVarName(method, localVarIndex, kind), slot);
+            }
             localVarIndex += kind.stackSlots;
         }
         Kind outKind = sig.resultKind();
@@ -621,6 +639,15 @@ public class T1XTemplate {
         Arg out = new Arg(outKind, regConfig.getReturnRegister(WordUtil.ciKind(outKind, true)), null, outSlot);
         Sig s = new Sig(in, out);
         return s;
+    }
+
+    private boolean hasLongValues(CiCallingConvention cc) {
+        for (int i = 0; i < cc.locations.length; i++) {
+            if (cc.locations[i].kind == CiKind.Long) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @HOSTED_ONLY
