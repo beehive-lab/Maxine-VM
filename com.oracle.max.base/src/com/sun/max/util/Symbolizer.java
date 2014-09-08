@@ -87,6 +87,7 @@ public interface Symbolizer<S extends Symbol> extends Iterable<S> {
             return new ListSymbolizer<S>(symbolType, Arrays.asList(symbols));
         }
 
+        @SuppressWarnings("unchecked")
         public static <S extends Symbol> Symbolizer<S> fromList(Class<S> symbolType, Iterable< ? extends S> symbols,
                         final S... additionalSymbols) {
             final List<S> list = new ArrayList<S>(Arrays.asList(additionalSymbols));

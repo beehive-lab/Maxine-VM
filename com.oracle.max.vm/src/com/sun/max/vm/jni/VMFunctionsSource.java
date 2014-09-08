@@ -209,6 +209,7 @@ public class VMFunctionsSource {
         return createLocalHandle(getClassContext());
     }
 
+    @SuppressWarnings("deprecation")
     @VM_ENTRY_POINT
     private static JniHandle GetCallerClass(Pointer env, int depth) {
         // Additionally ignore this method, as well as the Reflection method we call.

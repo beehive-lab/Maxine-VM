@@ -36,6 +36,7 @@ public final class Reflection_getCallerClass01 {
         private Caller1() {
         }
 
+        @SuppressWarnings("deprecation")
         static String caller1(int depth) {
             return Reflection.getCallerClass(depth).getName();
         }

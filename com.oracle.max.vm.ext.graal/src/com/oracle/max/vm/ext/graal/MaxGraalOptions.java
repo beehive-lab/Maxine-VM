@@ -180,10 +180,11 @@ public class MaxGraalOptions {
 
 // START GENERATED CODE
     static {
+        // CheckStyle: stop
         // Options from com.oracle.graal.compiler.GraalDebugConfig
         register(new VMBooleanOption("-G:+", "Debug", "Enable scope-based debugging"), com.oracle.graal.compiler.GraalDebugConfig.class, "DebugEnabled");
         register(new VMStringOption("-G:DebugValueSummary=", false, "Complete", "How to print metric and timing values:%nName - aggregate by unqualified name%nPartial - aggregate by partially qualified name (e.g., A.B.C.D.Counter and X.Y.Z.D.Counter will be merged to D.Counter)%nComplete - aggregate by qualified name%nThread - aggregate by qualified name and thread"), com.oracle.graal.compiler.GraalDebugConfig.class, "DebugValueSummary");
-        register(new VMBooleanOption("-G:+", "DetailedAsserts", "Enable expensive assertions"), com.oracle.graal.compiler.GraalDebugConfig.class, "DetailedAsserts");
+        register(new VMBooleanOption("-G:-", "DetailedAsserts", "Enable expensive assertions"), com.oracle.graal.compiler.GraalDebugConfig.class, "DetailedAsserts");
         register(new VMStringOption("-G:Dump=", false, null, "Scopes to be dumped"), com.oracle.graal.compiler.GraalDebugConfig.class, "Dump");
         register(new VMBooleanOption("-G:-", "DumpOnError", "Send Graal IR to dump handlers on error"), com.oracle.graal.compiler.GraalDebugConfig.class, "DumpOnError");
         register(new VMStringOption("-G:Log=", false, null, "Scopes to be logged"), com.oracle.graal.compiler.GraalDebugConfig.class, "Log");
@@ -329,6 +330,7 @@ public class MaxGraalOptions {
         register(new VMStringOption("-G:CompilerConfiguration=", false, "", "The compiler configuration to use"), com.oracle.graal.phases.tiers.Suites.Options.class, "CompilerConfiguration");
         // Options from com.oracle.graal.virtual.phases.ea.PartialEscapePhase
         register(new VMBooleanOption("-G:+", "OptEarlyReadElimination", ""), com.oracle.graal.virtual.phases.ea.PartialEscapePhase.class, "OptEarlyReadElimination");
+        // CheckStyle: resume
     }
 // END GENERATED CODE
 

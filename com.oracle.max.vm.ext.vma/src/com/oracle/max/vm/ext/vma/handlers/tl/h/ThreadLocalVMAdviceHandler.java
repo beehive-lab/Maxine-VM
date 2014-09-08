@@ -56,6 +56,7 @@ public class ThreadLocalVMAdviceHandler extends ObjectStateAdapter {
 
     private static boolean verbose;
     private static final int REPORTED_BIT = 0;
+    @SuppressWarnings("hiding")
     private IdBitSetObjectState state;
     private Data[] threadData;
 
