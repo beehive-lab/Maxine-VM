@@ -58,15 +58,9 @@ TARGETOS ?= $(shell uname -s)
 ifeq ($(TARGETOS),Darwin)
     OS := darwin
     DARWIN_GCC_MFLAG :=
-    a := $(shell uname -p)
-    ifeq ($a,i386)
-        mach := $(shell ls /usr/include/mach/x86_64)
-        ifneq ($(mach), )
-    	    DARWIN_GCC_MFLAG := -m64
-            ISA := amd64
-        else
-            ISA := ia32
-        endif
+    a := $(shell uname -m)
+    ifeq ($a,x86_64)
+        ISA := amd64
     else
        ifeq ($a,powerpc)
            ISA := power
