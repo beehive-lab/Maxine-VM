@@ -78,6 +78,7 @@ public class MixedFrames {
         int count = 0;
         int prefix = 0;
         while (true) {
+            @SuppressWarnings("deprecation")
             Class callerClass = Reflection.getCallerClass(count);
             if (callerClass == null) {
                 break;

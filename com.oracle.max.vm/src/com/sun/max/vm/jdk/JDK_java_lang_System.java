@@ -1045,6 +1045,7 @@ public final class JDK_java_lang_System {
             // to avoid bootstrap issues with class loading (and thus dynamic constant pool resolution).
         } else {
             // ATTENTION: these statements must have the exact same side effects as the original code of the substitutee:
+            @SuppressWarnings("deprecation")
             final Class callerClass = Reflection.getCallerClass(2);
 
             Runtime runtime = Runtime.getRuntime();

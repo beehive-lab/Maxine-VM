@@ -731,6 +731,7 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public Class defineClass(String name, byte[] bytes, int offset, int length) {
+        @SuppressWarnings("deprecation")
         final Class currentClass = Reflection.getCallerClass(2);
         return defineClass(name, bytes, offset, length, currentClass.getClassLoader(), currentClass.getProtectionDomain());
     }

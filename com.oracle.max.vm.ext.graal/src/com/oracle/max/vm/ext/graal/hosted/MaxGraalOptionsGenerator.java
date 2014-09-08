@@ -127,6 +127,7 @@ public class MaxGraalOptionsGenerator extends SourceGenerator {
         }
         Arrays.sort(optionClassArray);
 
+        out.printf("        // CheckStyle: stop line length check%n");
         // Process options
         for (CClass optionsGClass : optionClassArray) {
             Class< ? > optionsClass = optionsGClass.klass;
@@ -195,6 +196,7 @@ public class MaxGraalOptionsGenerator extends SourceGenerator {
                 FatalError.unexpected("error processing " + optionsClass.getName(), ex);
             }
         }
+        out.printf("        // CheckStyle: resume line length check%n");
         out.println("    }");
     }
 

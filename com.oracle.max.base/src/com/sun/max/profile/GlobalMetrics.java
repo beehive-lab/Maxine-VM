@@ -24,7 +24,6 @@ package com.sun.max.profile;
 
 import java.io.*;
 import java.util.*;
-import java.util.Arrays;
 
 import com.sun.max.*;
 import com.sun.max.profile.Metrics.*;
@@ -125,6 +124,7 @@ public class GlobalMetrics {
     /**
      * Resets of all the currently registered metrics.
      */
+    @SuppressWarnings("unchecked")
     public static synchronized void reset() {
         for (MetricSet<? extends Metric> metricSet : metricSets.values()) {
             for (Metric metric : metricSet.metrics.values()) {
@@ -138,6 +138,7 @@ public class GlobalMetrics {
      * execution run.
      * @param stream the print stream to which to print the report
      */
+    @SuppressWarnings("unchecked")
     public static synchronized void report(PrintStream stream) {
         final Map<String, Metric> allMetrics = new HashMap<String, Metric>();
         for (MetricSet<? extends Metric> metricSet : metricSets.values()) {
