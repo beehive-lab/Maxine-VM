@@ -1775,7 +1775,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_T1X_jtt_BC_iconst() throws Exception {
+    public void ignore_T1X_jtt_BC_iconst() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
@@ -3770,5 +3770,14 @@ public class ARMV7JTTTest extends MaxTestCase {
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
+    }
+
+    public void test_generic_compilation() throws Exception {
+        CompilationBroker.OFFLINE = initialised;
+        String klassName = getKlassName("com.sun.max.vm.compiler.deopt.Deoptimization");
+        //List<TargetMethod> methods = Compile.compileMethod(new String[] { klassName}, "C1X", "deoptimizeAtSafepoint");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        theCompiler.cleanup();
     }
 }
