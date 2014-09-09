@@ -691,8 +691,8 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(INEG)
-    public static int ineg(@Slot(0) int value) {
-        return -value;
+    public static int ineg(@Slot(0) int value, int zero) {
+        return zero - value;
     }
 
     @T1X_TEMPLATE(IOR)
@@ -888,18 +888,12 @@ public class T1XTemplateSource {
     }
 
     @T1X_TEMPLATE(FNEG)
-    public static float fneg(@Slot(0) float value ) {
-/*
-	at com.oracle.max.vm.ext.maxri.Compile.main(Compile.java:244)
-Caused by: java.lang.AssertionError:  double to long mov compare
-	at com.sun.c1x.target.armv7.ARMV7LIRAssembler.emitConvert(ARMV7LIRAssembler.java:917)
-removal of the zero argument got rid of this error?
-*/
+    public static float fneg(@Slot(0) float value, float zero) {
         float res;
-        if (Float.floatToRawIntBits(value) == Float.floatToRawIntBits(0.0f)) {
+        if (Float.floatToRawIntBits(value) == Float.floatToRawIntBits(zero)) {
             res = -0.0f;
         } else {
-            res = 0.0f - value;
+            res = zero - value;
         }
         return res;
     }
@@ -1490,12 +1484,12 @@ removal of the zero argument got rid of this error?
     }
 
     @T1X_TEMPLATE(DNEG)
-    public static double dneg(@Slot(0) double value) {
+    public static double dneg(@Slot(0) double value, double zero) {
         double res;
-        if (Double.doubleToRawLongBits(value) == Double.doubleToRawLongBits(0.0d)) {
+        if (Double.doubleToRawLongBits(value) == Double.doubleToRawLongBits(zero)) {
             res = -0.0d;
         } else {
-            res = 0.0d - value;
+            res = zero - value;
         }
         return res;
     }

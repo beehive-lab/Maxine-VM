@@ -2167,7 +2167,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
     @Override
     protected void emitMemoryBarriers(int barriers) {
     //    masm.membar(barriers);
-        assert 0 == 1 : "emitMemoryBarriers ARMV7IRAssembler";
+       System.out.println( "emitMemoryBarriers ARMV7IRAssembler not implemented");
 
     }
 
