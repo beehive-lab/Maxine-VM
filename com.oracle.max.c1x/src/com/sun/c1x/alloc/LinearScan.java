@@ -2487,6 +2487,10 @@ public final class LinearScan {
                         TTY.println("Intervals %d and %d overlap and have the same register assigned", i1.operandNumber, i2.operandNumber);
                         TTY.println(i1.logString(this));
                         TTY.println(i2.logString(this));
+                        TTY.println(l1.toString());
+                        TTY.println(l1High.toString());
+                        TTY.println(l2.toString());
+                        TTY.println(l2High.toString());
                     }
                     throw new CiBailout("");
                 }
