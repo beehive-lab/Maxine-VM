@@ -109,6 +109,15 @@ public class IntervalWalker {
         }
     }
 
+    boolean existsInList(Interval interval) {
+        if (interval.state == State.Active) {
+            return activeLists.exists(RegisterBinding.Any, interval);
+        } else {
+            assert interval.state == State.Inactive : "invalid state";
+            return inactiveLists.exists(RegisterBinding.Any, interval);
+        }
+    }
+
     void walkTo(State state, int from) {
         assert state == State.Active || state == State.Inactive : "wrong state";
         for (RegisterBinding binding : RegisterBinding.VALUES) {

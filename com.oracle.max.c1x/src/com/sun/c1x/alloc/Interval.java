@@ -172,6 +172,18 @@ public final class Interval {
                 prev.next = cur.next;
             }
         }
+
+        public boolean exists(RegisterBinding binding, Interval i) {
+            Interval list = get(binding);
+            Interval cur = list;
+            while (cur != i) {
+                if (cur != null && cur != Interval.EndMarker) {
+                    return false;
+                }
+                cur = cur.next;
+            }
+            return true;
+        }
     }
 
     /**
@@ -502,7 +514,7 @@ public final class Interval {
             if(location.kind != this.kind) {
                  System.out.println("Interval going to fail RegisterAllocation so it is bypassed and the assert location.kind == this.kind is TURNED OFF");
 		// DIRTY HACK FIXME
-	    } else 
+	    } else
             assert location.kind == this.kind;
         }
         this.location = location;

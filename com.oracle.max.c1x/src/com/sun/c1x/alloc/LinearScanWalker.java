@@ -650,7 +650,7 @@ final class LinearScanWalker extends IntervalWalker {
                 hintHigh = availableRegs[hint.number + 1];  // connect e.g. eax-edx
             }
             if (C1XOptions.TraceLinearScanLevel >= 4) {
-                TTY.println("   hint registers %d from interval %s", hint.number, hintHigh.number, locationHint.logString(allocator));
+                TTY.println("   hint registers %d from interval %s", hint.number, hintHigh!=null ? hintHigh.number : -1, locationHint.logString(allocator));
             }
         }
         assert interval.location() == null && interval.locationHigh() == null : "register already assigned to interval";
@@ -763,13 +763,21 @@ final class LinearScanWalker extends IntervalWalker {
         return null;
     }
 
-    void splitAndSpillIntersectingIntervals(CiRegister reg) {
+    void splitAndSpillIntersectingIntervals(CiRegister reg, CiRegister regHigh) {
         assert reg != null : "no register assigned";
-
         for (int i = 0; i < spillIntervals[reg.number].size(); i++) {
             Interval interval = spillIntervals[reg.number].get(i);
             removeFromList(interval);
             splitAndSpillInterval(interval);
+        }
+        if (regHigh != null) {
+            for (int i = 0; i < spillIntervals[regHigh.number].size(); i++) {
+                Interval interval = spillIntervals[regHigh.number].get(i);
+                if (existsInList(interval)) {
+                    removeFromList(interval);
+                    splitAndSpillInterval(interval);
+                }
+            }
         }
     }
 
@@ -819,6 +827,7 @@ final class LinearScanWalker extends IntervalWalker {
                 } else if (usePos[number] > regNeededUntil && usePos[number+1] > regNeededUntil) {
                     if (reg == null || (usePos[number] > usePos[reg.number])) {
                         reg = availableReg;
+                        regHigh = availableRegs[availableReg.number + 1];
                     }
                 }
             }
@@ -837,9 +846,12 @@ final class LinearScanWalker extends IntervalWalker {
         }
         int usePosition = (reg != null ? usePos[reg.number] : -1);
         int splitPos = (reg != null ? blockPos[reg.number] : -1);
+        if (adjacentRegs) {
+            usePosition = (reg != null ? Math.min(usePos[reg.number], usePos[regHigh.number]) : -1);
+            splitPos = (reg != null ? Math.min(blockPos[reg.number], blockPos[regHigh.number]) : -1);
+        }
 
-
-        if (reg == null || usePosition <= firstUsage) {
+        if (reg == null || (adjacentRegs && regHigh==null) ||usePosition <= firstUsage) {
 
             // the first use of cur is later than the spilling position -> spill cur
             if (C1XOptions.TraceLinearScanLevel >= 4) {
@@ -856,11 +868,7 @@ final class LinearScanWalker extends IntervalWalker {
             splitAndSpillInterval(interval);
             return;
         }
-        if (adjacentRegs) {
-            regHigh = availableRegs[reg.number + 1];
-            usePosition = Math.min(usePos[reg.number], usePos[regHigh.number]);
-            splitPos = Math.min(blockPos[reg.number], blockPos[regHigh.number]);
-        }
+
 
         boolean needSplit = false;
         if (adjacentRegs) {
@@ -885,7 +893,7 @@ final class LinearScanWalker extends IntervalWalker {
         }
 
         // perform splitting and spilling for all affected intervals
-        splitAndSpillIntersectingIntervals(reg);
+        splitAndSpillIntersectingIntervals(reg, regHigh);
     }
 
     boolean noAllocationPossible(Interval interval) {
