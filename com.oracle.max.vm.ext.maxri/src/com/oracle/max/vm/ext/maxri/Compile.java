@@ -17,41 +17,29 @@
  */
 package com.oracle.max.vm.ext.maxri;
 
-import com.oracle.max.asm.AsmOptions;
-import com.sun.cri.ci.CiStatistics;
-import com.sun.max.Utils;
-import com.sun.max.config.BootImagePackage;
-import com.sun.max.io.Files;
-import com.sun.max.lang.Classes;
-import com.sun.max.program.Classpath;
-import com.sun.max.program.Trace;
-import com.sun.max.program.option.Option;
-import com.sun.max.program.option.OptionSet;
-import com.sun.max.test.ProgressPrinter;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.MaxineVM.Phase;
-import com.sun.max.vm.VMOption;
-import com.sun.max.vm.actor.holder.ClassActor;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.actor.member.MethodActor;
-import com.sun.max.vm.compiler.CompilationBroker;
-import com.sun.max.vm.compiler.RuntimeCompiler;
-import com.sun.max.vm.compiler.target.Compilations;
-import com.sun.max.vm.compiler.target.TargetMethod;
-import com.sun.max.vm.hosted.CompiledPrototype;
-import com.sun.max.vm.hosted.JavaPrototype;
-import com.sun.max.vm.hosted.MethodFinder;
-import com.sun.max.vm.hosted.VMConfigurator;
-import com.sun.max.vm.profile.MethodInstrumentation;
-import com.sun.max.vm.reflection.Boxing;
-import com.sun.max.vm.reflection.InvocationStub;
-import com.sun.max.vm.type.ClassRegistry;
-import com.sun.max.vm.value.Value;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.*;
+
+import com.oracle.max.asm.*;
+import com.sun.cri.ci.*;
+import com.sun.max.*;
+import com.sun.max.config.*;
+import com.sun.max.io.*;
+import com.sun.max.lang.*;
+import com.sun.max.program.*;
+import com.sun.max.program.option.*;
+import com.sun.max.test.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.Phase;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.profile.*;
+import com.sun.max.vm.reflection.*;
+import com.sun.max.vm.type.*;
+import com.sun.max.vm.value.*;
 
 /**
  * A harness to run a {@linkplain RuntimeCompiler compiler} offline.
@@ -186,6 +174,79 @@ public class Compile {
         compiler.initialize(Phase.TERMINATING);
         return targetMethods;
     }
+
+    public static List<TargetMethod> compileMethod(String[] args, String compilerAlias, String method) throws IOException {
+        args = VMOption.extractVMArgs(args);
+
+        VMConfigurator vmConfigurator = null;
+        if (!CompilationBroker.OFFLINE) {
+            vmConfigurator = new VMConfigurator(options);
+
+        } else {
+            vmConfigurator = new VMConfigurator(null);
+        }
+        options.parseArguments(args);
+        options.setValuesAgain();
+
+        final String[] arguments = expandArguments(options.getArguments());
+
+        String compilerName = getCompilerClassname(compilerAlias);
+        if (compilerName == null) {
+            System.out.println("Must specify compiler to use with the -" + compilerOption + " option");
+            System.out.println("Valid values are: " + compilerAliasNames + " or fully qualified class name");
+            return null;
+        }
+        if (compilerName.contains("T1X")) {
+            RuntimeCompiler.baselineCompilerOption.setValue(compilerName);
+        } else {
+            RuntimeCompiler.optimizingCompilerOption.setValue(compilerName);
+        }
+
+        Trace.on(traceOption.getValue());
+
+        if (profOption.getValue()) {
+            MethodInstrumentation.enable(500);
+        }
+
+        if (!CompilationBroker.OFFLINE) {
+            vmConfigurator.create();
+
+            // create the prototype
+            if (verboseOption.getValue() > 0) {
+                out.print("Initializing Java prototype... ");
+            }
+            JavaPrototype.initialize(false);
+            if (verboseOption.getValue() > 0) {
+                out.println("done");
+            }
+        }
+        CompilationBroker cb = MaxineVM.vm().compilationBroker;
+        final RuntimeCompiler compiler = compilerName.contains("T1X") ? cb.baselineCompiler : cb.optimizingCompiler;
+        cb.optimizingCompiler.initialize(Phase.HOSTED_COMPILING);
+        if (cb.optimizingCompiler != cb.baselineCompiler && compiler == cb.baselineCompiler) {
+            cb.baselineCompiler.initialize(Phase.HOSTED_COMPILING);
+
+        }
+        final Classpath classpath = Classpath.fromSystem();
+        final List<MethodActor> tempMethods = new MyMethodFinder().find(arguments, classpath, Compile.class.getClassLoader(), null);
+        if (tempMethods.size() == 0) {
+            out.println("no methods matched");
+            return null;
+        }
+        List<MethodActor> methods = new ArrayList<>();
+        for (MethodActor m : tempMethods) {
+            System.out.println(m.name());
+            if (m.name().equals(method)) {
+                methods.add(m);
+            }
+        }
+
+        List<TargetMethod> targetMethods = doCompile(compiler, methods);
+        assert targetMethods.size() == 1;
+        compiler.initialize(Phase.TERMINATING);
+        return targetMethods;
+    }
+
 
     public static void main(String[] args) throws IOException {
 
