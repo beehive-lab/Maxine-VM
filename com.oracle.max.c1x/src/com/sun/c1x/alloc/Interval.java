@@ -177,7 +177,7 @@ public final class Interval {
             Interval list = get(binding);
             Interval cur = list;
             while (cur != i) {
-                if (cur != null && cur != Interval.EndMarker) {
+                if (cur == null || cur == Interval.EndMarker) {
                     return false;
                 }
                 cur = cur.next;
@@ -518,6 +518,7 @@ public final class Interval {
             assert location.kind == this.kind;
         }
         this.location = location;
+        this.locationHigh = null;
     }
 
     void assignLocationHigh(CiValue locationHigh) {
