@@ -1721,7 +1721,9 @@ public final class LinearScan {
                 // the part before fromOpId is unchanged
                 interval = interval.split(fromOpId, this);
                 interval.assignLocation(location);
-                interval.assignLocationHigh(locationHigh);
+                if (locationHigh != null) {
+                    interval.assignLocationHigh(locationHigh);
+                }
             }
             assert interval.from() == fromOpId : "must be true now";
 
