@@ -1824,7 +1824,8 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
                         masm.vldr(ConditionFlag.Always,ARMV7.d15,ARMV7.r12,0);
                         masm.ucomisd(reg1, ARMV7.d15);
                         break;
-                    case Long    : { assert 0 == 1;
+                    case Long    : { //assert 0 == 1;
+			System.out.println("emitCompare assert commented out --- not implemented");
                         if (c.asLong() == 0) {
                            // masm.cmpq(reg1, 0);
                         } else {

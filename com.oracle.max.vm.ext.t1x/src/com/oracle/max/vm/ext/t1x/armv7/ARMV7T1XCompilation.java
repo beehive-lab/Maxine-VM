@@ -1035,24 +1035,30 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         for (int pos = 0; pos < source.codeLength(); pos++) {
             for (CiRegister reg : ARMV7.cpuRegisters) { // TODO extend this to include floats and doubles?
                                                         // this means iterating over the set of allRegisters
+		int testValue = 4;
                 // Compute displacement operand position for a movq at 'pos'
                 ARMV7Assembler asm = new ARMV7Assembler(target(), null);
                 asm.setUpScratch(CiAddress.Placeholder);
-                asm.mov(ConditionFlag.Always, false, reg, r12);
-                int dispPos = pos + asm.codeBuffer.position() - 4 * 5; // where is the setUpScratch start in the buffer
+                asm.ldrImmediate(ConditionFlag.Always, 0, 0, 0, reg, r12, 0);
+                int dispPos = pos + asm.codeBuffer.position() - testValue ;//* 5; // where is the setUpScratch start in the buffer
                 int disp = movqDisp(dispPos, dispFromCodeStart);
                 asm.codeBuffer.reset();
 
                 // Assemble the movq instruction at 'pos' and compare it to the actual bytes at 'pos'
                 CiAddress src = new CiAddress(WordUtil.archKind(), ARMV7.r15.asValue(), disp);
                 asm.setUpScratch(src);
-                asm.ldr(ConditionFlag.Always, reg, r12, 0); // TODO different instructions for FPregs?
+                asm.ldrImmediate(ConditionFlag.Always,0,0,0, reg, r12, 0); // TODO different instructions for FPregs?
                 byte[] pattern = asm.codeBuffer.close(true);
                 byte[] instr = Arrays.copyOfRange(source.code(), pos, pos + pattern.length);
+		System.out.println("findData patach Debugging " + pattern.length + " " + instr.length);
+		for(int i = 0; i < pattern.length; i++) {
+			System.out.println("BYTES PATTERN INSTR " + pattern[i] + " " + instr[i]);
+		}
                 if (Arrays.equals(pattern, instr)) {
+		    System.out.println("ARRAYS EQUAL for testValue of " + testValue);
                     result = Arrays.copyOf(result, result.length + 1);
                     result[result.length - 1] = dispPos;
-                }
+		}
             }
 
         }

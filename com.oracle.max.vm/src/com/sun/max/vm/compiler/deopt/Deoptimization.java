@@ -734,7 +734,9 @@ public class Deoptimization extends VmOperation {
         // As such there is no current need to reconstruct an adapter frame between the lowest
         // deoptimized frame and the frame of its caller. This may need to be revisited for
         // other platforms so use an assertion for now.
-        assert platform().isa == ISA.AMD64;
+        //assert platform().isa == ISA.AMD64;
+
+       // assert platform().isa == ISA.ARM;
 
         // Fix up the caller details for the bottom most deoptimized frame
         cont.tm = info.callerTM();
