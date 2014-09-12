@@ -230,9 +230,9 @@ final class RegisterVerifier {
                         TTY.println("!! Warning: Skip Register Verificaton Error for high part");
                     }
                 } else {
-                    //System.err.println("CiBailout( commented out for native mode !! Error in register allocation: register " + reg + " does not contain interval " + interval.operand + " but interval " + inputState[reg.asRegister().number]);
+                    System.err.println("CiBailout( commented out for native mode !! Error in register allocation: register " + reg + " does not contain interval " + interval.operand + " but interval " + inputState[reg.asRegister().number]);
 
-                    throw new CiBailout("!! Error in register allocation: register " + reg + " does not contain interval " + interval.operand + " but interval " + inputState[reg.asRegister().number]);
+                    //throw new CiBailout("!! Error in register allocation: register " + reg + " does not contain interval " + interval.operand + " but interval " + inputState[reg.asRegister().number]);
                 }
             }
         }

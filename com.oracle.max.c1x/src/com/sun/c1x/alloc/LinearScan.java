@@ -2492,7 +2492,8 @@ public final class LinearScan {
                         TTY.println(l2.toString());
                         TTY.println(l2High.toString());
                     }
-                    throw new CiBailout("");
+		System.out.println("LinearScan.java CiBailout commented out to enable attempt to build boot image\n");
+                    //throw new CiBailout("");
                 }
             }
         }

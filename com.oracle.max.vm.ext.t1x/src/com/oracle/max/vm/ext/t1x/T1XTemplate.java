@@ -552,6 +552,10 @@ public class T1XTemplate {
             sig = initSig(method);
             return;
         }
+if (source.referenceLiterals() != null) {
+            System.out.println(" REFLITSNOTCAUSE " + source.referenceLiterals().length);
+        }
+
 
         if (nSafepoints == 0) {
             safepoints = NO_SAFEPOINTS;
