@@ -517,41 +517,41 @@ public class T1XTemplate {
         if (source.referenceLiterals() != null) {
             System.out.println(" REFLITS " + source.referenceLiterals().length);
         }
-        if (method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.monitorexit") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.loadException") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.rethrowException") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.monitorenter") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.iastore") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.newarray") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.anewarray") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.athrow") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialFloat") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticFloat") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialLong") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticLong") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialDouble") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticDouble") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialObject") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticObject") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialWord") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticWord") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialVoid") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticVoid") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.new_") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.new_hybrid") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.lock") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.unlock") == 0 ||
-                        method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.aastore") == 0)
+        //if (method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.monitorexit") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.loadException") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.rethrowException") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.monitorenter") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.iastore") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.newarray") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.anewarray") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.athrow") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialFloat") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticFloat") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialLong") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticLong") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialDouble") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticDouble") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialObject") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticObject") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialWord") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticWord") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokespecialVoid") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.invokestaticVoid") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.new_") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.new_hybrid") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.lock") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.unlock") == 0 ||
+                        //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.aastore") == 0)
 // end of issues with normal templates ...
 // / problems with intrinsictemplates
 
-        {
-            System.out.println("Avoiding cmpswapInt crash");
-            safepoints = NO_SAFEPOINTS; // remove this debugging
-            objectLiterals = null;
-            sig = initSig(method);
-            return;
-        }
+        //{
+            //System.out.println("Avoiding cmpswapInt crash");
+            //safepoints = NO_SAFEPOINTS; // remove this debugging
+            //objectLiterals = null;
+            //sig = initSig(method);
+            //return;
+        //}
 if (source.referenceLiterals() != null) {
             System.out.println(" REFLITSNOTCAUSE " + source.referenceLiterals().length);
         }

@@ -739,7 +739,7 @@ public abstract class TargetMethod extends MemoryRegion {
             // buffer so I will keep it in and produce a stripped down ARMISAInstructionDecoder that gets rid of all
             // the unnecessary X86 functionality                       com.oracle.max.asm/src/com/oracle/max/asm/target/armv7/ARMISAInstructionDecoder.java
 
-            for(Object j : referenceLiterals)
+            //for(Object j : referenceLiterals)
             //System.out.println("Klass " + classMethodActor +" + ((FieldActor)j).getInt(null));
 
             ARMISAInstructionDecoder.patchRelativeInstruction(code(), codePos, displacement);

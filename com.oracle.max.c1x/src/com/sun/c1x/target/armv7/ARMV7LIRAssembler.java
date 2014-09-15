@@ -207,6 +207,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             //masm.movq(dst, 0xDEADDEADDEADDEADL);
             masm.mov32BitConstant(dst,0xDEADDEAD);
         } else {
+	System.out.println("REGISTER used is " + dst.number + " pos " + masm.codeBuffer.position());
             masm.setUpScratch(tasm.recordDataReferenceInCode(constant));
             masm.ldr(ConditionFlag.Always,dst,ARMV7.r12,0);
              //masm.movq(dst, tasm.recordDataReferenceInCode(constant));

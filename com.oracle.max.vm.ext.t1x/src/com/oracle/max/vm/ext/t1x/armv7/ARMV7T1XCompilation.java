@@ -1032,28 +1032,37 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
         int[] result = {};
 
+        /*byte [] xx = source.code();
+	for(int ii = 0; ii < source.codeLength();ii++) {
+       		System.out.println("ORIGINALCODE " + ii + " " + xx[ii]); 
+        }o*/
         for (int pos = 0; pos < source.codeLength(); pos++) {
             for (CiRegister reg : ARMV7.cpuRegisters) { // TODO extend this to include floats and doubles?
                                                         // this means iterating over the set of allRegisters
-		int testValue = 4;
+		int testValue = 12; // was 4 originally but we need THREE INSTRUCTIONS?
                 // Compute displacement operand position for a movq at 'pos'
                 ARMV7Assembler asm = new ARMV7Assembler(target(), null);
                 asm.setUpScratch(CiAddress.Placeholder);
-                asm.ldrImmediate(ConditionFlag.Always, 0, 0, 0, reg, r12, 0);
+                asm.ldr(ConditionFlag.Always,  reg, r12, 0);
                 int dispPos = pos + asm.codeBuffer.position() - testValue ;//* 5; // where is the setUpScratch start in the buffer
                 int disp = movqDisp(dispPos, dispFromCodeStart);
                 asm.codeBuffer.reset();
+		//System.out.println("POS " + pos + " DISP-POS " + dispPos + " disp " + disp + 
+                //" dispfromCodeStart " + dispFromCodeStart);
 
                 // Assemble the movq instruction at 'pos' and compare it to the actual bytes at 'pos'
-                CiAddress src = new CiAddress(WordUtil.archKind(), ARMV7.r15.asValue(), disp);
-                asm.setUpScratch(src);
-                asm.ldrImmediate(ConditionFlag.Always,0,0,0, reg, r12, 0); // TODO different instructions for FPregs?
+                //CiAddress src = new CiAddress(WordUtil.archKind(), ARMV7.r15.asValue(), disp);
+		CiAddress src = CiAddress.Placeholder;
+		//System.out.println("DISPLACEMENT -- should this be -48 for the special case under consideration " + disp);
+                asm.mov32BitConstant(ARMV7.r12,disp);
+                asm.ldr(ConditionFlag.Always, reg, r12, 0); // TODO different instructions for FPregs?
                 byte[] pattern = asm.codeBuffer.close(true);
                 byte[] instr = Arrays.copyOfRange(source.code(), pos, pos + pattern.length);
-		System.out.println("findData patach Debugging " + pattern.length + " " + instr.length);
+		/*System.out.println("findData patach Debugging " + pattern.length + " " + instr.length);
 		for(int i = 0; i < pattern.length; i++) {
 			System.out.println("BYTES PATTERN INSTR " + pattern[i] + " " + instr[i]);
 		}
+*/
                 if (Arrays.equals(pattern, instr)) {
 		    System.out.println("ARRAYS EQUAL for testValue of " + testValue);
                     result = Arrays.copyOf(result, result.length + 1);
