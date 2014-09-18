@@ -511,12 +511,6 @@ public final class Interval {
             assert this.location == null || this.location.isRegister() : "cannot re-assign location for " + this;
             assert location.isStackSlot();
             assert location.kind != CiKind.Illegal;
-            /*if(location.kind != this.kind) {
-                 this.location = location;
-                 this.kind = location.kind;
-                 System.out.println("Interval going to fail RegisterAllocation so it is bypassed and the assert location.kind == this.kind is TURNED OFF");
-		// DIRTY HACK FIXME
-	    } else*/
             assert location.kind == this.kind;
         }
         this.location = location;
