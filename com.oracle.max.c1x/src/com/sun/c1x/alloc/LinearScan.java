@@ -188,12 +188,12 @@ public final class LinearScan {
         } else if (unusedSpillSlot != null) {
             // re-use hole that was the result of a previous double-word alignment
             spillSlot = unusedSpillSlot;
+            spillSlot.kind = kind;
             unusedSpillSlot = null;
         } else {
             spillSlot = CiStackSlot.get(kind, maxSpills);
             maxSpills++;
         }
-
         return spillSlot;
     }
 

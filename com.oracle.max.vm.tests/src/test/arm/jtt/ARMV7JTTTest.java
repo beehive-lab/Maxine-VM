@@ -3775,7 +3775,7 @@ public class ARMV7JTTTest extends MaxTestCase {
     public void test_generic_compilation() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("com.sun.max.vm.compiler.deopt.Deoptimization");
-        //List<TargetMethod> methods = Compile.compileMethod(new String[] { klassName}, "C1X", "deoptimizeLong");
+        //List<TargetMethod> methods = Compile.compileMethod(new String[] { klassName}, "C1X", "patchReturnAddress");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         CompilationBroker.OFFLINE = true;
         theCompiler.cleanup();

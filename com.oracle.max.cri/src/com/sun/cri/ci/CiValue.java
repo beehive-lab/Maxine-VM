@@ -57,7 +57,7 @@ public abstract class CiValue implements Serializable, Cloneable {
     /**
      * The kind of this value.
      */
-    public final CiKind kind;
+    public CiKind kind;
 
     public boolean highPart;
 
