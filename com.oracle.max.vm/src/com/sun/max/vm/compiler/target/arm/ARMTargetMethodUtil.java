@@ -208,7 +208,8 @@ public final class ARMTargetMethodUtil {
         if (MaxineVM.isHosted()) {
             final byte[] code = tm.code();
 
-            if (CompilationBroker.OFFLINE) {
+            //if (CompilationBroker.OFFLINE) {
+	    if(true) {
                 if (JUMP_WITH_LINK) {
                     if((callOffset +16) >= code.length) {
 
@@ -260,7 +261,7 @@ public final class ARMTargetMethodUtil {
                     code[callOffset + 9] = (byte) ((instruction >> 16) & 0xff);
                     code[callOffset + 8] = (byte) ((instruction >> 24) & 0xff);
                 }
-            } else {
+            } /*else {
                 assert (0 == 1);
                 oldDisp32 = (code[callOffset + 4] & 0xff) << 24 | (code[callOffset + 3] & 0xff) << 16 | (code[callOffset + 2] & 0xff) << 8 | (code[callOffset + 1] & 0xff) << 0;
                 if (oldDisp32 != disp32) {
@@ -282,7 +283,7 @@ public final class ARMTargetMethodUtil {
                 callSitePointer.writeByte(2, (byte) (disp32 >> 8));
                 callSitePointer.writeByte(3, (byte) (disp32 >> 16));
                 callSitePointer.writeByte(4, (byte) (disp32 >> 24));
-            }
+            }*/
         }
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);
     }

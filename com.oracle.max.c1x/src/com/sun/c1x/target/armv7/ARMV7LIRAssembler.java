@@ -1412,18 +1412,22 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     @Override
     protected void emitIntrinsicOp(LIROpcode code, CiValue value, CiValue unused, CiValue dest, LIROp2 op) {
         assert value.kind.isDouble();
-        assert 0 == 1 : "emitIntrinsicOp ARMV7IRAssembler";
 
         switch (code) {
             case Abs:
                 if (asXmmDoubleReg(dest) != asXmmDoubleReg(value)) {
                     masm.movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(value));
                 }
+		System.out.println("MISSING emitIntrinsicOp masm.andpd ");
+		/*
+			this implementes ai 66 0F 54 /r	ANDPD xmm1, xmm2/m128	Bitwise logical AND of xmm2/m128 and xmm1. If any part of the operand lies outside the effective address space from 0 to FFFFH. bitwise logical 
+			the strategy is to move the value a float at at a time into r8 r9 and then to do the and then to move back into the dest (float)?
+		*/
           //      masm.andpd(asXmmDoubleReg(dest), tasm.recordDataReferenceInCode(CiConstant.forLong(DoubleSignMask), 16));
                 break;
 
             case Sqrt:
-          //      masm.sqrtsd(asXmmDoubleReg(dest), asXmmDoubleReg(value));
+                masm.vsqrt(ConditionFlag.Always,asXmmDoubleReg(dest), asXmmDoubleReg(value));
                 break;
 
             default:
@@ -2179,6 +2183,10 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
     private static CiRegister asXmmDoubleReg(CiValue dest) {
         assert dest.kind.isDouble() : "must be double XMM register";
         CiRegister result = dest.asRegister();
+	if(result.number > 31) {
+		System.err.println("ARMV7LIRAssembler asXmmDoubleReg is a float!!!! bodging to D15");
+		result = ARMV7.d15;
+        }
         assert result.isFpu() : "must be XMM register";
         return result;
     }

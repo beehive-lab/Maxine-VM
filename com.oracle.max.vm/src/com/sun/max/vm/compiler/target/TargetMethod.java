@@ -449,6 +449,9 @@ public abstract class TargetMethod extends MemoryRegion {
      */
     @INLINE
     public final CodePointer codeAt(int pos) {
+	if (pos < 0 || pos >= codeLength()) {
+		System.err.println("REQUESTING codeAt " + pos + " yet codelength is  " + codeLength());
+        }
         FatalError.asert(pos >= 0 && pos < codeLength());
         return CodePointer.from(codeStart.plus(pos));
     }

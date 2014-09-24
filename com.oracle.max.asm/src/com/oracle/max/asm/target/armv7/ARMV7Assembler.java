@@ -712,7 +712,7 @@ System.out.println("ASSUMING JMP: check this came from an emitPrologue as a resu
         if (Rn.number < 16) {
             ldrd(cond, P, U, W, Rn, Rt, Rm);
         } else {
-            assert (Rn.number < 31);
+            assert (Rn.number < 32);
             vldr(cond, Rn, Rt, 0);
         }
     }
@@ -982,7 +982,37 @@ System.out.println("ASSUMING JMP: check this came from an emitPrologue as a resu
             vmov(ConditionFlag.Always,dst,ARMV7.r12);
         }
     }
+    public final void vsqrt(ConditionFlag cond,CiRegister dst, CiRegister src) {
+        if((src.number > 15 && src.number < 32 && dst.number >15 && dst.number < 32) ||
+          (src.number > 32 && dst.number >32)) {
+             int instruction = 0x0eb10ad0; 
+             instruction |= (cond.value() << 28);
+             int dp = (src.number < 32) ? 1 : 0;
+             instruction |= dp << 8;
+             int dest = dst.encoding;
+	     int srcr = src.encoding;
+             instruction |= dp << 8;
+      
+	     if(dp == 1) {
+                 instruction |= srcr;
+                 instruction |= dest << 12;
+             } else {
+                 instruction |= srcr >> 1;
+                 instruction |= (srcr & 1) << 5;
+		 instruction |= (dest >> 1) <<  12;
+                 instruction |= (dest & 1) << 22;
+             }
 
+
+            emitInt(instruction); 
+
+        } else {
+		assert 0 == 1 : "ERROR vsqrt illegal register combination";	
+        }
+
+
+
+    }
     public final void mov16BitConstant(ConditionFlag cond, CiRegister dst, int imm16) {
         movw(cond, dst, imm16);
     }
