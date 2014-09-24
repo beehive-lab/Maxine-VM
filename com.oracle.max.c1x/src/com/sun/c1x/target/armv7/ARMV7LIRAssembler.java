@@ -1268,15 +1268,22 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         assert right.isConstant();
                         raddr = tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) right).asFloat()));
                     }
-                    assert 0 == 1 : " const float arithmetic";
+                    System.out.println("DUBIOUS: REGISTER? float const arithmetic");
+                    masm.setUpScratch(raddr);
+                    masm.vldr(ConditionFlag.Always,ARMV7.s30,ARMV7.r12,0);
                     switch (code) {
-                        case Add: // masm.addss(lreg, raddr);
+                        case Add: // masm.addss(lreg, raddr)
+                            masm.vadd(ConditionFlag.Always,getFloatRegister(lreg),getFloatRegister(lreg),ARMV7.s30);
+
                             break;
                         case Sub: // masm.subss(lreg, raddr);
+                            masm.vsub(ConditionFlag.Always,getFloatRegister(lreg),getFloatRegister(lreg),ARMV7.s30);
                             break;
                         case Mul: // masm.mulss(lreg, raddr);
+                            masm.vmul(ConditionFlag.Always,getFloatRegister(lreg),getFloatRegister(lreg),ARMV7.s30);
                             break;
                         case Div: // masm.divss(lreg, raddr);
+                            masm.vdiv(ConditionFlag.Always,getFloatRegister(lreg),getFloatRegister(lreg),ARMV7.s30);
                             break;
                         default:
                             throw Util.shouldNotReachHere();
@@ -1291,15 +1298,24 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         raddr = tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) right).asDouble()));
                     }
 
-                    assert 0 == 1 : "double const arithmetic";
+                    System.out.println("DUBIOUS: double const arithmetic");
+                    masm.setUpScratch(raddr);
+                    masm.vldr(ConditionFlag.Always,ARMV7.d15,ARMV7.r12,0);
                     switch (code) {
                         case Add: // masm.addsd(lreg, raddr);
+                            masm.vadd(ConditionFlag.Always,lreg,lreg,ARMV7.d15);
                             break;
                         case Sub: // masm.subsd(lreg, raddr);
+                            masm.vsub(ConditionFlag.Always,lreg,lreg,ARMV7.d15);
+
                             break;
                         case Mul: // masm.mulsd(lreg, raddr);
+                            masm.vmul(ConditionFlag.Always,lreg,lreg,ARMV7.d15);
+
                             break;
                         case Div:// masm.divsd(lreg, raddr);
+                            masm.vdiv(ConditionFlag.Always,lreg,lreg,ARMV7.d15);
+
                             break;
                         default:
                             throw Util.shouldNotReachHere();
