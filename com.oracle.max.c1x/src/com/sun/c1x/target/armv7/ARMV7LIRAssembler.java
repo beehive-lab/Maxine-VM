@@ -919,14 +919,14 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             }
             case L2F:
                 //assert 0 == 1: "long to float convert";
-                System.out.println("long to float convert no timplemented");
+                System.out.println("MISSING: long to float convert no timplemented");
                 //masm.cvtsi2ssq(asXmmFloatReg(dest), srcRegister);
                 //masm.cvtsi2ssq(asXmmFloatReg(dest), srcRegister);
                 break;
 
             case L2D:
                 //assert 0 == 1: "long to double convert";
-                System.out.println("long to double conver not implemented");
+                System.out.println("MISSING: long to double conver not implemented");
 		
 		
 
@@ -935,7 +935,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
             case F2L: {
                 //assert (0 == 1) : " float to long convert";
-		System.out.println("F2L convert not iplemented");
+		System.out.println("MISSING: F2L convert not iplemented");
                 assert srcRegister.isFpu() && dest.kind.isLong() : "must both be XMM register (no fpu stack)";
                 //masm.cvttss2siq(dest.asRegister(), asXmmFloatReg(src));
                 //masm.movq(rscratch1, java.lang.Long.MIN_VALUE);
@@ -948,7 +948,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
             case D2L: {
                 //assert (0 == 1) : " double to long convert";
-		System.out.println("D2L notimplemented as a conversion needs runtime routines from fplib");
+		System.out.println("MISSING: D2L notimplemented as a conversion needs runtime routines from fplib");
                 assert srcRegister.isFpu() && dest.kind.isLong() : "must both be XMM register (no fpu stack)";
                 //masm.cvttsd2siq(dest.asRegister(), asXmmDoubleReg(src));
                 //masm.movq(rscratch1, java.lang.Long.MIN_VALUE);
@@ -965,7 +965,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 break;
 
             case MOV_L2D:
-                assert (0 == 1) : " long to double --- convert";
+                System.out.println("MISSING: ARMV7LIRASssembler MOV_L2D");
+                //assert (0 == 1) : " long to double --- convert";
                // masm.movdq(asXmmDoubleReg(dest), srcRegister);
                 break;
 
@@ -977,7 +978,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
             case MOV_D2L:
                 //assert (0 == 1): " double to long mov compare";
-                System.out.println(" double to long mov compare not implemented");
+                System.out.println("MISSING: double to long mov compare not implemented");
                 //masm.movdq(dest.asRegister(), asXmmDoubleReg(src));
                 break;
 
