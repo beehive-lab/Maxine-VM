@@ -1114,6 +1114,8 @@ public class Stubs {
 
             // Should never reach here
             //asm.hlt();
+            asm.nop(4);
+	    System.out.println("MISSING: hlt instruction used in Stubs.java");
 
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnrollStub, "unrollStub", frameSize, code, callPos, callSize, callee, -1);
