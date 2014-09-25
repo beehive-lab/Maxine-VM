@@ -1113,9 +1113,7 @@ public class Stubs {
             int callSize = asm.codeBuffer.position() - callPos;
 
             // Should never reach here
-            //asm.hlt();
-            asm.nop(4);
-	    System.out.println("MISSING: hlt instruction used in Stubs.java");
+            asm.hlt();
 
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnrollStub, "unrollStub", frameSize, code, callPos, callSize, callee, -1);
@@ -1751,7 +1749,7 @@ public class Stubs {
             int callSize = asm.codeBuffer.position() - callPos;
 
             // should never reach here
-            //asm.int3();
+            asm.int3();
 
             String stubName = runtimeRoutineName + "StubWithCSA";
             byte[] code = asm.codeBuffer.close(true);
@@ -1866,7 +1864,7 @@ public class Stubs {
 
             // Should never reach here
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
-            //asm.hlt();
+            asm.hlt();
 
             String stubName = name + "Stub";
             byte[] code = asm.codeBuffer.close(true);

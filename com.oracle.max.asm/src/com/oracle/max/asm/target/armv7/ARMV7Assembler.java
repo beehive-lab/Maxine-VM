@@ -1312,7 +1312,14 @@ System.out.println("ASSUMING JMP: check this came from an emitPrologue as a resu
     public final void nop() {
         nop(1);
     }
-
+    public final void int3() {
+        System.out.println("MISSING int3");
+	nop(4);
+    }
+    public final void hlt() {
+        System.out.println("MISSING hlt");
+	nop(4);
+    }
     public final void nop(int times) {
         assert times > 0;
         for (int i = 0; i < times; i++) {
