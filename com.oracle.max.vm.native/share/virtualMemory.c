@@ -65,6 +65,42 @@
 
 /* mmap returns MAP_FAILED on error, we convert to ALLOC_FAILED */
 static Address check_mmap_result(void *result) {
+printf("CALLED\n");
+	if(result == MAP_FAILED) {
+		switch(errno) {
+			case EACCES:
+				printf(" EACCES\n");
+			break;
+			case EAGAIN:
+				printf("EAGAIN\n");
+			break;
+			case EBADF:
+				printf("EBADF\n");
+			break;
+			case EINVAL:
+				printf("EINVAL\n");
+			break;
+			case ENFILE:
+				printf("ENFILE\n");
+			break;
+			case ENODEV:
+				printf("ENODEV\n");
+			break;
+			case ENOMEM:
+				printf("ENOMEM\n");
+			break;
+			case EPERM:
+				printf("EPERM\n");
+			break;
+			case ETXTBSY:
+				printf(" ETXTBSY\n");
+			break;
+			default:
+				printf("UNKNOWN\n");
+			break;
+
+		}
+	}
     return ((Address) (result == (void *) MAP_FAILED ? ALLOC_FAILED : result));
 }
 

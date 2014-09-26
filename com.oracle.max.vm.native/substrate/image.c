@@ -308,7 +308,11 @@ static void mapHeapAndCode(int fd) {
     theHeap = (Address) &maxvm_image_start + heapOffsetInImage;
 #elif os_SOLARIS || os_DARWIN || os_LINUX
     Address reservedVirtualSpace = (Address) 0;
-    size_t virtualSpaceSize = 1024L * theHeader->reservedVirtualSpaceSize;
+    size_t virtualSpaceSize = /*1024L **/   theHeader->reservedVirtualSpaceSize;
+
+printf("ZERO0 %d %d \n",theHeader->reservedVirtualSpaceSize,virtualSpaceSize);
+
+   printf("virtsize %d\n",virtualSpaceSize);
     c_ASSERT(virtualMemory_pageAlign((Size) virtualSpaceSize) == (Size) virtualSpaceSize);
     if (virtualSpaceSize != 0) {
         // VM configuration asks for reserving an address space of size reservedVirtualSpaceSize.
@@ -317,10 +321,12 @@ static void mapHeapAndCode(int fd) {
         // boot heap region, automatically splitting this mapping.
         // In any case,  the VM (mostly the heap scheme) is responsible for releasing unused reserved space.
         reservedVirtualSpace = virtualMemory_allocatePrivateAnon((Address) 0, virtualSpaceSize, JNI_FALSE, JNI_FALSE, HEAP_VM);
+        printf("reserved Virtual %x\n",reservedVirtualSpace);
         if (reservedVirtualSpace == ALLOC_FAILED) {
             log_exit(4, "could not reserve requested virtual space");
         }
     }
+    printf("maping constrain %d VERTSIZE %d %x\n",theHeader->bootRegionMappingConstraint,virtualSpaceSize,reservedVirtualSpace);
     if (theHeader->bootRegionMappingConstraint == 1) {
         // Map the boot heap region at the start of the reserved space
         theHeap = reservedVirtualSpace;
@@ -334,9 +340,11 @@ static void mapHeapAndCode(int fd) {
             log_exit(4, "could not reserve virtual space for boot image");
         }
     }
+    printf("PRIOR to MAP FAIL %x %x %x", theHeap, heapAndCodeSize,heapOffsetInImage);
     if (virtualMemory_mapFileAtFixedAddress(theHeap, heapAndCodeSize, fd, heapOffsetInImage) == ALLOC_FAILED) {
         log_exit(4, "could not map boot image");
     }
+    printf("POST MAP\n");
     if (reservedVirtualSpace) {
         Address *addr = image_offset_as_address(Address *, reservedVirtualSpaceFieldOffset);
         *addr = reservedVirtualSpace;
@@ -419,6 +427,7 @@ void image_load(char *imageFileName) {
     readStringInfo(fd);
     checkTrailer(fd);
     mapHeapAndCode(fd);
+    printf("mapHeapAndCode DONE\n");
 #if log_LOADER
     log_println("code @%p codeEnd @%p heap @%p", theCode, theCodeEnd, theHeap);
 #endif

@@ -345,21 +345,27 @@ int maxine(int argc, char *argv[], char *executablePath) {
     max_fd_limit();
 
     loadImage();
-
+    printf("IMAGE LOADED\n");
     tla_initialize(image_header()->tlaSize);
+    printf("TLA INITED\n");
 
     debugger_initialize();
+    printf("DEBUGGER INITED\n");
 
     method = image_offset_as_address(VMRunMethod, vmRunMethodOffset);
+    printf("METHOD OBTAINED\n");
 
     Address tlBlock = threadLocalsBlock_create(PRIMORDIAL_THREAD_ID, 0, 0);
+    printf("tlBlock\n");
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
+    printf("THREAD LOCALS method entry %p\n",method);
 
 #if log_LOADER
     log_println("entering Java by calling MaxineVM.run(tlBlock=%p, bootHeapRegionStart=%p, openLibrary=%p, dlsym=%p, dlerror=%p, vmInterface=%p, jniEnv=%p, jmmInterface=%p, jvmtiInterface=%p, argc=%d, argv=%p)",
                     tlBlock, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
 #endif
     exitCode = (*method)(tlBlock, ntl->tlBlockSize, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
+    printf("EXITED JAVA %d\n", exitCode);
 
 #if log_LOADER
     log_println("start method exited with code: %d", exitCode);
@@ -367,10 +373,13 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     if (exitCode == 0) {
         // Initialization succeeded: now run the main Java thread
+	printf("ENTER THREAD RUN\n");
         thread_run((void *) tlBlock);
     } else {
+        printf("NATIVE EXIT\n");
         native_exit(exitCode);
     }
+    printf("NEVER REACHED\n");
     // All exits should be routed through native_exit().
     log_exit(-1, "Should not reach here\n");
 }
