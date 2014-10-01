@@ -97,7 +97,9 @@ public final class TeleStateRegisters extends TeleRegisters {
     static CiRegister[] createStateRegisters() {
         if (platform().isa == ISA.AMD64) {
             return new CiRegister[] {AMD64.RIP, AMD64.FLAGS};
-        }
+        } else if(platform().isa == ISA.ARM) {
+            return new CiRegister[] {ARMV7.RIP, ARMV7.FLAGS};
+        } else
         throw TeleError.unimplemented();
     }
 
@@ -149,7 +151,7 @@ public final class TeleStateRegisters extends TeleRegisters {
         if (platform().isa == ISA.AMD64) {
             return AMD64.flagsToString(flags);
         } else if (platform().isa == ISA.ARM)
-            return AMD64.flagsToString(flags);
+            return ARMV7.flagsToString(flags);
         throw TeleError.unimplemented();
     }
 }

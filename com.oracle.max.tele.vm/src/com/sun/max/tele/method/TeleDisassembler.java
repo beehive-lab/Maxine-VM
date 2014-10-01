@@ -172,7 +172,9 @@ public final class TeleDisassembler {
             case AMD64: {
                 return new AMD64LoadLiteralParser(disassembler, codeStart);
             }
-            case ARM:
+            case ARM: {
+                return new ARMV7LoadLiteralParser(disassembler, codeStart);
+            }
             case PPC:
             case IA32:
             case SPARC: {

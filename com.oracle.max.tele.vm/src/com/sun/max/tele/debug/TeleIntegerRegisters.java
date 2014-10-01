@@ -57,8 +57,14 @@ public final class TeleIntegerRegisters extends TeleRegisters {
             indirectCallRegister = AMD64.rax;
             sp = AMD64.rsp;
             fp = AMD64.rbp;
+        } else if (platform().isa == ISA.ARM) {
+            indirectCallRegister = ARMV7.r14; // we mean LR?
+            sp = ARMV7.r13;
+            fp = ARMV7.r11;
+
         } else {
-            throw FatalError.unimplemented();
+                throw FatalError.unimplemented();
+
         }
     }
 
