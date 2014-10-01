@@ -308,7 +308,7 @@ static void mapHeapAndCode(int fd) {
     theHeap = (Address) &maxvm_image_start + heapOffsetInImage;
 #elif os_SOLARIS || os_DARWIN || os_LINUX
     Address reservedVirtualSpace = (Address) 0;
-    size_t virtualSpaceSize = /*1024L **/ 32*4096*4096+  theHeader->reservedVirtualSpaceSize;
+    size_t virtualSpaceSize = /*1024L **/ 32 *4096*4096+  theHeader->reservedVirtualSpaceSize;
 
 printf("ZERO0 %d %d \n",theHeader->reservedVirtualSpaceSize,virtualSpaceSize);
 
