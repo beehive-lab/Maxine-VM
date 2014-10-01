@@ -22,33 +22,37 @@
  */
 package com.sun.max.ins.method;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.print.*;
-import java.text.*;
-import java.util.*;
-
-import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.table.*;
-
-import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
-import com.sun.max.ins.*;
-import com.sun.max.ins.debug.*;
+import com.sun.cri.ci.CiCodePos;
+import com.sun.cri.ci.CiDebugInfo;
+import com.sun.cri.ci.CiUtil;
+import com.sun.cri.ri.RiMethod;
+import com.sun.max.ins.Inspection;
+import com.sun.max.ins.Prober;
+import com.sun.max.ins.debug.InspectorTableColumnModel;
 import com.sun.max.ins.gui.*;
 import com.sun.max.ins.gui.LocationLabel.AsAddressWithPosition;
-import com.sun.max.ins.object.*;
-import com.sun.max.ins.util.*;
-import com.sun.max.ins.value.*;
+import com.sun.max.ins.object.ObjectColumnKind;
+import com.sun.max.ins.util.InspectorError;
+import com.sun.max.ins.value.WordValueLabel;
 import com.sun.max.ins.view.InspectionViews.ViewKind;
-import com.sun.max.lang.*;
-import com.sun.max.program.*;
+import com.sun.max.lang.Classes;
+import com.sun.max.program.Trace;
 import com.sun.max.tele.*;
-import com.sun.max.tele.method.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.value.*;
+import com.sun.max.tele.method.TargetCodeInstruction;
+import com.sun.max.unsafe.Address;
+import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.value.Value;
+
+import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
+import java.awt.print.PrinterException;
+import java.text.MessageFormat;
+import java.util.Date;
 
 /**
  * A table-based viewer for an (immutable) section of {@link MaxMachineCodeRoutine} in the VM.
@@ -693,7 +697,21 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
             return wordValueLabel;
         }
     };
-
+    static final LiteralRenderer ARMV7_LITERAL_RENDERER = new LiteralRenderer() {
+        public WordValueLabel render(Inspection inspection, String literalLoadText, final Address literalAddress) {
+            final WordValueLabel wordValueLabel = new WordValueLabel(inspection, WordValueLabel.ValueMode.LITERAL_REFERENCE, null, true) {
+                @Override
+                public Value fetchValue() {
+                    return vm().memoryIO().readWordValue(literalAddress);
+                }
+            };
+            wordValueLabel.setTextSuffix(literalLoadText.substring(literalLoadText.indexOf(",")));
+            wordValueLabel.setToolTipSuffix(" from " + literalLoadText.substring(0, literalLoadText.indexOf(",")));
+            wordValueLabel.setWordDataFont(inspection.preference().style().defaultBoldFont());
+            wordValueLabel.updateText();
+            return wordValueLabel;
+        }
+    };
     LiteralRenderer getLiteralRenderer(Inspection inspection) {
         switch (isa) {
             case AMD64:
@@ -701,6 +719,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
             case SPARC:
                 return SPARC_LITERAL_RENDERER;
             case ARM:
+                return ARMV7_LITERAL_RENDERER;
             case PPC:
             case IA32:
                 InspectorError.unimplemented();
