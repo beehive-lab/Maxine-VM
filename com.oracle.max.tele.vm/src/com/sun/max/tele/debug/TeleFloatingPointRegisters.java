@@ -22,13 +22,14 @@
  */
 package com.sun.max.tele.debug;
 
-import static com.sun.max.platform.Platform.*;
+import com.oracle.max.asm.target.amd64.AMD64;
+import com.oracle.max.asm.target.armv7.ARMV7;
+import com.sun.cri.ci.CiRegister;
+import com.sun.max.lang.ISA;
+import com.sun.max.tele.TeleVM;
+import com.sun.max.tele.util.TeleError;
 
-import com.oracle.max.asm.target.amd64.*;
-import com.sun.cri.ci.*;
-import com.sun.max.lang.*;
-import com.sun.max.tele.*;
-import com.sun.max.tele.util.*;
+import static com.sun.max.platform.Platform.platform;
 
 /**
  * Encapsulates the values of the floating point registers for a tele native thread.
@@ -38,6 +39,8 @@ public final class TeleFloatingPointRegisters extends TeleRegisters {
     public static CiRegister[] getFloatingPointRegisters() {
         if (platform().isa == ISA.AMD64) {
             return AMD64.xmmRegisters;
+        } else if (platform().isa == ISA.ARM) {
+            return ARMV7.floatRegisters;
         }
         throw TeleError.unimplemented();
     }

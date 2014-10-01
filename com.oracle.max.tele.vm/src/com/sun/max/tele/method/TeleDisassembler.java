@@ -22,20 +22,25 @@
  */
 package com.sun.max.tele.method;
 
-import java.io.*;
-import java.util.*;
-
-import com.sun.max.*;
-import com.sun.max.asm.*;
-import com.sun.max.asm.amd64.*;
+import com.sun.max.Utils;
+import com.sun.max.asm.InlineDataDecoder;
+import com.sun.max.asm.amd64.AMD64GeneralRegister64;
 import com.sun.max.asm.dis.*;
-import com.sun.max.asm.gen.*;
-import com.sun.max.asm.gen.cisc.x86.*;
-import com.sun.max.lang.*;
-import com.sun.max.platform.*;
-import com.sun.max.program.*;
-import com.sun.max.tele.util.*;
-import com.sun.max.unsafe.*;
+import com.sun.max.asm.gen.ImmediateArgument;
+import com.sun.max.asm.gen.cisc.x86.X86OffsetParameter;
+import com.sun.max.asm.gen.cisc.x86.X86Template;
+import com.sun.max.asm.gen.cisc.x86.X86TemplateContext;
+import com.sun.max.lang.WordWidth;
+import com.sun.max.platform.Platform;
+import com.sun.max.program.Trace;
+import com.sun.max.tele.util.TeleError;
+import com.sun.max.tele.util.TeleWarning;
+import com.sun.max.unsafe.Address;
+
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Disassembler for machine code in the VM.
@@ -139,6 +144,28 @@ public final class TeleDisassembler {
             return Address.fromLong(disassembledInstruction.addressForRelativeAddressing().plus(immediateArgument).asLong());
         }
     }
+    private static class ARMV7LoadLiteralParser extends LoadLiteralParser {
+        ARMV7LoadLiteralParser(Disassembler disassembler, Address codeStart) {
+            super(disassembler, codeStart);
+        }
+        @Override
+        boolean loadsLiteralData(DisassembledInstruction disassembledInstruction) {
+            if (disassembledInstruction.arguments().size() == 2 &&
+                    Utils.first(disassembledInstruction.arguments()) instanceof AMD64GeneralRegister64 &&
+                    Utils.last(disassembledInstruction.template().operands()) instanceof X86OffsetParameter &&
+                    ((X86Template) disassembledInstruction.template()).addressSizeAttribute() == WordWidth.BITS_64 &&
+                    ((X86Template) disassembledInstruction.template()).rmCase() == X86TemplateContext.RMCase.SDWORD) {
+                return true;
+            }
+            return false;
+        }
+        @Override
+        Address literalAddress(DisassembledInstruction disassembledInstruction) {
+            final ImmediateArgument immediateArgument = (ImmediateArgument) disassembledInstruction.arguments().get(1);
+            return Address.fromLong(disassembledInstruction.addressForRelativeAddressing().plus(immediateArgument).asLong());
+        }
+    }
+
 
     private static LoadLiteralParser createLiteralParser(final Platform platform, Disassembler disassembler, Address codeStart, byte [] code) {
         switch (platform.isa) {
