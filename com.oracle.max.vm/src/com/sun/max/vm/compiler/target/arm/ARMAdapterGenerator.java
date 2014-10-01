@@ -394,6 +394,15 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             CiValue[] optArgs = opt.getCallingConvention(JavaCall, WordUtil.ciKinds(sig.kinds, true), target(), false).locations;
 
             ARMV7Assembler asm = new ARMV7Assembler(target(), null);
+            // ANDy marking of adapter so can identify which one when gdb-ing bootimage
+            asm.mov32BitConstant(ARMV7.r12,0x22);
+            asm.mov32BitConstant(ARMV7.r12,0x22);
+            asm.mov32BitConstant(ARMV7.r12,0x22);
+            asm.mov32BitConstant(ARMV7.r12,0x22);
+            asm.mov32BitConstant(ARMV7.r12,0x22);
+
+
+
 
             // On entry to the frame, there are 2 return addresses on the stack at [RSP] and [RSP + 8].
             // The one at [RSP] is the return address of the call in the OPT callee's prologue (which is
@@ -795,6 +804,12 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
         protected Adapter create(Sig sig) {
             CiValue[] optArgs = opt.getCallingConvention(JavaCall, WordUtil.ciKinds(sig.kinds, true), target(), false).locations;
             ARMV7Assembler asm = new ARMV7Assembler(target(), null);
+            // ANDy marking of adapter so can identify which one when gdb-ing bootimage
+            asm.mov32BitConstant(ARMV7.r12,0x11);
+            asm.mov32BitConstant(ARMV7.r12,0x11);
+            asm.mov32BitConstant(ARMV7.r12,0x11);
+            asm.mov32BitConstant(ARMV7.r12,0x11);
+            asm.mov32BitConstant(ARMV7.r12,0x11);
 
             // On entry to the frame, there are 2 return addresses at [RSP] and [RSP + 8].
             // The one at [RSP] is the return address of the call in the baseline callee's prologue (which is
