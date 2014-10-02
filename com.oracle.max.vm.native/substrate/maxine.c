@@ -356,9 +356,9 @@ int maxine(int argc, char *argv[], char *executablePath) {
     //printf("VMRUNMETHODOFFSET 0x%x\n", vmRunMethodOffset);//vmRunMethodOffset);
 
     Address tlBlock = threadLocalsBlock_create(PRIMORDIAL_THREAD_ID, 0, 0);
-    printf("tlBlock\n");
+    printf("tlBlock %x\n",tlBlock);
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
-    printf("THREAD LOCALS method entry %p\n",method);
+    printf("THREAD LOCALS method entry %p ntls %x\n",method,(Address ) ntl);
 
 #if log_LOADER
     log_println("entering Java by calling MaxineVM.run(tlBlock=%p, bootHeapRegionStart=%p, openLibrary=%p, dlsym=%p, dlerror=%p, vmInterface=%p, jniEnv=%p, jmmInterface=%p, jvmtiInterface=%p, argc=%d, argv=%p)",

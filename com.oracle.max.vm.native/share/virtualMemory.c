@@ -87,7 +87,7 @@ printf("CALLED\n");
 				printf("ENODEV\n");
 			break;
 			case ENOMEM:
-				printf("ENOMEM\n");
+				printf("ENOMEM FAIL\n");
 			break;
 			case EPERM:
 				printf("EPERM\n");

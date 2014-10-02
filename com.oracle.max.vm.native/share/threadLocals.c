@@ -60,11 +60,16 @@ int theTLASize = -1;
 static ThreadLocalsKey theThreadLocalsKey;
 
 static Address allocateThreadLocalBlock(size_t tlBlockSize) {
+
+      Address tmp;
 #if os_MAXVE
 	return (Address) maxve_virtualMemory_allocate(tlBlockSize, DATA_VM);
 #else
 	c_ASSERT(tlBlockSize < 100000000);
-	return (Address) valloc(tlBlockSize);
+	tmp =  (Address) valloc(tlBlockSize);
+	c_ASSERT(tmp != (0));
+        printf("tmp is %x\n",tmp);
+	return tmp;
 #endif
 }
 

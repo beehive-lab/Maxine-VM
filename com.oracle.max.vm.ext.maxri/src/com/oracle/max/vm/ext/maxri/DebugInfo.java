@@ -32,6 +32,7 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.asm.target.armv7.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
@@ -451,7 +452,9 @@ public final class DebugInfo {
                     CiRegister fp;
                     if (platform().isa == ISA.AMD64) {
                         fp = AMD64.rsp;
-                    } else {
+                    } else if (platform().isa == ISA.ARM) {
+                        fp = ARMV7.r13;
+                    } else  {
                         throw FatalError.unimplemented();
                     }
                     final int offsetInFrame = ss.index() * target().spillSlotSize;
