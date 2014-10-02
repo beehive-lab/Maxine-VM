@@ -353,7 +353,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
     printf("DEBUGGER INITED\n");
 
     method = image_offset_as_address(VMRunMethod, vmRunMethodOffset);
-    printf("METHOD OBTAINED\n");
+    //printf("VMRUNMETHODOFFSET 0x%x\n", vmRunMethodOffset);//vmRunMethodOffset);
 
     Address tlBlock = threadLocalsBlock_create(PRIMORDIAL_THREAD_ID, 0, 0);
     printf("tlBlock\n");

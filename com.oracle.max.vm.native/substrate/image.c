@@ -340,7 +340,7 @@ printf("ZERO0 %d %d \n",theHeader->reservedVirtualSpaceSize,virtualSpaceSize);
             log_exit(4, "could not reserve virtual space for boot image");
         }
     }
-    printf("PRIOR to MAP FAIL %x %x %x", theHeap, heapAndCodeSize,heapOffsetInImage);
+    printf("HEAP  0x%x HEAP&CODESIZE 0x%x HEAPOFFSET  0x%x", theHeap, heapAndCodeSize,heapOffsetInImage);
     if (virtualMemory_mapFileAtFixedAddress(theHeap, heapAndCodeSize, fd, heapOffsetInImage) == ALLOC_FAILED) {
         log_exit(4, "could not map boot image");
     }
@@ -361,6 +361,7 @@ printf("ZERO0 %d %d \n",theHeader->reservedVirtualSpaceSize,virtualSpaceSize);
 #endif
     theCode = theHeap + theHeader->heapSize;
     theCodeEnd = theCode + theHeader->codeSize;
+    printf("CODE  0x%x CODE-END  0x%x\n",theCode,theCodeEnd);
 }
 
 static void relocate(int fd) {
