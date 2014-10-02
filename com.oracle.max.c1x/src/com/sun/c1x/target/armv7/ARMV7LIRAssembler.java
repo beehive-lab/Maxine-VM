@@ -524,10 +524,12 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
     @Override
     protected void mem2mem(CiValue src, CiValue dest, CiKind kind) {
-        assert 0 == 1 : "mem2mem ARMV7IRAssembler";
         if (dest.kind.isInt()) {
             // we have 32 bit values ..
-
+            masm.setUpScratch((CiAddress)src);
+            masm.ldrImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,0);
+            masm.setUpRegister(ARMV7.r8,(CiAddress)dest);
+            masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r8,0);
             //masm.pushl((CiAddress) src);
             //masm.popl((CiAddress) dest);
 
