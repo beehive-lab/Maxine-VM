@@ -308,7 +308,8 @@ static void mapHeapAndCode(int fd) {
     theHeap = (Address) &maxvm_image_start + heapOffsetInImage;
 #elif os_SOLARIS || os_DARWIN || os_LINUX
     Address reservedVirtualSpace = (Address) 0;
-    size_t virtualSpaceSize = /*1024L **/ 8*4096 *4096L+  theHeader->reservedVirtualSpaceSize;
+
+    size_t virtualSpaceSize = 10L * /*8*4096 *4096L+*/  theHeader->reservedVirtualSpaceSize;
 
 printf("ZERO0 %d %d \n",theHeader->reservedVirtualSpaceSize,virtualSpaceSize);
 
@@ -321,7 +322,7 @@ printf("ZERO0 %d %d \n",theHeader->reservedVirtualSpaceSize,virtualSpaceSize);
         // boot heap region, automatically splitting this mapping.
         // In any case,  the VM (mostly the heap scheme) is responsible for releasing unused reserved space.
         reservedVirtualSpace = virtualMemory_allocatePrivateAnon((Address) 0, virtualSpaceSize, JNI_FALSE, JNI_FALSE, HEAP_VM);
-        printf("reserved Virtual %x\n",reservedVirtualSpace);
+        printf("reserved Virtual mapped to this address %x\n",reservedVirtualSpace);
         if (reservedVirtualSpace == ALLOC_FAILED) {
             log_exit(4, "could not reserve requested virtual space");
         }

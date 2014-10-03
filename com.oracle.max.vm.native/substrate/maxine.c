@@ -365,7 +365,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
                     tlBlock, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
 #endif
     printf("DEBUGGING this method call to enter the VM, expected problem is a broken adapter");
-    exitCode = (*method)(tlBlock, ntl->tlBlockSize, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
+    exitCode = (*method)(tlBlock,(17)/* ntl->tlBlockSize*/, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
     printf("EXITED JAVA %d\n", exitCode);
 
 #if log_LOADER
