@@ -358,14 +358,16 @@ int maxine(int argc, char *argv[], char *executablePath) {
     Address tlBlock = threadLocalsBlock_create(PRIMORDIAL_THREAD_ID, 0, 0);
     printf("tlBlock %x\n",tlBlock);
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
-    printf("THREAD LOCALS method entry %p ntls %x\n",method,(Address ) ntl);
+    printf("THREAD LOCALS method entry %p NTL %x\n",method,(Address ) ntl);
+    printf("THREAD LOCALS block size %d \n",ntl->tlBlockSize);
+
 
 #if log_LOADER
     log_println("entering Java by calling MaxineVM.run(tlBlock=%p, bootHeapRegionStart=%p, openLibrary=%p, dlsym=%p, dlerror=%p, vmInterface=%p, jniEnv=%p, jmmInterface=%p, jvmtiInterface=%p, argc=%d, argv=%p)",
                     tlBlock, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
 #endif
     printf("DEBUGGING this method call to enter the VM, expected problem is a broken adapter");
-    exitCode = (*method)(tlBlock,(17)/* ntl->tlBlockSize*/, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
+    exitCode = (*method)(tlBlock, ntl->tlBlockSize, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
     printf("EXITED JAVA %d\n", exitCode);
 
 #if log_LOADER

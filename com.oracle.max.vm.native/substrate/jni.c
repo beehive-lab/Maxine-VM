@@ -59,6 +59,7 @@ extern struct JavaVM_ main_vm;
  * Gets a pointer to the global JNI function table.
  */
 JNIEnv jniEnv() {
+     printf("jniEnv %p\n",&jni_NativeInterface);
     return &jni_NativeInterface;
 }
 

@@ -892,6 +892,7 @@ public class VmThread {
      * seems to be enough on AMD64.
      */
     public static final int YELLOW_ZONE_PAGES = 2;
+    //public static final int YELLOW_ZONE_PAGES = 1;
 
     /**
      * Number of red zone pages used for detecting unrecoverable stack overflow.

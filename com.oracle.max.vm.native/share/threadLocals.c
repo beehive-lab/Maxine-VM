@@ -68,7 +68,6 @@ static Address allocateThreadLocalBlock(size_t tlBlockSize) {
 	c_ASSERT(tlBlockSize < 100000000);
 	tmp =  (Address) valloc(tlBlockSize);
 	c_ASSERT(tmp != (0));
-        printf("tmp is %x\n",tmp);
 	return tmp;
 #endif
 }
@@ -126,9 +125,12 @@ Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize) {
 
 
     Address stackBase = 0;
+printf("STACKBASE %p SIZE %x\n",(void *)stackBase,(int)stackSize);
     if (stackSize == 0) {
         thread_getStackInfo(&stackBase, &stackSize);
     }
+    printf("STACKBASE %p  SIZE %x\n",(void *)stackBase,(int)stackSize);
+
 
     /* See diagram at top of threadLocals.h */
     const int triggerPageSize = pageSize;

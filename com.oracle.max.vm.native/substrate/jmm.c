@@ -74,6 +74,7 @@ struct jmmInterface_1_ jmm_interface = {
 
 void* getJMMInterface(int version) {
     if (version == -1 || version == JMM_VERSION_1_0) {
+	printf("JMMInterface %p\n",(void*) &jmm_interface);
         return (void*) &jmm_interface;
     }
     return NULL;

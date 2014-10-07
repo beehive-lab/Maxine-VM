@@ -100,6 +100,7 @@ ifeq ($(TARGETOS),Linux)
         else
             ISA := $a
             ISA := arm
+            OTHER_CFLAGS := -marm
             TARGET_WORD_SIZE := w32
         endif
     endif
@@ -229,7 +230,7 @@ ifeq ($(OS),linux)
     endif
     ifneq "$(findstring def, $(origin CFLAGS))" ""
         # origin of CFLAGS is either undefined or default, so set it here
-        CFLAGS = -g -Wall -Wno-long-long -Werror -Wextra -Wno-main -Wno-unused-parameter -fPIC -D_GNU_SOURCE -D$(ISA) -DLINUX -D$(TARGET) -D$(TARGET_WORD_SIZE) $(JDK7)
+        CFLAGS = -g -Wall -Wno-long-long -Werror -Wextra -Wno-main -Wno-unused-parameter -fPIC -D_GNU_SOURCE -D$(ISA) -DLINUX -D$(TARGET) -D$(TARGET_WORD_SIZE) $(JDK7) $(OTHER_CFLAGS)
     endif
     C_DEPENDENCIES_FLAGS = -M -DLINUX -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
     # The '-rpath' linker option is used so that LD_LIBRARY_PATH does not have to be configured at runtime to

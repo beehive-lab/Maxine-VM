@@ -377,6 +377,7 @@ typedef struct {
 
 void *getJVMTIInterface(int version) {
     if (version == -1 || version == JVMTI_VERSION) {
+	printf("getJVMTI %p\n",(void*) &jvmti_interface);
         return (void*) &jvmti_interface;
     }
     return NULL;

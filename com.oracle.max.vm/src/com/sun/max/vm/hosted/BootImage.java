@@ -300,12 +300,15 @@ public class BootImage {
 
             stringInfoSize = endian.readInt(dataInputStream);
             relocationDataSize = endian.readInt(dataInputStream);
+	    System.out.println("Relocation data size " + relocationDataSize);
 
             heapSize = endian.readInt(dataInputStream);
             codeSize = endian.readInt(dataInputStream);
 
             dynamicHeapRegionsArrayFieldOffset = endian.readInt(dataInputStream);
             //reservedVirtualSpaceSize = endian.readInt(dataInputStream);
+            int xx = endian.readInt(dataInputStream);
+            //
 	    System.out.println("BootImage reservedVirtualSpaceSize hardcoded");
 	    reservedVirtualSpaceSize = 133455872;
             reservedVirtualSpaceFieldOffset = endian.readInt(dataInputStream);
@@ -713,6 +716,9 @@ public class BootImage {
         this.header = new Header(dataPrototype, stringInfo.size());
         this.header.check();
         this.relocationData = dataPrototype.relocationData();
+	for(int i = 0; i < this.relocationData.length; i++) {
+		System.out.println("RELOCATION  " + i + " " + this.relocationData[i]);
+        }
         this.padding = new byte[deltaToPageAlign(header.size() + stringInfo.size() + relocationData.length)];
         this.heap = ByteBuffer.wrap(dataPrototype.heapData());
         this.code = ByteBuffer.wrap(dataPrototype.codeData());

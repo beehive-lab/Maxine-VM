@@ -98,6 +98,7 @@ VMInterface *getVMInterface() {
 }
 
 jint JVM_GetInterfaceVersion(void) {
+    
     return JVM_INTERFACE_VERSION;
 }
 
