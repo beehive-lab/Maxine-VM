@@ -3772,11 +3772,21 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_generic_compilation() throws Exception {
+    public void ignore_generic_compilation() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("com.sun.max.vm.compiler.deopt.Deoptimization");
         //List<TargetMethod> methods = Compile.compileMethod(new String[] { klassName}, "C1X", "patchReturnAddress");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        theCompiler.cleanup();
+    }
+    public void test_generic_compilation() throws Exception {
+        CompilationBroker.OFFLINE = initialised;
+        String klassName = getKlassName("com.sun.max.vm.MaxineVM");
+        //List<TargetMethod> methods = Compile.compileMethod(new String[] { klassName}, "C1X", "patchReturnAddress");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        initialiseCodeBuffers(methods, "MaxineVM.java", "int run(Pointer, int," +                " Pointer, Word, Word, Word, Pointer, Pointer, Pointer, Pointer, int, Pointer)");
+
         CompilationBroker.OFFLINE = true;
         theCompiler.cleanup();
     }

@@ -22,35 +22,43 @@
  */
 package com.sun.max.vm;
 
-import static com.sun.max.lang.Classes.*;
-import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.VMConfiguration.*;
-import static com.sun.max.vm.VMOptions.*;
-
-import java.lang.reflect.*;
-import java.util.*;
-import java.util.concurrent.*;
-
 import com.sun.max.annotate.*;
-import com.sun.max.config.*;
-import com.sun.max.lang.*;
-import com.sun.max.platform.*;
-import com.sun.max.program.*;
+import com.sun.max.config.BootImagePackage;
+import com.sun.max.lang.Classes;
+import com.sun.max.platform.Platform;
+import com.sun.max.program.ProgramWarning;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.heap.*;
-import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.jdk.*;
-import com.sun.max.vm.jni.*;
-import com.sun.max.vm.log.*;
+import com.sun.max.util.Utf8Exception;
+import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.actor.member.MethodActor;
+import com.sun.max.vm.classfile.ClassfileReader;
+import com.sun.max.vm.compiler.CompilationBroker;
+import com.sun.max.vm.compiler.target.RegisterConfigs;
+import com.sun.max.vm.compiler.target.Stubs;
+import com.sun.max.vm.heap.Heap;
+import com.sun.max.vm.heap.ImmortalHeap;
+import com.sun.max.vm.hosted.CompiledPrototype;
+import com.sun.max.vm.jdk.JDK;
+import com.sun.max.vm.jni.DynamicLinker;
+import com.sun.max.vm.jni.NativeInterfaces;
+import com.sun.max.vm.log.VMLog;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
-import com.sun.max.vm.ti.*;
-import com.sun.max.vm.type.*;
+import com.sun.max.vm.thread.VmThreadLocal;
+import com.sun.max.vm.thread.VmThreadMap;
+import com.sun.max.vm.ti.VMTI;
+import com.sun.max.vm.type.TypeDescriptor;
+
+import java.lang.reflect.AccessibleObject;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static com.sun.max.lang.Classes.getPackageName;
+import static com.sun.max.platform.Platform.platform;
+import static com.sun.max.vm.VMConfiguration.vmConfig;
+import static com.sun.max.vm.VMOptions.register;
 
 /**
  * The global VM context. There is a {@linkplain #vm() single VM context} in existence at any time.
@@ -455,10 +463,16 @@ public final class MaxineVM {
      */
     @VM_ENTRY_POINT
     public static int run(Pointer tlBlock, int tlBlockSize, Pointer bootHeapRegionStart, Word dlopen, Word dlsym, Word dlerror, Pointer vmInterface, Pointer jniEnv, Pointer jmmInterface, Pointer jvmtiInterface, int argc, Pointer argv) {
+        SafepointPoll.setLatchRegister(new Pointer(0));// debug
+        SafepointPoll.setLatchRegister(new Pointer(1));// debug
+        SafepointPoll.setLatchRegister(new Pointer(2));// debug
         primordialTLBlock = tlBlock;
+        SafepointPoll.setLatchRegister(new Pointer(3));// debug
         primordialTLBlockSize = tlBlockSize;
+        SafepointPoll.setLatchRegister(new Pointer(4));// debug
         Pointer etla = tlBlock.plus(platform().pageSize - Address.size() + VmThreadLocal.tlaSize().toInt());
-        SafepointPoll.setLatchRegister(etla);
+        SafepointPoll.setLatchRegister(new Pointer(5)); // debug
+        SafepointPoll.setLatchRegister(etla); // r10 in ARMV7
 
         // This one field was not marked by the data prototype for relocation
         // to avoid confusion between "offset zero" and "null".
