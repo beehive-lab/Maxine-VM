@@ -273,9 +273,12 @@ public abstract class LIRInstruction {
             } else {
                 assert allocatorOperands.size() == allocatorOutputCount + allocatorInputCount + allocatorTempInputCount + allocatorTempCount;
                 allocatorOperands.add(operand);
-                CiValue valueHigh = operand.getClone();
-                if (valueHigh != null && C1XCompilation.compilation().compiler.target.arch.is32bit()) {
-                    allocatorOperands.add(valueHigh);
+                CiValue valueHigh = null;
+                if (C1XCompilation.compilation().compiler.target.arch.is32bit()) {
+                    valueHigh = operand.getClone();
+                    if (valueHigh != null) {
+                        allocatorOperands.add(valueHigh);
+                    }
                 }
 
 
