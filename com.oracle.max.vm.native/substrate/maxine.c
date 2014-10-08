@@ -356,10 +356,14 @@ int maxine(int argc, char *argv[], char *executablePath) {
     //printf("VMRUNMETHODOFFSET 0x%x\n", vmRunMethodOffset);//vmRunMethodOffset);
 
     Address tlBlock = threadLocalsBlock_create(PRIMORDIAL_THREAD_ID, 0, 0);
-    printf("tlBlock %llx\n",tlBlock);
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
+#ifdef arm
+    printf("THREAD LOCALS method entry %p NTL %x\n",method,(Address ) ntl);
+    printf("THREAD LOCALS block size %u \n",ntl->tlBlockSize);
+#else
     printf("THREAD LOCALS method entry %p NTL %llx\n",method,(Address ) ntl);
     printf("THREAD LOCALS block size %llu \n",ntl->tlBlockSize);
+#endif
 
 
 #if log_LOADER

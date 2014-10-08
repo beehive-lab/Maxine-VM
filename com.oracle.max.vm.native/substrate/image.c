@@ -322,12 +322,23 @@ static void mapHeapAndCode(int fd) {
         // boot heap region, automatically splitting this mapping.
         // In any case,  the VM (mostly the heap scheme) is responsible for releasing unused reserved space.
         reservedVirtualSpace = virtualMemory_allocatePrivateAnon((Address) 0, virtualSpaceSize, JNI_FALSE, JNI_FALSE, HEAP_VM);
+
+#ifdef arm
+	        printf("reserved Virtual mapped to this address %x\n",reservedVirtualSpace);
+#else
         printf("reserved Virtual mapped to this address %llx\n",reservedVirtualSpace);
+#endif
         if (reservedVirtualSpace == ALLOC_FAILED) {
             log_exit(4, "could not reserve requested virtual space");
         }
     }
-    printf("maping constrain %d VERTSIZE %zu %llx\n",theHeader->bootRegionMappingConstraint,virtualSpaceSize,reservedVirtualSpace);
+
+#ifdef arm
+    printf("maping constrain %d VERTSIZE %zu %x\n",theHeader->bootRegionMappingConstraint,virtualSpaceSize,reservedVirtualSpace);
+#else 
+        printf("maping constrain %d VERTSIZE %zu %llx\n",theHeader->bootRegionMappingConstraint,virtualSpaceSize,reservedVirtualSpace);
+
+#endif 
     if (theHeader->bootRegionMappingConstraint == 1) {
         // Map the boot heap region at the start of the reserved space
         theHeap = reservedVirtualSpace;
@@ -341,7 +352,11 @@ static void mapHeapAndCode(int fd) {
             log_exit(4, "could not reserve virtual space for boot image");
         }
     }
+#ifdef arm
+    printf("HEAP  0x%x HEAP&CODESIZE 0x%x HEAPOFFSET  0x%x", theHeap, heapAndCodeSize,heapOffsetInImage);
+#else
     printf("HEAP  0x%llx HEAP&CODESIZE 0x%x HEAPOFFSET  0x%x", theHeap, heapAndCodeSize,heapOffsetInImage);
+#endif
     if (virtualMemory_mapFileAtFixedAddress(theHeap, heapAndCodeSize, fd, heapOffsetInImage) == ALLOC_FAILED) {
         log_exit(4, "could not map boot image");
     }
@@ -362,7 +377,11 @@ static void mapHeapAndCode(int fd) {
 #endif
     theCode = theHeap + theHeader->heapSize;
     theCodeEnd = theCode + theHeader->codeSize;
+#ifdef arm
+    printf("CODE  0x%x CODE-END  0x%x\n",theCode,theCodeEnd);
+#else
     printf("CODE  0x%llx CODE-END  0x%llx\n",theCode,theCodeEnd);
+#endif
 }
 
 static void relocate(int fd) {
