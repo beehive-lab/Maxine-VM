@@ -384,6 +384,9 @@ public class Compile {
         CiStatistics stats = new CiStatistics();
         try {
             TargetMethod tm = compiler.compile(classMethodActor, false, true, stats);
+		byte []theCode = tm.code(); // APN
+		for(int i = 0; i < theCode.length;i++)	// APN
+			System.out.println("machine code ..." + i + " " + theCode[i]); // APN
             if (validateInline.getValue()) {
                 validateInlining(tm);
             }
