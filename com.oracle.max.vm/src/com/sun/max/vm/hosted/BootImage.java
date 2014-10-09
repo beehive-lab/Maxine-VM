@@ -22,32 +22,45 @@
  */
 package com.sun.max.vm.hosted;
 
-import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.VMConfiguration.*;
+import com.sun.max.config.BootImagePackage;
+import com.sun.max.lang.*;
+import com.sun.max.platform.CPU;
+import com.sun.max.platform.OS;
+import com.sun.max.platform.Platform;
+import com.sun.max.program.ProgramError;
+import com.sun.max.unsafe.Address;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.util.Utf8;
+import com.sun.max.util.Utf8Exception;
+import com.sun.max.vm.BuildLevel;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.VMConfiguration;
+import com.sun.max.vm.VMScheme;
+import com.sun.max.vm.actor.Actor;
+import com.sun.max.vm.actor.holder.ClassActor;
+import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.actor.member.FieldActor;
+import com.sun.max.vm.classfile.constant.SymbolTable;
+import com.sun.max.vm.classfile.constant.Utf8Constant;
+import com.sun.max.vm.compiler.CallEntryPoint;
+import com.sun.max.vm.heap.Heap;
+import com.sun.max.vm.hosted.BootImage.StringInfo.Key;
+import com.sun.max.vm.tele.InspectableHeapInfo;
+import com.sun.max.vm.thread.VmThread;
+import com.sun.max.vm.thread.VmThreadLocal;
+import com.sun.max.vm.thread.VmThreadMap;
+import com.sun.max.vm.type.ClassRegistry;
 
 import java.io.*;
-import java.lang.reflect.*;
-import java.nio.*;
+import java.lang.reflect.Field;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.*;
 
-import com.sun.max.config.*;
-import com.sun.max.lang.*;
-import com.sun.max.platform.*;
-import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.actor.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.heap.*;
-import com.sun.max.vm.hosted.BootImage.StringInfo.Key;
-import com.sun.max.vm.tele.*;
-import com.sun.max.vm.thread.*;
-import com.sun.max.vm.type.*;
+import static com.sun.max.platform.Platform.platform;
+import static com.sun.max.vm.VMConfiguration.vmConfig;
 
 /**
  * The <i>boot image</i> contains the heap objects that represent a Maxine VM, including compiled code.
@@ -166,7 +179,15 @@ public class BootImage {
         public void write(OutputStream outputStream, Endianness endian) throws IOException {
             for (Field field : fields()) {
                 try {
-                    endianness.writeInt(outputStream, field.getInt(this));
+                    if(Platform.platform().cpu != CPU.ARMV7) {
+                        endianness.writeInt(outputStream, field.getInt(this));
+                    }else {
+                        int value = field.getInt(this);
+                        outputStream.write((value >> 24) & 0xff);
+                        outputStream.write((value >> 16) & 0xff);
+                        outputStream.write((value >> 8) & 0xff);
+                        outputStream.write(value & 0xff);
+                    }
                 } catch (IllegalAccessException illegalAccessException) {
                     throw ProgramError.unexpected();
                 }

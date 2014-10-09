@@ -26,6 +26,8 @@ import com.sun.max.*;
 import com.sun.max.config.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
+import com.sun.max.platform.CPU;
+import com.sun.max.platform.Platform;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.test.*;
@@ -378,13 +380,23 @@ public class Compile {
     }
 
     private static void offlineDebug(byte []stubs) {
+        PrintWriter writer = null;
         try {
-            PrintWriter writer = new PrintWriter("codebuffer.c", "UTF-8");
+            final Platform platform = Platform.platform();
+            writer = new PrintWriter("codebuffer.c", "UTF-8");
             writer.println("unsigned char codeArray[" + stubs.length + "]  = { \n");
             for (int i = 0; i < stubs.length; i += 4) {
+                if(platform.cpu == CPU.AMD64) {
+                    writer.println("0x" + Integer.toHexString(stubs[i]) + ", " + "0x" + Integer.toHexString(stubs[i + 1]) + ", " + "0x" + Integer.toHexString(stubs[i + 2]) + ", " + "0x" +
 
-                writer.println("0x" + Integer.toHexString(stubs[i + 3]) + ", " + "0x" + Integer.toHexString(stubs[i + 2]) + ", " + "0x" + Integer.toHexString(stubs[i + 1]) + ", " + "0x" +
-                Integer.toHexString(stubs[i]) + ",\n");
+                            //writer.println("0x" + Integer.toHexString(stubs[i + 3]) + ", " + "0x" + Integer.toHexString(stubs[i + 2]) + ", " + "0x" + Integer.toHexString(stubs[i + 1]) + ", " + "0x" +
+                            Integer.toHexString(stubs[i + 3]) + ",\n");
+                } else if(platform.cpu == CPU.ARMV7) {
+                    writer.println("0x" + Integer.toHexString(stubs[i+3]) + ", " + "0x" + Integer.toHexString(stubs[i + 2]) + ", " + "0x" + Integer.toHexString(stubs[i + 1]) + ", " + "0x" +
+
+                            //writer.println("0x" + Integer.toHexString(stubs[i + 3]) + ", " + "0x" + Integer.toHexString(stubs[i + 2]) + ", " + "0x" + Integer.toHexString(stubs[i + 1]) + ", " + "0x" +
+                            Integer.toHexString(stubs[i ]) + ",\n");
+                }
             }
             writer.println("0xfe, 0xff, 0xff, 0xea };\n");
 
@@ -392,6 +404,7 @@ public class Compile {
         } catch (Exception e) {
             System.err.println(e);
             e.printStackTrace();
+            writer.close();
         }
     }
     private static Throwable compile(RuntimeCompiler compiler, MethodActor method, boolean printBailout) {
