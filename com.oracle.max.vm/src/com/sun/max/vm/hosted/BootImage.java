@@ -802,7 +802,12 @@ public class BootImage {
         outputStream.write(relocationData);
         outputStream.write(padding);
         write(heap(), outputStream);
-        writeReversed(code(), outputStream);
+        if(Platform.platform().isa == ISA.ARM) {
+            writeReversed(code(), outputStream);
+        } else {
+            write(code(), outputStream);
+
+        }
         trailer.write(outputStream, header.endianness());
     }
 
@@ -817,8 +822,16 @@ public class BootImage {
     }
     private void writeReversed(ByteBuffer buffer, OutputStream outputStream) throws IOException {
         if (buffer.hasArray()) {
-            buffer.order(ByteOrder.LITTLE_ENDIAN);
-            outputStream.write(buffer.array(), buffer.arrayOffset(), buffer.limit());
+            int length = buffer.array().length;
+            byte [] reversed = new byte[length];
+            byte [] tmp = buffer.array();
+            for(int i = 0; i < length;i+=4) {
+                reversed[i] = tmp[i+3];
+                reversed[i+1] = tmp[i+2];
+                reversed[i+2] = tmp[i+1];
+                reversed[i+3] = tmp[i];
+            }
+            outputStream.write(tmp, buffer.arrayOffset(), buffer.limit());
         } else {
             byte[] array = new byte[buffer.limit()];
             buffer.get(array);
