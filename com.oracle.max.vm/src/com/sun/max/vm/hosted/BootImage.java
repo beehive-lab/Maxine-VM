@@ -831,7 +831,7 @@ public class BootImage {
                 reversed[i+2] = tmp[i+1];
                 reversed[i+3] = tmp[i];
             }
-            outputStream.write(tmp, buffer.arrayOffset(), buffer.limit());
+            outputStream.write(reversed, buffer.arrayOffset(), buffer.limit());
         } else {
             byte[] array = new byte[buffer.limit()];
             buffer.get(array);
