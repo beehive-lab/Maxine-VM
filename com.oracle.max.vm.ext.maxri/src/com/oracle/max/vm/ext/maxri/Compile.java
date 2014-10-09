@@ -377,6 +377,23 @@ public class Compile {
         }
     }
 
+    private static void offlineDebug(byte []stubs) {
+        try {
+            PrintWriter writer = new PrintWriter("codebuffer.c", "UTF-8");
+            writer.println("unsigned char codeArray[" + stubs.length + "]  = { \n");
+            for (int i = 0; i < stubs.length; i += 4) {
+
+                writer.println("0x" + Integer.toHexString(stubs[i + 3]) + ", " + "0x" + Integer.toHexString(stubs[i + 2]) + ", " + "0x" + Integer.toHexString(stubs[i + 1]) + ", " + "0x" +
+                Integer.toHexString(stubs[i]) + ",\n");
+            }
+            writer.println("0xfe, 0xff, 0xff, 0xea };\n");
+
+            writer.close();
+        } catch (Exception e) {
+            System.err.println(e);
+            e.printStackTrace();
+        }
+    }
     private static Throwable compile(RuntimeCompiler compiler, MethodActor method, boolean printBailout) {
         // compile a single method
         ClassMethodActor classMethodActor = (ClassMethodActor) method;
@@ -384,9 +401,8 @@ public class Compile {
         CiStatistics stats = new CiStatistics();
         try {
             TargetMethod tm = compiler.compile(classMethodActor, false, true, stats);
-		byte []theCode = tm.code(); // APN
-		for(int i = 0; i < theCode.length;i++)	// APN
-			System.out.println("machine code ..." + i + " " + theCode[i]); // APN
+		    offlineDebug(tm.code()); // APN
+
             if (validateInline.getValue()) {
                 validateInlining(tm);
             }
