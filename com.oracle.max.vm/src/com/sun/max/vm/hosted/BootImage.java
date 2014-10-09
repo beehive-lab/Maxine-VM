@@ -179,15 +179,8 @@ public class BootImage {
         public void write(OutputStream outputStream, Endianness endian) throws IOException {
             for (Field field : fields()) {
                 try {
-                    if(Platform.platform().cpu != CPU.ARMV7) {
                         endianness.writeInt(outputStream, field.getInt(this));
-                    }else {
-                        int value = field.getInt(this);
-                        outputStream.write((value >> 24) & 0xff);
-                        outputStream.write((value >> 16) & 0xff);
-                        outputStream.write((value >> 8) & 0xff);
-                        outputStream.write(value & 0xff);
-                    }
+
                 } catch (IllegalAccessException illegalAccessException) {
                     throw ProgramError.unexpected();
                 }
@@ -778,9 +771,11 @@ public class BootImage {
     }
 
     public synchronized ByteBuffer code() {
+
         if (code == null) {
             code = mapSection(codeOffset(), header.codeSize);
         }
+
         ByteBuffer duplicate = code.duplicate();
         duplicate.order(code.order());
         return duplicate;
@@ -807,12 +802,22 @@ public class BootImage {
         outputStream.write(relocationData);
         outputStream.write(padding);
         write(heap(), outputStream);
-        write(code(), outputStream);
+        writeReversed(code(), outputStream);
         trailer.write(outputStream, header.endianness());
     }
 
     private void write(ByteBuffer buffer, OutputStream outputStream) throws IOException {
         if (buffer.hasArray()) {
+            outputStream.write(buffer.array(), buffer.arrayOffset(), buffer.limit());
+        } else {
+            byte[] array = new byte[buffer.limit()];
+            buffer.get(array);
+            outputStream.write(array);
+        }
+    }
+    private void writeReversed(ByteBuffer buffer, OutputStream outputStream) throws IOException {
+        if (buffer.hasArray()) {
+            buffer.order(ByteOrder.LITTLE_ENDIAN);
             outputStream.write(buffer.array(), buffer.arrayOffset(), buffer.limit());
         } else {
             byte[] array = new byte[buffer.limit()];
