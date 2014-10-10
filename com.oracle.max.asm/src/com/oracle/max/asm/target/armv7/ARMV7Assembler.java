@@ -542,6 +542,7 @@ System.out.println("ASSUMING JMP: check this came from an emitPrologue as a resu
     public void strImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rvalue, final CiRegister Rmemory, int imm12) {
         int instruction = 0x04000000;
         assert imm12 == 0; // TODO fix the encoding its an ARM 12 bit
+	assert Rvalue.encoding != Rmemory.encoding || !(P == 0 && U == 0 && W == 0); 
         instruction |= (P & 0x1) << 24;
         instruction |= (U & 0x1) << 23;
         instruction |= (W & 0x1) << 21;
