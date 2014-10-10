@@ -566,7 +566,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
             //movq(new CiAddress(target.wordKind, frame, frameToCSA + offset), r);
             setUpScratch(new CiAddress(target.wordKind, frame, frameToCSA + offset));
             if(r.number < 16) {
-                strImmediate(ConditionFlag.Always,0,0,0,r,r12,0);
+                strImmediate(ConditionFlag.Always,1,0,0,r,r12,0);
             }else {
                 vstr(ConditionFlag.Always,r,r12,0);
             }
