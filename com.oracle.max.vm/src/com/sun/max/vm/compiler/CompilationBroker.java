@@ -411,7 +411,7 @@ public class CompilationBroker {
             boolean doCompile = true;
             synchronized (cma) {
 
-                    if(cma.name().compareTo("run") == 0 || cma.name().compareTo("com.sun.max.vm.MaxineVM") == 0) {
+                if (cma.name().compareTo("run") == 0 || cma.name().compareTo("com.sun.max.vm.MaxineVM") == 0) {
                     System.out.println("DEBUG ME");
                 }
                 assert !(cma.isNative() && cma.isVmEntryPoint()) : "cannot compile JNI functions that are native";
