@@ -233,23 +233,11 @@ public final class FrameMap {
      */
     public CiAddress toStackAddress(CiStackSlot slot) {
         int size = compilation.target.sizeInBytes(slot.kind);
-        /*System.out.print(" KIND is ");
-        if(slot.kind == CiKind.Double)  System.out.print("Dobule ");
-        else if(slot.kind == CiKind.Long) System.out.print("Long ");
-        else if(slot.kind == CiKind.Float)
-                     System.out.print("Float ");
-        else if(slot.kind ==  CiKind.Int)
-                    System.out.print("Int ");
-        else if(slot.kind == CiKind.Object)
-                    System.out.print("Object ");
-        else
-                System.out.print("other ");*/
-
         if (slot.inCallerFrame()) {
             int callerFrame = frameSize() + compilation.target.arch.returnAddressSize;
             final int callerFrameOffset = slot.index() * compilation.target.spillSlotSize;
             int offset = callerFrame + callerFrameOffset;
-            return new CiAddress(slot.kind, CiRegister.CallerFrame.asValue(), offset);
+            return new CiAddress(slot.kind, compilation.target.arch.isARM() ? CiRegister.CallerFrame.asValue() : CiRegister.Frame.asValue(), offset);
         } else {
             int offset = offsetForOutgoingOrSpillSlot(slot.index(), size);
             return new CiAddress(slot.kind, CiRegister.Frame.asValue(), offset);

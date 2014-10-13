@@ -320,11 +320,7 @@ public class BootImage {
             codeSize = endian.readInt(dataInputStream);
 
             dynamicHeapRegionsArrayFieldOffset = endian.readInt(dataInputStream);
-            //reservedVirtualSpaceSize = endian.readInt(dataInputStream);
-            int xx = endian.readInt(dataInputStream);
-            //
-	    System.out.println("BootImage reservedVirtualSpaceSize hardcoded");
-	    reservedVirtualSpaceSize = 133455872;
+            reservedVirtualSpaceSize = endian.readInt(dataInputStream);
             reservedVirtualSpaceFieldOffset = endian.readInt(dataInputStream);
             bootRegionMappingConstraint = endian.readInt(dataInputStream);
             tlaListHeadOffset = endian.readInt(dataInputStream);
@@ -381,10 +377,7 @@ public class BootImage {
 
             dynamicHeapRegionsArrayFieldOffset = staticFieldPointerOffset(dataPrototype, InspectableHeapInfo.class, "dynamicHeapMemoryRegions");
 
-            //reservedVirtualSpaceSize = vmConfiguration.heapScheme().reservedVirtualSpaceKB();
-            System.out.println("BootImage reservedVirtualSpaceSize hardcoded");
-
-            reservedVirtualSpaceSize = 133455872;
+            reservedVirtualSpaceSize = vmConfiguration.heapScheme().reservedVirtualSpaceKB();
             reservedVirtualSpaceFieldOffset = staticFieldPointerOffset(dataPrototype, Heap.class, "reservedVirtualSpace");
             bootRegionMappingConstraint = vmConfiguration.heapScheme().bootRegionMappingConstraint().ordinal();
             tlaListHeadOffset = dataPrototype.objectToOrigin(VmThreadMap.ACTIVE).toInt() + ClassActor.fromJava(VmThreadMap.class).findLocalInstanceFieldActor("tlaListHead").offset();

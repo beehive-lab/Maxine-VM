@@ -309,7 +309,7 @@ static void mapHeapAndCode(int fd) {
 #elif os_SOLARIS || os_DARWIN || os_LINUX
     Address reservedVirtualSpace = (Address) 0;
 
-    size_t virtualSpaceSize =  /*8*4096 *4096L+*/  theHeader->reservedVirtualSpaceSize;
+    size_t virtualSpaceSize =  1024L * theHeader->reservedVirtualSpaceSize;
 
     printf("ZERO0 %d %d \n",theHeader->reservedVirtualSpaceSize, (int)virtualSpaceSize);
     printf("virtsize %d\n", (int) virtualSpaceSize);
