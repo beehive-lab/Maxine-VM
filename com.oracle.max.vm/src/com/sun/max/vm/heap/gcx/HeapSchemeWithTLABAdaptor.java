@@ -24,6 +24,7 @@ package com.sun.max.vm.heap.gcx;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
+import com.sun.max.platform.*;
 import com.sun.max.profile.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.timer.*;
@@ -114,6 +115,9 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
     public int reservedVirtualSpaceKB() {
         // 2^30 Kb = 1 TB of reserved virtual space.
         // This will be truncated as soon as we taxed what we need at initialization time.
+        if (Platform.target().arch.is32bit()) {
+            return 4 * Size.M.toInt();
+        }
         return Size.G.toInt();
     }
 
