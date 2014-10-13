@@ -722,7 +722,6 @@ public abstract class TargetMethod extends MemoryRegion {
                 }
                 case Object: {
                     int index = literals.objectPool.get(site.constant.asObject());
-                    System.out.println("PATCH OBJECT " + referenceDiff.plus(index * Word.size()).toInt() + " " + referenceDiff.plus(index * Word.size() - site.pcOffset).toInt() );
                     patchRelativeInstruction(site.pcOffset, referenceDiff.plus(index * Word.size() - site.pcOffset).toInt());
                     break;
                 }
