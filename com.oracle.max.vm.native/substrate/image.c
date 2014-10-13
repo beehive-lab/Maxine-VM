@@ -308,11 +308,13 @@ static void mapHeapAndCode(int fd) {
     theHeap = (Address) &maxvm_image_start + heapOffsetInImage;
 #elif os_SOLARIS || os_DARWIN || os_LINUX
     Address reservedVirtualSpace = (Address) 0;
-
     size_t virtualSpaceSize =  1024L * theHeader->reservedVirtualSpaceSize;
 
-    printf("ZERO0 %d %d \n",theHeader->reservedVirtualSpaceSize, (int)virtualSpaceSize);
-    printf("virtsize %d\n", (int) virtualSpaceSize);
+#ifdef arm
+    log_println("ReservedVSpace Size %d ActualVSpaceSize(*1Mb) %d",theHeader->reservedVirtualSpaceSize, (int) virtualSpaceSize);
+#else
+    log_println("ReservedVSpace Size %llu ActualVSpaceSize(*1Mb) %llu",theHeader->reservedVirtualSpaceSize, virtualSpaceSize);
+#endif
 
     c_ASSERT(virtualMemory_pageAlign((Size) virtualSpaceSize) == (Size) virtualSpaceSize);
     if (virtualSpaceSize != 0) {
@@ -323,22 +325,15 @@ static void mapHeapAndCode(int fd) {
         // In any case,  the VM (mostly the heap scheme) is responsible for releasing unused reserved space.
         reservedVirtualSpace = virtualMemory_allocatePrivateAnon((Address) 0, virtualSpaceSize, JNI_FALSE, JNI_FALSE, HEAP_VM);
 
-#ifdef arm
-	        printf("reserved Virtual mapped to this address %x\n",reservedVirtualSpace);
-#else
-        printf("reserved Virtual mapped to this address %llx\n",reservedVirtualSpace);
-#endif
+	    log_println("Virtual Space starts @  0x%x", reservedVirtualSpace);
+
         if (reservedVirtualSpace == ALLOC_FAILED) {
             log_exit(4, "could not reserve requested virtual space");
         }
     }
 
-#ifdef arm
-    printf("maping constrain %d VERTSIZE %zu %x\n",theHeader->bootRegionMappingConstraint,virtualSpaceSize,reservedVirtualSpace);
-#else 
-        printf("maping constrain %d VERTSIZE %zu %llx\n",theHeader->bootRegionMappingConstraint,virtualSpaceSize,reservedVirtualSpace);
+    log_println("Mapping constraint %d",theHeader->bootRegionMappingConstraint);
 
-#endif 
     if (theHeader->bootRegionMappingConstraint == 1) {
         // Map the boot heap region at the start of the reserved space
         theHeap = reservedVirtualSpace;
@@ -352,15 +347,12 @@ static void mapHeapAndCode(int fd) {
             log_exit(4, "could not reserve virtual space for boot image");
         }
     }
-#ifdef arm
-    printf("HEAP  0x%x HEAP&CODESIZE 0x%x HEAPOFFSET  0x%x", theHeap, heapAndCodeSize,heapOffsetInImage);
-#else
-    printf("HEAP  0x%llx HEAP&CODESIZE 0x%x HEAPOFFSET  0x%x", theHeap, heapAndCodeSize,heapOffsetInImage);
-#endif
+
+    log_println("Heap start  @ 0x%x heapCode size %d", theHeap, heapAndCodeSize);
+
     if (virtualMemory_mapFileAtFixedAddress(theHeap, heapAndCodeSize, fd, heapOffsetInImage) == ALLOC_FAILED) {
         log_exit(4, "could not map boot image");
     }
-    printf("POST MAP\n");
     if (reservedVirtualSpace) {
         Address *addr = image_offset_as_address(Address *, reservedVirtualSpaceFieldOffset);
         *addr = reservedVirtualSpace;
@@ -377,11 +369,8 @@ static void mapHeapAndCode(int fd) {
 #endif
     theCode = theHeap + theHeader->heapSize;
     theCodeEnd = theCode + theHeader->codeSize;
-#ifdef arm
-    printf("CODE  0x%x CODE-END  0x%x\n",theCode,theCodeEnd);
-#else
-    printf("CODE  0x%llx CODE-END  0x%llx\n",theCode,theCodeEnd);
-#endif
+    //printf("CODE  0x%x CODE-END  0x%x\n",theCode,theCodeEnd);
+
 }
 
 static void relocate(int fd) {
@@ -448,7 +437,6 @@ void image_load(char *imageFileName) {
     readStringInfo(fd);
     checkTrailer(fd);
     mapHeapAndCode(fd);
-    printf("mapHeapAndCode DONE\n");
 #if log_LOADER
     log_println("code @%p codeEnd @%p heap @%p", theCode, theCodeEnd, theHeap);
 #endif
