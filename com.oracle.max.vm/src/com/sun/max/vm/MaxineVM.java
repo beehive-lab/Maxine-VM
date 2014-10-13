@@ -463,15 +463,9 @@ public final class MaxineVM {
      */
     @VM_ENTRY_POINT
     public static int run(Pointer tlBlock, int tlBlockSize, Pointer bootHeapRegionStart, Word dlopen, Word dlsym, Word dlerror, Pointer vmInterface, Pointer jniEnv, Pointer jmmInterface, Pointer jvmtiInterface, int argc, Pointer argv) {
-        SafepointPoll.setLatchRegister(new Pointer(0));// debug
-        SafepointPoll.setLatchRegister(new Pointer(1));// debug
-        SafepointPoll.setLatchRegister(new Pointer(2));// debug
         primordialTLBlock = tlBlock;
-        SafepointPoll.setLatchRegister(new Pointer(3));// debug
         primordialTLBlockSize = tlBlockSize;
-        SafepointPoll.setLatchRegister(new Pointer(4));// debug
         Pointer etla = tlBlock.plus(platform().pageSize - Address.size() + VmThreadLocal.tlaSize().toInt());
-        SafepointPoll.setLatchRegister(new Pointer(5)); // debug
         SafepointPoll.setLatchRegister(etla); // r10 in ARMV7
 
         // This one field was not marked by the data prototype for relocation

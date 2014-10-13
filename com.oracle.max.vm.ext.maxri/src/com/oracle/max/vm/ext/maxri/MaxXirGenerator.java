@@ -1063,7 +1063,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         XirLabel slowPath = asm.createOutOfLineLabel("slowPath");
         XirLabel reportNegativeIndexError = asm.createOutOfLineLabel("indexError");
 
-        XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), LATCH_REGISTER);
+        XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
         XirOperand etla = asm.createTemp("ETLA", WordUtil.archKind());
         XirOperand tlabEnd = asm.createTemp("tlabEnd", WordUtil.archKind());
         XirOperand newMark = asm.createTemp("newMark", WordUtil.archKind());
@@ -1215,7 +1215,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         XirOperand cell = asm.createTemp("cell",  WordUtil.archKind());
         XirLabel done = asm.createInlineLabel("done");
         XirLabel ok = asm.createInlineLabel("slowPath");
-        XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), LATCH_REGISTER);
+        XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
         XirOperand etla = asm.createTemp("ETLA", WordUtil.archKind());
         XirOperand tlabEnd = asm.createTemp("tlabEnd", WordUtil.archKind());
         XirOperand newMark = asm.createTemp("newMark", WordUtil.archKind());
@@ -1277,7 +1277,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         XirOperand cell = asm.createTemp("cell",  WordUtil.archKind());
         XirLabel done = asm.createInlineLabel("done");
         XirLabel slowPath = asm.createOutOfLineLabel("slowPath");
-        XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), LATCH_REGISTER);
+        XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
         XirOperand etla = asm.createTemp("ETLA", WordUtil.archKind());
         XirOperand tlabEnd = asm.createTemp("tlabEnd", WordUtil.archKind());
         XirOperand newMark = asm.createTemp("newMark", WordUtil.archKind());
@@ -1767,7 +1767,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     private XirTemplate buildExceptionObject() {
         XirOperand result = asm.restart(CiKind.Object);
         // Emit a safepoint
-        XirOperand latch = asm.createRegisterTemp("latch", WordUtil.archKind(), LATCH_REGISTER);
+        XirOperand latch = asm.createRegisterTemp("latch", WordUtil.archKind(), this.LATCH_REGISTER);
         asm.safepoint();
         asm.pload(WordUtil.archKind(), latch, latch, false);
 
