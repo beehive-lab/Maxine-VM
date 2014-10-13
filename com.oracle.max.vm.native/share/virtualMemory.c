@@ -65,7 +65,6 @@
 
 /* mmap returns MAP_FAILED on error, we convert to ALLOC_FAILED */
 static Address check_mmap_result(void *result) {
-printf("CALLED\n");
 	if(result == MAP_FAILED) {
 		switch(errno) {
 			case EACCES:
@@ -87,7 +86,7 @@ printf("CALLED\n");
 				printf("ENODEV\n");
 			break;
 			case ENOMEM:
-				printf("ENOMEM FAIL\n");
+				printf("ENOMEM\n");
 			break;
 			case EPERM:
 				printf("EPERM\n");
