@@ -25,6 +25,7 @@ package com.oracle.max.vm.ext.maxri;
 import com.oracle.max.asm.target.armv7.ARMV7;
 import com.sun.cri.ci.CiAddress.Scale;
 import com.sun.cri.ci.CiKind;
+import com.sun.cri.ci.CiRegister;
 import com.sun.cri.ci.CiRuntimeCall;
 import com.sun.cri.ri.*;
 import com.sun.cri.ri.RiType.Representation;
@@ -37,6 +38,7 @@ import com.sun.max.Utils;
 import com.sun.max.annotate.FOLD;
 import com.sun.max.annotate.HOSTED_ONLY;
 import com.sun.max.annotate.INLINE;
+import com.sun.max.platform.CPU;
 import com.sun.max.program.ProgramError;
 import com.sun.max.unsafe.Pointer;
 import com.sun.max.unsafe.Size;
@@ -67,6 +69,8 @@ import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.runtime.ResolutionGuard;
 import com.sun.max.vm.runtime.Snippets;
 import com.sun.max.vm.runtime.Throw;
+import com.sun.max.vm.runtime.amd64.AMD64SafepointPoll;
+import com.sun.max.vm.runtime.arm.ARMSafepointPoll;
 import com.sun.max.vm.thread.VmThread;
 import com.sun.max.vm.thread.VmThreadLocal;
 import com.sun.max.vm.type.ClassRegistry;
@@ -81,11 +85,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.sun.max.platform.Platform.platform;
 import static com.sun.max.platform.Platform.target;
 import static com.sun.max.vm.VMConfiguration.vmConfig;
 import static com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT;
 import static com.sun.max.vm.layout.Layout.*;
-import static com.sun.max.vm.runtime.amd64.AMD64SafepointPoll.LATCH_REGISTER;
 import static java.lang.reflect.Modifier.isFinal;
 
 /**
@@ -95,7 +99,7 @@ import static java.lang.reflect.Modifier.isFinal;
 public class MaxXirGenerator implements RiXirGenerator {
 
     private static final int SMALL_MULTIANEWARRAY_RANK = 2;
-
+    private CiRegister LATCH_REGISTER = null;
     // (tw) TODO: Up this to 255 / make a loop in the template
     private static final int MAX_MULTIANEWARRAY_RANK = 6;
 
@@ -225,6 +229,11 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     public MaxXirGenerator(boolean printXirTemplates) {
         this.printXirTemplates = printXirTemplates;
+        if(platform().cpu == CPU.ARMV7) {
+            this.LATCH_REGISTER = ARMSafepointPoll.LATCH_REGISTER;
+        } else {
+            this.LATCH_REGISTER = AMD64SafepointPoll.LATCH_REGISTER;
+        }
     }
 
     private static final Class<? extends RuntimeCalls> runtimeCalls = RuntimeCalls.class;

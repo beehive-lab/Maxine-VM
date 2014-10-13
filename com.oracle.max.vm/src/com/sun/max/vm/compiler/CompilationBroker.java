@@ -22,38 +22,52 @@
  */
 package com.sun.max.vm.compiler;
 
-import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.AbstractVMScheme.*;
-import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.VMOptions.*;
-import static com.sun.max.vm.compiler.CallEntryPoint.*;
-import static com.sun.max.vm.compiler.RuntimeCompiler.*;
-import static com.sun.max.vm.compiler.target.Safepoints.*;
-import static com.sun.max.vm.intrinsics.Infopoints.*;
+import com.sun.cri.ci.CiStatistics;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.annotate.RESET;
+import com.sun.max.lang.ISA;
+import com.sun.max.unsafe.Address;
+import com.sun.max.unsafe.CodePointer;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.vm.Log;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.MaxineVM.Phase;
+import com.sun.max.vm.VMOptions;
+import com.sun.max.vm.actor.Actor;
+import com.sun.max.vm.actor.holder.Hub;
+import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.code.CodeCacheMetricsPrinter;
+import com.sun.max.vm.compiler.RuntimeCompiler.*;
+import com.sun.max.vm.compiler.target.Compilation;
+import com.sun.max.vm.compiler.target.Compilations;
+import com.sun.max.vm.compiler.target.Safepoints;
+import com.sun.max.vm.compiler.target.TargetMethod;
+import com.sun.max.vm.compiler.target.amd64.AMD64TargetMethodUtil;
+import com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil;
+import com.sun.max.vm.heap.Heap;
+import com.sun.max.vm.object.ObjectAccess;
+import com.sun.max.vm.profile.MethodInstrumentation;
+import com.sun.max.vm.profile.MethodProfile;
+import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.runtime.VMRegister;
+import com.sun.max.vm.stack.RawStackFrameVisitor;
+import com.sun.max.vm.stack.StackFrameCursor;
+import com.sun.max.vm.stack.VmStackFrameWalker;
+import com.sun.max.vm.thread.VmThread;
+import com.sun.max.vm.ti.VMTI;
 
 import java.util.*;
 
-import com.sun.cri.ci.*;
-import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.Phase;
-import com.sun.max.vm.actor.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.target.amd64.*;
-import com.sun.max.vm.compiler.target.arm.*;
-import com.sun.max.vm.heap.*;
-import com.sun.max.vm.object.*;
-import com.sun.max.vm.profile.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.*;
-import com.sun.max.vm.thread.*;
-import com.sun.max.vm.ti.*;
+import static com.sun.max.platform.Platform.platform;
+import static com.sun.max.vm.AbstractVMScheme.configValue;
+import static com.sun.max.vm.MaxineVM.isHosted;
+import static com.sun.max.vm.MaxineVM.vm;
+import static com.sun.max.vm.VMOptions.addFieldOption;
+import static com.sun.max.vm.VMOptions.verboseOption;
+import static com.sun.max.vm.compiler.CallEntryPoint.*;
+import static com.sun.max.vm.compiler.RuntimeCompiler.*;
+import static com.sun.max.vm.compiler.target.Safepoints.DIRECT_CALL;
+import static com.sun.max.vm.intrinsics.Infopoints.here;
 
 /**
  * This class implements an adaptive compilation system with multiple compilers with different compilation time / code
@@ -396,6 +410,10 @@ public class CompilationBroker {
             Compilation compilation;
             boolean doCompile = true;
             synchronized (cma) {
+
+                    if(cma.name().compareTo("run") == 0 || cma.name().compareTo("com.sun.max.vm.MaxineVM") == 0) {
+                    System.out.println("DEBUG ME");
+                }
                 assert !(cma.isNative() && cma.isVmEntryPoint()) : "cannot compile JNI functions that are native";
                 Object compiledState = cma.compiledState;
                 compilation = compiledState instanceof Compilation ? (Compilation) compiledState : null;
@@ -654,9 +672,9 @@ public class CompilationBroker {
             // as it may have been called directly.
             DirectCallPatcher patcher = new DirectCallPatcher(oldMethod, newMethod);
             new VmStackFrameWalker(VmThread.current().tla()).inspect(Pointer.fromLong(here()),
-                            VMRegister.getCpuStackPointer(),
-                            VMRegister.getCpuFramePointer(),
-                            patcher);
+                    VMRegister.getCpuStackPointer(),
+                    VMRegister.getCpuFramePointer(),
+                    patcher);
         }
     }
 

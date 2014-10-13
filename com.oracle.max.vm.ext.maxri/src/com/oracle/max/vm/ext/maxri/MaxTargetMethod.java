@@ -280,6 +280,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
             }
             FatalError.check(Stubs.isJumpToStaticTrampoline(this), "sanity check");
         } else if (platform().isa == ISA.ARM) {
+            System.err.println("patchWithJump WRONG for ARM " + tm.name());
             ARMTargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(tm));
             if (vm().compilationBroker.needsAdapters()) {
                 ARMTargetMethodUtil.patchWithJump(this, BASELINE_ENTRY_POINT.offset(), BASELINE_ENTRY_POINT.in(tm));

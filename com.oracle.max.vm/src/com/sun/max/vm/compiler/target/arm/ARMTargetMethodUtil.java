@@ -188,8 +188,9 @@ public final class ARMTargetMethodUtil {
             // check for alignment of call site also here.
             // TODO(cwi): This is a check that I would like to have, however, T1X does not ensure proper alignment yet
 // when it stitches together templates that contain calls.
-            // FatalError.unexpected(" invalid patchable call site:  " + targetMethod + "+" + offset + " " +
-// callSite.toHexString());
+           // FatalError.unexpected(" invalid patchable call site:  " + targetMethod + "+" + offset + " " +
+ //callSite.toHexString());
+            System.err.println("unpatchable call site? " + tm + " "+ callSite.to0xHexString());
         }
 
 
@@ -261,7 +262,10 @@ public final class ARMTargetMethodUtil {
                     code[callOffset + 9] = (byte) ((instruction >> 16) & 0xff);
                     code[callOffset + 8] = (byte) ((instruction >> 24) & 0xff);
                 }
-            } /*else {
+            }
+        } else {
+            System.err.println("fixupCall32Site NOT implemented not hosted");
+        } /*else {
                 assert (0 == 1);
                 oldDisp32 = (code[callOffset + 4] & 0xff) << 24 | (code[callOffset + 3] & 0xff) << 16 | (code[callOffset + 2] & 0xff) << 8 | (code[callOffset + 1] & 0xff) << 0;
                 if (oldDisp32 != disp32) {
@@ -284,7 +288,8 @@ public final class ARMTargetMethodUtil {
                 callSitePointer.writeByte(3, (byte) (disp32 >> 16));
                 callSitePointer.writeByte(4, (byte) (disp32 >> 24));
             }*/
-        }
+
+
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);
     }
 
@@ -353,6 +358,7 @@ public final class ARMTargetMethodUtil {
      * @return {@code true} if the instruction is a jump to the target, false otherwise
      */
     public static boolean isJumpTo(TargetMethod tm, int pos, CodePointer jumpTarget) {
+        System.err.println("ARM isJumpTo WRONG");
         final Pointer jumpSite = tm.codeAt(pos).toPointer();
         if (jumpSite.readByte(0) == (byte) RIP_JMP) {
             final int disp32 = jumpSite.readInt(1);
