@@ -125,11 +125,9 @@ Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize) {
 
 
     Address stackBase = 0;
-printf("STACKBASE %p SIZE %x\n",(void *)stackBase,(int)stackSize);
     if (stackSize == 0) {
         thread_getStackInfo(&stackBase, &stackSize);
     }
-    printf("STACKBASE %p  SIZE %x\n",(void *)stackBase,(int)stackSize);
 
 
     /* See diagram at top of threadLocals.h */
