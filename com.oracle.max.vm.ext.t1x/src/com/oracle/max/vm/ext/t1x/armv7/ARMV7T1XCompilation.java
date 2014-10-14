@@ -1064,7 +1064,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 		}
 */
                 if (Arrays.equals(pattern, instr)) {
-		    System.out.println("ARRAYS EQUAL for testValue of " + testValue);
+		  //  System.out.println("ARRAYS EQUAL for testValue of " + testValue);
                     result = Arrays.copyOf(result, result.length + 1);
                     result[result.length - 1] = dispPos;
 		}

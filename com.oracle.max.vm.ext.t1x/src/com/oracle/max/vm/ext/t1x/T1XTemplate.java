@@ -17,29 +17,34 @@
  */
 package com.oracle.max.vm.ext.t1x;
 
-import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.compiler.target.Safepoints.*;
-import static com.oracle.max.vm.ext.t1x.T1X.dispFromCodeStart;
-
-import java.lang.annotation.*;
-import java.util.*;
-
-import com.oracle.max.vm.ext.maxri.*;
-import com.oracle.max.vm.ext.t1x.amd64.*;
-import com.oracle.max.vm.ext.t1x.armv7.*;
+import com.oracle.max.vm.ext.maxri.MaxTargetMethod;
+import com.oracle.max.vm.ext.t1x.amd64.AMD64T1XCompilation;
+import com.oracle.max.vm.ext.t1x.armv7.ARMV7T1XCompilation;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
-import com.sun.max.annotate.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.*;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.classfile.CodeAttribute;
+import com.sun.max.vm.classfile.LocalVariableTable;
 import com.sun.max.vm.classfile.LocalVariableTable.Entry;
-import com.sun.max.vm.collect.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.target.Safepoints.Attr;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.type.*;
+import com.sun.max.vm.collect.ByteArrayBitMap;
+import com.sun.max.vm.compiler.WordUtil;
+import com.sun.max.vm.compiler.target.Adapter;
+import com.sun.max.vm.compiler.target.Safepoints;
+import com.sun.max.vm.compiler.target.Safepoints.*;
+import com.sun.max.vm.compiler.target.Stub;
+import com.sun.max.vm.compiler.target.TargetMethod;
+import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.type.Kind;
+import com.sun.max.vm.type.SignatureDescriptor;
+
+import java.lang.annotation.Annotation;
+import java.util.*;
+
+import static com.oracle.max.vm.ext.t1x.T1X.dispFromCodeStart;
+import static com.sun.max.platform.Platform.target;
+import static com.sun.max.vm.MaxineVM.vm;
+import static com.sun.max.vm.compiler.target.Safepoints.*;
 
 /**
  * A T1X template is a piece of machine code (and its associated metadata) that is used by the T1X compiler to quickly
@@ -509,13 +514,13 @@ public class T1XTemplate {
         this.code = source.code();
         this.tag = tag;
         int nSafepoints = source.safepoints().size();
-        if (tag == null)
-            System.out.println("tag null");
-        System.out.println("T1XTemplate End " + method.qualifiedName());
+        //if (tag == null)
+         //   System.out.println("tag null");
+       // System.out.println("T1XTemplate End " + method.qualifiedName());
         // System.out.println("T1XTemplate End " + method.qualifiedName() + " " + nSafepoints +" tag " +
 // tag.toString());
         if (source.referenceLiterals() != null) {
-            System.out.println(" REFLITS " + source.referenceLiterals().length);
+           // System.out.println(" REFLITS " + source.referenceLiterals().length);
         }
         //if (method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.monitorexit") == 0 ||
                         //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.loadException") == 0 ||
@@ -553,7 +558,12 @@ public class T1XTemplate {
             //return;
         //}
 if (source.referenceLiterals() != null) {
-            System.out.println(" REFLITSNOTCAUSE " + source.referenceLiterals().length);
+            //
+            //
+            //
+            //
+            //
+            // System.out.println(" REFLITSNOTCAUSE " + source.referenceLiterals().length);
         }
 
 

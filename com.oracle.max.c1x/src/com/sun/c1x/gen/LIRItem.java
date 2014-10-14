@@ -147,7 +147,7 @@ public class LIRItem {
     public void loadByteItem() {
         if (gen.compilation.target.arch.isX86() || gen.compilation.target.arch.isARM()) {
             if (gen.compilation.target.arch.isARM()) {
-                System.err.println("please remove the || isARM and fill in LIRItem:loadBYteItem");
+                //System.err.println("please remove the || isARM and fill in LIRItem:loadBYteItem");
             }
             loadItem();
             CiValue res = result();
@@ -172,7 +172,7 @@ public class LIRItem {
     public void loadNonconstant() {
         if (gen.compilation.target.arch.isX86() || gen.compilation.target.arch.isARM()) {
             if (gen.compilation.target.arch.isARM())    {
-                System.err.println("please remove the || isARM and fill in LIRItem:loadNonconstant");
+                //System.err.println("please remove the || isARM and fill in LIRItem:loadNonconstant");
             }
             CiValue r = instruction.operand();
             if (r.isConstant()) {

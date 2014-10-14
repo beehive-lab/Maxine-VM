@@ -72,7 +72,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         int operation = codeBuffer.getInt(branch);
         if(operation == (ConditionFlag.NeverUse.value() << 28 | 0xdead)) { // JCC
            //
-            System.out.println("MATCHED JCC " + branch);
+            //System.out.println("MATCHED JCC " + branch);
             disp -= 4;
             instruction = movwHelper(ConditionFlag.Always,ARMV7.r12,disp & 0xffff);
             codeBuffer.emitInt(instruction,branch);
@@ -84,10 +84,10 @@ public class ARMV7Assembler extends AbstractAssembler {
 
             disp = disp/4;
             if (disp < 0) {
-                System.out.println("NEGATIVE DISP " + disp);
+                //System.out.println("NEGATIVE DISP " + disp);
             }
             codeBuffer.emitInt(0x0a000000 | (disp & 0xffffff) | ((ConditionFlag.Always.value() & 0xf) << 28),branch);
-            System.out.println("MATCHED JMP branch " + branch + " DISP " + disp + " target "+ target );
+            //System.out.println("MATCHED JMP branch " + branch + " DISP " + disp + " target "+ target );
 
         } else if ((operation & 0xf0000fff) == (ConditionFlag.NeverUse.value() << 28 | 0x0d0)) {
             disp = disp + 8;
@@ -102,7 +102,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
         } else {
 
-System.out.println("ASSUMING JMP: check this came from an emitPrologue as a result of hosted mode ARM ..patchjumpTarget NOT MATCHED " + branch + " " + target);
+//System.out.println("ASSUMING JMP: check this came from an emitPrologue as a result of hosted mode ARM ..patchjumpTarget NOT MATCHED " + branch + " " + target);
                 disp+=8;
                 disp = disp/4;
                 codeBuffer.emitInt(0x0a000000 | (disp & 0xffffff) | ((ConditionFlag.Always.value() & 0xf) << 28),branch);
@@ -382,6 +382,9 @@ System.out.println("ASSUMING JMP: check this came from an emitPrologue as a resu
 
     public static int movtHelper(final ConditionFlag cond, final CiRegister Rd, final int imm16) {
         int instruction = 0x03400000;
+        if( imm16 == 0xffe4c) {
+            System.out.println("DEBUG ME movtHELPER");
+        }
         // checkConstraint(0 <= imm16 && imm16 <= 65535, "0<= imm16 && imm16 <= 65535 ");
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (imm16 >> 12) << 16;
@@ -402,6 +405,9 @@ System.out.println("ASSUMING JMP: check this came from an emitPrologue as a resu
 
     public void movw(final ConditionFlag cond, final CiRegister Rd, final int imm16) {
         int instruction = 0x03000000;
+        if( imm16 == 0xffe4c) {
+            System.out.println("DEBUG ME movw");
+        }
         checkConstraint(0 <= imm16 && imm16 <= 65535, "0<= imm16 && imm16 <= 65535 ");
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (imm16 >> 12) << 16;
@@ -1171,8 +1177,13 @@ System.out.println("ASSUMING JMP: check this came from an emitPrologue as a resu
         CiAddress.Scale scale = addr.scale;
         int disp = addr.displacement;
         assert addr != CiAddress.Placeholder;
-        //assert base.isValid();
-	System.out.println("popq assert base.isValid() removed to allow boot image compile");
+        if (base == CiRegister.Frame || base == CiRegister.CallerFrame) {
+            assert frameRegister != null : "cannot use register " + CiRegister.Frame + " in assembler with null register configuration";
+            base = frameRegister;
+        }
+        assert base.isValid();
+
+	//System.out.println("popq assert base.isValid() removed to allow boot image compile");
         // APN can we have a memory address --- not handled yet?
         // APN simple case where we just have a register destination
         if (base.isValid()) {
@@ -1198,8 +1209,14 @@ System.out.println("ASSUMING JMP: check this came from an emitPrologue as a resu
         CiRegister index = addr.index();
         CiAddress.Scale scale = addr.scale;
         int disp = addr.displacement;
-        //assert base.isValid();
-	System.out.println("assert base.isValid() removed pushq for attempt at image compilation");
+       
+        if (base == CiRegister.Frame || base == CiRegister.CallerFrame) {
+            assert frameRegister != null : "cannot use register " + CiRegister.Frame + " in assembler with null register configuration";
+            base = frameRegister;
+        }
+
+        assert base.isValid();
+	//System.out.println("assert base.isValid() removed pushq for attempt at image compilation");
         // APN thinks it has to be valid or its an ERROR?
         // might not be the case if the addr is a PlaceHolder!
         assert addr != CiAddress.Placeholder;
@@ -1314,11 +1331,11 @@ System.out.println("ASSUMING JMP: check this came from an emitPrologue as a resu
         nop(1);
     }
     public final void int3() {
-        System.out.println("MISSING int3");
+        //System.out.println("MISSING int3");
 	nop(4);
     }
     public final void hlt() {
-        System.out.println("MISSING hlt");
+        //System.out.println("MISSING hlt");
 	nop(4);
     }
     public final void nop(int times) {
@@ -1359,7 +1376,6 @@ System.out.println("ASSUMING JMP: check this came from an emitPrologue as a resu
         sub(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
     }
     public final void lock() {
-        System.out.println("ARMV7Assembler lock not implemented\n");
 	    nop();
     }
 
@@ -1392,7 +1408,7 @@ System.out.println("ASSUMING JMP: check this came from an emitPrologue as a resu
     public final void jcc(ConditionFlag cc, Label l) {
         assert (0 <= cc.value) && (cc.value < 16) : "illegal cc";
         if (l.isBound()) {
-            System.out.println("LABEL bound jcc no need to patch");
+            //System.out.println("LABEL bound jcc no need to patch");
             jcc(cc, l.position(), false);
         } else {
             // Note: could eliminate cond. jumps to this jump if condition
@@ -1400,7 +1416,7 @@ System.out.println("ASSUMING JMP: check this came from an emitPrologue as a resu
             // Note: use jccb() if label to be bound is very close to get
             // an 8-bit displacement
             l.addPatchAt(codeBuffer.position());
-            System.out.println("ADDED JCC PATCH AT" + codeBuffer.position());
+            //System.out.println("ADDED JCC PATCH AT" + codeBuffer.position());
             emitInt(ConditionFlag.NeverUse.value() << 28 | 0xdead ); // JCC CODE for the PATCH
             nop(2);
             // TODO issues exist here ... what happens if R12 is loaded twice?
@@ -1501,7 +1517,7 @@ System.out.println("ASSUMING JMP: check this came from an emitPrologue as a resu
         int opc2;
         boolean double2Float = false;
         boolean floatConversion = false;
-        System.out.println("VCVT " + dest.number + " " + src.number);
+        //System.out.println("VCVT " + dest.number + " " + src.number);
         if (toInt == false && signed == false) {
             checkConstraint(dest.number >= 16 && src.number >= 16, "vcvt must be FP/DP regs");
             if(dest.number > src.number ) {
