@@ -50,7 +50,6 @@ import com.sun.cri.xir.CiXirAssembler.XirLabel;
 import com.sun.cri.xir.CiXirAssembler.XirMark;
 import com.sun.cri.xir.XirSnippet;
 import com.sun.cri.xir.XirTemplate;
-import com.sun.max.vm.Log;
 
 import java.util.Map;
 
@@ -207,7 +206,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             //masm.movq(dst, 0xDEADDEADDEADDEADL);
             masm.mov32BitConstant(dst,0xDEADDEAD);
         } else {
-	System.out.println("REGISTER used is " + dst.number + " pos " + masm.codeBuffer.position());
+	//System.out.println("REGISTER used is " + dst.number + " pos " + masm.codeBuffer.position());
             masm.setUpScratch(tasm.recordDataReferenceInCode(constant));
             masm.ldr(ConditionFlag.Always,dst,ARMV7.r12,0);
              //masm.movq(dst, tasm.recordDataReferenceInCode(constant));
@@ -559,7 +558,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         if (src.kind.isInt()) {
            // masm.pushl(frameMap.toStackAddress((CiStackSlot) src));
             //masm.popl(frameMap.toStackAddress((CiStackSlot) dest));
-	   System.out.println("stack2stack check functionality pushq popq should they load/str the values at the address prior/post push/pop");
+	   //System.out.println("stack2stack check functionality pushq popq should they load/str the values at the address prior/post push/pop");
             masm.pushq(frameMap.toStackAddress((CiStackSlot) src));
             masm.popq(frameMap.toStackAddress((CiStackSlot) dest));
         } else {
@@ -676,7 +675,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
         assert assertEmitTableSwitch(op);
         //assert 0 == 1 : "emitTableSwitch ARMV7IRAssembler";
-        Log.println("C1X ARMV7LIRAssembler tableswitch debug");
+        //Log.println("C1X ARMV7LIRAssembler tableswitch debug");
         CiRegister value = op.value().asRegister();
         final Buffer buf = masm.codeBuffer;
 
@@ -732,7 +731,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             } else {
                 label.addPatchAt(buf.position());
                 buf.emitInt((ConditionFlag.NeverUse.value() << 28)|(offsetToJumpTableBase<< 12)|0x0d0);
-                Log.println("PATCH at " + buf.position() + " " + offsetToJumpTableBase + " " +Integer.toHexString(offsetToJumpTableBase));
+                //Log.println("PATCH at " + buf.position() + " " + offsetToJumpTableBase + " " +Integer.toHexString(offsetToJumpTableBase));
                 //buf.emitByte(0); // psuedo-opcode for jump table entry
                 //buf.emitShort(offsetToJumpTableBase);
                 //buf.emitByte(0); // padding to make jump table entry 4 bytes wide
@@ -742,7 +741,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         JumpTable jt = new JumpTable(jumpTablePos, op.lowKey, highKey, 4);
         tasm.targetMethod.addAnnotation(jt);
 
-        Log.println("tableswitch emitted");
+       // Log.println("tableswitch emitted");
     }
 
     @Override
@@ -828,7 +827,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         switch (op.opcode) {
             case I2L:
                 //assert(0 == 1) : "Integer to long in convert";
-                System.out.println( "Integer to long in convert not implementeda emitConvert");
+                //System.out.println( "Integer to long in convert not implementeda emitConvert");
           //      masm.movslq(dest.asRegister(), srcRegister);
           //      masm.movslq(dest.asRegister(), srcRegister);
                 break;
@@ -836,7 +835,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case L2I:
 
                 //assert(0 == 1) : "Long to integer in convert";
-                System.out.println("emitConvert : Long to integer in convert not implementeda");
+                //System.out.println("emitConvert : Long to integer in convert not implementeda");
 
 
                 moveRegs(srcRegister, dest.asRegister(), src.kind);
@@ -882,7 +881,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case F2I: {
                 assert srcRegister.isFpu() && dest.isRegister() : "must both be XMM register (no fpu stack)";
                 //assert 0 == 1 : " F2I ARMV7LIRAssembler bind commented out";
-                System.out.println("F2I: ARMVLIRAssembler over simplification? replaced with vcvt");
+                //System.out.println("F2I: ARMVLIRAssembler over simplification? replaced with vcvt");
                 masm.vcvt(ConditionFlag.Always,ARMV7.s30,true,true,asXmmFloatReg(src));
                 masm.vmov(ConditionFlag.Always,dest.asRegister(),ARMV7.s30);
 
@@ -911,7 +910,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     masm.vmov(ConditionFlag.Always,dest.asRegister(),ARMV7.s30);
 
                 }
-                Log.println("ARMV7LIRAssembler D2I hack replaced stub with vcvt for quick test");
+                //Log.println("ARMV7LIRAssembler D2I hack replaced stub with vcvt for quick test");
                 /*masm.cmp32(dest.asRegister(), Integer.MIN_VALUE);
                 masm.jcc(ConditionFlag.NotEqual, endLabel);
                 callStub(op.stub, null, dest.asRegister(), src);
@@ -921,14 +920,14 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             }
             case L2F:
                 //assert 0 == 1: "long to float convert";
-                System.out.println("MISSING: long to float convert no timplemented");
+               // System.out.println("MISSING: long to float convert no timplemented");
                 //masm.cvtsi2ssq(asXmmFloatReg(dest), srcRegister);
                 //masm.cvtsi2ssq(asXmmFloatReg(dest), srcRegister);
                 break;
 
             case L2D:
                 //assert 0 == 1: "long to double convert";
-                System.out.println("MISSING: long to double conver not implemented");
+                //System.out.println("MISSING: long to double conver not implemented");
 		
 		
 
@@ -937,7 +936,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
             case F2L: {
                 //assert (0 == 1) : " float to long convert";
-		System.out.println("MISSING: F2L convert not iplemented");
+		//System.out.println("MISSING: F2L convert not iplemented");
                 assert srcRegister.isFpu() && dest.kind.isLong() : "must both be XMM register (no fpu stack)";
                 //masm.cvttss2siq(dest.asRegister(), asXmmFloatReg(src));
                 //masm.movq(rscratch1, java.lang.Long.MIN_VALUE);
@@ -950,7 +949,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
             case D2L: {
                 //assert (0 == 1) : " double to long convert";
-		System.out.println("MISSING: D2L notimplemented as a conversion needs runtime routines from fplib");
+		//System.out.println("MISSING: D2L notimplemented as a conversion needs runtime routines from fplib");
                 assert srcRegister.isFpu() && dest.kind.isLong() : "must both be XMM register (no fpu stack)";
                 //masm.cvttsd2siq(dest.asRegister(), asXmmDoubleReg(src));
                 //masm.movq(rscratch1, java.lang.Long.MIN_VALUE);
@@ -967,7 +966,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 break;
 
             case MOV_L2D:
-                System.out.println("MISSING: ARMV7LIRASssembler MOV_L2D");
+               // System.out.println("MISSING: ARMV7LIRASssembler MOV_L2D");
                 //assert (0 == 1) : " long to double --- convert";
                // masm.movdq(asXmmDoubleReg(dest), srcRegister);
                 break;
@@ -980,7 +979,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
             case MOV_D2L:
                 //assert (0 == 1): " double to long mov compare";
-                System.out.println("MISSING: double to long mov compare not implemented");
+                //System.out.println("MISSING: double to long mov compare not implemented");
                 //masm.movdq(dest.asRegister(), asXmmDoubleReg(src));
                 break;
 
@@ -1420,7 +1419,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 if (asXmmDoubleReg(dest) != asXmmDoubleReg(value)) {
                     masm.movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(value));
                 }
-		System.out.println("MISSING emitIntrinsicOp masm.andpd ");
+		//System.out.println("MISSING emitIntrinsicOp masm.andpd ");
 		/*
 			this implementes ai 66 0F 54 /r	ANDPD xmm1, xmm2/m128	Bitwise logical AND of xmm2/m128 and xmm1. If any part of the operand lies outside the effective address space from 0 to FFFFH. bitwise logical 
 			the strategy is to move the value a float at at a time into r8 r9 and then to do the and then to move back into the dest (float)?
@@ -1608,7 +1607,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
               // APN do we really need to signe extend? cdql?
             int offset = masm.codeBuffer.position();
           //  masm.idivl(rreg);
-            Log.println("idic and cdq arithmeticIdiv not implemented/called");
+            //Log.println("idic and cdq arithmeticIdiv not implemented/called");
 
             // normal and special case exit
             masm.bind(continuation);
@@ -1652,7 +1651,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
       //  moveRegs(lreg, ARMV7.rax);
 
         int offset = masm.codeBuffer.position();
-	System.err.println("ARMV divl not implemented  + rax/rdx as r0 r1 is GUESSED/WRONG... arithmeticIudiv");
+	//System.err.println("ARMV divl not implemented  + rax/rdx as r0 r1 is GUESSED/WRONG... arithmeticIudiv");
        // masm.divl(rreg);
 
         tasm.recordImplicitException(offset, info);
@@ -1693,7 +1692,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
             masm.movlong(rreg,java.lang.Long.MIN_VALUE);
      //       masm.movq(ARMV7.rdx, java.lang.Long.MIN_VALUE);
        //     masm.cmpq(ARMV7.rax, ARMV7.rdx);
-            System.out.println("64bit long compares not implemented? arithmeticLDiv");
+           // System.out.println("64bit long compares not implemented? arithmeticLDiv");
               masm.jcc(ConditionFlag.NotEqual, normalCase);
             if (code == LIROpcode.Lrem) {
                 // prepare X86Register.rdx for possible special case (where remainder = 0)
@@ -1849,7 +1848,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
                         masm.ucomisd(reg1, ARMV7.d15);
                         break;
                     case Long    : { //assert 0 == 1;
-			System.out.println("emitCompare assert commented out --- not implemented");
+			//System.out.println("emitCompare assert commented out --- not implemented");
                         if (c.asLong() == 0) {
                            // masm.cmpq(reg1, 0);
                         } else {
@@ -2035,7 +2034,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
             masm.mov(ConditionFlag.Always,false,dest.asRegister(),left.asRegister());
             // Checkstyle: off
             masm.mov32BitConstant(ARMV7.r12,count);
-	    System.out.println("emitShiftOp DEST is " + dest.asRegister().encoding);
+	    //System.out.println("emitShiftOp DEST is " + dest.asRegister().encoding);
             switch (code) {
                 case Shl  : masm.ishl(dest.asRegister(), value, ARMV7.r12); break;
                 case Shr  : //masm.sarl(value, count);
@@ -2196,7 +2195,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
     @Override
     protected void emitMemoryBarriers(int barriers) {
     //    masm.membar(barriers);
-       System.out.println( "emitMemoryBarriers ARMV7IRAssembler not implemented");
+       //System.out.println( "emitMemoryBarriers ARMV7IRAssembler not implemented");
 
     }
 
@@ -2293,7 +2292,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
 
                 case Mov: {
                     if(inst.result == null) {
-                        System.out.println("ARMV7LIRAssembler:emitXirInstructions case Mov BODGE remove null check");
+                       // System.out.println("ARMV7LIRAssembler:emitXirInstructions case Mov BODGE remove null check");
                         return;
                     }
                     CiValue result = operands[inst.result.index];
@@ -2755,14 +2754,14 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
             CiStackSlot inArg = stub.inArgs[i];
             assert inArg.inCallerFrame();
             CiStackSlot outArg = inArg.asOutArg();
-            System.out.print("CALL STUB STORE ");
+            //System.out.print("CALL STUB STORE ");
             storeParameter(args[i], outArg);
         }
 
         directCall(stub.stubObject, info);
 
         if (result != CiRegister.None) {
-            System.out.print("CALL STUB RESULT ");
+            //System.out.print("CALL STUB RESULT ");
 
             final CiAddress src = compilation.frameMap().toStackAddress(stub.outResult.asOutArg());
             loadResult(result, src);

@@ -437,7 +437,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
                     } catch (VerifyError e) {
                         FatalError.unexpected("Error verifying " + templateSource, e);
                     }
-                    System.out.println("T1XTemplate Start Tag: " + tag.toString());
+                    //System.out.println("T1XTemplate Start Tag: " + tag.toString());
 
                     MaxTargetMethod templateCode = compileTemplate(compiler, templateSource);
                     codeSize += templateCode.codeLength();

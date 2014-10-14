@@ -68,9 +68,9 @@ public final class PrototypeGenerator {
         GraphPrototype graphPrototype = new GraphPrototype(null);
 
         int numberOfClassActors = 0;
-        //int numberOfCompilationThreads = threadsOption.getValue();
-        int numberOfCompilationThreads = 1;
-        System.out.println("SET COMPILATION THREADS TO ONE !!!!!!!!!!!!!!!!!!!!");
+        int numberOfCompilationThreads = threadsOption.getValue();
+        //int numberOfCompilationThreads = 1;
+        //System.out.println("SET COMPILATION THREADS TO ONE !!!!!!!!!!!!!!!!!!!!");
         final CompiledPrototype compiledPrototype = new CompiledPrototype(numberOfCompilationThreads);
         compiledPrototype.addEntrypoints();
         compiledPrototype.addJavaLangObject();

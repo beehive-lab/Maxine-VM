@@ -371,13 +371,13 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 asm.nop(PROLOGUE_SIZE);
             } else {
                 asm.call();
-		System.out.println("SIZE " + asm.codeBuffer.position());
+		//System.out.println("SIZE " + asm.codeBuffer.position());
                 asm.align(PROLOGUE_SIZE);
-		System.out.println("SIZEAFTER " + asm.codeBuffer.position());
+		//System.out.println("SIZEAFTER " + asm.codeBuffer.position());
             }
             int size = asm.codeBuffer.position();
             if (size != PROLOGUE_SIZE ) {
-		System.out.println("ARMAdapterGenerator ... going to crach " + size + " PROLOGUE_SIZE " + PROLOGUE_SIZE);
+		System.out.println("ARMAdapterGenerator ... going to crash " + size + " PROLOGUE_SIZE " + PROLOGUE_SIZE);
 	    }
             assert size == PROLOGUE_SIZE;
             copyIfOutputStream(asm.codeBuffer, out);
@@ -501,7 +501,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             assert WordWidth.signedEffective(baselineArgsSize).lessEqual(WordWidth.BITS_16);
             // Retract the stack pointer back to its position before the first argument on the caller's stack.
-            System.err.println("removed ret in ARMAdapterGenerator");
+            //System.err.println("removed ret in ARMAdapterGenerator"); ****************************
             // asm.ret(/* to make it compile APN removed (short) baselineArgsSize*/);
 
             final byte[] code = asm.codeBuffer.close(true);
@@ -789,7 +789,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             asm.bind(end);
 
             int size = asm.codeBuffer.position();
-            System.err.println("ASM " + size + " " + PROLOGUE_SIZE);
+            //System.err.println("ASM " + size + " " + PROLOGUE_SIZE);
             assert size == PROLOGUE_SIZE;
             copyIfOutputStream(asm.codeBuffer, out);
             return size;
@@ -943,7 +943,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
         // APN Im guessing that this copies values from one stack to another
         // If we have a 64 bit stack copy we can do it as 2 copies.
         // endianness?
-        System.err.println("ARMAdapterGenerator::stackCopy STACK COPY NOT IMPLEMENTED");
+        //System.err.println("ARMAdapterGenerator::stackCopy STACK COPY NOT IMPLEMENTED");
         if (kind.width == WordWidth.BITS_64) {
             // APN NOT sure how to do this ...
             // I can certainly do it with 2 temporary registers ...

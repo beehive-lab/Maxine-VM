@@ -76,7 +76,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 	setUpScratch(address);
         ldrex(ConditionFlag.Always,ARMV7.r8,ARMV7.r12);
 	strex(ConditionFlag.Always,ARMV7.r8,newValue,ARMV7.r12);
-	System.out.println("cmpswapInt not implemented");
+	//System.out.println("cmpswapInt not implemented");
         
         
     }
@@ -86,7 +86,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         to be able to compare and swap the new value!
         */
 	setUpScratch(address);
-	System.out.println("cmpswapLong not implemented");
+	//System.out.println("cmpswapLong not implemented");
         
     }
 
@@ -202,7 +202,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public void cmpss2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
         assert opr1.isFpu();
         assert opr2.isFpu();
-        System.out.println("ARMV7MAcroAssembler cmpss2int not tested");
+        //System.out.println("ARMV7MAcroAssembler cmpss2int not tested");
         ucomisd(opr1, opr2);
         //assert !opr1.isFpu(); // APN force crash as not yet implemented
         Label l = new Label();
@@ -463,7 +463,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
             mov64BitConstant(dst, ARMV7.cpuRegisters[dst.encoding+1], src);
         } else {
             assert dst.number < 32 : "ERROR movlong in ARMV7MacroAssembler movlong to FPRegs";
-            System.out.println("movlong " + Long.toHexString(src));
+            //System.out.println("movlong " + Long.toHexString(src));
             mov32BitConstant(ARMV7.r8, (int) (0xffffffffL & src));
             mov32BitConstant(ARMV7.r9, (int) ((src >> 32) & 0xffffffffL));
             vmov(ConditionFlag.Always,dst,ARMV7.r8);
