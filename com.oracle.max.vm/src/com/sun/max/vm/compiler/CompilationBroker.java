@@ -410,10 +410,6 @@ public class CompilationBroker {
             Compilation compilation;
             boolean doCompile = true;
             synchronized (cma) {
-
-                if (cma.name().compareTo("run") == 0 || cma.name().compareTo("com.sun.max.vm.MaxineVM") == 0) {
-                    System.out.println("DEBUG ME");
-                }
                 assert !(cma.isNative() && cma.isVmEntryPoint()) : "cannot compile JNI functions that are native";
                 Object compiledState = cma.compiledState;
                 compilation = compiledState instanceof Compilation ? (Compilation) compiledState : null;
