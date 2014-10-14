@@ -311,7 +311,7 @@ static void mapHeapAndCode(int fd) {
     size_t virtualSpaceSize =  1024L * theHeader->reservedVirtualSpaceSize;
 
 #ifdef arm
-    log_println("ReservedVSpace Size %d ActualVSpaceSize(*1Mb) %d",theHeader->reservedVirtualSpaceSize, (int) virtualSpaceSize);
+    log_println("ReservedVSpace Size %d ActualVSpaceSize(*1Mb) %u",theHeader->reservedVirtualSpaceSize, virtualSpaceSize);
 #else
     log_println("ReservedVSpace Size %llu ActualVSpaceSize(*1Mb) %llu",theHeader->reservedVirtualSpaceSize, virtualSpaceSize);
 #endif
