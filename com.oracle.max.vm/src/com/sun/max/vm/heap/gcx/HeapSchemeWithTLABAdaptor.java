@@ -116,7 +116,7 @@ public abstract class HeapSchemeWithTLABAdaptor extends HeapSchemeWithTLAB {
         // 2^30 Kb = 1 TB of reserved virtual space.
         // This will be truncated as soon as we taxed what we need at initialization time.
         if (Platform.target().arch.is32bit()) {
-            return 4 * Size.M.toInt();
+            return 2 * Size.M.toInt();
         }
         return Size.G.toInt();
     }
