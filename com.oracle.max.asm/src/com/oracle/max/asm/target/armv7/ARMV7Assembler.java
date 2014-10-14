@@ -1177,7 +1177,12 @@ public class ARMV7Assembler extends AbstractAssembler {
         CiAddress.Scale scale = addr.scale;
         int disp = addr.displacement;
         assert addr != CiAddress.Placeholder;
-        //assert base.isValid();
+        if (base == CiRegister.Frame || base == CiRegister.CallerFrame) {
+            assert frameRegister != null : "cannot use register " + CiRegister.Frame + " in assembler with null register configuration";
+            base = frameRegister;
+        }
+        assert base.isValid();
+
 	//System.out.println("popq assert base.isValid() removed to allow boot image compile");
         // APN can we have a memory address --- not handled yet?
         // APN simple case where we just have a register destination
@@ -1204,7 +1209,13 @@ public class ARMV7Assembler extends AbstractAssembler {
         CiRegister index = addr.index();
         CiAddress.Scale scale = addr.scale;
         int disp = addr.displacement;
-        //assert base.isValid();
+       
+        if (base == CiRegister.Frame || base == CiRegister.CallerFrame) {
+            assert frameRegister != null : "cannot use register " + CiRegister.Frame + " in assembler with null register configuration";
+            base = frameRegister;
+        }
+
+        assert base.isValid();
 	//System.out.println("assert base.isValid() removed pushq for attempt at image compilation");
         // APN thinks it has to be valid or its an ERROR?
         // might not be the case if the addr is a PlaceHolder!
