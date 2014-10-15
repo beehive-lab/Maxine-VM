@@ -516,11 +516,11 @@ public class T1XTemplate {
         int nSafepoints = source.safepoints().size();
         //if (tag == null)
          //   System.out.println("tag null");
-       // System.out.println("T1XTemplate End " + method.qualifiedName());
+        //System.out.println("T1XTemplate End " + method.qualifiedName());
         // System.out.println("T1XTemplate End " + method.qualifiedName() + " " + nSafepoints +" tag " +
 // tag.toString());
         if (source.referenceLiterals() != null) {
-           // System.out.println(" REFLITS " + source.referenceLiterals().length);
+          //  System.out.println(" REFLITS " + source.referenceLiterals().length);
         }
         //if (method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.monitorexit") == 0 ||
                         //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.loadException") == 0 ||

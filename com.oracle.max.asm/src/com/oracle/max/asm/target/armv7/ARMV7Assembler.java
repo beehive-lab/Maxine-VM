@@ -382,9 +382,6 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public static int movtHelper(final ConditionFlag cond, final CiRegister Rd, final int imm16) {
         int instruction = 0x03400000;
-        if( imm16 == 0xffe4c) {
-            System.out.println("DEBUG ME movtHELPER");
-        }
         // checkConstraint(0 <= imm16 && imm16 <= 65535, "0<= imm16 && imm16 <= 65535 ");
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (imm16 >> 12) << 16;
@@ -395,6 +392,9 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public static int movwHelper(final ConditionFlag cond, final CiRegister Rd, final int imm16) {
         int instruction = 0x03000000;
+        if(imm16 == 0xfe4c) {
+            System.out.println("DEBUG ME");
+        }
         // checkConstraint(0 <= imm16 && imm16 <= 65535, "0<= imm16 && imm16 <= 65535 ");
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (imm16 >> 12) << 16;
@@ -405,7 +405,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void movw(final ConditionFlag cond, final CiRegister Rd, final int imm16) {
         int instruction = 0x03000000;
-        if( imm16 == 0xffe4c) {
+        if( imm16 == 0xfe4c) {
             System.out.println("DEBUG ME movw");
         }
         checkConstraint(0 <= imm16 && imm16 <= 65535, "0<= imm16 && imm16 <= 65535 ");
@@ -1209,7 +1209,8 @@ public class ARMV7Assembler extends AbstractAssembler {
         CiRegister index = addr.index();
         CiAddress.Scale scale = addr.scale;
         int disp = addr.displacement;
-       
+
+
         if (base == CiRegister.Frame || base == CiRegister.CallerFrame) {
             assert frameRegister != null : "cannot use register " + CiRegister.Frame + " in assembler with null register configuration";
             base = frameRegister;

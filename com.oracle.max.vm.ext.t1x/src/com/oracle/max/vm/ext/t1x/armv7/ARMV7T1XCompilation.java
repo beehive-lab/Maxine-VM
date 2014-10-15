@@ -49,6 +49,7 @@ import com.sun.max.vm.thread.VmThread;
 import com.sun.max.vm.type.Kind;
 import com.sun.max.vm.type.SignatureDescriptor;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -293,7 +294,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
          * asm.movq(dst, CiAddress.Placeholder); int dispPos = buf.position() - 4; patchInfo.addObjectLiteral(dispPos,
          * index);
          */
-        asm.ldr(ConditionFlag.Always, 0, 0, 0, dst, ARMV7.r12, ARMV7.r12, 0, 0);
+        asm.ldr(ConditionFlag.Always, 0, 1, 0, dst, ARMV7.r12, ARMV7.r15, 0, 0);
         int dispPos = buf.position() - 12; // three instructions
         patchInfo.addObjectLiteral(dispPos, index);
     }
@@ -347,7 +348,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected void storeObject(CiRegister src, int index) {
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.REFERENCE)));
-        asm.strd(ARMV7Assembler.ConditionFlag.Always, src, scratch, 0);
+        asm.str(ARMV7Assembler.ConditionFlag.Always, src, scratch, 0);
     }
 
     @Override
@@ -578,7 +579,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         int dispPos = buf.position() - 8;
       //  int dispPos = buf.position() - 12;
         patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
-        asm.str(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
+        asm.str(ConditionFlag.Always,0,1,0,ARMV7.r8,ARMV7.r12,ARMV7.r15,0,0);
+
     }
 
     @Override
@@ -1043,7 +1045,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 // Compute displacement operand position for a movq at 'pos'
                 ARMV7Assembler asm = new ARMV7Assembler(target(), null);
                 asm.setUpScratch(CiAddress.Placeholder);
-                asm.ldr(ConditionFlag.Always,  reg, r12, 0);
+                //asm.ldr(ConditionFlag.Always,reg, r12, 0);
+
+                asm.ldr(ConditionFlag.Always,  0,1,0,reg, r12,r15,0, 0);
                 int dispPos = pos + asm.codeBuffer.position() - testValue ;//* 5; // where is the setUpScratch start in the buffer
                 int disp = movqDisp(dispPos, dispFromCodeStart);
                 asm.codeBuffer.reset();
@@ -1055,7 +1059,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 		CiAddress src = CiAddress.Placeholder;
 		//System.out.println("DISPLACEMENT -- should this be -48 for the special case under consideration " + disp);
                 asm.mov32BitConstant(ARMV7.r12,disp);
-                asm.ldr(ConditionFlag.Always, reg, r12, 0); // TODO different instructions for FPregs?
+                asm.ldr(ConditionFlag.Always, 0,1,0,reg, r12,r15, 0,0); // TODO different instructions for FPregs?
+                //asm.ldr(ConditionFlag.Always,reg, r12,0); // TODO different instructions for FPregs?
+
                 byte[] pattern = asm.codeBuffer.close(true);
                 byte[] instr = Arrays.copyOfRange(source.code(), pos, pos + pattern.length);
 		/*System.out.println("findData patach Debugging " + pattern.length + " " + instr.length);
@@ -1069,6 +1075,31 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                     result[result.length - 1] = dispPos;
 		}
             }
+
+        }
+        if( result.length == 0) {
+            System.out.println("findDataPAtch problem");
+
+                PrintWriter writer = null;
+                try {
+                    writer = new PrintWriter("codebuffer.c", "UTF-8");
+                    writer.println("unsigned char codeArray[" + source.code().length + "]  = { \n");
+                    for (int i = 0; i < source.code().length; i += 4) {
+
+                            writer.println("0x" + Integer.toHexString(source.code()[i+3]) + ", " + "0x" + Integer.toHexString(source.code()[i + 2]) + ", " + "0x" + Integer.toHexString(source.code()[i + 1]) + ", " + "0x" +
+
+                                    //writer.println("0x" + Integer.toHexString(stubs[i + 3]) + ", " + "0x" + Integer.toHexString(stubs[i + 2]) + ", " + "0x" + Integer.toHexString(stubs[i + 1]) + ", " + "0x" +
+                                    Integer.toHexString(source.code()[i ]) + ",\n");
+
+                    }
+                    writer.println("0xfe, 0xff, 0xff, 0xea };\n");
+
+                    writer.close();
+                } catch (Exception e) {
+                    System.err.println(e);
+                    e.printStackTrace();
+                    writer.close();
+                }
 
         }
 
