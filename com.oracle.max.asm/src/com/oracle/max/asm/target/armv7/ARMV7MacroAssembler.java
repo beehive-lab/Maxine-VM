@@ -424,7 +424,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert dst.isFpu() && src.isFpu();
         vmov(ConditionFlag.Always,dst,src);
         if(AsmOptions.UseXmmRegToRegMoveAll) {
-            System.out.println("MOVE ALL XMM");
+            //System.out.println("MOVE ALL XMM");
         }
         /*if (AsmOptions.UseXmmRegToRegMoveAll) {
             movapd(dst, src);

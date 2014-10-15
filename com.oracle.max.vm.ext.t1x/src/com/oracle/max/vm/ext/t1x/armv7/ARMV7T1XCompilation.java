@@ -49,7 +49,7 @@ import com.sun.max.vm.thread.VmThread;
 import com.sun.max.vm.type.Kind;
 import com.sun.max.vm.type.SignatureDescriptor;
 
-import java.io.PrintWriter;
+//import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -199,7 +199,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
      */
     public static CiRegister getFloatRegister(CiRegister val) {
         int offset = 0;
-        System.out.println("ARMV7T1XCompilation number " + val.number + " encoding " + val.encoding);
+        //System.out.println("ARMV7T1XCompilation number " + val.number + " encoding " + val.encoding);
         //if(FLOATDOUBLEREGISTERS) {
             if(val.number > 31) {
                 offset = 16 + val.encoding;
@@ -279,7 +279,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         objectLiterals.add(value);
 
         // asm.movq(dst, CiAddress.Placeholder);
-        System.out.println("CiAddress.Placeholder and ARMV7T1XCompilation.assignObject pathcInfo needs workaround");
+        //System.out.println("CiAddress.Placeholder and ARMV7T1XCompilation.assignObject pathcInfo needs workaround");
         asm.nop(2);
         // leave space to do a setup scratch for a known address/value
         // it might needs to be bigger more nops required based on
@@ -294,8 +294,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
          * asm.movq(dst, CiAddress.Placeholder); int dispPos = buf.position() - 4; patchInfo.addObjectLiteral(dispPos,
          * index);
          */
-        asm.ldr(ConditionFlag.Always, 0, 1, 0, dst, ARMV7.r12, ARMV7.r15, 0, 0);
+	asm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
         int dispPos = buf.position() - 12; // three instructions
+        asm.ldr(ConditionFlag.Always,dst, r12, 0);
         patchInfo.addObjectLiteral(dispPos, index);
     }
 
@@ -566,7 +567,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         protectionLiteralIndex = objectLiterals.size();
         objectLiterals.add(T1XTargetMethod.PROTECTED);
         asm.xorq(ARMV7.r8, ARMV7.r8);
-        System.out.println("emitUnProtect partially commented out ... OBJECT LITERALS");
+        //System.out.println("emitUnProtect partially commented out ... OBJECT LITERALS");
        // asm.setUpScratch(CiAddress.Placeholder);
        // asm.str(ConditionFlag.Always,ARMV7.r8,scratch,0);
         // asm.movq(CiAddress.Placeholder, scratch);
@@ -579,7 +580,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         int dispPos = buf.position() - 8;
       //  int dispPos = buf.position() - 12;
         patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
-        asm.str(ConditionFlag.Always,0,1,0,ARMV7.r8,ARMV7.r12,ARMV7.r15,0,0);
+        asm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
+        asm.str(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,ARMV7.r15,0,0);
 
     }
 
@@ -1015,7 +1017,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                // val = asm.strHelper(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r15,ARMV7.r12,0,0);
                 //buf.emitInt(val);
 
-                System.out.println("ARMV7T1XCompilation ... OBJECT LITERAL PAtchInfo HAS BEEN allowed to emitInt need to emit store of r8? to  pc+disp " + disp);
+                //System.out.println("ARMV7T1XCompilation ... OBJECT LITERAL PAtchInfo HAS BEEN allowed to emitInt need to emit store of r8? to  pc+disp " + disp);
 
             } else {
                 throw FatalError.unexpected(String.valueOf(tag));
@@ -1046,9 +1048,10 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 ARMV7Assembler asm = new ARMV7Assembler(target(), null);
                 asm.setUpScratch(CiAddress.Placeholder);
                 //asm.ldr(ConditionFlag.Always,reg, r12, 0);
+		asm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
+                asm.ldr(ConditionFlag.Always,reg, r12, 0);
 
-                asm.ldr(ConditionFlag.Always,  0,1,0,reg, r12,r15,0, 0);
-                int dispPos = pos + asm.codeBuffer.position() - testValue ;//* 5; // where is the setUpScratch start in the buffer
+                int dispPos = pos + asm.codeBuffer.position() - testValue - 4 ;//* 5; // where is the setUpScratch start in the buffer
                 int disp = movqDisp(dispPos, dispFromCodeStart);
                 asm.codeBuffer.reset();
 		//System.out.println("POS " + pos + " DISP-POS " + dispPos + " disp " + disp + 
@@ -1059,7 +1062,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 		CiAddress src = CiAddress.Placeholder;
 		//System.out.println("DISPLACEMENT -- should this be -48 for the special case under consideration " + disp);
                 asm.mov32BitConstant(ARMV7.r12,disp);
-                asm.ldr(ConditionFlag.Always, 0,1,0,reg, r12,r15, 0,0); // TODO different instructions for FPregs?
+		asm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
+                asm.ldr(ConditionFlag.Always,reg, r12, 0);
                 //asm.ldr(ConditionFlag.Always,reg, r12,0); // TODO different instructions for FPregs?
 
                 byte[] pattern = asm.codeBuffer.close(true);
@@ -1078,9 +1082,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
         }
         if( result.length == 0) {
-            System.out.println("findDataPAtch problem");
+            //System.out.println("findDataPAtch problem");
 
-                PrintWriter writer = null;
+                /*PrintWriter writer = null;
                 try {
                     writer = new PrintWriter("codebuffer.c", "UTF-8");
                     writer.println("unsigned char codeArray[" + source.code().length + "]  = { \n");
@@ -1100,6 +1104,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                     e.printStackTrace();
                     writer.close();
                 }
+		*/
 
         }
 
