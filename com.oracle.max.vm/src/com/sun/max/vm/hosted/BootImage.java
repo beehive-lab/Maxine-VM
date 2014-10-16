@@ -795,12 +795,9 @@ public class BootImage {
         outputStream.write(relocationData);
         outputStream.write(padding);
         write(heap(), outputStream);
-        if(Platform.platform().isa == ISA.ARM) {
-            writeReversed(code(), outputStream);
-        } else {
-            write(code(), outputStream);
+        write(code(), outputStream);
 
-        }
+
         trailer.write(outputStream, header.endianness());
     }
 
@@ -813,24 +810,7 @@ public class BootImage {
             outputStream.write(array);
         }
     }
-    private void writeReversed(ByteBuffer buffer, OutputStream outputStream) throws IOException {
-        if (buffer.hasArray()) {
-            int length = buffer.array().length;
-            byte [] reversed = new byte[length];
-            byte [] tmp = buffer.array();
-            for(int i = 0; i < length;i+=4) {
-                reversed[i] = tmp[i+3];
-                reversed[i+1] = tmp[i+2];
-                reversed[i+2] = tmp[i+1];
-                reversed[i+3] = tmp[i];
-            }
-            outputStream.write(reversed, buffer.arrayOffset(), buffer.limit());
-        } else {
-            byte[] array = new byte[buffer.limit()];
-            buffer.get(array);
-            outputStream.write(array);
-        }
-    }
+
 
     /**
      * Computes the amount to add to a given size to bump it up to the next page-aligned size.
