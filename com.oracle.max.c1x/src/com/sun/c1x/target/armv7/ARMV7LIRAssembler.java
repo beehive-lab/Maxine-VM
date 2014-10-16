@@ -208,7 +208,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         } else {
 	//System.out.println("REGISTER used is " + dst.number + " pos " + masm.codeBuffer.position());
             masm.setUpScratch(tasm.recordDataReferenceInCode(constant));
-            masm.ldr(ConditionFlag.Always,dst,ARMV7.r12,0);
+            masm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
+            masm.ldr(ConditionFlag.Always,dst, ARMV7.r12, 0);
              //masm.movq(dst, tasm.recordDataReferenceInCode(constant));
         }
     }
@@ -1265,7 +1266,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         assert right.isConstant();
                         raddr = tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) right).asFloat()));
                     }
-                    System.out.println("DUBIOUS: REGISTER? float const arithmetic");
+                    //System.out.println("DUBIOUS: REGISTER? float const arithmetic");
                     masm.setUpScratch(raddr);
                     masm.vldr(ConditionFlag.Always,ARMV7.s30,ARMV7.r12,0);
                     switch (code) {
@@ -1295,7 +1296,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         raddr = tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) right).asDouble()));
                     }
 
-                    System.out.println("DUBIOUS: double const arithmetic");
+                    //System.out.println("DUBIOUS: double const arithmetic");
                     masm.setUpScratch(raddr);
                     masm.vldr(ConditionFlag.Always,ARMV7.d15,ARMV7.r12,0);
                     switch (code) {
@@ -2077,7 +2078,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
         if (src.isRegister()) {
             CiRegister value = src.asRegister();
             assert value != result;
-	    System.out.println("CHECK Semantics of clz versus bsrq concerning reutrn value  BITOPS emitSignificantBitOp");
+	    //System.out.println("CHECK Semantics of clz versus bsrq concerning reutrn value  BITOPS emitSignificantBitOp");
             if (most) {
 
                   masm.clz(ConditionFlag.Always,result,value);

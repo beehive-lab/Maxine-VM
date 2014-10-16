@@ -384,9 +384,6 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public static int movtHelper(final ConditionFlag cond, final CiRegister Rd, final int imm16) {
         int instruction = 0x03400000;
-        if( imm16 == 0xffe4c) {
-            System.out.println("DEBUG ME movtHELPER");
-        }
         // checkConstraint(0 <= imm16 && imm16 <= 65535, "0<= imm16 && imm16 <= 65535 ");
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (imm16 >> 12) << 16;
@@ -397,6 +394,9 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public static int movwHelper(final ConditionFlag cond, final CiRegister Rd, final int imm16) {
         int instruction = 0x03000000;
+        if(imm16 == 0xfe4c) {
+            //System.out.println("DEBUG ME");
+        }
         // checkConstraint(0 <= imm16 && imm16 <= 65535, "0<= imm16 && imm16 <= 65535 ");
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (imm16 >> 12) << 16;
@@ -407,8 +407,8 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void movw(final ConditionFlag cond, final CiRegister Rd, final int imm16) {
         int instruction = 0x03000000;
-        if( imm16 == 0xffe4c) {
-            System.out.println("DEBUG ME movw");
+        if( imm16 == 0xfe4c) {
+            //System.out.println("DEBUG ME movw");
         }
         checkConstraint(0 <= imm16 && imm16 <= 65535, "0<= imm16 && imm16 <= 65535 ");
         instruction |= (cond.value() & 0xf) << 28;
@@ -727,7 +727,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         } else {
             //assert (Rn.number > 31);
 	    if(Rn.number <= 31) {
-			System.out.println("movss assert removed ...attempting  vldr to a double not a single ... probably the hack to manipulate float/double registers has not been fixed in all places\n");
+			//System.out.println("movss assert removed ...attempting  vldr to a double not a single ... probably the hack to manipulate float/double registers has not been fixed in all places\n");
 	    }
             vldr(cond, Rn, Rt, 0);
         }

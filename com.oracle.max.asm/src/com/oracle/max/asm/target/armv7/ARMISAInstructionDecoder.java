@@ -112,7 +112,7 @@ public final class ARMISAInstructionDecoder {
     }
     private static int movt( final int imm16) {
         int instruction = 0xe3400000;
-        if(imm16 == 0xffe4c) {
+        if(imm16 == 0xfe4c) {
             System.out.println("DEBUG ME movt");
         }
         instruction |= (imm16 >> 12) << 16;
@@ -123,7 +123,7 @@ public final class ARMISAInstructionDecoder {
 
     private static int movw( final int imm16) {
         int instruction = 0xe3000000;
-        if(imm16 == 0xffe4c) {
+        if(imm16 == 0xfe4c) {
             System.out.println("DEBUG ME movw");
         }
         instruction |= (imm16 >> 12) << 16;
