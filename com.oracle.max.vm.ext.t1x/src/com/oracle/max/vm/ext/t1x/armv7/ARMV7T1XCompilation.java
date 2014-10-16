@@ -1085,18 +1085,18 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
         }
         if( result.length == 0) {
-            //System.out.println("findDataPAtch problem");
+            System.out.println("findDataPAtch problem");
 
-                /*PrintWriter writer = null;
+                java.io.PrintWriter writer = null;
                 try {
-                    writer = new PrintWriter("codebuffer.c", "UTF-8");
+                    writer = new java.io.PrintWriter("codebuffer.c", "UTF-8");
                     writer.println("unsigned char codeArray[" + source.code().length + "]  = { \n");
                     for (int i = 0; i < source.code().length; i += 4) {
 
-                            writer.println("0x" + Integer.toHexString(source.code()[i+3]) + ", " + "0x" + Integer.toHexString(source.code()[i + 2]) + ", " + "0x" + Integer.toHexString(source.code()[i + 1]) + ", " + "0x" +
+                            writer.println("0x" + Integer.toHexString(source.code()[i]) + ", " + "0x" + Integer.toHexString(source.code()[i + 1]) + ", " + "0x" + Integer.toHexString(source.code()[i + 2]) + ", " + "0x" +
 
                                     //writer.println("0x" + Integer.toHexString(stubs[i + 3]) + ", " + "0x" + Integer.toHexString(stubs[i + 2]) + ", " + "0x" + Integer.toHexString(stubs[i + 1]) + ", " + "0x" +
-                                    Integer.toHexString(source.code()[i ]) + ",\n");
+                                    Integer.toHexString(source.code()[i+3 ]) + ",\n");
 
                     }
                     writer.println("0xfe, 0xff, 0xff, 0xea };\n");
@@ -1107,7 +1107,6 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                     e.printStackTrace();
                     writer.close();
                 }
-		*/
 
         }
 

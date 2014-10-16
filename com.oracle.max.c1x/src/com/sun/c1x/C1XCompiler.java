@@ -110,7 +110,7 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
         C1XCompilation compilation = new C1XCompilation(this, method, osrBCI, stats, debugInfoLevel);
         try {
             if(method.name().compareTo("run")==0) {
-                System.out.println("DEBUG METHOD");
+                //System.out.println("DEBUG METHOD");
             }
             result = compilation.compile();
         } finally {

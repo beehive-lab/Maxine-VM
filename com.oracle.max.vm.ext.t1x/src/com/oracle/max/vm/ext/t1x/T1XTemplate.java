@@ -520,7 +520,7 @@ public class T1XTemplate {
         // System.out.println("T1XTemplate End " + method.qualifiedName() + " " + nSafepoints +" tag " +
 // tag.toString());
         if (source.referenceLiterals() != null) {
-          //  System.out.println(" REFLITS " + source.referenceLiterals().length);
+            //System.out.println(" REFLITS " + source.referenceLiterals().length);
         }
         //if (method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.monitorexit") == 0 ||
                         //method.qualifiedName().compareTo("com.oracle.max.vm.ext.t1x.T1XTemplateSource.loadException") == 0 ||
