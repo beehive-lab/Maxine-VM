@@ -23,8 +23,8 @@
 package com.sun.max.vm.compiler.target.arm;
 
 import com.oracle.max.asm.Label;
-import com.oracle.max.asm.target.armv7.ARMV7;
-import com.oracle.max.asm.target.armv7.ARMV7Assembler;
+import com.oracle.max.asm.target.armv7.*;
+import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
 import com.oracle.max.cri.intrinsics.UnsignedMath;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.HOSTED_ONLY;
@@ -771,7 +771,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 asm.nop(OPTIMIZED_ENTRY_POINT.offset());
                 if(asm.codeBuffer.position() != PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE) {
 			System.out.println("GOING TO CRASH mismatch  PROLOGUE SIZE NOARGS ARMAdapterGenerator " +  asm.codeBuffer.position() + " " + PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE);
-		} 
+		}
                 assert asm.codeBuffer.position() == PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;
                 copyIfOutputStream(asm.codeBuffer, out);
                 return PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;
@@ -939,20 +939,13 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
     }
 
     protected void stackCopy(ARMV7Assembler asm, Kind kind, int sourceStackOffset, int destStackOffset) {
-        // First, load into a scratch register of appropriate size for the kind, then write to memory location
-        // APN Im guessing that this copies values from one stack to another
-        // If we have a 64 bit stack copy we can do it as 2 copies.
-        // endianness?
-        //System.err.println("ARMAdapterGenerator::stackCopy STACK COPY NOT IMPLEMENTED");
         if (kind.width == WordWidth.BITS_64) {
-            // APN NOT sure how to do this ...
-            // I can certainly do it with 2 temporary registers ...
-            // or I can do it as an offset in an instruction.
-            //asm.movq(scratch, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), sourceStackOffset));
-            //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), destStackOffset), scratch);
+            assert kind == Kind.LONG;
+            asm.ldrd(ConditionFlag.Always, scratch, ARMV7.rsp, sourceStackOffset);
+            asm.strd(ConditionFlag.Always, scratch, ARMV7.rsp, destStackOffset);
         } else {
-            //asm.movzxd(scratch, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), sourceStackOffset));
-            //asm.movl(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), destStackOffset), scratch);
+            asm.ldr(ConditionFlag.Always, scratch, ARMV7.rsp, sourceStackOffset);
+            asm.str(ConditionFlag.Always, scratch, ARMV7.rsp, destStackOffset);
         }
     }
 
