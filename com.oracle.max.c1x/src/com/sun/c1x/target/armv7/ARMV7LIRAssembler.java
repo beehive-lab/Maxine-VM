@@ -303,7 +303,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case Long    : //masm.movq(rscratch1, c.asLong());
 			   masm.movlong(ARMV7.r8,c.asLong());
 			   masm.strd(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
-			  break; 
+			  break;
                            //masm.movq(frameMap.toStackAddress(slot), rscratch1); break;
             case Double  : //masm.movq(rscratch1, doubleToRawLongBits(c.asDouble()));
                            masm.movlong(ARMV7.r8,Double.doubleToRawLongBits(c.asDouble()));
@@ -359,7 +359,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
                            nullCheckHere = codePos();
                 masm.strd(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
-                          
+
                            //masm.movq(addr, rscratch1); break;
                          break;
             case Double  : //masm.movq(rscratch1, doubleToRawLongBits(constant.asDouble()));
@@ -369,7 +369,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                            //masm.movq(addr, rscratch1); break;
                 masm.strd(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
                         break;
-                          
+
             default      : throw Util.shouldNotReachHere();
         }
         // Checkstyle: on
@@ -928,8 +928,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case L2D:
                 //assert 0 == 1: "long to double convert";
                 //System.out.println("MISSING: long to double conver not implemented");
-		
-		
+
+
 
                 //masm.cvtsi2sdq(asXmmDoubleReg(dest), srcRegister);
                 break;
@@ -993,7 +993,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         CiAddress address = new CiAddress(CiKind.Object, op.address(), 0);
         CiRegister newval = op.newValue().asRegister();
         CiRegister cmpval = op.expectedValue().asRegister();
-       // assert cmpval == ARMV7.rax : "wrong register";
+        // assert cmpval == ARMV7.rax : "wrong register";
         assert newval != null : "new val must be register";
         assert cmpval != newval : "cmp and new values must be in different registers";
         assert cmpval != address.base() : "cmp and addr must be in different registers";
@@ -1001,18 +1001,14 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert cmpval != address.index() : "cmp and addr must be in different registers";
         assert newval != address.index() : "new value and addr must be in different registers";
 
-
         if (compilation.target.isMP) {
-            masm.lock();
+            masm.membar(-1);
         }
         if (op.code == LIROpcode.CasInt || op.code == LIROpcode.CasObj) {
-           // masm.cmpxchgl(newval, address);
-	  masm.cmpswapInt(newval,address);
+            masm.casInt(newval, cmpval, address);
         } else {
-            //assert op.code == LIROpcode.CasObj || op.code == LIROpcode.CasLong;
             assert op.code == LIROpcode.CasLong;
-	    masm.cmpswapLong(newval,address);
-          //  masm.cmpxchgq(newval, address);
+            masm.casLong(newval, cmpval, address);
         }
     }
 
@@ -1115,7 +1111,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             if (other.isRegister()) {
                 assert other.asRegister() != result.asRegister() : "other already overwritten by previous move";
                 if (other.kind.isInt()) {
-			masm.mov(ncond,false,result.asRegister(), other.asRegister()); 
+			masm.mov(ncond,false,result.asRegister(), other.asRegister());
                    // masm.cmovq(ncond, result.asRegister(), other.asRegister());
                 } else {
 			masm.mov(ncond,false,result.asRegister(), other.asRegister());
@@ -1421,7 +1417,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 }
 		//System.out.println("MISSING emitIntrinsicOp masm.andpd ");
 		/*
-			this implementes ai 66 0F 54 /r	ANDPD xmm1, xmm2/m128	Bitwise logical AND of xmm2/m128 and xmm1. If any part of the operand lies outside the effective address space from 0 to FFFFH. bitwise logical 
+			this implementes ai 66 0F 54 /r	ANDPD xmm1, xmm2/m128	Bitwise logical AND of xmm2/m128 and xmm1. If any part of the operand lies outside the effective address space from 0 to FFFFH. bitwise logical
 			the strategy is to move the value a float at at a time into r8 r9 and then to do the and then to move back into the dest (float)?
 		*/
           //      masm.andpd(asXmmDoubleReg(dest), tasm.recordDataReferenceInCode(CiConstant.forLong(DoubleSignMask), 16));
@@ -1640,7 +1636,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         // Must zero the high 64-bit word (in RDX) of the dividend
       //  masm.xorq(ARMV7.rdx, ARMV7.rdx);
 
-/* 
+/*
 	is rax rdx relarted to r0 r1 function args?
 THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
 */
@@ -2029,7 +2025,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
             // first move left into dest so that left is not destroyed by the shift
             CiRegister value = dest.asRegister();
             count = count & 0x1F; // Java spec
-            
+
 
             masm.mov(ConditionFlag.Always,false,dest.asRegister(),left.asRegister());
             // Checkstyle: off
@@ -2083,7 +2079,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
             assert value != result;
 	    System.out.println("CHECK Semantics of clz versus bsrq concerning reutrn value  BITOPS emitSignificantBitOp");
             if (most) {
-		
+
                   masm.clz(ConditionFlag.Always,result,value);
 		// NOTE wILL RETURN 32 if zero!!!
        //         masm.bsrq(result, value);
@@ -2855,7 +2851,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
     }
 
     public void movoop(CiAddress dst, CiConstant obj) {
-       
+
         movoop(ARMV7.r8, obj); // was rscratch1
      //   masm.movq(dst, rscratch1);
     }

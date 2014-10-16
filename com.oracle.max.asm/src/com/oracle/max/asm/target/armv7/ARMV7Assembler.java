@@ -1,5 +1,7 @@
 package com.oracle.max.asm.target.armv7;
 
+import static com.oracle.max.cri.intrinsics.MemoryBarriers.*;
+
 import com.oracle.max.asm.AbstractAssembler;
 import com.oracle.max.asm.Label;
 import com.sun.cri.ci.*;
@@ -548,7 +550,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public void strImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rvalue, final CiRegister Rmemory, int imm12) {
         int instruction = 0x04000000;
         assert imm12 == 0; // TODO fix the encoding its an ARM 12 bit
-	assert Rvalue.encoding != Rmemory.encoding || !(P == 0 && U == 0 && W == 0); 
+	assert Rvalue.encoding != Rmemory.encoding || !(P == 0 && U == 0 && W == 0);
         instruction |= (P & 0x1) << 24;
         instruction |= (U & 0x1) << 23;
         instruction |= (W & 0x1) << 21;
@@ -587,20 +589,37 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
- public void ldrex(final ConditionFlag cond, final CiRegister Rdest, final CiRegister Raddr) {
+    public void ldrex(final ConditionFlag cond, final CiRegister Rdest, final CiRegister Raddr) {
         int instruction = 0x01900f9f;
         instruction |= ((cond.value() & 0xf) << 28);
         instruction |= ((Rdest.encoding & 0xf) << 12);
         instruction |= ((Raddr.encoding & 0xf) << 16);
         emitInt(instruction);
     }
-    public void strex(final ConditionFlag cond, final CiRegister Rdest, final CiRegister Rnewval,final CiRegister Raddr) {
+
+    public void ldrexd(final ConditionFlag cond, final CiRegister Rn, final CiRegister Rt) {
+        int instruction = 0x1B00F9F;
+        instruction |= ((cond.value() & 0xf) << 28);
+        instruction |= ((Rn.encoding & 0xf) << 16);
+        instruction |= ((Rt.encoding & 0xf) << 12);
+        emitInt(instruction);
+    }
+
+    public void strex(final ConditionFlag cond, final CiRegister Rdest, final CiRegister Rnewval, final CiRegister Raddr) {
         int instruction = 0x01800f90;
         instruction |= ((cond.value() & 0xf) << 28);
         instruction |= ((Rdest.encoding & 0xf) << 12);
         instruction |= ((Raddr.encoding & 0xf) << 16);
-        instruction |= ((Rnewval.encoding & 0xf) << 0);
+        instruction |= Rnewval.encoding & 0xf;
+        emitInt(instruction);
+    }
 
+    public void strexd(final ConditionFlag cond, final CiRegister Rn, final CiRegister Rd, final CiRegister Rt) {
+        int instruction = 0x1A00F90;
+        instruction |= ((cond.value() & 0xf) << 28);
+        instruction |= ((Rn.encoding & 0xf) << 16);
+        instruction |= ((Rd.encoding & 0xf) << 12);
+        instruction |= Rt.encoding & 0xf;
         emitInt(instruction);
     }
 
@@ -992,14 +1011,14 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final void vsqrt(ConditionFlag cond,CiRegister dst, CiRegister src) {
         if((src.number > 15 && src.number < 32 && dst.number >15 && dst.number < 32) ||
           (src.number > 32 && dst.number >32)) {
-             int instruction = 0x0eb10ad0; 
+             int instruction = 0x0eb10ad0;
              instruction |= (cond.value() << 28);
              int dp = (src.number < 32) ? 1 : 0;
              instruction |= dp << 8;
              int dest = dst.encoding;
 	     int srcr = src.encoding;
              instruction |= dp << 8;
-      
+
 	     if(dp == 1) {
                  instruction |= srcr;
                  instruction |= dest << 12;
@@ -1011,10 +1030,10 @@ public class ARMV7Assembler extends AbstractAssembler {
              }
 
 
-            emitInt(instruction); 
+            emitInt(instruction);
 
         } else {
-		assert 0 == 1 : "ERROR vsqrt illegal register combination";	
+		assert 0 == 1 : "ERROR vsqrt illegal register combination";
         }
 
 
@@ -1209,7 +1228,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         CiRegister index = addr.index();
         CiAddress.Scale scale = addr.scale;
         int disp = addr.displacement;
-       
+
         if (base == CiRegister.Frame || base == CiRegister.CallerFrame) {
             assert frameRegister != null : "cannot use register " + CiRegister.Frame + " in assembler with null register configuration";
             base = frameRegister;
@@ -1383,8 +1402,13 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt((0xe << 28) | (0x3 << 24) | (0x5 << 20) | (r.encoding << 16) | 0); // sets condition flags
     }
 
-    public void membar() {
-        emitInt((0xf << 28) | (0x5 << 24) | (0x7 << 20) | (0xff05 << 4) | 0xf);
+    public void membar(int barriers) {
+        if (target.isMP) {
+            // We only have to handle StoreLoad
+            if (barriers == -1 || ((barriers & STORE_LOAD) != 0)) {
+                emitInt((0xf << 28) | (0x5 << 24) | (0x7 << 20) | (0xff05 << 4) | 0xf);
+            }
+        }
     }
 
     public void enter(short imm16) {
@@ -1912,6 +1936,15 @@ public class ARMV7Assembler extends AbstractAssembler {
                 instruction |= dest.encoding;
             }
         }
+        emitInt(instruction);
+    }
+
+    public final void teq(ConditionFlag cond, CiRegister Rn, CiRegister Rm, int imm5) {
+        int instruction = (cond.value() & 0xf) << 28;
+        instruction |= 0x13 << 20;
+        instruction |= (Rn.encoding & 0xf) << 16;
+        instruction |= (imm5 & 0x1f) << 7;
+        instruction |= (Rm.encoding & 0xf) << 16;
         emitInt(instruction);
     }
 }

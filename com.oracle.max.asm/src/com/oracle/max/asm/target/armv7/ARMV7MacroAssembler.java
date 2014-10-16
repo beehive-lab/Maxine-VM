@@ -40,54 +40,27 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void pushptr(CiAddress src) {
-        //stm(0xE,0,0,1,1,r13,src)
-        // APN obvously we need to figure out how to resolve the CiAddress issue which is explained below.
-        // in the next method.
         pushq(src);
-
-
-        /** APN
-         * A CiAddress Represents an address in target machine memory, specified via some combination of a base register, an index register,
-         * a displacement and a scale. Note that the base and index registers may be {@link CiVariable variable}, that is as yet
-         * unassigned to target machine registers.
-         *
-         * APN ok so this is problematic, Im not sure when the CiAddress might be lowered to an
-         * address that lies in memory, or in a target machine register that we can
-         * push onto the stack.
-         *
-         * prefixq(src)
-         * emitByte(0xFF)
-         * emitOperandHelper(rsi,src);
-         *
-         * A CiAddress can represent addresses of the form base + index*scale + displacement.
-         * Base & index would be registers.
-         *
-         */
-
-
     }
 
     public void popptr(CiAddress src) {
         popq(src);
     }
-    public final void cmpswapInt(CiRegister newValue, CiAddress address) {
-	/* we will use ldrex strex to implement the compare and swap
-        */
-	setUpScratch(address);
-        ldrex(ConditionFlag.Always,ARMV7.r8,ARMV7.r12);
-	strex(ConditionFlag.Always,ARMV7.r8,newValue,ARMV7.r12);
-	//System.out.println("cmpswapInt not implemented");
-        
-        
+
+    public final void casInt(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
+        setUpScratch(address);
+        ldrex(ConditionFlag.Always, ARMV7.r8, scratchRegister);
+        teq(ConditionFlag.Always, cmpValue, ARMV7.r8, 0);
+        // Keep r0 in sync with code at ARMV7LirGenerator.visitCompareAndSwap
+        strex(ConditionFlag.Equal, ARMV7.r0, newValue, scratchRegister);
     }
-    public final void cmpswapLong(CiRegister newValue, CiAddress address) {
-	/*
-        largely the same as above except we will use ldrexd (dual) and strexd (dual)
-        to be able to compare and swap the new value!
-        */
-	setUpScratch(address);
-	//System.out.println("cmpswapLong not implemented");
-        
+
+    public final void casLong(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
+        setUpScratch(address);
+        ldrexd(ConditionFlag.Always, scratchRegister, ARMV7.r8);
+        lcmpl(cmpValue, ARMV7.r8);
+        // Keep r0 in sync with code at ARMV7LirGenerator.visitCompareAndSwap
+        strexd(ConditionFlag.Equal, scratchRegister, ARMV7.r0, newValue);
     }
 
     public void xorptr(CiRegister dst, CiRegister src) {
