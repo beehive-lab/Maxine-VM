@@ -126,6 +126,7 @@ public class ARMV7 extends CiArchitecture {
     public static final CiRegisterValue RSP = r13.asValue(CiKind.Int);
     public static final CiRegister LR = r14;
     public static final CiRegister PC = r15;
+    public static final CiRegister rsp = r13;
     public static final CiRegister rip = new CiRegister(32, -1, 0, "rip");
 
     @Override
