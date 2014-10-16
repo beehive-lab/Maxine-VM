@@ -21,6 +21,7 @@ import com.oracle.max.asm.target.armv7.ARMV7;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
 import com.oracle.max.asm.target.armv7.ARMV7MacroAssembler;
+import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.vm.ext.maxri.MaxTargetMethod;
 import com.oracle.max.vm.ext.t1x.*;
 import com.sun.cri.bytecode.BytecodeLookupSwitch;
@@ -48,6 +49,8 @@ import com.sun.max.vm.stack.armv7.ARMV7JVMSFrameLayout;
 import com.sun.max.vm.thread.VmThread;
 import com.sun.max.vm.type.Kind;
 import com.sun.max.vm.type.SignatureDescriptor;
+
+
 
 //import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -597,16 +600,16 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected void do_preVolatileFieldAccess(T1XTemplateTag tag, FieldActor fieldActor) {
         if (fieldActor.isVolatile()) {
-            asm.membar(); // APN we will use the standard DMB instruction thisd might be overkill
-                          // and we might need to consider other uses/ways of doing this ....
-                          // in order to relax memory access further to account for the R-W W-R W-W semantics
+            boolean isWrite = tag.opcode == Bytecodes.PUTFIELD || tag.opcode == Bytecodes.PUTSTATIC;
+            asm.membar(isWrite ? MemoryBarriers.JMM_PRE_VOLATILE_WRITE : MemoryBarriers.JMM_PRE_VOLATILE_READ);
         }
     }
 
     @Override
     protected void do_postVolatileFieldAccess(T1XTemplateTag tag, FieldActor fieldActor) {
         if (fieldActor.isVolatile()) {
-            asm.membar(); // output a DMB instruction
+            boolean isWrite = tag.opcode == Bytecodes.PUTFIELD || tag.opcode == Bytecodes.PUTSTATIC;
+            asm.membar(isWrite ? MemoryBarriers.JMM_POST_VOLATILE_WRITE : MemoryBarriers.JMM_POST_VOLATILE_READ);
         }
     }
 
@@ -1038,7 +1041,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
         /*byte [] xx = source.code();
 	for(int ii = 0; ii < source.codeLength();ii++) {
-       		System.out.println("ORIGINALCODE " + ii + " " + xx[ii]); 
+       		System.out.println("ORIGINALCODE " + ii + " " + xx[ii]);
         }o*/
         for (int pos = 0; pos < source.codeLength(); pos++) {
             for (CiRegister reg : ARMV7.cpuRegisters) { // TODO extend this to include floats and doubles?
@@ -1054,7 +1057,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 int dispPos = pos + asm.codeBuffer.position() - testValue - 4 ;//* 5; // where is the setUpScratch start in the buffer
                 int disp = movqDisp(dispPos, dispFromCodeStart);
                 asm.codeBuffer.reset();
-		//System.out.println("POS " + pos + " DISP-POS " + dispPos + " disp " + disp + 
+		//System.out.println("POS " + pos + " DISP-POS " + dispPos + " disp " + disp +
                 //" dispfromCodeStart " + dispFromCodeStart);
 
                 // Assemble the movq instruction at 'pos' and compare it to the actual bytes at 'pos'

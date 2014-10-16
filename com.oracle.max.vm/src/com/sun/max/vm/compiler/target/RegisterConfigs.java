@@ -17,29 +17,27 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import com.oracle.max.asm.target.armv7.ARMV7;
-import com.sun.cri.ci.CiCalleeSaveLayout;
-import com.sun.cri.ci.CiRegister;
-import com.sun.cri.ci.CiRegisterConfig;
-import com.sun.cri.ri.RiRegisterAttributes;
-import com.sun.max.annotate.HOSTED_ONLY;
-import com.sun.max.lang.ISA;
-import com.sun.max.platform.OS;
-import com.sun.max.unsafe.Word;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.compiler.deopt.Deoptimization;
-import com.sun.max.vm.runtime.FatalError;
-import com.sun.max.vm.runtime.amd64.AMD64TrapFrameAccess;
-import com.sun.max.vm.runtime.arm.ARMTrapFrameAccess;
-
-import java.util.Arrays;
-import java.util.HashMap;
-
 import static com.oracle.max.asm.target.amd64.AMD64.*;
 import static com.oracle.max.asm.target.armv7.ARMV7.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
-import static com.sun.max.platform.Platform.platform;
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
+
+import java.util.*;
+
+import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.asm.target.armv7.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
+import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
+import com.sun.max.platform.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.deopt.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.amd64.*;
+import com.sun.max.vm.runtime.arm.*;
 
 /**
  * The set of register configurations applicable to compiled code in the VM.
@@ -259,15 +257,15 @@ public class RegisterConfigs {
 
                 // A call to the runtime may change the state of the safepoint latch
                 // and so a compiler stub must leave the latch register alone
-                allRegistersExceptLatch = new CiRegister[] {rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi, com.oracle.max.asm.target.amd64.AMD64.r8, com.oracle.max.asm.target.amd64.AMD64.r9,
+                allRegistersExceptLatch = new CiRegister[] {rax, rcx, rdx, rbx, AMD64.rsp, rbp, rsi, rdi, com.oracle.max.asm.target.amd64.AMD64.r8, com.oracle.max.asm.target.amd64.AMD64.r9,
                     com.oracle.max.asm.target.amd64.AMD64.r10, com.oracle.max.asm.target.amd64.AMD64.r11, com.oracle.max.asm.target.amd64.AMD64.r12,
                     com.oracle.max.asm.target.amd64.AMD64.r13, /* r14, */
                     com.oracle.max.asm.target.amd64.AMD64.r15, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15};
 
-                roleMap.put(CPU_SP, rsp);
+                roleMap.put(CPU_SP, AMD64.rsp);
                 roleMap.put(CPU_FP, rbp);
-                roleMap.put(ABI_SP, rsp);
-                roleMap.put(ABI_FP, rsp);
+                roleMap.put(ABI_SP, AMD64.rsp);
+                roleMap.put(ABI_FP, AMD64.rsp);
                 roleMap.put(LATCH, com.oracle.max.asm.target.amd64.AMD64.r14);
 
                 /**
@@ -275,7 +273,7 @@ public class RegisterConfigs {
                  * allocatable registers as caller-saved as inlining is expected to reduce the call overhead
                  * sufficiently.
                  */
-                standard = new CiRegisterConfig(rsp, // frame
+                standard = new CiRegisterConfig(AMD64.rsp, // frame
                     rax, // integral return value
                     xmm0, // floating point return value
                     com.oracle.max.asm.target.amd64.AMD64.r11, // scratch
@@ -295,7 +293,7 @@ public class RegisterConfigs {
                 standard.stackArg0Offsets[RuntimeCall.ordinal()] = javaStackArg0Offset;
                 standard.stackArg0Offsets[NativeCall.ordinal()] = nativeStackArg0Offset;
 
-                setNonZero(standard.getAttributesMap(), com.oracle.max.asm.target.amd64.AMD64.r14, rsp);
+                setNonZero(standard.getAttributesMap(), com.oracle.max.asm.target.amd64.AMD64.r14, AMD64.rsp);
 
                 CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, allRegistersExceptLatch));
                 CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, cpuxmmRegisters));
@@ -322,7 +320,7 @@ public class RegisterConfigs {
                     null, // no callee save
                     com.oracle.max.asm.target.amd64.AMD64.allRegisters, // all AMD64 registers
                     roleMap); // VM register role map
-                setNonZero(template.getAttributesMap(), com.oracle.max.asm.target.amd64.AMD64.r14, rsp, rbp);
+                setNonZero(template.getAttributesMap(), com.oracle.max.asm.target.amd64.AMD64.r14, AMD64.rsp, rbp);
 
                 return new RegisterConfigs(standard, n2j, trampoline, template, compilerStub, uncommonTrapStub, trapStub);
             }
