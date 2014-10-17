@@ -2690,8 +2690,8 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
      */
     private void bangStackWithOffset(int offset) {
         masm.setUpScratch(new CiAddress(target.wordKind, ARMV7.RSP, -offset));
-        masm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r14, ARMV7.r12, 0);
-        // assuming rax is the return address register ARMV7.r14
+        masm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r0, ARMV7.r12, 0);
+        // assuming rax is the return value register
       //  masm.movq(new CiAddress(target.wordKind, ARMV7.RSP, -offset), ARMV7.rax);
     }
 

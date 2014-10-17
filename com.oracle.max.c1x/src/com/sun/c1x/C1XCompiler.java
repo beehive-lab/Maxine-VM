@@ -109,8 +109,8 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
         TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, method);
         C1XCompilation compilation = new C1XCompilation(this, method, osrBCI, stats, debugInfoLevel);
         try {
-            if(method.name().compareTo("run")==0) {
-                //System.out.println("DEBUG METHOD");
+            if(method.name().compareTo("tlaSize")==0) {
+                System.out.println("DEBUG METHOD");
             }
             result = compilation.compile();
         } finally {
