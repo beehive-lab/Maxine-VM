@@ -216,26 +216,26 @@ public final class ARMTargetMethodUtil {
 
                     }
                     int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
-                    code[callOffset + 3] = (byte) (instruction & 0xff);
-                    code[callOffset + 2] = (byte) ((instruction >> 8) & 0xff);
-                    code[callOffset + 1] = (byte) ((instruction >> 16) & 0xff);
-                    code[callOffset] = (byte) ((instruction >> 24) & 0xff);
+                    code[callOffset + 0] = (byte) (instruction & 0xff);
+                    code[callOffset + 1] = (byte) ((instruction >> 8) & 0xff);
+                    code[callOffset + 2] = (byte) ((instruction >> 16) & 0xff);
+                    code[callOffset+3] = (byte) ((instruction >> 24) & 0xff);
                     int tmp32 = disp32 >> 16;
                     instruction = ARMV7Assembler.movtHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, tmp32 & 0xffff);
-                    code[callOffset + 7] = (byte) (instruction & 0xff);
-                    code[callOffset + 6] = (byte) ((instruction >> 8) & 0xff);
-                    code[callOffset + 5] = (byte) ((instruction >> 16) & 0xff);
-                    code[callOffset + 4] = (byte) ((instruction >> 24) & 0xff);
+                    code[callOffset + 4] = (byte) (instruction & 0xff);
+                    code[callOffset + 5] = (byte) ((instruction >> 8) & 0xff);
+                    code[callOffset + 6] = (byte) ((instruction >> 16) & 0xff);
+                    code[callOffset + 7] = (byte) ((instruction >> 24) & 0xff);
                     instruction = ARMV7Assembler.addRegistersHelper(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r15, ARMV7.r12, 0, 0);
-                    code[callOffset + 11] = (byte) (instruction & 0xff);
-                    code[callOffset + 10] = (byte) ((instruction >> 8) & 0xff);
-                    code[callOffset + 9] = (byte) ((instruction >> 16) & 0xff);
-                    code[callOffset + 8] = (byte) ((instruction >> 24) & 0xff);
+                    code[callOffset + 8] = (byte) (instruction & 0xff);
+                    code[callOffset + 9] = (byte) ((instruction >> 8) & 0xff);
+                    code[callOffset + 10] = (byte) ((instruction >> 16) & 0xff);
+                    code[callOffset + 11] = (byte) ((instruction >> 24) & 0xff);
                     instruction = ARMV7Assembler.blxHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12);
-                    code[callOffset + 15] = (byte) (instruction & 0xff);
-                    code[callOffset + 14] = (byte) ((instruction >> 8) & 0xff);
-                    code[callOffset + 13] = (byte) ((instruction >> 16) & 0xff);
-                    code[callOffset + 12] = (byte) ((instruction >> 24) & 0xff);
+                    code[callOffset + 12] = (byte) (instruction & 0xff);
+                    code[callOffset + 13] = (byte) ((instruction >> 8) & 0xff);
+                    code[callOffset + 14] = (byte) ((instruction >> 16) & 0xff);
+                    code[callOffset + 15] = (byte) ((instruction >> 24) & 0xff);
                 } else {
                     // OK this is where we need to patch
                     // BASIC IDEA WE SETUP R12 WITH THE RELATIVE OFFSET
@@ -245,22 +245,22 @@ public final class ARMTargetMethodUtil {
                     // disp32 = 25;
                     // callOffset -= 20; // DIRTY HACK
                     int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
-                    code[callOffset + 3] = (byte) (instruction & 0xff);
-                    code[callOffset + 2] = (byte) ((instruction >> 8) & 0xff);
-                    code[callOffset + 1] = (byte) ((instruction >> 16) & 0xff);
-                    code[callOffset] = (byte) ((instruction >> 24) & 0xff);
+                    code[callOffset + 0] = (byte) (instruction & 0xff);
+                    code[callOffset + 1] = (byte) ((instruction >> 8) & 0xff);
+                    code[callOffset + 2] = (byte) ((instruction >> 16) & 0xff);
+                    code[callOffset+3] = (byte) ((instruction >> 24) & 0xff);
                     int tmp32 = disp32 >> 16;
                     tmp32 = tmp32 & 0xffff;
                     instruction = ARMV7Assembler.movtHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, tmp32 & 0xffff);
-                    code[callOffset + 7] = (byte) (instruction & 0xff);
-                    code[callOffset + 6] = (byte) ((instruction >> 8) & 0xff);
-                    code[callOffset + 5] = (byte) ((instruction >> 16) & 0xff);
-                    code[callOffset + 4] = (byte) ((instruction >> 24) & 0xff);
+                    code[callOffset + 4] = (byte) (instruction & 0xff);
+                    code[callOffset + 5] = (byte) ((instruction >> 8) & 0xff);
+                    code[callOffset + 6] = (byte) ((instruction >> 16) & 0xff);
+                    code[callOffset + 7] = (byte) ((instruction >> 24) & 0xff);
                     instruction = ARMV7Assembler.addRegistersHelper(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r15, ARMV7.r12, 0, 0);
-                    code[callOffset + 11] = (byte) (instruction & 0xff);
-                    code[callOffset + 10] = (byte) ((instruction >> 8) & 0xff);
-                    code[callOffset + 9] = (byte) ((instruction >> 16) & 0xff);
-                    code[callOffset + 8] = (byte) ((instruction >> 24) & 0xff);
+                    code[callOffset + 8] = (byte) (instruction & 0xff);
+                    code[callOffset + 9] = (byte) ((instruction >> 8) & 0xff);
+                    code[callOffset + 10] = (byte) ((instruction >> 16) & 0xff);
+                    code[callOffset + 11] = (byte) ((instruction >> 24) & 0xff);
                 }
             }
         } else {

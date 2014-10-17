@@ -71,10 +71,12 @@ public class ARMCodeWriter {
                  * " + 2] = " + stubs[i+1] + ";"); writer.println("codeArray[" + i + " + 1] = " + stubs[i+2] + ";");
                  * writer.println("codeArray[" + i + " + 0] = " + stubs[i+3] + ";");
                  */
-                writer.println("0x" + Integer.toHexString(stubs[i + 3]) + ", " + "0x" + Integer.toHexString(stubs[i + 2]) + ", " + "0x" + Integer.toHexString(stubs[i + 1]) + ", " + "0x" +
-                                Integer.toHexString(stubs[i]) + ",\n");
+                //writer.println("0x" + Integer.toHexString(stubs[i + 3]) + ", " + "0x" + Integer.toHexString(stubs[i + 2]) + ", " + "0x" + Integer.toHexString(stubs[i + 1]) + ", " + "0x" +
+                                //Integer.toHexString(stubs[i]) + ",\n");
+                writer.println("0x" + Integer.toHexString(stubs[i ]) + ", " + "0x" + Integer.toHexString(stubs[i + 1]) + ", " + "0x" + Integer.toHexString(stubs[i + 2]) + ", " + "0x" +
+                        Integer.toHexString(stubs[i+3]) + ",\n");
             }
-            writer.println("0xfe, 0xff, 0xff, 0xea };\n");
+            writer.println("0xea, 0xff, 0xff, 0xfe  };\n");
             /*
              * for (int i = stubs.length/4; i < (totalInstructions+ stubs.length/4); i++) { xxx =
              * instructions[i-stubs.length/4]; val = (i-stubs.length/4) * 4+stubs.length; writer.println("codeArray[" +
@@ -112,10 +114,10 @@ public class ARMCodeWriter {
             // int val;
             for (int i = 0; i < stubs.length; i += 4) {
                 // val = i;
-                writer.println("codeArray[" + i + " + 3] = " + stubs[i] + ";");
-                writer.println("codeArray[" + i + " + 2] = " + stubs[i + 1] + ";");
-                writer.println("codeArray[" + i + " + 1] = " + stubs[i + 2] + ";");
-                writer.println("codeArray[" + i + " + 0] = " + stubs[i + 3] + ";");
+                writer.println("codeArray[" + i + " ] = " + stubs[i] + ";");
+                writer.println("codeArray[" + i + " + 1] = " + stubs[i + 1] + ";");
+                writer.println("codeArray[" + i + " + 2] = " + stubs[i + 2] + ";");
+                writer.println("codeArray[" + i + " + 3] = " + stubs[i + 3] + ";");
             }
             /*
              * for (int i = stubs.length/4; i < (totalInstructions+ stubs.length/4); i++) { xxx =
@@ -127,10 +129,10 @@ public class ARMCodeWriter {
              * & 0xff, 16) + ";"); val = val + 1; writer.println("code[" + val + "] = " + ((xxx >> 24) & 0xff) + ";");
              * log("codeArray[" + val + "] = 0x" + Long.toString((xxx >> 24) & 0xff, 16) + ";"); }
              */
-            writer.println("codeArray[" + stubs.length + "] = " + 0xfe + ";");
-            writer.println("codeArray[" + stubs.length + "+1] = " + 0xff + ";");
-            writer.println("codeArray[" + stubs.length + "+2] = " + 0xff + ";");
-            writer.println("codeArray[" + stubs.length + "+3] = " + 0xea + ";");
+            writer.println("codeArray[" + (stubs.length+3) +  "] = " + 0xfe + ";");
+            writer.println("codeArray[" + (stubs.length + 2) +"] = " + 0xff + ";");
+            writer.println("codeArray[" + (stubs.length+1) + "] = " + 0xff + ";");
+            writer.println("codeArray[" + (stubs.length) + "] = " + 0xea + ";");
             writer.println("unsigned char *code = codeArray + " + entryPoint + ";");
             writer.close();
         } catch (Exception e) {
@@ -152,8 +154,8 @@ public class ARMCodeWriter {
             for (int i = 0; i < totalInstructions; i++) {
                 xxx = instructions[i];
                 val = i * 4;
-                writer.println("code[" + val + "] = " + (xxx & 0xff) + ";");
-                log("code[" + val + "] = 0x" + Long.toString(xxx & 0xff, 16) + ";");
+                writer.println("code[" + val + "] = " + ( xxx& 0xff) + ";");
+                log("code[" + val + "] = 0x" + Long.toString((xxx ) & 0xff, 16) + ";");
                 val = val + 1;
                 writer.println("code[" + val + "] = " + ((xxx >> 8) & 0xff) + ";");
                 log("code[" + val + "] = 0x" + Long.toString((xxx >> 8) & 0xff, 16) + ";");
@@ -161,8 +163,12 @@ public class ARMCodeWriter {
                 writer.println("code[" + val + "] = " + ((xxx >> 16) & 0xff) + ";");
                 log("code[" + val + "] = 0x" + Long.toString((xxx >> 16) & 0xff, 16) + ";");
                 val = val + 1;
-                writer.println("code[" + val + "] = " + ((xxx >> 24) & 0xff) + ";");
-                log("code[" + val + "] = 0x" + Long.toString((xxx >> 24) & 0xff, 16) + ";");
+
+                writer.println("code[" + val + "] = " + (xxx >>24 & 0xff) + ";");
+                log("code[" + val + "] = 0x" + Long.toString(xxx>>24 & 0xff, 16) + ";");
+
+
+
             }
             writer.println("code[" + totalInstructions * 4 + "] = " + 0xfe + ";");
             log("code[" + totalInstructions * 4 + "] = " + 0xfe + ";");

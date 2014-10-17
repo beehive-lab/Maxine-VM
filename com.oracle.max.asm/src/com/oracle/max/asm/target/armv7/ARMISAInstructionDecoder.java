@@ -97,24 +97,24 @@ public final class ARMISAInstructionDecoder {
 
 
         instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always,ARMV7.r12,offset & 0xffff);
-        code[pos+3] = (byte) (instruction & 0xFF);
-        code[pos+2] = (byte) ((instruction >> 8) & 0xFF);
-        code[pos+1] = (byte) ((instruction >> 16) & 0xFF);
-        code[pos] = (byte) ((instruction >> 24) & 0xFF);
+        code[pos] = (byte) (instruction & 0xFF);
+        code[pos+1] = (byte) ((instruction >> 8) & 0xFF);
+        code[pos+2] = (byte) ((instruction >> 16) & 0xFF);
+        code[pos+3] = (byte) ((instruction >> 24) & 0xFF);
         offset = offset >>16;
         offset = offset & 0xffff;
         instruction = ARMV7Assembler.movtHelper(ARMV7Assembler.ConditionFlag.Always,ARMV7.r12,offset);
-        code[pos+7] = (byte) (instruction & 0xFF);
-        code[pos+6] = (byte) ((instruction >> 8) & 0xFF);
-        code[pos+5] = (byte) ((instruction >> 16) & 0xFF);
-        code[pos+4] = (byte) ((instruction >> 24) & 0xFF);
+        code[pos+4] = (byte) (instruction & 0xFF);
+        code[pos+5] = (byte) ((instruction >> 8) & 0xFF);
+        code[pos+6] = (byte) ((instruction >> 16) & 0xFF);
+        code[pos+7] = (byte) ((instruction >> 24) & 0xFF);
 
     }
     private static int movt( final int imm16) {
         int instruction = 0xe3400000;
-        if(imm16 == 0xfe4c) {
+        /*if(imm16 == 0xfe4c) {
             System.out.println("DEBUG ME movt");
-        }
+        }*/
         instruction |= (imm16 >> 12) << 16;
         instruction |= (12 & 0xf) << 12;
         instruction |= imm16 & 0xfff;
@@ -123,9 +123,9 @@ public final class ARMISAInstructionDecoder {
 
     private static int movw( final int imm16) {
         int instruction = 0xe3000000;
-        if(imm16 == 0xfe4c) {
+        /*if(imm16 == 0xfe4c) {
             System.out.println("DEBUG ME movw");
-        }
+        }*/
         instruction |= (imm16 >> 12) << 16;
         instruction |= (12 & 0xf) << 12;
         instruction |= imm16 & 0xfff;

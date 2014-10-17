@@ -406,7 +406,12 @@ static void relocate(int fd) {
 #if log_LOADER
     log_println("image.relocate [relocation map: %d bytes]", theHeader->relocationDataSize);
 #endif
+
+#ifdef arm
     relocation_apply((void *) theHeap, theHeap, relocationData, theHeader->relocationDataSize, word_BIG_ENDIAN, theHeader->wordSize);
+#else
+    relocation_apply((void *) theHeap, theHeap, relocationData, theHeader->relocationDataSize, word_BIG_ENDIAN, theHeader->wordSize);
+#endif
 
 #if !MEMORY_IMAGE
     free(relocationData);
