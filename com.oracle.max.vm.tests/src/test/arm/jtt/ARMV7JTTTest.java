@@ -106,7 +106,7 @@ public class ARMV7JTTTest extends MaxTestCase {
 
         public Args(long lfirst, float fsecond) {
             this.lfirst = lfirst;
-            this.fsecond = fsecond;
+            this.fsecond = (long)fsecond;
         }
 
 

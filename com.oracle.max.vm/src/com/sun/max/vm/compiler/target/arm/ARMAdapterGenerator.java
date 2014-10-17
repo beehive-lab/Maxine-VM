@@ -395,11 +395,8 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             ARMV7Assembler asm = new ARMV7Assembler(target(), null);
             // ANDy marking of adapter so can identify which one when gdb-ing bootimage
-            asm.mov32BitConstant(ARMV7.r12,0x22);
-            asm.mov32BitConstant(ARMV7.r12,0x22);
-            asm.mov32BitConstant(ARMV7.r12,0x22);
-            asm.mov32BitConstant(ARMV7.r12,0x22);
-            asm.mov32BitConstant(ARMV7.r12,0x22);
+	asm.movw(ConditionFlag.Always,ARMV7.r12, 2);
+            asm.movw(ConditionFlag.Always,ARMV7.r12, 2);
 
 
 
