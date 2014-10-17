@@ -143,16 +143,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public static int movRegistersHelper(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rm) {
-        int instruction = 0x01a00000;
-        instruction |= (cond.value() & 0xf) << 28;
-        instruction |= (s ? 1 : 0) << 20;
-        instruction |= (Rd.encoding & 0xf) << 12;
-        instruction |= Rm.encoding & 0xf;
-        return instruction;
-    }
-
-    public static int addRegistersHelper(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int imm2Type, final int imm5) {
+   public static int addRegistersHelper(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int imm2Type, final int imm5) {
         int instruction = 0x00800000;
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (s ? 1 : 0) << 20;

@@ -3772,7 +3772,38 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_generic_compilation() throws Exception {
+    /*
+     * @Harness: java
+     * @Runs: 1 = 1L; 2 = 2L; 3 = 3L; -1 = -1L; -2147483647 = -2147483647L;
+     * @Runs: -2147483648 = -2147483648L; 2147483647 = 2147483647L
+     */
+
+    public void test_jtt_BC_i2l() throws Exception {
+        CompilationBroker.OFFLINE = initialised;
+        String klassName = getKlassName("jtt.bytecode.BC_i2l");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(1, 1L));
+        pairs.add(new Args(2, 2L));
+        pairs.add(new Args(3, 3L));
+        pairs.add(new Args(-1, -1L));
+        pairs.add(new Args(-2147483647, -2147483647L));
+        pairs.add(new Args(-2147483648, -2147483648L));
+        pairs.add(new Args(2147483647, 2147483647L));
+        initialiseCodeBuffers(methods, "BC_i2l.java", "long test(int)");
+        int assemblerStatements = codeBytes.length / 4;
+        for (Args pair : pairs) {
+            long expectedValue = jtt.bytecode.BC_i2l.test(pair.first);
+            String functionPrototype = ARMCodeWriter.preAmble("long long", "int", Integer.toString(pair.first));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            long returnValue = Math.abs(connectRegs(registerValues[0], registerValues[1]));
+            assert returnValue ==  Math.abs(expectedValue) : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            theCompiler.cleanup();
+        }
+    }
+
+    public void ignore_generic_compilation1() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("com.sun.max.vm.compiler.deopt.Deoptimization");
         //List<TargetMethod> methods = Compile.compileMethod(new String[] { klassName}, "C1X", "patchReturnAddress");
@@ -3780,7 +3811,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         CompilationBroker.OFFLINE = true;
         theCompiler.cleanup();
     }
-    public void test_generic_compilation() throws Exception {
+    public void ignore_generic_compilation() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("com.sun.max.vm.MaxineVM");
         //List<TargetMethod> methods = Compile.compileMethod(new String[] { klassName}, "C1X", "patchReturnAddress");

@@ -25,9 +25,8 @@ package com.sun.c1x.target.armv7;
 import com.oracle.max.asm.Buffer;
 import com.oracle.max.asm.Label;
 import com.oracle.max.asm.NumUtil;
-import com.oracle.max.asm.target.armv7.ARMV7;
+import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
-import com.oracle.max.asm.target.armv7.ARMV7MacroAssembler;
 import com.oracle.max.criutils.TTY;
 import com.sun.c1x.C1XCompilation;
 import com.sun.c1x.C1XOptions;
@@ -160,13 +159,16 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         }
     }
 
-    private void moveRegs(CiRegister fromReg, CiRegister toReg, CiKind kind) {
-        if (fromReg != toReg) {
-            if (kind == CiKind.Long) {
-                masm.mov(ConditionFlag.Always, false, toReg, fromReg);
-                masm.mov(ConditionFlag.Always, false, compilation.registerConfig.getAllocatableRegisters()[toReg.number+1], compilation.registerConfig.getAllocatableRegisters()[fromReg.number+1]);
+    private void moveRegs(CiRegister src, CiRegister dest, CiKind srcKind, CiKind destKind) {
+        if (src != dest) {
+            if (srcKind == CiKind.Long && destKind == CiKind.Long) {
+                masm.mov(ConditionFlag.Always, false, dest, src);
+                masm.mov(ConditionFlag.Always, false, compilation.registerConfig.getAllocatableRegisters()[dest.number+1], compilation.registerConfig.getAllocatableRegisters()[src.number+1]);
+            } else  if (srcKind == CiKind.Int && destKind == CiKind.Long){
+                masm.mov(ConditionFlag.Always, false, dest, src);
+                masm.asr(ConditionFlag.Always, false, compilation.registerConfig.getAllocatableRegisters()[dest.number+1], dest, 31);
             } else {
-                masm.mov(ConditionFlag.Always, false, toReg, fromReg);
+                masm.mov(ConditionFlag.Always, false, dest, src);
             }
         }
     }
@@ -391,7 +393,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         } else if (dest.kind.isDouble()) {
             masm.movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(src));
         } else {
-            moveRegs(src.asRegister(), dest.asRegister(), src.kind);
+            moveRegs(src.asRegister(), dest.asRegister(), src.kind, dest.kind);
         }
     }
 
@@ -827,22 +829,11 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         CiRegister srcRegister = src.asRegister();
         switch (op.opcode) {
             case I2L:
-                //assert(0 == 1) : "Integer to long in convert";
-                //System.out.println( "Integer to long in convert not implementeda emitConvert");
-          //      masm.movslq(dest.asRegister(), srcRegister);
-          //      masm.movslq(dest.asRegister(), srcRegister);
+                moveRegs(srcRegister, dest.asRegister(), src.kind, dest.kind);
                 break;
-
             case L2I:
-
-                //assert(0 == 1) : "Long to integer in convert";
-                //System.out.println("emitConvert : Long to integer in convert not implementeda");
-
-
-                moveRegs(srcRegister, dest.asRegister(), src.kind);
-              //  masm.andl(dest.asRegister(), 0xFFFFFFFF);
+                moveRegs(srcRegister, dest.asRegister(), src.kind, dest.kind);
                 break;
-
             case I2B:
                 masm.signExtendByte(srcRegister, dest.asRegister());
                 break;
@@ -851,11 +842,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.mov32BitConstant(dest.asRegister(), 0xFFFF);
                 masm.and(ConditionFlag.Always, true, dest.asRegister(), srcRegister, dest.asRegister(), 0, 0);
                 break;
-
             case I2S:
                 masm.signExtendShort(srcRegister, dest.asRegister());
                 break;
-
             case F2D:
                 masm.vcvt(ConditionFlag.Always,asXmmDoubleReg(dest),false,false,asXmmFloatReg(src));
                 //masm.cvtss2sd(asXmmDoubleReg(dest), asXmmFloatReg(src));
@@ -1493,7 +1482,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         throw Util.shouldNotReachHere();
                 }
             }
-            moveRegs(reg, dst.asRegister(), left.kind);
+            moveRegs(reg, dst.asRegister(), left.kind, dst.kind);
         } else {
             CiRegister lreg = left.asRegister();
             if (right.isConstant()) {
@@ -1529,7 +1518,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 }
             }
             CiRegister dreg = dst.asRegister();
-            moveRegs(lreg, dreg, left.kind);
+            moveRegs(lreg, dreg, left.kind, dst.kind);
         }
         // Checkstyle: on
     }
@@ -1558,7 +1547,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
              //       masm.addl(lreg, ARMV7.rdx);
                 }
            //     masm.sarl(lreg, CiUtil.log2(divisor));
-                moveRegs(lreg, dreg, left.kind);
+                moveRegs(lreg, dreg, left.kind, result.kind);
             } else {
                 assert code == LIROpcode.Irem;
                 Label done = new Label();
@@ -2049,7 +2038,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
             CiRegister value = dest.asRegister();
             count = count & 0x1F; // Java spec
 
-            moveRegs(left.asRegister(), value, left.kind);
+            moveRegs(left.asRegister(), value, left.kind, dest.kind);
             masm.mov32BitConstant(ARMV7.r12,count);
             switch (code) {
                 case Shl  : //masm.shlq(value, count);
