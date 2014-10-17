@@ -405,7 +405,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void test_C1X_jtt_BC_imul() throws Exception {
+    public void ignore_C1X_jtt_BC_imul() throws Exception {
         initTests();
         int argsOne[] = { 1, 0, 33, 1, -2147483648, 2147483647, -2147483648};
         int argsTwo[] = { 12, -1, 67, -1, 1, -1, -1};
@@ -424,7 +424,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_T1X_jtt_BC_iadd2() throws Exception {
+    public void ignore_T1X_jtt_BC_iadd2() throws Exception {
         byte argsOne[] = { 1, 0, 33, 1, -128, 127};
         byte argsTwo[] = { 2, -1, 67, -1, 1, 1};
         initTests();
@@ -3095,7 +3095,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_BC_iadd() throws Exception {
+    public void ignore_C1X_jtt_BC_iadd() throws Exception {
         initTests();
         int argsOne[] = { 1, 0, 33, 1, -2147483648, -2147483647, 2147483647};
         int argsTwo[] = { 2, -1, 67, -1, 1, -2, 1};
@@ -3745,7 +3745,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lsub() throws Exception {
+    public void ignore_jtt_BC_lsub() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_lsub");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -3770,7 +3770,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_i2l() throws Exception {
+    public void ignore_jtt_BC_i2l() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_i2l");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -3791,6 +3791,31 @@ public class ARMV7JTTTest extends MaxTestCase {
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
             long returnValue = Math.abs(connectRegs(registerValues[0], registerValues[1]));
             assert returnValue ==  Math.abs(expectedValue) : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            theCompiler.cleanup();
+        }
+    }
+
+    public void test_jtt_BC_l2i() throws Exception {
+        CompilationBroker.OFFLINE = initialised;
+        String klassName = getKlassName("jtt.bytecode.BC_l2i");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(1L, 1));
+        pairs.add(new Args(2L, 2));
+        pairs.add(new Args(3L, 3));
+        pairs.add(new Args(-1L, -1));
+        pairs.add(new Args(-2147483647L, -2147483647));
+        pairs.add(new Args(-2147483648L, -2147483648));
+        pairs.add(new Args(2147483647L, 2147483647));
+        initialiseCodeBuffers(methods, "BC_l2i.java", "int test(long)");
+        int assemblerStatements = codeBytes.length / 4;
+        for (Args pair : pairs) {
+            long expectedValue = jtt.bytecode.BC_l2i.test(pair.lfirst);
+            String functionPrototype = ARMCodeWriter.preAmble( "int", "long long", Long.toString(pair.lfirst));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            long returnValue = connectRegs(registerValues[0], registerValues[1]);
+            assert Math.abs(returnValue) ==  Math.abs(expectedValue) : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
