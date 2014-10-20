@@ -722,7 +722,11 @@ public abstract class TargetMethod extends MemoryRegion {
                 }
                 case Object: {
                     int index = literals.objectPool.get(site.constant.asObject());
-                    patchRelativeInstruction(site.pcOffset, referenceDiff.plus(index * Word.size() - site.pcOffset).toInt());
+		    int tmp = 0;
+                    if(platform().isa == ISA.ARM ) {
+                        tmp = -12;
+                    }
+                    patchRelativeInstruction(site.pcOffset, referenceDiff.plus(index * Word.size() - site.pcOffset).toInt()+tmp);
                     break;
                 }
                 default:

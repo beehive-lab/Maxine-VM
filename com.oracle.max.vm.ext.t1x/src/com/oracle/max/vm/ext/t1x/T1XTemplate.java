@@ -601,7 +601,12 @@ if (source.referenceLiterals() != null) {
             List<ObjectLiteral> buf = new ArrayList<ObjectLiteral>(source.referenceLiterals().length);
             for (int i = 0; i < sourceLiterals.length; i++) {
                 int dispFromCodeStart = dispFromCodeStart(sourceLiterals.length, 0, i, true);
-                int[] patchPosns = findDataPatchPosns(source, dispFromCodeStart);
+		int tmp = 0;
+		if(com.sun.max.platform.Platform.platform().isa == com.sun.max.lang.ISA.ARM) {
+                    tmp = -12;
+                }
+
+                int[] patchPosns = findDataPatchPosns(source, dispFromCodeStart+tmp);
                 FatalError.check(patchPosns.length > 0, source + ": could not find load of reference literal " + i + " \"" + sourceLiterals[i] + "\"");
                 buf.add(new ObjectLiteral(sourceLiterals[i], patchPosns));
             }
