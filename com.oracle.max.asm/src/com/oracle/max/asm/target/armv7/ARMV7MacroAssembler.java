@@ -470,9 +470,23 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void xchgptr(CiRegister src1, CiRegister src2) {
         //xchgq(src1, src2);
+        // implicit locks in X86 so we need to do a lock
+        movw(ConditionFlag.Always,r12,3);
+        movw(ConditionFlag.Always,r12,3);
+        movw(ConditionFlag.Always,r12,3);
+        movw(ConditionFlag.Always,r12,3);
+        movw(ConditionFlag.Always,r12,3);
+
     }
 
     public void flog(CiRegister dest, CiRegister value, boolean base10) {
+        movw(ConditionFlag.Always,r12,4);
+        movw(ConditionFlag.Always,r12,4);
+        movw(ConditionFlag.Always,r12,4);
+        movw(ConditionFlag.Always,r12,4);
+        movw(ConditionFlag.Always,r12,4);
+
+
         /*assert value.spillSlotSize == dest.spillSlotSize;
 
         CiAddress tmp = new CiAddress(CiKind.Double, ARMV7.RSP);
@@ -493,17 +507,55 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void fsin(CiRegister dest, CiRegister value) {
         //ftrig(dest, value, 's');
+        movw(ConditionFlag.Always,r12,5);
+        movw(ConditionFlag.Always,r12,5);
+
+        movw(ConditionFlag.Always,r12,5);
+
+        movw(ConditionFlag.Always,r12,5);
+
+        movw(ConditionFlag.Always,r12,5);
+
+
     }
 
     public void fcos(CiRegister dest, CiRegister value) {
        // ftrig(dest, value, 'c');
+        movw(ConditionFlag.Always,r12,6);
+        movw(ConditionFlag.Always,r12,6);
+
+        movw(ConditionFlag.Always,r12,6);
+
+        movw(ConditionFlag.Always,r12,6);
+
+        movw(ConditionFlag.Always,r12,6);
+
+
     }
 
     public void ftan(CiRegister dest, CiRegister value) {
         //ftrig(dest, value, 't');
+        movw(ConditionFlag.Always,r12,7);
+        movw(ConditionFlag.Always,r12,7);
+
+        movw(ConditionFlag.Always,r12,7);
+
+        movw(ConditionFlag.Always,r12,7);
+
+        movw(ConditionFlag.Always,r12,7);
+
+
     }
 
     private void ftrig(CiRegister dest, CiRegister value, char op) {
+        movw(ConditionFlag.Always,r12,8);
+        movw(ConditionFlag.Always,r12,8);
+
+        movw(ConditionFlag.Always,r12,8);
+        movw(ConditionFlag.Always,r12,8);
+        movw(ConditionFlag.Always,r12,8);
+
+
         /*assert value.spillSlotSize == dest.spillSlotSize;
 
         CiAddress tmp = new CiAddress(CiKind.Double, ARMV7.RSP);

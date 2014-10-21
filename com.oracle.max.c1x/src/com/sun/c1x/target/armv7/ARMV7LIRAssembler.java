@@ -174,6 +174,13 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     }
 
     private void swapReg(CiRegister a, CiRegister b) {
+        masm.movw(ConditionFlag.Always,ARMV7.r12,9);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,9);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,9);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,9);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,9);
+
+
         masm.xchgptr(a, b);
     }
 
@@ -218,11 +225,18 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
     @Override
     public void emitTraps() {
+        masm.movw(ConditionFlag.Always,ARMV7.r12,10);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,10);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,10);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,10);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,10);
+
         //assert 0 == 1 : "emitTraps ARMV7IRAssembler";
         for (int i = 0; i < C1XOptions.MethodEndBreakpointGuards; ++i) {
             //masm.int3();
         }
         masm.nop(8); // BUGFIX for overflowing buffer on patch call ...
+
     }
 
     private void const2reg(CiRegister dst, float constant) {
@@ -329,7 +343,15 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         //assert 0 == 1 : "const2mem ARMV7IRAssembler";
 
         int nullCheckHere = codePos();
-	masm.setUpScratch(addr);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,11);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,11);
+
+        masm.movw(ConditionFlag.Always,ARMV7.r12,11);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,11);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,11);
+
+
+        masm.setUpScratch(addr);
         // Checkstyle: off
         switch (kind) {
             case Boolean :
@@ -544,6 +566,11 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     @Override
     protected void mem2stack(CiValue src, CiValue dest, CiKind kind) {
         assert 0 == 1 : "mem2stack ARMV7IRAssembler";
+        masm.movw(ConditionFlag.Always,ARMV7.r12,12);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,12);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,12);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,12);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,12);
 
         if (dest.kind.isInt()) {
             //masm.pushl((CiAddress) src);
@@ -557,6 +584,11 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     @Override
     protected void stack2stack(CiValue src, CiValue dest, CiKind kind) {
         //assert 0 == 1 : "stack2stack ARMV7IRAssembler";
+        masm.movw(ConditionFlag.Always,ARMV7.r12,13);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,13);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,13);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,13);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,13);
 
         if (src.kind.isInt()) {
            // masm.pushl(frameMap.toStackAddress((CiStackSlot) src));
@@ -619,6 +651,14 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     @Override
     protected void emitReadPrefetch(CiValue src) {
         CiAddress addr = (CiAddress) src;
+        masm.movw(ConditionFlag.Always,ARMV7.r12,14);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,14);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,14);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,14);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,14);
+
+
+
         assert 0 == 1 : "emitReadPrefetch ARMV7IRAssembler";
 
         // Checkstyle: off
@@ -675,6 +715,11 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitTableSwitch(LIRTableSwitch op) {
+        masm.movw(ConditionFlag.Always,ARMV7.r12,15);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,15);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,15);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,15);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,15);
 
         assert assertEmitTableSwitch(op);
         //assert 0 == 1 : "emitTableSwitch ARMV7IRAssembler";
@@ -909,6 +954,13 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 break;
             }
             case L2F:
+                masm.movw(ConditionFlag.Always,ARMV7.r12,16);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,16);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,16);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,16);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,16);
+
+
                 //assert 0 == 1: "long to float convert";
                // System.out.println("MISSING: long to float convert no timplemented");
                 //masm.cvtsi2ssq(asXmmFloatReg(dest), srcRegister);
@@ -919,12 +971,26 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 //assert 0 == 1: "long to double convert";
                 //System.out.println("MISSING: long to double conver not implemented");
 
+                masm.movw(ConditionFlag.Always,ARMV7.r12,17);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,17);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,17);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,17);
+
+                masm.movw(ConditionFlag.Always,ARMV7.r12,17);
+
 
 
                 //masm.cvtsi2sdq(asXmmDoubleReg(dest), srcRegister);
                 break;
 
             case F2L: {
+                masm.movw(ConditionFlag.Always,ARMV7.r12,18);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,18);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,18);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,18);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,18);
+
+
                 //assert (0 == 1) : " float to long convert";
 		//System.out.println("MISSING: F2L convert not iplemented");
                 assert srcRegister.isFpu() && dest.kind.isLong() : "must both be XMM register (no fpu stack)";
@@ -938,6 +1004,12 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             }
 
             case D2L: {
+                masm.movw(ConditionFlag.Always,ARMV7.r12,19);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,19);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,19);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,19);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,19);
+
                 //assert (0 == 1) : " double to long convert";
 		//System.out.println("MISSING: D2L notimplemented as a conversion needs runtime routines from fplib");
                 assert srcRegister.isFpu() && dest.kind.isLong() : "must both be XMM register (no fpu stack)";
@@ -956,6 +1028,13 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 break;
 
             case MOV_L2D:
+                masm.movw(ConditionFlag.Always,ARMV7.r12,20);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,20);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,20);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,20);
+
+                masm.movw(ConditionFlag.Always,ARMV7.r12,20);
+
                // System.out.println("MISSING: ARMV7LIRASssembler MOV_L2D");
                 //assert (0 == 1) : " long to double --- convert";
                // masm.movdq(asXmmDoubleReg(dest), srcRegister);
@@ -968,6 +1047,14 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 break;
 
             case MOV_D2L:
+                masm.movw(ConditionFlag.Always,ARMV7.r12,21);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,21);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,21);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,21);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,21);
+
+
+
                 //assert (0 == 1): " double to long mov compare";
                 //System.out.println("MISSING: double to long mov compare not implemented");
                 //masm.movdq(dest.asRegister(), asXmmDoubleReg(src));
@@ -991,6 +1078,13 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert cmpval != address.index() : "cmp and addr must be in different registers";
         assert newval != address.index() : "new value and addr must be in different registers";
 
+        masm.movw(ConditionFlag.Always,ARMV7.r12,22);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,22);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,22);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,22);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,22);
+
+
         if (compilation.target.isMP) {
             masm.membar(-1);
         }
@@ -1006,6 +1100,13 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     protected void emitConditionalMove(Condition condition, CiValue opr1, CiValue opr2, CiValue result) {
         ConditionFlag acond;
         ConditionFlag ncond;
+        masm.movw(ConditionFlag.Always,ARMV7.r12,23);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,23);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,23);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,23);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,23);
+
+
         switch (condition) {
             case EQ:
                 acond = ConditionFlag.Equal;
@@ -1405,12 +1506,25 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 if (asXmmDoubleReg(dest) != asXmmDoubleReg(value)) {
                     masm.movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(value));
                 }
-		//System.out.println("MISSING emitIntrinsicOp masm.andpd ");
+                int op1,op2;
+                op1 = asXmmDoubleReg(dest).encoding;
+                op2 = asXmmDoubleReg(value).encoding;
+                // crude ..
+                masm.vmov(ConditionFlag.Always,ARMV7.r8,ARMV7.floatRegisters[op1*2]);
+                masm.vmov(ConditionFlag.Always,ARMV7.r9,ARMV7.floatRegisters[op2*2]);
+                masm.and(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r9,ARMV7.r8,0,0);
+                masm.vmov(ConditionFlag.Always,ARMV7.floatRegisters[op1*2],ARMV7.r8);
+                masm.vmov(ConditionFlag.Always,ARMV7.r8,ARMV7.floatRegisters[op1*2+1]);
+                masm.vmov(ConditionFlag.Always,ARMV7.r9,ARMV7.floatRegisters[op2*2+1]);
+                masm.and(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r9,ARMV7.r8,0,0);
+                masm.vmov(ConditionFlag.Always,ARMV7.floatRegisters[op1*2+1],ARMV7.r8);
+                //System.out.println("MISSING emitIntrinsicOp masm.andpd ");
 		/*
 			this implementes ai 66 0F 54 /r	ANDPD xmm1, xmm2/m128	Bitwise logical AND of xmm2/m128 and xmm1. If any part of the operand lies outside the effective address space from 0 to FFFFH. bitwise logical
 			the strategy is to move the value a float at at a time into r8 r9 and then to do the and then to move back into the dest (float)?
 		*/
           //      masm.andpd(asXmmDoubleReg(dest), tasm.recordDataReferenceInCode(CiConstant.forLong(DoubleSignMask), 16));
+
                 break;
 
             case Sqrt:
@@ -1531,6 +1645,13 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
 
+        masm.movw(ConditionFlag.Always,ARMV7.r12,24);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,24);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,24);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,24);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,24);
+
+
         //assert 0 == 1 : "arithmeticIdiv ARMV7IRAssembler";
         if (right.isConstant()) {
             Util.shouldNotReachHere("cwi: I assume this is dead code, notify me if I'm wrong...");
@@ -1614,6 +1735,12 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert left.isRegister() : "left must be register";
         assert right.isRegister() : "right must be register";
         assert result.isRegister() : "result must be register";
+        masm.movw(ConditionFlag.Always,ARMV7.r12,25);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,25);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,25);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,25);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,25);
+
 
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
@@ -1654,6 +1781,11 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
         assert right.isRegister() : "right must be register";
         assert result.isRegister() : "result must be register";
         assert result.kind.isLong();
+        masm.movw(ConditionFlag.Always,ARMV7.r12,26);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,26);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,26);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,26);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,26);
 
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
@@ -1714,6 +1846,12 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
         assert left.isRegister() : "left must be register";
         assert right.isRegister() : "right must be register";
         assert result.isRegister() : "result must be register";
+        masm.movw(ConditionFlag.Always,ARMV7.r12,27);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,27);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,27);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,27);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,27);
+
 
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
@@ -1885,6 +2023,12 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
     @Override
     protected void emitCompare2Int(LIROpcode code, CiValue left, CiValue right, CiValue dst, LIROp2 op) {
        // assert 0 == 1 : "emitCompare2Int ARMV7IRAssembler";
+        masm.movw(ConditionFlag.Always,ARMV7.r12,28);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,28);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,28);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,28);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,28);
+
 
         if (code == LIROpcode.Cmpfd2i || code == LIROpcode.Ucmpfd2i) {
             if (left.kind.isFloat()) {
@@ -1926,6 +2070,12 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
     @Override
     protected void emitIndirectCall(Object target, LIRDebugInfo info, CiValue callAddress) {
         CiRegister reg = rscratch1;
+        masm.movw(ConditionFlag.Always,ARMV7.r12,29);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,29);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,29);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,29);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,29);
+
         if (callAddress.isRegister()) {
             reg = callAddress.asRegister();
         } else {
@@ -1936,12 +2086,26 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
 
     @Override
     protected void emitDirectCall(Object target, LIRDebugInfo info) {
+
+        masm.movw(ConditionFlag.Always,ARMV7.r12,30);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,30);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,30);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,30);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,30);
+
         directCall(target, info);
     }
 
     @Override
     protected void emitNativeCall(String symbol, LIRDebugInfo info, CiValue callAddress) {
         CiRegister reg = rscratch1;
+        masm.movw(ConditionFlag.Always,ARMV7.r12,31);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,31);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,31);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,31);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,31);
+
+
         if (callAddress.isRegister()) {
             reg = callAddress.asRegister();
         } else {
@@ -1955,6 +2119,13 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
        // exception object is not added to oop map by LinearScan
        // (LinearScan assumes that no oops are in fixed registers)
        // info.addRegisterOop(exceptionOop);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,32);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,32);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,32);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,32);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,32);
+
+
         directCall(unwind ? CiRuntimeCall.UnwindException : CiRuntimeCall.HandleException, info);
         // enough room for two byte trap
         if (!C1XOptions.EmitNopAfterCall) {
@@ -2062,6 +2233,13 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
         CiRegister result = dst.asRegister();
         masm.xorq(result, result);
         //assert 0 == 1 : "emitSignificantBitOp ARMV7IRAssembler";
+        masm.movw(ConditionFlag.Always,ARMV7.r12,33);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,33);
+
+        masm.movw(ConditionFlag.Always,ARMV7.r12,33);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,33);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,33);
+
 
         //   masm.notq(result);
         if (src.isRegister()) {
@@ -2123,6 +2301,13 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
     @Override
     protected void emitLea(CiValue src, CiValue dest) {
         CiRegister reg = dest.asRegister();
+        masm.movw(ConditionFlag.Always,ARMV7.r12,34);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,34);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,34);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,34);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,34);
+
+
         masm.leaq(reg, asAddress(src));
     }
 
@@ -2181,7 +2366,15 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
     @Override
     protected void emitMemoryBarriers(int barriers) {
     //    masm.membar(barriers);
-       //System.out.println( "emitMemoryBarriers ARMV7IRAssembler not implemented");
+        masm.movw(ConditionFlag.Always,ARMV7.r12,35);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,35);
+
+        masm.movw(ConditionFlag.Always,ARMV7.r12,35);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,35);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,35);
+
+
+        //System.out.println( "emitMemoryBarriers ARMV7IRAssembler not implemented");
 
     }
 
@@ -2438,6 +2631,13 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
                     break;
                 }
                 case CallRuntime: {
+                    masm.movw(ConditionFlag.Always,ARMV7.r12,36);
+                    masm.movw(ConditionFlag.Always,ARMV7.r12,36);
+                    masm.movw(ConditionFlag.Always,ARMV7.r12,36);
+                    masm.movw(ConditionFlag.Always,ARMV7.r12,36);
+                    masm.movw(ConditionFlag.Always,ARMV7.r12,36);
+
+
                     CiKind[] signature = new CiKind[inst.arguments.length];
                     for (int i = 0; i < signature.length; i++) {
                         signature[i] = inst.arguments[i].kind;
@@ -2726,6 +2926,13 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
     }
 
     public void callStub(XirTemplate stub, LIRDebugInfo info, CiRegister result, CiValue... args) {
+        masm.movw(ConditionFlag.Always,ARMV7.r12,37);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,37);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,37);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,37);
+        masm.movw(ConditionFlag.Always,ARMV7.r12,37);
+
+
         callStubHelper(lookupStub(stub), stub.resultOperand.kind, info, result, args);
     }
 
@@ -2841,7 +3048,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
     }
 
     public void movoop(CiAddress dst, CiConstant obj) {
-
+        masm.setUpRegister(ARMV7.r8,dst);
         movoop(ARMV7.r8, obj); // was rscratch1
      //   masm.movq(dst, rscratch1);
     }
