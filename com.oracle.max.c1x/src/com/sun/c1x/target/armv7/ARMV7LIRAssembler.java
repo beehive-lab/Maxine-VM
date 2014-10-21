@@ -2365,7 +2365,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
 
     @Override
     protected void emitMemoryBarriers(int barriers) {
-    //    masm.membar(barriers);
+       masm.membar(barriers);
         masm.movw(ConditionFlag.Always,ARMV7.r12,35);
         masm.movw(ConditionFlag.Always,ARMV7.r12,35);
 

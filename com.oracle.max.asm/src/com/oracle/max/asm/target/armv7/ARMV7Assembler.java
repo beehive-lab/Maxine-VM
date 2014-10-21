@@ -1,11 +1,14 @@
 package com.oracle.max.asm.target.armv7;
 
-import static com.oracle.max.cri.intrinsics.MemoryBarriers.*;
-
 import com.oracle.max.asm.AbstractAssembler;
 import com.oracle.max.asm.Label;
-import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiAddress;
+import com.sun.cri.ci.CiKind;
+import com.sun.cri.ci.CiRegister;
+import com.sun.cri.ci.CiTarget;
 import com.sun.cri.ri.RiRegisterConfig;
+
+import static com.oracle.max.cri.intrinsics.MemoryBarriers.STORE_LOAD;
 
 public class ARMV7Assembler extends AbstractAssembler {
 
