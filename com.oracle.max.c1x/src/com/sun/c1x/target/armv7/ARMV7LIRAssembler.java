@@ -2070,11 +2070,11 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
     @Override
     protected void emitIndirectCall(Object target, LIRDebugInfo info, CiValue callAddress) {
         CiRegister reg = rscratch1;
-        masm.movw(ConditionFlag.Always,ARMV7.r12,29);
-        masm.movw(ConditionFlag.Always,ARMV7.r12,29);
-        masm.movw(ConditionFlag.Always,ARMV7.r12,29);
-        masm.movw(ConditionFlag.Always,ARMV7.r12,29);
-        masm.movw(ConditionFlag.Always,ARMV7.r12,29);
+        masm.movw(ConditionFlag.Always,ARMV7.r8,29);
+        masm.movw(ConditionFlag.Always,ARMV7.r8,29);
+        masm.movw(ConditionFlag.Always,ARMV7.r8,29);
+        masm.movw(ConditionFlag.Always,ARMV7.r8,29);
+        masm.movw(ConditionFlag.Always,ARMV7.r8,29);
 
         if (callAddress.isRegister()) {
             reg = callAddress.asRegister();
@@ -2713,7 +2713,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
                     Label label = labels[((XirLabel) inst.extra).index];
                    //emitXirCompare(inst, Condition.AE, ConditionFlag.aboveEqual, operands, label);
 
-                    emitXirCompare(inst, Condition.AE, ConditionFlag.UnsignedLowerOrEqual, operands, label);  // negation in the XirCompare?
+                    emitXirCompare(inst, Condition.AE, ConditionFlag.CarrySetUnsignedHigherEqual, operands, label);  // negation in the XirCompare?
 
                     break;
                 }
