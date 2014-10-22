@@ -534,7 +534,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case Jsr     :
             case Int     :
             case Object  : // Object was movq but we are 32bit address space
-                masm.ldrImmediate(ConditionFlag.Always,0,0,0,dest.asRegister(),ARMV7.r12,0);
+                masm.ldrImmediate(ConditionFlag.Always,1,0,0,dest.asRegister(),ARMV7.r12,0);
                 break;
             case Long    :
                 masm.ldrd(ConditionFlag.Always,dest.asRegister(),ARMV7.r12,0);
@@ -551,7 +551,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         if (dest.kind.isInt()) {
             // we have 32 bit values ..
             masm.setUpScratch((CiAddress)src);
-            masm.ldrImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,0);
+            masm.ldrImmediate(ConditionFlag.Always,1,0,0,ARMV7.r12,ARMV7.r12,0);
             masm.setUpRegister(ARMV7.r8,(CiAddress)dest);
             masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r8,0);
             //masm.pushl((CiAddress) src);
@@ -627,7 +627,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             break;
             case Object  :// masm.movq(dest.asRegister(), addr);
             case Int:
-                masm.ldrImmediate(ConditionFlag.Always,0,0,0,dest.asRegister(),ARMV7.r12,0);
+                masm.ldrImmediate(ConditionFlag.Always,1,0,0,dest.asRegister(),ARMV7.r12,0);
                 break;
             //case Int     : masm.movslq(dest.asRegister(), addr); break;
             case Long    : //masm.movq(dest.asRegister(), addr);
@@ -1212,7 +1212,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 assert other.isStackSlot();
                 CiStackSlot otherSlot = (CiStackSlot) other;
 		masm.setUpScratch(frameMap.toStackAddress(otherSlot));
-                masm.ldrImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,0);
+                masm.ldrImmediate(ConditionFlag.Always,1,0,0,ARMV7.r12,ARMV7.r12,0);
                 if (other.kind.isInt()) {
 			masm.mov(ncond,false, result.asRegister(),ARMV7.r12);
                    // masm.cmovl(ncond, result.asRegister(), frameMap.toStackAddress(otherSlot));
@@ -1414,7 +1414,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         // register - stack
                         CiAddress raddr = frameMap.toStackAddress(((CiStackSlot) right));
                         masm.setUpScratch(raddr);
-                        masm.ldrImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, 0);
+                        masm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, ARMV7.r12, ARMV7.r12, 0);
                         // TODO what if addq subq so might be longs
                         switch (code) {
                             case Add: // masm.addq(ConditionFlag.Always,false,lreg,ARMV7.r12,0,0);
@@ -1564,7 +1564,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 // added support for stack operands
                 CiAddress raddr = frameMap.toStackAddress(((CiStackSlot) right));
                 masm.setUpScratch(raddr);
-                masm.ldrImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, 0);
+                masm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, ARMV7.r8, ARMV7.r12, 0);
                 assert (reg != ARMV7.r12);
                 switch (code) {
                     case LogicAnd:// masm.andl(reg, raddr);
@@ -2259,7 +2259,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
         } else {
             CiAddress laddr = asAddress(src);
 	    masm.setUpScratch(laddr);
-            masm.ldrImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,0);
+            masm.ldrImmediate(ConditionFlag.Always,1,0,0,ARMV7.r12,ARMV7.r12,0);
             if (most) {
                   masm.clz(ConditionFlag.Always,result,ARMV7.r12);
         //        masm.bsrq(result, laddr);
@@ -2980,7 +2980,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
 
         if (kind == CiKind.Int || kind == CiKind.Boolean) {
         //    masm.movl(dst, src);
-            masm.ldrImmediate(ConditionFlag.Always,0,0,0,dst,ARMV7.r12,0);
+            masm.ldrImmediate(ConditionFlag.Always,1,0,0,dst,ARMV7.r12,0);
         } else if (kind == CiKind.Float) {
             masm.vldr(ConditionFlag.Always,dst,ARMV7.r12,0);
          //   masm.movss(dst, src);
@@ -2992,7 +2992,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
             masm.ldrd(ConditionFlag.Always,dst,ARMV7.r12,0);
           //  masm.movq(dst, src);
         } else { // Additional clause added by APN
-            masm.ldrImmediate(ConditionFlag.Always,0,0,0,dst,ARMV7.r12,0);
+            masm.ldrImmediate(ConditionFlag.Always,1,0,0,dst,ARMV7.r12,0);
 
         }
     }

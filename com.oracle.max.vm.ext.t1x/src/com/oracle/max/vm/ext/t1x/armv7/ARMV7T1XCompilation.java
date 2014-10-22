@@ -137,7 +137,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     public void peekInt(CiRegister dst, int index) {
         asm.setUpScratch(spInt(index));
-        asm.ldrImmediate(ConditionFlag.Always, 0, 0, 0, dst, asm.scratchRegister, 0);
+        asm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, dst, asm.scratchRegister, 0);
 
     }
 
@@ -306,7 +306,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected void loadInt(CiRegister dst, int index) {
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.INT)));
-        asm.ldrImmediate(ConditionFlag.Always, 0, 0, 0, dst, ARMV7.r12, 0);
+        asm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, dst, ARMV7.r12, 0);
     }
 
     @Override
@@ -653,7 +653,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
         // Load jump table entry into r15 and jump to it
         asm.setUpScratch(new CiAddress(CiKind.Int, r7.asValue(), r9.asValue(), Scale.Times4, 0));
-        asm.ldrImmediate(ConditionFlag.Always, 0, 0, 0, r12, ARMV7.r12, 0);
+        asm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, r12, ARMV7.r12, 0);
         asm.addRegisters(ConditionFlag.Always, false, r12, ARMV7.r15, r12, 0, 0); // need to be careful are we using the right add!
         asm.add(ConditionFlag.Always, false, r12, r12, 8, 0);
         asm.mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12);
@@ -722,7 +722,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
             // Compare the value against the key
             asm.setUpScratch(new CiAddress(CiKind.Int, r6.asValue(), r7.asValue(), Scale.Times4, 0));
-            asm.ldrImmediate(ConditionFlag.Always, 0, 0, 0, r12, r12, 0);
+            asm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, r12, r12, 0);
             asm.cmpl(ARMV7.r9, ARMV7.r12);
 
             // If equal, exit loop
@@ -749,7 +749,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
             // Load jump table entry into r15 and jump to it
             asm.setUpScratch(new CiAddress(CiKind.Int, r6.asValue(), r7.asValue(), Scale.Times4, 4));
-            asm.ldrImmediate(ConditionFlag.Always, 0, 0, 0, r12, r12, 0);
+            asm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, r12, r12, 0);
             asm.addRegisters(ConditionFlag.Always, false, r12, r15, r12, 0, 0);
             asm.add(ConditionFlag.Always, false, r12, r12, 8, 0);
             asm.mov(ConditionFlag.Always, true, r15, r12);
