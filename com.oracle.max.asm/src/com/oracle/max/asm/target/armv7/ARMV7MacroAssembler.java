@@ -626,14 +626,14 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void iadd(CiRegister dest, CiRegister left, CiAddress right) {
         setUpScratch(right);
-        ldrImmediate(ConditionFlag.Always, 0, 0, 0, r1, r12, 0);
-        addRegisters(ConditionFlag.Always, true, dest, left, r1, 0, 0);
+        ldrImmediate(ConditionFlag.Always, 0, 0, 0, r12, r12, 0);
+        addRegisters(ConditionFlag.Always, true, dest, left, r12, 0, 0);
     }
 
     public void isub(CiRegister dest, CiRegister left, CiAddress right) {
         setUpScratch(right);
-        ldrImmediate(ConditionFlag.Always, 0, 0, 0, r1, r12, 0);
-        sub(ConditionFlag.Always, true, dest, left, r1, 0, 0);
+        ldrImmediate(ConditionFlag.Always, 0, 0, 0, r12, r12, 0);
+        sub(ConditionFlag.Always, true, dest, left, r12, 0, 0);
     }
 
     public void ineg(CiRegister dest, CiRegister left) {

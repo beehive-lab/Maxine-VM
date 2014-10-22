@@ -2365,13 +2365,14 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
 
     @Override
     protected void emitMemoryBarriers(int barriers) {
-       masm.membar(barriers);
         masm.movw(ConditionFlag.Always,ARMV7.r12,35);
         masm.movw(ConditionFlag.Always,ARMV7.r12,35);
 
         masm.movw(ConditionFlag.Always,ARMV7.r12,35);
         masm.movw(ConditionFlag.Always,ARMV7.r12,35);
         masm.movw(ConditionFlag.Always,ARMV7.r12,35);
+
+       masm.membar(barriers);
 
 
         //System.out.println( "emitMemoryBarriers ARMV7IRAssembler not implemented");
@@ -2785,7 +2786,8 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
                     //masm.vmov(ConditionFlag.Always,ARMV7.s6,ARMV7.s3);
                    // masm.vmov(ConditionFlag.Always,ARMV7.s4,ARMV7.s2);
                    // masm.vmov(ConditionFlag.Always,ARMV7.s2,ARMV7.s1);
-                    masm.str(ConditionFlag.Always,ARMV7.r14,ARMV7.r13,0); // save the return value!!!!!
+
+                    //masm.str(ConditionFlag.Always,ARMV7.r14,ARMV7.r13,0); // save the return value!!!!!
 
                     if (C1XOptions.ZapStackOnMethodEntry) {
                         final int intSize = 4;
@@ -2814,7 +2816,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
                         int frameToCSA = frameMap.offsetToCalleeSaveAreaStart();
                         masm.restore(csl, frameToCSA);
                     }
-                    masm.ldr(ConditionFlag.Always,ARMV7.r14,ARMV7.r13,0); // restore LR prior to adjusting stack?
+                    //masm.ldr(ConditionFlag.Always,ARMV7.r14,ARMV7.r13,0); // restore LR prior to adjusting stack?
                     masm.incrementq(ARMV7.r13,frameSize);
                   //  masm.incrementq(ARMV7.rsp, frameSize);
                     break;
