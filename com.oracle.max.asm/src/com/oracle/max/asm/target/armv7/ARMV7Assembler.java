@@ -1082,12 +1082,11 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void call(CiRegister target) {
-        // TODO APN believes that Adapters that do the necessary prologue/epilogue
-        // to save / restore state ....
-        ldrImmediate(ConditionFlag.Always, 1, 0, 0, ARMV7.r12, ARMV7.r12, 0); //
-        push(ConditionFlag.Always, 1 << 15); // PUSH the PC onto the stack
+        nop(4);
         // THIs is an indirect call, assuming the contents of the registers are a memory location we need to load
-        add(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12, 0, 0);
+        //add(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12, 0, 0);
+	int instruction = blxHelper(ConditionFlag.Always,target);
+	emitInt(instruction);
     }
 
     public final void leaq(CiRegister dest, CiAddress addr) {
