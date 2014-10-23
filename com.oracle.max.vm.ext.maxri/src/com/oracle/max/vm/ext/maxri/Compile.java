@@ -49,6 +49,8 @@ import com.sun.max.vm.value.*;
 public class Compile {
 
     private static final OptionSet options = new OptionSet(false);
+    private static int methodsFound = 0;
+    private static PrintWriter writer = null;	
 
     private static final Map<String, String> compilerAliases = RuntimeCompiler.aliases;
     private static final String compilerAliasNames = compilerAliases.keySet().toString().replaceAll("[\\[\\]]", "");
@@ -364,7 +366,11 @@ public class Compile {
 
     private static void doCompile(RuntimeCompiler compiler, List<MethodActor> methods, ProgressPrinter progress) {
         // compile all the methods and report progress
+        try {
+	writer = new PrintWriter("codebuffer.c", "UTF-8");
+	methodsFound++;
         for (MethodActor methodActor : methods) {
+	    writer.println("// " +  methodActor.toString());
             progress.begin(methodActor.toString());
             Throwable error = compile(compiler, methodActor, true);
             if (error == null) {
@@ -377,14 +383,17 @@ public class Compile {
                 }
             }
         }
+	writer.close();
+	} catch (Exception e) {
+ 		System.err.println(e);
+            	e.printStackTrace();
+            	writer.close();
+	}
     }
 
     private static void offlineDebug(byte []stubs) {
-        PrintWriter writer = null;
         try {
-            final Platform platform = Platform.platform();
-            writer = new PrintWriter("codebuffer.c", "UTF-8");
-            writer.println("unsigned char codeArray[" + stubs.length + "]  = { \n");
+            writer.println("unsigned char codeArray"+ methodsFound++ +"[" + stubs.length + "]  = { \n");
             for (int i = 0; i < stubs.length; i += 4) {
                     writer.println("0x" + Integer.toHexString(stubs[i]) + ", " + "0x" + Integer.toHexString(stubs[i + 1]) + ", " + "0x" + Integer.toHexString(stubs[i + 2]) + ", " + "0x" +
 
@@ -392,14 +401,14 @@ public class Compile {
                             Integer.toHexString(stubs[i + 3]) + ",\n");
 
             }
-            writer.println("0xfe, 0xff, 0xff, 0xea };\n");
+            writer.println("0xfe, 0xff, 0xff, 0xea };\n\n");
 
-            writer.close();
         } catch (Exception e) {
             System.err.println(e);
             e.printStackTrace();
             writer.close();
         }
+	System.out.println("METHOD FOUND " + methodsFound);
     }
     private static Throwable compile(RuntimeCompiler compiler, MethodActor method, boolean printBailout) {
         // compile a single method
@@ -427,15 +436,15 @@ public class Compile {
 
     private static List<TargetMethod> doCompile(RuntimeCompiler compiler, List<MethodActor> methods) {
         List<TargetMethod> targetMethods = new LinkedList<>();
-        for (MethodActor methodActor : methods) {
-            TargetMethod newTarget = null;
-            newTarget = compile(compiler, methodActor);
-            targetMethods.add(newTarget);
-            //targetMethods.add(compile(compiler, methodActor));
-            if(CompilationBroker.OFFLINE) {
-                ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
-                classMethodActor.compiledState = new Compilations(null,newTarget);
-                offlineAddCalls(newTarget);
+        	for (MethodActor methodActor : methods) {
+            	TargetMethod newTarget = null;
+            		newTarget = compile(compiler, methodActor);
+            		targetMethods.add(newTarget);
+            			//targetMethods.add(compile(compiler, methodActor));
+            		if(CompilationBroker.OFFLINE) {
+                	ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
+                	classMethodActor.compiledState = new Compilations(null,newTarget);
+                	offlineAddCalls(newTarget);
             }
         }
         return targetMethods;
