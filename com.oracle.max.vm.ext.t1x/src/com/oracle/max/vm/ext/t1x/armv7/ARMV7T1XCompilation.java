@@ -493,6 +493,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         if (receiverStackIndex >= 0) {
             peekObject(target, receiverStackIndex); // was rdi?
         }
+        asm.mov32BitConstant(ARMV7.r8,8);
         int causePos = buf.position();
         asm.call(target);
         int safepointPos = buf.position();
