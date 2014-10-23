@@ -394,11 +394,11 @@ public class Compile {
     private static void offlineDebug(byte []stubs) {
         try {
             writer.println("unsigned char codeArray"+ methodsFound++ +"[" + stubs.length + "]  = { \n");
-            for (int i = 0; i < stubs.length; i += 4) {
-                    writer.println("0x" + Integer.toHexString(stubs[i]) + ", " + "0x" + Integer.toHexString(stubs[i + 1]) + ", " + "0x" + Integer.toHexString(stubs[i + 2]) + ", " + "0x" +
+            for (int i = 0; i < stubs.length; i++) {
 
-                            //writer.println("0x" + Integer.toHexString(stubs[i + 3]) + ", " + "0x" + Integer.toHexString(stubs[i + 2]) + ", " + "0x" + Integer.toHexString(stubs[i + 1]) + ", " + "0x" +
-                            Integer.toHexString(stubs[i + 3]) + ",\n");
+                        writer.println("0x" + Integer.toHexString(stubs[i]) + ", ");
+
+                    
 
             }
             writer.println("0xfe, 0xff, 0xff, 0xea };\n\n");
