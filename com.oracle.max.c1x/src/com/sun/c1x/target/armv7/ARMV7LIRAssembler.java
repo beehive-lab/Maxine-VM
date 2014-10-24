@@ -2148,14 +2148,14 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
         // * count must be already in ECX (guaranteed by LinearScan)
         // * left and dest must be equal
         // * tmp must be unused
-        assert count.asRegister() == SHIFTCount : "count must be in r1";
+        assert count.asRegister() == SHIFTCount : "count must be in r8";
         assert left == dest : "left and dest must be equal";
         assert tmp.isIllegal() : "wasting a register if tmp is allocated";
         assert left.isRegister();
 
         if (left.kind.isInt()) {
             CiRegister value = left.asRegister();
-            assert value != SHIFTCount : "left cannot be r1";
+            assert value != SHIFTCount : "left cannot be r8";
 
             // Checkstyle: off
             switch (code) {
@@ -2166,7 +2166,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
             }
         } else {
             CiRegister lreg = left.asRegister();
-            assert lreg != SHIFTCount : "left cannot be r1";
+            assert lreg != SHIFTCount : "left cannot be r8";
             switch (code) {
                 case Shl  : masm.lshl(dest.asRegister(), lreg, count.asRegister());
                     break;
