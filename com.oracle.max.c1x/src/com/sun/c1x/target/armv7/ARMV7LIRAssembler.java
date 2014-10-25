@@ -22,44 +22,42 @@
  */
 package com.sun.c1x.target.armv7;
 
-import com.oracle.max.asm.Buffer;
-import com.oracle.max.asm.Label;
-import com.oracle.max.asm.NumUtil;
+import static com.sun.cri.ci.CiCallingConvention.Type.*;
+import static com.sun.cri.ci.CiValue.*;
+
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.atomic.*;
+
+import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
-import com.oracle.max.criutils.TTY;
-import com.sun.c1x.C1XCompilation;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.asm.TargetMethodAssembler;
+import com.oracle.max.criutils.*;
+import com.sun.c1x.*;
+import com.sun.c1x.asm.*;
 import com.sun.c1x.gen.LIRGenerator.DeoptimizationStub;
-import com.sun.c1x.ir.BlockBegin;
-import com.sun.c1x.ir.Condition;
-import com.sun.c1x.ir.Infopoint;
+import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.FrameMap.StackBlock;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.stub.CompilerStub;
-import com.sun.c1x.util.Util;
+import com.sun.c1x.stub.*;
+import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.JumpTable;
 import com.sun.cri.ci.CiTargetMethod.Mark;
-import com.sun.cri.xir.CiXirAssembler;
+import com.sun.cri.xir.*;
 import com.sun.cri.xir.CiXirAssembler.RuntimeCallInformation;
 import com.sun.cri.xir.CiXirAssembler.XirInstruction;
 import com.sun.cri.xir.CiXirAssembler.XirLabel;
 import com.sun.cri.xir.CiXirAssembler.XirMark;
-import com.sun.cri.xir.XirSnippet;
-import com.sun.cri.xir.XirTemplate;
-
-import java.util.Map;
-
-import static com.sun.cri.ci.CiCallingConvention.Type.RuntimeCall;
-import static com.sun.cri.ci.CiValue.IllegalValue;
 
 /**
  * This class implements the x86-specific code generation for LIR.
  */
 public final class ARMV7LIRAssembler extends LIRAssembler {
 
+    private static AtomicInteger methodCounter = new AtomicInteger(536870912);
+    private static final Object fileLock = new Object();
+    private static final boolean DEBUG_COUNT_METHODS = false;
     private static final Object[] NO_PARAMS = new Object[0];
     private static final CiRegister SHIFTCount = ARMV7.r8;
 
@@ -76,6 +74,27 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         rscratch1 = compilation.registerConfig.getScratchRegister();
     }
 
+    private void writeDebugMethod(String name, int index) throws Exception {
+        Writer writer = null;
+        synchronized (fileLock) {
+            try {
+                writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(getDebugMethodsPath() + "debugMethods.txt"), "utf-8"));
+                writer.write(index + " " + name);
+            } catch (IOException ex) {
+
+            } finally {
+                try {
+                    writer.close();
+                } catch (Exception ex) {
+                }
+            }
+        }
+    }
+
+    private String getDebugMethodsPath() {
+        return System.getenv("MAXINE_HOME") + "/maxine-tester/junit-tests/";
+
+    }
     private CiAddress asAddress(CiValue value) {
         if (value.isAddress()) {
             return (CiAddress) value;
@@ -2799,12 +2818,23 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
                        //     masm.movl(new CiAddress(CiKind.Int, ARMV7.rsp.asValue(), i * intSize), 0xC1C1C1C1);
                         }
                     }
+
                     CiCalleeSaveLayout csl = compilation.registerConfig.getCalleeSaveLayout();
                     if (csl != null && csl.size != 0) {
                         int frameToCSA = frameMap.offsetToCalleeSaveAreaStart();
                         assert frameToCSA >= 0;
                         masm.save(csl, frameToCSA);
                     }
+                    if (DEBUG_COUNT_METHODS) {
+                        int a = methodCounter.incrementAndGet();
+                        masm.mov32BitConstant(ARMV7.r12, a);
+                        try {
+                            writeDebugMethod(compilation.method.getClass().getName() +"." + compilation.method.name() , a);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+
                     break;
                 }
                 case PopFrame: {
