@@ -366,6 +366,15 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
+    public void mov(final ConditionFlag cond, final CiRegister Rd, final int immed12) {
+        int instruction = 0x3A00000;
+        assert(Rd.encoding < 16);
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (Rd.encoding & 0xf) << 12;
+        instruction |= immed12 & 0xfff;
+        emitInt(instruction);
+    }
+
     public void movt(final ConditionFlag cond, final CiRegister Rd, final int imm16) {
         int instruction = 0x03400000;
         checkConstraint(0 <= imm16 && imm16 <= 65535, "0<= imm16 && imm16 <= 65535 ");
@@ -1086,7 +1095,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         // THIs is an indirect call, assuming the contents of the registers are a memory location we need to load
         //add(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12, 0, 0);
        //ldrImmediate(ConditionFlag.Always,1,0,0,ARMV7.r12,target,0);
-	addRegisters(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r8,target,0,0); // PATCHING of emitIndirect 8 bytes out 
+	addRegisters(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r8,target,0,0); // PATCHING of emitIndirect 8 bytes out
 	int instruction = blxHelper(ConditionFlag.Always,ARMV7.r8);
 	emitInt(instruction);
     }
