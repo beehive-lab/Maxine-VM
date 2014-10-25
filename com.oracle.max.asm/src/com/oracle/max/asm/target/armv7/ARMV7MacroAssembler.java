@@ -453,7 +453,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         // AS a hack suggestion is to push a couple of registers onto the stack
         // load them with the constanv values
 
-        push(ConditionFlag.Always, (1 << 12) | 1 | 2); // r13 is the stack pointer
+        /*push(ConditionFlag.Always, (1 << 12) | 1 | 2); // r13 is the stack pointer
         setUpScratch(dst);
         mov32BitConstant(ARMV7.r0, (int) (0xffffffffL & src));
         mov32BitConstant(ARMV7.r1, (int) ((src >> 32) & 0xffffffffL));
@@ -461,6 +461,13 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         add(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, 4, 0); // add 4 to the address
         str(ConditionFlag.Always, 0, 0, 0, ARMV7.r1, ARMV7.r12, ARMV7.r1, 0, 0);
         pop(ConditionFlag.Always, (1 << 12) | 1 | 2); //restore all
+	*/
+        setUpScratch(dst);
+        mov32BitConstant(ARMV7.r8, (int) (0xffffffffL & src));
+        mov32BitConstant(ARMV7.r9, (int) ((src >> 32) & 0xffffffffL));
+        str(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, ARMV7.r0, 0, 0);
+        strImmediate(ConditionFlag.Always, 0, 1, 0, ARMV7.r9, ARMV7.r12,  4);
+        //CiAddress high = new CiAddress(dst.kind, dst.base, dst.index, dst.scale, dst.displacement + 4);
         //CiAddress high = new CiAddress(dst.kind, dst.base, dst.index, dst.scale, dst.displacement + 4);
 
         /*
@@ -605,7 +612,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
             // movq(r, new CiAddress(target.wordKind, frame, frameToCSA + offset));
             setUpScratch(new CiAddress(target.wordKind, frame, frameToCSA + offset));
             if (r.number < 16) {
-                ldrImmediate(ConditionFlag.Always, 0, 0, 0, r, r12, 0);
+                ldrImmediate(ConditionFlag.Always, 1, 0, 0, r, r12, 0);
             } else {
                 vldr(ConditionFlag.Always, r, r12, 0);
             }
@@ -626,13 +633,13 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void iadd(CiRegister dest, CiRegister left, CiAddress right) {
         setUpScratch(right);
-        ldrImmediate(ConditionFlag.Always, 0, 0, 0, r12, r12, 0);
+        ldrImmediate(ConditionFlag.Always, 1, 0, 0, r12, r12, 0);
         addRegisters(ConditionFlag.Always, true, dest, left, r12, 0, 0);
     }
 
     public void isub(CiRegister dest, CiRegister left, CiAddress right) {
         setUpScratch(right);
-        ldrImmediate(ConditionFlag.Always, 0, 0, 0, r12, r12, 0);
+        ldrImmediate(ConditionFlag.Always, 1, 0, 0, r12, r12, 0);
         sub(ConditionFlag.Always, true, dest, left, r12, 0, 0);
     }
 
@@ -684,14 +691,20 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void lshl(CiRegister dest, CiRegister left, CiRegister right) {
-        sub(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[9], right, 32, 0);
-        rsb(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[10], right, 32, 0);
-        lsl(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], right, registerConfig.getAllocatableRegisters()[left.number + 1]);
+        assert dest.encoding % 2 == 0;
+	assert  left == dest;
+	assert right == ARMV7.r8;
+	assert left != ARMV7.r8;
+	mov(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r8);	// BODGE --- need r8 as long tmp
+        sub(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r12, 32, 0);
+        rsb(ConditionFlag.Always, false, ARMV7.r9, ARMV7.r12, 32, 0);
+        lsl(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], ARMV7.r12, registerConfig.getAllocatableRegisters()[left.number + 1]);
         orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[dest.number + 1], left,
-                        registerConfig.getAllocatableRegisters()[9], 0);
+                        registerConfig.getAllocatableRegisters()[8], 0);
         orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[dest.number + 1], left,
-                        registerConfig.getAllocatableRegisters()[10], 1);
-        lsl(ConditionFlag.Always, false, dest, right, registerConfig.getAllocatableRegisters()[left.number]);
+                        registerConfig.getAllocatableRegisters()[9], 1);
+        lsl(ConditionFlag.Always, false, dest, ARMV7.r12, registerConfig.getAllocatableRegisters()[left.number]);
+	mov(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r12);
     }
 
     public void ishr(CiRegister dest, CiRegister left, int amount) {
@@ -703,14 +716,14 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void lshr(CiRegister dest, CiRegister left, CiRegister right) {
-        rsb(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[10], right, 32, 0);
-        sub(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[9], right, 32, 0);
+        rsb(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[9], right, 32, 0);
+        sub(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[8], right, 32, 0);
 
         lsr(ConditionFlag.Always, false, dest, right, registerConfig.getAllocatableRegisters()[left.number]);
         orsr(ConditionFlag.Always, false, dest, left, registerConfig.getAllocatableRegisters()[left.number + 1],
-                        registerConfig.getAllocatableRegisters()[10], 0);
+                        registerConfig.getAllocatableRegisters()[9], 0);
         orsr(ConditionFlag.Always, false, dest, left, registerConfig.getAllocatableRegisters()[left.number + 1],
-                        registerConfig.getAllocatableRegisters()[9], 1);
+                        registerConfig.getAllocatableRegisters()[8], 1);
         lsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], right, registerConfig.getAllocatableRegisters()[left.number + 1]);
     }
 
@@ -724,15 +737,15 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void lushr(CiRegister dest, CiRegister left, CiRegister right) {
         Label l = new Label();
-        rsb(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[10], right, 32, 0);
-        sub(ConditionFlag.Always, true, registerConfig.getAllocatableRegisters()[9], right, 32, 0);
+        rsb(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[9], right, 32, 0);
+        sub(ConditionFlag.Always, true, registerConfig.getAllocatableRegisters()[8], right, 32, 0);
 
         lsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], right, registerConfig.getAllocatableRegisters()[left.number + 1]);
         orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[dest.number + 1], left,
-                        registerConfig.getAllocatableRegisters()[9], 0);
+                        registerConfig.getAllocatableRegisters()[8], 0);
         jcc(ConditionFlag.Minus, l);
         orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[dest.number + 1], left,
-                        registerConfig.getAllocatableRegisters()[9], 2);
+                        registerConfig.getAllocatableRegisters()[8], 2);
         bind(l);
         asrr(ConditionFlag.Always, false, dest, right, registerConfig.getAllocatableRegisters()[left.number]);
     }
