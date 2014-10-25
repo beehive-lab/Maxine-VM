@@ -1,0 +1,51 @@
+#/bin/bash
+
+startInstruction=$1
+
+#Chop method index
+startIndex=$(grep "$startInstruction" test.data -n | cut -d':' -f1)
+
+#echo $startIndex
+
+#chop output and reverse to search the pattern for the method index
+(head -n $startIndex test.data | gtac) > test.data1
+index=1
+while read line
+do
+    delim=$((echo $line) | cut -d":" -f2 | tr -d ' ')
+    #echo $delim
+    if [ "$delim" == "subsp,sp,r12" ]
+    then
+    	myMovtIndex=$(( $index - 2 ))
+    	myMovt=$(head -n "$myMovtIndex" test.data1 | tail -1 | expand | sed 's/  */ /g')
+    	myMovwIndex=$(( $index - 1 ))
+    	myMovw=$(head -n "$myMovwIndex" test.data1 | tail -1 | expand | sed 's/  */ /g')
+    	
+    	#Start Validation that movw,movt were indeed found where expected
+    	echo $myMovw
+    	echo $myMovt
+    	tempValidateMovw=$(echo $myMovw | cut -d" " -f 3)
+    	tempValidateMovt=$(echo $myMovt | cut -d" " -f 3)
+    	if [ "$tempValidateMovw" != "movw" ]
+    	then
+    		echo "Error! Instruction found not movw $myMovw $tempValidateMovw"
+    	#else
+    		#echo "OK, MOVW!"
+    	fi
+    	if [ "$tempValidateMovt" != "movt" ]
+    	then
+    		echo "Error! Instruction found not movt $myMovt $tempValidateMovt"
+    	#else
+    		#echo "OK, MOVT!"
+    	fi
+    	#End Validation	
+    	
+    	
+    	#Get the method index from the movw
+    	methodIndex=$(echo $myMovw | cut -d"#" -f2)
+    	echo "MethodIndex: $methodIndex"
+    	
+    	
+    fi
+    index=$(( $index + 1 ))
+done < test.data1
