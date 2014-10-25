@@ -688,7 +688,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void ignore_C1X_jtt_BC_iand() throws Exception {
+    public void test_C1X_jtt_BC_iand() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_iand");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
