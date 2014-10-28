@@ -234,7 +234,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             //masm.movq(dst, 0xDEADDEADDEADDEADL);
             masm.mov32BitConstant(dst,0xDEADDEAD);
         } else {
-	//System.out.println("REGISTER used is " + dst.number + " pos " + masm.codeBuffer.position());
+	//System.out.println("const2reg is BROKEN --- REGISTER used is " + dst.number + " pos " + masm.codeBuffer.position());
             masm.setUpScratch(tasm.recordDataReferenceInCode(constant));
             masm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
             masm.ldr(ConditionFlag.Always,dst, ARMV7.r12, 0);
@@ -487,20 +487,20 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case Jsr     :
             case Object  :
             case Int     : //masm.movl(toAddr, src.asRegister()); break;
-                          masm.setUpScratch(toAddr); masm.strImmediate(ConditionFlag.Always,0,0,0,src.asRegister(),ARMV7.r12,0);break;
+                          masm.setUpScratch(toAddr); masm.strImmediate(ConditionFlag.Always,1,0,0,src.asRegister(),ARMV7.r12,0);break;
             case Long    :
-                          masm.setUpScratch(toAddr);masm.strDualImmediate(ConditionFlag.Always,0,0,0,src.asRegister(),ARMV7.r12,0);
+                          masm.setUpScratch(toAddr);masm.strDualImmediate(ConditionFlag.Always,1,0,0,src.asRegister(),ARMV7.r12,0);
                           //masm.movq(toAddr, src.asRegister());
             break;
             case Char    :
             case Short   : masm.setUpScratch(toAddr);
-                           masm.strHImmediate(ConditionFlag.Always,0,0,0,src.asRegister(),ARMV7.r12,0);
+                           masm.strHImmediate(ConditionFlag.Always,1,0,0,src.asRegister(),ARMV7.r12,0);
                            //masm.str, src.asRegister()); break;
                           break;
             case Byte    :
             case Boolean : //masm.movb(toAddr, src.asRegister());
                            masm.setUpScratch(toAddr);
-                           masm.strbImmediate(ConditionFlag.Always, 0, 0, 0, src.asRegister(), ARMV7.r12, 0);
+                           masm.strbImmediate(ConditionFlag.Always, 1, 0, 0, src.asRegister(), ARMV7.r12, 0);
              break;
             default      : throw Util.shouldNotReachHere();
         }
@@ -654,13 +654,13 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 break;
             case Boolean :
             case Byte    :// masm.movsxb(dest.asRegister(), addr);
-                    masm.ldrsb(ConditionFlag.Always,0,0,0,dest.asRegister(),ARMV7.r12,0);
+                    masm.ldrsb(ConditionFlag.Always,1,0,0,dest.asRegister(),ARMV7.r12,0);
                 break;
             case Char    : //masm.movzxl(dest.asRegister(), addr);
-                masm.ldrsb(ConditionFlag.Always,0,0,0,dest.asRegister(),ARMV7.r12,0);
+                masm.ldrsb(ConditionFlag.Always,1,0,0,dest.asRegister(),ARMV7.r12,0);
                 break;
             case Short   : //masm.movswl(dest.asRegister(), addr);
-                masm.ldrshw(ConditionFlag.Always,0,0,0,dest.asRegister(),ARMV7.r12,0);
+                masm.ldrshw(ConditionFlag.Always,1,0,0,dest.asRegister(),ARMV7.r12,0);
                 break;
             default      : throw Util.shouldNotReachHere();
         }
@@ -873,8 +873,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     case GE : acond = ConditionFlag.SignedGreaterOrEqual; /*greaterEqual;*/ break;
                     case GT : acond = ConditionFlag.SignedGreater; /*greater;*/ break;
                     case BE : acond = ConditionFlag.UnsignedLowerOrEqual; /*belowEqual;*/ break;
-                    case AE : acond = ConditionFlag.SignedGreaterOrEqual; /*aboveEqual;*/ break;
-                    case BT : acond = ConditionFlag.SignedLesser; /*below;*/ break;
+                    case AE : acond = ConditionFlag.CarrySetUnsignedHigherEqual; /*aboveEqual;*/ break;
+                    case BT : acond = ConditionFlag.CarryClearUnsignedLower; /*below;*/ break;
                     case AT : acond = ConditionFlag.UnsignedHigher; /*above;*/ break;
                     default : throw Util.shouldNotReachHere();
                 }
@@ -1163,26 +1163,26 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
               //  ncond = ConditionFlag.lessEqual;
                 break;
             case BE:
-                acond  = ConditionFlag.SignedLowerOrEqual;
-                ncond = ConditionFlag.SignedGreater;
+                acond  = ConditionFlag.UnsignedLowerOrEqual;
+                ncond = ConditionFlag.UnsignedHigher;
                // acond = ConditionFlag.belowEqual;
                // ncond = ConditionFlag.above;
                 break;
             case BT:
-                acond = ConditionFlag.SignedLesser;
-                ncond = ConditionFlag.SignedGreaterOrEqual;
+                acond = ConditionFlag.CarryClearUnsignedLower;
+                ncond = ConditionFlag.CarrySetUnsignedHigherEqual;
                // acond = ConditionFlag.below;
                // ncond = ConditionFlag.aboveEqual;
                 break;
             case AE:
-                acond = ConditionFlag.SignedGreaterOrEqual;
-                ncond = ConditionFlag.SignedLesser;
+                acond = ConditionFlag.CarrySetUnsignedHigherEqual;
+                ncond = ConditionFlag.CarryClearUnsignedLower;
                // acond = ConditionFlag.aboveEqual;
               //  ncond = ConditionFlag.below;
                 break;
             case AT:
-                acond = ConditionFlag.SignedGreater;
-                ncond = ConditionFlag.SignedLowerOrEqual;
+                acond = ConditionFlag.UnsignedHigher;
+                ncond = ConditionFlag.UnsignedLowerOrEqual;
                // acond = ConditionFlag.above;
                // ncond = ConditionFlag.belowEqual;
                 break;

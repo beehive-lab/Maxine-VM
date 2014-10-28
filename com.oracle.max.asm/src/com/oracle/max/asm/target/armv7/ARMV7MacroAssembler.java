@@ -716,15 +716,20 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void lshr(CiRegister dest, CiRegister left, CiRegister right) {
-        rsb(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[9], right, 32, 0);
-        sub(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[8], right, 32, 0);
+        assert(left == dest);
+        assert right == ARMV7.r8;
+        assert left != ARMV7.r8;
+        mov(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r8);
+        rsb(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[9], ARMV7.r12, 32, 0);
+        sub(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[8], ARMV7.r12, 32, 0);
 
-        lsr(ConditionFlag.Always, false, dest, right, registerConfig.getAllocatableRegisters()[left.number]);
+        lsr(ConditionFlag.Always, false, dest, ARMV7.r12, registerConfig.getAllocatableRegisters()[left.number]);
         orsr(ConditionFlag.Always, false, dest, left, registerConfig.getAllocatableRegisters()[left.number + 1],
                         registerConfig.getAllocatableRegisters()[9], 0);
         orsr(ConditionFlag.Always, false, dest, left, registerConfig.getAllocatableRegisters()[left.number + 1],
                         registerConfig.getAllocatableRegisters()[8], 1);
-        lsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], right, registerConfig.getAllocatableRegisters()[left.number + 1]);
+        lsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], ARMV7.r12, registerConfig.getAllocatableRegisters()[left.number + 1]);
+	mov(ConditionFlag.Always,false, ARMV7.r8, ARMV7.r12);
     }
 
     public void iushr(CiRegister dest, CiRegister left, int amount) {
@@ -737,16 +742,21 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void lushr(CiRegister dest, CiRegister left, CiRegister right) {
         Label l = new Label();
-        rsb(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[9], right, 32, 0);
-        sub(ConditionFlag.Always, true, registerConfig.getAllocatableRegisters()[8], right, 32, 0);
+        assert left  == dest;
+ 	assert right == ARMV7.r8;
+	assert left != ARMV7.r8;
+	mov(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r8);
+        rsb(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[9], ARMV7.r12, 32, 0);
+        sub(ConditionFlag.Always, true, registerConfig.getAllocatableRegisters()[8], ARMV7.r12, 32, 0);
 
-        lsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], right, registerConfig.getAllocatableRegisters()[left.number + 1]);
+        lsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], ARMV7.r12, registerConfig.getAllocatableRegisters()[left.number + 1]);
         orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[dest.number + 1], left,
                         registerConfig.getAllocatableRegisters()[8], 0);
         jcc(ConditionFlag.Minus, l);
         orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[dest.number + 1], left,
                         registerConfig.getAllocatableRegisters()[8], 2);
         bind(l);
-        asrr(ConditionFlag.Always, false, dest, right, registerConfig.getAllocatableRegisters()[left.number]);
+        asrr(ConditionFlag.Always, false, dest, ARMV7.r12, registerConfig.getAllocatableRegisters()[left.number]);
+	mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r12);
     }
 }
