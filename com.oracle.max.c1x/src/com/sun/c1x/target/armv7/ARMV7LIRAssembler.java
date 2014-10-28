@@ -1954,7 +1954,9 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
                         masm.cmpl(reg1,frameMap.toStackAddress(opr2Slot));
                         break;
                     case Long    :
-                        assert 0 == 1;
+			masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
+			masm.ldrd(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
+			masm.lcmpl(reg1,ARMV7.r8);
                         break;
                     case Object  : masm.cmpptr(reg1, frameMap.toStackAddress(opr2Slot)); break;
                     case Float   : //masm.ucomiss(reg1, frameMap.toStackAddress(opr2Slot));
@@ -1994,11 +1996,16 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
 			//System.out.println("emitCompare assert commented out --- not implemented");
                         if (c.asLong() == 0) {
                            // masm.cmpq(reg1, 0);
+			        masm.movlong(ARMV7.r8, 0);
+
                         } else {
                             //masm.movq(rscratch1, c.asLong());
-                            masm.cmpq(reg1, rscratch1);
+			        masm.movlong(ARMV7.r8, c.asLong());
+
+                            //masm.cmpq(reg1, rscratch1);
 
                         }
+			masm.lcmpl(reg1,ARMV7.r8);
                         break;
                     }
                     case Object  :  {
