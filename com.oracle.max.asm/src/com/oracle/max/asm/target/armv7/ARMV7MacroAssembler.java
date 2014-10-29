@@ -727,11 +727,13 @@ R5 DEST+1
     }
 
     public void ishr(CiRegister dest, CiRegister left, int amount) {
-        lsr(ConditionFlag.Always, true, dest, left, amount);
+        //lsr(ConditionFlag.Always, true, dest, left, amount);
+        asr(ConditionFlag.Always,true,dest,left,amount);
     }
 
     public void ishr(CiRegister dest, CiRegister left, CiRegister right) {
-        lsr(ConditionFlag.Always, true, dest, right, left);
+        //lsr(ConditionFlag.Always, true, dest, right, left);
+        asrr(ConditionFlag.Always,true,dest,right,left);
     }
 
     public void lshr(CiRegister dest, CiRegister left, CiRegister right) {
@@ -788,11 +790,16 @@ R5 DEST+1
     }
 
     public void iushr(CiRegister dest, CiRegister left, int amount) {
-        lusr(ConditionFlag.Always, true, dest, left, amount);
+        //lusr(ConditionFlag.Always, true, dest, left, amount);
+        lsr(ConditionFlag.Always, true, dest, left, amount); // logical shift right is sufficient
+        // the int amount is an ARM
+
     }
 
     public void iushr(CiRegister dest, CiRegister left, CiRegister right) {
-        lusr(ConditionFlag.Always, true, dest, right, left);
+        //lusr(ConditionFlag.Always, true, dest, right, left);
+        lsr(ConditionFlag.Always, true, dest, right, left);
+
     }
 
     public void lushr(CiRegister dest, CiRegister left, CiRegister right) {

@@ -711,7 +711,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_ishl() throws Exception {
+    public void test_jtt_BC_ishl() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -734,6 +734,109 @@ public class ARMV7JTTTest extends MaxTestCase {
         int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
+    }
+    public void test_jttC1X_BC_ishl() throws Exception {
+
+        CompilationBroker.OFFLINE = initialised;
+        String klassName = getKlassName("jtt.bytecode.BC_ishl");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        List<Args> pairs = new LinkedList<Args>();
+        /*
+        * @Harness: java
+                * @Runs: (1,2)=4; (0,-1)=0; (31,1)=62; (6, 4)=96; (-2147483648,1)=0
+                */
+        pairs.add(new Args(1, 2));
+        pairs.add(new Args(0, -1));
+        pairs.add(new Args(31, 1));
+        pairs.add(new Args(6, 4));
+        pairs.add(new Args(-2147483648, 1));
+        pairs.add(new Args(-9999, 12));
+
+
+
+        initialiseCodeBuffers(methods, "BC_ishl.java", "int test(int, int)");
+        int assemblerStatements = codeBytes.length / 4;
+        for (Args pair : pairs) {
+            int expectedValue = jtt.bytecode.BC_ishl.test(pair.first, pair.second);
+            String functionPrototype = ARMCodeWriter.preAmble("int", "int, int", Integer.toString(pair.first) + "," + Integer.toString(pair.second));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            //long returnValue = registerValues[0] | ((0xffffffffL & registerValues[1]) << 32);
+            int returnValue = registerValues[0];
+            System.out.println("ISHL EXPECTED " + expectedValue + " GOT "+ returnValue);
+
+            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] +  " " + expectedValue + " " + returnValue;
+            theCompiler.cleanup();
+        }
+    }
+    public void test_jttC1X_BC_ishr() throws Exception {
+
+        CompilationBroker.OFFLINE = initialised;
+        String klassName = getKlassName("jtt.bytecode.BC_ishr");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        List<Args> pairs = new LinkedList<Args>();
+        /*
+        * @Harness: java
+                 @Runs: (1,2)=0; (67,2)=16; (31,1)=15; (6, 4)=0; (-2147483648,16)=-32768
+                */
+        pairs.add(new Args(1, 2));
+        pairs.add(new Args(0, -1));
+        pairs.add(new Args(31, 1));
+        pairs.add(new Args(6, 4));
+        pairs.add(new Args(-2147483648, 16));
+        pairs.add(new Args(67, 2));
+
+
+
+        initialiseCodeBuffers(methods, "BC_ishr.java", "int test(int, int)");
+        int assemblerStatements = codeBytes.length / 4;
+        for (Args pair : pairs) {
+            int expectedValue = jtt.bytecode.BC_ishr.test(pair.first, pair.second);
+            String functionPrototype = ARMCodeWriter.preAmble("int", "int, int", Integer.toString(pair.first) + "," + Integer.toString(pair.second));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            int returnValue = registerValues[0];
+            System.out.println("ISHR EXPECTED " + expectedValue + " GOT "+ returnValue);
+
+            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] +  " " + expectedValue + " " + returnValue;
+            theCompiler.cleanup();
+        }
+    }
+    public void test_jttC1X_BC_iushr() throws Exception {
+
+        CompilationBroker.OFFLINE = initialised;
+        String klassName = getKlassName("jtt.bytecode.BC_iushr");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        List<Args> pairs = new LinkedList<Args>();
+        /*
+        * @Harness: java
+                * @Runs: (1,2)=4; (0,-1)=0; (31,1)=62; (6, 4)=96; (-2147483648,1)=0
+                */
+        pairs.add(new Args(1, 2));
+        pairs.add(new Args(0, -1));
+        pairs.add(new Args(31, 1));
+        pairs.add(new Args(6, 4));
+        pairs.add(new Args(-2147483648, 1));
+        pairs.add(new Args(-9999, 12));
+        pairs.add(new Args(-2048, 6));
+        pairs.add(new Args(99944444, 2));
+
+
+
+        initialiseCodeBuffers(methods, "BC_iushr.java", "int test(int, int)");
+        int assemblerStatements = codeBytes.length / 4;
+        for (Args pair : pairs) {
+            int expectedValue = jtt.bytecode.BC_iushr.test(pair.first, pair.second);
+            String functionPrototype = ARMCodeWriter.preAmble("int", "int, int", Integer.toString(pair.first) + "," + Integer.toString(pair.second));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            //long returnValue = registerValues[0] | ((0xffffffffL & registerValues[1]) << 32);
+            int returnValue = registerValues[0];
+            System.out.println("IUSHR EXPECTED " + expectedValue + " GOT "+ returnValue);
+
+            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] +  " " + expectedValue + " " + returnValue;
+            theCompiler.cleanup();
+        }
     }
 
     public void ignore_jtt_BC_ishr() throws Exception {
