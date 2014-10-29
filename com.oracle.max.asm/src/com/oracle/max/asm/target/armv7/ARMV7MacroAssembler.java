@@ -27,7 +27,6 @@ import com.oracle.max.asm.Label;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.RiRegisterConfig;
 
-import static com.oracle.max.asm.target.armv7.ARMV7.r1;
 import static com.oracle.max.asm.target.armv7.ARMV7.r12;
 
 /**
@@ -695,16 +694,36 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 	assert  left == dest;
 	assert right == ARMV7.r8;
 	assert left != ARMV7.r8;
-	mov(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r8);	// BODGE --- need r8 as long tmp
-        sub(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r12, 32, 0);
-        rsb(ConditionFlag.Always, false, ARMV7.r9, ARMV7.r12, 32, 0);
-        lsl(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], ARMV7.r12, registerConfig.getAllocatableRegisters()[left.number + 1]);
+       /*
+FINAL register usages
+R0,R12 tmp we use r9 and r12
+R1 right
+R2 LEFT
+R3 LEFT+1
+R4 DEST
+R5 DEST+1
+
+  1c:	e241c020 	sub	R12, RIGHT, #32
+  20:	e2610020 	rsb	R9, RIGHT, #32
+  24:	e1a05113 	lsl	DEST+1, LEFT+1, RIGHT // LEFT+1 destroyed by this OK
+  28:	e1855c12 	orr	DEST+1, DEST+1, LEFT, lsl R12
+  2c:	e1855032 	orr	DEST+1, DEST+1, LEFT, lsr R9
+  30:	e1a04112 	lsl	DEST, LEFT, RIGHT
+
+   */
+        mov32BitConstant(ARMV7.r12,0x3f); // We really need another register!!!!!!
+        and(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r8,ARMV7.r12,0,0);
+        sub(ConditionFlag.Always, false, ARMV7.r12, right, 32, 0);
+        rsb(ConditionFlag.Always, false, ARMV7.r9, right, 32, 0);
+        lsl(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1],
+                right,registerConfig.getAllocatableRegisters()[left.number + 1]);
+        orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1],
+                registerConfig.getAllocatableRegisters()[dest.number + 1], left,
+                        ARMV7.r12, 0);
         orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[dest.number + 1], left,
-                        registerConfig.getAllocatableRegisters()[8], 0);
-        orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[dest.number + 1], left,
-                        registerConfig.getAllocatableRegisters()[9], 1);
-        lsl(ConditionFlag.Always, false, dest, ARMV7.r12, registerConfig.getAllocatableRegisters()[left.number]);
-	mov(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r12);
+                ARMV7.r9, 1);
+        lsl(ConditionFlag.Always, false, dest, right,left);
+
     }
 
     public void ishr(CiRegister dest, CiRegister left, int amount) {
@@ -719,6 +738,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert(left == dest);
         assert right == ARMV7.r8;
         assert left != ARMV7.r8;
+        mov32BitConstant(ARMV7.r12,0x3f);
+        and(ConditionFlag.Always,false,right,right,ARMV7.r12,0,0);
         mov(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r8);
         rsb(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[9], ARMV7.r12, 32, 0);
         sub(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[8], ARMV7.r12, 32, 0);
@@ -745,6 +766,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert left  == dest;
  	assert right == ARMV7.r8;
 	assert left != ARMV7.r8;
+        mov32BitConstant(ARMV7.r12,0x3f);
+        and(ConditionFlag.Always,false,right,right,ARMV7.r12,0,0);
 	mov(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r8);
         rsb(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[9], ARMV7.r12, 32, 0);
         sub(ConditionFlag.Always, true, registerConfig.getAllocatableRegisters()[8], ARMV7.r12, 32, 0);
