@@ -2230,10 +2230,10 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
             switch (code) {
                 case Shl  : masm.ishl(dest.asRegister(), value, ARMV7.r12); break;
                 case Shr  : //masm.sarl(value, count);
-                            masm.iushr(dest.asRegister(),value,ARMV7.r12);
+                            masm.ishr(dest.asRegister(),value,ARMV7.r12);
                  break;
                 case Ushr : //masm.shrl(value, count);
-                          masm.ishr(dest.asRegister(),value,ARMV7.r12);
+                          masm.iushr(dest.asRegister(),value,ARMV7.r12);
                  break;
 
                 default   : throw Util.shouldNotReachHere();
@@ -2251,10 +2251,10 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
                            masm.lshl(value, left.asRegister(), ARMV7.r12);
                     break;
                 case Shr  : //masm.sarq(value, count);
-			   masm.lushr(value, left.asRegister(), ARMV7.r12);
+			   masm.lshr(value, left.asRegister(), ARMV7.r12);
                     break;
                case Ushr : //masm.shrq(value, count);
-                          masm.lshr(value, left.asRegister(), ARMV7.r12);
+                          masm.lushr(value, left.asRegister(), ARMV7.r12);
                    break;
                 default   : throw Util.shouldNotReachHere();
             }
