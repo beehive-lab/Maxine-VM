@@ -22,33 +22,41 @@
  */
 package com.sun.c1x.target.armv7;
 
-import static com.sun.cri.ci.CiCallingConvention.Type.*;
-import static com.sun.cri.ci.CiValue.*;
-
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.atomic.*;
-
-import com.oracle.max.asm.*;
-import com.oracle.max.asm.target.armv7.*;
+import com.oracle.max.asm.Buffer;
+import com.oracle.max.asm.Label;
+import com.oracle.max.asm.NumUtil;
+import com.oracle.max.asm.target.armv7.ARMV7;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
-import com.oracle.max.criutils.*;
-import com.sun.c1x.*;
-import com.sun.c1x.asm.*;
+import com.oracle.max.asm.target.armv7.ARMV7MacroAssembler;
+import com.oracle.max.criutils.TTY;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.asm.TargetMethodAssembler;
 import com.sun.c1x.gen.LIRGenerator.DeoptimizationStub;
-import com.sun.c1x.ir.*;
+import com.sun.c1x.ir.BlockBegin;
+import com.sun.c1x.ir.Condition;
+import com.sun.c1x.ir.Infopoint;
 import com.sun.c1x.lir.FrameMap.StackBlock;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.stub.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.stub.CompilerStub;
+import com.sun.c1x.util.Util;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.JumpTable;
 import com.sun.cri.ci.CiTargetMethod.Mark;
-import com.sun.cri.xir.*;
+import com.sun.cri.xir.CiXirAssembler;
 import com.sun.cri.xir.CiXirAssembler.RuntimeCallInformation;
 import com.sun.cri.xir.CiXirAssembler.XirInstruction;
 import com.sun.cri.xir.CiXirAssembler.XirLabel;
 import com.sun.cri.xir.CiXirAssembler.XirMark;
+import com.sun.cri.xir.XirSnippet;
+import com.sun.cri.xir.XirTemplate;
+
+import java.io.*;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.sun.cri.ci.CiCallingConvention.Type.RuntimeCall;
+import static com.sun.cri.ci.CiValue.IllegalValue;
 
 /**
  * This class implements the x86-specific code generation for LIR.
@@ -2186,8 +2194,8 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
             // Checkstyle: off
             switch (code) {
                   case Shl  : masm.ishl(dest.asRegister(), value, count.asRegister()); break;
-                  case Shr  : masm.iushr(dest.asRegister(), value, count.asRegister()); break;
-                  case Ushr : masm.ishr(dest.asRegister(), value, count.asRegister()); break;
+                  case Shr  : masm.ishr(dest.asRegister(), value, count.asRegister()); break;
+                  case Ushr : masm.iushr(dest.asRegister(), value, count.asRegister()); break;
                 default   : throw Util.shouldNotReachHere();
             }
         } else {
@@ -2196,9 +2204,9 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
             switch (code) {
                 case Shl  : masm.lshl(dest.asRegister(), lreg, count.asRegister());
                     break;
-                case Shr  : masm.lushr(dest.asRegister(), lreg, count.asRegister());
+                case Shr  : masm.lshr(dest.asRegister(), lreg, count.asRegister());
                     break;
-                case Ushr : masm.lshr(dest.asRegister(), lreg, count.asRegister());
+                case Ushr : masm.lushr(dest.asRegister(), lreg, count.asRegister());
                     break;
                 default   : throw Util.shouldNotReachHere();
             }

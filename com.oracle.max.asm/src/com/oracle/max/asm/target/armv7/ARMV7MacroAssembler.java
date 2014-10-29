@@ -738,19 +738,53 @@ R5 DEST+1
         assert(left == dest);
         assert right == ARMV7.r8;
         assert left != ARMV7.r8;
+        assert dest.encoding % 2 == 0;
+
         mov32BitConstant(ARMV7.r12,0x3f);
         and(ConditionFlag.Always,false,right,right,ARMV7.r12,0,0);
-        mov(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r8);
-        rsb(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[9], ARMV7.r12, 32, 0);
-        sub(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[8], ARMV7.r12, 32, 0);
+        /*
+         5c:	e14b01f4 	strd	r0, [fp, #-20]	; 0xffffffec
+  60:	e50b2018 	str	r2, [fp, #-24]
+  64:	e14b21d4 	ldrd	r2, [fp, #-20]	; 0xffffffec
+  R2 R3 => LEFT LEFT+1
+  68:	e51b1018 	ldr	r1, [fp, #-24]
+  R1 => RIGHT
+  R9 tmp
+  R12 tmp
+  R4 DEST, R5 DEST+1
+  R2,R3 LEFT, LEFT+1
+  6c:	e261c020 	rsb	R12, RIGHT, #32
+  70:	e2510020 	subs	R9, RIGHT, #32
+  74:	e1a04132 	lsr	DEST, LEFT, RIGHT
+  78:	e1844c13 	orr	DEST, DEST, LEFT+1, lsl r12
+  7c:	4a000000 	bmi	84 <rightshift+0x34>
+  80:	e1844053 	orr	DEST, DEST, LEFT+1, asr R9
+  84:	e1a05153 	asr	DEST+1, LEFT+1, RIGHT
 
-        lsr(ConditionFlag.Always, false, dest, ARMV7.r12, registerConfig.getAllocatableRegisters()[left.number]);
-        orsr(ConditionFlag.Always, false, dest, left, registerConfig.getAllocatableRegisters()[left.number + 1],
-                        registerConfig.getAllocatableRegisters()[9], 0);
-        orsr(ConditionFlag.Always, false, dest, left, registerConfig.getAllocatableRegisters()[left.number + 1],
-                        registerConfig.getAllocatableRegisters()[8], 1);
-        lsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], ARMV7.r12, registerConfig.getAllocatableRegisters()[left.number + 1]);
-	mov(ConditionFlag.Always,false, ARMV7.r8, ARMV7.r12);
+ 60:	e50b2018 	str	r2, [fp, #-24]
+  64:	e14b21d4 	ldrd	r2, [fp, #-20]	; 0xffffffec
+  68:	e51b1018 	ldr	r1, [fp, #-24]
+  6c:	e261c020 	rsb	ip, r1, #32
+  70:	e2510020 	subs	r0, r1, #32
+  74:	e1a04132 	lsr	r4, r2, r1
+  78:	e1844c13 	orr	r4, r4, r3, lsl ip
+  7c:	4a000000 	bmi	84 <rightshift+0x34>
+  80:	e1844053 	orr	r4, r4, r3, asr r0
+  84:	e1a05153 	asr	r5, r3, r1
+
+         */
+        rsb(ConditionFlag.Always, false, ARMV7.r12, right, 32, 0);
+        sub(ConditionFlag.Always, true, ARMV7.r9, right, 32, 0);
+
+        lsr(ConditionFlag.Always, false, dest, right, left);
+        orsr(ConditionFlag.Always, false, dest, dest,
+                registerConfig.getAllocatableRegisters()[left.number + 1], ARMV7.r12, 0);
+
+        orsr(ConditionFlag.Positive, false, dest, dest,
+                registerConfig.getAllocatableRegisters()[left.number + 1],
+                        ARMV7.r9, 2);
+        asrr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1],
+                right, registerConfig.getAllocatableRegisters()[left.number + 1]);
     }
 
     public void iushr(CiRegister dest, CiRegister left, int amount) {
@@ -764,22 +798,41 @@ R5 DEST+1
     public void lushr(CiRegister dest, CiRegister left, CiRegister right) {
         Label l = new Label();
         assert left  == dest;
+        assert dest.encoding % 2 == 0;
  	assert right == ARMV7.r8;
 	assert left != ARMV7.r8;
+
+        /*
+          5c:	e14b01f4 	strd	r0, [fp, #-20]	; 0xffffffec
+  60:	e50b2018 	str	r2, [fp, #-24]
+  64:	e14b21d4 	ldrd	r2, [fp, #-20]	; 0xffffffec
+  68:	e51b1018 	ldr	r1, [fp, #-24]
+
+  R12 is tmp
+  R9 is tmp
+  R2 LEFT R3 LEFT+1
+  R1 RIGHT
+  6c:	e261c020 	rsb	R12, RIGHT, #32
+  70:	e2410020 	sub	R9, RIGHT, #32
+  74:	e1a04132 	lsr	DEST, LEFT, RIGHT
+  78:	e1844c13 	orr	DEST, DEST, LEFT+1, lsl R12
+  7c:	e1844033 	orr	DEST, DEST, LEFT+1, lsr R9
+  80:	e1a05133 	lsr	DEST+1, LEFT+1, RIGHT
+  84:	e1a02004 	mov	r2, r4
+  88:	e1a03005 	mov	r3, r5
+
+         */
         mov32BitConstant(ARMV7.r12,0x3f);
         and(ConditionFlag.Always,false,right,right,ARMV7.r12,0,0);
-	mov(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r8);
-        rsb(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[9], ARMV7.r12, 32, 0);
-        sub(ConditionFlag.Always, true, registerConfig.getAllocatableRegisters()[8], ARMV7.r12, 32, 0);
+        rsb(ConditionFlag.Always, false, ARMV7.r12,right, 32, 0);
+        sub(ConditionFlag.Always, false, ARMV7.r9,right, 32, 0);
 
-        lsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], ARMV7.r12, registerConfig.getAllocatableRegisters()[left.number + 1]);
-        orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[dest.number + 1], left,
-                        registerConfig.getAllocatableRegisters()[8], 0);
-        jcc(ConditionFlag.Minus, l);
-        orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[dest.number + 1], left,
-                        registerConfig.getAllocatableRegisters()[8], 2);
-        bind(l);
-        asrr(ConditionFlag.Always, false, dest, ARMV7.r12, registerConfig.getAllocatableRegisters()[left.number]);
-	mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r12);
+        lsr(ConditionFlag.Always, false, dest, right, left);
+        orsr(ConditionFlag.Always, false, dest, dest,registerConfig.getAllocatableRegisters()[left.number + 1] ,
+                        ARMV7.r12, 0);
+        orsr(ConditionFlag.Positive, false, dest,dest, registerConfig.getAllocatableRegisters()[left.number + 1],
+                        ARMV7.r9, 1);
+        lsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number+1], right,
+                registerConfig.getAllocatableRegisters()[left.number+1]);
     }
 }

@@ -688,7 +688,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void test_C1X_jtt_BC_iand() throws Exception {
+    public void ignore_C1X_jtt_BC_iand() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_iand");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -3549,7 +3549,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lshl() throws Exception {
+    public void ignore_jtt_BC_lshl() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_lshl");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -3573,14 +3573,14 @@ public class ARMV7JTTTest extends MaxTestCase {
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
             //long returnValue = registerValues[0] | ((0xffffffffL & registerValues[1]) << 32);
             long returnValue = connectRegs(registerValues[0],registerValues[1]);
-            System.out.println("LSHL EXPECTED " + expectedValue + " GOT "+ returnValue);
+            //System.out.println("LSHL EXPECTED " + expectedValue + " GOT "+ returnValue);
 
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
 
-    public void test_jtt_BC_lshr() throws Exception {
+    public void ignore_jtt_BC_lshr() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_lshr");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -3592,15 +3592,17 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(6L, 4));
         pairs.add(new Args(-2147483648L, 16));
         pairs.add(new Args(0xdeadbeefd0daf0baL, 45));
+        pairs.add(new Args(0xdeadbeefd0daf0baL, 70));
 
         initialiseCodeBuffers(methods, "BC_lshr.java", "long test(long, int)");
         int assemblerStatements = codeBytes.length / 4;
         for (Args pair : pairs) {
             long expectedValue = jtt.bytecode.BC_lshr.test(pair.lfirst, pair.second);
-            String functionPrototype = ARMCodeWriter.preAmble("long long", "long long, int", Long.toString(pair.lfirst) + "," + Long.toString(pair.second));
+            String functionPrototype = ARMCodeWriter.preAmble("long long", "long long, int", Long.toString(pair.lfirst) + "LL," + Integer.toString(pair.second));
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
-            long returnValue = registerValues[0] | ((0xffffffffL & registerValues[1]) << 32);
-            System.out.println("LSHR EXPECTED " + expectedValue + " GOT "+ returnValue);
+            //long returnValue = registerValues[0] | ((0xffffffffL & registerValues[1]) << 32);
+            long returnValue = connectRegs(registerValues[0],registerValues[1]);
+            //System.out.println("LSHR EXPECTED " + expectedValue + " GOT "+ returnValue);
 
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -3671,7 +3673,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             String functionPrototype = ARMCodeWriter.preAmble("unsigned long long", "unsigned long long, int", asUnsignedDecimalString(pair.lfirst) + "," + Integer.toString(pair.second));
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
             long returnValue = connectRegs(registerValues[0], registerValues[1]);
-            System.out.println("LUSHR EXPECTED " + expectedValue + " GOT "+ returnValue);
+            //System.out.println("LUSHR EXPECTED " + expectedValue + " GOT "+ returnValue);
 
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
