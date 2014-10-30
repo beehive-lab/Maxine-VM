@@ -1472,6 +1472,12 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         // register - constant
                         assert right.isConstant();
                         long c = ((CiConstant) right).asLong();
+                           masm.movw(ConditionFlag.Always,ARMV7.r12,44);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,44);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,44);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,44);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,44);
+
                         if (NumUtil.isInt(c)) {
                             switch (code) {
                                 case Add:
@@ -1484,14 +1490,14 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                                     throw Util.shouldNotReachHere();
                             }
                         } else {
-                            assert 0 == 1 : "mov long into scratch1 ARMV7IRAssembler";
-
+                            masm.movlong(ARMV7.r8,c);
                             // masm.movq(rscratch1, c);
                             // masm.mov32BitConstant();
                             switch (code) {
-                                case Add: // masm.addq(lreg, rscratch1);
+                                case Add: masm.addLong(lreg,lreg,ARMV7.r8);
                                     break;
                                 case Sub: // masm.subq(lreg, rscratch1);
+                                    masm.subLong(lreg,lreg,ARMV7.r8);
                                     break;
                                 default:
                                     throw Util.shouldNotReachHere();
@@ -1533,6 +1539,12 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     default:
                         throw Util.shouldNotReachHere();
                 }
+                masm.movw(ConditionFlag.Always,ARMV7.r12,43);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,43);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,43);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,43);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,43);
+
             }
         }
         // Checkstyle: on
