@@ -1708,6 +1708,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         //assert 0 == 1 : "arithmeticIdiv ARMV7IRAssembler";
         if (right.isConstant()) {
             Util.shouldNotReachHere("cwi: I assume this is dead code, notify me if I'm wrong...");
+            assert 0 == 1 : "arithmeticIdiv ARMV7IRAssembler";
 
             int divisor = ((CiConstant) right).asInt();
             assert divisor > 0 && CiUtil.isPowerOf2(divisor) : "divisor must be power of two";
@@ -1751,6 +1752,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 Label normalCase = new Label();
          //       masm.cmpl(ARMV7.rax, Integer.MIN_VALUE);
 
+
                 masm.cmpl(ARMV7.r0, Integer.MIN_VALUE);
                 masm.jcc(ConditionFlag.NotEqual, normalCase);
                 if (code == LIROpcode.Irem) {
@@ -1766,7 +1768,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
            // masm.cdql();
               // APN do we really need to signe extend? cdql?
             int offset = masm.codeBuffer.position();
-          //  masm.idivl(rreg);
+           //masm.idivl(rreg);
+            masm.sdiv(ConditionFlag.Always,dreg,lreg,rreg);
             //Log.println("idic and cdq arithmeticIdiv not implemented/called");
 
             // normal and special case exit
@@ -1810,13 +1813,14 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 	is rax rdx relarted to r0 r1 function args?
 THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
 */
-                masm.eor(ConditionFlag.Always,false,rreg,rreg,rreg,0,0);
-                moveRegs(lreg,ARMV7.r0);
+               // masm.eor(ConditionFlag.Always,false,rreg,rreg,rreg,0,0);
+                //moveRegs(lreg,ARMV7.r0);
 
 
       //  moveRegs(lreg, ARMV7.rax);
 
         int offset = masm.codeBuffer.position();
+        masm.udiv(ConditionFlag.Always,dreg,lreg,rreg);
 	//System.err.println("ARMV divl not implemented  + rax/rdx as r0 r1 is GUESSED/WRONG... arithmeticIudiv");
        // masm.divl(rreg);
 
