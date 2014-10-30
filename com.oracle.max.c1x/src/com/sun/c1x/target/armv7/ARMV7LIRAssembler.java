@@ -565,6 +565,13 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 break;
             case Long    :
                 masm.ldrd(ConditionFlag.Always,dest.asRegister(),ARMV7.r12,0);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,40);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,40);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,40);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,40);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,40);
+
+
                 break;
             case Float   : masm.movflt(asXmmFloatReg(dest), addr); break;
             case Double  : masm.movdbl(asXmmDoubleReg(dest), addr); break;
@@ -659,6 +666,13 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             //case Int     : masm.movslq(dest.asRegister(), addr); break;
             case Long    : //masm.movq(dest.asRegister(), addr);
                     masm.ldrd(ConditionFlag.Always,dest.asRegister(),ARMV7.r12,0);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,41);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,41);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,41);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,41);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,41);
+
+
                 break;
             case Boolean :
             case Byte    :// masm.movsxb(dest.asRegister(), addr);
@@ -3036,7 +3050,13 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
             //    masm.movsd(dst, src);
         } else if (kind == CiKind.Long) {
             masm.ldrd(ConditionFlag.Always,dst,ARMV7.r12,0);
-          //  masm.movq(dst, src);
+            masm.movw(ConditionFlag.Always,ARMV7.r12,39);
+            masm.movw(ConditionFlag.Always,ARMV7.r12,39);
+            masm.movw(ConditionFlag.Always,ARMV7.r12,39);
+            masm.movw(ConditionFlag.Always,ARMV7.r12,39);
+            masm.movw(ConditionFlag.Always,ARMV7.r12,39);
+
+            //  masm.movq(dst, src);
         } else { // Additional clause added by APN
             masm.ldrImmediate(ConditionFlag.Always,1,0,0,dst,ARMV7.r12,0);
 
