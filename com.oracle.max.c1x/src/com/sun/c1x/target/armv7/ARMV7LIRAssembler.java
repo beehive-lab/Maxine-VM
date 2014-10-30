@@ -22,33 +22,41 @@
  */
 package com.sun.c1x.target.armv7;
 
-import static com.sun.cri.ci.CiCallingConvention.Type.*;
-import static com.sun.cri.ci.CiValue.*;
-
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.atomic.*;
-
-import com.oracle.max.asm.*;
-import com.oracle.max.asm.target.armv7.*;
+import com.oracle.max.asm.Buffer;
+import com.oracle.max.asm.Label;
+import com.oracle.max.asm.NumUtil;
+import com.oracle.max.asm.target.armv7.ARMV7;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
-import com.oracle.max.criutils.*;
-import com.sun.c1x.*;
-import com.sun.c1x.asm.*;
+import com.oracle.max.asm.target.armv7.ARMV7MacroAssembler;
+import com.oracle.max.criutils.TTY;
+import com.sun.c1x.C1XCompilation;
+import com.sun.c1x.C1XOptions;
+import com.sun.c1x.asm.TargetMethodAssembler;
 import com.sun.c1x.gen.LIRGenerator.DeoptimizationStub;
-import com.sun.c1x.ir.*;
+import com.sun.c1x.ir.BlockBegin;
+import com.sun.c1x.ir.Condition;
+import com.sun.c1x.ir.Infopoint;
 import com.sun.c1x.lir.FrameMap.StackBlock;
 import com.sun.c1x.lir.*;
-import com.sun.c1x.stub.*;
-import com.sun.c1x.util.*;
+import com.sun.c1x.stub.CompilerStub;
+import com.sun.c1x.util.Util;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.JumpTable;
 import com.sun.cri.ci.CiTargetMethod.Mark;
-import com.sun.cri.xir.*;
+import com.sun.cri.xir.CiXirAssembler;
 import com.sun.cri.xir.CiXirAssembler.RuntimeCallInformation;
 import com.sun.cri.xir.CiXirAssembler.XirInstruction;
 import com.sun.cri.xir.CiXirAssembler.XirLabel;
 import com.sun.cri.xir.CiXirAssembler.XirMark;
+import com.sun.cri.xir.XirSnippet;
+import com.sun.cri.xir.XirTemplate;
+
+import java.io.*;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.sun.cri.ci.CiCallingConvention.Type.RuntimeCall;
+import static com.sun.cri.ci.CiValue.IllegalValue;
 
 /**
  * This class implements the x86-specific code generation for LIR.
@@ -238,7 +246,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             //masm.movq(dst, 0xDEADDEADDEADDEADL);
             masm.mov32BitConstant(dst,0xDEADDEAD);
         } else {
-	//System.out.println("REGISTER used is " + dst.number + " pos " + masm.codeBuffer.position());
+	//System.out.println("const2reg is BROKEN --- REGISTER used is " + dst.number + " pos " + masm.codeBuffer.position());
             masm.setUpScratch(tasm.recordDataReferenceInCode(constant));
             masm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
             masm.ldr(ConditionFlag.Always,dst, ARMV7.r12, 0);
@@ -491,20 +499,20 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case Jsr     :
             case Object  :
             case Int     : //masm.movl(toAddr, src.asRegister()); break;
-                          masm.setUpScratch(toAddr); masm.strImmediate(ConditionFlag.Always,0,0,0,src.asRegister(),ARMV7.r12,0);break;
+                          masm.setUpScratch(toAddr); masm.strImmediate(ConditionFlag.Always,1,0,0,src.asRegister(),ARMV7.r12,0);break;
             case Long    :
-                          masm.setUpScratch(toAddr);masm.strDualImmediate(ConditionFlag.Always,0,0,0,src.asRegister(),ARMV7.r12,0);
+                          masm.setUpScratch(toAddr);masm.strDualImmediate(ConditionFlag.Always,1,0,0,src.asRegister(),ARMV7.r12,0);
                           //masm.movq(toAddr, src.asRegister());
             break;
             case Char    :
             case Short   : masm.setUpScratch(toAddr);
-                           masm.strHImmediate(ConditionFlag.Always,0,0,0,src.asRegister(),ARMV7.r12,0);
+                           masm.strHImmediate(ConditionFlag.Always,1,0,0,src.asRegister(),ARMV7.r12,0);
                            //masm.str, src.asRegister()); break;
                           break;
             case Byte    :
             case Boolean : //masm.movb(toAddr, src.asRegister());
                            masm.setUpScratch(toAddr);
-                           masm.strbImmediate(ConditionFlag.Always, 0, 0, 0, src.asRegister(), ARMV7.r12, 0);
+                           masm.strbImmediate(ConditionFlag.Always, 1, 0, 0, src.asRegister(), ARMV7.r12, 0);
              break;
             default      : throw Util.shouldNotReachHere();
         }
@@ -561,6 +569,13 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 break;
             case Long    :
                 masm.ldrd(ConditionFlag.Always,dest.asRegister(),ARMV7.r12,0);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,40);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,40);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,40);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,40);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,40);
+
+
                 break;
             case Float   : masm.movflt(asXmmFloatReg(dest), addr); break;
             case Double  : masm.movdbl(asXmmDoubleReg(dest), addr); break;
@@ -655,16 +670,23 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             //case Int     : masm.movslq(dest.asRegister(), addr); break;
             case Long    : //masm.movq(dest.asRegister(), addr);
                     masm.ldrd(ConditionFlag.Always,dest.asRegister(),ARMV7.r12,0);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,41);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,41);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,41);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,41);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,41);
+
+
                 break;
             case Boolean :
             case Byte    :// masm.movsxb(dest.asRegister(), addr);
-                    masm.ldrsb(ConditionFlag.Always,0,0,0,dest.asRegister(),ARMV7.r12,0);
+                    masm.ldrsb(ConditionFlag.Always,1,0,0,dest.asRegister(),ARMV7.r12,0);
                 break;
             case Char    : //masm.movzxl(dest.asRegister(), addr);
-                masm.ldrsb(ConditionFlag.Always,0,0,0,dest.asRegister(),ARMV7.r12,0);
+                masm.ldrsb(ConditionFlag.Always,1,0,0,dest.asRegister(),ARMV7.r12,0);
                 break;
             case Short   : //masm.movswl(dest.asRegister(), addr);
-                masm.ldrshw(ConditionFlag.Always,0,0,0,dest.asRegister(),ARMV7.r12,0);
+                masm.ldrshw(ConditionFlag.Always,1,0,0,dest.asRegister(),ARMV7.r12,0);
                 break;
             default      : throw Util.shouldNotReachHere();
         }
@@ -877,8 +899,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     case GE : acond = ConditionFlag.SignedGreaterOrEqual; /*greaterEqual;*/ break;
                     case GT : acond = ConditionFlag.SignedGreater; /*greater;*/ break;
                     case BE : acond = ConditionFlag.UnsignedLowerOrEqual; /*belowEqual;*/ break;
-                    case AE : acond = ConditionFlag.SignedGreaterOrEqual; /*aboveEqual;*/ break;
-                    case BT : acond = ConditionFlag.SignedLesser; /*below;*/ break;
+                    case AE : acond = ConditionFlag.CarrySetUnsignedHigherEqual; /*aboveEqual;*/ break;
+                    case BT : acond = ConditionFlag.CarryClearUnsignedLower; /*below;*/ break;
                     case AT : acond = ConditionFlag.UnsignedHigher; /*above;*/ break;
                     default : throw Util.shouldNotReachHere();
                 }
@@ -1167,26 +1189,26 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
               //  ncond = ConditionFlag.lessEqual;
                 break;
             case BE:
-                acond  = ConditionFlag.SignedLowerOrEqual;
-                ncond = ConditionFlag.SignedGreater;
+                acond  = ConditionFlag.UnsignedLowerOrEqual;
+                ncond = ConditionFlag.UnsignedHigher;
                // acond = ConditionFlag.belowEqual;
                // ncond = ConditionFlag.above;
                 break;
             case BT:
-                acond = ConditionFlag.SignedLesser;
-                ncond = ConditionFlag.SignedGreaterOrEqual;
+                acond = ConditionFlag.CarryClearUnsignedLower;
+                ncond = ConditionFlag.CarrySetUnsignedHigherEqual;
                // acond = ConditionFlag.below;
                // ncond = ConditionFlag.aboveEqual;
                 break;
             case AE:
-                acond = ConditionFlag.SignedGreaterOrEqual;
-                ncond = ConditionFlag.SignedLesser;
+                acond = ConditionFlag.CarrySetUnsignedHigherEqual;
+                ncond = ConditionFlag.CarryClearUnsignedLower;
                // acond = ConditionFlag.aboveEqual;
               //  ncond = ConditionFlag.below;
                 break;
             case AT:
-                acond = ConditionFlag.SignedGreater;
-                ncond = ConditionFlag.SignedLowerOrEqual;
+                acond = ConditionFlag.UnsignedHigher;
+                ncond = ConditionFlag.UnsignedLowerOrEqual;
                // acond = ConditionFlag.above;
                // ncond = ConditionFlag.belowEqual;
                 break;
@@ -1454,6 +1476,12 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         // register - constant
                         assert right.isConstant();
                         long c = ((CiConstant) right).asLong();
+                           masm.movw(ConditionFlag.Always,ARMV7.r12,44);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,44);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,44);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,44);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,44);
+
                         if (NumUtil.isInt(c)) {
                             switch (code) {
                                 case Add:
@@ -1466,14 +1494,14 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                                     throw Util.shouldNotReachHere();
                             }
                         } else {
-                            assert 0 == 1 : "mov long into scratch1 ARMV7IRAssembler";
-
+                            masm.movlong(ARMV7.r8,c);
                             // masm.movq(rscratch1, c);
                             // masm.mov32BitConstant();
                             switch (code) {
-                                case Add: // masm.addq(lreg, rscratch1);
+                                case Add: masm.addLong(lreg,lreg,ARMV7.r8);
                                     break;
                                 case Sub: // masm.subq(lreg, rscratch1);
+                                    masm.subLong(lreg,lreg,ARMV7.r8);
                                     break;
                                 default:
                                     throw Util.shouldNotReachHere();
@@ -1515,6 +1543,12 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     default:
                         throw Util.shouldNotReachHere();
                 }
+                masm.movw(ConditionFlag.Always,ARMV7.r12,43);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,43);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,43);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,43);
+                masm.movw(ConditionFlag.Always,ARMV7.r12,43);
+
             }
         }
         // Checkstyle: on
@@ -1678,6 +1712,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         //assert 0 == 1 : "arithmeticIdiv ARMV7IRAssembler";
         if (right.isConstant()) {
             Util.shouldNotReachHere("cwi: I assume this is dead code, notify me if I'm wrong...");
+            assert 0 == 1 : "arithmeticIdiv ARMV7IRAssembler";
 
             int divisor = ((CiConstant) right).asInt();
             assert divisor > 0 && CiUtil.isPowerOf2(divisor) : "divisor must be power of two";
@@ -1721,6 +1756,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 Label normalCase = new Label();
          //       masm.cmpl(ARMV7.rax, Integer.MIN_VALUE);
 
+
                 masm.cmpl(ARMV7.r0, Integer.MIN_VALUE);
                 masm.jcc(ConditionFlag.NotEqual, normalCase);
                 if (code == LIROpcode.Irem) {
@@ -1736,7 +1772,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
            // masm.cdql();
               // APN do we really need to signe extend? cdql?
             int offset = masm.codeBuffer.position();
-          //  masm.idivl(rreg);
+           //masm.idivl(rreg);
+            masm.sdiv(ConditionFlag.Always,dreg,lreg,rreg);
             //Log.println("idic and cdq arithmeticIdiv not implemented/called");
 
             // normal and special case exit
@@ -1780,13 +1817,14 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 	is rax rdx relarted to r0 r1 function args?
 THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
 */
-                masm.eor(ConditionFlag.Always,false,rreg,rreg,rreg,0,0);
-                moveRegs(lreg,ARMV7.r0);
+               // masm.eor(ConditionFlag.Always,false,rreg,rreg,rreg,0,0);
+                //moveRegs(lreg,ARMV7.r0);
 
 
       //  moveRegs(lreg, ARMV7.rax);
 
         int offset = masm.codeBuffer.position();
+        masm.udiv(ConditionFlag.Always,dreg,lreg,rreg);
 	//System.err.println("ARMV divl not implemented  + rax/rdx as r0 r1 is GUESSED/WRONG... arithmeticIudiv");
        // masm.divl(rreg);
 
@@ -1958,7 +1996,9 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
                         masm.cmpl(reg1,frameMap.toStackAddress(opr2Slot));
                         break;
                     case Long    :
-                        assert 0 == 1;
+			masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
+			masm.ldrd(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
+			masm.lcmpl(reg1,ARMV7.r8);
                         break;
                     case Object  : masm.cmpptr(reg1, frameMap.toStackAddress(opr2Slot)); break;
                     case Float   : //masm.ucomiss(reg1, frameMap.toStackAddress(opr2Slot));
@@ -1998,11 +2038,16 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
 			//System.out.println("emitCompare assert commented out --- not implemented");
                         if (c.asLong() == 0) {
                            // masm.cmpq(reg1, 0);
+			        masm.movlong(ARMV7.r8, 0);
+
                         } else {
                             //masm.movq(rscratch1, c.asLong());
-                            masm.cmpq(reg1, rscratch1);
+			        masm.movlong(ARMV7.r8, c.asLong());
+
+                            //masm.cmpq(reg1, rscratch1);
 
                         }
+			masm.lcmpl(reg1,ARMV7.r8);
                         break;
                     }
                     case Object  :  {
@@ -2183,8 +2228,8 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
             // Checkstyle: off
             switch (code) {
                   case Shl  : masm.ishl(dest.asRegister(), value, count.asRegister()); break;
-                  case Shr  : masm.iushr(dest.asRegister(), value, count.asRegister()); break;
-                  case Ushr : masm.ishr(dest.asRegister(), value, count.asRegister()); break;
+                  case Shr  : masm.ishr(dest.asRegister(), value, count.asRegister()); break;
+                  case Ushr : masm.iushr(dest.asRegister(), value, count.asRegister()); break;
                 default   : throw Util.shouldNotReachHere();
             }
         } else {
@@ -2193,9 +2238,9 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
             switch (code) {
                 case Shl  : masm.lshl(dest.asRegister(), lreg, count.asRegister());
                     break;
-                case Shr  : masm.lushr(dest.asRegister(), lreg, count.asRegister());
+                case Shr  : masm.lshr(dest.asRegister(), lreg, count.asRegister());
                     break;
-                case Ushr : masm.lshr(dest.asRegister(), lreg, count.asRegister());
+                case Ushr : masm.lushr(dest.asRegister(), lreg, count.asRegister());
                     break;
                 default   : throw Util.shouldNotReachHere();
             }
@@ -2219,10 +2264,10 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
             switch (code) {
                 case Shl  : masm.ishl(dest.asRegister(), value, ARMV7.r12); break;
                 case Shr  : //masm.sarl(value, count);
-                            masm.iushr(dest.asRegister(),value,ARMV7.r12);
+                            masm.ishr(dest.asRegister(),value,ARMV7.r12);
                  break;
                 case Ushr : //masm.shrl(value, count);
-                          masm.ishr(dest.asRegister(),value,ARMV7.r12);
+                          masm.iushr(dest.asRegister(),value,ARMV7.r12);
                  break;
 
                 default   : throw Util.shouldNotReachHere();
@@ -2240,10 +2285,10 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
                            masm.lshl(value, left.asRegister(), ARMV7.r12);
                     break;
                 case Shr  : //masm.sarq(value, count);
-			   masm.lushr(value, left.asRegister(), ARMV7.r12);
+			   masm.lshr(value, left.asRegister(), ARMV7.r12);
                     break;
                case Ushr : //masm.shrq(value, count);
-                          masm.lshr(value, left.asRegister(), ARMV7.r12);
+                          masm.lushr(value, left.asRegister(), ARMV7.r12);
                    break;
                 default   : throw Util.shouldNotReachHere();
             }
@@ -3026,7 +3071,13 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
             //    masm.movsd(dst, src);
         } else if (kind == CiKind.Long) {
             masm.ldrd(ConditionFlag.Always,dst,ARMV7.r12,0);
-          //  masm.movq(dst, src);
+            masm.movw(ConditionFlag.Always,ARMV7.r12,39);
+            masm.movw(ConditionFlag.Always,ARMV7.r12,39);
+            masm.movw(ConditionFlag.Always,ARMV7.r12,39);
+            masm.movw(ConditionFlag.Always,ARMV7.r12,39);
+            masm.movw(ConditionFlag.Always,ARMV7.r12,39);
+
+            //  masm.movq(dst, src);
         } else { // Additional clause added by APN
             masm.ldrImmediate(ConditionFlag.Always,1,0,0,dst,ARMV7.r12,0);
 
