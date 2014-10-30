@@ -42,8 +42,23 @@ do
     	
     	
     	#Get the method index from the movw
-    	methodIndex=$(echo $myMovw | cut -d"#" -f2)
-    	echo "MethodIndex: $methodIndex"
+    	methodUpperHalf=$(echo $myMovt | cut -d";" -f2 | tr -d ' ')
+    	methodBottomHalf=$(echo $myMovw | cut -d";" -f2 | tr -d ' ' | cut -d"x" -f2)
+    	
+    	echo "methodUpperHalf: $methodUpperHalf"
+    	echo "methodBottomHalf: $methodBottomHalf"
+    	methodIndexHex=$methodUpperHalf$methodBottomHalf
+    	echo "methodIndexHex: $methodIndexHex"
+    	mHex=$(echo $methodIndexHex | cut -d"x" -f2)
+    	mHex=$( tr '[a-z]' '[A-Z]' <<< $mHex)
+    	echo "mHex: $mHex"
+    	methodIndexDec=$(echo "ibase=16; $mHex" | bc)
+    	echo "methodIndexDec: $methodIndexDec"
+    	
+    	method=$(grep $methodIndexDec debug_methods | cut -d' ' -f2)
+    	echo "METHOD: $method"
+    	
+    	break
     	
     	
     fi
