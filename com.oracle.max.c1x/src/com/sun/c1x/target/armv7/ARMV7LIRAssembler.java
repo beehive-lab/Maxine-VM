@@ -55,9 +55,9 @@ import com.sun.cri.xir.CiXirAssembler.XirMark;
  */
 public final class ARMV7LIRAssembler extends LIRAssembler {
 
-    private static AtomicInteger methodCounter = new AtomicInteger(536870912);
+    public static AtomicInteger methodCounter = new AtomicInteger(536870912);
     private static final Object fileLock = new Object();
-    private static final boolean DEBUG_COUNT_METHODS = false;
+    public static final boolean DEBUG_COUNT_METHODS = false;
     private static final Object[] NO_PARAMS = new Object[0];
     private static final CiRegister SHIFTCount = ARMV7.r8;
 
@@ -74,24 +74,28 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         rscratch1 = compilation.registerConfig.getScratchRegister();
     }
 
-    private void writeDebugMethod(String name, int index) throws Exception {
-        Writer writer = null;
+    public static void writeDebugMethod(String name, int index) throws Exception {
         synchronized (fileLock) {
             try {
-                writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(getDebugMethodsPath() + "debugMethods.txt"), "utf-8"));
-                writer.write(index + " " + name);
-            } catch (IOException ex) {
+                File file = new File(getDebugMethodsPath() + "debug_methods");
 
-            } finally {
-                try {
-                    writer.close();
-                } catch (Exception ex) {
+                // if file doesnt exists, then create it
+                if (!file.exists()) {
+                    file.createNewFile();
                 }
+
+                FileWriter fw = new FileWriter(file.getAbsoluteFile(), true);
+                BufferedWriter bw = new BufferedWriter(fw);
+                bw.write(index + " " + name + "\n");
+                bw.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+
         }
     }
 
-    private String getDebugMethodsPath() {
+    public static String getDebugMethodsPath() {
         return System.getenv("MAXINE_HOME") + "/maxine-tester/junit-tests/";
 
     }
@@ -2825,6 +2829,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
                         assert frameToCSA >= 0;
                         masm.save(csl, frameToCSA);
                     }
+                    System.out.println("PushF");
                     if (DEBUG_COUNT_METHODS) {
                         int a = methodCounter.incrementAndGet();
                         masm.mov32BitConstant(ARMV7.r12, a);
