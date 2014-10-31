@@ -67,6 +67,10 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     final AMD64MacroAssembler masm;
     final CiRegister rscratch1;
 
+    static {
+        ARMV7LIRAssembler.initDebugMethods();
+    }
+
     public AMD64LIRAssembler(C1XCompilation compilation, TargetMethodAssembler tasm) {
         super(compilation, tasm);
         masm = (AMD64MacroAssembler) tasm.asm;
@@ -2028,7 +2032,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                         masm.save(csl, frameToCSA);
                     }
 
-                    if (ARMV7LIRAssembler.DEBUG_COUNT_METHODS) {
+                    if (ARMV7LIRAssembler.DEBUG_METHODS) {
                         int a = ARMV7LIRAssembler.methodCounter.incrementAndGet();
                         masm.movl(compilation.registerConfig.getScratchRegister(), a);
                         try {

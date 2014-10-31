@@ -65,7 +65,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
     public static AtomicInteger methodCounter = new AtomicInteger(536870912);
     private static final Object fileLock = new Object();
-    public static final boolean DEBUG_COUNT_METHODS = false;
+    public static boolean DEBUG_METHODS;
+    private static File file;
     private static final Object[] NO_PARAMS = new Object[0];
     private static final CiRegister SHIFTCount = ARMV7.r8;
 
@@ -75,6 +76,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     final ARMV7MacroAssembler masm;
     final CiRegister rscratch1;
 
+    static {
+        initDebugMethods();
+    }
+
     public ARMV7LIRAssembler(C1XCompilation compilation, TargetMethodAssembler tasm) {
         super(compilation, tasm);
         masm = (ARMV7MacroAssembler) tasm.asm;
@@ -82,16 +87,26 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         rscratch1 = compilation.registerConfig.getScratchRegister();
     }
 
+    public static void initDebugMethods() {
+        String value = System.getenv("DEBUG_METHODS");
+        if (value == null || value.isEmpty()) {
+            DEBUG_METHODS = false;
+        } else {
+            DEBUG_METHODS = Integer.parseInt(value) == 1 ? true : false;
+        }
+
+        if ((file = new File(getDebugMethodsPath() + "debug_methods")).exists()) {
+            file.delete();
+        }
+        if (DEBUG_METHODS) {
+            file = new File(getDebugMethodsPath() + "debug_methods");
+        }
+    }
+
     public static void writeDebugMethod(String name, int index) throws Exception {
         synchronized (fileLock) {
             try {
-                File file = new File(getDebugMethodsPath() + "debug_methods");
-
-                // if file doesnt exists, then create it
-                if (!file.exists()) {
-                    file.createNewFile();
-                }
-
+                assert DEBUG_METHODS;
                 FileWriter fw = new FileWriter(file.getAbsoluteFile(), true);
                 BufferedWriter bw = new BufferedWriter(fw);
                 bw.write(index + " " + name + "\n");
@@ -2874,8 +2889,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
                         assert frameToCSA >= 0;
                         masm.save(csl, frameToCSA);
                     }
-                    System.out.println("PushF");
-                    if (DEBUG_COUNT_METHODS) {
+                    if (DEBUG_METHODS) {
                         int a = methodCounter.incrementAndGet();
                         masm.mov32BitConstant(ARMV7.r12, a);
                         try {
