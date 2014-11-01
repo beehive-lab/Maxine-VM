@@ -360,9 +360,11 @@ int maxine(int argc, char *argv[], char *executablePath) {
 #ifdef arm
     printf("THREAD LOCALS method entry %p NTL %x\n",method,(Address ) ntl);
     printf("THREAD LOCALS block size %u \n",ntl->tlBlockSize);
+    printf("Main method entry %p\n", method);
 #else
     printf("THREAD LOCALS method entry %p NTL %llx\n",method,(Address ) ntl);
     printf("THREAD LOCALS block size %llu \n",ntl->tlBlockSize);
+    printf("Main method entry %p\n", method);
 #endif
 
 
