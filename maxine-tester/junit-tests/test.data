@@ -1,20 +1,259 @@
-   0x00073d18 <+404760>:	movt	r12, #0
-   0x00073d1c <+404764>:	sub	sp, sp, r12
-   0x00073d24 <+404772>:	movw	r12, #11912	; 0x2e88
-   0x00073d28 <+404776>:	movt	r12, #8192	; 0x2000
-   0x00073d30 <+404784>:	add	r12, r12, sp
-   0x00073d34 <+404788>:	str	r0, [r12], #-0
-   0x00073d38 <+404792>:	mov	r2, r0
-   0x00073d3c <+404796>:	mov	r0, r2
-   0x00073d40 <+404800>:	ands	r0, r0, r1
-   0x00073d44 <+404804>:	movw	r12, #8
-   0x00073d48 <+404808>:	movt	r12, #0
-   0x00073d4c <+404812>:	add	sp, sp, r12
-   0x00073d50 <+404816>:	mov	pc, lr
-   0x00073d54 <+404820>:	movw	r12, #10
-   0x00073d58 <+404824>:	movw	r12, #10
-   0x00073d5c <+404828>:	movw	r12, #10
-   0x00073d60 <+404832>:	movw	r12, #10
-   0x00073d64 <+404836>:	movw	r12, #10
-   0x00073d68 <+404840>:	nop	{0}
-   0x00073d6c <+404844>:	nop	{0}
+=> 0x39801e0c:	ldr	r3, [r12, #-0]
+   0x39801e08:	add	r12, r12, r1
+   0x39801e04:	movt	r12, #0
+   0x39801e00:	movw	r12, #144	; 0x90
+   0x39801dfc:	dmb	sy
+   0x39801df8:	movw	r12, #35	; 0x23
+   0x39801df4:	movw	r12, #35	; 0x23
+   0x39801df0:	movw	r12, #35	; 0x23
+   0x39801dec:	movw	r12, #35	; 0x23
+   0x39801de8:	movw	r12, #35	; 0x23
+   0x39801de4:	str	r6, [r12, #-240]	; 0xf0
+   0x39801de0:	add	r12, r12, r2
+   0x39801ddc:	movt	r12, #0
+   0x39801dd8:	movw	r12, #8
+   0x39801dd4:	add	r6, r6, r12
+   0x39801dd0:	movt	r12, #0
+   0x39801dcc:	movw	r12, #1
+   0x39801dc8:	movw	r12, #44	; 0x2c
+   0x39801dc4:	movw	r12, #44	; 0x2c
+   0x39801dc0:	movw	r12, #44	; 0x2c
+   0x39801dbc:	movw	r12, #44	; 0x2c
+   0x39801db8:	movw	r12, #44	; 0x2c
+   0x39801db4:	movw	r12, #38	; 0x26
+   0x39801db0:	movw	r12, #38	; 0x26
+   0x39801dac:	movw	r12, #38	; 0x26
+   0x39801da8:	movw	r12, #38	; 0x26
+   0x39801da4:	movw	r12, #38	; 0x26
+   0x39801da0:	movw	r12, #35	; 0x23
+   0x39801d9c:	movw	r12, #35	; 0x23
+   0x39801d98:	movw	r12, #35	; 0x23
+   0x39801d94:	movw	r12, #35	; 0x23
+   0x39801d90:	movw	r12, #35	; 0x23
+   0x39801d8c:	movw	r12, #41	; 0x29
+   0x39801d88:	movw	r12, #41	; 0x29
+   0x39801d84:	movw	r12, #41	; 0x29
+   0x39801d80:	movw	r12, #41	; 0x29
+   0x39801d7c:	movw	r12, #41	; 0x29
+   0x39801d78:	ldrd	r6, [r12]
+   0x39801d74:	add	r12, r12, r2
+   0x39801d70:	movt	r12, #0
+   0x39801d6c:	movw	r12, #8
+   0x39801d68:	ldr	r2, [r12]
+   0x39801d64:	add	r12, r12, pc
+   0x39801d60:	movt	r12, #65535	; 0xffff
+   0x39801d5c:	movw	r12, #65432	; 0xff98
+   0x39801d58:	ldr	r4, [r12]
+   0x39801d54:	add	r12, r12, pc
+   0x39801d50:	movt	r12, #65535	; 0xffff
+   0x39801d4c:	movw	r12, #65444	; 0xffa4
+   0x39801d48:	str	r0, [r12], #-0
+   0x39801d44:	add	r12, r12, sp
+   0x39801d40:	movt	r12, #65535	; 0xffff
+   0x39801d3c:	movw	r12, #57372	; 0xe01c
+   0x39801d38:	movt	r12, #8192	; 0x2000
+   0x39801d34:	movw	r12, #21
+   0x39801d30:	str	lr, [sp]
+   0x39801d2c:	sub	sp, sp, r12
+   0x39801d28:	movt	r12, #0
+   0x39801d24:	movw	r12, #28
+   0x39801d20:	blx	r12
+   0x39801d1c:	add	r12, pc, r12
+   0x39801d18:	movt	r12, #65535	; 0xffff
+   0x39801d14:	movw	r12, #65404	; 0xff7c
+   0x39801d10:	andeq	r0, r0, r12, ror #3
+   0x39801d0c:			; <UNDEFINED> instruction: 0x06da6b54
+   0x39801d08:	strbcc	lr, [r12, -r4, asr #13]!
+   0x39801d04:	ldmdacc	r1!, {r2, r3, r4, r7, r8, r10, r12, sp, lr, pc}^
+   0x39801d00:			; <UNDEFINED> instruction: 0x37ec5494
+   0x39801cfc:	andeq	r0, r0, r2
+   0x39801cf8:	strdeq	r4, [r9, #192]	; 0xc0
+   0x39801cf4:			; <UNDEFINED> instruction: 0x373bdf34
+   0x39801cf0:	add	sp, sp, r12
+   0x39801cec:	movt	r12, #0
+   0x39801ce8:	movw	r12, #8
+   0x39801ce4:	pop	{r11}
+   0x39801ce0:	mov	sp, r11
+   0x39801cdc:	mov	pc, lr
+   0x39801cd8:	ldr	r0, [r12], -r12
+   0x39801cd4:	add	r12, r12, sp
+   0x39801cd0:	movt	r12, #0
+   0x39801ccc:	movw	r12, #16
+   0x39801cc8:	ldr	r1, [r12], -r12
+   0x39801cc4:	add	r12, r12, sp
+   0x39801cc0:	movt	r12, #0
+   0x39801cbc:	movw	r12, #12
+   0x39801cb8:	add	sp, sp, r12
+   0x39801cb4:	movt	r12, #0
+   0x39801cb0:	movw	r12, #4
+   0x39801cac:	mov	r11, sp
+   0x39801ca8:	push	{r11}
+   0x39801ca4:	mov	lr, r12
+   0x39801ca0:	mov	r12, sp
+   0x39801c9c:	movw	r12, #2
+   0x39801c98:	movw	r12, #2
+   0x39801c94:	andeq	r0, r0, r12, asr r0
+   0x39801c90:	ldrbeq	r11, [r3, #528]!	; 0x210
+   0x39801c8c:	strbcc	lr, [r12, -r4, asr #13]!
+   0x39801c88:	nop	{0}
+   0x39801c84:	nop	{0}
+   0x39801c80:	nop	{0}
+   0x39801c7c:	nop	{0}
+   0x39801c78:	nop	{0}
+   0x39801c74:	nop	{0}
+   0x39801c70:	nop	{0}
+   0x39801c6c:	nop	{0}
+   0x39801c68:	movw	r12, #10
+   0x39801c64:	movw	r12, #10
+   0x39801c60:	movw	r12, #10
+   0x39801c5c:	movw	r12, #10
+   0x39801c58:	movw	r12, #10
+   0x39801c54:	mov	pc, lr
+   0x39801c50:	add	sp, sp, r12
+   0x39801c4c:	movt	r12, #0
+   0x39801c48:	movw	r12, #12
+   0x39801c44:	ldr	lr, [sp]
+   0x39801c40:	nop	{0}
+   0x39801c3c:	blx	r12
+   0x39801c38:	add	r12, pc, r12
+   0x39801c34:	movt	r12, #1
+   0x39801c30:	movw	r12, #27888	; 0x6cf0
+   0x39801c2c:	nop	{0}
+   0x39801c28:	nop	{0}
+   0x39801c24:	nop	{0}
+   0x39801c20:	nop	{0}
+   0x39801c1c:	movw	r12, #30
+   0x39801c18:	movw	r12, #30
+   0x39801c14:	movw	r12, #30
+   0x39801c10:	movw	r12, #30
+   0x39801c0c:	movw	r12, #30
+   0x39801c08:	nop	{0}
+   0x39801c04:	nop	{0}
+   0x39801c00:	nop	{0}
+   0x39801bfc:	str	r1, [r12]
+   0x39801bf8:	add	r12, r12, sp
+   0x39801bf4:	movt	r12, #0
+   0x39801bf0:	movw	r12, #4
+   0x39801bec:	mov	r0, r1
+   0x39801be8:	mov	r1, r0
+   0x39801be4:	str	r0, [r12], #-0
+   0x39801be0:	add	r12, r12, sp
+   0x39801bdc:	movt	r12, #65535	; 0xffff
+   0x39801bd8:	movw	r12, #57356	; 0xe00c
+   0x39801bd4:	movt	r12, #8192	; 0x2000
+   0x39801bd0:	movw	r12, #20
+   0x39801bcc:	str	lr, [sp]
+   0x39801bc8:	sub	sp, sp, r12
+   0x39801bc4:	movt	r12, #0
+   0x39801bc0:	movw	r12, #12
+   0x39801bbc:	blx	r12
+   0x39801bb8:	add	r12, pc, r12
+   0x39801bb4:	movt	r12, #65535	; 0xffff
+   0x39801bb0:	movw	r12, #65440	; 0xffa0
+   0x39801bac:	ldrdeq	r0, [r0], -r12
+   0x39801ba8:	ldrdeq	lr, [r11], -r12	; <UNPREDICTABLE>
+   0x39801ba4:	strbcc	lr, [r12, -r4, asr #13]!
+   0x39801ba0:	add	sp, sp, r12
+   0x39801b9c:	movt	r12, #0
+   0x39801b98:	movw	r12, #8
+   0x39801b94:	pop	{r11}
+   0x39801b90:	mov	sp, r11
+   0x39801b8c:	mov	pc, lr
+   0x39801b88:	ldr	r0, [r12], -r12
+   0x39801b84:	add	r12, r12, sp
+   0x39801b80:	movt	r12, #0
+   0x39801b7c:	movw	r12, #12
+   0x39801b78:	add	sp, sp, r12
+   0x39801b74:	movt	r12, #0
+   0x39801b70:	movw	r12, #4
+   0x39801b6c:	mov	r11, sp
+   0x39801b68:	push	{r11}
+   0x39801b64:	mov	lr, r12
+   0x39801b60:	mov	r12, sp
+   0x39801b5c:	movw	r12, #2
+   0x39801b58:	movw	r12, #2
+   0x39801b54:	andeq	r0, r0, r12, asr #32
+   0x39801b50:	eorseq	r9, pc, r12, asr r4	; <UNPREDICTABLE>
+   0x39801b4c:	strbcc	lr, [r12, -r4, asr #13]!
+   0x39801b48:	nop	{0}
+   0x39801b44:	nop	{0}
+   0x39801b40:	nop	{0}
+   0x39801b3c:	nop	{0}
+   0x39801b38:	nop	{0}
+   0x39801b34:	nop	{0}
+   0x39801b30:	nop	{0}
+   0x39801b2c:	nop	{0}
+   0x39801b28:	movw	r12, #10
+   0x39801b24:	movw	r12, #10
+   0x39801b20:	movw	r12, #10
+   0x39801b1c:	movw	r12, #10
+   0x39801b18:	movw	r12, #10
+   0x39801b14:	nop	{0}
+   0x39801b10:	mov	pc, r12
+   0x39801b0c:	add	r12, pc, r12
+   0x39801b08:	movt	r12, #65535	; 0xffff
+   0x39801b04:	movw	r12, #65116	; 0xfe5c
+   0x39801b00:	ldr	r3, [r12, #-0]
+   0x39801afc:	add	r12, r12, sp
+   0x39801af8:	movt	r12, #0
+   0x39801af4:	movw	r12, #4
+   0x39801af0:	nop	{0}
+   0x39801aec:	blx	r12
+   0x39801ae8:	add	r12, pc, r12
+   0x39801ae4:	movt	r12, #65532	; 0xfffc
+   0x39801ae0:	movw	r12, #63704	; 0xf8d8
+   0x39801adc:	nop	{0}
+   0x39801ad8:	nop	{0}
+   0x39801ad4:	nop	{0}
+   0x39801ad0:	nop	{0}
+   0x39801acc:	str	r4, [r12]
+   0x39801ac8:	add	r12, r12, sp
+   0x39801ac4:	movt	r12, #0
+   0x39801ac0:	movw	r12, #8
+   0x39801abc:	str	r8, [r12]
+   0x39801ab8:	movt	r8, #0
+   0x39801ab4:	movw	r8, #28
+   0x39801ab0:	add	r12, r12, sp
+   0x39801aac:	movt	r12, #0
+   0x39801aa8:	movw	r12, #4
+   0x39801aa4:	movw	r12, #37	; 0x25
+   0x39801aa0:	movw	r12, #37	; 0x25
+   0x39801a9c:	movw	r12, #37	; 0x25
+   0x39801a98:	movw	r12, #37	; 0x25
+   0x39801a94:	movw	r12, #37	; 0x25
+   0x39801a90:	nop	{0}
+   0x39801a8c:	blx	r12
+   0x39801a88:	add	r12, pc, r12
+   0x39801a84:	movt	r12, #0
+   0x39801a80:	movw	r12, #24944	; 0x6170
+   0x39801a7c:	nop	{0}
+   0x39801a78:	nop	{0}
+   0x39801a74:	nop	{0}
+   0x39801a70:	nop	{0}
+   0x39801a6c:	movw	r12, #32
+   0x39801a68:	movw	r12, #32
+   0x39801a64:	movw	r12, #32
+   0x39801a60:	movw	r12, #32
+   0x39801a5c:	movw	r12, #32
+   0x39801a58:	ldr	r2, [r12, #-0]
+   0x39801a54:	add	r12, r12, sp
+   0x39801a50:	movt	r12, #0
+   0x39801a4c:	movw	r12, #44	; 0x2c
+   0x39801a48:	ldr	r0, [r12, #-0]
+   0x39801a44:	add	r12, r12, sp
+   0x39801a40:	movt	r12, #0
+   0x39801a3c:	movw	r12, #44	; 0x2c
+   0x39801a38:	nop	{0}
+   0x39801a34:	blx	r12
+   0x39801a30:	add	r12, pc, r12
+   0x39801a2c:	movt	r12, #57	; 0x39
+   0x39801a28:	movw	r12, #16024	; 0x3e98
+   0x39801a24:	nop	{0}
+   0x39801a20:	nop	{0}
+   0x39801a1c:	nop	{0}
+   0x39801a18:	nop	{0}
+   0x39801a14:	movw	r12, #30
+   0x39801a10:	movw	r12, #30
+   0x39801a0c:	movw	r12, #30
+Dump of assembler code from 0x39801a0c to 0x39801e4c:
+==> /home/kotselidis/local_projects/maxine-arm-port/maxine/maxine-tester/junit-tests/gdb_proc.txt <==

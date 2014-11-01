@@ -1,14 +1,22 @@
 #/bin/bash
 
-startInstruction=$1
+gdb_out=$MAXINE_HOME/gdb.txt
+gdb_proc=$MAXINE_HOME/maxine-tester/junit-tests/gdb_proc.txt
+test_file=$MAXINE_HOME/maxine-tester/junit-tests/test.data
+methods=$MAXINE_HOME/maxine-tester/junit-tests/debug_methods
 
-#Chop method index
-startIndex=$(grep "$startInstruction" test.data -n | cut -d':' -f1)
+startInstruction=$(grep '$1' $gdb_out | cut -d' ' -f5)
+echo "Looking for: $startInstruction"
+
+#First chop gdb output to keep only the disasm
+loc=$(grep -n Dump $gdb_out | cut -d":" -f1)
+(tail -n +$loc $gdb_out) > $gdb_proc
+startIndex=$(grep "$startInstruction" $gdb_proc -n | cut -d':' -f1)
 
 #echo $startIndex
 
 #chop output and reverse to search the pattern for the method index
-(head -n $startIndex test.data | gtac) > test.data1
+(head -n $startIndex $gdb_proc | tac) > $test_file
 index=1
 while read line
 do
@@ -16,25 +24,25 @@ do
     #echo $delim
     if [ "$delim" == "subsp,sp,r12" ]
     then
-    	myMovtIndex=$(( $index - 2 ))
-    	myMovt=$(head -n "$myMovtIndex" test.data1 | tail -1 | expand | sed 's/  */ /g')
-    	myMovwIndex=$(( $index - 1 ))
-    	myMovw=$(head -n "$myMovwIndex" test.data1 | tail -1 | expand | sed 's/  */ /g')
+    	myMovtIndex=$(( $index - 3 ))
+    	myMovt=$(head -n "$myMovtIndex" $test_file | tail -1 | expand | sed 's/  */ /g')
+    	myMovwIndex=$(( $index - 2 ))
+    	myMovw=$(head -n "$myMovwIndex" $test_file | tail -1 | expand | sed 's/  */ /g')
     	
     	#Start Validation that movw,movt were indeed found where expected
-    	echo $myMovw
-    	echo $myMovt
-    	tempValidateMovw=$(echo $myMovw | cut -d" " -f 3)
-    	tempValidateMovt=$(echo $myMovt | cut -d" " -f 3)
+    	#echo $myMovw
+    	#echo $myMovt
+    	tempValidateMovw=$(echo $myMovw | cut -d" " -f 2)
+    	tempValidateMovt=$(echo $myMovt | cut -d" " -f 2)
     	if [ "$tempValidateMovw" != "movw" ]
     	then
-    		echo "Error! Instruction found not movw $myMovw $tempValidateMovw"
+    		echo "Error! Instruction found not movw $myMovw - $tempValidateMovw"
     	#else
     		#echo "OK, MOVW!"
     	fi
     	if [ "$tempValidateMovt" != "movt" ]
     	then
-    		echo "Error! Instruction found not movt $myMovt $tempValidateMovt"
+    		echo "Error! Instruction found not movt $myMovt - $tempValidateMovt"
     	#else
     		#echo "OK, MOVT!"
     	fi
@@ -42,25 +50,35 @@ do
     	
     	
     	#Get the method index from the movw
-    	methodUpperHalf=$(echo $myMovt | cut -d";" -f2 | tr -d ' ')
-    	methodBottomHalf=$(echo $myMovw | cut -d";" -f2 | tr -d ' ' | cut -d"x" -f2)
+    	methodUpperHalfDec=$(echo $myMovt | cut -d"#" -f2 | tr -d ' ' |cut -d';' -f1)
+    	methodBottomHalfDec=$(echo $myMovw | cut -d"#" -f2 | tr -d ' ' | cut -d";" -f1)
     	
-    	echo "methodUpperHalf: $methodUpperHalf"
-    	echo "methodBottomHalf: $methodBottomHalf"
-    	methodIndexHex=$methodUpperHalf$methodBottomHalf
-    	echo "methodIndexHex: $methodIndexHex"
+    	#echo "methodUpperHalfDec: $methodUpperHalfDec"
+    	#echo "methodBottomHalfDec: $methodBottomHalfDec"
+	methodUpperHalfHex=$(echo "obase=16; $methodUpperHalfDec" | bc)
+	methodBottomHalfHex=$(echo "obase=16; $methodBottomHalfDec" | bc)
+	
+	#echo "methodUpperHalfHex: $methodUpperHalfHex"
+        #echo "methodBottomHalfHex: $methodBottomHalfHex"   
+        
+        m=$(printf "%04x" $methodBottomHalfDec)
+	#echo $m
+    	methodIndexHex=$methodUpperHalfHex$m
+    	#echo "methodIndexHex: $methodIndexHex"
     	mHex=$(echo $methodIndexHex | cut -d"x" -f2)
     	mHex=$( tr '[a-z]' '[A-Z]' <<< $mHex)
-    	echo "mHex: $mHex"
+    	#echo "mHex: $mHex"
     	methodIndexDec=$(echo "ibase=16; $mHex" | bc)
-    	echo "methodIndexDec: $methodIndexDec"
+    	#echo "methodIndexDec: $methodIndexDec"
     	
-    	method=$(grep $methodIndexDec debug_methods | cut -d' ' -f2)
+    	method=$(grep $methodIndexDec $methods | cut -d' ' -f2)
     	echo "METHOD: $method"
-    	
+
+	rm $gdb_out
+	rm temp.txt    	
     	break
     	
     	
     fi
     index=$(( $index + 1 ))
-done < test.data1
+done < $test_file
