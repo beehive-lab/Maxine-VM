@@ -22,12 +22,11 @@
  */
 package com.oracle.max.asm.target.armv7;
 
-import com.oracle.max.asm.AsmOptions;
-import com.oracle.max.asm.Label;
-import com.sun.cri.ci.*;
-import com.sun.cri.ri.RiRegisterConfig;
+import static com.oracle.max.asm.target.armv7.ARMV7.*;
 
-import static com.oracle.max.asm.target.armv7.ARMV7.r12;
+import com.oracle.max.asm.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 /**
  * This class implements commonly used ARM!!!!! code patterns.
@@ -477,20 +476,19 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public void xchgptr(CiRegister src1, CiRegister src2) {
         //xchgq(src1, src2);
         // implicit locks in X86 so we need to do a lock
-        movw(ConditionFlag.Always,r12,3);
-        movw(ConditionFlag.Always,r12,3);
-        movw(ConditionFlag.Always,r12,3);
-        movw(ConditionFlag.Always,r12,3);
-        movw(ConditionFlag.Always,r12,3);
-
+        //movw(ConditionFlag.Always,r12,3);
+        //movw(ConditionFlag.Always,r12,3);
+        //movw(ConditionFlag.Always,r12,3);
+        //movw(ConditionFlag.Always,r12,3);
+        //movw(ConditionFlag.Always,r12,3);
     }
 
     public void flog(CiRegister dest, CiRegister value, boolean base10) {
-        movw(ConditionFlag.Always,r12,4);
-        movw(ConditionFlag.Always,r12,4);
-        movw(ConditionFlag.Always,r12,4);
-        movw(ConditionFlag.Always,r12,4);
-        movw(ConditionFlag.Always,r12,4);
+       //movw(ConditionFlag.Always,r12,4);
+       //movw(ConditionFlag.Always,r12,4);
+       //movw(ConditionFlag.Always,r12,4);
+       //movw(ConditionFlag.Always,r12,4);
+       //movw(ConditionFlag.Always,r12,4);
 
 
         /*assert value.spillSlotSize == dest.spillSlotSize;
@@ -512,55 +510,38 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void fsin(CiRegister dest, CiRegister value) {
-        //ftrig(dest, value, 's');
-        movw(ConditionFlag.Always,r12,5);
-        movw(ConditionFlag.Always,r12,5);
-
-        movw(ConditionFlag.Always,r12,5);
-
-        movw(ConditionFlag.Always,r12,5);
-
-        movw(ConditionFlag.Always,r12,5);
-
-
+        // ftrig(dest, value, 's');
+        // movw(ConditionFlag.Always,r12,5);
+        // movw(ConditionFlag.Always,r12,5);
+        // movw(ConditionFlag.Always,r12,5);
+        // movw(ConditionFlag.Always,r12,5);
+        // movw(ConditionFlag.Always,r12,5);
     }
 
     public void fcos(CiRegister dest, CiRegister value) {
-       // ftrig(dest, value, 'c');
-        movw(ConditionFlag.Always,r12,6);
-        movw(ConditionFlag.Always,r12,6);
-
-        movw(ConditionFlag.Always,r12,6);
-
-        movw(ConditionFlag.Always,r12,6);
-
-        movw(ConditionFlag.Always,r12,6);
-
-
+        // ftrig(dest, value, 'c');
+        // movw(ConditionFlag.Always,r12,6);
+        // movw(ConditionFlag.Always,r12,6);
+        // movw(ConditionFlag.Always,r12,6);
+        // movw(ConditionFlag.Always,r12,6);
+        // movw(ConditionFlag.Always,r12,6);
     }
 
     public void ftan(CiRegister dest, CiRegister value) {
-        //ftrig(dest, value, 't');
-        movw(ConditionFlag.Always,r12,7);
-        movw(ConditionFlag.Always,r12,7);
-
-        movw(ConditionFlag.Always,r12,7);
-
-        movw(ConditionFlag.Always,r12,7);
-
-        movw(ConditionFlag.Always,r12,7);
-
-
+        // ftrig(dest, value, 't');
+        // movw(ConditionFlag.Always,r12,7);
+        // movw(ConditionFlag.Always,r12,7);
+        // movw(ConditionFlag.Always,r12,7);
+        // movw(ConditionFlag.Always,r12,7);
+        // movw(ConditionFlag.Always,r12,7);
     }
 
     private void ftrig(CiRegister dest, CiRegister value, char op) {
-        movw(ConditionFlag.Always,r12,8);
-        movw(ConditionFlag.Always,r12,8);
-
-        movw(ConditionFlag.Always,r12,8);
-        movw(ConditionFlag.Always,r12,8);
-        movw(ConditionFlag.Always,r12,8);
-
+        // movw(ConditionFlag.Always,r12,8);
+        // movw(ConditionFlag.Always,r12,8);
+        // movw(ConditionFlag.Always,r12,8);
+        // movw(ConditionFlag.Always,r12,8);
+        // movw(ConditionFlag.Always,r12,8);
 
         /*assert value.spillSlotSize == dest.spillSlotSize;
 
@@ -744,37 +725,6 @@ R5 DEST+1
 
         mov32BitConstant(ARMV7.r12,0x3f);
         and(ConditionFlag.Always,false,right,right,ARMV7.r12,0,0);
-        /*
-         5c:	e14b01f4 	strd	r0, [fp, #-20]	; 0xffffffec
-  60:	e50b2018 	str	r2, [fp, #-24]
-  64:	e14b21d4 	ldrd	r2, [fp, #-20]	; 0xffffffec
-  R2 R3 => LEFT LEFT+1
-  68:	e51b1018 	ldr	r1, [fp, #-24]
-  R1 => RIGHT
-  R9 tmp
-  R12 tmp
-  R4 DEST, R5 DEST+1
-  R2,R3 LEFT, LEFT+1
-  6c:	e261c020 	rsb	R12, RIGHT, #32
-  70:	e2510020 	subs	R9, RIGHT, #32
-  74:	e1a04132 	lsr	DEST, LEFT, RIGHT
-  78:	e1844c13 	orr	DEST, DEST, LEFT+1, lsl r12
-  7c:	4a000000 	bmi	84 <rightshift+0x34>
-  80:	e1844053 	orr	DEST, DEST, LEFT+1, asr R9
-  84:	e1a05153 	asr	DEST+1, LEFT+1, RIGHT
-
- 60:	e50b2018 	str	r2, [fp, #-24]
-  64:	e14b21d4 	ldrd	r2, [fp, #-20]	; 0xffffffec
-  68:	e51b1018 	ldr	r1, [fp, #-24]
-  6c:	e261c020 	rsb	ip, r1, #32
-  70:	e2510020 	subs	r0, r1, #32
-  74:	e1a04132 	lsr	r4, r2, r1
-  78:	e1844c13 	orr	r4, r4, r3, lsl ip
-  7c:	4a000000 	bmi	84 <rightshift+0x34>
-  80:	e1844053 	orr	r4, r4, r3, asr r0
-  84:	e1a05153 	asr	r5, r3, r1
-
-         */
         rsb(ConditionFlag.Always, false, ARMV7.r12, right, 32, 0);
         sub(ConditionFlag.Always, true, ARMV7.r9, right, 32, 0);
 

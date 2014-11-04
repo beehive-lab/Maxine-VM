@@ -22,39 +22,33 @@
  */
 package com.sun.max.vm.compiler.target.arm;
 
-import com.oracle.max.asm.Label;
+import static com.sun.cri.ci.CiCallingConvention.Type.*;
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.compiler.CallEntryPoint.*;
+import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
+import static com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.*;
+
+import java.io.*;
+
+import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
-import com.oracle.max.cri.intrinsics.UnsignedMath;
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.ci.*;
-import com.sun.max.annotate.HOSTED_ONLY;
-import com.sun.max.lang.Bytes;
-import com.sun.max.lang.WordWidth;
-import com.sun.max.program.ProgramError;
-import com.sun.max.unsafe.Pointer;
-import com.sun.max.unsafe.Word;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.collect.ByteArrayBitMap;
-import com.sun.max.vm.compiler.CallEntryPoint;
-import com.sun.max.vm.compiler.WordUtil;
-import com.sun.max.vm.compiler.target.Adapter;
+import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
+import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.collect.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.Adapter.Type;
-import com.sun.max.vm.compiler.target.AdapterGenerator;
-import com.sun.max.vm.runtime.FatalError;
-import com.sun.max.vm.runtime.SafepointPoll;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.type.Kind;
-
-import java.io.OutputStream;
-
-import static com.sun.cri.ci.CiCallingConvention.Type.JavaCall;
-import static com.sun.max.platform.Platform.target;
-import static com.sun.max.vm.MaxineVM.vm;
-import static com.sun.max.vm.compiler.CallEntryPoint.BASELINE_ENTRY_POINT;
-import static com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT;
-import static com.sun.max.vm.compiler.deopt.Deoptimization.DEOPT_RETURN_ADDRESS_OFFSET;
-import static com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE;
+import com.sun.max.vm.type.*;
 
 /**
  * Adapter generators for ARMV7.
@@ -394,12 +388,9 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             CiValue[] optArgs = opt.getCallingConvention(JavaCall, WordUtil.ciKinds(sig.kinds, true), target(), false).locations;
 
             ARMV7Assembler asm = new ARMV7Assembler(target(), null);
-            // ANDy marking of adapter so can identify which one when gdb-ing bootimage
-	asm.movw(ConditionFlag.Always,ARMV7.r12, 2);
-            asm.movw(ConditionFlag.Always,ARMV7.r12, 2);
 
-
-
+            //asm.movw(ConditionFlag.Always,ARMV7.r12, 2);
+            //asm.movw(ConditionFlag.Always,ARMV7.r12, 2);
 
             // On entry to the frame, there are 2 return addresses on the stack at [RSP] and [RSP + 8].
             // The one at [RSP] is the return address of the call in the OPT callee's prologue (which is
@@ -808,12 +799,12 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
         protected Adapter create(Sig sig) {
             CiValue[] optArgs = opt.getCallingConvention(JavaCall, WordUtil.ciKinds(sig.kinds, true), target(), false).locations;
             ARMV7Assembler asm = new ARMV7Assembler(target(), null);
-            // ANDy marking of adapter so can identify which one when gdb-ing bootimage
-            asm.mov32BitConstant(ARMV7.r12,0x11);
-            asm.mov32BitConstant(ARMV7.r12,0x11);
-            asm.mov32BitConstant(ARMV7.r12,0x11);
-            asm.mov32BitConstant(ARMV7.r12,0x11);
-            asm.mov32BitConstant(ARMV7.r12,0x11);
+
+            //asm.mov32BitConstant(ARMV7.r12,0x11);
+            //asm.mov32BitConstant(ARMV7.r12,0x11);
+            //asm.mov32BitConstant(ARMV7.r12,0x11);
+            //asm.mov32BitConstant(ARMV7.r12,0x11);
+            //asm.mov32BitConstant(ARMV7.r12,0x11);
 
             // On entry to the frame, there are 2 return addresses at [RSP] and [RSP + 8].
             // The one at [RSP] is the return address of the call in the baseline callee's prologue (which is

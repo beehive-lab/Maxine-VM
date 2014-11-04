@@ -222,6 +222,8 @@ def image(args):
             os.environ['MAXINE_LOG_FILE'] = arg.split('=', 1)[1]
         elif arg.startswith('--XX:+DebugMethods'):
         	os.environ['DEBUG_METHODS']='1'
+        elif arg.startswith('--XX:+DebugMovs'):
+        	os.environ['DEBUG_MOVS']='1'
         elif arg == '-vma':
             systemProps += ['-Dmax.permsize=2']
         else:
