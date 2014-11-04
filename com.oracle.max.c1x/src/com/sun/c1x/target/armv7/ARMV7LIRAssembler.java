@@ -2893,7 +2893,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
                         int a = methodCounter.incrementAndGet();
                         masm.mov32BitConstant(ARMV7.r12, a);
                         try {
-                            writeDebugMethod(compilation.method.getClass().getName() +"." + compilation.method.name() , a);
+                            writeDebugMethod(compilation.method.holder() +"." + compilation.method.name() , a);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
