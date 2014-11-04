@@ -1,14 +1,10 @@
 package com.oracle.max.asm.target.armv7;
 
-import com.oracle.max.asm.AbstractAssembler;
-import com.oracle.max.asm.Label;
-import com.sun.cri.ci.CiAddress;
-import com.sun.cri.ci.CiKind;
-import com.sun.cri.ci.CiRegister;
-import com.sun.cri.ci.CiTarget;
-import com.sun.cri.ri.RiRegisterConfig;
+import static com.oracle.max.cri.intrinsics.MemoryBarriers.*;
 
-import static com.oracle.max.cri.intrinsics.MemoryBarriers.STORE_LOAD;
+import com.oracle.max.asm.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 public class ARMV7Assembler extends AbstractAssembler {
 
@@ -1424,13 +1420,12 @@ public class ARMV7Assembler extends AbstractAssembler {
             if (barriers == -1 || ((barriers & STORE_LOAD) != 0)) {
                 emitInt((0xf << 28) | (0x5 << 24) | (0x7 << 20) | (0xff05 << 4) | 0xf);
             } else {
-		movw(ConditionFlag.Always,ARMV7.r12,38);
-                movw(ConditionFlag.Always,ARMV7.r12,38);
-
-                movw(ConditionFlag.Always,ARMV7.r12,38);
-                movw(ConditionFlag.Always,ARMV7.r12,38);
-                movw(ConditionFlag.Always,ARMV7.r12,38);
-	    }
+                // movw(ConditionFlag.Always,ARMV7.r12,38);
+                // movw(ConditionFlag.Always,ARMV7.r12,38);
+                // movw(ConditionFlag.Always,ARMV7.r12,38);
+                // movw(ConditionFlag.Always,ARMV7.r12,38);
+                // movw(ConditionFlag.Always,ARMV7.r12,38);
+            }
         }
     }
 
