@@ -10,7 +10,7 @@ break *$x
 continue
 set logging overwrite on
 continue
-set $upper=$pc-0x400
+set $upper=$pc-0x800
 set $low=$pc+0x40
 disas $upper,$low 
 p $pc
