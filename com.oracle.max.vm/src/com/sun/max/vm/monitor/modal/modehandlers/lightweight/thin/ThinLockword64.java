@@ -54,9 +54,6 @@ public class ThinLockword64 extends LightweightLockword64 {
     @HOSTED_ONLY
     public ThinLockword64(long value) {
         super(value);
-        //System.out.println(RCOUNT_FIELD_WIDTH);
-        //System.out.println(UTIL_FIELD_WIDTH);
-        //System.out.println(THREADID_FIELD_WIDTH);
     }
 
     /**
