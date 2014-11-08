@@ -25,6 +25,7 @@ package com.sun.max.vm.monitor.modal.modehandlers.lightweight;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
@@ -44,20 +45,42 @@ public class LightweightLockword64 extends HashableLockword64 {
      *
      */
 
-    protected static final int RCOUNT_FIELD_WIDTH = 5; // Must be <= 8 (see incrementCount())
-    protected static final int UTIL_FIELD_WIDTH = 9;
-    protected static final int THREADID_FIELD_WIDTH = 64 - (RCOUNT_FIELD_WIDTH + UTIL_FIELD_WIDTH + HASH_FIELD_WIDTH + NUMBER_OF_MODE_BITS);
+    protected static final int RCOUNT_FIELD_WIDTH; // Must be <= 8 (see incrementCount())
+    protected static final int UTIL_FIELD_WIDTH ;
+    protected static final int THREADID_FIELD_WIDTH;
+    protected static final int THREADID_SHIFT;
+    protected static final int UTIL_SHIFT;
+    protected static final int RCOUNT_SHIFT;
+    protected static final Address THREADID_SHIFTED_MASK;
+    protected static final Address UTIL_SHIFTED_MASK;
+    protected static final Address RCOUNT_SHIFTED_MASK;
+    protected static final Address RCOUNT_INC_WORD;
 
-    protected static final int THREADID_SHIFT = HASHCODE_SHIFT + HASH_FIELD_WIDTH;
-    protected static final int UTIL_SHIFT = THREADID_SHIFT + THREADID_FIELD_WIDTH;
-    protected static final int RCOUNT_SHIFT = UTIL_SHIFT + UTIL_FIELD_WIDTH;
-
-    protected static final Address THREADID_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(64 - THREADID_FIELD_WIDTH);
-    protected static final Address UTIL_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(64 - UTIL_FIELD_WIDTH);
-    protected static final Address RCOUNT_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(64 - RCOUNT_FIELD_WIDTH);
-
-    protected static final Address RCOUNT_INC_WORD = Address.zero().bitSet(64 - RCOUNT_FIELD_WIDTH);
-
+    static {
+        if (Platform.target().arch.is32bit()) {
+            RCOUNT_FIELD_WIDTH = 2; // Must be <= 8 (see incrementCount())
+            UTIL_FIELD_WIDTH = 2;
+            THREADID_FIELD_WIDTH = 32 - (RCOUNT_FIELD_WIDTH + UTIL_FIELD_WIDTH + HASH_FIELD_WIDTH + NUMBER_OF_MODE_BITS);
+            THREADID_SHIFT = HASHCODE_SHIFT + HASH_FIELD_WIDTH;
+            UTIL_SHIFT = THREADID_SHIFT + THREADID_FIELD_WIDTH;
+            RCOUNT_SHIFT = UTIL_SHIFT + UTIL_FIELD_WIDTH;
+            THREADID_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(32 - THREADID_FIELD_WIDTH);
+            UTIL_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(32 - UTIL_FIELD_WIDTH);
+            RCOUNT_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(32 - RCOUNT_FIELD_WIDTH);
+            RCOUNT_INC_WORD = Address.zero().bitSet(64 - RCOUNT_FIELD_WIDTH);
+        } else {
+            RCOUNT_FIELD_WIDTH = 5; // Must be <= 8 (see incrementCount())
+            UTIL_FIELD_WIDTH = 9;
+            THREADID_FIELD_WIDTH = 64 - (RCOUNT_FIELD_WIDTH + UTIL_FIELD_WIDTH + HASH_FIELD_WIDTH + NUMBER_OF_MODE_BITS);
+            THREADID_SHIFT = HASHCODE_SHIFT + HASH_FIELD_WIDTH;
+            UTIL_SHIFT = THREADID_SHIFT + THREADID_FIELD_WIDTH;
+            RCOUNT_SHIFT = UTIL_SHIFT + UTIL_FIELD_WIDTH;
+            THREADID_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(64 - THREADID_FIELD_WIDTH);
+            UTIL_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(64 - UTIL_FIELD_WIDTH);
+            RCOUNT_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(64 - RCOUNT_FIELD_WIDTH);
+            RCOUNT_INC_WORD = Address.zero().bitSet(64 - RCOUNT_FIELD_WIDTH);
+        }
+    }
     @HOSTED_ONLY
     public LightweightLockword64(long value) {
         super(value);

@@ -25,6 +25,7 @@ package com.sun.max.vm.monitor.modal.modehandlers;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 
@@ -44,9 +45,22 @@ public class HashableLockword64 extends ModalLockword64 {
      *
      */
 
-    protected static final int HASH_FIELD_WIDTH = 32;
-    protected static final int HASHCODE_SHIFT = NUMBER_OF_MODE_BITS;
-    protected static final Address HASHCODE_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(64 - HASH_FIELD_WIDTH);
+    protected static final int HASH_FIELD_WIDTH;
+    protected static final int HASHCODE_SHIFT;
+    protected static final Address HASHCODE_SHIFTED_MASK;
+
+    static {
+        if (Platform.target().arch.is32bit()) {
+            HASH_FIELD_WIDTH = 16;
+            HASHCODE_SHIFT = NUMBER_OF_MODE_BITS;
+            HASHCODE_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(32 - HASH_FIELD_WIDTH);
+        } else {
+            HASH_FIELD_WIDTH = 32;
+            HASHCODE_SHIFT = NUMBER_OF_MODE_BITS;
+            HASHCODE_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(64 - HASH_FIELD_WIDTH);
+
+        }
+    }
 
     @HOSTED_ONLY
     public HashableLockword64(long value) {

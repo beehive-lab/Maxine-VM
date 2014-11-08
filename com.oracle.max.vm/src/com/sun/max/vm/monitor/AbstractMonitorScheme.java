@@ -23,6 +23,7 @@
 package com.sun.max.vm.monitor;
 
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -66,7 +67,11 @@ public abstract class AbstractMonitorScheme extends AbstractVMScheme implements 
         int hashCode = Reference.fromJava(object).toOrigin().unsignedShiftedRight(3).toInt() ^ counter++;
         // Ensure the hash code is positive. Even though the specification does not require this, at
         // least one application (NetBeans) assumes this is the case (see https://netbeans.org/bugzilla/show_bug.cgi?id=178688).
-        return hashCode & ~0x80000000;
+        if (Platform.target().arch.is64bit()) {
+            return hashCode & ~0x80000000;
+        } else {
+            return hashCode & ~0x8000;
+        }
     }
 
 }
