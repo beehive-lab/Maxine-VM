@@ -103,7 +103,7 @@ public abstract class Disassembler {
         }
 
         try {
-            return (Disassembler) con.newInstance(startAddress, inlineDataDecoder);
+            return (Disassembler) con.newInstance(isa == ISA.ARM ? (int) startAddress : startAddress, inlineDataDecoder);
         } catch (Exception e) {
             throw (InternalError) new InternalError("Error invoking constructor " + con).initCause(e);
         }
