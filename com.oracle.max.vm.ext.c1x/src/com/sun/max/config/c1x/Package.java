@@ -43,7 +43,7 @@ public class Package extends BootImagePackage {
         @Override
         public void initializeObjectIdentityMap(Map<Object, Object> objectMap) {
             objectMap.put(TTY.out(), new LogStream(Log.os));
-            if (C1XOptions.PrintCFGToFile) {
+            if (C1XOptions.PrintCFGToFile()) {
                 objectMap.put(CompilationPrinter.globalOut(), JavaPrototype.NULL);
             }
         }

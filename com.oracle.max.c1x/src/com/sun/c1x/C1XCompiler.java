@@ -84,7 +84,7 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
     }
 
     public CiResult compileMethod(RiResolvedMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
-        if (C1XOptions.PrintCFGToFile && cfgPrinterObserver == null) {
+        if (C1XOptions.PrintCFGToFile() && cfgPrinterObserver == null) {
             synchronized (this) {
                 if (cfgPrinterObserver == null) {
                     cfgPrinterObserver = new CFGPrinterObserver();
@@ -160,7 +160,7 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
             }
         //}
 
-        if (C1XOptions.PrintCFGToFile) {
+        if (C1XOptions.PrintCFGToFile()) {
             addCompilationObserver(cfgPrinterObserver = new CFGPrinterObserver());
         }
     }

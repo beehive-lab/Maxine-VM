@@ -22,6 +22,8 @@
  */
 package com.sun.c1x;
 
+import java.io.*;
+
 /**
  * This class encapsulates options that control the behavior of the C1X compiler.
  * The help message for each option is specified by a {@linkplain #helpMap help map}.
@@ -164,6 +166,22 @@ public final class C1XOptions {
 
         // turn detailed assertions on when the general assertions are on (misusing the assert keyword for this)
         assert (DetailedAsserts = true) == true;
+        initBootImageOptions();
+    }
+
+    public static void initBootImageOptions() {
+        String value = System.getenv("PRINT_CFG");
+        if (value == null || value.isEmpty()) {
+            PrintCFGToFile = false;
+        } else {
+            PrintCFGToFile = Integer.parseInt(value) == 1 ? true : false;
+        }
+        value = System.getenv("PRINT_FILTER");
+        if (value == null || value.isEmpty()) {
+            PrintFilter = null;
+        } else {
+            PrintFilter = new String(value);
+        }
     }
 
     public static void setOptimizationLevel(int level) {
@@ -198,5 +216,9 @@ public final class C1XOptions {
         OptDiamondElimination           = lll;
         OptCEElimination                = lll;
         OptBlockSkipping                = lll;
+    }
+
+    public static boolean PrintCFGToFile() {
+        return PrintCFGToFile;
     }
 }
