@@ -307,6 +307,7 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
                 }
                 TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, method);
                 try {
+
                     printMachineCode(compiledMethod, maxTargetMethod, false);
                 } finally {
                     filter.remove();
@@ -320,7 +321,7 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     }
 
     void printMachineCode(CiTargetMethod ciTM, MaxTargetMethod maxTM, boolean reentrant) {
-        if (!C1XOptions.PrintCFGToFile() || reentrant || TTY.isSuppressed()) {
+        if (!C1XOptions.PrintCFGToFile() || C1XOptions.OmmitAssembly || reentrant || TTY.isSuppressed()) {
             return;
         }
         if (!isHosted() && !isRunning()) {

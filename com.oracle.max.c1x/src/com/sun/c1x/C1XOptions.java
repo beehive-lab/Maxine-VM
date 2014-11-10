@@ -85,6 +85,7 @@ public final class C1XOptions {
     public static int     TraceBytecodeParserLevel           = 0;
     public static boolean PrintAssumptions                   = ____;
     public static boolean PrintInlinedIntrinsics             = ____;
+    public static boolean OmmitAssembly                      = false;
 
     // IR checking
     public static boolean InterpretInvokedMethods            = ____;
@@ -175,6 +176,7 @@ public final class C1XOptions {
             PrintCFGToFile = false;
         } else {
             PrintCFGToFile = Integer.parseInt(value) == 1 ? true : false;
+            OmmitAssembly = true;
         }
         value = System.getenv("PRINT_FILTER");
         if (value == null || value.isEmpty()) {
