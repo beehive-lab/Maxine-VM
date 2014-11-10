@@ -472,7 +472,7 @@ public final class Platform {
         //System.err.println("Platform Spec " + platformSpec);
         if (platformSpec != null) {
             Platform platform = parse(platformSpec);
-            //System.err.println("Platform " + platform);
+            System.err.println("Platform " + platform);
 
             if (platform == null) {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -510,6 +510,7 @@ public final class Platform {
         final OS os = OS.fromName(osName);
         final int pageSize = getInteger(PAGE_SIZE_PROPERTY) == null ? getPageSize() : getInteger(PAGE_SIZE_PROPERTY);
         final int nsig = getProperty(NUMBER_OF_SIGNALS_PROPERTY) == null ? getNumberOfSignals() : getInteger(NUMBER_OF_SIGNALS_PROPERTY);
+       System.out.println("ISA " + isa);
         return new Platform(cpu, isa, dataModel, os, pageSize, nsig);
     }
 
