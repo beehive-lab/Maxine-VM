@@ -39,7 +39,7 @@ import com.sun.max.lang.*;
 public class ARMDisassembler extends RiscDisassembler{
 
     public ARMDisassembler(int startAddress, InlineDataDecoder inlineDataDecoder) {
-        super(new Immediate32Argument(startAddress), ARMAssembly.ASSEMBLY, Endianness.BIG, inlineDataDecoder);
+        super(new Immediate32Argument(startAddress), ARMAssembly.ASSEMBLY, Endianness.LITTLE, inlineDataDecoder);
     }
 
     @Override
