@@ -1101,7 +1101,8 @@ public class ARMV7Assembler extends AbstractAssembler {
             nop(4);
         } else {
             setUpScratch(addr);
-            mov(ConditionFlag.Always, false, dest, ARMV7.r12);
+            ldrImmediate(ConditionFlag.Always, 1, 0, 0, dest, ARMV7.r12,0 );
+            //mov(ConditionFlag.Always, false, dest, ARMV7.r12);
         }
     }
 

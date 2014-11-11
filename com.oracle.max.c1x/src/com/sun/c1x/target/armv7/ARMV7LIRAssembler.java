@@ -692,8 +692,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 break;
             //case Int     : masm.movslq(dest.asRegister(), addr); break;
             case Long    : //masm.movq(dest.asRegister(), addr);
-                if (DEBUG_MOVS) {
                     masm.ldrd(ConditionFlag.Always, dest.asRegister(), ARMV7.r12, 0);
+                if (DEBUG_MOVS) {
                     masm.movw(ConditionFlag.Always, ARMV7.r12, 41);
                     masm.movw(ConditionFlag.Always, ARMV7.r12, 41);
                     masm.movw(ConditionFlag.Always, ARMV7.r12, 41);
