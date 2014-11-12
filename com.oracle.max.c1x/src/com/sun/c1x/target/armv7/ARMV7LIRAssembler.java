@@ -1507,7 +1507,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                             masm.movw(ConditionFlag.Always, ARMV7.r12, 44);
                             masm.movw(ConditionFlag.Always, ARMV7.r12, 44);
                         }
-                        if (NumUtil.isInt(c)) {
+                        /*if (NumUtil.isInt(c)) {
                             switch (code) {
                                 case Add:
                                     masm.addq(lreg, (int) c);
@@ -1518,7 +1518,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                                 default:
                                     throw Util.shouldNotReachHere();
                             }
-                        } else {
+                        } else */{
                             masm.movlong(ARMV7.r8,c);
                             // masm.movq(rscratch1, c);
                             // masm.mov32BitConstant();
