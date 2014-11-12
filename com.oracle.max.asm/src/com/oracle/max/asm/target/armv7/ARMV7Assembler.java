@@ -1105,8 +1105,8 @@ public class ARMV7Assembler extends AbstractAssembler {
             nop(4);
         } else {
             setUpScratch(addr);
-            ldrImmediate(ConditionFlag.Always, 1, 0, 0, dest, ARMV7.r12,0 );
-            //mov(ConditionFlag.Always, false, dest, ARMV7.r12);
+            //ldrImmediate(ConditionFlag.Always, 1, 0, 0, dest, ARMV7.r12,0 );
+            mov(ConditionFlag.Always, false, dest, ARMV7.r12);
         }
     }
 
@@ -1225,7 +1225,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         if (base.isValid()) {
             if (disp != 0) {
                 mov32BitConstant(scratchRegister, disp);
-                add(ConditionFlag.Always, false, scratchRegister, base, 0, 0);
+                addRegisters(ConditionFlag.Always, false, scratchRegister,scratchRegister, base, 0, 0);
             }
             if (index.isValid()) {
                 addlsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
