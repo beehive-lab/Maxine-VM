@@ -1487,10 +1487,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         // TODO what if addq subq so might be longs
                         switch (code) {
                             case Add: // masm.addq(ConditionFlag.Always,false,lreg,ARMV7.r12,0,0);
-                                masm.add(ConditionFlag.Always, false, lreg, ARMV7.r12, 0, 0);
+                                masm.addRegisters(ConditionFlag.Always, false, lreg,lreg, ARMV7.r12, 0, 0);
                                 break;
                             case Sub:
-                                masm.sub(ConditionFlag.Always, false, lreg, ARMV7.r12, 0, 0);
+                                masm.sub(ConditionFlag.Always, false, lreg,lreg, ARMV7.r12, 0, 0);
                                 // masm.subq(ConditionFlag.Always,false,lreg, ARMV7.r12,0,0);
                                 break;
                             default:

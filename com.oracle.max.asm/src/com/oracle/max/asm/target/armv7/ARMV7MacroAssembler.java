@@ -22,11 +22,12 @@
  */
 package com.oracle.max.asm.target.armv7;
 
-import static com.oracle.max.asm.target.armv7.ARMV7.*;
-
-import com.oracle.max.asm.*;
+import com.oracle.max.asm.AsmOptions;
+import com.oracle.max.asm.Label;
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
+import com.sun.cri.ri.RiRegisterConfig;
+
+import static com.oracle.max.asm.target.armv7.ARMV7.r12;
 
 /**
  * This class implements commonly used ARM!!!!! code patterns.
@@ -255,7 +256,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
             tmp = ARMV7.r9;
         }
         mov32BitConstant(tmp,value);
-        sub(ConditionFlag.Always,false,reg,tmp,0,0);
+        //sub(ConditionFlag.Always,false,reg,tmp,0,0);
+        sub(ConditionFlag.Always,false,reg,reg,tmp,0,0);
         /*if (value == Integer.MIN_VALUE) {
             subl(reg, value);
             return;
@@ -281,7 +283,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         setUpScratch(dst);
         ldr(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
         mov32BitConstant(ARMV7.r9,value);
-        sub(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r9,0,0);
+        //sub(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r9,0,0);
+        sub(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r8,ARMV7.r9,0,0);
         strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,0);
 
         /*if (value == Integer.MIN_VALUE) {
