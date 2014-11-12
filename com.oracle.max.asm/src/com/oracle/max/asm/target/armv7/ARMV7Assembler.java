@@ -1,10 +1,14 @@
 package com.oracle.max.asm.target.armv7;
 
-import static com.oracle.max.cri.intrinsics.MemoryBarriers.*;
+import com.oracle.max.asm.AbstractAssembler;
+import com.oracle.max.asm.Label;
+import com.sun.cri.ci.CiAddress;
+import com.sun.cri.ci.CiKind;
+import com.sun.cri.ci.CiRegister;
+import com.sun.cri.ci.CiTarget;
+import com.sun.cri.ri.RiRegisterConfig;
 
-import com.oracle.max.asm.*;
-import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
+import static com.oracle.max.cri.intrinsics.MemoryBarriers.STORE_LOAD;
 
 public class ARMV7Assembler extends AbstractAssembler {
 
@@ -1101,6 +1105,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             nop(4);
         } else {
             setUpScratch(addr);
+            //ldrImmediate(ConditionFlag.Always, 1, 0, 0, dest, ARMV7.r12,0 );
             mov(ConditionFlag.Always, false, dest, ARMV7.r12);
         }
     }
@@ -1220,7 +1225,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         if (base.isValid()) {
             if (disp != 0) {
                 mov32BitConstant(scratchRegister, disp);
-                add(ConditionFlag.Always, false, scratchRegister, base, 0, 0);
+                addRegisters(ConditionFlag.Always, false, scratchRegister,scratchRegister, base, 0, 0);
             }
             if (index.isValid()) {
                 addlsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);

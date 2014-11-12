@@ -692,8 +692,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 break;
             //case Int     : masm.movslq(dest.asRegister(), addr); break;
             case Long    : //masm.movq(dest.asRegister(), addr);
-                if (DEBUG_MOVS) {
                     masm.ldrd(ConditionFlag.Always, dest.asRegister(), ARMV7.r12, 0);
+                if (DEBUG_MOVS) {
                     masm.movw(ConditionFlag.Always, ARMV7.r12, 41);
                     masm.movw(ConditionFlag.Always, ARMV7.r12, 41);
                     masm.movw(ConditionFlag.Always, ARMV7.r12, 41);
@@ -1487,10 +1487,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         // TODO what if addq subq so might be longs
                         switch (code) {
                             case Add: // masm.addq(ConditionFlag.Always,false,lreg,ARMV7.r12,0,0);
-                                masm.add(ConditionFlag.Always, false, lreg, ARMV7.r12, 0, 0);
+                                masm.addRegisters(ConditionFlag.Always, false, lreg,lreg, ARMV7.r12, 0, 0);
                                 break;
                             case Sub:
-                                masm.sub(ConditionFlag.Always, false, lreg, ARMV7.r12, 0, 0);
+                                masm.sub(ConditionFlag.Always, false, lreg,lreg, ARMV7.r12, 0, 0);
                                 // masm.subq(ConditionFlag.Always,false,lreg, ARMV7.r12,0,0);
                                 break;
                             default:
@@ -1507,7 +1507,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                             masm.movw(ConditionFlag.Always, ARMV7.r12, 44);
                             masm.movw(ConditionFlag.Always, ARMV7.r12, 44);
                         }
-                        if (NumUtil.isInt(c)) {
+                        /*if (NumUtil.isInt(c)) {
                             switch (code) {
                                 case Add:
                                     masm.addq(lreg, (int) c);
@@ -1518,7 +1518,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                                 default:
                                     throw Util.shouldNotReachHere();
                             }
-                        } else {
+                        } else */{
                             masm.movlong(ARMV7.r8,c);
                             // masm.movq(rscratch1, c);
                             // masm.mov32BitConstant();
