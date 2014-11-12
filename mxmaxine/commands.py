@@ -223,7 +223,9 @@ def image(args):
         elif arg.startswith('--XX:+DebugMethods'):
         	os.environ['DEBUG_METHODS']='1'
         elif arg.startswith('--XX:+PrintCFGToFile'):
-        	os.environ['PRINT_CFG']='1'	
+        	os.environ['PRINT_CFG']='1'
+        elif arg.startswith('--XX:+PrintHIR'):
+        	os.environ['PRINT_HIR']='1'		
         elif arg.startswith('--XX:PrintFilter='):
             os.environ['PRINT_FILTER'] = arg.split('=', 1)[1]
         elif arg.startswith('--XX:+DebugMovs'):

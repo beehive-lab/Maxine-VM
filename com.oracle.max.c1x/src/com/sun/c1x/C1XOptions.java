@@ -178,6 +178,12 @@ public final class C1XOptions {
             PrintCFGToFile = Integer.parseInt(value) == 1 ? true : false;
             OmmitAssembly = true;
         }
+        value = System.getenv("PRINT_HIR");
+        if (value == null || value.isEmpty()) {
+            PrintHIR = false;
+        } else {
+            PrintHIR = Integer.parseInt(value) == 1 ? true : false;
+        }
         value = System.getenv("PRINT_FILTER");
         if (value == null || value.isEmpty()) {
             PrintFilter = null;
