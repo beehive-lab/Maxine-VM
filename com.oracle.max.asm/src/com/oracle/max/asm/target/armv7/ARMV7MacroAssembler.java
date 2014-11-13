@@ -477,7 +477,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void xchgptr(CiRegister src1, CiRegister src2) {
-        //xchgq(src1, src2);
+        xchgq(src1, src2);
         // implicit locks in X86 so we need to do a lock
         //movw(ConditionFlag.Always,r12,3);
         //movw(ConditionFlag.Always,r12,3);

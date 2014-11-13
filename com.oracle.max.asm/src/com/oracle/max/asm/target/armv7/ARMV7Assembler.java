@@ -1148,6 +1148,23 @@ public class ARMV7Assembler extends AbstractAssembler {
         //mov16BitConstant(ConditionFlag.SignedGreaterOrEqual, registerConfig.getReturnRegister(CiKind.Int), 0);
         //mov16BitConstant(ConditionFlag.SignedLesser, registerConfig.getReturnRegister(CiKind.Int), 1);
     }
+    public final void xchgq(CiRegister src1, CiRegister src2) {
+        // TODO need to have a lock in this!!!
+        CiRegister tmp = null;
+        if (src1 == ARMV7.r12 || src2 == ARMV7.r12 ) {
+            if (src1 != ARMV7.r8 && src2!=  ARMV7.r8 ) {
+                tmp = ARMV7.r9;
+            } else if (src1 != ARMV7.r8 && src2!=  ARMV7.r8 ) {
+                tmp = ARMV7.r8;
+            } else assert (0 == 1);
+        } else { tmp = ARMV7.r12; }
+        mov(ConditionFlag.Always,false,tmp,src1);
+        mov(ConditionFlag.Always,false,src1,src2);
+        mov(ConditionFlag.Always,false,src2,tmp);
+
+
+
+    }
 
     public final void incq(CiRegister dst) {
         assert dst.isValid();
