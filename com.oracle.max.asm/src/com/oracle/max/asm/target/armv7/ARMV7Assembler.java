@@ -564,7 +564,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void strDualImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
-        int instruction = 0x040000f0;
+        int instruction = 0x004000f0;
         assert imm8 == 0; // TODO fix the encoding its an ARM 8 bit
         instruction |= (P & 0x1) << 24;
         instruction |= (U & 0x1) << 23;
