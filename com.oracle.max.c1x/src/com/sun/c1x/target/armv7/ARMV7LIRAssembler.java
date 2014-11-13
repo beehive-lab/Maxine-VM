@@ -217,10 +217,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         if (src != dest) {
             if (srcKind == CiKind.Long && destKind == CiKind.Long) {
                 masm.mov(ConditionFlag.Always, false, dest, src);
-                masm.mov(ConditionFlag.Always, false, compilation.registerConfig.getAllocatableRegisters()[dest.number+1], compilation.registerConfig.getAllocatableRegisters()[src.number+1]);
+                masm.mov(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.number+1], ARMV7.cpuRegisters[src.number+1]);
             } else  if (srcKind == CiKind.Int && destKind == CiKind.Long){
                 masm.mov(ConditionFlag.Always, false, dest, src);
-                masm.asr(ConditionFlag.Always, false, compilation.registerConfig.getAllocatableRegisters()[dest.number+1], dest, 31);
+                masm.asr(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.number+1], dest, 31);
             } else {
                 masm.mov(ConditionFlag.Always, false, dest, src);
             }
