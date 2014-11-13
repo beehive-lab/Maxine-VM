@@ -1144,7 +1144,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void lcmpl(CiRegister src1, CiRegister src2) {
         cmp(ConditionFlag.Always, src1, src2, 0, 0);
-        sbc(ConditionFlag.Always, true, scratchRegister,  registerConfig.getAllocatableRegisters()[src1.number + 1],  registerConfig.getAllocatableRegisters()[src2.number + 1], 0, 0);
+        sbc(ConditionFlag.Always, true, scratchRegister,  ARMV7.cpuRegisters[src1.number + 1],  ARMV7.cpuRegisters[src2.number + 1], 0, 0);
         //mov16BitConstant(ConditionFlag.SignedGreaterOrEqual, registerConfig.getReturnRegister(CiKind.Int), 0);
         //mov16BitConstant(ConditionFlag.SignedLesser, registerConfig.getReturnRegister(CiKind.Int), 1);
     }
@@ -1162,27 +1162,27 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void addLong(CiRegister dst, CiRegister src1, CiRegister src2) {
         addRegisters(ConditionFlag.Always, true, dst, src1, src2, 0, 0);
-        addCRegisters(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dst.number + 1], registerConfig.getAllocatableRegisters()[src1.number + 1],
-                        registerConfig.getAllocatableRegisters()[src2.number + 1], 0, 0);
+        addCRegisters(ConditionFlag.Always, false, ARMV7.cpuRegisters[dst.number + 1], ARMV7.cpuRegisters[src1.number + 1],
+                ARMV7.cpuRegisters[src2.number + 1], 0, 0);
     }
 
     public final void subLong(CiRegister dst, CiRegister src1, CiRegister src2) {
         sub(ConditionFlag.Always, true, dst, src1, src2, 0, 0);
-        sbc(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dst.number + 1], registerConfig.getAllocatableRegisters()[src1.number + 1],
-                        registerConfig.getAllocatableRegisters()[src2.number + 1], 0, 0);
+        sbc(ConditionFlag.Always, false, ARMV7.cpuRegisters[dst.number + 1], ARMV7.cpuRegisters[src1.number + 1],
+                ARMV7.cpuRegisters[src2.number + 1], 0, 0);
     }
 
     public final void mulLong(CiRegister dst, CiRegister src1, CiRegister src2) {
-        mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratchRegister.number+1], registerConfig.getAllocatableRegisters()[src2.number]);
-        mul(ConditionFlag.Always, false, src2, src2, registerConfig.getAllocatableRegisters()[src1.number + 1]);
-        mul(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[src2.number + 1], src1, registerConfig.getAllocatableRegisters()[src2.number + 1]);
-        addRegisters(ConditionFlag.Always, false, scratchRegister, src2, registerConfig.getAllocatableRegisters()[src2.number+1], 0, 0);
-        umull(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[src2.number], dst,
-                        registerConfig.getAllocatableRegisters()[scratchRegister.number+1], src1);
+        mov(ConditionFlag.Always, false, ARMV7.cpuRegisters[scratchRegister.number+1], ARMV7.cpuRegisters[src2.number]);
+        mul(ConditionFlag.Always, false, src2, src2, ARMV7.cpuRegisters[src1.number + 1]);
+        mul(ConditionFlag.Always, false, ARMV7.cpuRegisters[src2.number + 1], src1, ARMV7.cpuRegisters[src2.number + 1]);
+        addRegisters(ConditionFlag.Always, false, scratchRegister, src2, ARMV7.cpuRegisters[src2.number+1], 0, 0);
+        umull(ConditionFlag.Always, false, ARMV7.cpuRegisters[src2.number], dst,
+                ARMV7.cpuRegisters[scratchRegister.number+1], src1);
 
         addRegisters(ConditionFlag.Always, false, scratchRegister, scratchRegister,
                         src2, 0, 0);
-        mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dst.number+1], scratchRegister);
+        mov(ConditionFlag.Always, false, ARMV7.cpuRegisters[dst.number+1], scratchRegister);
 
     }
 

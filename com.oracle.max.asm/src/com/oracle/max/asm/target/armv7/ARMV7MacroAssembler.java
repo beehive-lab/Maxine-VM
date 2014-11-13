@@ -632,7 +632,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void lneg(CiRegister dest, CiRegister left) {
         rsb(ConditionFlag.Always, true, dest, left, 0, 0);
-        rsc(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[left.number + 1], 0);
+        rsc(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.number + 1], ARMV7.cpuRegisters[left.number + 1], 0);
     }
 
     public void ior(CiRegister dest, CiRegister left, CiRegister right) {
@@ -641,8 +641,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void lor(CiRegister dest, CiRegister left, CiRegister right) {
         orr(ConditionFlag.Always, true, dest, left, right, 0, 0);
-        orr(ConditionFlag.Always, true, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[left.number + 1],
-                        registerConfig.getAllocatableRegisters()[right.number + 1], 0, 0);
+        orr(ConditionFlag.Always, true, ARMV7.cpuRegisters[dest.number + 1], ARMV7.cpuRegisters[left.number + 1],
+                ARMV7.cpuRegisters[right.number + 1], 0, 0);
     }
 
     public void ixor(CiRegister dest, CiRegister left, CiRegister right) {
@@ -651,8 +651,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void lxor(CiRegister dest, CiRegister left, CiRegister right) {
         eor(ConditionFlag.Always, true, dest, left, right, 0, 0);
-        eor(ConditionFlag.Always, true, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[left.number + 1],
-                        registerConfig.getAllocatableRegisters()[right.number + 1], 0, 0);
+        eor(ConditionFlag.Always, true, ARMV7.cpuRegisters[dest.number + 1], ARMV7.cpuRegisters[left.number + 1],
+                ARMV7.cpuRegisters[right.number + 1], 0, 0);
     }
 
     public void iand(CiRegister dest, CiRegister left, CiRegister right) {
@@ -661,8 +661,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void land(CiRegister dest, CiRegister left, CiRegister right) {
         and(ConditionFlag.Always, true, dest, left, right, 0, 0);
-        and(ConditionFlag.Always, true, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[left.number + 1],
-                        registerConfig.getAllocatableRegisters()[right.number + 1], 0, 0);
+        and(ConditionFlag.Always, true, ARMV7.cpuRegisters[dest.number + 1], ARMV7.cpuRegisters[left.number + 1],
+                ARMV7.cpuRegisters[right.number + 1], 0, 0);
     }
 
     public void ishl(CiRegister dest, CiRegister left, int amount) {
@@ -699,12 +699,12 @@ R5 DEST+1
         and(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r8,ARMV7.r12,0,0);
         sub(ConditionFlag.Always, false, ARMV7.r12, right, 32, 0);
         rsb(ConditionFlag.Always, false, ARMV7.r9, right, 32, 0);
-        lsl(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1],
-                right,registerConfig.getAllocatableRegisters()[left.number + 1]);
-        orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1],
-                registerConfig.getAllocatableRegisters()[dest.number + 1], left,
+        lsl(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.number + 1],
+                right,ARMV7.cpuRegisters[left.number + 1]);
+        orsr(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.number + 1],
+                ARMV7.cpuRegisters[dest.number + 1], left,
                         ARMV7.r12, 0);
-        orsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1], registerConfig.getAllocatableRegisters()[dest.number + 1], left,
+        orsr(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.number + 1], ARMV7.cpuRegisters[dest.number + 1], left,
                 ARMV7.r9, 1);
         lsl(ConditionFlag.Always, false, dest, right,left);
 
@@ -733,13 +733,13 @@ R5 DEST+1
 
         lsr(ConditionFlag.Always, false, dest, right, left);
         orsr(ConditionFlag.Always, false, dest, dest,
-                registerConfig.getAllocatableRegisters()[left.number + 1], ARMV7.r12, 0);
+                ARMV7.cpuRegisters[left.number + 1], ARMV7.r12, 0);
 
         orsr(ConditionFlag.Positive, false, dest, dest,
-                registerConfig.getAllocatableRegisters()[left.number + 1],
+                ARMV7.cpuRegisters[left.number + 1],
                         ARMV7.r9, 2);
-        asrr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number + 1],
-                right, registerConfig.getAllocatableRegisters()[left.number + 1]);
+        asrr(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.number + 1],
+                right, ARMV7.cpuRegisters[left.number + 1]);
     }
 
     public void iushr(CiRegister dest, CiRegister left, int amount) {
@@ -788,11 +788,11 @@ R5 DEST+1
         sub(ConditionFlag.Always, false, ARMV7.r9,right, 32, 0);
 
         lsr(ConditionFlag.Always, false, dest, right, left);
-        orsr(ConditionFlag.Always, false, dest, dest,registerConfig.getAllocatableRegisters()[left.number + 1] ,
+        orsr(ConditionFlag.Always, false, dest, dest,ARMV7.cpuRegisters[left.number + 1] ,
                         ARMV7.r12, 0);
-        orsr(ConditionFlag.Positive, false, dest,dest, registerConfig.getAllocatableRegisters()[left.number + 1],
+        orsr(ConditionFlag.Positive, false, dest,dest, ARMV7.cpuRegisters[left.number + 1],
                         ARMV7.r9, 1);
-        lsr(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dest.number+1], right,
-                registerConfig.getAllocatableRegisters()[left.number+1]);
+        lsr(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.number+1], right,
+                ARMV7.cpuRegisters[left.number+1]);
     }
 }
