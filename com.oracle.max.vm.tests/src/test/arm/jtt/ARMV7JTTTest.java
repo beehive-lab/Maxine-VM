@@ -1179,7 +1179,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_BC_tableswitch() throws Exception {
+    public void ignore_C1X_jtt_BC_tableswitch() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         int argOne[] = { 7, -1, 0, 1, 2, 3, 4, 5, 6, 0};
@@ -1363,7 +1363,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lookupswitch_1() throws Exception {
+    public void ignore_jtt_BC_lookupswitch_1() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 42));
@@ -3783,7 +3783,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_lcmp() throws Exception {
+    public void test_jtt_BC_lcmp() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_lcmp");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -3792,6 +3792,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(0L, -1L));
         pairs.add(new Args(77L, 78L));
         pairs.add(new Args(-1L, 0L));
+        pairs.add( new Args(0L,0L));
+        pairs.add( new Args(Long.MAX_VALUE,Long.MIN_VALUE));
+
         initialiseCodeBuffers(methods, "BC_lcmp.java", "boolean test(long, long)");
         int assemblerStatements = codeBytes.length / 4;
         for (Args pair : pairs) {
@@ -3803,7 +3806,29 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+    public void test_jtt_BC_lcmp2() throws Exception {
+        CompilationBroker.OFFLINE = initialised;
+        String klassName = getKlassName("jtt.bytecode.BC_lcmp2");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(0L, -1L));
+        pairs.add(new Args(77L, 78L));
+        pairs.add(new Args(-1L, 0L));
+        pairs.add( new Args(0L,0L));
+        pairs.add( new Args(Long.MAX_VALUE,Long.MIN_VALUE));
 
+        initialiseCodeBuffers(methods, "BC_lcmp2.java", "boolean test(long, long)");
+        int assemblerStatements = codeBytes.length / 4;
+        for (Args pair : pairs) {
+            boolean expectedValue = jtt.bytecode.BC_lcmp2.test(pair.lfirst, pair.lsecond);
+            String functionPrototype = ARMCodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "," + Long.toString(pair.lsecond));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            boolean returnValue = registerValues[0] > 0 ? true : false;
+            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            theCompiler.cleanup();
+        }
+    }
     // TODO: Figure out why -2147483648L and 2147483648L have
     // the same reg0,reg1 values
     public void ignore_jtt_BC_lmul() throws Exception {

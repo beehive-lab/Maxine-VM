@@ -3,7 +3,6 @@ package com.oracle.max.asm.target.armv7;
 import com.oracle.max.asm.AbstractAssembler;
 import com.oracle.max.asm.Label;
 import com.sun.cri.ci.CiAddress;
-import com.sun.cri.ci.CiKind;
 import com.sun.cri.ci.CiRegister;
 import com.sun.cri.ci.CiTarget;
 import com.sun.cri.ri.RiRegisterConfig;
@@ -1146,8 +1145,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final void lcmpl(CiRegister src1, CiRegister src2) {
         cmp(ConditionFlag.Always, src1, src2, 0, 0);
         sbc(ConditionFlag.Always, true, scratchRegister,  registerConfig.getAllocatableRegisters()[src1.number + 1],  registerConfig.getAllocatableRegisters()[src2.number + 1], 0, 0);
-        mov16BitConstant(ConditionFlag.SignedGreaterOrEqual, registerConfig.getReturnRegister(CiKind.Int), 0);
-        mov16BitConstant(ConditionFlag.SignedLesser, registerConfig.getReturnRegister(CiKind.Int), 1);
+        //mov16BitConstant(ConditionFlag.SignedGreaterOrEqual, registerConfig.getReturnRegister(CiKind.Int), 0);
+        //mov16BitConstant(ConditionFlag.SignedLesser, registerConfig.getReturnRegister(CiKind.Int), 1);
     }
 
     public final void incq(CiRegister dst) {
