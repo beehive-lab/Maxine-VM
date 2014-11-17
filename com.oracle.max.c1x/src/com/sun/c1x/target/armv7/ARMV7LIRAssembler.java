@@ -220,7 +220,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.mov(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.number+1], ARMV7.cpuRegisters[src.number+1]);
             } else  if (srcKind == CiKind.Int && destKind == CiKind.Long){
                 masm.mov(ConditionFlag.Always, false, dest, src);
-                masm.asr(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.number+1], dest, 31);
+                masm.asr(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.number+1], src, 31);
             } else {
                 masm.mov(ConditionFlag.Always, false, dest, src);
             }

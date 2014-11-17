@@ -3583,6 +3583,7 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void ignore_jtt_BC_lor() throws Exception {
         CompilationBroker.OFFLINE = initialised;
+        boolean failed = false;
         String klassName = getKlassName("jtt.bytecode.BC_lor");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         CompilationBroker.OFFLINE = true;
@@ -3592,16 +3593,33 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(31L, 67L));
         pairs.add(new Args(6L, 4L));
         pairs.add(new Args(-2147483648L, 1L));
+        pairs.add(new Args(Long.MAX_VALUE, 0));
+        pairs.add(new Args(0,Long.MAX_VALUE));
+        pairs.add(new Args(0,Long.MIN_VALUE));
+        pairs.add(new Args(Long.MIN_VALUE,0));
+        pairs.add(new Args(Long.MAX_VALUE, 0));
+        pairs.add(new Args(0,Long.MAX_VALUE-20L));
+        pairs.add(new Args(0,Long.MIN_VALUE+20L));
+        pairs.add(new Args(Long.MIN_VALUE,20L));
+        pairs.add(new Args(0xdeadbeefd0daf0baL,0xdeadd0d0deadd0d0L));
+        pairs.add(new Args(0xdeadbeefd0daf0baL,0xd0d0d0d0d0d0d0d0L));
+
+
         initialiseCodeBuffers(methods, "BC_lor.java", "long test(long, long)");
         int assemblerStatements = codeBytes.length / 4;
         for (Args pair : pairs) {
             long expectedValue = jtt.bytecode.BC_lor.test(pair.lfirst, pair.lsecond);
             String functionPrototype = ARMCodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "," + Long.toString(pair.lsecond));
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
-            long returnValue = registerValues[0] | ((0xffffffffL & registerValues[1]) << 32);
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+           // long returnValue = registerValues[0] | ((0xffffffffL & registerValues[1]) << 32);
+            long returnValue = connectRegs(registerValues[0],registerValues[1]);
+
+            if(expectedValue != returnValue) {
+                failed = true;//assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+                System.out.println("GOT " + returnValue + " EXPECTED " + expectedValue + " ARGS " +pair.lfirst + " " + pair.lsecond );}
             theCompiler.cleanup();
         }
+        assert(failed == false);
     }
 
     public void ignore_jtt_BC_lxor() throws Exception {
@@ -3615,6 +3633,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(31L, 63L));
         pairs.add(new Args(6L, 4L));
         pairs.add(new Args(-2147483648L, 1L));
+        pairs.add(new Args(0xdeadbeefd0daf0baL,0xdeadd0d0deadd0d0L));
+        pairs.add(new Args(0xdeadbeefd0daf0baL,0xd0d0d0d0d0d0d0d0L));
         initialiseCodeBuffers(methods, "BC_lxor.java", "long test(long, long)");
         int assemblerStatements = codeBytes.length / 4;
         for (Args pair : pairs) {
@@ -3629,6 +3649,7 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void ignore_jtt_BC_land() throws Exception {
         CompilationBroker.OFFLINE = initialised;
+        boolean failed = false;
         String klassName = getKlassName("jtt.bytecode.BC_land");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         CompilationBroker.OFFLINE = true;
@@ -3639,6 +3660,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(6L, 4L));
         pairs.add(new Args(-2147483648L, 1L));
         pairs.add(new Args(0xdeadbeefd0daf0baL, 45));
+        pairs.add(new Args(0xdeadbeefd0daf0baL,0xdeadd0d0deadd0d0L));
+        pairs.add(new Args(0xdeadbeefd0daf0baL,0xd0d0d0d0d0d0d0d0L));
+
 
         initialiseCodeBuffers(methods, "BC_land.java", "long test(long, long)");
         int assemblerStatements = codeBytes.length / 4;
@@ -3646,13 +3670,20 @@ public class ARMV7JTTTest extends MaxTestCase {
             long expectedValue = jtt.bytecode.BC_land.test(pair.lfirst, pair.lsecond);
             String functionPrototype = ARMCodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "," + Long.toString(pair.lsecond));
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
-            long returnValue = registerValues[0] | ((0xffffffffL & registerValues[1]) << 32);
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            //long returnValue = registerValues[0] | ((0xffffffffL & registerValues[1]) << 32);
+            long returnValue = connectRegs(registerValues[0],registerValues[1]);
+
+            if(returnValue != expectedValue) {
+                failed = true;
+                System.out.println("LAND GOT " +  returnValue + " EXPECTED " + expectedValue + " ARG " +pair.lfirst + " " + pair.lsecond );
+                //assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            }
             theCompiler.cleanup();
         }
+        assert(failed == false);
     }
 
-    public void test_jtt_BC_lshl() throws Exception {
+    public void ignore_jtt_BC_lshl() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_lshl");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -3695,6 +3726,10 @@ public class ARMV7JTTTest extends MaxTestCase {
         CompilationBroker.OFFLINE = true;
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1L, 2));
+        pairs.add(new Args(1L, 0));
+        pairs.add(new Args(1L, -1));
+
+
         pairs.add(new Args(67L, 2));
         pairs.add(new Args(31L, 1));
         pairs.add(new Args(6L, 4));
@@ -3726,9 +3761,40 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
         return b.toString();
     }
-
-    public long connectRegs(int reg0, int reg1) {
+public long connectRegs(int reg0, int reg1) {
         long returnVal = 0;
+        long tmp = 0;
+        System.out.println(" REG0 " + reg0 + " REG1 " + reg1);
+        if(reg1 < 0) {
+            // -ve long number
+
+            returnVal = ((long) reg1) << 32;
+
+
+            if(reg0 < 0) {
+                returnVal += Long.parseLong(String.format("%32s", Integer.toBinaryString(reg0)).replace(' ', '0'),2);
+            }else {
+                returnVal += reg0;
+            }
+        } else {
+           // +ve long number
+            returnVal = ((long)reg1) << 32;
+            if(reg1 == 0) {
+                returnVal += reg0;
+            } else
+            if(reg0 < 0) {
+                //returnVal += 1L << 31;
+                returnVal += Long.parseLong(String.format("%32s", Integer.toBinaryString(reg0)).replace(' ', '0'),2);
+            } else {
+                returnVal += reg0;
+            }
+        }
+
+        return returnVal;
+    }
+    public long OLDconnectRegs(int reg0, int reg1) {
+        long returnVal = 0;
+
         String r0 = String.format("%32s", Integer.toBinaryString(reg0)).replace(' ', '0');
         String r1 = String.format("%32s", Integer.toBinaryString(reg1)).replace(' ', '0');
         // System.out.println("Reg0 " + reg0 + " R0 " + r0);
@@ -3760,7 +3826,41 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
         return returnVal;
     }
+    public void test_jtt_BC_connectREGS() throws Exception {
+        CompilationBroker.OFFLINE = initialised;
+        String klassName = getKlassName("jtt.bytecode.BC_connectREGS");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(1L, 2));
+        pairs.add(new Args(0L,1));
+        pairs.add(new Args((long)Integer.MAX_VALUE, 45));
+        pairs.add(new Args(Long.MAX_VALUE, 45));
 
+        pairs.add(new Args((long)Integer.MIN_VALUE, 16));
+        pairs.add(new Args((long)Integer.MIN_VALUE+5, 16));
+
+        pairs.add(new Args((long)Integer.MAX_VALUE, 45));
+        pairs.add(new Args(Long.MIN_VALUE, 16));
+        pairs.add(new Args(Long.MIN_VALUE+5, 16));
+
+        pairs.add(new Args(Long.MAX_VALUE, 45));
+        pairs.add(new Args(Long.MAX_VALUE-5, 45));
+
+
+        initialiseCodeBuffers(methods, "BC_connectREGS.java", "long test(long)");
+        int assemblerStatements = codeBytes.length / 4;
+        for (Args pair : pairs) {
+            long expectedValue = BC_connectREGS.test(pair.lfirst);
+            String functionPrototype = ARMCodeWriter.preAmble("long long", "long long", Long.toString(pair.lfirst));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            long returnValue = connectRegs(registerValues[0], registerValues[1]);
+           System.out.println("connectREGS EXPECTED " + expectedValue + " GOT "+ returnValue + " OLD " +  OLDconnectRegs(registerValues[0], registerValues[1]));
+
+            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            theCompiler.cleanup();
+        }
+    }
     public void ignore_jtt_BC_lushr() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_lushr");
@@ -3932,33 +4032,45 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_i2l() throws Exception {
+    public void test_jtt_BC_i2l() throws Exception {
+        boolean failed = false;
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_i2l");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         CompilationBroker.OFFLINE = true;
         List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(Integer.MIN_VALUE, (long)Integer.MIN_VALUE));
+
         pairs.add(new Args(1, 1L));
         pairs.add(new Args(2, 2L));
         pairs.add(new Args(3, 3L));
         pairs.add(new Args(-1, -1L));
-        pairs.add(new Args(-2147483647, -2147483647L));
-        pairs.add(new Args(-2147483648, -2147483648L));
-        pairs.add(new Args(2147483647, 2147483647L));
+        pairs.add(new Args(Integer.MIN_VALUE/2, (long)Integer.MIN_VALUE));
+
+        pairs.add(new Args(Integer.MAX_VALUE, (long)Integer.MAX_VALUE));
         initialiseCodeBuffers(methods, "BC_i2l.java", "long test(int)");
         int assemblerStatements = codeBytes.length / 4;
         for (Args pair : pairs) {
             long expectedValue = jtt.bytecode.BC_i2l.test(pair.first);
             String functionPrototype = ARMCodeWriter.preAmble("long long", "int", Integer.toString(pair.first));
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
-            long returnValue = Math.abs(connectRegs(registerValues[0], registerValues[1]));
-            assert returnValue ==  Math.abs(expectedValue) : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+
+            long returnValue = connectRegs(registerValues[0], registerValues[1]);
+            if(returnValue != expectedValue) {
+                failed = true;
+                System.out.println("REG 0 was " + registerValues[0] + " REG1 " + registerValues[1]);
+                System.out.println("i2l GOT " + returnValue+ " EXPECTED " + expectedValue + " ARGS " + pair.first );
+            }
+            //assert returnValue ==  Math.abs(expectedValue) : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
+            assert(failed == false);
         }
+        assert(failed == false);
     }
 
     public void ignore_jtt_BC_l2i() throws Exception {
         CompilationBroker.OFFLINE = initialised;
+        boolean failed = false;
         String klassName = getKlassName("jtt.bytecode.BC_l2i");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         CompilationBroker.OFFLINE = true;
@@ -3970,16 +4082,27 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(-2147483647L, -2147483647));
         pairs.add(new Args(-2147483648L, -2147483648));
         pairs.add(new Args(2147483647L, 2147483647));
+        pairs.add(new Args(Long.MAX_VALUE, Integer.MAX_VALUE));
+        pairs.add(new Args(Long.MIN_VALUE, Integer.MIN_VALUE));
+        pairs.add(new Args(0, 0));
+
+
+
         initialiseCodeBuffers(methods, "BC_l2i.java", "int test(long)");
         int assemblerStatements = codeBytes.length / 4;
         for (Args pair : pairs) {
-            long expectedValue = jtt.bytecode.BC_l2i.test(pair.lfirst);
+            int expectedValue = jtt.bytecode.BC_l2i.test(pair.lfirst);
             String functionPrototype = ARMCodeWriter.preAmble( "int", "long long", Long.toString(pair.lfirst));
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
-            long returnValue = connectRegs(registerValues[0], registerValues[1]);
-            assert Math.abs(returnValue) ==  Math.abs(expectedValue) : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            int returnValue = registerValues[0];
+            if(returnValue != expectedValue) {
+                failed = true;
+                System.out.println("L2I GOT "+ returnValue + " EXPECTED "+ expectedValue + " ARG "+ pair.lfirst);
+                //assert Math.abs(returnValue) ==  Math.abs(expectedValue) : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            }
             theCompiler.cleanup();
         }
+        assert(failed == false);
     }
 
     //TODO: Implement functionality

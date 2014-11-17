@@ -330,7 +330,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (s ? 1 : 0) << 20;
         instruction |= (Rd.encoding & 0xf) << 12;
         instruction |= (imm5 & 0x1f) << 7;
-        instruction |= Rm.encoding & 0xfff;
+        instruction |= Rm.encoding & 0xf;
         emitInt(instruction);
     }
 

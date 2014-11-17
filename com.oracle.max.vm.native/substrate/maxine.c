@@ -130,6 +130,7 @@ static void getImageFilePath(char *result) {
 static void loadImage(void) {
     char imageFilePath[MAX_PATH_LENGTH];
     getImageFilePath(imageFilePath);
+	printf("FILEPATH %s\n",imageFilePath);
     image_load(imageFilePath);
 }
 
