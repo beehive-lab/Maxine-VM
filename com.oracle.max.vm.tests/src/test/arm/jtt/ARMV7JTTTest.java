@@ -3556,7 +3556,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_ladd() throws Exception {
+    public void test_jtt_BC_ladd() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_ladd");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -3569,11 +3569,13 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(-2147483648L, 1L));
         pairs.add(new Args(2147483647L, 1L));
         pairs.add(new Args(-2147483647L, -2L));
+        pairs.add(new Args(214723483647L, 1L));
+
         initialiseCodeBuffers(methods, "BC_ladd.java", "long test(long, long)");
         int assemblerStatements = codeBytes.length / 4;
         for (Args pair : pairs) {
             long expectedValue = jtt.bytecode.BC_ladd.test(pair.lfirst, pair.lsecond);
-            String functionPrototype = ARMCodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "," + Long.toString(pair.lsecond));
+            String functionPrototype = ARMCodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL ," + Long.toString(pair.lsecond)+"LL");
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
             long returnValue = connectRegs(registerValues[0], registerValues[1]);
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
@@ -3609,16 +3611,19 @@ public class ARMV7JTTTest extends MaxTestCase {
         int assemblerStatements = codeBytes.length / 4;
         for (Args pair : pairs) {
             long expectedValue = jtt.bytecode.BC_lor.test(pair.lfirst, pair.lsecond);
-            String functionPrototype = ARMCodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "," + Long.toString(pair.lsecond));
+            String functionPrototype = ARMCodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond)+"LL");
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
            // long returnValue = registerValues[0] | ((0xffffffffL & registerValues[1]) << 32);
             long returnValue = connectRegs(registerValues[0],registerValues[1]);
 
             if(expectedValue != returnValue) {
                 failed = true;//assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
-                System.out.println("GOT " + returnValue + " EXPECTED " + expectedValue + " ARGS " +pair.lfirst + " " + pair.lsecond );}
+                System.out.println("GOT " + returnValue + " EXPECTED " + expectedValue + " ARGS " +pair.lfirst + " " + pair.lsecond );
+            }
             theCompiler.cleanup();
+
         }
+
         assert(failed == false);
     }
 
@@ -3668,7 +3673,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         int assemblerStatements = codeBytes.length / 4;
         for (Args pair : pairs) {
             long expectedValue = jtt.bytecode.BC_land.test(pair.lfirst, pair.lsecond);
-            String functionPrototype = ARMCodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "," + Long.toString(pair.lsecond));
+            String functionPrototype = ARMCodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL ," + Long.toString(pair.lsecond)+"LL");
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
             //long returnValue = registerValues[0] | ((0xffffffffL & registerValues[1]) << 32);
             long returnValue = connectRegs(registerValues[0],registerValues[1]);
@@ -3764,6 +3769,7 @@ public class ARMV7JTTTest extends MaxTestCase {
 public long connectRegs(int reg0, int reg1) {
         long returnVal = 0;
         long tmp = 0;
+        //returnVal = ((long) reg1 << 32 | ((long)reg0 &0xffffffffL));
         System.out.println(" REG0 " + reg0 + " REG1 " + reg1);
         if(reg1 < 0) {
             // -ve long number
@@ -3772,19 +3778,17 @@ public long connectRegs(int reg0, int reg1) {
 
 
             if(reg0 < 0) {
-                returnVal += Long.parseLong(String.format("%32s", Integer.toBinaryString(reg0)).replace(' ', '0'),2);
+                returnVal += 1L<< 31;
+                returnVal += ((long)reg0)+(1L << 31);
             }else {
                 returnVal += reg0;
             }
         } else {
            // +ve long number
             returnVal = ((long)reg1) << 32;
-            if(reg1 == 0) {
-                returnVal += reg0;
-            } else
             if(reg0 < 0) {
-                //returnVal += 1L << 31;
-                returnVal += Long.parseLong(String.format("%32s", Integer.toBinaryString(reg0)).replace(' ', '0'),2);
+                returnVal += 1L << 31;
+                returnVal += ((long)reg0)+(1L << 31);
             } else {
                 returnVal += reg0;
             }
@@ -3828,39 +3832,86 @@ public long connectRegs(int reg0, int reg1) {
     }
     public void test_jtt_BC_connectREGS() throws Exception {
         CompilationBroker.OFFLINE = initialised;
+        boolean failed = false;
         String klassName = getKlassName("jtt.bytecode.BC_connectREGS");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         CompilationBroker.OFFLINE = true;
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1L, 2));
+        pairs.add(new Args(-1L,1));
+
         pairs.add(new Args(0L,1));
         pairs.add(new Args((long)Integer.MAX_VALUE, 45));
+        pairs.add(new Args((long)Integer.MAX_VALUE+5L, 45));
+
         pairs.add(new Args(Long.MAX_VALUE, 45));
 
         pairs.add(new Args((long)Integer.MIN_VALUE, 16));
-        pairs.add(new Args((long)Integer.MIN_VALUE+5, 16));
+        pairs.add(new Args((long)Integer.MIN_VALUE-5L, 16));
 
         pairs.add(new Args((long)Integer.MAX_VALUE, 45));
         pairs.add(new Args(Long.MIN_VALUE, 16));
-        pairs.add(new Args(Long.MIN_VALUE+5, 16));
+        pairs.add(new Args(Long.MIN_VALUE+5L, 16));
 
         pairs.add(new Args(Long.MAX_VALUE, 45));
-        pairs.add(new Args(Long.MAX_VALUE-5, 45));
+        pairs.add(new Args(Long.MAX_VALUE-5L, 45));
 
 
         initialiseCodeBuffers(methods, "BC_connectREGS.java", "long test(long)");
         int assemblerStatements = codeBytes.length / 4;
         for (Args pair : pairs) {
             long expectedValue = BC_connectREGS.test(pair.lfirst);
-            String functionPrototype = ARMCodeWriter.preAmble("long long", "long long", Long.toString(pair.lfirst));
+            String functionPrototype = ARMCodeWriter.preAmble("long long", "long long", Long.toString(pair.lfirst)+"LL");
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
             long returnValue = connectRegs(registerValues[0], registerValues[1]);
-           System.out.println("connectREGS EXPECTED " + expectedValue + " GOT "+ returnValue + " OLD " +  OLDconnectRegs(registerValues[0], registerValues[1]));
+            if(returnValue != expectedValue) {
+                failed = true;
+                System.out.println("connectREGS EXPECTED " + expectedValue + " GOT "+ returnValue + " REG0 " +  registerValues[0] + " REG1  " + registerValues[1]);
+            }
 
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            //assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
+        assert (failed == false);
     }
+    public void test_jtt_BC_movlong() throws Exception {
+        boolean failed = false;
+        CompilationBroker.OFFLINE = initialised;
+        String klassName = getKlassName("jtt.bytecode.BC_movlong");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+
+        long [] values= new long [10];
+        values[0] = 0L;
+        values[1] = -1L;
+        values[2] = (long)Integer.MIN_VALUE;
+        values[3] = (long)Integer.MAX_VALUE;
+        values[4] = Long.MAX_VALUE;
+        values[5] = Long.MIN_VALUE;
+        values[6] = Long.MIN_VALUE + 5;
+        values[7] = Long.MAX_VALUE -5;
+        values[8] = ((long)Integer.MIN_VALUE) +5L;
+        values[9] = ((long)Integer.MAX_VALUE) -5L;
+
+        initialiseCodeBuffers(methods, "BC_movlong.java", "long test(int)");
+        int assemblerStatements = codeBytes.length / 4;
+        for (int i = 0; i <values.length;i++ ) {
+            long expectedValue = BC_movlong.test(i);
+            String functionPrototype = ARMCodeWriter.preAmble("long long", "int", Integer.toString(i));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            long returnValue = connectRegs(registerValues[0], registerValues[1]);
+
+            if( returnValue != expectedValue) {
+                failed = true;
+                System.out.println(i+ "MOVLONG EXPECTED " + expectedValue + " GOT "+ returnValue + " REG0 " +  registerValues[0] +
+                        " REG1 " +registerValues[1]);
+
+            }
+            theCompiler.cleanup();
+        }
+        assert(failed == false);
+    }
+
     public void ignore_jtt_BC_lushr() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_lushr");
@@ -3936,8 +3987,9 @@ public long connectRegs(int reg0, int reg1) {
     }
     // TODO: Figure out why -2147483648L and 2147483648L have
     // the same reg0,reg1 values
-    public void ignore_jtt_BC_lmul() throws Exception {
+    public void test_jtt_BC_lmul() throws Exception {
         CompilationBroker.OFFLINE = initialised;
+        boolean failed = false;
         String klassName = getKlassName("jtt.bytecode.BC_lmul");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         CompilationBroker.OFFLINE = true;
@@ -3954,16 +4006,22 @@ public long connectRegs(int reg0, int reg1) {
         int assemblerStatements = codeBytes.length / 4;
         for (Args pair : pairs) {
             long expectedValue = jtt.bytecode.BC_lmul.test(pair.lfirst, pair.lsecond);
-            String functionPrototype = ARMCodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "," + Long.toString(pair.lsecond));
+            String functionPrototype = ARMCodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL ," + Long.toString(pair.lsecond)+"LL");
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
             long returnValue = connectRegs(registerValues[0], registerValues[1]);
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            if(returnValue != expectedValue) {
+                failed = true;
+                System.out.println("EXPECTED " + expectedValue  + " GOT " + returnValue + " REG 0 was " + registerValues[0] + " REG1 " + registerValues[1]);
+            }
+            //assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
+        assert(failed == false);
     }
 
-    public void ignore_jtt_BC_lneg() throws Exception {
+    public void test_jtt_BC_lneg() throws Exception {
         CompilationBroker.OFFLINE = initialised;
+        boolean failed = false;
         String klassName = getKlassName("jtt.bytecode.BC_lneg");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         CompilationBroker.OFFLINE = true;
@@ -3976,12 +4034,16 @@ public long connectRegs(int reg0, int reg1) {
         int assemblerStatements = codeBytes.length / 4;
         for (Args pair : pairs) {
             long expectedValue = jtt.bytecode.BC_lneg.test(pair.lfirst);
-            String functionPrototype = ARMCodeWriter.preAmble("long long", "long long", Long.toString(pair.lfirst));
+            String functionPrototype = ARMCodeWriter.preAmble("long long", "long long", Long.toString(pair.lfirst)+"LL");
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
             long returnValue = connectRegs(registerValues[0], registerValues[1]);
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            if(returnValue != expectedValue) {
+                failed = true;
+                System.out.println("EXPECTED " + expectedValue  + " GOT " + returnValue + " REG 0 was " + registerValues[0] + " REG1 " + registerValues[1]);
+            }//assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
+           assert(failed == false);
     }
 
     public void ignore_jtt_BC_lreturn() throws Exception {
@@ -4007,7 +4069,7 @@ public long connectRegs(int reg0, int reg1) {
         }
     }
 
-    public void ignore_jtt_BC_lsub() throws Exception {
+    public void test_jtt_BC_lsub() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_lsub");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -4020,11 +4082,18 @@ public long connectRegs(int reg0, int reg1) {
         pairs.add(new Args(-2147483648L, -1L));
         pairs.add(new Args(2147483647L, -1L));
         pairs.add(new Args(-2147483647L, 2L));
+        pairs.add(new Args(Long.MAX_VALUE, 2L));
+        pairs.add(new Args(Long.MAX_VALUE, Long.MAX_VALUE));
+        pairs.add(new Args(0L, Long.MIN_VALUE));
+        pairs.add(new Args(Long.MIN_VALUE, Long.MIN_VALUE));
+
+
+
         initialiseCodeBuffers(methods, "BC_lsub.java", "long test(long, long)");
         int assemblerStatements = codeBytes.length / 4;
         for (Args pair : pairs) {
             long expectedValue = jtt.bytecode.BC_lsub.test(pair.lfirst, pair.lsecond);
-            String functionPrototype = ARMCodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "," + Long.toString(pair.lsecond));
+            String functionPrototype = ARMCodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL ," + Long.toString(pair.lsecond)+ "LL");
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
             long returnValue = connectRegs(registerValues[0], registerValues[1]);
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
@@ -4032,7 +4101,7 @@ public long connectRegs(int reg0, int reg1) {
         }
     }
 
-    public void test_jtt_BC_i2l() throws Exception {
+    public void ignroe_jtt_BC_i2l() throws Exception {
         boolean failed = false;
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_i2l");
@@ -4092,7 +4161,7 @@ public long connectRegs(int reg0, int reg1) {
         int assemblerStatements = codeBytes.length / 4;
         for (Args pair : pairs) {
             int expectedValue = jtt.bytecode.BC_l2i.test(pair.lfirst);
-            String functionPrototype = ARMCodeWriter.preAmble( "int", "long long", Long.toString(pair.lfirst));
+            String functionPrototype = ARMCodeWriter.preAmble( "int", "long long", Long.toString(pair.lfirst)+"LL");
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
             int returnValue = registerValues[0];
             if(returnValue != expectedValue) {

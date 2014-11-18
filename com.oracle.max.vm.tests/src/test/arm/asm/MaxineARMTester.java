@@ -7,7 +7,7 @@ public class MaxineARMTester {
     public static boolean DEBUG = false;
     public static boolean DEBUGOBJECTS = false;
     public static final String ENABLE_QEMU = "max.arm.qemu";
-    public static boolean ENABLE_SIMULATOR = false;
+    public static boolean ENABLE_SIMULATOR = true;
     public static final int NUM_REGS = 17;
     public static final int NUM_DP_REGS = 16;
 
@@ -311,6 +311,44 @@ public class MaxineARMTester {
         int[] simulatedRegisters = parseRegistersToFile(gdbOutput.getName());
         assert validateRegisters(simulatedRegisters, expectRegs, testRegs);
     }
+    public int [] runSimulationRegisters() throws Exception {
+        cleanFiles();
+        ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb");
+        gdbProcess.redirectInput(gdbInput);
+        gdbProcess.redirectOutput(gdbOutput);
+        gdbProcess.redirectError(gdbErrors);
+        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a9", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.bin");
+        qemuProcess.redirectOutput(qemuOutput);
+        qemuProcess.redirectError(qemuErrors);
+        try {
+            qemu = qemuProcess.start();
+            while (!qemuOutput.exists()) {
+                Thread.sleep(500);
+            }
+            do {
+                ProcessBuilder binder = new ProcessBuilder("lsof", "-i", "TCP:1234");
+                binder.redirectOutput(bindOutput);
+                binder.start().waitFor();
+                FileInputStream inputStream = new FileInputStream(bindOutput);
+                if (inputStream.available() != 0) {
+                    log("MaxineARMTester:: qemu ready");
+                    break;
+                } else {
+                    log("MaxineARMTester: gemu not ready");
+                    Thread.sleep(500);
+                }
+            } while (true);
+            gdb = gdbProcess.start();
+            gdb.waitFor();
+        } catch (Exception e) {
+            System.out.println(e);
+            e.printStackTrace();
+            cleanProcesses();
+            System.exit(-1);
+        }
+        int[] simulatedRegisters = parseRegistersToFile(gdbOutput.getName());
+        return simulatedRegisters;
+    }
 
     private boolean validateRegisters(int[] simRegisters, int[] expectedRegisters, boolean[] testRegisters) {
         for (int i = 0; i < NUM_REGS; i++) {
@@ -359,6 +397,12 @@ public class MaxineARMTester {
                 testRegs[j] = testRegs[j + 1] = test[i];
                 j = +2;
             }
+        }
+    }
+    public MaxineARMTester() {
+        initializeQemu();
+        for (int i = 0; i < NUM_REGS; i++) {
+            testRegs[i] = false;
         }
     }
 
@@ -499,7 +543,13 @@ public class MaxineARMTester {
                 continue;
             }
             String value = line.split("\\s+")[1];
-            expectedValues[i] = (int) Long.parseLong(value.substring(2, value.length()).toString(), 16);
+            long tmp = Long.parseLong(value.substring(2, value.length()).toString(), 16);
+
+            if (tmp >= Integer.MAX_VALUE) {
+                expectedValues[i] = (int)(2L*Integer.MIN_VALUE + tmp);
+            } else expectedValues[i] = (int)tmp;
+
+            //expectedValues[i] = (int) Long.parseLong(value.substring(2, value.length()).toString(), 16);
             i++;
             if (line.contains("cpsr")) {
                 enabled = false;

@@ -1060,8 +1060,9 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final void mov64BitConstant(CiRegister dstUpper, CiRegister dstLow, long imm64) {
         int low32 = (int) (imm64 & 0xffffffff);
         int high32 = (int) ((imm64 >> 32) & 0xffffffff);
-        mov32BitConstant(dstLow, low32);
-        mov32BitConstant(dstUpper, high32);
+        // Yes I know ... it looks wrong but it is RIGHT!
+        mov32BitConstant(dstLow, high32);
+        mov32BitConstant(dstUpper, low32);
     }
 
     public final void alignForPatchableDirectCall() {
@@ -1190,13 +1191,35 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void mulLong(CiRegister dst, CiRegister src1, CiRegister src2) {
-        mov(ConditionFlag.Always, false, ARMV7.cpuRegisters[scratchRegister.number+1], ARMV7.cpuRegisters[src2.number]);
-        mul(ConditionFlag.Always, false, src2, src2, ARMV7.cpuRegisters[src1.number + 1]);
-        mul(ConditionFlag.Always, false, ARMV7.cpuRegisters[src2.number + 1], src1, ARMV7.cpuRegisters[src2.number + 1]);
-        addRegisters(ConditionFlag.Always, false, scratchRegister, src2, ARMV7.cpuRegisters[src2.number+1], 0, 0);
+       /* 0x0000846c <+0>:	push	{r11}		; (str r11, [sp, #-4]!)
+        0x00008470 <+4>:	add	r11, sp, #0
+        0x00008474 <+8>:	sub	sp, sp, #20
+        0x00008478 <+12>:	strd	r0, [r11, #-12]
+        0x0000847c <+16>:	strd	r2, [r11, #-20]	; 0xffffffec
+        0x00008480 <+20>:	ldr	r3, [r11, #-8] src1COPY+1
+        0x00008484 <+24>:	ldr	r2, [r11, #-20] src2COPY
+        0x00008488 <+28>:	mul	r2, r2, r3 src2COPY, src2COPY,src1COPY+1
+        0x0000848c <+32>:	ldr	r3, [r11, #-16]  src2COPY+1
+        0x00008490 <+36>:	ldr	r1, [r11, #-12]  src1COPY
+        0x00008494 <+40>:	mul	r3, r1, r3  src2COPY+1,src1COPY,src2COPY+1
+        0x00008498 <+44>:	add	r1, r2, r3 src1COPY
+        0x0000849c <+48>:	ldr	r2, [r11, #-12]  NEWsrc1COPY
+        0x000084a0 <+52>:	ldr	r3, [r11, #-20] NEWsrc2COPY
+        0x000084a4 <+56>:	umull	r2, r3, r2, r3  src1COPY, src2COPY, src1COPY,src2COPY
+        0x000084a8 <+60>:	add	r1, r1, r3    dest+1, dest+1,src2COPY
+        0x000084ac <+64>:	mov	r3, r1
+        0x000084b0 <+68>:	mov	r0, r2        mov dest, src1COPY
+        0x000084b4 <+72>:	mov	r1, r3
+        0x000084b8 <+76>:	sub	sp, r11, #0
+        0x000084bc <+80>:	pop	{r11}		; (ldr r11, [sp], #4)
+        0x000084c0 <+84>:	bx	lr
+*/
+       
+        mul(ConditionFlag.Always, false, scratchRegister, src2, ARMV7.cpuRegisters[src1.number + 1]);
+        mul(ConditionFlag.Always, false, ARMV7.cpuRegisters[dst.number + 1], src1, ARMV7.cpuRegisters[src2.number + 1]);
+        addRegisters(ConditionFlag.Always, false, dst, ARMV7.r12, ARMV7.cpuRegisters[src2.number+1], 0, 0);
         umull(ConditionFlag.Always, false, ARMV7.cpuRegisters[src2.number], dst,
-                ARMV7.cpuRegisters[scratchRegister.number+1], src1);
-
+                ARMV7.cpuRegisters[scratchRegister.number], src1);
         addRegisters(ConditionFlag.Always, false, scratchRegister, scratchRegister,
                         src2, 0, 0);
         mov(ConditionFlag.Always, false, ARMV7.cpuRegisters[dst.number+1], scratchRegister);

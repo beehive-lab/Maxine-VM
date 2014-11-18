@@ -100,6 +100,24 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         r.runSimulation();
         r.reset();
     }
+    private int [] generate(int assemblerStatements) throws Exception {
+        ARMCodeWriter code = new ARMCodeWriter(assemblerStatements, asm.codeBuffer);
+        code.createCodeFile();
+        int [] retArr;
+        MaxineARMTester r = new MaxineARMTester();
+        if (!MaxineARMTester.ENABLE_SIMULATOR) {
+            System.out.println("Code Generation is disabled!");
+            return null;
+        }
+        r.assembleStartup();
+        r.assembleEntry();
+        r.compile();
+        r.link();
+        r.objcopy();
+        retArr = r.runSimulationRegisters();
+        r.reset();
+        return retArr;
+    }
 
     private void generateAndTest(int assemblerStatements, long[] expected, boolean[] tests, MaxineARMTester.BitsFlag[] masks) throws Exception {
         ARMCodeWriter code = new ARMCodeWriter(assemblerStatements, asm.codeBuffer);
@@ -151,7 +169,69 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         generateAndTest(assemblerStatements, expectedValues, testValues, bitmasks);
 
     }
+    public long connectRegs(int reg0, int reg1) {
+        long returnVal = 0;
+        long tmp = 0;
+        //  r1 is MSW
+        // r2 is LSW
+        System.out.println(" REG0 " + reg0 + " REG1 " + reg1);
+        if(reg1 < 0) {
+            // -ve long number
 
+            returnVal = ((long) reg1) << 32;
+
+
+            if(reg0 < 0) {
+                returnVal += Long.parseLong(String.format("%32s", Integer.toBinaryString(reg0)).replace(' ', '0'),2);
+            }else {
+                returnVal += reg0;
+            }
+        } else {
+            // +ve long number
+            returnVal = ((long)reg1) << 32;
+            if(reg1 == 0) {
+                returnVal += reg0;
+            } else
+            if(reg0 < 0) {
+                //returnVal += 1L << 31;
+                returnVal += Long.parseLong(String.format("%32s", Integer.toBinaryString(reg0)).replace(' ', '0'),2);
+            } else {
+                returnVal += reg0;
+            }
+        }
+
+        return returnVal;
+    }
+    public void test_mov64BitConstant() throws Exception {
+        int[] instructions = new int[6];
+        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
+        long [] values= new long [10];
+        values[0] = 0L;
+        values[1] = -1L;
+        values[2] = (long)Integer.MIN_VALUE;
+        values[3] = (long)Integer.MAX_VALUE;
+        values[4] = Long.MAX_VALUE;
+        values[5] = Long.MIN_VALUE;
+        values[6] = Long.MIN_VALUE + 5;
+        values[7] = Long.MAX_VALUE -5;
+        values[8] = ((long)Integer.MIN_VALUE) +5L;
+        values[9] = ((long)Integer.MAX_VALUE) -5L;
+        int registers [] = null;
+                for (int i = 0; i < values.length; i++) {
+                    asm.codeBuffer.reset();
+                    asm.mov64BitConstant(ARMV7.r0,ARMV7.r1,values[i]);
+                    instructions[0] = asm.codeBuffer.getInt(0);
+                    instructions[1] = asm.codeBuffer.getInt(4);
+                    instructions[2] = asm.codeBuffer.getInt(8);
+                    instructions[3] = asm.codeBuffer.getInt(12);
+                    registers = generate(4);
+                    if(values[i] != connectRegs(registers[0],registers[1]))
+                    System.out.println("FAILED " + i + " EXPECTED " + values[i] + " GOT " + connectRegs(registers[0],registers[1]));
+                    //assert (values[i] == connectRegs(registers[0],registers[1]));
+                }
+
+
+    }
     public void test_AddConstant() throws Exception {
         int[] instructions = new int[3];
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
