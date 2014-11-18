@@ -3556,7 +3556,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_ladd() throws Exception {
+    public void ignore_jtt_BC_ladd() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_ladd");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -3830,7 +3830,7 @@ public long connectRegs(int reg0, int reg1) {
         }
         return returnVal;
     }
-    public void test_jtt_BC_connectREGS() throws Exception {
+    public void ignore_jtt_BC_connectREGS() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         String klassName = getKlassName("jtt.bytecode.BC_connectREGS");
@@ -3874,7 +3874,7 @@ public long connectRegs(int reg0, int reg1) {
         }
         assert (failed == false);
     }
-    public void test_jtt_BC_movlong() throws Exception {
+    public void ignore_jtt_BC_movlong() throws Exception {
         boolean failed = false;
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_movlong");

@@ -1213,17 +1213,31 @@ public class ARMV7Assembler extends AbstractAssembler {
         0x000084b8 <+76>:	sub	sp, r11, #0
         0x000084bc <+80>:	pop	{r11}		; (ldr r11, [sp], #4)
         0x000084c0 <+84>:	bx	lr
-*/
-       
-        mul(ConditionFlag.Always, false, scratchRegister, src2, ARMV7.cpuRegisters[src1.number + 1]);
-        mul(ConditionFlag.Always, false, ARMV7.cpuRegisters[dst.number + 1], src1, ARMV7.cpuRegisters[src2.number + 1]);
-        addRegisters(ConditionFlag.Always, false, dst, ARMV7.r12, ARMV7.cpuRegisters[src2.number+1], 0, 0);
+mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratchRegister.number+1], registerConfig.getAllocatableRegisters()[src2.number]);
++        mul(ConditionFlag.Always, false, src2, src2, registerConfig.getAllocatableRegisters()[src1.number + 1]);
++        mul(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[src2.number + 1], src1, registerConfig.getAllocatableRegisters()[src2.number + 1]);
++        addRegisters(ConditionFlag.Always, false, scratchRegister, src2, registerConfig.getAllocatableRegisters()[src2.number+1], 0, 0);
++
++        umull(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[src2.number], dst,
++                        registerConfig.getAllocatableRegisters()[scratchRegister.number+1], src1);
++
++        addRegisters(ConditionFlag.Always, false, scratchRegister, scratchRegister,
++                        src2, 0, 0);
++
++        mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dst.number+1], scratchRegister);*/
+        assert(src1 == dst);
+        push(ConditionFlag.Always,1<< src2.number | 1 << (src2.number+1));
+        System.out.println("using SRC1 " + src1.number + " " + src2.number + " DEST "+ dst.number);
+        mov(ConditionFlag.Always,false,ARMV7.r12,src2); // save src2
+        mul(ConditionFlag.Always, false, src2, src2, ARMV7.cpuRegisters[src1.number + 1]);
+        mul(ConditionFlag.Always, false, ARMV7.cpuRegisters[src2.number+1], src1, ARMV7.cpuRegisters[src2.number + 1]);
+        addRegisters(ConditionFlag.Always, false, ARMV7.cpuRegisters[src2.number+1], src2, ARMV7.cpuRegisters[src2.number+1], 0, 0);
         umull(ConditionFlag.Always, false, ARMV7.cpuRegisters[src2.number], dst,
                 ARMV7.cpuRegisters[scratchRegister.number], src1);
-        addRegisters(ConditionFlag.Always, false, scratchRegister, scratchRegister,
+        addRegisters(ConditionFlag.Always, false, scratchRegister, ARMV7.cpuRegisters[src2.number+1],
                         src2, 0, 0);
         mov(ConditionFlag.Always, false, ARMV7.cpuRegisters[dst.number+1], scratchRegister);
-
+        pop(ConditionFlag.Always,1<< src2.number | 1 << (src2.number+1) );
     }
 
     public void xorq(CiRegister dest, CiAddress src) {
