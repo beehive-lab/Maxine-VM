@@ -1061,8 +1061,10 @@ public class ARMV7Assembler extends AbstractAssembler {
         int low32 = (int) (imm64 & 0xffffffff);
         int high32 = (int) ((imm64 >> 32) & 0xffffffff);
         // Yes I know ... it looks wrong but it is RIGHT!
-        mov32BitConstant(dstLow, high32);
-        mov32BitConstant(dstUpper, low32);
+        mov32BitConstant(dstLow, low32);
+        mov32BitConstant(dstUpper, high32);
+        //mov32BitConstant(dstLow, high32);
+        //mov32BitConstant(dstUpper, low32);
     }
 
     public final void alignForPatchableDirectCall() {

@@ -2179,7 +2179,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
         } else {
             moveOp(callAddress, reg.asValue(callAddress.kind), callAddress.kind, null, false);
         }
-	masm.mov32BitConstant(ARMV7.r8,8); // indirectcalls found to be jumping into Adapter 8 bytes prior to real entry point
+        masm.mov32BitConstant(ARMV7.r8,8);
         indirectCall(reg, target, info);
     }
 
@@ -2211,6 +2211,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
         } else {
             moveOp(callAddress, reg.asValue(callAddress.kind), callAddress.kind, null, false);
         }
+	masm.mov32BitConstant(ARMV7.r8,0);
         indirectCall(reg, symbol, info);
     }
 

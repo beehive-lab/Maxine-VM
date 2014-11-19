@@ -373,7 +373,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
     log_println("entering Java by calling MaxineVM.run(tlBlock=%p, bootHeapRegionStart=%p, openLibrary=%p, dlsym=%p, dlerror=%p, vmInterface=%p, jniEnv=%p, jmmInterface=%p, jvmtiInterface=%p, argc=%d, argv=%p)",
                     tlBlock, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
 #endif
-    printf("DEBUGGING this method call to enter the VM, expected problem is a broken adapter");
+    printf("dlopen %p dlsym %p dlsym %p\n",openLibrary,loadSymbol,dlerror);
     exitCode = (*method)(tlBlock, ntl->tlBlockSize, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
     printf("EXITED JAVA %d\n", exitCode);
 

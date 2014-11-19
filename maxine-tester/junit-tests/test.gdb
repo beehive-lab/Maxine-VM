@@ -15,3 +15,4 @@ set $low=$pc+0x40
 disas $upper,$low 
 p $pc
 shell maxine-tester/junit-tests/method_finder
+

@@ -37,6 +37,7 @@ jint nativeMutexSize(void) {
 }
 
 void nativeMutexInitialize(Mutex mutex) {
+	printf("DOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO\n");
 	mutex_initialize(mutex);
 }
 

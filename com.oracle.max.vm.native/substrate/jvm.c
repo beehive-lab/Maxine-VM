@@ -2188,6 +2188,7 @@ jio_vfprintf(FILE *file, const char *fmt, va_list args) {
 
 void *JVM_RawMonitorCreate(void) {
     Mutex mutex = (Mutex) calloc(sizeof(*mutex), 1);
+    printf("INITME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
     mutex_initialize(mutex);
     return mutex;
 }
