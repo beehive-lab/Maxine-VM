@@ -1057,9 +1057,9 @@ public class ARMV7Assembler extends AbstractAssembler {
         movw(cond, dst, imm16);
     }
 
-    public final void mov64BitConstant(CiRegister dstUpper, CiRegister dstLow, long imm64) {
-        int low32 = (int) (imm64 & 0xffffffff);
-        int high32 = (int) ((imm64 >> 32) & 0xffffffff);
+    public final void mov64BitConstant(CiRegister dstLow, CiRegister dstUpper, long imm64) {
+        int low32 = (int) (imm64 & 0xffffffffL);
+        int high32 = (int) ((imm64 >> 32) & 0xffffffffL);
         // Yes I know ... it looks wrong but it is RIGHT!
         mov32BitConstant(dstLow, low32);
         mov32BitConstant(dstUpper, high32);
@@ -1145,11 +1145,18 @@ public class ARMV7Assembler extends AbstractAssembler {
         cmp(ConditionFlag.Always, src1, src2, 0, 0);
     }
 
-    public final void lcmpl(CiRegister src1, CiRegister src2) {
-        cmp(ConditionFlag.Always, src1, src2, 0, 0);
-        sbc(ConditionFlag.Always, true, scratchRegister,  ARMV7.cpuRegisters[src1.number + 1],  ARMV7.cpuRegisters[src2.number + 1], 0, 0);
-        //mov16BitConstant(ConditionFlag.SignedGreaterOrEqual, registerConfig.getReturnRegister(CiKind.Int), 0);
-        //mov16BitConstant(ConditionFlag.SignedLesser, registerConfig.getReturnRegister(CiKind.Int), 1);
+    public final void lcmpl(ConditionFlag condition,CiRegister src1, CiRegister src2) {
+cmp(ConditionFlag.Always, src1, src2, 0, 0);
+        if(condition == ConditionFlag.Equal ||
+           condition == ConditionFlag.NotEqual) {
+            cmp(ConditionFlag.Equal, ARMV7.cpuRegisters[src1.number + 1], ARMV7.cpuRegisters[src2.number + 1],0,0);
+        } else {
+
+                sbc(ConditionFlag.Always, true, scratchRegister,  ARMV7.cpuRegisters[src1.number + 1],  ARMV7.cpuRegisters[src2.number + 1], 0, 0);
+
+
+
+        }
     }
     public final void xchgq(CiRegister src1, CiRegister src2) {
         // TODO need to have a lock in this!!!

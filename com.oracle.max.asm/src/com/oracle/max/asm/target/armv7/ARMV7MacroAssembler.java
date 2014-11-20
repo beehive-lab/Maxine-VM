@@ -57,7 +57,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public final void casLong(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
         setUpScratch(address);
         ldrexd(ConditionFlag.Always, scratchRegister, ARMV7.r8);
-        lcmpl(cmpValue, ARMV7.r8);
+        lcmpl(ConditionFlag.Equal,cmpValue, ARMV7.r8);
         // Keep r0 in sync with code at ARMV7LirGenerator.visitCompareAndSwap
         strexd(ConditionFlag.Equal, scratchRegister, ARMV7.r0, newValue);
     }

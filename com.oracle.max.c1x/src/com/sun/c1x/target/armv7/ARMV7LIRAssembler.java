@@ -1968,7 +1968,25 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
         //    moveRegs(ARMV7.rax, dreg);
         }
     }
+private ConditionFlag convertCondition(Condition condition) {
+        ConditionFlag acond = ConditionFlag.NeverUse;
+        switch (condition) {
+            case EQ : acond = ConditionFlag.Equal; /*ConditionFlag.equal;*/ break;
+            case NE : acond = ConditionFlag.NotEqual; /*notEqual;*/ break;
 
+            case LT : acond = ConditionFlag.SignedLesser; /*less;*/ break;
+            case LE : acond = ConditionFlag.SignedLowerOrEqual; /*lessEqual;*/ break;
+            case GE : acond = ConditionFlag.SignedGreaterOrEqual; /*greaterEqual;*/ break;
+            case GT : acond = ConditionFlag.SignedGreater; /*greater;*/ break;
+            case BE : acond = ConditionFlag.UnsignedLowerOrEqual; /*belowEqual;*/ break;
+            case AE : acond = ConditionFlag.CarrySetUnsignedHigherEqual; /*aboveEqual;*/ break;
+            case BT : acond = ConditionFlag.CarryClearUnsignedLower; /*below;*/ break;
+            case AT : acond = ConditionFlag.UnsignedHigher; /*above;*/ break;
+            default : throw Util.shouldNotReachHere();
+
+        }
+        return acond;
+    }
     @Override
     protected void emitCompare(Condition condition, CiValue opr1, CiValue opr2, LIROp2 op) {
         // Checkstyle: off
@@ -1997,7 +2015,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
                         masm.cmpq(reg1, opr2.asRegister());
                         break;
                     case Long:
-                        masm.lcmpl(reg1, opr2.asRegister());
+                        masm.lcmpl(convertCondition(condition),reg1, opr2.asRegister());
                         break;
                     case Float:
                         // was reg1 but need to hack it to use the correct float reg!!
@@ -2027,7 +2045,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
                     case Long    :
 			masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
 			masm.ldrd(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
-			masm.lcmpl(reg1,ARMV7.r8);
+			masm.lcmpl(convertCondition(condition),reg1,ARMV7.r8);
                         break;
                     case Object  : masm.cmpptr(reg1, frameMap.toStackAddress(opr2Slot)); break;
                     case Float   : //masm.ucomiss(reg1, frameMap.toStackAddress(opr2Slot));
@@ -2076,7 +2094,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
                             //masm.cmpq(reg1, rscratch1);
 
                         }
-			masm.lcmpl(reg1,ARMV7.r8);
+			masm.lcmpl(convertCondition(condition),reg1,ARMV7.r8);
                         break;
                     }
                     case Object  :  {
