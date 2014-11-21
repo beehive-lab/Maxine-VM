@@ -436,7 +436,13 @@ public class MaxineARMTester {
                 continue;
             }
             String value = line.split("\\s+")[1];
-            expectedValues[i] = new Integer((int) Long.parseLong(value.substring(2, value.length()).toString(), 16));
+            long tmp = Long.parseLong(value.substring(2, value.length()).toString(), 16);
+
+            if (tmp > Integer.MAX_VALUE) {
+                tmp = (int)(2L*Integer.MIN_VALUE + tmp);
+            } else expectedValues[i] = (int)tmp;
+            //expectedValues[i] = new Integer((int) Long.parseLong(value.substring(2, value.length()).toString(), 16));
+            expectedValues[i] = tmp;
             if (DEBUGOBJECTS) {
                 System.out.println(" CORE " + i + " " + ((Integer) expectedValues[i]).intValue());
             }
@@ -545,7 +551,7 @@ public class MaxineARMTester {
             String value = line.split("\\s+")[1];
             long tmp = Long.parseLong(value.substring(2, value.length()).toString(), 16);
 
-            if (tmp >= Integer.MAX_VALUE) {
+            if (tmp > Integer.MAX_VALUE) {
                 expectedValues[i] = (int)(2L*Integer.MIN_VALUE + tmp);
             } else expectedValues[i] = (int)tmp;
 
