@@ -72,10 +72,22 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public final void casLong(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
         setUpScratch(address);
-        ldrexd(ConditionFlag.Always, scratchRegister, ARMV7.r8);
+        Label notAtomic = new Label();
+        bind(notAtomic);
+        assert(newValue != ARMV7.r8);
+        assert(cmpValue != ARMV7.r8);
+        mov32BitConstant(ARMV7.r0,2);// put we.re not equal in
+        ldrexd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12);
         lcmpl(ConditionFlag.Equal,cmpValue, ARMV7.r8);
         // Keep r0 in sync with code at ARMV7LirGenerator.visitCompareAndSwap
-        strexd(ConditionFlag.Equal, scratchRegister, ARMV7.r0, newValue);
+        strexd(ConditionFlag.Equal, ARMV7.r0, newValue, ARMV7.r12);
+        cmp32(ARMV7.r0,1);
+        jcc(ConditionFlag.Equal,notAtomic);
+        cmp32(ARMV7.r0,0);
+        mov32BitConstant(ARMV7.r12,1);
+        mov(ConditionFlag.Equal,false,ARMV7.r0,ARMV7.r12);
+        eor(ConditionFlag.NotEqual,false,ARMV7.r0,ARMV7.r0,ARMV7.r0,0,0);
+
     }
 
     public void xorptr(CiRegister dst, CiRegister src) {

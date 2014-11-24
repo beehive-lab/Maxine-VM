@@ -599,11 +599,11 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public void ldrexd(final ConditionFlag cond, final CiRegister Rn, final CiRegister Rt) {
+    public void ldrexd(final ConditionFlag cond, final CiRegister Rdest, final CiRegister Raddr) {
         int instruction = 0x1B00F9F;
         instruction |= ((cond.value() & 0xf) << 28);
-        instruction |= ((Rn.encoding & 0xf) << 16);
-        instruction |= ((Rt.encoding & 0xf) << 12);
+        instruction |= ((Raddr.encoding & 0xf) << 16);
+        instruction |= ((Rdest.encoding & 0xf) << 12);
         emitInt(instruction);
     }
 
@@ -616,7 +616,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public void strexd(final ConditionFlag cond, final CiRegister Rn, final CiRegister Rd, final CiRegister Rt) {
+    public void strexd(final ConditionFlag cond, final CiRegister Rd, final CiRegister Rt, final CiRegister Rn) {
         int instruction = 0x1A00F90;
         instruction |= ((cond.value() & 0xf) << 28);
         instruction |= ((Rn.encoding & 0xf) << 16);
