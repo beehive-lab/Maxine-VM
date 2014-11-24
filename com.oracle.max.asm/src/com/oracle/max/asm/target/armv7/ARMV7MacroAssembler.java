@@ -57,11 +57,13 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         ldrex(ConditionFlag.Always, ARMV7.r8, scratchRegister);
         teq(ConditionFlag.Always, cmpValue, ARMV7.r8, 0);
         // Keep r0 in sync with code at ARMV7LirGenerator.visitCompareAndSwap
+
         strex(ConditionFlag.NotEqual, ARMV7.r0, newValue, scratchRegister);
         cmp32(ARMV7.r0,1);
         jcc(ConditionFlag.Equal,failedAtomically);
         teq(ConditionFlag.Always, cmpValue, ARMV7.r8, 0);
         mov(ConditionFlag.Equal,false,ARMV7.r0,newValue);
+
 
     }
 
