@@ -51,18 +51,16 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
         assert(ARMV7.r0 != cmpValue);
         assert (ARMV7.r0 != newValue);
-        Label failedAtomically = new Label();
-        bind(failedAtomically);
-        mov32BitConstant(ARMV7.r0,0);// put true in
+        mov32BitConstant(ARMV7.r0,1);// put false  in
         ldrex(ConditionFlag.Always, ARMV7.r8, scratchRegister);
         teq(ConditionFlag.Always, cmpValue, ARMV7.r8, 0);
         // Keep r0 in sync with code at ARMV7LirGenerator.visitCompareAndSwap
 
-        strex(ConditionFlag.NotEqual, ARMV7.r0, newValue, scratchRegister);
+        strex(ConditionFlag.Equal, ARMV7.r0, newValue, scratchRegister);
         cmp32(ARMV7.r0,1);
-        jcc(ConditionFlag.Equal,failedAtomically);
-        teq(ConditionFlag.Always, cmpValue, ARMV7.r8, 0);
-        mov(ConditionFlag.Equal,false,ARMV7.r0,newValue);
+	eor(ConditionFlag.Equal,false,ARMV7.r0,ARMV7.r12,ARMV7.r12,0,0);
+	mov32BitConstant(ARMV7.r12,1);
+	mov(ConditionFlag.NotEqual,false,ARMV7.r0,ARMV7.r12);
 
 
     }
