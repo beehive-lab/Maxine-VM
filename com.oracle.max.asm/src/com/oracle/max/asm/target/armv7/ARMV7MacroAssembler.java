@@ -48,10 +48,18 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public final void casInt(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
         setUpScratch(address);
+
+
+        mov32BitConstant(ARMV7.r0,1);// put false in
         ldrex(ConditionFlag.Always, ARMV7.r8, scratchRegister);
         teq(ConditionFlag.Always, cmpValue, ARMV7.r8, 0);
         // Keep r0 in sync with code at ARMV7LirGenerator.visitCompareAndSwap
         strex(ConditionFlag.Equal, ARMV7.r0, newValue, scratchRegister);
+        cmp32(ARMV7.r0,0);// 0 == pass
+        mov(ConditionFlag.Equal,false,ARMV7.r0,newValue);
+        mov(ConditionFlag.NotEqual,false,ARMV7.r0,oldValue);
+
+
     }
 
     public final void casLong(CiRegister newValue, CiRegister cmpValue, CiAddress address) {

@@ -1485,7 +1485,7 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
         if (target.isMP) {
             // We only have to handle StoreLoad
             if (barriers == -1 || ((barriers & STORE_LOAD) != 0)) {
-                emitInt((0xf << 28) | (0x5 << 24) | (0x7 << 20) | (0xff05 << 4) | 0xf);
+                emitInt((0xf << 28) | (0x5 << 24) | (0x7 << 20) | (0xff05 << 5) | 0xf);
             } else {
                 // movw(ConditionFlag.Always,ARMV7.r12,38);
                 // movw(ConditionFlag.Always,ARMV7.r12,38);
