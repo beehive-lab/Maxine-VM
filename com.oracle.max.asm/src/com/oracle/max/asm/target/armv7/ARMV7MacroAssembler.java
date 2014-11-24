@@ -51,6 +51,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         ldrex(ConditionFlag.Always, ARMV7.r8, scratchRegister);
         teq(ConditionFlag.Always, cmpValue, ARMV7.r8, 0);
         // Keep r0 in sync with code at ARMV7LirGenerator.visitCompareAndSwap
+        //strex(ConditionFlag.Equal, ARMV7.r0, newValue, scratchRegister);
         strex(ConditionFlag.Equal, ARMV7.r0, newValue, scratchRegister);
     }
 
