@@ -490,6 +490,7 @@ public final class MaxineVM {
 
         NativeInterfaces.initialize(vmInterface, jniEnv, jmmInterface);
 
+
         // Perhaps this should be later, after VM has initialized
         startupTime = System.currentTimeMillis();
         startupTimeNano = System.nanoTime();
