@@ -1157,8 +1157,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             masm.membar(-1);
         }
         if (op.code == LIROpcode.CasInt || op.code == LIROpcode.CasObj) {
+            //((CiRegisterConfig)masm.registerConfig).printAllocatable();
             masm.casInt(newval, cmpval, address);
         } else {
+            //System.out.println("AM I EVER CALLED");
             assert op.code == LIROpcode.CasLong;
             masm.casLong(newval, cmpval, address);
         }

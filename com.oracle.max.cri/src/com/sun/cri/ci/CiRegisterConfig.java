@@ -17,11 +17,14 @@
  */
 package com.sun.cri.ci;
 
-import java.util.*;
-
 import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ci.CiRegister.RegisterFlag;
-import com.sun.cri.ri.*;
+import com.sun.cri.ri.RiRegisterAttributes;
+import com.sun.cri.ri.RiRegisterConfig;
+
+import java.util.Arrays;
+import java.util.EnumMap;
+import java.util.Map;
 
 /**
  * A default implementation of {@link RiRegisterConfig}.
@@ -47,6 +50,10 @@ public class CiRegisterConfig implements RiRegisterConfig {
      * The set of registers that can be used by the register allocator.
      */
     public final CiRegister[] allocatable;
+    public void printAllocatable() {
+        for(int i = 0; i < allocatable.length;i++)
+            System.out.println("ARMV7 allocatable regs "+  allocatable[i].number);
+    }
 
     /**
      * The set of registers that can be used by the register allocator, {@linkplain CiRegister#categorize(CiRegister[])

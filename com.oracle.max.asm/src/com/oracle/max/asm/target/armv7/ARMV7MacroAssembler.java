@@ -50,19 +50,21 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         setUpScratch(address);
 
         Label notAtomic = new Label();
-        assert(ARMV7.r0 != cmpValue);
-        assert (ARMV7.r0 != newValue);
+        assert(ARMV7.r9 != cmpValue);
+        assert (ARMV7.r9 != newValue);
+        assert(ARMV7.r8 != cmpValue);
+        assert(ARMV7.r8 != newValue);
         bind(notAtomic);
-        mov32BitConstant(ARMV7.r0,2);// put we.re not equal in
+        mov32BitConstant(ARMV7.r9,2);// put we.re not equal in
         ldrex(ConditionFlag.Always, ARMV7.r8, scratchRegister);
         teq(ConditionFlag.Always, cmpValue, ARMV7.r8, 0);
 
         // Keep r0 in sync with code at ARMV7LirGenerator.visitCompareAndSwap
 
-        strex(ConditionFlag.Equal, ARMV7.r0, newValue, scratchRegister);
-        cmp32(ARMV7.r0,1);
+        strex(ConditionFlag.Equal, ARMV7.r9, newValue, scratchRegister);
+        cmp32(ARMV7.r9,1);
         jcc(ConditionFlag.Equal,notAtomic);
-        cmp32(ARMV7.r0,0);
+        cmp32(ARMV7.r9,0);
 	    mov32BitConstant(ARMV7.r12,1);
 	    mov(ConditionFlag.Equal,false,ARMV7.r0,ARMV7.r12);
         eor(ConditionFlag.NotEqual,false,ARMV7.r0,ARMV7.r0,ARMV7.r0,0,0);
@@ -76,6 +78,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         bind(notAtomic);
         assert(newValue != ARMV7.r8);
         assert(cmpValue != ARMV7.r8);
+        assert(newValue != ARMV7.r9);
+        assert(cmpValue != ARMV7.r9);
         mov32BitConstant(ARMV7.r0,2);// put we.re not equal in
         ldrexd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12);
         lcmpl(ConditionFlag.Equal,cmpValue, ARMV7.r8);
