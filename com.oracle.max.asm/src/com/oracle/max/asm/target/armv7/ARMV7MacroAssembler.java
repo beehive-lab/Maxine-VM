@@ -65,8 +65,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         cmp32(ARMV7.r9,1);
         jcc(ConditionFlag.Equal,notAtomic);
         cmp32(ARMV7.r9,0);
-	    mov32BitConstant(ARMV7.r12,1);
-	    mov(ConditionFlag.Equal,false,ARMV7.r0,ARMV7.r12);
+	    mov32BitConstant(ARMV7.r8,1);
+	    mov(ConditionFlag.Equal,false,ARMV7.r0,ARMV7.r8);
         eor(ConditionFlag.NotEqual,false,ARMV7.r0,ARMV7.r0,ARMV7.r0,0,0);
 
 
