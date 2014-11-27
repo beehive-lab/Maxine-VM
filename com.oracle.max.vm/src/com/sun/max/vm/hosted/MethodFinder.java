@@ -234,11 +234,6 @@ public class MethodFinder {
                         continue;
                     }
 
-                    if(CompilationBroker.OFFLINE == true) {
-                        System.out.println("CLASS " + className + " " + classActor.hasClassInitializer());
-                        //ClassActor.create(classActor);
-                    }
-
                     if (colonIndex == -1) {
                         // Class only: select all methods in class
                         for (MethodActor actor : classActor.localStaticMethodActors()) {

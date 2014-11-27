@@ -4489,11 +4489,11 @@ public long connectRegs(int reg0, int reg1) {
         }
     }
 
-    public void ignore_generic_compilation1() throws Exception {
+    public void test_generic_compilation1() throws Exception {
         CompilationBroker.OFFLINE = initialised;
-        String klassName = getKlassName("com.sun.max.vm.compiler.deopt.Deoptimization");
-        //List<TargetMethod> methods = Compile.compileMethod(new String[] { klassName}, "C1X", "patchReturnAddress");
-        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        String klassName = getKlassName("com.sun.max.vm.jni.JniFunctions");
+        List<TargetMethod> methods = Compile.compileMethod(new String[] { klassName}, "C1X", "RegisterNatives");
+        //List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         CompilationBroker.OFFLINE = true;
         theCompiler.cleanup();
     }
