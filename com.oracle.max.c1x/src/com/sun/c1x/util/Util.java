@@ -310,6 +310,7 @@ public class Util {
      */
     public static boolean archKindsEqual(CiKind k1, CiKind k2) {
         // TODO(cwi): I think that implementation should do it with the new handling of Word types.
+
         return k1 == k2;
     }
 
