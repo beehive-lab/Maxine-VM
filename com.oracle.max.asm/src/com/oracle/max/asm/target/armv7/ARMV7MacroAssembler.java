@@ -53,14 +53,19 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert (ARMV7.r8 != cmpValue);
         assert (ARMV7.r8 != newValue);
         setUpScratch(address);
+	Label atomicFail = new Label();
+	bind(atomicFail);
         mov32BitConstant(ARMV7.r9, 2);// put we.re not equal in
         ldrex(ConditionFlag.Always, ARMV7.r8, scratchRegister);
         teq(ConditionFlag.Always, cmpValue, ARMV7.r8, 0);
-
         // Keep r0 in sync with code at ARMV7LirGenerator.visitCompareAndSwap
-
+	
         strex(ConditionFlag.Equal, ARMV7.r9, newValue, scratchRegister);
-        cmp32(ARMV7.r9, 0);
+	mov32BitConstant(ARMV7.r8,1);
+        cmp(ConditionFlag.Always,ARMV7.r9, ARMV7.r8,0,0);
+	jcc(ConditionFlag.Equal,atomicFail);
+	mov32BitConstant(ARMV7.r8,2);
+        cmp(ConditionFlag.Always,ARMV7.r9, ARMV7.r8,0,0);
         mov(ConditionFlag.Equal, false, ARMV7.r0, newValue);
 	mov(ConditionFlag.NotEqual,false, ARMV7.r0, cmpValue);
 
@@ -69,8 +74,6 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public final void casLong(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
-        Label notAtomic = new Label();
-        bind(notAtomic);
         setUpScratch(address);
         assert (newValue != ARMV7.r8);
         assert (cmpValue != ARMV7.r8);
@@ -80,13 +83,12 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         ldrexd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12);
         lcmpl(ConditionFlag.Equal, cmpValue, ARMV7.r8);
         // Keep r0 in sync with code at ARMV7LirGenerator.visitCompareAndSwap
-        strexd(ConditionFlag.Equal, ARMV7.r0, newValue, ARMV7.r12);
-        cmp32(ARMV7.r0, 1);
-        jcc(ConditionFlag.Equal, notAtomic);
-        cmp32(ARMV7.r0, 0);
-        mov32BitConstant(ARMV7.r12, 1);
-        mov(ConditionFlag.Equal, false, ARMV7.r0, ARMV7.r12);
+        strexd(ConditionFlag.Equal, ARMV7.r8, newValue, ARMV7.r12);
+        cmp32(ARMV7.r8, 0);
+        mov(ConditionFlag.Equal, false, ARMV7.r0, newValue);
+        mov(ConditionFlag.Equal, false, ARMV7.r1, ARMV7.cpuRegisters[newValue.number+1]);
         eor(ConditionFlag.NotEqual, false, ARMV7.r0, ARMV7.r0, ARMV7.r0, 0, 0);
+        eor(ConditionFlag.NotEqual, false, ARMV7.r1, ARMV7.r1, ARMV7.r1, 0, 0);
 
     }
 
