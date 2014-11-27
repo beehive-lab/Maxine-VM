@@ -3757,7 +3757,67 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+    public void test_jtt_loop01() throws Exception {
+        CompilationBroker.OFFLINE = initialised;
+        boolean failed = false;
+        String klassName = getKlassName("jtt.loop.Loop01");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(-1, 2));
+        pairs.add(new Args(0, 0));
+        pairs.add(new Args(1, -1));
+        pairs.add(new Args(62, 2));
 
+
+        initialiseCodeBuffers(methods, "Loop01.java", "boolean test(int)");
+        int assemblerStatements = codeBytes.length / 4;
+        for (Args pair : pairs) {
+            boolean answer = jtt.loop.Loop01.test(pair.first);
+            int expectedValue = answer ? 1 : 0;
+
+            String functionPrototype = ARMCodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            //long returnValue = registerValues[0] | ((0xffffffffL & registerValues[1]) << 32);
+            int returnValue = registerValues[0];
+            //System.out.println("LSHR EXPECTED " + expectedValue + " GOT "+ returnValue);
+            if(returnValue != expectedValue) {
+                failed = true;
+                System.out.println("LOOP01 GOT "  +returnValue + " EXPECT " + expectedValue );
+            }
+            theCompiler.cleanup();
+        }
+        assert(failed == false);
+    }
+    public void ignore_jtt_loop03() throws Exception {
+        CompilationBroker.OFFLINE = initialised;
+        String klassName = getKlassName("jtt.loop.Loop03");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(-1, 2));
+        pairs.add(new Args(0, 0));
+        pairs.add(new Args(1, -1));
+        pairs.add(new Args(62, 2));
+        pairs.add(new Args(10, 2));
+
+
+
+        initialiseCodeBuffers(methods, "Loop03.java", "int test(int)");
+        int assemblerStatements = codeBytes.length / 4;
+        for (Args pair : pairs) {
+            int expectedValue = jtt.loop.Loop03.test(pair.first);
+
+            String functionPrototype = ARMCodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            //long returnValue = registerValues[0] | ((0xffffffffL & registerValues[1]) << 32);
+            int returnValue = registerValues[0];
+            //System.out.println("LSHR EXPECTED " + expectedValue + " GOT "+ returnValue);
+
+            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            theCompiler.cleanup();
+        }
+    }
     private static final BigInteger TWO_64 = BigInteger.ONE.shiftLeft(64);
 
     public String asUnsignedDecimalString(long l) {
@@ -3883,7 +3943,7 @@ public long connectRegs(int reg0, int reg1) {
     public static boolean lt(long a, long b) { return a <b};
     public static boolean gt(long a, long b) { return a >b};*/
 
-    public void test_jtt_BC_LONGle() throws Exception {
+    public void ignore_jtt_BC_LONGle() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         String klassName = getKlassName("jtt.bytecode.BC_connectREGS");
@@ -3922,7 +3982,7 @@ public long connectRegs(int reg0, int reg1) {
     }
 
 
-    public void test_jtt_BC_LONGge() throws Exception {
+    public void ignore_jtt_BC_LONGge() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         String klassName = getKlassName("jtt.bytecode.BC_connectREGS");
@@ -3959,7 +4019,7 @@ public long connectRegs(int reg0, int reg1) {
         assert (failed == false);
     }
 
-    public void test_jtt_BC_LONGeq() throws Exception {
+    public void ignore_jtt_BC_LONGeq() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         String klassName = getKlassName("jtt.bytecode.BC_connectREGS");
@@ -3996,7 +4056,7 @@ public long connectRegs(int reg0, int reg1) {
         }
         assert (failed == false);
     }
-    public void test_jtt_BC_LONGne() throws Exception {
+    public void ignore_jtt_BC_LONGne() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         String klassName = getKlassName("jtt.bytecode.BC_connectREGS");
@@ -4033,7 +4093,7 @@ public long connectRegs(int reg0, int reg1) {
         }
         assert (failed == false);
     }
-    public void test_jtt_BC_LONGgt() throws Exception {
+    public void ignore_jtt_BC_LONGgt() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         String klassName = getKlassName("jtt.bytecode.BC_connectREGS");
@@ -4070,7 +4130,7 @@ public long connectRegs(int reg0, int reg1) {
         }
         assert (failed == false);
     }
-    public void test_jtt_BC_LONGlt() throws Exception {
+    public void ignore_jtt_BC_LONGlt() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         String klassName = getKlassName("jtt.bytecode.BC_connectREGS");

@@ -95,7 +95,7 @@ public final class ARMISAInstructionDecoder {
         // currently Im assuming an absolute address.
         // TODO probably wrong as looks like relative
 
-	//System.out.println("CALLED " + offset);
+
         instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always,ARMV7.r12,offset & 0xffff);
         code[pos] = (byte) (instruction & 0xFF);
         code[pos+1] = (byte) ((instruction >> 8) & 0xFF);

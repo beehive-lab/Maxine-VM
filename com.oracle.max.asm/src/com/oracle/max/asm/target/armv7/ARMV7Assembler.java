@@ -76,7 +76,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         int operation = codeBuffer.getInt(branch);
         if(operation == (ConditionFlag.NeverUse.value() << 28 | 0xdead)) { // JCC
            //
-            //System.out.println("MATCHED JCC " + branch);
+            //System.out.println("MATCHED JCC " + branch + " target " + target);
             disp -= 4;
             instruction = movwHelper(ConditionFlag.Always,ARMV7.r12,disp & 0xffff);
             codeBuffer.emitInt(instruction,branch);
@@ -87,6 +87,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             disp +=8;
 
             disp = disp/4;
+            //System.out.println("MATCHED OTHER DISP " + (target-branch) + " bran "+ branch + " target " + target);
             if (disp < 0) {
                 //System.out.println("NEGATIVE DISP " + disp);
             }
@@ -97,7 +98,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             disp = disp + 8;
             disp = disp/4;
             codeBuffer.emitInt(0x0a000000 | (disp & 0xffffff) | ((ConditionFlag.Always.value() & 0xf) << 28),branch);
-
+            //System.out.println("DISP was "+ (target - branch)+ " " + target+ " "+ branch);
             /*code[callOffset + 7] = (byte) (instruction & 0xff);
             code[callOffset + 6] = (byte) ((instruction >> 8) & 0xff);
             code[callOffset + 5] = (byte) ((instruction >> 16) & 0xff);
@@ -105,6 +106,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             */
 
         } else {
+            //System.out.println("JUMP was "+ (target - branch)+ " " + target+ " "+ branch);
 
 //System.out.println("ASSUMING JMP: check this came from an emitPrologue as a result of hosted mode ARM ..patchjumpTarget NOT MATCHED " + branch + " " + target);
                 disp+=8;
@@ -1557,7 +1559,10 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
         } else {
             if (disp > 0) {
                 disp -= 16;
+            } else {
+                disp = disp -16;
             }
+            //System.out.println("CALLED jcc " + disp + " target "+ target+ " pos "+ codeBuffer.position());
             mov32BitConstant(scratchRegister, disp);
             addRegisters(ConditionFlag.Always, false, scratchRegister, ARMV7.r15, scratchRegister, 0, 0);
             mov(cc, false, ARMV7.r15, scratchRegister);
@@ -1607,7 +1612,7 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
             // we can't yet know where the label will be bound. If you're sure that
             // the forward jump will not run beyond 256 bytes, use jmpb to
             // force an 8-bit displacement.
-
+            //System.out.println("JMP PATCHAT "+ codeBuffer.position());
             l.addPatchAt(codeBuffer.position());
             emitInt(ConditionFlag.NeverUse.value() << 28 | 0xbeef); // JMP CODE for the PATCH
             // TODO fix this it will not work ....
@@ -1625,6 +1630,8 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
         } else {
             if (disp > 0)
                 disp -= 16;
+            else if(disp <0) disp = disp -16;
+            //System.out.println("JMP "+ target + " CODE " +codeBuffer.position());
             mov32BitConstant(scratchRegister, disp);
             addRegisters(ConditionFlag.Always, false, scratchRegister, ARMV7.r15, scratchRegister, 0, 0);
             mov(ConditionFlag.Always, false, ARMV7.r15, scratchRegister); // UPDATE the PC to the target
