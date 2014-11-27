@@ -48,12 +48,10 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public final void casInt(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
 
-        Label notAtomic = new Label();
         assert (ARMV7.r9 != cmpValue);
         assert (ARMV7.r9 != newValue);
         assert (ARMV7.r8 != cmpValue);
         assert (ARMV7.r8 != newValue);
-        bind(notAtomic);
         setUpScratch(address);
         mov32BitConstant(ARMV7.r9, 2);// put we.re not equal in
         ldrex(ConditionFlag.Always, ARMV7.r8, scratchRegister);
@@ -62,12 +60,9 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         // Keep r0 in sync with code at ARMV7LirGenerator.visitCompareAndSwap
 
         strex(ConditionFlag.Equal, ARMV7.r9, newValue, scratchRegister);
-        cmp32(ARMV7.r9, 1);
-        jcc(ConditionFlag.Equal, notAtomic);
         cmp32(ARMV7.r9, 0);
-        mov32BitConstant(ARMV7.r8, 1);
-        mov(ConditionFlag.Equal, false, ARMV7.r0, ARMV7.r8);
-        eor(ConditionFlag.NotEqual, false, ARMV7.r0, ARMV7.r0, ARMV7.r0, 0, 0);
+        mov(ConditionFlag.Equal, false, ARMV7.r0, newValue);
+	mov(ConditionFlag.NotEqual,false, ARMV7.r0, cmpValue);
 
 
 

@@ -981,7 +981,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             base = frameRegister;
 	    if(base.number <= 15 && base.number >= 0) base = ARMV7.allRegisters[base.number]; 
 	    else base = ARMV7.r11;
-            mov32BitConstant(scratchRegister, /*addr.kind.isLong() ? disp + 4 :*/ disp);
+            mov32BitConstant(scratchRegister, addr.kind.isLong() ? disp + 4 : disp);
             //sub(ConditionFlag.Always, false, scratchRegister, /*ARMV7.r11*/base, scratchRegister, 0, 0);
             addRegisters(ConditionFlag.Always, false, scratchRegister, /*ARMV7.r11*/base, scratchRegister, 0, 0);
             if (index.isValid()) {
