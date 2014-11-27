@@ -1047,7 +1047,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         for (int pos = 0; pos < source.codeLength(); pos++) {
             for (CiRegister reg : ARMV7.cpuRegisters) { // TODO extend this to include floats and doubles?
                                                         // this means iterating over the set of allRegisters
-		int testValue = 12; // was 4 originally but we need THREE INSTRUCTIONS?
+		int testValue = 12;// was12 // was 4 originally but we need THREE INSTRUCTIONS?
                 // Compute displacement operand position for a movq at 'pos'
                 ARMV7Assembler asm = new ARMV7Assembler(target(), null);
                 asm.setUpScratch(CiAddress.Placeholder);
@@ -1057,6 +1057,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
                 int dispPos = pos + asm.codeBuffer.position() - testValue - 4 ;//* 5; // where is the setUpScratch start in the buffer
                 int disp = movqDisp(dispPos, dispFromCodeStart);
+
                 asm.codeBuffer.reset();
 		//System.out.println("POS " + pos + " DISP-POS " + dispPos + " disp " + disp +
                 //" dispfromCodeStart " + dispFromCodeStart);
