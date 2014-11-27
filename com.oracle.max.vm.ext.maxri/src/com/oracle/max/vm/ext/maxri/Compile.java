@@ -50,7 +50,7 @@ public class Compile {
 
     private static final OptionSet options = new OptionSet(false);
     private static int methodsFound = 0;
-    private static PrintWriter writer = null;	
+    private static PrintWriter writer = null;
 
     private static final Map<String, String> compilerAliases = RuntimeCompiler.aliases;
     private static final String compilerAliasNames = compilerAliases.keySet().toString().replaceAll("[\\[\\]]", "");
@@ -239,7 +239,6 @@ public class Compile {
         }
         List<MethodActor> methods = new ArrayList<>();
         for (MethodActor m : tempMethods) {
-            System.out.println(m.name());
             if (m.name().equals(method)) {
                 methods.add(m);
             }
@@ -398,7 +397,7 @@ public class Compile {
 
                         writer.println("0x" + Integer.toHexString(stubs[i]) + ", ");
 
-                    
+
 
             }
             writer.println("0xfe, 0xff, 0xff, 0xea };\n\n");

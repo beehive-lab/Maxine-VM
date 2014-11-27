@@ -3883,7 +3883,7 @@ public long connectRegs(int reg0, int reg1) {
     public static boolean lt(long a, long b) { return a <b};
     public static boolean gt(long a, long b) { return a >b};*/
 
-    public void test_jtt_BC_LONGle() throws Exception {
+    public void ignore_jtt_BC_LONGle() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         String klassName = getKlassName("jtt.bytecode.BC_connectREGS");
@@ -3922,7 +3922,7 @@ public long connectRegs(int reg0, int reg1) {
     }
 
 
-    public void test_jtt_BC_LONGge() throws Exception {
+    public void ignore_jtt_BC_LONGge() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         String klassName = getKlassName("jtt.bytecode.BC_connectREGS");
@@ -3959,7 +3959,7 @@ public long connectRegs(int reg0, int reg1) {
         assert (failed == false);
     }
 
-    public void test_jtt_BC_LONGeq() throws Exception {
+    public void ignore_jtt_BC_LONGeq() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         String klassName = getKlassName("jtt.bytecode.BC_connectREGS");
@@ -3996,7 +3996,7 @@ public long connectRegs(int reg0, int reg1) {
         }
         assert (failed == false);
     }
-    public void test_jtt_BC_LONGne() throws Exception {
+    public void ignore_jtt_BC_LONGne() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         String klassName = getKlassName("jtt.bytecode.BC_connectREGS");
@@ -4033,7 +4033,7 @@ public long connectRegs(int reg0, int reg1) {
         }
         assert (failed == false);
     }
-    public void test_jtt_BC_LONGgt() throws Exception {
+    public void ignore_jtt_BC_LONGgt() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         String klassName = getKlassName("jtt.bytecode.BC_connectREGS");
@@ -4070,7 +4070,7 @@ public long connectRegs(int reg0, int reg1) {
         }
         assert (failed == false);
     }
-    public void test_jtt_BC_LONGlt() throws Exception {
+    public void ignore_jtt_BC_LONGlt() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         String klassName = getKlassName("jtt.bytecode.BC_connectREGS");
@@ -4429,11 +4429,11 @@ public long connectRegs(int reg0, int reg1) {
         }
     }
 
-    public void ignore_generic_compilation1() throws Exception {
+    public void test_generic_compilation1() throws Exception {
         CompilationBroker.OFFLINE = initialised;
-        String klassName = getKlassName("com.sun.max.vm.compiler.deopt.Deoptimization");
-        //List<TargetMethod> methods = Compile.compileMethod(new String[] { klassName}, "C1X", "patchReturnAddress");
-        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        String klassName = getKlassName("com.sun.max.vm.jni.JniFunctions");
+        List<TargetMethod> methods = Compile.compileMethod(new String[] { klassName}, "C1X", "RegisterNatives");
+        //List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         CompilationBroker.OFFLINE = true;
         theCompiler.cleanup();
     }

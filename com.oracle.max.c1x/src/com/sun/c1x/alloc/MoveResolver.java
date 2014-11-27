@@ -364,6 +364,9 @@ final class MoveResolver {
         }
 
         assert fromInterval.operand != toInterval.operand : "from and to interval equal: " + fromInterval;
+        if (!Util.archKindsEqual(fromInterval.kind(), toInterval.kind())) {
+            System.out.println("From kind " + fromInterval.kind() + " To kind " + toInterval.kind());
+        }
         assert Util.archKindsEqual(fromInterval.kind(), toInterval.kind());
         mappingFrom.add(fromInterval);
         mappingFromOpr.add(CiValue.IllegalValue);
