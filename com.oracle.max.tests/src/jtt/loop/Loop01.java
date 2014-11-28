@@ -32,7 +32,7 @@ public class Loop01 {
         int x = 1;
 
         for (int i = 0; i < 10; i++) {
-            int y = 2;//m();
+            int y = m();
             if (x == 1) {
                 return true;
             }
@@ -41,8 +41,8 @@ public class Loop01 {
         return false;
     }
 
-    /*private static int m() {
+    private static int m() {
         return 2;
-    }*/
+    }
 
 }

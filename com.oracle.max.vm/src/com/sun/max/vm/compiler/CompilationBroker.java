@@ -108,6 +108,10 @@ public class CompilationBroker {
     private static boolean VMExtOpt;
     static int PrintCodeCacheMetrics;
     public static boolean OFFLINE = false;
+    /* SIMULATEADAPTER needs to be set to true in any test harness where inlining might occur and we are compiled by C1X
+    the number of nops is 4, movw(r12) movt(r12), add(r12,pc,r12), blx(r12) to account for the call to the adapter
+     Is this also true for T1X compiled methods? */
+    public static boolean SIMULATEADAPTER = false; // needed to be set for test harness when method calls occur
 
     static {
         addFieldOption("-X", "opt", CompilationBroker.class, "Select optimizing compiler whenever possible.");

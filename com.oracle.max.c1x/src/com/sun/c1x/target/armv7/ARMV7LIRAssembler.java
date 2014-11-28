@@ -50,6 +50,7 @@ import com.sun.cri.xir.CiXirAssembler.XirLabel;
 import com.sun.cri.xir.CiXirAssembler.XirMark;
 import com.sun.cri.xir.XirSnippet;
 import com.sun.cri.xir.XirTemplate;
+import com.sun.max.vm.compiler.CompilationBroker;
 
 import java.io.*;
 import java.util.Map;
@@ -2900,6 +2901,16 @@ private ConditionFlag convertCondition(Condition condition) {
                 }
                 case PushFrame: {
                     int frameSize = initialFrameSizeInBytes();
+                    if(CompilationBroker.SIMULATEADAPTER) {
+                        /*
+                        Needed as we now have adjusted the start address to include the adapter offset?
+                        If this is not included then the stack adjustment and the LR register are lost!
+                         */
+                        masm.nop();
+                        masm.nop();
+                        masm.nop();
+                        masm.nop();
+                    }
                     masm.decrementq(ARMV7.r13, frameSize); // does not emit code for frameSize == 0
                     //masm.vmov(ConditionFlag.Always,ARMV7.s6,ARMV7.s3);
                    // masm.vmov(ConditionFlag.Always,ARMV7.s4,ARMV7.s2);

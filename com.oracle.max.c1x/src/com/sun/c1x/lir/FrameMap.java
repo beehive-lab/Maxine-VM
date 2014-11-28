@@ -208,6 +208,7 @@ public final class FrameMap {
         if (csl != null) {
             frameSize += csl.size;
         }
+
         this.frameSize = compilation.target.alignFrameSize(frameSize);
     }
 

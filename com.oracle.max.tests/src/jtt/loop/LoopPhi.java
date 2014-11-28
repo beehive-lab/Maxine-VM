@@ -49,13 +49,13 @@ public class LoopPhi {
                 i4 = 2;
             }
 
-            for (int j = 0; j < 10; j++) {
+           /* for (int j = 0; j < 10; j++) {
                 if (j == 0) {
                     i5 = 2;
                 } else {
                     i6 = 2;
                 }
-            }
+            }*/
         }
 
         return i1 + i2 + i3 + i4 + i5 + i6;
