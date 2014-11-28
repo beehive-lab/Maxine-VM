@@ -3818,6 +3818,132 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+    public void test_jtt_loop04() throws Exception {
+        CompilationBroker.OFFLINE = initialised;
+        boolean failed = false;
+        String klassName = getKlassName("jtt.loop.Loop04");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(-1, 2));
+        pairs.add(new Args(0, 0));
+        pairs.add(new Args(1, -1));
+        pairs.add(new Args(10, 2));
+
+
+        initialiseCodeBuffers(methods, "Loop04.java", "int test(int)");
+        int assemblerStatements = codeBytes.length / 4;
+        for (Args pair : pairs) {
+            int expectedValue = jtt.loop.Loop04.test(pair.first);
+
+            String functionPrototype = ARMCodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            //long returnValue = registerValues[0] | ((0xffffffffL & registerValues[1]) << 32);
+            int returnValue = registerValues[0];
+            //System.out.println("LSHR EXPECTED " + expectedValue + " GOT "+ returnValue);
+            if(returnValue != expectedValue) {
+                failed = true;
+                System.out.println("LOOP04 GOT "  +returnValue + " EXPECT " + expectedValue );
+            }
+            theCompiler.cleanup();
+        }
+        assert(failed == false);
+    }
+    public void test_jtt_loop11() throws Exception {
+        CompilationBroker.OFFLINE = initialised;
+        boolean failed = false;
+        String klassName = getKlassName("jtt.loop.Loop11");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(-1, 2));
+        pairs.add(new Args(0, 0));
+        pairs.add(new Args(1, -1));
+        pairs.add(new Args(5, 2));
+
+
+        initialiseCodeBuffers(methods, "Loop11.java", "int test(int)");
+        int assemblerStatements = codeBytes.length / 4;
+        for (Args pair : pairs) {
+            int expectedValue = jtt.loop.Loop11.test(pair.first);
+
+            String functionPrototype = ARMCodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            //long returnValue = registerValues[0] | ((0xffffffffL & registerValues[1]) << 32);
+            int returnValue = registerValues[0];
+            //System.out.println("LSHR EXPECTED " + expectedValue + " GOT "+ returnValue);
+            if(returnValue != expectedValue) {
+                failed = true;
+                System.out.println("LOOP11 GOT "  +returnValue + " EXPECT " + expectedValue );
+            }
+            theCompiler.cleanup();
+        }
+        assert(failed == false);
+    }
+    public void test_jtt_loopPHI() throws Exception {
+        CompilationBroker.OFFLINE = initialised;
+        boolean failed = false;
+        String klassName = getKlassName("jtt.loop.LoopPhi");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(5000, 2));
+        pairs.add(new Args(0, 0));
+        pairs.add(new Args(1, -1));
+        pairs.add(new Args(2, 2));
+        pairs.add(new Args(10, 2));
+
+
+
+        initialiseCodeBuffers(methods, "LoopPhi.java", "int test(int)");
+        int assemblerStatements = codeBytes.length / 4;
+        for (Args pair : pairs) {
+            int expectedValue = jtt.loop.LoopPhi.test(pair.first);
+
+            String functionPrototype = ARMCodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            //long returnValue = registerValues[0] | ((0xffffffffL & registerValues[1]) << 32);
+            int returnValue = registerValues[0];
+            //System.out.println("LSHR EXPECTED " + expectedValue + " GOT "+ returnValue);
+            if(returnValue != expectedValue) {
+                failed = true;
+                System.out.println("LOOPPHI GOT "  +returnValue + " EXPECT " + expectedValue + " ARG "+ pair.first );
+            }
+            theCompiler.cleanup();
+        }
+        assert(failed == false);
+    }
+    public void test_jtt_loopInline() throws Exception {
+        CompilationBroker.OFFLINE = initialised;
+        boolean failed = false;
+        String klassName = getKlassName("jtt.loop.LoopInline");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        List<Args> pairs = new LinkedList<Args>();
+        pairs.add(new Args(-1, 2));
+        pairs.add(new Args(0, 0));
+        pairs.add(new Args(1, -1));
+        pairs.add(new Args(10, 2));
+
+
+        initialiseCodeBuffers(methods, "LoopInline.java", "int test(int)");
+        int assemblerStatements = codeBytes.length / 4;
+        for (Args pair : pairs) {
+            int expectedValue = jtt.loop.LoopInline.test(pair.first);
+
+            String functionPrototype = ARMCodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            //long returnValue = registerValues[0] | ((0xffffffffL & registerValues[1]) << 32);
+            int returnValue = registerValues[0];
+            //System.out.println("LSHR EXPECTED " + expectedValue + " GOT "+ returnValue);
+            if(returnValue != expectedValue) {
+                failed = true;
+                System.out.println("LOOPInline GOT "  +returnValue + " EXPECT " + expectedValue );
+            }
+            theCompiler.cleanup();
+        }
+        assert(failed == false);
+    }
     private static final BigInteger TWO_64 = BigInteger.ONE.shiftLeft(64);
 
     public String asUnsignedDecimalString(long l) {
