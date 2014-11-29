@@ -3931,9 +3931,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         CompilationBroker.SIMULATEADAPTER = false;
 
         List<Args> pairs = new LinkedList<Args>();
-       // pairs.add(new Args(5000, 2));
+        pairs.add(new Args(5000, 2));
         pairs.add(new Args(0, 0));
-       // pairs.add(new Args(1, -1));
+        pairs.add(new Args(1, -1));
        // pairs.add(new Args(2, 2));
        // pairs.add(new Args(3, 2));
        // pairs.add(new Args(5, 2));
@@ -3942,7 +3942,7 @@ public class ARMV7JTTTest extends MaxTestCase {
       //  pairs.add(new Args(8, 2));
       //  pairs.add(new Args(9, 2));
 
-      //  pairs.add(new Args(10, 2));
+        pairs.add(new Args(10, 2));
 
 
 
