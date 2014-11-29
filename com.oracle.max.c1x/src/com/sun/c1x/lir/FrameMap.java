@@ -237,7 +237,7 @@ public final class FrameMap {
         if (slot.inCallerFrame()) {
             int callerFrame = frameSize() + compilation.target.arch.returnAddressSize;
             final int callerFrameOffset = slot.index() * compilation.target.spillSlotSize;
-            int offset = callerFrame + callerFrameOffset;
+            int offset = callerFrame + callerFrameOffset -4;
             return new CiAddress(slot.kind, compilation.target.arch.isARM() ? CiRegister.CallerFrame.asValue() : CiRegister.Frame.asValue(), offset);
         } else {
             int offset = offsetForOutgoingOrSpillSlot(slot.index(), size);
