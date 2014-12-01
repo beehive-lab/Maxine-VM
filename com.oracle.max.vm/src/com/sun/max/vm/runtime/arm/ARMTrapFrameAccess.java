@@ -22,14 +22,18 @@
  */
 package com.sun.max.vm.runtime.arm;
 
-import static com.oracle.max.asm.target.armv7.ARMV7.*;
-import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.runtime.arm.ARMSafepointPoll.*;
+import com.sun.cri.ci.CiCalleeSaveLayout;
+import com.sun.cri.ci.CiRegister;
+import com.sun.max.unsafe.Address;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.Log;
+import com.sun.max.vm.runtime.Trap;
+import com.sun.max.vm.runtime.TrapFrameAccess;
 
-import com.sun.cri.ci.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.runtime.*;
+import static com.oracle.max.asm.target.armv7.ARMV7.*;
+import static com.sun.max.vm.MaxineVM.vm;
+import static com.sun.max.vm.runtime.arm.ARMSafepointPoll.LATCH_REGISTER;
 
 /* APN this will need to be rewritten
  ARM architecture traps are going to be different to X86 ...
