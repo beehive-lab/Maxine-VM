@@ -33,8 +33,8 @@ public class LoopPhi {
         for (int i = 0; i < arg; i++) {
             test(1, 1, 1, 1, 1, 1);
         }
+        //return test(1, 1, 1, 1, 1, 1);
         return test(1, 1, 1, 1, 1, 1);
-        //return test(1, 2, 3, 4, 5, 6);
 
     }
 
