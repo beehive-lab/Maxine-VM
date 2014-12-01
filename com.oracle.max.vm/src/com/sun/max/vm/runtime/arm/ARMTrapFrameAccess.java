@@ -91,7 +91,7 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
 
     public static final CiCalleeSaveLayout CSL;
     static {
-        CiRegister[] csaRegs = {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r13, r14, r15};
+        CiRegister[] csaRegs = {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r13, r14/*, r15*/};
 
         int size = 4 * 15;
         TRAP_NUMBER_OFFSET = size;

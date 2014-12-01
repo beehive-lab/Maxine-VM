@@ -79,6 +79,10 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert (cmpValue != ARMV7.r8);
         assert (newValue != ARMV7.r9);
         assert (cmpValue != ARMV7.r9);
+
+	Label x = new Label();
+	bind(x);
+	jcc(ConditionFlag.Always,x);
         mov32BitConstant(ARMV7.r0, 2);// put we.re not equal in
         ldrexd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12);
         lcmpl(ConditionFlag.Equal, cmpValue, ARMV7.r8);
