@@ -74,25 +74,24 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public final void casLong(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
-        setUpScratch(address);
         assert (newValue != ARMV7.r8);
         assert (cmpValue != ARMV7.r8);
         assert (newValue != ARMV7.r9);
         assert (cmpValue != ARMV7.r9);
 
-	Label x = new Label();
-	bind(x);
-	jcc(ConditionFlag.Always,x);
-        mov32BitConstant(ARMV7.r0, 2);// put we.re not equal in
+	Label atomicFail = new Label();
+	bind(atomicFail);
+        setUpScratch(address);
         ldrexd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12);
         lcmpl(ConditionFlag.Equal, cmpValue, ARMV7.r8);
         // Keep r0 in sync with code at ARMV7LirGenerator.visitCompareAndSwap
         strexd(ConditionFlag.Equal, ARMV7.r8, newValue, ARMV7.r12);
-        cmp32(ARMV7.r8, 0);
-        mov(ConditionFlag.Equal, false, ARMV7.r0, newValue);
-        mov(ConditionFlag.Equal, false, ARMV7.r1, ARMV7.cpuRegisters[newValue.number+1]);
-        eor(ConditionFlag.NotEqual, false, ARMV7.r0, ARMV7.r0, ARMV7.r0, 0, 0);
-        eor(ConditionFlag.NotEqual, false, ARMV7.r1, ARMV7.r1, ARMV7.r1, 0, 0);
+	mov(ConditionFlag.NotEqual,false,cmpValue,ARMV7.r8);
+	mov(ConditionFlag.NotEqual,false,ARMV7.cpuRegisters[cmpValue.number+1],ARMV7.r9);
+	mov32BitConstant(ARMV7.r12,1);
+	cmp(ConditionFlag.Equal,ARMV7.r8,ARMV7.r12,0,0); // equal to 1 then we failed MP so loop
+	jcc(ConditionFlag.Equal,atomicFail);
+	// FLAGs might be wrong for subsequent compares?	
 
     }
 
