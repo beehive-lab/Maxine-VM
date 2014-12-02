@@ -52,22 +52,22 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert (ARMV7.r9 != newValue);
         assert (ARMV7.r8 != cmpValue);
         assert (ARMV7.r8 != newValue);
-        setUpScratch(address);
+	assert (ARMV7.r0 == cmpValue);
 	Label atomicFail = new Label();
 	bind(atomicFail);
+        setUpScratch(address);
         mov32BitConstant(ARMV7.r9, 2);// put we.re not equal in
         ldrex(ConditionFlag.Always, ARMV7.r8, scratchRegister);
-        teq(ConditionFlag.Always, cmpValue, ARMV7.r8, 0);
+        cmp(ConditionFlag.Always, cmpValue, ARMV7.r8,0,0);
         // Keep r0 in sync with code at ARMV7LirGenerator.visitCompareAndSwap
 	
         strex(ConditionFlag.Equal, ARMV7.r9, newValue, scratchRegister);
-	mov32BitConstant(ARMV7.r8,1);
-        cmp(ConditionFlag.Always,ARMV7.r9, ARMV7.r8,0,0);
+	mov32BitConstant(ARMV7.r12,1);
+        cmp(ConditionFlag.Always,ARMV7.r9, ARMV7.r12,0,0);
 	jcc(ConditionFlag.Equal,atomicFail);
-	mov32BitConstant(ARMV7.r8,2);
-        cmp(ConditionFlag.Always,ARMV7.r9, ARMV7.r8,0,0);
-        mov(ConditionFlag.Equal, false, ARMV7.r0, newValue);
-	mov(ConditionFlag.NotEqual,false, ARMV7.r0, cmpValue);
+	mov32BitConstant(ARMV7.r12,2);
+        cmp(ConditionFlag.Always,ARMV7.r9, ARMV7.r12,0,0);
+	mov(ConditionFlag.Equal,false, cmpValue, ARMV7.r8); // return newValue as we were successful
 
 
 
