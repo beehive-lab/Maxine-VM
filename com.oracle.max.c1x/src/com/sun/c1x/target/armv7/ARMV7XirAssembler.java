@@ -22,6 +22,7 @@
  */
 package com.sun.c1x.target.armv7;
 
+import com.oracle.max.asm.target.armv7.ARMV7;
 import com.sun.c1x.util.Util;
 import com.sun.cri.ci.CiKind;
 import com.sun.cri.ci.CiTarget;
@@ -87,12 +88,13 @@ public class ARMV7XirAssembler extends CiXirAssembler {
 
                         if (fixedRDX == null) {
                             //System.out.println("ARMV7XirAssembler RDX was null");
-                            //fixedRDX = createRegisterTemp("divModTemp", CiKind.Int, ARMV7.rdx);
+                            fixedRDX = createRegisterTemp("divModTemp", CiKind.Int,
+                                    ARMV7.r8);
                         }
                         // Special treatment to make sure that the left input of % and / is in RAX
                         if (fixedRAX == null) {
                             //System.out.println("ARMV7XirAssembler RAX was null");
-                            //fixedRAX = createRegisterTemp("divModLeftInput", CiKind.Int, ARMV7.rax);
+                            fixedRAX = createRegisterTemp("divModLeftInput", CiKind.Int, ARMV7.r9);
                         }
                         currentList.add(new XirInstruction(i.x().kind, XirOp.Mov, fixedRAX, i.x()));
                         xOp = fixedRAX;

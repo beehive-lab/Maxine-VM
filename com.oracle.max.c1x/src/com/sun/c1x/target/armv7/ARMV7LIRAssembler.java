@@ -1737,7 +1737,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             masm.movw(ConditionFlag.Always, ARMV7.r12, 24);
             masm.movw(ConditionFlag.Always, ARMV7.r12, 24);
         }
-
+        System.out.println("OH DEAR idiv called");
         //assert 0 == 1 : "arithmeticIdiv ARMV7IRAssembler";
         if (right.isConstant()) {
             Util.shouldNotReachHere("cwi: I assume this is dead code, notify me if I'm wrong...");
@@ -1831,6 +1831,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             masm.movw(ConditionFlag.Always, ARMV7.r12, 25);
             masm.movw(ConditionFlag.Always, ARMV7.r12, 25);
         }
+        System.out.println("OH DEAR iudiv called");
 
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
@@ -1945,6 +1946,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
             masm.movw(ConditionFlag.Always, ARMV7.r12, 27);
             masm.movw(ConditionFlag.Always, ARMV7.r12, 27);
         }
+        System.out.println("OH DEAR ludiv called");
 
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
@@ -2589,10 +2591,10 @@ private ConditionFlag convertCondition(Condition condition) {
                     break;
 
                 case Mov: {
-                    if(inst.result == null) {
+                   // if(inst.result == null) {
                        // System.out.println("ARMV7LIRAssembler:emitXirInstructions case Mov BODGE remove null check");
-                        return;
-                    }
+                     //   return;
+                    //}
                     CiValue result = operands[inst.result.index];
 
                     CiValue source = operands[inst.x().index];
