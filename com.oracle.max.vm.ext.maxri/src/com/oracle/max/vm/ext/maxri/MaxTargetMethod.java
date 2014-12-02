@@ -194,6 +194,8 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     public VMFrameLayout frameLayout() {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.frameLayout(this);
+        } else if (platform().isa == ISA.ARM) {
+            return ARMTargetMethodUtil.frameLayout(this);
         } else {
             throw FatalError.unimplemented();
         }
@@ -721,6 +723,8 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     public boolean acceptStackFrameVisitor(StackFrameCursor current, StackFrameVisitor visitor) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.acceptStackFrameVisitor(current, visitor);
+        } else if (platform().isa == ISA.ARM) {
+            return ARMTargetMethodUtil.acceptStackFrameVisitor(current, visitor);
         }
         throw FatalError.unimplemented();
     }
@@ -739,6 +743,14 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
                 csa = current.sp().plus(frameSize() - csl.size);
             }
             AMD64TargetMethodUtil.advance(current, csl, csa);
+        } else if (platform().isa == ISA.ARM) {
+            CiCalleeSaveLayout csl = calleeSaveLayout();
+            Pointer csa = Pointer.zero();
+            if (csl != null) {
+                // See FrameMap
+                csa = current.sp().plus(frameSize() - csl.size);
+            }
+            ARMTargetMethodUtil.advance(current, csl, csa);
         } else {
             throw FatalError.unimplemented();
         }
@@ -748,6 +760,8 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     public Pointer returnAddressPointer(StackFrameCursor frame) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.returnAddressPointer(frame);
+        } else if (platform().isa == ISA.ARM) {
+            return ARMTargetMethodUtil.returnAddressPointer(frame);
         } else {
             throw FatalError.unimplemented();
         }
