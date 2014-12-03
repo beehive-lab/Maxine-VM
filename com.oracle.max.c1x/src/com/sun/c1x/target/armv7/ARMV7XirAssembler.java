@@ -58,11 +58,13 @@ public class ARMV7XirAssembler extends CiXirAssembler {
 
         List<XirInstruction> currentList = fastPath;
 
-        XirOperand fixedRDX = null;
-        XirOperand fixedRAX = null;
-        XirOperand fixedRCX = null;
-        XirOperand fixedRSI = null;
-        XirOperand fixedRDI = null;
+        // APN NOT sure how this works with these hard coded registers ....
+        // doing something similar to X86 so don;t want to disturb this in C1X
+        XirOperand fixedRDX = null; // r2
+        XirOperand fixedRAX = null; // r6
+        XirOperand fixedRCX = null; // r0
+        XirOperand fixedRSI = null; // r3
+        XirOperand fixedRDI = null; // r2
         HashSet<XirLabel> boundLabels = new HashSet<XirLabel>();
 
         for (XirInstruction i : instructions) {
@@ -89,12 +91,12 @@ public class ARMV7XirAssembler extends CiXirAssembler {
                         if (fixedRDX == null) {
                             //System.out.println("ARMV7XirAssembler RDX was null");
                             fixedRDX = createRegisterTemp("divModTemp", CiKind.Int,
-                                    ARMV7.r8);
+                                    ARMV7.r2);
                         }
                         // Special treatment to make sure that the left input of % and / is in RAX
                         if (fixedRAX == null) {
                             //System.out.println("ARMV7XirAssembler RAX was null");
-                            fixedRAX = createRegisterTemp("divModLeftInput", CiKind.Int, ARMV7.r9);
+                            fixedRAX = createRegisterTemp("divModLeftInput", CiKind.Int, ARMV7.r6);
                         }
                         currentList.add(new XirInstruction(i.x().kind, XirOp.Mov, fixedRAX, i.x()));
                         xOp = fixedRAX;
@@ -111,7 +113,7 @@ public class ARMV7XirAssembler extends CiXirAssembler {
                         if (fixedRCX == null) {
                            //System.out.println("ARMV7XirAssembler RCX was null");
 
-                         //   fixedRCX = createRegisterTemp("fixedShiftCount", i.y().kind, ARMV7.rcx);
+                            fixedRCX = createRegisterTemp("fixedShiftCount", i.y().kind, ARMV7.r0);
                         }
                         currentList.add(new XirInstruction(i.result.kind, XirOp.Mov, fixedRCX, i.y()));
                         yOp = fixedRCX;
@@ -133,13 +135,13 @@ public class ARMV7XirAssembler extends CiXirAssembler {
                 case RepeatMoveBytes:
                     //System.out.println("ARMV7XirAssembler RepeatMove Words/Bytes");
                     if (fixedRSI == null) {
-                       // fixedRSI = createRegisterTemp("fixedRSI", target.wordKind, ARMV7.rsi);
+                       fixedRSI = createRegisterTemp("fixedRSI", target.wordKind, ARMV7.r3);
                     }
                     if (fixedRDI == null) {
-                    //    fixedRDI = createRegisterTemp("fixedRDI", target.wordKind, ARMV7.rdi);
+                        fixedRDI = createRegisterTemp("fixedRDI", target.wordKind, ARMV7.r2);
                     }
                     if (fixedRCX == null) {
-                     //   fixedRCX = createRegisterTemp("fixedRCX", target.wordKind, ARMV7.rcx);
+                       fixedRCX = createRegisterTemp("fixedRCX", target.wordKind, ARMV7.r0);
                     }
                     currentList.add(new XirInstruction(target.wordKind, XirOp.Mov, fixedRSI, i.x()));
                     currentList.add(new XirInstruction(target.wordKind, XirOp.Mov, fixedRDI, i.y()));
@@ -159,7 +161,7 @@ public class ARMV7XirAssembler extends CiXirAssembler {
                     //System.out.println("ARMV7XirAssembler PointerCAS");
 
                     if (fixedRAX == null) {
-                    //    fixedRAX = createRegisterTemp("fixedRAX", target.wordKind, ARMV7.rax);
+                        fixedRAX = createRegisterTemp("fixedRAX", target.wordKind, ARMV7.r6);
                     }
                     // x = source of cmpxch
                     // y = new value

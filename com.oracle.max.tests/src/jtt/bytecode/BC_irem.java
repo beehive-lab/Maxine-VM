@@ -28,6 +28,6 @@ package jtt.bytecode;
  */
 public class BC_irem {
     public static int test(int a, int b) {
-        return a % b;
+        return a / b;
     }
 }

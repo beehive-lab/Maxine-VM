@@ -3757,7 +3757,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_jtt_loop01() throws Exception {
+    public void ignore_jtt_loop01() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         CompilationBroker.SIMULATEADAPTER = true;
@@ -3793,7 +3793,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
         assert(failed == false);
     }
-    public void test_jtt_loopStack() throws Exception {
+    public void ignore_jtt_loopStack() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         CompilationBroker.SIMULATEADAPTER = true;
@@ -3827,7 +3827,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
         assert(failed == false);
     }
-    public void test_jtt_loop02() throws Exception {
+    public void ignore_jtt_loop02() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         CompilationBroker.SIMULATEADAPTER = true;
@@ -3863,7 +3863,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
         assert(failed == false);
     }
-    public void test_jtt_loop03() throws Exception {
+    public void ignore_jtt_loop03() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.loop.Loop03");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -3892,7 +3892,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_jtt_loop04() throws Exception {
+    public void ignore_jtt_loop04() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         String klassName = getKlassName("jtt.loop.Loop04");
@@ -3923,7 +3923,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
         assert(failed == false);
     }
-    public void test_jtt_loop11() throws Exception {
+    public void ignore_jtt_loop11() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         String klassName = getKlassName("jtt.loop.Loop11");
@@ -3954,7 +3954,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
         assert(failed == false);
     }
-    public void test_jtt_loopPHI() throws Exception {
+    public void ignore_jtt_loopPHI() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         String klassName = getKlassName("jtt.loop.LoopPhi");
@@ -3999,6 +3999,55 @@ public class ARMV7JTTTest extends MaxTestCase {
                 failed = true;
                 System.out.println("LOOPPHI GOT "  +returnValue + " EXPECT " + expectedValue + " ARG "+ pair.first );
             }else System.out.println("ARG "+ pair.first + " OK");
+            theCompiler.cleanup();
+        }
+        assert(failed == false);
+    }
+    public void test_jtt_BC_irem() throws Exception {
+        CompilationBroker.OFFLINE = initialised;
+        boolean failed = false;
+        CompilationBroker.SIMULATEADAPTER = true;
+
+        String klassName = getKlassName("jtt.bytecode.BC_irem");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        CompilationBroker.SIMULATEADAPTER = false;
+
+        List<Args> pairs = new LinkedList<Args>();
+
+/*
+ * @Harness: java
+ * @Runs: (1,2)=1; (2,-1)=0; (256,4)=0; (135,7)=2
+ */
+        pairs.add(new Args(1, 2));
+        pairs.add(new Args(2, -1));
+        pairs.add(new Args(256, 4));
+        pairs.add(new Args(135,7));
+
+
+        initialiseCodeBuffers(methods, "BC_irem.java", "int test(int, int)");
+        int assemblerStatements = codeBytes.length / 4;
+        for (Args pair : pairs) {
+            int expectedValue = jtt.bytecode.BC_irem.test(pair.first,pair.second);
+
+            String functionPrototype = ARMCodeWriter.preAmble("int ", " int, int ", Integer.toString(pair.first) + ", "+ Integer.toString(pair.second));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            //long returnValue = registerValues[0] | ((0xffffffffL & registerValues[1]) << 32);
+            int returnValue = registerValues[0];
+            //System.out.println("LSHR EXPECTED " + expectedValue + " GOT "+ returnValue);
+            if(returnValue != expectedValue) {
+                failed = true;
+                System.out.println("BC_irem GOT "  +returnValue + " EXPECT " + expectedValue );
+                System.out.println("REG1 "+ registerValues[1]);
+                System.out.println("REG8 "+ registerValues[8]);
+
+
+            } else {
+                System.out.println("SUCCESS BC_irem GOT "  +returnValue + " EXPECT " + expectedValue );
+                System.out.println("REG1 "+ registerValues[1]);
+                System.out.println("REG8 "+ registerValues[8]);
+
+            }
             theCompiler.cleanup();
         }
         assert(failed == false);

@@ -137,7 +137,7 @@ public class MaxineARMTester {
     }
 
     public void assembleStartup() {
-        final ProcessBuilder assemble = new ProcessBuilder("arm-none-eabi-as", "-mcpu=cortex-a9", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-g", "startup.s", "-o", "startup.o");
+        final ProcessBuilder assemble = new ProcessBuilder("arm-none-eabi-as", "-mcpu=cortex-a15", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-g", "startup.s", "-o", "startup.o");
         assemble.redirectOutput(new File("as_output"));
         assemble.redirectError(new File("as_errors"));
         try {
@@ -150,7 +150,7 @@ public class MaxineARMTester {
     }
 
     public void assembleEntry() {
-        final ProcessBuilder assemble = new ProcessBuilder("arm-none-eabi-as", "-mcpu=cortex-a9", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-g", "asm_entry.s", "-o", "asm_entry.o");
+        final ProcessBuilder assemble = new ProcessBuilder("arm-none-eabi-as", "-mcpu=cortex-a15", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-g", "asm_entry.s", "-o", "asm_entry.o");
         assemble.redirectOutput(asOutput);
         assemble.redirectError(asErrors);
         try {
@@ -200,7 +200,7 @@ public class MaxineARMTester {
         }
         gdbProcess.redirectOutput(gdbOutput);
         gdbProcess.redirectError(gdbErrors);
-        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a9", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.bin");
+        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.bin");
         qemuProcess.redirectOutput(qemuOutput);
         qemuProcess.redirectError(qemuErrors);
         try {
@@ -241,7 +241,7 @@ public class MaxineARMTester {
         gdbProcess.redirectInput(gdbInput);
         gdbProcess.redirectOutput(gdbOutput);
         gdbProcess.redirectError(gdbErrors);
-        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a9", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.bin");
+        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.bin");
         qemuProcess.redirectOutput(qemuOutput);
         qemuProcess.redirectError(qemuErrors);
         try {
@@ -279,7 +279,7 @@ public class MaxineARMTester {
         gdbProcess.redirectInput(gdbInput);
         gdbProcess.redirectOutput(gdbOutput);
         gdbProcess.redirectError(gdbErrors);
-        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a9", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.bin");
+        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.bin");
         qemuProcess.redirectOutput(qemuOutput);
         qemuProcess.redirectError(qemuErrors);
         try {
@@ -317,7 +317,7 @@ public class MaxineARMTester {
         gdbProcess.redirectInput(gdbInput);
         gdbProcess.redirectOutput(gdbOutput);
         gdbProcess.redirectError(gdbErrors);
-        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a9", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.bin");
+        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.bin");
         qemuProcess.redirectOutput(qemuOutput);
         qemuProcess.redirectError(qemuErrors);
         try {
