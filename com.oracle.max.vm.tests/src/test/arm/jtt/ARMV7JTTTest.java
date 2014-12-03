@@ -4023,6 +4023,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(2, -1));
         pairs.add(new Args(256, 4));
         pairs.add(new Args(135,7));
+        pairs.add(new Args(Integer.MIN_VALUE,-1));
+        pairs.add(new Args(-1,1));
+        pairs.add(new Args(0,1));
+        pairs.add(new Args(1000,1));
+        pairs.add(new Args(Integer.MIN_VALUE,1));
+        pairs.add(new Args(Integer.MAX_VALUE,1));
 
 
         initialiseCodeBuffers(methods, "BC_irem.java", "int test(int, int)");

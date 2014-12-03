@@ -1737,9 +1737,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             masm.movw(ConditionFlag.Always, ARMV7.r12, 24);
             masm.movw(ConditionFlag.Always, ARMV7.r12, 24);
         }
-        System.out.println("OH DEAR idiv called");
         //assert 0 == 1 : "arithmeticIdiv ARMV7IRAssembler";
         if (right.isConstant()) {
+            assert 0 == 1 : "arithmeticIdiv divide by constant not implemented";
             Util.shouldNotReachHere("cwi: I assume this is dead code, notify me if I'm wrong...");
             assert 0 == 1 : "arithmeticIdiv ARMV7IRAssembler";
 
@@ -1771,45 +1771,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         } else {
             CiRegister rreg = right.asRegister();
 
-            System.out.println("LREG IS "+ lreg.number);
-            System.out.println("RREG is " + rreg.number);
-            System.out.println("DREG is " + dreg.number);
-            /*assert lreg == AMD64.rax : "left register must be rax";
-            assert rreg != AMD64.rdx : "right register must not be rdx";
 
-            moveRegs(lreg, AMD64.rax);
-
-            Label continuation = new Label();
-
-            if (C1XOptions.GenSpecialDivChecks) {
-                // check for special case of Integer.MIN_VALUE / -1
-                Label normalCase = new Label();
-                masm.cmpl(AMD64.rax, Integer.MIN_VALUE);
-                masm.jcc(ConditionFlag.notEqual, normalCase);
-                if (code == LIROpcode.Irem) {
-                    // prepare X86Register.rdx for possible special case where remainder = 0
-                    masm.xorl(AMD64.rdx, AMD64.rdx);
-                }
-                masm.cmpl(rreg, -1);
-                masm.jcc(ConditionFlag.equal, continuation);
-
-                // handle normal case
-                masm.bind(normalCase);
-            }
-            masm.cdql();
-            int offset = masm.codeBuffer.position();
-            masm.idivl(rreg);
-
-            // normal and special case exit
-            masm.bind(continuation);
-
-            tasm.recordImplicitException(offset, info);
-            if (code == LIROpcode.Irem) {
-                moveRegs(AMD64.rdx, dreg); // result is in rdx
-            } else {
-                assert code == LIROpcode.Idiv;
-                moveRegs(AMD64.rax, dreg);
-            }*/
             //assert lreg == ARMV7.r6 : "left register must be r6-ax";
           //  assert rreg != ARMV7.rdx : "right register must not be rdx";
 
@@ -1836,8 +1798,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.bind(normalCase);
             }
            // masm.cdql();
-            System.out.println("NEED cdql replacement");
-              // APN do we really need to signe extend? cdql?
+            masm.mov(ConditionFlag.Always,false,ARMV7.r9,lreg);
             int offset = masm.codeBuffer.position();
 
             masm.sdiv(ConditionFlag.Always,dreg,lreg,rreg);
@@ -1848,6 +1809,15 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
             tasm.recordImplicitException(offset, info);
             if (code == LIROpcode.Irem) {
+                /*
+                (a/b)b + (a%b) = a
+                => (a%b) = a - (a/b)b
+                r9 = a
+                r12 = a
+                reg = b
+                 */
+                masm.mul(ConditionFlag.Always,false,lreg,lreg,rreg);
+                masm.sub(ConditionFlag.Always,false,lreg,ARMV7.r9,lreg,0,0);
                // masm.mov(ConditionFlag.Always, false, dreg, ARMV7.r1);
          //       moveRegs(ARMV7.rdx, dreg); // result is in rdx
             } else {
@@ -1869,12 +1839,11 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             masm.movw(ConditionFlag.Always, ARMV7.r12, 25);
             masm.movw(ConditionFlag.Always, ARMV7.r12, 25);
         }
-        System.out.println("OH DEAR iudiv called");
+        System.out.println("arithmeticIudiv not implemented");
 
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
         CiRegister rreg = right.asRegister();
-        assert lreg == ARMV7.r6 : "left register must be r6-rax";
       //  assert rreg != ARMV7.rdx : "right register must not be rdx";
 
         //assert 0 == 1 : "arithmeticIudiv ARMV7IRAssembler";
@@ -1921,10 +1890,9 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
         CiRegister rreg = right.asRegister();
-        System.out.println("LDIV called");
+        System.out.println("arithmeticLdiv not implemented");
         //assert 0 == 1 : "arithmeticLdiv ARMV7IRAssembler";
 
-        assert lreg == ARMV7.r6 : "left register must be r6-rax";
         //assert lreg == ARMV7.r0 : "left register must be r0 was rax";
 
         //  assert rreg != ARMV7.rdx : "right register must not be rdx";
@@ -1984,7 +1952,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
             masm.movw(ConditionFlag.Always, ARMV7.r12, 27);
             masm.movw(ConditionFlag.Always, ARMV7.r12, 27);
         }
-        System.out.println("OH DEAR ludiv called");
+        //System.out.println("arithmeticLudiv not implemented");
 
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
