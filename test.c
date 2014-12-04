@@ -59,6 +59,10 @@ int compare2(long long a, long long b) {
 long long convertME(int yy) {
 	return (long long) yy;
 }
+
+long long longdiv(long long a, long long b) {
+	return a/b;
+}
 int main(int argc, char**argv) {
 	long long xx = 0;
 	long long yy = -2147483648LL;

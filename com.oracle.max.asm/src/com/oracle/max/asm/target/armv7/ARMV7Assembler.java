@@ -1286,7 +1286,7 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
 +        mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[dst.number+1], scratchRegister);*/
         assert(src1 == dst);
         push(ConditionFlag.Always,1<< src2.number | 1 << (src2.number+1));
-        System.out.println("using SRC1 " + src1.number + " " + src2.number + " DEST "+ dst.number);
+        //System.out.println("using SRC1 " + src1.number + " " + src2.number + " DEST "+ dst.number);
         mov(ConditionFlag.Always,false,ARMV7.r12,src2); // save src2
         mul(ConditionFlag.Always, false, src2, src2, ARMV7.cpuRegisters[src1.number + 1]);
         mul(ConditionFlag.Always, false, ARMV7.cpuRegisters[src2.number+1], src1, ARMV7.cpuRegisters[src2.number + 1]);

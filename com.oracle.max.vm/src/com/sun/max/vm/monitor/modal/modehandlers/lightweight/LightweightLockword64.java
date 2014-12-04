@@ -67,7 +67,7 @@ public class LightweightLockword64 extends HashableLockword64 {
             THREADID_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(32 - THREADID_FIELD_WIDTH);
             UTIL_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(32 - UTIL_FIELD_WIDTH);
             RCOUNT_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(32 - RCOUNT_FIELD_WIDTH);
-            RCOUNT_INC_WORD = Address.zero().bitSet(64 - RCOUNT_FIELD_WIDTH);
+            RCOUNT_INC_WORD = Address.zero().bitSet(32 - RCOUNT_FIELD_WIDTH); // APN altered
         } else {
             RCOUNT_FIELD_WIDTH = 5; // Must be <= 8 (see incrementCount())
             UTIL_FIELD_WIDTH = 9;

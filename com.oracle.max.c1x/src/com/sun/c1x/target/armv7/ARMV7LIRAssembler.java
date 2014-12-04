@@ -1741,7 +1741,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         if (right.isConstant()) {
             assert 0 == 1 : "arithmeticIdiv divide by constant not implemented";
             Util.shouldNotReachHere("cwi: I assume this is dead code, notify me if I'm wrong...");
-            assert 0 == 1 : "arithmeticIdiv ARMV7IRAssembler";
 
             int divisor = ((CiConstant) right).asInt();
             assert divisor > 0 && CiUtil.isPowerOf2(divisor) : "divisor must be power of two";
@@ -1816,8 +1815,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 r12 = a
                 reg = b
                  */
-                masm.mul(ConditionFlag.Always,false,lreg,lreg,rreg);
-                masm.sub(ConditionFlag.Always,false,lreg,ARMV7.r9,lreg,0,0);
+                masm.mul(ConditionFlag.Always,false,lreg,dreg,rreg);
+                masm.sub(ConditionFlag.Always,false,dreg,ARMV7.r9,lreg,0,0);
                // masm.mov(ConditionFlag.Always, false, dreg, ARMV7.r1);
          //       moveRegs(ARMV7.rdx, dreg); // result is in rdx
             } else {
@@ -1839,7 +1838,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             masm.movw(ConditionFlag.Always, ARMV7.r12, 25);
             masm.movw(ConditionFlag.Always, ARMV7.r12, 25);
         }
-        System.out.println("arithmeticIudiv not implemented");
+        //System.out.println("arithmeticIudiv not implemented");
 
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
@@ -1890,7 +1889,7 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
         CiRegister rreg = right.asRegister();
-        System.out.println("arithmeticLdiv not implemented");
+        //System.out.println("arithmeticLdiv not implemented");
         //assert 0 == 1 : "arithmeticLdiv ARMV7IRAssembler";
 
         //assert lreg == ARMV7.r0 : "left register must be r0 was rax";

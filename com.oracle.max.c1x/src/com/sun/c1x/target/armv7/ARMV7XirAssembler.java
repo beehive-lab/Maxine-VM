@@ -62,7 +62,7 @@ public class ARMV7XirAssembler extends CiXirAssembler {
         // doing something similar to X86 so don;t want to disturb this in C1X
         XirOperand fixedRDX = null; // r2
         XirOperand fixedRAX = null; // r6
-        XirOperand fixedRCX = null; // r0
+        XirOperand fixedRCX = null; // r4
         XirOperand fixedRSI = null; // r3
         XirOperand fixedRDI = null; // r2
         HashSet<XirLabel> boundLabels = new HashSet<XirLabel>();
@@ -84,6 +84,7 @@ public class ARMV7XirAssembler extends CiXirAssembler {
                 case Or:
                 case Xor:
                     // Convert to two operand form
+
                     XirOperand xOp = i.x();
                     if (i.op == XirOp.Div || i.op == XirOp.Mod) {
                         //System.out.println("ARMV7XirAssembler createRegisterTemp stuff");
@@ -91,7 +92,7 @@ public class ARMV7XirAssembler extends CiXirAssembler {
                         if (fixedRDX == null) {
                             //System.out.println("ARMV7XirAssembler RDX was null");
                             fixedRDX = createRegisterTemp("divModTemp", CiKind.Int,
-                                    ARMV7.r2);
+                                    ARMV7.r9);
                         }
                         // Special treatment to make sure that the left input of % and / is in RAX
                         if (fixedRAX == null) {
@@ -100,6 +101,7 @@ public class ARMV7XirAssembler extends CiXirAssembler {
                         }
                         currentList.add(new XirInstruction(i.x().kind, XirOp.Mov, fixedRAX, i.x()));
                         xOp = fixedRAX;
+			/* so this means we move a value into the R8 register */
                     } else {
                         if (i.result != i.x()) {
                             currentList.add(new XirInstruction(i.result.kind, XirOp.Mov, i.result, i.x()));
@@ -113,7 +115,7 @@ public class ARMV7XirAssembler extends CiXirAssembler {
                         if (fixedRCX == null) {
                            //System.out.println("ARMV7XirAssembler RCX was null");
 
-                            fixedRCX = createRegisterTemp("fixedShiftCount", i.y().kind, ARMV7.r0);
+                            fixedRCX = createRegisterTemp("fixedShiftCount", i.y().kind, ARMV7.r4);
                         }
                         currentList.add(new XirInstruction(i.result.kind, XirOp.Mov, fixedRCX, i.y()));
                         yOp = fixedRCX;
@@ -124,7 +126,6 @@ public class ARMV7XirAssembler extends CiXirAssembler {
                         yOp = tempLocation;
 
                     }
-
                     if (xOp != i.x() || yOp != i.y()) {
                         currentList.add(new XirInstruction(i.result.kind, i.op, i.result, xOp, yOp));
                         appended = true;
@@ -133,15 +134,16 @@ public class ARMV7XirAssembler extends CiXirAssembler {
 
                 case RepeatMoveWords:
                 case RepeatMoveBytes:
-                    //System.out.println("ARMV7XirAssembler RepeatMove Words/Bytes");
+                    System.out.println("ARMV7XirAssembler RepeatMove Words/Bytes");
+
                     if (fixedRSI == null) {
-                       fixedRSI = createRegisterTemp("fixedRSI", target.wordKind, ARMV7.r3);
+                       fixedRSI = createRegisterTemp("fixedRSI", target.wordKind, ARMV7.r8);
                     }
                     if (fixedRDI == null) {
-                        fixedRDI = createRegisterTemp("fixedRDI", target.wordKind, ARMV7.r2);
+                        fixedRDI = createRegisterTemp("fixedRDI", target.wordKind, ARMV7.r8);
                     }
                     if (fixedRCX == null) {
-                       fixedRCX = createRegisterTemp("fixedRCX", target.wordKind, ARMV7.r0);
+                       fixedRCX = createRegisterTemp("fixedRCX", target.wordKind, ARMV7.r8);
                     }
                     currentList.add(new XirInstruction(target.wordKind, XirOp.Mov, fixedRSI, i.x()));
                     currentList.add(new XirInstruction(target.wordKind, XirOp.Mov, fixedRDI, i.y()));
@@ -158,7 +160,7 @@ public class ARMV7XirAssembler extends CiXirAssembler {
                 case PointerStoreDisp:
                     break;
                 case PointerCAS:
-                    //System.out.println("ARMV7XirAssembler PointerCAS");
+                    System.out.println("ARMV7XirAssembler PointerCAS");
 
                     if (fixedRAX == null) {
                         fixedRAX = createRegisterTemp("fixedRAX", target.wordKind, ARMV7.r6);
