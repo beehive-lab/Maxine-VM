@@ -58,8 +58,8 @@ public class LightweightLockword64 extends HashableLockword64 {
 
     static {
         if (Platform.target().arch.is32bit()) {
-            RCOUNT_FIELD_WIDTH = 2; // Must be <= 8 (see incrementCount())
-            UTIL_FIELD_WIDTH = 2;
+            RCOUNT_FIELD_WIDTH = 3; // Must be <= 8 (see incrementCount())
+            UTIL_FIELD_WIDTH = 5; //was 2
             THREADID_FIELD_WIDTH = 32 - (RCOUNT_FIELD_WIDTH + UTIL_FIELD_WIDTH + HASH_FIELD_WIDTH + NUMBER_OF_MODE_BITS);
             THREADID_SHIFT = HASHCODE_SHIFT + HASH_FIELD_WIDTH;
             UTIL_SHIFT = THREADID_SHIFT + THREADID_FIELD_WIDTH;

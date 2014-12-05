@@ -29,6 +29,8 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.*;
+import com.sun.max.platform.Platform;
+
 
 /**
  * Abstracts access to a thin lock word's bit fields.
@@ -107,7 +109,13 @@ public class ThinLockword64 extends LightweightLockword64 {
      */
     @INLINE
     public final ThinLockword64 asUnlocked() {
-        return ThinLockword64.from(asAddress().and(UNLOCKED_MASK));
+	if (Platform.target().arch.is32bit()) {
+        	return ThinLockword64.from(asAddress().and(0x7fffffffL));
+		//return ThinLockword64.from(asAddress().and(UNLOCKED_MASK));
+
+	} else {
+        	return ThinLockword64.from(asAddress().and(UNLOCKED_MASK));
+	}
     }
 
     /**

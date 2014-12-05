@@ -53,7 +53,7 @@ public class HashableLockword64 extends ModalLockword64 {
         if (Platform.target().arch.is32bit()) {
             HASH_FIELD_WIDTH = 12;// was 16
             HASHCODE_SHIFT = NUMBER_OF_MODE_BITS;
-            HASHCODE_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(32 - HASH_FIELD_WIDTH);
+            HASHCODE_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(32 - HASH_FIELD_WIDTH ); //  APN
         } else {
             HASH_FIELD_WIDTH = 32;
             HASHCODE_SHIFT = NUMBER_OF_MODE_BITS;
