@@ -30,6 +30,9 @@ import com.oracle.max.asm.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * This class implements an assembler that can encode most X86 instructions.
  */
@@ -68,11 +71,24 @@ public class AMD64Assembler extends AbstractAssembler {
 
         public final int value;
 
+        public static final ConditionFlag[] values = values();
+
+        private static final Map<Integer, ConditionFlag> intToConditionFlag =
+                new HashMap<Integer, ConditionFlag>();
+
+        static {
+            for (ConditionFlag flag : ConditionFlag.values()) {
+                intToConditionFlag.put(flag.value, flag);
+            }
+        }
+
         private ConditionFlag(int value) {
             this.value = value;
         }
 
-        public static final ConditionFlag[] values = values();
+        public ConditionFlag negation() {
+            return intToConditionFlag.get(this.value ^ 0x1);
+        }
     }
 
     /**
