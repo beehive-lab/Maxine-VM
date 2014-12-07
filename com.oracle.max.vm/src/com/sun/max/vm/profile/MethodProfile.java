@@ -57,6 +57,9 @@ public class MethodProfile {
     private static final byte RECVR_COUNT   = 6;
     private static final byte RECVR_NOT_FOUND = 7;
 
+    private static final byte BR_TAKEN_INDEX = 0;
+    private static final byte BR_NOT_TAKEN_INDEX = 1;
+
     /**
      * The method that contains the instrumentation to increase counters in this profile.
      */
@@ -137,9 +140,44 @@ public class MethodProfile {
         Integer taken = get(search(bci, BR_TAKEN));
         Integer notTaken = get(search(bci, BR_NOT_TAKEN));
         if (taken != null || notTaken != null) {
-            return new Integer[] {taken, notTaken};
+            Integer[] branchCounts = new Integer[2];
+
+            branchCounts[BR_TAKEN_INDEX] = taken;
+            branchCounts[BR_NOT_TAKEN_INDEX] = notTaken;
+
+            return branchCounts;
         }
         return null;
+    }
+
+    /**
+     * Gets the probability for a branch at the specified index, if it is available.
+     * @param bci the bytecode index for which to get the information
+     * @return double value, if it is available ({@code null} otherwise)
+     */
+    public double getBranchTakenProbability(int bci) {
+        Integer[] branchCounts = getBranchCounts(bci);
+        if (branchCounts == null) {
+            return -1;
+        }
+        Integer takenCount = branchCounts[MethodProfile.BR_TAKEN_INDEX];
+        Integer notTakenCount = branchCounts[MethodProfile.BR_NOT_TAKEN_INDEX];
+
+        if (takenCount != null) {
+            assert takenCount >= 0;
+            if (notTakenCount != null) {
+                // Calculating branch probability.
+                Integer totalCount = takenCount + notTakenCount;
+                assert notTakenCount >= 0;
+                return totalCount <= 0 ? -1 : takenCount / totalCount.doubleValue();
+            } else {
+                // Calculating jump probability.
+                return takenCount != 0 ? 1 : 0;
+            }
+        } else {
+            assert notTakenCount == null;
+            return -1;
+        }
     }
 
     /**
@@ -357,7 +395,7 @@ public class MethodProfile {
 
         private int add(int bci, byte type, int value) {
             setLastBci(bci);
-            infoList.add(encodeInfo(0, type));
+            infoList.add(encodeInfo(bci, type));
             dataList.add(value);
             return infoList.size() - 1;
         }

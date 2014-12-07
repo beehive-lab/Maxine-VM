@@ -28,11 +28,13 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.oracle.graal.api.meta.*;
+import com.oracle.graal.phases.GraalOptions;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.profile.MethodProfile;
 
 /**
  * Likely temporary indirect between a {@link MethodActor} and a {@link ResolvedJavaMethod},
@@ -142,8 +144,23 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
 
     @Override
     public ProfilingInfo getProfilingInfo() {
-        // TODO
-        return DefaultProfilingInfo.get(ProfilingInfo.TriState.FALSE);
+        ClassMethodActor ma = (ClassMethodActor) riResolvedMethod();
+        ProfilingInfo info;
+        MethodProfile methodProfile = null;
+
+        if (GraalOptions.UseProfilingInformation.getValue()) {
+            TargetMethod tm = ma.currentTargetMethod();
+            if (tm != null) {
+                methodProfile = tm.profile();
+            }
+        }
+
+        if (methodProfile == null) {
+            info = DefaultProfilingInfo.get(ProfilingInfo.TriState.FALSE);
+        } else {
+            info = new MaxProfilingInfo(methodProfile, this);
+        }
+        return info;
     }
 
     private final Map<Object, Object> compilerStorage = new ConcurrentHashMap<Object, Object>();
