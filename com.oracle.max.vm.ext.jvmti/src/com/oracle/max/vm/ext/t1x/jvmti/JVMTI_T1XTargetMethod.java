@@ -125,18 +125,7 @@ public class JVMTI_T1XTargetMethod extends T1XTargetMethod {
      * @return the {@link ClassMethodActor} at the given code offset in {@code tm} or null if not found.
      */
     private ClassMethodActor callSiteToEventCallee(TargetMethod tm, int pos) {
-        int dcIndex = 0;
-        Safepoints oldSafepoints = tm.safepoints();
-        Object[] oldDirectCallees = tm.directCallees();
-        for (int i = 0; i < oldSafepoints.size(); i++) {
-            if (oldSafepoints.isSetAt(DIRECT_CALL, i)) {
-                if (oldSafepoints.posAt(i) == pos && oldDirectCallees[dcIndex] instanceof ClassMethodActor) {
-                    return (ClassMethodActor) oldDirectCallees[dcIndex];
-                }
-                dcIndex++;
-            }
-        }
-        return null;
+        return tm.callPosToCallee(pos);
     }
 
 }

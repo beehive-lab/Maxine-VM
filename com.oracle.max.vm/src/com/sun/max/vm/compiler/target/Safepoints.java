@@ -166,7 +166,7 @@ public final class Safepoints {
                 int pos = pos(safepoint);
                 int prev = safepoints[i - 1];
                 int prevPos = pos(prev);
-                assert prevPos < pos : "safepoint positions are not sorted: " + prevPos + " >= " + pos;
+                assert prevPos <= pos : "safepoint positions are not sorted: " + prevPos + " > " + pos + "\nSafepoints: " + toString();
             }
         }
         return true;
@@ -222,6 +222,15 @@ public final class Safepoints {
      */
     public static boolean isCall(int safepoint) {
         return INDIRECT_CALL.isSet(safepoint) || DIRECT_CALL.isSet(safepoint);
+    }
+
+    /**
+     * Determines if a given safepoint is a direct call.
+     *
+     * @param safepoint the safepoint to test
+     */
+    public static boolean isDirectCall(int safepoint) {
+        return DIRECT_CALL.isSet(safepoint);
     }
 
     /**
