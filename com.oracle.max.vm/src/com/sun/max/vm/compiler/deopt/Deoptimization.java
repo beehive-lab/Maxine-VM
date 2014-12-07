@@ -48,6 +48,7 @@ import com.sun.max.vm.compiler.target.amd64.AMD64TargetMethodUtil;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.profile.MethodProfile;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -120,6 +121,11 @@ public class Deoptimization extends VmOperation {
     private final ArrayList<TargetMethod> methods;
 
     /**
+     * Deoptimization reason identificator used for deoptimization profiling.
+     */
+    private int deoptReasonId;
+
+    /**
      * Creates an object to deoptimize a given set of methods.
      *
      * @param methods the set of methods to be deoptimized (must not contain duplicates)
@@ -127,6 +133,19 @@ public class Deoptimization extends VmOperation {
     public Deoptimization(ArrayList<TargetMethod> methods) {
         super("Deoptimization", null, Mode.Safepoint);
         this.methods = methods;
+        this.deoptReasonId = MethodProfile.UNDEFINED_DEOPTIMIZATION_REASON_ID;
+    }
+
+    /**
+     * Creates an object to deoptimize a given set of methods for a given deoptimization reason.
+     *
+     * @param methods the set of methods to be deoptimized (must not contain duplicates)
+     * @param deoptReasonId deoptimization reason identificator
+     */
+    public Deoptimization(ArrayList<TargetMethod> methods, int deoptReasonId) {
+        super("Deoptimization", null, Mode.Safepoint);
+        this.methods = methods;
+        this.deoptReasonId = deoptReasonId;
     }
 
     @HOSTED_ONLY
@@ -159,7 +178,7 @@ public class Deoptimization extends VmOperation {
             } else {
                 // Perform deoptimization-related actions in the compilation broker.
                 ClassMethodActor cma = tm.classMethodActor();
-                vm().compilationBroker.deoptimize(cma);
+                vm().compilationBroker.deoptimize(cma, deoptReasonId);
 
                 // Find all references to invalidated target method(s) in dispatch tables (e.g. vtables, itables etc) and revert to trampoline references.
                 // Concurrent patching ok here as it is atomic.

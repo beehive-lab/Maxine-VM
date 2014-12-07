@@ -355,15 +355,19 @@ public class CompilationBroker {
      *   <li>Reset entry counter of the unoptimized method.</li>
      *   <li>Remove compilations.</li>
      * </ol>
-     * @param cma
+     * @param cma class method actor of the deoptimized method
+     * @param deoptReasonId deoptimization reason identificator
      */
-    public void deoptimize(ClassMethodActor cma) {
+    public void deoptimize(ClassMethodActor cma, int deoptReasonId) {
         TargetMethod tm = Compilations.currentTargetMethod(cma.compiledState, Nature.BASELINE);
         if (tm != null) {
             assert tm.invalidated() == null && tm.isBaseline();
             MethodProfile mp = tm.profile();
-            if (mp != null && mp.entryBackedgeCount <= 0) {
-                mp.entryBackedgeCount = MethodInstrumentation.initialEntryBackedgeCount;
+            if (mp != null) {
+                mp.incrementDeoptimizationCount(deoptReasonId);
+                if (mp.entryBackedgeCount <= 0) {
+                    mp.entryBackedgeCount = MethodInstrumentation.initialEntryBackedgeCount;
+                }
             }
         }
         baselineCompiler.deoptimize(cma);

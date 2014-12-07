@@ -22,62 +22,28 @@
  */
 package com.oracle.max.vm.ext.graal;
 
-import static com.sun.max.vm.VMOptions.*;
-
-import java.lang.reflect.*;
-import java.net.*;
-import java.nio.channels.*;
 import java.util.*;
-import java.util.concurrent.*;
-
-import com.oracle.graal.api.code.*;
 import com.oracle.graal.api.meta.*;
-import com.oracle.graal.compiler.*;
-import com.oracle.graal.compiler.target.*;
-import com.oracle.graal.debug.*;
-import com.oracle.graal.debug.internal.*;
-import com.oracle.graal.graph.*;
-import com.oracle.graal.java.*;
-import com.oracle.graal.lir.*;
-import com.oracle.graal.nodes.*;
-import com.oracle.graal.nodes.extended.*;
-import com.oracle.graal.nodes.spi.*;
-import com.oracle.graal.phases.*;
-import com.oracle.graal.phases.OptimisticOptimizations.Optimization;
-import com.oracle.graal.phases.PhasePlan.PhasePosition;
-import com.oracle.graal.phases.common.*;
-import com.oracle.graal.phases.tiers.*;
-import com.oracle.graal.printer.*;
-import com.oracle.graal.replacements.*;
-import com.oracle.graal.virtual.phases.ea.*;
-import com.oracle.max.vm.ext.graal.amd64.*;
-import com.oracle.max.vm.ext.graal.phases.*;
-import com.oracle.max.vm.ext.graal.snippets.*;
-import com.oracle.max.vm.ext.graal.stubs.*;
-import com.oracle.max.vm.ext.maxri.*;
-import com.sun.cri.ci.*;
-import com.sun.max.annotate.*;
-import com.sun.max.config.*;
-import com.sun.max.program.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.deps.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.profile.MethodProfile;
-import com.sun.max.vm.type.*;
 
 public class MaxProfilingInfo implements ProfilingInfo {
 
     private final MethodProfile methodProfile;
     private final MaxResolvedJavaMethod method;
 
+    public static final int DEOPTIMIZATION_REASONS_NUM = DeoptimizationReason.values().length;
+    static {
+        assert MethodProfile.DEOPTIMIZATION_REASONS_NUM <= DEOPTIMIZATION_REASONS_NUM;
+    }
+
     MaxProfilingInfo(MethodProfile methodProfile, MaxResolvedJavaMethod method) {
         this.methodProfile = methodProfile;
         this.method = method;
+    }
+
+    public static int getDeoptimizationReasonId(DeoptimizationReason deoptimizationReason) {
+        return deoptimizationReason.ordinal();
     }
 
     @Override
@@ -141,7 +107,7 @@ public class MaxProfilingInfo implements ProfilingInfo {
     @Override
     public TriState getExceptionSeen(int bci) {
         int exceptionSeenCount = methodProfile.getExceptionSeenCount(bci);
-        if (exceptionSeenCount == -1) {
+        if (exceptionSeenCount == MethodProfile.UNDEFINED_EXECUTION_COUNT) {
             return TriState.UNKNOWN;
         }
         return TriState.get(exceptionSeenCount > 0);
@@ -150,7 +116,7 @@ public class MaxProfilingInfo implements ProfilingInfo {
     @Override
     public TriState getNullSeen(int bci) {
         int nullSeenCount = methodProfile.getNullSeenCount(bci);
-        if (nullSeenCount == -1) {
+        if (nullSeenCount == MethodProfile.UNDEFINED_EXECUTION_COUNT) {
             return TriState.UNKNOWN;
         }
         return TriState.get(nullSeenCount > 0);
@@ -163,7 +129,11 @@ public class MaxProfilingInfo implements ProfilingInfo {
 
     @Override
     public int getDeoptimizationCount(DeoptimizationReason reason) {
-        return 0;
+        int deoptCount = methodProfile.getDeoptimizationCount(getDeoptimizationReasonId(reason));
+        if (deoptCount == MethodProfile.UNDEFINED_EXECUTION_COUNT) {
+            return 0;
+        }
+        return deoptCount;
     }
 
     @Override
