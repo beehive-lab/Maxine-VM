@@ -95,7 +95,10 @@ public class MethodInstrumentation {
     @INLINE
     private static void incrementProfileCounterAtIndex(MethodProfile mpo, int index) {
         int[] data = mpo.rawData();
-        data[index]++;
+        int counter = data[index];
+        if (counter < Integer.MAX_VALUE) {
+            data[index] = counter + 1;
+        }
     }
 
     @INLINE
