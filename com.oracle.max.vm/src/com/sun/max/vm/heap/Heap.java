@@ -47,6 +47,7 @@ import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.run.java.JavaRunScheme;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
@@ -308,47 +309,97 @@ public final class Heap {
         return heapScheme().isGcThread(thread);
     }
 
-    @INLINE
-    public static Object createArray(DynamicHub hub, int length) {
-        final Object array = heapScheme().createArray(hub, length);
+    @NEVER_INLINE
+    private static void doDebugAfterCreateArray(Hub hub, int length, Object array) {
         if (Heap.logAllocation()) {
             allocationLogger.logCreateArray(hub, length, array);
         }
+        if (Heap.profileAllocation()) {
+            JavaRunScheme.getHeapSamplingProfiler().sampleAllocation(array);
+        }
+    }
+
+    @INLINE
+    public static Object createArray(DynamicHub hub, int length) {
+        final Object array = heapScheme().createArray(hub, length);
+        if (MaxineVM.isDebug()) {
+            doDebugAfterCreateArray(hub, length, array);
+        }
         return array;
+    }
+
+    @NEVER_INLINE
+    private static void doDebugAfterCreateTuple(Hub hub, Object object) {
+        if (Heap.logAllocation()) {
+            allocationLogger.logCreateTuple(hub, object);
+        }
+        if (Heap.profileAllocation()) {
+            JavaRunScheme.getHeapSamplingProfiler().sampleAllocation(object);
+        }
     }
 
     @INLINE
     public static Object createTuple(Hub hub) {
         final Object object = heapScheme().createTuple(hub);
-        if (Heap.logAllocation()) {
-            allocationLogger.logCreateTuple(hub, object);
+        if (MaxineVM.isDebug()) {
+            doDebugAfterCreateTuple(hub, object);
         }
         return object;
+    }
+
+    @NEVER_INLINE
+    private static void doDebugAfterCreateHybrid(Hub hub, Object hybrid) {
+        if (Heap.logAllocation()) {
+            allocationLogger.logCreateHybrid(hub, hybrid);
+        }
+        if (Heap.profileAllocation()) {
+            JavaRunScheme.getHeapSamplingProfiler().sampleAllocation(hybrid);
+        }
     }
 
     @INLINE
     public static Object createHybrid(DynamicHub hub) {
         final Object hybrid = heapScheme().createHybrid(hub);
-        if (Heap.logAllocation()) {
-            allocationLogger.logCreateHybrid(hub, hybrid);
+        if (MaxineVM.isDebug()) {
+            doDebugAfterCreateHybrid(hub, hybrid);
         }
         return hybrid;
+    }
+
+    @NEVER_INLINE
+    private static void doDebugAfterExpandHybrid(Hub hub, Object expandedHybrid) {
+        if (Heap.logAllocation()) {
+            allocationLogger.logExpandHybrid(hub, expandedHybrid);
+        }
+        if (Heap.profileAllocation()) {
+            JavaRunScheme.getHeapSamplingProfiler().sampleAllocation(expandedHybrid);
+        }
     }
 
     @INLINE
     public static Hybrid expandHybrid(Hybrid hybrid, int length) {
         final Hybrid expandedHybrid = heapScheme().expandHybrid(hybrid, length);
-        if (Heap.logAllocation()) {
-            allocationLogger.logExpandHybrid(ObjectAccess.readHub(hybrid), expandedHybrid);
+        if (MaxineVM.isDebug()) {
+            doDebugAfterExpandHybrid(ObjectAccess.readHub(hybrid), expandedHybrid);
         }
         return expandedHybrid;
+    }
+
+    @NEVER_INLINE
+    private static void doDebugAfterClone(Hub hub, Object clone) {
+        if (Heap.logAllocation()) {
+            allocationLogger.logClone(hub, clone);
+        }
+        if (Heap.profileAllocation()) {
+            JavaRunScheme.getHeapSamplingProfiler().sampleAllocation(clone);
+        }
     }
 
     @INLINE
     public static Object clone(Object object) {
         final Object clone = heapScheme().clone(object);
-        if (Heap.logAllocation()) {
-            allocationLogger.logClone(ObjectAccess.readHub(object), clone);
+        if (MaxineVM.isDebug()) {
+            doDebugAfterClone(ObjectAccess.readHub(object), clone);
         }
         return clone;
     }
@@ -696,6 +747,20 @@ public final class Heap {
     }
 
     /*
+     * Functions that act as guards for profiling.
+     */
+
+    /**
+     * Determines if object allocation should be profiled.
+     *
+     * @return {@code false} if the VM build level is not {@link BuildLevel#DEBUG}.
+     */
+    @INLINE
+    public static boolean profileAllocation() {
+        return MaxineVM.isDebug() && JavaRunScheme.getHeapSamplingProfiler() != null;
+    }
+
+    /*
      * Functions that act as guards for logging, and add additional conjunctive constraints
      * beyond the setting of the log options.
      */
@@ -871,7 +936,7 @@ public final class Heap {
         }
 
         @NEVER_INLINE
-        void logExpandHybrid(Hub hub, Hybrid expandedHybrid) {
+        void logExpandHybrid(Hub hub, Object expandedHybrid) {
             logExpandHybrid(hub.classActor, Layout.originToCell(ObjectAccess.toOrigin(expandedHybrid)), hub.tupleSize);
         }
 

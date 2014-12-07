@@ -40,6 +40,7 @@ import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.run.java.JavaRunScheme;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.thread.VmThreadLocal.Nature;
@@ -268,7 +269,8 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-        if (Compilation.PrintCompilationAllocationOption.getValue()) {
+        if (Compilation.PrintCompilationAllocationOption.getValue() ||
+            JavaRunScheme.isHeapProfilingOptionPassed()) {
             useAllocationCounter = true;
         }
         if (phase == MaxineVM.Phase.PRISTINE) {
