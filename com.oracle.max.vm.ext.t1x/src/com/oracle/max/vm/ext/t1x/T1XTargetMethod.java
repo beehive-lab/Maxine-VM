@@ -74,8 +74,8 @@ import com.sun.max.vm.type.*;
 public class T1XTargetMethod extends TargetMethod {
 
     static final int SYNC_METHOD_CATCH_TYPE_CPI = -1;
-
     public static final String PROTECTED = "PROTECTED";
+    static final boolean PRINT_WARNING_ON_NOT_PROFILED_EXCEPTION = false;
 
     /**
      * This is the max number of slots used by any template and is computed when the templates are
@@ -864,7 +864,10 @@ public class T1XTargetMethod extends TargetMethod {
                 assert bci >= 0;
                 int mpoIndex = profile.getExceptionSeenProfileDataIndex(bci);
                 if (mpoIndex == MethodProfile.UNDEFINED_INDEX) {
-                    TTY.println("WARNING: Profile index not found to record exception for %s at bci: %d", classMethodActor, bci);
+                    // Exception for this bci is not utilized in Graal so it is not recorded
+                    if (PRINT_WARNING_ON_NOT_PROFILED_EXCEPTION) {
+                        TTY.println("WARNING: Profile index not found to record exception for %s at bci: %d", classMethodActor, bci);
+                    }
                 } else {
                     MethodInstrumentation.recordExceptionSeen(profile, mpoIndex);
                 }

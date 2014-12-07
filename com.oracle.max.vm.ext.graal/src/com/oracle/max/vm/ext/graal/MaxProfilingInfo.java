@@ -140,13 +140,11 @@ public class MaxProfilingInfo implements ProfilingInfo {
 
     @Override
     public TriState getExceptionSeen(int bci) {
-        return TriState.UNKNOWN;
-        // FIXME: turn on when exception instrumentation is implemented.
-        // int exceptionSeenCount = methodProfile.getExceptionSeenCount(bci);
-        // if (exceptionSeenCount == -1) {
-        //     return TriState.UNKNOWN;
-        // }
-        // return TriState.get(exceptionSeenCount > 0);
+        int exceptionSeenCount = methodProfile.getExceptionSeenCount(bci);
+        if (exceptionSeenCount == -1) {
+            return TriState.UNKNOWN;
+        }
+        return TriState.get(exceptionSeenCount > 0);
     }
 
     @Override
