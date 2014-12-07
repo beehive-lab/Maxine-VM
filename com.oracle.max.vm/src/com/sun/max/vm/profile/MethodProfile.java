@@ -56,6 +56,8 @@ public class MethodProfile {
     private static final byte RECVR_METHOD  = 5;
     private static final byte RECVR_COUNT   = 6;
     private static final byte RECVR_NOT_FOUND = 7;
+    private static final byte SWITCH_CASE_COUNT  = 8;
+    private static final byte SWITCH_DEFAULT_COUNT  = 9;
 
     private static final byte BR_TAKEN_INDEX = 0;
     private static final byte BR_NOT_TAKEN_INDEX = 1;
@@ -111,7 +113,7 @@ public class MethodProfile {
      * {@code null} if this profile info does not have such an entry
      */
     public Integer[] getTypeProfile(int bci) {
-        return extractPairs(bci, RECVR_TYPE);
+        return extractOrderedPairs(bci, RECVR_TYPE, RECVR_COUNT, RECVR_NOT_FOUND);
     }
 
     /**
@@ -124,7 +126,7 @@ public class MethodProfile {
      * {@code null} if this profile info does not have such an entry
      */
     public Integer[] getReceiverProfile(int bci) {
-        return extractPairs(bci, RECVR_METHOD);
+        return extractOrderedPairs(bci, RECVR_METHOD, RECVR_COUNT, RECVR_NOT_FOUND);
     }
 
     /**
@@ -153,7 +155,7 @@ public class MethodProfile {
     /**
      * Gets the probability for a branch at the specified index, if it is available.
      * @param bci the bytecode index for which to get the information
-     * @return double value, if it is available ({@code null} otherwise)
+     * @return double value, if it is available ({@code -1} otherwise)
      */
     public double getBranchTakenProbability(int bci) {
         Integer[] branchCounts = getBranchCounts(bci);
@@ -177,6 +179,54 @@ public class MethodProfile {
         } else {
             assert notTakenCount == null;
             return -1;
+        }
+    }
+
+    /**
+     * Gets the switch profile of the specified bytecode index, if it is available.
+     * The data is formatted as an array of integers. The integers represent case
+     * counts, and the last integer represents the default case.
+     *
+     * @param bci the bytecode index for which to get the information
+     * @return an array of switch case counts;
+     * {@code null} if this profile info does not have such an entry
+     */
+    public Integer[] getSwitchProfile(int bci) {
+        return extractSingletons(bci, SWITCH_CASE_COUNT, SWITCH_DEFAULT_COUNT);
+    }
+
+    /**
+     * Gets the probabilities for a switch at the specified index, if it is available.
+     *
+     * @param bci the bytecode index for which to get the information
+     * @return array of double values for cases with default case as the last element,
+     * if it is available ({@code null} otherwise)
+     */
+    public double[] getSwitchProbabilities(int bci) {
+        Integer[] switchProfile = getSwitchProfile(bci);
+        if (switchProfile == null) {
+            return null;
+        }
+
+        int arrayLength = switchProfile.length;
+        assert arrayLength > 0 : "switch must have at least the default case";
+        long switchCount = 0;
+        double[] probabilities = new double[arrayLength];
+
+        for (int i = 0; i < arrayLength; i++) {
+            Integer caseCount = switchProfile[i];
+
+            switchCount += caseCount;
+            probabilities[i] = caseCount;
+        }
+
+        if (switchCount <= 0) {
+            return null;
+        } else {
+            for (int i = 0; i < arrayLength; i++) {
+                probabilities[i] = probabilities[i] / switchCount;
+            }
+            return probabilities;
         }
     }
 
@@ -210,22 +260,38 @@ public class MethodProfile {
         return info;
     }
 
-    private Integer[] extractPairs(int bci, byte type) {
-        int index = search(bci, type);
-        int tinfo = encodeInfo(bci, type);
-        int cinfo = encodeInfo(bci, RECVR_COUNT);
-        int einfo = encodeInfo(bci, RECVR_NOT_FOUND);
+    private Integer[] extractSingletons(int bci, byte entryOrdinary, byte entryEndMarker) {
+        int index = search(bci, entryOrdinary);
+        int oinfo = encodeInfo(bci, entryOrdinary);
+        int einfo = encodeInfo(bci, entryEndMarker);
+        if (index >= 0) {
+            List<Integer> list = new ArrayList<Integer>();
+            for (; index < dataLength(); index += 1) {
+                list.add(dataAt(index));
+                if (infoAt(index) != oinfo) {
+                    assert infoAt(index) == einfo;
+                    break;
+                }
+            }
+            return list.toArray(new Integer[list.size()]);
+        }
+        return null;
+    }
+
+    private Integer[] extractOrderedPairs(int bci, byte firstEntryOrdinary, byte secondEntry, byte firstEntryEndMarker) {
+        int index = search(bci, firstEntryOrdinary);
+        int tinfo = encodeInfo(bci, firstEntryOrdinary);
+        int cinfo = encodeInfo(bci, secondEntry);
+        int einfo = encodeInfo(bci, firstEntryEndMarker);
         if (index >= 0) {
             List<Integer> list = new ArrayList<Integer>();
             for (; index < dataLength() - 1; index += 2) {
-                if (infoAt(index + 1) == cinfo) {
-                    if (infoAt(index) == tinfo) {
-                        list.add(dataAt(index));
-                        list.add(dataAt(index + 1));
-                    } else if (infoAt(index) == einfo) {
-                        list.add(0);
-                        list.add(dataAt(index + 1));
-                    }
+                list.add(dataAt(index));
+                list.add(dataAt(index + 1));
+                assert infoAt(index + 1) == cinfo;
+                if (infoAt(index) != tinfo) {
+                    assert infoAt(index) == einfo;
+                    break;
                 }
             }
             return list.toArray(new Integer[list.size()]);
@@ -320,6 +386,7 @@ public class MethodProfile {
         private List<Integer> dataList = new ArrayList<Integer>();
         private final MethodProfile mpo = new MethodProfile();
         private int lastBci = 0;
+        public static final byte NO_INDEX = -1;
 
         public void addEntryCounter(int initialValue) {
             mpo.entryCount = initialValue;
@@ -367,6 +434,15 @@ public class MethodProfile {
             }
             add(bci, RECVR_NOT_FOUND, 0);
             add(bci, RECVR_COUNT, 0);
+            return index;
+        }
+
+        public int addSwitchProfile(int bci, int numberOfCases) {
+            int index = infoList.size();
+            for (int i = 0; i < numberOfCases; i++) {
+                add(bci, SWITCH_CASE_COUNT, 0);
+            }
+            add(bci, SWITCH_DEFAULT_COUNT, 0);
             return index;
         }
 

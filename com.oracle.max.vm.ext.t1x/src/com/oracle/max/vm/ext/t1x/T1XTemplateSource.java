@@ -87,6 +87,24 @@ public class T1XTemplateSource {
         MethodInstrumentation.recordNonTakenBranch(mpo, mpoIndex);
     }
 
+    /**
+     * Profiles switch case.
+     *
+     * @param caseIndexDelta is passed in the (platform-dependent) register which should live through the call,
+     * so it is returned back (hence the {@code @Slot(-1)} annotation).
+     */
+    @T1X_TEMPLATE(PROFILE_SWITCH_CASE)
+    @Slot(-1)
+    public static int profileSwitchCase(MethodProfile mpo, int switchProfileIndex, int caseIndexDelta) {
+        MethodInstrumentation.recordNonTakenBranch(mpo, switchProfileIndex + caseIndexDelta);
+        return caseIndexDelta;
+    }
+
+    @T1X_TEMPLATE(PROFILE_SWITCH_DEFAULT)
+    public static void profileSwitchDefault(MethodProfile mpo, int switchDefaultIndex) {
+        MethodInstrumentation.recordNonTakenBranch(mpo, switchDefaultIndex);
+    }
+
     @T1X_TEMPLATE(TRACE_METHOD_EXIT)
     public static void traceMethodExit(String msg) {
         Log.println(msg);

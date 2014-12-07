@@ -377,11 +377,37 @@ public class AMD64T1XCompilation extends T1XCompilation {
             asm.cmpl(rax, highMatch);
         }
 
-        // Jump to default target if index is not within the jump table
         startBlock(ts.defaultTarget());
         int pos = buf.position();
-        patchInfo.addJCC(ConditionFlag.above, pos, ts.defaultTarget());
-        asm.jcc(ConditionFlag.above, 0, true);
+        if (methodProfileBuilder == null) {
+            // Jump to default target if index is not within the jump table
+            patchInfo.addJCC(ConditionFlag.above, pos, ts.defaultTarget());
+            asm.jcc(ConditionFlag.above, 0, true);
+        } else {
+            // If condition is false jump to "not taken" code
+            final int placeholderForShortJumpDisp = pos + 2;
+            asm.jcc(ConditionFlag.above.negation(), placeholderForShortJumpDisp, false);
+            assert buf.position() - pos == 2;
+
+            // Start of "default" code
+            int switchProfileIndex = do_ProfileSwitchInit(bci, ts.numberOfCases());
+            do_ProfileSwitchDefault(switchProfileIndex, ts.numberOfCases());
+
+            // Jump to default target if index is not within the jump table
+            int jmpPos = buf.position();
+            patchInfo.addJMP(jmpPos, ts.defaultTarget());
+            asm.jmp(0, true);
+
+            // Start of "cases" code
+            // Patch the jump to "cases" code now that we know where it is going
+            int casesCodePos = buf.position();
+            buf.setPosition(pos);
+            asm.jcc(ConditionFlag.above.negation(), casesCodePos, false);
+            buf.setPosition(casesCodePos);
+            do_ProfileSwitchCase(switchProfileIndex, rax);
+        }
+
+
 
         // Set r15 to address of jump table
         int leaPos = buf.position();
@@ -516,6 +542,9 @@ public class AMD64T1XCompilation extends T1XCompilation {
         super.cleanup();
     }
 
+    /**
+     * Constructs code for a branch without profiling instrumentation.
+     */
     protected void branchOnConditionWithoutProfile(ConditionFlag cc, int targetBCI, int bci) {
         int pos = buf.position();
         if (bci < targetBCI) {
@@ -562,6 +591,9 @@ public class AMD64T1XCompilation extends T1XCompilation {
         }
     }
 
+    /**
+     * Constructs code for a branch with profiling instrumentation where "not taken" code preceeds "taken" code.
+     */
     protected void branchOnConditionWithProfileNotTakenTaken(ConditionFlag cc, int targetBCI, int bci) {
         boolean isForwardBranch = bci < targetBCI;
         boolean isConditionalBranch = cc != null;
@@ -614,6 +646,9 @@ public class AMD64T1XCompilation extends T1XCompilation {
 
     }
 
+    /**
+     * Constructs code for a branch with profiling instrumentation where "taken" code preceeds "not taken" code.
+     */
     protected void branchOnConditionWithProfileTakenNotTaken(ConditionFlag cc, int targetBCI, int bci) {
         boolean isForwardBranch = bci < targetBCI;
         boolean isConditionalBranch = cc != null;
