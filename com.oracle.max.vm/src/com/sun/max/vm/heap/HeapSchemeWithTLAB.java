@@ -32,6 +32,7 @@ import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.compiler.target.Compilation;
 import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.intrinsics.*;
 import com.sun.max.vm.layout.*;
@@ -267,6 +268,9 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
+        if (Compilation.PrintCompilationAllocationOption.getValue()) {
+            useAllocationCounter = true;
+        }
         if (phase == MaxineVM.Phase.PRISTINE) {
             useTLAB = UseTLAB;
             initialTlabSize = tlabSizeOption.getValue();

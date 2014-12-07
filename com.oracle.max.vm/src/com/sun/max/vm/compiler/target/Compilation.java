@@ -54,12 +54,25 @@ public class Compilation {
         VMOptions.addFieldOption("-XX:", "GCOnCompilationOf", Compilation.class, "Perform a GC before every compilation of a method whose fully qualified name contains <value>.");
     }
 
-    public static final VMBooleanOption TIME_COMPILATION = register(new VMBooleanOption("-XX:-TimeCompilation",
-        "Report time spent in compilation.") {
+    public static final VMBooleanOption PrintCompilationSizeOption = register(new VMBooleanOption("-XX:-PrintCompilationSize",
+            "Report size of compiled methods.") {
         @Override
         protected void beforeExit() {
             if (getValue()) {
-                Log.print("Time spent in compilation: ");
+                Log.print("Total size of compiled methods: ");
+                Log.print(compilationSize);
+                Log.println("b");
+            }
+
+        }
+    }, MaxineVM.Phase.STARTING);
+
+    public static final VMBooleanOption PrintCompilationTimeOption = register(new VMBooleanOption("-XX:-PrintCompilationTime",
+            "Report time spent in compilation.") {
+        @Override
+        protected void beforeExit() {
+            if (getValue()) {
+                Log.print("Total time spent in compilation: ");
                 Log.print(compilationTime);
                 Log.println("ms");
             }
@@ -67,8 +80,27 @@ public class Compilation {
         }
     }, MaxineVM.Phase.STARTING);
 
+    public static final VMBooleanOption PrintCompilationAllocationOption = register(new VMBooleanOption("-XX:-PrintCompilationAllocation",
+            "Report memory allocated in compilation.") {
+        @Override
+        protected void beforeExit() {
+            if (getValue()) {
+                Log.print("Total memory allocated in compilation: ");
+                Log.print(compilationAllocation / 1024);
+                Log.println("KB");
+            }
+
+        }
+    }, MaxineVM.Phase.STARTING);
+
     @RESET
     private static long compilationTime;
+
+    @RESET
+    private static long compilationSize;
+
+    @RESET
+    private static long compilationAllocation;
 
     public RuntimeCompiler compiler;
     public final ClassMethodActor classMethodActor;
@@ -187,42 +219,90 @@ public class Compilation {
     }
 
     /**
+     * Compilation metrics: compilation time and memory allocation.
+     */
+    private long startCompilationTime;
+    private long deltaCompilationTime;
+    private long startCompilationAllocation;
+    private long deltaCompilationAllocation;
+
+    /**
+     * Start compilation metrics collection.
+     */
+    private void startCompilationMetricsCollection() {
+        if (PrintCompilationTimeOption.getValue()) {
+            long currentTime = System.currentTimeMillis();
+            if (parent != null) {
+                parent.deltaCompilationTime += currentTime - parent.startCompilationTime;
+            }
+            startCompilationTime = currentTime;
+        }
+        if (PrintCompilationAllocationOption.getValue()) {
+            long currentAllocationCounter = Heap.getAllocationCounterForCurrentThread();
+            if (parent != null) {
+                parent.deltaCompilationAllocation += currentAllocationCounter - parent.startCompilationAllocation;
+            }
+            startCompilationAllocation = currentAllocationCounter;
+        }
+    }
+
+    /**
+     * Stop compilation metrics collection and record the.
+     */
+    private void stopCompilationMetricsCollection() {
+        if (PrintCompilationTimeOption.getValue()) {
+            long currentTime = System.currentTimeMillis();
+            deltaCompilationTime += currentTime - startCompilationTime;
+            compilationTime += deltaCompilationTime;
+            if (parent != null) {
+                parent.startCompilationTime = currentTime;
+            }
+        }
+        if (PrintCompilationAllocationOption.getValue()) {
+            long currentAllocationCounter = Heap.getAllocationCounterForCurrentThread();
+            deltaCompilationAllocation += currentAllocationCounter - startCompilationAllocation;
+            compilationAllocation += deltaCompilationAllocation;
+            if (parent != null) {
+                parent.startCompilationAllocation = currentAllocationCounter;
+            }
+        }
+        if (PrintCompilationSizeOption.getValue()) {
+            compilationSize += result.codeLength();
+        }
+    }
+
+    /**
      * Perform the compilation, notifying the specified observers.
      *
      * @return the target method that is the result of the compilation
      */
     public TargetMethod compile() {
-        RuntimeCompiler compiler = this.compiler;
-
         Throwable error = null;
         String methodString = "";
-        long startCompile = 0;
 
         try {
-
             InspectableCompilationInfo.notifyCompilationEvent(classMethodActor, null);
 
-            methodString = logBeforeCompilation(compiler);
+            logBeforeCompilation();
+
             if (!MaxineVM.isHosted() && StackReferenceMapPreparer.VerifyRefMaps) {
                 StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
             }
 
             gcIfRequested(classMethodActor, methodString);
 
-            if (TIME_COMPILATION.getValue()) {
-                startCompile = System.currentTimeMillis();
-            }
+            startCompilationMetricsCollection();
+
             result = compiler.compile(classMethodActor, isDeopt, true, null);
             if (result == null) {
                 throw new InternalError(classMethodActor.format("Result of compiling of %H.%n(%p) is null"));
             }
+
             InspectableCompilationInfo.notifyCompilationEvent(result.classMethodActor, result);
 
-            if (startCompile != 0) {
-                compilationTime += System.currentTimeMillis() - startCompile;
-            }
+            stopCompilationMetricsCollection();
 
-            logAfterCompilation(compiler, result, methodString);
+            logAfterCompilation();
         } catch (RuntimeException t) {
             error = t;
         } catch (Error t) {
@@ -255,7 +335,7 @@ public class Compilation {
         }
         if (error != null) {
             // an error occurred
-            logCompilationError(error, compiler, methodString);
+            logCompilationError(error);
         } else if (result == null) {
             // the compilation didn't produce a target method
             FatalError.unexpected("target method should not be null");
@@ -288,8 +368,13 @@ public class Compilation {
         }
     }
 
-    private void logCompilationError(Throwable error, RuntimeCompiler compiler, String methodString) {
+    private String getLogMethodString() {
+        return classMethodActor.format("%H.%n(%p)");
+    }
+
+    private void logCompilationError(Throwable error) {
         if (verboseOption.verboseCompilation) {
+            String methodString = getLogMethodString();
             boolean lockDisabledSafepoints = Log.lock();
             Log.printCurrentThread(false);
             Log.print(": ");
@@ -304,10 +389,9 @@ public class Compilation {
         throw (RuntimeException) error;
     }
 
-    private String logBeforeCompilation(RuntimeCompiler compiler) {
-        String methodString = null;
+    private void logBeforeCompilation() {
         if (verboseOption.verboseCompilation) {
-            methodString = classMethodActor.format("%H.%n(%p)");
+            String methodString = getLogMethodString();
             boolean lockDisabledSafepoints = Log.lock();
             Log.printCurrentThread(false);
             Log.print(": ");
@@ -316,11 +400,11 @@ public class Compilation {
             Log.println(methodString);
             Log.unlock(lockDisabledSafepoints);
         }
-        return methodString;
     }
 
-    private void logAfterCompilation(RuntimeCompiler compiler, TargetMethod targetMethod, String methodString) {
+    private void logAfterCompilation() {
         if (verboseOption.verboseCompilation) {
+            String methodString = getLogMethodString();
             boolean lockDisabledSafepoints = Log.lock();
             Log.printCurrentThread(false);
             Log.print(": ");
@@ -328,9 +412,21 @@ public class Compilation {
             Log.print(prevCompilations == Compilations.EMPTY ? ": Compiled " : ": Recompiled ");
             Log.print(methodString);
             Log.print(" @ ");
-            Log.print(targetMethod.codeStart());
+            Log.print(result.codeStart());
+            // code size is printed unconditionally as it does not incur significant overhead.
             Log.print(", size = ");
-            Log.print(targetMethod.codeLength());
+            Log.print(result.codeLength());
+            Log.print("b");
+            if (PrintCompilationTimeOption.getValue()) {
+                Log.print(", time = ");
+                Log.print(deltaCompilationTime);
+                Log.print("ms");
+            }
+            if (PrintCompilationAllocationOption.getValue()) {
+                Log.print(", allocation = ");
+                Log.print(deltaCompilationAllocation / 1024);
+                Log.print("KB");
+            }
             Log.println();
             Log.unlock(lockDisabledSafepoints);
         }
