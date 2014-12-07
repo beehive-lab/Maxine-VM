@@ -535,11 +535,8 @@ public class AMD64T1XCompilation extends T1XCompilation {
             // Compute relative offset
             final int target = bciToPos[targetBCI];
             if (cc == null) {
-                // TODO Switch it on as it does profiling of a backward branch in the case it is taken
-                if (false) {
-                    do_profileBackwardBranch();
-                    do_safepointAtBackwardBranch(bci);
-                }
+                do_profileBackwardBranch();
+                do_safepointAtBackwardBranch(bci);
                 asm.jmp(target, false);
             } else {
                 ConditionFlag ccNeg = cc.negation();
@@ -552,11 +549,8 @@ public class AMD64T1XCompilation extends T1XCompilation {
                 assert buf.position() - jumpNotTakenPos == 2;
 
                 // Start of "taken" code
-                // TODO Switch it on as it does profiling of a backward branch in the case it is taken
-                if (false) {
-                    do_profileBackwardBranch();
-                    do_safepointAtBackwardBranch(bci);
-                }
+                do_profileBackwardBranch();
+                do_safepointAtBackwardBranch(bci);
                 asm.jmp(target, false);
 
                 // Start of "not taken" code
