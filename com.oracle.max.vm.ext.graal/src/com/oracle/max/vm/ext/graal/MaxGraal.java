@@ -89,14 +89,31 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
 
         private ConcurrentMap<ResolvedJavaMethod, StructuredGraph> cache = new ConcurrentHashMap<ResolvedJavaMethod, StructuredGraph>();
 
+        /**
+         * Cache for graphs which were constructed ignoring collected profiling information.
+         */
+        private ConcurrentMap<ResolvedJavaMethod, StructuredGraph> cacheIgnoredProfilingInfo = new ConcurrentHashMap<ResolvedJavaMethod, StructuredGraph>();
+
         @Override
         public StructuredGraph get(ResolvedJavaMethod method) {
-            return cache.get(method);
+            assert method instanceof MaxResolvedJavaMethod;
+            if (((MaxResolvedJavaMethod) method).isProfilingInfoIgnored()) {
+                return cacheIgnoredProfilingInfo.get(method);
+            } else {
+                return cache.get(method);
+            }
         }
 
         @Override
         public void put(StructuredGraph graph, boolean hasMatureProfilingInfo) {
-            cache.put(graph.method(), graph);
+            ResolvedJavaMethod method = graph.method();
+            assert method instanceof MaxResolvedJavaMethod;
+
+            if (((MaxResolvedJavaMethod) method).isProfilingInfoIgnored()) {
+                cacheIgnoredProfilingInfo.put(method, graph);
+            } else {
+                cache.put(method, graph);
+            }
         }
 
         public void remove(ResolvedJavaMethod method) {
