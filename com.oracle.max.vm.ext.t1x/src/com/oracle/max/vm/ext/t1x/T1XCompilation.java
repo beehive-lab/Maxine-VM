@@ -1469,12 +1469,17 @@ public abstract class T1XCompilation {
     /**
      * Emit template for a bytecode operating on a (static or dynamic) field.
      * @param index Index to the field ref constant.
-     * @param template one of getfield, putfield, getstatic, putstatic
+     * @param tags one of GETFIELDS, PUTFIELDS, GETSTATICS, PUTSTATICS
      */
     protected void do_fieldAccess(EnumMap<KindEnum, T1XTemplateTag> tags, int index) {
         FieldRefConstant fieldRefConstant = cp.fieldAt(index);
         KindEnum fieldKind = fieldRefConstant.type(cp).toKind().asEnum;
         T1XTemplateTag tag = tags.get(fieldKind);
+        if (tags == GETFIELDS || tags == PUTFIELDS) {
+            if (methodProfileBuilder != null) {
+                methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+            }
+        }
         if (fieldRefConstant.isResolvableWithoutClassLoading(cp)) {
             try {
                 FieldActor fieldActor = fieldRefConstant.resolve(cp, index);
@@ -1593,7 +1598,7 @@ public abstract class T1XCompilation {
         if (methodProfileBuilder != null) {
             return methodProfileBuilder.addSwitchProfile(bci, numberOfCases);
         }
-        return methodProfileBuilder.UNDEFINED_INDEX;
+        return MethodProfile.UNDEFINED_INDEX;
     }
 
     /**
@@ -1603,7 +1608,7 @@ public abstract class T1XCompilation {
      */
     protected void do_ProfileSwitchDefault(int switchProfileIndex, int numberOfCases) {
         if (methodProfileBuilder != null) {
-            assert switchProfileIndex != methodProfileBuilder.UNDEFINED_INDEX;
+            assert switchProfileIndex != MethodProfile.UNDEFINED_INDEX;
 
             start(PROFILE_SWITCH_DEFAULT);
             assignObject(0, "mpo", methodProfileBuilder.methodProfileObject());
@@ -1620,7 +1625,7 @@ public abstract class T1XCompilation {
      */
     protected void do_ProfileSwitchCase(int switchProfileIndex, CiRegister caseRegister) {
         if (methodProfileBuilder != null) {
-            assert switchProfileIndex != methodProfileBuilder.UNDEFINED_INDEX;
+            assert switchProfileIndex != MethodProfile.UNDEFINED_INDEX;
 
             start(PROFILE_SWITCH_CASE);
             assignObject(0, "mpo", methodProfileBuilder.methodProfileObject());
@@ -1742,10 +1747,12 @@ public abstract class T1XCompilation {
             do_invokespecial(index);
             return;
         }
-
         Kind kind = invokeKind(signature);
         T1XTemplateTag tag = INVOKEVIRTUALS.get(kind.asEnum);
         int receiverStackIndex = receiverStackIndex(signature);
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+        }
         try {
             if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
                 try {
@@ -1796,10 +1803,12 @@ public abstract class T1XCompilation {
             do_invokespecial(index);
             return;
         }
-
         Kind kind = invokeKind(signature);
         T1XTemplateTag tag = INVOKEINTERFACES.get(kind.asEnum);
         int receiverStackIndex = receiverStackIndex(signature);
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+        }
         try {
             if (interfaceMethodRef.isResolvableWithoutClassLoading(cp)) {
                 try {
@@ -1838,6 +1847,9 @@ public abstract class T1XCompilation {
         SignatureDescriptor signature = classMethodRef.signature(cp);
         T1XTemplateTag tag = INVOKESPECIALS.get(kind.asEnum);
         int receiverStackIndex = receiverStackIndex(signature);
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+        }
         try {
             if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
                 VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
@@ -1867,6 +1879,9 @@ public abstract class T1XCompilation {
         ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
         Kind kind = invokeKind(classMethodRef.signature(cp));
         T1XTemplateTag tag = INVOKESTATICS.get(kind.asEnum);
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+        }
         try {
             if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
                 StaticMethodActor staticMethodActor = classMethodRef.resolveStatic(cp, index);
@@ -1950,6 +1965,9 @@ public abstract class T1XCompilation {
 
     protected void do_checkcast(int cpi) {
         ClassConstant classConstant = cp.classAt(cpi);
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+        }
         if (classConstant.isResolvableWithoutClassLoading(cp)) {
             start(methodProfileBuilder == null ? CHECKCAST$resolved : CHECKCAST$instrumented);
             assignObject(0, "classActor", classConstant.resolve(cp, cpi));
@@ -2222,10 +2240,16 @@ public abstract class T1XCompilation {
     }
 
     protected void do_dastore() {
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+        }
         emit(DASTORE);
     }
 
     protected void do_daload() {
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+        }
         emit(DALOAD);
     }
 
@@ -2246,22 +2270,37 @@ public abstract class T1XCompilation {
     }
 
     protected void do_castore() {
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+        }
         emit(CASTORE);
     }
 
     protected void do_caload() {
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+        }
         emit(CALOAD);
     }
 
     protected void do_bastore() {
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+        }
         emit(BASTORE);
     }
 
     protected void do_baload() {
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+        }
         emit(BALOAD);
     }
 
     protected void do_athrow() {
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+        }
         emit(ATHROW);
     }
 
@@ -2270,10 +2309,16 @@ public abstract class T1XCompilation {
     }
 
     protected void do_aastore() {
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+        }
         emit(AASTORE);
     }
 
     protected void do_aaload() {
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+        }
         emit(AALOAD);
     }
 
@@ -2306,10 +2351,16 @@ public abstract class T1XCompilation {
     }
 
     protected void do_faload() {
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+        }
         emit(FALOAD);
     }
 
     protected void do_fastore() {
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+        }
         emit(FASTORE);
     }
 
@@ -2366,6 +2417,9 @@ public abstract class T1XCompilation {
     }
 
     protected void do_iaload() {
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+        }
         emit(IALOAD);
     }
 
@@ -2374,6 +2428,9 @@ public abstract class T1XCompilation {
     }
 
     protected void do_iastore() {
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+        }
         emit(IASTORE);
     }
 
@@ -2430,6 +2487,9 @@ public abstract class T1XCompilation {
     }
 
     protected void do_laload() {
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+        }
         emit(LALOAD);
     }
 
@@ -2438,6 +2498,9 @@ public abstract class T1XCompilation {
     }
 
     protected void do_lastore() {
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+        }
         emit(LASTORE);
     }
 
@@ -2490,10 +2553,16 @@ public abstract class T1XCompilation {
     }
 
     protected void do_saload() {
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+        }
         emit(SALOAD);
     }
 
     protected void do_sastore() {
+        if (methodProfileBuilder != null) {
+            methodProfileBuilder.addExceptionSeenCount(stream.currentBCI());
+        }
         emit(SASTORE);
     }
 }

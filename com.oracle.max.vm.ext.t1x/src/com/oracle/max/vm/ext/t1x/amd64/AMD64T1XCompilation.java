@@ -47,6 +47,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.profile.MethodProfile;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.stack.amd64.*;
@@ -469,7 +470,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
                 asm.jmp(0, true);
             }
         } else {
-            int switchProfileIndex = methodProfileBuilder.UNDEFINED_INDEX;
+            int switchProfileIndex = MethodProfile.UNDEFINED_INDEX;
             int leaPosProf = methodProfileBuilder.UNDEFINED_POS;
             int afterLeaProf = methodProfileBuilder.UNDEFINED_POS;
 

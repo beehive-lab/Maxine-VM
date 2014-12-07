@@ -84,6 +84,11 @@ public class MethodInstrumentation {
     }
 
     @INLINE
+    public static void recordExceptionSeen(MethodProfile mpo, int mpoIndex) {
+        incrementProfileCounterAtIndex(mpo, mpoIndex);
+    }
+
+    @INLINE
     public static void recordBackwardBranch(MethodProfile mpo) {
         mpo.entryBackedgeCount--;
     }

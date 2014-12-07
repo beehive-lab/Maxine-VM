@@ -34,6 +34,7 @@ import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 
 import java.util.*;
 
+import com.oracle.max.criutils.TTY;
 import com.oracle.max.vm.ext.t1x.T1XTemplate.SafepointsBuilder;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
@@ -856,12 +857,31 @@ public class T1XTargetMethod extends TargetMethod {
         }
     }
 
+    private void recordExceptionSeen(StackFrameCursor current) {
+        if (profile != null) {
+            int bci = bciFor(current.vmIP());
+            if (bci <  classMethodActor.codeSize()) {
+                assert bci >= 0;
+                int mpoIndex = profile.getExceptionSeenProfileDataIndex(bci);
+                if (mpoIndex == MethodProfile.UNDEFINED_INDEX) {
+                    TTY.println("WARNING: Profile index not found to record exception for %s at bci: %d", classMethodActor, bci);
+                } else {
+                    MethodInstrumentation.recordExceptionSeen(profile, mpoIndex);
+                }
+            } else {
+                // Do not record exception rethrown in T1X epilogue
+                assert bci == classMethodActor.codeSize();
+            }
+        }
+    }
+
     @Override
     public void catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable) {
         StackFrameWalker sfw = current.stackFrameWalker();
         CodePointer throwAddress = throwAddress(current);
         CodePointer catchAddress = throwAddressToCatchAddress(throwAddress, throwable);
 
+        recordExceptionSeen(current);
         if (!catchAddress.isZero()) {
             if (StackFrameWalker.TraceStackWalk) {
                 Log.print("StackFrameWalk: Handler position for exception at position ");
