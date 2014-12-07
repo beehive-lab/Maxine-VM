@@ -65,11 +65,16 @@ public class Compilations {
      * @param nature the specific type of target method required or {@code null} if any target method is acceptable
      */
     public TargetMethod currentTargetMethod(RuntimeCompiler.Nature nature) {
-        if (nature == Nature.BASELINE) {
-            return baseline.invalidated() != null ? null : baseline;
-        } else if (nature == Nature.OPT) {
-            if (optimized != null && optimized.invalidated() == null) {
-                return optimized;
+        if (nature != null) {
+            TargetMethod tm = null;
+
+            if (nature == Nature.BASELINE) {
+                tm = baseline;
+            } else if (nature == Nature.OPT) {
+                tm = optimized;
+            }
+            if (tm != null && tm.invalidated() == null) {
+                return tm;
             } else {
                 return null;
             }
