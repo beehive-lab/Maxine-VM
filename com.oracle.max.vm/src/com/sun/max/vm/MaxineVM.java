@@ -637,6 +637,9 @@ public final class MaxineVM {
         MaxineVM vm = vm();
         vm.phase = MaxineVM.Phase.PRIMORDIAL;
 
+        // Trace main thread before termination
+        VmThread.traceMainThreadBeforeTermination();
+
         native_exit(code);
     }
 }

@@ -329,6 +329,11 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     }
 
     @Override
+    public boolean isAllocationCounterEnabledForCurrentThread() {
+        return useAllocationCounter;
+    }
+
+    @Override
     public final long getAllocationCounterForCurrentThread() {
         final Pointer etla = ETLA.load(currentTLA());
         Pointer apt = ALLOCATION_COUNTER.load(etla);

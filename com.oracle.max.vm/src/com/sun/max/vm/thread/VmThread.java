@@ -1204,9 +1204,18 @@ public class VmThread {
             Log.print(id);
             Log.print(", name=\"");
             Log.print(name);
-            Log.println("\"]");
+            if (Heap.isAllocationCounterEnabledForCurrentThread()) {
+                Log.print(", allocation=");
+                Log.print(Heap.getAllocationCounterForCurrentThread() / 1024);
+                Log.print("KB");
+            }
+            Log.println("]");
             Log.unlock(lockDisabledSafepoints);
         }
+    }
+
+    public static void traceMainThreadBeforeTermination() {
+        VmThread.mainThread.traceThreadAfterTermination();
     }
 
     /**
