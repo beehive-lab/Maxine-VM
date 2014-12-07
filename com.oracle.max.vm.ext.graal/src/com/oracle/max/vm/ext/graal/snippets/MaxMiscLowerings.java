@@ -246,6 +246,7 @@ public class MaxMiscLowerings extends SnippetLowerings {
     @SNIPPET_SLOWPATH
     private static void deoptimize(FrameState deoptState) {
         ArrayList<TargetMethod> tms = new ArrayList<TargetMethod>(0);
+        assert deoptState != null;
         for (FrameState frame = deoptState; frame != null; frame = frame.outerFrameState()) {
             ClassMethodActor ma = (ClassMethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(frame.method());
             TargetMethod tm = Compilations.currentTargetMethod(ma.compiledState, RuntimeCompiler.Nature.OPT);

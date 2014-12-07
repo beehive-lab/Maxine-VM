@@ -969,6 +969,15 @@ public abstract class T1XCompilation {
      *
      * @param name the expected name of the parameter
      */
+    final void assignIntReg(int n, String name, CiRegister src) {
+        assignWordReg(reg(n, name, Kind.INT), src);
+    }
+
+    /**
+     * Emits code to copy the value in {@code src} to parameter {@code n} of the current template.
+     *
+     * @param name the expected name of the parameter
+     */
     final void assignWordReg(int n, String name, CiRegister src) {
         assignWordReg(reg(n, name, Kind.WORD), src);
     }
@@ -1575,9 +1584,59 @@ public abstract class T1XCompilation {
         safepointsBuilder.addSafepoint(bci, Safepoints.make(pos), null);
     }
 
+    /**
+     * Initializes profiling of switch.
+     *
+     * @return index of element denoting the beginning of switch profile information.
+     */
+    protected int do_ProfileSwitchInit(int bci, int numberOfCases) {
+        if (methodProfileBuilder != null) {
+            return methodProfileBuilder.addSwitchProfile(bci, numberOfCases);
+        }
+        return methodProfileBuilder.NO_INDEX;
+    }
+
+    /**
+     * Profiles switch default.
+     *
+     * @param switchProfileIndex index denoting the beginning of switch profile information.
+     */
+    protected void do_ProfileSwitchDefault(int switchProfileIndex, int numberOfCases) {
+        if (methodProfileBuilder != null) {
+            assert switchProfileIndex != methodProfileBuilder.NO_INDEX;
+
+            start(PROFILE_SWITCH_DEFAULT);
+            assignObject(0, "mpo", methodProfileBuilder.methodProfileObject());
+            assignInt(1, "switchDefaultIndex", switchProfileIndex + numberOfCases);
+            finish();
+        }
+    }
+
+    /**
+     * Profiles switch case.
+     *
+     * @param switchProfileIndex index denoting the beginning of switch profile information.
+     * @param caseRegister register holding case index which should live through the call.
+     */
+    protected void do_ProfileSwitchCase(int switchProfileIndex, CiRegister caseRegister) {
+        if (methodProfileBuilder != null) {
+            assert switchProfileIndex != methodProfileBuilder.NO_INDEX;
+
+            start(PROFILE_SWITCH_CASE);
+            assignObject(0, "mpo", methodProfileBuilder.methodProfileObject());
+            assignInt(1, "switchProfileIndex", switchProfileIndex);
+            assignIntReg(2, "caseIndexDelta", caseRegister);
+            finish();
+            // Returns the input register, so it will be alive after the call,
+            assert caseRegister.compareTo(MaxineVM.vm().registerConfigs.bytecodeTemplate.getReturnRegister(CiKind.Int)) == 0;
+        }
+    }
+
+    /**
+     * Profiles taken branch.
+     */
     protected void do_profileTakenBranch(int bci, int targetBCI) {
         if (methodProfileBuilder != null) {
-            // Profiling of taken branches.
             int mpoIndex = methodProfileBuilder.addBranchTakenCounters(bci);
             start(PROFILE_TAKEN_BRANCH);
             assignObject(0, "mpo", methodProfileBuilder.methodProfileObject());
@@ -1590,9 +1649,11 @@ public abstract class T1XCompilation {
         }
     }
 
+    /**
+     * Profiles not taken branch.
+     */
     protected void do_profileNotTakenBranch(int bci) {
         if (methodProfileBuilder != null) {
-            // Profiling of not taken branches.
             int mpoIndex = methodProfileBuilder.addBranchNotTakenCounters(bci);
             start(PROFILE_NOT_TAKEN_BRANCH);
             assignObject(0, "mpo", methodProfileBuilder.methodProfileObject());
