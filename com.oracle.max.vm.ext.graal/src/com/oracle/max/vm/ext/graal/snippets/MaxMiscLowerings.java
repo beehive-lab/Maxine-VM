@@ -164,6 +164,7 @@ public class MaxMiscLowerings extends SnippetLowerings {
                 ProgramError.check(node.getDeoptimizationState() != null, "Deoptimization state is null");
                 // In the normal case, there is no state to pass other than (this) methodActor to be deoptimized.
                 args = createAndAddConst(snippetInfo, "deoptState", node.getDeoptimizationState());
+                args.addConst("deoptReason", node.getDeoptimizationReason());
             }
             instantiate(node, args, tool);
         }
@@ -244,8 +245,9 @@ public class MaxMiscLowerings extends SnippetLowerings {
      * Called to explicitly deoptimize the given method.
      */
     @SNIPPET_SLOWPATH
-    private static void deoptimize(FrameState deoptState) {
+    private static void deoptimize(FrameState deoptState, DeoptimizationReason deoptReason) {
         ArrayList<TargetMethod> tms = new ArrayList<TargetMethod>(0);
+        int deoptReasonId = MaxProfilingInfo.getDeoptimizationReasonId(deoptReason);
         assert deoptState != null;
         for (FrameState frame = deoptState; frame != null; frame = frame.outerFrameState()) {
             ClassMethodActor ma = (ClassMethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(frame.method());
@@ -258,13 +260,13 @@ public class MaxMiscLowerings extends SnippetLowerings {
                 }
             }
         }
-        new Deoptimization(tms).go();
+        new Deoptimization(tms, deoptReasonId).go();
         // on return it will all happen!
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void deoptimizeSnippet(@ConstantParameter FrameState deoptState) {
-        deoptimize(deoptState);
+    private static void deoptimizeSnippet(@ConstantParameter FrameState deoptState, @ConstantParameter DeoptimizationReason deoptReason) {
+        deoptimize(deoptState, deoptReason);
         throw UnreachableNode.unreachable();
     }
 

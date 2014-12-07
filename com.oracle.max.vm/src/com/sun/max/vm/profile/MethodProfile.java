@@ -65,14 +65,17 @@ public class MethodProfile {
     private static final byte SWITCH_DEFAULT_COUNT               = 9;
     private static final byte EXCEPTION_SEEN_COUNT               = 10;
 
-    private static final byte BR_TAKEN_INDEX = 0;
-    private static final byte BR_NOT_TAKEN_INDEX = 1;
+    private static final byte BR_TAKEN_INDEX                     = 0;
+    private static final byte BR_NOT_TAKEN_INDEX                 = 1;
 
-    public static final int UNDEFINED_TYPE_ID = ClassIDManager.NULL_CLASS_ID;
-    public static final int UNDEFINED_METHOD_ID = -1;
+    public static final int DEOPTIMIZATION_REASONS_NUM           = 14;
+    public static final int UNDEFINED_DEOPTIMIZATION_REASON_ID   = -1;
 
-    public static final int UNDEFINED_EXECUTION_COUNT = -1;
-    public static final byte UNDEFINED_INDEX = -1;
+    public static final int UNDEFINED_TYPE_ID                    = ClassIDManager.NULL_CLASS_ID;
+    public static final int UNDEFINED_METHOD_ID                  = -1;
+
+    public static final int UNDEFINED_EXECUTION_COUNT            = -1;
+    public static final int UNDEFINED_INDEX                      = -1;
 
     /**
      * The method that contains the instrumentation to increase counters in this profile.
@@ -97,6 +100,11 @@ public class MethodProfile {
     private int[] info;
 
     /**
+     * Records deoptimization count for different deoptimization reasons.
+     */
+    private int[] deoptimizationCounts;
+
+    /**
      * When {@code true} re-compilation is disabled.
      * This is used by JVMTI to prevent methods with JVMTI instrumentation from
      * being recompiled with the optimizing compiler (and so removing the instrumentation).
@@ -104,6 +112,21 @@ public class MethodProfile {
     public boolean compilationDisabled;
 
     protected MethodProfile() {
+    }
+
+    /**
+     * Increments deoptimization profiling counter for a gived deoptimization reason.
+     * @param deoptReasonId deoptimization reason identificator
+     */
+    public void incrementDeoptimizationCount(int deoptReasonId) {
+        if (deoptReasonId == UNDEFINED_DEOPTIMIZATION_REASON_ID) {
+            return;
+        }
+        int counter = deoptimizationCounts[deoptReasonId];
+        if (counter != Integer.MAX_VALUE) {
+            counter++;
+        }
+        deoptimizationCounts[deoptReasonId] = counter;
     }
 
     /**
@@ -179,6 +202,16 @@ public class MethodProfile {
 
         // Undefined execution count
         return UNDEFINED_EXECUTION_COUNT;
+    }
+
+    /**
+     * Returns deoptimization counter for a given deoptimization reason identifier.
+     */
+    public int getDeoptimizationCount(int deoptReasonId) {
+        if (deoptimizationCounts == null) {
+            return UNDEFINED_EXECUTION_COUNT;
+        }
+        return deoptimizationCounts[deoptReasonId];
     }
 
     /**
@@ -632,6 +665,7 @@ public class MethodProfile {
                 mpo.info = info;
                 mpo.data = data;
             }
+            mpo.deoptimizationCounts = new int [DEOPTIMIZATION_REASONS_NUM];
             return mpo;
         }
 
