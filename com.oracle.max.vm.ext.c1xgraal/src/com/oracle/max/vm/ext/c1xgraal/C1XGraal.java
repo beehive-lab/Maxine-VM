@@ -68,6 +68,12 @@ public class C1XGraal implements RuntimeCompiler {
         }
     }
 
+    @Override
+    public void deoptimize(ClassMethodActor classMethodActor) {
+        c1x.deoptimize(classMethodActor);
+        graal.deoptimize(classMethodActor);
+    }
+
     private static final String C1XGraal_C1X = "C1XGraal_C1X";
     private static final String C1XGraal_Graal = "C1XGraal_Graal";
 

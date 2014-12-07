@@ -350,6 +350,26 @@ public class CompilationBroker {
     }
 
     /**
+     * Perform deoptimization actions.
+     * <ol>
+     *   <li>Reset entry counter of the unoptimized method.</li>
+     *   <li>Remove compilations.</li>
+     * </ol>
+     * @param cma
+     */
+    public void deoptimize(ClassMethodActor cma) {
+        TargetMethod tm = Compilations.currentTargetMethod(cma.compiledState, Nature.BASELINE);
+        if (tm != null) {
+            assert tm.invalidated() == null && tm.isBaseline();
+            if ( tm.profile() != null && tm.profile().entryCount <= 0) {
+                tm.profile().entryCount = MethodInstrumentation.initialEntryCount;
+            }
+        }
+        baselineCompiler.deoptimize(cma);
+        optimizingCompiler.deoptimize(cma);
+    }
+
+    /**
      * Deopt compilation, if necessary.
      * The method is only recompiled if the current target method has been invalidated, which is the normal deopt case.
      * However, a VMTI handler may already have compiled the method before the deoptimzation step happened.
@@ -357,8 +377,9 @@ public class CompilationBroker {
      * @param force always compile iff {@code true}.
      */
     public TargetMethod compileForDeopt(ClassMethodActor cma) {
-        TargetMethod tm = cma.currentTargetMethod();
-        if (tm != null && tm.isBaseline() && tm.invalidated() == null) {
+        TargetMethod tm = Compilations.currentTargetMethod(cma.compiledState, Nature.BASELINE);
+        if (tm != null) {
+            assert tm.invalidated() == null && tm.isBaseline();
             return tm;
         }
         return compile(cma, Nature.BASELINE, true);
@@ -874,6 +895,8 @@ public class CompilationBroker {
         }
 
         public void initialize(Phase phase) {
+        }
+        public void deoptimize(ClassMethodActor classMethodActor) {
         }
         public TargetMethod compile(ClassMethodActor classMethodActor, boolean isDeopt, boolean install, CiStatistics stats) {
             return null;

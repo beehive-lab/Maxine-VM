@@ -194,6 +194,10 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         }
     }
 
+    @Override
+    public void deoptimize(ClassMethodActor classMethodActor) {
+    }
+
     private static class WordTypeRewriterObserver implements CompilationObserver {
         @Override
         public void compilationEvent(CompilationEvent event) {

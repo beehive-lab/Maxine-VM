@@ -365,6 +365,11 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         }
     }
 
+
+    @Override
+    public void deoptimize(ClassMethodActor classMethodActor) {
+    }
+
     @HOSTED_ONLY
     protected RuntimeCompiler createBootCompiler() {
         // Create a boot compiler to compile the templates
