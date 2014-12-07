@@ -59,7 +59,7 @@ public class ValueMap {
             return RegisterMap.toCi(((RegisterValue) value).getRegister()).asValue();
         } else if (value instanceof StackSlot) {
             StackSlot stackSlot = (StackSlot) value;
-            int offset = stackSlot.getOffset(totalFrameSize);
+            int offset = stackSlot.isInCallerFrame() ? stackSlot.getRawOffset() : stackSlot.getOffset(totalFrameSize);
             assert offset % Word.size() == 0;
             return CiStackSlot.get(KindMap.toCiKind(stackSlot.getKind()), offset / Word.size(), stackSlot.isInCallerFrame());
         } else if (value.getKind() == Kind.Illegal) {

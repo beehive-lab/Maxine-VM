@@ -77,8 +77,8 @@ public final class CiStackSlot extends CiValue {
 
     /**
      * Gets the index of this stack slot. If this is a spill slot or outgoing stack argument to a call,
-     * then the index is relative to the current frame pointer. Otherwise this is an incoming stack
-     * argument and the index is relative to the caller frame pointer.
+     * then the return value is relative to the stack pointer. Otherwise this is an incoming stack
+     * argument and the return value is relative to the frame pointer.
      *
      * @return the index of this slot
      * @see #inCallerFrame()
