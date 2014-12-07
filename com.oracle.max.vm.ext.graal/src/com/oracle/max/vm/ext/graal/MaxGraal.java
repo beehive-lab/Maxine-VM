@@ -154,9 +154,10 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
     private List<com.oracle.graal.phases.Phase> afterParsingBootPhases;
 
     /**
-     * To propagate to multiple compiler threads.
+     * To propagate to multiple compiler threads in boot image generation.
      */
-    private DebugConfig debugConfig;
+    @HOSTED_ONLY
+    private DebugConfig hostedDebugConfig;
 
     /**
      * Gets the {@link MaxRuntime} associated with the compiler that is currently active in the current thread.
@@ -262,7 +263,6 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
                 defaultSuites = createDefaultSuites();
             }
             DebugEnvironment.initialize(System.out);
-            debugConfig = DebugScope.getConfig();
         }
     }
 
@@ -308,7 +308,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         State state = setMaxGraal();
          // This sets up the debug environment for the boot image build
         DebugEnvironment.initialize(Trace.stream());
-        debugConfig = DebugScope.getConfig();
+        hostedDebugConfig = DebugScope.getConfig();
         MaxTargetDescription td = new MaxTargetDescription();
         runtime = new MaxRuntime(td);
         backend = new MaxAMD64Backend(runtime, td);
@@ -460,8 +460,13 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
             if (MaxineVM.isHosted() && state.bootCompile || !MaxineVM.isHosted()) {
                 // need to propagate the Debug configuration if this is a new compiler thread
                 DebugConfig threadDebugConfig = DebugScope.getConfig();
+
                 if (threadDebugConfig == null) {
-                    DebugScope.getInstance().setConfig(debugConfig);
+                    if (!MaxineVM.isHosted()) {
+                        DebugEnvironment.initialize(Trace.stream());
+                    } else {
+                        DebugScope.getInstance().setConfig(hostedDebugConfig);
+                    }
                 }
             }
             if (methodActor.compilee().isNative()) {
