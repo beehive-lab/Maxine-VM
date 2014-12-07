@@ -154,12 +154,6 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
     private List<com.oracle.graal.phases.Phase> afterParsingBootPhases;
 
     /**
-     * To propagate to multiple compiler threads in boot image generation.
-     */
-    @HOSTED_ONLY
-    private DebugConfig hostedDebugConfig;
-
-    /**
      * Gets the {@link MaxRuntime} associated with the compiler that is currently active in the current thread.
      * @return
      */
@@ -308,7 +302,6 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         State state = setMaxGraal();
          // This sets up the debug environment for the boot image build
         DebugEnvironment.initialize(Trace.stream());
-        hostedDebugConfig = DebugScope.getConfig();
         MaxTargetDescription td = new MaxTargetDescription();
         runtime = new MaxRuntime(td);
         backend = new MaxAMD64Backend(runtime, td);
@@ -463,9 +456,9 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
 
                 if (threadDebugConfig == null) {
                     if (!MaxineVM.isHosted()) {
-                        DebugEnvironment.initialize(Trace.stream());
+                        DebugEnvironment.initialize(System.out);
                     } else {
-                        DebugScope.getInstance().setConfig(hostedDebugConfig);
+                        DebugEnvironment.initialize(Trace.stream());
                     }
                 }
             }
