@@ -634,7 +634,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
             if (invalidated() != null) {
                 assert current.sp().readWord(DEOPT_RETURN_ADDRESS_OFFSET).equals(current.ipAsPointer()) : "real caller IP should have been saved in rescue slot";
                 Pointer returnAddress = callee.targetMethod().returnAddressPointer(callee).readWord(0).asPointer();
-                assert Stub.isDeoptStubEntry(returnAddress, Code.codePointerToTargetMethod(returnAddress)) :
+                assert Stub.isDeoptStubEntry(returnAddress, Code.codePointerToTargetMethod(returnAddress), callee) :
                     "the return address of a method that was on the stack when marked for deoptimization should have been patched with a deopt stub";
 
                 Stub voidDeoptStub = vm().stubs.deoptStub(CiKind.Void, callee.targetMethod().is(CompilerStub));

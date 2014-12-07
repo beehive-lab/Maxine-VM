@@ -44,6 +44,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
+import com.sun.max.vm.compiler.target.amd64.AMD64TargetMethodUtil;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.object.*;
@@ -462,27 +463,11 @@ public class Deoptimization extends VmOperation {
             TargetMethod tm = current.targetMethod();
             TargetMethod calleeTM = callee.targetMethod();
             boolean deopt = methods.contains(tm);
-            if (deopt && calleeTM.is(TrapStub)) {
-                // Patches the return address in the trap frame to trigger deoptimization
-                // of the top frame when the trap stub returns.
-                Stub stub = vm().stubs.deoptStubForSafepointPoll();
-                CodePointer to = stub.codeStart();
-                Pointer save = current.sp().plus(DEOPT_RETURN_ADDRESS_OFFSET);
-                Pointer patch = tm.returnAddressPointer(callee);
-                CodePointer from = CodePointer.from(patch.readWord(0));
-                assert !to.equals(from);
-                if (deoptLogger.enabled()) {
-                    deoptLogger.logPatchReturnAddress(tm, "TRAP STUB", stub, to, save, patch, from);
-                }
-                patch.writeWord(0, to.toAddress());
-                save.writeWord(0, from.toAddress());
-            } else {
-                if (calleeTM != null && calleeTM.classMethodActor != null) {
-                    lastCalleeMethod = calleeTM.classMethodActor;
-                }
-                if (deopt) {
-                    patchReturnAddress(current, callee, lastCalleeMethod);
-                }
+            if (calleeTM != null && calleeTM.classMethodActor != null) {
+                lastCalleeMethod = calleeTM.classMethodActor;
+            }
+            if (deopt) {
+                patchReturnAddress(current, callee, lastCalleeMethod);
             }
             return true;
         }
@@ -628,9 +613,30 @@ public class Deoptimization extends VmOperation {
      *            in the case where {@code callee} is an adapter frame
      */
     static void patchReturnAddress(StackFrameCursor caller, StackFrameCursor callee, ClassMethodActor calleeMethod) {
-        assert calleeMethod != null;
         TargetMethod tm = caller.targetMethod();
-        Stub stub = vm().stubs.deoptStub(calleeMethod.descriptor().returnKind(true), callee.targetMethod().is(CompilerStub));
+        Stub.Type stubType = callee.targetMethod().stubType();
+        Stub stub;
+
+        if (stubType == null) {
+            assert calleeMethod != null;
+            stub = vm().stubs.deoptStub(calleeMethod.descriptor().returnKind(true), false);
+        } else {
+            switch (stubType) {
+                case CompilerStub: {
+                    stub = vm().stubs.deoptStub(calleeMethod.descriptor().returnKind(true), true);
+                    break;
+                }
+                case TrapStub: {
+                    stub = vm().stubs.deoptStubForSafepointPoll();
+                    break;
+                }
+                default: {
+                    assert calleeMethod != null;
+                    stub = vm().stubs.deoptStub(calleeMethod.descriptor().returnKind(true), false);
+                }
+            }
+
+        }
         CodePointer to = stub.codeStart();
         Pointer save = caller.sp().plus(DEOPT_RETURN_ADDRESS_OFFSET);
         Pointer patch = callee.targetMethod().returnAddressPointer(callee);
@@ -638,6 +644,14 @@ public class Deoptimization extends VmOperation {
         assert !to.equals(from);
         if (deoptLogger.enabled()) {
             deoptLogger.logPatchReturnAddress(tm, callee.targetMethod(), stub, to, save, patch, from);
+        }
+        // Adjust return address taking into account return address substitution in static trampoline.
+        if (stubType == StaticTrampoline) {
+            if (platform().isa == ISA.AMD64) {
+                to = to.plus(AMD64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
+            } else {
+                throw FatalError.unimplemented();
+            }
         }
         patch.writeWord(0, to.toAddress());
         save.writeWord(0, from.toAddress());

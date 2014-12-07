@@ -126,8 +126,15 @@ public final class Stub extends TargetMethod {
      * @param ip a code address
      * @param tm the target method {@linkplain Code#codePointerToTargetMethod(Pointer) found} in the code cache based on {@code ip}
      */
-    public static boolean isDeoptStubEntry(Pointer ip, TargetMethod tm) {
+    public static boolean isDeoptStubEntry(Pointer ip, TargetMethod tm, StackFrameCursor calee) {
         if (tm != null && (tm.is(DeoptStub) || tm.is(DeoptStubFromCompilerStub) || tm.is(DeoptStubFromSafepoint))) {
+            if (calee.targetMethod() != null && calee.targetMethod().is(StaticTrampoline)) {
+                if (platform().isa == ISA.AMD64) {
+                    // Take into account return address adjustment in static trampoline
+                    return ip.asPointer().equals(tm.codeStart().plus(AMD64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE));
+                }
+                throw FatalError.unimplemented();
+            }
             return ip.asPointer().equals(tm.codeStart());
         } else {
             return false;
