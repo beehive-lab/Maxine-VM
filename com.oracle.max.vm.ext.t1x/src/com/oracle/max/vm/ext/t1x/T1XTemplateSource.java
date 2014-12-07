@@ -77,6 +77,16 @@ public class T1XTemplateSource {
         MethodInstrumentation.recordBackwardBranch(mpo);
     }
 
+    @T1X_TEMPLATE(PROFILE_TAKEN_BRANCH)
+    public static void profileTakenBranch(MethodProfile mpo, int mpoIndex) {
+        MethodInstrumentation.recordTakenBranch(mpo, mpoIndex);
+    }
+
+    @T1X_TEMPLATE(PROFILE_NOT_TAKEN_BRANCH)
+    public static void profileNotTakenBranch(MethodProfile mpo, int mpoIndex) {
+        MethodInstrumentation.recordNonTakenBranch(mpo, mpoIndex);
+    }
+
     @T1X_TEMPLATE(TRACE_METHOD_EXIT)
     public static void traceMethodExit(String msg) {
         Log.println(msg);

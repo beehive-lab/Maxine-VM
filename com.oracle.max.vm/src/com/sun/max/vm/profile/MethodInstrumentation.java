@@ -82,6 +82,22 @@ public class MethodInstrumentation {
         mpo.entryCount--;
     }
 
+    @NEVER_INLINE
+    public static void recordTakenBranch(MethodProfile mpo, int mpoIndex) {
+        incrementProfileCounterAtIndex(mpo, mpoIndex);
+    }
+
+    @NEVER_INLINE
+    public static void recordNonTakenBranch(MethodProfile mpo, int mpoIndex) {
+        incrementProfileCounterAtIndex(mpo, mpoIndex);
+    }
+
+    @INLINE
+    private static void incrementProfileCounterAtIndex(MethodProfile mpo, int index) {
+        int[] data = mpo.rawData();
+        data[index]++;
+    }
+
     @INLINE
     private static void findAndIncrement(MethodProfile mpo, int index, int entries, int id) {
         int[] data = mpo.rawData();

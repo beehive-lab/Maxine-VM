@@ -516,6 +516,67 @@ public class AMD64T1XCompilation extends T1XCompilation {
         super.cleanup();
     }
 
+    protected void branchOnConditionWithoutProfile(ConditionFlag cc, int targetBCI, int bci) {
+        int pos = buf.position();
+        if (bci < targetBCI) {
+            // Forward branch
+            if (cc != null) {
+                patchInfo.addJCC(cc, pos, targetBCI);
+                asm.jcc(cc, 0, true);
+            } else {
+                // Unconditional jump
+                patchInfo.addJMP(pos, targetBCI);
+                asm.jmp(0, true);
+            }
+            assert bciToPos[targetBCI] == 0;
+        } else {
+            // Backward branch
+
+            // Compute relative offset.
+            final int target = bciToPos[targetBCI];
+            if (cc == null) {
+                asm.jmp(target, false);
+            } else {
+                asm.jcc(cc, target, false);
+            }
+        }
+    }
+
+    protected void branchOnConditionWithProfile(ConditionFlag cc, int targetBCI, int bci) {
+        boolean isForwardBranch = bci < targetBCI;
+        boolean isConditionalBranch = cc != null;
+        ConditionFlag ccNeg = isConditionalBranch ? cc.negation() : null;
+        final int relativeOffset = isForwardBranch ? 0 : bciToPos[targetBCI];
+        int jumpNotTakenPos = buf.position();
+
+        if (isConditionalBranch) {
+            // If condition is false jump to "not taken" code
+            final int placeholderForShortJumpDisp = jumpNotTakenPos + 2;
+            asm.jcc(ccNeg, placeholderForShortJumpDisp, false);
+            assert buf.position() - jumpNotTakenPos == 2;
+        }
+
+        // Start of "taken" code
+        do_profileTakenBranch(bci, targetBCI);
+        if (isForwardBranch) {
+            int pos = buf.position();
+            patchInfo.addJMP(pos, targetBCI);
+        }
+        asm.jmp(relativeOffset, true);
+        assert !isForwardBranch || bciToPos[targetBCI] == 0;
+
+
+        if (isConditionalBranch) {
+            // Start of "not taken" code
+            // Patch the jump to "not taken" code now that we know where's it's going
+            int notTakenCodePos = buf.position();
+            buf.setPosition(jumpNotTakenPos);
+            asm.jcc(ccNeg, notTakenCodePos, false);
+            buf.setPosition(notTakenCodePos);
+            do_profileNotTakenBranch(bci);
+        }
+    }
+
     @Override
     protected void branch(int opcode, int targetBCI, int bci) {
         ConditionFlag cc;
@@ -642,29 +703,10 @@ public class AMD64T1XCompilation extends T1XCompilation {
                 throw new InternalError("Unknown branch opcode: " + Bytecodes.nameOf(opcode));
 
         }
-
-        int pos = buf.position();
-        if (bci < targetBCI) {
-            // Forward branch
-            if (cc != null) {
-                patchInfo.addJCC(cc, pos, targetBCI);
-                asm.jcc(cc, 0, true);
-            } else {
-                // Unconditional jump
-                patchInfo.addJMP(pos, targetBCI);
-                asm.jmp(0, true);
-            }
-            assert bciToPos[targetBCI] == 0;
+        if (methodProfileBuilder != null) {
+            branchOnConditionWithProfile(cc, targetBCI, bci);
         } else {
-            // Backward branch
-
-            // Compute relative offset.
-            final int target = bciToPos[targetBCI];
-            if (cc == null) {
-                asm.jmp(target, false);
-            } else {
-                asm.jcc(cc, target, false);
-            }
+            branchOnConditionWithoutProfile(cc, targetBCI, bci);
         }
     }
 

@@ -70,14 +70,12 @@ public class MethodProfile {
     public int entryCount;
 
     /**
-     * Records actual counts of a count entry
-     * TODO since we don't emit actual profiling yet, this is unused.
+     * Records actual counts of a count entry.
      */
     private int[] data;
 
     /**
      * Records bci and type for each count entry.
-     * TODO since we don't emit actual profiling yet, this is unused.
      */
     private int[] info;
 
@@ -297,9 +295,19 @@ public class MethodProfile {
             return add(0, BC_LOCATION, initialValue);
         }
 
+        public int addBranchTakenCounters(int bci) {
+            return addGotoCounter(bci);
+        }
+
+        public int addBranchNotTakenCounters(int bci) {
+            return add(bci, BR_NOT_TAKEN, 0);
+        }
+
         public int addBranchCounters(int bci) {
-            add(bci, BR_TAKEN, 0);
-            return add(bci, BR_NOT_TAKEN, 0) - 1;
+            int index = infoList.size();
+            addBranchTakenCounters(bci);
+            addBranchNotTakenCounters(bci);
+            return index;
         }
 
         public int addTypeProfile(int bci, int entries) {
