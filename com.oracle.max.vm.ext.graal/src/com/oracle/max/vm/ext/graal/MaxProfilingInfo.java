@@ -91,7 +91,7 @@ public class MaxProfilingInfo implements ProfilingInfo {
         if (typeProfile == null) {
             return null;
         }
-        TriState nullSeen = TriState.get(methodProfile.getNullSeen(bci) > 0);
+        TriState nullSeen = TriState.get(methodProfile.getNullSeenCount(bci) > 0);
         int typesNum = typeProfile.length / 2;
         boolean isAnonymousTypeRecorded = false;
         double anonymousRecordedTypeProbability = 0;
@@ -141,16 +141,21 @@ public class MaxProfilingInfo implements ProfilingInfo {
     @Override
     public TriState getExceptionSeen(int bci) {
         return TriState.UNKNOWN;
+        // FIXME: turn on when exception instrumentation is implemented.
+        // int exceptionSeenCount = methodProfile.getExceptionSeenCount(bci);
+        // if (exceptionSeenCount == -1) {
+        //     return TriState.UNKNOWN;
+        // }
+        // return TriState.get(exceptionSeenCount > 0);
     }
 
     @Override
     public TriState getNullSeen(int bci) {
-        int profiledTypesNum = methodProfile.getProfiledTypesNum(bci);
-        if (profiledTypesNum == 0) {
+        int nullSeenCount = methodProfile.getNullSeenCount(bci);
+        if (nullSeenCount == -1) {
             return TriState.UNKNOWN;
         }
-        int nullSeen = methodProfile.getNullSeen(bci);
-        return TriState.get(nullSeen > 0);
+        return TriState.get(nullSeenCount > 0);
     }
 
     @Override

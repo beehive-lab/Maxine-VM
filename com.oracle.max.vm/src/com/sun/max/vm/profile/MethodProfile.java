@@ -49,26 +49,30 @@ import com.sun.max.vm.compiler.target.*;
  */
 public class MethodProfile {
 
-    private static final byte METHOD_ENTRY_COUNT              = 0;
-    private static final byte BC_LOCATION                     = 1;
-    private static final byte BR_TAKEN_COUNT                  = 2;
-    private static final byte BR_NOT_TAKEN_COUNT              = 3;
-    private static final byte TYPE_ID                         = 4;
-    private static final byte METHOD_ID                       = 5;
-    private static final byte TYPE_METHOD_COUNT               = 6;
-    private static final byte TYPE_COUNT                      = TYPE_METHOD_COUNT;
-    private static final byte METHOD_COUNT                    = TYPE_METHOD_COUNT;
-    private static final byte TYPE_METHOD_NULL_EXCEPTION_SEEN = 7;
-    private static final byte TYPE_NULL_SEEN                  = TYPE_METHOD_NULL_EXCEPTION_SEEN;
-    private static final byte METHOD_EXCEPTION_SEEN           = TYPE_METHOD_NULL_EXCEPTION_SEEN;
-    private static final byte SWITCH_CASE_COUNT               = 8;
-    private static final byte SWITCH_DEFAULT_COUNT            = 9;
+    private static final byte METHOD_ENTRY_COUNT                 = 0;
+    private static final byte BC_LOCATION                        = 1;
+    private static final byte BR_TAKEN_COUNT                     = 2;
+    private static final byte BR_NOT_TAKEN_COUNT                 = 3;
+    private static final byte TYPE_ID                            = 4;
+    private static final byte METHOD_ID                          = 5;
+    private static final byte TYPE_METHOD_COUNT                  = 6;
+    private static final byte TYPE_COUNT                         = TYPE_METHOD_COUNT;
+    private static final byte METHOD_COUNT                       = TYPE_METHOD_COUNT;
+    private static final byte TYPE_NULL_SEEN_METHOD_UNUSED_COUNT = 7;
+    private static final byte TYPE_NULL_SEEN_COUNT               = TYPE_NULL_SEEN_METHOD_UNUSED_COUNT;
+    private static final byte METHOD_UNUSED_COUNT                = TYPE_NULL_SEEN_METHOD_UNUSED_COUNT;
+    private static final byte SWITCH_CASE_COUNT                  = 8;
+    private static final byte SWITCH_DEFAULT_COUNT               = 9;
+    private static final byte EXCEPTION_SEEN_COUNT               = 10;
 
     private static final byte BR_TAKEN_INDEX = 0;
     private static final byte BR_NOT_TAKEN_INDEX = 1;
 
     public static final int UNDEFINED_TYPE_ID = ClassIDManager.NULL_CLASS_ID;
     public static final int UNDEFINED_METHOD_ID = -1;
+
+    public static final int UNDEFINED_EXECUTION_COUNT = -1;
+    public static final byte UNDEFINED_INDEX = -1;
 
     /**
      * The method that contains the instrumentation to increase counters in this profile.
@@ -127,7 +131,7 @@ public class MethodProfile {
                 totalCount += notTakenCount;
             }
             if (totalCount == 0) {
-                return -1;
+                return UNDEFINED_EXECUTION_COUNT;
             }
             if (totalCount > Integer.MAX_VALUE) {
                 totalCount = Integer.MAX_VALUE;
@@ -136,7 +140,7 @@ public class MethodProfile {
         }
 
         // Calculate types execution count
-        Integer[] orderedPairs = extractOrderedPairs(bci, TYPE_ID, TYPE_COUNT, TYPE_NULL_SEEN);
+        Integer[] orderedPairs = extractOrderedPairs(bci, TYPE_ID, TYPE_COUNT, TYPE_NULL_SEEN_COUNT);
         if (orderedPairs != null) {
             int pairs = orderedPairs.length / 2;
             long totalCount = 0;
@@ -147,7 +151,7 @@ public class MethodProfile {
             }
             totalCount += orderedPairs[(pairs - 1) * 2 + 1];
             if (totalCount == 0) {
-                return -1;
+                return UNDEFINED_EXECUTION_COUNT;
             }
             if (totalCount > Integer.MAX_VALUE) {
                 totalCount = Integer.MAX_VALUE;
@@ -165,7 +169,7 @@ public class MethodProfile {
                 totalCount += switchProfile[i];
             }
             if (totalCount == 0) {
-                return -1;
+                return UNDEFINED_EXECUTION_COUNT;
             }
             if (totalCount > Integer.MAX_VALUE) {
                 totalCount = Integer.MAX_VALUE;
@@ -174,15 +178,36 @@ public class MethodProfile {
         }
 
         // Undefined execution count
-        return -1;
+        return UNDEFINED_EXECUTION_COUNT;
+    }
+
+    /**
+     * Returns an index of exception seen counter for a given bci.
+     */
+    public int getExceptionSeenProfileDataIndex(int bci) {
+        return search(bci, EXCEPTION_SEEN_COUNT);
+    }
+
+    /**
+     * Returns number of times exception was seen for a given bci.
+     */
+    public int getExceptionSeenCount(int bci) {
+        Integer exceptionSeenCount = get(search(bci, EXCEPTION_SEEN_COUNT));
+        if (exceptionSeenCount != null) {
+            return exceptionSeenCount;
+        }
+        return UNDEFINED_EXECUTION_COUNT;
     }
 
     /**
      * Returns number of times null reference was seen for a given bci.
      */
-    public int getNullSeen(int bci) {
-        Integer[] orderedPairs = extractOrderedPairs(bci, TYPE_ID, TYPE_COUNT, TYPE_NULL_SEEN);
-        return orderedPairs[orderedPairs.length - 2];
+    public int getNullSeenCount(int bci) {
+        Integer nullSeenCount = get(search(bci, TYPE_NULL_SEEN_COUNT));
+        if (nullSeenCount != null) {
+            return nullSeenCount;
+        }
+        return UNDEFINED_EXECUTION_COUNT;
     }
 
     /**
@@ -207,7 +232,7 @@ public class MethodProfile {
      * Returns number of profiled types including anonymous type for a given bci.
      */
     public int getProfiledTypesNum(int bci) {
-        Integer[] orderedPairs = extractOrderedPairs(bci, TYPE_ID, TYPE_COUNT, TYPE_NULL_SEEN);
+        Integer[] orderedPairs = extractOrderedPairs(bci, TYPE_ID, TYPE_COUNT, TYPE_NULL_SEEN_COUNT);
         if (orderedPairs == null) {
             return 0;
         }
@@ -225,7 +250,7 @@ public class MethodProfile {
      * {@code null} if this profile info does not have such an entry
      */
     public Integer[] getTypeProfile(int bci) {
-        Integer[] orderedPairs = extractOrderedPairs(bci, TYPE_ID, TYPE_COUNT, TYPE_NULL_SEEN);
+        Integer[] orderedPairs = extractOrderedPairs(bci, TYPE_ID, TYPE_COUNT, TYPE_NULL_SEEN_COUNT);
         if (orderedPairs == null) {
             return null;
         }
@@ -259,8 +284,8 @@ public class MethodProfile {
      * @return an array of entrypoint / count pairs;
      * {@code null} if this profile info does not have such an entry
      */
-    public Integer[] getReceiverProfile(int bci) {
-        return extractOrderedPairs(bci, METHOD_ID, METHOD_COUNT, METHOD_EXCEPTION_SEEN);
+    public Integer[] getMethodProfile(int bci) {
+        return extractOrderedPairs(bci, METHOD_ID, METHOD_COUNT, METHOD_UNUSED_COUNT);
     }
 
     /**
@@ -294,7 +319,7 @@ public class MethodProfile {
     public double getBranchTakenProbability(int bci) {
         Integer[] branchCounts = getBranchCounts(bci);
         if (branchCounts == null) {
-            return -1;
+            return UNDEFINED_EXECUTION_COUNT;
         }
         Integer takenCount = branchCounts[MethodProfile.BR_TAKEN_INDEX];
         Integer notTakenCount = branchCounts[MethodProfile.BR_NOT_TAKEN_INDEX];
@@ -305,14 +330,14 @@ public class MethodProfile {
                 // Calculating branch probability.
                 Long totalCount = (long) takenCount + (long) notTakenCount;
                 assert notTakenCount >= 0;
-                return totalCount <= 0 ? -1 : takenCount / totalCount.doubleValue();
+                return totalCount <= 0 ? UNDEFINED_EXECUTION_COUNT : takenCount / totalCount.doubleValue();
             } else {
                 // Calculating jump probability.
                 return takenCount != 0 ? 1 : 0;
             }
         } else {
             assert notTakenCount == null;
-            return -1;
+            return UNDEFINED_EXECUTION_COUNT;
         }
     }
 
@@ -422,9 +447,10 @@ public class MethodProfile {
                 list.add(dataAt(index));
                 list.add(dataAt(index + 1));
                 assert infoAt(index + 1) == cinfo;
-                if (infoAt(index) != tinfo) {
-                    assert infoAt(index) == einfo;
+                if (infoAt(index) == einfo) {
                     break;
+                } else {
+                    assert infoAt(index) == tinfo;
                 }
             }
             return list.toArray(new Integer[list.size()]);
@@ -451,7 +477,7 @@ public class MethodProfile {
                 index++;
             }
         }
-        return -1;
+        return UNDEFINED_EXECUTION_COUNT;
     }
 
     private int search(int bci) {
@@ -519,7 +545,6 @@ public class MethodProfile {
         private List<Integer> dataList = new ArrayList<Integer>();
         private final MethodProfile mpo = new MethodProfile();
         private int lastBci = 0;
-        public static final byte UNDEFINED_INDEX = -1;
         public static final byte UNDEFINED_POS = -1;
 
         public void addEntryBackedgeCounter(int initialValue) {
@@ -542,7 +567,11 @@ public class MethodProfile {
             return add(bci, BR_NOT_TAKEN_COUNT, 0);
         }
 
-        public int addBranchCounters(int bci) {
+        public int addExceptionSeenCount(int bci) {
+            return add(bci, EXCEPTION_SEEN_COUNT, 0);
+        }
+
+        public int addBranchProfile(int bci) {
             int index = infoList.size();
             addBranchTakenCounters(bci);
             addBranchNotTakenCounters(bci);
@@ -555,7 +584,7 @@ public class MethodProfile {
                 add(bci, TYPE_ID, MethodProfile.UNDEFINED_TYPE_ID);
                 add(bci, TYPE_COUNT, 0);
             }
-            add(bci, TYPE_NULL_SEEN, 0);
+            add(bci, TYPE_NULL_SEEN_COUNT, 0);
             add(bci, TYPE_COUNT, 0);
             return index;
         }
@@ -566,7 +595,7 @@ public class MethodProfile {
                 add(bci, METHOD_ID, MethodProfile.UNDEFINED_METHOD_ID);
                 add(bci, METHOD_COUNT, 0);
             }
-            add(bci, METHOD_EXCEPTION_SEEN, 0);
+            add(bci, METHOD_UNUSED_COUNT, 0);
             add(bci, METHOD_COUNT, 0);
             return index;
         }
