@@ -269,17 +269,14 @@ public final class DebugInfo {
     private static void initRefMap(byte[] data, int index, int refmapIndex, CiDebugInfo debugInfo, int frameRefMapSize, int regRefMapSize) {
         if (debugInfo != null) {
             // copy the stack map
-            int frameRefMapBytes;
             if (debugInfo.hasStackRefMap()) {
-                frameRefMapBytes = debugInfo.frameRefMap.copyTo(data, refmapIndex, -1);
+                debugInfo.frameRefMap.copyTo(data, refmapIndex, -1);
                 assert new CiBitMap(data, refmapIndex, frameRefMapSize).equals(debugInfo.frameRefMap);
-            } else {
-                frameRefMapBytes = 0;
             }
             // copy the register map
             if (debugInfo.hasRegisterRefMap()) {
-                debugInfo.registerRefMap.copyTo(data, refmapIndex + frameRefMapBytes, regRefMapSize);
-                assert new CiBitMap(data, refmapIndex + frameRefMapBytes, regRefMapSize).equals(debugInfo.registerRefMap);
+                debugInfo.registerRefMap.copyTo(data, refmapIndex + frameRefMapSize, regRefMapSize);
+                assert new CiBitMap(data, refmapIndex + frameRefMapSize, regRefMapSize).equals(debugInfo.registerRefMap);
             }
         }
     }

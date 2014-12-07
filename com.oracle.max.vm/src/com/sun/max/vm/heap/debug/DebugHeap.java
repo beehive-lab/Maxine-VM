@@ -330,11 +330,11 @@ public class DebugHeap {
             if (ref.isZero()) {
                 return;
             }
-            if (isTagging()) {
-                checkNonNullRefTag(ref);
-            }
             if (CodePointer.isCodePointer(ref)) {
                 return;
+            }
+            if (isTagging()) {
+                checkNonNullRefTag(ref);
             }
             final Pointer origin = ref.toOrigin();
             if (Heap.bootHeapRegion.contains(origin) || Code.contains(origin) || ImmortalHeap.contains(origin)) {
