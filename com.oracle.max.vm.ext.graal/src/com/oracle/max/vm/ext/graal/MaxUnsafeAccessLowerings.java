@@ -33,6 +33,12 @@ import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.actor.member.VirtualMethodActor;
+import com.sun.max.vm.layout.Layout;
+
+import static com.sun.max.vm.layout.Layout.*;
 
 public class MaxUnsafeAccessLowerings {
 
@@ -41,6 +47,10 @@ public class MaxUnsafeAccessLowerings {
         lowerings.put(UnsafeLoadNode.class, unsafeLoadLowering);
         UnsafeStoreLowering unsafeStoreLowering = new UnsafeStoreLowering();
         lowerings.put(UnsafeStoreNode.class, unsafeStoreLowering);
+        LoadHubNodeLowering loadHubNodeLowering = new LoadHubNodeLowering();
+        lowerings.put(LoadHubNode.class, loadHubNodeLowering);
+        LoadMethodNodeLowering loadMethodNodeLowering = new LoadMethodNodeLowering();
+        lowerings.put(LoadMethodNode.class, loadMethodNodeLowering);
 
         lowerings.put(MaxCompareAndSwapNode.class, new MaxCompareAndSwapLowering());
     }
@@ -76,6 +86,46 @@ public class MaxUnsafeAccessLowerings {
             WriteNode write = graph.add(new WriteNode(object, value, location, BarrierType.NONE, false));
             write.setStateAfter(stateAfter);
             graph.replaceFixedWithFixed(node, write);
+        }
+
+    }
+
+    private static class LoadHubNodeLowering implements LoweringProvider<LoadHubNode> {
+
+        @Override
+        public void lower(LoadHubNode node, LoweringTool tool) {
+            StructuredGraph graph = node.graph();
+            long hubOffset = generalLayout().getOffsetFromOrigin(Layout.HeaderField.HUB).toLong();
+            lower(graph, node, Kind.Object, node.object(), node.getGuard(), hubOffset);
+        }
+
+        void lower(StructuredGraph graph, LoadHubNode node, Kind kind, ValueNode object, GuardingNode guard, long offset) {
+            assert !object.isConstant() || object.asConstant().isNull();
+            LocationNode location = ConstantLocationNode.create(LocationIdentity.FINAL_LOCATION, kind, offset, graph);
+            FloatingReadNode floatingReadNode = graph.add(new FloatingReadNode(object, location, null, StampFactory.forKind(kind), guard, BarrierType.NONE, false));
+            graph.replaceFloating(node, floatingReadNode);
+        }
+
+    }
+
+    private static class LoadMethodNodeLowering implements LoweringProvider<LoadMethodNode> {
+
+        @Override
+        public void lower(LoadMethodNode node, LoweringTool tool) {
+            StructuredGraph graph = node.graph();
+            ResolvedJavaMethod method = node.getMethod();
+            ClassMethodActor methodActor = (ClassMethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(method);
+            assert methodActor instanceof VirtualMethodActor;
+            VirtualMethodActor virtualMethodActor = (VirtualMethodActor) methodActor;
+            final int vTableIndex = virtualMethodActor.vTableIndex();
+            final long vTableEntryOffset = vTableIndex * Word.size() + byteArrayLayout().getElementOffsetFromOrigin(0).toInt();
+            lower(graph, node, Kind.Object, node.getHub(), vTableEntryOffset);
+        }
+
+        void lower(StructuredGraph graph, LoadMethodNode node, Kind kind, ValueNode hub, long vTableEntryOffset) {
+            LocationNode location = ConstantLocationNode.create(LocationIdentity.ANY_LOCATION, kind, vTableEntryOffset, graph);
+            ReadNode readNode = graph.add(new ReadNode(hub, location, StampFactory.forKind(kind), BarrierType.NONE, false));
+            graph.replaceFixed(node, readNode);
         }
 
     }

@@ -29,6 +29,7 @@ import java.util.concurrent.*;
 
 import com.oracle.graal.api.meta.*;
 import com.oracle.graal.phases.GraalOptions;
+import com.sun.cri.ci.CiConstant;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
@@ -469,16 +470,17 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
 
     @Override
     public Constant getEncoding() {
-        // TODO Auto-generated method stub
-        MaxGraal.unimplemented("getEncoding");
-        return null;
+        CiConstant encoding = ((MethodActor) riResolvedMethod()).getEncoding();
+        return ConstantMap.toGraal(encoding);
     }
 
     @Override
     public boolean isInVirtualMethodTable() {
-        // TODO Auto-generated method stub
-        MaxGraal.unimplemented("isInVirtualMethodTable");
-        return false;
+        ClassMethodActor methodActor = (ClassMethodActor) riResolvedMethod();
+        assert methodActor instanceof VirtualMethodActor;
+        VirtualMethodActor virtualMethodActor = (VirtualMethodActor) methodActor;
+        final int vtableIndex = virtualMethodActor.vTableIndex();
+        return vtableIndex >= 0;
     }
 
     @Override

@@ -26,6 +26,7 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.actor.holder.ClassIDManager;
 import com.sun.max.vm.compiler.target.*;
 
 /**
@@ -48,19 +49,26 @@ import com.sun.max.vm.compiler.target.*;
  */
 public class MethodProfile {
 
-    private static final byte METHOD_ENTRY  = 0;
-    private static final byte BC_LOCATION   = 1;
-    private static final byte BR_TAKEN      = 2;
-    private static final byte BR_NOT_TAKEN  = 3;
-    private static final byte RECVR_TYPE    = 4;
-    private static final byte RECVR_METHOD  = 5;
-    private static final byte RECVR_COUNT   = 6;
-    private static final byte RECVR_NOT_FOUND = 7;
-    private static final byte SWITCH_CASE_COUNT  = 8;
-    private static final byte SWITCH_DEFAULT_COUNT  = 9;
+    private static final byte METHOD_ENTRY_COUNT              = 0;
+    private static final byte BC_LOCATION                     = 1;
+    private static final byte BR_TAKEN_COUNT                  = 2;
+    private static final byte BR_NOT_TAKEN_COUNT              = 3;
+    private static final byte TYPE_ID                         = 4;
+    private static final byte METHOD_ID                       = 5;
+    private static final byte TYPE_METHOD_COUNT               = 6;
+    private static final byte TYPE_COUNT                      = TYPE_METHOD_COUNT;
+    private static final byte METHOD_COUNT                    = TYPE_METHOD_COUNT;
+    private static final byte TYPE_METHOD_NULL_EXCEPTION_SEEN = 7;
+    private static final byte TYPE_NULL_SEEN                  = TYPE_METHOD_NULL_EXCEPTION_SEEN;
+    private static final byte METHOD_EXCEPTION_SEEN           = TYPE_METHOD_NULL_EXCEPTION_SEEN;
+    private static final byte SWITCH_CASE_COUNT               = 8;
+    private static final byte SWITCH_DEFAULT_COUNT            = 9;
 
     private static final byte BR_TAKEN_INDEX = 0;
     private static final byte BR_NOT_TAKEN_INDEX = 1;
+
+    public static final int UNDEFINED_TYPE_ID = ClassIDManager.NULL_CLASS_ID;
+    public static final int UNDEFINED_METHOD_ID = -1;
 
     /**
      * The method that contains the instrumentation to increase counters in this profile.
@@ -72,7 +80,7 @@ public class MethodProfile {
      * This is a separate counter since even methods without heavy profiling need a simple
      * invocation counter to trigger recompilation.
      */
-    public int entryCount;
+    public int entryBackedgeCount;
 
     /**
      * Records actual counts of a count entry.
@@ -100,20 +108,146 @@ public class MethodProfile {
      * {@code null} if this profile info does not have such an entry
      */
     public Integer getEntryCount() {
-        return get(search(0, METHOD_ENTRY));
+        return get(search(0, METHOD_ENTRY_COUNT));
+    }
+
+    /**
+     * Returns execution count for a given bci.
+     */
+    public int getExecutionCount(int bci) {
+
+        // Calculate branch execution count
+        Integer[] branchCounts = getBranchCounts(bci);
+        if (branchCounts != null) {
+            long totalCount = 0;
+            Integer takenCount = branchCounts[MethodProfile.BR_TAKEN_INDEX];
+            Integer notTakenCount = branchCounts[MethodProfile.BR_NOT_TAKEN_INDEX];
+            totalCount += takenCount;
+            if (notTakenCount != null) {
+                totalCount += notTakenCount;
+            }
+            if (totalCount == 0) {
+                return -1;
+            }
+            if (totalCount > Integer.MAX_VALUE) {
+                totalCount = Integer.MAX_VALUE;
+            }
+            return (int) totalCount;
+        }
+
+        // Calculate types execution count
+        Integer[] orderedPairs = extractOrderedPairs(bci, TYPE_ID, TYPE_COUNT, TYPE_NULL_SEEN);
+        if (orderedPairs != null) {
+            int pairs = orderedPairs.length / 2;
+            long totalCount = 0;
+            for (int i = 0; i < pairs - 1; i++) {
+                if (orderedPairs[i * 2] != UNDEFINED_TYPE_ID) {
+                    totalCount += orderedPairs[i * 2 + 1];
+                }
+            }
+            totalCount += orderedPairs[(pairs - 1) * 2 + 1];
+            if (totalCount == 0) {
+                return -1;
+            }
+            if (totalCount > Integer.MAX_VALUE) {
+                totalCount = Integer.MAX_VALUE;
+            }
+            return (int) totalCount;
+        }
+
+        // Calculate switch execution count
+        Integer[] switchProfile = getSwitchProfile(bci);
+        if (switchProfile != null) {
+            int arrayLength = switchProfile.length;
+            long totalCount = 0;
+
+            for (int i = 0; i < arrayLength; i++) {
+                totalCount += switchProfile[i];
+            }
+            if (totalCount == 0) {
+                return -1;
+            }
+            if (totalCount > Integer.MAX_VALUE) {
+                totalCount = Integer.MAX_VALUE;
+            }
+            return (int) totalCount;
+        }
+
+        // Undefined execution count
+        return -1;
+    }
+
+    /**
+     * Returns number of times null reference was seen for a given bci.
+     */
+    public int getNullSeen(int bci) {
+        Integer[] orderedPairs = extractOrderedPairs(bci, TYPE_ID, TYPE_COUNT, TYPE_NULL_SEEN);
+        return orderedPairs[orderedPairs.length - 2];
+    }
+
+    /**
+     * Returns number of profiled types including anonymous type in type profile ordered pairs.
+     */
+    private int getProfiledTypesNum(Integer[] orderedPairs) {
+        int pairs = orderedPairs.length / 2;
+        int resSize = 0;
+        for (int i = 0; i < pairs - 1; i++) {
+            if (orderedPairs[i * 2] != UNDEFINED_TYPE_ID) {
+                resSize++;
+            }
+        }
+        if (orderedPairs[(pairs - 1) * 2 + 1] > 0) {
+            resSize++;
+        }
+
+        return resSize;
+    }
+
+    /**
+     * Returns number of profiled types including anonymous type for a given bci.
+     */
+    public int getProfiledTypesNum(int bci) {
+        Integer[] orderedPairs = extractOrderedPairs(bci, TYPE_ID, TYPE_COUNT, TYPE_NULL_SEEN);
+        if (orderedPairs == null) {
+            return 0;
+        }
+        return getProfiledTypesNum(orderedPairs);
     }
 
     /**
      * Gets the type profile of the specified bytecode index, if it is available.
      * The data is formatted as an array of integers, in pairs. The first integer in
      * a pair represents the ID of a type, and the second integer represents the number
-     * of times that type was seen.
+     * of times that type was seen. The pair with id == {@link #UNDEFINED_TYPE_ID} represents integral
+     * profile anonymous information for the rest of profiled types.
      * @param bci the bytecode index for which to get the information
      * @return an array of type id / count pairs;
      * {@code null} if this profile info does not have such an entry
      */
     public Integer[] getTypeProfile(int bci) {
-        return extractOrderedPairs(bci, RECVR_TYPE, RECVR_COUNT, RECVR_NOT_FOUND);
+        Integer[] orderedPairs = extractOrderedPairs(bci, TYPE_ID, TYPE_COUNT, TYPE_NULL_SEEN);
+        if (orderedPairs == null) {
+            return null;
+        }
+        int pairs = orderedPairs.length / 2;
+        int resSize = getProfiledTypesNum(orderedPairs);
+        if (resSize == 0) {
+            return null;
+        }
+        Integer[] typeProfile = new Integer[resSize * 2];
+        int j = 0;
+        for (int i = 0; i < pairs - 1; i++) {
+            if (orderedPairs[i * 2] != UNDEFINED_TYPE_ID) {
+                typeProfile[j * 2] = orderedPairs[i * 2];
+                typeProfile[j * 2 + 1] = orderedPairs[i * 2 + 1];
+                j++;
+            }
+        }
+        if (orderedPairs[(pairs - 1) * 2 + 1] > 0) {
+            typeProfile[j * 2] = UNDEFINED_TYPE_ID;
+            typeProfile[j * 2 + 1] = orderedPairs[(pairs - 1) * 2 + 1];
+        }
+        return typeProfile;
     }
 
     /**
@@ -126,7 +260,7 @@ public class MethodProfile {
      * {@code null} if this profile info does not have such an entry
      */
     public Integer[] getReceiverProfile(int bci) {
-        return extractOrderedPairs(bci, RECVR_METHOD, RECVR_COUNT, RECVR_NOT_FOUND);
+        return extractOrderedPairs(bci, METHOD_ID, METHOD_COUNT, METHOD_EXCEPTION_SEEN);
     }
 
     /**
@@ -139,8 +273,8 @@ public class MethodProfile {
      * is no information for this branch
      */
     public Integer[] getBranchCounts(int bci) {
-        Integer taken = get(search(bci, BR_TAKEN));
-        Integer notTaken = get(search(bci, BR_NOT_TAKEN));
+        Integer taken = get(search(bci, BR_TAKEN_COUNT));
+        Integer notTaken = get(search(bci, BR_NOT_TAKEN_COUNT));
         if (taken != null || notTaken != null) {
             Integer[] branchCounts = new Integer[2];
 
@@ -169,7 +303,7 @@ public class MethodProfile {
             assert takenCount >= 0;
             if (notTakenCount != null) {
                 // Calculating branch probability.
-                Integer totalCount = takenCount + notTakenCount;
+                Long totalCount = (long) takenCount + (long) notTakenCount;
                 assert notTakenCount >= 0;
                 return totalCount <= 0 ? -1 : takenCount / totalCount.doubleValue();
             } else {
@@ -209,7 +343,6 @@ public class MethodProfile {
         }
 
         int arrayLength = switchProfile.length;
-        assert arrayLength > 0 : "switch must have at least the default case";
         long switchCount = 0;
         double[] probabilities = new double[arrayLength];
 
@@ -220,7 +353,7 @@ public class MethodProfile {
             probabilities[i] = caseCount;
         }
 
-        if (switchCount <= 0) {
+        if (switchCount == 0) {
             return null;
         } else {
             for (int i = 0; i < arrayLength; i++) {
@@ -373,7 +506,7 @@ public class MethodProfile {
     }
 
     public boolean protectedEntryCount() {
-        return entryCount <= MethodInstrumentation.protectionThreshold;
+        return entryBackedgeCount <= MethodInstrumentation.protectionThreshold;
     }
 
     /**
@@ -386,15 +519,15 @@ public class MethodProfile {
         private List<Integer> dataList = new ArrayList<Integer>();
         private final MethodProfile mpo = new MethodProfile();
         private int lastBci = 0;
-        public static final byte NO_INDEX = -1;
+        public static final byte UNDEFINED_INDEX = -1;
         public static final byte UNDEFINED_POS = -1;
 
-        public void addEntryCounter(int initialValue) {
-            mpo.entryCount = initialValue;
+        public void addEntryBackedgeCounter(int initialValue) {
+            mpo.entryBackedgeCount = initialValue;
         }
 
         public int addGotoCounter(int bci) {
-            return add(bci, BR_TAKEN, 0);
+            return add(bci, BR_TAKEN_COUNT, 0);
         }
 
         public int addLocationCounter(int initialValue) {
@@ -406,7 +539,7 @@ public class MethodProfile {
         }
 
         public int addBranchNotTakenCounters(int bci) {
-            return add(bci, BR_NOT_TAKEN, 0);
+            return add(bci, BR_NOT_TAKEN_COUNT, 0);
         }
 
         public int addBranchCounters(int bci) {
@@ -419,22 +552,22 @@ public class MethodProfile {
         public int addTypeProfile(int bci, int entries) {
             int index = infoList.size();
             for (int i = 0; i < entries; i++) {
-                add(bci, RECVR_TYPE, 0);
-                add(bci, RECVR_COUNT, 0);
+                add(bci, TYPE_ID, MethodProfile.UNDEFINED_TYPE_ID);
+                add(bci, TYPE_COUNT, 0);
             }
-            add(bci, RECVR_NOT_FOUND, 0);
-            add(bci, RECVR_COUNT, 0);
+            add(bci, TYPE_NULL_SEEN, 0);
+            add(bci, TYPE_COUNT, 0);
             return index;
         }
 
         public int addMethodProfile(int bci, int entries) {
             int index = infoList.size();
             for (int i = 0; i < entries; i++) {
-                add(bci, RECVR_METHOD, 0);
-                add(bci, RECVR_COUNT, 0);
+                add(bci, METHOD_ID, MethodProfile.UNDEFINED_METHOD_ID);
+                add(bci, METHOD_COUNT, 0);
             }
-            add(bci, RECVR_NOT_FOUND, 0);
-            add(bci, RECVR_COUNT, 0);
+            add(bci, METHOD_EXCEPTION_SEEN, 0);
+            add(bci, METHOD_COUNT, 0);
             return index;
         }
 

@@ -23,34 +23,34 @@
 package com.sun.max.vm.profile;
 
 import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.object.ArrayAccess;
+import com.sun.max.vm.object.ObjectAccess;
 
 /**
  * This class contains several utility methods for dealing with method instrumentation.
  */
 public class MethodInstrumentation {
 
-    public static int initialEntryCount = 5000;
+    public static int initialEntryBackedgeCount = 5000;
     public static final int DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES = 3;
 
     /**
      * Methods whose invocation count (entry count) is within 90 % of the recompilation threshold
-     * (see {@link #initialEntryCount}), are protected from {@linkplain CodeEviction code eviction}.
+     * (see {@link #initialEntryBackedgeCount}), are protected from {@linkplain CodeEviction code eviction}.
      */
     public static final double PROTECTION_PERCENTAGE = 0.9;
 
-    public static int protectionThreshold = (int) (1 - PROTECTION_PERCENTAGE) * initialEntryCount;
+    public static int protectionThreshold = (int) (1 - PROTECTION_PERCENTAGE) * initialEntryBackedgeCount;
 
     private static boolean enabled;
 
     public static void enable(int initialEntryCount) {
         enabled = true;
-        MethodInstrumentation.initialEntryCount = initialEntryCount;
+        MethodInstrumentation.initialEntryBackedgeCount = initialEntryCount;
         MethodInstrumentation.protectionThreshold = (int) (1 - PROTECTION_PERCENTAGE) * initialEntryCount;
     }
 
@@ -62,25 +62,30 @@ public class MethodInstrumentation {
     }
 
     @NEVER_INLINE
-    public static void recordType(MethodProfile mpo, Hub hub, int mpoIndex, int entries) {
-        findAndIncrement(mpo, mpoIndex, entries, hub.classActor.id);
+    public static void recordType(MethodProfile mpo, Object object, int mpoIndex, int entries) {
+        if (object != null) {
+            Hub hub = ObjectAccess.readHub(object);
+            findAndIncrement(mpo, mpoIndex, entries, hub.classActor.id, MethodProfile.UNDEFINED_TYPE_ID);
+        } else {
+            incrementProfileCounterAtIndex(mpo, mpoIndex + entries * 2);
+        }
     }
 
     @NEVER_INLINE
-    public static void recordReceiver(MethodProfile mpo, Word entrypoint, int mpoIndex, int entries) {
-        findAndIncrement(mpo, mpoIndex, entries, entrypoint.asOffset().toInt());
+    public static void recordReceiver(MethodProfile mpo, int methodId, int mpoIndex, int entries) {
+        findAndIncrement(mpo, mpoIndex, entries, methodId, MethodProfile.UNDEFINED_METHOD_ID);
     }
 
     @INLINE
     public static void recordEntrypoint(MethodProfile mpo, Object receiver) {
-        if (--mpo.entryCount <= 0) {
+        if (--mpo.entryBackedgeCount <= 0) {
             CompilationBroker.instrumentationCounterOverflow(mpo, receiver);
         }
     }
 
     @INLINE
     public static void recordBackwardBranch(MethodProfile mpo) {
-        mpo.entryCount--;
+        mpo.entryBackedgeCount--;
     }
 
     @INLINE
@@ -104,47 +109,53 @@ public class MethodInstrumentation {
     }
 
     @INLINE
-    private static void findAndIncrement(MethodProfile mpo, int index, int entries, int id) {
+    private static void findAndIncrement(MethodProfile mpo, int index, int entries, int id, int emptyDataId) {
         int[] data = mpo.rawData();
         int max = index + entries * 2;
         for (int i = index; i < max; i += 2) {
-            if (data[i] == id) {
+            if (ArrayAccess.getInt(data, i) == id) {
                 // this entry matches
-                data[i + 1]++;
+                incrementProfileCounterAtIndex(mpo, i + 1);
                 return;
-            } else if (data[i] == 0) {
+            } else if (ArrayAccess.getInt(data, i) == emptyDataId) {
                 // this entry is empty
-                data[i] = id;
-                data[i + 1] = 1;
+                ArrayAccess.setInt(data, i, id);
+                ArrayAccess.setInt(data, i + 1, 1);
                 return;
             }
         }
         // failed to find matching entry, increment default
-        data[index + entries * 2 + 1]++;
+        incrementProfileCounterAtIndex(mpo, index + entries * 2 + 1);
     }
 
     public static Hub computeMostFrequentHub(MethodProfile mpo, int bci, int threshold, float ratio) {
         if (mpo != null) {
-            Integer[] hubProfile = mpo.getTypeProfile(bci);
-            if (hubProfile != null) {
+            Integer[] typeProfile = mpo.getTypeProfile(bci);
+            if (typeProfile != null) {
                 int total = 0;
-                for (int i = 0; i < hubProfile.length; i++) {
-                    // count up the total of all entries
-                    Integer hubId = hubProfile[i];
-                    Integer count = hubProfile[i + 1];
-                    if (hubId != null && count != null) {
+                for (int i = 0; i < typeProfile.length; i++) {
+                    // count up the total of all non anonymous entries
+                    Integer typeId = typeProfile[i];
+                    Integer count = typeProfile[i + 1];
+                    if (typeId != MethodProfile.UNDEFINED_TYPE_ID) {
                         total += count;
                     }
                 }
                 if (total >= threshold) {
                     // if there are enough recorded entries
                     int thresh = (int) (ratio * total);
-                    for (int i = 0; i < hubProfile.length; i++) {
-                        Integer hubId = hubProfile[i];
-                        Integer count = hubProfile[i + 1];
-                        if (hubId != null && count != null && count >= thresh) {
-                            return idToHub(hubId);
+                    int mostFrequentTypeId = MethodProfile.UNDEFINED_TYPE_ID;
+                    int mostFrequentTypeCount = thresh;
+                    for (int i = 0; i < typeProfile.length; i++) {
+                        Integer typeId = typeProfile[i];
+                        Integer count = typeProfile[i + 1];
+                        if (typeId != MethodProfile.UNDEFINED_TYPE_ID && count >= mostFrequentTypeCount) {
+                            mostFrequentTypeCount = count;
+                            mostFrequentTypeId = typeId;
                         }
+                    }
+                    if (mostFrequentTypeId != MethodProfile.UNDEFINED_TYPE_ID) {
+                        return typeIdToHub(mostFrequentTypeId);
                     }
                 }
             }
@@ -152,9 +163,10 @@ public class MethodInstrumentation {
         return null;
     }
 
-    private static Hub idToHub(Integer hubId) {
-        if (hubId != null && hubId > 0) {
-            // TODO: convert hub id to hub
+    private static Hub typeIdToHub(Integer typeId) {
+        if (typeId != MethodProfile.UNDEFINED_TYPE_ID) {
+            ClassActor classActor = ClassIDManager.toClassActor(typeId);
+            return classActor.dynamicHub();
         }
         return null;
     }

@@ -163,6 +163,7 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
         } else {
             assignObject(0, "methodActor", virtualMethodActor);
             peekObject(1, "receiver", receiverStackIndex);
+            assignInvokeTemplatesProfileInstrumentationParameters();
         }
     }
 

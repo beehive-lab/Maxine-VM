@@ -362,8 +362,8 @@ public class CompilationBroker {
         if (tm != null) {
             assert tm.invalidated() == null && tm.isBaseline();
             MethodProfile mp = tm.profile();
-            if (mp != null && mp.entryCount <= 0) {
-                mp.entryCount = MethodInstrumentation.initialEntryCount;
+            if (mp != null && mp.entryBackedgeCount <= 0) {
+                mp.entryBackedgeCount = MethodInstrumentation.initialEntryBackedgeCount;
             }
         }
         baselineCompiler.deoptimize(cma);
@@ -592,19 +592,19 @@ public class CompilationBroker {
      */
     public static void instrumentationCounterOverflow(MethodProfile mpo, Object receiver) {
         if (mpo.compilationDisabled) {
-            mpo.entryCount = Integer.MAX_VALUE;
+            mpo.entryBackedgeCount = Integer.MAX_VALUE;
             return;
         }
         if (Heap.isAllocationDisabledForCurrentThread()) {
             logCounterOverflow(mpo, "Stopped recompilation because allocation is currently disabled");
             // We don't want to see another counter overflow in the near future
-            mpo.entryCount = 1000;
+            mpo.entryBackedgeCount = 1000;
             return;
         }
         if (Compilation.isCompilationRunningInCurrentThread()) {
             logCounterOverflow(mpo, "Stopped recompilation because compilation is running in current thread");
             // We don't want to see another counter overflow in the near future
-            mpo.entryCount = 1000;
+            mpo.entryBackedgeCount = 1000;
             return;
         }
 
@@ -633,11 +633,11 @@ public class CompilationBroker {
         if (oldMethod == newMethod || newMethod == null) {
             // No compiled method available yet, maybe compilation is pending.
             // We don't want to see another counter overflow in the near future.
-            mpo.entryCount = 10000;
+            mpo.entryBackedgeCount = 10000;
         } else {
             assert newMethod != null : oldMethod;
             logPatching(cma, oldMethod, newMethod);
-            mpo.entryCount = 0;
+            mpo.entryBackedgeCount = 0;
 
             if (receiver != null) {
                 Address from = oldMethod.getEntryPoint(VTABLE_ENTRY_POINT).toAddress();
@@ -681,7 +681,7 @@ public class CompilationBroker {
             Log.print(": Invocation counter overflow of ");
             Log.printMethod(mpo.method, false);
             Log.print(" counter ");
-            Log.print(mpo.entryCount);
+            Log.print(mpo.entryBackedgeCount);
             Log.print("  ");
             Log.print(msg);
             Log.println();

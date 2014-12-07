@@ -129,7 +129,7 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
             // disable the method profiler
             MethodProfile methodProfile = methodProfileBuilder.methodProfileObject();
             methodProfile.compilationDisabled = true;
-            methodProfile.entryCount = Integer.MAX_VALUE;
+            methodProfile.entryBackedgeCount = Integer.MAX_VALUE;
             // register the dependency
             Dependencies deps = JVMTI_DependencyProcessor.recordInstrumentation(method.holder(), eventSettings, breakpoints);
             assert deps != null;

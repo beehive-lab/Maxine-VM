@@ -1158,7 +1158,7 @@ public class VMAdviceBeforeTemplateSource {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
         }
-        return selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
+        return selectVirtualMethodInstrumented(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -1537,7 +1537,7 @@ public class VMAdviceBeforeTemplateSource {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
         }
-        return selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
+        return selectVirtualMethodInstrumented(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -1874,7 +1874,7 @@ public class VMAdviceBeforeTemplateSource {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
         }
-        return selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
+        return selectVirtualMethodInstrumented(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -2134,7 +2134,7 @@ public class VMAdviceBeforeTemplateSource {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
         }
-        return selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
+        return selectVirtualMethodInstrumented(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -2352,7 +2352,7 @@ public class VMAdviceBeforeTemplateSource {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
         }
-        return selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
+        return selectVirtualMethodInstrumented(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -2470,7 +2470,7 @@ public class VMAdviceBeforeTemplateSource {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
         }
-        return selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
+        return selectVirtualMethodInstrumented(receiver, methodActor.vTableIndex(), mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
