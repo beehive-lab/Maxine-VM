@@ -76,19 +76,26 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         "Selects the 64-bit data model if available. Currently ignored."), MaxineVM.Phase.PRISTINE);
     private static final JavaAgentVMOption javaagentOption = register(new JavaAgentVMOption(), MaxineVM.Phase.STARTING);
     private static final VMExtensionVMOption vmExtensionOption = register(new VMExtensionVMOption(), MaxineVM.Phase.STARTING);
-    private static final VMStringOption profOption = register(new VMStringOption(
-        "-Xprof", false, null, "run sampling profiler"), MaxineVM.Phase.STARTING);
+    private static final VMStringOption cprofOption = register(new VMStringOption(
+        "-Xprof", false, null, "run CPU sampling profiler"), MaxineVM.Phase.STARTING);
+    private static final VMStringOption hprofOption = register(new VMStringOption(
+        "-Xhprof", false, null, "run heap sampling profiler"), MaxineVM.Phase.STARTING);
 
     /**
      * List of classes to explicitly reinitialise in the {@link Phase#STARTING} phase.
      * This supports extensions to the boot image.
      */
     private static List<String> reinitClasses = new LinkedList<String>();
-    private static boolean profiling;
+    private static CPUSamplingProfiler cpuSamplingProfiler;
+    private static HeapSamplingProfiler heapSamplingProfiler;
     private static String mainClassName;
 
     @HOSTED_ONLY
     public JavaRunScheme() {
+    }
+
+    public static boolean isHeapProfilingOptionPassed() {
+        return hprofOption.getValue() != null;
     }
 
     /**
@@ -197,18 +204,26 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             case RUNNING: {
                 // This is always the last scheme to be initialized, so now is the right time
                 // to start the profiler if requested.
-                final String profValue = profOption.getValue();
-                if (profValue != null) {
-                    profiling = true;
-                    SamplingProfiler.create(profValue);
+                final String cpuProfOptionValue = cprofOption.getValue();
+                if (cpuProfOptionValue != null) {
+                    final String cpuProfOptionPrefix = cprofOption.toString();
+                    cpuSamplingProfiler = new CPUSamplingProfiler(cpuProfOptionPrefix, cpuProfOptionValue);
+                }
+                final String heapProfOptionValue = hprofOption.getValue();
+                if (heapProfOptionValue != null) {
+                    final String heapProfOptionPrefix = hprofOption.toString();
+                    heapSamplingProfiler = new HeapSamplingProfiler(heapProfOptionPrefix, heapProfOptionValue);
                 }
                 break;
             }
 
             case TERMINATING: {
                 JniFunctions.printJniFunctionTimers();
-                if (profiling) {
-                    SamplingProfiler.terminate();
+                if (cpuSamplingProfiler != null) {
+                    cpuSamplingProfiler.terminate();
+                }
+                if (heapSamplingProfiler != null) {
+                    heapSamplingProfiler.terminate();
                 }
                 break;
             }
@@ -363,6 +378,20 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     private Class<?> loadMainClass() throws IOException, ClassNotFoundException {
         final ClassLoader appClassLoader = Launcher.getLauncher().getClassLoader();
         return appClassLoader.loadClass(mainClassName);
+    }
+
+    /**
+     * @return CPUSamplingProfiler instance or null
+     */
+    public static CPUSamplingProfiler getCPUSamplingProfiler() {
+        return cpuSamplingProfiler;
+    }
+
+    /**
+     * @return HeapSamplingProfiler instance or null
+     */
+    public static HeapSamplingProfiler getHeapSamplingProfiler() {
+        return heapSamplingProfiler;
     }
 
     /**

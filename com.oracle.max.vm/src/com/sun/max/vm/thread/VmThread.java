@@ -1204,6 +1204,7 @@ public class VmThread {
             Log.print(id);
             Log.print(", name=\"");
             Log.print(name);
+            Log.print("\"");
             if (Heap.isAllocationCounterEnabledForCurrentThread()) {
                 Log.print(", allocation=");
                 Log.print(Heap.getAllocationCounterForCurrentThread() / 1024);
