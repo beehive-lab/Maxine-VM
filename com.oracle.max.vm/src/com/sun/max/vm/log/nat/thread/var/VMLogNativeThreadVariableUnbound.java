@@ -217,6 +217,7 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
         NativeRecord r = getNativeRecord(tla);
         int offset = firstOffset(offsets);
         VmThread vmThread = VmThread.fromTLA(tla);
+        assert offset < nextOffset || isWrapped(offsets);
 
         if (MaxineVM.isDebug()) {
             debug_tla = tla;
@@ -230,7 +231,7 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
         // associated NativeRecord, to avoid corruption when the flush iteration resumes.
         Pointer saveAddress = r.address;
 
-        while (offset != nextOffset) {
+        do {
             r.address = buffer.plus(offset);
             int header = r.getHeader();
             if (MaxineVM.isDebug()) {
@@ -245,7 +246,7 @@ public abstract class VMLogNativeThreadVariableUnbound extends VMLogNativeThread
                 }
             }
             offset = modLogSize(offset + ARGS_OFFSET + r.getArgCount() * Word.size());
-        }
+        } while (offset != nextOffset);
 
         if (scanning) {
             r.address = saveAddress;
