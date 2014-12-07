@@ -584,7 +584,7 @@ public abstract class StackFrameWalker {
         TargetMethod tm = targetMethodForReturnAddress(retAddr);
 
         // Rescue a return address that has been patched for deoptimization
-        if (isDeoptStubEntry(ip, tm)) {
+        if (isDeoptStubEntry(ip, tm, callee)) {
             // Since 'ip' denotes the start of a deopt stub, then we're dealing with a patched return address
             // and the real caller is found in the rescue slot
             Pointer originalReturnAddress = readWord(sp.asAddress(), DEOPT_RETURN_ADDRESS_OFFSET).asPointer();

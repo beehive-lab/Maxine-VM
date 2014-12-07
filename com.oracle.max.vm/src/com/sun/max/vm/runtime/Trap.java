@@ -417,7 +417,7 @@ public abstract class Trap {
             CodePointer from = CodePointer.from(patch.readWord(0));
             assert !to.equals(from);
             if (deoptLogger.enabled()) {
-                deoptLogger.logPatchReturnAddress(tm, "TRAP STUB", stub, to, save, patch, from);
+                deoptLogger.logPatchReturnAddress(tm, vm().stubs.trapStub(), stub, to, save, patch, from);
             }
             patch.writeWord(0, to.toAddress());
             save.writeWord(0, from.toAddress());
