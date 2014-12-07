@@ -1551,31 +1551,60 @@ public abstract class T1XCompilation {
         emitEpilogue();
     }
 
+    protected void do_profileBackwardBranch() {
+        if (methodProfileBuilder != null) {
+            // Profiling of backward branches.
+            start(PROFILE_BACKWARD_BRANCH);
+            assignObject(0, "mpo", methodProfileBuilder.methodProfileObject());
+            finish();
+        }
+    }
+
+    protected void do_backwardBranch(int bci) {
+        do_profileBackwardBranch();
+        // Ideally, we'd like to emit a safepoint at the target of a backward branch.
+        // However, that would require at least one extra pass to determine where
+        // the backward branches are. Instead, we simply emit a safepoint at the source of
+        // a backward branch. This means the cost of the safepoint is taken even if
+        // the backward branch is not taken but that cost should not be noticeable.
+        // Note also that the safepoint must be placed before conditional
+        // test instruction(s) to avoid affecting the condition flags
+        // with the safepoint poll instruction(s).
+        int pos = buf.position();
+        byte[] safepointCode = vm().safepointPoll.code;
+        buf.emitBytes(safepointCode, 0, safepointCode.length);
+        safepointsBuilder.addSafepoint(bci, Safepoints.make(pos), null);
+    }
+
+    protected void do_profileTakenBranch(int bci, int targetBCI) {
+        if (methodProfileBuilder != null) {
+            // Profiling of taken branches.
+            int mpoIndex = methodProfileBuilder.addBranchTakenCounters(bci);
+            start(PROFILE_TAKEN_BRANCH);
+            assignObject(0, "mpo", methodProfileBuilder.methodProfileObject());
+            assignInt(1, "mpoIndex", mpoIndex);
+            finish();
+
+            if (bci >= targetBCI) {
+                do_backwardBranch(bci);
+            }
+        }
+    }
+
+    protected void do_profileNotTakenBranch(int bci) {
+        if (methodProfileBuilder != null) {
+            // Profiling of not taken branches.
+            int mpoIndex = methodProfileBuilder.addBranchNotTakenCounters(bci);
+            start(PROFILE_NOT_TAKEN_BRANCH);
+            assignObject(0, "mpo", methodProfileBuilder.methodProfileObject());
+            assignInt(1, "mpoIndex", mpoIndex);
+            finish();
+        }
+    }
+
     protected void do_branch(int opcode, int targetBCI) {
         int bci = stream.currentBCI();
         startBlock(targetBCI);
-
-        if (bci >= targetBCI) {
-            if (methodProfileBuilder != null) {
-                // Profiling of backward branches.
-                start(PROFILE_BACKWARD_BRANCH);
-                assignObject(0, "mpo", methodProfileBuilder.methodProfileObject());
-                finish();
-            }
-
-            // Ideally, we'd like to emit a safepoint at the target of a backward branch.
-            // However, that would require at least one extra pass to determine where
-            // the backward branches are. Instead, we simply emit a safepoint at the source of
-            // a backward branch. This means the cost of the safepoint is taken even if
-            // the backward branch is not taken but that cost should not be noticeable.
-            // Note also that the safepoint must be placed before conditional
-            // test instruction(s) to avoid affecting the condition flags
-            // with the safepoint poll instruction(s).
-            int pos = buf.position();
-            byte[] safepointCode = vm().safepointPoll.code;
-            buf.emitBytes(safepointCode, 0, safepointCode.length);
-            safepointsBuilder.addSafepoint(bci, Safepoints.make(pos), null);
-        }
 
         branch(opcode, targetBCI, bci);
     }
