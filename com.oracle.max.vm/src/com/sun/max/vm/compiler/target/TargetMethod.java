@@ -229,6 +229,13 @@ public abstract class TargetMethod extends MemoryRegion {
     }
 
     /**
+     * Indicates that a method code is located in the boot code region.
+     */
+    public boolean isInBootCodeRegion() {
+        return Code.bootCodeRegion().contains(codeStart.asAddress());
+    }
+
+    /**
      * Marks this method as invalidated.
      *
      * @return true if this was the first attempt to invalidate the method. If not, then the invalidation marker for
@@ -829,8 +836,7 @@ public abstract class TargetMethod extends MemoryRegion {
         System.arraycopy(codeBuffer, 0, this.code, 0, this.code.length);
     }
 
-    public final ClassMethodActor callSiteToCallee(CodePointer callSite) {
-        final int callPos = callSite.minus(codeStart).toInt();
+    public final ClassMethodActor callPosToCallee(int callPos) {
         int dcIndex = 0;
         for (int i = 0; i < safepoints.size(); i++) {
             if (safepoints.isSetAt(DIRECT_CALL, i)) {
@@ -839,6 +845,15 @@ public abstract class TargetMethod extends MemoryRegion {
                 }
                 dcIndex++;
             }
+        }
+        return null;
+    }
+
+    public final ClassMethodActor callSiteToCallee(CodePointer callSite) {
+        final int callPos = callSite.minus(codeStart).toInt();
+        ClassMethodActor res = callPosToCallee(callPos);
+        if (res != null) {
+            return res;
         }
         final boolean lockDisabledSafepoints = Log.lock();
         Log.print("Could not find callee in ");
@@ -850,7 +865,7 @@ public abstract class TargetMethod extends MemoryRegion {
         Log.print(" + ");
         Log.print(callPos);
         Log.println("]");
-        dcIndex = 0;
+        int dcIndex = 0;
         for (int i = 0; i < safepoints.size(); i++) {
             if (safepoints.isSetAt(DIRECT_CALL, i)) {
                 if (safepoints.causePosAt(i) == callPos) {

@@ -93,7 +93,7 @@ public class MaxRuntime implements GraalCodeCacheProvider {
                 }
             }
             for (DataPatch site : tm.getDataReferences()) {
-                hcf.addOperandComment(site.pcOffset, "{" + site.constant + "}");
+                addOperandComment(hcf, site.pcOffset, "{" + site.constant + "}");
             }
         }
         return hcf.toEmbeddedString();
@@ -114,7 +114,9 @@ public class MaxRuntime implements GraalCodeCacheProvider {
 
     private static void addOperandComment(HexCodeFile hcf, int pos, String comment) {
         String oldValue = hcf.addOperandComment(pos, comment);
-        assert oldValue == null : "multiple comments for operand of instruction at " + pos + ": " + comment + ", " + oldValue;
+        if (oldValue != null) {
+            hcf.addOperandComment(pos, oldValue + " " + comment);
+        }
     }
 
     @Override

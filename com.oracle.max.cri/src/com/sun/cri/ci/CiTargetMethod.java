@@ -68,12 +68,24 @@ public class CiTargetMethod implements Serializable {
             return sb.toString();
         }
 
+        protected int getSafepointPos() {
+            return pcOffset;
+        }
+
         @Override
         public int compareTo(Safepoint o) {
+            int oPos;
+            int thisPos = pcOffset;
+
             if (pcOffset < o.pcOffset) {
                 return -1;
             } else if (pcOffset > o.pcOffset) {
                 return 1;
+            }
+            if (getSafepointPos() < o.getSafepointPos()) {
+                return -1;
+            } else if (getSafepointPos() > o.getSafepointPos()) {
+                return  1;
             }
             return 0;
         }
@@ -120,6 +132,11 @@ public class CiTargetMethod implements Serializable {
             }
 
             return sb.toString();
+        }
+
+        @Override
+        protected int getSafepointPos() {
+            return pcOffset + size;
         }
     }
 
@@ -427,7 +444,7 @@ public class CiTargetMethod implements Serializable {
 
     protected void addSafepoint(Safepoint safepoint) {
         // The safepoints list must always be sorted
-        if (!safepoints.isEmpty() && safepoints.get(safepoints.size() - 1).pcOffset >= safepoint.pcOffset) {
+        if (!safepoints.isEmpty() && safepoints.get(safepoints.size() - 1).compareTo(safepoint) == 1) {
             // This re-sorting should be very rare
             Collections.sort(safepoints);
         }

@@ -39,7 +39,10 @@ import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.ProgramError;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.ClassActor;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.constant.SymbolTable;
+import com.sun.max.vm.classfile.constant.Utf8Constant;
 import com.sun.max.vm.compiler.RuntimeCompiler;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.*;
@@ -65,6 +68,7 @@ public class MaxMiscLowerings extends SnippetLowerings {
         lowerings.put(IllegalArgumentDeoptimizeNode.class, new MaxIADeoptimizeLowering(this));
         lowerings.put(ArrayStoreDeoptimizeNode.class, new MaxASDeoptimizeLowering(this));
         lowerings.put(FixedGuardNode.class, new FixedGuardLowering());
+        Deoptimization.initializeMaxMiscLoweringsDeoptimizeMethodActor(getDeoptimizeMethodActor());
     }
 
     public static class FixedGuardLowering implements LoweringProvider<FixedGuardNode> {
@@ -81,7 +85,6 @@ public class MaxMiscLowerings extends SnippetLowerings {
             node.graph().replaceFixedWithFixed(node, newAnchor);
             return newAnchor;
         }
-
     }
 
     /**
@@ -228,6 +231,14 @@ public class MaxMiscLowerings extends SnippetLowerings {
         }
     }
 
+    /**
+     * Returns method actor for {@link #deoptimize} method of {@link MaxMiscLowerings) class.
+     */
+    @HOSTED_ONLY
+    private static StaticMethodActor getDeoptimizeMethodActor() {
+        Utf8Constant deoptimizeMethodName = SymbolTable.makeSymbol("deoptimize");
+        return ClassActor.fromJava(MaxMiscLowerings.class).findLocalStaticMethodActor(deoptimizeMethodName);
+    }
 
     /**
      * Called to explicitly deoptimize the given method.
@@ -240,7 +251,10 @@ public class MaxMiscLowerings extends SnippetLowerings {
             TargetMethod tm = Compilations.currentTargetMethod(ma.compiledState, RuntimeCompiler.Nature.OPT);
             if (tm != null) {
                 assert tm.invalidated() == null;
-                tms.add(tm);
+                // do not deoptimize inlined method which resides in boot code region as it may be needed fot its own compilation
+                if (frame.outerFrameState() == null || !tm.isInBootCodeRegion()) {
+                    tms.add(tm);
+                }
             }
         }
         new Deoptimization(tms).go();

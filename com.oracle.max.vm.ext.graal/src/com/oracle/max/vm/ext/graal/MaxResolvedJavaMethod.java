@@ -143,7 +143,38 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
                         cma.codeAttribute() == null ? -1 : cma.codeAttribute().lineNumberTable().findLineNumber(bci));
     }
 
+    private final ThreadLocal<Boolean> ignoreCollectedProfilingInfo = new ThreadLocal<Boolean>() {
+        @Override
+        protected Boolean initialValue() {
+            return Boolean.FALSE;
+        }
+    };
+
+    public boolean isOptimizedMethodInBootCodeRegion() {
+        ClassMethodActor cma = (ClassMethodActor) riResolvedMethod();
+        TargetMethod tm = Compilations.currentTargetMethod(cma.compiledState, RuntimeCompiler.Nature.OPT);
+        if (tm == null) {
+            return false;
+        }
+        return tm.isInBootCodeRegion();
+    }
+
+    public void ignoreCollectedProfilingInfo() {
+        ignoreCollectedProfilingInfo.set(true);
+    }
+
+    public void utilizeCollectedProfilingInfo() {
+        ignoreCollectedProfilingInfo.set(false);
+    }
+
+    public boolean isCollectedProfilingInfoIgnored() {
+        return ignoreCollectedProfilingInfo.get();
+    }
+
     public MethodProfile getBaselineMethodCollectedProfilingInfo() {
+        if (isCollectedProfilingInfoIgnored()) {
+            return null;
+        }
         ClassMethodActor cma = (ClassMethodActor) riResolvedMethod();
         TargetMethod tm = Compilations.currentTargetMethod(cma.compiledState, RuntimeCompiler.Nature.BASELINE);
         if (tm == null || tm.profile() == null || tm.profile().rawData() == null) {

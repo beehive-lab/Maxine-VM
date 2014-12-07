@@ -110,6 +110,11 @@ public class Deoptimization extends VmOperation {
     }
 
     /**
+     * Method actor of MaxMiscLowerings.deoptimize method.
+     */
+    private static StaticMethodActor MaxMiscLoweringsDeoptimizeMethodActor;
+
+    /**
      * The set of target methods to be deoptimized.
      */
     private final ArrayList<TargetMethod> methods;
@@ -122,6 +127,11 @@ public class Deoptimization extends VmOperation {
     public Deoptimization(ArrayList<TargetMethod> methods) {
         super("Deoptimization", null, Mode.Safepoint);
         this.methods = methods;
+    }
+
+    @HOSTED_ONLY
+    public static void initializeMaxMiscLoweringsDeoptimizeMethodActor(StaticMethodActor methodActor) {
+        MaxMiscLoweringsDeoptimizeMethodActor = methodActor;
     }
 
     /**
@@ -739,8 +749,18 @@ public class Deoptimization extends VmOperation {
             FatalError.check(compiledMethod.isBaseline(), compiledMethod + " should be a deopt target");
             cont.tm = compiledMethod;
             boolean reexecute = false;
-            if (frame == topFrame && !Safepoints.isCall(tm.safepoints().safepointAt(safepointIndex))) {
-                reexecute = true;
+            if (frame == topFrame) {
+                final Safepoints safepoints = tm.safepoints();
+                if (!Safepoints.isCall(safepoints.safepointAt(safepointIndex))) {
+                    reexecute = true;
+                }
+                if (Safepoints.isDirectCall(safepoints.safepointAt(safepointIndex))) {
+                    final int callPos = safepoints.causePosAt(safepointIndex);
+                    ClassMethodActor callee = tm.callPosToCallee(callPos);
+                    if (callee == MaxMiscLoweringsDeoptimizeMethodActor) {
+                        reexecute = true;
+                    }
+                }
             }
             cont = compiledMethod.createDeoptimizedFrame(info, frame, cont, pendingException, reexecute);
 
