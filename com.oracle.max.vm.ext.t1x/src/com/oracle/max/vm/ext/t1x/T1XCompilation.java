@@ -1560,8 +1560,7 @@ public abstract class T1XCompilation {
         }
     }
 
-    protected void do_backwardBranch(int bci) {
-        do_profileBackwardBranch();
+    protected void do_safepointAtBackwardBranch(int bci) {
         // Ideally, we'd like to emit a safepoint at the target of a backward branch.
         // However, that would require at least one extra pass to determine where
         // the backward branches are. Instead, we simply emit a safepoint at the source of
@@ -1586,7 +1585,7 @@ public abstract class T1XCompilation {
             finish();
 
             if (bci >= targetBCI) {
-                do_backwardBranch(bci);
+                do_profileBackwardBranch();
             }
         }
     }
