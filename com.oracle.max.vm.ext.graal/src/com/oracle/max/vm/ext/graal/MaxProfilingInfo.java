@@ -100,9 +100,7 @@ public class MaxProfilingInfo implements ProfilingInfo {
 
     @Override
     public double[] getSwitchProbabilities(int bci) {
-        return null;
-        // TODO: enable switch probabilities
-        // return methodProfile.getSwitchProbabilities(bci);
+        return methodProfile.getSwitchProbabilities(bci);
     }
 
     @Override
