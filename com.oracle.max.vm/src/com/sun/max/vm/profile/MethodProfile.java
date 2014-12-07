@@ -387,6 +387,7 @@ public class MethodProfile {
         private final MethodProfile mpo = new MethodProfile();
         private int lastBci = 0;
         public static final byte NO_INDEX = -1;
+        public static final byte UNDEFINED_POS = -1;
 
         public void addEntryCounter(int initialValue) {
             mpo.entryCount = initialValue;

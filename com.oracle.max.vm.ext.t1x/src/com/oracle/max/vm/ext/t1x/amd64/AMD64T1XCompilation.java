@@ -449,25 +449,32 @@ public class AMD64T1XCompilation extends T1XCompilation {
     protected void do_lookupswitch() {
         int bci = stream.currentBCI();
         BytecodeLookupSwitch ls = new BytecodeLookupSwitch(stream, bci);
-        if (ls.numberOfCases() == 0) {
+        int defaultTargetBCI = ls.defaultTarget();
+        int numberOfCases = ls.numberOfCases();
+
+        if (numberOfCases == 0) {
             // Pop the key
             decStack(1);
+            startBlock(defaultTargetBCI);
+            assert defaultTargetBCI > bci;
 
-            int targetBCI = ls.defaultTarget();
-            startBlock(targetBCI);
-            if (stream.nextBCI() == targetBCI) {
-                // Skip completely if default target is next instruction
-            } else if (targetBCI <= bci) {
-                int target = bciToPos[targetBCI];
-                assert target != 0;
-                asm.jmp(target, false);
-            } else {
-                patchInfo.addJMP(buf.position(), targetBCI);
+            if (methodProfileBuilder != null) {
+                // Profile switch "default"
+                int switchProfileIndex = do_ProfileSwitchInit(bci, numberOfCases);
+                do_ProfileSwitchDefault(switchProfileIndex, numberOfCases);
+            }
+            if (stream.nextBCI() != defaultTargetBCI) {
+                // Jump to default target if index is not within the jump table
+                patchInfo.addJMP(buf.position(), defaultTargetBCI);
                 asm.jmp(0, true);
             }
         } else {
-            // Pop key from stack into rax
-            asm.movl(rax, new CiAddress(CiKind.Int, rsp.asValue()));
+            int switchProfileIndex = methodProfileBuilder.NO_INDEX;
+            int leaPosProf = methodProfileBuilder.UNDEFINED_POS;
+            int afterLeaProf = methodProfileBuilder.UNDEFINED_POS;
+
+            // Pop key from stack into rcx
+            asm.movl(rcx, new CiAddress(CiKind.Int, rsp.asValue()));
             asm.addq(rsp, JVMSFrameLayout.JVMS_SLOT_SIZE);
 
             // Set rbx to address of lookup table
@@ -475,13 +482,13 @@ public class AMD64T1XCompilation extends T1XCompilation {
             asm.leaq(rbx, CiAddress.Placeholder);
             int afterLea = buf.position();
 
-            // Initialize rcx to index of last entry
-            asm.movl(rcx, (ls.numberOfCases() - 1) * 2);
+            // Initialize rax to index of the last entry
+            asm.movl(rax, numberOfCases - 1);
 
             int loopPos = buf.position();
 
             // Compare the value against the key
-            asm.cmpl(rax, new CiAddress(CiKind.Int, rbx.asValue(), rcx.asValue(), Scale.Times4, 0));
+            asm.cmpl(rcx, new CiAddress(CiKind.Int, rbx.asValue(), rax.asValue(), Scale.Times8, 0));
 
             // If equal, exit loop
             int matchTestPos = buf.position();
@@ -489,13 +496,18 @@ public class AMD64T1XCompilation extends T1XCompilation {
             asm.jcc(ConditionFlag.equal, placeholderForShortJumpDisp, false);
             assert buf.position() - matchTestPos == 2;
 
-            // Decrement loop var (r15) and jump to top of loop if it did not go below zero (i.e. carry flag was not set)
-            asm.subl(rcx, 2);
+            // Decrement loop var (rax) and jump to top of loop if it did not go below zero (i.e. carry flag was not set)
+            asm.subl(rax, 1);
             asm.jcc(ConditionFlag.carryClear, loopPos, false);
 
             // Jump to default target
-            startBlock(ls.defaultTarget());
-            patchInfo.addJMP(buf.position(), ls.defaultTarget());
+            startBlock(defaultTargetBCI);
+            if (methodProfileBuilder != null) {
+                // Profile switch "default"
+                switchProfileIndex = do_ProfileSwitchInit(bci, numberOfCases);
+                do_ProfileSwitchDefault(switchProfileIndex, numberOfCases);
+            }
+            patchInfo.addJMP(buf.position(), defaultTargetBCI);
             asm.jmp(0, true);
 
             // Patch the first conditional branch instruction above now that we know where's it's going
@@ -504,9 +516,17 @@ public class AMD64T1XCompilation extends T1XCompilation {
             asm.jcc(ConditionFlag.equal, matchPos, false);
             buf.setPosition(matchPos);
 
-            // Load jump table entry into r15 and jump to it
-            asm.movslq(rcx, new CiAddress(CiKind.Int, rbx.asValue(), rcx.asValue(), Scale.Times4, 4));
-            asm.addq(rbx, rcx);
+            // Load jump case table entry into rbx and jump to it
+            if (methodProfileBuilder != null) {
+                // Profile switch "case"
+                do_ProfileSwitchCase(switchProfileIndex, rax);
+                // Reset rbx to address of lookup table as it may be killed during call
+                leaPosProf = buf.position();
+                asm.leaq(rbx, CiAddress.Placeholder);
+                afterLeaProf = buf.position();
+            }
+            asm.movslq(rax, new CiAddress(CiKind.Int, rbx.asValue(), rax.asValue(), Scale.Times8, 4));
+            asm.addq(rbx, rax);
             asm.jmp(rbx);
 
             // Inserting padding so that lookup table address is 4-byte aligned
@@ -514,14 +534,18 @@ public class AMD64T1XCompilation extends T1XCompilation {
                 asm.nop();
             }
 
-            // Patch the LEA instruction above now that we know the position of the lookup table
+            // Patch the LEA instructions above now that we know the position of the lookup table
             int lookupTablePos = buf.position();
             buf.setPosition(leaPos);
             asm.leaq(rbx, new CiAddress(WordUtil.archKind(), rip.asValue(), lookupTablePos - afterLea));
+            if (methodProfileBuilder != null) {
+                buf.setPosition(leaPosProf);
+                asm.leaq(rbx, new CiAddress(WordUtil.archKind(), rip.asValue(), lookupTablePos - afterLeaProf));
+            }
             buf.setPosition(lookupTablePos);
 
             // Emit lookup table entries
-            for (int i = 0; i < ls.numberOfCases(); i++) {
+            for (int i = 0; i < numberOfCases; i++) {
                 int key = ls.keyAt(i);
                 int targetBCI = ls.targetAt(i);
                 startBlock(targetBCI);
@@ -532,7 +556,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
             if (codeAnnotations == null) {
                 codeAnnotations = new ArrayList<CiTargetMethod.CodeAnnotation>();
             }
-            codeAnnotations.add(new LookupTable(lookupTablePos, ls.numberOfCases(), 4, 4));
+            codeAnnotations.add(new LookupTable(lookupTablePos, numberOfCases, 4, 4));
         }
     }
 
@@ -688,6 +712,13 @@ public class AMD64T1XCompilation extends T1XCompilation {
     @Override
     protected void branch(int opcode, int targetBCI, int bci) {
         ConditionFlag cc;
+
+        if (stream.nextBCI() == targetBCI && methodProfileBuilder == null) {
+            // Skip completely if target is next instruction and profiling is turned off
+            decStack(1);
+            return;
+        }
+
         // Important: the compare instructions must come after the stack
         // adjustment instructions as both affect the condition flags.
         switch (opcode) {
