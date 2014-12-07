@@ -302,6 +302,12 @@ public interface HeapScheme extends VMScheme {
     boolean isAllocationDisabledForCurrentThread();
 
     /**
+     * Indicates whether an allocation counter being returned by {@link #getAllocationCounterForCurrentThread} is
+     * available for this heap scheme.
+     */
+    boolean isAllocationCounterEnabledForCurrentThread();
+
+    /**
      * Returns amount of memory allocated by current thread.
      * @return amount of memory in bytes.
      */

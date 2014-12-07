@@ -292,6 +292,11 @@ public final class Heap {
     }
 
     @INLINE
+    public static boolean isAllocationCounterEnabledForCurrentThread() {
+        return heapScheme().isAllocationCounterEnabledForCurrentThread();
+    }
+
+    @INLINE
     public static long getAllocationCounterForCurrentThread()  {
         return heapScheme().getAllocationCounterForCurrentThread();
     }
