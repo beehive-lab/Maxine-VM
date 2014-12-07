@@ -140,19 +140,19 @@ public class MaxInliningPhase extends InliningPhase {
         super.run(graph, context);
         redundantInfopointsElimination(graph);
         for (MaxResolvedJavaMethod m : methodList) {
-            m.utilizeCollectedProfilingInfo();
+            m.utilizeProfilingInfo();
         }
     }
 
     @Override
     protected StructuredGraph buildGraph(final ResolvedJavaMethod method, final Invoke invoke, final Assumptions assumptions, final HighTierContext context) {
         MaxResolvedJavaMethod callerMethod = (MaxResolvedJavaMethod) invoke.asNode().graph().method();
-        if (callerMethod.isCollectedProfilingInfoIgnored() || callerMethod.isOptimizedMethodInBootCodeRegion()) {
+        if (callerMethod.isProfilingInfoIgnored() || callerMethod.isOptimizedMethodInBootCodeRegion()) {
             List<MaxResolvedJavaMethod> methodList = methodListTL.get();
             MaxResolvedJavaMethod calleeMethod = (MaxResolvedJavaMethod) method;
 
             methodList.add(calleeMethod);
-            calleeMethod.ignoreCollectedProfilingInfo();
+            calleeMethod.ignoreProfilingInfo();
         }
         StructuredGraph resGraph = super.buildGraph(method, invoke, assumptions, context);
         insertInfopointsToMethodBondaries(resGraph);

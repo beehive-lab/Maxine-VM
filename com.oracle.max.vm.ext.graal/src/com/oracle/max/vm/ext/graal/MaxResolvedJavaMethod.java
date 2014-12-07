@@ -143,7 +143,7 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
                         cma.codeAttribute() == null ? -1 : cma.codeAttribute().lineNumberTable().findLineNumber(bci));
     }
 
-    private final ThreadLocal<Boolean> ignoreCollectedProfilingInfo = new ThreadLocal<Boolean>() {
+    private final ThreadLocal<Boolean> ignoreProfilingInfo = new ThreadLocal<Boolean>() {
         @Override
         protected Boolean initialValue() {
             return Boolean.FALSE;
@@ -159,20 +159,20 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
         return tm.isInBootCodeRegion();
     }
 
-    public void ignoreCollectedProfilingInfo() {
-        ignoreCollectedProfilingInfo.set(true);
+    public void ignoreProfilingInfo() {
+        ignoreProfilingInfo.set(true);
     }
 
-    public void utilizeCollectedProfilingInfo() {
-        ignoreCollectedProfilingInfo.set(false);
+    public void utilizeProfilingInfo() {
+        ignoreProfilingInfo.set(false);
     }
 
-    public boolean isCollectedProfilingInfoIgnored() {
-        return ignoreCollectedProfilingInfo.get();
+    public boolean isProfilingInfoIgnored() {
+        return ignoreProfilingInfo.get();
     }
 
-    public MethodProfile getBaselineMethodCollectedProfilingInfo() {
-        if (isCollectedProfilingInfoIgnored()) {
+    public MethodProfile getBaselineMethodProfilingInfo() {
+        if (isProfilingInfoIgnored()) {
             return null;
         }
         ClassMethodActor cma = (ClassMethodActor) riResolvedMethod();
@@ -190,7 +190,7 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
         MethodProfile methodProfile = null;
 
         if (GraalOptions.UseProfilingInformation.getValue()) {
-            methodProfile = getBaselineMethodCollectedProfilingInfo();
+            methodProfile = getBaselineMethodProfilingInfo();
         }
 
         if (methodProfile == null) {
