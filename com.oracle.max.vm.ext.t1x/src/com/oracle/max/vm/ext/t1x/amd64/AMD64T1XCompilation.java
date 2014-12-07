@@ -532,12 +532,38 @@ public class AMD64T1XCompilation extends T1XCompilation {
         } else {
             // Backward branch
 
-            // Compute relative offset.
+            // Compute relative offset
             final int target = bciToPos[targetBCI];
             if (cc == null) {
+                // TODO Switch it on as it does profiling of a backward branch in the case it is taken
+                if (false) {
+                    do_profileBackwardBranch();
+                    do_safepointAtBackwardBranch(bci);
+                }
                 asm.jmp(target, false);
             } else {
-                asm.jcc(cc, target, false);
+                ConditionFlag ccNeg = cc.negation();
+                int jumpNotTakenPos = buf.position();
+                final int placeholderForShortJumpDisp = jumpNotTakenPos + 2;
+                int fallThroughPos;
+
+                // If condition is false jump to "not taken" code
+                asm.jcc(ccNeg, placeholderForShortJumpDisp, false);
+                assert buf.position() - jumpNotTakenPos == 2;
+
+                // Start of "taken" code
+                // TODO Switch it on as it does profiling of a backward branch in the case it is taken
+                if (false) {
+                    do_profileBackwardBranch();
+                    do_safepointAtBackwardBranch(bci);
+                }
+                asm.jmp(target, false);
+
+                // Start of "not taken" code
+                fallThroughPos = buf.position();
+                buf.setPosition(jumpNotTakenPos);
+                asm.jcc(ccNeg, fallThroughPos, false);
+                buf.setPosition(fallThroughPos);
             }
         }
     }
@@ -581,7 +607,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
         } else {
             do_safepointAtBackwardBranch(bci);
         }
-        asm.jmp(relativeOffset, true);
+        asm.jmp(relativeOffset, isForwardBranch ? true : false);
         assert !isForwardBranch || bciToPos[targetBCI] == 0;
 
         // Start of "fall through" code
@@ -616,7 +642,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
         } else {
             do_safepointAtBackwardBranch(bci);
         }
-        asm.jmp(relativeOffset, true);
+        asm.jmp(relativeOffset, isForwardBranch ? true : false);
         assert !isForwardBranch || bciToPos[targetBCI] == 0;
 
         if (isConditionalBranch) {

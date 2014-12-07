@@ -1605,6 +1605,12 @@ public abstract class T1XCompilation {
         int bci = stream.currentBCI();
         startBlock(targetBCI);
 
+
+        // TODO Remove it as it profiles backward branch in the case it is taken.
+        if (bci >= targetBCI) {
+            do_profileBackwardBranch();
+            do_safepointAtBackwardBranch(bci);
+        }
         branch(opcode, targetBCI, bci);
     }
 
