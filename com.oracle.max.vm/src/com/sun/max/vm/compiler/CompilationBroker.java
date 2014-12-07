@@ -361,8 +361,9 @@ public class CompilationBroker {
         TargetMethod tm = Compilations.currentTargetMethod(cma.compiledState, Nature.BASELINE);
         if (tm != null) {
             assert tm.invalidated() == null && tm.isBaseline();
-            if ( tm.profile() != null && tm.profile().entryCount <= 0) {
-                tm.profile().entryCount = MethodInstrumentation.initialEntryCount;
+            MethodProfile mp = tm.profile();
+            if (mp != null && mp.entryCount <= 0) {
+                mp.entryCount = MethodInstrumentation.initialEntryCount;
             }
         }
         baselineCompiler.deoptimize(cma);

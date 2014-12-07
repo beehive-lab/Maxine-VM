@@ -154,8 +154,8 @@ public class MaxMiscLowerings extends SnippetLowerings {
                     }
                 }
             } else {
-                if (tool.getLoweringType() == Lowerable.LoweringType.BEFORE_GUARDS) {
-                    // deoptState is not ready on that stage
+                if (tool.getLoweringType() != Lowerable.LoweringType.AFTER_FSA) {
+                    // deoptState is not ready before frame states assignment
                     return;
                 }
                 ProgramError.check(node.getDeoptimizationState() != null, "Deoptimization state is null");
