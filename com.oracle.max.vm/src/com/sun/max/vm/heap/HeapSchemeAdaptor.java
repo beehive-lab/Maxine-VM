@@ -255,6 +255,10 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
         throw FatalError.unimplemented();
     }
 
+    public long getAllocationCounterForCurrentThread() {
+        throw FatalError.unimplemented();
+    }
+
     public void notifyCurrentThreadDetach() {
         // nothing by default
     }

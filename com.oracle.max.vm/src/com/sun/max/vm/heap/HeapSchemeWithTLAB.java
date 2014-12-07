@@ -132,6 +132,12 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         = new VmThreadLocal("TLAB_MARK_TMP", false, "HeapSchemeWithTLAB: temporary allocation mark of current TLAB, zero if not used", Nature.Single);
 
     /**
+     * Thread-local used to count memory allocated by a thread.
+     */
+    private static final VmThreadLocal ALLOCATION_COUNTER
+        = new VmThreadLocal("ALLOCATION_COUNTER", false, "Amount of memory allocated by thread", Nature.Single);
+
+    /**
      * Thread-local used to disable allocation per thread.
      */
     private static final VmThreadLocal ALLOCATION_DISABLED
@@ -197,6 +203,11 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
      * Flags if TLABs are being used for allocation.
      */
     private boolean useTLAB;
+
+    /**
+     * Indicates if allocation counter is being used during allocation.
+     */
+    private boolean useAllocationCounter;
 
     /**
      * Initial size of a TLABs.
@@ -313,6 +324,13 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         return !ALLOCATION_DISABLED.load(currentTLA()).isZero();
     }
 
+    @Override
+    public final long getAllocationCounterForCurrentThread() {
+        final Pointer etla = ETLA.load(currentTLA());
+        Pointer apt = ALLOCATION_COUNTER.load(etla);
+        return apt.asSize().toLong();
+    }
+
     @INLINE
     @Override
     public final boolean usesTLAB() {
@@ -420,9 +438,26 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         TLAB_MARK.store(etla, end);
 
         if (MaxineVM.isDebug()) {
-            TLABLog.record(etla, Pointer.fromLong(Infopoints.here()), cell, size);
+            doDebugAfterTlabAllocate(etla, cell, size);
         }
+
         return cell;
+    }
+
+    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
+    @NEVER_INLINE
+    private void doDebugAfterTlabAllocate(Pointer etla, Pointer cell, Size size) {
+        TLABLog.record(etla, Pointer.fromLong(Infopoints.here()), cell, size);
+        incrementAllocationCounter(etla, size);
+    }
+
+    @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
+    @INLINE
+    private void incrementAllocationCounter(Pointer etla, Size size) {
+        if (useAllocationCounter) {
+            Pointer apt = ALLOCATION_COUNTER.load(etla);
+            ALLOCATION_COUNTER.store(etla, apt.plus(size));
+        }
     }
 
     @SNIPPET_SLOWPATH
