@@ -268,7 +268,7 @@ public class MaxGraalOptions {
         register(new VMBooleanOption("-G:-", "OmitHotExceptionStacktrace", ""), com.oracle.graal.phases.GraalOptions.class, "OmitHotExceptionStacktrace");
         register(new VMBooleanOption("-G:+", "OptAssumptions", ""), com.oracle.graal.phases.GraalOptions.class, "OptAssumptions");
         register(new VMBooleanOption("-G:+", "OptCanonicalizer", ""), com.oracle.graal.phases.GraalOptions.class, "OptCanonicalizer");
-        register(new VMBooleanOption("-G:+", "OptConvertDeoptsToGuards", ""), com.oracle.graal.phases.GraalOptions.class, "OptConvertDeoptsToGuards");
+        register(new VMBooleanOption("-G:-", "OptConvertDeoptsToGuards", ""), com.oracle.graal.phases.GraalOptions.class, "OptConvertDeoptsToGuards");
         register(new VMBooleanOption("-G:+", "OptDevirtualizeInvokesOptimistically", ""), com.oracle.graal.phases.GraalOptions.class, "OptDevirtualizeInvokesOptimistically");
         register(new VMBooleanOption("-G:+", "OptEliminateGuards", ""), com.oracle.graal.phases.GraalOptions.class, "OptEliminateGuards");
         register(new VMBooleanOption("-G:+", "OptEliminatePartiallyRedundantGuards", ""), com.oracle.graal.phases.GraalOptions.class, "OptEliminatePartiallyRedundantGuards");
