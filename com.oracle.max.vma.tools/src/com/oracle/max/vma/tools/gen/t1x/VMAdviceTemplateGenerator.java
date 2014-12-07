@@ -1053,9 +1053,9 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
             if (tag.equals("")) {
                 out.printf("        return VMAT1XRuntime.selectNonPrivateVirtualMethod(receiver, methodActor).%n");
             } else if (tag.equals("resolved")) {
-                out.printf("        return ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress().%n");
+                out.printf("        return selectVirtualMethod(receiver, methodActor.vTableIndex()).%n");
             } else if (tag.equals("instrumented")) {
-                out.printf("        return selectVirtualMethod(receiver, methodActor.vTableIndex(), mpo, mpoIndex).%n");
+                out.printf("        return selectVirtualMethodInstrumented(receiver, methodActor.vTableIndex(), mpo, mpoIndex).%n");
             }
         }
         out.printf("            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());%n");

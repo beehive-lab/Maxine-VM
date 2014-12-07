@@ -469,7 +469,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
                 asm.jmp(0, true);
             }
         } else {
-            int switchProfileIndex = methodProfileBuilder.NO_INDEX;
+            int switchProfileIndex = methodProfileBuilder.UNDEFINED_INDEX;
             int leaPosProf = methodProfileBuilder.UNDEFINED_POS;
             int afterLeaProf = methodProfileBuilder.UNDEFINED_POS;
 

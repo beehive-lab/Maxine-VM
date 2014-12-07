@@ -119,10 +119,14 @@ public class T1XTemplateSource {
     }
 
     @INLINE
-    public static Address selectVirtualMethod(Object receiver, int vTableIndex, MethodProfile mpo, int mpoIndex) {
-        Hub hub = ObjectAccess.readHub(receiver);
-        Address entryPoint = hub.getWord(vTableIndex).asAddress();
-        MethodInstrumentation.recordType(mpo, hub, mpoIndex, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
+    public static Address selectVirtualMethod(Object receiver, int vTableIndex) {
+        return ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress();
+    }
+
+    @INLINE
+    public static Address selectVirtualMethodInstrumented(Object receiver, int vTableIndex, MethodProfile mpo, int mpoIndex) {
+        Address entryPoint = selectVirtualMethod(receiver, vTableIndex);
+        MethodInstrumentation.recordType(mpo, receiver, mpoIndex, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
         return entryPoint;
     }
 
@@ -975,7 +979,7 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(INVOKEVIRTUAL$float$resolved)
     @Slot(-1)
     public static Address invokevirtualFloat(int vTableIndex, Reference receiver) {
-        return ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress().
+        return selectVirtualMethod(receiver, vTableIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -983,15 +987,15 @@ public class T1XTemplateSource {
      * Selects the correct implementation of a resolved method referenced by an INVOKEVIRTUAL instruction.
      *
      * @param vTableIndex the index into the vtable of the virtual method being invoked
+     * @param receiver the receiver object of the invocation
      * @param mpo the profile object for an instrumented invocation
      * @param mpoIndex a profile specific index
-     * @param receiver the receiver object of the invocation
      * @return the {@link CallEntryPoint#BASELINE_ENTRY_POINT} to be called
      */
     @T1X_TEMPLATE(INVOKEVIRTUAL$float$instrumented)
     @Slot(-1)
-    public static Address invokevirtualFloat(int vTableIndex, MethodProfile mpo, int mpoIndex, Reference receiver) {
-        return selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex).
+    public static Address invokevirtualFloat(int vTableIndex, Reference receiver, MethodProfile mpo, int mpoIndex) {
+        return selectVirtualMethodInstrumented(receiver, vTableIndex, mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -1026,14 +1030,14 @@ public class T1XTemplateSource {
      * Selects the correct implementation of a resolved method referenced by an INVOKEINTERFACE instruction.
      *
      * @param methodActor the resolved interface method being invoked
+     * @param receiver the receiver object of the invocation
      * @param mpo the profile object for an instrumented invocation
      * @param mpoIndex a profile specific index
-     * @param receiver the receiver object of the invocation
      * @return the {@link CallEntryPoint#BASELINE_ENTRY_POINT} to be called
      */
     @T1X_TEMPLATE(INVOKEINTERFACE$float$instrumented)
     @Slot(-1)
-    public static Address invokeinterfaceFloat(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
+    public static Address invokeinterfaceFloat(InterfaceMethodActor methodActor, Reference receiver, MethodProfile mpo, int mpoIndex) {
         return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
@@ -1285,7 +1289,7 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(INVOKEVIRTUAL$long$resolved)
     @Slot(-1)
     public static Address invokevirtualLong(int vTableIndex, Reference receiver) {
-        return ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress().
+        return selectVirtualMethod(receiver, vTableIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -1293,15 +1297,15 @@ public class T1XTemplateSource {
      * Selects the correct implementation of a resolved method referenced by an INVOKEVIRTUAL instruction.
      *
      * @param vTableIndex the index into the vtable of the virtual method being invoked
+     * @param receiver the receiver object of the invocation
      * @param mpo the profile object for an instrumented invocation
      * @param mpoIndex a profile specific index
-     * @param receiver the receiver object of the invocation
      * @return the {@link CallEntryPoint#BASELINE_ENTRY_POINT} to be called
      */
     @T1X_TEMPLATE(INVOKEVIRTUAL$long$instrumented)
     @Slot(-1)
-    public static Address invokevirtualLong(int vTableIndex, MethodProfile mpo, int mpoIndex, Reference receiver) {
-        return selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex).
+    public static Address invokevirtualLong(int vTableIndex, Reference receiver, MethodProfile mpo, int mpoIndex) {
+        return selectVirtualMethodInstrumented(receiver, vTableIndex, mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -1336,14 +1340,14 @@ public class T1XTemplateSource {
      * Selects the correct implementation of a resolved method referenced by an INVOKEINTERFACE instruction.
      *
      * @param methodActor the resolved interface method being invoked
+     * @param receiver the receiver object of the invocation
      * @param mpo the profile object for an instrumented invocation
      * @param mpoIndex a profile specific index
-     * @param receiver the receiver object of the invocation
      * @return the {@link CallEntryPoint#BASELINE_ENTRY_POINT} to be called
      */
     @T1X_TEMPLATE(INVOKEINTERFACE$long$instrumented)
     @Slot(-1)
-    public static Address invokeinterfaceLong(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
+    public static Address invokeinterfaceLong(InterfaceMethodActor methodActor, Reference receiver, MethodProfile mpo, int mpoIndex) {
         return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
@@ -1571,7 +1575,7 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(INVOKEVIRTUAL$double$resolved)
     @Slot(-1)
     public static Address invokevirtualDouble(int vTableIndex, Reference receiver) {
-        return ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress().
+        return selectVirtualMethod(receiver, vTableIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -1579,15 +1583,15 @@ public class T1XTemplateSource {
      * Selects the correct implementation of a resolved method referenced by an INVOKEVIRTUAL instruction.
      *
      * @param vTableIndex the index into the vtable of the virtual method being invoked
+     * @param receiver the receiver object of the invocation
      * @param mpo the profile object for an instrumented invocation
      * @param mpoIndex a profile specific index
-     * @param receiver the receiver object of the invocation
      * @return the {@link CallEntryPoint#BASELINE_ENTRY_POINT} to be called
      */
     @T1X_TEMPLATE(INVOKEVIRTUAL$double$instrumented)
     @Slot(-1)
-    public static Address invokevirtualDouble(int vTableIndex, MethodProfile mpo, int mpoIndex, Reference receiver) {
-        return selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex).
+    public static Address invokevirtualDouble(int vTableIndex, Reference receiver, MethodProfile mpo, int mpoIndex) {
+        return selectVirtualMethodInstrumented(receiver, vTableIndex, mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -1622,14 +1626,14 @@ public class T1XTemplateSource {
      * Selects the correct implementation of a resolved method referenced by an INVOKEINTERFACE instruction.
      *
      * @param methodActor the resolved interface method being invoked
+     * @param receiver the receiver object of the invocation
      * @param mpo the profile object for an instrumented invocation
      * @param mpoIndex a profile specific index
-     * @param receiver the receiver object of the invocation
      * @return the {@link CallEntryPoint#BASELINE_ENTRY_POINT} to be called
      */
     @T1X_TEMPLATE(INVOKEINTERFACE$double$instrumented)
     @Slot(-1)
-    public static Address invokeinterfaceDouble(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
+    public static Address invokeinterfaceDouble(InterfaceMethodActor methodActor, Reference receiver, MethodProfile mpo, int mpoIndex) {
         return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
@@ -1807,7 +1811,7 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(INVOKEVIRTUAL$reference$resolved)
     @Slot(-1)
     public static Address invokevirtualObject(int vTableIndex, Reference receiver) {
-        return ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress().
+        return selectVirtualMethod(receiver, vTableIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -1815,15 +1819,15 @@ public class T1XTemplateSource {
      * Selects the correct implementation of a resolved method referenced by an INVOKEVIRTUAL instruction.
      *
      * @param vTableIndex the index into the vtable of the virtual method being invoked
+     * @param receiver the receiver object of the invocation
      * @param mpo the profile object for an instrumented invocation
      * @param mpoIndex a profile specific index
-     * @param receiver the receiver object of the invocation
      * @return the {@link CallEntryPoint#BASELINE_ENTRY_POINT} to be called
      */
     @T1X_TEMPLATE(INVOKEVIRTUAL$reference$instrumented)
     @Slot(-1)
-    public static Address invokevirtualObject(int vTableIndex, MethodProfile mpo, int mpoIndex, Reference receiver) {
-        return selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex).
+    public static Address invokevirtualObject(int vTableIndex, Reference receiver, MethodProfile mpo, int mpoIndex) {
+        return selectVirtualMethodInstrumented(receiver, vTableIndex, mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -1858,14 +1862,14 @@ public class T1XTemplateSource {
      * Selects the correct implementation of a resolved method referenced by an INVOKEINTERFACE instruction.
      *
      * @param methodActor the resolved interface method being invoked
+     * @param receiver the receiver object of the invocation
      * @param mpo the profile object for an instrumented invocation
      * @param mpoIndex a profile specific index
-     * @param receiver the receiver object of the invocation
      * @return the {@link CallEntryPoint#BASELINE_ENTRY_POINT} to be called
      */
     @T1X_TEMPLATE(INVOKEINTERFACE$reference$instrumented)
     @Slot(-1)
-    public static Address invokeinterfaceObject(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
+    public static Address invokeinterfaceObject(InterfaceMethodActor methodActor, Reference receiver, MethodProfile mpo, int mpoIndex) {
         return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
@@ -2016,7 +2020,7 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(INVOKEVIRTUAL$word$resolved)
     @Slot(-1)
     public static Address invokevirtualWord(int vTableIndex, Reference receiver) {
-        return ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress().
+        return selectVirtualMethod(receiver, vTableIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -2024,15 +2028,15 @@ public class T1XTemplateSource {
      * Selects the correct implementation of a resolved method referenced by an INVOKEVIRTUAL instruction.
      *
      * @param vTableIndex the index into the vtable of the virtual method being invoked
+     * @param receiver the receiver object of the invocation
      * @param mpo the profile object for an instrumented invocation
      * @param mpoIndex a profile specific index
-     * @param receiver the receiver object of the invocation
      * @return the {@link CallEntryPoint#BASELINE_ENTRY_POINT} to be called
      */
     @T1X_TEMPLATE(INVOKEVIRTUAL$word$instrumented)
     @Slot(-1)
-    public static Address invokevirtualWord(int vTableIndex, MethodProfile mpo, int mpoIndex, Reference receiver) {
-        return selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex).
+    public static Address invokevirtualWord(int vTableIndex, Reference receiver, MethodProfile mpo, int mpoIndex) {
+        return selectVirtualMethodInstrumented(receiver, vTableIndex, mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -2067,14 +2071,14 @@ public class T1XTemplateSource {
      * Selects the correct implementation of a resolved method referenced by an INVOKEINTERFACE instruction.
      *
      * @param methodActor the resolved interface method being invoked
+     * @param receiver the receiver object of the invocation
      * @param mpo the profile object for an instrumented invocation
      * @param mpoIndex a profile specific index
-     * @param receiver the receiver object of the invocation
      * @return the {@link CallEntryPoint#BASELINE_ENTRY_POINT} to be called
      */
     @T1X_TEMPLATE(INVOKEINTERFACE$word$instrumented)
     @Slot(-1)
-    public static Address invokeinterfaceWord(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
+    public static Address invokeinterfaceWord(InterfaceMethodActor methodActor, Reference receiver, MethodProfile mpo, int mpoIndex) {
         return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
@@ -2140,7 +2144,7 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(INVOKEVIRTUAL$void$resolved)
     @Slot(-1)
     public static Address invokevirtualVoid(int vTableIndex, Reference receiver) {
-        return ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress().
+        return selectVirtualMethod(receiver, vTableIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -2148,15 +2152,15 @@ public class T1XTemplateSource {
      * Selects the correct implementation of a resolved method referenced by an INVOKEVIRTUAL instruction.
      *
      * @param vTableIndex the index into the vtable of the virtual method being invoked
+     * @param receiver the receiver object of the invocation
      * @param mpo the profile object for an instrumented invocation
      * @param mpoIndex a profile specific index
-     * @param receiver the receiver object of the invocation
      * @return the {@link CallEntryPoint#BASELINE_ENTRY_POINT} to be called
      */
     @T1X_TEMPLATE(INVOKEVIRTUAL$void$instrumented)
     @Slot(-1)
-    public static Address invokevirtualVoid(int vTableIndex, MethodProfile mpo, int mpoIndex, Reference receiver) {
-        return selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex).
+    public static Address invokevirtualVoid(int vTableIndex, Reference receiver, MethodProfile mpo, int mpoIndex) {
+        return selectVirtualMethodInstrumented(receiver, vTableIndex, mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -2191,14 +2195,14 @@ public class T1XTemplateSource {
      * Selects the correct implementation of a resolved method referenced by an INVOKEINTERFACE instruction.
      *
      * @param methodActor the resolved interface method being invoked
+     * @param receiver the receiver object of the invocation
      * @param mpo the profile object for an instrumented invocation
      * @param mpoIndex a profile specific index
-     * @param receiver the receiver object of the invocation
      * @return the {@link CallEntryPoint#BASELINE_ENTRY_POINT} to be called
      */
     @T1X_TEMPLATE(INVOKEINTERFACE$void$instrumented)
     @Slot(-1)
-    public static Address invokeinterfaceVoid(InterfaceMethodActor methodActor, MethodProfile mpo, int mpoIndex, Reference receiver) {
+    public static Address invokeinterfaceVoid(InterfaceMethodActor methodActor, Reference receiver, MethodProfile mpo, int mpoIndex) {
         return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
@@ -2311,15 +2315,22 @@ public class T1XTemplateSource {
         return Reference.fromJava(array);
     }
 
+    @T1X_TEMPLATE(CHECKCAST)
+    public static Object checkcast(ResolutionGuard guard, @Slot(0) Object object) {
+        resolveAndCheckcast(guard, object);
+        return object;
+    }
+
     @T1X_TEMPLATE(CHECKCAST$resolved)
     public static Object checkcast(ClassActor classActor, @Slot(0) Object object) {
         Snippets.checkCast(classActor, object);
         return object;
     }
 
-    @T1X_TEMPLATE(CHECKCAST)
-    public static Object checkcast(ResolutionGuard guard, @Slot(0) Object object) {
-        resolveAndCheckcast(guard, object);
+    @T1X_TEMPLATE(CHECKCAST$instrumented)
+    public static Object checkcast(ClassActor classActor, @Slot(0) Object object, MethodProfile mpo, int mpoIndex) {
+        MethodInstrumentation.recordType(mpo, object, mpoIndex, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
+        Snippets.checkCast(classActor, object);
         return object;
     }
 
@@ -2364,6 +2375,12 @@ public class T1XTemplateSource {
 
     @T1X_TEMPLATE(INSTANCEOF$resolved)
     public static int instanceof_(ClassActor classActor, @Slot(0) Object object) {
+        return UnsafeCast.asByte(Snippets.instanceOf(classActor, object));
+    }
+
+    @T1X_TEMPLATE(INSTANCEOF$instrumented)
+    public static int instanceof_(ClassActor classActor, @Slot(0) Object object, MethodProfile mpo, int mpoIndex) {
+        MethodInstrumentation.recordType(mpo, object, mpoIndex, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
         return UnsafeCast.asByte(Snippets.instanceOf(classActor, object));
     }
 

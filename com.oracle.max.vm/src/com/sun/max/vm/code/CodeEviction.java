@@ -1653,7 +1653,7 @@ public final class CodeEviction extends VmOperation {
             Log.print(". ");
             Log.print(tm);
             Log.print(" - invocations: ");
-            Log.println(MethodInstrumentation.initialEntryCount - tm.profile().entryCount);
+            Log.println(MethodInstrumentation.initialEntryBackedgeCount - tm.profile().entryBackedgeCount);
         }
 
         @Override

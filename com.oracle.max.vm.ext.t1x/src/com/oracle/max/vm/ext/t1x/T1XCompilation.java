@@ -1327,7 +1327,7 @@ public abstract class T1XCompilation {
 
     void do_profileMethodEntry() {
         if (methodProfileBuilder != null) {
-            methodProfileBuilder.addEntryCounter(MethodInstrumentation.initialEntryCount);
+            methodProfileBuilder.addEntryBackedgeCounter(MethodInstrumentation.initialEntryBackedgeCount);
             if (method.isStatic()) {
                 start(PROFILE_STATIC_METHOD_ENTRY);
                 assignObject(0, "mpo", methodProfileBuilder.methodProfileObject());
@@ -1593,7 +1593,7 @@ public abstract class T1XCompilation {
         if (methodProfileBuilder != null) {
             return methodProfileBuilder.addSwitchProfile(bci, numberOfCases);
         }
-        return methodProfileBuilder.NO_INDEX;
+        return methodProfileBuilder.UNDEFINED_INDEX;
     }
 
     /**
@@ -1603,7 +1603,7 @@ public abstract class T1XCompilation {
      */
     protected void do_ProfileSwitchDefault(int switchProfileIndex, int numberOfCases) {
         if (methodProfileBuilder != null) {
-            assert switchProfileIndex != methodProfileBuilder.NO_INDEX;
+            assert switchProfileIndex != methodProfileBuilder.UNDEFINED_INDEX;
 
             start(PROFILE_SWITCH_DEFAULT);
             assignObject(0, "mpo", methodProfileBuilder.methodProfileObject());
@@ -1620,7 +1620,7 @@ public abstract class T1XCompilation {
      */
     protected void do_ProfileSwitchCase(int switchProfileIndex, CiRegister caseRegister) {
         if (methodProfileBuilder != null) {
-            assert switchProfileIndex != methodProfileBuilder.NO_INDEX;
+            assert switchProfileIndex != methodProfileBuilder.UNDEFINED_INDEX;
 
             start(PROFILE_SWITCH_CASE);
             assignObject(0, "mpo", methodProfileBuilder.methodProfileObject());
@@ -1697,6 +1697,21 @@ public abstract class T1XCompilation {
 
     }
 
+    protected void assignInvokeTemplatesProfileInstrumentationParameters() {
+        if (methodProfileBuilder != null) {
+            int bci = stream.currentBCI();
+            int mpoIndex = methodProfileBuilder.addTypeProfile(bci, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
+            assignObject(2, "mpo", methodProfileBuilder.methodProfileObject());
+            assignInt(3, "mpoIndex", mpoIndex);
+        }
+    }
+
+    protected void assignInvokeInterfaceTemplateParameters(MethodActor interfaceMethod, int receiverStackIndex) {
+        assignObject(0, "methodActor", interfaceMethod);
+        peekObject(1, "receiver", receiverStackIndex);
+        assignInvokeTemplatesProfileInstrumentationParameters();
+    }
+
     /*
      * The following three methods exist to be overridden by the VMA extension.
      * They permit flexibility in the form of the templates for the INVOKE bytecodes
@@ -1707,6 +1722,7 @@ public abstract class T1XCompilation {
     protected void assignInvokeVirtualTemplateParameters(VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
         assignInt(0, "vTableIndex", virtualMethodActor.vTableIndex());
         peekObject(1, "receiver", receiverStackIndex);
+        assignInvokeTemplatesProfileInstrumentationParameters();
     }
 
     protected void do_invokespecial_resolved(T1XTemplateTag tag, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
@@ -1745,11 +1761,12 @@ public abstract class T1XCompilation {
                         finishCall(tag, kind, safepoint, virtualMethodActor);
                         return;
                     }
-                    // emit an unprofiled virtual dispatch
-                    start(tag.resolved);
+                    // emit a virtual dispatch
+                    start(methodProfileBuilder == null ? tag.resolved : tag.instrumented);
                     CiRegister target = template.sig.out.reg;
                     assignInvokeVirtualTemplateParameters(virtualMethodActor, receiverStackIndex);
                     finish();
+
                     int safepoint = callIndirect(target, receiverStackIndex);
                     finishCall(tag, kind, safepoint, null);
                     return;
@@ -1790,10 +1807,9 @@ public abstract class T1XCompilation {
                     if (processIntrinsic(interfaceMethod)) {
                         return;
                     }
-                    start(tag.resolved);
+                    start(methodProfileBuilder == null ? tag.resolved : tag.instrumented);
                     CiRegister target = template.sig.out.reg;
-                    assignObject(0, "methodActor", interfaceMethod);
-                    peekObject(1, "receiver", receiverStackIndex);
+                    assignInvokeInterfaceTemplateParameters(interfaceMethod, receiverStackIndex);
                     finish();
 
                     int safepoint = callIndirect(target, receiverStackIndex);
@@ -1920,9 +1936,10 @@ public abstract class T1XCompilation {
     protected void do_instanceof(int cpi) {
         ClassConstant classConstant = cp.classAt(cpi);
         if (classConstant.isResolvableWithoutClassLoading(cp)) {
-            start(INSTANCEOF$resolved);
+            start(methodProfileBuilder == null ? INSTANCEOF$resolved : INSTANCEOF$instrumented);
             ClassActor resolvedClassActor = classConstant.resolve(cp, cpi);
             assignObject(0, "classActor", resolvedClassActor);
+            assignInvokeTemplatesProfileInstrumentationParameters();
             finish();
         } else {
             start(INSTANCEOF);
@@ -1934,8 +1951,9 @@ public abstract class T1XCompilation {
     protected void do_checkcast(int cpi) {
         ClassConstant classConstant = cp.classAt(cpi);
         if (classConstant.isResolvableWithoutClassLoading(cp)) {
-            start(CHECKCAST$resolved);
+            start(methodProfileBuilder == null ? CHECKCAST$resolved : CHECKCAST$instrumented);
             assignObject(0, "classActor", classConstant.resolve(cp, cpi));
+            assignInvokeTemplatesProfileInstrumentationParameters();
             finish();
         } else {
             start(CHECKCAST);

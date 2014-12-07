@@ -507,6 +507,10 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
         return kinds;
     }
 
+    public final CiConstant getEncoding() {
+        return CiConstant.forObject(this);
+    }
+
     public final int accessFlags() {
         return flags() & JAVA_METHOD_FLAGS;
     }

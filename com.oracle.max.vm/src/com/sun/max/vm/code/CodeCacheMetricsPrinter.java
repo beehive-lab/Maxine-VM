@@ -110,7 +110,7 @@ public final class CodeCacheMetricsPrinter {
             MethodProfile profile = targetMethod.profile();
             int invocations = 0;
             if (profile != null) {
-                invocations = MethodInstrumentation.initialEntryCount - profile.entryCount;
+                invocations = MethodInstrumentation.initialEntryBackedgeCount - profile.entryBackedgeCount;
             }
             String type = targetMethod.getClass().getSimpleName();
             add(metrics, type, bcSize, mcSize, invocations);

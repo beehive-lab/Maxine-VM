@@ -637,6 +637,20 @@ public class VmThreadLocal implements FormatWithToString {
     }
 
     /**
+     * Checks store address.
+     *
+     * @param etla this must be the value of the {@link #ETLA} thread local
+     */
+    @NEVER_INLINE
+    private void storeCheckAddress(Pointer etla) {
+        if (nature != Nature.Single || !etla.readWord(ETLA.offset).equals(etla)) {
+            Log.print("Triple thread local being stored to as a single: ");
+            Log.println(name);
+            FatalError.unexpected("Triple thread local updated as a single");
+        }
+    }
+
+    /**
      * Stores the value of this {@linkplain Nature#Single single} variable.
      *
      * This operation is a single store.
@@ -647,11 +661,7 @@ public class VmThreadLocal implements FormatWithToString {
     @INLINE
     public final void store(Pointer etla, Reference value) {
         if (MaxineVM.isDebug()) {
-            if (nature != Nature.Single || !etla.readWord(ETLA.offset).equals(etla)) {
-                Log.print("Triple thread local being stored to as a single: ");
-                Log.println(name);
-                FatalError.unexpected("Triple thread local updated as a single");
-            }
+            storeCheckAddress(etla);
         }
         etla.setReference(index, value);
     }
@@ -667,11 +677,7 @@ public class VmThreadLocal implements FormatWithToString {
     @INLINE
     public final void store(Pointer etla, Word value) {
         if (MaxineVM.isDebug()) {
-            if (nature != Nature.Single || !etla.readWord(ETLA.offset).equals(etla)) {
-                Log.print("Triple thread local being stored to as a single: ");
-                Log.println(name);
-                FatalError.unexpected("Triple thread local updated as a single");
-            }
+            storeCheckAddress(etla);
         }
         etla.setWord(index, value);
     }

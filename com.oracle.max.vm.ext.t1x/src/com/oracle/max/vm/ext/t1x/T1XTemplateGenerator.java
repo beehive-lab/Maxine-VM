@@ -899,39 +899,48 @@ public class T1XTemplateGenerator {
      * Generate all the {@link #CHECKCAST_TEMPLATE_TAGS}.
      */
     public void generateCheckcastTemplates() {
-        generateCheckcastTemplate("resolved");
         generateCheckcastTemplate("");
+        generateCheckcastTemplate("resolved");
+        generateCheckcastTemplate("instrumented");
         generateResolveAndCheckCast();
     }
 
     /**
      * Generate the requested {@code CHECKCAST} template.
-     * @param resolved if "" generate {@code CHECKCAST} template, else {@code CHECKCAST$resolved}.
+     * @param resolved if "" generate {@code CHECKCAST} template, else if "resolved" {@code CHECKCAST$resolved},
+     *                 else if "instrumented" {@code CHECKCAST$instrumented},
      */
     public void generateCheckcastTemplate(String resolved) {
         String t;
         String m;
-        boolean isResolved = resolved.equals("resolved");
-        String arg = isResolved ? "classActor" : "guard";
-
-        if (!isResolved) {
+        String extraParams = "";
+        boolean isNotResolved = resolved.equals("");
+        String arg = !isNotResolved ? "classActor" : "guard";
+        boolean isInstrumented = resolved.equals("instrumented");
+        if (isNotResolved) {
             t = "ResolutionGuard";
             m = "resolveAndCheckcast";
         } else {
             t = "ClassActor";
             m = "Snippets.checkCast";
         }
+        if (isInstrumented) {
+            extraParams += ", MethodProfile mpo, int mpoIndex";
+        }
         startMethodGeneration();
         generateTemplateTag("CHECKCAST%s", prefixDollar(resolved));
-        out.printf("    public static Object checkcast(%s %s, @Slot(0) Object object%s) {%n", t, arg, suffixParams(true));
-        if (isResolved) {
+        out.printf("    public static Object checkcast(%s %s, @Slot(0) Object object%s%s) {%n", t, arg, suffixParams(true), extraParams);
+        if (!isNotResolved) {
             generateBeforeAdvice(NULL_ARGS);
         }
-        out.printf("        %s(%s, object%s);%n", m, arg, !isResolved ? suffixArgs(true) : "");
+        if (isInstrumented) {
+            out.printf("        MethodInstrumentation.recordType(mpo, object, mpoIndex, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);%n");
+        }
+        out.printf("        %s(%s, object%s);%n", m, arg, isNotResolved ? suffixArgs(true) : "");
         out.printf("        return object;%n", m, arg);
         out.printf("    }%n");
         newLine();
-        if (isResolved) {
+        if (!isNotResolved) {
             endTemplateMethodGeneration();
         }
     }
@@ -956,27 +965,38 @@ public class T1XTemplateGenerator {
     public void generateInstanceofTemplates() {
         generateInstanceofTemplate("");
         generateInstanceofTemplate("resolved");
+        generateInstanceofTemplate("instrumented");
     }
 
     /**
      * Generate the requested {@code INSTANCEOF} template.
-     * @param resolved if "" generate {@code INSTANCEOF} template, else {@code INSTANCEOF$resolved}.
+     * @param resolved if "" generate {@code INSTANCEOF} template, else if "resolved" {@code INSTANCEOF$resolved},
+     *                 else if "instrumented" {@code INSTANCEOF$instrumented}.
      */
     public void generateInstanceofTemplate(String resolved) {
         String t;
         String v;
-        if (resolved.equals("")) {
+        String extraParams = "";
+        boolean isNotResolved = resolved.equals("");
+        boolean isInstrumented = resolved.equals("instrumented");
+        if (isNotResolved) {
             t = "ResolutionGuard";
             v = "guard";
         } else {
             t = "ClassActor";
             v = "classActor";
         }
+        if (isInstrumented) {
+            extraParams += ", MethodProfile mpo, int mpoIndex";
+        }
         startMethodGeneration();
         generateTemplateTag("INSTANCEOF%s", prefixDollar(resolved));
-        out.printf("    public static int instanceof_(%s %s, @Slot(0) Object object%s) {%n", t, v, suffixParams(true));
-        if (resolved.equals("")) {
+        out.printf("    public static int instanceof_(%s %s, @Slot(0) Object object%s%s) {%n", t, v, suffixParams(true), extraParams);
+        if (isNotResolved) {
             out.printf("        ClassActor classActor = Snippets.resolveClass(guard);%n");
+        }
+        if (isInstrumented) {
+            out.printf("        MethodInstrumentation.recordType(mpo, object, mpoIndex, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);%n");
         }
         generateBeforeAdvice(NULL_ARGS);
         out.printf("        return UnsafeCast.asByte(Snippets.instanceOf(classActor, object));%n");
@@ -1139,8 +1159,9 @@ public class T1XTemplateGenerator {
      */
     public void generateInvokeVITemplate(Kind k, String variant, boolean instrumented) {
         String params = variant.equals("interface") ? "InterfaceMethodActor methodActor" : "int vTableIndex";
+        String extraParams = "";
         if (instrumented) {
-            params += ", MethodProfile mpo, int mpoIndex";
+            extraParams += ", MethodProfile mpo, int mpoIndex";
         }
         startMethodGeneration();
         out.printf("    /**%n");
@@ -1151,16 +1172,16 @@ public class T1XTemplateGenerator {
         } else {
             out.printf("     * @param vTableIndex the index into the vtable of the virtual method being invoked%n");
         }
+        out.printf("     * @param receiver the receiver object of the invocation%n");
         if (instrumented) {
             out.printf("     * @param mpo the profile object for an instrumented invocation%n");
             out.printf("     * @param mpoIndex a profile specific index%n");
         }
-        out.printf("     * @param receiver the receiver object of the invocation%n");
         out.printf("     * @return the {@link CallEntryPoint#BASELINE_ENTRY_POINT} to be called%n");
         out.printf("     */%n");
         generateTemplateTag("INVOKE%s$%s%s", variant.toUpperCase(), lr(k), instrumented ? "$instrumented" : "$resolved");
         out.printf("    @Slot(-1)%n");
-        out.printf("    public static Address invoke%s%s(%s, Reference receiver%s) {%n", variant, u(k), params, suffixParams(true));
+        out.printf("    public static Address invoke%s%s(%s, Reference receiver%s%s) {%n", variant, u(k), params, suffixParams(true), extraParams);
         generateBeforeAdvice(k, variant);
         if (variant.equals("interface")) {
             if (!instrumented) {
@@ -1170,9 +1191,9 @@ public class T1XTemplateGenerator {
             }
         } else {
             if (!instrumented) {
-                out.printf("        return ObjectAccess.readHub(receiver).getWord(vTableIndex).asAddress().%n");
+                out.printf("        return selectVirtualMethod(receiver, vTableIndex).%n");
             } else {
-                out.printf("        return selectVirtualMethod(receiver, vTableIndex, mpo, mpoIndex).%n");
+                out.printf("        return selectVirtualMethodInstrumented(receiver, vTableIndex, mpo, mpoIndex).%n");
             }
         }
         out.printf("            plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());%n");

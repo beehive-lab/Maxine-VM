@@ -144,9 +144,8 @@ public class Snippets {
 
     @INLINE
     public static Address selectInterfaceMethod(Object receiver, InterfaceMethodActor interfaceMethodActor, MethodProfile mpo, int mpoIndex) {
-        Hub hub = ObjectAccess.readHub(receiver);
         Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
-        MethodInstrumentation.recordType(mpo, hub, mpoIndex, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
+        MethodInstrumentation.recordType(mpo, receiver, mpoIndex, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
         return entryPoint;
     }
 
