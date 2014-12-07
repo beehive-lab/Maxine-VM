@@ -86,10 +86,45 @@ public class MaxProfilingInfo implements ProfilingInfo {
     }
 
     @Override
-    public JavaTypeProfile getTypeProfile(int bci) { return null; }
+    public JavaTypeProfile getTypeProfile(int bci) {
+        Integer[] typeProfile = methodProfile.getTypeProfile(bci);
+        if (typeProfile == null) {
+            return null;
+        }
+        TriState nullSeen = TriState.get(methodProfile.getNullSeen(bci) > 0);
+        int typesNum = typeProfile.length / 2;
+        boolean isAnonymousTypeRecorded = false;
+        double anonymousRecordedTypeProbability = 0;
+        Long totalCount = 0L;
+        for (int i = 0; i < typesNum; i++) {
+            totalCount += typeProfile[i * 2 + 1];
+            if (typeProfile[i * 2] == MethodProfile.UNDEFINED_TYPE_ID) {
+                isAnonymousTypeRecorded = true;
+            }
+        }
+        assert totalCount > 0;
+        JavaTypeProfile.ProfiledType[] profiledTypes =
+            new JavaTypeProfile.ProfiledType[typesNum - (isAnonymousTypeRecorded ? 1 : 0)];
+        int j = 0;
+        for (int i = 0; i < typesNum; i++) {
+            Integer typeId = typeProfile[i * 2];
+            Integer typeCount = typeProfile[i * 2  + 1];
+            if (typeId == MethodProfile.UNDEFINED_TYPE_ID) {
+                anonymousRecordedTypeProbability = typeCount / totalCount.doubleValue();
+            } else {
+                ClassActor classActor = ClassIDManager.toClassActor(typeId);
+                ResolvedJavaType javaType = MaxResolvedJavaType.get(classActor);
+                profiledTypes[j] = new JavaTypeProfile.ProfiledType(javaType, typeCount / totalCount.doubleValue());
+                j++;
+            }
+        }
+        Arrays.sort(profiledTypes);
+        return new JavaTypeProfile(nullSeen, anonymousRecordedTypeProbability, profiledTypes);
+    }
 
     @Override
     public JavaMethodProfile getMethodProfile(int bci) {
+        // TODO: implement when method profile information is utilzied in Graal
         return null;
     }
 
@@ -110,12 +145,17 @@ public class MaxProfilingInfo implements ProfilingInfo {
 
     @Override
     public TriState getNullSeen(int bci) {
-        return TriState.UNKNOWN;
+        int profiledTypesNum = methodProfile.getProfiledTypesNum(bci);
+        if (profiledTypesNum == 0) {
+            return TriState.UNKNOWN;
+        }
+        int nullSeen = methodProfile.getNullSeen(bci);
+        return TriState.get(nullSeen > 0);
     }
 
     @Override
     public int getExecutionCount(int bci) {
-        return -1;
+        return methodProfile.getExecutionCount(bci);
     }
 
     @Override
@@ -125,7 +165,7 @@ public class MaxProfilingInfo implements ProfilingInfo {
 
     @Override
     public boolean isMature() {
-        return false;
+        return true;
     }
 
     @Override
