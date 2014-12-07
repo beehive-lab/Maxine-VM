@@ -33,6 +33,7 @@ import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.RuntimeCompiler;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.profile.MethodProfile;
 
@@ -142,6 +143,15 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
                         cma.codeAttribute() == null ? -1 : cma.codeAttribute().lineNumberTable().findLineNumber(bci));
     }
 
+    public MethodProfile getBaselineMethodCollectedProfilingInfo() {
+        ClassMethodActor cma = (ClassMethodActor) riResolvedMethod();
+        TargetMethod tm = Compilations.currentTargetMethod(cma.compiledState, RuntimeCompiler.Nature.BASELINE);
+        if (tm == null || tm.profile() == null || tm.profile().rawData() == null) {
+            return null;
+        }
+        return tm.profile();
+    }
+
     @Override
     public ProfilingInfo getProfilingInfo() {
         ClassMethodActor ma = (ClassMethodActor) riResolvedMethod();
@@ -149,13 +159,10 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
         MethodProfile methodProfile = null;
 
         if (GraalOptions.UseProfilingInformation.getValue()) {
-            TargetMethod tm = ma.currentTargetMethod();
-            if (tm != null) {
-                methodProfile = tm.profile();
-            }
+            methodProfile = getBaselineMethodCollectedProfilingInfo();
         }
 
-        if (methodProfile == null || methodProfile.rawData() == null) {
+        if (methodProfile == null) {
             info = DefaultProfilingInfo.get(ProfilingInfo.TriState.FALSE);
         } else {
             info = new MaxProfilingInfo(methodProfile, this);
