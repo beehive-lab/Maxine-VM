@@ -154,6 +154,11 @@
     <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable all checks"/>
   </module>
   <module name="SuppressionCommentFilter">
+    <property name="offCommentFormat" value="// START GENERATED CODE"/>
+    <property name="onCommentFormat" value="// END GENERATED CODE"/>
+    <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable all checks for generated code"/>
+  </module>
+  <module name="SuppressionCommentFilter">
     <property name="offCommentFormat" value="// START GENERATED RAW ASSEMBLER METHODS"/>
     <property name="onCommentFormat" value="// END GENERATED RAW ASSEMBLER METHODS"/>
     <metadata name="com.atlassw.tools.eclipse.checkstyle.comment" value="Disable all checks for generated raw assembler methods"/>
