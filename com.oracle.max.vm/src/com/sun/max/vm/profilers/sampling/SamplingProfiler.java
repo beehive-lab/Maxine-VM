@@ -25,6 +25,7 @@ package com.sun.max.vm.profilers.sampling;
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.program.ProgramError;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.runtime.*;
@@ -69,6 +70,18 @@ public final class SamplingProfiler extends Thread {
      * The default depth is quite large mostly because of the depth of the current monitor lock acquisition call stack.
      */
     private static final int DEFAULT_DEPTH = 4;
+    /**
+     * The default flat argument.
+     */
+    private static final boolean DEFAULT_FLAT = true;
+    /**
+     * The default sort argument.
+     */
+    private static final boolean DEFAULT_SORT = true;
+    /**
+     * The default systhreads argument.
+     */
+    private static final boolean DEFAULT_SYSTHREADS = false;
 
     private static final Random rand = new Random();
     /**
@@ -174,7 +187,10 @@ public final class SamplingProfiler extends Thread {
         int stackDepth = 0;
         int dumpPeriod = 0;
         boolean sortedOutputOptionSet = false;
-        boolean flatOptionSet = false;
+
+        flat = DEFAULT_FLAT;
+        sortedOutput = DEFAULT_SORT;
+        trackSystemThreads = DEFAULT_SYSTHREADS;
         if (optionValue.length() > 0) {
             if (optionValue.charAt(0) == ':') {
                 String[] options = optionValue.substring(1).split(",");
@@ -192,10 +208,11 @@ public final class SamplingProfiler extends Thread {
                         logSampleTimes = true;
                     } else if (option.startsWith("systhreads")) {
                         trackSystemThreads = getBoolOption(option);
-                    } else if (option.equals("sort")) {
-                        sortedOutputOptionSet = getBoolOption(option);
+                    } else if (option.startsWith("sort")) {
+                        sortedOutputOptionSet = true;
+                        sortedOutput = getBoolOption(option);
                     } else if (option.startsWith("flat")) {
-                        flatOptionSet = getBoolOption(option);
+                        flat = getBoolOption(option);
                     } else {
                         usage();
                     }
@@ -204,11 +221,11 @@ public final class SamplingProfiler extends Thread {
                 usage();
             }
         }
-        // if sort option is set, honor it, otherwise default based on dump
-        sortedOutput = sortedOutputOptionSet ? true : dumpPeriod == 0;
-        flat = flatOptionSet ? true : dumpPeriod == 0;
+        // the default value is true unless dump is non-zero, as the sorting incurs both CPU and allocation overhead.
+        if (sortedOutputOptionSet == false && dumpPeriod != 0) {
+            sortedOutput = false;
+        }
         if (flat) {
-            sortedOutput = true;
             stackDepth = 1;
         }
         create(frequency, stackDepth, dumpPeriod);
@@ -280,6 +297,7 @@ public final class SamplingProfiler extends Thread {
                     }
                 }
             } catch (InterruptedException ex) {
+                throw ProgramError.unexpected("SamplingProfiler failed");
             }
         }
     }
@@ -411,6 +429,11 @@ public final class SamplingProfiler extends Thread {
         ClassMethodActor classMethodActor;
         int lineNumber;  // < 0 if unknown
 
+        StackElement() {
+            classMethodActor = null;
+            lineNumber = -1;
+        }
+
         void print() {
             printName();
             Log.print('(');
@@ -503,7 +526,9 @@ public final class SamplingProfiler extends Thread {
             final StackInfo result = new StackInfo(depth);
             for (int i = 0; i < result.stack.length; i++) {
                 ClassMethodActor cm = this.stack[i].classMethodActor;
-                assert cm != null;
+                if (cm == null) {
+                    break;
+                }
                 result.stack[i].classMethodActor = cm;
                 result.stack[i].lineNumber = this.stack[i].lineNumber;
             }
@@ -532,6 +557,9 @@ public final class SamplingProfiler extends Thread {
                 final StackInfo stackInfo = entry.getKey();
                 final List<ThreadSample> threadSampleList = entry.getValue();
                 for (StackElement se : stackInfo.stack) {
+                    if (se.classMethodActor == null) {
+                        break;
+                    }
                     se.print();
                 }
                 for (ThreadSample ti : threadSampleList) {
@@ -582,6 +610,9 @@ public final class SamplingProfiler extends Thread {
                     printPercentage(p100);
                     Log.println(")");
                     for (StackElement se : countedStackInfo.stack) {
+                        if (se.classMethodActor == null) {
+                            break;
+                        }
                         se.print();
                     }
                 }
