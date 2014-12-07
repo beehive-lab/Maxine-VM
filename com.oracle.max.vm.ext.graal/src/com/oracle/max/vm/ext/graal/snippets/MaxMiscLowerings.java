@@ -37,8 +37,10 @@ import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.sun.max.annotate.*;
+import com.sun.max.program.ProgramError;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.RuntimeCompiler;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.runtime.*;
@@ -152,8 +154,13 @@ public class MaxMiscLowerings extends SnippetLowerings {
                     }
                 }
             } else {
+                if (tool.getLoweringType() == Lowerable.LoweringType.BEFORE_GUARDS) {
+                    // deoptState is not ready on that stage
+                    return;
+                }
+                ProgramError.check(node.getDeoptimizationState() != null, "Deoptimization state is null");
                 // In the normal case, there is no state to pass other than (this) methodActor to be deoptimized.
-                args = createAndAddConst(snippetInfo, "methodActor", methodActor);
+                args = createAndAddConst(snippetInfo, "deoptState", node.getDeoptimizationState());
             }
             instantiate(node, args, tool);
         }
@@ -226,17 +233,23 @@ public class MaxMiscLowerings extends SnippetLowerings {
      * Called to explicitly deoptimize the given method.
      */
     @SNIPPET_SLOWPATH
-    private static void deoptimize(ClassMethodActor methodActor) {
-        TargetMethod tm = methodActor.currentTargetMethod();
-        ArrayList<TargetMethod> tms = new ArrayList<>(1);
-        tms.add(tm);
+    private static void deoptimize(FrameState deoptState) {
+        ArrayList<TargetMethod> tms = new ArrayList<TargetMethod>(0);
+        for (FrameState frame = deoptState; frame != null; frame = frame.outerFrameState()) {
+            ClassMethodActor ma = (ClassMethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(frame.method());
+            TargetMethod tm = Compilations.currentTargetMethod(ma.compiledState, RuntimeCompiler.Nature.OPT);
+            if (tm != null) {
+                assert tm.invalidated() == null;
+                tms.add(tm);
+            }
+        }
         new Deoptimization(tms).go();
         // on return it will all happen!
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
-    private static void deoptimizeSnippet(@ConstantParameter ClassMethodActor methodActor) {
-        deoptimize(methodActor);
+    private static void deoptimizeSnippet(@ConstantParameter FrameState deoptState) {
+        deoptimize(deoptState);
         throw UnreachableNode.unreachable();
     }
 

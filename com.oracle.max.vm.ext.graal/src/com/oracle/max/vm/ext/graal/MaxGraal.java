@@ -98,6 +98,10 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
         public void put(StructuredGraph graph, boolean hasMatureProfilingInfo) {
             cache.put(graph.method(), graph);
         }
+
+        public void remove(ResolvedJavaMethod method) {
+            cache.remove(method);
+        }
     }
     static {
         addFieldOption("-XX:", "GraalForBoot", MaxGraal.class, "use Graal for boot image");
@@ -259,6 +263,14 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
             }
             DebugEnvironment.initialize(System.out);
             debugConfig = DebugScope.getConfig();
+        }
+    }
+
+    @Override
+    public void deoptimize(ClassMethodActor classMethodActor) {
+        if (cache != null) {
+            ResolvedJavaMethod method = MaxResolvedJavaMethod.get(classMethodActor);
+            cache.remove(method);
         }
     }
 

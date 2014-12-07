@@ -146,6 +146,10 @@ public class Deoptimization extends VmOperation {
                     deoptLogger.logDoIt("ignoring previously invalidated method ", tm, true);
                 }
             } else {
+                // Perform deoptimization-related actions in the compilation broker.
+                ClassMethodActor cma = tm.classMethodActor();
+                vm().compilationBroker.deoptimize(cma);
+
                 // Find all references to invalidated target method(s) in dispatch tables (e.g. vtables, itables etc) and revert to trampoline references.
                 // Concurrent patching ok here as it is atomic.
                 patchDispatchTables(tm);

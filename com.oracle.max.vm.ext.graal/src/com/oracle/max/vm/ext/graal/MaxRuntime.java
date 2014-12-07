@@ -199,8 +199,7 @@ public class MaxRuntime implements GraalCodeCacheProvider {
 
     @Override
     public boolean constantEquals(Constant x, Constant y) {
-        assert x.getKind() == Kind.Object && y.getKind() == Kind.Object;
-        return x.asObject() == y.asObject();
+        return x.equals(y);
     }
 
     @Override

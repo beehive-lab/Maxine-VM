@@ -69,6 +69,13 @@ public interface RuntimeCompiler {
     void initialize(MaxineVM.Phase phase);
 
     /**
+     * Deoptimizes compilation of a method.
+     *
+     * @param classMethodActor the method to deoptimize
+     */
+    void deoptimize(ClassMethodActor classMethodActor);
+
+    /**
      * Compiles a method to an internal representation.
      *
      * @param classMethodActor the method to compile
