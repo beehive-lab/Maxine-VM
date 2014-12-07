@@ -542,7 +542,59 @@ public class AMD64T1XCompilation extends T1XCompilation {
         }
     }
 
-    protected void branchOnConditionWithProfile(ConditionFlag cc, int targetBCI, int bci) {
+    protected void branchOnConditionWithProfileNotTakenTaken(ConditionFlag cc, int targetBCI, int bci) {
+        boolean isForwardBranch = bci < targetBCI;
+        boolean isConditionalBranch = cc != null;
+        final int relativeOffset = isForwardBranch ? 0 : bciToPos[targetBCI];
+        int jumpTakenPos = buf.position();
+        int jumpNotTakenPos = buf.position();
+        int fallThroughPos;
+
+        if (isConditionalBranch) {
+            final int placeholderForShortJumpDisp = jumpTakenPos + 2;
+            asm.jcc(cc, placeholderForShortJumpDisp, false);
+            assert buf.position() - jumpTakenPos == 2;
+        }
+
+        if (isConditionalBranch) {
+            // Start of "not taken" code
+            final int placeholderForShortJumpDisp;
+            do_profileNotTakenBranch(bci);
+            jumpNotTakenPos = buf.position();
+            placeholderForShortJumpDisp = jumpNotTakenPos + 2;
+            asm.jmp(placeholderForShortJumpDisp, false);
+            assert buf.position() - jumpNotTakenPos == 2;
+        }
+
+        // Start of "taken" code
+        if (isConditionalBranch) {
+            // Patch the jump to "taken" code now that we know where it is going
+            int notTakenCodePos = buf.position();
+            buf.setPosition(jumpTakenPos);
+            asm.jcc(cc, notTakenCodePos, false);
+            buf.setPosition(notTakenCodePos);
+        }
+        do_profileTakenBranch(bci, targetBCI);
+        if (isForwardBranch) {
+            int pos = buf.position();
+            patchInfo.addJMP(pos, targetBCI);
+        } else {
+            do_safepointAtBackwardBranch(bci);
+        }
+        asm.jmp(relativeOffset, true);
+        assert !isForwardBranch || bciToPos[targetBCI] == 0;
+
+        // Start of "fall through" code
+        if (isConditionalBranch) {
+            fallThroughPos = buf.position();
+            buf.setPosition(jumpNotTakenPos);
+            asm.jmp(fallThroughPos, false);
+            buf.setPosition(fallThroughPos);
+        }
+
+    }
+
+    protected void branchOnConditionWithProfileTakenNotTaken(ConditionFlag cc, int targetBCI, int bci) {
         boolean isForwardBranch = bci < targetBCI;
         boolean isConditionalBranch = cc != null;
         ConditionFlag ccNeg = isConditionalBranch ? cc.negation() : null;
@@ -561,14 +613,15 @@ public class AMD64T1XCompilation extends T1XCompilation {
         if (isForwardBranch) {
             int pos = buf.position();
             patchInfo.addJMP(pos, targetBCI);
+        } else {
+            do_safepointAtBackwardBranch(bci);
         }
         asm.jmp(relativeOffset, true);
         assert !isForwardBranch || bciToPos[targetBCI] == 0;
 
-
         if (isConditionalBranch) {
             // Start of "not taken" code
-            // Patch the jump to "not taken" code now that we know where's it's going
+            // Patch the jump to "not taken" code now that we know where it is going
             int notTakenCodePos = buf.position();
             buf.setPosition(jumpNotTakenPos);
             asm.jcc(ccNeg, notTakenCodePos, false);
@@ -704,7 +757,14 @@ public class AMD64T1XCompilation extends T1XCompilation {
 
         }
         if (methodProfileBuilder != null) {
-            branchOnConditionWithProfile(cc, targetBCI, bci);
+            if (cc != null && targetBCI < bci) {
+                // For a conditional backward branch a code section for a taken backward branch should be emitted after
+                // a code section for a fall through to satisfy the property that a safepoint for non-template code must
+                // come after all template code safepoints.
+                branchOnConditionWithProfileNotTakenTaken(cc, targetBCI, bci);
+            } else {
+                branchOnConditionWithProfileTakenNotTaken(cc, targetBCI, bci);
+            }
         } else {
             branchOnConditionWithoutProfile(cc, targetBCI, bci);
         }

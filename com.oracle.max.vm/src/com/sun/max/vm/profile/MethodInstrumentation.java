@@ -28,6 +28,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.object.ArrayAccess;
 
 /**
  * This class contains several utility methods for dealing with method instrumentation.
@@ -82,12 +83,12 @@ public class MethodInstrumentation {
         mpo.entryCount--;
     }
 
-    @NEVER_INLINE
+    @INLINE
     public static void recordTakenBranch(MethodProfile mpo, int mpoIndex) {
         incrementProfileCounterAtIndex(mpo, mpoIndex);
     }
 
-    @NEVER_INLINE
+    @INLINE
     public static void recordNonTakenBranch(MethodProfile mpo, int mpoIndex) {
         incrementProfileCounterAtIndex(mpo, mpoIndex);
     }
@@ -95,9 +96,10 @@ public class MethodInstrumentation {
     @INLINE
     private static void incrementProfileCounterAtIndex(MethodProfile mpo, int index) {
         int[] data = mpo.rawData();
-        int counter = data[index];
+        int counter = ArrayAccess.getInt(data, index);
+
         if (counter < Integer.MAX_VALUE) {
-            data[index] = counter + 1;
+            ArrayAccess.setInt(data, index, counter + 1);
         }
     }
 

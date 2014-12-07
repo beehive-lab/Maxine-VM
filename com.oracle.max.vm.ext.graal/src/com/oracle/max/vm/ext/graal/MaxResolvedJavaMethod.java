@@ -155,7 +155,7 @@ public class MaxResolvedJavaMethod extends MaxJavaMethod implements ResolvedJava
             }
         }
 
-        if (methodProfile == null) {
+        if (methodProfile == null || methodProfile.rawData() == null) {
             info = DefaultProfilingInfo.get(ProfilingInfo.TriState.FALSE);
         } else {
             info = new MaxProfilingInfo(methodProfile, this);
