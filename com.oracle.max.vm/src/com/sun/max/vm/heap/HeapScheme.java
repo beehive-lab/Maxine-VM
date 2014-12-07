@@ -301,6 +301,12 @@ public interface HeapScheme extends VMScheme {
      */
     boolean isAllocationDisabledForCurrentThread();
 
+    /**
+     * Returns amount of memory allocated by current thread.
+     * @return amount of memory in bytes.
+     */
+    long getAllocationCounterForCurrentThread();
+
     boolean needsBarrier(IntBitSet<WriteBarrierSpecification.WriteBarrierSpec> writeBarrierSpec);
 
     void preWriteBarrier(Reference ref, Offset offset, Reference value);
