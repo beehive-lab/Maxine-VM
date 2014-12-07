@@ -756,7 +756,8 @@ public class AMD64T1XCompilation extends T1XCompilation {
                 throw new InternalError("Unknown branch opcode: " + Bytecodes.nameOf(opcode));
 
         }
-        if (methodProfileBuilder != null) {
+        // TODO Switch on branch instrumentstion by changing "if (false)" statement to "if (methodProfileBuilder != null)".
+        if (false) {
             if (cc != null && targetBCI < bci) {
                 // For a conditional backward branch a code section for a taken backward branch should be emitted after
                 // a code section for a fall through to satisfy the property that a safepoint for non-template code must

@@ -82,7 +82,8 @@ public class MaxProfilingInfo implements ProfilingInfo {
 
     @Override
     public int getCodeSize() {
-        return method.getCodeSize();
+        // TODO Switch on "getCodeSize" by changing "return 0" statement to "return method.getCodeSize()".
+        return 0;
     }
 
     @Override
@@ -94,7 +95,10 @@ public class MaxProfilingInfo implements ProfilingInfo {
     }
 
     @Override
-    public double getBranchTakenProbability(int bci) { return methodProfile.getBranchTakenProbability(bci); }
+    public double getBranchTakenProbability(int bci) {
+        // TODO Switch on "getBranchTakenProbability" by changing "return -1" statement to "return methodProfile.getBranchTakenProbability(bci)".
+        return -1;
+    }
 
     @Override
     public double[] getSwitchProbabilities(int bci) {
