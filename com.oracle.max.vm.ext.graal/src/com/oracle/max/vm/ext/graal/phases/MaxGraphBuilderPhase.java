@@ -122,13 +122,4 @@ public class MaxGraphBuilderPhase extends GraphBuilderPhase {
         return new FixedGuardNode(condition, deoptReason, action, negated);
     }
 
-    @Override
-    protected void emitExplicitExceptions(ValueNode receiver, ValueNode outOfBoundsIndex) {
-        // All explicit exceptions are handled by deopt guards
-        // Since Maxine currently disables the use of ExceptionProbability, if we don't
-        // override this method, we get duplicate checks. The downside is that a method
-        // that actually contains a handler for an implicit exception will never have the handler
-        // code generated which means it must always deopt. Too bad if it's on the hot path.
-    }
-
 }

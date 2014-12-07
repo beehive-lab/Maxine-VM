@@ -483,6 +483,9 @@ public class MethodProfile {
     private int search(int bci) {
         // perform binary search to find the lowest entry with data for the bci
         int low = 0;
+        if (data == null) {
+            return UNDEFINED_INDEX;
+        }
         int high = dataLength() - 1;
 
         while (low <= high) {
