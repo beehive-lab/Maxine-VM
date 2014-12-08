@@ -372,7 +372,6 @@ int maxine(int argc, char *argv[], char *executablePath) {
 #endif
     printf("dlopen %p dlsym %p dlsym %p\n",openLibrary,loadSymbol,dlerror);
     exitCode = (*method)(tlBlock, ntl->tlBlockSize, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
-    printf("EXITED JAVA %d\n", exitCode);
 
 #if log_LOADER
     log_println("start method exited with code: %d", exitCode);
