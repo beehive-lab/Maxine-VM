@@ -453,9 +453,7 @@ public final class GenSSHeapScheme extends HeapSchemeWithTLABAdaptor implements 
     @Override
     public void initialize(MaxineVM.Phase phase) {
         super.initialize(phase);
-	Log.println("initialised Base class of GenSSHeapScheme");
         cardTableRSet.initialize(phase);
-	Log.println("initialised cardTableRset  GenSSHeapScheme");
         if (MaxineVM.isHosted() && phase == BOOTSTRAPPING) {
             // Make sure the DarkMatter logger has its options checked at boot image generation time.
             DarkMatter.initialize();
