@@ -937,22 +937,39 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void ignore_C1X_jtt_BC_i2b() throws Exception {
+    public void test_C1X_jtt_BC_i2b() throws Exception {
+        CompilationBroker.OFFLINE = initialised;
+        boolean failed = false;
+        CompilationBroker.SIMULATEADAPTER = true;
         initTests();
         int argsOne[] = { -1, 2, 255, 128};
         String klassName = getKlassName("jtt.bytecode.BC_i2b");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.SIMULATEADAPTER = true;
+
         CompilationBroker.OFFLINE = true;
         initialiseCodeBuffers(methods, "BC_i2b.java", "byte test(int)");
         int assemblerStatements = codeBytes.length / 4;
-        short expectedValue = 0;
-        for (int i = 0; i < argsOne.length; i++) {
+        byte expectedValue = 0;
+        /*for (int i = 0; i < argsOne.length; i++) {
             expectedValue = jtt.bytecode.BC_i2b.test(argsOne[i]);
             String functionPrototype = ARMCodeWriter.preAmble("char", "int", Integer.toString(argsOne[i]));
             Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
             assert ((Integer) registerValues[0]).byteValue() == expectedValue : "Failed incorrect value " + ((Integer) registerValues[0]).byteValue() + " " + expectedValue;
             theCompiler.cleanup();
+        }*/
+        for(int i =-255; i < 256; i++) {
+            expectedValue = jtt.bytecode.BC_i2b.test(i);
+            String functionPrototype = ARMCodeWriter.preAmble("char", "int", Integer.toString(i));
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+
+            if ((byte)registerValues[0] != expectedValue) {
+                failed = true;
+                System.out.println("I2B Failed incorrect value " + ((byte) registerValues[0]) + " " + expectedValue);
+            }
+            theCompiler.cleanup();
         }
+        assert(failed == false);
     }
 
     public void ignore_jtt_BC_i2b_1() throws Exception {
@@ -3822,6 +3839,44 @@ public class ARMV7JTTTest extends MaxTestCase {
             if(returnValue != expectedValue) {
                 failed = true;
                 System.out.println("LOOPSTACK GOT "  +returnValue + " EXPECT " + expectedValue );
+            }
+            theCompiler.cleanup();
+        }
+        assert(failed == false);
+    }
+    public void test_jtt_charComp() throws Exception {
+        CompilationBroker.OFFLINE = initialised;
+        boolean failed = false;
+        CompilationBroker.SIMULATEADAPTER = true;
+
+        String klassName = getKlassName("jtt.bytecode.BC_charComp");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        CompilationBroker.SIMULATEADAPTER = false;
+        char argOne = 'c';
+        char argTwo[] = {'a','c','d'};
+        List<Args> pairs = new LinkedList<Args>();
+
+
+
+        initialiseCodeBuffers(methods, "BC_charComp.java", "boolean test(int, char, char)");
+        int assemblerStatements = codeBytes.length / 4;
+        for(int j = 0; j < argTwo.length; j++)
+        for (int i = -2; i<4; i++) {
+            boolean answer = jtt.bytecode.BC_charComp.test(i,argOne,argTwo[j]);
+            int expectedValue = answer ? 1 : 0;
+
+            String functionPrototype = ARMCodeWriter.preAmble("int ", " int, char, char", Integer.toString(i) + ", "
+                    + "'"+Character.toString(argOne)+"'" + ", " + "'" +Character.toString(argTwo[j])+"'");
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            //long returnValue = registerValues[0] | ((0xffffffffL & registerValues[1]) << 32);
+            int returnValue = registerValues[0];
+            //System.out.println("LSHR EXPECTED " + expectedValue + " GOT "+ returnValue);
+            if(returnValue != expectedValue) {
+                failed = true;
+                System.out.println("FAIL i " + i + " j " + j + " charComp GOT "  +returnValue + " EXPECT " + expectedValue );
+            }else {
+                System.out.println("SUCCESS " + i + " " + j);
             }
             theCompiler.cleanup();
         }
