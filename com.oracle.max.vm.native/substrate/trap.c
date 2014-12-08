@@ -422,6 +422,9 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
 #elif isa_AMD64 && os_MAXVE
     tla_store3(dtla, TRAP_LATCH_REGISTER, ucontext->r14);
     ucontext->r14 = (Address) dtla;
+#elif isa_ARM
+    tla_store3(dtla,TRAP_LATCH_REGISTER, ucontext->uc_mcontext.arm_r10);
+
 #else
     c_UNIMPLEMENTED();
 #endif
