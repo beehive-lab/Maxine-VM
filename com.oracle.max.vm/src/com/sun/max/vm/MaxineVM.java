@@ -512,26 +512,26 @@ public static int test(int arg) {
 
         // Link the critical native methods:
         CriticalNativeMethod.linkAll();
-	Log.println("lined critical methods");
+	//Log.println("lined critical methods");
         DynamicLinker.markCriticalLinked();
 
-	Log.println("marked critical");
+	//Log.println("marked critical");
         // Initialize the trap system:
         Trap.initialize();
-	Log.println("Traps done");
+	//Log.println("Traps done");
         ImmortalHeap.initialize();
 
-	Log.println("immortals done");
+	//Log.println("immortals done");
         NativeInterfaces.initialize(vmInterface, jniEnv, jmmInterface);
 
-	Log.println("interfaces initialised");
+	//Log.println("interfaces initialised");
         // Perhaps this should be later, after VM has initialized
         startupTime = System.currentTimeMillis();
         startupTimeNano = System.nanoTime();
 
-	Log.println("timers");
+	//Log.println("timers");
         MaxineVM vm = vm();
-	Log.println("vm created");
+	//Log.println("vm created");
         vmConfig().initializeSchemes(MaxineVM.Phase.PRIMORDIAL);
 
 	Log.println("schemes inited");

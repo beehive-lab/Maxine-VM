@@ -313,7 +313,6 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
             Pointer cell = top.asPointer();
             if (cell.plus(size).greaterThan(end)) {
                 if (isLarge(size)) {
-                    Log.println("refillorAllocate BaseAtomicBumpPointerAllocator");
                     return refillManager.allocateLargeRaw(size).asPointer();
                 }
                 // end isn't the hard limit of the space.

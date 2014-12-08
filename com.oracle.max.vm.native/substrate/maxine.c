@@ -158,9 +158,6 @@ static void *openLibrary(char *path) {
 }
 
 static void* loadSymbol(void* handle, const char* symbol) {
-#if log_LINKER
-    log_println("loadSymbol(%p, PTR %p, \"%s\")", handle, symbol,symbol);
-#endif
     void* result = dlsym(handle, symbol);
 #if log_LINKER
 #if os_MAXVE

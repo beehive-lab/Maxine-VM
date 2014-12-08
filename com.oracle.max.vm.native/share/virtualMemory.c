@@ -122,7 +122,6 @@ Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean r
   if (address != 0) {
 	  flags |= MAP_FIXED;
   }
-
   void * result = mmap((void*) address, (size_t) size, prot, flags, -1, 0);
 
 #if log_LOADER
@@ -166,12 +165,15 @@ Address virtualMemory_allocate(Size size, int type) {
 #if os_MAXVE
 	return (Address) maxve_virtualMemory_allocate(size, type);
 #else
+  printf("VM ALLOC  %u\n",(size_t)size);
     return check_mmap_result(mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE, -1, (off_t) 0));
 #endif
 }
 
 Address virtualMemory_allocateIn31BitSpace(Size size, int type) {
 #if os_LINUX
+   printf("VM ALLOC 31BITSPACE  %ud\n",size);
+
     return check_mmap_result(mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_32BIT, -1, (off_t) 0));
 #elif os_MAXVE
     return (Address) maxve_virtualMemory_allocateIn31BitSpace(size, type);

@@ -139,7 +139,7 @@ public final class ImmortalHeap {
 
         if(Platform.target().arch.is32bit()) {
 
-            immortalHeap.initialize(Size.fromLong(Math.max(MaxPermSize.toLong()/2, PermSize.toLong())));
+            immortalHeap.initialize(Size.fromLong(Math.max(MaxPermSize.toLong() , PermSize.toLong())));
 
         } else {
 
