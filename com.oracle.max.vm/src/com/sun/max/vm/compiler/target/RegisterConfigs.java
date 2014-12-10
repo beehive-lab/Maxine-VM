@@ -190,7 +190,7 @@ public class RegisterConfigs {
                 standard.stackArg0Offsets[RuntimeCall.ordinal()] = javaStackArg0Offset;
                 standard.stackArg0Offsets[NativeCall.ordinal()] = nativeStackArg0Offset;
 
-                setNonZero(standard.getAttributesMap(), com.oracle.max.asm.target.armv7.ARMV7.r11, com.oracle.max.asm.target.armv7.ARMV7.r13); /*
+                setNonZero(standard.getAttributesMap(), com.oracle.max.asm.target.armv7.ARMV7.r10, com.oracle.max.asm.target.armv7.ARMV7.r13); /*
                                                                                                                                                 * APN
                 /*
                  * APN I don't get why we need in the x86 version cpuxmmRegisters and all registers perhaps this will
@@ -212,16 +212,16 @@ public class RegisterConfigs {
                  */
                 CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 4, ARMV7.r0, ARMV7.r1, ARMV7.r2,
                     ARMV7.r3, // parameters
-                    r4, r5, r6, r7, com.oracle.max.asm.target.armv7.ARMV7.r8, com.oracle.max.asm.target.armv7.ARMV7.r9, com.oracle.max.asm.target.armv7.ARMV7.r10,
+                    r4, r5, r6, r7, com.oracle.max.asm.target.armv7.ARMV7.r8, com.oracle.max.asm.target.armv7.ARMV7.r9, 
                     com.oracle.max.asm.target.armv7.ARMV7.r11, // r4..r11? must be preserved for baseline compiler
-                    standard.getScratchRegister())); // dynamic dispatch index is saved here for stack frame walker
+                    standard.getScratchRegister(),ARMV7.d0,ARMV7.d1,ARMV7.d2,ARMV7.d3)); // dynamic dispatch index is saved here for stack frame walker
                                                                 // parameters APN lets not worry about floating point .... lets crack out the StollyBolly once we get HelloWorld working
 
                 // the registers below are a guess in n2j ....
                 // ....
-                CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 4,  r1, r2, r3, r4, r5, r6, r7, com.oracle.max.asm.target.armv7.ARMV7.r8,
-                     com.oracle.max.asm.target.armv7.ARMV7.r9, com.oracle.max.asm.target.armv7.ARMV7.r10, com.oracle.max.asm.target.armv7.ARMV7.r11,
-                     com.oracle.max.asm.target.armv7.ARMV7.r12)); //NOT STACK
+                CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 4,  /*r1, r2, r3,*/ r4, r5, r6, r7, com.oracle.max.asm.target.armv7.ARMV7.r8,
+                     com.oracle.max.asm.target.armv7.ARMV7.r9,  com.oracle.max.asm.target.armv7.ARMV7.r10,com.oracle.max.asm.target.armv7.ARMV7.r11, 
+                     com.oracle.max.asm.target.armv7.ARMV7.r12,ARMV7.r14)); //NOT STACK 
                 n2j.stackArg0Offsets[JavaCallee.ordinal()] = nativeStackArg0Offset;
 
                 roleMap.put(ABI_FP, com.oracle.max.asm.target.armv7.ARMV7.r11);
@@ -236,7 +236,7 @@ public class RegisterConfigs {
                      com.oracle.max.asm.target.armv7.ARMV7.allRegisters, // all ARM!!! registers
                      roleMap); // VM register role map
 
-                setNonZero(template.getAttributesMap(), com.oracle.max.asm.target.armv7.ARMV7.r11, com.oracle.max.asm.target.armv7.ARMV7.r13, com.oracle.max.asm.target.armv7.ARMV7.r12);
+                setNonZero(template.getAttributesMap(), com.oracle.max.asm.target.armv7.ARMV7.r10, com.oracle.max.asm.target.armv7.ARMV7.r13, com.oracle.max.asm.target.armv7.ARMV7.r11);
 
                 /*
                  * APN this is really all a bit of a hack/guess in this file --- need to know more about the
