@@ -42,6 +42,7 @@ void condition_initialize(Condition condition) {
     }
 #elif os_LINUX || os_DARWIN
     if (pthread_cond_init(condition, NULL) != 0) {
+	printf("FATAL ERROR condition_initialize\n");
         c_FATAL();
     }
 #elif os_MAXVE
