@@ -2923,7 +2923,7 @@ private ConditionFlag convertCondition(Condition condition) {
                    // masm.vmov(ConditionFlag.Always,ARMV7.s4,ARMV7.s2);
                    // masm.vmov(ConditionFlag.Always,ARMV7.s2,ARMV7.s1);
 
-                    masm.str(ConditionFlag.Always,ARMV7.r14,ARMV7.r13,0); // save the return value!!!!!
+                    //masm.str(ConditionFlag.Always,ARMV7.r14,ARMV7.r13,0); // save the return value!!!!!
 
                     if (C1XOptions.ZapStackOnMethodEntry) {
                         final int intSize = 4;
@@ -2963,7 +2963,7 @@ private ConditionFlag convertCondition(Condition condition) {
                         int frameToCSA = frameMap.offsetToCalleeSaveAreaStart();
                         masm.restore(csl, frameToCSA);
                     }
-                    masm.ldr(ConditionFlag.Always,ARMV7.r14,ARMV7.r13,0); // restore LR prior to adjusting stack?
+                    //masm.ldr(ConditionFlag.Always,ARMV7.r14,ARMV7.r13,0); // restore LR prior to adjusting stack?
                     masm.incrementq(ARMV7.r13,frameSize);
                   //  masm.incrementq(ARMV7.rsp, frameSize);
                     break;

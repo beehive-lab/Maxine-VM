@@ -468,7 +468,6 @@ public final class MaxineVM {
         Pointer etla = tlBlock.plus(platform().pageSize - Address.size() + VmThreadLocal.tlaSize().toInt());
         SafepointPoll.setLatchRegister(etla); // r10 in ARMV7
 	//while(test(0) != 8) ;
-
         // This one field was not marked by the data prototype for relocation
         // to avoid confusion between "offset zero" and "null".
         // Fix it manually:
@@ -511,6 +510,7 @@ public final class MaxineVM {
         VMOptions.parsePristine(argc, argv);
 	Log.println("parse pristine");
         return exitCode;
+
     }
 
     public static String getExecutablePath() {
