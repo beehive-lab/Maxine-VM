@@ -478,9 +478,11 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected int callDirect() {
         // alignDirectCall(buf.position()); NOT required for ARM APN believes.
+        asm.push(ConditionFlag.Always,1<<14);
         int causePos = buf.position();
         asm.call();
         int safepointPos = buf.position();
+        asm.pop(ConditionFlag.Always,1<<14);
         asm.nop(); // nop separates any potential safepoint emitted as a successor to the call
         return Safepoints.make(safepointPos, causePos, DIRECT_CALL, TEMPLATE_CALL);
     }
@@ -494,9 +496,11 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             peekObject(target, receiverStackIndex); // was rdi?
         }
         asm.mov32BitConstant(ARMV7.r8,8);
+        asm.push(ConditionFlag.Always,1<<14);
         int causePos = buf.position();
         asm.call(target);
         int safepointPos = buf.position();
+        asm.pop(ConditionFlag.Always,1<<14); // Need to fix but put them in here for now
         asm.nop(); // nop separates any potential safepoint emitted as a successor to the call
         return Safepoints.make(safepointPos, causePos, INDIRECT_CALL, TEMPLATE_CALL);
     }

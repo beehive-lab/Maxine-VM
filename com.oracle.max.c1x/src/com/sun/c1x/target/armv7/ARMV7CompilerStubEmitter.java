@@ -440,9 +440,12 @@ public class ARMV7CompilerStubEmitter {
             asm.alignForPatchableDirectCall();
         }
         // Call to the runtime
+        asm.push(ARMV7Assembler.ConditionFlag.Always,1<<14);
         int before = asm.codeBuffer.position();
         asm.call();
         int after = asm.codeBuffer.position();
+        asm.pop(ARMV7Assembler.ConditionFlag.Always,1<<14);
+
         if (C1XOptions.EmitNopAfterCall) {
             asm.nop();
         }
