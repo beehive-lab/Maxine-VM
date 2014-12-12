@@ -115,6 +115,7 @@ public final class Safepoints {
      * Complete set of declared safepoint attributes.
      */
     public static final Attr[] ALL_ATTRS;
+
     static {
         ArrayList<Attr> attrs = new ArrayList<Attr>();
         int mask = 0;
@@ -133,23 +134,60 @@ public final class Safepoints {
         ALL_ATTRS = attrs.toArray(new Attr[attrs.size()]);
     }
 
+    public static void initialiseSafePoints() {
+
+    }
+    /*if(Platform.target().arch.is32bit())
+
+    {
+        POS_MASK = (1 << 23) - 1;
+        CAUSE_OFFSET_MASK = ((1 << 28) - 1) & ~((1 << 23) - 1); //&~POS_MASK;
+        CAUSE_OFFSET_SHIFT = 23;
+        MAX_CAUSE_OFFSET = 24;
+        ATTRS_MASK = -1 & ~(((1 << 23) - 1) | (((1 << 28) - 1) & ~((1 << 23) - 1)));
+    }
+
+    else
+
+    {
+        POS_MASK = (1 << 25) - 1;
+        CAUSE_OFFSET_MASK = ((1 << 28) - 1) & ~(1 << 25) - 1; //&~POS_MASK;
+        CAUSE_OFFSET_SHIFT = 25;
+        MAX_CAUSE_OFFSET = 7;
+        ATTRS_MASK = -1 & ~(((1 << 25) - 1) | (((1 << 28) - 1) & ~(1 << 25) - 1));
+    //}*/
+
+    //}
     /**
      * Mask for extracting position.
      */
-    public static final int POS_MASK = (1 << 25) - 1;
+
+
+
+
+    public static final int POS_MASK = (1 << 23) - 1;
+
+    private static final int CAUSE_OFFSET_MASK = ((1 << 28) - 1) & ~POS_MASK;
+    private static final int CAUSE_OFFSET_SHIFT = 23;
+    //X86 was this .... private static final int MAX_CAUSE_OFFSET = 7;
+    private static final int MAX_CAUSE_OFFSET = 24; // ARM we need this to be 24 means 5 bits.
+    /*public static final int POS_MASK = (1 << 25) - 1;
 
     private static final int CAUSE_OFFSET_MASK = ((1 << 28) - 1) & ~POS_MASK;
     private static final int CAUSE_OFFSET_SHIFT = 25;
     //X86 was this .... private static final int MAX_CAUSE_OFFSET = 7;
-    private static final int MAX_CAUSE_OFFSET = 16;; // ARM seems to come in at 16, dont know why.
+    private static final int MAX_CAUSE_OFFSET = 7; // ARM we need this to be 24 means 5 bits.
+    */
     /**
      * Mask for extracting attributes.
-     */
+    */
     public static final int ATTRS_MASK = -1 & ~(POS_MASK | CAUSE_OFFSET_MASK);
 
     private final int[] safepoints;
 
-    public static final Safepoints NO_SAFEPOINTS = new Safepoints();
+    public static final Safepoints NO_SAFEPOINTS = new Safepoints(
+
+    );
 
     /**
      * Creates an object encapsulating a set of safepoints.

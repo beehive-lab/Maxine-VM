@@ -371,9 +371,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             if (adapter == null) {
                 asm.nop(PROLOGUE_SIZE);
             } else {
-                asm.push(ConditionFlag.Always,1<<14);
                 asm.call();
-                asm.pop(ConditionFlag.Always,1<<14);
 		//System.out.println("SIZE " + asm.codeBuffer.position());
                 asm.align(PROLOGUE_SIZE);
 		//System.out.println("SIZEAFTER " + asm.codeBuffer.position());
@@ -788,9 +786,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             // Pad with nops up to the OPT entry point
             asm.align(OPTIMIZED_ENTRY_POINT.offset());
-            asm.push(ConditionFlag.Always,1<<14);
             asm.call();
-            asm.pop(ConditionFlag.Always,1<<14);
             asm.bind(end);
 
             int size = asm.codeBuffer.position();

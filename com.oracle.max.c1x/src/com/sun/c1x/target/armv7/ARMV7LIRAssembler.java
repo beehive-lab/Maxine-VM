@@ -3206,18 +3206,17 @@ private ConditionFlag convertCondition(Condition condition) {
     }
 
     public void directCall(Object target, LIRDebugInfo info) {
-        masm.push(ConditionFlag.Always,1<<14);
         int before = masm.codeBuffer.position();
         masm.call();
         int after = masm.codeBuffer.position();
         if (C1XOptions.EmitNopAfterCall) {
             masm.nop();
         }
-        masm.pop(ConditionFlag.Always,1<<14);
+        //System.out.println("DIRECT " + before + " after " + after);
 
         tasm.recordDirectCall(before, after - before, asCallTarget(target), info);
         tasm.recordExceptionHandlers(after, info);
-        masm.nop(4);
+
     }
 
     public void directJmp(Object target) {
@@ -3231,14 +3230,12 @@ private ConditionFlag convertCondition(Condition condition) {
     }
 
     public void indirectCall(CiRegister src, Object target, LIRDebugInfo info) {
-        masm.push(ConditionFlag.Always,1<<14);
         int before = masm.codeBuffer.position();
         masm.call(src);
         int after = masm.codeBuffer.position();
         if (C1XOptions.EmitNopAfterCall) {
             masm.nop();
         }
-        masm.pop(ConditionFlag.Always,1<<14);
         tasm.recordIndirectCall(before, after - before, asCallTarget(target), info);
         tasm.recordExceptionHandlers(after, info);
     }

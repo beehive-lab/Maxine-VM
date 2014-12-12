@@ -1138,13 +1138,13 @@ public class ARMV7Assembler extends AbstractAssembler {
         // so we can use whatever registers we want!
         // emitInt(0); // space for setupscratch
         // emitInt(0);
-      //  push(ConditionFlag.Always,1<<14);
+        push(ConditionFlag.Always,1<<14);
         nop(4);
         // nops replaced with movw R12, lowconst
         //                  movt R12, highconst
         // add R12, R12, PC
         // BLX R12
-       // pop(ConditionFlag.Always,1<<14);
+        pop(ConditionFlag.Always,1<<14);
         // Target needs to be patched later ...
     }
 
@@ -1153,11 +1153,11 @@ public class ARMV7Assembler extends AbstractAssembler {
         // THIs is an indirect call, assuming the contents of the registers are a memory location we need to load
         //add(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12, 0, 0);
        //ldrImmediate(ConditionFlag.Always,1,0,0,ARMV7.r12,target,0);o
-      // push(ConditionFlag.Always,1<<14);
+       push(ConditionFlag.Always,1<<14);
 	   addRegisters(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r8,target,0,0); // PATCHING of emitIndirect 8 bytes out
 	   int instruction = blxHelper(ConditionFlag.Always,ARMV7.r8);
 	   emitInt(instruction);
-      // pop(ConditionFlag.Always,1<<14);
+       pop(ConditionFlag.Always,1<<14);
 
     }
 

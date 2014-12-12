@@ -200,7 +200,7 @@ public final class ARMTargetMethodUtil {
         //Log.println("RIP_CALL_INSTRUCTION_LENGTH: " + RIP_CALL_INSTRUCTION_LENGTH + " hex: " + Integer.toHexString(RIP_CALL_INSTRUCTION_LENGTH));
         //Log.println("Patching with disp32: " + disp32 + " hex: " + Integer.toHexString(disp32));
 
-
+        disp32 -= 4;
         int oldDisp32 = 0;
 /*        callOffset = callOffset - RIP_CALL_INSTRUCTION_LENGTH;
         disp32 += RIP_CALL_INSTRUCTION_LENGTH;
@@ -215,6 +215,7 @@ public final class ARMTargetMethodUtil {
                     if((callOffset +16) >= code.length) {
 
                     }
+                    callOffset +=4; // push lr
                     int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
                     code[callOffset + 0] = (byte) (instruction & 0xff);
                     code[callOffset + 1] = (byte) ((instruction >> 8) & 0xff);
@@ -244,6 +245,7 @@ public final class ARMTargetMethodUtil {
                     // IF WE WANTED TO STAY IN THUMB MODE AND/OR TO TRANSITION FORM ARM<->THUMB
                     // disp32 = 25;
                     // callOffset -= 20; // DIRTY HACK
+                    callOffset+=4; // push lr
                     int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
                     code[callOffset + 0] = (byte) (instruction & 0xff);
                     code[callOffset + 1] = (byte) ((instruction >> 8) & 0xff);
