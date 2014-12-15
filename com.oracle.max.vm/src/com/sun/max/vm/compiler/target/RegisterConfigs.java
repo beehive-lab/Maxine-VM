@@ -182,7 +182,7 @@ public class RegisterConfigs {
                     armStandard, ///allocatable, // caller save *** TODO APN-- not sure we might need a
                     // different set for ARM HERE!!!!!
                     parameters, // parameter registers
-                    new CiCalleeSaveLayout(0,-1,4,ARMV7.r14), /// null, // no callee save
+                    new CiCalleeSaveLayout(0,-1,4,ARMV7.r14),//null, // no callee save
                     com.oracle.max.asm.target.armv7.ARMV7.allRegisters, // all ARM registers
                     roleMap); // VM register role map
 
@@ -219,13 +219,13 @@ public class RegisterConfigs {
                     ARMV7.r3, // parameters
                     r4, r5, r6, r7, com.oracle.max.asm.target.armv7.ARMV7.r8, com.oracle.max.asm.target.armv7.ARMV7.r9, 
                     com.oracle.max.asm.target.armv7.ARMV7.r11, // r4..r11? must be preserved for baseline compiler
-                    standard.getScratchRegister(),ARMV7.d0,ARMV7.d1,ARMV7.d2,ARMV7.d3)); // dynamic dispatch index is saved here for stack frame walker
+                    standard.getScratchRegister(),ARMV7.r14,ARMV7.d0,ARMV7.d1,ARMV7.d2,ARMV7.d3)); // dynamic dispatch index is saved here for stack frame walker
                                                                 // parameters APN lets not worry about floating point .... lets crack out the StollyBolly once we get HelloWorld working
 
                 // the registers below are a guess in n2j ....
                 // ....
                 CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 4,  /*r1, r2, r3,*/ r4, r5, r6, r7, com.oracle.max.asm.target.armv7.ARMV7.r8,
-                     com.oracle.max.asm.target.armv7.ARMV7.r9,  com.oracle.max.asm.target.armv7.ARMV7.r10,com.oracle.max.asm.target.armv7.ARMV7.r11, ARMV7.r14 )); //NOT STACK 
+                     com.oracle.max.asm.target.armv7.ARMV7.r9,  com.oracle.max.asm.target.armv7.ARMV7.r10,com.oracle.max.asm.target.armv7.ARMV7.r11,ARMV7.r14)); //NOT STACK 
                 n2j.stackArg0Offsets[JavaCallee.ordinal()] = nativeStackArg0Offset;
 
                 roleMap.put(ABI_FP, com.oracle.max.asm.target.armv7.ARMV7.r11);

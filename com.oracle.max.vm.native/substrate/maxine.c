@@ -379,7 +379,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     if (exitCode == 0) {
         // Initialization succeeded: now run the main Java thread
-	printf("ENTER THREAD RUN\n");
+	printf("ENTERING MAIN JAVA THREAD TO RUN\n");
         thread_run((void *) tlBlock);
     } else {
         printf("NATIVE EXIT\n");

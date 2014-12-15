@@ -2918,6 +2918,7 @@ private ConditionFlag convertCondition(Condition condition) {
                         masm.nop();
                         masm.nop();
                     }
+		    //masm.push(ConditionFlag.Always,1<<14);
                     masm.decrementq(ARMV7.r13, frameSize); // does not emit code for frameSize == 0
                     //masm.vmov(ConditionFlag.Always,ARMV7.s6,ARMV7.s3);
                    // masm.vmov(ConditionFlag.Always,ARMV7.s4,ARMV7.s2);
@@ -2965,6 +2966,7 @@ private ConditionFlag convertCondition(Condition condition) {
                     }
                     //masm.ldr(ConditionFlag.Always,ARMV7.r14,ARMV7.r13,0); // restore LR prior to adjusting stack?
                     masm.incrementq(ARMV7.r13,frameSize);
+		    //masm.pop(ConditionFlag.Always,1<<14);
                   //  masm.incrementq(ARMV7.rsp, frameSize);
                     break;
                 }

@@ -136,11 +136,16 @@ public final class Safepoints {
     /**
      * Mask for extracting position.
      */
-    public static final int POS_MASK = (1 << 25) - 1;
+    //public static final int POS_MASK = (1 << 25) - 1;
+
+    //private static final int CAUSE_OFFSET_MASK = ((1 << 28) - 1) & ~POS_MASK;
+    //private static final int CAUSE_OFFSET_SHIFT = 25;
+    //X86 was this .... private static final int MAX_CAUSE_OFFSET = 7;
+    public static final int POS_MASK = (1 << 23) - 1;
 
     private static final int CAUSE_OFFSET_MASK = ((1 << 28) - 1) & ~POS_MASK;
-    private static final int CAUSE_OFFSET_SHIFT = 25;
-    //X86 was this .... private static final int MAX_CAUSE_OFFSET = 7;
+    private static final int CAUSE_OFFSET_SHIFT = 23;
+
     private static final int MAX_CAUSE_OFFSET = 16;; // ARM seems to come in at 16, dont know why.
     /**
      * Mask for extracting attributes.
@@ -170,10 +175,7 @@ public final class Safepoints {
                 int pos = pos(safepoint);
                 int prev = safepoints[i - 1];
                 int prevPos = pos(prev);
-                if( prevPos >= pos ) {
-                    System.out.println("COMMENTING out safepoint assertion vm.compiler.Safepoints.validateSafepoints");
-                }
-                //assert prevPos < pos : "safepoint positions are not sorted: " + prevPos + " >= " + pos;
+                assert prevPos < pos : "safepoint positions are not sorted: " + prevPos + " >= " + pos;
             }
         }
         return true;
