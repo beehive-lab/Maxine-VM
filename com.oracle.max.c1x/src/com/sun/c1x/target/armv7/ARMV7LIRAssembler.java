@@ -3212,11 +3212,9 @@ private ConditionFlag convertCondition(Condition condition) {
         if (C1XOptions.EmitNopAfterCall) {
             masm.nop();
         }
-        //System.out.println("DIRECT " + before + " after " + after);
-
         tasm.recordDirectCall(before, after - before, asCallTarget(target), info);
         tasm.recordExceptionHandlers(after, info);
-
+        masm.nop(4);
     }
 
     public void directJmp(Object target) {

@@ -239,7 +239,7 @@ public final class FrameMap {
             final int callerFrameOffset = slot.index() * compilation.target.spillSlotSize;
             int offset = callerFrame + callerFrameOffset;
             if(compilation.target.arch.isARM()) {
-                offset = offset -4;
+                offset = offset -4; // we push the LR in the Callee Save
             }
             return new CiAddress(slot.kind, compilation.target.arch.isARM() ? CiRegister.CallerFrame.asValue() : CiRegister.Frame.asValue(), offset);
         } else {

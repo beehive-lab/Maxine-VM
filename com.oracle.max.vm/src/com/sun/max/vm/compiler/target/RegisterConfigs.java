@@ -33,6 +33,7 @@ import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.runtime.amd64.AMD64TrapFrameAccess;
 import com.sun.max.vm.runtime.arm.ARMTrapFrameAccess;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 import static com.oracle.max.asm.target.amd64.AMD64.*;
@@ -131,21 +132,21 @@ public class RegisterConfigs {
         if (platform().isa == ISA.ARM) {
             if (os == OS.LINUX || os == OS.DARWIN) {
                 /*
-                 * The set of allocatable registers etc .... APN I hope this is correct Yaman would you like to check
-                 * this. APN ... ARM Assembly Language:Fundamentals & Techiques states r0..r3 used for argument value
-                 * passing and to return a result value from a function r12 might be used by a linker as a register
-                 * between a routine and any subroutine it calls. r4..r8, r10 and r11 are used to hold the values of a
-                 * routine's local variables ONLY r4..r7 can be used uniformly by THUMB. subroutine must preserve r4.r8,
-                 * r10 and r11 and SP (r9 as well sometimes).
-                 *
+		 * PARAMETERS r0,r1,r2,r3 and
+		 * FLOATING POINT d0,d1,d2,d3 (s0,s1,s2,s3)
+                 * r11 is sometimes used as a frame pointer
+		 * r13 is the stack
+		 * r14 is the return register
                  * LATCH chosen to be r10 FP chosen to be r11
-                 * r8 and r9 used as additional scratch for longs etc.
-                 d15 is not allocatable and therefore this also means s30 s31 we need them for scratch to be able to do floating point compares
+                 * CORE SCRATCH r12, r8 and r9 used as additional scratch for longs etc.
+                 * FLOATING POINT SCRATCH d15 is not allocatable and therefore this also means s30 s31 we need them for scratch to be able to do floating point compares
                  */
 
                 allocatable = new CiRegister[] {r0, r1, r2, r3, r4, r5, r6, r7, d0, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12,
                     s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29}; // no
-
+                armStandard = new CiRegister[] {r0, r1, r2, r3, r4, r5, r6, r7,ARMV7.r14, d0, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12,
+                    s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29}; // no
+		returnReg = new CiRegister[] {ARMV7.r14};
                 // scratch in allocatable
                 parameters = new CiRegister[] {r0, r1, r2, r3, d0, d1, d2, d3, s0, s1, s2, s3};
                 allRegistersExceptLatch = new CiRegister[] {r0, r1, r2, r3, r4, r5, r6, r7, com.oracle.max.asm.target.armv7.ARMV7.r8, com.oracle.max.asm.target.armv7.ARMV7.r9,
@@ -178,10 +179,10 @@ public class RegisterConfigs {
                     // TODO it might be better to handle this another way
                     com.oracle.max.asm.target.armv7.ARMV7.r12, // scratch
                     allocatable, // allocatable
-                    allocatable, ///allocatable, // caller save *** TODO APN-- not sure we might need a
+                    armStandard, ///allocatable, // caller save *** TODO APN-- not sure we might need a
                     // different set for ARM HERE!!!!!
                     parameters, // parameter registers
-                    null, /// null, // no callee save
+                    new CiCalleeSaveLayout(0,-1,4,ARMV7.r14), /// null, // no callee save
                     com.oracle.max.asm.target.armv7.ARMV7.allRegisters, // all ARM registers
                     roleMap); // VM register role map
 

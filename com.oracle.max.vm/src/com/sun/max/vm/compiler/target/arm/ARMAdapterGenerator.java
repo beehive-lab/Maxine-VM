@@ -22,40 +22,33 @@
  */
 package com.sun.max.vm.compiler.target.arm;
 
-import com.oracle.max.asm.Label;
-import com.oracle.max.asm.target.armv7.ARMV7;
-import com.oracle.max.asm.target.armv7.ARMV7Assembler;
+import static com.sun.cri.ci.CiCallingConvention.Type.*;
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.compiler.CallEntryPoint.*;
+import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
+import static com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.*;
+
+import java.io.*;
+
+import com.oracle.max.asm.*;
+import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
-import com.oracle.max.cri.intrinsics.UnsignedMath;
+import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.ci.*;
-import com.sun.max.annotate.HOSTED_ONLY;
-import com.sun.max.lang.Bytes;
-import com.sun.max.lang.WordWidth;
-import com.sun.max.program.ProgramError;
-import com.sun.max.unsafe.Pointer;
-import com.sun.max.unsafe.Word;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.collect.ByteArrayBitMap;
-import com.sun.max.vm.compiler.CallEntryPoint;
-import com.sun.max.vm.compiler.WordUtil;
-import com.sun.max.vm.compiler.target.Adapter;
+import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
+import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.collect.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.Adapter.Type;
-import com.sun.max.vm.compiler.target.AdapterGenerator;
-import com.sun.max.vm.runtime.FatalError;
-import com.sun.max.vm.runtime.SafepointPoll;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.type.Kind;
-
-import java.io.OutputStream;
-
-import static com.sun.cri.ci.CiCallingConvention.Type.JavaCall;
-import static com.sun.max.platform.Platform.target;
-import static com.sun.max.vm.MaxineVM.vm;
-import static com.sun.max.vm.compiler.CallEntryPoint.BASELINE_ENTRY_POINT;
-import static com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT;
-import static com.sun.max.vm.compiler.deopt.Deoptimization.DEOPT_RETURN_ADDRESS_OFFSET;
-import static com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE;
+import com.sun.max.vm.type.*;
 
 /**
  * Adapter generators for ARMV7.
@@ -341,7 +334,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             }
         }
 
-        private static final int PROLOGUE_SIZE = 24;//16; /// determined experimentally12; // setupScratch with movw movt and then the branch?
+        private static final int PROLOGUE_SIZE = 16; /// determined experimentally12; // setupScratch with movw movt and then the branch?
 
         public Baseline2Opt() {
             super(Adapter.Type.BASELINE2OPT);
@@ -786,6 +779,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             // Pad with nops up to the OPT entry point
             asm.align(OPTIMIZED_ENTRY_POINT.offset());
+
             asm.call();
             asm.bind(end);
 

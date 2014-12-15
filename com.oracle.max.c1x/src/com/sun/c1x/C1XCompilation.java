@@ -39,7 +39,6 @@ import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ri.*;
-import com.sun.max.vm.compiler.target.Safepoints;
 
 /**
  * This class encapsulates global information about the compilation of a particular method,
@@ -99,7 +98,6 @@ public final class C1XCompilation {
         if (compiler.isObserved()) {
             compiler.fireCompilationStarted(new CompilationEvent(this));
         }
-        Safepoints.initialiseSafePoints();
     }
 
     public void close() {

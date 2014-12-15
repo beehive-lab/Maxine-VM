@@ -178,6 +178,8 @@ static void setInstructionPointer(UContext *ucontext, Address stub) {
      ucontext->uc_mcontext.gregs[REG_RIP] = (greg_t) stub;
 #   elif isa_IA32
      ucontext->uc_mcontext.gregs[REG_EIP] = (greg_t) stub;
+#elif isa_ARM
+	ucontext->uc_mcontext.arm_pc = (greg_t) (stub-8);
 #   endif
 #elif os_MAXVE
     ucontext->rip = (unsigned long) stub;

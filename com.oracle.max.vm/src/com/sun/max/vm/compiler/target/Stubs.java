@@ -507,7 +507,6 @@ public class Stubs {
 
             asm.alignForPatchableDirectCall(); // insert nops so that the call is in an allowed position
                                             // obeying alignment rules
-
             int callPos = asm.codeBuffer.position();
             ClassMethodActor callee = isInterface ? resolveInterfaceCall.classMethodActor : resolveVirtualCall.classMethodActor;
             asm.call();
@@ -682,7 +681,6 @@ public class Stubs {
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, locations[0].asRegister(), callSite);
 
             asm.alignForPatchableDirectCall(); // we have this but everything is aligned ok for ARM32 bit ARMV7.
-
             int callPos = asm.codeBuffer.position();
             ClassMethodActor callee = patchStaticTrampoline.classMethodActor;
             asm.call(); // 3 instructions = 12 bytes on ARMV7 ON AMD64-X86 this is an E8 CALL!
@@ -690,7 +688,6 @@ public class Stubs {
 
             // restore all parameter registers before returning
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
-
             asm.restore(csl, frameToCSA); // APN now follows X86 way ....
 
             // undo the frame
@@ -877,12 +874,10 @@ public class Stubs {
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, args[2].asRegister(), asm.scratchRegister, 0);
 
             asm.alignForPatchableDirectCall();
-
             int callPos = asm.codeBuffer.position();
             ClassMethodActor callee = Trap.handleTrap.classMethodActor;
             asm.call();
             int callSize = asm.codeBuffer.position() - callPos;
-
             asm.restore(csl, frameToCSA);
 
             // now pop the flags register off the stack before returning
@@ -1113,7 +1108,6 @@ public class Stubs {
 
             CriticalMethod unroll = new CriticalMethod(Deoptimization.class, "unroll", null);
             asm.alignForPatchableDirectCall();
-
             int callPos = asm.codeBuffer.position();
             ClassMethodActor callee = unroll.classMethodActor;
             asm.call();
@@ -1750,7 +1744,6 @@ public class Stubs {
 
 
             // Call runtime routine
-
             asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
             asm.call();
@@ -1865,7 +1858,6 @@ public class Stubs {
 
 
             asm.alignForPatchableDirectCall();
-
             int callPos = asm.codeBuffer.position();
             ClassMethodActor callee = uncommonTrap.classMethodActor;
             asm.call();

@@ -443,7 +443,6 @@ public class ARMV7CompilerStubEmitter {
         int before = asm.codeBuffer.position();
         asm.call();
         int after = asm.codeBuffer.position();
-
         if (C1XOptions.EmitNopAfterCall) {
             asm.nop();
         }
