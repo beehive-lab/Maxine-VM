@@ -22,21 +22,50 @@
  */
 package com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased;
 
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.annotate.INLINE;
+import com.sun.max.annotate.INTRINSIC;
+import com.sun.max.platform.Platform;
+import com.sun.max.unsafe.Address;
+import com.sun.max.unsafe.Word;
 
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
 
 /**
 
  */
 public final class BiasedLockEpoch64 extends Word {
 
-    private static final BiasedLockEpoch64 UNUSED = BiasedLockEpoch64.from(Word.zero());
+    private static  BiasedLockEpoch64 UNUSED; // = BiasedLockEpoch64.from(Word.zero());
+    private static  BiasedLockEpoch64 BULK_REVOCATION; // = BiasedLockEpoch64.from(Address.fromInt(1).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
+    static final BiasedLockEpoch64 REVOKED; // = BiasedLockEpoch64.from(Address.fromInt(2).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
+    private static  BiasedLockEpoch64 MIN; // = BiasedLockEpoch64.from(Address.fromInt(3).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
+    private static  BiasedLockEpoch64 MAX; // = BiasedLockEpoch64.from(BiasedLockword64.EPOCH_MASK);
+
+    static {
+        if (Platform.target().arch.is32bit()) {
+            UNUSED  = BiasedLockEpoch64.from(Word.zero());
+            BULK_REVOCATION = BiasedLockEpoch64.from(Address.fromInt(1).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
+            REVOKED = BiasedLockEpoch64.from(Address.fromInt(2).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
+            MIN = BiasedLockEpoch64.from(Address.fromInt(3).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
+            MAX = BiasedLockEpoch64.from(BiasedLockword64.EPOCH_MASK);
+
+        } else {
+            UNUSED  = BiasedLockEpoch64.from(Word.zero());
+            BULK_REVOCATION = BiasedLockEpoch64.from(Address.fromInt(1).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
+            REVOKED = BiasedLockEpoch64.from(Address.fromInt(2).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
+            MIN = BiasedLockEpoch64.from(Address.fromInt(3).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
+            MAX = BiasedLockEpoch64.from(BiasedLockword64.EPOCH_MASK);
+
+
+        }
+    }
+    /*private static final BiasedLockEpoch64 UNUSED = BiasedLockEpoch64.from(Word.zero());
     private static final BiasedLockEpoch64 BULK_REVOCATION = BiasedLockEpoch64.from(Address.fromInt(1).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
     static final BiasedLockEpoch64 REVOKED = BiasedLockEpoch64.from(Address.fromInt(2).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
     private static final BiasedLockEpoch64 MIN = BiasedLockEpoch64.from(Address.fromInt(3).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
     private static final BiasedLockEpoch64 MAX = BiasedLockEpoch64.from(BiasedLockword64.EPOCH_MASK);
+    */
 
     @HOSTED_ONLY
     public BiasedLockEpoch64(long value) {

@@ -22,12 +22,17 @@
  */
 package com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased;
 
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.annotate.INLINE;
+import com.sun.max.annotate.INTRINSIC;
+import com.sun.max.platform.Platform;
+import com.sun.max.unsafe.Address;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.monitor.modal.modehandlers.HashableLockword64;
+import com.sun.max.vm.monitor.modal.modehandlers.ModalLockword64;
+import com.sun.max.vm.monitor.modal.modehandlers.lightweight.LightweightLockword64;
 
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.monitor.modal.modehandlers.*;
-import com.sun.max.vm.monitor.modal.modehandlers.lightweight.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
 
 /**
  * Abstracts access to a biased lock word's bit fields.
@@ -51,13 +56,41 @@ public class BiasedLockword64 extends LightweightLockword64 {
      * For REVOKED_EPOCH see BiasedLockEpoch.REVOKED.
      */
 
-    private static final Address HASHCODE_MASK = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT);
+    /*private static final Address HASHCODE_MASK = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT);
     static final Address EPOCH_MASK = UTIL_SHIFTED_MASK.shiftedLeft(UTIL_SHIFT);
     private static final Address NON_EPOCH_MASK = EPOCH_MASK.not();
     private static final Address BIASED_OWNED_MASK = HASHCODE_MASK.or(EPOCH_MASK.or(THREADID_SHIFTED_MASK.shiftedLeft(THREADID_SHIFT).bitSet(SHAPE_BIT_INDEX)));
 
     static final int EPOCH_FIELD_WIDTH = UTIL_FIELD_WIDTH;
-    static final int EPOCH_SHIFT = UTIL_SHIFT;
+    static final int EPOCH_SHIFT = UTIL_SHIFT;*/
+
+    private static  Address HASHCODE_MASK; // = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT);
+    static final Address EPOCH_MASK; // = UTIL_SHIFTED_MASK.shiftedLeft(UTIL_SHIFT);
+    private static  Address NON_EPOCH_MASK; // = EPOCH_MASK.not();
+    private static  Address BIASED_OWNED_MASK; // = HASHCODE_MASK.or(EPOCH_MASK.or(THREADID_SHIFTED_MASK.shiftedLeft(THREADID_SHIFT).bitSet(SHAPE_BIT_INDEX)));
+
+    static  int EPOCH_FIELD_WIDTH; // = UTIL_FIELD_WIDTH;
+    static  int EPOCH_SHIFT; // = UTIL_SHIFT;
+    static {
+        if (Platform.target().arch.is32bit()) {
+            HASHCODE_MASK = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT);
+            EPOCH_MASK = UTIL_SHIFTED_MASK.shiftedLeft(UTIL_SHIFT);
+            NON_EPOCH_MASK = EPOCH_MASK.not();
+            BIASED_OWNED_MASK = HASHCODE_MASK.or(EPOCH_MASK.or(THREADID_SHIFTED_MASK.shiftedLeft(THREADID_SHIFT).bitSet(SHAPE_BIT_INDEX)));
+
+            EPOCH_FIELD_WIDTH = UTIL_FIELD_WIDTH;
+            EPOCH_SHIFT = UTIL_SHIFT;
+        } else {
+            HASHCODE_MASK = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT);
+            EPOCH_MASK = UTIL_SHIFTED_MASK.shiftedLeft(UTIL_SHIFT);
+            NON_EPOCH_MASK = EPOCH_MASK.not();
+            BIASED_OWNED_MASK = HASHCODE_MASK.or(EPOCH_MASK.or(THREADID_SHIFTED_MASK.shiftedLeft(THREADID_SHIFT).bitSet(SHAPE_BIT_INDEX)));
+
+            EPOCH_FIELD_WIDTH = UTIL_FIELD_WIDTH;
+            EPOCH_SHIFT = UTIL_SHIFT;
+
+        }
+    }
 
     @HOSTED_ONLY
     public BiasedLockword64(long value) {
