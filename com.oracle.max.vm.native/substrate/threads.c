@@ -249,7 +249,8 @@ void *thread_run(void *arg) {
     VmThreadAddMethod addMethod = image_offset_as_address(VmThreadAddMethod, vmThreadAddMethodOffset);
 
 #if log_THREADS
-    log_print("thread_run: id=%d, t=%p, calling VmThread.add(): ", id, nativeThread);
+    log_print("thread_run: id=%d, t=%p, calling VmThread.add(): ", id, nativeThread);  
+   log_print("  vmThreadAddMEthodOffset vmThreadAddMethod %p  ",addMethod);
     void image_printAddress(Address address);
     image_printAddress((Address) addMethod);
     log_println("");

@@ -104,7 +104,9 @@ public class JVMTI_T1XTargetMethod extends T1XTargetMethod {
                         if (isAMD64()) {
                             // On x86 the safepoint position of a call *is* the return position
                             return codeAt(safepointPos);
-                        } else {
+                        } if(isARM()) {
+                            return codeAt(safepointPos);
+			} else {
                             throw unimplISA();
                         }
                     }
