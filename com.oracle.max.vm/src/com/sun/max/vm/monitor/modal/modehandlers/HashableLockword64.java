@@ -22,12 +22,15 @@
  */
 package com.sun.max.vm.monitor.modal.modehandlers;
 
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.annotate.INLINE;
+import com.sun.max.annotate.INTRINSIC;
+import com.sun.max.platform.Platform;
+import com.sun.max.unsafe.Address;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.Log;
 
-import com.sun.max.annotate.*;
-import com.sun.max.platform.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
 
 /**
  * Abstracts access to a lock word's hashcode bit field.
@@ -45,9 +48,12 @@ public class HashableLockword64 extends ModalLockword64 {
      *
      */
 
-    protected static final int HASH_FIELD_WIDTH;
-    protected static final int HASHCODE_SHIFT;
-    protected static final Address HASHCODE_SHIFTED_MASK;
+    /*
+    APN were final (*removed*) to allow initialisation
+     */
+    protected static int HASH_FIELD_WIDTH;
+    protected static int HASHCODE_SHIFT;
+    protected static Address HASHCODE_SHIFTED_MASK;
 
     static {
         if (Platform.target().arch.is32bit()) {

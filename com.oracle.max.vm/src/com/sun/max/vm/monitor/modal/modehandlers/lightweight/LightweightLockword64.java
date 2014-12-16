@@ -22,13 +22,16 @@
  */
 package com.sun.max.vm.monitor.modal.modehandlers.lightweight;
 
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.annotate.INLINE;
+import com.sun.max.annotate.INTRINSIC;
+import com.sun.max.platform.Platform;
+import com.sun.max.unsafe.Address;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.Log;
+import com.sun.max.vm.monitor.modal.modehandlers.HashableLockword64;
 
-import com.sun.max.annotate.*;
-import com.sun.max.platform.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.monitor.modal.modehandlers.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
 
 /**
  * Provides common bit-field definitions and method-level access for lightweight lock words.
@@ -45,16 +48,19 @@ public class LightweightLockword64 extends HashableLockword64 {
      *
      */
 
-    protected static final int RCOUNT_FIELD_WIDTH; // Must be <= 8 (see incrementCount())
-    protected static final int UTIL_FIELD_WIDTH ;
-    protected static final int THREADID_FIELD_WIDTH;
-    protected static final int THREADID_SHIFT;
-    protected static final int UTIL_SHIFT;
-    protected static final int RCOUNT_SHIFT;
-    protected static final Address THREADID_SHIFTED_MASK;
-    protected static final Address UTIL_SHIFTED_MASK;
-    protected static final Address RCOUNT_SHIFTED_MASK;
-    protected static final Address RCOUNT_INC_WORD;
+    /*
+    APN were final (removed) to see if we can get them to iniitalise correctly
+     */
+    protected static  int RCOUNT_FIELD_WIDTH; // Must be <= 8 (see incrementCount())
+    protected static  int UTIL_FIELD_WIDTH ;
+    protected static  int THREADID_FIELD_WIDTH;
+    protected static  int THREADID_SHIFT;
+    protected static  int UTIL_SHIFT;
+    protected static  int RCOUNT_SHIFT;
+    protected static  Address THREADID_SHIFTED_MASK;
+    protected static  Address UTIL_SHIFTED_MASK;
+    protected static  Address RCOUNT_SHIFTED_MASK;
+    protected static  Address RCOUNT_INC_WORD;
 
     static {
         if (Platform.target().arch.is32bit()) {

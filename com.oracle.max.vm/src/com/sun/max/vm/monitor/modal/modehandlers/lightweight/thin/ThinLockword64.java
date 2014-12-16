@@ -22,14 +22,18 @@
  */
 package com.sun.max.vm.monitor.modal.modehandlers.lightweight.thin;
 
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
-
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.monitor.modal.modehandlers.*;
-import com.sun.max.vm.monitor.modal.modehandlers.lightweight.*;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.annotate.INLINE;
+import com.sun.max.annotate.INTRINSIC;
 import com.sun.max.platform.Platform;
+import com.sun.max.unsafe.Address;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.Log;
+import com.sun.max.vm.monitor.modal.modehandlers.HashableLockword64;
+import com.sun.max.vm.monitor.modal.modehandlers.ModalLockword64;
+import com.sun.max.vm.monitor.modal.modehandlers.lightweight.LightweightLockword64;
+
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
 
 
 /**
@@ -49,10 +53,20 @@ public class ThinLockword64 extends LightweightLockword64 {
      * The per-shape mode bit, m, is not used and is always masked.
      * The 'util' field is not used and is always masked.
      */
+    /* APN was final ... removed to get correct initialisation?
 
-    private static final Address UTIL_MASK = UTIL_SHIFTED_MASK.shiftedLeft(UTIL_SHIFT);
-    private static final Address UNLOCKED_MASK = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT).bitSet(MISC_BIT_INDEX).or(UTIL_MASK);
-
+     */
+    private static  Address UTIL_MASK;// = UTIL_SHIFTED_MASK.shiftedLeft(UTIL_SHIFT);
+    private static  Address UNLOCKED_MASK;// = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT).bitSet(MISC_BIT_INDEX).or(UTIL_MASK);
+    static {
+        if (Platform.target().arch.is32bit()) {
+            UTIL_MASK = UTIL_SHIFTED_MASK.shiftedLeft(UTIL_SHIFT);
+            UNLOCKED_MASK = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT).bitSet(MISC_BIT_INDEX).or(UTIL_MASK);
+        } else {
+            UTIL_MASK = UTIL_SHIFTED_MASK.shiftedLeft(UTIL_SHIFT);
+            UNLOCKED_MASK = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT).bitSet(MISC_BIT_INDEX).or(UTIL_MASK);
+        }
+    }
     @HOSTED_ONLY
     public ThinLockword64(long value) {
         super(value);
@@ -110,8 +124,8 @@ public class ThinLockword64 extends LightweightLockword64 {
     @INLINE
     public final ThinLockword64 asUnlocked() {
 	if (Platform.target().arch.is32bit()) {
-        	return ThinLockword64.from(asAddress().and(0x7fffffffL));
-		//return ThinLockword64.from(asAddress().and(UNLOCKED_MASK));
+        	//return ThinLockword64.from(asAddress().and(0x7fffffffL));
+		return ThinLockword64.from(asAddress().and(UNLOCKED_MASK));
 
 	} else {
         	return ThinLockword64.from(asAddress().and(UNLOCKED_MASK));
