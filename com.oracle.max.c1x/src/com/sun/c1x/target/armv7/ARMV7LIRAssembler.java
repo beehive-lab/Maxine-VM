@@ -1456,9 +1456,12 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     CiAddress raddr;
                     if (right.isStackSlot()) {
                         raddr = frameMap.toStackAddress(((CiStackSlot) right));
+                        masm.setUpScratch(raddr);
                     } else {
                         assert right.isConstant();
                         raddr = tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) right).asDouble()));
+                        masm.setUpScratch(raddr);
+                        masm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
                     }
 
                     //System.out.println("DUBIOUS: double const arithmetic");
@@ -2085,12 +2088,14 @@ private ConditionFlag convertCondition(Condition condition) {
                     case Int     : masm.cmpl(reg1, c.asInt()); break;
                     case Float   : //masm.ucomiss(reg1, tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) opr2).asFloat())));
                         masm.setUpScratch(tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) opr2).asFloat())));
+                        masm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
                         masm.vldr(ConditionFlag.Always,ARMV7.s30,ARMV7.r12,0);
                         masm.ucomisd(reg1, ARMV7.s30);
 
                         break;
                     case Double  : //masm.ucomisd(reg1, tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) opr2).asDouble())));
                         masm.setUpScratch(tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) opr2).asDouble())));
+                        masm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
                         masm.vldr(ConditionFlag.Always,ARMV7.d15,ARMV7.r12,0);
                         masm.ucomisd(reg1, ARMV7.d15);
                         break;
