@@ -1424,12 +1424,15 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     CiAddress raddr;
                     if (right.isStackSlot()) {
                         raddr = frameMap.toStackAddress(((CiStackSlot) right));
+                        masm.setUpScratch(raddr);
+
                     } else {
                         assert right.isConstant();
                         raddr = tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) right).asFloat()));
+                        masm.setUpScratch(raddr);
+                        masm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
                     }
                     //System.out.println("DUBIOUS: REGISTER? float const arithmetic");
-                    masm.setUpScratch(raddr);
                     masm.vldr(ConditionFlag.Always,ARMV7.s30,ARMV7.r12,0);
                     switch (code) {
                         case Add: // masm.addss(lreg, raddr)
