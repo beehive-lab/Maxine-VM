@@ -3202,6 +3202,7 @@ private ConditionFlag convertCondition(Condition condition) {
              //   masm.movq(dst, 0xDEADDEADDEADDEADL);
             } else {
 		masm.setUpScratch(tasm.recordDataReferenceInCode(obj));
+		masm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
                 masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,dst,0);
 
              //   masm.movq(dst, tasm.recordDataReferenceInCode(obj));
