@@ -375,6 +375,11 @@ def jnigen(args):
 
     return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm'), 'com.sun.max.vm.jni.JniFunctionsGenerator'])
 
+def optionsgen(args):
+    """(re)generate Java source for Graal Options"""
+
+    return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm.ext.graal'), 'com.oracle.max.vm.ext.graal.hosted.MaxGraalOptionsGenerator'])
+
 def jvmtigen(args):
     """(re)generate Java source for JVMTI native function interfaces
 
@@ -704,6 +709,7 @@ def mx_init(suite):
         'inspectoragent': [inspectoragent, '[-impl target] [-port port]'],
         'jnigen': [jnigen, ''],
         'jvmtigen': [jvmtigen, ''],
+        'optionsgen': [optionsgen, ''],
         'jttgen': [jttgen, ''],
         'loggen': [loggen, ''],
         'makejdk': [makejdk, '[<destination directory>]'],
