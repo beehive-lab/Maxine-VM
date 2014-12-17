@@ -90,7 +90,7 @@ public class MaxProfilingInfo implements ProfilingInfo {
 
     @Override
     public JavaMethodProfile getMethodProfile(int bci) {
-        // TODO: implement when method profile information is utilzied in Graal
+        // TODO: implement when method profile information is utilized in Graal
         return null;
     }
 
