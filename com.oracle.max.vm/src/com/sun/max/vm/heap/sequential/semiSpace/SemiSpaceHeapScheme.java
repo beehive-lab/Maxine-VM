@@ -944,7 +944,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 cell = adjustForDebugTag ? DebugHeap.adjustForDebugTag(oldAllocationMark) : oldAllocationMark;
                 end = cell.plus(size);
             }
-        } while (toSpace.mark.compareAndSwap(oldAllocationMark, end) != oldAllocationMark);
+        } while (!toSpace.mark.compareAndSwap(oldAllocationMark, end).equals(oldAllocationMark));
 
         // Zero the allocated chunk before returning
         Memory.clearWords(cell, size.dividedBy(Word.size()).toInt());
