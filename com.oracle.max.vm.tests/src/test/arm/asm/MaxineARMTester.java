@@ -442,7 +442,7 @@ public class MaxineARMTester {
                 tmp = (int)(2L*Integer.MIN_VALUE + tmp);
             } else expectedValues[i] = (int)tmp;
             //expectedValues[i] = new Integer((int) Long.parseLong(value.substring(2, value.length()).toString(), 16));
-            expectedValues[i] = tmp;
+            expectedValues[i] = new Integer((int)tmp);
             if (DEBUGOBJECTS) {
                 System.out.println(" CORE " + i + " " + ((Integer) expectedValues[i]).intValue());
             }

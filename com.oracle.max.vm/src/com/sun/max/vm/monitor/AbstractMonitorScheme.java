@@ -70,7 +70,7 @@ public abstract class AbstractMonitorScheme extends AbstractVMScheme implements 
         if (Platform.target().arch.is64bit()) {
             return hashCode & ~0x80000000;
         } else {
-            return hashCode & ~0x8000;
+            return hashCode & ~0x80000000;
         }
     }
 

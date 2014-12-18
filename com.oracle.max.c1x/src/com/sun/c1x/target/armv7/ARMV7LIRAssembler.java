@@ -949,7 +949,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 moveRegs(srcRegister, dest.asRegister(), src.kind, dest.kind);
                 break;
             case I2B:
-                masm.signExtendByte(dest.asRegister(),srcRegister );
+                moveRegs(srcRegister, dest.asRegister());
+                //masm.signExtendByte(dest.asRegister() );
+                masm.sxtb(ConditionFlag.Always,dest.asRegister(),srcRegister);
                 break;
 
             case I2C:
@@ -957,7 +959,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.and(ConditionFlag.Always, true, dest.asRegister(), srcRegister, dest.asRegister(), 0, 0);
                 break;
             case I2S:
-                masm.signExtendShort(srcRegister, dest.asRegister());
+                //masm.signExtendShort(dest.asRegister(),srcRegister);
+                moveRegs(srcRegister, dest.asRegister());
+                masm.sxth(ConditionFlag.Always,dest.asRegister(),srcRegister);
                 break;
             case F2D:
                 masm.vcvt(ConditionFlag.Always,asXmmDoubleReg(dest),false,false,asXmmFloatReg(src));

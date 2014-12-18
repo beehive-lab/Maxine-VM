@@ -119,6 +119,22 @@ public class ARMV7Assembler extends AbstractAssembler {
 
 
     }
+    public void sxtb(final ConditionFlag cond, final CiRegister dest, final CiRegister source){
+        int instruction = 0x06af0070;
+        instruction |= (cond.value()&0xf) << 28;
+        instruction |= (dest.encoding &0xf) << 12;
+        instruction |= (source.encoding &0xf);
+
+        emitInt(instruction);
+    }
+    public void sxth(final ConditionFlag cond, final CiRegister dest, final CiRegister source){
+        int instruction = 0x06bf0070;
+        instruction |= (cond.value()&0xf) << 28;
+        instruction |= (dest.encoding &0xf) << 12;
+        instruction |= (source.encoding &0xf);
+
+        emitInt(instruction);
+    }
 
     public void addlsl(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int shift_imm) {
         int instruction = 0x800000;
