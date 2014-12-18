@@ -124,7 +124,7 @@ public class ThinLockword64 extends LightweightLockword64 {
     @INLINE
     public final ThinLockword64 asUnlocked() {
 	if (Platform.target().arch.is32bit()) {
-        	//return ThinLockword64.from(asAddress().and(0x7fffffffL));
+        	//return ThinLockword64.from(asAddress().and(0xfffffffeL));
 		return ThinLockword64.from(asAddress().and(UNLOCKED_MASK));
 
 	} else {

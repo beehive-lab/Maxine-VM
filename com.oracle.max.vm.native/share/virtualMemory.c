@@ -188,10 +188,13 @@ Address virtualMemory_allocateIn31BitSpace(Size size, int type) {
 }
 
 Address virtualMemory_deallocate(Address start, Size size, int type) {
+
+    printf("DEALLOCATE %u\n",start);
 #if os_MAXVE
     return (Address) maxve_virtualMemory_deallocate((void *)start, size, type);
 #else
     int result = munmap((void *) start, (size_t) size);
+    printf("RETURNING %d\n",result);
     return result == -1 ? 0 : start;
 #endif
 }

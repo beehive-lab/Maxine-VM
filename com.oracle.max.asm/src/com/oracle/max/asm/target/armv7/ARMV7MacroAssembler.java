@@ -52,10 +52,11 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert (ARMV7.r9 != newValue);
         assert (ARMV7.r8 != cmpValue);
         assert (ARMV7.r8 != newValue);
-	    assert (ARMV7.r0 == cmpValue);
-	    Label atomicFail = new Label();
-	    bind(atomicFail);
-        membar(1);
+	assert (ARMV7.r0 == cmpValue);
+	Label atomicFail = new Label();
+	bind(atomicFail);
+	membar(1);
+
         setUpScratch(address);
         mov32BitConstant(ARMV7.r9, 2);// put we.re not equal in
         ldrex(ConditionFlag.Always, ARMV7.r8, scratchRegister);
@@ -80,9 +81,10 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert (newValue != ARMV7.r9);
         assert (cmpValue != ARMV7.r9);
 
-	    Label atomicFail = new Label();
-	    bind(atomicFail);
-        membar(1);
+	Label atomicFail = new Label();
+	bind(atomicFail);
+	membar(1);
+
         setUpScratch(address);
         ldrexd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12);
         lcmpl(ConditionFlag.Equal, cmpValue, ARMV7.r8);

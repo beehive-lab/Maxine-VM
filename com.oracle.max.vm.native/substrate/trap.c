@@ -95,6 +95,8 @@ int getTrapNumber(int signal) {
 #endif
 
 void setCurrentThreadSignalMask(boolean isVmOperationThread) {
+	printf("remove the return in setCurrentThreadSignalMask\n");
+	return;
 #if !os_MAXVE
     if (isVmOperationThread) {
         thread_setSignalMask(SIG_SETMASK, &vmAndDefaultSignals, NULL);
@@ -110,6 +112,8 @@ void* setSignalHandler(int signal, SignalHandlerFunction handler) {
 	maxve_register_fault_handler(signal, handler);
 	return NULL;
 #else
+    printf("setSignalHandler returning NULL");
+   return NULL;
 
     struct sigaction newSigaction;
     struct sigaction oldSigaction;
@@ -237,6 +241,7 @@ static boolean handleDivideOverflow(UContext *ucontext) {
     unsigned char *rip = (unsigned char *) getInstructionPointer(ucontext);
 
     boolean is64Bit = false;
+    printf("handleDivideOverflow NOT IMPLEMENTED FOR ARM\n");
 
     if ((rip[0] & 0xf0) == 0x40) {
         /* Decode REX byte */
@@ -341,6 +346,7 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
     Address ip = getInstructionPointer(ucontext);
     Address faultAddress = getFaultAddress(signalInfo, ucontext);
 
+    printf("vmSignalHandler\n");
     /* Only VM signals should get here. */
     if (trapNumber < 0) {
         logTrap(signal, ip, faultAddress, 0);
@@ -450,16 +456,18 @@ SignalHandlerFunction userSignalHandler = (SignalHandlerFunction) userSignalHand
  */
 void nativeTrapInitialize(Address javaTrapStub) {
     /* This function must be called on the primordial thread. */
+    printf("Commenting out some signals in nativeTrapIniitialize\n");
     c_ASSERT(tla_load(int, tla_current(), ID) == PRIMORDIAL_THREAD_ID);
 
     theJavaTrapStub = javaTrapStub;
-    setSignalHandler(SIGSEGV, (SignalHandlerFunction) vmSignalHandler);
-    setSignalHandler(SIGILL, (SignalHandlerFunction) vmSignalHandler);
+    //setSignalHandler(SIGSEGV, (SignalHandlerFunction) vmSignalHandler);
+    //setSignalHandler(SIGILL, (SignalHandlerFunction) vmSignalHandler);
     setSignalHandler(SIGFPE, (SignalHandlerFunction) vmSignalHandler);
+    return; // RMEOVE me and uncomment
 
 #if !os_MAXVE
-    setSignalHandler(SIGBUS, (SignalHandlerFunction) vmSignalHandler);
-    setSignalHandler(SIGUSR1, (SignalHandlerFunction) vmSignalHandler);
+    //setSignalHandler(SIGBUS, (SignalHandlerFunction) vmSignalHandler);
+    //setSignalHandler(SIGUSR1, (SignalHandlerFunction) vmSignalHandler);
 
     sigfillset(&allSignals);
 
@@ -468,10 +476,10 @@ void nativeTrapInitialize(Address javaTrapStub) {
 
     /* Define the VM signals mask. */
     sigemptyset(&vmSignals);
-    sigaddset(&vmSignals, SIGSEGV);
-    sigaddset(&vmSignals, SIGBUS);
-    sigaddset(&vmSignals, SIGILL);
-    sigaddset(&vmSignals, SIGFPE);
+    //sigaddset(&vmSignals, SIGSEGV);
+    //sigaddset(&vmSignals, SIGBUS);
+    //sigaddset(&vmSignals, SIGILL);
+    //sigaddset(&vmSignals, SIGFPE);
     sigaddset(&vmSignals, SIGUSR1);
 
     /* Let all threads be stopped by a debugger. */
