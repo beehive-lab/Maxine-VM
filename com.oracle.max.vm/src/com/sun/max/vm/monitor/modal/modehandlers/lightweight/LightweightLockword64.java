@@ -39,18 +39,23 @@ import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
 public class LightweightLockword64 extends HashableLockword64 {
 
     /*
-     * Field layout:
+     * Field layout for 64 bit:
      *
      * bit [63........................................ 1  0]     Shape
      *
      *     [ r. count ][ util  ][  thread ID ][ hash ][m][0]     Lightweight
      *     [                 Undefined               ][m][1]     Inflated
      *
+     *
+     * Field layout for 32 bit:
+     *
+     * bit [32........................................ 1  0]     Shape
+     *
+     *     [ r. count 5 ][ util 1 ][  thread ID 4][ hash 20][m][0]     Lightweight
+     *     [                 Undefined                     ][m][1]     Inflated
+     *
      */
 
-    /*
-    APN were final (removed) to see if we can get them to iniitalise correctly
-     */
     protected static  int RCOUNT_FIELD_WIDTH; // Must be <= 8 (see incrementCount())
     protected static  int UTIL_FIELD_WIDTH ;
     protected static  int THREADID_FIELD_WIDTH;
@@ -65,7 +70,7 @@ public class LightweightLockword64 extends HashableLockword64 {
     static {
         if (Platform.target().arch.is32bit()) {
             RCOUNT_FIELD_WIDTH = 5; // Must be <= 8 (see incrementCount())
-            UTIL_FIELD_WIDTH = 1; //was 2
+            UTIL_FIELD_WIDTH = 1;
             THREADID_FIELD_WIDTH = 32 - (RCOUNT_FIELD_WIDTH + UTIL_FIELD_WIDTH + HASH_FIELD_WIDTH + NUMBER_OF_MODE_BITS);
             THREADID_SHIFT = HASHCODE_SHIFT + HASH_FIELD_WIDTH;
             UTIL_SHIFT = THREADID_SHIFT + THREADID_FIELD_WIDTH;
@@ -73,7 +78,7 @@ public class LightweightLockword64 extends HashableLockword64 {
             THREADID_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(32 - THREADID_FIELD_WIDTH);
             UTIL_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(32 - UTIL_FIELD_WIDTH);
             RCOUNT_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(32 - RCOUNT_FIELD_WIDTH);
-            RCOUNT_INC_WORD = Address.zero().bitSet(32 - RCOUNT_FIELD_WIDTH); // APN altered
+            RCOUNT_INC_WORD = Address.zero().bitSet(32 - RCOUNT_FIELD_WIDTH);
         } else {
             RCOUNT_FIELD_WIDTH = 5; // Must be <= 8 (see incrementCount())
             UTIL_FIELD_WIDTH = 9;
@@ -86,6 +91,18 @@ public class LightweightLockword64 extends HashableLockword64 {
             RCOUNT_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(64 - RCOUNT_FIELD_WIDTH);
             RCOUNT_INC_WORD = Address.zero().bitSet(64 - RCOUNT_FIELD_WIDTH);
         }
+        System.out.println("RCOUNT_FIELD_WIDTH " + RCOUNT_FIELD_WIDTH);
+        System.out.println("UTIL_FIELD_WIDTH " + UTIL_FIELD_WIDTH);
+        System.out.println("THREADID_FIELD_WIDTH " + THREADID_FIELD_WIDTH);
+
+        //THREADID_SHIFT = HASHCODE_SHIFT + HASH_FIELD_WIDTH;
+        //UTIL_SHIFT = THREADID_SHIFT + THREADID_FIELD_WIDTH;
+        //RCOUNT_SHIFT = UTIL_SHIFT + UTIL_FIELD_WIDTH;
+        //THREADID_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(64 - THREADID_FIELD_WIDTH);
+        //UTIL_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(64 - UTIL_FIELD_WIDTH);
+        //RCOUNT_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(64 - RCOUNT_FIELD_WIDTH);
+        //RCOUNT_INC_WORD = Address.zero().bitSet(64 - RCOUNT_FIELD_WIDTH);
+
     }
     @HOSTED_ONLY
     public LightweightLockword64(long value) {

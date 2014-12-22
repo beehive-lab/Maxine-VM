@@ -42,26 +42,36 @@ import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
 public class ThinLockword64 extends LightweightLockword64 {
 
     /*
+     * For 64 bit:
      * bit [63........................................ 1  0]     Shape         Lock-state
      *
      *     [     0    ][ util  ][     0      ][ hash ][m][0]     Lightweight   Unlocked
      *     [ r. count ][ util  ][  thread ID ][ hash ][m][0]     Lightweight   Locked (rcount >= 1)
      *     [                 Undefined               ][m][1]     Inflated
      *
+     * For 32 bit:
+     * bit [32........................................ 1  0]     Shape         Lock-state
+     *
+     *     [     0    ][ util  ][     0           ][ hash ][m][0]     Lightweight   Unlocked
+     *     [ r. count 5][ util 1 ][  thread ID 4][ hash 20][m][0]     Lightweight   Locked (rcount >= 1)
+     *     [                 Undefined                    ][m][1]     Inflated
+     *
      * Note:
      * A valid thread ID must be >= 1. This is enforced by VmThreadMap.
      * The per-shape mode bit, m, is not used and is always masked.
      * The 'util' field is not used and is always masked.
      */
-    /* APN was final ... removed to get correct initialisation?
 
-     */
-    private static  Address UTIL_MASK;// = UTIL_SHIFTED_MASK.shiftedLeft(UTIL_SHIFT);
-    private static  Address UNLOCKED_MASK;// = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT).bitSet(MISC_BIT_INDEX).or(UTIL_MASK);
+
+    private static  Address UTIL_MASK;
+    private static  Address UNLOCKED_MASK;
     static {
         if (Platform.target().arch.is32bit()) {
             UTIL_MASK = UTIL_SHIFTED_MASK.shiftedLeft(UTIL_SHIFT);
             UNLOCKED_MASK = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT).bitSet(MISC_BIT_INDEX).or(UTIL_MASK);
+            System.out.println("UTIL MASK :" + UTIL_MASK);
+            System.out.println("UNLOCKED MASK :" + UNLOCKED_MASK);
+
         } else {
             UTIL_MASK = UTIL_SHIFTED_MASK.shiftedLeft(UTIL_SHIFT);
             UNLOCKED_MASK = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT).bitSet(MISC_BIT_INDEX).or(UTIL_MASK);
