@@ -24,14 +24,14 @@ do
     #echo $delim
     if [ "$delim" == "subsp,sp,r12" ]
     then
-    	myMovtIndex=$(( $index - 3 ))
+    	myMovtIndex=$(( $index - 2 ))
     	myMovt=$(head -n "$myMovtIndex" $test_file | tail -1 | expand | sed 's/  */ /g')
-    	myMovwIndex=$(( $index - 2 ))
+    	myMovwIndex=$(( $index - 1 ))
     	myMovw=$(head -n "$myMovwIndex" $test_file | tail -1 | expand | sed 's/  */ /g')
     	
     	#Start Validation that movw,movt were indeed found where expected
-    	#echo $myMovw
-    	#echo $myMovt
+    	echo $myMovw
+    	echo $myMovt
     	tempValidateMovw=$(echo $myMovw | cut -d" " -f 2)
     	tempValidateMovt=$(echo $myMovt | cut -d" " -f 2)
     	if [ "$tempValidateMovw" != "movw" ]
