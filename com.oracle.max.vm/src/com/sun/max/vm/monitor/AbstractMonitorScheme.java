@@ -74,7 +74,7 @@ public abstract class AbstractMonitorScheme extends AbstractVMScheme implements 
         } else {
             //return hashCode & ~0x8000;
             //return hashCode & ~0x80000000;
-	    return hashCode & 0xfffff;
+            return hashCode & 0xfffff;
         }
     }
 

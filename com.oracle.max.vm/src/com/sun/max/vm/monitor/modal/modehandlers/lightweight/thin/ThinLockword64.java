@@ -69,15 +69,14 @@ public class ThinLockword64 extends LightweightLockword64 {
         if (Platform.target().arch.is32bit()) {
             UTIL_MASK = UTIL_SHIFTED_MASK.shiftedLeft(UTIL_SHIFT);
             UNLOCKED_MASK = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT).bitSet(MISC_BIT_INDEX).or(UTIL_MASK);
-            System.out.println("UTIL MASK :" + UTIL_MASK);
-            System.out.println("UNLOCKED MASK :" + UNLOCKED_MASK);
-
         } else {
             UTIL_MASK = UTIL_SHIFTED_MASK.shiftedLeft(UTIL_SHIFT);
             UNLOCKED_MASK = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT).bitSet(MISC_BIT_INDEX).or(UTIL_MASK);
             System.out.println("UTIL MASK :" + UTIL_MASK);
             System.out.println("UNLOCKED MASK :" + UNLOCKED_MASK);
         }
+        System.out.println("UTIL MASK :" + UTIL_MASK);
+        System.out.println("UNLOCKED MASK :" + UNLOCKED_MASK);
     }
     @HOSTED_ONLY
     public ThinLockword64(long value) {
