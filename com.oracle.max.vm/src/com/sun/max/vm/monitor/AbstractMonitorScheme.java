@@ -61,7 +61,9 @@ public abstract class AbstractMonitorScheme extends AbstractVMScheme implements 
     @INLINE
     public final int createHashCode(Object object) {
         if (MaxineVM.isHosted()) {
-            return System.identityHashCode(object);
+	    if(!Platform.target().arch.is64bit())
+		return System.identityHashCode(object) & 0xfffff;
+            else return System.identityHashCode(object);
         }
 
         int hashCode = Reference.fromJava(object).toOrigin().unsignedShiftedRight(3).toInt() ^ counter++;
@@ -71,7 +73,8 @@ public abstract class AbstractMonitorScheme extends AbstractVMScheme implements 
             return hashCode & ~0x80000000;
         } else {
             //return hashCode & ~0x8000;
-            return hashCode & ~0x80000000;
+            //return hashCode & ~0x80000000;
+	    return hashCode & 0xfffff;
         }
     }
 
