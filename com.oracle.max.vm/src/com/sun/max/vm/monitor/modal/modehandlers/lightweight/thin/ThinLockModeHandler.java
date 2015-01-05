@@ -69,11 +69,14 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
     private ModalLockword64 inflate(Object object, ThinLockword64 lockword) {
         ModalLockword64 inflatedLockword = delegate().prepareModalLockword(object, lockword);
         ThinLockword64 thinLockword = lockword;
+        Log.print("Attempt to inflate lock ");
         while (true) {
             final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, thinLockword, inflatedLockword));
             if (answer.equals(thinLockword)) {
+                Log.print("1 ");
                 break;
             } else if (answer.isInflated()) {
+                Log.print("2 ");
                 delegate().cancelPreparedModalLockword(inflatedLockword);
                 inflatedLockword = answer;
                 break;
