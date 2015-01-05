@@ -91,9 +91,13 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
         int retries = THIN_LOCK_RETRIES;
         while (true) {
             if (ThinLockword64.isThinLockword(newLockword)) {
+		if(MaxineVM.isPristine()) Log.println("IS THIN");
                 final ThinLockword64 thinLockword = ThinLockword64.from(newLockword);
                 // Do we own the lock?
                 if (thinLockword.getLockOwnerID() == lockwordThreadID) {
+			if(MaxineVM.isPristine()) {
+				Log.println("WE OWN Thin lock");
+			}
                     // Attempt to inc the recursion count
                     if (!thinLockword.countOverflow()) {
                         final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, thinLockword, thinLockword.incrementCount()));
@@ -109,9 +113,18 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
                     final ThinLockword64 asLocked  = thinLockword.asLockedOnceBy(lockwordThreadID);
                     final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, asUnlocked, asLocked));
                     if (answer.equals(asUnlocked)) {
+			if(MaxineVM.isPristine()) {
+				Log.println("WE already have the lock");
+			}
                         // The current thread got the lock
                         return;
                     }
+		    if(MaxineVM.isPristine()) { 
+			Log.println("Another threads potentially owns the lock?i (unlocked, locked, actual");
+			ThinLockword64.log(asUnlocked);
+			ThinLockword64.log(asLocked);
+			ModalLockword64.log(answer);
+		    }
                     // This could be a hashcode, inflation or another thread got the lock.
                     // Lets try again.
                     newLockword = answer;
@@ -119,14 +132,21 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
                         continue;
                     }
                 }
+		Log.println("monitor retry overflow");
                 // Count overflow or too much contention - inflate
                 newLockword = inflate(object, thinLockword);
-            }
+	    }else {
+	 	if(MaxineVM.isPristine()) { 
+			Log.println("IS INFLATED");
+			ModalLockword64.log(newLockword);
+		}
+	    }
 
             // The monitor is inflated
             if (delegate().delegateMonitorEnter(object, newLockword, lockwordThreadID)) {
                 return;
             }
+	    //Log.println("monitor THIN_LOCK_RETRY: re-initialised");
 
             // Try again. Monitor was deflated.
             newLockword = ModalLockword64.from(ObjectAccess.readMisc(object));
