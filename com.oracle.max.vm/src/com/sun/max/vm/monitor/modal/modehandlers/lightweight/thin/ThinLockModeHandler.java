@@ -103,8 +103,8 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
                             Log.print("Attempt to CAS thin lock ");
                         }
                         final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, thinLockword, thinLockword.incrementCount()));
-                        ThinLockword64.log(thinLockword);
-                        ThinLockword64.log(answer);
+                       // ThinLockword64.log(thinLockword);
+                        //ThinLockword64.log(answer);
 
                         if (answer.equals(thinLockword)) {
                             if (MaxineVM.isPristine()) {
