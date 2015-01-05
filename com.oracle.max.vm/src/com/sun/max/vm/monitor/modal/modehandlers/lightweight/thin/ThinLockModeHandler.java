@@ -96,7 +96,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
                 if (thinLockword.getLockOwnerID() == lockwordThreadID) {
                     if (MaxineVM.isPristine()) {
                         Log.print("Attempt to acquire thin lock ");
-                        Log.println(object.hashCode());
+                        ModalLockword64.log(lockword);
                     }
                     // Attempt to inc the recursion count
                     if (!thinLockword.countOverflow()) {
@@ -104,7 +104,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
                         if (answer.equals(thinLockword)) {
                             if (MaxineVM.isPristine()) {
                                 Log.print("Incremented and returned");
-                                Log.println(object.hashCode());
+                                ModalLockword64.log(lockword);
                             }
                             return;
                         }
@@ -119,7 +119,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
                     if (answer.equals(asUnlocked)) {
                         if (MaxineVM.isPristine()) {
                             Log.print("Already have thin lock ");
-                            Log.println(object.hashCode());
+                            ModalLockword64.log(lockword);
                         }
                         // The current thread got the lock
                         return;
@@ -142,7 +142,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
 	    }
             if (MaxineVM.isPristine()) {
                 Log.print("Monitor is inflated ");
-                Log.println(object.hashCode());
+                ModalLockword64.log(lockword);
             }
 
 
