@@ -148,10 +148,10 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
                 newLockword = inflate(object, thinLockword);
 	    }
             if (MaxineVM.isPristine()) {
-                Log.print("Monitor is inflated ");
-                ModalLockword64.log(lockword);
-                if(!lockword.isInflated() && !ThinLockword64.isThinLockword(newLockword)) {
-                    System.exit(-1);
+                Log.print("Monitor is inflated (ModalLockWord): " + (lockword.isInflated() ? "True" : "False"));
+                Log.print("Monitor is thin lock word (ThinLockWord): " + (ThinLockword64.isThinLockword(newLockword) ? "True":"False"));
+                if (!lockword.isInflated() && !ThinLockword64.isThinLockword(newLockword)) {
+                    MaxineVM.exit(-1);
                 }
             }
 
