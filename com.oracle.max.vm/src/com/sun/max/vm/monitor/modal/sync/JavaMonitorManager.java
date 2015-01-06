@@ -164,6 +164,19 @@ public class JavaMonitorManager {
                 monitor.setDisplacedMisc(ObjectAccess.readMisc(monitor.boundObject()));
                 monitor.refreshBoundObject();
             }
+            if (Monitor.TraceMonitors && stickyMonitors.length > 0) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.println("Sticky monitors:");
+                for (int i = 0; i < stickyMonitors.length; i++) {
+                    final ManagedMonitor monitor = stickyMonitors[i];
+                    Log.print("  ");
+                    Log.print(i);
+                    Log.print(": ");
+                    monitor.log();
+                    Log.println();
+                }
+                Log.unlock(lockDisabledSafepoints);
+            }
         } else if (phase == MaxineVM.Phase.STARTING) {
             assert numberOfBindableMonitors <= bindableMonitors.length;
             if (Monitor.TraceMonitors && stickyMonitors.length > 0) {
