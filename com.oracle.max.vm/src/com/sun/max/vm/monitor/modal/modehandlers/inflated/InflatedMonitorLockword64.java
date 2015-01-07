@@ -29,7 +29,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.reference.*;
-
+import com.sun.max.vm.*;
 /**
  * Abstracts access to an inflated lock word's bit fields.
  */
@@ -82,7 +82,11 @@ public class InflatedMonitorLockword64 extends HashableLockword64 {
      */
     @INLINE
     public final boolean isBound() {
-        return asAddress().isBitSet(MISC_BIT_INDEX);
+        if (MaxineVM.isPristine()) {
+        Log.println("isBound?");
+	Log.println(asAddress().isBitSet(MISC_BIT_INDEX));
+        }
+	return asAddress().isBitSet(MISC_BIT_INDEX);
     }
 
     /**

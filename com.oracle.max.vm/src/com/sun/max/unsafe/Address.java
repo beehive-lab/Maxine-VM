@@ -30,6 +30,7 @@ import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.*;
 
 /**
  * A machine word interpreted as a linear address.
@@ -402,7 +403,20 @@ public class Address extends Word {
 
     @INLINE
     public final boolean isBitSet(int index) {
+	//if (Word.width() == 64) {
+//boolean b = false;
+//         if (MaxineVM.isPristine()) {
+        //Log.println(" Address toLong: ");
+        //Log.println(toLong());
+  //      boolean a = (toLong() & (1L << index)) != 0;
+   //     Log.println( "isSet? ");
+   //     Log.println(a);
+//b=(toLong() & (1L << index)) != 0;
+//	}
         return (toLong() & (1L << index)) != 0;
+	//}else{
+	//return (toInt() & (1 <<index)) !=0;
+	//}
     }
 
     @INLINE

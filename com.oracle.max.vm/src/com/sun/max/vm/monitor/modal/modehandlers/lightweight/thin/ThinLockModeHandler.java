@@ -69,14 +69,20 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
     private ModalLockword64 inflate(Object object, ThinLockword64 lockword) {
         ModalLockword64 inflatedLockword = delegate().prepareModalLockword(object, lockword);
         ThinLockword64 thinLockword = lockword;
-        Log.print("Attempt to inflate lock ");
+        if (MaxineVM.isPristine()) {
+           Log.println("Attempt to inflate lock ");
+	}
         while (true) {
             final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, thinLockword, inflatedLockword));
             if (answer.equals(thinLockword)) {
-                Log.print("1 ");
+                if (MaxineVM.isPristine()) {
+		   Log.print("1 ");
+		}
                 break;
             } else if (answer.isInflated()) {
-                Log.print("2 ");
+                if (MaxineVM.isPristine()) {
+		   Log.print("2 ");
+		}
                 delegate().cancelPreparedModalLockword(inflatedLockword);
                 inflatedLockword = answer;
                 break;
@@ -93,17 +99,23 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
         ModalLockword64 newLockword = lockword;
         int retries = THIN_LOCK_RETRIES;
         while (true) {
+		 if (MaxineVM.isPristine()) {
+                    Log.println("Enter Loop Slowpath");
+                    }
             if (ThinLockword64.isThinLockword(newLockword)) {
+		if (MaxineVM.isPristine()) {
+                Log.println("Slowpath 1");
+                }
 		final ThinLockword64 thinLockword = ThinLockword64.from(newLockword);
                 // Do we own the lock?
                 if (thinLockword.getLockOwnerID() == lockwordThreadID) {
                     if (MaxineVM.isPristine()) {
-                        Log.print("Attempt to acquire thin lock ");
+                        Log.println("Attempt to acquire thin lock ");
                     }
                     // Attempt to inc the recursion count
                     if (!thinLockword.countOverflow()) {
                         if (MaxineVM.isPristine()) {
-                            Log.print("Attempt to CAS thin lock ");
+                            Log.println("Attempt to CAS thin lock ");
                         }
                         final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, thinLockword, thinLockword.incrementCount()));
                        // ThinLockword64.log(thinLockword);
@@ -111,7 +123,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
 
                         if (answer.equals(thinLockword)) {
                             if (MaxineVM.isPristine()) {
-                                Log.print("Incremented and returned");
+                                Log.println("Incremented and returned");
                             }
                             return;
                         }
@@ -120,6 +132,9 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
                         continue;
                     }
                 } else {
+		    if (MaxineVM.isPristine()) {
+                    Log.println("Slowpath 2");
+                    }
                     final ThinLockword64 asUnlocked = thinLockword.asUnlocked();
                     final ThinLockword64 asLocked  = thinLockword.asLockedOnceBy(lockwordThreadID);
                     final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, asUnlocked, asLocked));
@@ -149,17 +164,31 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
 	    }
             if (MaxineVM.isPristine()) {
                 if (lockword.isInflated()) {
-                    Log.print("Monitor is inflated (ModalLockWord): True ");
+                    Log.println("1 Monitor is inflated (ModalLockWord): True ");
                 } else {
-                    Log.print("Monitor is inflated (ModalLockWord): False ");
+                    Log.println("1 Monitor is inflated (ModalLockWord): False ");
                 }
-                if (ThinLockword64.isThinLockword(newLockword)) {
-                    Log.print("Monitor is thin lock word (ThinLockWord): True");
+                if (ThinLockword64.isThinLockword(lockword)) {
+                    Log.println("1 Monitor is thin lock word (ThinLockWord): True ");
                 } else {
-                    Log.print("Monitor is thin lock word (ThinLockWord): False");
+                    Log.println("1 Monitor is thin lock word (ThinLockWord): False ");
                 }
-                if (!lockword.isInflated() && !ThinLockword64.isThinLockword(newLockword)) {
-                    MaxineVM.exit(-1);
+
+                if (lockword.isInflated()) {
+                    Log.println("2 Monitor is inflated (ModalLockWord): True ");
+                } else {
+                    Log.println("2 Monitor is inflated (ModalLockWord): False ");
+                }
+                if (ThinLockword64.isThinLockword(lockword)) {
+                    Log.println("2 Monitor is thin lock word (ThinLockWord): True ");
+                } else {
+                    Log.println("2 Monitor is thin lock word (ThinLockWord): False ");
+                }
+
+
+                if (lockword.isInflated() && ThinLockword64.isThinLockword(lockword)) {
+		    Log.print("In");
+                    System.exit(-1);
                 }
             }
 
