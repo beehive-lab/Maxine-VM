@@ -47,32 +47,26 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public final void casInt(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
-
         assert (ARMV7.r9 != cmpValue);
         assert (ARMV7.r9 != newValue);
         assert (ARMV7.r8 != cmpValue);
         assert (ARMV7.r8 != newValue);
-	assert (ARMV7.r0 == cmpValue);
-	Label atomicFail = new Label();
-	bind(atomicFail);
-	membar(1);
-
+        assert (ARMV7.r0 == cmpValue);
+        Label atomicFail = new Label();
+        bind(atomicFail);
+        membar(1);
         setUpScratch(address);
         mov32BitConstant(ARMV7.r9, 2);// put we.re not equal in
         ldrex(ConditionFlag.Always, ARMV7.r8, scratchRegister);
-        cmp(ConditionFlag.Always, cmpValue, ARMV7.r8,0,0);
+        cmp(ConditionFlag.Always, cmpValue, ARMV7.r8, 0, 0);
         // Keep r0 in sync with code at ARMV7LirGenerator.visitCompareAndSwap
-	
         strex(ConditionFlag.Equal, ARMV7.r9, newValue, scratchRegister);
-	    mov32BitConstant(ARMV7.r12,1);
-        cmp(ConditionFlag.Always,ARMV7.r9, ARMV7.r12,0,0);
-	    jcc(ConditionFlag.Equal,atomicFail);
-	    mov32BitConstant(ARMV7.r12,2);
-        cmp(ConditionFlag.Always,ARMV7.r9, ARMV7.r12,0,0);
-	    mov(ConditionFlag.Equal,false, cmpValue, ARMV7.r8); // return newValue as we were successful
-
-
-
+        mov32BitConstant(ARMV7.r12, 1);
+        cmp(ConditionFlag.Always, ARMV7.r9, ARMV7.r12, 0, 0);
+        jcc(ConditionFlag.Equal, atomicFail);
+        mov32BitConstant(ARMV7.r12, 2);
+        cmp(ConditionFlag.Always, ARMV7.r9, ARMV7.r12, 0, 0);
+        mov(ConditionFlag.Equal, false, cmpValue, ARMV7.r8); // return newValue as we were successful
     }
 
     public final void casLong(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
@@ -95,7 +89,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 	    mov32BitConstant(ARMV7.r12,1);
 	    cmp(ConditionFlag.Equal,ARMV7.r8,ARMV7.r12,0,0); // equal to 1 then we failed MP so loop
 	    jcc(ConditionFlag.Equal,atomicFail);
-	// FLAGs might be wrong for subsequent compares?	
+	// FLAGs might be wrong for subsequent compares?
 
     }
 
@@ -480,11 +474,9 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void movlong(CiRegister dst, long src) {
         if (dst.number < 16) { // move to ARM CORE register
-            //System.out.println("Register: " + dst.encoding);
             mov64BitConstant(dst, ARMV7.cpuRegisters[dst.encoding + 1], src);
         } else {
             assert dst.number < 32 : "ERROR movlong in ARMV7MacroAssembler movlong to FPRegs";
-            //System.out.println("movlong " + Long.toHexString(src));
             mov32BitConstant(ARMV7.r8, (int) (0xffffffffL & src));
             mov32BitConstant(ARMV7.r9, (int) ((src >> 32) & 0xffffffffL));
             vmov(ConditionFlag.Always, dst, ARMV7.r8);
