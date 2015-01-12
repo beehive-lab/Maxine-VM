@@ -995,7 +995,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             }
         } else {
             base = frameRegister;
-	    if(base.number <= 15 && base.number >= 0) base = ARMV7.allRegisters[base.number]; 
+	    if(base.number <= 15 && base.number >= 0) base = ARMV7.allRegisters[base.number];
 	    else base = ARMV7.r11;
             mov32BitConstant(scratchRegister, addr.kind.isLong() ? disp + 4 : disp);
             //sub(ConditionFlag.Always, false, scratchRegister, /*ARMV7.r11*/base, scratchRegister, 0, 0);
@@ -1126,11 +1126,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final void mov64BitConstant(CiRegister dstLow, CiRegister dstUpper, long imm64) {
         int low32 = (int) (imm64 & 0xffffffffL);
         int high32 = (int) ((imm64 >> 32) & 0xffffffffL);
-        // Yes I know ... it looks wrong but it is RIGHT!
         mov32BitConstant(dstLow, low32);
         mov32BitConstant(dstUpper, high32);
-        //mov32BitConstant(dstLow, high32);
-        //mov32BitConstant(dstUpper, low32);
     }
 
     public final void alignForPatchableDirectCall() {
