@@ -857,10 +857,14 @@ public class T1XTargetMethod extends TargetMethod {
         }
     }
 
+    private int bytecodeSize() {
+        return bciToPos.length - 1;
+    }
+
     private void recordExceptionSeen(StackFrameCursor current) {
         if (profile != null) {
             int bci = bciFor(current.vmIP());
-            if (bci <  classMethodActor.codeSize()) {
+            if (bci < bytecodeSize()) {
                 assert bci >= 0;
                 int mpoIndex = profile.getExceptionSeenProfileDataIndex(bci);
                 if (mpoIndex == MethodProfile.UNDEFINED_INDEX) {
@@ -873,7 +877,7 @@ public class T1XTargetMethod extends TargetMethod {
                 }
             } else {
                 // Do not record exception rethrown in T1X epilogue
-                assert bci == classMethodActor.codeSize();
+                assert bci == bytecodeSize();
             }
         }
     }
