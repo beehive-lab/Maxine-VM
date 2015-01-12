@@ -1,24 +1,19 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
+ * OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package com.sun.max.vm.monitor.modal.modehandlers.lightweight.thin;
 
@@ -34,7 +29,8 @@ import com.sun.max.vm.thread.*;
 
 /**
  *
- * TODO: For AMD64 and Sparc TSO we don't need any membars. PPC, IA32 and ARM will need some adding to the acquire and release logic.
+ * TODO: For AMD64 and Sparc TSO we don't need any membars. PPC, IA32 and ARM will need some adding to the acquire and
+ * release logic.
  */
 public abstract class ThinLockModeHandler extends AbstractModeHandler {
 
@@ -69,20 +65,11 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
     private ModalLockword64 inflate(Object object, ThinLockword64 lockword) {
         ModalLockword64 inflatedLockword = delegate().prepareModalLockword(object, lockword);
         ThinLockword64 thinLockword = lockword;
-        if (MaxineVM.isPristine()) {
-           Log.println("Attempt to inflate lock ");
-	}
         while (true) {
             final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, thinLockword, inflatedLockword));
             if (answer.equals(thinLockword)) {
-                if (MaxineVM.isPristine()) {
-		   Log.print("1 ");
-		}
                 break;
             } else if (answer.isInflated()) {
-                if (MaxineVM.isPristine()) {
-		   Log.print("2 ");
-		}
                 delegate().cancelPreparedModalLockword(inflatedLockword);
                 inflatedLockword = answer;
                 break;
@@ -99,32 +86,15 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
         ModalLockword64 newLockword = lockword;
         int retries = THIN_LOCK_RETRIES;
         while (true) {
-		 if (MaxineVM.isPristine()) {
-                    Log.println("Enter Loop Slowpath");
-                    }
             if (ThinLockword64.isThinLockword(newLockword)) {
-		if (MaxineVM.isPristine()) {
-                Log.println("Slowpath 1");
-                }
-		final ThinLockword64 thinLockword = ThinLockword64.from(newLockword);
+                final ThinLockword64 thinLockword = ThinLockword64.from(newLockword);
                 // Do we own the lock?
                 if (thinLockword.getLockOwnerID() == lockwordThreadID) {
-                    if (MaxineVM.isPristine()) {
-                        Log.println("Attempt to acquire thin lock ");
-                    }
                     // Attempt to inc the recursion count
                     if (!thinLockword.countOverflow()) {
-                        if (MaxineVM.isPristine()) {
-                            Log.println("Attempt to CAS thin lock ");
-                        }
                         final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, thinLockword, thinLockword.incrementCount()));
-                       // ThinLockword64.log(thinLockword);
-                        //ThinLockword64.log(answer);
 
                         if (answer.equals(thinLockword)) {
-                            if (MaxineVM.isPristine()) {
-                                Log.println("Incremented and returned");
-                            }
                             return;
                         }
                         // An inflation or a new hashcode was installed. Try again
@@ -132,26 +102,13 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
                         continue;
                     }
                 } else {
-		    if (MaxineVM.isPristine()) {
-                    Log.println("Slowpath 2");
-                    }
                     final ThinLockword64 asUnlocked = thinLockword.asUnlocked();
-                    final ThinLockword64 asLocked  = thinLockword.asLockedOnceBy(lockwordThreadID);
+                    final ThinLockword64 asLocked = thinLockword.asLockedOnceBy(lockwordThreadID);
                     final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, asUnlocked, asLocked));
                     if (answer.equals(asUnlocked)) {
-                        if (MaxineVM.isPristine()) {
-                            Log.print("Already have thin lock ");
-                            ModalLockword64.log(lockword);
-                        }
                         // The current thread got the lock
                         return;
                     }
-		    if(MaxineVM.isPristine()) {
-			Log.println("Another threads potentially owns the lock?i (unlocked, locked, actual");
-			ThinLockword64.log(asUnlocked);
-			ThinLockword64.log(asLocked);
-			ModalLockword64.log(answer);
-		    }
                     // This could be a hashcode, inflation or another thread got the lock.
                     // Lets try again.
                     newLockword = answer;
@@ -159,39 +116,9 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
                         continue;
                     }
                 }
-		   // Count overflow or too much contention - inflate
+                // Count overflow or too much contention - inflate
                 newLockword = inflate(object, thinLockword);
-	    }
-            if (MaxineVM.isPristine()) {
-                if (lockword.isInflated()) {
-                    Log.println("1 Monitor is inflated (ModalLockWord): True ");
-                } else {
-                    Log.println("1 Monitor is inflated (ModalLockWord): False ");
-                }
-                if (ThinLockword64.isThinLockword(lockword)) {
-                    Log.println("1 Monitor is thin lock word (ThinLockWord): True ");
-                } else {
-                    Log.println("1 Monitor is thin lock word (ThinLockWord): False ");
-                }
-
-                if (lockword.isInflated()) {
-                    Log.println("2 Monitor is inflated (ModalLockWord): True ");
-                } else {
-                    Log.println("2 Monitor is inflated (ModalLockWord): False ");
-                }
-                if (ThinLockword64.isThinLockword(lockword)) {
-                    Log.println("2 Monitor is thin lock word (ThinLockWord): True ");
-                } else {
-                    Log.println("2 Monitor is thin lock word (ThinLockWord): False ");
-                }
-
-
-                if (lockword.isInflated() && ThinLockword64.isThinLockword(lockword)) {
-		    Log.print("In");
-                    System.exit(-1);
-                }
             }
-
 
             // The monitor is inflated
             if (delegate().delegateMonitorEnter(object, newLockword, lockwordThreadID)) {
@@ -272,7 +199,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             // By lightweight lock semantics we have no threads waiting, so just return.
             return;
         }
-        //  We don't have to check for deflation, as either we own the lock or an exception will be thrown
+        // We don't have to check for deflation, as either we own the lock or an exception will be thrown
         delegate().delegateMonitorNotify(object, all, lockword);
     }
 
@@ -341,7 +268,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
         public boolean delegateMonitorEnter(Object object, ModalLockword64 lockword, int lockwordThreadID) {
             final ThinLockword64 thinLockword = ThinLockword64.from(lockword);
             final ThinLockword64 asUnlocked = thinLockword.asUnlocked();
-            final ThinLockword64 asLocked  = thinLockword.asLockedOnceBy(lockwordThreadID);
+            final ThinLockword64 asLocked = thinLockword.asLockedOnceBy(lockwordThreadID);
             final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, asUnlocked, asLocked));
             if (!answer.equals(asUnlocked)) {
                 slowPathMonitorEnter(object, answer, lockwordThreadID);
@@ -353,7 +280,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             final int lockwordThreadID = encodeCurrentThreadIDForLockword();
             final ThinLockword64 thinLockword = ThinLockword64.from(lockword);
             final ThinLockword64 asUnlocked = thinLockword.asUnlocked();
-            final ThinLockword64 asLocked  = thinLockword.asLockedOnceBy(lockwordThreadID);
+            final ThinLockword64 asLocked = thinLockword.asLockedOnceBy(lockwordThreadID);
             final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, asLocked, asUnlocked));
             if (!answer.equals(asLocked)) {
                 slowPathMonitorExit(object, answer, lockwordThreadID);
@@ -441,7 +368,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             final int lockwordThreadID = encodeCurrentThreadIDForLockword();
             final ThinLockword64 lockword = ThinLockword64.from(ObjectAccess.readMisc(object));
             final ThinLockword64 asUnlocked = lockword.asUnlocked();
-            final ThinLockword64 asLocked  = lockword.asLockedOnceBy(lockwordThreadID);
+            final ThinLockword64 asLocked = lockword.asLockedOnceBy(lockwordThreadID);
             final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, asLocked, asUnlocked));
             if (!answer.equals(asLocked)) {
                 slowPathMonitorExit(object, answer, lockwordThreadID);
@@ -498,4 +425,3 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
         }
     }
 }
-

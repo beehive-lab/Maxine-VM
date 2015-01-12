@@ -82,11 +82,7 @@ public class InflatedMonitorLockword64 extends HashableLockword64 {
      */
     @INLINE
     public final boolean isBound() {
-        if (MaxineVM.isPristine()) {
-        Log.println("isBound?");
-	Log.println(asAddress().isBitSet(MISC_BIT_INDEX));
-        }
-	return asAddress().isBitSet(MISC_BIT_INDEX);
+        return asAddress().isBitSet(MISC_BIT_INDEX);
     }
 
     /**
