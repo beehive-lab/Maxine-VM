@@ -591,8 +591,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.ldrImmediate(ConditionFlag.Always,1,0,0,dest.asRegister(),ARMV7.r12,0);
                 break;
             case Long    :
+                masm.ldrd(ConditionFlag.Always, dest.asRegister(), ARMV7.r12, 0);
                 if (DEBUG_MOVS) {
-                    masm.ldrd(ConditionFlag.Always, dest.asRegister(), ARMV7.r12, 0);
                     masm.movw(ConditionFlag.Always, ARMV7.r12, 40);
                     masm.movw(ConditionFlag.Always, ARMV7.r12, 40);
                     masm.movw(ConditionFlag.Always, ARMV7.r12, 40);
