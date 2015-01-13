@@ -311,6 +311,7 @@ public class CompilationBroker {
      * @param phase the phase of VM starting up.
      */
     public void initialize(MaxineVM.Phase phase) {
+	Log.println("COMPILATION BROKER INITIALIZE");
         optimizingCompiler.initialize(phase);
         if (baselineCompiler != null) {
             baselineCompiler.initialize(phase);

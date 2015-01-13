@@ -166,6 +166,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 int afterLea = masm.codeBuffer.position();
                 masm.codeBuffer.setPosition(beforeLea);
                 masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, ARMV7.r15.asValue(), beforeLea - afterLea));
+		// ADDED as meant to be 32bit quantity
+        	masm.mov32BitConstant(ARMV7.cpuRegisters[dst.asRegister().encoding+1], 0);
+
                 break;
             case UNCOMMON_TRAP:
                 directCall(CiRuntimeCall.Deoptimize, info);
@@ -617,8 +620,11 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r8,0);
             //masm.pushl((CiAddress) src);
             //masm.popl((CiAddress) dest);
-
+	    
+            // TODO WHAT ABOUT Long?
+	   
         } else {
+	    System.err.println("MEM2MEM PUSH POP PTR CALLED");
             masm.pushptr((CiAddress) src);
             masm.popptr((CiAddress) dest);
         }
@@ -627,6 +633,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     @Override
     protected void mem2stack(CiValue src, CiValue dest, CiKind kind) {
         assert 0 == 1 : "mem2stack ARMV7IRAssembler";
+	System.err.println("MEM2STACK");
         if (DEBUG_MOVS) {
             masm.movw(ConditionFlag.Always, ARMV7.r12, 12);
             masm.movw(ConditionFlag.Always, ARMV7.r12, 12);
@@ -653,14 +660,21 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             masm.movw(ConditionFlag.Always, ARMV7.r12, 13);
         }
         if (src.kind.isInt()) {
-           // masm.pushl(frameMap.toStackAddress((CiStackSlot) src));
-            //masm.popl(frameMap.toStackAddress((CiStackSlot) dest));
 	   //System.out.println("stack2stack check functionality pushq popq should they load/str the values at the address prior/post push/pop");
-            masm.pushq(frameMap.toStackAddress((CiStackSlot) src));
-            masm.popq(frameMap.toStackAddress((CiStackSlot) dest));
+            //masm.pushq(frameMap.toStackAddress((CiStackSlot) src));
+            //masm.popq(frameMap.toStackAddress((CiStackSlot) dest));
+            masm.setUpScratch(frameMap.toStackAddress((CiStackSlot) src));
+            masm.ldrImmediate(ConditionFlag.Always,1,0,0,ARMV7.r8,ARMV7.r12,0);
+	    masm.setUpScratch(frameMap.toStackAddress((CiStackSlot) dest));
+	    masm.str(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
+	   
         } else {
-            masm.pushptr(frameMap.toStackAddress((CiStackSlot) src));
-            masm.popptr(frameMap.toStackAddress((CiStackSlot) dest));
+            masm.setUpScratch(frameMap.toStackAddress((CiStackSlot) src));
+            masm.ldrImmediate(ConditionFlag.Always,1,0,0,ARMV7.r8,ARMV7.r12,0);
+	    masm.setUpScratch(frameMap.toStackAddress((CiStackSlot) dest));
+	    masm.str(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
+            //masm.pushptr(frameMap.toStackAddress((CiStackSlot) src));
+            //masm.popptr(frameMap.toStackAddress((CiStackSlot) dest));
         }
     }
 
@@ -3147,8 +3161,8 @@ private ConditionFlag convertCondition(Condition condition) {
             masm.vldr(ConditionFlag.Always, dst, ARMV7.r12, 0);
             // masm.movsd(dst, src);
         } else if (kind == CiKind.Long) {
-            if (DEBUG_MOVS) {
                 masm.ldrd(ConditionFlag.Always, dst, ARMV7.r12, 0);
+            if (DEBUG_MOVS) {
                 masm.movw(ConditionFlag.Always, ARMV7.r12, 39);
                 masm.movw(ConditionFlag.Always, ARMV7.r12, 39);
                 masm.movw(ConditionFlag.Always, ARMV7.r12, 39);
@@ -3180,7 +3194,7 @@ private ConditionFlag convertCondition(Condition condition) {
                 masm.vstr(ConditionFlag.Always,asXmmFloatReg(registerOrConstant),ARMV7.r12,0);
                 //masm.movss(dst, registerOrConstastoreParameternt.asRegister());
             } else if (k.isDouble()) {
-                masm.vstr(ConditionFlag.Always,registerOrConstant.asRegister(),ARMV7.r12,0);
+                masm.vstr(ConditionFlag.Always,asXmmDoubleReg(registerOrConstant),ARMV7.r12,0);
 
                 //   masm.movsd(dst, registerOrConstant.asRegister());
             } else if (k.isLong()) {
