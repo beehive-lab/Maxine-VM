@@ -803,6 +803,13 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= 0xffff & registerList;
         emitInt(instruction);
     }
+    public void ldmea(final ConditionFlag flag,final CiRegister theStack, final int registerList) {
+	int instruction = 0x09100000; 
+        instruction |= (flag.value() & 0xf) << 28;
+	instruction |= (theStack.encoding & 0xf) << 16; 
+        instruction |= 0xffff & registerList;
+        emitInt(instruction);
+    }
 
     public void ldrd(final ConditionFlag flag, final CiRegister valueReg, final CiRegister baseReg, int offset8) {
         int instruction;
@@ -1510,7 +1517,11 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
         // TODO ret() implements an X86 return from subroutine this needs to pop the return value of the stack TODO we
         // might need to push the value of r14 onto the stack in order to make this work for a call from the C harness
         // TODO for testing of the methods
-        mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
+        //mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
+
+        //sub(ConditionFlag.Always,false,ARMV7.r13,ARMV7.r11,4,0);
+	//pop(ConditionFlag.Always,1<<11|1<<15);
+	ldmea(ConditionFlag.Always,ARMV7.r11,1<<11|1<<13|1<<15);
 
     }
 

@@ -129,7 +129,7 @@ public class RegisterConfigs {
         CiRegisterConfig standard = null;
 
         if (platform().isa == ISA.ARM) {
-	    CiCalleeSaveLayout armCalleeSave = new CiCalleeSaveLayout(0,-1,4,ARMV7.r14);
+	    CiCalleeSaveLayout armCalleeSave = new CiCalleeSaveLayout(0,-1,4,ARMV7.r14,ARMV7.r11);
             if (os == OS.LINUX || os == OS.DARWIN) {
                 /*
 		 * PARAMETERS r0,r1,r2,r3 and
@@ -148,6 +148,8 @@ public class RegisterConfigs {
                     s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29}; // no
                 // scratch in allocatable
                 parameters = new CiRegister[] {r0, r1, r2, r3, d0, d1, d2, d3, s0, s1, s2, s3};
+
+		// AND NOT tHE PC!!!
                 allRegistersExceptLatch = new CiRegister[] {r0, r1, r2, r3, r4, r5, r6, r7, com.oracle.max.asm.target.armv7.ARMV7.r8, com.oracle.max.asm.target.armv7.ARMV7.r9,
                     com.oracle.max.asm.target.armv7.ARMV7.r11, com.oracle.max.asm.target.armv7.ARMV7.r12, com.oracle.max.asm.target.armv7.ARMV7.r13,
                     com.oracle.max.asm.target.armv7.ARMV7.r14, /*com.oracle.max.asm.target.armv7.ARMV7.r15,*/ d0, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, s0, s1, s2,
@@ -178,10 +180,12 @@ public class RegisterConfigs {
                     // TODO it might be better to handle this another way
                     com.oracle.max.asm.target.armv7.ARMV7.r12, // scratch
                     allocatable, // allocatable
-                    armStandard, ///allocatable, // caller save *** TODO APN-- not sure we might need a
+                    allocatable, ///allocatable, // caller save *** TODO APN-- not sure we might need a
+                    //armStandard, ///allocatable, // caller save *** TODO APN-- not sure we might need a
                     // different set for ARM HERE!!!!!
                     parameters, // parameter registers
-                    new CiCalleeSaveLayout(0,-1,4,ARMV7.r14),//null, // no callee save
+                    null, // no callee save
+                    //armCalleeSave//null, // no callee save
                     com.oracle.max.asm.target.armv7.ARMV7.allRegisters, // all ARM registers
                     roleMap); // VM register role map
 
@@ -223,8 +227,8 @@ public class RegisterConfigs {
 
                 // the registers below are a guess in n2j ....
                 // ....
-                CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 4,  r1, r2, r3, r4, r5, r6, r7, com.oracle.max.asm.target.armv7.ARMV7.r8,
-                     com.oracle.max.asm.target.armv7.ARMV7.r9,  com.oracle.max.asm.target.armv7.ARMV7.r10,com.oracle.max.asm.target.armv7.ARMV7.r11,ARMV7.r14)); //NOT STACK 
+                CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 4,   r4, r5, r6, r7, com.oracle.max.asm.target.armv7.ARMV7.r8,
+                     com.oracle.max.asm.target.armv7.ARMV7.r9 /*com.oracle.max.asm.target.armv7.ARMV7.r11,ARMV7.r13*/)); //NOT STACK 
                 n2j.stackArg0Offsets[JavaCallee.ordinal()] = nativeStackArg0Offset;
 
                 roleMap.put(ABI_FP, com.oracle.max.asm.target.armv7.ARMV7.r11);
@@ -233,9 +237,10 @@ public class RegisterConfigs {
                      d0, // floating point return value
                      com.oracle.max.asm.target.armv7.ARMV7.r12, // scratch
                      allocatable, // allocatable
-                     armStandard, // caller save
+		     allocatable,
+                     //armStandard, // caller save
                      parameters, // parameter registers
-                     armCalleeSave,//null, // no callee save
+                     null,//armCalleeSave,//null, // no callee save
                      com.oracle.max.asm.target.armv7.ARMV7.allRegisters, // all ARM!!! registers
                      roleMap); // VM register role map
 

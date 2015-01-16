@@ -239,7 +239,10 @@ public final class FrameMap {
             final int callerFrameOffset = slot.index() * compilation.target.spillSlotSize;
             int offset = callerFrame + callerFrameOffset;
             if(compilation.target.arch.isARM()) {
-                offset = offset-4 ; // we push the LR in the Callee Save
+		
+                //offset = offset-4 ; // we push the LR in the Callee Save
+		// +4 if we dont do PC as well
+		offset = offset +12; // we push ip(copy of sp) r11 r15 in the Calee Save tryin -4, 0 ,4 ,8, 12 16 , -8, -12, -16
             }
             return new CiAddress(slot.kind, compilation.target.arch.isARM() ? CiRegister.CallerFrame.asValue() : CiRegister.Frame.asValue(), offset);
         } else {

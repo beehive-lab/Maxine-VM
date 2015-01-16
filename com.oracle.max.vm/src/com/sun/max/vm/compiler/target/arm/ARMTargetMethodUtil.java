@@ -417,6 +417,7 @@ public final class ARMTargetMethodUtil {
         TargetMethod tm = current.targetMethod();
         Pointer sp = current.sp();
         Pointer ripPointer = sp.plus(tm.frameSize());
+	Log.println("STACK  FRAME WALKING ARMTargetMethodUtil:advance");
         if (MaxineVM.isHosted()) {
             // Only during a stack walk in the context of the Inspector can execution
             // be anywhere other than at a safepoint.

@@ -167,7 +167,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.codeBuffer.setPosition(beforeLea);
                 masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, ARMV7.r15.asValue(), beforeLea - afterLea));
 		// ADDED as meant to be 32bit quantity
-        	masm.mov32BitConstant(ARMV7.cpuRegisters[dst.asRegister().encoding+1], 0);
+        	//masm.mov32BitConstant(ARMV7.cpuRegisters[dst.asRegister().encoding+1], 0);
 
                 break;
             case UNCOMMON_TRAP:
@@ -659,7 +659,19 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             masm.movw(ConditionFlag.Always, ARMV7.r12, 13);
             masm.movw(ConditionFlag.Always, ARMV7.r12, 13);
         }
-        if (src.kind.isInt()) {
+	if(src.kind == CiKind.Long || src.kind == CiKind.Double )  {
+            masm.setUpScratch(frameMap.toStackAddress((CiStackSlot) src));
+            masm.ldrd(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
+	    masm.setUpScratch(frameMap.toStackAddress((CiStackSlot) dest));
+	    masm.strd(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
+
+	} else {
+            masm.setUpScratch(frameMap.toStackAddress((CiStackSlot) src));
+            masm.ldrImmediate(ConditionFlag.Always,1,0,0,ARMV7.r8,ARMV7.r12,0);
+	    masm.setUpScratch(frameMap.toStackAddress((CiStackSlot) dest));
+	    masm.str(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
+	}
+        /*if (src.kind.isInt()) {
 	   //System.out.println("stack2stack check functionality pushq popq should they load/str the values at the address prior/post push/pop");
             //masm.pushq(frameMap.toStackAddress((CiStackSlot) src));
             //masm.popq(frameMap.toStackAddress((CiStackSlot) dest));
@@ -676,6 +688,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             //masm.pushptr(frameMap.toStackAddress((CiStackSlot) src));
             //masm.popptr(frameMap.toStackAddress((CiStackSlot) dest));
         }
+	*/
     }
 
     @Override
@@ -2944,8 +2957,18 @@ private ConditionFlag convertCondition(Condition condition) {
                         masm.nop();
                         masm.nop();
                     }
-		    //masm.push(ConditionFlag.Always,1<<14);
-                    masm.decrementq(ARMV7.r13, frameSize); // does not emit code for frameSize == 0
+		    /*****ATES r11 so that we have a valid stack backtrace?
+		    //masm.mov32BitConstant(ARMV7.r11,0);
+	            masm.mov(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r13);
+		    */
+		    masm.mov(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r13);
+		    masm.push(ConditionFlag.Always,1<<11|1<<12|1<<14|1<<15);// r11, r12(stack),r14 (LR),r15(PC)
+	            masm.add(ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13,12,0);
+
+
+		   masm.decrementq(ARMV7.r13,frameSize);// DIRTY HACK TO get STACK to work
+                    //masm.decrementq(ARMV7.r13, frameSize); // does not emit code for frameSize == 0
+
                     //masm.vmov(ConditionFlag.Always,ARMV7.s6,ARMV7.s3);
                    // masm.vmov(ConditionFlag.Always,ARMV7.s4,ARMV7.s2);
                    // masm.vmov(ConditionFlag.Always,ARMV7.s2,ARMV7.s1);
@@ -2968,6 +2991,8 @@ private ConditionFlag convertCondition(Condition condition) {
                         assert frameToCSA >= 0;
                         masm.save(csl, frameToCSA);
                     }
+
+		
                     if (DEBUG_METHODS) {
                         int a = methodCounter.incrementAndGet();
                         masm.mov32BitConstant(ARMV7.r12, a);
@@ -2992,6 +3017,12 @@ private ConditionFlag convertCondition(Condition condition) {
                     }
                     //masm.ldr(ConditionFlag.Always,ARMV7.r14,ARMV7.r13,0); // restore LR prior to adjusting stack?
                     masm.incrementq(ARMV7.r13,frameSize);
+
+
+	/*	    masm.pop(ConditionFlag.Always,1<<14|1<<12|1<<11);
+		    masm.incrementq(ARMV7.r13,4);
+*/
+
 		    //masm.pop(ConditionFlag.Always,1<<14);
                   //  masm.incrementq(ARMV7.rsp, frameSize);
                     break;

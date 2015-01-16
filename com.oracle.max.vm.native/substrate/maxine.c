@@ -382,7 +382,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
 	printf("ENTERING MAIN JAVA THREAD TO RUN\n");
         thread_run((void *) tlBlock);
     } else {
-        printf("NATIVE EXIT\n");
+        printf("NON ZERO NATIVE EXIT %d\n",exitCode);
         native_exit(exitCode);
     }
     printf("NEVER REACHED\n");

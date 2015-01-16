@@ -634,13 +634,18 @@ public class VmThread {
         // Enable safepoints:
         Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(etla));
         // JniFunctions.prologue calls VMTI.beginUpcallVM but we aren't actually in an upcall into the VM
-        VMTI.handler().endUpcallVM();
 
+	Log.println("done prologue");
+        VMTI.handler().endUpcallVM();
+	Log.println("done endupcall");
         final VmThread thread = VmThread.current();
 
+	Log.println("done current");
         VMLog.vmLog().threadStart();
 
+	Log.println("done threadstart");
         thread.initializationComplete();
+	Log.println("done init");
 
         thread.traceThreadAfterInitialization(stackBase, stackEnd);
 

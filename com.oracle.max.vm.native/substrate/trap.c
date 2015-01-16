@@ -48,7 +48,8 @@
 #define ASYNC_INTERRUPT 4
 
 static Address theJavaTrapStub;
-static boolean traceTraps = false;
+static boolean traceTraps = true;
+//static boolean traceTraps = false;
 
 #if !os_MAXVE
 
@@ -170,6 +171,7 @@ static Address getInstructionPointer(UContext *ucontext) {
 }
 
 static void setInstructionPointer(UContext *ucontext, Address stub) {
+printf("SET PC CALLED\n");
 #if os_SOLARIS
 #   if isa_SPARC
     ucontext->uc_mcontext.gregs[REG_nPC] = (greg_t) (stub + 4);
