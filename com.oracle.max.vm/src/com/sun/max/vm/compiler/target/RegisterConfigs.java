@@ -228,7 +228,7 @@ public class RegisterConfigs {
                 // the registers below are a guess in n2j ....
                 // ....
                 CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 4,   r4, r5, r6, r7, com.oracle.max.asm.target.armv7.ARMV7.r8,
-                     com.oracle.max.asm.target.armv7.ARMV7.r9 /*com.oracle.max.asm.target.armv7.ARMV7.r11,ARMV7.r13*/)); //NOT STACK 
+                     com.oracle.max.asm.target.armv7.ARMV7.r9,com.oracle.max.asm.target.armv7.ARMV7.r10 /*com.oracle.max.asm.target.armv7.ARMV7.r11,ARMV7.r13*/)); //NOT STACK 
                 n2j.stackArg0Offsets[JavaCallee.ordinal()] = nativeStackArg0Offset;
 
                 roleMap.put(ABI_FP, com.oracle.max.asm.target.armv7.ARMV7.r11);

@@ -385,8 +385,11 @@ public class SpecialReferenceManager {
             sentinelAlias.next = sentinel;
             sentinelAlias.referent = null;
             assert sentinelAlias.isInactive();
+	    Log.println("SpecialReferenceManager: trying to start REFHANDLER"); 
             startReferenceHandlerThread();
+	    Log.println("SpecialReferenceManager: trying to start FINALIZER"); 
             startFinalizerThread();
+	    Log.println("SpecialReferenceManager: initialize ocmpleted"); 
         }
     }
 

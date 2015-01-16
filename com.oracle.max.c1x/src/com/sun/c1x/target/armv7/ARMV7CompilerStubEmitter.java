@@ -405,6 +405,7 @@ public class ARMV7CompilerStubEmitter {
 	// ADDED
   	// early versionasm.push(ARMV7Assembler.ConditionFlag.Always,1<<11|1<<14|1<<15);
         // early versionasm.add(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13,8,0);
+	asm.nop();
  	asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r12,ARMV7.r13);
         asm.push(ARMV7Assembler.ConditionFlag.Always,1<<11|1<<12|1<<14|1<<15);// r11, r12(stack),r14 (LR),r15(PC)
         asm.add(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13,12,0);

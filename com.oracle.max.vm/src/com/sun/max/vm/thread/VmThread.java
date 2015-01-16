@@ -674,9 +674,13 @@ public class VmThread {
             vmConfig().initializeSchemes(MaxineVM.Phase.PRISTINE);
 
             // We can now start the other system threads.
+	    Log.println("trying to start vmOperationThread (systemthread");
             VmThread.vmOperationThread.startVmSystemThread();
+            Log.println("vmOperationThread started");
             SpecialReferenceManager.initialize(MaxineVM.Phase.PRISTINE);
+	    Log.println("trying to start signalDispatcher thread");
             VmThread.signalDispatcherThread.startVmSystemThread();
+	    Log.println("signalDispatcher thread started");
 
         }
 
