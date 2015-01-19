@@ -157,6 +157,9 @@ public abstract class StackFrameWalker {
             TargetMethod tm = current.targetMethod();
             TargetMethod calleeTM = callee.targetMethod();
             traceCursor(current);
+	    Log.print("STACK WALK current name is ");
+		if(tm!= null) Log.println ( tm.regionName());
+		else Log.println(" NULL");
 
             if (tm != null && (!initialIsInNative || (purpose == INSPECTING || purpose == RAW_INSPECTING))) {
 
@@ -165,11 +168,14 @@ public abstract class StackFrameWalker {
 
                 checkVmEntrypointCaller(calleeTM, tm);
 
+		Log.println("Walk the frame");
                 // walk the frame
                 if (!walkFrame(current, callee, tm, purpose, context)) {
+			
                     break;
                 }
             } else {
+		Log.println("DID NOT FIND target method in native code");
                 // did not find target method => in native code
                 if (MaxineVM.isHosted() && purpose == INSPECTING) {
                     final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;
@@ -237,6 +243,7 @@ public abstract class StackFrameWalker {
 
     private boolean walkFrame(StackFrameCursor current, StackFrameCursor callee, TargetMethod targetMethod, Purpose purpose, Object context) {
         boolean proceed = true;
+	Log.println("WALKING FRAME");
         if (purpose == Purpose.REFERENCE_MAP_PREPARING) {
             // walk the frame for reference map preparation
             StackReferenceMapPreparer preparer = (StackReferenceMapPreparer) context;
