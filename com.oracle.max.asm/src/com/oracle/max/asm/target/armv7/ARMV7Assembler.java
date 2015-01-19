@@ -1500,7 +1500,9 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
     }
     public final void int3() {
         //System.out.println("MISSING int3");
-	nop(4);
+	//nop(4);
+	//emitInt(0xfedeffe7);
+	emitInt(0xe1200070);
     }
     public final void hlt() {
         //System.out.println("MISSING hlt");
@@ -1577,8 +1579,9 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
 
     public final void jcc(ConditionFlag cc, int target, boolean forceDisp32) {
         int disp = (target - codeBuffer.position());
-        if (disp <= 16777215 && !forceDisp32) { // TODO check ok to make this false
-            disp = (disp / 4) - 2;
+        if (Math.abs(disp) <= 16777214 && !forceDisp32) { // TODO check ok to make this false
+            //disp = (disp - / 4) - 2;
+	    disp = (disp - 12) / 4;
             emitInt((cc.value & 0xf) << 28 | (0xa << 24) | (disp & 0xffffff));
         } else {
             if (disp > 0) {
@@ -1597,7 +1600,9 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
         assert (0 <= cc.value) && (cc.value < 16) : "illegal cc";
         if (l.isBound()) {
             //System.out.println("LABEL bound jcc no need to patch");
+            //jcc(cc, l.position(), false);
             jcc(cc, l.position(), false);
+	
         } else {
             // Note: could eliminate cond. jumps to this jump if condition
             // is the same however, seems to be rather unlikely case.
