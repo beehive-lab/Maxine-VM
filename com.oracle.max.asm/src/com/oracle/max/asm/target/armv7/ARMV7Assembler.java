@@ -8,7 +8,7 @@ import com.sun.cri.ci.CiTarget;
 import com.sun.cri.ri.RiRegisterConfig;
 
 import static com.oracle.max.cri.intrinsics.MemoryBarriers.STORE_LOAD;
-
+ 
 public class ARMV7Assembler extends AbstractAssembler {
 
     public final CiRegister frameRegister;
@@ -52,7 +52,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             // branch(l.position(), false);
             checkConstraint(-0x800000 <= (l.position() - codeBuffer.position()) && (l.position() - codeBuffer.position()) <= 0x7fffff, "branch must be within  a 24bit offset");
             //emitInt(0x06000000 | (l.position() - codeBuffer.position()) | ConditionFlag.Always.value() & 0xf);
-            emitInt(0x0a000000 | (l.position() - codeBuffer.position()) | ((ConditionFlag.Always.value() & 0xf) << 28));
+            emitInt(0x0a000000 | (l.position() - codeBuffer.position() -12)/4 | ((ConditionFlag.Always.value() & 0xf) << 28));
 
         } else {
             // By default, forward jumps are always 24-bit displacements, since
@@ -1162,6 +1162,12 @@ public class ARMV7Assembler extends AbstractAssembler {
         // Target needs to be patched later ...
     }
 
+public final void blx(CiRegister target) {
+        int instruction = blxHelper(ConditionFlag.Always, target);
+        emitInt(instruction);
+    }
+
+
     public final void call(CiRegister target) {
         //nop(4);
         // THIs is an indirect call, assuming the contents of the registers are a memory location we need to load
@@ -1183,8 +1189,9 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void leave() {
-        mov(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r11); // restore SP that is in the FP
-        pop(ConditionFlag.Always, 1 << 11); // POP the old FP r11 off the stack.
+        //mov(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r11); // restore SP that is in the FP
+        //pop(ConditionFlag.Always, 1 << 11); // POP the old FP r11 off the stack.
+	ret();
 
     }
 
@@ -1507,6 +1514,7 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
     public final void hlt() {
         //System.out.println("MISSING hlt");
 	nop(4);
+	int3();
     }
     public final void nop(int times) {
         assert times > 0;
@@ -1543,11 +1551,21 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
         /*
          * APN this does a push of the FP, moves the SP onto -> r11 subs the SP by imm16 .... DONT KNOW WHAT THE IMM8 IS
          * FOR
-         */
         push(ConditionFlag.Always, 1 << 11); // push the FP.
         mov(ConditionFlag.Always, false, ARMV7.r11, ARMV7.r13); // move the SP onto the FP
         mov32BitConstant(ARMV7.r12, imm16);
         sub(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
+	REPLACED to below as this is what we do in when we push a frame aonto the stack
+         */
+
+	mov(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r13);
+	push(ConditionFlag.Always,1<<11|1<<12|1<<14|1<<15);// r11, r12(stack),r14 (LR),r15(PC)
+	add(ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13,12,0);
+
+	// the sub is to make space on the stack for whatever else is required./
+        mov32BitConstant(ARMV7.r12, imm16);
+        sub(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
+
     }
     public final void lock() {
 	    nop();

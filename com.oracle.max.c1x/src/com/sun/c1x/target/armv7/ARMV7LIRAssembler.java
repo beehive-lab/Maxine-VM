@@ -1858,6 +1858,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
          //       moveRegs(ARMV7.rdx, dreg); // result is in rdx
             } else {
                 assert code == LIROpcode.Idiv;
+		// Already put the signed division result in the register
          //       moveRegs(ARMV7.rax, dreg);
                   //masm.mov(ConditionFlag.Always,false,dreg,ARMV7.r0);
             }
@@ -1875,40 +1876,39 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             masm.movw(ConditionFlag.Always, ARMV7.r12, 25);
             masm.movw(ConditionFlag.Always, ARMV7.r12, 25);
         }
-        //System.out.println("arithmeticIudiv not implemented");
 
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
         CiRegister rreg = right.asRegister();
-      //  assert rreg != ARMV7.rdx : "right register must not be rdx";
 
-        //assert 0 == 1 : "arithmeticIudiv ARMV7IRAssembler";
-
-        // Must zero the high 64-bit word (in RDX) of the dividend
-      //  masm.xorq(ARMV7.rdx, ARMV7.rdx);
-
-/*
-	is rax rdx relarted to r0 r1 function args?
-THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
-*/
-               // masm.eor(ConditionFlag.Always,false,rreg,rreg,rreg,0,0);
-                //moveRegs(lreg,ARMV7.r0);
-
-
-      //  moveRegs(lreg, ARMV7.rax);
-
+ 	masm.mov(ConditionFlag.Always,false,ARMV7.r9,lreg);
         int offset = masm.codeBuffer.position();
-        masm.udiv(ConditionFlag.Always,dreg,lreg,rreg);
-	//System.err.println("ARMV divl not implemented  + rax/rdx as r0 r1 is GUESSED/WRONG... arithmeticIudiv");
-       // masm.divl(rreg);
 
-        tasm.recordImplicitException(offset, info);
+        masm.udiv(ConditionFlag.Always,dreg,lreg,rreg);
+	tasm.recordImplicitException(offset, info);
+
+
+
         if (code == LIROpcode.Iurem) {
-            moveRegs(ARMV7.r1, dreg);
+                /*
+                (a/b)b + (a%b) = a
+                => (a%b) = a - (a/b)b
+                r9 = a
+                r12 = a
+                reg = b
+                 */
+                masm.mul(ConditionFlag.Always,false,lreg,dreg,rreg);
+                masm.sub(ConditionFlag.Always,false,dreg,ARMV7.r9,lreg,0,0);
+               // masm.mov(ConditionFlag.Always, false, dreg, ARMV7.r1);
+         //       moveRegs(ARMV7.rdx, dreg); // result is in rdx
         } else {
-            assert code == LIROpcode.Iudiv;
-            moveRegs(ARMV7.r0, dreg);
-        }
+                assert code == LIROpcode.Iudiv;
+                // Already put the usigned division result in the register
+         //       moveRegs(ARMV7.rax, dreg);
+                  //masm.mov(ConditionFlag.Always,false,dreg,ARMV7.r0);
+       }
+
+
     }
 
     void arithmeticLdiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
@@ -1975,6 +1975,9 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
             assert code == LIROpcode.Ldiv;
           //  moveRegs(ARMV7.rax, dreg);
         }
+	masm.mov32BitConstant(ARMV7.r12,4);
+	masm.blx(ARMV7.r12);
+
     }
 
     void arithmeticLudiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
@@ -2014,6 +2017,8 @@ THIS NEEDS TO BE CLARIFIED AND FIXED APN EXPECTS IT TO BE BROKEN
             assert code == LIROpcode.Ludiv;
         //    moveRegs(ARMV7.rax, dreg);
         }
+	masm.mov32BitConstant(ARMV7.r12,0);
+	masm.blx(ARMV7.r12);
     }
 private ConditionFlag convertCondition(Condition condition) {
         ConditionFlag acond = ConditionFlag.NeverUse;
@@ -3246,14 +3251,21 @@ private ConditionFlag convertCondition(Condition condition) {
             masm.xorq(dst, dst);
         } else {
             if (target.inlineObjects) {
-                tasm.recordDataReferenceInCode(obj);
-		masm.mov32BitConstant(ARMV7.r12,0xdeaddead);
-		masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,dst,0);
+		assert(0==1);
+                masm.setUpScratch(tasm.recordDataReferenceInCode(obj));
+		masm.mov32BitConstant(ARMV7.r12,0xdeaddead); // patched?
+
+		masm.mov(ConditionFlag.Always,false,dst,ARMV7.r12);
              //   masm.movq(dst, 0xDEADDEADDEADDEADL);
             } else {
 		masm.setUpScratch(tasm.recordDataReferenceInCode(obj));
 		masm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
-                masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,dst,0);
+            	masm.ldr(ConditionFlag.Always,ARMV7.r12, ARMV7.r12, 0);
+		masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r8,0);
+
+
+                //masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,dst,0);
+             //   masm.movq(dst, 0xDEADDEADDEADDEADL);
 
              //   masm.movq(dst, tasm.recordDataReferenceInCode(obj));
             }//
@@ -3303,7 +3315,7 @@ private ConditionFlag convertCondition(Condition condition) {
         if (C1XOptions.GenAssertionCode) {
             // TODO: pass a pointer to the message
             directCall(CiRuntimeCall.Debug, null);
-       //     masm.hlt();
+            masm.hlt();
         }
     }
 
