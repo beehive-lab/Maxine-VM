@@ -22,35 +22,48 @@
  */
 package com.sun.max.vm.ext.jvmti;
 
+import com.oracle.max.vm.ext.t1x.T1X;
+import com.oracle.max.vm.ext.t1x.jvmti.JVMTI_T1XCompilationFactory;
+import com.oracle.max.vm.ext.t1x.jvmti.JVMTI_T1XTemplateSource;
+import com.sun.cri.bytecode.Bytecodes;
+import com.sun.max.annotate.ALIAS;
+import com.sun.max.annotate.C_FUNCTION;
+import com.sun.max.annotate.INTRINSIC;
+import com.sun.max.annotate.NEVER_INLINE;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.Log;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.VMOptions;
+import com.sun.max.vm.actor.holder.ClassActor;
+import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.actor.member.MethodActor;
+import com.sun.max.vm.compiler.RuntimeCompiler;
+import com.sun.max.vm.compiler.target.TargetMethod;
+import com.sun.max.vm.ext.jvmti.JVMTIBreakpoints.EventBreakpointID;
+import com.sun.max.vm.ext.jvmti.JVMTIException.ExceptionEventData;
+import com.sun.max.vm.ext.jvmti.JVMTIThreadFunctions.FramePopEventData;
+import com.sun.max.vm.ext.jvmti.JVMTIUtil.ModeUnion;
+import com.sun.max.vm.jni.*;
+import com.sun.max.vm.runtime.CriticalNativeMethod;
+import com.sun.max.vm.thread.VmThread;
+import com.sun.max.vm.thread.VmThreadFactory;
+import com.sun.max.vm.ti.NullVMTIHandler;
+import com.sun.max.vm.ti.VMTI;
+import com.sun.max.vm.ti.VMTIHandler;
+
+import java.security.ProtectionDomain;
+import java.util.EnumSet;
+
+import static com.sun.max.unsafe.UnsafeCast.asClassActor;
+import static com.sun.max.unsafe.UnsafeCast.asClassMethodActor;
 import static com.sun.max.vm.ext.jvmti.JVMTICallbacks.*;
 import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
-import static com.sun.max.vm.ext.jvmti.JVMTIEnvNativeStruct.*;
-import static com.sun.max.vm.ext.jvmti.JVMTIEvents.*;
-import static com.sun.max.vm.ext.jvmti.JVMTIFieldWatch.*;
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
-import static com.sun.max.unsafe.UnsafeCast.*;
-
-import java.security.*;
-import java.util.*;
-
-import com.oracle.max.vm.ext.t1x.*;
-import com.oracle.max.vm.ext.t1x.jvmti.*;
-import com.sun.cri.bytecode.*;
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.ext.jvmti.JVMTIUtil.ModeUnion;
-import com.sun.max.vm.ext.jvmti.JVMTIBreakpoints.*;
-import com.sun.max.vm.ext.jvmti.JVMTIException.*;
-import com.sun.max.vm.ext.jvmti.JVMTIThreadFunctions.*;
-import com.sun.max.vm.jni.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
-import com.sun.max.vm.ti.*;
+import static com.sun.max.vm.ext.jvmti.JVMTIEnvNativeStruct.CALLBACKS;
+import static com.sun.max.vm.ext.jvmti.JVMTIEvents.E;
+import static com.sun.max.vm.ext.jvmti.JVMTIEvents.JVMTIEventLogger;
+import static com.sun.max.vm.ext.jvmti.JVMTIFieldWatch.FieldEventData;
+import static com.sun.max.vm.ext.jvmti.JVMTIFieldWatch.invokeFieldAccessCallback;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
 
 /**
  * The heart of the Maxine JVMTI implementation.
@@ -386,15 +399,18 @@ public class JVMTI {
 	Log.println("JVMTI initialize called !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 
         NativeInterfaces.initFunctionTable(getJVMTIInterface(-1), JVMTIFunctions.jvmtiFunctions, JVMTIFunctions.jvmtiFunctionActors);
+        Log.println("JVMTI:iniited native interfaces");
         JVMTISystem.initSystemProperties();
-
+        Log.println("JVMTI:initSysPRops");
         for (int i = 0; i < AgentVMOption.count(); i++) {
             AgentVMOption.Info info = AgentVMOption.getInfo(i);
             Word handle = Word.zero();
             Pointer path = info.libStart;
             if (info.isAbsolute) {
+                Log.println("JVMTI:Dynamic linker load");
                 handle = DynamicLinker.load(path);
             } else {
+                Log.println("JVMTI: Sytem load");
                 handle = JVMTISystem.load(path);
                 if (CString.equals(info.libStart, "jdwp")) {
                     if (JVMTIVMOptions.jdwpLogOption.getValue()) {
@@ -404,10 +420,13 @@ public class JVMTI {
             }
 
             if (handle.isZero()) {
+                Log.println("JVMTI: handle was zero");
                 initializeFail("failed to load agentlib: ", info.libStart, "");
             }
+            Log.println("JVMTI: Dynamic Linker lookupSymbol");
             Word onLoad = DynamicLinker.lookupSymbol(handle, AGENT_ONLOAD);
             if (onLoad.isZero()) {
+                Log.println("JVMTI: oLoad zero");
                 initializeFail("agentlib: ", info.libStart, " does not contain an Agent_OnLoad function");
             }
             int rc = invokeAgentOnLoad(onLoad.asAddress(), info.optionStart);

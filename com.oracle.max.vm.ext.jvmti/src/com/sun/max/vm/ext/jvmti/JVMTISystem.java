@@ -22,17 +22,24 @@
  */
 package com.sun.max.vm.ext.jvmti;
 
-import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
+import com.sun.max.memory.Memory;
+import com.sun.max.platform.OS;
+import com.sun.max.unsafe.CString;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.unsafe.Size;
+import com.sun.max.unsafe.Word;
+import com.sun.max.util.Utf8Exception;
+import com.sun.max.vm.Log;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.VMOptions;
+import com.sun.max.vm.VMProperty;
+import com.sun.max.vm.ext.jvmti.JJVMTI.JJVMTIException;
+import com.sun.max.vm.jdk.JDK;
+import com.sun.max.vm.jdk.JDK_java_lang_System;
+import com.sun.max.vm.jni.DynamicLinker;
 
-import com.sun.max.memory.*;
-import com.sun.max.platform.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.ext.jvmti.JJVMTI.*;
-import com.sun.max.vm.jdk.*;
-import com.sun.max.vm.jni.*;
+import static com.sun.max.platform.Platform.platform;
+import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
 
 /**
  * Custom access to system properties for JVMTI.
