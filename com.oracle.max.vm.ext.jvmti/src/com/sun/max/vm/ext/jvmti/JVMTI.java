@@ -383,6 +383,8 @@ public class JVMTI {
      * agents listed in VM startup command.
      */
     public static void initialize() {
+	Log.println("JVMTI initialize called !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+
         NativeInterfaces.initFunctionTable(getJVMTIInterface(-1), JVMTIFunctions.jvmtiFunctions, JVMTIFunctions.jvmtiFunctionActors);
         JVMTISystem.initSystemProperties();
 
