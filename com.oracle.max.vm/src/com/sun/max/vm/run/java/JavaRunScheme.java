@@ -22,39 +22,54 @@
  */
 package com.sun.max.vm.run.java;
 
-import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.VMConfiguration.*;
-import static com.sun.max.vm.VMOptions.*;
-import static com.sun.max.vm.type.ClassRegistry.*;
-
-import java.io.*;
-import java.lang.instrument.*;
-import java.lang.reflect.*;
-import java.net.*;
-import java.security.*;
-import java.util.*;
-import java.util.jar.*;
-
-import sun.misc.*;
-
-import com.sun.max.annotate.*;
-import com.sun.max.program.*;
+import com.sun.max.annotate.ALIAS;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.program.ProgramError;
+import com.sun.max.program.Trace;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.Phase;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.deopt.*;
-import com.sun.max.vm.heap.*;
-import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.instrument.*;
-import com.sun.max.vm.jni.*;
-import com.sun.max.vm.log.*;
-import com.sun.max.vm.profilers.sampling.*;
-import com.sun.max.vm.run.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
-import com.sun.max.vm.ti.*;
-import com.sun.max.vm.type.*;
+import com.sun.max.vm.actor.holder.ClassActor;
+import com.sun.max.vm.actor.member.MethodActor;
+import com.sun.max.vm.actor.member.StaticMethodActor;
+import com.sun.max.vm.compiler.deopt.Deoptimization;
+import com.sun.max.vm.heap.Heap;
+import com.sun.max.vm.hosted.CompiledPrototype;
+import com.sun.max.vm.instrument.InstrumentationManager;
+import com.sun.max.vm.jni.JniFunctions;
+import com.sun.max.vm.log.VMLog;
+import com.sun.max.vm.profilers.sampling.SamplingProfiler;
+import com.sun.max.vm.run.RunScheme;
+import com.sun.max.vm.runtime.CriticalMethod;
+import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.runtime.PrintThreads;
+import com.sun.max.vm.thread.VmThread;
+import com.sun.max.vm.ti.VMTI;
+import com.sun.max.vm.type.Kind;
+import com.sun.max.vm.type.SignatureDescriptor;
+import com.sun.max.vm.type.VMClassLoader;
+import sun.misc.Launcher;
+import sun.misc.Signal;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.instrument.Instrumentation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
+
+import static com.sun.max.vm.MaxineVM.vm;
+import static com.sun.max.vm.VMConfiguration.vmConfig;
+import static com.sun.max.vm.VMOptions.register;
+import static com.sun.max.vm.type.ClassRegistry.BOOT_CLASS_REGISTRY;
 
 /**
  * The normal Java run scheme that starts up the standard JDK services, loads a user
@@ -224,25 +239,28 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
      */
     protected final void initializeBasicFeatures() {
         MaxineVM vm = vm();
+        Log.println("InitBasicFeatures:vm created");
         vm.phase = MaxineVM.Phase.STARTING;
 
         // Now we can decode all the other VM arguments using the full language
         if (VMOptions.parseStarting()) {
-
+            Log.println("InitBasicFeatures:parseStarting");
             VMLog.checkLogOptions();
+            Log.println("InitBasicFeatures:chekcLogOptions");
 
             vmConfig().initializeSchemes(MaxineVM.Phase.STARTING);
-
+            Log.println("InitBasicFeatures:initedSchemes");
             if (Heap.ExcessiveGCFrequency != 0) {
                 new ExcessiveGCDaemon(Heap.ExcessiveGCFrequency).start();
             }
-
+            Log.println("InitBasicFeatures:ExcessiveGCDaemon");
             if (Deoptimization.DeoptimizeALot != 0 && Deoptimization.UseDeopt) {
                 new DeoptimizeALot(Deoptimization.DeoptimizeALot).start();
             }
-
+            Log.println("InitBasicFeatures:Deopt");
             // Install the signal handler for dumping threads when SIGHUP is received
             Signal.handle(new Signal("QUIT"), new PrintThreads(false));
+            Log.println("InitBasicFeatures:Signalinstalled");
         }
     }
 
@@ -260,10 +278,13 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         boolean error = true;
         String classKindName = "premain";
         try {
+            Log.println("JavaRunScheme:premain");
             initializeBasicFeatures();
+            Log.println("JavaRunScheme:initBasicFeatures");
             if (VMOptions.earlyVMExitRequested()) {
                 return;
             }
+            Log.println("JavaRunScheme:loadVMExtensions");
 
             loadVMExtensions();
 
@@ -276,21 +297,23 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             if (showVersionOption.isPresent()) {
                 sun.misc.Version.print();
             }
-
+            Log.println("JavaRunScheme:parseMain");
             if (!parseMain()) {
                 return;
             }
 
             error = true;
-
+            Log.println("JavaRunScheme:MaxineVM.run");
             MaxineVM vm = vm();
             vm.phase = Phase.RUNNING;
+            Log.println("JavaRunScheme:vm");
             vmConfig().initializeSchemes(MaxineVM.Phase.RUNNING);
-
+            Log.println("JavaRunScheme:initisaliseSchemesd");
             mainClassName = getMainClassName();
             VMTI.handler().vmInitialized();
+            Log.println("JavaRunScheme:threadstart");
             VMTI.handler().threadStart(VmThread.current());
-
+            Log.println("JavaRunScheme:loadJavaAgents");
             // load -javaagent agents
             loadJavaAgents();
 
