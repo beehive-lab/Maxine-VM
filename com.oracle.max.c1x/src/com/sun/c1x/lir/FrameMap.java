@@ -242,7 +242,9 @@ public final class FrameMap {
 		
                 //offset = offset-4 ; // we push the LR in the Callee Save
 		// +4 if we dont do PC as well
-		offset = offset +12; // we push ip(copy of sp) r11 r15 in the Calee Save tryin -4, 0 ,4 ,8, 12 16 , -8, -12, -16
+		//offset = offset +12; // we push ip(copy of sp) r11 r14 r15 in the Calee Save tryin -4, 0 ,4 ,8, 12 16 , -8, -12, -16
+		//offset = offset +4 ;// pushed r11 and r14
+		offset = offset + 0; // pushed r14
             }
             return new CiAddress(slot.kind, compilation.target.arch.isARM() ? CiRegister.CallerFrame.asValue() : CiRegister.Frame.asValue(), offset);
         } else {

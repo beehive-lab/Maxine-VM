@@ -124,7 +124,7 @@ public final class InspectorError extends Error {
      * @throws InspectorError unconditionally
      */
     public static InspectorError unknownCase() {
-        throw error("unknown switch case", null);
+        throw error("unknown switch case inspector error", null);
     }
 
     /**
@@ -135,7 +135,7 @@ public final class InspectorError extends Error {
      * @throws InspectorError unconditionally
      */
     public static InspectorError unknownCase(String caseValue) {
-        throw error("unknown switch case \"" + caseValue + "\"", null);
+        throw error("unknown switch case inspector error\"" + caseValue + "\"", null);
     }
 
     /**

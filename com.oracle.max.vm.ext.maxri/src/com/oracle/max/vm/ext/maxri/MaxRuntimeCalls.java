@@ -96,24 +96,22 @@ public class MaxRuntimeCalls {
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.RegisterFinalizer)
     public static void runtimeRegisterFinalizer(Object object) {
-	Log.println("BEFORE VERIFY");
         verifyRefMaps();
-	Log.println("AFTER VERIFY");
         if (ObjectAccess.readClassActor(object).hasFinalizer()) {
-	    Log.println("BEFORE SPECIAL");
             SpecialReferenceManager.registerFinalizee(object);
-             Log.println("AFTER SPECIAL");
         }
     }
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.HandleException)
     public static void runtimeHandleException(Throwable throwable) throws Throwable {
+	Log.println("runtimeHandleException");
         verifyRefMaps();
         Throw.raise(throwable);
     }
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.OSRMigrationEnd)
     public static void runtimeOSRMigrationEnd() {
+	 Log.println("runtimeOSRMigrationEnd");
         verifyRefMaps();
     }
 
@@ -131,6 +129,7 @@ public class MaxRuntimeCalls {
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.Debug)
     public static void runtimeDebug() {
+	Log.println("runtimeDebug");
         verifyRefMaps();
         throw FatalError.unexpected("Debug");
     }
@@ -204,11 +203,13 @@ public class MaxRuntimeCalls {
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.CreateNullPointerException)
     public static Object createNullPointerException() {
+	Log.println("NULL PTR exception");
         return new NullPointerException();
     }
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.CreateOutOfBoundsException)
     public static Object createOutOfBoundsException(int index) {
+	Log.println("OOB Exception");
         return new ArrayIndexOutOfBoundsException(index);
     }
 

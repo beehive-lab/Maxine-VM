@@ -147,6 +147,9 @@ public abstract class StackFrameWalker {
         current.fp = fp;
         current.isTopFrame = true;
 
+	if(purpose == EXCEPTION_HANDLING) Log.println("WALK EXCEPTION_HANDLING");
+	else if (purpose == REFERENCE_MAP_PREPARING) Log.println("REFERENCE_MAP_PREPARING");
+
         this.purpose = purpose;
         this.currentAnchor = readPointer(LAST_JAVA_FRAME_ANCHOR);
         boolean isTopFrame = true;

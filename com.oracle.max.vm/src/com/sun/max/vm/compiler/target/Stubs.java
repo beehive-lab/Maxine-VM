@@ -231,7 +231,6 @@ public class Stubs {
      */
     public void intialize() {
         for (RuntimeInitialization ri : runtimeInits) {
-	    Log.println("initialising stubs in a loop");
             ri.apply();
         }
     }

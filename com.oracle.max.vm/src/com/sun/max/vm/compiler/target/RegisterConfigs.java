@@ -206,7 +206,7 @@ public class RegisterConfigs {
                  * uncommonTrapStub
                  */
                 CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 4, allRegistersExceptLatch));
-                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 4, com.oracle.max.asm.target.armv7.ARMV7.allRegisters));
+                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 4, com.oracle.max.asm.target.armv7.ARMV7.cpuxmmRegisters));
                 CiRegisterConfig trapStub = new CiRegisterConfig(standard, ARMTrapFrameAccess.CSL);
 
                 // CSL stands for CALLEE SAVE LAYOUT ... needs to be rewritten in com.sun.man.vm.runtime.arm.ARMTrapFrameAccess or similar
@@ -228,7 +228,7 @@ public class RegisterConfigs {
                 // the registers below are a guess in n2j ....
                 // ....
                 CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 4,   r4, r5, r6, r7, com.oracle.max.asm.target.armv7.ARMV7.r8,
-                     com.oracle.max.asm.target.armv7.ARMV7.r9,com.oracle.max.asm.target.armv7.ARMV7.r10 /*com.oracle.max.asm.target.armv7.ARMV7.r11,ARMV7.r13*/)); //NOT STACK 
+                     com.oracle.max.asm.target.armv7.ARMV7.r9,com.oracle.max.asm.target.armv7.ARMV7.r10 ,com.oracle.max.asm.target.armv7.ARMV7.r11/*,ARMV7.r13*/)); //NOT STACK 
                 n2j.stackArg0Offsets[JavaCallee.ordinal()] = nativeStackArg0Offset;
 
                 roleMap.put(ABI_FP, com.oracle.max.asm.target.armv7.ARMV7.r11);
@@ -307,7 +307,8 @@ public class RegisterConfigs {
                 setNonZero(standard.getAttributesMap(), com.oracle.max.asm.target.amd64.AMD64.r14, AMD64.rsp);
 
                 CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, allRegistersExceptLatch));
-                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, cpuxmmRegisters));
+                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, 
+		com.oracle.max.asm.target.amd64.AMD64.cpuxmmRegisters));
                 CiRegisterConfig trapStub  = new CiRegisterConfig(standard, AMD64TrapFrameAccess.CSL);
                 CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, rdi, rsi, rdx, rcx, com.oracle.max.asm.target.amd64.AMD64.r8,
                     com.oracle.max.asm.target.amd64.AMD64.r9, // parameters

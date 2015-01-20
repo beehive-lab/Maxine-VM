@@ -1527,11 +1527,9 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
         // TODO ret() implements an X86 return from subroutine this needs to pop the return value of the stack TODO we
         // might need to push the value of r14 onto the stack in order to make this work for a call from the C harness
         // TODO for testing of the methods
-        //mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
 
-        //sub(ConditionFlag.Always,false,ARMV7.r13,ARMV7.r11,4,0);
-	//pop(ConditionFlag.Always,1<<11|1<<15);
-	ldmea(ConditionFlag.Always,ARMV7.r11,1<<11|1<<13|1<<15);
+	//ldmea(ConditionFlag.Always,ARMV7.r11,1<<11|1<<13|1<<15);
+	pop(ConditionFlag.Always,1<<15);
 
     }
 
@@ -1549,18 +1547,15 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
     public void enter(short imm16, byte imm8) {
         assert false;
         /*
-         * APN this does a push of the FP, moves the SP onto -> r11 subs the SP by imm16 .... DONT KNOW WHAT THE IMM8 IS
-         * FOR
-        push(ConditionFlag.Always, 1 << 11); // push the FP.
-        mov(ConditionFlag.Always, false, ARMV7.r11, ARMV7.r13); // move the SP onto the FP
-        mov32BitConstant(ARMV7.r12, imm16);
-        sub(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
-	REPLACED to below as this is what we do in when we push a frame aonto the stack
+	enter, ARMV7LIRAssembler case PushFrame and the prologue in ARMV7CompilerStubEmitter need to be kept in step
+        also if more than one reigster is pushed then the FrameMap.java in CallerFrame offset needs to be 4 for each
+       register more than one.
          */
 
-	mov(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r13);
-	push(ConditionFlag.Always,1<<11|1<<12|1<<14|1<<15);// r11, r12(stack),r14 (LR),r15(PC)
-	add(ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13,12,0);
+	//mov(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r13);
+	//push(ConditionFlag.Always,1<<11|1<<12|1<<14|1<<15);// r11, r12(stack),r14 (LR),r15(PC)
+	//add(ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13,12,0);
+	push(ConditionFlag.Always,1<<14);
 
 	// the sub is to make space on the stack for whatever else is required./
         mov32BitConstant(ARMV7.r12, imm16);

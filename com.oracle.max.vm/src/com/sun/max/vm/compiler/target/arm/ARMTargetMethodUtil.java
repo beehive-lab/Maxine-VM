@@ -402,7 +402,7 @@ public final class ARMTargetMethodUtil {
         // APN confusion here is, we plan to use a frame pointer fp, which is to store the top of
         // the stack (activation record) for a procedure
         // whereas the stack pointer sp is the tail of the stack itself where we add onto
-        return new OptoStackFrameLayout(tm.frameSize(), false, ARMV7.r13);
+        return new OptoStackFrameLayout(tm.frameSize(), true, ARMV7.r13);
     }
 
     /**

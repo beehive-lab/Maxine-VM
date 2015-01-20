@@ -2966,9 +2966,10 @@ private ConditionFlag convertCondition(Condition condition) {
 		    //masm.mov32BitConstant(ARMV7.r11,0);
 	            masm.mov(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r13);
 		    */
-		    masm.mov(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r13);
-		    masm.push(ConditionFlag.Always,1<<11|1<<12|1<<14|1<<15);// r11, r12(stack),r14 (LR),r15(PC)
-	            masm.add(ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13,12,0);
+		    //masm.mov(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r13);
+		    //masm.push(ConditionFlag.Always,1<<11|1<<12|1<<14|1<<15);// r11, r12(stack),r14 (LR),r15(PC)
+	            //masm.add(ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13,12,0);
+		    masm.push(ConditionFlag.Always,1<<14);
 
 
 		   masm.decrementq(ARMV7.r13,frameSize);// DIRTY HACK TO get STACK to work

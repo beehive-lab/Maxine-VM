@@ -505,10 +505,15 @@ public class VmThread {
         try {
             if (vmThread == mainThread) {
                 // JVMTIEvent.THREAD_START is dispatched in JavaRunScheme
+		Log.println("Try execution of mainThread");
                 vmConfig().runScheme().run();
+		Log.println("mainThread Finished/returned");
             } else {
+	        Log.println("normal thread");
                 VMTI.handler().threadStart(vmThread);
+		Log.println("vmti thread (normal) started");
                 vmThread.javaThread.run();
+		Log.println("normal thread returns");
             }
         } finally {
             // 'stop0()' support.
@@ -635,17 +640,12 @@ public class VmThread {
         Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(etla));
         // JniFunctions.prologue calls VMTI.beginUpcallVM but we aren't actually in an upcall into the VM
 
-	Log.println("done prologue");
         VMTI.handler().endUpcallVM();
-	Log.println("done endupcall");
         final VmThread thread = VmThread.current();
 
-	Log.println("done current");
         VMLog.vmLog().threadStart();
 
-	Log.println("done threadstart");
         thread.initializationComplete();
-	Log.println("done init");
 
         thread.traceThreadAfterInitialization(stackBase, stackEnd);
 
@@ -674,13 +674,9 @@ public class VmThread {
             vmConfig().initializeSchemes(MaxineVM.Phase.PRISTINE);
 
             // We can now start the other system threads.
-	    Log.println("trying to start vmOperationThread (systemthread");
             VmThread.vmOperationThread.startVmSystemThread();
-            Log.println("vmOperationThread started");
             SpecialReferenceManager.initialize(MaxineVM.Phase.PRISTINE);
-	    Log.println("trying to start signalDispatcher thread");
             VmThread.signalDispatcherThread.startVmSystemThread();
-	    Log.println("signalDispatcher thread started");
 
         }
 

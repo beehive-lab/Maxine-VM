@@ -125,7 +125,7 @@ public final class TeleError extends Error {
      * @throws TeleError unconditionally
      */
     public static TeleError unknownCase() {
-        throw error("unknown switch case", null);
+        throw error("unknown switch case TeleError", null);
     }
 
     /**
@@ -136,7 +136,7 @@ public final class TeleError extends Error {
      * @throws TeleError unconditionally
      */
     public static TeleError unknownCase(String caseValue) {
-        throw error("unknown switch case \"" + caseValue + "\"", null);
+        throw error("unknown switch case TeleError \"" + caseValue + "\"", null);
     }
 
     /**
