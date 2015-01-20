@@ -262,7 +262,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public void cmpptr(CiRegister src1, CiAddress src2) {
         setUpScratch(src2);
         assert (ARMV7.r12.number != src1.number);
-        ldr(ConditionFlag.Always, ARMV7.r12, ARMV7.r12, 0); // TODO is this necessary or is the address the pointer?
+        //ldr(ConditionFlag.Always, ARMV7.r12, ARMV7.r12, 0); // TODO is this necessary or is the address the pointer?
         cmp(ConditionFlag.Always, src1, ARMV7.r12, 0, 0);
         //cmpq(src1, src2);
     }

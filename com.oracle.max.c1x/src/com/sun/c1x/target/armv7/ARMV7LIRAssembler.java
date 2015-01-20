@@ -1928,7 +1928,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
         CiRegister rreg = right.asRegister();
-        //System.out.println("arithmeticLdiv not implemented");
+        System.out.println("arithmeticLdiv not implemented");
         //assert 0 == 1 : "arithmeticLdiv ARMV7IRAssembler";
 
         //assert lreg == ARMV7.r0 : "left register must be r0 was rax";
@@ -1993,7 +1993,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             masm.movw(ConditionFlag.Always, ARMV7.r12, 27);
             masm.movw(ConditionFlag.Always, ARMV7.r12, 27);
         }
-        //System.out.println("arithmeticLudiv not implemented");
+        System.out.println("arithmeticLudiv not implemented");
 
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
