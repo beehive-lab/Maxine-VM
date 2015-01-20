@@ -190,12 +190,12 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitPause() {
-       // masm.pause();
+       masm.pause();
     }
 
     @Override
     protected void emitBreakpoint() {
-       // masm.int3();
+       masm.int3();
     }
 
     @Override
@@ -292,7 +292,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         }
         // assert 0 == 1 : "emitTraps ARMV7IRAssembler";
         for (int i = 0; i < C1XOptions.MethodEndBreakpointGuards; ++i) {
-            // masm.int3();
+             masm.int3();
         }
         masm.nop(8); // BUGFIX for overflowing buffer on patch call ...
     }
@@ -735,7 +735,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     masm.ldrsb(ConditionFlag.Always,1,0,0,dest.asRegister(),ARMV7.r12,0);
                 break;
             case Char    : //masm.movzxl(dest.asRegister(), addr);
-                masm.ldrsb(ConditionFlag.Always,1,0,0,dest.asRegister(),ARMV7.r12,0);
+                masm.ldrb(ConditionFlag.Always,1,0,0,dest.asRegister(),ARMV7.r12,0);
                 break;
             case Short   : //masm.movswl(dest.asRegister(), addr);
                 masm.ldrshw(ConditionFlag.Always,1,0,0,dest.asRegister(),ARMV7.r12,0);
@@ -1496,7 +1496,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     }
 
                     //System.out.println("DUBIOUS: double const arithmetic");
-                    masm.setUpScratch(raddr);
+                    //masm.setUpScratch(raddr);
                     masm.vldr(ConditionFlag.Always,ARMV7.d15,ARMV7.r12,0);
                     switch (code) {
                         case Add: // masm.addsd(lreg, raddr);
@@ -1662,6 +1662,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     @Override
     protected void emitLogicOp(LIROpcode code, CiValue left, CiValue right, CiValue dst) {
         assert left.isRegister();
+
+	assert(dst.isRegister());
         // Checkstyle: off
         if (left.kind.isInt()) {
             CiRegister reg = left.asRegister();
@@ -1691,34 +1693,34 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 assert (reg != ARMV7.r12);
                 switch (code) {
                     case LogicAnd:// masm.andl(reg, raddr);
-                        masm.iand(ARMV7.r8, reg, ARMV7.r8);
+                        masm.iand(reg, reg, ARMV7.r8);
                         break;
                     case LogicOr: // masm.orl(reg, raddr);
-                        masm.ior(ARMV7.r8, reg, ARMV7.r8);
+                        masm.ior(reg, reg, ARMV7.r8);
                         break;
                     case LogicXor: // masm.xorl(reg, raddr);
-                        masm.ixor(ARMV7.r8, reg, ARMV7.r8);
+                        masm.ixor(reg, reg, ARMV7.r8);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
                 }
-                masm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, 0);
             } else {
                 CiRegister rright = right.asRegister();
                 switch (code) {
                     case LogicAnd:
-                        masm.iand(dst.asRegister(), reg, rright);
+                        masm.iand(reg, reg, rright);
                         break;
                     case LogicOr:
-                        masm.ior(dst.asRegister(), reg, rright);
+                        masm.ior(reg, reg, rright);
                         break;
                     case LogicXor:
-                        masm.ixor(dst.asRegister(), reg, rright);
+                        masm.ixor(reg, reg, rright);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
                 }
             }
+		
             moveRegs(reg, dst.asRegister(), left.kind, dst.kind);
         } else {
             CiRegister lreg = left.asRegister();
@@ -1728,12 +1730,12 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 	        masm.movlong(ARMV7.r8,rightConstant.asLong());
                 switch (code) {
                     case LogicAnd:// masm.andq(lreg, rscratch1);
-                        masm.land(dst.asRegister(),lreg,ARMV7.r8);
+                        masm.land(lreg,lreg,ARMV7.r8);
                         break;
-                    case LogicOr: masm.lor(dst.asRegister(),lreg, ARMV7.r8);
+                    case LogicOr: masm.lor(lreg,lreg, ARMV7.r8);
                         break;
                     case LogicXor:
-                        masm.lxor(dst.asRegister(),lreg, ARMV7.r8);
+                        masm.lxor(lreg,lreg, ARMV7.r8);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
@@ -1742,13 +1744,13 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 CiRegister rreg = right.asRegister();
                 switch (code) {
                     case LogicAnd:
-                        masm.land(dst.asRegister(), lreg, rreg);
+                        masm.land(lreg, lreg, rreg);
                         break;
                     case LogicOr:
-                        masm.lor(dst.asRegister(), lreg, rreg);
+                        masm.lor(lreg, lreg, rreg);
                         break;
                     case LogicXor:
-                        masm.lxor(dst.asRegister(), lreg, rreg);
+                        masm.lxor(lreg, lreg, rreg);
                         break;
                     default:
                         throw Util.shouldNotReachHere();

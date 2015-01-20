@@ -1505,6 +1505,13 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
     public final void nop() {
         nop(1);
     }
+    public final void pause() {
+	// YIELD instruction hint, intended to improve spinlock perofrmance
+	int instruction = 0x0320f001;
+	instruction |= (ConditionFlag.Always.value() <<28);
+	emitInt(instruction);
+
+    }
     public final void int3() {
         //System.out.println("MISSING int3");
 	//nop(4);

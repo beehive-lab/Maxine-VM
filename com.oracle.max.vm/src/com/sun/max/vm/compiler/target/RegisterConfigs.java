@@ -222,7 +222,7 @@ public class RegisterConfigs {
                     ARMV7.r3, // parameters
                     r4, r5, r6, r7, com.oracle.max.asm.target.armv7.ARMV7.r8, com.oracle.max.asm.target.armv7.ARMV7.r9, 
                     com.oracle.max.asm.target.armv7.ARMV7.r11, // r4..r11? must be preserved for baseline compiler
-                    standard.getScratchRegister(),ARMV7.r14,ARMV7.d0,ARMV7.d1,ARMV7.d2,ARMV7.d3)); // dynamic dispatch index is saved here for stack frame walker
+                    standard.getScratchRegister(),ARMV7.r14,ARMV7.d0,ARMV7.d1,ARMV7.d2,ARMV7.d3,ARMV7.s0,ARMV7.s1,ARMV7.s2,ARMV7.s3)); // dynamic dispatch index is saved here for stack frame walker
                                                                 // parameters APN lets not worry about floating point .... lets crack out the StollyBolly once we get HelloWorld working
 
                 // the registers below are a guess in n2j ....
