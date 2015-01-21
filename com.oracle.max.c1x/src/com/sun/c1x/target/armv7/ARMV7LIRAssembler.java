@@ -2019,7 +2019,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             assert code == LIROpcode.Ludiv;
         //    moveRegs(ARMV7.rax, dreg);
         }
-	masm.mov32BitConstant(ARMV7.r12,0);
+	masm.mov32BitConstant(ARMV7.r12,12);
 	masm.blx(ARMV7.r12);
     }
 private ConditionFlag convertCondition(Condition condition) {
@@ -3250,7 +3250,7 @@ private ConditionFlag convertCondition(Condition condition) {
     public void movoop(CiRegister dst, CiConstant obj) {
         assert obj.kind == CiKind.Object;
         if (obj.isNull()) {
-            masm.xorq(dst, dst);
+            masm.xorq(ARMV7.r12, ARMV7.r12);
         } else {
             if (target.inlineObjects) {
 		assert(0==1);
@@ -3262,8 +3262,7 @@ private ConditionFlag convertCondition(Condition condition) {
             } else {
 		masm.setUpScratch(tasm.recordDataReferenceInCode(obj));
 		masm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
-            	masm.ldr(ConditionFlag.Always,ARMV7.r12, ARMV7.r12, 0);
-		masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r8,0);
+            	masm.ldr(ConditionFlag.Always,dst, ARMV7.r12, 0);
 
 
                 //masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,dst,0);
@@ -3275,8 +3274,10 @@ private ConditionFlag convertCondition(Condition condition) {
     }
 
     public void movoop(CiAddress dst, CiConstant obj) {
-        masm.setUpRegister(ARMV7.r8,dst);
         movoop(ARMV7.r8, obj); // was rscratch1
+        masm.setUpScratch(dst);
+	masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,0);
+
      //   masm.movq(dst, rscratch1);
     }
 
