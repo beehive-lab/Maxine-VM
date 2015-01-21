@@ -2416,7 +2416,9 @@ private ConditionFlag convertCondition(Condition condition) {
             masm.movw(ConditionFlag.Always, ARMV7.r12, 33);
         }
 
-        //   masm.notq(result);
+        //   masm.notq(result); // twos complement?
+	masm.rsb(ConditionFlag.Always,false,result,result,0,0); // negate
+	masm.incq(result); // add 1 to get to the twos completent
         if (src.isRegister()) {
             CiRegister value = src.asRegister();
             assert value != result;
@@ -2911,6 +2913,7 @@ private ConditionFlag convertCondition(Condition condition) {
                     CiConstant constantOffset = (CiConstant) offset;
                     CiConstant constantBit = (CiConstant) bit;
                     CiAddress src = new CiAddress(inst.kind, pointer, constantOffset.asInt());
+		    assert(0==1);
                   //  masm.btli(src, constantBit.asInt());
                     //masm.jcc(ConditionFlag.aboveEqual, label);
                     masm.jcc(ConditionFlag.UnsignedHigher,label);
