@@ -193,8 +193,9 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
 
                 // Normally, we would have to initialize tracing this late,
                 // because 'PrintWriter.<init>()' relies on a system property ("line.separator"), which is accessed during 'initializeSystemClass()'.
-
+                Log.println("initialiszeSyatemClass");
                 initializeSystemClass();
+                Log.println("reinit classes");
 
                 // reinitialise any registered classes
                 for (String className : reinitClasses) {

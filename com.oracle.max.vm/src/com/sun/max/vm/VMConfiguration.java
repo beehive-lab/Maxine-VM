@@ -22,22 +22,23 @@
  */
 package com.sun.max.vm;
 
-import static com.sun.max.vm.MaxineVM.*;
+import com.sun.max.annotate.*;
+import com.sun.max.config.BootImagePackage;
+import com.sun.max.platform.Platform;
+import com.sun.max.program.ProgramError;
+import com.sun.max.vm.heap.HeapScheme;
+import com.sun.max.vm.hosted.HostedVMClassLoader;
+import com.sun.max.vm.layout.LayoutScheme;
+import com.sun.max.vm.monitor.MonitorScheme;
+import com.sun.max.vm.reference.ReferenceScheme;
+import com.sun.max.vm.run.RunScheme;
+import com.sun.max.vm.runtime.FatalError;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.*;
 
-import com.sun.max.annotate.*;
-import com.sun.max.config.*;
-import com.sun.max.platform.*;
-import com.sun.max.program.*;
-import com.sun.max.vm.heap.*;
-import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.layout.*;
-import com.sun.max.vm.monitor.*;
-import com.sun.max.vm.reference.*;
-import com.sun.max.vm.run.*;
-import com.sun.max.vm.runtime.*;
+import static com.sun.max.vm.MaxineVM.vm;
 
 /**
  * The configuration of a VM is defined by:
@@ -230,10 +231,10 @@ public final class VMConfiguration {
         vm().compilationBroker.initialize(phase);
         for (int i = 0; i < vmSchemes.size(); i++) {
             try {
-                // Log.print("Initializing: ");
-                // Log.print(vmSchemes.get(i).name());
-                // Log.print(" @");
-                // Log.println(phase.name());
+                Log.print("Initializing: ");
+                Log.print(vmSchemes.get(i).name());
+                Log.print(" @");
+                Log.println(phase.name());
                 vmSchemes.get(i).initialize(phase);
             } catch (Throwable t) {
                 FatalError.unexpected("Error initializing scheme " + vmSchemes.get(i).name() + " in phase " + phase.name(), t);
