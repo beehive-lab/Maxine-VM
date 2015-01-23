@@ -3260,7 +3260,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_BC_iadd() throws Exception {
+    public void ignore_C1X_jtt_BC_iadd() throws Exception {
         initTests();
         int argsOne[] = { 1, 0, 33, 1, -2147483648, -2147483647, 2147483647, 4080};
         int argsTwo[] = { 2, -1, 67, -1, 1, -2, 1, 134217728};
@@ -3279,7 +3279,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_BC_ladd() throws Exception {
+    public void ignore_C1X_jtt_BC_ladd() throws Exception {
         initTests();
         int argsOne[] = { 1, 0, 33, 1, -2147483648, -2147483647, 2147483647, 4080};
         int argsTwo[] = { 2, -1, 67, -1, 1, -2, 1, 134217728};
@@ -3725,7 +3725,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_BC_land() throws Exception {
+    public void ignore_C1X_jtt_BC_land() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         String klassName = getKlassName("jtt.bytecode.BC_land");
@@ -3758,7 +3758,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_BC_land_const() throws Exception {
+    public void ignore_C1X_jtt_BC_land_const() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         String klassName = getKlassName("jtt.bytecode.BC_land_const");
@@ -4839,7 +4839,7 @@ public long connectRegs(int reg0, int reg1) {
         assert(failed == false);
     }
 
-    public void test_jtt_BC_l2i() throws Exception {
+    public void ignore_jtt_BC_l2i() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         String klassName = getKlassName("jtt.bytecode.BC_l2i");
@@ -4907,14 +4907,38 @@ public long connectRegs(int reg0, int reg1) {
         CompilationBroker.OFFLINE = true;
         theCompiler.cleanup();
     }
+
     public void ignore_generic_compilation() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("com.sun.max.vm.MaxineVM");
-        //List<TargetMethod> methods = Compile.compileMethod(new String[] { klassName}, "C1X", "patchReturnAddress");
+        // List<TargetMethod> methods = Compile.compileMethod(new String[] { klassName}, "C1X", "patchReturnAddress");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
-        initialiseCodeBuffers(methods, "MaxineVM.java", "int run(Pointer, int," +                " Pointer, Word, Word, Word, Pointer, Pointer, Pointer, Pointer, int, Pointer)");
+        initialiseCodeBuffers(methods, "MaxineVM.java", "int run(Pointer, int," + " Pointer, Word, Word, Word, Pointer, Pointer, Pointer, Pointer, int, Pointer)");
 
         CompilationBroker.OFFLINE = true;
         theCompiler.cleanup();
+    }
+
+    public void test_jtt_BC_fload5() throws Exception {
+        initTests();
+        float argsOne[] = { 0.0f, 1.1f};
+        float argsTwo[] = { 17.1f, 2.5f};
+        float argsThree[] = { 0.0f, 1.1f};
+        float argsFour[] = { 17.1f, 2.5f};
+        float argsFive[] = { 0.0f, 1.0f};
+
+        String klassName = getKlassName("jtt.bytecode.BC_fload_5");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        initialiseCodeBuffers(methods, "BC_fload_5.java", "boolean test(float, float, float, float, float)");
+        int assemblerStatements = codeBytes.length / 4;
+        for (int i = 0; i < argsOne.length; i++) {
+            boolean rt = jtt.bytecode.BC_fload_5.test(argsOne[i], argsTwo[i], argsThree[i], argsFour[i], argsFive[i]);
+            int expectedValue = rt ? 1 : 0;
+            String functionPrototype = ARMCodeWriter.preAmble("int", "float, float, float, float, float", Float.toString(argsOne[i]) + "," + Float.toString(argsTwo[i]) +","+ Float.toString(argsThree[i]) + ","+ Float.toString(argsFour[i]) + ","+ Float.toString(argsFive[i]));
+            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            assert ((Integer) registerValues[0]).intValue()  == expectedValue : "Failed incorrect value " + ((Integer) registerValues[0]).intValue()  + " " + expectedValue;
+            theCompiler.cleanup();
+        }
     }
 }
