@@ -33,7 +33,6 @@ import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.runtime.amd64.AMD64TrapFrameAccess;
 import com.sun.max.vm.runtime.arm.ARMTrapFrameAccess;
 
-import java.util.Arrays;
 import java.util.HashMap;
 
 import static com.oracle.max.asm.target.amd64.AMD64.*;
@@ -147,7 +146,7 @@ public class RegisterConfigs {
                 armStandard = new CiRegister[] {r0, r1, r2, r3, r4, r5, r6, r7,ARMV7.r14, d0, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12,
                     s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29}; // no
                 // scratch in allocatable
-                parameters = new CiRegister[] {r0, r1, r2, r3, d0, d1, d2, d3/*, s0, s1, s2, s3*/};
+                parameters = new CiRegister[] {r0, r1, r2, r3, d0, d1, d2, d3, d4, d5, d6, d7/*, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15*/};
 
 		// AND NOT tHE PC!!!
                 allRegistersExceptLatch = new CiRegister[] {r0, r1, r2, r3, r4, r5, r6, r7, com.oracle.max.asm.target.armv7.ARMV7.r8, com.oracle.max.asm.target.armv7.ARMV7.r9,

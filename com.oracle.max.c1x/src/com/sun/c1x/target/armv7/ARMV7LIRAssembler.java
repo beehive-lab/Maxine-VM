@@ -273,7 +273,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             //masm.movq(dst, 0xDEADDEADDEADDEADL);
             masm.mov32BitConstant(dst,0xDEADDEAD);
         } else {
-	//System.out.println("const2reg is BROKEN --- REGISTER used is " + dst.number + " pos " + masm.codeBuffer.position());
             masm.setUpScratch(tasm.recordDataReferenceInCode(constant));
             masm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
             masm.ldr(ConditionFlag.Always,dst, ARMV7.r12, 0);
@@ -1463,7 +1462,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         masm.setUpScratch(raddr);
                         masm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
                     }
-                    //System.out.println("DUBIOUS: REGISTER? float const arithmetic");
                     masm.vldr(ConditionFlag.Always,ARMV7.s30,ARMV7.r12,0);
                     switch (code) {
                         case Add: // masm.addss(lreg, raddr)
@@ -2097,9 +2095,9 @@ private ConditionFlag convertCondition(Condition condition) {
                         masm.cmpl(reg1,frameMap.toStackAddress(opr2Slot));
                         break;
                     case Long    :
-			masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
-			masm.ldrd(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
-			masm.lcmpl(convertCondition(condition),reg1,ARMV7.r8);
+			            masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
+			            masm.ldrd(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
+			            masm.lcmpl(convertCondition(condition),reg1,ARMV7.r8);
                         break;
                     case Object  : masm.cmpptr(reg1, frameMap.toStackAddress(opr2Slot)); break;
                     case Float   : //masm.ucomiss(reg1, frameMap.toStackAddress(opr2Slot));
@@ -2435,7 +2433,7 @@ private ConditionFlag convertCondition(Condition condition) {
             }
         } else {
             CiAddress laddr = asAddress(src);
-	    masm.setUpScratch(laddr);
+	        masm.setUpScratch(laddr);
             masm.ldrImmediate(ConditionFlag.Always,1,0,0,ARMV7.r12,ARMV7.r12,0);
             if (most) {
                   masm.clz(ConditionFlag.Always,result,ARMV7.r12);
@@ -2496,8 +2494,6 @@ private ConditionFlag convertCondition(Condition condition) {
         }
         tasm.recordImplicitException(codePos(), info);
          masm.nullCheck(src.asRegister());
-       // assert 0 == 1 : "emitNullCheck ARMV7IRAssembler";
-
     }
 
     @Override
@@ -2644,10 +2640,6 @@ private ConditionFlag convertCondition(Condition condition) {
                     break;
 
                 case Mov: {
-                   // if(inst.result == null) {
-                       // System.out.println("ARMV7LIRAssembler:emitXirInstructions case Mov BODGE remove null check");
-                     //   return;
-                    //}
                     CiValue result = operands[inst.result.index];
 
                     CiValue source = operands[inst.x().index];
@@ -2916,8 +2908,7 @@ private ConditionFlag convertCondition(Condition condition) {
 		    assert(0==1);
                   //  masm.btli(src, constantBit.asInt());
                     //masm.jcc(ConditionFlag.aboveEqual, label);
-                    masm.jcc(ConditionFlag.UnsignedHigher,label);
-                    masm.jcc(ConditionFlag.Equal,label);
+                    masm.jcc(ConditionFlag.SignedGreaterOrEqual,label);
                     break;
                 }
 
@@ -2967,17 +2958,22 @@ private ConditionFlag convertCondition(Condition condition) {
                         masm.nop();
                         masm.nop();
                     }
-		    /*****ATES r11 so that we have a valid stack backtrace?
-		    //masm.mov32BitConstant(ARMV7.r11,0);
-	            masm.mov(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r13);
-		    */
-		    //masm.mov(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r13);
-		    //masm.push(ConditionFlag.Always,1<<11|1<<12|1<<14|1<<15);// r11, r12(stack),r14 (LR),r15(PC)
-	            //masm.add(ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13,12,0);
-		    masm.push(ConditionFlag.Always,1<<14);
+		    /* FOR a valid stack backtrace?
 
+		           //masm.mov(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r13);
+		           //masm.push(ConditionFlag.Always,1<<11|1<<12|1<<14|1<<15);// r11, r12(stack),r14 (LR),r15(PC)
+	              //masm.add(ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13,12,0);
 
-		   masm.decrementq(ARMV7.r13,frameSize);// DIRTY HACK TO get STACK to work
+	              REMEMBER: ARMV7CompilerStubEmitter (prologue)
+	                        ARMV7Assembler (return --)
+	                        and FrameMap.java see the inCallerFrame, where we would need to do an adjustment to the offset
+	                        if we change what is pushed onto the stack, ie if we push more than just LR we need to adject the offset
+	         */
+                    // We only Push LR as that is what X86 does
+                    // this means we can reuse all their
+                    // stack unwinding code
+		            masm.push(ConditionFlag.Always,1<<14);
+		            masm.decrementq(ARMV7.r13,frameSize);// DIRTY HACK TO get STACK to work
                     //masm.decrementq(ARMV7.r13, frameSize); // does not emit code for frameSize == 0
 
                     //masm.vmov(ConditionFlag.Always,ARMV7.s6,ARMV7.s3);
@@ -3026,16 +3022,9 @@ private ConditionFlag convertCondition(Condition condition) {
                         int frameToCSA = frameMap.offsetToCalleeSaveAreaStart();
                         masm.restore(csl, frameToCSA);
                     }
-                    //masm.ldr(ConditionFlag.Always,ARMV7.r14,ARMV7.r13,0); // restore LR prior to adjusting stack?
                     masm.incrementq(ARMV7.r13,frameSize);
 
 
-	/*	    masm.pop(ConditionFlag.Always,1<<14|1<<12|1<<11);
-		    masm.incrementq(ARMV7.r13,4);
-*/
-
-		    //masm.pop(ConditionFlag.Always,1<<14);
-                  //  masm.incrementq(ARMV7.rsp, frameSize);
                     break;
                 }
                 case Push: {
@@ -3111,7 +3100,7 @@ private ConditionFlag convertCondition(Condition condition) {
         masm.setUpScratch(new CiAddress(target.wordKind, ARMV7.RSP, -offset));
         masm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r0, ARMV7.r12, 0);
         // assuming rax is the return value register
-      //  masm.movq(new CiAddress(target.wordKind, ARMV7.RSP, -offset), ARMV7.rax);
+        //  masm.movq(new CiAddress(target.wordKind, ARMV7.RSP, -offset), ARMV7.rax);
     }
 
     private CiRegisterValue assureInRegister(CiValue pointer) {
@@ -3129,8 +3118,8 @@ private ConditionFlag convertCondition(Condition condition) {
         CiValue x = ops[inst.x().index];
         CiValue y = ops[inst.y().index];
         emitCompare(condition, x, y, null);
-        masm.jcc(cflag, label);
-        masm.nop(3); // TODO no necessary f2i01 overflows buffer on patchJumpTarget
+        masm.jcc(cflag, label); // allow space movw, movt add pc, blx(ConditionFlag,r12)
+        masm.nop(3); // allow space in buffer on patchJumpTarget +3instructions
     }
 
     @Override
