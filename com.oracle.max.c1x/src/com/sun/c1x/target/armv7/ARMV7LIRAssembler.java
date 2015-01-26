@@ -2972,9 +2972,12 @@ private ConditionFlag convertCondition(Condition condition) {
                     // We only Push LR as that is what X86 does
                     // this means we can reuse all their
                     // stack unwinding code
-		            masm.push(ConditionFlag.Always,1<<14);
-		            masm.decrementq(ARMV7.r13,frameSize);// DIRTY HACK TO get STACK to work
-                    //masm.decrementq(ARMV7.r13, frameSize); // does not emit code for frameSize == 0
+		    masm.push(ConditionFlag.Always,1<<14);
+		            //masm.decrementq(ARMV7.r13,frameSize);// DIRTY HACK TO get STACK to work
+                    
+
+		    //masm.push(ConditionFlag.Always,1<<11|1<<14);
+		    masm.decrementq(ARMV7.r13, frameSize); // does not emit code for frameSize == 0
 
                     //masm.vmov(ConditionFlag.Always,ARMV7.s6,ARMV7.s3);
                    // masm.vmov(ConditionFlag.Always,ARMV7.s4,ARMV7.s2);

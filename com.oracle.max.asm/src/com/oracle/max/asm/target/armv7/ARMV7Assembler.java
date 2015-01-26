@@ -1537,6 +1537,7 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
 
 	//ldmea(ConditionFlag.Always,ARMV7.r11,1<<11|1<<13|1<<15);
 	pop(ConditionFlag.Always,1<<15);
+	//pop(ConditionFlag.Always,1<<15|1<<11);
 
     }
 
@@ -1563,6 +1564,8 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
 	//push(ConditionFlag.Always,1<<11|1<<12|1<<14|1<<15);// r11, r12(stack),r14 (LR),r15(PC)
 	//add(ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13,12,0);
 	push(ConditionFlag.Always,1<<14);
+
+	//push(ConditionFlag.Always,1<<14|1<<11);
 
 	// the sub is to make space on the stack for whatever else is required./
         mov32BitConstant(ARMV7.r12, imm16);
