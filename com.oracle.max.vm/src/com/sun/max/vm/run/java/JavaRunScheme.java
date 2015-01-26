@@ -94,10 +94,6 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     public JavaRunScheme() {
     }
 
-    public static boolean isHeapProfilingOptionPassed() {
-        return hprofOption.getValue() != null;
-    }
-
     /**
      * JDK methods that need to be re-executed at startup, e.g. to re-register native methods.
      */
@@ -157,6 +153,28 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             }
         }
         initIDMethods = methods.toArray(new StaticMethodActor[methods.size()]);
+    }
+
+    public static boolean isHeapProfilingOptionPassed() {
+        return hprofOption.getValue() != null;
+    }
+
+    public static void terminateProfilers() {
+        if (cpuSamplingProfiler != null) {
+            cpuSamplingProfiler.terminate();
+        }
+        if (heapSamplingProfiler != null) {
+            heapSamplingProfiler.terminate();
+        }
+    }
+
+    public static void restartProfilers() {
+        if (cpuSamplingProfiler != null) {
+            cpuSamplingProfiler.restart();
+        }
+        if (heapSamplingProfiler != null) {
+            heapSamplingProfiler.restart();
+        }
     }
 
     @ALIAS(declaringClass = System.class)
@@ -219,12 +237,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
 
             case TERMINATING: {
                 JniFunctions.printJniFunctionTimers();
-                if (cpuSamplingProfiler != null) {
-                    cpuSamplingProfiler.terminate();
-                }
-                if (heapSamplingProfiler != null) {
-                    heapSamplingProfiler.terminate();
-                }
+                terminateProfilers();
                 break;
             }
             default: {
