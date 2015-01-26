@@ -159,7 +159,6 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public void cmpsd2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
         assert opr1.isFpu() && opr2.isFpu();
         ucomisd(opr1, opr2);
-        // assert !opr1.isFpu(); //force crash as not implemented yet.
         // get condition codes. don't set
         // FPSCR register  flags
         // [31] N Set to 1 if a comparison operation produces a less than result.
@@ -180,21 +179,21 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         1 iff opr1 > opr2
         */
         if (unorderedIsLess) {
+
             mov32BitConstant(dst, -1);
-            //jcc(ARMV7Assembler.ConditionFlag.parity, l);
-            //jcc(ARMV7Assembler.ConditionFlag.below, l);
             jcc(ConditionFlag.SignedOverflow, l);
+            jcc(ConditionFlag.CarryClearUnsignedLower,l);  // NEW
+
             mov32BitConstant(dst, 0);
-            //jcc(ARMV7Assembler.ConditionFlag.equal, l);
+            jcc(ConditionFlag.Equal,l); // NEW
             incrementl(dst, 1);
         } else { // unordered is greater
-            mov32BitConstant(dst, 1);
-            //jcc(ARMV7Assembler.ConditionFlag.parity, l);
-            //jcc(ARMV7Assembler.ConditionFlag.above, l);
-            jcc(ConditionFlag.SignedOverflow, l);
-            mov32BitConstant(dst, 0);
-            //jcc(ARMV7Assembler.ConditionFlag.equal, l);
 
+            mov32BitConstant(dst, 1);
+            jcc(ConditionFlag.SignedOverflow, l);
+            jcc(ConditionFlag.SignedGreater,l);  // nEW
+            mov32BitConstant(dst, 0);
+            jcc(ConditionFlag.Equal,l);
             decrementl(dst, 1);
         }
 
@@ -205,49 +204,28 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public void cmpss2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess) {
         assert opr1.isFpu();
         assert opr2.isFpu();
-        //System.out.println("ARMV7MAcroAssembler cmpss2int not tested");
         ucomisd(opr1, opr2);
-        //assert !opr1.isFpu(); // APN force crash as not yet implemented
         Label l = new Label();
         if (unorderedIsLess) {
             mov32BitConstant(dst, -1);
-            //jcc(ARMV7Assembler.ConditionFlag.parity, l);
-            //jcc(ARMV7Assembler.ConditionFlag.below, l);
             jcc(ConditionFlag.SignedOverflow, l);
+            jcc(ConditionFlag.CarryClearUnsignedLower,l);  // NEW
+
             mov32BitConstant(dst, 0);
-            //jcc(ARMV7Assembler.ConditionFlag.equal, l);
+            jcc(ConditionFlag.Equal,l); // NEW
+
             incrementl(dst, 1);
         } else { // unordered is greater
             mov32BitConstant(dst, 1);
-            //jcc(ARMV7Assembler.ConditionFlag.parity, l);
-            //jcc(ARMV7Assembler.ConditionFlag.above, l);
             jcc(ConditionFlag.SignedOverflow, l);
+            jcc(ConditionFlag.SignedGreater,l);  // nEW
+
             mov32BitConstant(dst, 0);
-            //jcc(ARMV7Assembler.ConditionFlag.equal, l);
-
+            jcc(ConditionFlag.Equal,l); // NEW
             decrementl(dst, 1);
         }
         bind(l);
-        /*ucomiss(opr1, opr2);
 
-        Label l = new Label();
-        if (unorderedIsLess) {
-            movl(dst, -1);
-            jcc(ARMV7Assembler.ConditionFlag.parity, l);
-            jcc(ARMV7Assembler.ConditionFlag.below, l);
-            movl(dst, 0);
-            jcc(ARMV7Assembler.ConditionFlag.equal, l);
-            incrementl(dst, 1);
-        } else { // unordered is greater
-            movl(dst, 1);
-            jcc(ARMV7Assembler.ConditionFlag.parity, l);
-            jcc(ARMV7Assembler.ConditionFlag.above, l);
-            movl(dst, 0);
-            jcc(ARMV7Assembler.ConditionFlag.equal, l);
-            decrementl(dst, 1);
-        }
-        bind(l);
-        */
     }
 
     public void cmpq(CiRegister src1, CiRegister src2) {

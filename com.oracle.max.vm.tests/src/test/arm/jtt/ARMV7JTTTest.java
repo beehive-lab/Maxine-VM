@@ -2646,7 +2646,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_C1X_jtt_BC_dcmp01() throws Exception {
+    public void test_C1X_jtt_BC_dcmp01() throws Exception {
 
         CompilationBroker.OFFLINE = initialised;
         double argOne[] = { 5.0d, -3.1d, 5.0d, -5.0d, 0d, -0.1d, -5.0d, 25.5d, 0.5d};
@@ -2666,7 +2666,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_C1X_jtt_BC_dcmp02() throws Exception {
+    public void test_C1X_jtt_BC_dcmp02() throws Exception {
         double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp02");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -2683,7 +2683,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_C1X_jtt_BC_dcmp03() throws Exception {
+    public void test_C1X_jtt_BC_dcmp03() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
@@ -2702,7 +2702,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_C1X_jtt_BC_dcmp04() throws Exception {
+    public void test_C1X_jtt_BC_dcmp04() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
@@ -2721,7 +2721,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_C1X_jtt_BC_dcmp05() throws Exception {
+    public void test_C1X_jtt_BC_dcmp05() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
@@ -2740,7 +2740,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_C1X_jtt_BC_dcmp06() throws Exception {
+    public void test_C1X_jtt_BC_dcmp06() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
@@ -2759,7 +2759,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_C1X_jtt_BC_dcmp07() throws Exception {
+    public void test_C1X_jtt_BC_dcmp07() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
@@ -2778,7 +2778,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_C1X_jtt_BC_dcmp08() throws Exception {
+    public void test_C1X_jtt_BC_dcmp08() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
@@ -2797,7 +2797,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_C1X_jtt_BC_dcmp09() throws Exception {
+    public void test_C1X_jtt_BC_dcmp09() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         double argOne[] = { -1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
@@ -2816,7 +2816,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_C1X_jtt_BC_dcmp10() throws Exception {
+    public void test_C1X_jtt_BC_dcmp10() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_dcmp10");
@@ -2834,27 +2834,92 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_C1X_jtt_BC_fcmp01() throws Exception {
+    public void test_C1X_jtt_BC_dNAN() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
-        float argOne[] = { 5.0f, -3.0f, 5.0f, -5.0f, 0f, -0.1f};
-        float argTwo[] = { 78.00f, 78.01f, 3.3f, -7.2f, 78.00f, 78.001f};
+        double argOne[] = { 5.0d,    0.0d/0.0d};
+
+        String klassName = getKlassName("jtt.bytecode.BC_dNAN");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        initialiseCodeBuffers(methods, "BC_dNAN.java", "boolean test(double)");
+        int assemblerStatements = codeBytes.length / 4;
+        for (int i = 0; i < argOne.length; i++) {
+            if(i == argOne.length-1) {
+                argOne[i] = Double.parseDouble("NaN");
+            }
+            boolean answer = jtt.bytecode.BC_dNAN.test(argOne[i]);
+            int expectedValue = answer ? 1 : 0;
+            String tmp = null;
+            if(Double.isNaN(argOne[i])) tmp = new String("0.0d/0.0d");
+            else tmp = Double.toString(argOne[i]);
+            String functionPrototype = ARMCodeWriter.preAmble("int", "double", tmp );
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            //if(registerValues[0] != expectedValue) System.out.println("FAIL "  + registerValues[0]);
+            //else System.out.println("SUCCESS " + registerValues[0]);
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+
+    public void test_C1X_jtt_BC_fNAN() throws Exception {
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+        float argOne[] = { 5.0f,    0.0f/0.0f};
+
+        String klassName = getKlassName("jtt.bytecode.BC_fNAN");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        initialiseCodeBuffers(methods, "BC_fNAN.java", "boolean test(float)");
+        int assemblerStatements = codeBytes.length / 4;
+        for (int i = 0; i < argOne.length; i++) {
+            if(i == argOne.length-1) {
+                argOne[i] = Float.parseFloat("NaN");
+            }
+            boolean answer = jtt.bytecode.BC_fNAN.test(argOne[i]);
+            int expectedValue = answer ? 1 : 0;
+            String tmp = null;
+            if(Float.isNaN(argOne[i])) tmp = new String("0.0f/0.0f");
+            else tmp = Float.toString(argOne[i]);
+            String functionPrototype = ARMCodeWriter.preAmble("int", "float", tmp );
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            //if(registerValues[0] != expectedValue) System.out.println("FAIL "  + registerValues[0]);
+            //else System.out.println("SUCCESS " + registerValues[0]);
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+
+    public void test_C1X_jtt_BC_fcmp01() throws Exception {
+        initTests();
+        CompilationBroker.OFFLINE = initialised;
+        float argOne[] = { 5.0f,    -3.0f,  5.0f, -5.0f, 0f,    -0.1f,  0.75f};
+        float argTwo[] = { 78.00f, 78.01f, 3.3f, -7.2f, 78.00f, 78.001f, 0.0f};
         String klassName = getKlassName("jtt.bytecode.BC_fcmp01");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         CompilationBroker.OFFLINE = true;
         initialiseCodeBuffers(methods, "BC_fcmp01.java", "boolean test(float, float)");
         int assemblerStatements = codeBytes.length / 4;
         for (int i = 0; i < argOne.length; i++) {
+            if(i == argOne.length-1) {
+                argOne[i] = Float.parseFloat("NaN");
+            }
             boolean answer = jtt.bytecode.BC_fcmp01.test(argOne[i], argTwo[i]);
+            System.out.println(answer + " " + argOne[i] + " less than " + argTwo[i] + " " + Float.isNaN(argOne[i]));
             int expectedValue = answer ? 1 : 0;
-            String functionPrototype = ARMCodeWriter.preAmble("int", "float, float", Float.toString(argOne[i]) + new String(",") + Float.toString(argTwo[i]));
+            String tmp = null;
+            if(Float.isNaN(argOne[i])) tmp = new String("0.0f/0.0f");
+            else tmp = Float.toString(argOne[i]);
+            String functionPrototype = ARMCodeWriter.preAmble("int", "float, float", tmp + new String(",") + Float.toString(argTwo[i]));
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            //if(registerValues[0] != expectedValue) System.out.println("FAIL "  + registerValues[0]);
+            //else System.out.println("SUCCESS " + registerValues[0]);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
     }
 
-    public void ignore_C1X_jtt_BC_fcmp02() throws Exception {
+    public void test_C1X_jtt_BC_fcmp02() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
@@ -2873,7 +2938,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_C1X_jtt_BC_fcmp03() throws Exception {
+    public void test_C1X_jtt_BC_fcmp03() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
@@ -2892,7 +2957,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_C1X_jtt_BC_fcmp04() throws Exception {
+    public void test_C1X_jtt_BC_fcmp04() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
@@ -2911,7 +2976,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_C1X_jtt_BC_fcmp05() throws Exception {
+    public void test_C1X_jtt_BC_fcmp05() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
@@ -2930,7 +2995,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_C1X_jtt_BC_fcmp06() throws Exception {
+    public void test_C1X_jtt_BC_fcmp06() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
@@ -2949,7 +3014,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_C1X_jtt_BC_fcmp07() throws Exception {
+    public void test_C1X_jtt_BC_fcmp07() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
@@ -2968,7 +3033,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_C1X_jtt_BC_fcmp08() throws Exception {
+    public void test_C1X_jtt_BC_fcmp08() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
@@ -2987,7 +3052,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_C1X_jtt_BC_fcmp09() throws Exception {
+    public void test_C1X_jtt_BC_fcmp09() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         float argOne[] = { -1.0f, 1.0f, 0.0f, -0.0f, 5.1f, -5.1f, 0.0f};
@@ -3006,7 +3071,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_C1X_jtt_BC_fcmp10() throws Exception {
+    public void test_C1X_jtt_BC_fcmp10() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_fcmp10");
@@ -4919,7 +4984,7 @@ public long connectRegs(int reg0, int reg1) {
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_fload5() throws Exception {
+    public void ignore_jtt_BC_fload5() throws Exception {
         initTests();
         float argsOne[] = { 0.0f, 1.1f};
         float argsTwo[] = { 17.1f, 2.5f};
