@@ -40,7 +40,10 @@ import com.oracle.graal.replacements.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.phases.*;
 import com.sun.max.program.*;
+import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.actor.member.*;
+
+import static com.sun.max.vm.MaxineVM.vm;
 
 /**
  * Customized snippet building for Maxine.
@@ -111,7 +114,9 @@ public class MaxReplacementsImpl extends ReplacementsImpl {
 
             Debug.dump(graph, "%s: %s", method.getName(), GraphBuilderPhase.class.getSimpleName());
 
-            new MaxWordType.MakeWordFinalRewriterPhase().apply(graph);
+            if (vm().phase != MaxineVM.Phase.RUNNING) {
+                new MaxWordType.MakeWordFinalRewriterPhase().apply(graph);
+            }
             new MaxFoldPhase(runtime).apply(graph);
             // need constant propagation for folded methods
             new CanonicalizerPhase.Instance(runtime, assumptions, MaxGraal.canonicalizeReads).apply(graph);
@@ -132,8 +137,10 @@ public class MaxReplacementsImpl extends ReplacementsImpl {
 
         @Override
         public void afterInline(StructuredGraph caller, StructuredGraph callee, Object beforeInlineData) {
-            new MaxWordType.MaxNullCheckRewriterPhase().setInvokePredecessor((Node) beforeInlineData).apply(caller);
-            new MaxWordType.ReplaceAccessorPhase().apply(caller);
+            if (vm().phase != MaxineVM.Phase.RUNNING) {
+                new MaxWordType.MaxNullCheckRewriterPhase().setInvokePredecessor((Node) beforeInlineData).apply(caller);
+                new MaxWordType.ReplaceAccessorPhase().apply(caller);
+            }
             new CanonicalizerPhase.Instance(runtime, assumptions, MaxGraal.canonicalizeReads).apply(caller);
             new MaxIntrinsicsPhase().apply(caller);
         }
@@ -142,13 +149,15 @@ public class MaxReplacementsImpl extends ReplacementsImpl {
         protected void finalizeGraph(StructuredGraph graph) {
             new MaxFoldPhase(runtime).apply(graph);
 
-            // These only get done once right at the end
-            new MaxWordType.MaxUnsafeAccessRewriterPhase().apply(graph);
-            new MaxSlowpathRewriterPhase(runtime).apply(graph);
-            new MaxWordType.MaxNullCheckRewriterPhase().apply(graph);
+            if (vm().phase != MaxineVM.Phase.RUNNING) {
+                // These only get done once right at the end
+                new MaxWordType.MaxUnsafeAccessRewriterPhase().apply(graph);
+                new MaxSlowpathRewriterPhase(runtime).apply(graph);
+                new MaxWordType.MaxNullCheckRewriterPhase().apply(graph);
 
-            // The replaces all Word based types with target.wordKind
-            new MaxWordType.KindRewriterPhase().apply(graph, phaseContext);
+                // The replaces all Word based types with target.wordKind
+                new MaxWordType.KindRewriterPhase().apply(graph, phaseContext);
+            }
             // Remove UnsafeCasts rendered irrelevant by previous phase
             new CanonicalizerPhase.Instance(runtime, assumptions, MaxGraal.canonicalizeReads).apply(graph);
 

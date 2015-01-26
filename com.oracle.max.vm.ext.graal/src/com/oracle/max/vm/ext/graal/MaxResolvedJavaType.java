@@ -73,7 +73,6 @@ public class MaxResolvedJavaType extends MaxJavaType implements ResolvedJavaType
             reenter(wordType);
             reenter(pointerType);
             reenter(accessorType);
-            reenter(accessorType);
             reenter(referenceType);
             reenter(codePointerType);
             reenter(hubType);
