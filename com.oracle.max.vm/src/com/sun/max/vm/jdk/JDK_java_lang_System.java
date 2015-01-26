@@ -202,7 +202,7 @@ public final class JDK_java_lang_System {
                 break;
             }
             default: {
-                throw ProgramError.unknownCase();
+                throw ProgramError.unknownCase("arrayCopyForward");
             }
         }
     }
@@ -280,7 +280,7 @@ public final class JDK_java_lang_System {
                 break;
             }
             default: {
-                throw ProgramError.unknownCase();
+                throw ProgramError.unknownCase("arrayCopyBackward");
             }
         }
     }
@@ -718,7 +718,7 @@ public final class JDK_java_lang_System {
                 initBasicUnixProperties(properties);
                 break;
             default:
-                throw ProgramError.unknownCase();
+                throw ProgramError.unknownCase("initProperties OS name" );
         }
 
         // 5. set up user-specific information
@@ -1019,7 +1019,7 @@ public final class JDK_java_lang_System {
             case WINDOWS:
                 return libraryName + ".dll";
             default:
-                throw ProgramError.unknownCase();
+                throw ProgramError.unknownCase("mapLibraryName");
         }
     }
 
