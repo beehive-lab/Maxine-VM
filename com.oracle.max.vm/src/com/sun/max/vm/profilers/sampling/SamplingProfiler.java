@@ -622,6 +622,12 @@ public abstract class SamplingProfiler extends Thread {
         }
     }
 
+    public void restart() {
+        isProfiling = false;
+        stackInfoMap.clear();
+        isProfiling = true;
+    }
+
     public void terminate() {
         isProfiling = false;
         dumpTraces();
