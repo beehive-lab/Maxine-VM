@@ -155,7 +155,7 @@ public class MaxInliningPhase extends InliningPhase {
             calleeMethod.ignoreProfilingInfo();
         }
         StructuredGraph resGraph = super.buildGraph(method, invoke, assumptions, context);
-        insertInfopointsToMethodBondaries(resGraph);
+        insertInfopointsToMethodBondaries(resGraph, method, context);
         return resGraph;
     }
 
@@ -163,7 +163,7 @@ public class MaxInliningPhase extends InliningPhase {
      * Inserts infopoints at the start and all the return points of the graph to preserve information about inlined
      * methods for their invalidation during deoptimization.
      */
-    private void insertInfopointsToMethodBondaries(StructuredGraph graph) {
+    private void insertInfopointsToMethodBondaries(StructuredGraph graph, final ResolvedJavaMethod method, final HighTierContext context) {
         InfopointNode maxInfopointNode = null;
         FrameState frameState;
 
@@ -171,6 +171,11 @@ public class MaxInliningPhase extends InliningPhase {
         FixedWithNextNode entryFrameStateNode = graph.start();
         frameState = ((StateSplit) entryFrameStateNode).stateAfter();
         if (frameState == null) {
+            if (graph.method() != method) {
+                // method was replaced by a snippet method and frame states were cleaned up so no deoptimization will happen.
+                assert InliningUtil.canIntrinsify(context.getReplacements(), method);
+                return;
+            }
             FatalError.unexpected("Expected non zero frame state at start node");
         }
         if (entryFrameStateNode.next() instanceof ReturnNode) {

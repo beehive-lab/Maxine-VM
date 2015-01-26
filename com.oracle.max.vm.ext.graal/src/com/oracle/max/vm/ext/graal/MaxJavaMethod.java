@@ -34,7 +34,6 @@ public class MaxJavaMethod implements JavaMethod {
 
     protected RiMethod riMethod;
 
-    @RESET
     private static ConcurrentHashMap<RiMethod, MaxJavaMethod> map;
 
     private static ConcurrentHashMap<RiMethod, MaxJavaMethod> getMap() {
