@@ -1231,7 +1231,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_BC_lookupswitch01() throws Exception {
+    public void ignore_C1X_jtt_BC_lookupswitch01() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -1260,7 +1260,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_BC_lookupswitch02() throws Exception {
+    public void ignore_C1X_jtt_BC_lookupswitch02() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -1291,7 +1291,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_BC_lookupswitch03() throws Exception {
+    public void ignore_C1X_jtt_BC_lookupswitch03() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         int argOne[] = { 0,1,44,66, 67,68,96,97,98,106,107,108,132,133,134,211,212,213, -121, -122, -123};
@@ -1311,7 +1311,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_BC_lookupswitch04() throws Exception {
+    public void ignore_C1X_jtt_BC_lookupswitch04() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -1331,7 +1331,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_BC_tableswitch() throws Exception {
+    public void ignore_C1X_jtt_BC_tableswitch() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         int argOne[] = { 7, -1, 0, 1, 2, 3, 4, 5, 6, 0};
@@ -1349,7 +1349,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_tableswitch2() throws Exception {
+    public void ignore_C1X_jtt_BC_tableswitch2() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         /*
@@ -1371,7 +1371,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_tableswitch3() throws Exception {
+    public void ignore_C1X_jtt_BC_tableswitch3() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
 
@@ -1394,7 +1394,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
-    public void test_C1X_jtt_BC_tableswitch4() throws Exception {
+    public void ignore_C1X_jtt_BC_tableswitch4() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         /*
@@ -5109,8 +5109,7 @@ public long connectRegs(int reg0, int reg1) {
         assert(failed == false);
     }
 
-    //TODO: Implement functionality
-    public void ignore_jtt_BC_l2f() throws Exception {
+    public void test_jtt_BC_l2f() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_l2f");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -5118,15 +5117,24 @@ public long connectRegs(int reg0, int reg1) {
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0L, 0.0f));
         pairs.add(new Args(1L, 1.0f));
+        pairs.add(new Args((long)Integer.MAX_VALUE, (float)Integer.MAX_VALUE));
+        pairs.add(new Args((long)Long.MAX_VALUE, (float)Long.MAX_VALUE));
         pairs.add(new Args(-74652389L, -74652389.00f));
-        initialiseCodeBuffers(methods, "BC_l2f.java", "int test(long)");
+        pairs.add(new Args((long)Integer.MIN_VALUE, (float)Integer.MIN_VALUE));
+
+        pairs.add(new Args((long)Long.MIN_VALUE, (float)Long.MIN_VALUE));
+
+
+
+        initialiseCodeBuffers(methods, "BC_l2f.java", "float test(long)");
         int assemblerStatements = codeBytes.length / 4;
         for (Args pair : pairs) {
             float expectedValue = jtt.bytecode.BC_l2f.test(pair.lfirst);
-            String functionPrototype = ARMCodeWriter.preAmble( "float", "long long", Long.toString(pair.lfirst));
-            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
-            float returnValue = registerValues[0];
-            assert returnValue ==  expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            String functionPrototype = ARMCodeWriter.preAmble( "float", "long long", Long.toString(pair.lfirst)+"LL");
+            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
+            float returnValue = ((Float)registerValues[33]).floatValue();
+            System.out.println("GOT " + returnValue + " EXPECTED " + expectedValue);
+            assert returnValue ==  expectedValue : "Failed incorrect value s0 " + ((Float)registerValues[33]).floatValue() + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
