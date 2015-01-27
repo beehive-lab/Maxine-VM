@@ -1085,32 +1085,27 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.mov(ConditionFlag.SignedLesser,false,srcRegister,ARMV7.r8);
                 masm.mov(ConditionFlag.SignedLesser,false,ARMV7.cpuRegisters[srcRegister.number+1],ARMV7.r9);
 
-                // for unsigned longs this works ...
                 masm.vmov(ConditionFlag.Always,ARMV7.s31,ARMV7.cpuRegisters[srcRegister.number+1]);
                 masm.unsignedvcvt(ConditionFlag.Always,true,ARMV7.s31,ARMV7.s31);
                 // HIGHWORD = s31
                 masm.mov32BitConstant(ARMV7.r12,0xffffffff);
                 masm.vmov(ConditionFlag.Always,ARMV7.s30,ARMV7.r12);
                 masm.unsignedvcvt(ConditionFlag.Always,true,ARMV7.s30,ARMV7.s30);
-                masm.vmul(ConditionFlag.Always,ARMV7.s30,ARMV7.s31,ARMV7.s30); // HIGHWORD divided by ...
+                masm.vmul(ConditionFlag.Always,ARMV7.s30,ARMV7.s31,ARMV7.s30); // HIGHWORD multiplied by ...
                 masm.vmov(ConditionFlag.Always,ARMV7.s31,src.asRegister());
                 masm.unsignedvcvt(ConditionFlag.Always,true,ARMV7.s31,ARMV7.s31); //s30 holds the LSB
                 masm.vadd(ConditionFlag.Always,asXmmFloatReg(dest),ARMV7.s30,ARMV7.s31);
 
                 masm.mov32BitConstant(ARMV7.r12,-1);
-                Label isPositive = new Label();
-                //masm.jcc(ConditionFlag.SignedGreaterOrEqual,isPositive);
                 masm.vmov(ConditionFlag.SignedLesser,ARMV7.s31,ARMV7.r12);
                 masm.vcvt(ConditionFlag.SignedLesser,ARMV7.s31,false,true,ARMV7.s31);
                 masm.vmul(ConditionFlag.SignedLesser,asXmmFloatReg(dest),asXmmFloatReg(dest),ARMV7.s31);
-                //masm.bind(isPositive);
 
 
                 break;
 
             case L2D:
-                //assert 0 == 1: "long to double convert";
-                //System.out.println("MISSING: long to double conver not implemented");
+
                 if (DEBUG_MOVS) {
                     masm.movw(ConditionFlag.Always, ARMV7.r12, 17);
                     masm.movw(ConditionFlag.Always, ARMV7.r12, 17);
@@ -1118,6 +1113,62 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     masm.movw(ConditionFlag.Always, ARMV7.r12, 17);
                     masm.movw(ConditionFlag.Always, ARMV7.r12, 17);
                 }
+                /*masm.push(ConditionFlag.Always,1<< (srcRegister.number+1)| 1<< srcRegister.number);
+                masm.eor(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
+                masm.cmp(ConditionFlag.Always,ARMV7.cpuRegisters[srcRegister.number+1],ARMV7.r12,0,0);
+                masm.movlong(ARMV7.r8,-1);
+                masm.mulLong(ARMV7.r8,ARMV7.r8,srcRegister);
+                masm.pop(ConditionFlag.Always,1<< (srcRegister.number+1)| 1<< srcRegister.number);
+
+                masm.mov(ConditionFlag.SignedLesser,false,srcRegister,ARMV7.r8);
+                masm.mov(ConditionFlag.SignedLesser,false,ARMV7.cpuRegisters[srcRegister.number+1],ARMV7.r9);
+
+                masm.vmov(ConditionFlag.Always,ARMV7.s30,ARMV7.cpuRegisters[srcRegister.number+1]);
+                masm.unsignedvcvt(ConditionFlag.Always,true,ARMV7.d15,ARMV7.s30);
+                // HIGHWORD = d15
+                masm.mov32BitConstant(ARMV7.r12,0xffffffff);
+                masm.vmov(ConditionFlag.Always, ARMV7.s29,ARMV7.r12);
+                masm.unsignedvcvt(ConditionFlag.Always,true,asXmmDoubleReg(dest),ARMV7.s29);
+                masm.vmul(ConditionFlag.Always,asXmmDoubleReg(dest),asXmmDoubleReg(dest),ARMV7.d15); // HIGHWORD multiplied by ...
+                masm.vmov(ConditionFlag.Always,ARMV7.s30,src.asRegister());
+                masm.unsignedvcvt(ConditionFlag.Always,true,ARMV7.d15,ARMV7.s30); //s30 holds the LSB
+                masm.vadd(ConditionFlag.Always,asXmmDoubleReg(dest),ARMV7.d15,asXmmDoubleReg(dest));
+
+                masm.mov32BitConstant(ARMV7.r12,-1);
+                masm.vmov(ConditionFlag.SignedLesser,ARMV7.s30,ARMV7.r12);
+                masm.vcvt(ConditionFlag.SignedLesser,ARMV7.d15,false,true,ARMV7.s30);
+                masm.vmul(ConditionFlag.SignedLesser,asXmmDoubleReg(dest),asXmmDoubleReg(dest),ARMV7.d15);
+                */
+                int number = asXmmDoubleReg(dest).encoding;
+                CiRegister floatReg = ARMV7.floatRegisters[number*2+16];
+                masm.push(ConditionFlag.Always,1<< (srcRegister.number+1)| 1<< srcRegister.number);
+                masm.eor(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
+                masm.cmp(ConditionFlag.Always,ARMV7.cpuRegisters[srcRegister.number+1],ARMV7.r12,0,0);
+                masm.movlong(ARMV7.r8,-1);
+                masm.mulLong(ARMV7.r8,ARMV7.r8,srcRegister);
+                masm.pop(ConditionFlag.Always,1<< (srcRegister.number+1)| 1<< srcRegister.number);
+
+                masm.mov(ConditionFlag.SignedLesser,false,srcRegister,ARMV7.r8);
+                masm.mov(ConditionFlag.SignedLesser,false,ARMV7.cpuRegisters[srcRegister.number+1],ARMV7.r9);
+
+                masm.vmov(ConditionFlag.Always,ARMV7.s31,ARMV7.cpuRegisters[srcRegister.number+1]);
+                masm.unsignedvcvt(ConditionFlag.Always,true,ARMV7.s31,ARMV7.s31);
+                // HIGHWORD = s31
+                masm.mov32BitConstant(ARMV7.r12,0xffffffff);
+                masm.vmov(ConditionFlag.Always,ARMV7.s30,ARMV7.r12);
+                masm.unsignedvcvt(ConditionFlag.Always,true,ARMV7.s30,ARMV7.s30);
+                masm.vmul(ConditionFlag.Always,ARMV7.s30,ARMV7.s31,ARMV7.s30); // HIGHWORD multiplied by ...
+                masm.vmov(ConditionFlag.Always,ARMV7.s31,src.asRegister());
+                masm.unsignedvcvt(ConditionFlag.Always,true,ARMV7.s31,ARMV7.s31); //s30 holds the LSB
+                masm.vadd(ConditionFlag.Always,floatReg,ARMV7.s30,ARMV7.s31);
+
+                masm.mov32BitConstant(ARMV7.r12,-1);
+                masm.vmov(ConditionFlag.SignedLesser,ARMV7.s31,ARMV7.r12);
+                masm.vcvt(ConditionFlag.SignedLesser,ARMV7.s31,false,true,ARMV7.s31);
+                masm.vmul(ConditionFlag.SignedLesser,floatReg,floatReg,ARMV7.s31);
+                masm.vcvt(ConditionFlag.Always,asXmmDoubleReg(dest),false,false,floatReg);
+
+
 
                 //masm.cvtsi2sdq(asXmmDoubleReg(dest), srcRegister);
                 break;

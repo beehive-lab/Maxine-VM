@@ -1731,38 +1731,53 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
         instruction |= 0x0eb80a40;
         int opc2;
         assert (src.number >= 16 && dest.number >= 16);
-        assert(toFloat == true); // not implemented to int yet
+        assert (toFloat == true); // not implemented to int yet
 
-        if(dest.number <=31 && src.number <= 31) {
+        if (dest.number <= 31 && src.number <= 31) {
             //unsigned 32 to double conversion
-		System.out.println("unsigned to double converison not implemented");		
-		instruction |= 1<<8;
-		if(toFloat) {
-			instruction |=  (src.encoding & 0x1) << 5;
-			instruction |= (src.encoding >> 1);
-			
-			instruction |= (dest.encoding >>4) << 22;
-			instruction |= (dest.encoding & 0xf) << 12;	
-		} else {
-			assert(0==1);
-		}
+            System.out.println("unsigned to double converison not implemented");
+            instruction |= 1 << 8;
+            if (toFloat) {
+                instruction |= (src.encoding & 0x1) << 5;
+                instruction |= (src.encoding >> 1);
 
-        }else if (dest.number >= 31 && src.number >= 32) {
-            //unsiged 32 to float conversion
-        	if(toFloat) {
-			instruction |= (dest.encoding &0x1) <<22;
-			instruction |= (dest.encoding >>1) <<12;
+                instruction |= (dest.encoding >> 4) << 22;
+                instruction |= (dest.encoding & 0xf) << 12;
+            } else {
+                assert (0 == 1);
+            }
 
-			instruction |= (src.encoding & 0x1) << 5;
-			instruction |= (src.encoding >> 1);
-			
-        	} else {
-                       assert(0==1);
+        } else if (dest.number > 31 && src.number > 31) {
+            //unsiged 32 to double conversion
 
-	
-        	}
+            if (toFloat) {
+                instruction |= (dest.encoding & 0x1) << 22;
+                instruction |= (dest.encoding >> 1) << 12;
 
-        } else assert 0==1 : "unsigedvct inconsistent use of registers";
+                instruction |= (src.encoding & 0x1) << 5;
+                instruction |= (src.encoding >> 1);
+
+            } else {
+                assert (0 == 1);
+
+
+            }
+
+        } else if (dest.number <= 31 && src.number > 31) {
+            instruction |= 1<<8;
+            if (toFloat) {
+                instruction |= (dest.encoding >>4) << 22;
+                instruction |= (dest.encoding & 0xf) << 12;
+
+                instruction |= (src.encoding & 0x1) << 5;
+                instruction |= (src.encoding >> 1);
+            } else {
+                assert(0==1);
+            }
+    } else  {
+            System.out.println("SRC " + src.number + " DEST " + dest.number);
+            assert 0==1 : "unsigedvct inconsistent use of registers";
+        }
 
         emitInt(instruction);
 
