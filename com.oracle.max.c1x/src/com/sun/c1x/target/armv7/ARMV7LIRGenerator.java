@@ -47,6 +47,8 @@ public class ARMV7LIRGenerator extends LIRGenerator {
     private static final CiRegisterValue RAX_L = ARMV7.r8.asValue(CiKind.Long); // and r9 32bit registers
     private static final CiRegisterValue RDX_I = ARMV7.r8.asValue(CiKind.Int);
     private static final CiRegisterValue RDX_L = ARMV7.r8.asValue(CiKind.Long); // and r9 32bit registers
+    private static final CiRegisterValue RETURNREG_L = ARMV7.r0.asValue(CiKind.Long);
+    private static final CiRegisterValue RETURNREG_I = ARMV7.r0.asValue(CiKind.Int);
 
     private static final CiRegisterValue LDIV_TMP = RDX_L;
 
@@ -68,6 +70,8 @@ public class ARMV7LIRGenerator extends LIRGenerator {
     protected CiValue exceptionPcOpr() {
         return ILLEGAL;
     }
+
+
 
     @Override
     protected boolean canStoreAsConstant(Value v, CiKind kind) {
@@ -212,33 +216,37 @@ public class ARMV7LIRGenerator extends LIRGenerator {
         if (opcode == Bytecodes.LDIV || opcode == Bytecodes.LREM || opcode == Op2.UDIV || opcode == Op2.UREM) {
             // emit inline 64-bit code
             LIRDebugInfo info = x.needsZeroCheck() ? stateFor(x) : null;
-            CiValue dividend = force(x.x(), RAX_L); // dividend must be in RAX
+            //CiValue dividend = force(x.x(), RAX_L); // dividend must be in RAX
+            CiValue dividend = force(x.x(), RAX_L);
             CiValue divisor = load(x.y());            // divisor can be in any (other) register
 
             CiValue result = createResultVariable(x);
             CiValue resultReg;
             if (opcode == Bytecodes.LREM) {
-                resultReg = RDX_L; // remainder result is produced in rdx
-                lir.lrem(dividend, divisor, resultReg, LDIV_TMP, info);
+                resultReg = RETURNREG_L;//RDX_L; // remainder result is produced in rdx
+                //lir.lremt(dividend, divisor, resultReg, LDIV_TMP, info);
+                resultReg = callRuntime(CiRuntimeCall.arithmeticlrem, null, dividend,divisor);
             } else if (opcode == Bytecodes.LDIV) {
-                resultReg = RAX_L; // division result is produced in rax
+                //resultReg = RAX_L; // division result is produced in rax
                 //lir.ldiv(dividend, divisor, resultReg, LDIV_TMP, info);
-	        resultReg = callRuntimeWithResult(CiRuntimeCall.arithmeticldiv, null, dividend,divisor); // HERE call the native method
+	            resultReg = callRuntime(CiRuntimeCall.arithmeticldiv, null, dividend,divisor); // HERE call the native method
 
             } else if (opcode == Op2.UREM) {
-                resultReg = RDX_L; // remainder result is produced in rdx
+                resultReg = RETURNREG_L; // remainder result is produced in rdx
                 //lir.lurem(dividend, divisor, resultReg, LDIV_TMP, info);
-                resultReg = callRuntimeWithResult(CiRuntimeCall.arithmeticlurem, null, dividend,divisor); // HERE call the native method
+                resultReg = callRuntime(CiRuntimeCall.arithmeticlurem, null, dividend,divisor); // HERE call the native method
 
             } else if (opcode == Op2.UDIV) {
-                resultReg = RAX_L; // division result is produced in rax
+                resultReg = RETURNREG_L; // division result is produced in rax
                 //lir.ludiv(dividend, divisor, resultReg, LDIV_TMP, info);
-		resultReg = callRuntimeWithResult(CiRuntimeCall.arithmeticludiv, null, dividend,divisor); // HERE call the native method
+		        resultReg = callRuntime(CiRuntimeCall.arithmeticludiv, null, dividend,divisor); // HERE call the native method
 
             } else {
                 throw Util.shouldNotReachHere();
             }
-            lir.move(resultReg, result);
+            assert(resultReg.asRegister() == ARMV7.r0);
+            lir.move(RETURNREG_L,result);
+            //lir.move(resultReg, result);
         } else if (opcode == Bytecodes.LMUL) {
             LIRItem right = new LIRItem(x.y(), this);
 

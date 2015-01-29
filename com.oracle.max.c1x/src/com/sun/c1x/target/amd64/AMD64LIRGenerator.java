@@ -217,6 +217,7 @@ public class AMD64LIRGenerator extends LIRGenerator {
             if (opcode == Bytecodes.LREM) {
                 resultReg = RDX_L; // remainder result is produced in rdx
                 lir.lrem(dividend, divisor, resultReg, LDIV_TMP, info);
+                //resultReg = callRuntimeWithResult(CiRuntimeCall.arithmeticlrem, null, dividend, divisor);
             } else if (opcode == Bytecodes.LDIV) {
                 resultReg = RAX_L; // division result is produced in rax
                 lir.ldiv(dividend, divisor, resultReg, LDIV_TMP, info);
@@ -225,9 +226,11 @@ public class AMD64LIRGenerator extends LIRGenerator {
             } else if (opcode == Op2.UREM) {
                 resultReg = RDX_L; // remainder result is produced in rdx
                 lir.lurem(dividend, divisor, resultReg, LDIV_TMP, info);
+                //resultReg = callRuntimeWithResult(CiRuntimeCall.arithmeticlurem, null, dividend, divisor);
             } else if (opcode == Op2.UDIV) {
                 resultReg = RAX_L; // division result is produced in rax
                 lir.ludiv(dividend, divisor, resultReg, LDIV_TMP, info);
+                //resultReg = callRuntimeWithResult(CiRuntimeCall.arithmeticludiv, null, dividend, divisor);
             } else {
                 throw Util.shouldNotReachHere();
             }
