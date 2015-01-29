@@ -1323,7 +1323,6 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
         addRegisters(ConditionFlag.Always, false, scratchRegister, ARMV7.cpuRegisters[src2.number+1],
                         src2, 0, 0);
         mov(ConditionFlag.Always, false, ARMV7.cpuRegisters[dst.number+1], scratchRegister);
-        pop(ConditionFlag.Always,1<< src2.number | 1 << (src2.number+1) );
     }
 
     public void xorq(CiRegister dest, CiAddress src) {
@@ -1727,6 +1726,62 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
         emitInt(instruction);
     }
 
+    public final void unsignedvcvt(ConditionFlag cond, boolean toFloat, CiRegister dest, CiRegister src) {
+        int instruction = (cond.value() & 0xf) << 28;
+        instruction |= 0x0eb80a40;
+        int opc2;
+        assert (src.number >= 16 && dest.number >= 16);
+        assert (toFloat == true); // not implemented to int yet
+
+        if (dest.number <= 31 && src.number <= 31) {
+            //unsigned 32 to double conversion
+            System.out.println("unsigned to double converison not implemented");
+            instruction |= 1 << 8;
+            if (toFloat) {
+                instruction |= (src.encoding & 0x1) << 5;
+                instruction |= (src.encoding >> 1);
+
+                instruction |= (dest.encoding >> 4) << 22;
+                instruction |= (dest.encoding & 0xf) << 12;
+            } else {
+                assert (0 == 1);
+            }
+
+        } else if (dest.number > 31 && src.number > 31) {
+            //unsiged 32 to double conversion
+
+            if (toFloat) {
+                instruction |= (dest.encoding & 0x1) << 22;
+                instruction |= (dest.encoding >> 1) << 12;
+
+                instruction |= (src.encoding & 0x1) << 5;
+                instruction |= (src.encoding >> 1);
+
+            } else {
+                assert (0 == 1);
+
+
+            }
+
+        } else if (dest.number <= 31 && src.number > 31) {
+            instruction |= 1<<8;
+            if (toFloat) {
+                instruction |= (dest.encoding >>4) << 22;
+                instruction |= (dest.encoding & 0xf) << 12;
+
+                instruction |= (src.encoding & 0x1) << 5;
+                instruction |= (src.encoding >> 1);
+            } else {
+                assert(0==1);
+            }
+    } else  {
+            System.out.println("SRC " + src.number + " DEST " + dest.number);
+            assert 0==1 : "unsigedvct inconsistent use of registers";
+        }
+
+        emitInt(instruction);
+
+    }
     public final void vcvt(ConditionFlag cond, CiRegister dest, boolean toInt, boolean signed, CiRegister src) {
         int instruction = (cond.value() & 0xf) << 28;
         instruction |= 0x0eb80a40;
@@ -1915,12 +1970,14 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
         } else {
             // VFPV3 has 32 regs so we NEED to do the MSB manipulation --
             // different to what it would be for doubles!!! (if there were 32)
-            instruction |= (rn.encoding >> 4) << 7;
-            instruction |= (rm.encoding >> 4) << 5;
-            instruction |= (dest.encoding >> 4) << 22;
+            instruction |= (rn.encoding & 0x1) << 7;
             instruction |= (rn.encoding >> 1) << 16;
+
+            instruction |= (rm.encoding & 0x1) << 5;
+            instruction |= (rm.encoding >> 1);
+
+            instruction |= (dest.encoding & 0x1) << 22;
             instruction |= (dest.encoding >> 1) << 12;
-            instruction |= rm.encoding >> 1;
         }
         emitInt(instruction);
     }
@@ -2047,9 +2104,9 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
         } else {
             // VFPV3 has 32 regs so we NEED to do the MSB manipulation --
             // different to what it would be for doubles!!! (if there were 32)
-            instruction |= (rn.encoding >> 4) << 7;
-            instruction |= (rm.encoding >> 4) << 5;
-            instruction |= (dest.encoding >> 4) << 22;
+            instruction |= (rn.encoding & 0x1) << 7;
+            instruction |= (rm.encoding & 0x1) << 5;
+            instruction |= (dest.encoding & 0x1) << 22;
             instruction |= (rn.encoding >> 1) << 16;
             instruction |= (dest.encoding >> 1) << 12;
             instruction |= rm.encoding >> 1;
@@ -2077,9 +2134,9 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
         } else {
             // VFPV3 has 32 regs so we NEED to do the MSB manipulation --
             // different to what it would be for doubles!!! (if there were 32)
-            instruction |= (rn.encoding >> 4) << 7;
-            instruction |= (rm.encoding >> 4) << 5;
-            instruction |= (dest.encoding >> 4) << 22;
+            instruction |= (rn.encoding & 0x1) << 7;
+            instruction |= (rm.encoding  & 0x1 ) << 5;
+            instruction |= (dest.encoding & 0x1) << 22;
             instruction |= (rn.encoding >> 1) << 16;
             instruction |= (dest.encoding >> 1) << 12;
             instruction |= rm.encoding >> 1;

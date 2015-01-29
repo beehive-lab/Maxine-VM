@@ -445,6 +445,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         if (src.number > 15) {
             vstr(ConditionFlag.Always, src, r12, 0);
         } else {
+            System.out.println("Attempted a movdbl where the src register containing the address is not an ARM core register");
+            assert(0==1);
 
         }
 
@@ -472,15 +474,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         // AS a hack suggestion is to push a couple of registers onto the stack
         // load them with the constanv values
 
-        /*push(ConditionFlag.Always, (1 << 12) | 1 | 2); // r13 is the stack pointer
-        setUpScratch(dst);
-        mov32BitConstant(ARMV7.r0, (int) (0xffffffffL & src));
-        mov32BitConstant(ARMV7.r1, (int) ((src >> 32) & 0xffffffffL));
-        str(ConditionFlag.Always, 0, 0, 0, ARMV7.r0, ARMV7.r12, ARMV7.r0, 0, 0);
-        add(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, 4, 0); // add 4 to the address
-        str(ConditionFlag.Always, 0, 0, 0, ARMV7.r1, ARMV7.r12, ARMV7.r1, 0, 0);
-        pop(ConditionFlag.Always, (1 << 12) | 1 | 2); //restore all
-	*/
+
         setUpScratch(dst);
         mov32BitConstant(ARMV7.r8, (int) (0xffffffffL & src));
         mov32BitConstant(ARMV7.r9, (int) ((src >> 32) & 0xffffffffL));
@@ -489,19 +483,13 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         //CiAddress high = new CiAddress(dst.kind, dst.base, dst.index, dst.scale, dst.displacement + 4);
         //CiAddress high = new CiAddress(dst.kind, dst.base, dst.index, dst.scale, dst.displacement + 4);
 
-        /*
-        movl(dst, (int) (src & 0xFFFFFFFF));
-        movl(high, (int) (src >> 32));*/
+
     }
 
     public void xchgptr(CiRegister src1, CiRegister src2) {
         xchgq(src1, src2);
         // implicit locks in X86 so we need to do a lock
-        //movw(ConditionFlag.Always,r12,3);
-        //movw(ConditionFlag.Always,r12,3);
-        //movw(ConditionFlag.Always,r12,3);
-        //movw(ConditionFlag.Always,r12,3);
-        //movw(ConditionFlag.Always,r12,3);
+
     }
 
     public void flog(CiRegister dest, CiRegister value, boolean base10) {
