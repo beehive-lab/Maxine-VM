@@ -1113,10 +1113,14 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     masm.movw(ConditionFlag.Always, ARMV7.r12, 17);
                     masm.movw(ConditionFlag.Always, ARMV7.r12, 17);
                 }
-                masm.vmrs(ConditionFlag.Always,ARMV7.r8);
-                masm.mov32BitConstant(ARMV7.r9,0x00a00000);
-                masm.orr(ConditionFlag.Always,false,ARMV7.r9,ARMV7.r8,ARMV7.r9,0,0);
-                masm.vmsr(ConditionFlag.Always,ARMV7.r9);
+                /*
+                Experimented with rounding mode for better accuracy
+                //masm.vmrs(ConditionFlag.Always,ARMV7.r8);
+                //masm.mov32BitConstant(ARMV7.r9,0x00a00000);
+                // masm.orr(ConditionFlag.Always,false,ARMV7.r9,ARMV7.r8,ARMV7.r9,0,0);
+                //masm.vmsr(ConditionFlag.Always,ARMV7.r9);
+                 */
+
                 masm.push(ConditionFlag.Always,1<< (srcRegister.number+1)| 1<< srcRegister.number);
                 masm.eor(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
                 masm.cmp(ConditionFlag.Always,ARMV7.cpuRegisters[srcRegister.number+1],ARMV7.r12,0,0);
@@ -1221,8 +1225,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             }
 
             case MOV_I2F:
-                masm.vcvt(ConditionFlag.Always,asXmmFloatReg(dest),false,true,srcRegister);
-               // masm.movdl(asXmmFloatReg(dest), srcRegister);
+                //implements intBitsToFloat
+                masm.vmov(ConditionFlag.Always,asXmmFloatReg(dest),srcRegister);
                 break;
 
             case MOV_L2D:
@@ -1233,15 +1237,12 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     masm.movw(ConditionFlag.Always, ARMV7.r12, 20);
                     masm.movw(ConditionFlag.Always, ARMV7.r12, 20);
                 }
-               // System.out.println("MISSING: ARMV7LIRASssembler MOV_L2D");
-                //assert (0 == 1) : " long to double --- convert";
-               // masm.movdq(asXmmDoubleReg(dest), srcRegister);
+                masm.vmov(ConditionFlag.Always,asXmmDoubleReg(dest),srcRegister);
                 break;
 
             case MOV_F2I:
-                masm.vcvt(ConditionFlag.Always,dest.asRegister(),true,true,asXmmFloatReg(src));
-
-                //masm.movdl(dest.asRegister(), asXmmFloatReg(src));
+                // implements floatToRawIntBits
+                masm.vmov(ConditionFlag.Always,dest.asRegister(),asXmmFloatReg(src));
                 break;
 
             case MOV_D2L:
@@ -1252,9 +1253,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     masm.movw(ConditionFlag.Always, ARMV7.r12, 21);
                     masm.movw(ConditionFlag.Always, ARMV7.r12, 21);
                 }
-                //assert (0 == 1): " double to long mov compare";
-                //System.out.println("MISSING: double to long mov compare not implemented");
-                //masm.movdq(dest.asRegister(), asXmmDoubleReg(src));
+
+                //implements doubleToRawLongBits
+                masm.vmov(ConditionFlag.Always,dest.asRegister(),asXmmDoubleReg(src));
                 break;
 
             default:
