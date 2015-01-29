@@ -22,27 +22,34 @@
  */
 package com.sun.max.vm.actor.member;
 
-import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.VMOptions.*;
-import static com.sun.max.vm.actor.member.LivenessAdapter.*;
-
-import java.lang.reflect.*;
-
-import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
+import com.sun.cri.ci.CiBitMap;
+import com.sun.cri.ci.CiExceptionHandler;
+import com.sun.cri.ri.RiConstantPool;
 import com.sun.max.annotate.*;
-import com.sun.max.program.*;
+import com.sun.max.program.Trace;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.bytecode.*;
-import com.sun.max.vm.bytecode.graft.*;
-import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.actor.holder.ClassActor;
+import com.sun.max.vm.bytecode.CodeAttributePrinter;
+import com.sun.max.vm.bytecode.graft.BytecodeTransformation;
+import com.sun.max.vm.classfile.ClassfileWriter;
+import com.sun.max.vm.classfile.CodeAttribute;
+import com.sun.max.vm.classfile.constant.ConstantPoolEditor;
+import com.sun.max.vm.classfile.constant.Utf8Constant;
 import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
-import com.sun.max.vm.jni.*;
-import com.sun.max.vm.type.*;
-import com.sun.max.vm.verifier.*;
+import com.sun.max.vm.compiler.target.Compilation;
+import com.sun.max.vm.compiler.target.Compilations;
+import com.sun.max.vm.compiler.target.TargetMethod;
+import com.sun.max.vm.jni.NativeStubGenerator;
+import com.sun.max.vm.type.BootClassLoader;
+import com.sun.max.vm.type.SignatureDescriptor;
+import com.sun.max.vm.verifier.ClassVerifier;
+import com.sun.max.vm.verifier.TypeInferencingVerifier;
+
+import java.lang.reflect.Method;
+
+import static com.sun.max.vm.MaxineVM.vm;
+import static com.sun.max.vm.VMOptions.verboseOption;
+import static com.sun.max.vm.actor.member.LivenessAdapter.NO_LIVENESS_MAP;
 
 /**
  * Non-interface methods.
@@ -242,6 +249,7 @@ public abstract class ClassMethodActor extends MethodActor {
                         codeAttribute = verify(compilee, codeAttribute, verifier);
                     } finally {
                         if (compilee.isNative()) {
+
                             BootClassLoader.allowResolveVM(allowResolveVM);
                         }
                     }

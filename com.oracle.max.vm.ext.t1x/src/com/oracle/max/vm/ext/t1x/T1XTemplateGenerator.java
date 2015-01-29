@@ -31,6 +31,8 @@ import java.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
+import com.sun.max.lang.ISA;
+import com.sun.max.platform.Platform;
 import com.sun.max.vm.type.*;
 
 /**

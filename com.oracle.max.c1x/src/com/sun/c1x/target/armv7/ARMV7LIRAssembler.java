@@ -1113,7 +1113,11 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     masm.movw(ConditionFlag.Always, ARMV7.r12, 17);
                     masm.movw(ConditionFlag.Always, ARMV7.r12, 17);
                 }
-                /*masm.push(ConditionFlag.Always,1<< (srcRegister.number+1)| 1<< srcRegister.number);
+                masm.vmrs(ConditionFlag.Always,ARMV7.r8);
+                masm.mov32BitConstant(ARMV7.r9,0x00a00000);
+                masm.orr(ConditionFlag.Always,false,ARMV7.r9,ARMV7.r8,ARMV7.r9,0,0);
+                masm.vmsr(ConditionFlag.Always,ARMV7.r9);
+                masm.push(ConditionFlag.Always,1<< (srcRegister.number+1)| 1<< srcRegister.number);
                 masm.eor(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
                 masm.cmp(ConditionFlag.Always,ARMV7.cpuRegisters[srcRegister.number+1],ARMV7.r12,0,0);
                 masm.movlong(ARMV7.r8,-1);
@@ -1138,7 +1142,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.vmov(ConditionFlag.SignedLesser,ARMV7.s30,ARMV7.r12);
                 masm.vcvt(ConditionFlag.SignedLesser,ARMV7.d15,false,true,ARMV7.s30);
                 masm.vmul(ConditionFlag.SignedLesser,asXmmDoubleReg(dest),asXmmDoubleReg(dest),ARMV7.d15);
-                */
+                /*
                 int number = asXmmDoubleReg(dest).encoding;
                 CiRegister floatReg = ARMV7.floatRegisters[number*2+16];
                 masm.push(ConditionFlag.Always,1<< (srcRegister.number+1)| 1<< srcRegister.number);
@@ -1168,7 +1172,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.vmul(ConditionFlag.SignedLesser,floatReg,floatReg,ARMV7.s31);
                 masm.vcvt(ConditionFlag.Always,asXmmDoubleReg(dest),false,false,floatReg);
 
-
+                */
 
                 //masm.cvtsi2sdq(asXmmDoubleReg(dest), srcRegister);
                 break;
@@ -1211,6 +1215,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.jcc(ConditionFlag.NotEqual, endLabel);
                 callStub(op.stub, null, dest.asRegister(), src);
                 masm.bind(endLabel);
+
+
                 break;
             }
 

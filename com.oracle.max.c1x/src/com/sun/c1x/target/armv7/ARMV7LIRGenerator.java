@@ -23,16 +23,18 @@
 
 package com.sun.c1x.target.armv7;
 
-import com.oracle.max.asm.*;
-import com.oracle.max.asm.target.armv7.*;
-import com.sun.c1x.*;
+import com.oracle.max.asm.NumUtil;
+import com.oracle.max.asm.target.armv7.ARMV7;
+import com.sun.c1x.C1XCompilation;
 import com.sun.c1x.alloc.OperandPool.VariableFlag;
-import com.sun.c1x.gen.*;
+import com.sun.c1x.gen.LIRGenerator;
+import com.sun.c1x.gen.LIRItem;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.stub.*;
-import com.sun.c1x.util.*;
-import com.sun.cri.bytecode.*;
+import com.sun.c1x.lir.LIRDebugInfo;
+import com.sun.c1x.lir.LIROpcode;
+import com.sun.c1x.stub.CompilerStub;
+import com.sun.c1x.util.Util;
+import com.sun.cri.bytecode.Bytecodes;
 import com.sun.cri.ci.*;
 
 /**
@@ -576,19 +578,22 @@ public class ARMV7LIRGenerator extends LIRGenerator {
             case F2L: stub = stubFor(CompilerStub.Id.f2l); break;
             case D2I: stub = stubFor(CompilerStub.Id.d2i); break;
             case D2L: stub = stubFor(CompilerStub.Id.d2l); break;
+
         }
         // Checkstyle: on
         if (stub != null) {
             // Force result to be rax to match compiler stubs expectation.
             CiValue stubResult = x.kind == CiKind.Int ? RAX_I : RAX_L;
+
             if(x.opcode == Convert.Op.D2L) {
                 result = callRuntimeWithResult(CiRuntimeCall.d2jlong, null, input);
             } else if(x.opcode == Convert.Op.F2L) {
                 result = callRuntimeWithResult(CiRuntimeCall.f2jlong, null, input);
-	    } else {
+	        } else {
             	lir.convert(x.opcode, input, stubResult, stub);
             	lir.move(stubResult, result);
-	    }
+	        }
+
         } else {
             lir.convert(x.opcode, input, result, stub);
         }

@@ -1695,6 +1695,12 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
         instruction |= dest.encoding << 12;
         emitInt(instruction);
         }
+    public final void vmsr(ConditionFlag cond, CiRegister src) {
+        int instruction = (cond.value() & 0xf) << 28;
+        instruction |= 0x0ee10a10;
+        instruction |= src.encoding << 12;
+        emitInt(instruction);
+    }
 
     public final void vmul(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
         int instruction = (cond.value() & 0xf) << 28;
