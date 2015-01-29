@@ -220,17 +220,22 @@ public class ARMV7LIRGenerator extends LIRGenerator {
                 lir.lrem(dividend, divisor, resultReg, LDIV_TMP, info);
             } else if (opcode == Bytecodes.LDIV) {
                 resultReg = RAX_L; // division result is produced in rax
-                lir.ldiv(dividend, divisor, resultReg, LDIV_TMP, info);
+                //lir.ldiv(dividend, divisor, resultReg, LDIV_TMP, info);
+	        resultReg = callRuntimeWithResult(CiRuntimeCall.arithmeticldiv, null, dividend,divisor); // HERE call the native method
+
             } else if (opcode == Op2.UREM) {
                 resultReg = RDX_L; // remainder result is produced in rdx
-                lir.lurem(dividend, divisor, resultReg, LDIV_TMP, info);
+                //lir.lurem(dividend, divisor, resultReg, LDIV_TMP, info);
+                resultReg = callRuntimeWithResult(CiRuntimeCall.arithmeticlurem, null, dividend,divisor); // HERE call the native method
+
             } else if (opcode == Op2.UDIV) {
                 resultReg = RAX_L; // division result is produced in rax
-                lir.ludiv(dividend, divisor, resultReg, LDIV_TMP, info);
+                //lir.ludiv(dividend, divisor, resultReg, LDIV_TMP, info);
+		resultReg = callRuntimeWithResult(CiRuntimeCall.arithmeticludiv, null, dividend,divisor); // HERE call the native method
+
             } else {
                 throw Util.shouldNotReachHere();
             }
-
             lir.move(resultReg, result);
         } else if (opcode == Bytecodes.LMUL) {
             LIRItem right = new LIRItem(x.y(), this);
@@ -576,8 +581,14 @@ public class ARMV7LIRGenerator extends LIRGenerator {
         if (stub != null) {
             // Force result to be rax to match compiler stubs expectation.
             CiValue stubResult = x.kind == CiKind.Int ? RAX_I : RAX_L;
-            lir.convert(x.opcode, input, stubResult, stub);
-            lir.move(stubResult, result);
+            if(x.opcode == Convert.Op.D2L) {
+                result = callRuntimeWithResult(CiRuntimeCall.d2jlong, null, input);
+            } else if(x.opcode == Convert.Op.F2L) {
+                result = callRuntimeWithResult(CiRuntimeCall.f2jlong, null, input);
+	    } else {
+            	lir.convert(x.opcode, input, stubResult, stub);
+            	lir.move(stubResult, result);
+	    }
         } else {
             lir.convert(x.opcode, input, result, stub);
         }

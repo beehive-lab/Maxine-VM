@@ -170,6 +170,9 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     @ALIAS(declaringClass = System.class)
     public static native void initializeSystemClass();
 
+
+
+
     /**
      * The initialization method of the Java run scheme runs at both bootstrapping and startup.
      * While bootstrapping, it gathers the methods needed for native initialization, and at startup

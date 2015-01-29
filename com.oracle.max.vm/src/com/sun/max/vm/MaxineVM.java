@@ -544,6 +544,29 @@ public final class MaxineVM {
         registerImageMethod(criticalEntryPoint.classMethodActor);
     }
 
+
+    /* ARM HACK ... NATIVE FUNCTIONS FOR BASIC ARITHMETIC
+	These helper functions will have problems but they are just there to make things work,
+	they will not adhere to the correct exception handling semantics (probably)
+	and they will be slow ... we need to rip the library out of the compiler-rt lib and instantiate this inside of our compilers ... either via Snippets? or to find a way to efficiently instantiate a native library.
+    */
+    @C_FUNCTION
+    public static native long d2jlong(double x);
+
+    @C_FUNCTION
+    public static native long f2jlong(float x);
+
+    @C_FUNCTION
+    public static native long arithmeticldiv(long x, long y);
+    @C_FUNCTION
+    public static native long arithmeticlrem(long x, long y);
+    @C_FUNCTION
+    public static native long arithmeticlurem(long x, long y); // might now work as java does not have unsigned
+							      // but we will force interpretation of the register
+								// contents to be the equivalent of unsigned long long
+								// for armv7
+    @C_FUNCTION
+    public static native long arithmeticludiv(long x, long y); // same as above
     /*
      * Global native functions: these functions implement a thin layer over basic native
      * services that are needed to implement higher-level Java VM services. Note that

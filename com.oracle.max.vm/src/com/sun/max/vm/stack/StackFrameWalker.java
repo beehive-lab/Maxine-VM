@@ -160,9 +160,6 @@ public abstract class StackFrameWalker {
             TargetMethod tm = current.targetMethod();
             TargetMethod calleeTM = callee.targetMethod();
             traceCursor(current);
-	    Log.print("STACK WALK current name is ");
-		if(tm!= null) Log.println ( tm.regionName());
-		else Log.println(" NULL");
 
             if (tm != null && (!initialIsInNative || (purpose == INSPECTING || purpose == RAW_INSPECTING))) {
 

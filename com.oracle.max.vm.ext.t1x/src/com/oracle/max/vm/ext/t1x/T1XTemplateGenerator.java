@@ -1444,6 +1444,9 @@ public class T1XTemplateGenerator {
         generateTemplateTag("%s%s", tagPrefix(k), op.toUpperCase());
         out.printf("    public static %s %s%s(@Slot(%d) %s value1, @Slot(0) %s value2%s) {%n", s(k), opPrefix(k), op, arg1Slot, s(k), arg2IsInt ? "int" : s(k), suffixParams(true));
         generateBeforeAdvice(k);
+	/*if (op.equals("div") && k == Kind.LONG && com.sun.max.platform.Platform.platform().isa == com.sun.max.lang.ISA.ARM) {
+		out.printf("       return T1XRuntime.arithmeticldiv(value1,value2);%n"); 
+        } else*/
         out.printf("        return value1 %s value2;%n", algOp(op));
         out.printf("    }%n");
         newLine();

@@ -87,6 +87,38 @@ public class MaxRuntimeCalls {
         }
         return true;
     }
+    /* ARM HACKS ... we need to get rid of these and get the compiler to generate correct assembler
+    */
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.d2jlong)
+    public static long runtimeJd2jlong(double val) {
+        verifyRefMaps();
+        return MaxineVM.d2jlong(val);
+    }
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.f2jlong)
+    public static long runtimeJd2jlong(float val) {
+        verifyRefMaps();
+        return MaxineVM.f2jlong(val);
+    }
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.arithmeticldiv)
+    public static long runtimearithmeticldiv(long a, long b) {
+        verifyRefMaps();
+        return MaxineVM.arithmeticldiv(a,b);
+    }
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.arithmeticludiv)
+    public static long runtimearithmeticludiv(long a, long b) {
+        verifyRefMaps();
+        return MaxineVM.arithmeticludiv(a,b);
+    }
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.arithmeticlrem)
+    public static long runtimearithmeticlrem(long a, long b) {
+        verifyRefMaps();
+        return MaxineVM.arithmeticlrem(a,b);
+    }
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.arithmeticlurem)
+    public static long runtimearithmeticlurem(long a, long b) {
+        verifyRefMaps();
+        return MaxineVM.arithmeticlurem(a,b);
+    }
 
     private static void verifyRefMaps() {
         if (ENABLE_REFMAP_VERIFICATION && StackReferenceMapPreparer.VerifyRefMaps) {

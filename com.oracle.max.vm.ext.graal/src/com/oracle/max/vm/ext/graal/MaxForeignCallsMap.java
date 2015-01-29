@@ -67,6 +67,17 @@ public class MaxForeignCallsMap {
     public static void initialize(MaxRuntime runtime) {
         MaxForeignCallsMap.runtime = runtime;
         try {
+	    createCiRuntimeCall(CiRuntimeCall.d2jlong, "d2jlong", RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
+            createCiRuntimeCall(CiRuntimeCall.f2jlong, "f2jlong", RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
+            createCiRuntimeCall(CiRuntimeCall.arithmeticldiv, "arithmeticldiv", RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
+            createCiRuntimeCall(CiRuntimeCall.arithmeticlrem, "arithmeticlrem", RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
+            createCiRuntimeCall(CiRuntimeCall.arithmeticlurem, "arithmeticlurem", RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
+            createCiRuntimeCall(CiRuntimeCall.arithmeticludiv, "arithmeticludiv", RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
+
+
+
+
+
             createCiRuntimeCall(CiRuntimeCall.RegisterFinalizer, null, RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
             createCiRuntimeCall(CiRuntimeCall.CreateNullPointerException, null, RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
             createCiRuntimeCall(CiRuntimeCall.CreateOutOfBoundsException, null, RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);

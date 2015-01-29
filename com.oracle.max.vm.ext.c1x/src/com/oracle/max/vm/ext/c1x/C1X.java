@@ -292,6 +292,7 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         CiTargetMethod compiledMethod;
         do {
             DebugInfoLevel debugInfoLevel = method.isTemplate() ? DebugInfoLevel.REF_MAPS : DebugInfoLevel.FULL;
+	    //System.out.println("METHOD is " + method.name());
             compiledMethod = compiler().compileMethod(method, -1, stats, debugInfoLevel).targetMethod();
             Dependencies deps = Dependencies.validateDependencies(compiledMethod.assumptions());
             if (deps != Dependencies.INVALID) {
