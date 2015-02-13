@@ -937,20 +937,13 @@ final class LinearScanWalker extends IntervalWalker {
     }
 
     boolean requiresAdjacentRegs(Interval interval) {
-        if (C1XCompilation.compilation().compiler.target.arch.is32bit() && interval.kind() == CiKind.Long) {
+        if (C1XCompilation.compilation().compiler.target.arch.is32bit() && (interval.kind() == CiKind.Long)) {
             return true;
         }
         return false;
     }
 
-    int numPhysicalRegs(Interval interval) {
-        if (C1XCompilation.compilation().compiler.target.arch.is32bit() && interval.kind() == CiKind.Long) {
-            return 2;
-        }
-        return 1;
-    }
-
-    boolean isMove(LIRInstruction op, Interval from, Interval to) {
+   boolean isMove(LIRInstruction op, Interval from, Interval to) {
         if (op.code != LIROpcode.Move) {
             return false;
         }
@@ -978,7 +971,7 @@ final class LinearScanWalker extends IntervalWalker {
 
         if (interval.spillState() != SpillState.NoOptimization || registerHint.spillState() != SpillState.NoOptimization) {
             // combining the stack slots for intervals where spill move optimization is applied
-            // is not benefitial and would cause problems
+            // is not beneficial and would cause problems
             return;
         }
 
