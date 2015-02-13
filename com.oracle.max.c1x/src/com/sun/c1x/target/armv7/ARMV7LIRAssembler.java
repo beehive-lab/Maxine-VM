@@ -97,13 +97,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         } else {
             DEBUG_METHODS = Integer.parseInt(value) == 1 ? true : false;
         }
-        value = System.getenv("DEBUG_MOVS");
-        if (value == null || value.isEmpty()) {
-            DEBUG_MOVS = false;
-        } else {
-            DEBUG_MOVS = Integer.parseInt(value) == 1 ? true : false;
-        }
-
         if ((file = new File(getDebugMethodsPath() + "debug_methods")).exists()) {
             file.delete();
         }
@@ -166,10 +159,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 int afterLea = masm.codeBuffer.position();
                 masm.codeBuffer.setPosition(beforeLea);
                 masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, ARMV7.r15.asValue(), beforeLea - afterLea));
-		// ADDED as meant to be 32bit quantity
-        	//masm.mov32BitConstant(ARMV7.cpuRegisters[dst.asRegister().encoding+1], 0);
-
-                break;
+	        break;
             case UNCOMMON_TRAP:
                 directCall(CiRuntimeCall.Deoptimize, info);
                 break;
@@ -213,7 +203,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     private void moveRegs(CiRegister fromReg, CiRegister toReg) {
         if (fromReg != toReg) {
             masm.mov(ConditionFlag.Always, false, toReg, fromReg);
-
         }
     }
 
@@ -232,13 +221,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     }
 
     private void swapReg(CiRegister a, CiRegister b) {
-        if (DEBUG_MOVS) {
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 9);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 9);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 9);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 9);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 9);
-        }
         masm.xchgptr(a, b);
     }
 
@@ -249,11 +231,11 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         masm.mov32BitConstant(dst, constant);
     }
 
-    private void const2reg(CiRegister dst, long constant) {
+    private void const2reg(CiRegister dst, long constant, CiKind dstKind) {
         // Do not optimize with an XOR as this instruction may be between
         // a CMP and a Jcc in which case the XOR will modify the condition
         // flags and interfere with the Jcc.
-        masm.movlong(dst, constant);
+        masm.movlong(dst, constant, dstKind);
      }
 
     private void const2reg(CiRegister dst, CiConstant constant) {
@@ -282,48 +264,27 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
     @Override
     public void emitTraps() {
-        if (DEBUG_MOVS) {
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 10);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 10);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 10);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 10);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 10);
-        }
-        // assert 0 == 1 : "emitTraps ARMV7IRAssembler";
         for (int i = 0; i < C1XOptions.MethodEndBreakpointGuards; ++i) {
-             masm.int3();
+            masm.int3();
         }
-        masm.nop(8); // BUGFIX for overflowing buffer on patch call ...
+        masm.nop(8);
     }
 
-    private void const2reg(CiRegister dst, float constant) {
-
-        // This is *not* the same as 'constant == 0.0f' in the case where constant is -0.0f
-        if (Float.floatToRawIntBits(constant) == Float.floatToRawIntBits(0.0f)) {
-            //masm.xorps(dst, dst);
-            masm.eor(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
-            masm.vmov(ConditionFlag.Always,dst,ARMV7.r12);
-        } else {
-            masm.mov32BitConstant(rscratch1, Float.floatToRawIntBits(constant));
-            masm.vmov(ConditionFlag.Always,dst,rscratch1);
-            //masm.movdl(dst, rscratch1);
-        }
+    private void const2reg(CiRegister dst, float constant, CiKind dstKind) {
+        // if (constant == 0.0f) {
+        // masm.vmovImm(ConditionFlag.Always, dst, 0, dstKind);
+        // } else {
+        masm.mov32BitConstant(rscratch1, Float.floatToRawIntBits(constant));
+        masm.vmov(ConditionFlag.Always, dst, rscratch1, dstKind, CiKind.Int);
+        // }
     }
 
-    private void const2reg(CiRegister dst, double constant) {
-
-        // This is *not* the same as 'constant == 0.0d' in the case where constant is -0.0d
-        if (Double.doubleToRawLongBits(constant) == Double.doubleToRawLongBits(0.0d)) {
-            //masm.xorpd(dst, dst);
-            masm.eor(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r8,ARMV7.r8,0,0);
-            masm.mov(ConditionFlag.Always,false,ARMV7.r9,ARMV7.r8);
-            masm.vmov(ConditionFlag.Always,dst,ARMV7.r8);
-        } else {
-            masm.movlong(dst, Double.doubleToRawLongBits(constant));
-
-            //masm.movq(rscratch1, Double.doubleToRawLongBits(constant));
-            //masm.movdq(dst, rscratch1);
-        }
+    private void const2reg(CiRegister dst, double constant, CiKind dstKind) {
+        // if (constant == 0.0d) {
+        // masm.vmovImm(ConditionFlag.Always, dst, 0, dstKind);
+        // } else {
+        masm.movlong(dst, Double.doubleToRawLongBits(constant), dstKind);
+        // }
     }
 
     @Override
@@ -340,10 +301,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case Short   :
             case Jsr     :
             case Int     : const2reg(dest.asRegister(), c.asInt()); break;
-            case Long    : const2reg(dest.asRegister(), c.asLong()); break;
+            case Long    : const2reg(dest.asRegister(), c.asLong(), dest.kind); break;
             case Object  : const2reg(dest.asRegister(), c); break;
-            case Float   : const2reg(asXmmFloatReg(dest), c.asFloat()); break;
-            case Double  : const2reg(asXmmDoubleReg(dest), c.asDouble()); break;
+            case Float   : const2reg(dest.asRegister(), c.asFloat(), dest.kind); break;
+            case Double  : const2reg(dest.asRegister(), c.asDouble(), dest.kind); break;
             default      : throw Util.shouldNotReachHere();
         }
         // Checkstyle: on
@@ -357,35 +318,34 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         CiConstant c = (CiConstant) src;
 
         // Checkstyle: off
-	masm.setUpScratch(frameMap.toStackAddress(slot));
+        masm.setUpScratch(frameMap.toStackAddress(slot));
         switch (c.kind) {
-            case Boolean :
-            case Byte    :
-            case Char    :
-            case Short   :
-            case Jsr     :
-            case Int     : //masm.movl(frameMap.toStackAddress(slot), c.asInt()); break;
-                         masm.mov32BitConstant(ARMV7.r8, c.asInt());
-			 masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,0);
-                          break;
-
-            case Float   : ////masm.movl(frameMap.toStackAddress(slot), floatToRawIntBits(c.asFloat())); break;
-			 masm.mov32BitConstant(ARMV7.r8, Float.floatToRawIntBits(c.asFloat()));
-			 masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,0);
-			break;
-            case Object  : movoop(frameMap.toStackAddress(slot), c); break;
-            case Long    : //masm.movq(rscratch1, c.asLong());
-			   masm.movlong(ARMV7.r8,c.asLong());
-			   masm.strd(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
-			  break;
-                           //masm.movq(frameMap.toStackAddress(slot), rscratch1); break;
-            case Double  : //masm.movq(rscratch1, doubleToRawLongBits(c.asDouble()));
-                           masm.movlong(ARMV7.r8,Double.doubleToRawLongBits(c.asDouble()));
-			   masm.strd(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
-
-                           //masm.movq(frameMap.toStackAddress(slot), rscratch1); break;
-                            break;
-            default      : throw Util.shouldNotReachHere("Unknown constant kind for const2stack: " + c.kind);
+            case Boolean:
+            case Byte:
+            case Char:
+            case Short:
+            case Jsr:
+            case Int:
+                masm.mov32BitConstant(ARMV7.r8, c.asInt());
+                masm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, 0);
+                break;
+            case Float:
+                masm.mov32BitConstant(ARMV7.r8, Float.floatToRawIntBits(c.asFloat()));
+                masm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, 0);
+                break;
+            case Object:
+                movoop(frameMap.toStackAddress(slot), c);
+                break;
+            case Long:
+                masm.movlong(ARMV7.r8, c.asLong(), CiKind.Long);
+                masm.strd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
+                break;
+            case Double:
+                masm.movlong(ARMV7.r8, Double.doubleToRawLongBits(c.asDouble()), CiKind.Long);
+                masm.strd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
+                break;
+            default:
+                throw Util.shouldNotReachHere("Unknown constant kind for const2stack: " + c.kind);
         }
         // Checkstyle: on
     }
@@ -396,62 +356,45 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert dst.isAddress();
         CiConstant constant = (CiConstant) src;
         CiAddress addr = asAddress(dst);
-
         int nullCheckHere = codePos();
-
-        if (DEBUG_MOVS) {
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 11);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 11);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 11);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 11);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 11);
-        }
 
         masm.setUpScratch(addr);
         // Checkstyle: off
         switch (kind) {
-            case Boolean :
-            case Byte    :// masm.movb(addr, constant.asInt() & 0xFF); break;
-			masm.mov32BitConstant(ARMV7.r8, constant.asInt() & 0xFF);
-                        masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,0);
-
-			break;
-
-            case Char    :
-            case Short   : //masm.movw(addr, constant.asInt() & 0xFFFF); break;
-			masm.mov32BitConstant(ARMV7.r8,constant.asInt() & 0xFFFF);
-			masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,0);
-                        break;
-
-            case Jsr     :
-            case Int     : //masm.movl(addr, constant.asInt()); break;
-			masm.mov32BitConstant(ARMV7.r8,constant.asInt());
-                        masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,0);
-                        break;
-
-            case Float   : //masm.movl(addr, floatToRawIntBits(constant.asFloat())); break;
-                         masm.mov32BitConstant(ARMV7.r8,Float.floatToRawIntBits(constant.asFloat()));
-                         masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,0);
-			 break;
-
-            case Object  : movoop(addr, constant); break;
-            case Long    : //masm.movq(rscratch1, constant.asLong());
-                         masm.movlong(ARMV7.r8,constant.asLong());
-
-                           nullCheckHere = codePos();
-                masm.strd(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
-
-                           //masm.movq(addr, rscratch1); break;
-                         break;
-            case Double  : //masm.movq(rscratch1, doubleToRawLongBits(constant.asDouble()));
-                         masm.movlong(ARMV7.r8,Double.doubleToRawLongBits(constant.asDouble()));
-
-                           nullCheckHere = codePos();
-                           //masm.movq(addr, rscratch1); break;
-                masm.strd(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
-                        break;
-
-            default      : throw Util.shouldNotReachHere();
+            case Boolean:
+            case Byte:
+                masm.mov32BitConstant(ARMV7.r8, constant.asInt() & 0xFF);
+                masm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, 0);
+                break;
+            case Char:
+            case Short:
+                masm.mov32BitConstant(ARMV7.r8, constant.asInt() & 0xFFFF);
+                masm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, 0);
+                break;
+            case Jsr:
+            case Int:
+                masm.mov32BitConstant(ARMV7.r8, constant.asInt());
+                masm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, 0);
+                break;
+            case Float:
+                masm.mov32BitConstant(ARMV7.r8, Float.floatToRawIntBits(constant.asFloat()));
+                masm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, 0);
+                break;
+            case Object:
+                movoop(addr, constant);
+                break;
+            case Long:
+                masm.movlong(ARMV7.r8, constant.asLong(), CiKind.Long);
+                nullCheckHere = codePos();
+                masm.strd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
+                break;
+            case Double:
+                masm.movlong(ARMV7.r8, Double.doubleToRawLongBits(constant.asDouble()), CiKind.Long);
+                nullCheckHere = codePos();
+                masm.strd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
+                break;
+            default:
+                throw Util.shouldNotReachHere();
         }
         // Checkstyle: on
 
@@ -464,12 +407,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     protected void reg2reg(CiValue src, CiValue dest) {
         assert src.isRegister();
         assert dest.isRegister();
-
         if (dest.kind.isFloat()) {
-            masm.movflt(asXmmFloatReg(dest), asXmmFloatReg(src));
-
+            masm.movflt(dest.asRegister(), src.asRegister(), dest.kind, src.kind);
         } else if (dest.kind.isDouble()) {
-            masm.movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(src));
+            masm.movdbl(dest.asRegister(), src.asRegister(), dest.kind, src.kind);
         } else {
             moveRegs(src.asRegister(), dest.asRegister(), src.kind, dest.kind);
         }
@@ -483,26 +424,28 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
         // Checkstyle: off
         switch (src.kind) {
-            case Boolean :
-            case Byte    :
-            case Char    :
-            case Short   :
-            case Jsr     :
-            case Object  :
-
-            case Int     : //masm.movl(addr, src.asRegister());
+            case Boolean:
+            case Byte:
+            case Char:
+            case Short:
+            case Jsr:
+            case Object:
+            case Int:
                 masm.setUpScratch(addr);
-                masm.str(ConditionFlag.Always,src.asRegister(),ARMV7.r12,0);
-             break;
-            case Long    : //masm.movq(addr, src.asRegister());
-                masm.setUpScratch(addr);
-                masm.strd(ConditionFlag.Always,src.asRegister(),ARMV7.r12,0);
-             break;
-            case Float   : masm.movflt(addr, asXmmFloatReg(src)); break;
-            case Double  : masm.movdbl(addr,asXmmDoubleReg(src));
-
+                masm.str(ConditionFlag.Always, src.asRegister(), ARMV7.r12, 0);
                 break;
-            default      : throw Util.shouldNotReachHere();
+            case Long:
+                masm.setUpScratch(addr);
+                masm.strd(ConditionFlag.Always, src.asRegister(), ARMV7.r12, 0);
+                break;
+            case Float:
+                masm.movflt(addr, src.asRegister());
+                break;
+            case Double:
+                masm.movdbl(addr, src.asRegister());
+                break;
+            default:
+                throw Util.shouldNotReachHere();
         }
         // Checkstyle: on
     }
@@ -510,101 +453,74 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     @Override
     protected void reg2mem(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
         CiAddress toAddr = (CiAddress) dest;
-
-
         if (info != null) {
             tasm.recordImplicitException(codePos(), info);
         }
 
         // Checkstyle: off
         switch (kind) {
-            case Float   : masm.movflt(toAddr, asXmmFloatReg(src)); break;
-            case Double  : masm.movflt(toAddr, asXmmDoubleReg(src)); break;
-
-            case Jsr     :
-            case Object  :
-            case Int     : //masm.movl(toAddr, src.asRegister()); break;
-                          masm.setUpScratch(toAddr); masm.strImmediate(ConditionFlag.Always,1,0,0,src.asRegister(),ARMV7.r12,0);break;
-            case Long    :
-                          masm.setUpScratch(toAddr);masm.strDualImmediate(ConditionFlag.Always,1,0,0,src.asRegister(),ARMV7.r12,0);
-                          //masm.movq(toAddr, src.asRegister());
-            break;
-            case Char    :
-            case Short   : masm.setUpScratch(toAddr);
-                           masm.strHImmediate(ConditionFlag.Always,1,0,0,src.asRegister(),ARMV7.r12,0);
-                           //masm.str, src.asRegister()); break;
-                          break;
-            case Byte    :
-            case Boolean : //masm.movb(toAddr, src.asRegister());
-                           masm.setUpScratch(toAddr);
-                           masm.strbImmediate(ConditionFlag.Always, 1, 0, 0, src.asRegister(), ARMV7.r12, 0);
-             break;
-            default      : throw Util.shouldNotReachHere();
+            case Float:
+                masm.movflt(toAddr, src.asRegister());
+                break;
+            case Double:
+                masm.movflt(toAddr, src.asRegister());
+                break;
+            case Jsr:
+            case Object:
+            case Int:
+                masm.setUpScratch(toAddr);
+                masm.strImmediate(ConditionFlag.Always, 1, 0, 0, src.asRegister(), ARMV7.r12, 0);
+                break;
+            case Long:
+                masm.setUpScratch(toAddr);
+                masm.strDualImmediate(ConditionFlag.Always, 1, 0, 0, src.asRegister(), ARMV7.r12, 0);
+                break;
+            case Char:
+            case Short:
+                masm.setUpScratch(toAddr);
+                masm.strHImmediate(ConditionFlag.Always, 1, 0, 0, src.asRegister(), ARMV7.r12, 0);
+                break;
+            case Byte:
+            case Boolean:
+                masm.setUpScratch(toAddr);
+                masm.strbImmediate(ConditionFlag.Always, 1, 0, 0, src.asRegister(), ARMV7.r12, 0);
+                break;
+            default:
+                throw Util.shouldNotReachHere();
         }
 
         // Checkstyle: on
     }
-    private static boolean FLOATDOUBLEREGISTERS = true;
-    private static CiRegister getFloatRegister(CiRegister val) {
-        int offset = 0;
-        //System.out.println("LIRAgetFloatRegister val.encoding "+ val.encoding + " val.number "+ val.number);
-        if(FLOATDOUBLEREGISTERS) {
-            if(val.number > 31) {
-                offset = 16 + val.encoding;
-            } else {
-                offset = 16 + 2*val.encoding;
-            }
-            //System.out.println(" OFFSET " + offset);
-            return ARMV7.floatRegisters[offset];
 
-        }else {
-            return val;
-        }
-    }
-    private static CiRegister asXmmFloatReg(CiValue src) {
-
-       // System.out.println("LIRAasXmmFloatReg val.encoding "+ src.asRegister().encoding + " val.number "+ src.asRegister().number);
-        assert src.kind.isFloat() : "must be float, actual kind: " + src.kind;
-        //CiRegister result = src.asRegister();
-        CiRegister result = getFloatRegister(src.asRegister());
-        assert result.isFpu() : "must be xmm, actual type: " + result;
-        return result;
-    }
 
     @Override
     protected void stack2reg(CiValue src, CiValue dest, CiKind kind) {
         assert src.isStackSlot();
         assert dest.isRegister();
-
         CiAddress addr = frameMap.toStackAddress((CiStackSlot) src);
-        // TODO what does movl do ... it thebase register is illegal but it
-        // is the frameRegister ...
         masm.setUpScratch(addr);
-
-       // Checkstyle: off
+        // Checkstyle: off
         switch (dest.kind) {
-            case Boolean :
-            case Byte    :
-            case Char    :
-            case Short   :
-            case Jsr     :
-            case Int     :
-            case Object  : // Object was movq but we are 32bit address space
-                masm.ldrImmediate(ConditionFlag.Always,1,0,0,dest.asRegister(),ARMV7.r12,0);
+            case Boolean:
+            case Byte:
+            case Char:
+            case Short:
+            case Jsr:
+            case Int:
+            case Object:
+                masm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, dest.asRegister(), ARMV7.r12, 0);
                 break;
-            case Long    :
+            case Long:
                 masm.ldrd(ConditionFlag.Always, dest.asRegister(), ARMV7.r12, 0);
-                if (DEBUG_MOVS) {
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 40);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 40);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 40);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 40);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 40);
-                }
                 break;
-            case Float   : masm.movflt(asXmmFloatReg(dest), addr); break;
-            case Double  : masm.movdbl(asXmmDoubleReg(dest), addr); break;
-            default      : throw Util.shouldNotReachHere();
+            case Float:
+                masm.movflt(dest.asRegister(), addr);
+                break;
+            case Double:
+                masm.movdbl(dest.asRegister(), addr);
+                break;
+            default:
+                throw Util.shouldNotReachHere();
         }
         // Checkstyle: on
     }
@@ -619,30 +535,22 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r8,0);
             //masm.pushl((CiAddress) src);
             //masm.popl((CiAddress) dest);
-	    
+
             // TODO WHAT ABOUT Long?
-	   
+
         } else {
 	    System.err.println("MEM2MEM PUSH POP PTR CALLED");
-            masm.pushptr((CiAddress) src);
-            masm.popptr((CiAddress) dest);
+           // masm.pushptr((CiAddress) src);
+            //masm.popptr((CiAddress) dest);
         }
     }
 
     @Override
     protected void mem2stack(CiValue src, CiValue dest, CiKind kind) {
-        assert 0 == 1 : "mem2stack ARMV7IRAssembler";
-	System.err.println("MEM2STACK");
-        if (DEBUG_MOVS) {
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 12);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 12);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 12);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 12);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 12);
-        }
+        assert false : "mem2stack ARMV7IRAssembler";
         if (dest.kind.isInt()) {
-            //masm.pushl((CiAddress) src);
-            //masm.popl(frameMap.toStackAddress((CiStackSlot) dest));
+            // masm.pushl((CiAddress) src);
+            // masm.popl(frameMap.toStackAddress((CiStackSlot) dest));
         } else {
             masm.pushptr((CiAddress) src);
             masm.popptr(frameMap.toStackAddress((CiStackSlot) dest));
@@ -651,95 +559,56 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
     @Override
     protected void stack2stack(CiValue src, CiValue dest, CiKind kind) {
-        if (DEBUG_MOVS) {
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 13);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 13);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 13);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 13);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 13);
-        }
-	if(src.kind == CiKind.Long || src.kind == CiKind.Double )  {
+        if (src.kind == CiKind.Long || src.kind == CiKind.Double) {
             masm.setUpScratch(frameMap.toStackAddress((CiStackSlot) src));
-            masm.ldrd(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
-	    masm.setUpScratch(frameMap.toStackAddress((CiStackSlot) dest));
-	    masm.strd(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
+            masm.ldrd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
+            masm.setUpScratch(frameMap.toStackAddress((CiStackSlot) dest));
+            masm.strd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
 
-	} else {
-            masm.setUpScratch(frameMap.toStackAddress((CiStackSlot) src));
-            masm.ldrImmediate(ConditionFlag.Always,1,0,0,ARMV7.r8,ARMV7.r12,0);
-	    masm.setUpScratch(frameMap.toStackAddress((CiStackSlot) dest));
-	    masm.str(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
-	}
-        /*if (src.kind.isInt()) {
-	   //System.out.println("stack2stack check functionality pushq popq should they load/str the values at the address prior/post push/pop");
-            //masm.pushq(frameMap.toStackAddress((CiStackSlot) src));
-            //masm.popq(frameMap.toStackAddress((CiStackSlot) dest));
-            masm.setUpScratch(frameMap.toStackAddress((CiStackSlot) src));
-            masm.ldrImmediate(ConditionFlag.Always,1,0,0,ARMV7.r8,ARMV7.r12,0);
-	    masm.setUpScratch(frameMap.toStackAddress((CiStackSlot) dest));
-	    masm.str(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
-	   
         } else {
             masm.setUpScratch(frameMap.toStackAddress((CiStackSlot) src));
-            masm.ldrImmediate(ConditionFlag.Always,1,0,0,ARMV7.r8,ARMV7.r12,0);
-	    masm.setUpScratch(frameMap.toStackAddress((CiStackSlot) dest));
-	    masm.str(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
-            //masm.pushptr(frameMap.toStackAddress((CiStackSlot) src));
-            //masm.popptr(frameMap.toStackAddress((CiStackSlot) dest));
+            masm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, ARMV7.r8, ARMV7.r12, 0);
+            masm.setUpScratch(frameMap.toStackAddress((CiStackSlot) dest));
+            masm.str(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
         }
-	*/
     }
 
     @Override
     protected void mem2reg(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
         assert src.isAddress();
         assert dest.isRegister() : "dest=" + dest;
-
-
         CiAddress addr = (CiAddress) src;
         if (info != null) {
             tasm.recordImplicitException(codePos(), info);
         }
-
         // Checkstyle: off
         masm.setUpScratch(addr);
         switch (kind) {
-            case Float   :
-               // masm.movflt(asXmmFloatReg(dest), addr);
-               masm.vldr(ConditionFlag.Always,asXmmFloatReg(dest),ARMV7.r12,0);
+            case Float:
+                 masm.vldr(ConditionFlag.Always, dest.asRegister(), ARMV7.r12, 0, CiKind.Float, CiKind.Int);
                 break;
-            case Double  ://
-                masm.vldr(ConditionFlag.Always,asXmmDoubleReg(dest),ARMV7.r12,0);
-
-                // masm.movdbl(asXmmDoubleReg(dest), addr);
-            break;
-            case Object  :// masm.movq(dest.asRegister(), addr);
+            case Double:
+                masm.vldr(ConditionFlag.Always, dest.asRegister(), ARMV7.r12, 0, CiKind.Double, CiKind.Int);
+                break;
+            case Object:
             case Int:
-                masm.ldrImmediate(ConditionFlag.Always,1,0,0,dest.asRegister(),ARMV7.r12,0);
+                masm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, dest.asRegister(), ARMV7.r12, 0);
                 break;
-            //case Int     : masm.movslq(dest.asRegister(), addr); break;
-            case Long    : //masm.movq(dest.asRegister(), addr);
-                    masm.ldrd(ConditionFlag.Always, dest.asRegister(), ARMV7.r12, 0);
-                if (DEBUG_MOVS) {
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 41);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 41);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 41);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 41);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 41);
-                }
-
+            case Long:
+                masm.ldrd(ConditionFlag.Always, dest.asRegister(), ARMV7.r12, 0);
                 break;
-            case Boolean :
-            case Byte    :// masm.movsxb(dest.asRegister(), addr);
-                    masm.ldrsb(ConditionFlag.Always,1,0,0,dest.asRegister(),ARMV7.r12,0);
+            case Boolean:
+            case Byte:
+                masm.ldrsb(ConditionFlag.Always, 1, 0, 0, dest.asRegister(), ARMV7.r12, 0);
                 break;
-            case Char    : //masm.movzxl(dest.asRegister(), addr);
-                masm.ldrb(ConditionFlag.Always,1,0,0,dest.asRegister(),ARMV7.r12,0);
+            case Char:
+                masm.ldrb(ConditionFlag.Always, 1, 0, 0, dest.asRegister(), ARMV7.r12, 0);
                 break;
-            case Short   : //masm.movswl(dest.asRegister(), addr);
-                masm.ldrshw(ConditionFlag.Always,1,0,0,dest.asRegister(),ARMV7.r12,0);
+            case Short:
+                masm.ldrshw(ConditionFlag.Always, 1, 0, 0, dest.asRegister(), ARMV7.r12, 0);
                 break;
-            default      : throw Util.shouldNotReachHere();
+            default:
+                throw Util.shouldNotReachHere();
         }
         // Checkstyle: on
     }
@@ -748,13 +617,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     protected void emitReadPrefetch(CiValue src) {
         assert 0 == 1 : "emitReadPrefetch ARMV7IRAssembler";
         CiAddress addr = (CiAddress) src;
-        if (DEBUG_MOVS) {
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 14);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 14);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 14);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 14);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 14);
-        }
         // Checkstyle: off
         switch (C1XOptions.ReadPrefetchInstr) {
             case 0  :// masm.prefetchnta(addr);
@@ -807,18 +669,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         return true;
     }
 
+
     @Override
     protected void emitTableSwitch(LIRTableSwitch op) {
-        if (DEBUG_MOVS) {
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 15);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 15);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 15);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 15);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 15);
-        }
         assert assertEmitTableSwitch(op);
-        //assert 0 == 1 : "emitTableSwitch ARMV7IRAssembler";
-        //Log.println("C1X ARMV7LIRAssembler tableswitch debug");
         CiRegister value = op.value().asRegister();
         final Buffer buf = masm.codeBuffer;
 
@@ -826,17 +680,16 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         int highKey = op.lowKey + op.targets.length - 1;
         if (op.lowKey != 0) {
             // subtract the low value from the switch value
-           masm.subq(value, op.lowKey); // was subl ... am assuming that the register is NOT storing a long
+            masm.subq(value, op.lowKey); // was subl ... am assuming that the register is NOT storing a long
             masm.cmpl(value, highKey - op.lowKey);
         } else {
             masm.cmpl(value, highKey);
         }
 
         // Jump to default target if index is not within the jump table
-       //masm.jcc(ConditionFlag.above, op.defaultTarget.label());
-        masm.jcc(ConditionFlag.SignedGreater,op.defaultTarget.label());
-        masm.cmpl(value,op.lowKey); // added
-        masm.jcc(ConditionFlag.SignedLesser,op.defaultTarget.label());
+        masm.jcc(ConditionFlag.SignedGreater, op.defaultTarget.label());
+        masm.cmpl(value, op.lowKey); // added
+        masm.jcc(ConditionFlag.SignedLesser, op.defaultTarget.label());
 
         // Set scratch to address of jump table
         int leaPos = buf.position();
@@ -844,13 +697,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         int afterLea = buf.position();
 
         // Load jump table entry into scratch and jump to it
-        //masm.movslq(value, new CiAddress(CiKind.Int, rscratch1.asValue(), value.asValue(), Scale.Times4, 0));
         masm.setUpRegister(value, new CiAddress(CiKind.Int, rscratch1.asValue(), value.asValue(), CiAddress.Scale.Times4, 0));
-        //masm.ldr(ConditionFlag.Always,value,value,0);
         // TODO do we need to load the value stored at the address done above but might be wrong
-       //masm.addq(rscratch1, value);
-        masm.add(ConditionFlag.Always,false,rscratch1,value,0,0);
-        //masm.ldr(ConditionFlag.Always,rscratch1,rscratch1,0);
+        masm.add(ConditionFlag.Always, false, rscratch1, value, 0, 0);
         masm.jmp(rscratch1);
 
         // Inserting padding so that jump table address is 4-byte aligned
@@ -861,7 +710,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         // Patch LEA instruction above now that we know the position of the jump table
         int jumpTablePos = buf.position();
         buf.setPosition(leaPos);
-        masm.leaq(rscratch1, new CiAddress(target.wordKind, ARMV7.r15.asValue(), jumpTablePos - afterLea)); // rip now r15
+        masm.leaq(rscratch1, new CiAddress(target.wordKind, ARMV7.r15.asValue(), jumpTablePos - afterLea)); // rip now
+// r15
         buf.setPosition(jumpTablePos);
 
         // Emit jump table entries
@@ -873,18 +723,12 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 buf.emitInt(imm32);
             } else {
                 label.addPatchAt(buf.position());
-                buf.emitInt((ConditionFlag.NeverUse.value() << 28)|(offsetToJumpTableBase<< 12)|0x0d0);
-                //Log.println("PATCH at " + buf.position() + " " + offsetToJumpTableBase + " " +Integer.toHexString(offsetToJumpTableBase));
-                //buf.emitByte(0); // psuedo-opcode for jump table entry
-                //buf.emitShort(offsetToJumpTableBase);
-                //buf.emitByte(0); // padding to make jump table entry 4 bytes wide
+                buf.emitInt((ConditionFlag.NeverUse.value() << 28) | (offsetToJumpTableBase << 12) | 0x0d0);
             }
         }
 
         JumpTable jt = new JumpTable(jumpTablePos, op.lowKey, highKey, 4);
         tasm.targetMethod.addAnnotation(jt);
-
-       // Log.println("tableswitch emitted");
     }
 
     @Override
@@ -965,7 +809,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         CiValue src = op.operand();
         CiValue dest = op.result();
         Label endLabel = new Label();
-
         CiRegister srcRegister = src.asRegister();
         switch (op.opcode) {
             case I2L:
@@ -976,189 +819,76 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 break;
             case I2B:
                 moveRegs(srcRegister, dest.asRegister());
-                //masm.signExtendByte(dest.asRegister() );
-                masm.sxtb(ConditionFlag.Always,dest.asRegister(),srcRegister);
+                masm.sxtb(ConditionFlag.Always, dest.asRegister(), srcRegister);
                 break;
-
             case I2C:
                 masm.mov32BitConstant(dest.asRegister(), 0xFFFF);
                 masm.and(ConditionFlag.Always, true, dest.asRegister(), srcRegister, dest.asRegister(), 0, 0);
                 break;
             case I2S:
-                //masm.signExtendShort(dest.asRegister(),srcRegister);
                 moveRegs(srcRegister, dest.asRegister());
-                masm.sxth(ConditionFlag.Always,dest.asRegister(),srcRegister);
+                masm.sxth(ConditionFlag.Always, dest.asRegister(), srcRegister);
                 break;
             case F2D:
-                masm.vcvt(ConditionFlag.Always,asXmmDoubleReg(dest),false,false,asXmmFloatReg(src));
-                //masm.cvtss2sd(asXmmDoubleReg(dest), asXmmFloatReg(src));
+                masm.vcvt(ConditionFlag.Always, dest.asRegister(), false, false, src.asRegister(), dest.kind, src.kind);
                 break;
-
             case D2F:
-                masm.vcvt(ConditionFlag.Always,asXmmFloatReg(dest),false,false,asXmmDoubleReg(src));
-               // masm.cvtsd2ss(asXmmFloatReg(dest), asXmmDoubleReg(src));
+                masm.vcvt(ConditionFlag.Always, dest.asRegister(), false, false, src.asRegister(), CiKind.Float, CiKind.Double);
                 break;
-
             case I2F:
-                masm.vmov(ConditionFlag.Always,ARMV7.s30,srcRegister);
-                masm.vcvt(ConditionFlag.Always,asXmmFloatReg(dest),false,true,ARMV7.s30);
-                //masm.cvtsi2ssl(asXmmFloatReg(dest), srcRegister);
+                masm.vmov(ConditionFlag.Always, ARMV7.s30, srcRegister, CiKind.Float, src.kind);
+                masm.vcvt(ConditionFlag.Always, dest.asRegister(), false, true, ARMV7.s30, CiKind.Float, CiKind.Int);
                 break;
             case I2D:
-                /* vcvt only works on FP regs so need to do a vmov first to FP scratch */
-                masm.vmov(ConditionFlag.Always,ARMV7.s30,srcRegister);
-                masm.vcvt(ConditionFlag.Always,asXmmDoubleReg(dest),false,true,ARMV7.s30);
-
-                // masm.cvtsi2sdl(asXmmDoubleReg(dest), srcRegister);
+                masm.vmov(ConditionFlag.Always, ARMV7.s30, srcRegister, CiKind.Float, src.kind);
+                masm.vcvt(ConditionFlag.Always, dest.asRegister(), false, true, ARMV7.s30, CiKind.Double, CiKind.Int);
                 break;
-
             case F2I: {
-                assert srcRegister.isFpu() && dest.isRegister() : "must both be XMM register (no fpu stack)";
-                //assert 0 == 1 : " F2I ARMV7LIRAssembler bind commented out";
-                //System.out.println("F2I: ARMVLIRAssembler over simplification? replaced with vcvt");
-                masm.vcvt(ConditionFlag.Always,ARMV7.s30,true,true,asXmmFloatReg(src));
-                masm.vmov(ConditionFlag.Always,dest.asRegister(),ARMV7.s30);
-
-                // masm.cvttss2sil(dest.asRegister(), srcRegister);
-               /* masm.cmp32(dest.asRegister(), Integer.MIN_VALUE);
-                masm.jcc(ConditionFlag.NotEqual, endLabel);
-                callStub(op.stub, null, dest.asRegister(), src);
-                // cannot cause an exception
-                masm.bind(endLabel);
-                */
+                assert srcRegister.isFpu() && dest.isRegister() : "must both be S-register (no fpu stack)";
+                masm.vcvt(ConditionFlag.Always, ARMV7.s30, true, true, src.asRegister(), CiKind.Float, src.kind);
+                masm.vmov(ConditionFlag.Always, dest.asRegister(), ARMV7.s30, dest.kind, CiKind.Float);
                 break;
             }
             case D2I: {
-                assert srcRegister.isFpu() && dest.isRegister() : "must both be XMM register (no fpu stack)";
-                //masm.cvttsd2sil(dest.asRegister(), asXmmDoubleReg(src));
-
-                //masm.vcvt(ConditionFlag.Always,dest.asRegister(),true,true,asXmmDoubleReg(src));
-                /*
-                VCVT can convert to from only in the SP DP regs so we must use the SP/DP scratch and then
-                vmov to the core registers!
-                 */
-                if(dest.asRegister().isFpu()) {
-                    masm.vcvt(ConditionFlag.Always,asXmmFloatReg(dest),true,true,asXmmDoubleReg(src));
-                }else {
-                    masm.vcvt(ConditionFlag.Always,ARMV7.s30,true,true,asXmmDoubleReg(src));
-                    masm.vmov(ConditionFlag.Always,dest.asRegister(),ARMV7.s30);
-
+                assert srcRegister.isFpu() && dest.isRegister() : "must both be S-register (no fpu stack)";
+                if (dest.asRegister().isFpu()) {
+                    masm.vcvt(ConditionFlag.Always, dest.asRegister(), true, true, src.asRegister(), dest.kind, src.kind);
+                } else {
+                    masm.vcvt(ConditionFlag.Always, ARMV7.s30, true, true, src.asRegister(), CiKind.Float, src.kind);
+                    masm.vmov(ConditionFlag.Always, dest.asRegister(), ARMV7.s30, dest.kind, CiKind.Float);
                 }
-                //Log.println("ARMV7LIRAssembler D2I hack replaced stub with vcvt for quick test");
-                /*masm.cmp32(dest.asRegister(), Integer.MIN_VALUE);
-                masm.jcc(ConditionFlag.NotEqual, endLabel);
-                callStub(op.stub, null, dest.asRegister(), src);
-                // cannot cause an exception
-                masm.bind(endLabel);*/
                 break;
             }
             case L2F:
-                if (DEBUG_MOVS) {
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 16);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 16);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 16);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 16);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 16);
-                }
-
-                //assert 0 == 1: "long to float convert";
-               // System.out.println("MISSING: long to float convert no timplemented");
-                //masm.cvtsi2ssq(asXmmFloatReg(dest), srcRegister);
-                //masm.cvtsi2ssq(asXmmFloatReg(dest), srcRegister);
+                assert false : "long to float convert";
                 break;
-
             case L2D:
-                //assert 0 == 1: "long to double convert";
-                //System.out.println("MISSING: long to double conver not implemented");
-                if (DEBUG_MOVS) {
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 17);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 17);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 17);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 17);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 17);
-                }
-
-                //masm.cvtsi2sdq(asXmmDoubleReg(dest), srcRegister);
+                assert false : "long to double convert";
                 break;
-
-            case F2L: {
-                if (DEBUG_MOVS) {
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 18);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 18);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 18);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 18);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 18);
-                }
-
-                //assert (0 == 1) : " float to long convert";
-		//System.out.println("MISSING: F2L convert not iplemented");
+            case F2L:
                 assert srcRegister.isFpu() && dest.kind.isLong() : "must both be XMM register (no fpu stack)";
-                //masm.cvttss2siq(dest.asRegister(), asXmmFloatReg(src));
-                //masm.movq(rscratch1, java.lang.Long.MIN_VALUE);
-                //masm.cmpq(dest.asRegister(), rscratch1);
                 masm.jcc(ConditionFlag.NotEqual, endLabel);
                 callStub(op.stub, null, dest.asRegister(), src);
                 masm.bind(endLabel);
                 break;
-            }
-
-            case D2L: {
-                if (DEBUG_MOVS) {
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 19);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 19);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 19);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 19);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 19);
-                }
-                //assert (0 == 1) : " double to long convert";
-		//System.out.println("MISSING: D2L notimplemented as a conversion needs runtime routines from fplib");
+            case D2L:
                 assert srcRegister.isFpu() && dest.kind.isLong() : "must both be XMM register (no fpu stack)";
-                //masm.cvttsd2siq(dest.asRegister(), asXmmDoubleReg(src));
-                //masm.movq(rscratch1, java.lang.Long.MIN_VALUE);
-                //masm.cmpq(dest.asRegister(), rscratch1);
                 masm.jcc(ConditionFlag.NotEqual, endLabel);
                 callStub(op.stub, null, dest.asRegister(), src);
                 masm.bind(endLabel);
                 break;
-            }
-
             case MOV_I2F:
-                masm.vcvt(ConditionFlag.Always,asXmmFloatReg(dest),false,true,srcRegister);
-               // masm.movdl(asXmmFloatReg(dest), srcRegister);
+                masm.vcvt(ConditionFlag.Always, dest.asRegister(), false, true, srcRegister, dest.kind, src.kind);
                 break;
-
             case MOV_L2D:
-                if (DEBUG_MOVS) {
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 20);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 20);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 20);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 20);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 20);
-                }
-               // System.out.println("MISSING: ARMV7LIRASssembler MOV_L2D");
-                //assert (0 == 1) : " long to double --- convert";
-               // masm.movdq(asXmmDoubleReg(dest), srcRegister);
+                assert false : "mov_l2d uimplemented";
                 break;
-
             case MOV_F2I:
-                masm.vcvt(ConditionFlag.Always,dest.asRegister(),true,true,asXmmFloatReg(src));
-
-                //masm.movdl(dest.asRegister(), asXmmFloatReg(src));
+                masm.vcvt(ConditionFlag.Always, dest.asRegister(), true, true, src.asRegister(), dest.kind, src.kind);
                 break;
-
             case MOV_D2L:
-                if (DEBUG_MOVS) {
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 21);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 21);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 21);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 21);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 21);
-                }
-                //assert (0 == 1): " double to long mov compare";
-                //System.out.println("MISSING: double to long mov compare not implemented");
-                //masm.movdq(dest.asRegister(), asXmmDoubleReg(src));
+                assert false : "mov_d2l uimplemented";
                 break;
-
             default:
                 throw Util.shouldNotReachHere();
         }
@@ -1169,20 +899,12 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         CiAddress address = new CiAddress(CiKind.Object, op.address(), 0);
         CiRegister newval = op.newValue().asRegister();
         CiRegister cmpval = op.expectedValue().asRegister();
-        // assert cmpval == ARMV7.rax : "wrong register";
         assert newval != null : "new val must be register";
         assert cmpval != newval : "cmp and new values must be in different registers";
         assert cmpval != address.base() : "cmp and addr must be in different registers";
         assert newval != address.base() : "new value and addr must be in different registers";
         assert cmpval != address.index() : "cmp and addr must be in different registers";
         assert newval != address.index() : "new value and addr must be in different registers";
-        if (DEBUG_MOVS) {
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 22);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 22);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 22);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 22);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 22);
-        }
 
         if (compilation.target.isMP) {
             masm.membar(-1);
@@ -1201,14 +923,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     protected void emitConditionalMove(Condition condition, CiValue opr1, CiValue opr2, CiValue result) {
         ConditionFlag acond;
         ConditionFlag ncond;
-        if (DEBUG_MOVS) {
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 23);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 23);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 23);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 23);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 23);
-        }
-
         switch (condition) {
             case EQ:
                 acond = ConditionFlag.Equal;
@@ -1351,9 +1065,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         // Checkstyle: off
         if (left.isRegister()) {
             CiRegister lreg = left.asRegister();
-
             if (right.isRegister()) {
-                // register - register
                 CiRegister rreg = right.asRegister();
                 if (kind.isInt()) {
                     switch (code) {
@@ -1372,18 +1084,17 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 } else if (kind.isFloat()) {
                     assert rreg.isFpu() : "must be xmm";
                     switch (code) {
-                        case Add: // masm.addss(lreg, rreg);
-                            masm.vadd(ConditionFlag.Always, asXmmFloatReg(dest), asXmmFloatReg(left), asXmmFloatReg(right));
+                        case Add:
+                            masm.vadd(ConditionFlag.Always, lreg, lreg, rreg, CiKind.Float);
                             break;
-                        case Sub: // masm.subss(lreg, rreg);
-                            masm.vsub(ConditionFlag.Always, asXmmFloatReg(dest), asXmmFloatReg(left), asXmmFloatReg(right));
+                        case Sub:
+                            masm.vsub(ConditionFlag.Always, lreg, lreg, rreg, CiKind.Float);
                             break;
-                        case Mul: // masm.mulss(lreg, rreg);
-                            masm.vmul(ConditionFlag.Always, asXmmFloatReg(dest), asXmmFloatReg(left), asXmmFloatReg(right));
+                        case Mul:
+                            masm.vmul(ConditionFlag.Always, lreg, lreg, rreg, CiKind.Float);
                             break;
-                        case Div: // masm.divss(lreg, rreg);
-                            // masm.vdiv(ConditionFlag.Always,lreg,lreg,rreg);
-                            masm.vdiv(ConditionFlag.Always, asXmmFloatReg(dest), asXmmFloatReg(left), asXmmFloatReg(right));
+                        case Div:
+                            masm.vdiv(ConditionFlag.Always, lreg, lreg, rreg, CiKind.Float);
                             break;
                         default:
                             throw Util.shouldNotReachHere();
@@ -1391,17 +1102,17 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 } else if (kind.isDouble()) {
                     assert rreg.isFpu();
                     switch (code) {
-                        case Add: // masm.addsd(lreg, rreg);
-                            masm.vadd(ConditionFlag.Always, lreg, lreg, rreg);
+                        case Add:
+                            masm.vadd(ConditionFlag.Always, lreg, lreg, rreg, CiKind.Double);
                             break;
-                        case Sub: // masm.subsd(lreg, rreg);
-                            masm.vsub(ConditionFlag.Always, lreg, lreg, rreg);
+                        case Sub:
+                            masm.vsub(ConditionFlag.Always, lreg, lreg, rreg, CiKind.Double);
                             break;
-                        case Mul: // masm.mulsd(lreg, rreg);
-                            masm.vmul(ConditionFlag.Always, lreg, lreg, rreg);
+                        case Mul:
+                            masm.vmul(ConditionFlag.Always, lreg, lreg, rreg, CiKind.Double);
                             break;
-                        case Div: // masm.divsd(lreg, rreg);
-                            masm.vdiv(ConditionFlag.Always, lreg, lreg, rreg);
+                        case Div:
+                            masm.vdiv(ConditionFlag.Always, lreg, lreg, rreg, CiKind.Double);
                             break;
                         default:
                             throw Util.shouldNotReachHere();
@@ -1409,11 +1120,14 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 } else {
                     assert kind.isLong();
                     switch (code) {
-                        case Add: masm.addLong(dest.asRegister(), lreg, rreg);
+                        case Add:
+                            masm.addLong(dest.asRegister(), lreg, rreg);
                             break;
-                        case Sub: masm.subLong(dest.asRegister(), lreg, rreg);
+                        case Sub:
+                            masm.subLong(dest.asRegister(), lreg, rreg);
                             break;
-                        case Mul:  masm.mulLong(dest.asRegister(), lreg, rreg);
+                        case Mul:
+                            masm.mulLong(dest.asRegister(), lreg, rreg);
                             break;
                         default:
                             throw Util.shouldNotReachHere();
@@ -1455,27 +1169,25 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     if (right.isStackSlot()) {
                         raddr = frameMap.toStackAddress(((CiStackSlot) right));
                         masm.setUpScratch(raddr);
-
                     } else {
                         assert right.isConstant();
                         raddr = tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) right).asFloat()));
                         masm.setUpScratch(raddr);
-                        masm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
+                        masm.addRegisters(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r15, 0, 0);
                     }
-                    masm.vldr(ConditionFlag.Always,ARMV7.s30,ARMV7.r12,0);
+                    masm.vldr(ConditionFlag.Always, ARMV7.s30, ARMV7.r12, 0, CiKind.Float, CiKind.Int);
                     switch (code) {
-                        case Add: // masm.addss(lreg, raddr)
-                            masm.vadd(ConditionFlag.Always,getFloatRegister(lreg),getFloatRegister(lreg),ARMV7.s30);
-
+                        case Add:
+                            masm.vadd(ConditionFlag.Always, lreg, lreg, ARMV7.s30, CiKind.Float);
                             break;
-                        case Sub: // masm.subss(lreg, raddr);
-                            masm.vsub(ConditionFlag.Always,getFloatRegister(lreg),getFloatRegister(lreg),ARMV7.s30);
+                        case Sub:
+                            masm.vsub(ConditionFlag.Always, lreg, lreg, ARMV7.s30, CiKind.Float);
                             break;
-                        case Mul: // masm.mulss(lreg, raddr);
-                            masm.vmul(ConditionFlag.Always,getFloatRegister(lreg),getFloatRegister(lreg),ARMV7.s30);
+                        case Mul:
+                            masm.vmul(ConditionFlag.Always, lreg, lreg, ARMV7.s30, CiKind.Float);
                             break;
-                        case Div: // masm.divss(lreg, raddr);
-                            masm.vdiv(ConditionFlag.Always,getFloatRegister(lreg),getFloatRegister(lreg),ARMV7.s30);
+                        case Div:
+                            masm.vdiv(ConditionFlag.Always, lreg, lreg, ARMV7.s30, CiKind.Float);
                             break;
                         default:
                             throw Util.shouldNotReachHere();
@@ -1490,27 +1202,21 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         assert right.isConstant();
                         raddr = tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) right).asDouble()));
                         masm.setUpScratch(raddr);
-                        masm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
+                        masm.addRegisters(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r15, 0, 0);
                     }
-
-                    //System.out.println("DUBIOUS: double const arithmetic");
-                    //masm.setUpScratch(raddr);
-                    masm.vldr(ConditionFlag.Always,ARMV7.d15,ARMV7.r12,0);
+                    masm.vldr(ConditionFlag.Always, ARMV7.s30, ARMV7.r12, 0, CiKind.Double, CiKind.Int);
                     switch (code) {
-                        case Add: // masm.addsd(lreg, raddr);
-                            masm.vadd(ConditionFlag.Always,lreg,lreg,ARMV7.d15);
+                        case Add:
+                            masm.vadd(ConditionFlag.Always, lreg, lreg, ARMV7.s30, CiKind.Double);
                             break;
-                        case Sub: // masm.subsd(lreg, raddr);
-                            masm.vsub(ConditionFlag.Always,lreg,lreg,ARMV7.d15);
-
+                        case Sub:
+                            masm.vsub(ConditionFlag.Always, lreg, lreg, ARMV7.s30, CiKind.Double);
                             break;
-                        case Mul: // masm.mulsd(lreg, raddr);
-                            masm.vmul(ConditionFlag.Always,lreg,lreg,ARMV7.d15);
-
+                        case Mul:
+                            masm.vmul(ConditionFlag.Always, lreg, lreg, ARMV7.s3, CiKind.Double);
                             break;
-                        case Div:// masm.divsd(lreg, raddr);
-                            masm.vdiv(ConditionFlag.Always,lreg,lreg,ARMV7.d15);
-
+                        case Div:
+                            masm.vdiv(ConditionFlag.Always, lreg, lreg, ARMV7.s30, left.kind);
                             break;
                         default:
                             throw Util.shouldNotReachHere();
@@ -1524,12 +1230,11 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         masm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, ARMV7.r12, ARMV7.r12, 0);
                         // TODO what if addq subq so might be longs
                         switch (code) {
-                            case Add: // masm.addq(ConditionFlag.Always,false,lreg,ARMV7.r12,0,0);
-                                masm.addRegisters(ConditionFlag.Always, false, lreg,lreg, ARMV7.r12, 0, 0);
+                            case Add:
+                                masm.addRegisters(ConditionFlag.Always, false, lreg, lreg, ARMV7.r12, 0, 0);
                                 break;
                             case Sub:
-                                masm.sub(ConditionFlag.Always, false, lreg,lreg, ARMV7.r12, 0, 0);
-                                // masm.subq(ConditionFlag.Always,false,lreg, ARMV7.r12,0,0);
+                                masm.sub(ConditionFlag.Always, false, lreg, lreg, ARMV7.r12, 0, 0);
                                 break;
                             default:
                                 throw Util.shouldNotReachHere();
@@ -1538,37 +1243,16 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         // register - constant
                         assert right.isConstant();
                         long c = ((CiConstant) right).asLong();
-                        if (DEBUG_MOVS) {
-                            masm.movw(ConditionFlag.Always, ARMV7.r12, 44);
-                            masm.movw(ConditionFlag.Always, ARMV7.r12, 44);
-                            masm.movw(ConditionFlag.Always, ARMV7.r12, 44);
-                            masm.movw(ConditionFlag.Always, ARMV7.r12, 44);
-                            masm.movw(ConditionFlag.Always, ARMV7.r12, 44);
-                        }
-                        /*if (NumUtil.isInt(c)) {
-                            switch (code) {
-                                case Add:
-                                    masm.addq(lreg, (int) c);
-                                    break;
-                                case Sub:
-                                    masm.subq(lreg, (int) c);
-                                    break;
-                                default:
-                                    throw Util.shouldNotReachHere();
-                            }
-                        } else */{
-                            masm.movlong(ARMV7.r8,c);
-                            // masm.movq(rscratch1, c);
-                            // masm.mov32BitConstant();
-                            switch (code) {
-                                case Add: masm.addLong(lreg,lreg,ARMV7.r8);
-                                    break;
-                                case Sub: // masm.subq(lreg, rscratch1);
-                                    masm.subLong(lreg,lreg,ARMV7.r8);
-                                    break;
-                                default:
-                                    throw Util.shouldNotReachHere();
-                            }
+                        masm.movlong(ARMV7.r8, c, CiKind.Long);
+                        switch (code) {
+                            case Add:
+                                masm.addLong(lreg, lreg, ARMV7.r8);
+                                break;
+                            case Sub:
+                                masm.subLong(lreg, lreg, ARMV7.r8);
+                                break;
+                            default:
+                                throw Util.shouldNotReachHere();
                         }
                     }
                 }
@@ -1576,16 +1260,15 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         } else {
             assert kind.isInt();
             CiAddress laddr = asAddress(left);
-
             if (right.isRegister()) {
                 CiRegister rreg = right.asRegister();
                 masm.setUpScratch(laddr);
                 masm.ldr(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
                 switch (code) {
-                    case Add: // masm.addl(laddr, rreg);
+                    case Add:
                         masm.addRegisters(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, rreg, 0, 0);
                         break;
-                    case Sub: // masm.subl(laddr, rreg);
+                    case Sub:
                         masm.sub(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, rreg, 0, 0);
                         break;
                     default:
@@ -1606,13 +1289,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     default:
                         throw Util.shouldNotReachHere();
                 }
-                if (DEBUG_MOVS) {
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 43);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 43);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 43);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 43);
-                    masm.movw(ConditionFlag.Always, ARMV7.r12, 43);
-                }
             }
         }
         // Checkstyle: on
@@ -1621,37 +1297,28 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     @Override
     protected void emitIntrinsicOp(LIROpcode code, CiValue value, CiValue unused, CiValue dest, LIROp2 op) {
         assert value.kind.isDouble();
-
         switch (code) {
             case Abs:
-                if (asXmmDoubleReg(dest) != asXmmDoubleReg(value)) {
-                    masm.movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(value));
+              /*  if (dest.asRegister() != value.asRegister()) {
+                    masm.movdbl(dest.asRegister(), value.asRegister());
                 }
-                int op1,op2;
-                op1 = asXmmDoubleReg(dest).encoding;
-                op2 = asXmmDoubleReg(value).encoding;
-                // crude ..
-                masm.vmov(ConditionFlag.Always,ARMV7.r8,ARMV7.floatRegisters[op1*2]);
-                masm.vmov(ConditionFlag.Always,ARMV7.r9,ARMV7.floatRegisters[op2*2]);
-                masm.and(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r9,ARMV7.r8,0,0);
-                masm.vmov(ConditionFlag.Always,ARMV7.floatRegisters[op1*2],ARMV7.r8);
-                masm.vmov(ConditionFlag.Always,ARMV7.r8,ARMV7.floatRegisters[op1*2+1]);
-                masm.vmov(ConditionFlag.Always,ARMV7.r9,ARMV7.floatRegisters[op2*2+1]);
-                masm.and(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r9,ARMV7.r8,0,0);
-                masm.vmov(ConditionFlag.Always,ARMV7.floatRegisters[op1*2+1],ARMV7.r8);
-                //System.out.println("MISSING emitIntrinsicOp masm.andpd ");
-		/*
-			this implementes ai 66 0F 54 /r	ANDPD xmm1, xmm2/m128	Bitwise logical AND of xmm2/m128 and xmm1. If any part of the operand lies outside the effective address space from 0 to FFFFH. bitwise logical
-			the strategy is to move the value a float at at a time into r8 r9 and then to do the and then to move back into the dest (float)?
-		*/
-          //      masm.andpd(asXmmDoubleReg(dest), tasm.recordDataReferenceInCode(CiConstant.forLong(DoubleSignMask), 16));
-
+                int op1,
+                op2;
+                op1 = dest.asRegister().encoding;
+                op2 = value.asRegister().encoding;
+                //TODO: Fix that code
+                masm.vmov(ConditionFlag.Always, ARMV7.r8, ARMV7.floatRegisters[op1 * 2]);
+                masm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.floatRegisters[op2 * 2]);
+                masm.and(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r9, ARMV7.r8, 0, 0);
+                masm.vmov(ConditionFlag.Always, ARMV7.floatRegisters[op1 * 2], ARMV7.r8);
+                masm.vmov(ConditionFlag.Always, ARMV7.r8, ARMV7.floatRegisters[op1 * 2 + 1]);
+                masm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.floatRegisters[op2 * 2 + 1]);
+                masm.and(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r9, ARMV7.r8, 0, 0);
+                masm.vmov(ConditionFlag.Always, ARMV7.floatRegisters[op1 * 2 + 1], ARMV7.r8);*/
                 break;
-
             case Sqrt:
-                masm.vsqrt(ConditionFlag.Always,asXmmDoubleReg(dest), asXmmDoubleReg(value));
+                masm.vsqrt(ConditionFlag.Always, dest.asRegister(), value.asRegister());
                 break;
-
             default:
                 throw Util.shouldNotReachHere();
         }
@@ -1718,14 +1385,14 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         throw Util.shouldNotReachHere();
                 }
             }
-		
+
             moveRegs(reg, dst.asRegister(), left.kind, dst.kind);
         } else {
             CiRegister lreg = left.asRegister();
             if (right.isConstant()) {
                 CiConstant rightConstant = (CiConstant) right;
                 // masm.movq(rscratch1, rightConstant.asLong());
-	        masm.movlong(ARMV7.r8,rightConstant.asLong());
+	        masm.movlong(ARMV7.r8,rightConstant.asLong(), CiKind.Long);
                 switch (code) {
                     case LogicAnd:// masm.andq(lreg, rscratch1);
                         masm.land(lreg,lreg,ARMV7.r8);
@@ -1767,13 +1434,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
-        if (DEBUG_MOVS) {
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 24);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 24);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 24);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 24);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 24);
-        }
+
         //assert 0 == 1 : "arithmeticIdiv ARMV7IRAssembler";
         if (right.isConstant()) {
             assert 0 == 1 : "arithmeticIdiv divide by constant not implemented";
@@ -1869,13 +1530,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert left.isRegister() : "left must be register";
         assert right.isRegister() : "right must be register";
         assert result.isRegister() : "result must be register";
-        if (DEBUG_MOVS) {
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 25);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 25);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 25);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 25);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 25);
-        }
 
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
@@ -1912,145 +1566,110 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     }
 
     void arithmeticLdiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
+        System.out.println("arithmeticLdiv not implemented");
         assert left.isRegister() : "left must be register";
         assert right.isRegister() : "right must be register";
         assert result.isRegister() : "result must be register";
         assert result.kind.isLong();
-        if (DEBUG_MOVS) {
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 26);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 26);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 26);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 26);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 26);
-        }
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
         CiRegister rreg = right.asRegister();
-        System.out.println("arithmeticLdiv not implemented");
-        //assert 0 == 1 : "arithmeticLdiv ARMV7IRAssembler";
-
-        //assert lreg == ARMV7.r0 : "left register must be r0 was rax";
-
-        //  assert rreg != ARMV7.rdx : "right register must not be rdx";
-        //masm.mov(ConditionFlag.Always, false, ARMV7.r0, lreg);
-        //masm.mov(ConditionFlag.Always, false, ARMV7.r1, ARMV7.cpuRegisters[lreg.encoding+1]);
-
-        //   moveRegs(lreg, ARMV7.rax);
 
         Label continuation = new Label();
-
         if (C1XOptions.GenSpecialDivChecks) {
             // check for special case of Long.MIN_VALUE / -1
             Label normalCase = new Label();
-            masm.movlong(rreg,java.lang.Long.MIN_VALUE);
-     //       masm.movq(ARMV7.rdx, java.lang.Long.MIN_VALUE);
-       //     masm.cmpq(ARMV7.rax, ARMV7.rdx);
-           // System.out.println("64bit long compares not implemented? arithmeticLDiv");
-              masm.jcc(ConditionFlag.NotEqual, normalCase);
+            masm.movlong(rreg, java.lang.Long.MIN_VALUE, CiKind.Long);
+            masm.jcc(ConditionFlag.NotEqual, normalCase);
             if (code == LIROpcode.Lrem) {
-                // prepare X86Register.rdx for possible special case (where remainder = 0)
-          //      masm.xorq(ARMV7.rdx, ARMV7.rdx);
-                masm.eor(ConditionFlag.Always,false,rreg,rreg,rreg,0,0);
-                masm.eor(ConditionFlag.Always,false,ARMV7.cpuRegisters[rreg.encoding+1],
-                        ARMV7.cpuRegisters[rreg.encoding+1],ARMV7.cpuRegisters[rreg.encoding+1],0,0);
-
+                masm.eor(ConditionFlag.Always, false, rreg, rreg, rreg, 0, 0);
+                masm.eor(ConditionFlag.Always, false, ARMV7.cpuRegisters[rreg.encoding + 1], ARMV7.cpuRegisters[rreg.encoding + 1], ARMV7.cpuRegisters[rreg.encoding + 1], 0, 0);
             }
             masm.cmpl(rreg, -1);
-           masm.jcc(ConditionFlag.Equal, continuation);
-
+            masm.jcc(ConditionFlag.Equal, continuation);
             // handle normal case
             masm.bind(normalCase);
         }
-      //  masm.cdqq();
         int offset = masm.codeBuffer.position();
-      //  masm.idivq(rreg);
-
         // normal and special case exit
         masm.bind(continuation);
 
         tasm.recordImplicitException(offset, info);
         if (code == LIROpcode.Lrem) {
-        //    moveRegs(ARMV7.rdx, dreg);
         } else {
             assert code == LIROpcode.Ldiv;
-          //  moveRegs(ARMV7.rax, dreg);
         }
-	masm.mov32BitConstant(ARMV7.r12,4);
-	masm.blx(ARMV7.r12);
-
+        masm.mov32BitConstant(ARMV7.r12, 4);
+        masm.blx(ARMV7.r12);
     }
 
     void arithmeticLudiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
         assert left.isRegister() : "left must be register";
         assert right.isRegister() : "right must be register";
         assert result.isRegister() : "result must be register";
-        if (DEBUG_MOVS) {
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 27);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 27);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 27);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 27);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 27);
-        }
         System.out.println("arithmeticLudiv not implemented");
-
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
         CiRegister rreg = right.asRegister();
-
-        //assert 0 == 1 : "arithmeticLudiv ARMV7IRAssembler";
-
-        //   assert lreg == ARMV7.rax : "left register must be rax";
-      //  assert rreg != ARMV7.rdx : "right register must not be rdx";
-       //
-        // Must zero the high 64-bit word (in RDX) of the dividend
-     //   masm.xorq(ARMV7.rdx, ARMV7.rdx);
-
-    //    moveRegs(lreg, ARMV7.rax);
-
         int offset = masm.codeBuffer.position();
-    //    masm.divq(rreg);
-
         tasm.recordImplicitException(offset, info);
         if (code == LIROpcode.Lurem) {
-      //      moveRegs(ARMV7.rdx, dreg);
         } else {
             assert code == LIROpcode.Ludiv;
-        //    moveRegs(ARMV7.rax, dreg);
         }
-	masm.mov32BitConstant(ARMV7.r12,12);
-	masm.blx(ARMV7.r12);
+        masm.mov32BitConstant(ARMV7.r12, 12);
+        masm.blx(ARMV7.r12);
     }
-private ConditionFlag convertCondition(Condition condition) {
+
+    private ConditionFlag convertCondition(Condition condition) {
         ConditionFlag acond = ConditionFlag.NeverUse;
         switch (condition) {
-            case EQ : acond = ConditionFlag.Equal; /*ConditionFlag.equal;*/ break;
-            case NE : acond = ConditionFlag.NotEqual; /*notEqual;*/ break;
-
-            case LT : acond = ConditionFlag.SignedLesser; /*less;*/ break;
-            case LE : acond = ConditionFlag.SignedLowerOrEqual; /*lessEqual;*/ break;
-            case GE : acond = ConditionFlag.SignedGreaterOrEqual; /*greaterEqual;*/ break;
-            case GT : acond = ConditionFlag.SignedGreater; /*greater;*/ break;
-            case BE : acond = ConditionFlag.UnsignedLowerOrEqual; /*belowEqual;*/ break;
-            case AE : acond = ConditionFlag.CarrySetUnsignedHigherEqual; /*aboveEqual;*/ break;
-            case BT : acond = ConditionFlag.CarryClearUnsignedLower; /*below;*/ break;
-            case AT : acond = ConditionFlag.UnsignedHigher; /*above;*/ break;
-            default : throw Util.shouldNotReachHere();
-
+            case EQ:
+                acond = ConditionFlag.Equal; /* ConditionFlag.equal; */
+                break;
+            case NE:
+                acond = ConditionFlag.NotEqual; /* notEqual; */
+                break;
+            case LT:
+                acond = ConditionFlag.SignedLesser; /* less; */
+                break;
+            case LE:
+                acond = ConditionFlag.SignedLowerOrEqual; /* lessEqual; */
+                break;
+            case GE:
+                acond = ConditionFlag.SignedGreaterOrEqual; /* greaterEqual; */
+                break;
+            case GT:
+                acond = ConditionFlag.SignedGreater; /* greater; */
+                break;
+            case BE:
+                acond = ConditionFlag.UnsignedLowerOrEqual; /* belowEqual; */
+                break;
+            case AE:
+                acond = ConditionFlag.CarrySetUnsignedHigherEqual; /* aboveEqual; */
+                break;
+            case BT:
+                acond = ConditionFlag.CarryClearUnsignedLower; /* below; */
+                break;
+            case AT:
+                acond = ConditionFlag.UnsignedHigher; /* above; */
+                break;
+            default:
+                throw Util.shouldNotReachHere();
         }
         return acond;
     }
+
     @Override
     protected void emitCompare(Condition condition, CiValue opr1, CiValue opr2, LIROp2 op) {
         // Checkstyle: off
-        assert Util.archKindsEqual(opr1.kind.stackKind(), opr2.kind.stackKind()) || (opr1.kind == CiKind.Long && opr2.kind == CiKind.Int) : "nonmatching stack kinds (" + condition + "): " + opr1.kind.stackKind() + "==" + opr2.kind.stackKind();
-
+        assert Util.archKindsEqual(opr1.kind.stackKind(), opr2.kind.stackKind()) || (opr1.kind == CiKind.Long && opr2.kind == CiKind.Int) : "nonmatching stack kinds (" + condition + "): " +
+                        opr1.kind.stackKind() + "==" + opr2.kind.stackKind();
         if (opr1.isConstant()) {
-            // Use scratch register
             CiValue newOpr1 = compilation.registerConfig.getScratchRegister().asValue(opr1.kind);
             const2reg(opr1, newOpr1, null);
             opr1 = newOpr1;
         }
-
         if (opr1.isRegister()) {
             CiRegister reg1 = opr1.asRegister();
             if (opr2.isRegister()) {
@@ -2067,122 +1686,112 @@ private ConditionFlag convertCondition(Condition condition) {
                         masm.cmpq(reg1, opr2.asRegister());
                         break;
                     case Long:
-                        masm.lcmpl(convertCondition(condition),reg1, opr2.asRegister());
+                        masm.lcmpl(convertCondition(condition), reg1, opr2.asRegister());
                         break;
                     case Float:
-                        // was reg1 but need to hack it to use the correct float reg!!
-                        masm.ucomisd(asXmmFloatReg(opr1), asXmmFloatReg(opr2));
-                        // was ucomiss but our encoding can
-                        // handle single or double precision
-                        // as long as the FP regs s0 d0 usage is fixed.
+                        masm.ucomisd(opr1.asRegister(), opr2.asRegister(), opr1.kind, opr2.kind);
                         break;
                     case Double:
-                        masm.ucomisd(reg1, asXmmDoubleReg(opr2));
+                        masm.ucomisd(reg1, opr2.asRegister(), opr1.kind, opr2.kind);
                         break;
                     default:
                         throw Util.shouldNotReachHere(opr1.kind.toString());
                 }
             } else if (opr2.isStackSlot()) {
                 // register - stack
-
                 CiStackSlot opr2Slot = (CiStackSlot) opr2;
                 switch (opr1.kind) {
-                    case Boolean :
-                    case Byte    :
-                    case Char    :
-                    case Short   :
-                    case Int     : //masm.cmpl(reg1, frameMap.toStackAddress(opr2Slot)); break;
-                        masm.cmpl(reg1,frameMap.toStackAddress(opr2Slot));
+                    case Boolean:
+                    case Byte:
+                    case Char:
+                    case Short:
+                    case Int:
+                        masm.cmpl(reg1, frameMap.toStackAddress(opr2Slot));
                         break;
-                    case Long    :
-			            masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
-			            masm.ldrd(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
-			            masm.lcmpl(convertCondition(condition),reg1,ARMV7.r8);
-                        break;
-                    case Object  : masm.cmpptr(reg1, frameMap.toStackAddress(opr2Slot)); break;
-                    case Float   : //masm.ucomiss(reg1, frameMap.toStackAddress(opr2Slot));
+                    case Long:
                         masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
-                        masm.vldr(ConditionFlag.Always,ARMV7.s30,ARMV7.r12,0);
-                        masm.ucomisd(reg1, ARMV7.s30);
+                        masm.ldrd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
+                        masm.lcmpl(convertCondition(condition), reg1, ARMV7.r8);
+                        break;
+                    case Object:
+                        masm.cmpptr(reg1, frameMap.toStackAddress(opr2Slot));
+                        break;
+                    case Float:
+                        masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
+                        masm.vldr(ConditionFlag.Always, ARMV7.s30, ARMV7.r12, 0, CiKind.Float, CiKind.Int);
+                        masm.ucomisd(reg1, ARMV7.s30, opr1.kind, CiKind.Float);
                         break;
                     case Double:
                         masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
-                        masm.vldr(ConditionFlag.Always,ARMV7.d15,ARMV7.r12,0);
-                        masm.ucomisd(reg1, ARMV7.d15);
-                     break;
-                    default      : throw Util.shouldNotReachHere();
+                        masm.vldr(ConditionFlag.Always, ARMV7.s30, ARMV7.r12, 0, CiKind.Double, CiKind.Int);
+                        masm.ucomisd(reg1, ARMV7.s30, opr1.kind, CiKind.Double);
+                        break;
+                    default:
+                        throw Util.shouldNotReachHere();
                 }
             } else if (opr2.isConstant()) {
                 // register - constant
                 CiConstant c = (CiConstant) opr2;
-
                 switch (opr1.kind) {
-                    case Boolean :
-                    case Byte    :
-                    case Char    :
-                    case Short   :
-                    case Int     : masm.cmpl(reg1, c.asInt()); break;
-                    case Float   : //masm.ucomiss(reg1, tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) opr2).asFloat())));
+                    case Boolean:
+                    case Byte:
+                    case Char:
+                    case Short:
+                    case Int:
+                        masm.cmpl(reg1, c.asInt());
+                        break;
+                    case Float:
                         masm.setUpScratch(tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) opr2).asFloat())));
-                        masm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
-                        masm.vldr(ConditionFlag.Always,ARMV7.s30,ARMV7.r12,0);
-                        masm.ucomisd(reg1, ARMV7.s30);
-
+                        masm.addRegisters(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r15, 0, 0);
+                        masm.vldr(ConditionFlag.Always, ARMV7.s30, ARMV7.r12, 0, CiKind.Float, CiKind.Int);
+                        masm.ucomisd(reg1, ARMV7.s30, opr1.kind, CiKind.Float);
                         break;
-                    case Double  : //masm.ucomisd(reg1, tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) opr2).asDouble())));
+                    case Double:
                         masm.setUpScratch(tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) opr2).asDouble())));
-                        masm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
-                        masm.vldr(ConditionFlag.Always,ARMV7.d15,ARMV7.r12,0);
-                        masm.ucomisd(reg1, ARMV7.d15);
+                        masm.addRegisters(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r15, 0, 0);
+                        masm.vldr(ConditionFlag.Always, ARMV7.s30, ARMV7.r12, 0, CiKind.Double, CiKind.Int);
+                        masm.ucomisd(reg1, ARMV7.s30, opr1.kind, CiKind.Double);
                         break;
-                    case Long    : { //assert 0 == 1;
-			//System.out.println("emitCompare assert commented out --- not implemented");
+                    case Long: {
                         if (c.asLong() == 0) {
-                           // masm.cmpq(reg1, 0);
-			        masm.movlong(ARMV7.r8, 0);
-
+                            masm.movlong(ARMV7.r8, 0, CiKind.Long);
                         } else {
-                            //masm.movq(rscratch1, c.asLong());
-			        masm.movlong(ARMV7.r8, c.asLong());
-
-                            //masm.cmpq(reg1, rscratch1);
-
+                            masm.movlong(ARMV7.r8, c.asLong(), CiKind.Long);
                         }
-			masm.lcmpl(convertCondition(condition),reg1,ARMV7.r8);
+                        masm.lcmpl(convertCondition(condition), reg1, ARMV7.r8);
                         break;
                     }
-                    case Object  :  {
+                    case Object: {
                         movoop(rscratch1, c);
                         masm.cmpq(reg1, rscratch1);
                         break;
                     }
-                    default      : throw Util.shouldNotReachHere();
+                    default:
+                        throw Util.shouldNotReachHere();
                 }
             } else {
                 throw Util.shouldNotReachHere();
             }
         } else if (opr1.isStackSlot()) {
-            CiAddress left = asAddress(opr1);
             if (opr2.isConstant()) {
                 CiConstant right = (CiConstant) opr2;
-                // stack - constant
-                assert  0 == 1 : "stack constant ";
+                assert false : "stack constant ";
                 switch (opr1.kind) {
-                    case Boolean :
-                    case Byte    :
-                    case Char    :
-                    case Short   :
-                    case Int     : //masm.cmpl(left, right.asInt()); break;
-                    case Long    : assert NumUtil.isInt(right.asLong());
-                                  // masm.cmpq(left, right.asInt()); break;
-                    case Object  : assert right.isNull();
-                                   //masm.cmpq(left, 0); break;
-                    default      : throw Util.shouldNotReachHere();
+                    case Boolean:
+                    case Byte:
+                    case Char:
+                    case Short:
+                    case Int:
+                    case Long:
+                        assert NumUtil.isInt(right.asLong());
+                    case Object:
+                        assert right.isNull();
+                    default:
+                        throw Util.shouldNotReachHere();
                 }
             } else {
                 throw Util.shouldNotReachHere();
             }
-
         } else {
             throw Util.shouldNotReachHere(opr1.toString() + " opr2 = " + opr2);
         }
@@ -2191,19 +1800,11 @@ private ConditionFlag convertCondition(Condition condition) {
 
     @Override
     protected void emitCompare2Int(LIROpcode code, CiValue left, CiValue right, CiValue dst, LIROp2 op) {
-        if (DEBUG_MOVS) {
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 28);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 28);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 28);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 28);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 28);
-        }
-
         if (code == LIROpcode.Cmpfd2i || code == LIROpcode.Ucmpfd2i) {
             if (left.kind.isFloat()) {
-                masm.cmpss2int(asXmmFloatReg(left), asXmmFloatReg(right), dst.asRegister(), code == LIROpcode.Ucmpfd2i);
+                masm.cmpss2int(left.asRegister(), right.asRegister(), dst.asRegister(), code == LIROpcode.Ucmpfd2i, left.kind, right.kind);
             } else if (left.kind.isDouble()) {
-                masm.cmpsd2int(asXmmDoubleReg(left), asXmmDoubleReg(right), dst.asRegister(), code == LIROpcode.Ucmpfd2i);
+                masm.cmpsd2int(left.asRegister(), right.asRegister(), dst.asRegister(), code == LIROpcode.Ucmpfd2i, left.kind, right.kind);
             } else {
                 throw Util.unimplemented("no fpu stack");
             }
@@ -2214,10 +1815,8 @@ private ConditionFlag convertCondition(Condition condition) {
             Label done = new Label();
             Label isEqual = new Label();
             masm.cmpptr(left.asRegister(), right.asRegister());
-            //masm.jcc(ConditionFlag.equal, isEqual);
-            masm.jcc(ConditionFlag.Equal,isEqual);
-           // masm.jcc(ConditionFlag.greater, high);
-            masm.jcc(ConditionFlag.SignedGreater,high); // unsigned Greater?
+            masm.jcc(ConditionFlag.Equal, isEqual);
+            masm.jcc(ConditionFlag.SignedGreater, high); // unsigned Greater?
             masm.xorptr(dest, dest);
             masm.decrementl(dest, 1);
             masm.jmp(done);
@@ -2239,13 +1838,6 @@ private ConditionFlag convertCondition(Condition condition) {
     @Override
     protected void emitIndirectCall(Object target, LIRDebugInfo info, CiValue callAddress) {
         CiRegister reg = rscratch1;
-        if (DEBUG_MOVS) {
-            masm.movw(ConditionFlag.Always, ARMV7.r8, 29);
-            masm.movw(ConditionFlag.Always, ARMV7.r8, 29);
-            masm.movw(ConditionFlag.Always, ARMV7.r8, 29);
-            masm.movw(ConditionFlag.Always, ARMV7.r8, 29);
-            masm.movw(ConditionFlag.Always, ARMV7.r8, 29);
-        }
         if (callAddress.isRegister()) {
             reg = callAddress.asRegister();
         } else {
@@ -2257,27 +1849,12 @@ private ConditionFlag convertCondition(Condition condition) {
 
     @Override
     protected void emitDirectCall(Object target, LIRDebugInfo info) {
-        if (DEBUG_MOVS) {
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 30);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 30);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 30);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 30);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 30);
-        }
         directCall(target, info);
     }
 
     @Override
     protected void emitNativeCall(String symbol, LIRDebugInfo info, CiValue callAddress) {
         CiRegister reg = rscratch1;
-        if (DEBUG_MOVS) {
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 31);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 31);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 31);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 31);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 31);
-        }
-
         if (callAddress.isRegister()) {
             reg = callAddress.asRegister();
         } else {
@@ -2292,15 +1869,7 @@ private ConditionFlag convertCondition(Condition condition) {
        // exception object is not added to oop map by LinearScan
        // (LinearScan assumes that no oops are in fixed registers)
        // info.addRegisterOop(exceptionOop);
-        if (DEBUG_MOVS) {
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 32);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 32);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 32);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 32);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 32);
-        }
-
-        directCall(unwind ? CiRuntimeCall.UnwindException : CiRuntimeCall.HandleException, info);
+       directCall(unwind ? CiRuntimeCall.UnwindException : CiRuntimeCall.HandleException, info);
         // enough room for two byte trap
         if (!C1XOptions.EmitNopAfterCall) {
             masm.nop();
@@ -2406,14 +1975,6 @@ private ConditionFlag convertCondition(Condition condition) {
         assert dst.isRegister();
         CiRegister result = dst.asRegister();
         masm.xorq(result, result);
-        if (DEBUG_MOVS) {
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 33);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 33);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 33);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 33);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 33);
-        }
-
         //   masm.notq(result); // twos complement?
 	masm.rsb(ConditionFlag.Always,false,result,result,0,0); // negate
 	masm.incq(result); // add 1 to get to the twos completent
@@ -2459,15 +2020,9 @@ private ConditionFlag convertCondition(Condition condition) {
         if (left.kind.isInt()) {
             masm.ineg(dest.asRegister(), left.asRegister());
         } else if (dest.kind.isFloat()) {
-            if (asXmmFloatReg(left) != asXmmFloatReg(dest)) {
-                masm.movflt(asXmmFloatReg(dest), asXmmFloatReg(left));
-            }
-            callStub(op.stub, null, asXmmFloatReg(dest), dest);
+            masm.vneg(ConditionFlag.Always, dest.asRegister(), left.asRegister(), CiKind.Float);
         } else if (dest.kind.isDouble()) {
-            if (asXmmDoubleReg(left) != asXmmDoubleReg(dest)) {
-                masm.movdbl(asXmmDoubleReg(dest), asXmmDoubleReg(left));
-            }
-            callStub(op.stub, null, asXmmDoubleReg(dest), dest);
+            masm.vneg(ConditionFlag.Always, dest.asRegister(), left.asRegister(), CiKind.Double);
         } else {
             masm.lneg(dest.asRegister(), left.asRegister());
         }
@@ -2476,13 +2031,6 @@ private ConditionFlag convertCondition(Condition condition) {
     @Override
     protected void emitLea(CiValue src, CiValue dest) {
         CiRegister reg = dest.asRegister();
-        if (DEBUG_MOVS) {
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 34);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 34);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 34);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 34);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 34);
-        }
         masm.leaq(reg, asAddress(src));
     }
 
@@ -2493,58 +2041,35 @@ private ConditionFlag convertCondition(Condition condition) {
             masm.nop();
         }
         tasm.recordImplicitException(codePos(), info);
-         masm.nullCheck(src.asRegister());
+        masm.nullCheck(src.asRegister());
     }
 
     @Override
     protected void emitVolatileMove(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info) {
         assert kind == CiKind.Long : "only for volatile long fields";
-
         if (info != null) {
             tasm.recordImplicitException(codePos(), info);
         }
-        assert 0 == 1 : "emitVolatileMove ARMV7IRAssembler";
-
+        assert false : "emitVolatileMove ARMV7IRAssembler";
         if (src.kind.isDouble()) {
             if (dest.isRegister()) {
-          //      masm.movdq(dest.asRegister(), asXmmDoubleReg(src));
             } else if (dest.isStackSlot()) {
-               // masm.movsd(frameMap.toStackAddress((CiStackSlot) dest), asXmmDoubleReg(src));
             } else {
                 assert dest.isAddress();
-                //masm.movsd((CiAddress) dest, asXmmDoubleReg(src));
             }
         } else {
             assert dest.kind.isDouble();
             if (src.isStackSlot()) {
-                masm.movdbl(asXmmDoubleReg(dest), frameMap.toStackAddress((CiStackSlot) src));
+                masm.movdbl(dest.asRegister(), frameMap.toStackAddress((CiStackSlot) src));
             } else {
                 assert src.isAddress();
-                masm.movdbl(asXmmDoubleReg(dest), (CiAddress) src);
+                masm.movdbl(dest.asRegister(), (CiAddress) src);
             }
         }
     }
 
-    private static CiRegister asXmmDoubleReg(CiValue dest) {
-        assert dest.kind.isDouble() : "must be double XMM register";
-        CiRegister result = dest.asRegister();
-	if(result.number > 31) {
-		System.err.println("ARMV7LIRAssembler asXmmDoubleReg is a float!!!! bodging to D15");
-		result = ARMV7.d15;
-        }
-        assert result.isFpu() : "must be XMM register";
-        return result;
-    }
-
     @Override
     protected void emitMemoryBarriers(int barriers) {
-        if (DEBUG_MOVS) {
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 35);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 35);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 35);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 35);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 35);
-        }
         masm.membar(barriers);
     }
 
@@ -2584,17 +2109,14 @@ private ConditionFlag convertCondition(Condition condition) {
     public void emitXirInstructions(LIRXirInstruction xir, XirInstruction[] instructions, Label[] labels, CiValue[] operands, Map<XirMark, Mark> marks) {
         LIRDebugInfo info = xir == null ? null : xir.info;
         LIRDebugInfo infoAfter = xir == null ? null : xir.infoAfter;
-
         for (XirInstruction inst : instructions) {
             switch (inst.op) {
                 case Add:
                     emitArithOp(LIROpcode.Add, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
                     break;
-
                 case Sub:
                     emitArithOp(LIROpcode.Sub, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
                     break;
-
                 case Div:
                     if (inst.kind == CiKind.Int) {
                         arithmeticIdiv(LIROpcode.Idiv, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
@@ -2602,11 +2124,9 @@ private ConditionFlag convertCondition(Condition condition) {
                         emitArithOp(LIROpcode.Div, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
                     }
                     break;
-
                 case Mul:
                     emitArithOp(LIROpcode.Mul, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
                     break;
-
                 case Mod:
                     if (inst.kind == CiKind.Int) {
                         arithmeticIdiv(LIROpcode.Irem, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
@@ -2614,51 +2134,40 @@ private ConditionFlag convertCondition(Condition condition) {
                         emitArithOp(LIROpcode.Rem, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index], null);
                     }
                     break;
-
                 case Shl:
                     emitXIRShiftOp(LIROpcode.Shl, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
                     break;
-
                 case Sar:
                     emitXIRShiftOp(LIROpcode.Shr, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
                     break;
-
                 case Shr:
                     emitXIRShiftOp(LIROpcode.Ushr, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
                     break;
-
                 case And:
                     emitLogicOp(LIROpcode.LogicAnd, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
                     break;
-
                 case Or:
                     emitLogicOp(LIROpcode.LogicOr, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
                     break;
-
                 case Xor:
                     emitLogicOp(LIROpcode.LogicXor, operands[inst.x().index], operands[inst.y().index], operands[inst.result.index]);
                     break;
-
                 case Mov: {
                     CiValue result = operands[inst.result.index];
-
                     CiValue source = operands[inst.x().index];
                     moveOp(source, result, result.kind, null, false);
                     break;
                 }
-
                 case PointerLoad: {
                     if ((Boolean) inst.extra && info != null) {
                         tasm.recordImplicitException(codePos(), info);
                     }
-
                     CiValue result = operands[inst.result.index];
                     CiValue pointer = operands[inst.x().index];
                     CiRegisterValue register = assureInRegister(pointer);
                     moveOp(new CiAddress(inst.kind, register, 0), result, inst.kind, null, false);
                     break;
                 }
-
                 case PointerStore: {
                     if ((Boolean) inst.extra && info != null) {
                         tasm.recordImplicitException(codePos(), info);
@@ -2670,21 +2179,16 @@ private ConditionFlag convertCondition(Condition condition) {
                     moveOp(value, new CiAddress(inst.kind, pointer, 0), inst.kind, null, false);
                     break;
                 }
-
                 case PointerLoadDisp: {
                     CiXirAssembler.AddressAccessInformation addressInformation = (CiXirAssembler.AddressAccessInformation) inst.extra;
                     boolean canTrap = addressInformation.canTrap;
-
                     CiAddress.Scale scale = addressInformation.scale;
                     int displacement = addressInformation.disp;
-
                     CiValue result = operands[inst.result.index];
                     CiValue pointer = operands[inst.x().index];
                     CiValue index = operands[inst.y().index];
-
                     pointer = assureInRegister(pointer);
                     assert pointer.isVariableOrRegister();
-
                     CiValue src = null;
                     if (index.isConstant()) {
                         assert index.kind == CiKind.Int;
@@ -2693,7 +2197,6 @@ private ConditionFlag convertCondition(Condition condition) {
                     } else {
                         src = new CiAddress(inst.kind, pointer, index, scale, displacement);
                     }
-
                     moveOp(src, result, inst.kind, canTrap ? info : null, false);
                     break;
                 }
@@ -2701,44 +2204,35 @@ private ConditionFlag convertCondition(Condition condition) {
                     CiValue result = operands[inst.result.index];
                     CiRegister dst = result.asRegister();
                     int beforeLea = masm.codeBuffer.position();
-                    masm.leaq(dst, new CiAddress(target.wordKind, ARMV7.r15.asValue(), 0)); // was rip not r15
+                    masm.leaq(dst, new CiAddress(target.wordKind, ARMV7.r15.asValue(), 0));
                     int afterLea = masm.codeBuffer.position();
                     masm.codeBuffer.setPosition(beforeLea);
-                    masm.leaq(dst, new CiAddress(target.wordKind, ARMV7.r15.asValue(), beforeLea - afterLea)); // was rip
+                    masm.leaq(dst, new CiAddress(target.wordKind, ARMV7.r15.asValue(), beforeLea - afterLea));
                     break;
                 }
-
                 case LoadEffectiveAddress: {
                     CiXirAssembler.AddressAccessInformation addressInformation = (CiXirAssembler.AddressAccessInformation) inst.extra;
-
                     CiAddress.Scale scale = addressInformation.scale;
                     int displacement = addressInformation.disp;
-
                     CiValue result = operands[inst.result.index];
                     CiValue pointer = operands[inst.x().index];
                     CiValue index = operands[inst.y().index];
-
                     pointer = assureInRegister(pointer);
                     assert pointer.isVariableOrRegister();
                     CiValue src = new CiAddress(CiKind.Illegal, pointer, index, scale, displacement);
                     emitLea(src, result);
                     break;
                 }
-
                 case PointerStoreDisp: {
                     CiXirAssembler.AddressAccessInformation addressInformation = (CiXirAssembler.AddressAccessInformation) inst.extra;
                     boolean canTrap = addressInformation.canTrap;
-
                     CiAddress.Scale scale = addressInformation.scale;
                     int displacement = addressInformation.disp;
-
                     CiValue value = operands[inst.z().index];
                     CiValue pointer = operands[inst.x().index];
                     CiValue index = operands[inst.y().index];
-
                     pointer = assureInRegister(pointer);
                     assert pointer.isVariableOrRegister();
-
                     CiValue dst;
                     if (index.isConstant()) {
                         assert index.kind == CiKind.Int;
@@ -2747,42 +2241,26 @@ private ConditionFlag convertCondition(Condition condition) {
                     } else {
                         dst = new CiAddress(inst.kind, pointer, index, scale, displacement);
                     }
-
                     moveOp(value, dst, inst.kind, canTrap ? info : null, false);
                     break;
                 }
-
                 case RepeatMoveBytes:
-                    assert 0 == 1 : "RepeatMoveBytes ARMV7LIRAssembler";
-                  //  assert operands[inst.x().index].asRegister().equals(ARMV7.rsi) : "wrong input x: " + operands[inst.x().index];
-                   // assert operands[inst.y().index].asRegister().equals(ARMV7.rdi) : "wrong input y: " + operands[inst.y().index];
-                   // assert operands[inst.z().index].asRegister().equals(ARMV7.rcx) : "wrong input z: " + operands[inst.z().index];
-                //    masm.repeatMoveBytes();
+                    assert false: "RepeatMoveBytes in ARMV7LIRAssembler unimplemented";
                     break;
-
                 case RepeatMoveWords:
-                    assert 0 == 1 : "RepeatMoveWords ARMV7LIRAssembler";
-                  //  assert operands[inst.x().index].asRegister().equals(ARMV7.rsi) : "wrong input x: " + operands[inst.x().index];
-                  //  assert operands[inst.y().index].asRegister().equals(ARMV7.rdi) : "wrong input y: " + operands[inst.y().index];
-                   // assert operands[inst.z().index].asRegister().equals(ARMV7.rcx) : "wrong input z: " + operands[inst.z().index];
-                 //   masm.repeatMoveWords();
+                    assert false : "RepeatMoveWords in ARMV7LIRAssembler unimplemented";
                     break;
-
-                case PointerCAS:
-                    assert 0 == 1 : "PointerCAS ARMV7LIRAssembler";
+                case PointerCAS: {
+                    assert false: "PointerCAS in ARMV7LIRAssembler unimplemented";
                     if ((Boolean) inst.extra && info != null) {
                         tasm.recordImplicitException(codePos(), info);
                     }
-                  //  assert operands[inst.x().index].asRegister().equals(ARMV7.rax) : "wrong input x: " + operands[inst.x().index];
-
                     CiValue exchangedVal = operands[inst.y().index];
                     CiValue exchangedAddress = operands[inst.x().index];
                     CiRegisterValue pointerRegister = assureInRegister(exchangedAddress);
                     CiAddress addr = new CiAddress(target.wordKind, pointerRegister);
-                 //   masm.cmpxchgq(exchangedVal.asRegister(), addr);
-
                     break;
-
+                }
                 case CallStub: {
                     XirTemplate stubId = (XirTemplate) inst.extra;
                     CiRegister result = CiRegister.None;
@@ -2797,19 +2275,10 @@ private ConditionFlag convertCondition(Condition condition) {
                     break;
                 }
                 case CallRuntime: {
-                    if (DEBUG_MOVS) {
-                        masm.movw(ConditionFlag.Always, ARMV7.r12, 36);
-                        masm.movw(ConditionFlag.Always, ARMV7.r12, 36);
-                        masm.movw(ConditionFlag.Always, ARMV7.r12, 36);
-                        masm.movw(ConditionFlag.Always, ARMV7.r12, 36);
-                        masm.movw(ConditionFlag.Always, ARMV7.r12, 36);
-                    }
-
                     CiKind[] signature = new CiKind[inst.arguments.length];
                     for (int i = 0; i < signature.length; i++) {
                         signature[i] = inst.arguments[i].kind;
                     }
-
                     CiCallingConvention cc = frameMap.getCallingConvention(signature, RuntimeCall);
                     for (int i = 0; i < inst.arguments.length; i++) {
                         CiValue argumentLocation = cc.locations[i];
@@ -2818,10 +2287,8 @@ private ConditionFlag convertCondition(Condition condition) {
                             moveOp(argumentSourceLocation, argumentLocation, argumentLocation.kind, null, false);
                         }
                     }
-
                     RuntimeCallInformation runtimeCallInformation = (RuntimeCallInformation) inst.extra;
                     directCall(runtimeCallInformation.target, (runtimeCallInformation.useInfoAfter) ? infoAfter : info);
-
                     if (inst.result != null && inst.result.kind != CiKind.Illegal && inst.result.kind != CiKind.Void) {
                         CiRegister returnRegister = compilation.registerConfig.getReturnRegister(inst.result.kind);
                         CiValue resultLocation = returnRegister.asValue(inst.result.kind.stackKind());
@@ -2839,22 +2306,19 @@ private ConditionFlag convertCondition(Condition condition) {
                     break;
                 }
                 case DecAndJumpNotZero: {
-                    assert 0 == 1 : "DecAndJumpNotZero ARMV7LIRAssembler";
+                    assert false : "DecAndJumpNotZero in ARMV7LIRAssembler unimplemented";
                     Label label = labels[((XirLabel) inst.extra).index];
                     CiValue value = operands[inst.x().index];
                     if (value.kind == CiKind.Long) {
                         masm.decq(value.asRegister());
                     } else {
                         assert value.kind == CiKind.Int;
-                   //     masm.decl(value.asRegister());
                     }
-                    //masm.jcc(ConditionFlag.notZero, label);
                     break;
                 }
-                // TODO check all the conditions!!!!!
                 case Jeq: {
                     Label label = labels[((XirLabel) inst.extra).index];
-                   emitXirCompare(inst, Condition.EQ, ConditionFlag.Equal, operands, label);
+                    emitXirCompare(inst, Condition.EQ, ConditionFlag.Equal, operands, label);
                     break;
                 }
                 case Jneq: {
@@ -2862,40 +2326,31 @@ private ConditionFlag convertCondition(Condition condition) {
                     emitXirCompare(inst, Condition.NE, ConditionFlag.NotEqual, operands, label);
                     break;
                 }
-
                 case Jgt: {
                     Label label = labels[((XirLabel) inst.extra).index];
-                    emitXirCompare(inst, Condition.GT, ConditionFlag.SignedGreater, operands, label); // was Greater?
+                    emitXirCompare(inst, Condition.GT, ConditionFlag.SignedGreater, operands, label);
                     break;
                 }
-
                 case Jgteq: {
                     Label label = labels[((XirLabel) inst.extra).index];
-                   emitXirCompare(inst, Condition.GE, ConditionFlag.SignedGreaterOrEqual, operands, label); // was greaterEqual
+                    emitXirCompare(inst, Condition.GE, ConditionFlag.SignedGreaterOrEqual, operands, label);
                     break;
                 }
-
                 case Jugteq: {
                     Label label = labels[((XirLabel) inst.extra).index];
-                   //emitXirCompare(inst, Condition.AE, ConditionFlag.aboveEqual, operands, label);
-
-                    emitXirCompare(inst, Condition.AE, ConditionFlag.CarrySetUnsignedHigherEqual, operands, label);  // negation in the XirCompare?
-
+                    emitXirCompare(inst, Condition.AE, ConditionFlag.CarrySetUnsignedHigherEqual, operands, label);
                     break;
                 }
-
                 case Jlt: {
                     Label label = labels[((XirLabel) inst.extra).index];
                     emitXirCompare(inst, Condition.LT, ConditionFlag.SignedLesser, operands, label);
                     break;
                 }
-
                 case Jlteq: {
                     Label label = labels[((XirLabel) inst.extra).index];
                     emitXirCompare(inst, Condition.LE, ConditionFlag.SignedLowerOrEqual, operands, label);
                     break;
                 }
-
                 case Jbset: {
                     Label label = labels[((XirLabel) inst.extra).index];
                     CiValue pointer = operands[inst.x().index];
@@ -2905,10 +2360,10 @@ private ConditionFlag convertCondition(Condition condition) {
                     CiConstant constantOffset = (CiConstant) offset;
                     CiConstant constantBit = (CiConstant) bit;
                     CiAddress src = new CiAddress(inst.kind, pointer, constantOffset.asInt());
-		    assert(0==1);
-                  //  masm.btli(src, constantBit.asInt());
-                    //masm.jcc(ConditionFlag.aboveEqual, label);
-                    masm.jcc(ConditionFlag.SignedGreaterOrEqual,label);
+                    assert (0 == 1);
+                    // masm.btli(src, constantBit.asInt());
+                    // masm.jcc(ConditionFlag.aboveEqual, label);
+                    masm.jcc(ConditionFlag.SignedGreaterOrEqual, label);
                     break;
                 }
 
@@ -2943,52 +2398,51 @@ private ConditionFlag convertCondition(Condition condition) {
                         bangStackWithOffset(offset - frameSize);
                     }
 
-
                     break;
                 }
                 case PushFrame: {
                     int frameSize = initialFrameSizeInBytes();
-                    if(CompilationBroker.SIMULATEADAPTER) {
+                    if (CompilationBroker.SIMULATEADAPTER) {
                         /*
-                        Needed as we now have adjusted the start address to include the adapter offset?
-                        If this is not included then the stack adjustment and the LR register are lost!
+                         * Needed as we now have adjusted the start address to include the adapter offset? If this is
+                         * not included then the stack adjustment and the LR register are lost!
                          */
                         masm.nop();
                         masm.nop();
                         masm.nop();
                         masm.nop();
                     }
-		    /* FOR a valid stack backtrace?
-
-		           //masm.mov(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r13);
-		           //masm.push(ConditionFlag.Always,1<<11|1<<12|1<<14|1<<15);// r11, r12(stack),r14 (LR),r15(PC)
-	              //masm.add(ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13,12,0);
-
-	              REMEMBER: ARMV7CompilerStubEmitter (prologue)
-	                        ARMV7Assembler (return --)
-	                        and FrameMap.java see the inCallerFrame, where we would need to do an adjustment to the offset
-	                        if we change what is pushed onto the stack, ie if we push more than just LR we need to adject the offset
-	         */
+                    /*
+                     * FOR a valid stack backtrace?
+                     *
+                     * //masm.mov(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r13);
+                     * //masm.push(ConditionFlag.Always,1<<11|1<<12|1<<14|1<<15);// r11, r12(stack),r14 (LR),r15(PC)
+                     * //masm.add(ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13,12,0);
+                     *
+                     * REMEMBER: ARMV7CompilerStubEmitter (prologue) ARMV7Assembler (return --) and FrameMap.java see
+                     * the inCallerFrame, where we would need to do an adjustment to the offset if we change what is
+                     * pushed onto the stack, ie if we push more than just LR we need to adject the offset
+                     */
                     // We only Push LR as that is what X86 does
                     // this means we can reuse all their
                     // stack unwinding code
-		            masm.push(ConditionFlag.Always,1<<14);
-		            masm.decrementq(ARMV7.r13,frameSize);// DIRTY HACK TO get STACK to work
-                    //masm.decrementq(ARMV7.r13, frameSize); // does not emit code for frameSize == 0
+                    masm.push(ConditionFlag.Always, 1 << 14);
+                    masm.decrementq(ARMV7.r13, frameSize);// DIRTY HACK TO get STACK to work
+                    // masm.decrementq(ARMV7.r13, frameSize); // does not emit code for frameSize == 0
 
-                    //masm.vmov(ConditionFlag.Always,ARMV7.s6,ARMV7.s3);
-                   // masm.vmov(ConditionFlag.Always,ARMV7.s4,ARMV7.s2);
-                   // masm.vmov(ConditionFlag.Always,ARMV7.s2,ARMV7.s1);
+                    // masm.vmov(ConditionFlag.Always,ARMV7.s6,ARMV7.s3);
+                    // masm.vmov(ConditionFlag.Always,ARMV7.s4,ARMV7.s2);
+                    // masm.vmov(ConditionFlag.Always,ARMV7.s2,ARMV7.s1);
 
-                    //masm.str(ConditionFlag.Always,ARMV7.r14,ARMV7.r13,0); // save the return value!!!!!
+                    // masm.str(ConditionFlag.Always,ARMV7.r14,ARMV7.r13,0); // save the return value!!!!!
 
                     if (C1XOptions.ZapStackOnMethodEntry) {
                         final int intSize = 4;
                         for (int i = 0; i < frameSize / intSize; ++i) {
                             masm.setUpScratch(new CiAddress(CiKind.Int, ARMV7.r13.asValue(), i * intSize));
-                            masm.mov32BitConstant(ARMV7.r8,0xC1C1C1C1);
+                            masm.mov32BitConstant(ARMV7.r8, 0xC1C1C1C1);
                             masm.str(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, ARMV7.r0, 0, 0);
-                       //     masm.movl(new CiAddress(CiKind.Int, ARMV7.rsp.asValue(), i * intSize), 0xC1C1C1C1);
+                            // masm.movl(new CiAddress(CiKind.Int, ARMV7.rsp.asValue(), i * intSize), 0xC1C1C1C1);
                         }
                     }
 
@@ -2999,12 +2453,11 @@ private ConditionFlag convertCondition(Condition condition) {
                         masm.save(csl, frameToCSA);
                     }
 
-		
                     if (DEBUG_METHODS) {
                         int a = methodCounter.incrementAndGet();
                         masm.mov32BitConstant(ARMV7.r12, a);
                         try {
-                            writeDebugMethod(compilation.method.holder() +"." + compilation.method.name() , a);
+                            writeDebugMethod(compilation.method.holder() + "." + compilation.method.name(), a);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -3022,9 +2475,7 @@ private ConditionFlag convertCondition(Condition condition) {
                         int frameToCSA = frameMap.offsetToCalleeSaveAreaStart();
                         masm.restore(csl, frameToCSA);
                     }
-                    masm.incrementq(ARMV7.r13,frameSize);
-
-
+                    masm.incrementq(ARMV7.r13, frameSize);
                     break;
                 }
                 case Push: {
@@ -3032,23 +2483,20 @@ private ConditionFlag convertCondition(Condition condition) {
                     if (value.asRegister().number < 16) {
                         masm.push(ConditionFlag.Always, 1 << value.asRegister().number);
                     } else {
-                        masm.vpush(ConditionFlag.Always,value.asRegister(),value.asRegister());
+                        masm.vpush(ConditionFlag.Always, value.asRegister(), value.asRegister(), value.kind, value.kind);
                     }
-                 /// masm.push(value.asRegister());
                     break;
                 }
                 case Pop: {
                     CiValue result = operands[inst.result.index];
                     if (result.isRegister()) {
-                     //   masm.pop(result.asRegister());
-                        if(result.asRegister().encoding < 16) {
-                            masm.pop(ConditionFlag.Always,1<< result.asRegister().encoding);
+                        if (result.asRegister().encoding < 16) {
+                            masm.pop(ConditionFlag.Always, 1 << result.asRegister().encoding);
                         } else {
-                            masm.vpop(ConditionFlag.Always,result.asRegister(),result.asRegister());
+                            masm.vpop(ConditionFlag.Always, result.asRegister(), result.asRegister());
                         }
                     } else {
-                      //  masm.pop(rscratch1);
-                        masm.pop(ConditionFlag.Always,1<<12);
+                        masm.pop(ConditionFlag.Always, 1 << 12);
                         moveOp(rscratch1.asValue(), result, result.kind, null, true);
                     }
                     break;
@@ -3134,13 +2582,6 @@ private ConditionFlag convertCondition(Condition condition) {
     }
 
     public void callStub(XirTemplate stub, LIRDebugInfo info, CiRegister result, CiValue... args) {
-        if (DEBUG_MOVS) {
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 37);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 37);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 37);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 37);
-            masm.movw(ConditionFlag.Always, ARMV7.r12, 37);
-        }
         callStubHelper(lookupStub(stub), stub.resultOperand.kind, info, result, args);
     }
 
@@ -3183,24 +2624,13 @@ private ConditionFlag convertCondition(Condition condition) {
         final CiKind kind = src.kind;
         masm.setUpScratch(src);
         if (kind == CiKind.Int || kind == CiKind.Boolean) {
-            // masm.movl(dst, src);
             masm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, dst, ARMV7.r12, 0);
         } else if (kind == CiKind.Float) {
-            masm.vldr(ConditionFlag.Always, dst, ARMV7.r12, 0);
-            // masm.movss(dst, src);
+            masm.vldr(ConditionFlag.Always, dst, ARMV7.r12, 0, CiKind.Float, CiKind.Int);
         } else if (kind == CiKind.Double) {
-            masm.vldr(ConditionFlag.Always, dst, ARMV7.r12, 0);
-            // masm.movsd(dst, src);
+            masm.vldr(ConditionFlag.Always, dst, ARMV7.r12, 0, CiKind.Double, CiKind.Int);
         } else if (kind == CiKind.Long) {
-                masm.ldrd(ConditionFlag.Always, dst, ARMV7.r12, 0);
-            if (DEBUG_MOVS) {
-                masm.movw(ConditionFlag.Always, ARMV7.r12, 39);
-                masm.movw(ConditionFlag.Always, ARMV7.r12, 39);
-                masm.movw(ConditionFlag.Always, ARMV7.r12, 39);
-                masm.movw(ConditionFlag.Always, ARMV7.r12, 39);
-                masm.movw(ConditionFlag.Always, ARMV7.r12, 39);
-            }
-            // masm.movq(dst, src);
+            masm.ldrd(ConditionFlag.Always, dst, ARMV7.r12, 0);
         } else { // Additional clause added by APN
             masm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, dst, ARMV7.r12, 0);
         }
@@ -3209,7 +2639,6 @@ private ConditionFlag convertCondition(Condition condition) {
     private void storeParameter(CiValue registerOrConstant, CiStackSlot outArg) {
         CiAddress dst = compilation.frameMap().toStackAddress(outArg);
         CiKind k = registerOrConstant.kind;
-
         if (registerOrConstant.isConstant()) {
             CiConstant c = (CiConstant) registerOrConstant;
             if (c.kind == CiKind.Object) {
@@ -3220,19 +2649,13 @@ private ConditionFlag convertCondition(Condition condition) {
         } else if (registerOrConstant.isRegister()) {
             masm.setUpScratch(dst);
             if (k.isFloat()) {
-
-                // TODO manipulate for use of s0..s31 registers
-                masm.vstr(ConditionFlag.Always,asXmmFloatReg(registerOrConstant),ARMV7.r12,0);
-                //masm.movss(dst, registerOrConstastoreParameternt.asRegister());
+                masm.vstr(ConditionFlag.Always, registerOrConstant.asRegister(), ARMV7.r12, 0, CiKind.Float, CiKind.Int);
             } else if (k.isDouble()) {
-                masm.vstr(ConditionFlag.Always,asXmmDoubleReg(registerOrConstant),ARMV7.r12,0);
-
-                //   masm.movsd(dst, registerOrConstant.asRegister());
+                masm.vstr(ConditionFlag.Always, registerOrConstant.asRegister(), ARMV7.r12, 0, CiKind.Double, CiKind.Int);
             } else if (k.isLong()) {
-                masm.strd(ConditionFlag.Always,registerOrConstant.asRegister(),ARMV7.r12,0);
-               // masm.movq(dst, registerOrConstant.asRegister());
+                masm.strd(ConditionFlag.Always, registerOrConstant.asRegister(), ARMV7.r12, 0);
             } else {
-                masm.str(ConditionFlag.Always,registerOrConstant.asRegister(),ARMV7.r12,0);
+                masm.str(ConditionFlag.Always, registerOrConstant.asRegister(), ARMV7.r12, 0);
             }
         } else {
             throw new InternalError("should not reach here");
@@ -3245,23 +2668,15 @@ private ConditionFlag convertCondition(Condition condition) {
             masm.xorq(ARMV7.r12, ARMV7.r12);
         } else {
             if (target.inlineObjects) {
-		assert(0==1);
+                assert (0 == 1);
                 masm.setUpScratch(tasm.recordDataReferenceInCode(obj));
-		masm.mov32BitConstant(ARMV7.r12,0xdeaddead); // patched?
-
-		masm.mov(ConditionFlag.Always,false,dst,ARMV7.r12);
-             //   masm.movq(dst, 0xDEADDEADDEADDEADL);
+                masm.mov32BitConstant(ARMV7.r12, 0xdeaddead); // patched?
+                masm.mov(ConditionFlag.Always, false, dst, ARMV7.r12);
             } else {
-		masm.setUpScratch(tasm.recordDataReferenceInCode(obj));
-		masm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
-            	masm.ldr(ConditionFlag.Always,dst, ARMV7.r12, 0);
-
-
-                //masm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r12,dst,0);
-             //   masm.movq(dst, 0xDEADDEADDEADDEADL);
-
-             //   masm.movq(dst, tasm.recordDataReferenceInCode(obj));
-            }//
+                masm.setUpScratch(tasm.recordDataReferenceInCode(obj));
+                masm.addRegisters(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r15, 0, 0);
+                masm.ldr(ConditionFlag.Always, dst, ARMV7.r12, 0);
+            }
         }
     }
 
