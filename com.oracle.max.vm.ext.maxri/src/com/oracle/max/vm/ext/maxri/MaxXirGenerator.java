@@ -357,33 +357,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
 
         asm.pushFrame();
-        /*
-        APN hack for the Float and DOuble problem
-
-         */
-        Kind [] kinds =  ((ClassMethodActor) method).getParameterKinds();
-        int numberOfFloats = 0;
-        for(int i = 0; i < kinds.length;i++) {
-            if(kinds[i] == Kind.FLOAT || kinds[i] == Kind.DOUBLE) {
-                numberOfFloats++;
-            }
-        }
-        for(int i = kinds.length-1; i > 0;i--) {
-            if(kinds[i] == Kind.FLOAT) {
-                assert(numberOfFloats != 0);
-                asm.mov(asm.createRegister("shufflingFLOATS",CiKind.Float, ARMV7.floatRegisters[16+(numberOfFloats-1)*2]),asm.createRegister("floatPARAMETER", CiKind.Float, ARMV7.floatRegisters[16 + (numberOfFloats-1)]));
-                numberOfFloats--;
-
-            }
-            if(kinds[i] == Kind.DOUBLE) {
-                assert(numberOfFloats != 0);
-                numberOfFloats--;
-            }
-        }
-        /* END OF APN HACK
-
-         */
-
+        
         if (!callee.isVmEntryPoint()) {
             asm.stackOverflowCheck();
         }
