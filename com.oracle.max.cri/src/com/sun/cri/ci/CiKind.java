@@ -259,6 +259,10 @@ public enum CiKind {
         return this == CiKind.Jsr;
     }
 
+    public boolean isGeneral() {
+        return this != CiKind.Float && this !=CiKind.Double;
+    }
+
     /**
      * Converts this value type to a string.
      */
