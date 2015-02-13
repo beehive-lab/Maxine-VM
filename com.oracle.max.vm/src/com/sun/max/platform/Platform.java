@@ -165,12 +165,11 @@ public final class Platform {
         } else if (isa == ISA.ARM) {
             arch = new ARMV7();
             if (os == OS.DARWIN) {
-                //stackAlignment = 16;
-		stackAlignment = 8;
+        	stackAlignment = 4;
             } else if (os == OS.SOLARIS || os == OS.LINUX) {
-                stackAlignment = 8;
+                stackAlignment = 4;
             } else if (os == OS.MAXVE) {
-                stackAlignment = 8;
+                stackAlignment = 4;
             } else {
                 throw FatalError.unexpected("Unimplemented stack alignment: " + os);
             }
@@ -472,8 +471,6 @@ public final class Platform {
         String platformSpec = System.getProperty(PLATFORM_PROPERTY);
         if (platformSpec != null) {
             Platform platform = parse(platformSpec);
-            //System.out.println("Platform " + platform);
-            //System.out.println("ISA " + platform.isa);
 
             if (platform == null) {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -512,8 +509,6 @@ public final class Platform {
         final int pageSize = getInteger(PAGE_SIZE_PROPERTY) == null ? getPageSize() : getInteger(PAGE_SIZE_PROPERTY);
         final int nsig = getProperty(NUMBER_OF_SIGNALS_PROPERTY) == null ? getNumberOfSignals() : getInteger(NUMBER_OF_SIGNALS_PROPERTY);
         Platform platform = new Platform(cpu, isa, dataModel, os, pageSize, nsig);
-        //System.out.println("Platform " + platform);
-        //System.out.println("ISA " + platform.isa);
         return platform;
     }
 
