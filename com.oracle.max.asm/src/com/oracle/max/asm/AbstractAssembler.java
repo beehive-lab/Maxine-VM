@@ -59,15 +59,14 @@ public abstract class AbstractAssembler {
     }
 
     protected final void emitInt(int x) {
-        // yaman: the simulator might be signalled
         codeBuffer.emitInt(x);
     }
 
     protected final void emitLong(long x) {
         codeBuffer.emitLong(x);
     }
-    public final void offlineAddToBuffer(byte []b) {
-        // APN hack for method test ...
+
+    public final void offlineAddToBuffer(byte[] b) {
         codeBuffer.offlineCopyBuffer(b);
     }
 }
