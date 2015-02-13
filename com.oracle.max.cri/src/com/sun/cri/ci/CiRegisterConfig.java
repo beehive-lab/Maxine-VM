@@ -182,14 +182,14 @@ public class CiRegisterConfig implements RiRegisterConfig {
     public CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, CiTarget target, boolean stackOnly) {
         CiValue[] locations = new CiValue[parameters.length];
         int currentGeneral = 0;
-        int currentXMM = 0;
+        int currentFloats = 0;
+        int currentDouble = 0;
         int firstStackIndex = (stackArg0Offsets[type.ordinal()]) / target.spillSlotSize;
         int currentStackIndex = firstStackIndex;
 
         for (int i = 0; i < parameters.length; i++) {
             locations[i] = null;
             final CiKind kind = parameters[i];
-
             switch (kind) {
                 case Byte:
                 case Boolean:
@@ -215,28 +215,32 @@ public class CiRegisterConfig implements RiRegisterConfig {
                     }
                     break;
                 case Float:
-                case Double:
-                    // TODO fix for float and double
-                    // throw new InternalError("floats and doubles are not supported yet for ARM");
-                    if (!stackOnly && currentXMM < fpuParameters.length) {
-                        CiRegister register = fpuParameters[currentXMM++];
+                    if (!stackOnly && currentFloats < fpuParameters.length) {
+                        CiRegister register = fpuParameters[currentFloats++];
                         locations[i] = register.asValue(kind);
                     }
-                    // ARM
-                    /*
-                     * if (!stackOnly) { if(currentGeneral < (cpuParameters.length)) { CiRegister register =
-                     * cpuParameters[currentGeneral++]; locations[i] = register.asValue(kind); //currentGeneral++;
-                     * System.err.println("DOUBLE needs 2 register  getCallingConvention");
-                     *
-                     * } }
-                     */
                     break;
+                case Double:
+                    if (!stackOnly && currentFloats < fpuParameters.length) {
+                        if (target.arch.is32bit()) {
+                            if ((fpuParameters.length - currentFloats) < 2) {
+                                break;
+                            }
+                        }
+                        CiRegister register = fpuParameters[currentDouble++];
+                        locations[i] = register.asValue(kind);
+                        if (target.arch.is32bit()) {
+                            currentFloats += 2;
+                        }
+                    }
 
+                    break;
                 default:
                     throw new InternalError("Unexpected parameter kind: " + kind);
             }
 
             if (locations[i] == null) {
+               // System.out.println("Index " + i + " cStackIndex " + currentStackIndex);
                 locations[i] = CiStackSlot.get(kind.stackKind(), currentStackIndex, !type.out);
                 currentStackIndex += target.spillSlots(kind);
             }
