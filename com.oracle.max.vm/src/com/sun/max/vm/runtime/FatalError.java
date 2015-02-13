@@ -167,6 +167,7 @@ public final class FatalError extends Error {
         // Try to recover from a fatal error while dumping stacks of the other threads
         if (DUMPING_STACKS_IN_FATAL_ERROR && FATAL_ERROR_WHILE_DUMPING_STACKS != null) {
             FatalError error = FATAL_ERROR_WHILE_DUMPING_STACKS;
+	    Log.println("FatalError: stack reset position one");
             vmThread.stackDumpStackFrameWalker().reset();
             // Nulling FATAL_ERROR_WHILE_DUMPING_STACKS makes this is a one shot attempt at recovery
             FATAL_ERROR_WHILE_DUMPING_STACKS = null;
@@ -181,6 +182,7 @@ public final class FatalError extends Error {
 
         final boolean lockDisabledSafepoints = Log.lock();
         if (vmThread != null) {
+	    Log.println("FatalError: stack reset position two");
             vmThread.stackDumpStackFrameWalker().reset();
         }
 

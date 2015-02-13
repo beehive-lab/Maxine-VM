@@ -686,6 +686,8 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
 
             TargetMethod calleeMethod = callee.targetMethod();
             // Reset the stack walker
+            Log.println("MaxTargetMethod:: catchException stackframewalker reset");
+
             current.stackFrameWalker().reset();
 
             // Store the exception for the handler

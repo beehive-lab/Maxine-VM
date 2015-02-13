@@ -23,16 +23,18 @@
 
 package com.sun.c1x.target.armv7;
 
-import com.oracle.max.asm.*;
-import com.oracle.max.asm.target.armv7.*;
-import com.sun.c1x.*;
+import com.oracle.max.asm.NumUtil;
+import com.oracle.max.asm.target.armv7.ARMV7;
+import com.sun.c1x.C1XCompilation;
 import com.sun.c1x.alloc.OperandPool.VariableFlag;
-import com.sun.c1x.gen.*;
+import com.sun.c1x.gen.LIRGenerator;
+import com.sun.c1x.gen.LIRItem;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.lir.*;
-import com.sun.c1x.stub.*;
-import com.sun.c1x.util.*;
-import com.sun.cri.bytecode.*;
+import com.sun.c1x.lir.LIRDebugInfo;
+import com.sun.c1x.lir.LIROpcode;
+import com.sun.c1x.stub.CompilerStub;
+import com.sun.c1x.util.Util;
+import com.sun.cri.bytecode.Bytecodes;
 import com.sun.cri.ci.*;
 
 /**
@@ -45,6 +47,8 @@ public class ARMV7LIRGenerator extends LIRGenerator {
     private static final CiRegisterValue RAX_L = ARMV7.r8.asValue(CiKind.Long); // and r9 32bit registers
     private static final CiRegisterValue RDX_I = ARMV7.r8.asValue(CiKind.Int);
     private static final CiRegisterValue RDX_L = ARMV7.r8.asValue(CiKind.Long); // and r9 32bit registers
+    private static final CiRegisterValue RETURNREG_L = ARMV7.r0.asValue(CiKind.Long);
+    private static final CiRegisterValue RETURNREG_I = ARMV7.r0.asValue(CiKind.Int);
 
     private static final CiRegisterValue LDIV_TMP = RDX_L;
 
@@ -66,6 +70,8 @@ public class ARMV7LIRGenerator extends LIRGenerator {
     protected CiValue exceptionPcOpr() {
         return ILLEGAL;
     }
+
+
 
     @Override
     protected boolean canStoreAsConstant(Value v, CiKind kind) {
@@ -204,28 +210,37 @@ public class ARMV7LIRGenerator extends LIRGenerator {
         if (opcode == Bytecodes.LDIV || opcode == Bytecodes.LREM || opcode == Op2.UDIV || opcode == Op2.UREM) {
             // emit inline 64-bit code
             LIRDebugInfo info = x.needsZeroCheck() ? stateFor(x) : null;
-            CiValue dividend = force(x.x(), RAX_L); // dividend must be in RAX
+            //CiValue dividend = force(x.x(), RAX_L); // dividend must be in RAX
+            CiValue dividend = force(x.x(), RAX_L);
             CiValue divisor = load(x.y());            // divisor can be in any (other) register
 
             CiValue result = createResultVariable(x);
             CiValue resultReg;
             if (opcode == Bytecodes.LREM) {
-                resultReg = RDX_L; // remainder result is produced in rdx
-                lir.lrem(dividend, divisor, resultReg, LDIV_TMP, info);
+                resultReg = RETURNREG_L;//RDX_L; // remainder result is produced in rdx
+                //lir.lremt(dividend, divisor, resultReg, LDIV_TMP, info);
+                resultReg = callRuntime(CiRuntimeCall.arithmeticlrem, null, dividend,divisor);
             } else if (opcode == Bytecodes.LDIV) {
-                resultReg = RAX_L; // division result is produced in rax
-                lir.ldiv(dividend, divisor, resultReg, LDIV_TMP, info);
+                //resultReg = RAX_L; // division result is produced in rax
+                //lir.ldiv(dividend, divisor, resultReg, LDIV_TMP, info);
+	            resultReg = callRuntime(CiRuntimeCall.arithmeticldiv, null, dividend,divisor); // HERE call the native method
+
             } else if (opcode == Op2.UREM) {
-                resultReg = RDX_L; // remainder result is produced in rdx
-                lir.lurem(dividend, divisor, resultReg, LDIV_TMP, info);
+                resultReg = RETURNREG_L; // remainder result is produced in rdx
+                //lir.lurem(dividend, divisor, resultReg, LDIV_TMP, info);
+                resultReg = callRuntime(CiRuntimeCall.arithmeticlurem, null, dividend,divisor); // HERE call the native method
+
             } else if (opcode == Op2.UDIV) {
-                resultReg = RAX_L; // division result is produced in rax
-                lir.ludiv(dividend, divisor, resultReg, LDIV_TMP, info);
+                resultReg = RETURNREG_L; // division result is produced in rax
+                //lir.ludiv(dividend, divisor, resultReg, LDIV_TMP, info);
+		        resultReg = callRuntime(CiRuntimeCall.arithmeticludiv, null, dividend,divisor); // HERE call the native method
+
             } else {
                 throw Util.shouldNotReachHere();
             }
-
-            lir.move(resultReg, result);
+            assert(resultReg.asRegister() == ARMV7.r0);
+            lir.move(RETURNREG_L,result);
+            //lir.move(resultReg, result);
         } else if (opcode == Bytecodes.LMUL) {
             LIRItem right = new LIRItem(x.y(), this);
 
@@ -565,13 +580,22 @@ public class ARMV7LIRGenerator extends LIRGenerator {
             case F2L: stub = stubFor(CompilerStub.Id.f2l); break;
             case D2I: stub = stubFor(CompilerStub.Id.d2i); break;
             case D2L: stub = stubFor(CompilerStub.Id.d2l); break;
+
         }
         // Checkstyle: on
         if (stub != null) {
             // Force result to be rax to match compiler stubs expectation.
             CiValue stubResult = x.kind == CiKind.Int ? RAX_I : RAX_L;
-            lir.convert(x.opcode, input, stubResult, stub);
-            lir.move(stubResult, result);
+
+            if(x.opcode == Convert.Op.D2L) {
+                result = callRuntimeWithResult(CiRuntimeCall.d2jlong, null, input);
+            } else if(x.opcode == Convert.Op.F2L) {
+                result = callRuntimeWithResult(CiRuntimeCall.f2jlong, null, input);
+	        } else {
+            	lir.convert(x.opcode, input, stubResult, stub);
+            	lir.move(stubResult, result);
+	        }
+
         } else {
             lir.convert(x.opcode, input, result, stub);
         }

@@ -113,6 +113,7 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
             if(method.name().compareTo("initialize")==0) {
                 System.out.println("DEBUG METHOD");
             }
+            //System.out.println("COMPILING " + method.name());
             result = compilation.compile();
         } finally {
             filter.remove();

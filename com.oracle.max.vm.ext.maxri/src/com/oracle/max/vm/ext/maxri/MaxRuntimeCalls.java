@@ -22,20 +22,31 @@
  */
 package com.oracle.max.vm.ext.maxri;
 
-import static com.sun.max.vm.MaxineVM.*;
-import java.lang.annotation.*;
-import java.lang.reflect.*;
+import com.sun.cri.ci.CiGenericCallback;
+import com.sun.cri.ci.CiKind;
+import com.sun.cri.ci.CiRuntimeCall;
+import com.sun.cri.ci.CiUtil;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.vm.Log;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.compiler.CallEntryPoint;
+import com.sun.max.vm.compiler.target.Stubs;
+import com.sun.max.vm.heap.SpecialReferenceManager;
+import com.sun.max.vm.object.ObjectAccess;
+import com.sun.max.vm.runtime.CriticalMethod;
+import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.runtime.Snippets;
+import com.sun.max.vm.runtime.Throw;
+import com.sun.max.vm.stack.StackReferenceMapPreparer;
 
-import com.sun.cri.ci.*;
-import com.sun.max.annotate.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.heap.*;
-import com.sun.max.vm.object.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.*;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.reflect.Method;
+
+import static com.sun.max.vm.MaxineVM.vm;
 
 /**
  * This class contains the implementation of runtime calls that are called by
@@ -86,6 +97,38 @@ public class MaxRuntimeCalls {
             assert kinds[i] == call.arguments[i] : call + " incompatible with " + classMethodActor;
         }
         return true;
+    }
+    /* ARM HACKS ... we need to get rid of these and get the compiler to generate correct assembler
+    */
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.d2jlong)
+    public static long runtimeJd2jlong(double val) {
+        verifyRefMaps();
+        return MaxineVM.d2jlong(val);
+    }
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.f2jlong)
+    public static long runtimeJd2jlong(float val) {
+        verifyRefMaps();
+        return MaxineVM.f2jlong(val);
+    }
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.arithmeticldiv)
+    public static long runtimearithmeticldiv(long a, long b) {
+        verifyRefMaps();
+        return MaxineVM.arithmeticldiv(a,b);
+    }
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.arithmeticludiv)
+    public static long runtimearithmeticludiv(long a, long b) {
+        verifyRefMaps();
+        return MaxineVM.arithmeticludiv(a,b);
+    }
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.arithmeticlrem)
+    public static long runtimearithmeticlrem(long a, long b) {
+        verifyRefMaps();
+        return MaxineVM.arithmeticlrem(a,b);
+    }
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.arithmeticlurem)
+    public static long runtimearithmeticlurem(long a, long b) {
+        verifyRefMaps();
+        return MaxineVM.arithmeticlurem(a,b);
     }
 
     private static void verifyRefMaps() {

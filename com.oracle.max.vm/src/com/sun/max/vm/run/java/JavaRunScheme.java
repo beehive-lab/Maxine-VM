@@ -170,6 +170,9 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     @ALIAS(declaringClass = System.class)
     public static native void initializeSystemClass();
 
+
+
+
     /**
      * The initialization method of the Java run scheme runs at both bootstrapping and startup.
      * While bootstrapping, it gathers the methods needed for native initialization, and at startup
@@ -194,6 +197,10 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                 // Normally, we would have to initialize tracing this late,
                 // because 'PrintWriter.<init>()' relies on a system property ("line.separator"), which is accessed during 'initializeSystemClass()'.
                 Log.println("initialiszeSyatemClass");
+                /*double x = 23.456d;
+                long y = MaxineVM.d2jlong(x);
+                Log.println("VALUEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE ");
+                Log.println(y);*/
                 initializeSystemClass();
                 Log.println("reinit classes");
 

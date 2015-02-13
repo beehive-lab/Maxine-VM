@@ -217,15 +217,20 @@ public class AMD64LIRGenerator extends LIRGenerator {
             if (opcode == Bytecodes.LREM) {
                 resultReg = RDX_L; // remainder result is produced in rdx
                 lir.lrem(dividend, divisor, resultReg, LDIV_TMP, info);
+                //resultReg = callRuntimeWithResult(CiRuntimeCall.arithmeticlrem, null, dividend, divisor);
             } else if (opcode == Bytecodes.LDIV) {
                 resultReg = RAX_L; // division result is produced in rax
                 lir.ldiv(dividend, divisor, resultReg, LDIV_TMP, info);
+                //resultReg = callRuntimeWithResult(CiRuntimeCall.arithmeticldiv, null, dividend, divisor);
+
             } else if (opcode == Op2.UREM) {
                 resultReg = RDX_L; // remainder result is produced in rdx
                 lir.lurem(dividend, divisor, resultReg, LDIV_TMP, info);
+                //resultReg = callRuntimeWithResult(CiRuntimeCall.arithmeticlurem, null, dividend, divisor);
             } else if (opcode == Op2.UDIV) {
                 resultReg = RAX_L; // division result is produced in rax
                 lir.ludiv(dividend, divisor, resultReg, LDIV_TMP, info);
+                //resultReg = callRuntimeWithResult(CiRuntimeCall.arithmeticludiv, null, dividend, divisor);
             } else {
                 throw Util.shouldNotReachHere();
             }
@@ -566,13 +571,21 @@ public class AMD64LIRGenerator extends LIRGenerator {
             case F2L: stub = stubFor(CompilerStub.Id.f2l); break;
             case D2I: stub = stubFor(CompilerStub.Id.d2i); break;
             case D2L: stub = stubFor(CompilerStub.Id.d2l); break;
+
+
         }
         // Checkstyle: on
         if (stub != null) {
             // Force result to be rax to match compiler stubs expectation.
             CiValue stubResult = x.kind == CiKind.Int ? RAX_I : RAX_L;
-            lir.convert(x.opcode, input, stubResult, stub);
-            lir.move(stubResult, result);
+            /*if(x.opcode == Convert.Op.D2L) {
+            ANDY -- remove the comments to add a runtime call instead of the
+            LIRAssembler way of doing D2L
+                result = callRuntimeWithResult(CiRuntimeCall.d2jlong, null, input);
+            } else {*/
+                lir.convert(x.opcode, input, stubResult, stub);
+                lir.move(stubResult, result);
+            /*}*/
         } else {
             lir.convert(x.opcode, input, result, stub);
         }

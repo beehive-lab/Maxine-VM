@@ -30,6 +30,12 @@ import static com.sun.cri.ci.CiKind.*;
  * bytecodes.
  */
 public enum CiRuntimeCall {
+    d2jlong(Long, Double),
+    f2jlong(Long, Float),
+    arithmeticldiv(Long, Long, Long),
+    arithmeticlrem(Long, Long, Long),
+    arithmeticlurem(Long, Long, Long),
+    arithmeticludiv(Long, Long, Long),
     UnwindException(Void, Object),
     Deoptimize(Void),
     RegisterFinalizer(Void, Object),

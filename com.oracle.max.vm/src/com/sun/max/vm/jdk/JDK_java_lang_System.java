@@ -22,32 +22,44 @@
  */
 package com.sun.max.vm.jdk;
 
-import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.VMConfiguration.*;
-import static com.sun.max.vm.VMOptions.*;
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
-import static com.sun.max.vm.VMProperty.*;
-
-import java.io.*;
-import java.nio.charset.*;
-import java.util.*;
-
-import sun.misc.*;
-import sun.reflect.*;
-
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
-import com.sun.max.platform.*;
-import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
+import com.sun.max.lang.Strings;
+import com.sun.max.platform.OS;
+import com.sun.max.platform.Platform;
+import com.sun.max.program.ProgramError;
+import com.sun.max.unsafe.CString;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.unsafe.Word;
+import com.sun.max.util.Utf8Exception;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.NativeProperty;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.object.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.type.*;
+import com.sun.max.vm.actor.holder.ClassActor;
+import com.sun.max.vm.actor.holder.Hub;
+import com.sun.max.vm.object.ArrayAccess;
+import com.sun.max.vm.object.ObjectAccess;
+import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.type.BootClassLoader;
+import com.sun.max.vm.type.Kind;
+import sun.misc.Launcher;
+import sun.misc.Perf;
+import sun.reflect.Reflection;
+
+import java.io.File;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.nio.charset.Charset;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.TreeMap;
+
+import static com.sun.max.platform.Platform.platform;
+import static com.sun.max.vm.MaxineVM.vm;
+import static com.sun.max.vm.VMConfiguration.vmConfig;
+import static com.sun.max.vm.VMOptions.register;
+import static com.sun.max.vm.VMOptions.verboseOption;
+import static com.sun.max.vm.VMProperty.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
 
 /**
  * Implements method substitutions for {@link java.lang.System java.lang.System}.
@@ -136,6 +148,9 @@ public final class JDK_java_lang_System {
      * @param toComponentClassActor the class actor representing the component type of the destination array
      */
     private static void arrayCopyForward(final Kind kind, Object fromArray, int fromIndex, Object toArray, int toIndex, int length, ClassActor toComponentClassActor) {
+        //Log.println("arrayCopyForward");
+        //Log.println(kind.asEnum);
+
         switch (kind.asEnum) {
             case BYTE: {
                 for (int i = 0; i < length; i++) {
@@ -202,7 +217,7 @@ public final class JDK_java_lang_System {
                 break;
             }
             default: {
-                throw ProgramError.unknownCase();
+                throw ProgramError.unknownCase("arrayCopyForward");
             }
         }
     }
@@ -280,7 +295,7 @@ public final class JDK_java_lang_System {
                 break;
             }
             default: {
-                throw ProgramError.unknownCase();
+                throw ProgramError.unknownCase("arrayCopyBackward");
             }
         }
     }
@@ -316,6 +331,7 @@ public final class JDK_java_lang_System {
                 if (toIndex < 0 || length < 0 || fromIndex + length > ArrayAccess.readArrayLength(fromArray)) {
                     throw new IndexOutOfBoundsException();
                 }
+		Log.println("POSITION ONE arrayCopyForward");
                 arrayCopyForward(kind, fromArray, fromIndex, fromArray, toIndex, length, null);
             }
             return;
@@ -327,10 +343,15 @@ public final class JDK_java_lang_System {
                     toIndex + length > ArrayAccess.readArrayLength(toArray)) {
                 throw new IndexOutOfBoundsException();
             }
+            Log.println("POSITION TWO arrayCopyForward");
+            //Log.println( kind.asEnum);
+	   // Log.println("DONE");
+
+
             arrayCopyForward(kind, fromArray, fromIndex, toArray, toIndex, length, null);
         } else {
             final ClassActor toArrayClassActor = toHub.classActor;
-            if (!toArrayClassActor.isArrayClass()) {
+          if (!toArrayClassActor.isArrayClass()) {
                 throw new ArrayStoreException();
             }
             final ClassActor toComponentClassActor = toArrayClassActor.componentClassActor();
@@ -342,11 +363,13 @@ public final class JDK_java_lang_System {
                     toIndex + length > ArrayAccess.readArrayLength(toArray)) {
                 throw new IndexOutOfBoundsException();
             }
+            Log.println("POSITION THREE arrayCopyForward");
             arrayCopyForward(kind, fromArray, fromIndex, toArray, toIndex, length, toComponentClassActor);
         }
     }
 
     /**
+
      * Gets the default (identity) hashcode for an object.
      *
      * @see java.lang.System#identityHashCode(Object)
@@ -718,7 +741,7 @@ public final class JDK_java_lang_System {
                 initBasicUnixProperties(properties);
                 break;
             default:
-                throw ProgramError.unknownCase();
+                throw ProgramError.unknownCase("initProperties OS name" );
         }
 
         // 5. set up user-specific information
@@ -1019,7 +1042,7 @@ public final class JDK_java_lang_System {
             case WINDOWS:
                 return libraryName + ".dll";
             default:
-                throw ProgramError.unknownCase();
+                throw ProgramError.unknownCase("mapLibraryName");
         }
     }
 

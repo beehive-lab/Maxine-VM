@@ -343,7 +343,6 @@ public class ARMV7CompilerStubEmitter {
             asm.nop(entryCodeOffset);
         }
         asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
-
         final int frameSize = frameSize();
         asm.subq(ARMV7.r13, frameSize);
         tasm.setFrameSize(frameSize);
