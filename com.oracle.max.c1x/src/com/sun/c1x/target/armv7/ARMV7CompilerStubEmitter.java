@@ -50,15 +50,11 @@ public class ARMV7CompilerStubEmitter {
     //APN BROKEN!!!!
     private static final long FloatSignFlip = 0x8000000080000000L;
     private static final long DoubleSignFlip = 0x8000000000000000L;
-    private static final CiRegister convertArgument = ARMV7.d0;
-    private static final CiRegister convertResult = ARMV7.d0; // APCS return first arg in d0
-                                                              // are we allowed to destructively update d0?
-    /*
-    The problem we have here is what to do for single precision? Do we use s0 instead?
+    private static final CiRegister convertArgument = ARMV7.s0;
+    private static final CiRegister convertResult = ARMV7.s0;
 
-     */
-    private static final CiRegister negateArgument = ARMV7.d0;
-    private static final CiRegister negateTemp = ARMV7.d15;
+    private static final CiRegister negateArgument = ARMV7.s0;
+    private static final CiRegister negateTemp = ARMV7.s30;
 
     /**
      * The slots in which the stub finds its incoming arguments.
@@ -136,12 +132,6 @@ public class ARMV7CompilerStubEmitter {
                 break;
             case d2l:
                 emitD2L();
-                break;
-            case fneg:
-                emitFNEG();
-                break;
-            case dneg:
-                emitDNEG();
                 break;
         }
 
@@ -242,92 +232,42 @@ public class ARMV7CompilerStubEmitter {
     }
 
     private void negatePrologue(boolean isDNEG) {
-        /*
-        prologue(new CiCalleeSaveLayout(0, -1, comp.target.wordSize, negateArgument, negateTemp));
-        asm.movq(negateArgument, comp.frameMap().toStackAddress(inArgs[0]));
-        */
         if (isDNEG) {
-            prologue(new CiCalleeSaveLayout(0, -1, comp.target.wordSize, negateArgument,ARMV7.r14));
+            prologue(new CiCalleeSaveLayout(0, -1, comp.target.wordSize, negateArgument, ARMV7.r14));
         } else {
-            prologue(new CiCalleeSaveLayout(0, -1, comp.target.wordSize, ARMV7.s0,ARMV7.r14));
+            prologue(new CiCalleeSaveLayout(0, -1, comp.target.wordSize, ARMV7.s0, ARMV7.r14));
         }
 
-        /*
-        The callee save layout is saving d0, at the FP address.
-         */
-
         CiAddress tmp = comp.frameMap().toStackAddress(inArgs[0]);
-        //CiAddress fixed = new CiAddress(tmp.kind,ARMV7.r11.asValue(),tmp.index,tmp.scale,tmp.displacement);
         asm.setUpScratch(tmp);
 
         if (isDNEG) {
-            asm.vldr(ARMV7Assembler.ConditionFlag.Always, negateArgument, ARMV7.r12, -1); //(-1 becomes -4)
+            asm.vldr(ARMV7Assembler.ConditionFlag.Always, negateArgument, ARMV7.r12, -1, CiKind.Int, CiKind.Int);
         } else {
-            asm.vldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.s0, ARMV7.r12,-1);//(-2 becomes -8)
+            asm.vldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.s0, ARMV7.r12, -1, CiKind.Float, CiKind.Int);
         }
-        //asm.vpop(ARMV7Assembler.ConditionFlag.Always,negateArgument,negateArgument);
-       //' asm.movq(negateArgument, comp.frameMap().toStackAddress(inArgs[0]));
     }
 
     private void negateEpilogue(boolean isDNEG) {
-       // asm.movq(comp.frameMap().toStackAddress(outResult), negateArgument);
-        CiAddress tmp  = comp.frameMap().toStackAddress(outResult);
-        //CiAddress fixed = new CiAddress(tmp.kind,ARMV7.r11.asValue(),tmp.index,tmp.scale,tmp.displacement);
+        CiAddress tmp = comp.frameMap().toStackAddress(outResult);
         asm.setUpScratch(tmp);
         if (isDNEG) {
-            asm.vstr(ARMV7Assembler.ConditionFlag.Always, negateArgument, ARMV7.r12, -1);//(-1 becomes -4)
-        }else {
-            asm.vstr(ARMV7Assembler.ConditionFlag.Always,ARMV7.s0,ARMV7.r12,-1);//(-2 becomes -8)
+            asm.vstr(ARMV7Assembler.ConditionFlag.Always, negateArgument, ARMV7.r12, -1, CiKind.Int, CiKind.Int);
+        } else {
+            asm.vstr(ARMV7Assembler.ConditionFlag.Always, ARMV7.s0, ARMV7.r12, -1, CiKind.Float, CiKind.Int);
         }
-        //asm.vpush(ARMV7Assembler.ConditionFlag.Always,negateArgument,negateArgument);
         epilogue();
-    }
-
-
-    private void emitDNEG() {
-
-        /*
-        Removes the top double-precision float from the operand stack, negates it#
-         (i.e. inverts its sign), and pushes the negated result back onto the stack.
-
-        Note that, in IEEE double precision floating point arithmetic, negation is not
-         quite the same as subtracting from 0. IEEE has two zeros, +0.0 and -0.0, and
-         dneg applied to +0.0 is -0.0, whereas (+0.0 minus +0.0) is +0.0.
-         */
-        //System.out.println("DOING DNEG");
-        negatePrologue(true);
-        asm.nop();
-        /* On ARMV7 we can use the vneg function tested that vneg of +0.0 gives -0.0 */
-
-        //asm.movsd(negateTemp, tasm.recordDataReferenceInCode(CiConstant.forLong(DoubleSignFlip)));
-        // asm.xorpd(negateArgument, negateTemp);
-
-        asm.vneg(ARMV7Assembler.ConditionFlag.Always,negateArgument,negateArgument);
-        negateEpilogue(true);
-        //System.out.println("DONE DNEG");
-    }
-
-    private void emitFNEG() {
-        negatePrologue(false);
-        //asm.setUpScratch(tasm.recordDataReferenceInCode(CiConstant.forLong(FloatSignFlip)));
-        //asm.vldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.s1,ARMV7.r12,0);
-        asm.vneg(ARMV7Assembler.ConditionFlag.Always,ARMV7.s0,ARMV7.s0);
-       // asm.movsd(negateTemp, tasm.recordDataReferenceInCode(CiConstant.forLong(FloatSignFlip)));
-       // asm.xorps(negateArgument, negateTemp);
-        negateEpilogue(false);
     }
 
     private void convertPrologue() {
         prologue(new CiCalleeSaveLayout(0, -1, comp.target.wordSize, convertArgument, convertResult));
-       // asm.movq(convertArgument, comp.frameMap().toStackAddress(inArgs[0]));
         asm.setUpScratch(comp.frameMap().toStackAddress(inArgs[0]));
-        asm.vldr(ARMV7Assembler.ConditionFlag.Always,convertArgument,ARMV7.r12,0);
+        asm.vldr(ARMV7Assembler.ConditionFlag.Always, convertArgument, ARMV7.r12, 0, CiKind.Int, CiKind.Int);
     }
 
     private void convertEpilogue() {
-        //asm.movq(comp.frameMap().toStackAddress(outResult), convertResult);
         asm.setUpScratch(comp.frameMap().toStackAddress(outResult));
-        asm.vstr(ARMV7Assembler.ConditionFlag.Always,convertResult,ARMV7.r12,0);
+        asm.vstr(ARMV7Assembler.ConditionFlag.Always, convertResult, ARMV7.r12, 0, CiKind.Int, CiKind.Int);
         epilogue();
     }
 
@@ -402,12 +342,7 @@ public class ARMV7CompilerStubEmitter {
             // pad to normal code entry point
             asm.nop(entryCodeOffset);
         }
-	// ADDED
- 	//asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r12,ARMV7.r13);
-        //asm.push(ARMV7Assembler.ConditionFlag.Always,1<<11|1<<12|1<<14|1<<15);// r11, r12(stack),r14 (LR),r15(PC)
-        //asm.add(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13,12,0);
-	asm.push(ARMV7Assembler.ConditionFlag.Always,1<<14);
-
+        asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
 
         final int frameSize = frameSize();
         asm.subq(ARMV7.r13, frameSize);
@@ -440,7 +375,6 @@ public class ARMV7CompilerStubEmitter {
             CiValue location = cc.locations[i];
             asm.setUpScratch(comp.frameMap().toStackAddress(inArgs[i]));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always,location.asRegister(),ARMV7.r12,0);
-            //asm.movq(location.asRegister(), comp.frameMap().toStackAddress(inArgs[i]));
         }
 
         if (C1XOptions.AlignDirectCallsForPatching) {
@@ -459,10 +393,9 @@ public class ARMV7CompilerStubEmitter {
             CiRegister returnRegister = comp.registerConfig.getReturnRegister(call.resultKind);
             asm.setUpScratch(comp.frameMap().toStackAddress(outResult));
             if(returnRegister.number <= 15) {
-                asm.str(ARMV7Assembler.ConditionFlag.Always, returnRegister, ARMV7.r12, 0); //TODO check is the store the correct way round
-                // asm.movq(comp.frameMap().toStackAddress(outResult), returnRegister);
+                asm.str(ARMV7Assembler.ConditionFlag.Always, returnRegister, ARMV7.r12, 0);
             } else {
-                asm.vstr(ARMV7Assembler.ConditionFlag.Always,returnRegister,ARMV7.r12,0);
+                asm.vstr(ARMV7Assembler.ConditionFlag.Always,returnRegister,ARMV7.r12,0, CiKind.Float, CiKind.Int);
             }
         }
     }
