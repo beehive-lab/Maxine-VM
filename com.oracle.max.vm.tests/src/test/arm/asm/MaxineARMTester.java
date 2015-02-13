@@ -5,6 +5,7 @@ import java.io.*;
 public class MaxineARMTester {
 
     public static boolean DEBUG = false;
+    public static boolean RESET = false;
     public static boolean DEBUGOBJECTS = false;
     public static final String ENABLE_QEMU = "max.arm.qemu";
     public static boolean ENABLE_SIMULATOR = true;
@@ -67,7 +68,9 @@ public class MaxineARMTester {
      */
 
     public void reset() {
-        cleanFiles();
+        if (RESET) {
+            cleanFiles();
+        }
         cleanProcesses();
     }
 
@@ -191,7 +194,7 @@ public class MaxineARMTester {
         }
     }
 
-    private void runSimulationRefactored(boolean captureFPREGs) throws Exception {
+    private void runSimulation(boolean captureFPREGs) throws Exception {
         ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb");
         if (captureFPREGs) {
             gdbProcess.redirectInput(gdbInputFPREGS);
@@ -231,7 +234,7 @@ public class MaxineARMTester {
     }
 
     public Object[] runObjectRegisteredSimulation() throws Exception {
-        runSimulationRefactored(true);
+        runSimulation(true);
         Object[] simulatedRegisters = parseObjectRegistersToFile(gdbOutput.getName());
         return simulatedRegisters;
     }
@@ -309,7 +312,10 @@ public class MaxineARMTester {
             System.exit(-1);
         }
         int[] simulatedRegisters = parseRegistersToFile(gdbOutput.getName());
-        assert validateRegisters(simulatedRegisters, expectRegs, testRegs);
+        if (!validateRegisters(simulatedRegisters, expectRegs, testRegs)) {
+            cleanProcesses();
+            assert true : "Error while validating registers";
+        }
     }
     public int [] runSimulationRegisters() throws Exception {
         cleanFiles();
