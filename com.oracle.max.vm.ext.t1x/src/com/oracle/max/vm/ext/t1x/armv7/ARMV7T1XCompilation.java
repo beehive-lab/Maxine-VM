@@ -152,7 +152,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         assert dst.encoding < 10;
         asm.setUpScratch(spLong(index));
         asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
-        asm.ldrd(ConditionFlag.Always, dst, asm.scratchRegister, 0); // dst needs to be big enough to hold a long!
+        asm.ldrd(ConditionFlag.Always, dst, scratch, 0); // dst needs to be big enough to hold a long!
     }
 
     @Override
@@ -166,72 +166,32 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     public void peekDouble(CiRegister dst, int index) {
         assert dst.isFpu();
-        assert (dst.number <= ARMV7.d15.number) && (dst.number >= ARMV7.d0.number); // must be double
         asm.setUpScratch(spLong(index));
         asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
-        asm.vldr(ARMV7Assembler.ConditionFlag.Always, dst, asm.scratchRegister, 0);
+        asm.vldr(ARMV7Assembler.ConditionFlag.Always, dst, scratch, 0, CiKind.Double, CiKind.Int);
 
     }
 
     @Override
     public void pokeDouble(CiRegister src, int index) {
         assert src.isFpu();
-        assert (src.number <= ARMV7.d15.number) && (src.number >= ARMV7.d0.number); // must be double
         asm.setUpScratch(spLong(index));
         asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
-        asm.vstr(ARMV7Assembler.ConditionFlag.Always, src, asm.scratchRegister, 0);
+        asm.vstr(ARMV7Assembler.ConditionFlag.Always, src, scratch, 0, CiKind.Double, CiKind.Int);
     }
-    /*
-    HUGE HACK TO GET THE CORRECT FLOLATING POINT REGISTER
-    private static CiRegister getFloatRegister(CiRegister val) {
-        int offset = 0;
-        System.out.print(" val.encoding "+ val.encoding + " val.number "+ val.number);
-        if(FLOATDOUBLEREGISTERS) {
-            if(val.number > 31) {
-                offset = 16 + val.encoding;
-            } else {
-                offset = 16 + 2*val.encoding;
-            }
-            System.out.println(" OFFSET " + offset);
-            return ARMV7.floatRegisters[offset];
 
-        }else {
-            return val;
-        }
-    }
-     */
-    public static CiRegister getFloatRegister(CiRegister val) {
-        int offset = 0;
-        //System.out.println("ARMV7T1XCompilation number " + val.number + " encoding " + val.encoding);
-        //if(FLOATDOUBLEREGISTERS) {
-            if(val.number > 31) {
-                offset = 16 + val.encoding;
-            } else {
-                offset = 16 + 2*val.encoding;
-            }
-            return ARMV7.floatRegisters[offset];
-
-       // }else {
-          //  return val;
-        //}
-    }
     @Override
     public void peekFloat(CiRegister dst, int index) {
         assert dst.isFpu();
-        dst = getFloatRegister(dst);
-        assert (dst.number <= ARMV7.s31.number) && (dst.number >= ARMV7.s0.number); // must be FLOAT!
         asm.setUpScratch(spInt(index));
-        asm.vldr(ConditionFlag.Always, dst, asm.scratchRegister, 0);
+        asm.vldr(ConditionFlag.Always, dst, asm.scratchRegister, 0, CiKind.Float, CiKind.Int);
     }
 
     @Override
     public void pokeFloat(CiRegister src, int index) {
         assert src.isFpu();
-        src = getFloatRegister(src);
-
-        assert (src.number <= ARMV7.s31.number) && (src.number >= ARMV7.s0.number);
         asm.setUpScratch(spInt(index));
-        asm.vstr(ConditionFlag.Always, src, asm.scratchRegister, 0);
+        asm.vstr(ConditionFlag.Always, src, asm.scratchRegister, 0, CiKind.Float, CiKind.Int);
     }
 
     @Override
@@ -362,11 +322,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignFloat(CiRegister dst, float value) {
-        dst = getFloatRegister(dst);
-
         assert dst.number >= ARMV7.s0.number && dst.number <= ARMV7.s31.number;
         asm.mov32BitConstant(ARMV7.r12, Float.floatToRawIntBits(value));
-        asm.vmov(ConditionFlag.Always, dst, ARMV7.r12);
+        asm.vmov(ConditionFlag.Always, dst, ARMV7.r12, CiKind.Float, CiKind.Int);
     }
 
     @Override
@@ -465,14 +423,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignDouble(CiRegister dst, double value) {
-        assert dst.number >= ARMV7.d0.number && dst.number <= ARMV7.d15.number;
-        long asLong = Double.doubleToRawLongBits(value);
-        // Dirty dirty code -- is there a better way?
-        // TODO, change to using scratch and assign to the appropriate single precision
-        // TODO register that overlaps with the appropriate double precision register.
-        // TODO this will save 2x2 memory stores and loads
-        assignLong(ARMV7.r8, asLong);
-        asm.vmov(ConditionFlag.Always, dst, ARMV7.r8);
+        assert dst.isFpu();
+        assignLong(ARMV7.r8, Double.doubleToRawLongBits(value));
+        asm.vmov(ConditionFlag.Always, dst, ARMV7.r8, CiKind.Double, CiKind.Int);
     }
 
     @Override
