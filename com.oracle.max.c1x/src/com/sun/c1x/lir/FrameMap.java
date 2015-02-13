@@ -204,11 +204,11 @@ public final class FrameMap {
 
         this.spillSlotCount = spillSlotCount;
         int frameSize = offsetToStackBlocksEnd();
+        //System.out.println("ofset ToStackBloks End " + frameSize);
         CiCalleeSaveLayout csl = compilation.registerConfig.getCalleeSaveLayout();
         if (csl != null) {
             frameSize += csl.size;
         }
-
         this.frameSize = compilation.target.alignFrameSize(frameSize);
     }
 
@@ -238,15 +238,7 @@ public final class FrameMap {
             int callerFrame = frameSize() + compilation.target.arch.returnAddressSize;
             final int callerFrameOffset = slot.index() * compilation.target.spillSlotSize;
             int offset = callerFrame + callerFrameOffset;
-            if(compilation.target.arch.isARM()) {
-		
-                //offset = offset-4 ; // we push the LR in the Callee Save
-		// +4 if we dont do PC as well
-		//offset = offset +12; // we push ip(copy of sp) r11 r14 r15 in the Calee Save tryin -4, 0 ,4 ,8, 12 16 , -8, -12, -16
-		//offset = offset +4 ;// pushed r11 and r14
-		offset = offset + 0; // pushed r14
-            }
-            return new CiAddress(slot.kind, compilation.target.arch.isARM() ? CiRegister.CallerFrame.asValue() : CiRegister.Frame.asValue(), offset);
+            return new CiAddress(slot.kind, CiRegister.Frame.asValue(), offset);
         } else {
             int offset = offsetForOutgoingOrSpillSlot(slot.index(), size);
             return new CiAddress(slot.kind, CiRegister.Frame.asValue(), offset);
