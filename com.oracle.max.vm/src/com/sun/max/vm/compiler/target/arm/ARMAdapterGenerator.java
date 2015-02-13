@@ -507,69 +507,45 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
         @Override
         protected void adapt(ARMV7Assembler asm, Kind kind, CiRegister reg, int offset32) {
             switch (kind.asEnum) {
-                case BYTE:      //asm.movsxb(reg, new CiAddress(CiKind.Byte, rsp.asValue(), offset32));
-                    // sign extend
+                case BYTE:
                     asm.setUpScratch(new CiAddress(CiKind.Byte, ARMV7.r13.asValue(), offset32));
-                    asm.ldrsb(ARMV7Assembler.ConditionFlag.Always,1,1,0,reg,ARMV7.r12,0);
-
-                break;
-
-                case BOOLEAN:   //asm.movzxb(reg, new CiAddress(CiKind.Boolean, rsp.asValue(), offset32));
-                    // zero extend
+                    asm.ldrsb(ARMV7Assembler.ConditionFlag.Always, 1, 1, 0, reg, ARMV7.r12, 0);
+                    break;
+                case BOOLEAN:
                     asm.setUpScratch(new CiAddress(CiKind.Boolean, ARMV7.r13.asValue(), offset32));
-                    asm.ldrb(ARMV7Assembler.ConditionFlag.Always,1,1,0, reg, ARMV7.r12, 0);
-                break;
-
+                    asm.ldrb(ARMV7Assembler.ConditionFlag.Always, 1, 1, 0, reg, ARMV7.r12, 0);
+                    break;
                 case SHORT:
-                    // sign extend
-                    //asm.movsxw(reg, new CiAddress(CiKind.Short, rsp.asValue(), offset32));
-                    asm.setUpScratch( new CiAddress(CiKind.Short, ARMV7.r13.asValue(), offset32));
-                    asm.ldrshw(ARMV7Assembler.ConditionFlag.Always,1,1,0, reg, ARMV7.r12,0);
-                break;
-
+                    asm.setUpScratch(new CiAddress(CiKind.Short, ARMV7.r13.asValue(), offset32));
+                    asm.ldrshw(ARMV7Assembler.ConditionFlag.Always, 1, 1, 0, reg, ARMV7.r12, 0);
+                    break;
                 case CHAR:
-                    // zero extend
-                    asm.setUpScratch(    new CiAddress(CiKind.Char, ARMV7.r13.asValue(), offset32));
-                    asm.ldrb(ARMV7Assembler.ConditionFlag.Always,1,1,0,reg,ARMV7.r12,0);
-                            //asm.movzxl(reg, new CiAddress(CiKind.Char, rsp.asValue(), offset32));
-                break;
-
+                    asm.setUpScratch(new CiAddress(CiKind.Char, ARMV7.r13.asValue(), offset32));
+                    asm.ldrb(ARMV7Assembler.ConditionFlag.Always, 1, 1, 0, reg, ARMV7.r12, 0);
+                    break;
                 case INT:
                 case WORD:
-                case REFERENCE: // ARMV7 is 32 bit!!!!! so we only need 32bits
-                    asm.setUpScratch(   new CiAddress(CiKind.Int, ARMV7.r13.asValue(), offset32));
-                    asm.ldr(ARMV7Assembler.ConditionFlag.Always,0,0,0,reg,ARMV7.r12,ARMV7.r12,0,0);
-                    //asm.movslq(reg, new CiAddress(CiKind.Int, rsp.asValue(), offset32));
-                break;
-
-                case LONG: // what about long long? we dont have an enum CiKind for that? APN
-                    asm.setUpScratch(    new CiAddress(CiKind.Long, ARMV7.r13.asValue(), offset32));
-                    asm.ldrd(ARMV7Assembler.ConditionFlag.Always,reg, ARMV7.r12, 0);
-                    //asm.movw(ConditionFlag.Always,ARMV7.r12,42);
-                    //asm.movw(ConditionFlag.Always,ARMV7.r12,42);
-                    //asm.movw(ConditionFlag.Always,ARMV7.r12,42);
-                    //asm.movw(ConditionFlag.Always,ARMV7.r12,42);
-                    //asm.movw(ConditionFlag.Always,ARMV7.r12,42);
-
-
-                    //  asm.movq(reg, new CiAddress(CiKind.Long, rsp.asValue(), offset32));
-                break;
-
+                case REFERENCE:
+                    asm.setUpScratch(new CiAddress(CiKind.Int, ARMV7.r13.asValue(), offset32));
+                    asm.ldr(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, reg, ARMV7.r12, ARMV7.r12, 0, 0);
+                    break;
+                case LONG:
+                    asm.setUpScratch(new CiAddress(CiKind.Long, ARMV7.r13.asValue(), offset32));
+                    asm.ldrd(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0);
+                    break;
                 case FLOAT:
                     asm.setUpScratch(new CiAddress(CiKind.Float, ARMV7.r13.asValue(), offset32));
-                    asm.movss(ARMV7Assembler.ConditionFlag.Always,0,0,0,reg,ARMV7.r12,ARMV7.r12,0,0);
-
-                    //asm.movss(reg, new CiAddress(CiKind.Float, rsp.asValue(), offset32));
-                break;
-
+                    asm.movss(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, reg, ARMV7.r12, ARMV7.r12, 0, 0, CiKind.Float, CiKind.Float);
+                    break;
                 case DOUBLE:
                     asm.setUpScratch(new CiAddress(CiKind.Double, ARMV7.r13.asValue(), offset32));
-                    asm.movsd(ARMV7Assembler.ConditionFlag.Always,0,0,0,reg,ARMV7.r12,ARMV7.r12);
-                    //asm.movsd(reg, new CiAddress(CiKind.Double, rsp.asValue(), offset32));
-                break;
-                default:        throw ProgramError.unexpected();
+                    asm.movsd(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, reg, ARMV7.r12, ARMV7.r12, CiKind.Double, CiKind.Double);
+                    break;
+                default:
+                    throw ProgramError.unexpected();
             }
         }
+
         // Checkstyle: resume
 
         @Override
@@ -935,7 +911,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
     protected void stackCopy(ARMV7Assembler asm, Kind kind, int sourceStackOffset, int destStackOffset) {
         if (kind.width == WordWidth.BITS_64) {
-            assert kind == Kind.LONG;
+            assert kind == Kind.LONG || kind == Kind.DOUBLE;
             asm.ldrd(ConditionFlag.Always, scratch, ARMV7.rsp, sourceStackOffset);
             asm.strd(ConditionFlag.Always, scratch, ARMV7.rsp, destStackOffset);
         } else {
