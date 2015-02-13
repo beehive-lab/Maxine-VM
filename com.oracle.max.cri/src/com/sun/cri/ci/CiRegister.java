@@ -252,4 +252,7 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
         return 0;
     }
 
+    public boolean isGeneral() {
+        return isSet(RegisterFlag.CPU);
+    }
 }
