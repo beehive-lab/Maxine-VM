@@ -1657,7 +1657,7 @@ public class Stubs {
                         if (tmp.number <= 15) {
                             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << tmp.number);
                         } else {
-                            asm.vpush(ARMV7Assembler.ConditionFlag.Always, tmp, tmp);
+                            asm.vpush(ARMV7Assembler.ConditionFlag.Always, tmp, tmp, CiKind.Float, CiKind.Float);
                         }
 
 
@@ -1675,7 +1675,7 @@ public class Stubs {
                         if (tmp2arg4.number <= 15) {
                             asm.push(ARMV7Assembler.ConditionFlag.Always, (1 << tmp2arg4.number) | (1 << (tmp2arg4.number + 1)));
                         } else {
-                            asm.vpush(ARMV7Assembler.ConditionFlag.Always, tmp2arg4, tmp2arg4);
+                            asm.vpush(ARMV7Assembler.ConditionFlag.Always, tmp2arg4, tmp2arg4, CiKind.Double, CiKind.Double);
                         }
 
                         // aPN TODO this is broken beyond belief
