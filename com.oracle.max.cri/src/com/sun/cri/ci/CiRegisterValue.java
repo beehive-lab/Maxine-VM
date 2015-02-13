@@ -45,7 +45,7 @@ public final class CiRegisterValue extends CiValue {
 
     CiRegisterValue(CiRegisterValue regValue) {
         super(regValue.kind);
-        assert regValue.kind.isLong() : regValue.kind;
+        assert regValue.kind.isLong() || regValue.kind.isDouble() : regValue.kind;
         String name = regValue.reg.name.substring(0, 1) + (new Integer(regValue.reg.name.substring(1, 2)) + 1);
         this.reg = new CiRegister(regValue.reg.number + 1, regValue.reg.encoding, regValue.reg.spillSlotSize, name, regValue.reg.originalFlags);
         highPart = true;
@@ -71,7 +71,7 @@ public final class CiRegisterValue extends CiValue {
 
     @Override
     public CiRegisterValue getClone() {
-        if (kind.isLong()) {
+        if (kind.isLong() || kind.isDouble()) {
             return new CiRegisterValue(this);
         } else {
             return null;
