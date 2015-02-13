@@ -814,11 +814,6 @@ public abstract class T1XCompilation {
             }
         }
         buf.emitBytes(template.code, 0, template.code.length);
-        //if(buf == null) System.err.println("buf is null");
-        //if(template == null) System.err.println("template is null");
-        //if(template.code == null) System.err.println("template code is null REMOVE COMMENTED OUT T1XCompilation::emitAndRecordSafepoints");
-        //System.err.println("BUFFER POS " + buf.position()); // this is the machine code right?
-        //if(template.code != null) buf.emitBytes(template.code, 0, template.code.length);
     }
 
     /**
