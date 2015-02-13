@@ -132,13 +132,7 @@ public class ARMV7LIRGenerator extends LIRGenerator {
         value.setDestroysRegister();
         value.loadItem();
         CiVariable reg = newVariable(x.kind);
-        CompilerStub stub = null;
-        if (x.kind == CiKind.Float) {
-            stub = stubFor(CompilerStub.Id.fneg);
-        } else if (x.kind == CiKind.Double) {
-            stub = stubFor(CompilerStub.Id.dneg);
-        }
-        lir.negate(value.result(), reg, stub);
+        lir.negate(value.result(), reg, null);
         setResult(x, reg);
     }
 
