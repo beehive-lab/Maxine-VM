@@ -1,14 +1,11 @@
 package com.oracle.max.asm.target.armv7;
 
-import com.oracle.max.asm.AbstractAssembler;
-import com.oracle.max.asm.Label;
-import com.sun.cri.ci.CiAddress;
-import com.sun.cri.ci.CiRegister;
-import com.sun.cri.ci.CiTarget;
-import com.sun.cri.ri.RiRegisterConfig;
+import static com.oracle.max.cri.intrinsics.MemoryBarriers.*;
 
-import static com.oracle.max.cri.intrinsics.MemoryBarriers.STORE_LOAD;
- 
+import com.oracle.max.asm.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
+
 public class ARMV7Assembler extends AbstractAssembler {
 
     public final CiRegister frameRegister;
@@ -739,27 +736,21 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    // TODO: Finalize this
-    public void movss(final ConditionFlag cond, int P, int U, int W, final CiRegister Rn, final CiRegister Rt, final CiRegister Rm, int imm2Type, int imm5) { // move
-        assert (Rt.number < 16);
-        if (Rn.number < 16) {
+    public void movss(final ConditionFlag cond, int P, int U, int W, final CiRegister Rn, final CiRegister Rt, final CiRegister Rm, int imm2Type, int imm5, CiKind destKind, CiKind srcKind) {
+        if (destKind.isGeneral()) {
             ldr(cond, P, U, W, Rn, Rt, Rm, imm2Type, imm5);
         } else {
-            //assert (Rn.number > 31);
-	    if(Rn.number <= 31) {
-			//System.out.println("movss assert removed ...attempting  vldr to a double not a single ... probably the hack to manipulate float/double registers has not been fixed in all places\n");
-	    }
-            vldr(cond, Rn, Rt, 0);
+            assert destKind.isFloatOrDouble();
+            vldr(cond, Rn, Rt, 0, destKind, srcKind);
         }
     }
 
-    // TODO: Finalize this
-    public void movsd(final ConditionFlag cond, int P, int U, int W, final CiRegister Rn, final CiRegister Rt, final CiRegister Rm) {
-        if (Rn.number < 16) {
+    public void movsd(final ConditionFlag cond, int P, int U, int W, final CiRegister Rn, final CiRegister Rt, final CiRegister Rm, CiKind destKind, CiKind srcKind) {
+        if (destKind.isGeneral()) {
             ldrd(cond, P, U, W, Rn, Rt, Rm);
         } else {
-            assert (Rn.number < 32);
-            vldr(cond, Rn, Rt, 0);
+            assert destKind.isFloatOrDouble();
+            vldr(cond, Rn, Rt, 0, destKind, srcKind);
         }
     }
 
@@ -804,9 +795,9 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
     public void ldmea(final ConditionFlag flag,final CiRegister theStack, final int registerList) {
-	int instruction = 0x09100000; 
+	int instruction = 0x09100000;
         instruction |= (flag.value() & 0xf) << 28;
-	instruction |= (theStack.encoding & 0xf) << 16; 
+	instruction |= (theStack.encoding & 0xf) << 16;
         instruction |= 0xffff & registerList;
         emitInt(instruction);
     }
@@ -913,59 +904,6 @@ public class ARMV7Assembler extends AbstractAssembler {
         return r.encoding;
     }
 
-    /**
-     * APN The methods below here are largely to interface the ARMV7Assembler to the ARMV7MAcroAssembler which is based
-     * on the X86 version in the longer term we probably want a more natural encoding/fit to ARM elsewhere in Maxine and
-     * then to refactor but right now the priority is to get the port working. movl in the AMD assembler has complex
-     * semantics, it might be a constant it might be memory location ..... movl is being replaced into mov32BitConstant
-     * and other yet to be implemented instruction aspects in order to disambiguate the desired operation from the
-     * purpose
-     */
-    public void casSetUpScratch(CiAddress addr) {
-        CiRegister base = addr.base();
-        CiRegister index = addr.index();
-        CiAddress.Scale scale = addr.scale;
-        int disp = addr.displacement;
-        if (addr == CiAddress.Placeholder) {
-            nop(numInstructions(addr)); // 4 instructions, 2 for mov32, 1 for add and 1 for addclsl
-            return;
-        }
-
-        assert base.isValid() || base.compareTo(CiRegister.Frame) == 0 || base.compareTo(CiRegister.CallerFrame) == 0;
-
-        //}
-        // APN can we have a memory address --- not handled yet?
-        // APN simple case where we just have a register destination
-        // TODO fix this so it will issue loads when appropriate!
-
-        if (base.isValid() || base.compareTo(CiRegister.Frame) == 0) {
-            if(base == CiRegister.Frame) {
-                base = frameRegister;
-            }
-            if (disp != 0) {
-                mov32BitConstant(scratchRegister, disp);
-                addRegisters(ConditionFlag.Always, false, scratchRegister, scratchRegister, base, 0, 0);
-                if (index.isValid()) {
-                    addlsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
-                }
-            } else {
-                if (index.isValid()) {
-                    addlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
-                } else {
-                    mov(ConditionFlag.Always, false, scratchRegister, base);
-                }
-            }
-        } else {
-
-            mov32BitConstant(scratchRegister, addr.kind.isLong() ? disp + 4 : disp);
-            sub(ConditionFlag.Always, false, scratchRegister, ARMV7.r11, scratchRegister, 0, 0);
-            //addRegisters(ConditionFlag.Always, false, scratchRegister, /*ARMV7.r11*/base, scratchRegister, 0, 0);
-            if (index.isValid()) {
-                addlsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
-            }
-        }
-    }
-
     public void setUpScratch(CiAddress addr) {
         CiRegister base = addr.base();
         CiRegister index = addr.index();
@@ -976,15 +914,10 @@ public class ARMV7Assembler extends AbstractAssembler {
             return;
         }
 
-        assert base.isValid() || base.compareTo(CiRegister.Frame) == 0 || base.compareTo(CiRegister.CallerFrame) == 0;
-
-        //}
-        // APN can we have a memory address --- not handled yet?
-        // APN simple case where we just have a register destination
-        // TODO fix this so it will issue loads when appropriate!
+        assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
 
         if (base.isValid() || base.compareTo(CiRegister.Frame) == 0) {
-            if(base == CiRegister.Frame) {
+            if (base == CiRegister.Frame) {
                 base = frameRegister;
             }
             if (disp != 0) {
@@ -999,16 +932,6 @@ public class ARMV7Assembler extends AbstractAssembler {
                 } else {
                     mov(ConditionFlag.Always, false, scratchRegister, base);
                 }
-            }
-        } else {
-            base = frameRegister;
-	    if(base.number <= 15 && base.number >= 0) base = ARMV7.allRegisters[base.number];
-	    else base = ARMV7.r11;
-            mov32BitConstant(scratchRegister, addr.kind.isLong() ? disp + 4 : disp);
-            //sub(ConditionFlag.Always, false, scratchRegister, /*ARMV7.r11*/base, scratchRegister, 0, 0);
-            addRegisters(ConditionFlag.Always, false, scratchRegister, /*ARMV7.r11*/base, scratchRegister, 0, 0);
-            if (index.isValid()) {
-                addlsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
             }
         }
     }
@@ -1024,13 +947,10 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
 
         assert base.isValid() || base.compareTo(CiRegister.Frame) == 0 || base.compareTo(CiRegister.CallerFrame) == 0;
-        if(base == CiRegister.Frame) {
-                base = frameRegister;
+        if (base == CiRegister.Frame) {
+            base = frameRegister;
         }
 
-        // APN can we have a memory address --- not handled yet?
-        // APN simple case where we just have a register destination
-        // TODO fix this so it will issue loads when appropriate!
         if (base.isValid()) {
             if (disp != 0) {
                 mov32BitConstant(dest, disp);
@@ -1085,16 +1005,17 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void mov32BitConstant(CiRegister dst, int imm32) {
-        if(dst.number < 16) {
+        if (dst.number < 16) {
             movw(ConditionFlag.Always, dst, imm32 & 0xffff);
             imm32 = imm32 >> 16;
             imm32 = imm32 & 0xffff;
             movt(ConditionFlag.Always, dst, imm32 & 0xffff);
-        }else { // initialise a float with a constant
-            mov32BitConstant(ARMV7.r12,imm32);
-            vmov(ConditionFlag.Always,dst,ARMV7.r12);
+        } else { // initialise a float with a constant
+            mov32BitConstant(ARMV7.r12, imm32);
+            vmov(ConditionFlag.Always, dst, ARMV7.r12, CiKind.Float, CiKind.Int);
         }
     }
+
     public final void vsqrt(ConditionFlag cond,CiRegister dst, CiRegister src) {
         if((src.number > 15 && src.number < 32 && dst.number >15 && dst.number < 32) ||
           (src.number > 32 && dst.number >32)) {
@@ -1329,8 +1250,6 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
     public void xorq(CiRegister dest, CiAddress src) {
         assert dest.isValid();
         setUpScratch(src);
-        // scratchRegister now contains the value of the address
-        // APN I'm not sure if I need to load the memory[valueofAddress] into scratch
         eor(ConditionFlag.Always, false, dest, dest, scratchRegister, 0, 0);
     }
 
@@ -1340,158 +1259,35 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
         eor(ConditionFlag.Always, false, dest, dest, src, 0, 0);
     }
 
-    public void popq(CiAddress addr) {
-        // APN presume we are popping off the stack?
-        // addr could be a register, base index scale displacement --- handled
-        // or a memory address constant not handled right now -- not sure how it would be represented
-        // as a CiAddress.
-        // Placeholders not handled at the moment. .
-        // REFACTOR to use the code setUpScratch
-        CiRegister base = addr.base();
-        CiRegister index = addr.index();
-        CiAddress.Scale scale = addr.scale;
-        int disp = addr.displacement;
-        assert addr != CiAddress.Placeholder;
-        if (base == CiRegister.Frame || base == CiRegister.CallerFrame) {
-            assert frameRegister != null : "cannot use register " + CiRegister.Frame + " in assembler with null register configuration";
-            base = frameRegister;
-        }
-        assert base.isValid();
-
-	//System.out.println("popq assert base.isValid() removed to allow boot image compile");
-        // APN can we have a memory address --- not handled yet?
-        // APN simple case where we just have a register destination
-        if (base.isValid()) {
-            if (disp != 0) {
-                mov32BitConstant(scratchRegister, disp);
-                addRegisters(ConditionFlag.Always, false, scratchRegister,scratchRegister, base, 0, 0);
-            }
-            if (index.isValid()) {
-                addlsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
-            }
-            pop(ConditionFlag.Always, 1 << encode(scratchRegister));
-        }
-    }
-
-    public void pushq(CiAddress addr) {
-        /*
-         * APN push a value specified by an CiAddress onto the stack r13. // Im assuming base cannot be destructively
-         * updated perhaps this is stupid and maybe DO NOT NEED to use the scratch register as defined in
-         * RegisterConfigs.java for the target as AMD64Assembler does not seem to use it ... TODO are we really moving
-         * the value stored at an address onto the stack or just the address!!
-         */
-        CiRegister base = addr.base();
-        CiRegister index = addr.index();
-        CiAddress.Scale scale = addr.scale;
-        int disp = addr.displacement;
-
-        if (base == CiRegister.Frame || base == CiRegister.CallerFrame) {
-            assert frameRegister != null : "cannot use register " + CiRegister.Frame + " in assembler with null register configuration";
-            base = frameRegister;
-        }
-
-        assert base.isValid();
-	//System.out.println("assert base.isValid() removed pushq for attempt at image compilation");
-        // APN thinks it has to be valid or its an ERROR?
-        // might not be the case if the addr is a PlaceHolder!
-        assert addr != CiAddress.Placeholder;
-        /*
-         * TODO APN we will need to add code for this ... Placeholders are sentinel values that will be patched at a
-         * later point, once we see how/where they are patched then we will be able to make sensible decisions
-         */
-
-        // APN case that its just a valid register no index scale or displacement
-        if (base.isValid() && (!index.isValid()) && scale.value == 1 && disp == 0) {
-            // Base register is valid and stores an address
-            push(ConditionFlag.Always, 1 << encode(base)); // r13 is the stack pointer
-        } else if (base.isValid()) { // APN superfluous check, but base might be invalid once we sort out Placeholders
-            if (disp != 0) {
-                // TODO EMIT AN INSTRUCTION TO DO BASE + DISPLACEMENT
-                // can we destructively update base to store the result?
-                // do we know the range of immediate values that might be produced?
-                // TODO try to do some tracing of Maxine and see what values come out of here.
-                // in the meantime we do it inefficiently but correctly for 32 bit displacements
-                mov32BitConstant(scratchRegister, disp);
-                add(ConditionFlag.Always, false, scratchRegister, base, 0, 0); // APN A8.8.5 ADD(immediate,ARM)
-            }
-            if (index.isValid()) {
-                addlsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
-                // APN even if scale is zero this is ok.
-                // as a shift of zero will not affect the value.
-                /*
-                 * if(scale.value != 1) { // TODO emit an instruction to do // instruction= base + indexRegister* scale
-                 * // NOTE scale can be 1,2,4 or 8 so we should be able to do // this with a simple shift of 1,2 or 3
-                 * bits }else { // TODO emit an instruction to do // instruction = base + indexRegister
-                 *
-                 * }
-                 */
-            }
-            push(ConditionFlag.Always, 1 << encode(scratchRegister)); // r13 is the stack pointer
-        }
-    }
-
-    public final void vcmpZERO(boolean nanExceptions, ConditionFlag cond, CiRegister src1) {
-        int instruction = 0x0eb50a40;
-        int dpOperation = 0;
-        int quietNAN = 1;
-
-        if (nanExceptions) {
-            quietNAN = 0;
-        }
-        assert (src1.number > 15);
-        if (src1.number < 32) {
-            dpOperation = 1;
-            instruction |= (src1.encoding << 12);
-        } else {
-            instruction |= (src1.encoding & 0x1) << 22;
-            instruction |= (src1.encoding >> 1) << 12;
-        }
-        instruction |= (cond.value() << 28);
-        instruction |= (dpOperation << 8);
-        instruction |= (quietNAN << 7);
-
-        emitInt(instruction);
-    }
-
-    public final void vcmp(boolean nanExceptions, ConditionFlag cond, CiRegister src1, CiRegister src2) {
+    public final void vcmp(boolean nanExceptions, ConditionFlag cond, CiRegister src1, CiRegister src2, CiKind src1Kind, CiKind src2Kind) {
+        assert src1.isFpu() && src2.isFpu();
         int instruction = 0x0eb40a40;
         int dpOperation = 0;
-        int quietNAN = 1;
+        int quietNAN = nanExceptions ? 0 : 1;
 
-        if (nanExceptions) {
-            quietNAN = 0;
-        }
-
-        assert src1.number > 15 && src2.number > 15;
-        if (src1.number < 32) {
-            assert (src2.number < 32);
+        if (src1Kind.isDouble()) {
+            assert src2Kind.isDouble();
             dpOperation = 1;
             instruction |= (src1.encoding << 12);
             instruction |= (src2.encoding);
         } else {
-            assert (src2.number >= 32);
+            assert src2Kind.isFloat();
             instruction |= (src1.encoding >> 1) << 12;
             instruction |= (src1.encoding & 0x1) << 22;
             instruction |= (src2.encoding >> 1);
             instruction |= (src2.encoding & 0x1) << 5;
         }
-
         instruction |= (cond.value() << 28);
         instruction |= (dpOperation << 8);
         instruction |= (quietNAN << 7);
         emitInt(instruction);
     }
 
-    public final void ucomisd(CiRegister dst, CiRegister src) {
-        assert dst.isFpu(); // will this work
-        assert src.isFpu();
-        assert ((src.number > 15 && dst.number > 15) || ( src.number > 31 && dst.number > 31)); // Either FP FP or DP DP compare
-        // Assuming this is a single precision load
-        vcmp(true,ConditionFlag.Always,dst,src);
-        // set FPSCR flags these need to be accessed using a VMRS to transfer them to arm flags
-        // assert !dst.isFpu(); // force a crash one way or another as this is notimplemented yet
-        vmrs(ConditionFlag.Always,ARMV7.r15);
-
+    public final void ucomisd(CiRegister dst, CiRegister src, CiKind destKind, CiKind srcKind) {
+        assert destKind.isFloatOrDouble();
+        assert srcKind.isFloatOrDouble();
+        vcmp(true, ConditionFlag.Always, dst, src, destKind, srcKind);
+        vmrs(ConditionFlag.Always, ARMV7.r15);
     }
 
     public void align(int modulus) {
@@ -1505,24 +1301,23 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
     public final void nop() {
         nop(1);
     }
-    public final void pause() {
-	// YIELD instruction hint, intended to improve spinlock perofrmance
-	int instruction = 0x0320f001;
-	instruction |= (ConditionFlag.Always.value() <<28);
-	emitInt(instruction);
 
+    public final void pause() {
+        // YIELD instruction hint, intended to improve spinlock performance
+        int instruction = 0x0320f001;
+        instruction |= (ConditionFlag.Always.value() << 28);
+        emitInt(instruction);
     }
+
     public final void int3() {
-        //System.out.println("MISSING int3");
-	//nop(4);
-	//emitInt(0xfedeffe7);
-	emitInt(0xe1200070);
+        emitInt(0xe1200070);
     }
+
     public final void hlt() {
-        //System.out.println("MISSING hlt");
-	nop(4);
-	int3();
+        nop(4);
+        int3();
     }
+
     public final void nop(int times) {
         assert times > 0;
         for (int i = 0; i < times; i++) {
@@ -1552,23 +1347,15 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
     }
 
     public void enter(short imm16, byte imm8) {
-        assert false;
-        /*
-	enter, ARMV7LIRAssembler case PushFrame and the prologue in ARMV7CompilerStubEmitter need to be kept in step
-        also if more than one reigster is pushed then the FrameMap.java in CallerFrame offset needs to be 4 for each
-       register more than one.
-         */
+        assert false : "Enter not implemented";
+        push(ConditionFlag.Always, 1 << 14);
 
-	//mov(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r13);
-	//push(ConditionFlag.Always,1<<11|1<<12|1<<14|1<<15);// r11, r12(stack),r14 (LR),r15(PC)
-	//add(ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13,12,0);
-	push(ConditionFlag.Always,1<<14);
-
-	// the sub is to make space on the stack for whatever else is required./
+        // the sub is to make space on the stack for whatever else is required./
         mov32BitConstant(ARMV7.r12, imm16);
         sub(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
 
     }
+
     public final void lock() {
 	    nop();
     }
@@ -1622,7 +1409,7 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
             //System.out.println("LABEL bound jcc no need to patch");
             //jcc(cc, l.position(), false);
             jcc(cc, l.position(), false);
-	
+
         } else {
             // Note: could eliminate cond. jumps to this jump if condition
             // is the same however, seems to be rather unlikely case.
@@ -1692,15 +1479,15 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
         instruction |= 0x0ef10a10;
         instruction |= dest.encoding << 12;
         emitInt(instruction);
-        }
+    }
 
-    public final void vmul(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
+    public final void vmul(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm, CiKind destKind) {
         int instruction = (cond.value() & 0xf) << 28;
         instruction |= 0x0e200a00;
         int sz = 0;
         checkConstraint(dest.number >= 16 && rn.number >= 16 && rm.number >= 16, "vmul ALL  FP/DP regs");
         checkConstraint((dest.number <= 31 && rn.number <= 31 && rm.number <= 31) || (dest.number >= 32 && rn.number >= 32 && rm.number >= 32), "vmul ALL  FP OR ALL DP regs");
-        if (dest.number <= 31) {
+        if (destKind.isDouble()) {
             sz = 1;
         }
         if (sz == 1) { // bit rest of bits
@@ -1724,27 +1511,34 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
         emitInt(instruction);
     }
 
-    public final void vcvt(ConditionFlag cond, CiRegister dest, boolean toInt, boolean signed, CiRegister src) {
+    public final void vcvt(ConditionFlag cond, CiRegister dest, boolean toInt, boolean signed, CiRegister src, CiKind destKind, CiKind srcKind) {
         int instruction = (cond.value() & 0xf) << 28;
-        instruction |= 0x0eb80a40;
         int sz = 0;
         int op = 0;
-        int opc2;
+        int opc2 = 0;
         boolean double2Float = false;
+        boolean int2Float = false;
+        boolean int2Double = false;
         boolean floatConversion = false;
-        //System.out.println("VCVT " + dest.number + " " + src.number);
-        if (toInt == false && signed == false) {
-            checkConstraint(dest.number >= 16 && src.number >= 16, "vcvt must be FP/DP regs");
-            if(dest.number > src.number ) {
+
+        if (toInt == false) {
+            checkConstraint(!dest.isGeneral() && !src.isGeneral(), "vcvt must be FP/DP regs");
+            if (destKind.isFloat() && srcKind.isDouble()) {
                 double2Float = true;
+            } else if (destKind.isFloat() && srcKind.isGeneral()) {
+                int2Float = true;
+            } else if (destKind.isDouble() && srcKind.isGeneral()) {
+                int2Double = true;
             }
-            floatConversion = true;
-            checkConstraint(!(dest.number <= 31 && src.number <= 31), "vcvt one reg mus be FP another DP");
-            checkConstraint(!(dest.number >= 32 && src.number >= 32), "vcvt one reg mus be FP another DP");
+            if (destKind.isFloat()) {
+                floatConversion = true;
+            }
         }
-        if (dest.number <= 31 || src.number <= 31) {
+
+        if (destKind.isDouble() || srcKind.isDouble()) {
             sz = 1;
         }
+
         if (signed) {
             if (toInt) {
                 opc2 = 5;
@@ -1760,78 +1554,65 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
                 op = 0;
             }
         }
-        if(!floatConversion) {
-            if (toInt) {
+        if (!floatConversion) {
+            if (toInt) { // FD2I
+                instruction |= 0x0eb80a40;
                 instruction |= (dest.encoding >> 1) << 12; // LSB in bit 22
                 instruction |= (dest.encoding & 0x1) << 22;
                 if (sz == 1) {
                     instruction |= src.encoding & 0xf; //
                     instruction |= (src.encoding >> 4) << 5;
-
                 } else {
                     instruction |= src.encoding >> 1;
                     instruction |= (src.encoding & 0x1) << 5;
                 }
-            } else {
-                instruction |= src.encoding >> 1;
+                instruction |= opc2 << 16;
+                instruction |= op << 7;
+                instruction |= sz << 8;
+            } else if (int2Double) { //I2D
+                instruction |= 0xEB80A40;
+                instruction |= sz << 8;
+                instruction |= (dest.encoding >> 4) << 22;
+                instruction |= (dest.encoding & 0xf) << 12;
+                instruction |= (src.encoding & 1) << 5;
+                instruction |= (src.encoding >> 1);
+                instruction |= opc2 << 16;
+                instruction |= op << 7;
+            } else { // F2D
+                instruction |= 0xEB70AC0;
                 instruction |= (src.encoding & 0x1) << 5;
-                if (sz == 0) {
-                    instruction |= (dest.encoding >> 1) << 12;
-                    instruction |= (dest.encoding & 0x1) << 22;
-                } else {
-                    instruction |= (dest.encoding & 0xf) << 12;
-                    instruction |= (dest.encoding >> 4) << 22;
-                }
+                instruction |= src.encoding >>1;
+                instruction |= (dest.encoding >> 4) << 22;
+                instruction |= (dest.encoding & 0xf) << 12;
             }
-            instruction |= opc2 << 16;
-            instruction |= op << 7;
-            instruction |= sz << 8;
         } else {
-            instruction = cond.value << 28;
-            instruction |= 0xeb70ac0;
-            if(double2Float) {
-                instruction |= 1<<8;
-                // d is dest and dest is FLOAT SINGLE
-
-                instruction |= (dest.encoding >>1) << 12;
+            instruction |= sz << 8;
+            if (double2Float) { //D2F
+                instruction |= 0xEB70AC0;
+                instruction |= (dest.encoding >> 1) << 12;
                 instruction |= (dest.encoding & 1) << 22;
-
                 instruction |= (src.encoding & 0xf);
                 instruction |= (src.encoding >> 4) << 5;
-
-            } else {
+            } else if (int2Float) { //I2F
+                instruction |= 0xEB80A40;
                 instruction |= (dest.encoding & 0xf) << 12;
-                instruction |= (dest.encoding >> 4) << 22;
-
+                instruction |= (dest.encoding & 1) << 22;
                 instruction |= (src.encoding & 1) << 5;
-                instruction |= (src.encoding >>1);
-
+                instruction |= (src.encoding >> 1);
+                instruction |= opc2 << 16;
+                instruction |= op << 7;
             }
         }
         emitInt(instruction);
-        /*
-         * VCVT{R}{<c>}{<q>}.S32.F64 <Sd>, <Dm> Encoded as opc2 = 0b101, sz = 1
-         *
-         * VCVT{R}{<c>}{<q>}.S32.F32 <Sd>, <Sm> Encoded as opc2 = 0b101, sz = 0
-         *
-         * VCVT{R}{<c>}{<q>}.U32.F64 <Sd>, <Dm> Encoded as opc2 = 0b100, sz = 1
-         *
-         * VCVT{R}{<c>}{<q>}.U32.F32 <Sd>, <Sm> Encoded as opc2 = 0b100, sz = 0
-         *
-         * VCVT{<c>}{<q>}.F64.<Tm> <Dd>, <Sm> Encoded as opc2 = 0b000, sz = 1
-         *
-         * VCVT{<c>}{<q>}.F32.<Tm> <Sd>, <Sm> Encoded as opc2 = 0b000, sz = 0
-         *
-         *
-         * Tm S32 encoded as op =1 U32 encoded as op = 0;
-         */
     }
 
-    public final void vstr(ConditionFlag cond, CiRegister dest, CiRegister src, int imm8) {
+
+
+    public final void vstr(ConditionFlag cond, CiRegister dest, CiRegister src, int imm8, CiKind destKind, CiKind srcKind) {
         int instruction = (cond.value() & 0xf) << 28;
-        checkConstraint(dest.number <= 63 && dest.number >= 16, "vstr dest must be a FP/DP reg");
+        checkConstraint(dest.isFpu(), "vstr dest must be a FP/DP reg");
         checkConstraint(-255 <= imm8 && imm8 <= 255, "vmov offset greater than +/- 255 ");
-        checkConstraint(src.number <= 15, "vstr base src address register must be core");
+        checkConstraint(src.isCpu(), "vstr base src address register must be core");
         if (imm8 >= 0) {
             instruction |= 1 << 23;
         } else {
@@ -1839,29 +1620,25 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
         }
         instruction |= (imm8 & 0xff);
         instruction |= (src.encoding & 0xf) << 16;
-        if (dest.number <= 31) {
+        if (destKind.isDouble()) {
             instruction |= 0x0d000b00;
             instruction |= (dest.encoding & 0xf) << 12;
         } else {
             instruction |= 0xd000a00;
             instruction |= (dest.encoding >> 1) << 12;
-            instruction |= (dest.encoding & 0x1) << 22; // / Hmmm check some assembler encodings for this please.
+            instruction |= (dest.encoding & 0x1) << 22;
         }
         emitInt(instruction);
     }
 
-    public final void vneg(ConditionFlag cond, CiRegister dest, CiRegister src) {
+    public final void vneg(ConditionFlag cond, CiRegister dest, CiRegister src, CiKind destKind) {
         int instruction = (cond.value() & 0xf) << 28;
+        assert destKind.isFloat() || destKind.isDouble() : " Dest register must be FP/DP reg";
         int sz = 0;
-        if (src.number >= 32) {
-            checkConstraint(src.number >= 32 && dest.number >= 32, "vldr dest must both be a FP reg");
-        } else {
+        if (destKind.isDouble()) {
             sz = 1;
-            checkConstraint(src.number >= 16 && src.number <= 31 && dest.number >= 16 && dest.number <= 31, "vldr dest must be a DP reg");
         }
-
         instruction |= 0x0eb10a40;
-
         instruction |= (src.encoding & 0xf);
         instruction |= (src.encoding >> 4) << 5;
         instruction |= (dest.encoding & 0xf) << 12;
@@ -1870,9 +1647,9 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
         emitInt(instruction);
     }
 
-    public final void vldr(ConditionFlag cond, CiRegister dest, CiRegister src, int imm8) {
+    public final void vldr(ConditionFlag cond, CiRegister dest, CiRegister src, int imm8, CiKind destKind, CiKind srcKind) {
         int instruction = (cond.value() & 0xf) << 28;
-        checkConstraint(dest.number <= 63 && dest.number >= 16, "vldr dest must be a FP/DP reg");
+        checkConstraint(dest.isFpu(), "vldr dest must be a FP/DP reg");
         checkConstraint(-255 <= imm8 && imm8 <= 255, "vmov offset greater than +/- 255 ");
         if (imm8 >= 0) {
             instruction |= 1 << 23;
@@ -1881,43 +1658,38 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
         }
         instruction |= (imm8 & 0xff);
         instruction |= src.encoding << 16;
-        if (dest.number <= 31) {
+        if (destKind.isDouble()) {
             instruction |= 0x0d100b00;
             instruction |= dest.encoding << 12;
         } else {
             instruction |= 0xd100a00;
             instruction |= (dest.encoding >> 1) << 12;
-            instruction |= (dest.encoding & 0x1) << 22; // / Hmmm check some assembler encodings for this please.
+            instruction |= (dest.encoding & 0x1) << 22;
         }
         emitInt(instruction);
     }
 
-    public final void vadd(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
-        // A8.8.283
+    public final void vadd(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm, CiKind kind) {
         int instruction = (cond.value() & 0xf) << 28;
         instruction |= 0x0e300a00;
-        checkConstraint(dest.number >= 16 && rn.number >= 16 && rm.number >= 16, "vadd NO CORE REGISTERS ALLOWED");
-        checkConstraint((dest.number <= 31 && rn.number <= 31 && rm.number <= 31) || (dest.number <= 63 && rn.number <= 63 && rm.number <= 63), "vadd ALL REGISTERS must be SP OR DP no mix allowed");
+        checkConstraint(dest.number >= 16 && rn.number >= 16 && rm.number >= 16, "vadd no core registers allowed");
+        checkConstraint((dest.number <= 47 && rn.number <= 47 && rm.number <= 47) || (dest.number <= 47 && rn.number <= 47 && rm.number <= 47), "vadd register overflow");
         int sz = 0;
-        if (dest.number <= 31) {
+        if (kind.isDouble()) {
             sz = 1;
         }
         instruction |= sz << 8;
         if (sz == 1) {
-            // VFPV3 only has 16 regs and these fit so no need to do the MSB
-            // for double precision registers
             instruction |= (rn.encoding & 0xf) << 16;
             instruction |= (dest.encoding & 0xf) << 12;
             instruction |= rm.encoding & 0xf;
         } else {
-            // VFPV3 has 32 regs so we NEED to do the MSB manipulation --
-            // different to what it would be for doubles!!! (if there were 32)
-            instruction |= (rn.encoding >> 4) << 7;
-            instruction |= (rm.encoding >> 4) << 5;
-            instruction |= (dest.encoding >> 4) << 22;
+            instruction |= (rn.encoding & 1) << 7;
             instruction |= (rn.encoding >> 1) << 16;
-            instruction |= (dest.encoding >> 1) << 12;
+            instruction |= (rm.encoding & 1) << 5;
             instruction |= rm.encoding >> 1;
+            instruction |= (dest.encoding & 1) << 22;
+            instruction |= (dest.encoding >> 1) << 12;
         }
         emitInt(instruction);
     }
@@ -1949,26 +1721,21 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
         emitInt(instruction);
     }
 
-    public final void vpush(ConditionFlag cond, CiRegister first, CiRegister last) {
-        // A8.8.368
+    public final void vpush(ConditionFlag cond, CiRegister first, CiRegister last, CiKind firstKind, CiKind lastKind) {
         int instruction = (cond.value() & 0xf) << 28;
-        checkConstraint(first.number >= 16 && last.number >= 16, "vpush NO CORE REGISTERS ALLOWED");
-        checkConstraint((first.number <= 31 && last.number <= 31) || (first.number <= 63 && last.number <= 63), "vpush ALL REGISTERS must be SP OR DP no mix allowed");
-        checkConstraint(last.number >= first.number, "vpush at least ONE register!!");
+        checkConstraint(!first.isCpu() && !last.isCpu(), "vpush No core regs allowed");
+        checkConstraint(!(firstKind.isDouble() && !lastKind.isDouble()) && !(!firstKind.isDouble() && lastKind.isDouble()), "vpush no mix of FP/DP allowed");
+        checkConstraint(last.number >= first.number, "vpush at least one register!!");
         int sz = 0;
-        if (first.number <= 31) {
+        if (firstKind.isDouble()) {
             sz = 1;
         }
         if (sz == 1) {
             instruction |= 0x0d2d0b00;
-            // VFPV3 only has 16 regs and these fit so no need to do the MSB
-            // for double precision registers
             instruction |= (first.encoding & 0xf) << 12;
             instruction |= (last.encoding - first.encoding + 1) << 1;
         } else {
             instruction |= 0x0d2d0a00;
-            // VFPV3 has 32 regs so we NEED to do the MSB manipulation --
-            // different to what it would be for doubles!!! (if there were 32)
             instruction |= (first.encoding & 0x1) << 22;
             instruction |= (first.encoding >> 1) << 12;
             instruction |= (last.encoding - first.encoding + 1) << 1;
@@ -2024,97 +1791,81 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
         emitInt(instruction);
     }
 
-    public final void vdiv(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
-        // A8.8.415
+    public final void vdiv(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm, CiKind destKind) {
         int instruction = (cond.value() & 0xf) << 28;
         instruction |= 0x0e800a00;
-        checkConstraint(dest.number >= 16 && rn.number >= 16 && rm.number >= 16, "vdiv NO CORE REGISTERS ALLOWED");
-        checkConstraint((dest.number <= 31 && rn.number <= 31 && rm.number <= 31) || (dest.number <= 63 && rn.number <= 63 && rm.number <= 63), "vdiv ALL REGISTERS must be SP OR DP no mix allowed");
+        checkConstraint(dest.number >= 16 && rn.number >= 16 && rm.number >= 16, "vdiv no core registers allowed");
+        checkConstraint((dest.number <= 31 && rn.number <= 31 && rm.number <= 31) || (dest.number <= 63 && rn.number <= 63 && rm.number <= 63), "vdiv all registers must be SP OR DP no mix allowed");
         int sz = 0;
-        if (dest.number <= 31) {
+        if (destKind.isDouble()) {
             sz = 1;
         }
         instruction |= sz << 8;
         if (sz == 1) {
-            // VFPV3 only has 16 regs and these fit so no need to do the MSB
-            // for double precision registers
             instruction |= (rn.encoding & 0xf) << 16;
             instruction |= (dest.encoding & 0xf) << 12;
             instruction |= rm.encoding & 0xf;
         } else {
-            // VFPV3 has 32 regs so we NEED to do the MSB manipulation --
-            // different to what it would be for doubles!!! (if there were 32)
-            instruction |= (rn.encoding >> 4) << 7;
-            instruction |= (rm.encoding >> 4) << 5;
-            instruction |= (dest.encoding >> 4) << 22;
-            instruction |= (rn.encoding >> 1) << 16;
             instruction |= (dest.encoding >> 1) << 12;
-            instruction |= rm.encoding >> 1;
+            instruction |= (dest.encoding & 1) << 22;
+            instruction |= (rn.encoding & 1) << 7;
+            instruction |= (rn.encoding >> 1) << 16;
+            instruction |= (rm.encoding & 1) << 5;
+            instruction |= (rm.encoding >> 1);
         }
         emitInt(instruction);
     }
 
-    public final void vsub(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
-        // A8.8.415
+    public final void vsub(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm, CiKind destKind) {
         int instruction = (cond.value() & 0xf) << 28;
         instruction |= 0x0e300a40;
         checkConstraint(dest.number >= 16 && rn.number >= 16 && rm.number >= 16, "vsub NO CORE REGISTERS ALLOWED");
         checkConstraint((dest.number <= 31 && rn.number <= 31 && rm.number <= 31) || (dest.number <= 63 && rn.number <= 63 && rm.number <= 63), "vsub ALL REGISTERS must be SP OR DP no mix allowed");
         int sz = 0;
-        if (dest.number <= 31) {
+        if (destKind.isDouble()) {
             sz = 1;
         }
         instruction |= sz << 8;
         if (sz == 1) {
-            // VFPV3 only has 16 regs and these fit so no need to do the MSB
-            // for double precision registers
             instruction |= (rn.encoding & 0xf) << 16;
             instruction |= (dest.encoding & 0xf) << 12;
             instruction |= rm.encoding & 0xf;
         } else {
-            // VFPV3 has 32 regs so we NEED to do the MSB manipulation --
-            // different to what it would be for doubles!!! (if there were 32)
-            instruction |= (rn.encoding >> 4) << 7;
-            instruction |= (rm.encoding >> 4) << 5;
-            instruction |= (dest.encoding >> 4) << 22;
-            instruction |= (rn.encoding >> 1) << 16;
-            instruction |= (dest.encoding >> 1) << 12;
+            instruction |= (rm.encoding & 0x1) << 5;
             instruction |= rm.encoding >> 1;
+            instruction |= (rn.encoding >> 1) << 16;
+            instruction |= (rn.encoding & 0x1) << 7;
+            instruction |= (dest.encoding >> 1) << 12;
+            instruction |= (dest.encoding & 0x1) << 22;
         }
         emitInt(instruction);
     }
 
-    public final void vmov(ConditionFlag cond, CiRegister dest, CiRegister src) {
-        /*
-         * APN potentially we need to do lots of checks on instrucitonencodings for this case regarding the particular
-         * registers used vmov.f32 s,s vmov.f64 d,d
-         */
+    public final void vmov(ConditionFlag cond, CiRegister dest, CiRegister src, CiKind destKind, CiKind srcKind) {
         int instruction = (cond.value() & 0xf) << 28;
         int vmovSameType = 0x0eb00a40; // A8.8.340
         int vmovSingleCore = 0x0e000a10; // A8.8.343 full word only // ARM core to scalar
         int vmovDoubleCore = 0x0c400b10; // A8.8.345 // TWO ARM core to doubleword extension
-        if ((src.number >= 16 && src.number <= 31) && (dest.number >= 16 && dest.number <= 31)) {
+        if (srcKind.isDouble() && destKind.isDouble()) {
             instruction |= (1 << 8) | vmovSameType;
             instruction |= dest.encoding << 12;
             instruction |= src.encoding;
-        } else if (src.number >= 32 && dest.number >= 32) {
+        } else if (srcKind.isFloat() && destKind.isFloat()) {
             // dest LSB bit 22, and 12-15
             // src LSB 5 and 0-3
             instruction |= vmovSameType;
-            instruction |= ((dest.encoding >>1) << 12) | ((dest.encoding & 0x1) << 22);
+            instruction |= ((dest.encoding >> 1) << 12) | ((dest.encoding & 0x1) << 22);
             instruction |= (src.encoding >> 1) | ((src.encoding & 0x1) << 5);
-        } else if ((dest.number <= 15 || src.number <= 15) && (src.number >= 32 || dest.number >= 32)) {
+        } else if ((destKind.isGeneral()|| srcKind.isGeneral()) && (srcKind.isFloat() || destKind.isFloat())) {
             instruction |= vmovSingleCore;
             if (dest.number <= 15) {
                 instruction |= (1 << 20) | ((src.encoding & 1) << 7) | (dest.encoding << 12) | ((src.encoding >> 1) << 16);
             } else {
                 instruction |= (src.encoding << 12) | ((dest.encoding >> 1) << 16) | ((dest.encoding & 0x1) << 7);
             }
-        } else if ((src.number >= 16 && src.number <= 31 && dest.number <= 15) || (dest.number >= 16 && dest.number <= 31 && src.number <= 15)) {
-            // deviating slightly from ARM book, we are assuming this to transfer double to pair of core registers
-            // aligned on an even 0, 2, ... boundary
+        } else if ((srcKind.isDouble() && destKind.isGeneral()) || (destKind.isDouble() && srcKind.isGeneral())) {
             instruction |= vmovDoubleCore;
-            if (dest.number <= 15) { // to ARM
+            if (dest.isGeneral()) { // to ARM
                 checkConstraint((dest.encoding) <= 14, "vmov doubleword to core destination register > 14");
                 instruction |= 1 << 20;
                 instruction |= dest.encoding << 12;
@@ -2126,6 +1877,27 @@ mov(ConditionFlag.Always, false, registerConfig.getAllocatableRegisters()[scratc
                 instruction |= src.encoding << 12;
                 instruction |= dest.encoding;
             }
+        }
+        emitInt(instruction);
+    }
+
+    public final void vmovImm(ConditionFlag cond, CiRegister dst, int imm, CiKind dstKind) {
+        int instruction = 0xEB00A00;
+        assert imm == (long)imm : "Immediate must be size int";
+        instruction |= (cond.value() & 0xf) << 28;
+        int size = 0;
+        if (dstKind.isDouble()) {
+            size = 1;
+        }
+        instruction |= size << 8;
+        instruction |= (imm >> 4) << 16;
+        instruction |= (imm & 0xf);
+        if (size == 1) {
+            instruction |= (dst.encoding >> 4 ) << 22;
+            instruction |= (dst.encoding & 0xf) << 12;
+        } else {
+            instruction |= (dst.encoding >> 1 ) << 12;
+            instruction |= (dst.encoding << 4) << 22;
         }
         emitInt(instruction);
     }
