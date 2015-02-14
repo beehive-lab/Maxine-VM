@@ -907,7 +907,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 break;
             }
             case L2F:
-                assert false : "long to float convert";
+                System.out.println("long to float convert unimplemented");
                 /*
                  * masm.push(ConditionFlag.Always,1<< (srcRegister.number+1)| 1<< srcRegister.number);
                  * masm.eor(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
@@ -931,7 +931,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
                 break;
             case L2D:
-                assert false : "long to double convert";
+                System.out.println("long to double convert unimplemented");
                 /*
                  * masm.push(ConditionFlag.Always,1<< (srcRegister.number+1)| 1<< srcRegister.number);
                  * masm.eor(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
