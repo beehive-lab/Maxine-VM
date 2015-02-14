@@ -78,7 +78,7 @@ public final class C1XOptions {
     public static boolean PrintAssembly                      = ____;
     public static boolean PrintCodeBytes                     = ____;
     public static int     PrintAssemblyBytesPerLine          = 16;
-    public static int     TraceLinearScanLevel               = 4;
+    public static int     TraceLinearScanLevel               = 0;
     public static boolean TraceRelocation                    = ____;
     public static boolean TraceLIRVisit                      = ____;
     public static boolean TraceAssembler                     = ____;
