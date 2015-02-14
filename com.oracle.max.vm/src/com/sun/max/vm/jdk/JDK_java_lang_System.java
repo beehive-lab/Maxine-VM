@@ -382,9 +382,9 @@ public final class JDK_java_lang_System {
             return 0;
         }
         if (Platform.target().arch.is32bit()) {
-            return 0xfffff & ObjectAccess.makeHashCode(this);
+            return 0xfffff & ObjectAccess.makeHashCode(object);
         } else {
-            return ObjectAccess.makeHashCode(this);
+            return ObjectAccess.makeHashCode(object);
         }
     }
 
