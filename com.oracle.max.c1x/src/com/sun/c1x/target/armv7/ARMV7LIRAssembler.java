@@ -711,9 +711,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         }
 
         // Jump to default target if index is not within the jump table
-        masm.jcc(ConditionFlag.SignedGreater, op.defaultTarget.label());
-        masm.cmpl(value, op.lowKey); // added
-        masm.jcc(ConditionFlag.SignedLesser, op.defaultTarget.label());
+        masm.jcc(ConditionFlag.UnsignedHigher, op.defaultTarget.label());
+
 
         // Set scratch to address of jump table
         int leaPos = buf.position();
