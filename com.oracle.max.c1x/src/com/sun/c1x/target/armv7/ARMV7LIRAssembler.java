@@ -964,14 +964,12 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.jcc(ConditionFlag.NotEqual, endLabel);
                 callStub(op.stub, null, dest.asRegister(), src);
                 masm.bind(endLabel);
-
                 break;
             case MOV_I2F:
                 masm.vcvt(ConditionFlag.Always, dest.asRegister(), false, true, srcRegister, dest.kind, src.kind);
                 break;
             case MOV_L2D:
-                assert false : "mov_l2d uimplemented";
-
+                System.out.println("mov_l2d uimplemented");
                 break;
             case MOV_F2I:
                 masm.vcvt(ConditionFlag.Always, dest.asRegister(), true, true, src.asRegister(), dest.kind, src.kind);
