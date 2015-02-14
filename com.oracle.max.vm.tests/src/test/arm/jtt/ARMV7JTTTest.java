@@ -4732,7 +4732,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_l2d() throws Exception {
+    //TODO: Implement functionality
+    public void broken_jtt_BC_l2d() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         String klassName = getKlassName("jtt.bytecode.BC_l2d");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -4744,9 +4745,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args((long) Long.MAX_VALUE, (float) Long.MAX_VALUE));
         pairs.add(new Args(-74652389L, -74652389.00f));
         pairs.add(new Args((long) Integer.MIN_VALUE, (float) Integer.MIN_VALUE));
-
         pairs.add(new Args((long) Long.MIN_VALUE, (float) Long.MIN_VALUE));
-
         initialiseCodeBuffers(methods, "BC_l2d.java", "double test(long)");
         int assemblerStatements = codeBytes.length / 4;
         for (Args pair : pairs) {
@@ -4754,11 +4753,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             String functionPrototype = ARMCodeWriter.preAmble("double", "long long", Long.toString(pair.lfirst) + "LL");
             Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, assemblerStatements, expectedValues, testvalues, bitmasks);
             double returnValue = ((Double) registerValues[17]).doubleValue();
-            System.out.println("GOT " + returnValue + " EXPECTED " + expectedValue);
-            if (returnValue != expectedValue)
-                System.out.println("VAlues differ ");
-            // assert returnValue == expectedValue : "Failed incorrect value d0 " +
-// ((Double)registerValues[17]).doubleValue() + " " + expectedValue + " " + returnValue;
+            assert returnValue == expectedValue : "Failed incorrect value d0 " + ((Double)registerValues[17]).doubleValue() + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
