@@ -1143,7 +1143,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     protected void emitArithOp(LIROpcode code, CiValue left, CiValue right, CiValue dest, LIRDebugInfo info) {
         assert info == null : "should never be used :  idiv/irem and ldiv/lrem not handled by this method";
         assert Util.archKindsEqual(left.kind, right.kind) || (left.kind == CiKind.Long && right.kind == CiKind.Int) : code.toString() + " left arch is " + left.kind + " and right arch is " +
-                        right.kind;
+                right.kind;
         assert left.equals(dest) : "left and dest must be equal";
         CiKind kind = left.kind;
 
@@ -1310,16 +1310,16 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     assert target.sizeInBytes(kind) == 8;
                     if (right.isStackSlot()) {
                         // register - stack
-                        assert(right.kind == CiKind.Long);
+                        assert (right.kind == CiKind.Long);
                         CiAddress raddr = frameMap.toStackAddress(((CiStackSlot) right));
                         masm.setUpScratch(raddr);
-                        masm.ldrd(ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
+                        masm.ldrd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
                         switch (code) {
                             case Add:
-                                masm.addLong(lreg,lreg,ARMV7.r8);
+                                masm.addLong(lreg, lreg, ARMV7.r8);
                                 break;
                             case Sub:
-                                masm.subLong(lreg,lreg,ARMV7.r8);
+                                masm.subLong(lreg, lreg, ARMV7.r8);
                                 break;
                             default:
                                 throw Util.shouldNotReachHere();
@@ -1731,11 +1731,16 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     protected void emitCompare(Condition condition, CiValue opr1, CiValue opr2, LIROp2 op) {
         // Checkstyle: off
         assert Util.archKindsEqual(opr1.kind.stackKind(), opr2.kind.stackKind()) || (opr1.kind == CiKind.Long && opr2.kind == CiKind.Int) : "nonmatching stack kinds (" + condition + "): " +
-                        opr1.kind.stackKind() + "==" + opr2.kind.stackKind();
+                opr1.kind.stackKind() + "==" + opr2.kind.stackKind();
+        CiValue oldOpr1 = opr1; // Hack to avoid using r12 twice in movoop later in this method
         if (opr1.isConstant()) {
             CiValue newOpr1 = compilation.registerConfig.getScratchRegister().asValue(opr1.kind);
             const2reg(opr1, newOpr1, null);
             opr1 = newOpr1;
+            // Defensive programming asserts ...
+            assert (opr1.kind != CiKind.Float);
+            assert (opr1.kind != CiKind.Long);
+            assert (opr1.kind != CiKind.Double);
         }
         if (opr1.isRegister()) {
             CiRegister reg1 = opr1.asRegister();
@@ -1753,6 +1758,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         masm.cmpq(reg1, opr2.asRegister());
                         break;
                     case Long:
+                        assert (reg1 != ARMV7.r12);
                         masm.lcmpl(convertCondition(condition), reg1, opr2.asRegister());
                         break;
                     case Float:
@@ -1829,8 +1835,15 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         break;
                     }
                     case Object: {
-                        movoop(rscratch1, c);
-                        masm.cmpq(reg1, rscratch1);
+                        movoop(ARMV7.r8, c);
+                        if (oldOpr1.isConstant()) {
+                            // Use scratch register
+                            CiValue newOpr1 = compilation.registerConfig.getScratchRegister().asValue(oldOpr1.kind);
+                            const2reg(oldOpr1, newOpr1, null);
+                            opr1 = newOpr1;
+                            reg1 = opr1.asRegister();
+                        }
+                        masm.cmpq(reg1, ARMV7.r8);
                         break;
                     }
                     default:
@@ -2616,9 +2629,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
     /**
      * @param offset the offset RSP at which to bang. Note that this offset is relative to RSP after RSP has been
-     *            adjusted to allocated the frame for the method. It denotes an offset "down" the stack. For very large
-     *            frames, this means that the offset may actually be negative (i.e. denoting a slot "up" the stack above
-     *            RSP).
+     *               adjusted to allocated the frame for the method. It denotes an offset "down" the stack. For very large
+     *               frames, this means that the offset may actually be negative (i.e. denoting a slot "up" the stack above
+     *               RSP).
      */
     private void bangStackWithOffset(int offset) {
         masm.setUpScratch(new CiAddress(target.wordKind, ARMV7.RSP, -offset));
@@ -2741,7 +2754,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     public void movoop(CiRegister dst, CiConstant obj) {
         assert obj.kind == CiKind.Object;
         if (obj.isNull()) {
-            masm.xorq(ARMV7.r12, ARMV7.r12);
+            masm.xorq(dst, dst);
         } else {
             if (target.inlineObjects) {
                 assert (0 == 1);

@@ -1,10 +1,14 @@
 package com.oracle.max.asm.target.armv7;
 
-import static com.oracle.max.cri.intrinsics.MemoryBarriers.*;
+import com.oracle.max.asm.AbstractAssembler;
+import com.oracle.max.asm.Label;
+import com.sun.cri.ci.CiAddress;
+import com.sun.cri.ci.CiKind;
+import com.sun.cri.ci.CiRegister;
+import com.sun.cri.ci.CiTarget;
+import com.sun.cri.ri.RiRegisterConfig;
 
-import com.oracle.max.asm.*;
-import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
+import static com.oracle.max.cri.intrinsics.MemoryBarriers.STORE_LOAD;
 
 public class ARMV7Assembler extends AbstractAssembler {
 
@@ -881,6 +885,8 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void cmp(final ConditionFlag flag, final CiRegister Rn, final CiRegister Rm, int imm5, int imm2Type) {
         int instruction = 0x01500000;
+        assert (Rn.encoding != Rm.encoding); // defensive assert against scratch problem in ARMV7LIemitCompare ...
+
         checkConstraint(0 <= imm5 && imm5 <= 31, "0 <= imm5 && imm5 <= 31");
         checkConstraint(0 <= imm2Type && imm2Type <= 3, "0 <= imm2Type && imm2Type <= 3");
         instruction |= (flag.value() & 0xf) << 28;
