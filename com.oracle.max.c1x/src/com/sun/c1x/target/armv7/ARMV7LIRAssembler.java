@@ -977,7 +977,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.vcvt(ConditionFlag.Always, dest.asRegister(), true, true, src.asRegister(), dest.kind, src.kind);
                 break;
             case MOV_D2L:
-                assert false : "mov_d2l uimplemented";
+                System.out.println("mov_d2l uimplemented");
                 break;
             default:
                 throw Util.shouldNotReachHere();
