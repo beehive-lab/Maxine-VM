@@ -22,11 +22,14 @@
  */
 package com.sun.max.vm.jdk;
 
-import static com.sun.max.vm.MaxineVM.*;
+import com.sun.max.annotate.METHOD_SUBSTITUTIONS;
+import com.sun.max.annotate.SUBSTITUTE;
+import com.sun.max.platform.Platform;
+import com.sun.max.vm.heap.Heap;
+import com.sun.max.vm.heap.SpecialReferenceManager;
+import com.sun.max.vm.object.ObjectAccess;
 
-import com.sun.max.annotate.*;
-import com.sun.max.vm.heap.*;
-import com.sun.max.vm.object.*;
+import static com.sun.max.vm.MaxineVM.vm;
 
 /**
  * Method substitutions for java.lang.Object.
@@ -61,7 +64,11 @@ final class JDK_java_lang_Object {
      */
     @SUBSTITUTE("hashCode")
     public int hashCode_SUBSTITUTE() {
-        return ObjectAccess.makeHashCode(this);
+        if (Platform.target().arch.is32bit()) {
+            return 0xfffff & ObjectAccess.makeHashCode(this);
+        } else {
+            return ObjectAccess.makeHashCode(this);
+        }
     }
 
     /**

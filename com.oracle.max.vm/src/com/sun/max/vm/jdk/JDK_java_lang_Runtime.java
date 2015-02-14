@@ -82,6 +82,7 @@ public final class JDK_java_lang_Runtime {
     @ALIAS(declaringClassName = "java.lang.ref.Finalizer", name = "runFinalization")
     static native void runFinalization();
 
+
     /**
      * Invoke finalizers of garbage collected objects.
      * @see java.lang.Runtime#runFinalization()

@@ -22,30 +22,35 @@
  */
 package com.sun.max.vm.actor.member;
 
-import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
-import static com.sun.max.vm.type.ClassRegistry.Property.*;
-
-import java.lang.annotation.*;
-import java.lang.reflect.*;
-import java.util.*;
-import java.util.concurrent.*;
-
-import sun.reflect.*;
-
-import com.sun.cri.bytecode.*;
-import com.sun.cri.ci.*;
+import com.sun.cri.bytecode.Bytecodes;
+import com.sun.cri.ci.CiBitMap;
+import com.sun.cri.ci.CiExceptionHandler;
 import com.sun.cri.ri.*;
-import com.sun.max.*;
+import com.sun.max.Utils;
 import com.sun.max.annotate.*;
-import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.hosted.*;
+import com.sun.max.program.ProgramError;
+import com.sun.max.unsafe.UnsafeCast;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.actor.holder.ClassActor;
+import com.sun.max.vm.classfile.constant.SymbolTable;
+import com.sun.max.vm.classfile.constant.Utf8Constant;
+import com.sun.max.vm.hosted.JavaPrototype;
 import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.*;
+import com.sun.max.vm.value.Value;
+import sun.reflect.Reflection;
+import sun.reflect.ReflectionFactory;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.*;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.Constructor_methodActor;
+import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.Method_methodActor;
+import static com.sun.max.vm.type.ClassRegistry.Property.*;
 
 /**
  * Internal representations of Java methods.
@@ -361,14 +366,26 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
      */
     public final InvocationStub makeInvocationStub() {
         ClassRegistry classRegistry = holder().classRegistry();
+        ARM32Box boxOne = classRegistry.get(INVOCATION_STUB, new ARM32Box(this));
+        InvocationStub invocationStub = (InvocationStub) boxOne.get();
+
+        /*
+        ARM32Box is used to workaround the problem of hashCodes being 32bit, but in ARMV7 (32bit)
+        we needed a masked 0xfffff 20 bit hashcode
         InvocationStub invocationStub = classRegistry.get(INVOCATION_STUB, this);
+        */
         if (invocationStub == null) {
+
             if (isInstanceInitializer()) {
                 invocationStub = InvocationStub.newConstructorStub(toJavaConstructor(), null, Boxing.VALUE);
             } else {
                 invocationStub = InvocationStub.newMethodStub(toJava(), Boxing.VALUE);
             }
-            classRegistry.set(INVOCATION_STUB, this, invocationStub);
+            classRegistry.set(INVOCATION_STUB, new ARM32Box(this), new ARM32Box(invocationStub));
+
+            /*classRegistry.set(INVOCATION_STUB, this, invocationStub);
+            Replaced with ARM32Box
+             */
         }
         return invocationStub;
     }

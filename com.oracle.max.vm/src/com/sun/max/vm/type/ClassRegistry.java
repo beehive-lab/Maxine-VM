@@ -22,38 +22,49 @@
  */
 package com.sun.max.vm.type;
 
-import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
-import static com.sun.max.vm.hosted.HostedBootClassLoader.*;
-import static com.sun.max.vm.hosted.HostedVMClassLoader.*;
-import static com.sun.max.vm.jdk.JDK.*;
-import java.io.*;
-import java.lang.reflect.*;
-import java.nio.*;
-import java.util.*;
-import java.util.concurrent.*;
-
-import com.sun.max.*;
-import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
-import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.actor.*;
+import com.sun.max.Utils;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.annotate.INLINE;
+import com.sun.max.annotate.INSPECTED;
+import com.sun.max.lang.Classes;
+import com.sun.max.program.ProgramError;
+import com.sun.max.unsafe.UnsafeCast;
+import com.sun.max.vm.Log;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.actor.Actor;
 import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.deps.*;
-import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.actor.member.FieldActor;
+import com.sun.max.vm.actor.member.MethodActor;
+import com.sun.max.vm.classfile.constant.Utf8Constant;
+import com.sun.max.vm.compiler.CallEntryPoint;
+import com.sun.max.vm.compiler.deps.DependenciesManager;
+import com.sun.max.vm.hosted.HostedClassLoader;
 import com.sun.max.vm.jdk.JDK.ClassRef;
 import com.sun.max.vm.log.VMLog.Record;
-import com.sun.max.vm.log.hosted.*;
-import com.sun.max.vm.reference.*;
-import com.sun.max.vm.reflection.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.tele.*;
-import com.sun.max.vm.thread.*;
+import com.sun.max.vm.log.hosted.VMLogParam;
+import com.sun.max.vm.reference.Reference;
+import com.sun.max.vm.runtime.CriticalMethod;
+import com.sun.max.vm.runtime.CriticalNativeMethod;
+import com.sun.max.vm.tele.InspectableClassInfo;
+import com.sun.max.vm.thread.VmThread;
 import com.sun.max.vm.value.*;
+
+import java.io.Serializable;
+import java.lang.reflect.Method;
+import java.nio.Buffer;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.ClassLoader_classRegistry;
+import static com.sun.max.vm.hosted.HostedBootClassLoader.HOSTED_BOOT_CLASS_LOADER;
+import static com.sun.max.vm.hosted.HostedVMClassLoader.HOSTED_VM_CLASS_LOADER;
+import static com.sun.max.vm.jdk.JDK.java_lang_ref_Finalizer$FinalizerThread;
+import static com.sun.max.vm.jdk.JDK.java_lang_ref_Reference$ReferenceHandler;
 
 /**
  * Each class loader is associated with a class registry and vice versa.
@@ -378,7 +389,13 @@ public final class ClassRegistry {
         CONSTANT_VALUE(FieldActor.class, Value.class, null),
         ANNOTATION_DEFAULT_BYTES(MethodActor.class, byte[].class, MethodActor.NO_ANNOTATION_DEFAULT_BYTES),
         ACCESSOR(MethodActor.class, Class.class, null),
-        INVOCATION_STUB(false, MethodActor.class, InvocationStub.class, null),
+        /* WE need to control the hashCode to match what we have done with monitors, so we can mask the hashCode to the correct number of bits
+        currently 0xfffff for ARM 32 bit platforms
+                INVOCATION_STUB(false, MethodActor.class, InvocationStub.class, null),
+
+       */
+        INVOCATION_STUB(false, ARM32Box.class, ARM32Box.class, new ARM32Box(null)),
+
         RUNTIME_VISIBLE_PARAMETER_ANNOTATION_BYTES(MethodActor.class, byte[].class, MethodActor.NO_RUNTIME_VISIBLE_PARAMETER_ANNOTATION_BYTES);
 
         public static final List<Property> VALUES = java.util.Arrays.asList(values());
@@ -501,7 +518,7 @@ public final class ClassRegistry {
     }
 
     @HOSTED_ONLY
-    private static class BootImageClassesIterator implements Iterable<ClassActor>, Iterator<ClassActor> {
+    private static class BootImageClassesIterator implements Iterable<ClassActor>, java.util.Iterator<ClassActor> {
         Iterator<ClassActor> bootListIter;
         Iterator<ClassActor> vmListIter;
         Iterator<ClassActor> unregisteredListIter;
