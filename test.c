@@ -63,6 +63,15 @@ long long convertME(int yy) {
 long long longdiv(long long a, long long b) {
 	return a/b;
 }
+unsigned int umull(unsigned int a, unsigned int b) {
+return a*b;
+}
+unsigned int uadd(unsigned int a, unsigned int b) {
+return a+b;
+}
+unsigned int usub(unsigned int a, unsigned int b) {
+return a-b;
+}
 int main(int argc, char**argv) {
 	long long xx = 0;
 	long long yy = -2147483648LL;
