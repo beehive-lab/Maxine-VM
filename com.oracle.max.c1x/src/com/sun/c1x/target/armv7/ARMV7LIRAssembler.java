@@ -966,13 +966,15 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.bind(endLabel);
                 break;
             case MOV_I2F:
-                masm.vcvt(ConditionFlag.Always, dest.asRegister(), false, true, srcRegister, dest.kind, src.kind);
+                masm.vmov(ConditionFlag.Always, ARMV7.s30, srcRegister, CiKind.Float, src.kind);
+                masm.vcvt(ConditionFlag.Always, dest.asRegister(), false, true, ARMV7.s30, CiKind.Float, CiKind.Int);
                 break;
             case MOV_L2D:
                 System.out.println("mov_l2d uimplemented");
                 break;
             case MOV_F2I:
-                masm.vcvt(ConditionFlag.Always, dest.asRegister(), true, true, src.asRegister(), dest.kind, src.kind);
+                masm.vcvt(ConditionFlag.Always, ARMV7.s30, true, true, src.asRegister(), CiKind.Float, src.kind);
+                masm.vmov(ConditionFlag.Always, dest.asRegister(), ARMV7.s30, dest.kind, CiKind.Float);
                 break;
             case MOV_D2L:
                 System.out.println("mov_d2l uimplemented");
