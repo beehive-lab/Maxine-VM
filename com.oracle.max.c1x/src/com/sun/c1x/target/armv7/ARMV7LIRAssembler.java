@@ -1895,14 +1895,18 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             }
         } else {
             assert code == LIROpcode.Cmpl2i;
-            System.out.println("Cmpl2i");
+
             CiRegister dest = dst.asRegister();
             Label high = new Label();
             Label done = new Label();
             Label isEqual = new Label();
-            masm.cmpptr(left.asRegister(), right.asRegister());
+            masm.lcmpl(ConditionFlag.Equal, left.asRegister(), right.asRegister());
             masm.jcc(ConditionFlag.Equal, isEqual);
+
+            // We dont do lcmps perfectly so we need to do another compare to try to get the correct condition code
+            masm.lcmpl(ConditionFlag.SignedGreater, left.asRegister(), right.asRegister());
             masm.jcc(ConditionFlag.SignedGreater, high); // unsigned Greater?
+
             masm.xorptr(dest, dest);
             masm.decrementl(dest, 1);
             masm.jmp(done);
@@ -1913,6 +1917,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             masm.bind(isEqual);
             masm.xorptr(dest, dest);
             masm.bind(done);
+
+
         }
     }
 
