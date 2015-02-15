@@ -1627,7 +1627,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
              * (a/b)b + (a%b) = a => (a%b) = a - (a/b)b r9 = a r12 = a reg = b
              */
             masm.mul(ConditionFlag.Always, false, lreg, dreg, rreg);
-            masm.rsbRegister(ConditionFlag.Always, false, dreg, ARMV7.r9, lreg, 0, 0);
+            masm.sub(ConditionFlag.Always, false, dreg, ARMV7.r9, lreg, 0, 0);
+
+            //masm.rsbRegister(ConditionFlag.Always, false, dreg, ARMV7.r9, lreg, 0, 0);
 
         } else {
             assert code == LIROpcode.Iudiv;
