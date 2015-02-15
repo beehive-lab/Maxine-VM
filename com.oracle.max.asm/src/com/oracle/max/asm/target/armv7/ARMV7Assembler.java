@@ -1423,7 +1423,6 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= 0x0e200a00;
         int sz = 0;
         checkConstraint(dest.number >= 16 && rn.number >= 16 && rm.number >= 16, "vmul ALL  FP/DP regs");
-        checkConstraint((dest.number <= 31 && rn.number <= 31 && rm.number <= 31) || (dest.number >= 32 && rn.number >= 32 && rm.number >= 32), "vmul ALL  FP OR ALL DP regs");
         if (destKind.isDouble()) {
             sz = 1;
         }
@@ -1442,7 +1441,6 @@ public class ARMV7Assembler extends AbstractAssembler {
             instruction |= (dest.encoding & 0x1) << 22;
             instruction |= (rn.encoding & 0x1) << 7;
             instruction |= (rm.encoding & 0x1) << 5;
-
         }
         instruction |= sz << 8;
         emitInt(instruction);
