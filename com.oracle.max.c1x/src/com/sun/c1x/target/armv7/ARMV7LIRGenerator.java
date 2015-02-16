@@ -572,31 +572,31 @@ public class ARMV7LIRGenerator extends LIRGenerator {
     public void visitConvert(Convert x) {
         CiValue input = load(x.value());
         CiVariable result = newVariable(x.kind);
-        // arguments of lirConvert
         CompilerStub stub = null;
+
         // Checkstyle: off
         switch (x.opcode) {
             case F2I: stub = stubFor(CompilerStub.Id.f2i); break;
             case F2L: stub = stubFor(CompilerStub.Id.f2l); break;
             case D2I: stub = stubFor(CompilerStub.Id.d2i); break;
             case D2L: stub = stubFor(CompilerStub.Id.d2l); break;
-
         }
         // Checkstyle: on
+
         if (stub != null) {
             // Force result to be rax to match compiler stubs expectation.
             CiValue stubResult = x.kind == CiKind.Int ? RAX_I : RAX_L;
-
-            if(x.opcode == Convert.Op.D2L) {
-                result = callRuntimeWithResult(CiRuntimeCall.d2jlong, null, input);
-            } else if(x.opcode == Convert.Op.F2L) {
-                result = callRuntimeWithResult(CiRuntimeCall.f2jlong, null, input);
-	        } else {
-            	lir.convert(x.opcode, input, stubResult, stub);
-            	lir.move(stubResult, result);
-	        }
-
-        } else {
+            lir.convert(x.opcode, input, stubResult, stub);
+            lir.move(stubResult, result);
+        } else if (x.opcode == Convert.Op.D2L) {
+            result = callRuntimeWithResult(CiRuntimeCall.d2long, null, input);
+        } else if (x.opcode == Convert.Op.F2L) {
+            result = callRuntimeWithResult(CiRuntimeCall.f2long, null, input);
+        } else if (x.opcode == Convert.Op.L2D) {
+            result = callRuntimeWithResult(CiRuntimeCall.l2double, null, input);
+        } else if (x.opcode == Convert.Op.L2F) {
+            result = callRuntimeWithResult(CiRuntimeCall.l2float, null, input);
+        }else {
             lir.convert(x.opcode, input, result, stub);
         }
         setResult(x, result);
