@@ -68,8 +68,11 @@ public class MaxForeignCallsMap {
         MaxForeignCallsMap.runtime = runtime;
         try {
 
-      	    createCiRuntimeCall(CiRuntimeCall.d2jlong, "d2jlong", RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
-            createCiRuntimeCall(CiRuntimeCall.f2jlong, "f2jlong", RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
+      	    createCiRuntimeCall(CiRuntimeCall.d2long, "d2long", RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
+            createCiRuntimeCall(CiRuntimeCall.f2long, "f2long", RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
+            createCiRuntimeCall(CiRuntimeCall.l2double, "l2double", RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
+            createCiRuntimeCall(CiRuntimeCall.l2float, "l2float", RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
+
             createCiRuntimeCall(CiRuntimeCall.arithmeticlrem, "arithmeticlrem", RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
             createCiRuntimeCall(CiRuntimeCall.arithmeticlurem, "arithmeticlurem", RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
             createCiRuntimeCall(CiRuntimeCall.arithmeticludiv, "arithmeticludiv", RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);

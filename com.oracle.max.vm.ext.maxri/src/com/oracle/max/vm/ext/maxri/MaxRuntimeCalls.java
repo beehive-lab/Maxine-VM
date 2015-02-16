@@ -98,37 +98,53 @@ public class MaxRuntimeCalls {
         }
         return true;
     }
-    /* ARM HACKS ... we need to get rid of these and get the compiler to generate correct assembler
-    */
-    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.d2jlong)
+
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.d2long)
     public static long runtimeJd2jlong(double val) {
         verifyRefMaps();
-        return MaxineVM.d2jlong(val);
+        return Snippets.d2long(val);
     }
-    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.f2jlong)
+
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.f2long)
     public static long runtimeJd2jlong(float val) {
         verifyRefMaps();
-        return MaxineVM.f2jlong(val);
+        return Snippets.f2long(val);
     }
+
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.l2double)
+    public static double runtimel2double(long val) {
+        verifyRefMaps();
+        return Snippets.l2double(val);
+    }
+
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.l2float)
+    public static float runtimel2float(long val) {
+        verifyRefMaps();
+        return Snippets.l2float(val);
+    }
+
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.arithmeticldiv)
     public static long runtimearithmeticldiv(long a, long b) {
         verifyRefMaps();
-        return MaxineVM.arithmeticldiv(a,b);
+        return MaxineVM.arithmeticldiv(a, b);
     }
+
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.arithmeticludiv)
     public static long runtimearithmeticludiv(long a, long b) {
         verifyRefMaps();
-        return MaxineVM.arithmeticludiv(a,b);
+        return MaxineVM.arithmeticludiv(a, b);
     }
+
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.arithmeticlrem)
     public static long runtimearithmeticlrem(long a, long b) {
         verifyRefMaps();
-        return MaxineVM.arithmeticlrem(a,b);
+        return MaxineVM.arithmeticlrem(a, b);
     }
+
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.arithmeticlurem)
     public static long runtimearithmeticlurem(long a, long b) {
         verifyRefMaps();
-        return MaxineVM.arithmeticlurem(a,b);
+        return MaxineVM.arithmeticlurem(a, b);
     }
 
     private static void verifyRefMaps() {
