@@ -328,8 +328,7 @@ public final class JDK_java_lang_System {
                 if (toIndex < 0 || length < 0 || fromIndex + length > ArrayAccess.readArrayLength(fromArray)) {
                     throw new IndexOutOfBoundsException();
                 }
-		Log.println("POSITION ONE arrayCopyForward");
-                arrayCopyForward(kind, fromArray, fromIndex, fromArray, toIndex, length, null);
+		arrayCopyForward(kind, fromArray, fromIndex, fromArray, toIndex, length, null);
             }
             return;
         }
@@ -340,11 +339,6 @@ public final class JDK_java_lang_System {
                     toIndex + length > ArrayAccess.readArrayLength(toArray)) {
                 throw new IndexOutOfBoundsException();
             }
-            Log.println("POSITION TWO arrayCopyForward");
-            //Log.println( kind.asEnum);
-	   // Log.println("DONE");
-
-
             arrayCopyForward(kind, fromArray, fromIndex, toArray, toIndex, length, null);
         } else {
             final ClassActor toArrayClassActor = toHub.classActor;
@@ -360,7 +354,6 @@ public final class JDK_java_lang_System {
                     toIndex + length > ArrayAccess.readArrayLength(toArray)) {
                 throw new IndexOutOfBoundsException();
             }
-            Log.println("POSITION THREE arrayCopyForward");
             arrayCopyForward(kind, fromArray, fromIndex, toArray, toIndex, length, toComponentClassActor);
         }
     }
