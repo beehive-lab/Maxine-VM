@@ -1779,8 +1779,10 @@ public class ARMV7Assembler extends AbstractAssembler {
         int vmovDoubleCore = 0x0c400b10; // A8.8.345 // TWO ARM core to doubleword extension
         if (srcKind.isDouble() && destKind.isDouble()) {
             instruction |= (1 << 8) | vmovSameType;
-            instruction |= dest.encoding << 12;
-            instruction |= src.encoding;
+            instruction |= (dest.encoding >> 4)  << 22;
+            instruction |= (dest.encoding & 0xf)  << 12;
+            instruction |= (src.encoding >> 4)  << 5;
+            instruction |= (src.encoding & 0xf);
         } else if (srcKind.isFloat() && destKind.isFloat()) {
             // dest LSB bit 22, and 12-15
             // src LSB 5 and 0-3
@@ -1806,7 +1808,8 @@ public class ARMV7Assembler extends AbstractAssembler {
                 checkConstraint((src.encoding) <= 14, "vmov core to doubleword core register > 14");
                 instruction |= (src.encoding + 1) << 16;
                 instruction |= src.encoding << 12;
-                instruction |= dest.encoding;
+                instruction |= (dest.encoding & 1) << 5;
+                instruction |= dest.encoding >> 1;
             }
         }
         emitInt(instruction);
