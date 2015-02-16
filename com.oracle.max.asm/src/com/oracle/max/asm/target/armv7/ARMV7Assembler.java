@@ -477,6 +477,20 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
+    public void rsbRegister(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int immed5, final int rotate_amount) {
+        int instruction = 0x600000;
+        checkConstraint(0 <= immed5 && immed5 < 32, "0 <= immed5 && immed5 < 32");
+        checkConstraint(0 <= rotate_amount && rotate_amount < 4, "0 <= rotate_amount && rotate_amount  < 4");
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (s ? 1 : 0) << 20;
+        instruction |= (Rd.encoding & 0xf) << 12;
+        instruction |= (Rn.encoding & 0xf) << 16;
+        instruction |= (Rm.encoding & 0xf);
+        instruction |= (immed5 & 0x1f) << 7;
+        instruction |= (rotate_amount & 0x3) << 5;
+        emitInt(instruction);
+    }
+
     public void rsc(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int immed_5, final int type) {
         int instruction = 0xE00000;
         instruction |= (cond.value() & 0xf) << 28;

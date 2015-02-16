@@ -716,17 +716,21 @@ public abstract class TargetMethod extends MemoryRegion {
                 case Float: // fall through
                 case Int: // fall through
                 case Long: {
+                    int tmp = 0;
+                    if (platform().isa == ISA.ARM) {
+                        tmp = -12;
+                    }
                     assert site.alignment == 0 || targetBundleLayout.firstElementPointer(start, ArrayField.scalarLiterals).plus(literals.scalarPos(dataIndex)).isAligned(site.alignment) : "patching to a scalar address that is not aligned";
-                    patchRelativeInstruction(site.pcOffset, scalarDiff.plus(literals.scalarPos(dataIndex) - site.pcOffset).toInt());
+                    patchRelativeInstruction(site.pcOffset, scalarDiff.plus(literals.scalarPos(dataIndex) - site.pcOffset).toInt() + tmp);
                     break;
                 }
                 case Object: {
                     int index = literals.objectPool.get(site.constant.asObject());
-		    int tmp = 0;
-                    if(platform().isa == ISA.ARM ) {
+                    int tmp = 0;
+                    if (platform().isa == ISA.ARM) {
                         tmp = -12;
                     }
-                    patchRelativeInstruction(site.pcOffset, referenceDiff.plus(index * Word.size() - site.pcOffset).toInt()+tmp);
+                    patchRelativeInstruction(site.pcOffset, referenceDiff.plus(index * Word.size() - site.pcOffset).toInt() + tmp);
                     break;
                 }
                 default:
