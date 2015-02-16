@@ -150,9 +150,8 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
             }
         }
 
-        // if (!CompilationBroker.OFFLINE) {
         for (CompilerStub.Id id : CompilerStub.Id.values()) {
-            if (Platform.target().arch.is32bit() && (id == CompilerStub.Id.fneg || id == CompilerStub.Id.dneg)) {
+            if (omitStub(id)) {
                 continue;
             }
             TTY.Filter suppressor = new TTY.Filter(C1XOptions.PrintFilter, id);
@@ -162,16 +161,33 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
                 suppressor.remove();
             }
         }
-        // }
 
         if (C1XOptions.PrintCFGToFile()) {
             addCompilationObserver(cfgPrinterObserver = new CFGPrinterObserver());
         }
     }
 
+    /**
+     * The compiler stubs at the moment are generic to target platform.
+     * For ARMv7, some stubs have been replaced by runtime calls and hence,
+     * they are omitted from adding them to the stubs list.
+     * @param id of the stub.
+     * @return true if the stub is omited.
+     */
+    private boolean omitStub(CompilerStub.Id id) {
+        if (Platform.target().arch.is32bit() &&
+               (id == CompilerStub.Id.fneg ||
+                id == CompilerStub.Id.dneg ||
+                id == CompilerStub.Id.d2l  ||
+                id == CompilerStub.Id.f2l)) {
+            return true;
+        }
+        return false;
+    }
+
     public CompilerStub lookupStub(CompilerStub.Id id) {
         CompilerStub stub = stubs.get(id);
-        assert stub != null : "no stub for compiler stub id: " + id;
+        assert stub != null || (stub==null && omitStub(id)) : "no stub for compiler stub id: " + id;
         return stub;
     }
 
