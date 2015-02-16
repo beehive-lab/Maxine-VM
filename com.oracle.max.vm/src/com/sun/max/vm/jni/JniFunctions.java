@@ -22,45 +22,59 @@
  */
 package com.sun.max.vm.jni;
 
-import static com.sun.max.vm.classfile.ErrorContext.*;
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
-import static com.sun.max.vm.thread.VmThread.*;
-import static com.sun.max.vm.thread.VmThreadLocal.*;
-import static com.sun.max.vm.jni.JniFunctions.JxxFunctionsLogger.*;
-
-import java.lang.reflect.*;
-import java.nio.*;
-import java.util.*;
-
-import com.sun.max.*;
-import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
-import com.sun.max.memory.*;
-import com.sun.max.program.*;
+import com.sun.max.Utils;
+import com.sun.max.annotate.INLINE;
+import com.sun.max.annotate.INTRINSIC;
+import com.sun.max.annotate.VM_ENTRY_POINT;
+import com.sun.max.lang.Classes;
+import com.sun.max.memory.Memory;
+import com.sun.max.program.ProgramError;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
-import com.sun.max.vm.*;
+import com.sun.max.util.Utf8;
+import com.sun.max.util.Utf8Exception;
+import com.sun.max.vm.Log;
 import com.sun.max.vm.MaxineVM.Phase;
-import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.VMOption;
+import com.sun.max.vm.VMOptions;
+import com.sun.max.vm.actor.holder.ClassActor;
+import com.sun.max.vm.actor.holder.TupleClassActor;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.heap.*;
-import com.sun.max.vm.jdk.*;
-import com.sun.max.vm.layout.*;
-//import com.sun.max.vm.log.*;  // see comment on JxxFunctionsLogger
-import com.sun.max.vm.log.*;
-import com.sun.max.vm.log.VMLog.*;
-import com.sun.max.vm.monitor.*;
-import com.sun.max.vm.object.*;
-import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.*;
-import com.sun.max.vm.thread.*;
-import com.sun.max.vm.ti.*;
+import com.sun.max.vm.classfile.ClassfileReader;
+import com.sun.max.vm.classfile.constant.SymbolTable;
+import com.sun.max.vm.classfile.constant.Utf8Constant;
+import com.sun.max.vm.compiler.target.TargetMethod;
+import com.sun.max.vm.heap.Heap;
+import com.sun.max.vm.jdk.JDK_sun_reflect_Reflection;
+import com.sun.max.vm.layout.Layout;
+import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.VMLogger;
+import com.sun.max.vm.monitor.Monitor;
+import com.sun.max.vm.object.ObjectAccess;
+import com.sun.max.vm.reference.Reference;
+import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.runtime.SafepointPoll;
+import com.sun.max.vm.runtime.Snippets;
+import com.sun.max.vm.stack.JavaFrameAnchor;
+import com.sun.max.vm.thread.VmThread;
+import com.sun.max.vm.ti.VMTI;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
+
+import java.lang.reflect.*;
+import java.nio.Buffer;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import static com.sun.max.vm.classfile.ErrorContext.classFormatError;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
+import static com.sun.max.vm.jni.JniFunctions.JxxFunctionsLogger.UPCALL_ENTRY;
+import static com.sun.max.vm.jni.JniFunctions.JxxFunctionsLogger.UPCALL_EXIT;
+import static com.sun.max.vm.thread.VmThread.currentTLA;
+import static com.sun.max.vm.thread.VmThreadLocal.*;
+
+//import com.sun.max.vm.log.*;  // see comment on JxxFunctionsLogger
 
 /**
  * Upcalls from C that implement the <a href="http://java.sun.com/j2se/1.5.0/docs/guide/jni/spec/jniTOC.html">JNI Interface Functions</a>.

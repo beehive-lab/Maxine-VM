@@ -1044,8 +1044,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             def = opr2;
             other = opr1;
             // and flip the condition
-            acond = ConditionFlag.Always;
-            ncond = ConditionFlag.Always;
             ConditionFlag tcond = acond;
             acond = ncond;
             ncond = tcond;
