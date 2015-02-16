@@ -148,9 +148,6 @@ public final class JDK_java_lang_System {
      * @param toComponentClassActor the class actor representing the component type of the destination array
      */
     private static void arrayCopyForward(final Kind kind, Object fromArray, int fromIndex, Object toArray, int toIndex, int length, ClassActor toComponentClassActor) {
-        //Log.println("arrayCopyForward");
-        //Log.println(kind.asEnum);
-
         switch (kind.asEnum) {
             case BYTE: {
                 for (int i = 0; i < length; i++) {
