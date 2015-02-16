@@ -818,6 +818,9 @@ public abstract class LIRGenerator extends ValueVisitor {
 
     protected CompilerStub stubFor(CompilerStub.Id compilerStub) {
         CompilerStub stub = compilation.compiler.lookupStub(compilerStub);
+        if (stub == null) {
+            return null;
+        }
         compilation.frameMap().usesStub(stub);
         return stub;
     }
