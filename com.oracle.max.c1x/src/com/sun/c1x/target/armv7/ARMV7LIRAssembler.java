@@ -907,77 +907,36 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 break;
             }
             case L2F:
-                System.out.println("long to float convert unimplemented");
-                /*
-                 * masm.push(ConditionFlag.Always,1<< (srcRegister.number+1)| 1<< srcRegister.number);
-                 * masm.eor(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
-                 * masm.cmp(ConditionFlag.Always,ARMV7.cpuRegisters[srcRegister.number+1],ARMV7.r12,0,0);
-                 * masm.movlong(ARMV7.r8,-1); masm.mulLong(ARMV7.r8,ARMV7.r8,srcRegister);
-                 * masm.pop(ConditionFlag.Always,1<< (srcRegister.number+1)| 1<< srcRegister.number);
-                 * masm.mov(ConditionFlag.SignedLesser,false,srcRegister,ARMV7.r8);
-                 * masm.mov(ConditionFlag.SignedLesser,false,ARMV7.cpuRegisters[srcRegister.number+1],ARMV7.r9);
-                 * masm.vmov(ConditionFlag.Always,ARMV7.s31,ARMV7.cpuRegisters[srcRegister.number+1]);
-                 * masm.unsignedvcvt(ConditionFlag.Always,true,ARMV7.s31,ARMV7.s31); // HIGHWORD = s31
-                 * masm.mov32BitConstant(ARMV7.r12,0xffffffff); masm.vmov(ConditionFlag.Always,ARMV7.s30,ARMV7.r12);
-                 * masm.unsignedvcvt(ConditionFlag.Always,true,ARMV7.s30,ARMV7.s30);
-                 * masm.vmul(ConditionFlag.Always,ARMV7.s30,ARMV7.s31,ARMV7.s30); // HIGHWORD multiplied by ...
-                 * masm.vmov(ConditionFlag.Always,ARMV7.s31,src.asRegister());
-                 * masm.unsignedvcvt(ConditionFlag.Always,true,ARMV7.s31,ARMV7.s31); //s30 holds the LSB
-                 * masm.vadd(ConditionFlag.Always,asXmmFloatReg(dest),ARMV7.s30,ARMV7.s31);
-                 * masm.mov32BitConstant(ARMV7.r12,-1); masm.vmov(ConditionFlag.SignedLesser,ARMV7.s31,ARMV7.r12);
-                 * masm.vcvt(ConditionFlag.SignedLesser,ARMV7.s31,false,true,ARMV7.s31);
-                 * masm.vmul(ConditionFlag.SignedLesser,asXmmFloatReg(dest),asXmmFloatReg(dest),ARMV7.s31);
-                 */
-
+                assert false: "L2F is implemented as runtime call!";
                 break;
             case L2D:
-                System.out.println("long to double convert unimplemented");
-                /*
-                 * masm.push(ConditionFlag.Always,1<< (srcRegister.number+1)| 1<< srcRegister.number);
-                 * masm.eor(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
-                 * masm.cmp(ConditionFlag.Always,ARMV7.cpuRegisters[srcRegister.number+1],ARMV7.r12,0,0);
-                 * masm.movlong(ARMV7.r8,-1); masm.mulLong(ARMV7.r8,ARMV7.r8,srcRegister);
-                 * masm.pop(ConditionFlag.Always,1<< (srcRegister.number+1)| 1<< srcRegister.number);
-                 * masm.mov(ConditionFlag.SignedLesser,false,srcRegister,ARMV7.r8);
-                 * masm.mov(ConditionFlag.SignedLesser,false,ARMV7.cpuRegisters[srcRegister.number+1],ARMV7.r9);
-                 * masm.vmov(ConditionFlag.Always,ARMV7.s30,ARMV7.cpuRegisters[srcRegister.number+1]);
-                 * masm.unsignedvcvt(ConditionFlag.Always,true,ARMV7.d15,ARMV7.s30); // HIGHWORD = d15
-                 * masm.mov32BitConstant(ARMV7.r12,0xffffffff); masm.vmov(ConditionFlag.Always, ARMV7.s29,ARMV7.r12);
-                 * masm.unsignedvcvt(ConditionFlag.Always,true,asXmmDoubleReg(dest),ARMV7.s29);
-                 * masm.vmul(ConditionFlag.Always,asXmmDoubleReg(dest),asXmmDoubleReg(dest),ARMV7.d15); // HIGHWORD
-                 * multiplied by ... masm.vmov(ConditionFlag.Always,ARMV7.s30,src.asRegister());
-                 * masm.unsignedvcvt(ConditionFlag.Always,true,ARMV7.d15,ARMV7.s30); //s30 holds the LSB
-                 * masm.vadd(ConditionFlag.Always,asXmmDoubleReg(dest),ARMV7.d15,asXmmDoubleReg(dest));
-                 * masm.mov32BitConstant(ARMV7.r12,-1); masm.vmov(ConditionFlag.SignedLesser,ARMV7.s30,ARMV7.r12);
-                 * masm.vcvt(ConditionFlag.SignedLesser,ARMV7.d15,false,true,ARMV7.s30);
-                 * masm.vmul(ConditionFlag.SignedLesser,asXmmDoubleReg(dest),asXmmDoubleReg(dest),ARMV7.d15);
-                 */
+                assert false: "L2D is implemented as runtime call!";
                 break;
             case F2L:
-                assert srcRegister.isFpu() && dest.kind.isLong() : "must both be XMM register (no fpu stack)";
-                masm.jcc(ConditionFlag.NotEqual, endLabel);
-                callStub(op.stub, null, dest.asRegister(), src);
-                masm.bind(endLabel);
+                assert false: "F2L is implemented as runtime call!";
+               // assert srcRegister.isFpu() && dest.kind.isLong() : "must both be XMM register (no fpu stack)";
+               // masm.jcc(ConditionFlag.NotEqual, endLabel);
+               // callStub(op.stub, null, dest.asRegister(), src);
+               // masm.bind(endLabel);
                 break;
             case D2L:
-                assert srcRegister.isFpu() && dest.kind.isLong() : "must both be XMM register (no fpu stack)";
-                masm.jcc(ConditionFlag.NotEqual, endLabel);
-                callStub(op.stub, null, dest.asRegister(), src);
-                masm.bind(endLabel);
+                assert false: "D2L is implemented as runtime call!";
+                //assert srcRegister.isFpu() && dest.kind.isLong() : "must both be XMM register (no fpu stack)";
+                //masm.jcc(ConditionFlag.NotEqual, endLabel);
+                //callStub(op.stub, null, dest.asRegister(), src);
+                //masm.bind(endLabel);
                 break;
             case MOV_I2F:
-                masm.vmov(ConditionFlag.Always, ARMV7.s30, srcRegister, CiKind.Float, src.kind);
-                masm.vcvt(ConditionFlag.Always, dest.asRegister(), false, true, ARMV7.s30, CiKind.Float, CiKind.Int);
+                masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, CiKind.Float, CiKind.Int);
                 break;
             case MOV_L2D:
-                System.out.println("mov_l2d uimplemented");
+                masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, CiKind.Double, CiKind.Long);
                 break;
             case MOV_F2I:
-                masm.vcvt(ConditionFlag.Always, ARMV7.s30, true, true, src.asRegister(), CiKind.Float, src.kind);
-                masm.vmov(ConditionFlag.Always, dest.asRegister(), ARMV7.s30, dest.kind, CiKind.Float);
+                masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, CiKind.Int, CiKind.Float);
                 break;
             case MOV_D2L:
-                System.out.println("mov_d2l uimplemented");
+                masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, CiKind.Long, CiKind.Double);
                 break;
             default:
                 throw Util.shouldNotReachHere();
