@@ -693,6 +693,46 @@ public class Snippets {
     }
 
     @C_FUNCTION
+    public static native double l2double(long x);
+
+    public static double long2double(long x) {
+        if (MaxineVM.isHosted()) {
+            return x;
+        }
+        return l2double(x);
+    }
+
+    @C_FUNCTION
+    public static native float l2float(long x);
+
+    public static float long2float(long x) {
+        if (MaxineVM.isHosted()) {
+            return x;
+        }
+        return l2float(x);
+    }
+
+    @C_FUNCTION
+    public static native long d2long(double x);
+
+    public static long double2long(double x) {
+        if (MaxineVM.isHosted()) {
+            return (long) x;
+        }
+        return d2long(x);
+    }
+
+    @C_FUNCTION
+    public static native long f2long(float x);
+
+    public static long float2long(float x) {
+        if (MaxineVM.isHosted()) {
+            return (long) x;
+        }
+        return f2long(x);
+    }
+
+    @C_FUNCTION
     private static native float nativeFloatRemainder(float dividend, float divisor);
 
     @INLINE
