@@ -51,12 +51,12 @@
 #endif
 
 
-jlong d2long(double x) {
-	return (jlong)x;
+long d2long(double x) {
+	return (long)x;
 }
 
-jlong f2long(float x) {
-	return (jlong)x;
+long f2long(float x) {
+	return (long)x;
 }
 
 jlong arithmeticldiv(jlong x, jlong y) {
@@ -75,11 +75,11 @@ unsigned long long  arithmeticlurem(unsigned long long x , unsigned long long y)
 	return x%y; 
 }
 
-jdouble l2double(jlong x) {
+double l2double(long x) {
 	return (jdouble) x;
 }
 
-jfloat l2float(jlong x) {
+float l2float(long x) {
 	return (jfloat) x;
 }
 
