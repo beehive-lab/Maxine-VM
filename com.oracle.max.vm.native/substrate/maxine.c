@@ -51,41 +51,37 @@
 #endif
 
 
-jlong d2jlong(double x) {
-    // hack for arm
-    // long term replace with assembler in the compiler
-    return (jlong)x;
+jlong d2long(double x) {
+	return (jlong)x;
 }
+
 jlong f2long(float x) {
-    // hack for armv7
-    // longer term we need to replace wih assembler in the compiler
-    return (jlong)x;
+	return (jlong)x;
 }
+
 jlong arithmeticldiv(jlong x, jlong y) {
-    // hack for armv7
-    // longer term we need to replace wih assembler in the compiler
 	return x/y;
 }
+
 jlong arithmeticlrem(jlong x, jlong y) {
-    // hack for armv7
-    // longer term we need to replace wih assembler in the compiler
 	return x % y; 
 }
+
 unsigned long long  arithmeticludiv(unsigned long long x , unsigned long long y) {
-    // might not work ... java longs are signed by default ...
-    // hack for armv7
-    // longer term we need to replace wih assembler in the compiler
-    return x/y; 
+	return x/y; 
 }
+
 unsigned long long  arithmeticlurem(unsigned long long x , unsigned long long y) {
-    // might not work ... java longs are signed by default ...
-    // hack for armv7
-    // longer term we need to replace wih assembler in the compiler
-    return x%y; 
+	return x%y; 
 }
 
+jdouble l2double(jlong x) {
+	return (jdouble) x;
+}
 
-
+jfloat l2float(jlong x) {
+	return (jfloat) x;
+}
 
 static void max_fd_limit() {
 #if os_LINUX || os_SOLARIS || os_DARWIN
