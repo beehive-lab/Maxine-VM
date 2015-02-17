@@ -93,6 +93,11 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     private static StaticMethodActor MaxMiscLoweringsThrowExceptionMethodActor;
 
     /**
+     * Method actor of MaxRuntimeCalls.runtimeUnwindException method.
+     */
+    private static StaticMethodActor MaxRuntimeCallsRuntimeUnwindException;
+
+    /**
      * Debug info.
      */
     private DebugInfo debugInfo;
@@ -630,26 +635,32 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
         Throwable throwable = context.throwable;
         ClassMethodActor calleeCMA = context.lastCalleeCMA;
         CodePointer catchAddress = throwAddressToCatchAddress(ip, throwable);
-        boolean isDeoptimized = false;
+        boolean isMethodDeoptimized = invalidated() != null;
+        boolean isMethodHandlerFound = !catchAddress.isZero();
+        boolean isOriginalHandlerFoundOrMethodSynchronized = false;
 
-        // mark current method for deoptimization if exception handler was not compiled
-        if (catchAddress.isZero()) {
-            TargetMethod tm = current.targetMethod();
-            int si = tm.findSafepointIndex(ip);
-            // do not deoptimize method of the frame being unwinded or not at a safepoint 
-            if (si != -1 && calleeCMA != MaxMiscLoweringsThrowExceptionMethodActor) {
-                int frameChainLength = debugInfo.retrieveFrameChainLength(si, true);
-                for (int frameIndex = 0; frameIndex < frameChainLength; frameIndex++) {
-                    ClassMethodActor frameCMA = debugInfo.retrieveClassMethodActor(si, true, frameIndex);
-                    int frameBCI = debugInfo.retrieveBCI(si, true, frameIndex);
-                    if (frameCMA.findCachedHandlerForException(frameBCI, throwable) != null) {
+        TargetMethod tm = current.targetMethod();
+        int si = tm.findSafepointIndex(ip);
+        // skip method of the frame being unwinded or not at a safepoint
+        if (si != -1 && calleeCMA != MaxMiscLoweringsThrowExceptionMethodActor && calleeCMA != MaxRuntimeCallsRuntimeUnwindException) {
+            int frameChainLength = debugInfo.retrieveFrameChainLength(si, true);
+            for (int frameIndex = 0; frameIndex < frameChainLength; frameIndex++) {
+                ClassMethodActor frameCMA = debugInfo.retrieveClassMethodActor(si, true, frameIndex);
+                int frameBCI = debugInfo.retrieveBCI(si, true, frameIndex);
+                if (frameCMA.findCachedHandlerForException(frameBCI, throwable) != null || frameCMA.isSynchronized()) {
+                    // mark current method for deoptimization if exception handler was not compiled
+                    if (catchAddress.isZero()) {
                         Deoptimization.patchReturnAddress(current, callee, calleeCMA);
-                        isDeoptimized = true;
+                        isMethodDeoptimized = true;
                     }
+                    // set indication that original exception handler exists for this frame location and exception
+                    // or method is synchronized (so that an extra exception handler exists in order to exit a monitor)
+                    isOriginalHandlerFoundOrMethodSynchronized = true;
+                    break;
                 }
             }
         }
-        if (!catchAddress.isZero() || isDeoptimized) {
+        if (isOriginalHandlerFoundOrMethodSynchronized || isMethodHandlerFound && !isMethodDeoptimized) {
             if (StackFrameWalker.TraceStackWalk) {
                 Log.print("StackFrameWalk: Handler position for exception at position ");
                 Log.print(ip.minus(codeStart()).toInt());
@@ -657,8 +668,8 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
                 Log.println(catchAddress.minus(codeStart()).toInt());
             }
 
-            int catchPos = posFor(isDeoptimized ? ip : catchAddress);
-            if (invalidated() != null || isDeoptimized) {
+            int catchPos = posFor(isMethodDeoptimized ? ip : catchAddress);
+            if (isMethodDeoptimized) {
                 assert current.sp().readWord(DEOPT_RETURN_ADDRESS_OFFSET).equals(current.ipAsPointer()) : "real caller IP should have been saved in rescue slot";
                 Pointer returnAddress = callee.targetMethod().returnAddressPointer(callee).readWord(0).asPointer();
                 assert Stub.isDeoptStubEntry(returnAddress, Code.codePointerToTargetMethod(returnAddress), callee) :
@@ -761,5 +772,10 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     @HOSTED_ONLY
     public static void initializeMaxMiscLoweringsThrowExceptionMethodActor(StaticMethodActor methodActor) {
         MaxMiscLoweringsThrowExceptionMethodActor = methodActor;
+    }
+
+    @HOSTED_ONLY
+    public static void initializeMaxRuntimeCallsRuntimeUnwindExceptionMethodActor(StaticMethodActor methodActor) {
+        MaxRuntimeCallsRuntimeUnwindException = methodActor;
     }
 }

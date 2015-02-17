@@ -749,17 +749,24 @@ public class Deoptimization extends VmOperation {
             if (pendingException == null) {
                 pendingException = new NullPointerException();
             }
-            Throw.traceThrow(pendingException);
-            VmThread.current().storeExceptionForHandler(pendingException, tm, tm.posFor(ip));
         } else {
             pendingException = VmThread.current().pendingException();
         }
-
         if (pendingException != null) {
-            topFrame = unwindToHandlerFrame(topFrame, pendingException);
-            assert topFrame != null : "could not (re)find handler for " + pendingException +
-                                       " thrown at " + tm + "+" + ip.to0xHexString();
+            CiFrame handleFrame = unwindToHandlerFrame(topFrame, pendingException);
+            if (topFrame.rethrowException == true) {
+                if (handleFrame == null) {
+                    Throw.raise(pendingException);
+                } else {
+                    Throw.traceThrow(pendingException);
+                    VmThread.current().storeExceptionForHandler(pendingException, tm, tm.posFor(ip));
+                }
+            }
+            assert handleFrame != null : "could not (re)find handler for " + pendingException +
+                    " thrown at " + tm + "+" + ip.to0xHexString();
+            topFrame = handleFrame;
         }
+
 
         if (deoptLogger.enabled()) {
             CiFrame locationsFrame = (pendingException == null) ?
@@ -846,7 +853,8 @@ public class Deoptimization extends VmOperation {
     }
 
     /**
-     * Finds the frame containing a handler for an exception thrown at the current BCI of the frame.
+     * Finds the frame containing a handler for an exception thrown at the current BCI or
+     * of a synchronized method (so that an extra exception handler exists in order to exit a monitor).
      *
      * @param topFrame the frame to start searching in
      * @param exception the exception being thrown
@@ -857,6 +865,9 @@ public class Deoptimization extends VmOperation {
         // Unwind to frame with handler
         for (CiFrame frame = topFrame; frame != null; frame = frame.caller()) {
             ClassMethodActor method = (ClassMethodActor) frame.method;
+            if (method.isSynchronized()) {
+                return frame;
+            }
             CiExceptionHandler handler = method.findHandlerForException(frame.bci, exception);
             if (handler != null) {
                 return frame;

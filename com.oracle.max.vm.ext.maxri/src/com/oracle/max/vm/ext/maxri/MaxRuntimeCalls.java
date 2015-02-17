@@ -29,7 +29,10 @@ import java.lang.reflect.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.ClassActor;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.constant.SymbolTable;
+import com.sun.max.vm.classfile.constant.Utf8Constant;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
@@ -71,11 +74,22 @@ public class MaxRuntimeCalls {
         for (CiRuntimeCall call : CiRuntimeCall.values()) {
             assert checkCompatible(call, getClassMethodActor(call));
         }
+
+        MaxTargetMethod.initializeMaxRuntimeCallsRuntimeUnwindExceptionMethodActor(getRuntimeUnwindExceptionMethodActor());
     }
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.UnwindException)
     public static void runtimeUnwindException(Throwable throwable) throws Throwable {
         Throw.raise(throwable);
+    }
+
+    /**
+     * Returns method actor for {@link #runtimeUnwindException} method of {@link MaxRuntimeCalls) class.
+     */
+    @HOSTED_ONLY
+    private static StaticMethodActor getRuntimeUnwindExceptionMethodActor() {
+        Utf8Constant runtimeUnwindExceptionMethodName = SymbolTable.makeSymbol("runtimeUnwindException");
+        return ClassActor.fromJava(MaxRuntimeCalls.class).findLocalStaticMethodActor(runtimeUnwindExceptionMethodName);
     }
 
     @HOSTED_ONLY

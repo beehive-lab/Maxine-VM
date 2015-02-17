@@ -260,6 +260,13 @@ public class MaxMiscLowerings extends SnippetLowerings {
         ArrayList<TargetMethod> tms = new ArrayList<TargetMethod>(0);
         int deoptReasonId = MaxProfilingInfo.getDeoptimizationReasonId(deoptReason);
         assert deoptState != null;
+        // this assertion should be extended (or removed) after verifying that deoptimization is done correctly
+        // for previously unseen deoptimization reasons
+        assert deoptReason == DeoptimizationReason.UnreachedCode ||
+               deoptReason == DeoptimizationReason.TypeCheckedInliningViolated ||
+               deoptReason == DeoptimizationReason.NotCompiledExceptionHandler ||
+               deoptReason == DeoptimizationReason.BoundsCheckException ||
+               deoptReason == DeoptimizationReason.ClassCastException : deoptReason.toString() + " not tested";
         for (FrameState frame = deoptState; frame != null; frame = frame.outerFrameState()) {
             ClassMethodActor ma = (ClassMethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(frame.method());
             TargetMethod tm = Compilations.currentTargetMethod(ma.compiledState, RuntimeCompiler.Nature.OPT);
