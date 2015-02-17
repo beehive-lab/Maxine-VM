@@ -29,12 +29,15 @@ import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.HeapAccess.BarrierType;
+import com.oracle.graal.nodes.java.LoadFieldNode;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
 import com.oracle.max.vm.ext.graal.snippets.*;
-import com.sun.max.unsafe.Word;
+import com.sun.max.vm.actor.holder.ClassActor;
+import com.sun.max.vm.actor.holder.Hub;
 import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.actor.member.FieldActor;
 import com.sun.max.vm.actor.member.VirtualMethodActor;
 import com.sun.max.vm.layout.Layout;
 
@@ -117,14 +120,25 @@ public class MaxUnsafeAccessLowerings {
             ClassMethodActor methodActor = (ClassMethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(method);
             assert methodActor instanceof VirtualMethodActor;
             VirtualMethodActor virtualMethodActor = (VirtualMethodActor) methodActor;
-            final int vTableIndex = virtualMethodActor.vTableIndex();
-            final long vTableEntryOffset = vTableIndex * Word.size() + byteArrayLayout().getElementOffsetFromOrigin(0).toInt();
-            lower(graph, node, Kind.Object, node.getHub(), vTableEntryOffset);
+
+            FieldActor classActorField = FieldActor.findInstance(ClassActor.fromJava(Hub.class), "classActor");
+            LoadFieldNode loadedClassActor = new LoadFieldNode(node.getHub(), MaxResolvedJavaField.get(classActorField));
+            graph.add(loadedClassActor);
+            graph.addBeforeFixed(node, loadedClassActor);
+
+            FieldActor allVirtualMethodActorsField = FieldActor.findInstance(ClassActor.fromJava(ClassActor.class), "allVirtualMethodActors");
+            LoadFieldNode loadedAllVirtualMethodActors = new LoadFieldNode(loadedClassActor, MaxResolvedJavaField.get(allVirtualMethodActorsField));
+            graph.add(loadedAllVirtualMethodActors);
+            graph.addBeforeFixed(node, loadedAllVirtualMethodActors);
+
+            final int vTableIndex = virtualMethodActor.vTableIndex() - Hub.vTableStartIndex();
+            final long vTableEntryOffset = referenceArrayLayout().getElementOffsetFromOrigin(vTableIndex).toInt();
+            lower(graph, node, Kind.Object, loadedAllVirtualMethodActors, vTableEntryOffset);
         }
 
-        void lower(StructuredGraph graph, LoadMethodNode node, Kind kind, ValueNode hub, long vTableEntryOffset) {
+        void lower(StructuredGraph graph, LoadMethodNode node, Kind kind, ValueNode virtualMethodsArray, long vTableEntryOffset) {
             LocationNode location = ConstantLocationNode.create(LocationIdentity.ANY_LOCATION, kind, vTableEntryOffset, graph);
-            ReadNode readNode = graph.add(new ReadNode(hub, location, StampFactory.forKind(kind), BarrierType.NONE, false));
+            ReadNode readNode = graph.add(new ReadNode(virtualMethodsArray, location, StampFactory.forKind(kind), BarrierType.NONE, false));
             graph.replaceFixed(node, readNode);
         }
 
