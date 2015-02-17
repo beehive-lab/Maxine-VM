@@ -891,7 +891,7 @@ public class VmThread {
      * The maximum space required is very dependent on the compiler but 2 pages
      * seems to be enough on AMD64.
      */
-    public static final int YELLOW_ZONE_PAGES = 2;
+    public static final int YELLOW_ZONE_PAGES = 3;
 
     /**
      * Number of red zone pages used for detecting unrecoverable stack overflow.

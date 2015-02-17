@@ -61,6 +61,10 @@ public class CiExceptionHandler implements RiExceptionHandler {
         return endBCI;
     }
 
+    public boolean covers(int bci) {
+        return startBCI() <= bci && bci < endBCI();
+    }
+
     public int handlerBCI() {
         return handlerBCI;
     }

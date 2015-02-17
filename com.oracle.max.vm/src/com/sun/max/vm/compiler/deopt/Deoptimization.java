@@ -641,7 +641,7 @@ public class Deoptimization extends VmOperation {
      * @param calleeMethod the class method actor that is being called. This is required in addition to {@code callee}
      *            in the case where {@code callee} is an adapter frame
      */
-    static void patchReturnAddress(StackFrameCursor caller, StackFrameCursor callee, ClassMethodActor calleeMethod) {
+    public static void patchReturnAddress(StackFrameCursor caller, StackFrameCursor callee, ClassMethodActor calleeMethod) {
         TargetMethod tm = caller.targetMethod();
         Stub.Type stubType = callee.targetMethod().stubType();
         Stub stub;
@@ -840,27 +840,34 @@ public class Deoptimization extends VmOperation {
      * @param exception the exception being thrown
      * @return the frame that catches {@code exception}
      */
-    static CiFrame unwindToHandlerFrame(CiFrame topFrame, Throwable exception) {
+    public static CiFrame findHandlerFrameForException(CiFrame topFrame, Throwable exception) {
         if (exception == null) {
             return topFrame;
         }
         // Unwind to frame with handler
         for (CiFrame frame = topFrame; frame != null; frame = frame.caller()) {
             ClassMethodActor method = (ClassMethodActor) frame.method;
-            CiExceptionHandler[] handlers = method.exceptionHandlers();
-            if (handlers != null) {
-                int bci = frame.bci;
-                for (CiExceptionHandler h : handlers) {
-                    if (h.startBCI <= bci && bci < h.endBCI) {
-                        ClassActor catchType = (ClassActor) h.catchType;
-                        if (catchType == null || catchType.isAssignableFrom(ObjectAccess.readClassActor(exception))) {
-                            return frame.withEmptyStack();
-                        }
-                    }
-                }
+            CiExceptionHandler handler = method.findHandlerForException(frame.bci, exception);
+            if (handler != null) {
+                return frame;
             }
         }
         return null;
+    }
+
+    /**
+     * Finds the frame containing a handler for an exception thrown at the current BCI of the frame and empties its stack.
+     *
+     * @param topFrame the frame to start searching in
+     * @param exception the exception being thrown
+     * @return the frame that catches {@code exception}
+     */
+    static CiFrame unwindToHandlerFrame(CiFrame topFrame, Throwable exception) {
+        CiFrame frame = findHandlerFrameForException(topFrame, exception);
+        if (frame == null) {
+            return null;
+        }
+        return frame.withEmptyStack();
     }
 
     /**

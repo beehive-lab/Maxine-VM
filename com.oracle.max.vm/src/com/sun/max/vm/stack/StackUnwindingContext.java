@@ -23,6 +23,7 @@
 package com.sun.max.vm.stack;
 
 import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.member.ClassMethodActor;
 
 /**
  * Carries context that may be necessary while unwinding a stack for exception handling.
@@ -35,12 +36,8 @@ public class StackUnwindingContext {
      */
     public Throwable throwable;
     public Word stackPointer;
+    public ClassMethodActor lastCalleeCMA;
 
     public StackUnwindingContext() {
-    }
-
-    public StackUnwindingContext(Word stackPointer, Throwable throwable) {
-        this.throwable = throwable;
-        this.stackPointer = stackPointer;
     }
 }

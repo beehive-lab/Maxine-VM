@@ -251,8 +251,12 @@ public abstract class StackFrameWalker {
             }
         } else if (purpose == Purpose.EXCEPTION_HANDLING) {
             // walk the frame for exception handling
-            Throwable throwable = ((StackUnwindingContext) context).throwable;
-            targetMethod.catchException(current, callee, throwable);
+            StackUnwindingContext stackUnwindingContext = (StackUnwindingContext) context;
+            TargetMethod calleeTM = callee.targetMethod();
+            if (calleeTM != null && calleeTM.classMethodActor != null) {
+                stackUnwindingContext.lastCalleeCMA = calleeTM.classMethodActor;
+            }
+            targetMethod.catchException(current, callee, stackUnwindingContext);
         } else if (MaxineVM.isHosted() && purpose == Purpose.INSPECTING) {
             // walk the frame for inspecting (Java frames)
             StackFrameVisitor visitor = (StackFrameVisitor) context;
@@ -515,6 +519,7 @@ public abstract class StackFrameWalker {
     public final void unwind(Pointer ip, Pointer sp, Pointer fp, Throwable throwable) {
         defaultStackUnwindingContext.throwable = throwable;
         defaultStackUnwindingContext.stackPointer = sp;
+        defaultStackUnwindingContext.lastCalleeCMA = null;
         walk(ip, sp, fp, EXCEPTION_HANDLING, defaultStackUnwindingContext);
     }
 
@@ -550,6 +555,7 @@ public abstract class StackFrameWalker {
         purpose = null;
         defaultStackUnwindingContext.stackPointer = Pointer.zero();
         defaultStackUnwindingContext.throwable = null;
+        defaultStackUnwindingContext.lastCalleeCMA = null;
     }
 
     /**

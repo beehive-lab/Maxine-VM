@@ -41,6 +41,8 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.jni.*;
+import com.sun.max.vm.object.ObjectAccess;
+import com.sun.max.vm.runtime.FatalError;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.verifier.*;
 
@@ -145,6 +147,46 @@ public abstract class ClassMethodActor extends MethodActor {
         CodeAttribute codeAttribute = codeAttribute();
         exceptionHandlers = codeAttribute != null ? codeAttribute.exceptionHandlers() : CiExceptionHandler.NONE;
         return exceptionHandlers;
+    }
+
+    /**
+     * Finds exception handler for a given bci and exception.
+     */
+    public CiExceptionHandler findHandlerForException(int bci, Throwable exception) {
+        return findHandlerForExceptionInHandlersArray(bci, exception, exceptionHandlers());
+    }
+
+    /**
+     * Finds cached (to avoid memory allocations) exception handler for a given bci and exception.
+     *
+     * Precondition: exception handlers must be cached when this method is called.
+     */
+    public CiExceptionHandler findCachedHandlerForException(int bci, Throwable exception) {
+        FatalError.check(exceptionHandlers != null ||
+                         compilee != null && (codeAttribute == null || codeAttribute.getExceptionHandlerTableOffset() == -1),
+                         "exception handlers were not cached");
+        if (exceptionHandlers != null) {
+            return findHandlerForExceptionInHandlersArray(bci, exception, exceptionHandlers);
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * Finds exception handler for a given bci and exception in the array of exception handlers.
+     */
+    private static CiExceptionHandler findHandlerForExceptionInHandlersArray(int bci, Throwable exception, CiExceptionHandler[] handlers) {
+        if (handlers != null) {
+            for (CiExceptionHandler h : handlers) {
+                if (h.covers(bci)) {
+                    ClassActor catchType = (ClassActor) h.catchType;
+                    if (catchType == null || catchType.isAssignableFrom(ObjectAccess.readClassActor(exception))) {
+                        return h;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     @Override

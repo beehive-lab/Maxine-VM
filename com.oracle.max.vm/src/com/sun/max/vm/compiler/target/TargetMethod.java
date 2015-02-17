@@ -1152,9 +1152,9 @@ public abstract class TargetMethod extends MemoryRegion {
      *
      * @param current the current stack frame
      * @param callee the callee stack frame (ignoring any interposing {@linkplain Adapter adapter} frame)
-     * @param throwable the exception thrown
+     * @param context the stack unwinding context
      */
-    public abstract void catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable);
+    public abstract void catchException(StackFrameCursor current, StackFrameCursor callee, StackUnwindingContext context);
 
     /**
      * Similar to {@link #catchException} but simply checks if there is a handler for {@code exception}

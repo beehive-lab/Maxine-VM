@@ -638,7 +638,7 @@ public class T1XTargetMethod extends TargetMethod {
             if (exceptionBCI != -1) {
                 for (CiExceptionHandler e : handlers) {
                     if (e.catchTypeCPI != SYNC_METHOD_CATCH_TYPE_CPI) {
-                        if (e.startBCI <= exceptionBCI && exceptionBCI < e.endBCI) {
+                        if (e.covers(exceptionBCI)) {
                             ClassActor catchType = (ClassActor) e.catchType;
                             if (catchType == null || catchType.isAssignableFrom(ObjectAccess.readClassActor(exception))) {
                                 int handlerPos = posForBci(e.handlerBCI());
@@ -655,7 +655,7 @@ public class T1XTargetMethod extends TargetMethod {
             }
             if (handlers[handlers.length - 1].catchTypeCPI == SYNC_METHOD_CATCH_TYPE_CPI) {
                 CiExceptionHandler syncMethodHandler = handlers[handlers.length - 1];
-                if (syncMethodHandler.startBCI <= exceptionPos && exceptionPos < syncMethodHandler.endBCI) {
+                if (syncMethodHandler.covers(exceptionPos)) {
                     int handlerPos = syncMethodHandler.handlerBCI;
                     checkHandler(exceptionPos, exceptionBCI, -1, handlerPos);
                     return codeAt(handlerPos);
@@ -883,8 +883,9 @@ public class T1XTargetMethod extends TargetMethod {
     }
 
     @Override
-    public void catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable) {
+    public void catchException(StackFrameCursor current, StackFrameCursor callee, StackUnwindingContext context) {
         StackFrameWalker sfw = current.stackFrameWalker();
+        Throwable throwable = context.throwable;
         CodePointer throwAddress = throwAddress(current);
         CodePointer catchAddress = throwAddressToCatchAddress(throwAddress, throwable);
 

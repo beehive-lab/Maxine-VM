@@ -36,6 +36,7 @@ import com.oracle.graal.replacements.Snippet.ConstantParameter;
 import com.oracle.graal.replacements.SnippetTemplate.*;
 import com.oracle.max.vm.ext.graal.*;
 import com.oracle.max.vm.ext.graal.nodes.*;
+import com.oracle.max.vm.ext.maxri.MaxTargetMethod;
 import com.sun.max.annotate.*;
 import com.sun.max.program.ProgramError;
 import com.sun.max.vm.*;
@@ -69,6 +70,7 @@ public class MaxMiscLowerings extends SnippetLowerings {
         lowerings.put(ArrayStoreDeoptimizeNode.class, new MaxASDeoptimizeLowering(this));
         lowerings.put(FixedGuardNode.class, new FixedGuardLowering());
         Deoptimization.initializeMaxMiscLoweringsDeoptimizeMethodActor(getDeoptimizeMethodActor());
+        MaxTargetMethod.initializeMaxMiscLoweringsThrowExceptionMethodActor(getThrowExceptionMethodActor());
     }
 
     public static class FixedGuardLowering implements LoweringProvider<FixedGuardNode> {
@@ -239,6 +241,15 @@ public class MaxMiscLowerings extends SnippetLowerings {
     private static StaticMethodActor getDeoptimizeMethodActor() {
         Utf8Constant deoptimizeMethodName = SymbolTable.makeSymbol("deoptimize");
         return ClassActor.fromJava(MaxMiscLowerings.class).findLocalStaticMethodActor(deoptimizeMethodName);
+    }
+
+    /**
+     * Returns method actor for {@link #throwException} method of {@link MaxMiscLowerings) class.
+     */
+    @HOSTED_ONLY
+    private static StaticMethodActor getThrowExceptionMethodActor() {
+        Utf8Constant throwExceptionMethodName = SymbolTable.makeSymbol("throwException");
+        return ClassActor.fromJava(MaxMiscLowerings.class).findLocalStaticMethodActor(throwExceptionMethodName);
     }
 
     /**

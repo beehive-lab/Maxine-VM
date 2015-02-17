@@ -242,4 +242,8 @@ public final class CodeAttribute {
         }
         return null;
     }
+
+    public int getExceptionHandlerTableOffset() {
+        return exceptionHandlerTableOffset;
+    }
 }

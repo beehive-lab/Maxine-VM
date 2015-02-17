@@ -122,6 +122,16 @@ public final class DebugInfo {
     final MaxTargetMethod tm;
 
     /**
+     * Thread local decoder to retrieve data from debug info without memory allocations.
+     */
+    private static final ThreadLocal<DecodingStream> decodingStreamTL = new ThreadLocal<DecodingStream>() {
+        @Override
+        protected DecodingStream initialValue() {
+            return new DecodingStream(null);
+        }
+    };
+
+    /**
      * Encodes an array of debug infos.
      *
      * @param debugInfos an array of debug infos correlated with each safepoint index
@@ -556,5 +566,127 @@ public final class DebugInfo {
             assert bci == -1 || (bci >= 0 && bci < method.code().length);
             return true;
         }
+    }
+
+    /**
+     * Enumeration of debug info data retrievers.
+     */
+    private enum DebugInfoDataRetriever {
+        FrameChainLength,
+        ClassActorID,
+        ClassMemberIndex,
+        BCI
+    }
+
+    /**
+     * Retrieves data from debug info.
+     * @param safepointIndex safepoint index
+     * @param allocationsDisabled indicates whether allocations are disabled
+     * @param frameIndex index of the frame in the inlined call chain starting from the innermost call with index 0
+     * @param retriever defines which data to retrieve
+     */
+    private int retrieveDataFromDebugInfo(int safepointIndex,
+                                          boolean allocationsDisabled,
+                                          int frameIndex,
+                                          DebugInfoDataRetriever retriever) {
+        DecodingStream decodingStream;
+        int framePos;
+        int callerIndex = safepointIndex;
+        int fpt = (tm.totalRefMapSize()) * tm.safepoints().size();
+        int frameChainLength = 0;
+        int bci = -1;
+        int classID = -1;
+        int memberIndex = -1;
+        int retrievedData = -1;
+
+        if (retriever == DebugInfoDataRetriever.FrameChainLength) {
+            frameIndex = -1;
+        }
+
+        if (allocationsDisabled) {
+            decodingStream = decodingStreamTL.get();
+            assert decodingStream.buf == null;
+            decodingStream.buf = data;
+        } else {
+            decodingStream = new DecodingStream(data);
+        }
+        while ((framePos = framePos(fpt, callerIndex)) != 0) {
+            int encCallerIndex;
+
+            decodingStream.pos = framePos;
+            encCallerIndex = decodingStream.decodeUInt();
+            if (frameChainLength == frameIndex) {
+                classID = decodingStream.decodeUInt();
+                int m = decodingStream.decodeUInt();
+
+                if ((m & 1) == 1) {
+                    memberIndex = m >>> 1;
+                    bci = -1;
+                } else {
+                    memberIndex = m >>> 1;
+                    bci = decodingStream.decodeUInt();
+                }
+                break;
+            }
+            frameChainLength++;
+            if (encCallerIndex != NO_FRAME) {
+                assert callerIndex != encCallerIndex - FIRST_FRAME;
+                callerIndex = encCallerIndex - FIRST_FRAME;
+            } else  {
+                break;
+            }
+        }
+        if (allocationsDisabled) {
+            decodingStream.buf = null;
+        }
+        switch (retriever) {
+            case FrameChainLength:
+                retrievedData = frameChainLength;
+                break;
+            case BCI:
+                retrievedData = bci;
+                break;
+            case ClassActorID:
+                retrievedData = classID;
+                break;
+            case ClassMemberIndex:
+                retrievedData = memberIndex;
+                break;
+            default:
+                FatalError.unimplemented();
+        }
+        return retrievedData;
+    }
+
+    /**
+     * Retrieves frame chain length.
+     * @param safepointIndex safepoint index
+     * @param allocationsDisabled indicates whether allocations are disabled
+     */
+    public int retrieveFrameChainLength(int safepointIndex, boolean allocationsDisabled) {
+        return retrieveDataFromDebugInfo(safepointIndex, allocationsDisabled, -1, DebugInfoDataRetriever.FrameChainLength);
+    }
+
+    /**
+     * Retrieves bci.
+     * @param safepointIndex safepoint index
+     * @param allocationsDisabled indicates whether allocations are disabled
+     * @param frameIndex index of the frame in the inlined call chain starting from the innermost call with index 0
+     */
+    public int retrieveBCI(int safepointIndex, boolean allocationsDisabled, int frameIndex) {
+        return retrieveDataFromDebugInfo(safepointIndex, allocationsDisabled, frameIndex, DebugInfoDataRetriever.BCI);
+    }
+
+    /**
+     * Retrieves class method actor.
+     * @param safepointIndex safepoint index
+     * @param allocationsDisabled indicates whether allocations are disabled
+     * @param frameIndex index of the frame in the inlined call chain starting from the innermost call with index 0
+     */
+    public ClassMethodActor retrieveClassMethodActor(int safepointIndex, boolean allocationsDisabled, int frameIndex) {
+        int classActorID = retrieveDataFromDebugInfo(safepointIndex, allocationsDisabled, frameIndex, DebugInfoDataRetriever.ClassActorID);
+        int classMemberIndex = retrieveDataFromDebugInfo(safepointIndex, allocationsDisabled, frameIndex, DebugInfoDataRetriever.ClassMemberIndex);
+        ClassActor classActor = ClassIDManager.toClassActor(classActorID);
+        return (ClassMethodActor) classActor.getLocalMethodActor(classMemberIndex);
     }
 }

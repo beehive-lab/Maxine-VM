@@ -52,6 +52,7 @@ import com.sun.max.vm.code.*;
 import com.sun.max.vm.code.CodeManager.Lifespan;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.deopt.Deoptimization;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.object.*;
@@ -85,6 +86,11 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
      * Needed by JVMTI.
      */
     private int[] exceptionHandlerBCIs;
+
+    /**
+     * Method actor of MaxMiscLowerings.throwException method.
+     */
+    private static StaticMethodActor MaxMiscLoweringsThrowExceptionMethodActor;
 
     /**
      * Debug info.
@@ -614,15 +620,36 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
      * Attempt to catch an exception that has been thrown with this method on the call stack.
      * @param current the current stack frame
      * @param callee the callee stack frame
-     * @param throwable the exception being thrown
+     * @param context the stack unwinding context
      */
     @Override
-    public void catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable) {
+    public void catchException(StackFrameCursor current, StackFrameCursor callee, StackUnwindingContext context) {
         CodePointer ip = current.vmIP();
         Pointer sp = current.sp();
         Pointer fp = current.fp();
+        Throwable throwable = context.throwable;
+        ClassMethodActor calleeCMA = context.lastCalleeCMA;
         CodePointer catchAddress = throwAddressToCatchAddress(ip, throwable);
-        if (!catchAddress.isZero()) {
+        boolean isDeoptimized = false;
+
+        // mark current method for deoptimization if exception handler was not compiled
+        if (catchAddress.isZero()) {
+            TargetMethod tm = current.targetMethod();
+            int si = tm.findSafepointIndex(ip);
+            // do not deoptimize method of the frame being unwinded or not at a safepoint 
+            if (si != -1 && calleeCMA != MaxMiscLoweringsThrowExceptionMethodActor) {
+                int frameChainLength = debugInfo.retrieveFrameChainLength(si, true);
+                for (int frameIndex = 0; frameIndex < frameChainLength; frameIndex++) {
+                    ClassMethodActor frameCMA = debugInfo.retrieveClassMethodActor(si, true, frameIndex);
+                    int frameBCI = debugInfo.retrieveBCI(si, true, frameIndex);
+                    if (frameCMA.findCachedHandlerForException(frameBCI, throwable) != null) {
+                        Deoptimization.patchReturnAddress(current, callee, calleeCMA);
+                        isDeoptimized = true;
+                    }
+                }
+            }
+        }
+        if (!catchAddress.isZero() || isDeoptimized) {
             if (StackFrameWalker.TraceStackWalk) {
                 Log.print("StackFrameWalk: Handler position for exception at position ");
                 Log.print(ip.minus(codeStart()).toInt());
@@ -630,8 +657,8 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
                 Log.println(catchAddress.minus(codeStart()).toInt());
             }
 
-            int catchPos = posFor(catchAddress);
-            if (invalidated() != null) {
+            int catchPos = posFor(isDeoptimized ? ip : catchAddress);
+            if (invalidated() != null || isDeoptimized) {
                 assert current.sp().readWord(DEOPT_RETURN_ADDRESS_OFFSET).equals(current.ipAsPointer()) : "real caller IP should have been saved in rescue slot";
                 Pointer returnAddress = callee.targetMethod().returnAddressPointer(callee).readWord(0).asPointer();
                 assert Stub.isDeoptStubEntry(returnAddress, Code.codePointerToTargetMethod(returnAddress), callee) :
@@ -729,5 +756,10 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     @Override
     public CiDebugInfo debugInfoAt(int stopIndex, FrameAccess fa) {
         return debugInfo.infoAt(stopIndex, fa, true);
+    }
+
+    @HOSTED_ONLY
+    public static void initializeMaxMiscLoweringsThrowExceptionMethodActor(StaticMethodActor methodActor) {
+        MaxMiscLoweringsThrowExceptionMethodActor = methodActor;
     }
 }
