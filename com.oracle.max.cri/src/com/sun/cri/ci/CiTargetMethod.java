@@ -443,12 +443,16 @@ public class CiTargetMethod implements Serializable {
     }
 
     protected void addSafepoint(Safepoint safepoint) {
+        boolean resortSafepoints = false;
         // The safepoints list must always be sorted
         if (!safepoints.isEmpty() && safepoints.get(safepoints.size() - 1).compareTo(safepoint) == 1) {
-            // This re-sorting should be very rare
-            Collections.sort(safepoints);
+            resortSafepoints = true;
         }
         safepoints.add(safepoint);
+        // This re-sorting should be very rare
+        if (resortSafepoints) {
+            Collections.sort(safepoints);
+        }
     }
 
     /**
