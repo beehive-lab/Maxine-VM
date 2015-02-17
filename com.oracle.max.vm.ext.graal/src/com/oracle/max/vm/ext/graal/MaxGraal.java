@@ -455,6 +455,7 @@ public class MaxGraal extends RuntimeCompiler.DefaultNameAdapter implements Runt
             // all SUBSTITUTEd methods should have been compiled into the boot image
             assert !substitutedMethod(methodActor);
             compileSuites = defaultSuites;
+            optimisticOpts = new OptimisticOptimizations(method);
         }
 
         StructuredGraph graph = (StructuredGraph) method.getCompilerStorage().get(Graph.class);
