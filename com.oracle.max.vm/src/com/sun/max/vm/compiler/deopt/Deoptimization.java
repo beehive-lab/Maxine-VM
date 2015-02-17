@@ -721,17 +721,15 @@ public class Deoptimization extends VmOperation {
     public static void deoptimize(CodePointer ip, Pointer sp, Pointer fp, Pointer csa, CiCalleeSaveLayout csl, CiConstant returnValue) {
         SafepointPoll.disable();
         Info info = new Info(VmThread.current(), ip.toPointer(), sp, fp);
+        TargetMethod tm = info.tm;
 
         if (deoptLogger.enabled()) {
-            deoptLogger.logStart(info.tm);
+            deoptLogger.logStart(tm);
         }
 
         if (StackReferenceMapPreparer.VerifyRefMaps || deoptLogger.enabled() || DeoptimizeALot != 0) {
             StackReferenceMapPreparer.verifyReferenceMapsForThisThread();
         }
-
-        TargetMethod tm = info.tm;
-        Throwable pendingException = VmThread.current().pendingException();
 
         int safepointIndex = tm.findSafepointIndex(ip);
         assert safepointIndex >= 0 : "no safepoint index for " + tm + "+" + tm.posFor(ip);
@@ -745,6 +743,18 @@ public class Deoptimization extends VmOperation {
         CiFrame topFrame = debugInfo.frame();
         FatalError.check(topFrame != null, "No frame info found at deopt site: " + tm.posFor(ip));
 
+        Throwable pendingException = null;
+        if (topFrame.rethrowException) {
+            pendingException = (Throwable) ((CiConstant) topFrame.getStackValue(0)).asObject();
+            if (pendingException == null) {
+                pendingException = new NullPointerException();
+            }
+            Throw.traceThrow(pendingException);
+            VmThread.current().storeExceptionForHandler(pendingException, tm, tm.posFor(ip));
+        } else {
+            pendingException = VmThread.current().pendingException();
+        }
+
         if (pendingException != null) {
             topFrame = unwindToHandlerFrame(topFrame, pendingException);
             assert topFrame != null : "could not (re)find handler for " + pendingException +
@@ -752,8 +762,10 @@ public class Deoptimization extends VmOperation {
         }
 
         if (deoptLogger.enabled()) {
+            CiFrame locationsFrame = (pendingException == null) ?
+                topFrame : unwindToHandlerFrame(tm.debugInfoAt(safepointIndex, null).frame(), pendingException);
             // Trace the frame states in terms of the locations holding the frame values
-            deoptLogger.logFrames(unwindToHandlerFrame(tm.debugInfoAt(safepointIndex, null).frame(), pendingException), "locations");
+            deoptLogger.logFrames(locationsFrame, "locations");
 
             // Trace the frame states in terms of the frame values
             deoptLogger.logFrames(topFrame, "values");
@@ -840,10 +852,8 @@ public class Deoptimization extends VmOperation {
      * @param exception the exception being thrown
      * @return the frame that catches {@code exception}
      */
-    public static CiFrame findHandlerFrameForException(CiFrame topFrame, Throwable exception) {
-        if (exception == null) {
-            return topFrame;
-        }
+    private static CiFrame findHandlerFrameForException(CiFrame topFrame, Throwable exception) {
+        assert exception != null;
         // Unwind to frame with handler
         for (CiFrame frame = topFrame; frame != null; frame = frame.caller()) {
             ClassMethodActor method = (ClassMethodActor) frame.method;
@@ -862,12 +872,16 @@ public class Deoptimization extends VmOperation {
      * @param exception the exception being thrown
      * @return the frame that catches {@code exception}
      */
-    static CiFrame unwindToHandlerFrame(CiFrame topFrame, Throwable exception) {
+    private static CiFrame unwindToHandlerFrame(CiFrame topFrame, Throwable exception) {
+        assert exception != null;
         CiFrame frame = findHandlerFrameForException(topFrame, exception);
         if (frame == null) {
             return null;
         }
-        return frame.withEmptyStack();
+        if (!frame.rethrowException) {
+            frame = frame.withEmptyStack();
+        }
+        return frame;
     }
 
     /**

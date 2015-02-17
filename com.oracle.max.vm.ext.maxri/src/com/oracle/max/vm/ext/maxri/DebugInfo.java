@@ -94,6 +94,7 @@ public final class DebugInfo {
      *         uint num_locals;
      *         uint num_stack;
      *         uint num_locks;
+     *         uint rethrowException;
      *         value[num_locals + num_stack + num_locks] values;
      *     } frames[fptSize]
      *
@@ -247,6 +248,7 @@ public final class DebugInfo {
             out.encodeUInt(frame.numLocals);
             out.encodeUInt(frame.numStack);
             out.encodeUInt(frame.numLocks);
+            out.encodeUInt(frame.rethrowException ? 1 : 0);
 
             for (CiValue value : frame.values) {
                 if (isHosted()) {
@@ -445,6 +447,7 @@ public final class DebugInfo {
         int numLocals = in.decodeUInt();
         int numStack = in.decodeUInt();
         int numLocks = in.decodeUInt();
+        boolean rethrowException = in.decodeUInt() == 0 ? false : true;
 
         int n = numLocals + numStack + numLocks;
         CiValue[] values = new CiValue[n];
@@ -481,7 +484,7 @@ public final class DebugInfo {
             assert frameIndex != callerIndex;
             caller = decodeFrame(in, fpt, callerIndex, fa, regRefMap, frameRefMap, stackSlotAsAddress);
         }
-        return new CiFrame(caller, method, bci, false, values, numLocals, numStack, numLocks);
+        return new CiFrame(caller, method, bci, rethrowException, values, numLocals, numStack, numLocks);
     }
 
     private static CiValue toLiveSlot(FrameAccess fa, CiValue value) {

@@ -1045,10 +1045,13 @@ public class T1XTargetMethod extends TargetMethod {
                 addSlotPadding(info, "ostack (pad)");
             }
         } else {
-            assert frame.numStack == 0 : "operand stack must be clear at exception handler";
-            // The ref maps for the handler address will expect a valid reference to
-            // to in stack slot 0 so we store a null there.
-            for (int pad = 0; pad < STACK_SLOTS_PER_JVMS_SLOT; pad++) {
+            assert frame.numStack == 0 || frame.rethrowException && frame.numStack == 1 :
+                "operand stack must be clear at exception handler or contain a single slot with exception";
+            // The ref maps for the handler address will expect a valid reference to exception in stack slot 0
+            assert STACK_SLOTS_PER_JVMS_SLOT == 2;
+            for (int pad = 0; pad < 1; pad++) {
+                CiConstant value = CiConstant.forObject(exception);
+                info.addSlot(value, "ostack");
                 info.addSlot(WordUtil.ZERO, "ostack (pad)");
             }
 
