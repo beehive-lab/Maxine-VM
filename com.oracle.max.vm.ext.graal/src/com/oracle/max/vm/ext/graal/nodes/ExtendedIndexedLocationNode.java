@@ -26,6 +26,7 @@ import com.oracle.graal.api.meta.*;
 import com.oracle.graal.graph.*;
 import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.calc.ConvertNode.Op;
+import com.oracle.graal.nodes.calc.LeftShiftNode;
 import com.oracle.graal.nodes.extended.*;
 import com.oracle.graal.nodes.spi.*;
 import com.oracle.graal.nodes.type.*;
@@ -66,7 +67,16 @@ public class ExtendedIndexedLocationNode extends LocationNode implements Canonic
     public ValueNode canonical(CanonicalizerTool tool) {
         if (displacement.isConstant()) {
             int intDisplacement = displacement.asConstant().asInt();
-            return IndexedLocationNode.create(locationIdentity, valueKind, intDisplacement, scaledIndex, graph(), 1);
+            ValueNode index = scaledIndex;
+            int indexScaling = 1;
+            if (scaledIndex instanceof LeftShiftNode) {
+                LeftShiftNode leftShiftNode = (LeftShiftNode) scaledIndex;
+                if (leftShiftNode.y().isConstant()) {
+                    index = leftShiftNode.x();
+                    indexScaling = 1 << leftShiftNode.y().asConstant().asInt();
+                }
+            }
+            return IndexedLocationNode.create(locationIdentity, valueKind, intDisplacement, index, graph(), indexScaling);
         }
         if (scaledIndex.isConstant()) {
             // switch scaledIndex and displacement
