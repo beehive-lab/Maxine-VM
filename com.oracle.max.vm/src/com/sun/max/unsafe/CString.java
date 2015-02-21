@@ -52,6 +52,9 @@ public final class CString {
      * @return the length
      */
     public static Size length(Pointer cString) {
+        if (cString.isZero()) {
+            return Size.zero();
+        }
         Pointer p = cString;
         while (p.readByte(0) != (byte) 0) {
             p = p.plus(1);
@@ -78,6 +81,9 @@ public final class CString {
      * Converts a NULL terminated C string located in natively allocated memory to a Java string.
      */
     public static String utf8ToJava(Pointer cString) throws Utf8Exception {
+        if (cString.isZero()) {
+            return null;
+        }
         final int n = length(cString).toInt();
         final byte[] bytes = new byte[n];
         Memory.readBytes(cString, n, bytes);
