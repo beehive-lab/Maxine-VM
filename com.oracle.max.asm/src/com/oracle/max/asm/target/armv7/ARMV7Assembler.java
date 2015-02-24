@@ -1308,10 +1308,12 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void membar(int barriers) {
+        int instruction = 0xF57FF050;
         if (target.isMP) {
             // We only have to handle StoreLoad
             if (barriers == -1 || ((barriers & STORE_LOAD) != 0)) {
-                emitInt((0xf << 28) | (0x5 << 24) | (0x7 << 20) | (0xff05 << 4) | 0xf);
+                instruction |= 0xf;
+                emitInt(instruction);
             }
         }
     }

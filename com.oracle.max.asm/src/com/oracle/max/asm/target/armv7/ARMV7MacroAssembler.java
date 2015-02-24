@@ -39,37 +39,61 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public final void casInt(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
         assert (ARMV7.r8 != cmpValue);
         assert (ARMV7.r8 != newValue);
+        assert (newValue != cmpValue);
         assert (ARMV7.r0 == cmpValue);
-        Label atomicFail = new Label();
-        bind(atomicFail);
-        membar(1);
-        setUpScratch(address);
-        ldrex(ConditionFlag.Always, ARMV7.r8, scratchRegister);
-        cmp(ConditionFlag.Always, cmpValue, ARMV7.r8, 0, 0);
-        strex(ConditionFlag.Equal, ARMV7.r8, newValue, scratchRegister);
-        mov32BitConstant(ARMV7.r12, 1);
-        cmp(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0, 0);
-        jcc(ConditionFlag.Equal, atomicFail);
-        mov32BitConstant(ARMV7.r12, 2);
-        cmp(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0, 0);
+        membar(-1);
+        setUpScratch(address); // r12 has the address to CAS
+        ldrex(ConditionFlag.Always, ARMV7.r8, scratchRegister); // r8 has the current Value
+        cmp(ConditionFlag.Always, cmpValue, ARMV7.r8, 0, 0); // compare r8 with cmpValue
+        strex(ConditionFlag.Equal, ARMV7.r8, newValue, scratchRegister); // if equal, store newValue to address and result to r8
+        mov32BitConstant(ARMV7.r12, 1); // r12 has value 1
+        cmp(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0, 0); // compare r8 to r12 (r8 (0/1), r12 1)
+    }
+
+    // The same as casInt except the last conditional move sine it is added implicitly by the LIR generator.
+    public final void casIntAsmTest(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
+        assert (ARMV7.r8 != cmpValue);
+        assert (ARMV7.r8 != newValue);
+        assert (newValue != cmpValue);
+        assert (ARMV7.r0 == cmpValue);
+        membar(-1);
+        setUpScratch(address); // r12 has the address to CAS
+        ldrex(ConditionFlag.Always, ARMV7.r8, scratchRegister); // r8 has the current Value
+        cmp(ConditionFlag.Always, cmpValue, ARMV7.r8, 0, 0); // compare r8 with cmpValue
+        strex(ConditionFlag.Equal, ARMV7.r8, newValue, scratchRegister); // if equal, store newValue to address and result to r8
+        mov32BitConstant(ARMV7.r12, 1); // r12 has value 1
+        cmp(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0, 0); // compare r8 to r12 (r8 (0/1), r12 1)
         mov(ConditionFlag.Equal, false, cmpValue, newValue); // return newValue as we were successful
     }
 
     public final void casLong(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
         assert (newValue != ARMV7.r8);
         assert (cmpValue != ARMV7.r8);
-        Label atomicFail = new Label();
-        bind(atomicFail);
-        membar(1);
-        setUpScratch(address);
-        ldrexd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12);
-        lcmpl(ConditionFlag.Equal, cmpValue, ARMV7.r8);
-        strexd(ConditionFlag.Equal, ARMV7.r8, newValue, ARMV7.r12);
-        mov(ConditionFlag.NotEqual, false, cmpValue, ARMV7.r8);
-        mov(ConditionFlag.NotEqual, false, ARMV7.cpuRegisters[cmpValue.number + 1], ARMV7.cpuRegisters[ARMV7.r8.number + 1]);
-        mov32BitConstant(ARMV7.r12, 1);
-        cmp(ConditionFlag.Equal, ARMV7.r8, ARMV7.r12, 0, 0); // equal to 1 then we failed MP so loop
-        jcc(ConditionFlag.Equal, atomicFail);
+        assert (newValue != cmpValue);
+        assert (ARMV7.r0 == cmpValue);
+        membar(-1);
+        setUpScratch(address); // r12 has the address to CAS
+        ldrexd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12); // r8, r9 have the current Value
+        lcmpl(ConditionFlag.Equal, cmpValue, ARMV7.r8); // compare r8,r9 with cmpValue
+        strexd(ConditionFlag.Equal, ARMV7.r8, newValue, ARMV7.r12); // if equal, store newValue to address and store result to r8
+        mov32BitConstant(ARMV7.r12, 1); // r12 has the value of 1
+        cmp(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0, 0); // equal to 1 then we failed MP so loop
+    }
+
+    public final void casLongAsmTest(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
+        assert (newValue != ARMV7.r8);
+        assert (cmpValue != ARMV7.r8);
+        assert (newValue != cmpValue);
+        assert (ARMV7.r0 == cmpValue);
+        membar(-1);
+        setUpScratch(address); // r12 has the address to CAS
+        ldrexd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12); // r8, r9 have the current Value
+        lcmpl(ConditionFlag.Equal, cmpValue, ARMV7.r8); // compare r8,r9 with cmpValue
+        strexd(ConditionFlag.Equal, ARMV7.r8, newValue, ARMV7.r12); // if equal, store newValue to address and store result to r8
+        mov32BitConstant(ARMV7.r12, 1); // r12 has the value of 1
+        cmp(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0, 0); // equal to 1 then we failed MP so loop
+        mov(ConditionFlag.Always, false, cmpValue, newValue);
+        mov(ConditionFlag.Always, false, ARMV7.cpuRegisters[cmpValue.number + 1], ARMV7.cpuRegisters[newValue.number + 1]);
     }
 
     public void xorptr(CiRegister dst, CiRegister src) {
