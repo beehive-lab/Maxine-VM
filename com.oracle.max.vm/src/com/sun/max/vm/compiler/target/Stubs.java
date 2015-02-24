@@ -375,6 +375,12 @@ public class Stubs {
      */
     private static Address resolveInterfaceCall(Object receiver, int iIndex, Pointer pcInCaller) {
         // pcInCaller must be dealt with before any safepoint
+        Log.println("pcInCaller");
+
+        Log.println(pcInCaller);
+        Log.println("pcInCallerValue");
+
+        Log.println(pcInCaller.value);
         CodePointer cpCallSite = CodePointer.from(pcInCaller);
         final TargetMethod caller = cpCallSite.toTargetMethod();
 

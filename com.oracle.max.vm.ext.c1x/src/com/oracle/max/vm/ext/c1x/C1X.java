@@ -292,8 +292,13 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         CiTargetMethod compiledMethod;
         do {
             DebugInfoLevel debugInfoLevel = method.isTemplate() ? DebugInfoLevel.REF_MAPS : DebugInfoLevel.FULL;
-	    //System.out.println("METHOD is " + method.name());
+           // System.out.println(method.compilee());
+
+            if (method.compilee().toString().equals("com.oracle.max.vm.ext.t1x.T1X.compile(ClassMethodActor, boolean, boolean, CiStatistics)")) {
+                C1XOptions.TraceLinearScanLevel = 4;
+            }
             compiledMethod = compiler().compileMethod(method, -1, stats, debugInfoLevel).targetMethod();
+            C1XOptions.TraceLinearScanLevel =  0;
             Dependencies deps = Dependencies.validateDependencies(compiledMethod.assumptions());
             if (deps != Dependencies.INVALID) {
                 if (C1XOptions.PrintTimers) {

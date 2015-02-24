@@ -366,49 +366,46 @@ public class Compile {
     private static void doCompile(RuntimeCompiler compiler, List<MethodActor> methods, ProgressPrinter progress) {
         // compile all the methods and report progress
         try {
-	writer = new PrintWriter("codebuffer.c", "UTF-8");
-	methodsFound++;
-        for (MethodActor methodActor : methods) {
-	    writer.println("// " +  methodActor.toString());
-            progress.begin(methodActor.toString());
-            Throwable error = compile(compiler, methodActor, true);
-            if (error == null) {
-                progress.pass();
-            } else {
-                progress.fail(error.toString());
-                if (failFastOption.getValue()) {
-                    out.println("");
-                    break;
+            writer = new PrintWriter("codebuffer.c", "UTF-8");
+            methodsFound++;
+            for (MethodActor methodActor : methods) {
+                System.out.println(methodActor.toString());
+                writer.println("// " + methodActor.toString());
+                progress.begin(methodActor.toString());
+                Throwable error = compile(compiler, methodActor, true);
+                if (error == null) {
+                    progress.pass();
+                } else {
+                    progress.fail(error.toString());
+                    if (failFastOption.getValue()) {
+                        out.println("");
+                        break;
+                    }
                 }
             }
-        }
-	writer.close();
-	} catch (Exception e) {
- 		System.err.println(e);
-            	e.printStackTrace();
-            	writer.close();
-	}
-    }
-
-    private static void offlineDebug(byte []stubs) {
-        try {
-            writer.println("unsigned char codeArray"+ methodsFound++ +"[" + stubs.length + "]  = { \n");
-            for (int i = 0; i < stubs.length; i++) {
-
-                        writer.println("0x" + Integer.toHexString(stubs[i]) + ", ");
-
-
-
-            }
-            writer.println("0xfe, 0xff, 0xff, 0xea };\n\n");
-
+            writer.close();
         } catch (Exception e) {
             System.err.println(e);
             e.printStackTrace();
             writer.close();
         }
-	System.out.println("METHOD FOUND " + methodsFound);
     }
+
+    private static void offlineDebug(byte[] stubs) {
+        try {
+            writer.println("unsigned char codeArray" + methodsFound++ + "[" + stubs.length + "]  = { \n");
+            for (int i = 0; i < stubs.length; i++) {
+                writer.println("0x" + Integer.toHexString(stubs[i]) + ", ");
+            }
+            writer.println("0xfe, 0xff, 0xff, 0xea };\n\n");
+        } catch (Exception e) {
+            System.err.println(e);
+            e.printStackTrace();
+            writer.close();
+        }
+        System.out.println("METHOD FOUND " + methodsFound);
+    }
+
     private static Throwable compile(RuntimeCompiler compiler, MethodActor method, boolean printBailout) {
         // compile a single method
         ClassMethodActor classMethodActor = (ClassMethodActor) method;
@@ -416,7 +413,7 @@ public class Compile {
         CiStatistics stats = new CiStatistics();
         try {
             TargetMethod tm = compiler.compile(classMethodActor, false, true, stats);
-		    offlineDebug(tm.code()); // APN
+            offlineDebug(tm.code()); // APN
 
             if (validateInline.getValue()) {
                 validateInlining(tm);

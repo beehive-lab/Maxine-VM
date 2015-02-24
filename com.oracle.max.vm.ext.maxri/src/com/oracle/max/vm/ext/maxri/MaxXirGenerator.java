@@ -357,7 +357,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         }
 
         asm.pushFrame();
-        
+
         if (!callee.isVmEntryPoint()) {
             asm.stackOverflowCheck();
         }

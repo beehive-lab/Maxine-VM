@@ -164,14 +164,15 @@ static Address getInstructionPointer(UContext *ucontext) {
 #elif os_DARWIN
     return ucontext->uc_mcontext->__ss.__rip;
 #elif os_MAXVE
-        return ucontext->rip;
+    return ucontext->rip;
 #else
-        c_UNIMPLEMENTED();
+    c_UNIMPLEMENTED();
 #endif
 }
 
 static void setInstructionPointer(UContext *ucontext, Address stub) {
 printf("SET PC CALLED\n");
+log_println("  Instruction Pointer = %p", stub);
 #if os_SOLARIS
 #   if isa_SPARC
     ucontext->uc_mcontext.gregs[REG_nPC] = (greg_t) (stub + 4);
@@ -184,7 +185,7 @@ printf("SET PC CALLED\n");
      ucontext->uc_mcontext.gregs[REG_RIP] = (greg_t) stub;
 #   elif isa_IA32
      ucontext->uc_mcontext.gregs[REG_EIP] = (greg_t) stub;
-#elif isa_ARM
+#	elif isa_ARM
 	ucontext->uc_mcontext.arm_pc = (greg_t) (stub);
 #   endif
 #elif os_MAXVE

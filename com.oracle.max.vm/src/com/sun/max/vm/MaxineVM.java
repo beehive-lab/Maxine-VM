@@ -466,11 +466,10 @@ public final class MaxineVM {
         primordialTLBlock = tlBlock;
         primordialTLBlockSize = tlBlockSize;
         Pointer etla = tlBlock.plus(platform().pageSize - Address.size() + VmThreadLocal.tlaSize().toInt());
-        SafepointPoll.setLatchRegister(etla); // r10 in ARMV7
-	//while(test(0) != 8) ;
+        SafepointPoll.setLatchRegister(etla);
+
         // This one field was not marked by the data prototype for relocation
         // to avoid confusion between "offset zero" and "null".
-        // Fix it manually:
         Heap.bootHeapRegion.setStart(bootHeapRegionStart);
 
         VMLog.vmLog().initialize(MaxineVM.Phase.PRIMORDIAL);
@@ -480,27 +479,20 @@ public final class MaxineVM {
 
         // Link the critical native methods:
         CriticalNativeMethod.linkAll();
-	//Log.println("lined critical methods");
-        DynamicLinker.markCriticalLinked();
+	DynamicLinker.markCriticalLinked();
 
-	//Log.println("marked critical");
-        // Initialize the trap system:
+	// Initialize the trap system:
         Trap.initialize();
-	//Log.println("Traps done");
-        ImmortalHeap.initialize();
+	ImmortalHeap.initialize();
 
-	//Log.println("immortals done");
-        NativeInterfaces.initialize(vmInterface, jniEnv, jmmInterface);
+	NativeInterfaces.initialize(vmInterface, jniEnv, jmmInterface);
 
-	//Log.println("interfaces initialised");
-        // Perhaps this should be later, after VM has initialized
+	// Perhaps this should be later, after VM has initialized
         startupTime = System.currentTimeMillis();
         startupTimeNano = System.nanoTime();
 
-	//Log.println("timers");
-        MaxineVM vm = vm();
-	//Log.println("vm created");
-        vmConfig().initializeSchemes(MaxineVM.Phase.PRIMORDIAL);
+	MaxineVM vm = vm();
+	vmConfig().initializeSchemes(MaxineVM.Phase.PRIMORDIAL);
 
 	Log.println("schemes inited");
         vm().stubs.intialize();

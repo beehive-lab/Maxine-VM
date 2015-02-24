@@ -1098,10 +1098,6 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void call(CiRegister target) {
-        // nop(4);
-        // THIs is an indirect call, assuming the contents of the registers are a memory location we need to load
-        // add(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12, 0, 0);
-        // ldrImmediate(ConditionFlag.Always,1,0,0,ARMV7.r12,target,0);
         addRegisters(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, target, 0, 0);
         int instruction = blxHelper(ConditionFlag.Always, ARMV7.r8);
         emitInt(instruction);
@@ -1122,9 +1118,6 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void movslq(CiAddress dst, int imm32) {
-        // TODO APN ok Im assuming this is just as simple mov rather than an actual sign extend?
-        // it might be used in 64 bit mode, but ARMV7 is only 32 bit anyway.
-        // if it transpires that this is necessary for 64bit values in a 32bit processor
         setUpScratch(dst);
         mov32BitConstant(ARMV7.r8, imm32);
         str(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
@@ -1158,18 +1151,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void xchgq(CiRegister src1, CiRegister src2) {
-        // TODO need to have a lock in this!!!
-        CiRegister tmp = null;
-        if (src1 == ARMV7.r12 || src2 == ARMV7.r12) {
-            if (src1 != ARMV7.r8 && src2 != ARMV7.r8) {
-                tmp = ARMV7.r9;
-            } else if (src1 != ARMV7.r8 && src2 != ARMV7.r8) {
-                tmp = ARMV7.r8;
-            } else
-                assert (0 == 1);
-        } else {
-            tmp = ARMV7.r12;
-        }
+        CiRegister tmp =  ARMV7.r8;
+        assert src1 != tmp && src2 !=tmp;
         mov(ConditionFlag.Always, false, tmp, src1);
         mov(ConditionFlag.Always, false, src1, src2);
         mov(ConditionFlag.Always, false, src2, tmp);

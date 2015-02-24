@@ -69,7 +69,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
     private static File file;
     private static final Object[] NO_PARAMS = new Object[0];
-    private static final CiRegister SHIFTCount = ARMV7.r8;
+    private static final CiRegister SHIFTCount = ARMV7.r1;
 
     private static final long DoubleSignMask = 0x7FFFFFFFFFFFFFFFL;
 
@@ -914,17 +914,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 break;
             case F2L:
                 assert false: "F2L is implemented as runtime call!";
-               // assert srcRegister.isFpu() && dest.kind.isLong() : "must both be XMM register (no fpu stack)";
-               // masm.jcc(ConditionFlag.NotEqual, endLabel);
-               // callStub(op.stub, null, dest.asRegister(), src);
-               // masm.bind(endLabel);
                 break;
             case D2L:
                 assert false: "D2L is implemented as runtime call!";
-                //assert srcRegister.isFpu() && dest.kind.isLong() : "must both be XMM register (no fpu stack)";
-                //masm.jcc(ConditionFlag.NotEqual, endLabel);
-                //callStub(op.stub, null, dest.asRegister(), src);
-                //masm.bind(endLabel);
                 break;
             case MOV_I2F:
                 masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, CiKind.Float, CiKind.Int);
@@ -1482,9 +1474,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
 
-        // assert 0 == 1 : "arithmeticIdiv ARMV7IRAssembler";
         if (right.isConstant()) {
-            assert 0 == 1 : "arithmeticIdiv divide by constant not implemented";
             Util.shouldNotReachHere("cwi: I assume this is dead code, notify me if I'm wrong...");
 
             int divisor = ((CiConstant) right).asInt();
@@ -1531,7 +1521,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.jcc(ConditionFlag.NotEqual, normalCase);
                 if (code == LIROpcode.Irem) {
                     // prepare X86Register.rdx for possible special case where remainder = 0
-                    masm.eor(ConditionFlag.Always, false, ARMV7.r9, ARMV7.r9, ARMV7.r9, 0, 0);
+                    masm.eor(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, ARMV7.r8, 0, 0);
                 }
                 masm.mov32BitConstant(ARMV7.r12, -1);
                 masm.cmp(ConditionFlag.Always, rreg, ARMV7.r12, 0, 0);
@@ -1541,7 +1531,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.bind(normalCase);
             }
             // masm.cdql();
-            masm.mov(ConditionFlag.Always, false, ARMV7.r9, lreg);
+            masm.mov(ConditionFlag.Always, false, ARMV7.r8, lreg);
             int offset = masm.codeBuffer.position();
 
             masm.sdiv(ConditionFlag.Always, dreg, lreg, rreg);
@@ -1555,7 +1545,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                  * (a/b)b + (a%b) = a => (a%b) = a - (a/b)b r9 = a r12 = a reg = b
                  */
                 masm.mul(ConditionFlag.Always, false, lreg, dreg, rreg);
-                masm.sub(ConditionFlag.Always, false, dreg, ARMV7.r9, lreg, 0, 0);
+                masm.sub(ConditionFlag.Always, false, dreg, ARMV7.r8, lreg, 0, 0);
 
             } else {
                 assert code == LIROpcode.Idiv;
@@ -1575,7 +1565,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         CiRegister dreg = result.asRegister();
         CiRegister rreg = right.asRegister();
 
-        masm.mov(ConditionFlag.Always, false, ARMV7.r9, lreg);
+        masm.mov(ConditionFlag.Always, false, ARMV7.r8, lreg);
         int offset = masm.codeBuffer.position();
 
         masm.udiv(ConditionFlag.Always, dreg, lreg, rreg);
@@ -1586,7 +1576,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
              * (a/b)b + (a%b) = a => (a%b) = a - (a/b)b r9 = a r12 = a reg = b
              */
             masm.mul(ConditionFlag.Always, false, lreg, dreg, rreg);
-            masm.sub(ConditionFlag.Always, false, dreg, ARMV7.r9, lreg, 0, 0);
+            masm.sub(ConditionFlag.Always, false, dreg, ARMV7.r8, lreg, 0, 0);
 
             //masm.rsbRegister(ConditionFlag.Always, false, dreg, ARMV7.r9, lreg, 0, 0);
 
@@ -1599,7 +1589,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     }
 
     void arithmeticLdiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
-        System.out.println("arithmeticLdiv not implemented");
         assert left.isRegister() : "left must be register";
         assert right.isRegister() : "right must be register";
         assert result.isRegister() : "result must be register";

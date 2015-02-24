@@ -37,28 +37,22 @@ import com.sun.c1x.util.Util;
 import com.sun.cri.bytecode.Bytecodes;
 import com.sun.cri.ci.*;
 
-/**
- * This class implements the X86-specific portion of the LIR generator.
- */
+
 public class ARMV7LIRGenerator extends LIRGenerator {
 
-    // APN just hacked to compile
-    private static final CiRegisterValue RAX_I = ARMV7.r8.asValue(CiKind.Int);
-    private static final CiRegisterValue RAX_L = ARMV7.r8.asValue(CiKind.Long); // and r9 32bit registers
-    private static final CiRegisterValue RDX_I = ARMV7.r8.asValue(CiKind.Int);
-    private static final CiRegisterValue RDX_L = ARMV7.r8.asValue(CiKind.Long); // and r9 32bit registers
+    private static final CiRegisterValue RAX_I = ARMV7.r0.asValue(CiKind.Int);
+    private static final CiRegisterValue RAX_L = ARMV7.r0.asValue(CiKind.Long);
+    private static final CiRegisterValue RDX_I = ARMV7.r2.asValue(CiKind.Int);
+    private static final CiRegisterValue RDX_L = ARMV7.r2.asValue(CiKind.Long);
     private static final CiRegisterValue RETURNREG_L = ARMV7.r0.asValue(CiKind.Long);
     private static final CiRegisterValue RETURNREG_I = ARMV7.r0.asValue(CiKind.Int);
 
     private static final CiRegisterValue LDIV_TMP = RDX_L;
 
 
-    /**
-     * The register in which MUL puts the result for 64-bit multiplication.
-     */
     private static final CiRegisterValue LMUL_OUT = RAX_L;
 
-    private static final CiRegisterValue SHIFT_COUNT_IN = ARMV7.r8.asValue(CiKind.Int); // Which reg to choose?
+    private static final CiRegisterValue SHIFT_COUNT_IN = ARMV7.r1.asValue(CiKind.Int);
 
     protected static final CiValue ILLEGAL = CiValue.IllegalValue;
 
@@ -70,8 +64,6 @@ public class ARMV7LIRGenerator extends LIRGenerator {
     protected CiValue exceptionPcOpr() {
         return ILLEGAL;
     }
-
-
 
     @Override
     protected boolean canStoreAsConstant(Value v, CiKind kind) {

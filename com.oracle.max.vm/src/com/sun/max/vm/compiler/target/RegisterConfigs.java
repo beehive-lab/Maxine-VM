@@ -17,30 +17,28 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import com.oracle.max.asm.target.amd64.AMD64;
-import com.oracle.max.asm.target.armv7.ARMV7;
-import com.sun.cri.ci.CiCalleeSaveLayout;
-import com.sun.cri.ci.CiRegister;
-import com.sun.cri.ci.CiRegisterConfig;
-import com.sun.cri.ri.RiRegisterAttributes;
-import com.sun.max.annotate.HOSTED_ONLY;
-import com.sun.max.lang.ISA;
-import com.sun.max.platform.OS;
-import com.sun.max.unsafe.Word;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.deopt.Deoptimization;
-import com.sun.max.vm.runtime.FatalError;
-import com.sun.max.vm.runtime.amd64.AMD64TrapFrameAccess;
-import com.sun.max.vm.runtime.arm.ARMTrapFrameAccess;
-
-import java.util.HashMap;
-
 import static com.oracle.max.asm.target.amd64.AMD64.*;
 import static com.oracle.max.asm.target.armv7.ARMV7.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
-import static com.sun.max.platform.Platform.platform;
+import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
+
+import java.util.*;
+
+import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.asm.target.armv7.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
+import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
+import com.sun.max.platform.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.deopt.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.amd64.*;
+import com.sun.max.vm.runtime.arm.*;
 
 /**
  * The set of register configurations applicable to compiled code in the VM.
@@ -132,11 +130,11 @@ public class RegisterConfigs {
          * Frame pointer: r11 Stack pointer: r13
          * Return register: r14
          * Latch register: r10
-         * Scratch registers: r8, r9, r12, d15
+         * Scratch registers: r8, r12, d15
          */
         if (platform().isa == ISA.ARM) {
             if (os == OS.LINUX || os == OS.DARWIN) {
-                allocatable = new CiRegister[] { r0, r1, r2, r3, r4, r5, r6, r7, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16,
+                allocatable = new CiRegister[] { r0, r1, r2, r3, r4, r5, r6, r7, ARMV7.r9, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16,
                                 s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29};
                 parameters = new CiRegister[] { r0, r1, r2, r3, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15};
                 allRegistersExceptLatch = new CiRegister[] { r0, r1, r2, r3, r4, r5, r6, r7, com.oracle.max.asm.target.armv7.ARMV7.r8, com.oracle.max.asm.target.armv7.ARMV7.r9,

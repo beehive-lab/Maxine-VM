@@ -25,6 +25,7 @@ package com.sun.max.unsafe;
 import static com.sun.max.vm.MaxineVM.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
@@ -45,7 +46,8 @@ import com.sun.max.vm.reference.*;
  */
 public final class CodePointer {
 
-    private static long BASE_ADDRESS = MaxineVM.isHosted() ? 0x1000000000000000L : Code.bootCodeRegion().start().toLong();
+    private static long baseOffset = (Platform.target().arch.is32bit() ? 0x1000000000000000L : 0x40000000);
+    private static long BASE_ADDRESS = MaxineVM.isHosted() ? baseOffset : Code.bootCodeRegion().start().toLong();
 
     /**
      * Set the base address. This is needed since the static field will otherwise not be properly initialised
@@ -109,7 +111,7 @@ public final class CodePointer {
         return BASE_ADDRESS + (value >> 1);
     }
 
-    /**
+    /**t
      * Relocates a {@code CodePointer} by a given {@link Offset}.
      *
      * @param offset the offset by which the value is to be relocated
