@@ -323,14 +323,6 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         }
     }
 
-    public void movlong(CiAddress dst, long src) {
-        setUpScratch(dst);
-        mov32BitConstant(ARMV7.r8, (int) (0xffffffffL & src));
-        mov32BitConstant(ARMV7.cpuRegisters[ARMV7.r8.encoding + 1], (int) ((src >> 32) & 0xffffffffL));
-        str(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, ARMV7.r0, 0, 0);
-        strImmediate(ConditionFlag.Always, 0, 1, 0, ARMV7.cpuRegisters[ARMV7.r8.encoding + 1], ARMV7.r12, 4);
-    }
-
     public void xchgptr(CiRegister src1, CiRegister src2) {
         xchgq(src1, src2);
     }
