@@ -227,6 +227,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void decrementl(CiRegister reg, int value) {
+        assert reg == ARMV7.r12 || reg != ARMV7.r8 : "Reg " + reg;
         mov32BitConstant(ARMV7.r8, value);
         sub(ConditionFlag.Always, false, reg, reg, ARMV7.r8, 0, 0);
     }
