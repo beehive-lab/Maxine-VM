@@ -314,7 +314,7 @@ public class MaxineARMTester {
         int[] simulatedRegisters = parseRegistersToFile(gdbOutput.getName());
         if (!validateRegisters(simulatedRegisters, expectRegs, testRegs)) {
             cleanProcesses();
-            assert true : "Error while validating registers";
+            assert false : "Error while validating registers";
         }
     }
     public int [] runSimulationRegisters() throws Exception {
@@ -367,18 +367,15 @@ public class MaxineARMTester {
             long expectedRegister = expectedRegisters[i];
             if (testRegisters[i]) {
                 if (simulatedRegister != expectedRegister) {
-                    System.out.println("Error: Register " + i + " Expected " + expectedRegister + " " + Long.toString(expectedRegister, 16) + " Simulated " + simulatedRegister + " " +
-                                    Long.toString(simulatedRegister, 16));
                     bitmask = bitmask | (1 << i);
                     result = false;
-                } else {
-                    log("Correct: Register " + i + " Expected " + expectedRegister + " " + Long.toString(expectedRegister, 16) + " Simulated " + simulatedRegister + " " +
-                                    Long.toString(simulatedRegister, 16));
                 }
             }
         }
         if (!result) {
-            System.out.println("Bit mask of incorrect registers " + bitmask);
+            for (int i = 0; i < NUM_REGS; i++) {
+                System.out.println(i + " sim: " + simRegisters[i] + " exp: " + expectedRegisters[i] + " test: " + testRegisters[i]);
+            }
         }
         return result;
     }
