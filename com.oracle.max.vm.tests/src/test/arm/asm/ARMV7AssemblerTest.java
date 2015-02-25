@@ -978,7 +978,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         generateAndTest(assemblerStatements, expectedLongValues, testValues, bitmasks);
     }
 
-    public void test_casInt() throws Exception {
+    public void work_casInt() throws Exception {
         int assemblerStatements = 22;
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
@@ -1000,7 +1000,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         generateAndTest(assemblerStatements, expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void test_casLong() throws Exception {
+    public void work_casLong() throws Exception {
         int assemblerStatements = 34;
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
@@ -1025,6 +1025,47 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         testValues[0] = true;
         expectedValues[1] = 0;
         testValues[1] = true;
+        generateAndTest(assemblerStatements, expectedValues, testValues, bitmasks, masm.codeBuffer);
+    }
+
+    public void test_decrementl() throws Exception {
+        int assemblerStatements = 34;
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        masm.codeBuffer.reset();
+        // r0=10, r1=20
+        // r2=30, r3=40
+        // r4=50, r5=60
+        // r6=70, r7=80
+        // r8=90, r9=100
+        for (int i = 0; i < 10; i++) {
+            masm.mov32BitConstant(ARMV7.cpuRegisters[i], (i + 1) * 10);
+        }
+        masm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
+        CiAddress addr = new CiAddress(CiKind.Int, ARMV7.r13.asValue(), 16);
+        masm.decrementl(addr, 10);
+        masm.pop(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
+        expectedValues[0] = 10;
+        testValues[0] = true;
+        expectedValues[1] = 20;
+        testValues[1] = true;
+        expectedValues[2] = 30;
+        testValues[2] = true;
+        expectedValues[3] = 40;
+        testValues[3] = true;
+        expectedValues[4] = 40;
+        testValues[4] = true;
+        expectedValues[5] = 60;
+        testValues[5] = true;
+        expectedValues[6] = 70;
+        testValues[6] = true;
+        expectedValues[7] = 80;
+        testValues[7] = true;
+        expectedValues[8] = 90;
+        testValues[8] = true;
+        expectedValues[9] = 100;
+        testValues[9] = true;
         generateAndTest(assemblerStatements, expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 }
