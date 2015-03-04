@@ -1030,7 +1030,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             movt(ConditionFlag.Always, dst, imm32 & 0xffff);
         } else {
             mov32BitConstant(ARMV7.r12, imm32);
-            vmov(ConditionFlag.Always, dst, ARMV7.r12, CiKind.Float, CiKind.Int);
+            vmov(ConditionFlag.Always, dst, ARMV7.r12, null, CiKind.Float, CiKind.Int);
         }
     }
 
@@ -1485,19 +1485,18 @@ public class ARMV7Assembler extends AbstractAssembler {
                 opc2 = 4;
             } else {
                 opc2 = 0;
-                op = 0;
             }
         }
         if (!floatConversion) {
             if (toInt) { // FD2I
-                instruction |= 0x0eb80a40;
+                instruction |= 0xeb80a40;
                 instruction |= (dest.encoding >> 1) << 12; // LSB in bit 22
                 instruction |= (dest.encoding & 0x1) << 22;
                 if (sz == 1) {
-                    instruction |= src.encoding & 0xf; //
+                    instruction |= (src.encoding & 0xf);
                     instruction |= (src.encoding >> 4) << 5;
                 } else {
-                    instruction |= src.encoding >> 1;
+                    instruction |= (src.encoding >> 1);
                     instruction |= (src.encoding & 0x1) << 5;
                 }
                 instruction |= opc2 << 16;
@@ -1521,7 +1520,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             }
         } else {
             instruction |= sz << 8;
-            if (double2Float) { // D2F
+            if (double2Float) { // D2FI
                 instruction |= 0xEB70AC0;
                 instruction |= (dest.encoding >> 1) << 12;
                 instruction |= (dest.encoding & 1) << 22;
@@ -1529,7 +1528,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                 instruction |= (src.encoding >> 4) << 5;
             } else if (int2Float) { // I2F
                 instruction |= 0xEB80A40;
-                instruction |= (dest.encoding & 0xf) << 12;
+                instruction |= (dest.encoding >> 1) << 12;
                 instruction |= (dest.encoding & 1) << 22;
                 instruction |= (src.encoding & 1) << 5;
                 instruction |= (src.encoding >> 1);
@@ -1626,26 +1625,21 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public final void vpop(ConditionFlag cond, CiRegister first, CiRegister last) {
-        // A8.8.367
+    public final void vpop(ConditionFlag cond, CiRegister first, CiRegister last, CiKind firstKind, CiKind lastKind) {
         int instruction = (cond.value() & 0xf) << 28;
-        checkConstraint(first.number >= 16 && last.number >= 16, "vpop NO CORE REGISTERS ALLOWED");
-        checkConstraint((first.number <= 31 && last.number <= 31) || (first.number <= 63 && last.number <= 63), "vpop ALL REGISTERS must be SP OR DP no mix allowed");
+        checkConstraint(!first.isCpu() && !last.isCpu(), "vpop No core regs allowed");
+        checkConstraint(!(firstKind.isDouble() && !lastKind.isDouble()) && !(!firstKind.isDouble() && lastKind.isDouble()), "vpush no mix of FP/DP allowed");
         checkConstraint(last.number >= first.number, "vpop at least ONE register!!");
         int sz = 0;
-        if (first.number <= 31) {
+        if (firstKind.isDouble()) {
             sz = 1;
         }
         if (sz == 1) {
             instruction |= 0x0cbd0c00;
-            // VFPV3 only has 16 regs and these fit so no need to do the MSB
-            // for double precision registers
             instruction |= (first.encoding & 0xf) << 12;
             instruction |= (last.encoding - first.encoding + 1) << 1;
         } else {
             instruction |= 0x0cbd0b00;
-            // VFPV3 has 32 regs so we NEED to do the MSB manipulation --
-            // different to what it would be for doubles!!! (if there were 32)
             instruction |= (first.encoding & 0x1) << 22;
             instruction |= (first.encoding >> 1) << 12;
             instruction |= (last.encoding - first.encoding + 1) << 1;
@@ -1771,7 +1765,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public final void vmov(ConditionFlag cond, CiRegister dest, CiRegister src, CiKind destKind, CiKind srcKind) {
+    public final void vmov(ConditionFlag cond, CiRegister dest, CiRegister src, CiRegister src2, CiKind destKind, CiKind srcKind) {
         int instruction = (cond.value() & 0xf) << 28;
         int vmovSameType = 0x0eb00a40; // A8.8.340
         int vmovSingleCore = 0x0e000a10; // A8.8.343 full word only // ARM core to scalar
@@ -1804,11 +1798,12 @@ public class ARMV7Assembler extends AbstractAssembler {
                 instruction |= (dest.encoding + 1) << 16;
                 instruction |= src.encoding;
             } else {
+                assert src2 != null;
                 checkConstraint((src.encoding) <= 14, "vmov core to doubleword core register > 14");
-                instruction |= (src.encoding + 1) << 16;
+                instruction |= src2.encoding << 16;
                 instruction |= src.encoding << 12;
-                instruction |= (dest.encoding & 1) << 5;
-                instruction |= dest.encoding >> 1;
+                instruction |= (dest.encoding >> 4) << 5;
+                instruction |= dest.encoding & 0xf;
             }
         }
         emitInt(instruction);
