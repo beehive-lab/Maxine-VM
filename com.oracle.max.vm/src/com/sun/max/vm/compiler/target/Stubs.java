@@ -1380,7 +1380,7 @@ public class Stubs {
                         if (tmp.number <= 15) {
                             asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << tmp.number);
                         } else {
-                            asm.vpop(ARMV7Assembler.ConditionFlag.Always, tmp, tmp);
+                            asm.vpop(ARMV7Assembler.ConditionFlag.Always, tmp, tmp, CiKind.Float, CiKind.Float);
                         }
 
                         break;
@@ -1397,7 +1397,7 @@ public class Stubs {
                         if (tmp2arg4.number <= 15)  {
                             asm.pop(ARMV7Assembler.ConditionFlag.Always, (1 << tmp2arg4.number) | (1 << (tmp2arg4.number + 1)));
                         } else {
-                            asm.vpop(ARMV7Assembler.ConditionFlag.Always, tmp2arg4, tmp2arg4);
+                            asm.vpop(ARMV7Assembler.ConditionFlag.Always, tmp2arg4, tmp2arg4, CiKind.Double, CiKind.Double);
                         }
 
 
