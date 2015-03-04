@@ -38,6 +38,7 @@ import test.com.sun.max.vm.ExternalCommand.Result;
 import test.com.sun.max.vm.MaxineTesterConfiguration.ExpectedResult;
 import test.vm.output.*;
 
+import com.oracle.max.vm.ext.c1x.*;
 import com.sun.max.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
