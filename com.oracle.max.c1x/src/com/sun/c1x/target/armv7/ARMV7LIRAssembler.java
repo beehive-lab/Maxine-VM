@@ -57,9 +57,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.sun.cri.ci.CiCallingConvention.Type.RuntimeCall;
 import static com.sun.cri.ci.CiValue.IllegalValue;
 
-/**
- * This class implements the x86-specific code generation for LIR.
- */
+
 public final class ARMV7LIRAssembler extends LIRAssembler {
 
     public static AtomicInteger methodCounter = new AtomicInteger(536870912);
@@ -279,7 +277,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         // masm.vmovImm(ConditionFlag.Always, dst, 0, dstKind);
         // } else {
         masm.mov32BitConstant(rscratch1, Float.floatToRawIntBits(constant));
-        masm.vmov(ConditionFlag.Always, dst, rscratch1, dstKind, CiKind.Int);
+        masm.vmov(ConditionFlag.Always, dst, rscratch1, null, dstKind, CiKind.Int);
         // }
     }
 
@@ -883,17 +881,17 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.vcvt(ConditionFlag.Always, dest.asRegister(), false, false, src.asRegister(), CiKind.Float, CiKind.Double);
                 break;
             case I2F:
-                masm.vmov(ConditionFlag.Always, ARMV7.s30, srcRegister, CiKind.Float, src.kind);
+                masm.vmov(ConditionFlag.Always, ARMV7.s30, srcRegister, null, CiKind.Float, src.kind);
                 masm.vcvt(ConditionFlag.Always, dest.asRegister(), false, true, ARMV7.s30, CiKind.Float, CiKind.Int);
                 break;
             case I2D:
-                masm.vmov(ConditionFlag.Always, ARMV7.s30, srcRegister, CiKind.Float, src.kind);
+                masm.vmov(ConditionFlag.Always, ARMV7.s30, srcRegister, null, CiKind.Float, src.kind);
                 masm.vcvt(ConditionFlag.Always, dest.asRegister(), false, true, ARMV7.s30, CiKind.Double, CiKind.Int);
                 break;
             case F2I: {
                 assert srcRegister.isFpu() && dest.isRegister() : "must both be S-register (no fpu stack)";
                 masm.vcvt(ConditionFlag.Always, ARMV7.s30, true, true, src.asRegister(), CiKind.Float, src.kind);
-                masm.vmov(ConditionFlag.Always, dest.asRegister(), ARMV7.s30, dest.kind, CiKind.Float);
+                masm.vmov(ConditionFlag.Always, dest.asRegister(), ARMV7.s30, null, dest.kind, CiKind.Float);
                 break;
             }
             case D2I: {
@@ -902,7 +900,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     masm.vcvt(ConditionFlag.Always, dest.asRegister(), true, true, src.asRegister(), dest.kind, src.kind);
                 } else {
                     masm.vcvt(ConditionFlag.Always, ARMV7.s30, true, true, src.asRegister(), CiKind.Float, src.kind);
-                    masm.vmov(ConditionFlag.Always, dest.asRegister(), ARMV7.s30, dest.kind, CiKind.Float);
+                    masm.vmov(ConditionFlag.Always, dest.asRegister(), ARMV7.s30, null, dest.kind, CiKind.Float);
                 }
                 break;
             }
@@ -919,16 +917,16 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 assert false: "D2L is implemented as runtime call!";
                 break;
             case MOV_I2F:
-                masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, CiKind.Float, CiKind.Int);
+                masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, null, CiKind.Float, CiKind.Int);
                 break;
             case MOV_L2D:
-                masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, CiKind.Double, CiKind.Long);
+                masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, ARMV7.cpuRegisters[srcRegister.encoding + 1], CiKind.Double, CiKind.Long);
                 break;
             case MOV_F2I:
-                masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, CiKind.Int, CiKind.Float);
+                masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, null, CiKind.Int, CiKind.Float);
                 break;
             case MOV_D2L:
-                masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, CiKind.Long, CiKind.Double);
+                masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, null, CiKind.Long, CiKind.Double);
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -2541,7 +2539,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         if (result.asRegister().encoding < 16) {
                             masm.pop(ConditionFlag.Always, 1 << result.asRegister().encoding);
                         } else {
-                            masm.vpop(ConditionFlag.Always, result.asRegister(), result.asRegister());
+                            masm.vpop(ConditionFlag.Always, result.asRegister(), result.asRegister(), result.kind, result.kind);
                         }
                     } else {
                         masm.pop(ConditionFlag.Always, 1 << 12);
