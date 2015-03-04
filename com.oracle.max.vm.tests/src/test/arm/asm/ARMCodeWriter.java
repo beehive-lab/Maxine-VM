@@ -1,8 +1,8 @@
 package test.arm.asm;
 
-import com.oracle.max.asm.Buffer;
+import java.io.*;
 
-import java.io.PrintWriter;
+import com.oracle.max.asm.*;
 
 public class ARMCodeWriter {
 
@@ -11,17 +11,17 @@ public class ARMCodeWriter {
     private byte[] byteVersion;
     private int totalInstructions;
 
-    public ARMCodeWriter(int assemblerStatements, Buffer codeBuffer) {
-        totalInstructions = assemblerStatements;
+    public ARMCodeWriter(Buffer codeBuffer) {
+        totalInstructions = codeBuffer.position() / 4;
         byteVersion = null;
-        instructions = new int[assemblerStatements];
-        for (int j = 0; j < assemblerStatements; j++) {
+        instructions = new int[totalInstructions];
+        for (int j = 0; j < totalInstructions; j++) {
             instructions[j] = codeBuffer.getInt(j * 4);
         }
     }
 
-    public ARMCodeWriter(int assemblerStatements, byte[] codeBuffer) {
-        totalInstructions = assemblerStatements;
+    public ARMCodeWriter(byte[] codeBuffer) {
+        totalInstructions = codeBuffer.length / 4;
         instructions = null;
         byteVersion = codeBuffer;
 
