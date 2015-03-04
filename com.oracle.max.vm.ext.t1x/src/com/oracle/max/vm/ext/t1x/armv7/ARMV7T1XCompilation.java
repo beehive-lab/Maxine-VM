@@ -196,10 +196,6 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignObjectReg(CiRegister dst, CiRegister src) {
-        // TODO check the functionality of this in a unit test for X86
-        // asm.movq(ConditionFlag.Always,false,dst, src);
-        // scratch r12 stores the loaded value
-        // then we store the loaded value into the address pointed by dst
         asm.mov(ARMV7Assembler.ConditionFlag.Always, true, dst, src);
     }
 
@@ -210,25 +206,11 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignLong(CiRegister dst, long value) {
-        // asm.movq(dst, value);
-        // how are the registers constrianed to correctly use the registers for long?
-        // asm.movlong(dst,value);
-        // TODO constrain register allocator to prevent r11 being used for LONGS!!!!
-        // as it will then overflow into fp -- r11, r12, the scratch register and break!
         assert dst.number < 10;
-        /*
-         * IF we use the register dst to store the MSW use the commented out code just here
-         * asm.movw(ConditionFlag.Always,dst,(int)(((value>>32)&0xffff)));
-         * asm.movt(ConditionFlag.Always,dst,(int)(((value>>48)&0xffff)));
-         * asm.movw(ConditionFlag.Always,ARMV7.cpuRegisters[dst.encoding +1],(int)(value&0xffff));
-         * asm.movt(ConditionFlag.Always,ARMV7.cpuRegisters[dst.encoding +1],(int)((value>>16)&0xffff));
-         */
-        // dst stores the LSW
         asm.movw(ConditionFlag.Always, dst, (int) (value & 0xffff));
         asm.movt(ConditionFlag.Always, dst, (int) ((value >> 16) & 0xffff));
         asm.movw(ConditionFlag.Always, ARMV7.cpuRegisters[dst.encoding + 1], (int) (((value >> 32) & 0xffff)));
         asm.movt(ConditionFlag.Always, ARMV7.cpuRegisters[dst.encoding + 1], (int) (((value >> 48) & 0xffff)));
-
     }
 
     @Override
@@ -240,9 +222,6 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
         int index = objectLiterals.size();
         objectLiterals.add(value);
-
-        // asm.movq(dst, CiAddress.Placeholder);
-        //System.out.println("CiAddress.Placeholder and ARMV7T1XCompilation.assignObject pathcInfo needs workaround");
         asm.nop(2);
         // leave space to do a setup scratch for a known address/value
         // it might needs to be bigger more nops required based on
@@ -324,7 +303,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     protected void assignFloat(CiRegister dst, float value) {
         assert dst.number >= ARMV7.s0.number && dst.number <= ARMV7.s31.number;
         asm.mov32BitConstant(ARMV7.r12, Float.floatToRawIntBits(value));
-        asm.vmov(ConditionFlag.Always, dst, ARMV7.r12, CiKind.Float, CiKind.Int);
+        asm.vmov(ConditionFlag.Always, dst, ARMV7.r12, null, CiKind.Float, CiKind.Int);
     }
 
     @Override
@@ -425,7 +404,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     protected void assignDouble(CiRegister dst, double value) {
         assert dst.isFpu();
         assignLong(ARMV7.r8, Double.doubleToRawLongBits(value));
-        asm.vmov(ConditionFlag.Always, dst, ARMV7.r8, CiKind.Double, CiKind.Int);
+        asm.vmov(ConditionFlag.Always, dst, ARMV7.r8, ARMV7.r9, CiKind.Double, CiKind.Int);
     }
 
     @Override
@@ -440,9 +419,6 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected int callIndirect(CiRegister target, int receiverStackIndex) {
-        /*
-         * APN What is meant by received in this context, do we mean return address?
-         */
         if (receiverStackIndex >= 0) {
             peekObject(target, receiverStackIndex); // was rdi?
         }
