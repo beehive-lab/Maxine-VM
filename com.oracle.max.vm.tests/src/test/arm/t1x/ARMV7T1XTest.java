@@ -14,7 +14,6 @@ import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.t1x.armv7.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiRegister.RegisterFlag;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
 import com.sun.max.program.option.*;
@@ -94,8 +93,8 @@ public class ARMV7T1XTest extends MaxTestCase {
     private static int[] expectedValues = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     private static boolean[] testvalues = new boolean[17];
 
-    private int[] generateAndTest(int assemblerStatements, int[] expected, boolean[] tests, MaxineARMTester.BitsFlag[] masks) throws Exception {
-        ARMCodeWriter code = new ARMCodeWriter(assemblerStatements, theCompiler.getMacroAssembler().codeBuffer);
+    private int[] generateAndTest(int[] expected, boolean[] tests, MaxineARMTester.BitsFlag[] masks) throws Exception {
+        ARMCodeWriter code = new ARMCodeWriter(theCompiler.getMacroAssembler().codeBuffer);
         code.createCodeFile();
         MaxineARMTester r = new MaxineARMTester(expected, tests, masks);
         r.cleanFiles();
@@ -159,7 +158,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.decStack(2);
         masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r2, ARMV7.r13);
         assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] simulatedValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] simulatedValues = generateAndTest(expectedValues, testvalues, bitmasks);
         for (int i = 0; i < 16; i++) {
             assert 2 * (simulatedValues[1] - simulatedValues[0]) == (simulatedValues[2] - simulatedValues[1]) : "Register " + i + " Value " + simulatedValues[i];
         }
@@ -172,8 +171,8 @@ public class ARMV7T1XTest extends MaxTestCase {
         masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r1, ARMV7.r13); // copy stack value onto r1
         theCompiler.incStack(2);
         masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r2, ARMV7.r13);
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] simulatedValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+        int[] simulatedValues = generateAndTest(expectedValues, testvalues, bitmasks);
         for (int i = 0; i < 16; i++) {
             assert 2 * (simulatedValues[0] - simulatedValues[1]) == (simulatedValues[1] - simulatedValues[2]) : "Register " + i + " Value " + simulatedValues[i];
         }
@@ -195,8 +194,8 @@ public class ARMV7T1XTest extends MaxTestCase {
         masm.incrementl(ARMV7.r5, 0);
         masm.mov32BitConstant(ARMV7.r6, -10);
         masm.incrementl(ARMV7.r6, -1);
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] simulatedValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+        int[] simulatedValues = generateAndTest(expectedValues, testvalues, bitmasks);
         expectedValues[0] = 1;
         expectedValues[1] = 0;
         expectedValues[2] = Integer.MAX_VALUE;
@@ -242,8 +241,8 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.peekInt(ARMV7.cpuRegisters[3], 2);
         theCompiler.peekInt(ARMV7.cpuRegisters[4], 1);
         theCompiler.peekInt(ARMV7.cpuRegisters[5], 0);
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         for (int i = 0; i < 6; i++) {
             assert registerValues[i] == expectedValues[i] : "Failed incorrect value " + Long.toString(registerValues[i], 16) + " " + Long.toString(expectedValues[i], 16);
         }
@@ -264,7 +263,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         for (i = 0; i < 10; i++) {
             if (i % 2 == 0) {
                 returnValue = 0xffffffffL & registerValues[i];
@@ -275,7 +274,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void test_PeekLong() throws Exception {
+    public void work_PeekLong() throws Exception {
         long returnValue = 0;
         int assemblerStatements;
         long[] expectedLongValues = new long[10];
@@ -303,7 +302,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.peekLong(ARMV7.cpuRegisters[6], 2);
         theCompiler.peekLong(ARMV7.cpuRegisters[8], 0);
         assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         for (int i = 0; i < 10; i++) {
             if (i % 2 == 0) {
                 returnValue = 0xffffffffL & registerValues[i];
@@ -314,7 +313,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void test_PokeLong() throws Exception {
+    public void work_PokeLong() throws Exception {
         long returnValue = 0;
         long[] expectedLongValues = new long[10];
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
@@ -346,8 +345,8 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.peekLong(ARMV7.cpuRegisters[4], 4);
         theCompiler.peekLong(ARMV7.cpuRegisters[6], 2);
         theCompiler.peekLong(ARMV7.cpuRegisters[8], 0);
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         for (int i = 0; i < 10; i++) {
             if (i % 2 == 0) {
                 returnValue = 0xffffffffL & registerValues[i];
@@ -385,14 +384,14 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.peekInt(ARMV7.cpuRegisters[3], 2);
         theCompiler.peekInt(ARMV7.cpuRegisters[4], 1);
         theCompiler.peekInt(ARMV7.cpuRegisters[5], 0);
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         for (int i = 0; i < 6; i++) {
             assert registerValues[i] == expectedValues[i] : "Failed incorrect value " + Long.toString(registerValues[i], 16) + " " + Long.toString(expectedValues[i], 16);
         }
     }
 
-    public void test_PokeDouble() throws Exception {
+    public void work_PokeDouble() throws Exception {
         long returnValue = 0;
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         long[] expectedLongValues = new long[5];
@@ -438,13 +437,13 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.peekDouble(dRegs[2], 4);
         theCompiler.peekDouble(dRegs[3], 2);
         theCompiler.peekDouble(dRegs[4], 0);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, dRegs[0], CiKind.Int, CiKind.Double);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, dRegs[1], CiKind.Int, CiKind.Double);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4, dRegs[2], CiKind.Int, CiKind.Double);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r6, dRegs[3], CiKind.Int, CiKind.Double);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, dRegs[4], CiKind.Int, CiKind.Double);
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, dRegs[0], null, CiKind.Int, CiKind.Double);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, dRegs[1], null, CiKind.Int, CiKind.Double);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4, dRegs[2], null, CiKind.Int, CiKind.Double);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r6, dRegs[3], null, CiKind.Int, CiKind.Double);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, dRegs[4], null, CiKind.Int, CiKind.Double);
+
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
 
         for (int i = 0; i < 10; i += 2) {
             returnValue = 0xffffffffL & registerValues[i];
@@ -460,7 +459,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void test_PeekFloat() throws Exception {
+    public void work_PeekFloat() throws Exception {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         long[] expectedLongValues = new long[6];
         expectedLongValues[0] = Float.floatToRawIntBits(Float.MIN_VALUE);
@@ -487,21 +486,21 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.peekFloat(ARMV7.s3, 2);
         theCompiler.peekFloat(ARMV7.s4, 1);
         theCompiler.peekFloat(ARMV7.s5, 0);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, ARMV7.s0, CiKind.Int, CiKind.Float);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r1, ARMV7.s1, CiKind.Int, CiKind.Float);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, ARMV7.s2, CiKind.Int, CiKind.Float);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r3, ARMV7.s3, CiKind.Int, CiKind.Float);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4, ARMV7.s4, CiKind.Int, CiKind.Float);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r5, ARMV7.s5, CiKind.Int, CiKind.Float);
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, ARMV7.s0, null, CiKind.Int, CiKind.Float);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r1, ARMV7.s1, null, CiKind.Int, CiKind.Float);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, ARMV7.s2, null, CiKind.Int, CiKind.Float);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r3, ARMV7.s3, null, CiKind.Int, CiKind.Float);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4, ARMV7.s4, null, CiKind.Int, CiKind.Float);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r5, ARMV7.s5, null, CiKind.Int, CiKind.Float);
+
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         for (int i = 0; i < 6; i++) {
             assert registerValues[i] == expectedLongValues[i] : "Failed incorrect value " + Long.toString(registerValues[i], 16) + " " + Long.toString(expectedLongValues[i], 16) + " Expected " +
                             Float.intBitsToFloat((int) expectedLongValues[i]) + " GOT " + Float.intBitsToFloat(registerValues[i]);
         }
     }
 
-    public void ignore_PokeFloat() throws Exception {
+    public void work_PokeFloat() throws Exception {
         long[] expectedLongValues = new long[6];
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         expectedLongValues[0] = Float.floatToRawIntBits(Float.MIN_VALUE);
@@ -525,7 +524,7 @@ public class ARMV7T1XTest extends MaxTestCase {
             expectedLongValues[i] = Float.floatToRawIntBits(value);
             value = value + -1.2f;
             masm.mov32BitConstant(ARMV7.cpuRegisters[i], (int) expectedLongValues[i]);
-            masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.allRegisters[i + 16], ARMV7.cpuRegisters[i], CiKind.Float, CiKind.Int);
+            masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.allRegisters[i + 16], ARMV7.cpuRegisters[i], null, CiKind.Float, CiKind.Int);
         }
         theCompiler.pokeFloat(ARMV7.s0, 5);
         theCompiler.pokeFloat(ARMV7.s1, 4);
@@ -539,21 +538,21 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.peekFloat(ARMV7.s9, 2);
         theCompiler.peekFloat(ARMV7.s10, 1);
         theCompiler.peekFloat(ARMV7.s11, 0);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, ARMV7.s6, CiKind.Int, CiKind.Float);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r1, ARMV7.s7, CiKind.Int, CiKind.Float);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, ARMV7.s8, CiKind.Int, CiKind.Float);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r3, ARMV7.s9, CiKind.Int, CiKind.Float);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4, ARMV7.s10, CiKind.Int, CiKind.Float);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r5, ARMV7.s11, CiKind.Int, CiKind.Float);
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, ARMV7.s6, null, CiKind.Int, CiKind.Float);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r1, ARMV7.s7, null, CiKind.Int, CiKind.Float);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, ARMV7.s8, null, CiKind.Int, CiKind.Float);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r3, ARMV7.s9, null, CiKind.Int, CiKind.Float);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4, ARMV7.s10, null, CiKind.Int, CiKind.Float);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r5, ARMV7.s11, null, CiKind.Int, CiKind.Float);
+
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         for (int i = 0; i < 6; i++) {
             assert registerValues[i] == expectedLongValues[i] : "Failed incorrect value " + Long.toString(registerValues[i], 16) + " " + Long.toString(expectedLongValues[i], 16) + " Expected " +
                             Float.intBitsToFloat((int) expectedLongValues[i]) + " got " + Float.intBitsToFloat(registerValues[i]);
         }
     }
 
-    public void ignore_AssignDouble() throws Exception {
+    public void test_AssignDouble() throws Exception {
         long returnValue = 0;
         long[] expectedLongValues = new long[5];
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
@@ -568,13 +567,13 @@ public class ARMV7T1XTest extends MaxTestCase {
         for (int i = 0; i <= 9; i++) {
             masm.mov32BitConstant(ARMV7.cpuRegisters[i], -25);
         }
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, ARMV7.s0, CiKind.Int, CiKind.Double);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, ARMV7.s2, CiKind.Int, CiKind.Double);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4, ARMV7.s4, CiKind.Int, CiKind.Double);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r6, ARMV7.s6, CiKind.Int, CiKind.Double);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.s8, CiKind.Int, CiKind.Double);
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, ARMV7.s0, null, CiKind.Int, CiKind.Double);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, ARMV7.s1, null, CiKind.Int, CiKind.Double);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4, ARMV7.s2, null, CiKind.Int, CiKind.Double);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r6, ARMV7.s3, null, CiKind.Int, CiKind.Double);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.s4, null, CiKind.Int, CiKind.Double);
+
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         for (int i = 0; i < 10; i += 2) {
             returnValue = 0xffffffffL & registerValues[i];
             returnValue |= (0xffffffffL & registerValues[i + 1]) << 32;
@@ -583,7 +582,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void test_PeekDouble() throws Exception {
+    public void work_PeekDouble() throws Exception {
         long returnValue = 0;
         long[] expectedLongValues = new long[5];
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
@@ -611,14 +610,14 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.peekDouble(dRegs[2], 4);
         theCompiler.peekDouble(dRegs[3], 2);
         theCompiler.peekDouble(dRegs[4], 0);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, dRegs[0], CiKind.Int, CiKind.Double);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, dRegs[1], CiKind.Int, CiKind.Double);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4, dRegs[2], CiKind.Int, CiKind.Double);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r6, dRegs[3], CiKind.Int, CiKind.Double);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, dRegs[4], CiKind.Int, CiKind.Double);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, dRegs[0], null, CiKind.Int, CiKind.Double);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, dRegs[1], null, CiKind.Int, CiKind.Double);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4, dRegs[2], null, CiKind.Int, CiKind.Double);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r6, dRegs[3], null, CiKind.Int, CiKind.Double);
+        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, dRegs[4], null, CiKind.Int, CiKind.Double);
 
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         for (int i = 0; i < 10; i += 2) {
             returnValue = 0xffffffffL & registerValues[i];
             returnValue |= (0xffffffffL & registerValues[i + 1]) << 32;
@@ -641,8 +640,8 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.do_lconstTests(0xffffffff0000ffffL);
         masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r3, ARMV7.r13); // copy revised stack pointer to r3
         theCompiler.peekLong(ARMV7.r0, 0);
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         returnValue = 0xffffffffL & registerValues[0];
         returnValue |= (0xffffffffL & registerValues[1]) << 32;
         assert returnValue == 0xffffffff0000ffffL;
@@ -665,8 +664,8 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.do_dconstTests(myVal);
         masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r3, ARMV7.r13); // copy revised stack pointer to r3
         theCompiler.peekLong(ARMV7.r0, 0);
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         returnValue = 0;
         returnValue = 0xffffffffL & registerValues[0];
         returnValue |= (0xffffffffL & registerValues[1]) << 32;
@@ -687,8 +686,8 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.do_fconstTests(myVal);
         masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r3, ARMV7.r13); // copy revised stack pointer to r3
         theCompiler.peekInt(ARMV7.r0, 0);
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         returnValue = registerValues[0];
         assert returnValue == Float.floatToRawIntBits(myVal);
         assert registerValues[2] - registerValues[3] == 4;
@@ -740,7 +739,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
         theCompiler.do_loadTests(5, Kind.LONG);
         masm.pop(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64);
-        int assemblerStatements = masm.codeBuffer.position() / 4;
+
         expectedValues[0] = 172;
         expectedValues[1] = 0;
         expectedValues[2] = 100;
@@ -748,7 +747,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         expectedValues[4] = 102;
         expectedValues[5] = 103;
         expectedValues[6] = 104;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         for (int i = 0; i <= 6; i++) {
             assert registerValues[i] == expectedValues[i] : "Reg Values [" + i + "] Hex " + Long.toString(registerValues[i], 16) + "  Dex " + registerValues[i];
         }
@@ -766,8 +765,8 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.do_iaddTests();
         expectedValues[0] = 3;
         expectedValues[1] = 2;
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         assert expectedValues[0] == registerValues[0];
     }
 
@@ -783,8 +782,8 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.do_imulTests();
         expectedValues[0] = 12;
         expectedValues[1] = 4;
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         assert expectedValues[0] == registerValues[0];
     }
 
@@ -805,8 +804,8 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.peekWord(ARMV7.cpuRegisters[0], 2);
         theCompiler.peekWord(ARMV7.cpuRegisters[1], 1);
         theCompiler.peekWord(ARMV7.cpuRegisters[2], 0);
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         for (int i = 0; i < 3; i++) {
             assert registerValues[i] == expectedValues[i] : "Failed incorrect value " + Long.toString(registerValues[i], 16) + " " + Long.toString(expectedValues[i], 16);
         }
@@ -836,8 +835,8 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.peekWord(ARMV7.cpuRegisters[0], 2);
         theCompiler.peekWord(ARMV7.cpuRegisters[1], 1);
         theCompiler.peekWord(ARMV7.cpuRegisters[2], 0);
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         for (int i = 0; i < 3; i++) {
             assert registerValues[i] == expectedValues[i] : "Failed incorrect value " + Long.toString(registerValues[i], 16) + " " + Long.toString(expectedValues[i], 16);
         }
@@ -860,8 +859,8 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.peekObject(ARMV7.cpuRegisters[0], 2);
         theCompiler.peekObject(ARMV7.cpuRegisters[1], 1);
         theCompiler.peekObject(ARMV7.cpuRegisters[2], 0);
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         for (int i = 0; i < 3; i++) {
             assert registerValues[i] == expectedValues[i] : "Failed incorrect value " + Long.toString(registerValues[i], 16) + " " + Long.toString(expectedValues[i], 16);
         }
@@ -890,8 +889,8 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.peekObject(ARMV7.cpuRegisters[0], 2);
         theCompiler.peekObject(ARMV7.cpuRegisters[1], 1);
         theCompiler.peekObject(ARMV7.cpuRegisters[2], 0);
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         for (int i = 0; i < 3; i++) {
             assert registerValues[i] == expectedValues[i] : "Failed incorrect value " + Long.toString(registerValues[i], 16) + " " + Long.toString(expectedValues[i], 16);
         }
@@ -923,8 +922,8 @@ public class ARMV7T1XTest extends MaxTestCase {
         masm.jcc(cc, masm.codeBuffer.position() + 1, false); // 1 as a false will insert one instructions!!!
         theCompiler.assignInt(ARMV7.cpuRegisters[2], 20);
         theCompiler.assignInt(ARMV7.cpuRegisters[3], 10);
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         assert registerValues[3] == 10 : "Failed incorrect value " + Long.toString(registerValues[3], 16) + " 10";
         assert registerValues[2] == -1 : "Failed incorrect value " + Long.toString(registerValues[2], 16) + " -1";
 
@@ -951,8 +950,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         masm.jcc(cc, masm.codeBuffer.position() + 8, true);
         theCompiler.assignInt(ARMV7.cpuRegisters[2], 20);
         theCompiler.assignInt(ARMV7.cpuRegisters[3], 10);
-        assemblerStatements = masm.codeBuffer.position() / 4;
-        registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+        registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         assert registerValues[3] == 10 : "Failed incorrect value " + Long.toString(registerValues[0], 16) + " 10";
         assert registerValues[2] == 20 : "Failed incorrect value " + Long.toString(registerValues[0], 16) + " 20";
     }
@@ -1039,8 +1037,8 @@ public class ARMV7T1XTest extends MaxTestCase {
             theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 15);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.pop(ARMV7Assembler.ConditionFlag.Always, 1);
-            int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+            int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + Long.toString(registerValues[0], 16) + " " + Long.toString(expectedValues[0], 16);
             theCompiler.cleanup();
         }
@@ -1079,8 +1077,8 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.peekInt(ARMV7.r2, 1);
         theCompiler.peekInt(ARMV7.r1, 2);
         theCompiler.peekInt(ARMV7.r0, 3);
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         assert registerValues[1] == expectedValues[1] : "Failed incorrect value " + registerValues[1] + " " + expectedValues[1];
         assert registerValues[2] == expectedValues[2] : "Failed incorrect value " + registerValues[2] + " " + expectedValues[2];
@@ -1097,8 +1095,8 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.pop(ConditionFlag.Always, 1);
-        int assemblerStatements = masm.codeBuffer.position() / 4;
-        int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -1210,8 +1208,8 @@ public class ARMV7T1XTest extends MaxTestCase {
             theCompiler.peekInt(ARMV7.r2, 1);
             theCompiler.peekInt(ARMV7.r1, 2);
             theCompiler.peekInt(ARMV7.r0, 3);
-            int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+            int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             assert registerValues[1] == expectedValues[1] : "Failed incorrect value " + registerValues[1] + " " + expectedValues[1];
             assert registerValues[2] == expectedValues[2] : "Failed incorrect value " + registerValues[2] + " " + expectedValues[2];
@@ -1324,8 +1322,8 @@ public class ARMV7T1XTest extends MaxTestCase {
             theCompiler.peekInt(ARMV7.r2, 1);
             theCompiler.peekInt(ARMV7.r1, 2);
             theCompiler.peekInt(ARMV7.r0, 3);
-            int assemblerStatements = masm.codeBuffer.position() / 4;
-            int[] registerValues = generateAndTest(assemblerStatements, expectedValues, testvalues, bitmasks);
+
+            int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             assert registerValues[1] == expectedValues[1] : "Failed incorrect value " + registerValues[1] + " " + expectedValues[1];
             assert registerValues[2] == expectedValues[2] : "Failed incorrect value " + registerValues[2] + " " + expectedValues[2];
