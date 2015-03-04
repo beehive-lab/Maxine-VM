@@ -281,7 +281,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void movflt(CiRegister dst, CiRegister src, CiKind dstKind, CiKind srcKind) {
-        vmov(ConditionFlag.Always, dst, src, dstKind, srcKind);
+        vmov(ConditionFlag.Always, dst, src, null, dstKind, srcKind);
     }
 
     public void movflt(CiRegister dst, CiAddress src) {
@@ -298,7 +298,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void movdbl(CiRegister dst, CiRegister src, CiKind dstKind, CiKind srcKind) {
         assert dst.isFpu() && src.isFpu();
-        vmov(ConditionFlag.Always, dst, src, dstKind, srcKind);
+        vmov(ConditionFlag.Always, dst, src, null,dstKind, srcKind);
     }
 
     public void movdbl(CiRegister dst, CiAddress src) {
@@ -318,8 +318,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
             mov64BitConstant(dst, ARMV7.cpuRegisters[dst.encoding + 1], src);
         } else {
             assert dstKind.isDouble() : "Dst reg must be double";
-            mov64BitConstant(ARMV7.r8, ARMV7.cpuRegisters[ARMV7.r8.encoding + 1], src);
-            vmov(ConditionFlag.Always, dst, ARMV7.r8, dstKind, CiKind.Long);
+            mov64BitConstant(ARMV7.r8, ARMV7.r12, src);
+            vmov(ConditionFlag.Always, dst, ARMV7.r8, ARMV7.r12, dstKind, CiKind.Long);
         }
     }
 
