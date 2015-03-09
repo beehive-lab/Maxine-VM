@@ -46,13 +46,18 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void branch(Label l) {
         if (l.isBound()) {
-            // APn I need to compute a relative address if it is less than 24bits;
+            /*
+        REMEMBER -- the current stored value of the PC is 8 bytes larger than that of the
+        currently executing instruction, BUT WHEN we jump we must set PC to the actual
+        address of the instruction we want to execute NEXT.!!!!
+         */
+            // Compute a relative address if it is less than 24bits;
             // then branch
-            // or I need to compute an absolute address and do a MOV PC,absolute.
+            // or  TODO compute an absolute address and do a MOV PC,absolute.
             // branch(l.position(), false);
             checkConstraint(-0x800000 <= (l.position() - codeBuffer.position()) && (l.position() - codeBuffer.position()) <= 0x7fffff, "branch must be within  a 24bit offset");
             // emitInt(0x06000000 | (l.position() - codeBuffer.position()) | ConditionFlag.Always.value() & 0xf);
-            emitInt(0x0a000000 | (l.position() - codeBuffer.position() - 12) / 4 | ((ConditionFlag.Always.value() & 0xf) << 28));
+            emitInt(0x0a000000 | (l.position() - codeBuffer.position() - 8) / 4 | ((ConditionFlag.Always.value() & 0xf) << 28));
 
         } else {
             // By default, forward jumps are always 24-bit displacements, since
@@ -1322,9 +1327,14 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void jcc(ConditionFlag cc, int target, boolean forceDisp32) {
+        /*
+        REMEMBER -- the current stored value of the PC is 8 bytes larger than that of the
+        currently executing instruction, BUT WHEN we jump we must set PC to the actual
+        address of the instruction we want to execute NEXT.!!!!
+         */
         int disp = (target - codeBuffer.position());
         if (Math.abs(disp) <= 16777214 && !forceDisp32) { // TODO check ok to make this false
-            disp = (disp - 12) / 4;
+            disp = (disp - 8) / 4;
             emitInt((cc.value & 0xf) << 28 | (0xa << 24) | (disp & 0xffffff));
         } else {
             if (disp > 0) {
