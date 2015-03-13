@@ -378,9 +378,7 @@ public class Stubs {
         Log.println("pcInCaller");
 
         Log.println(pcInCaller);
-        Log.println("pcInCallerValue");
 
-        Log.println(pcInCaller.value);
         CodePointer cpCallSite = CodePointer.from(pcInCaller);
         final TargetMethod caller = cpCallSite.toTargetMethod();
 
