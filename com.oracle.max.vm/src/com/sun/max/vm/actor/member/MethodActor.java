@@ -47,6 +47,8 @@ import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import com.sun.max.platform.Platform;
+
 
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.Constructor_methodActor;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.Method_methodActor;
@@ -78,6 +80,20 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
         super(name, descriptor, flags);
         this.intrinsic = intrinsic;
     }
+
+    /*
+    Override --- necessary to get a 20bit hasshcode to work with the Java_sun_reflect_ReflectionFactory, newConstructorStub and the HashMamp used to
+    store the prePopulatedConstructorStubs
+    */
+    @Override
+    public int hashCode() {
+        if (Platform.target().arch.is32bit()) {
+            return (0xfffff & System.identityHashCode(this));
+        } else {
+            return System.identityHashCode(this);
+        }
+    }
+
 
     /**
      * Gets the intrinsic id of this method.
