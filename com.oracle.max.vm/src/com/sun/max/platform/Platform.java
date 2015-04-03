@@ -29,6 +29,7 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
+import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
@@ -153,6 +154,14 @@ public final class Platform {
                 throw FatalError.unexpected("Unimplemented stack alignment: " + os);
             }
 
+        } else if (isa == ISA.AARCH64) {
+            // jiaqi.liu
+            arch = new AARCH64();
+            if (os == OS.LINUX) {
+                stackAlignment = 16;
+            } else {
+                throw FatalError.unexpected("Unimplemented stack alignment: " + os);
+            }
         } else {
             return null;
         }
@@ -508,6 +517,9 @@ public final class Platform {
         map.put("solaris-sparcv9", new Platform(CPU.SPARCV9, OS.SOLARIS, Ints.K * 8, 32));
         map.put("darwin-amd64", new Platform(CPU.AMD64, OS.DARWIN, Ints.K * 8, 32));
         map.put("maxve-amd64", new Platform(CPU.AMD64, OS.MAXVE, Ints.K * 8, 32));
+        // jiaqi.liu
+        // name, platform(cpu, os, num_sig, pageSize)
+        map.put("linux-aarch64", new Platform(CPU.AARCH64, OS.LINUX, Ints.K * 8, 32));
         Supported = Collections.unmodifiableMap(map);
         Default = map.get("linux-amd64");
     }
