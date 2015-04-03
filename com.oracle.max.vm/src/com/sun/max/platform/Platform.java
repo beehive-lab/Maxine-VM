@@ -27,6 +27,7 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
+import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.asm.target.armv7.*;
 import com.sun.cri.ci.*;
@@ -164,9 +165,17 @@ public final class Platform {
             } else {
                 throw FatalError.unexpected("Unimplemented stack alignment: " + os);
             }
+        } else if (isa == ISA.AARCH64) {
+            arch = new AARCH64();
+            if (os == OS.LINUX) {
+                stackAlignment = 16;
+            } else {
+                throw FatalError.unexpected("Unimplemented stack alignment: " + os);
+            }
         } else {
             return null;
         }
+
         assert arch.wordSize == dataModel.wordWidth.numberOfBytes;
         boolean isMP = true;
         int spillSlotSize = arch.wordSize;
@@ -509,6 +518,7 @@ public final class Platform {
         final OS os = OS.fromName(osName);
         final int pageSize = getInteger(PAGE_SIZE_PROPERTY) == null ? getPageSize() : getInteger(PAGE_SIZE_PROPERTY);
         final int nsig = getProperty(NUMBER_OF_SIGNALS_PROPERTY) == null ? getNumberOfSignals() : getInteger(NUMBER_OF_SIGNALS_PROPERTY);
+
         return new Platform(cpu, isa, dataModel, os, pageSize, nsig);
     }
 
@@ -530,6 +540,7 @@ public final class Platform {
         map.put("maxve-amd64", new Platform(CPU.AMD64, OS.MAXVE, Ints.K * 8, 32));
         map.put("linux-arm", new Platform(CPU.ARMV7, OS.LINUX, Ints.K * 4, 32));
         map.put("darwin-arm", new Platform(CPU.ARMV7, OS.DARWIN, Ints.K * 4, 32));
+        map.put("linux-aarch64", new Platform(CPU.AARCH64, OS.LINUX, Ints.K * 8, 32));
         Supported = Collections.unmodifiableMap(map);
         Default = map.get("linux-amd64");
     }

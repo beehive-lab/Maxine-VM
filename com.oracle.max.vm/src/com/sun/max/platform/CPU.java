@@ -35,7 +35,9 @@ public enum CPU {
     IA32(ISA.IA32, new DataModel(WordWidth.BITS_32, Endianness.LITTLE, 64), MemoryModel.RelaxedMemoryOrder),
     PPC(ISA.PPC, new DataModel(WordWidth.BITS_32, Endianness.BIG, 64), MemoryModel.RelaxedMemoryOrder),
     SPARC(ISA.SPARC, new DataModel(WordWidth.BITS_32, Endianness.BIG, 64), MemoryModel.TotalStoreOrder),
-    SPARCV9(ISA.SPARC, new DataModel(WordWidth.BITS_64, Endianness.BIG, 64), MemoryModel.TotalStoreOrder);
+    SPARCV9(ISA.SPARC, new DataModel(WordWidth.BITS_64, Endianness.BIG, 64), MemoryModel.TotalStoreOrder),
+    // jiaqi.liu
+    AARCH64(ISA.AARCH64, new DataModel(WordWidth.BITS_64, Endianness.LITTLE, 64), MemoryModel.SequentialConsistency);
 
     public final ISA isa;
 

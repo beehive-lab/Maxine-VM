@@ -20,6 +20,7 @@
  */
 package com.sun.max.vm.compiler.target;
 
+import static com.oracle.max.asm.target.aarch64.AARCH64.*;
 import static com.oracle.max.asm.target.amd64.AMD64.*;
 import static com.oracle.max.asm.target.armv7.ARMV7.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
@@ -29,6 +30,7 @@ import static com.sun.max.vm.runtime.VMRegister.*;
 
 import java.util.*;
 
+import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.asm.target.armv7.*;
 import com.sun.cri.ci.*;
@@ -40,6 +42,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.aarch64.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.runtime.arm.*;
 
@@ -107,7 +110,7 @@ public class RegisterConfigs {
 
         // In ARM the callee save are different to the allocatable since it includes R14 which we use for
         // return address, R10 for safepoint , and R8,R9 scratch registers.
-        if (platform().isa == ISA.AMD64) {
+        if (platform().isa != ISA.ARM) {
             assert Arrays.equals(standard.getAllocatableRegisters(), standard.getCallerSaveRegisters()) : "VM requires caller-save for VM to VM calls";
         }
     }
@@ -202,8 +205,18 @@ public class RegisterConfigs {
                  * allocatable registers as caller-saved as inlining is expected to reduce the call overhead
                  * sufficiently.
                  */
-                standard = new CiRegisterConfig(AMD64.rsp, rax, xmm0, com.oracle.max.asm.target.amd64.AMD64.r11, null, allocatable, allocatable, parameters, null,
-                                com.oracle.max.asm.target.amd64.AMD64.allRegisters, roleMap);
+                standard = new CiRegisterConfig(
+                                AMD64.rsp,           // frame
+                                rax,                 // integral return value
+                                xmm0,                // floating point return value
+                                AMD64.r11,           // scratch
+                                null,                // scratch 1
+                                allocatable,         // allocatable
+                                allocatable,         // caller save
+                                parameters,          // parameter registers
+                                null,                // no callee save
+                                AMD64.allRegisters,  // all AMD64 registers
+                                roleMap);            // VM register role map
 
                 // Account for the word at the bottom of the frame used
                 // for saving an overwritten return address during deoptimization
@@ -217,7 +230,7 @@ public class RegisterConfigs {
                 setNonZero(standard.getAttributesMap(), com.oracle.max.asm.target.amd64.AMD64.r14, AMD64.rsp);
 
                 CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, allRegistersExceptLatch));
-                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, com.oracle.max.asm.target.amd64.AMD64.cpuxmmRegisters));
+                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, AMD64.cpuxmmRegisters));
                 CiRegisterConfig trapStub = new CiRegisterConfig(standard, AMD64TrapFrameAccess.CSL);
                 CiRegisterConfig trampoline = new CiRegisterConfig(standard,
                                 new CiCalleeSaveLayout(0, -1, 8, rdi, rsi, rdx, rcx, com.oracle.max.asm.target.amd64.AMD64.r8, com.oracle.max.asm.target.amd64.AMD64.r9, // parameters
@@ -231,9 +244,93 @@ public class RegisterConfigs {
                 n2j.stackArg0Offsets[JavaCallee.ordinal()] = nativeStackArg0Offset;
 
                 roleMap.put(ABI_FP, rbp);
-                CiRegisterConfig template = new CiRegisterConfig(rbp, rax, xmm0, com.oracle.max.asm.target.amd64.AMD64.r11, null, allocatable, allocatable, parameters, null,
-                                com.oracle.max.asm.target.amd64.AMD64.allRegisters, roleMap);
-                setNonZero(template.getAttributesMap(), com.oracle.max.asm.target.amd64.AMD64.r14, AMD64.rsp, rbp);
+                CiRegisterConfig template = new CiRegisterConfig(
+                                rbp,                 // frame
+                                rax,                 // integral return value
+                                xmm0,                // floating point return value
+                                AMD64.r11,           // scratch
+                                null,                // scratch 1
+                                allocatable,         // allocatable
+                                allocatable,         // caller save
+                                parameters,          // parameter registers
+                                null,                // no callee save
+                                AMD64.allRegisters,  // all AMD64 registers
+                                roleMap);            // VM register role map
+                setNonZero(template.getAttributesMap(), AMD64.r14, AMD64.rsp, rbp);
+
+                return new RegisterConfigs(standard, n2j, trampoline, template, compilerStub, uncommonTrapStub, trapStub);
+            }
+        } else if (platform().isa == ISA.AARCH64) {
+            if (os == OS.LINUX) {
+
+                /**
+                 * The set of allocatable registers shared by most register configurations.
+                 */
+                allocatable = new CiRegister[] {
+                    x10, x11, x12, x13, x14, x15, x16, x17, x18, x19,
+                    x20, x21, x22, x23, x24, x25, x26, x27, x28, /*x29,*/
+                    x30
+                };
+                parameters = new CiRegister[] {
+                    x0, x1, x2, x3, x4, x5, x6, x7
+                };
+                // A call to the runtime may change the state of the safepoint latch
+                // and so a compiler stub must leave the latch register alone
+                allRegistersExceptLatch = new CiRegister[] {
+                    x0, x1, x2, x3, x4, x5, x6, x7, x8, x9,
+                    x10, x11, x12, x13, x14, x15, x16, x17, x18, x19,
+                    x20, x21, x22, x23, x24, x25, x26, x27, x28, x29, x30,
+                    sp, pc
+                };
+
+                roleMap.put(CPU_SP, sp);
+                roleMap.put(CPU_FP, x29);
+                roleMap.put(LATCH, x30);
+
+                /**
+                 * The register configuration for a normal Java method.
+                 * This configuration specifies <b>all</b> allocatable registers as caller-saved
+                 * as inlining is expected to reduce the call overhead sufficiently.
+                 */
+                standard = new CiRegisterConfig(
+                                sp,                 // frame
+                                x1,                 // integral return value
+                                x2,                // floating point return value
+                                x3,                 // scratch
+                                null,                // scratch 1
+                                allocatable,         // allocatable
+                                allocatable,         // caller save
+                                parameters,          // parameter registers
+                                null,                // no callee save
+                                AARCH64.allRegisters,// all AMD64 registers
+                                roleMap);            // VM register role map
+
+                CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, allRegistersExceptLatch));
+                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, AARCH64.cpuxmmRegisters));
+                CiRegisterConfig trapStub = new CiRegisterConfig(standard, AARCH64TrapFrameAccess.CSL);
+
+                CiRegisterConfig template = new CiRegisterConfig(
+                                sp,                 // frame
+                                x1,                 // integral return value
+                                x2,                // floating point return value
+                                x3,                 // scratch
+                                null,                // scratch 1
+                                allocatable,         // allocatable
+                                allocatable,         // caller save
+                                parameters,          // parameter registers
+                                null,                // no callee save
+                                AARCH64.allRegisters,// all AMD64 registers
+                                roleMap);            // VM register role map
+
+
+                CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8,
+                                x0, x1, x2, x3, x4, x5, x6, x7,                   // parameters
+                                //rbp,                                              // must be preserved for baseline compiler
+                                standard.getScratchRegister()                    // dynamic dispatch index is saved here for stack frame walker
+                            ));
+
+                CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 8, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19));
+
                 return new RegisterConfigs(standard, n2j, trampoline, template, compilerStub, uncommonTrapStub, trapStub);
             }
         } else {
