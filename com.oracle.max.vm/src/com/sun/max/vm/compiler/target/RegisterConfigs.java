@@ -22,7 +22,7 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import static com.oracle.max.asm.target.amd64.AMD64.*;
+import com.oracle.max.asm.target.amd64.AMD64;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
@@ -128,31 +128,35 @@ public class RegisterConfigs {
                  * The set of allocatable registers shared by most register configurations.
                  */
                 CiRegister[] allocatable = {
-                    rax, rcx, rdx, rbx, rsi, rdi, r8, r9, r10, r12, r13, r15,
-                    xmm0, xmm1, xmm2,  xmm3,  xmm4,  xmm5,  xmm6,  xmm7,
-                    xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15};
+                    AMD64.rax,   AMD64.rcx,   AMD64.rdx,   AMD64.rbx,   AMD64.rsi,   AMD64.rdi,
+                    AMD64.r8,    AMD64.r9,    AMD64.r10,   AMD64.r12,   AMD64.r13,   AMD64.r15,
+                    AMD64.xmm0,  AMD64.xmm1,  AMD64.xmm2,  AMD64.xmm3,  AMD64.xmm4,
+                    AMD64.xmm5,  AMD64.xmm6,  AMD64.xmm7,  AMD64.xmm8,  AMD64.xmm9,
+                    AMD64.xmm10, AMD64.xmm11, AMD64.xmm12, AMD64.xmm13, AMD64.xmm14, AMD64.xmm15};
 
                 CiRegister[] parameters = {
-                    rdi, rsi, rdx, rcx, r8, r9,
-                    xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7
+                    AMD64.rdi, AMD64.rsi, AMD64.rdx, AMD64.rcx, AMD64.r8, AMD64.r9,
+                    AMD64.xmm0, AMD64.xmm1, AMD64.xmm2, AMD64.xmm3, AMD64.xmm4, AMD64.xmm5, AMD64.xmm6, AMD64.xmm7
                 };
 
                 // A call to the runtime may change the state of the safepoint latch
                 // and so a compiler stub must leave the latch register alone
                 CiRegister[] allRegistersExceptLatch = {
-                    rax,  rcx,  rdx,   rbx,   rsp,   rbp,   rsi,   rdi,
-                    r8,   r9,   r10,   r11,   r12,   r13, /*r14,*/ r15,
-                    xmm0, xmm1, xmm2,  xmm3,  xmm4,  xmm5,  xmm6,  xmm7,
-                    xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15
+                    AMD64.rax,  AMD64.rcx,  AMD64.rdx,   AMD64.rbx,   AMD64.rsp,   AMD64.rbp,   AMD64.rsi,   AMD64.rdi,
+                    AMD64.r8,   AMD64.r9,   AMD64.r10,   AMD64.r11,   AMD64.r12,   AMD64.r13,
+                    /*r14,*/
+                    AMD64.r15,
+                    AMD64.xmm0, AMD64.xmm1, AMD64.xmm2,  AMD64.xmm3,  AMD64.xmm4,  AMD64.xmm5,  AMD64.xmm6,  AMD64.xmm7,
+                    AMD64.xmm8, AMD64.xmm9, AMD64.xmm10, AMD64.xmm11, AMD64.xmm12, AMD64.xmm13, AMD64.xmm14, AMD64.xmm15
                 };
 
 
                 HashMap<Integer, CiRegister> roleMap = new HashMap<Integer, CiRegister>();
-                roleMap.put(CPU_SP, rsp);
-                roleMap.put(CPU_FP, rbp);
-                roleMap.put(ABI_SP, rsp);
-                roleMap.put(ABI_FP, rsp);
-                roleMap.put(LATCH, r14);
+                roleMap.put(CPU_SP, AMD64.rsp);
+                roleMap.put(CPU_FP, AMD64.rbp);
+                roleMap.put(ABI_SP, AMD64.rsp);
+                roleMap.put(ABI_FP, AMD64.rsp);
+                roleMap.put(LATCH, AMD64.r14);
 
                 /**
                  * The register configuration for a normal Java method.
@@ -160,15 +164,15 @@ public class RegisterConfigs {
                  * as inlining is expected to reduce the call overhead sufficiently.
                  */
                 CiRegisterConfig standard = new CiRegisterConfig(
-                                rsp,                 // frame
-                                rax,                 // integral return value
-                                xmm0,                // floating point return value
-                                r11,                 // scratch
+                                AMD64.rsp,                 // frame
+                                AMD64.rax,                 // integral return value
+                                AMD64.xmm0,                // floating point return value
+                                AMD64.r11,                 // scratch
                                 allocatable,         // allocatable
                                 allocatable,         // caller save
                                 parameters,          // parameter registers
                                 null,                // no callee save
-                                allRegisters,        // all AMD64 registers
+                                AMD64.allRegisters,        // all AMD64 registers
                                 roleMap);            // VM register role map
 
                 // Account for the word at the bottom of the frame used
@@ -180,34 +184,34 @@ public class RegisterConfigs {
                 standard.stackArg0Offsets[RuntimeCall.ordinal()] = javaStackArg0Offset;
                 standard.stackArg0Offsets[NativeCall.ordinal()] = nativeStackArg0Offset;
 
-                setNonZero(standard.getAttributesMap(), r14, rsp);
+                setNonZero(standard.getAttributesMap(), AMD64.r14, AMD64.rsp);
 
                 CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, allRegistersExceptLatch));
-                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, cpuxmmRegisters));
+                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, AMD64.cpuxmmRegisters));
                 CiRegisterConfig trapStub = new CiRegisterConfig(standard, AMD64TrapFrameAccess.CSL);
                 CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8,
-                    rdi, rsi, rdx, rcx, r8, r9,                       // parameters
-                    rbp,                                              // must be preserved for baseline compiler
+                                AMD64.rdi, AMD64.rsi, AMD64.rdx, AMD64.rcx, AMD64.r8, AMD64.r9,                       // parameters
+                                AMD64.rbp,                                              // must be preserved for baseline compiler
                     standard.getScratchRegister(),                    // dynamic dispatch index is saved here for stack frame walker
-                    xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7    // parameters
+                    AMD64.xmm0, AMD64.xmm1, AMD64.xmm2, AMD64.xmm3, AMD64.xmm4, AMD64.xmm5, AMD64.xmm6, AMD64.xmm7    // parameters
                 ));
 
-                CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 8, rbx, rbp, r12, r13, r14, r15));
+                CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 8, AMD64.rbx, AMD64.rbp, AMD64.r12, AMD64.r13, AMD64.r14, AMD64.r15));
                 n2j.stackArg0Offsets[JavaCallee.ordinal()] = nativeStackArg0Offset;
 
-                roleMap.put(ABI_FP, rbp);
+                roleMap.put(ABI_FP, AMD64.rbp);
                 CiRegisterConfig template = new CiRegisterConfig(
-                                rbp,                 // frame
-                                rax,                 // integral return value
-                                xmm0,                // floating point return value
-                                r11,                 // scratch
+                                AMD64.rbp,                 // frame
+                                AMD64.rax,                 // integral return value
+                                AMD64.xmm0,                // floating point return value
+                                AMD64.r11,                 // scratch
                                 allocatable,         // allocatable
                                 allocatable,         // caller save
                                 parameters,          // parameter registers
                                 null,                // no callee save
-                                allRegisters,        // all AMD64 registers
+                                AMD64.allRegisters,        // all AMD64 registers
                                 roleMap);            // VM register role map
-                setNonZero(template.getAttributesMap(), r14, rsp, rbp);
+                setNonZero(template.getAttributesMap(), AMD64.r14, AMD64.rsp, AMD64.rbp);
 
                 return new RegisterConfigs(standard, n2j, trampoline, template, compilerStub, uncommonTrapStub, trapStub);
             }
