@@ -508,6 +508,8 @@ public final class Platform {
         map.put("solaris-sparcv9", new Platform(CPU.SPARCV9, OS.SOLARIS, Ints.K * 8, 32));
         map.put("darwin-amd64", new Platform(CPU.AMD64, OS.DARWIN, Ints.K * 8, 32));
         map.put("maxve-amd64", new Platform(CPU.AMD64, OS.MAXVE, Ints.K * 8, 32));
+        // jiaqi.liu.cs@gmail.com Add linux-aarch64 platform
+        map.put("linux-aarch64", new Platform(CPU.AARCH64, OS.LINUX, Ints.K * 8, 32));
         Supported = Collections.unmodifiableMap(map);
         Default = map.get("linux-amd64");
     }
