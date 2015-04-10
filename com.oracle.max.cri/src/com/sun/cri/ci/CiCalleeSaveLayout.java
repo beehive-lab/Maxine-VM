@@ -97,7 +97,7 @@ public class CiCalleeSaveLayout {
         size = this.size;
 
         this.regNumToIndex = new int[maxRegNum + 1];
-        this.indexToReg = offset == 0 ? new CiRegister[0] : new CiRegister[offset / slotSize + /* jiaqi.liu */1];
+        this.indexToReg = offset == 0 ? new CiRegister[0] : new CiRegister[offset / slotSize];
         Arrays.fill(regNumToIndex, -1);
         offset = 0;
         for (CiRegister reg : registers) {
