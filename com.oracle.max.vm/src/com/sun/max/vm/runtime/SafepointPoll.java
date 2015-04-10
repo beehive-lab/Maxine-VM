@@ -73,10 +73,7 @@ public abstract class SafepointPoll {
     public static SafepointPoll create() {
         try {
             final String isa = platform().isa.name();
-            final Class<?> safepointClass = Class.forName(
-                            getPackageName(SafepointPoll.class) + "." +
-                            isa.toLowerCase() + "." + isa +
-                            SafepointPoll.class.getSimpleName());
+            final Class<?> safepointClass = Class.forName(getPackageName(SafepointPoll.class) + "." + isa.toLowerCase() + "." + isa + SafepointPoll.class.getSimpleName());
             return (SafepointPoll) safepointClass.newInstance();
         } catch (Exception exception) {
             exception.printStackTrace();
