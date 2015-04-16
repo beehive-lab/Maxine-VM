@@ -95,7 +95,12 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     /**
      * Method actor of MaxRuntimeCalls.runtimeUnwindException method.
      */
-    private static StaticMethodActor MaxRuntimeCallsRuntimeUnwindException;
+    private static StaticMethodActor MaxRuntimeCallsRuntimeUnwindExceptionMethodActor;
+
+    /**
+     * Method actor of MaxXirGenerator$RuntimeCalls.monitorEnter method.
+     */
+    private static StaticMethodActor MaxXirGeneratorRuntimeCallsMonitorEnterMethodActor;
 
     /**
      * Debug info.
@@ -642,12 +647,13 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
         TargetMethod tm = current.targetMethod();
         int si = tm.findSafepointIndex(ip);
         // skip method of the frame being unwinded or not at a safepoint
-        if (si != -1 && calleeCMA != MaxMiscLoweringsThrowExceptionMethodActor && calleeCMA != MaxRuntimeCallsRuntimeUnwindException) {
+        if (si != -1 && calleeCMA != MaxMiscLoweringsThrowExceptionMethodActor && calleeCMA != MaxRuntimeCallsRuntimeUnwindExceptionMethodActor) {
             int frameChainLength = debugInfo.retrieveFrameChainLength(si, true);
             for (int frameIndex = 0; frameIndex < frameChainLength; frameIndex++) {
                 ClassMethodActor frameCMA = debugInfo.retrieveClassMethodActor(si, true, frameIndex);
                 int frameBCI = debugInfo.retrieveBCI(si, true, frameIndex);
-                if (frameCMA.findCachedHandlerForException(frameBCI, throwable) != null || frameCMA.isSynchronized()) {
+                if (frameCMA.findCachedHandlerForException(frameBCI, throwable) != null ||
+                    frameCMA.isSynchronized() && (frameIndex != 0 || calleeCMA != MaxXirGeneratorRuntimeCallsMonitorEnterMethodActor)) {
                     // mark current method for deoptimization if exception handler was not compiled
                     if (catchAddress.isZero()) {
                         Pointer returnAddress = callee.targetMethod().returnAddressPointer(callee).readWord(0).asPointer();
@@ -668,7 +674,11 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
                 Log.print("StackFrameWalk: Handler position for exception at position ");
                 Log.print(ip.minus(codeStart()).toInt());
                 Log.print(" is ");
-                Log.println(catchAddress.minus(codeStart()).toInt());
+                if (catchAddress.isZero()) {
+                    Log.println("absent");
+                } else {
+                    Log.println(catchAddress.minus(codeStart()).toInt());
+                }
             }
 
             int catchPos = posFor(isMethodDeoptimized ? ip : catchAddress);
@@ -779,6 +789,11 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
 
     @HOSTED_ONLY
     public static void initializeMaxRuntimeCallsRuntimeUnwindExceptionMethodActor(StaticMethodActor methodActor) {
-        MaxRuntimeCallsRuntimeUnwindException = methodActor;
+        MaxRuntimeCallsRuntimeUnwindExceptionMethodActor = methodActor;
+    }
+
+    @HOSTED_ONLY
+    public static void initializeMaxXirGeneratorRuntimeCallsMonitorEnterMethodActor(StaticMethodActor methodActor) {
+        MaxXirGeneratorRuntimeCallsMonitorEnterMethodActor = methodActor;
     }
 }

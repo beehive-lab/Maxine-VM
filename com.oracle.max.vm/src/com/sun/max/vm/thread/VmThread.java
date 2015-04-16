@@ -888,7 +888,7 @@ public class VmThread {
      * This space must also accommodate the execution of stack over handling from
      * the trap stub all the way until the stack is unwound for the {@link StackOverflowError}
      * exception. If this is too little, the red stack zone will be hit.
-     * The maximum space required is very dependent on the compiler but 2 pages
+     * The maximum space required is very dependent on the compiler but 3 pages
      * seems to be enough on AMD64.
      */
     public static final int YELLOW_ZONE_PAGES = 3;

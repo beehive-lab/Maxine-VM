@@ -300,7 +300,18 @@ public class MaxXirGenerator implements RiXirGenerator {
 
         exceptionObjectTemplate = buildExceptionObject();
 
+        MaxTargetMethod.initializeMaxXirGeneratorRuntimeCallsMonitorEnterMethodActor(getRuntimeCallsMonitorEnterMethodActor());
+
         return stubs;
+    }
+
+    /**
+     * Returns method actor for {@link RuntimeCalls#monitorEnter} method of {@link RuntimeCalls) class.
+     */
+    @HOSTED_ONLY
+    private static StaticMethodActor getRuntimeCallsMonitorEnterMethodActor() {
+        Utf8Constant runtimeCallsMonitorEnterMethodName = SymbolTable.makeSymbol("monitorEnter");
+        return ClassActor.fromJava(MaxXirGenerator.RuntimeCalls.class).findLocalStaticMethodActor(runtimeCallsMonitorEnterMethodName);
     }
 
     @Override

@@ -1136,6 +1136,8 @@ public class T1XTargetMethod extends TargetMethod {
      */
     private CodePointer findContinuationIP(Info info, Throwable exception, int bci, boolean reexecute) throws FatalError {
         CodePointer ip;
+        assert info.tm != null;
+        assert bci != -1 : "Unable to find deoptimized execution continuation for " + info.tm + "+" + info.ip.pos();
         if (exception == null) {
             RiMethod callee = classMethodActor.codeAttribute().calleeAt(bci);
             if (reexecute) {
