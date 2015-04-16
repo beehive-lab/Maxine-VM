@@ -650,7 +650,10 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
                 if (frameCMA.findCachedHandlerForException(frameBCI, throwable) != null || frameCMA.isSynchronized()) {
                     // mark current method for deoptimization if exception handler was not compiled
                     if (catchAddress.isZero()) {
-                        Deoptimization.patchReturnAddress(current, callee, calleeCMA);
+                        Pointer returnAddress = callee.targetMethod().returnAddressPointer(callee).readWord(0).asPointer();
+                        if (!Stub.isDeoptStubEntry(returnAddress, Code.codePointerToTargetMethod(returnAddress), callee)) {
+                            Deoptimization.patchReturnAddress(current, callee, calleeCMA);
+                        }
                         isMethodDeoptimized = true;
                     }
                     // set indication that original exception handler exists for this frame location and exception
