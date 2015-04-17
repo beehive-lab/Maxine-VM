@@ -281,6 +281,11 @@ public class RegisterConfigs {
                     AARCH64.v24, AARCH64.v25, AARCH64.v26, AARCH64.v27, AARCH64.v28, AARCH64.v29, AARCH64.v30, AARCH64.v31
                 };
 
+                CiRegister[] calleeSavedRegisters= {
+                    AARCH64.r19, AARCH64.r20, AARCH64.r21, AARCH64.r22, AARCH64.r23,
+                    AARCH64.r24, AARCH64.r25, AARCH64.r26, AARCH64.r27, AARCH64.r28,
+                };
+
                 HashMap<Integer, CiRegister> roleMap = new HashMap<Integer, CiRegister>();
                 roleMap.put(CPU_SP, AARCH64.sp);
                 roleMap.put(CPU_FP, AARCH64.r29);
@@ -319,7 +324,7 @@ public class RegisterConfigs {
 
                 CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, allRegistersExceptLatch));
                 CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, AARCH64.allRegisters));
-                CiRegisterConfig trapStub = new CiRegisterConfig(standard,  new CiCalleeSaveLayout(0, 32*8+32*16, 8, AARCH64.allRegisters));
+                CiRegisterConfig trapStub = new CiRegisterConfig(standard,  new CiCalleeSaveLayout(0, 34*8+32*16, 8, AARCH64.allRegisters));
                 CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8,
                                 AARCH64.r0, AARCH64.r1, AARCH64.r2, AARCH64.r3, AARCH64.r4, AARCH64.r5, AARCH64.r6, AARCH64.r7, // parameters
                                 AARCH64.fp,   // must be preserved for baseline compiler ???frame pointer???
@@ -327,10 +332,25 @@ public class RegisterConfigs {
                     AARCH64.v0, AARCH64.v1, AARCH64.v2, AARCH64.v3, AARCH64.v4, AARCH64.v5, AARCH64.v6, AARCH64.v7   // parameters
                 ));
 
+                CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 8, calleeSavedRegisters));
+                n2j.stackArg0Offsets[JavaCallee.ordinal()] = nativeStackArg0Offset;
+
+                roleMap.put(ABI_FP, AARCH64.r29);
+                CiRegisterConfig template = new CiRegisterConfig(
+                                AARCH64.r29,          // frame???
+                                AARCH64.r0,          // integral return value
+                                AARCH64.v0,          // floating point return value
+                                AARCH64.r16,         // scratch
+                                allocatable,         // allocatable
+                                allocatable,         // caller save
+                                parameters,          // parameter registers
+                                null,                // no callee save
+                                AARCH64.allRegisters,        // all AMD64 registers
+                                roleMap);            // VM register role map
+
+                setNonZero(template.getAttributesMap(), AARCH64.r26, AARCH64.sp, AARCH64.r29);
+                return new RegisterConfigs(standard, n2j, trampoline, template, compilerStub, uncommonTrapStub, trapStub);
             }
-
-
-            //return new RegisterConfigs(standard, n2j, trampoline, template, compilerStub, uncommonTrapStub, trapStub);
         }
         throw FatalError.unimplemented();
     }
