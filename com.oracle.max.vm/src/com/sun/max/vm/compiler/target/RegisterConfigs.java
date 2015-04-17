@@ -265,27 +265,62 @@ public class RegisterConfigs {
 
                 /**
                  * The set of allocatable registers shared by most register configurations.
+                 * according to
+                 * "voo-graal/graal/src/cpu/aarch64/vm/register_definitions_aarch64.cpp"
+                 * and
+                 * "voo-graal/graal/graal/com.oracle.graal.hotspot.armv8/src/com/oracle/graal/hotspot/armv8/ARMv8HotSpotRegisterConfig.java"
                  */
                 allocatable = new CiRegister[] {
-                    x10, x11, x12, x13, x14, x15, x16, x17, x18, x19,
-                    x20, x21, x22, x23, x24, x25, x26, x27, x28, /*x29,*/
-                    x30
+                    AARCH64.r0,  AARCH64.r1,  AARCH64.r2,  AARCH64.r3,  AARCH64.r4,  AARCH64.r5,  AARCH64.r6,  AARCH64.r7,
+                    AARCH64.r8,  AARCH64.r9,  AARCH64.r10, AARCH64.r11, AARCH64.r12, AARCH64.r13, AARCH64.r14, AARCH64.r15,
+                    /*AARCH64.r16, AARCH64.r17, AARCH64.r18,*/
+                    AARCH64.r19, AARCH64.r20, AARCH64.r21, AARCH64.r22, AARCH64.r23,
+                    AARCH64.r24, AARCH64.r25, AARCH64.r26,
+                    //r27:heapBaseRegister, r28:threadRegister, r29:fp(framePointer), r30:linkRegister
+                    /*AARCH64.r27, AARCH64.r28, AARCH64.r29, AARCH64.r30,*/
+                    //r31:sp||zr
+                    /*AARCH64.r31, AARCH64.sp,  AARCH64.zr,*/
+                    AARCH64.v0,  AARCH64.v1,  AARCH64.v2,  AARCH64.v3,  AARCH64.v4,  AARCH64.v5,  AARCH64.v6,  AARCH64.v7,
+                    AARCH64.v8,  AARCH64.v9,  AARCH64.v10, AARCH64.v11, AARCH64.v12, AARCH64.v13, AARCH64.v14, AARCH64.v15,
+                    AARCH64.v16, AARCH64.v17, AARCH64.v18, AARCH64.v19, AARCH64.v20, AARCH64.v21, AARCH64.v22, AARCH64.v23,
+                    AARCH64.v24, AARCH64.v25, AARCH64.v26, AARCH64.v27, AARCH64.v28, AARCH64.v29, AARCH64.v30, AARCH64.v31
                 };
                 parameters = new CiRegister[] {
-                    x0, x1, x2, x3, x4, x5, x6, x7
+                    AARCH64.r0, AARCH64.r1, AARCH64.r2, AARCH64.r3,
+                    AARCH64.r4, AARCH64.r5, AARCH64.r6, AARCH64.r7,
+                    AARCH64.v0, AARCH64.v1, AARCH64.v2, AARCH64.v3,
+                    AARCH64.v4, AARCH64.v5, AARCH64.v6, AARCH64.v7
                 };
                 // A call to the runtime may change the state of the safepoint latch
                 // and so a compiler stub must leave the latch register alone
                 allRegistersExceptLatch = new CiRegister[] {
-                    x0, x1, x2, x3, x4, x5, x6, x7, x8, x9,
-                    x10, x11, x12, x13, x14, x15, x16, x17, x18, x19,
-                    x20, x21, x22, x23, x24, x25, x26, x27, x28, x29, x30,
-                    sp, pc
+                    AARCH64.r0,  AARCH64.r1,  AARCH64.r2,  AARCH64.r3,  AARCH64.r4,  AARCH64.r5,  AARCH64.r6,  AARCH64.r7,
+                    AARCH64.r8,  AARCH64.r9,  AARCH64.r10, AARCH64.r11, AARCH64.r12, AARCH64.r13, AARCH64.r14, AARCH64.r15,
+                    AARCH64.r16, AARCH64.r17, AARCH64.r18,
+                    AARCH64.r19, AARCH64.r20, AARCH64.r21, AARCH64.r22, AARCH64.r23,
+                    AARCH64.r24, AARCH64.r25,
+                    // r26 is personally defined as latch register
+                    /*AARCH64.r26,*/
+                    //r27:heapBaseRegister, r28:threadRegister, r29:fp(framePointer), r30:linkRegister
+                    AARCH64.r27, AARCH64.r28, AARCH64.r29, AARCH64.r30,
+                    //r31:sp||zr
+                    AARCH64.r31, AARCH64.sp,  AARCH64.zr,
+                    AARCH64.v0,  AARCH64.v1,  AARCH64.v2,  AARCH64.v3,  AARCH64.v4,  AARCH64.v5,  AARCH64.v6,  AARCH64.v7,
+                    AARCH64.v8,  AARCH64.v9,  AARCH64.v10, AARCH64.v11, AARCH64.v12, AARCH64.v13, AARCH64.v14, AARCH64.v15,
+                    AARCH64.v16, AARCH64.v17, AARCH64.v18, AARCH64.v19, AARCH64.v20, AARCH64.v21, AARCH64.v22, AARCH64.v23,
+                    AARCH64.v24, AARCH64.v25, AARCH64.v26, AARCH64.v27, AARCH64.v28, AARCH64.v29, AARCH64.v30, AARCH64.v31
                 };
 
-                roleMap.put(CPU_SP, sp);
-                roleMap.put(CPU_FP, x29);
-                roleMap.put(LATCH, x30);
+                CiRegister[] calleeSavedRegisters= {
+                    AARCH64.r19, AARCH64.r20, AARCH64.r21, AARCH64.r22, AARCH64.r23,
+                    AARCH64.r24, AARCH64.r25, AARCH64.r26, AARCH64.r27, AARCH64.r28,
+                };
+
+                roleMap.put(CPU_SP, AARCH64.sp);
+                roleMap.put(CPU_FP, AARCH64.r29);
+                roleMap.put(ABI_SP, AARCH64.sp);
+                roleMap.put(ABI_FP, AARCH64.r29);
+                roleMap.put(LATCH, AARCH64.r26);
 
                 /**
                  * The register configuration for a normal Java method.
@@ -293,10 +328,10 @@ public class RegisterConfigs {
                  * as inlining is expected to reduce the call overhead sufficiently.
                  */
                 standard = new CiRegisterConfig(
-                                sp,                 // frame
-                                x1,                 // integral return value
-                                x2,                // floating point return value
-                                x3,                 // scratch
+                                AARCH64.sp,          // frame
+                                AARCH64.r0,          // integral return value
+                                AARCH64.v0,          // floating point return value
+                                AARCH64.r16,         // scratch
                                 null,                // scratch 1
                                 allocatable,         // allocatable
                                 allocatable,         // caller save
@@ -304,16 +339,38 @@ public class RegisterConfigs {
                                 null,                // no callee save
                                 AARCH64.allRegisters,// all AMD64 registers
                                 roleMap);            // VM register role map
+
+
+                // Account for the word at the bottom of the frame used
+                // for saving an overwritten return address during deoptimization
+                int javaStackArg0Offset = Deoptimization.DEOPT_RETURN_ADDRESS_OFFSET + Word.size();
+                int nativeStackArg0Offset = 0;
+                standard.stackArg0Offsets[JavaCall.ordinal()] = javaStackArg0Offset;
+                standard.stackArg0Offsets[JavaCallee.ordinal()] = javaStackArg0Offset;
+                standard.stackArg0Offsets[RuntimeCall.ordinal()] = javaStackArg0Offset;
+                standard.stackArg0Offsets[NativeCall.ordinal()] = nativeStackArg0Offset;
+
+                setNonZero(standard.getAttributesMap(), AARCH64.r26, AARCH64.sp, AARCH64.fp);
 
                 CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, allRegistersExceptLatch));
-                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, AARCH64.cpuxmmRegisters));
-                CiRegisterConfig trapStub = new CiRegisterConfig(standard, AARCH64TrapFrameAccess.CSL);
+                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, AARCH64.allRegisters));
+                CiRegisterConfig trapStub = new CiRegisterConfig(standard,  new CiCalleeSaveLayout(0, 34*8+32*16, 8, AARCH64.allRegisters));
+                CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8,
+                                AARCH64.r0, AARCH64.r1, AARCH64.r2, AARCH64.r3, AARCH64.r4, AARCH64.r5, AARCH64.r6, AARCH64.r7, // parameters
+                                AARCH64.fp,   // must be preserved for baseline compiler ???frame pointer???
+                    standard.getScratchRegister(),    // dynamic dispatch index is saved here for stack frame walker
+                    AARCH64.v0, AARCH64.v1, AARCH64.v2, AARCH64.v3, AARCH64.v4, AARCH64.v5, AARCH64.v6, AARCH64.v7   // parameters
+                ));
 
+                CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 8, calleeSavedRegisters));
+                n2j.stackArg0Offsets[JavaCallee.ordinal()] = nativeStackArg0Offset;
+
+                roleMap.put(ABI_FP, AARCH64.r29);
                 CiRegisterConfig template = new CiRegisterConfig(
-                                sp,                 // frame
-                                x1,                 // integral return value
-                                x2,                // floating point return value
-                                x3,                 // scratch
+                                AARCH64.r29,          // frame???
+                                AARCH64.r0,          // integral return value
+                                AARCH64.v0,          // floating point return value
+                                AARCH64.r16,         // scratch
                                 null,                // scratch 1
                                 allocatable,         // allocatable
                                 allocatable,         // caller save
@@ -322,15 +379,7 @@ public class RegisterConfigs {
                                 AARCH64.allRegisters,// all AMD64 registers
                                 roleMap);            // VM register role map
 
-
-                CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8,
-                                x0, x1, x2, x3, x4, x5, x6, x7,                   // parameters
-                                //rbp,                                              // must be preserved for baseline compiler
-                                standard.getScratchRegister()                    // dynamic dispatch index is saved here for stack frame walker
-                            ));
-
-                CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 8, x10, x11, x12, x13, x14, x15, x16, x17, x18, x19));
-
+                setNonZero(template.getAttributesMap(), AARCH64.r26, AARCH64.sp, AARCH64.r29);
                 return new RegisterConfigs(standard, n2j, trampoline, template, compilerStub, uncommonTrapStub, trapStub);
             }
         } else {
