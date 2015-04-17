@@ -391,6 +391,16 @@ public final class DirectReferenceScheme extends AbstractVMScheme implements Ref
         toOrigin(ref).setReference(displacement, index, value);
         heapScheme().postWriteBarrier(ref, displacement, index, value);
     }
+    @INLINE
+    public long compareAndSwapLong(Reference ref, Offset offset, long expectedValue, long newValue) {
+        return toOrigin(ref).compareAndSwapLong(offset, expectedValue, newValue);
+    }
+
+    @INLINE
+    public long compareAndSwapLong(Reference ref, int offset, long expectedValue, long newValue) {
+        return toOrigin(ref).compareAndSwapLong(offset, expectedValue, newValue);
+    }
+
 
     @INLINE
     public int compareAndSwapInt(Reference ref, Offset offset, int expectedValue, int newValue) {

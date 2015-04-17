@@ -1194,6 +1194,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         umull(ConditionFlag.Always, false, ARMV7.cpuRegisters[src2.number], dst, ARMV7.cpuRegisters[scratchRegister.number], src1);
         addRegisters(ConditionFlag.Always, false, scratchRegister, ARMV7.cpuRegisters[src2.number + 1], src2, 0, 0);
         mov(ConditionFlag.Always, false, ARMV7.cpuRegisters[dst.number + 1], scratchRegister);
+        pop(ConditionFlag.Always, 1 << src2.number | 1 << (src2.number + 1));
     }
 
     public void xorq(CiRegister dest, CiAddress src) {

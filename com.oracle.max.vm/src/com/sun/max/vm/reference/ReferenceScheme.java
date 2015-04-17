@@ -148,6 +148,11 @@ public interface ReferenceScheme extends VMScheme {
      * @return the value of the memory location before this call; if it is equal to {@code expectedValue}, then the
      *         update occurred, otherwise the update did not occur (assuming {@code expectedValue != newValue})
      */
+
+    long compareAndSwapLong(Reference reference, Offset offset, long expectedValue, long newValue);
+    long compareAndSwapLong(Reference reference, int offset, long expectedValue, long newValue);
+
+
     int compareAndSwapInt(Reference reference, Offset offset, int expectedValue, int newValue);
 
     /**

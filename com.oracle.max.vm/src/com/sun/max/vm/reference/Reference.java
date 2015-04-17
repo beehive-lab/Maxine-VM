@@ -418,6 +418,18 @@ public class Reference implements Accessor {
      * @return the value of the memory location before this call; if it is equal to {@code expectedValue}, then the
      *         update occurred, otherwise the update did not occur (assuming {@code expectedValue != newValue})
      */
+/**
+     * @see #compareAndSwapLong(Offset, long, long)
+     */
+    @INLINE
+    public final long compareAndSwapLong(Offset offset, long expectedValue, long newValue) {
+        return referenceScheme().compareAndSwapLong(this, offset, expectedValue, newValue);
+    }
+    @INLINE
+    public final long compareAndSwapLong(int offset, long expectedValue, long newValue) {
+        return referenceScheme().compareAndSwapLong(this, offset, expectedValue, newValue);
+    }
+
     @INLINE
     public final int compareAndSwapInt(Offset offset, int expectedValue, int newValue) {
         return referenceScheme().compareAndSwapInt(this, offset, expectedValue, newValue);

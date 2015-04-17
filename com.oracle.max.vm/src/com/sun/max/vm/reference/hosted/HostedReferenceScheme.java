@@ -407,6 +407,15 @@ public final class HostedReferenceScheme extends AbstractVMScheme implements Ref
         setValue(ref, displacement, index, value.toJava());
     }
 
+    public long compareAndSwapLong(Reference ref, Offset offset, long expectedValue, long newValue) {
+        return toOrigin(ref).compareAndSwapLong(offset, expectedValue, newValue);
+    }
+
+    public long compareAndSwapLong(Reference ref, int offset, long expectedValue, long newValue) {
+        return toOrigin(ref).compareAndSwapLong(offset, expectedValue, newValue);
+    }
+
+
     public int compareAndSwapInt(Reference ref, Offset offset, int expectedValue, int newValue) {
         return toOrigin(ref).compareAndSwapInt(offset, expectedValue, newValue);
     }
