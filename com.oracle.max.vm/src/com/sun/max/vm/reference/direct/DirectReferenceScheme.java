@@ -23,15 +23,21 @@
 /*VCSID=4db5fb46-e2e9-4aa7-81a5-2a0e13ac9265*/
 package com.sun.max.vm.reference.direct;
 
-import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.VMConfiguration.*;
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+import com.sun.max.annotate.FOLD;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.annotate.INLINE;
+import com.sun.max.annotate.INTRINSIC;
+import com.sun.max.unsafe.Offset;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.AbstractVMScheme;
+import com.sun.max.vm.heap.HeapScheme;
+import com.sun.max.vm.reference.Reference;
+import com.sun.max.vm.reference.ReferenceScheme;
 
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.heap.*;
-import com.sun.max.vm.reference.*;
+import static com.sun.max.platform.Platform.platform;
+import static com.sun.max.vm.VMConfiguration.vmConfig;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
 
 /**
  * References are direct pointers in this scheme.
@@ -391,6 +397,7 @@ public final class DirectReferenceScheme extends AbstractVMScheme implements Ref
         toOrigin(ref).setReference(displacement, index, value);
         heapScheme().postWriteBarrier(ref, displacement, index, value);
     }
+
     @INLINE
     public long compareAndSwapLong(Reference ref, Offset offset, long expectedValue, long newValue) {
         return toOrigin(ref).compareAndSwapLong(offset, expectedValue, newValue);

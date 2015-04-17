@@ -22,27 +22,29 @@
  */
 package com.sun.max.vm.jdk;
 
-import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.VMConfiguration.*;
-
-import java.lang.reflect.*;
-import java.security.*;
-
-import sun.misc.*;
-import sun.reflect.*;
-
-import com.oracle.max.cri.intrinsics.*;
-import com.sun.max.annotate.*;
-import com.sun.max.memory.*;
+import com.oracle.max.cri.intrinsics.MemoryBarriers;
+import com.sun.max.annotate.INLINE;
+import com.sun.max.annotate.METHOD_SUBSTITUTIONS;
+import com.sun.max.annotate.SUBSTITUTE;
+import com.sun.max.memory.Memory;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.heap.*;
-import com.sun.max.vm.layout.*;
-import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
+import com.sun.max.vm.actor.holder.ArrayClassActor;
+import com.sun.max.vm.actor.holder.ClassActor;
+import com.sun.max.vm.actor.member.FieldActor;
+import com.sun.max.vm.classfile.ClassfileReader;
+import com.sun.max.vm.heap.Heap;
+import com.sun.max.vm.layout.ArrayLayout;
+import com.sun.max.vm.reference.Reference;
+import com.sun.max.vm.runtime.Snippets;
+import com.sun.max.vm.thread.VmThread;
+import sun.misc.Unsafe;
+import sun.reflect.Reflection;
+
+import java.lang.reflect.Field;
+import java.security.ProtectionDomain;
+
+import static com.sun.max.platform.Platform.platform;
+import static com.sun.max.vm.VMConfiguration.vmConfig;
 
 /**
  * Method substitutions for {@link sun.misc.Unsafe}, which provides
@@ -826,11 +828,11 @@ final class JDK_sun_misc_Unsafe {
     public boolean compareAndSwapLong(Object object, long offset, long expected, long value) {
 
         /* THIS IS AN EXMAPLE OF AN IMPLICIT ASSUMPTION THAT 64BITS IS THE WORD SIZE FOR LONG return Reference.fromJava(object).compareAndSwapWord(Offset.fromLong(offset), Address.fromLong(expected), Address.fromLong(value)).equals(Address.fromLong(expected));
-	*/
-	 if(Word.width() == 64)  {
-                return Reference.fromJava(object).compareAndSwapWord(Offset.fromLong(offset), Address.fromLong(expected), Address.fromLong(value)).equals(Address.fromLong(expected));
+    */
+        if (Word.width() == 64) {
+            return Reference.fromJava(object).compareAndSwapWord(Offset.fromLong(offset), Address.fromLong(expected), Address.fromLong(value)).equals(Address.fromLong(expected));
         } else {
-                return Reference.fromJava(object).compareAndSwapLong(Offset.fromLong(offset), expected, value) == expected;
+            return Reference.fromJava(object).compareAndSwapLong(Offset.fromLong(offset), expected, value) == expected;
         }
 
     }
