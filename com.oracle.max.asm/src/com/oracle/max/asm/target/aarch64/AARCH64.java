@@ -51,8 +51,9 @@ public class AARCH64 extends CiArchitecture {
     // The register numbers are kept in sync with register_aarch64.hpp and have to
     // be sequential, hence we also need a general r31 register here, which is never used.
     public static final CiRegister r31 = gpCiRegister(31);
-    public static final CiRegister zr = new CiRegister(32, 31, 8, "ZR", CPU);
-    public static final CiRegister sp = new CiRegister(33, 31, 8, "SP", CPU);
+    public static final CiRegister sp = new CiRegister(32, 31, 8, "SP", CPU);
+    public static final CiRegister zr = new CiRegister(33, 31, 8, "ZR", CPU);
+
     // Names for special registers.
     public static final CiRegister linkRegister = r30;
     public static final CiRegister fp = r29;
@@ -126,8 +127,8 @@ public class AARCH64 extends CiArchitecture {
     }
 
     private static CiRegister fpCiRegister(int nr) {
-        // Stackpointer is last integer register.
-        int firstFpRegNumber = sp.number + 1;
+        // zr is last integer register.
+        int firstFpRegNumber = zr.number + 1;
         return new CiRegister(firstFpRegNumber + nr, nr, 16, "v" + nr, FPU);
     }
 
