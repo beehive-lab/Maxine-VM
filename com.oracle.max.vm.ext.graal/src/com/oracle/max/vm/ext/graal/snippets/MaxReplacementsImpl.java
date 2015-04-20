@@ -78,6 +78,17 @@ public class MaxReplacementsImpl extends ReplacementsImpl {
         this.phaseContext = new PhaseContext(runtime, assumptions, this);
     }
 
+    public StructuredGraph getSnippet(ResolvedJavaMethod method) {
+        assert !Modifier.isAbstract(method.getModifiers()) && !Modifier.isNative(method.getModifiers()) : "Snippet must not be abstract or native";
+
+        StructuredGraph graph = graphs.get(method);
+        if (graph == null) {
+            graphs.putIfAbsent(method, makeGraph(method, null, inliningPolicy(method)));
+            graph = graphs.get(method);
+        }
+        return graph;
+    }
+
     public void installAndRegisterSnippets(Class< ? extends SnippetLowerings> clazz) {
         // assumption is that it is ok to register the lowerings incrementally
         try {

@@ -126,6 +126,14 @@ public class Package extends BootImagePackage {
         CompiledPrototype.addCompilationWhitelist("sun.reflect.Reflection");
         CompiledPrototype.addCompilationWhitelist("sun.reflect.ReflectionFactory");
         CompiledPrototype.addCompilationWhitelist("sun.security.action.GetPropertyAction");
+        CompiledPrototype.addCompilationWhitelist("sun.reflect.annotation.AnnotationType");
+        CompiledPrototype.addCompilationWhitelist("sun.reflect.annotation.AnnotationInvocationHandler");
+        CompiledPrototype.addCompilationWhitelist("sun.reflect.generics.factory.CoreReflectionFactory");
+        CompiledPrototype.addCompilationWhitelist("sun.reflect.generics.parser.SignatureParser");
+        CompiledPrototype.addCompilationWhitelist("sun.reflect.generics.tree.SimpleClassTypeSignature");
+        CompiledPrototype.addCompilationWhitelist("sun.reflect.generics.tree.ClassTypeSignature");
+        CompiledPrototype.addCompilationWhitelist("sun.reflect.generics.visitor.Reifier");
+        CompiledPrototype.addCompilationWhitelist("sun.util.locale.BaseLocale");
         CompiledPrototype.addCompilationWhitelist("java.net.URL");
         CompiledPrototype.addCompilationWhitelist("java.net.Parts");
 
