@@ -66,6 +66,25 @@ public abstract class AbstractTestRunScheme extends JavaRunScheme {
             // load all inner and anonymous classes into the image as well
             addClassToImage(declaredClass);
         }
+        // load methods from private top level classes which are siblings of javaClass
+        if (actor.outerClassActor() == null) {
+            for (int constantIndex = 0; constantIndex < actor.constantPool().constants().length; constantIndex++) {
+                PoolConstant poolConstant = actor.constantPool().at(constantIndex);
+                if (poolConstant instanceof ClassConstant) {
+                    ClassConstant classConstant = (ClassConstant) poolConstant;
+                    ClassActor siblingClassActor = classConstant.resolve(actor.constantPool(), constantIndex);
+                    if (siblingClassActor.toJava().getPackage() == javaClass.getPackage() &&
+                        siblingClassActor.sourceFileName.contentEquals(actor.sourceFileName) &&
+                        siblingClassActor.toJava() != javaClass &&
+                        siblingClassActor.outerClassActor() != actor) {
+                        if (COMPILE_ALL_TEST_METHODS) {
+                            addMethods(siblingClassActor.localStaticMethodActors());
+                            addMethods(siblingClassActor.localVirtualMethodActors());
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @HOSTED_ONLY

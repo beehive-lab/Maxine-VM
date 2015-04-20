@@ -69,8 +69,11 @@ public final class Monitor {
 
     @INLINE
     public static void exit(Object object) {
-        // Assuming balanced monitors, which Maxine does, no null check is required for exit.
-        monitorScheme().monitorExit(object);
+        // Null check condition is required when deoptimization happens in case exception handler was not compiled by
+        // Graal compiler while throwing NullPointerException in MonitorEnter.
+        if (object != null) {
+            monitorScheme().monitorExit(object);
+        }
     }
 
     @NEVER_INLINE

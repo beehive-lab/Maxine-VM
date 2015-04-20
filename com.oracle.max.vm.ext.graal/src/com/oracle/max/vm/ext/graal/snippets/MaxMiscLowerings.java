@@ -266,7 +266,9 @@ public class MaxMiscLowerings extends SnippetLowerings {
                deoptReason == DeoptimizationReason.TypeCheckedInliningViolated ||
                deoptReason == DeoptimizationReason.NotCompiledExceptionHandler ||
                deoptReason == DeoptimizationReason.BoundsCheckException ||
-               deoptReason == DeoptimizationReason.ClassCastException : deoptReason.toString() + " not tested";
+               deoptReason == DeoptimizationReason.ClassCastException ||
+               deoptReason == DeoptimizationReason.RuntimeConstraint ||
+               deoptReason == DeoptimizationReason.NullCheckException : deoptReason.toString() + " not tested";
         for (FrameState frame = deoptState; frame != null; frame = frame.outerFrameState()) {
             ClassMethodActor ma = (ClassMethodActor) MaxResolvedJavaMethod.getRiResolvedMethod(frame.method());
             TargetMethod tm = Compilations.currentTargetMethod(ma.compiledState, RuntimeCompiler.Nature.OPT);
