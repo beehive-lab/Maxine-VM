@@ -511,6 +511,9 @@ public final class Interval {
             assert this.location == null || this.location.isRegister() : "cannot re-assign location for " + this;
             assert location.isStackSlot();
             assert location.kind != CiKind.Illegal;
+            if (location.kind != this.kind) {
+                System.out.println("Location kind, this.kind " + location.kind + " " + this.kind);
+            }
             assert location.kind == this.kind;
         }
         this.location = location;
@@ -520,7 +523,7 @@ public final class Interval {
     void assignLocationHigh(CiValue locationHigh) {
         if (locationHigh.isRegister()) {
             assert this.locationHigh == null : "cannot re-assign location for " + this;
-	
+
             if (locationHigh.kind == CiKind.Illegal && kind != CiKind.Illegal) {
                 locationHigh = locationHigh.asRegister().asValue(kind);
             }
@@ -528,10 +531,9 @@ public final class Interval {
             assert this.locationHigh == null || this.locationHigh.isRegister() : "cannot re-assign location for " + this;
             assert locationHigh.isStackSlot();
             assert locationHigh.kind != CiKind.Illegal;
-            if(locationHigh.kind != this.kind) {
-                System.out.println("MANUAL BODGE com.sun.c1x.alloc.Interval.java");
-
-            } else
+            if (locationHigh.kind != this.kind) {
+                System.out.println("Location High kind, this.kind " + location.kind + " " + this.kind);
+            }
             assert locationHigh.kind == this.kind;
         }
         this.locationHigh = locationHigh;
