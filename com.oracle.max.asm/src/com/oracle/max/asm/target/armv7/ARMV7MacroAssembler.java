@@ -117,6 +117,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         Label atomicFail = new Label();
         Label notEqualTocmpValue = new Label();
 
+	push(ConditionFlag.Always,1<<9);
 
         bind(atomicFail);
         membar(-1);
@@ -138,7 +139,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         bind(notEqualTocmpValue);
         cmp(ConditionFlag.Always, newValue, cmpValue, 0, 0);
         cmp(ConditionFlag.Equal, ARMV7.cpuRegisters[newValue.number + 1], ARMV7.cpuRegisters[cmpValue.number + 1], 0, 0);
-
+	pop(ConditionFlag.Always,1<<9);
 
     }
 

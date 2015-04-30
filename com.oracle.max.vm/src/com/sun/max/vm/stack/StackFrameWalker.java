@@ -262,7 +262,9 @@ public abstract class StackFrameWalker {
 
             // walk the frame for exception handling
             Throwable throwable = ((StackUnwindingContext) context).throwable;
+	    Log.println("Created the throwable");
             targetMethod.catchException(current, callee, throwable);
+	    Log.println("After catchException");
         } else if (MaxineVM.isHosted() && purpose == Purpose.INSPECTING) {
             Log.println("WALKING FRAME: INSPECTING");
 

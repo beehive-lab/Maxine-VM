@@ -282,7 +282,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
             }
             FatalError.check(Stubs.isJumpToStaticTrampoline(this), "sanity check");
         } else if (platform().isa == ISA.ARM) {
-            System.err.println("patchWithJump WRONG for ARM " + tm.name());
+            Log.print("patchWithJump WRONG for ARM ");Log.println(  tm.name());
             ARMTargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(tm));
             if (vm().compilationBroker.needsAdapters()) {
                 ARMTargetMethodUtil.patchWithJump(this, BASELINE_ENTRY_POINT.offset(), BASELINE_ENTRY_POINT.in(tm));
@@ -313,19 +313,31 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     private CodePointer throwAddressToCatchAddress(CodePointer throwAddress, Throwable exception, CatchExceptionInfo info) {
         final int exceptionPos = throwAddress.minus(codeStart()).toInt();
         int count = getExceptionHandlerCount();
+	Log.print("Count "); Log.println(count);
+	Log.print("ExceptPOS "); Log.println(exceptionPos);
         for (int i = 0; i < count; i++) {
             int codePos = getExceptionPosAt(i);
+	    Log.println("GOT CODEPOS");
             int catchPos = getCatchPosAt(i);
+	    Log.println("GOT CATCHPOS");
             ClassActor catchType = getCatchTypeAt(i);
+	    Log.println("GOT CATCHTYPE");
 
             if (codePos == exceptionPos && checkType(exception, catchType)) {
                 if (info != null) {
                     info.bci = getHandlerBCIAt(i);
                 }
+	Log.print("MAxTargetMethod:throwAddressToCatchAddress ");Log.println(i);
                 return codeAt(catchPos);
             }
         }
-        return CodePointer.zero();
+	//if(count == 0) Log.println("ZERO");
+	//else Log.println("NONZERO");
+	Log.println("MAxTargetMethod:throwAddressToCatchAddress RET ZERO");
+	CodePointer xx = CodePointer.zero();
+	Log.println("CONSTRUCTED ZERO");
+        //return CodePointer.zero();
+	return xx;
     }
 
     private boolean checkType(Throwable exception, ClassActor catchType) {
@@ -658,16 +670,24 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     @Override
     public void catchException(StackFrameCursor current, StackFrameCursor callee, Throwable throwable) {
         CodePointer ip = current.vmIP();
+	Log.println("MaxTargetMethod:catchException got IP");
         Pointer sp = current.sp();
+	Log.println("MaxTargetMethod:catchException got SP");
         Pointer fp = current.fp();
+	Log.println("MaxTargetMethod:catchException got FP");
         CodePointer catchAddress = throwAddressToCatchAddress(ip, throwable);
+	Log.println("MaxTargetMethod:catchException got catchAddress");
+	Log.println(catchAddress);
+	Log.println("TRIED to print catchAddress");
         if (!catchAddress.isZero()) {
+	    Log.println("MaxTargetMethod:catchException catchAddress NOT ZERO");
             if (StackFrameWalker.TraceStackWalk) {
                 Log.print("StackFrameWalk: Handler position for exception at position ");
                 Log.print(ip.minus(codeStart()).toInt());
                 Log.print(" is ");
                 Log.println(catchAddress.minus(codeStart()).toInt());
             }
+	    Log.println("MaxTargetMethod:catchException PAST IF TEST");
 
             int catchPos = posFor(catchAddress);
             if (invalidated() != null) {
@@ -696,8 +716,10 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
             if (calleeMethod != null && calleeMethod.registerRestoreEpilogueOffset() != -1) {
                 unwindToCalleeEpilogue(catchAddress, sp, calleeMethod);
             } else {
+		Log.println("MaxTargetMethod:catchException about to unwind");
                 Stubs.unwind(catchAddress.toPointer(), sp, fp);
             }
+	    Log.println("About to throw unexecpected in MAxTargetMethod:catchException");
             throw ProgramError.unexpected("Should not reach here, unwind must jump to the exception handler!");
         }
     }

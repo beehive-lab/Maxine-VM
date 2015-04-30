@@ -326,6 +326,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             loadJavaAgents();
 
             classKindName = "main";
+
             Class<?> mainClass = loadMainClass();
             if (mainClass != null) {
                 lookupAndInvokeMain(mainClass);
