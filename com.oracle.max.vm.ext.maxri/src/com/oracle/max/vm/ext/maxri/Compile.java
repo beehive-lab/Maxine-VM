@@ -245,7 +245,7 @@ public class Compile {
         }
 
         List<TargetMethod> targetMethods = doCompile(compiler, methods);
-        assert targetMethods.size() == 1;
+        assert targetMethods.size() == 2;
         compiler.initialize(Phase.TERMINATING);
         return targetMethods;
     }

@@ -810,6 +810,15 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
+    // Wee need that method due to limited number of registers when we process long values in 32 bit space.
+    public void saveRegister(int reg) {
+        push(ConditionFlag.Always, 1 << reg);
+    }
+
+    public void restoreRegister(int reg) {
+        pop(ConditionFlag.Always, 1 << reg);
+    }
+
     public void pop(final ConditionFlag flag, final int registerList) {
         int instruction;
         instruction = (flag.value() & 0xf) << 28;

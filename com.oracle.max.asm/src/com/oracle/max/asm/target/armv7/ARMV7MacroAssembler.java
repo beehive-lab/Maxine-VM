@@ -113,34 +113,28 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert (cmpValue != ARMV7.r8);
         assert (newValue != cmpValue);
         assert (ARMV7.r0 == cmpValue);
-
         Label atomicFail = new Label();
         Label notEqualTocmpValue = new Label();
-
-	push(ConditionFlag.Always,1<<9);
-
+        saveRegister(9);
         bind(atomicFail);
         membar(-1);
         setUpScratch(address); // r12 has the address to CAS
         ldrexd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12); // r8, r9 have the current Value
         lcmpl(ConditionFlag.Equal, cmpValue, ARMV7.r8); // compare r8,r9 with cmpValue
-        strexd(ConditionFlag.Equal, ARMV7.r8, newValue, ARMV7.r12); // if equal, store newValue to address and store result to r8
+        // if equal, store newValue to address and store result to r8
+        strexd(ConditionFlag.Equal, ARMV7.r8, newValue, ARMV7.r12);
         mov(ConditionFlag.NotEqual, false, cmpValue, ARMV7.r8);// Updated cmpValue to have the value loaded
         mov(ConditionFlag.NotEqual, false, ARMV7.cpuRegisters[cmpValue.number + 1], ARMV7.r9);
         jcc(ConditionFlag.NotEqual, notEqualTocmpValue); // we were not equal to the cmpValue
-        /*
-        If the Condition isa Equal then the strex took place but it MIGHT have failed so we need to test for this.
-        */
+        // If the Condition isa Equal then the strex took place but it might have failed so we need to test for this.
         mov32BitConstant(ARMV7.r12, 1); // r12 has value 1
         cmp(ConditionFlag.Equal, ARMV7.r8, ARMV7.r12, 0, 0);
-        /* If r8 is eqaul to r12 then there was an issue with atomicity so do the operation again
-        */
+        // If r8 is equal to r12 then there was an issue with atomicity so do the operation again
         jcc(ConditionFlag.Equal, atomicFail);
         bind(notEqualTocmpValue);
         cmp(ConditionFlag.Always, newValue, cmpValue, 0, 0);
         cmp(ConditionFlag.Equal, ARMV7.cpuRegisters[newValue.number + 1], ARMV7.cpuRegisters[cmpValue.number + 1], 0, 0);
-	pop(ConditionFlag.Always,1<<9);
-
+        restoreRegister(9);
     }
 
     public final void casLongAsmTest(CiRegister newValue, CiRegister cmpValue, CiAddress address) {

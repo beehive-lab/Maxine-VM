@@ -244,8 +244,7 @@ public abstract class StackFrameWalker {
     private boolean walkFrame(StackFrameCursor current, StackFrameCursor callee, TargetMethod targetMethod, Purpose purpose, Object context) {
         boolean proceed = true;
 	 if (purpose == Purpose.REFERENCE_MAP_PREPARING) {
-	     Log.println("WALKING FRAME: REFERENCE_MAP_PREPARING");
-
+            Log.println("WALKING FRAME: REFERENCE_MAP_PREPARING");
             // walk the frame for reference map preparation
             StackReferenceMapPreparer preparer = (StackReferenceMapPreparer) context;
             if (preparer.checkIgnoreCurrentFrame()) {
@@ -259,22 +258,16 @@ public abstract class StackFrameWalker {
             }
         } else if (purpose == Purpose.EXCEPTION_HANDLING) {
             Log.println("WALKING FRAME: EXCEPTION_HANDLING");
-
             // walk the frame for exception handling
             Throwable throwable = ((StackUnwindingContext) context).throwable;
-	    Log.println("Created the throwable");
             targetMethod.catchException(current, callee, throwable);
-	    Log.println("After catchException");
         } else if (MaxineVM.isHosted() && purpose == Purpose.INSPECTING) {
             Log.println("WALKING FRAME: INSPECTING");
-
             // walk the frame for inspecting (Java frames)
             StackFrameVisitor visitor = (StackFrameVisitor) context;
             proceed = targetMethod.acceptStackFrameVisitor(current, visitor);
         } else if (purpose == Purpose.RAW_INSPECTING) {
             Log.println("WALKING FRAME: RAW_INSPECTING");
-
-
             // walk the frame for inspect (compiled frames)
             RawStackFrameVisitor visitor = (RawStackFrameVisitor) context;
             proceed = visitor.visitFrame(current, callee);
