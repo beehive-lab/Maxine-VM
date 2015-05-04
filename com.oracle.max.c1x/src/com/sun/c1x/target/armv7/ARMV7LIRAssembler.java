@@ -207,11 +207,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             if (srcKind == CiKind.Long && destKind == CiKind.Long) {
                 masm.mov(ConditionFlag.Always, false, dest, src);
                 masm.mov(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.number + 1], ARMV7.cpuRegisters[src.number + 1]);
-            } else if (srcKind != CiKind.Long && destKind == CiKind.Long) {
-
+            } else if (srcKind == CiKind.Int && destKind == CiKind.Long) {
                 assert (srcKind != CiKind.Float);
                 assert (srcKind != CiKind.Double);
-
                 masm.mov(ConditionFlag.Always, false, dest, src);
                 masm.asr(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.number + 1], src, 31);
             } else {
@@ -219,6 +217,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 assert (srcKind != CiKind.Double);
                 masm.mov(ConditionFlag.Always, false, dest, src);
             }
+        } else if (srcKind == CiKind.Int && destKind == CiKind.Long) {
+            masm.asr(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.number + 1], src, 31);
         }
     }
 
