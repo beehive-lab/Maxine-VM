@@ -1011,33 +1011,41 @@ public class Stubs {
             String name = "unwindStub";
             if (args.length == 4) {
                 CiValue retValue = args[3];
-                //CiRegister reg = retValue.asRegister();
+                CiRegister reg = null;
+		CiAddress stackAddr = null;
                 CiKind kind = retValue.kind.stackKind();
                 name = "unwind" + kind.name() + "Stub";
                 switch (kind) {
+
                     case Long:
-                        // TODO fix this we need two registers for a long!!!!
-                        // Therefore it must be on the stack!!!!!?
+			stackAddr = new CiAddress(kind, ARMV7.RSP, ((CiStackSlot)retValue).index()* Word.size());
+                        asm.setUpScratch(stackAddr);
+                        asm.ldrd(ARMV7Assembler.ConditionFlag.Always,registerConfig.getReturnRegister(CiKind.Long),ARMV7.r12,0);
                     break;
+
                     case Int:
                     case Object:
-                     //   asm.mov(ARMV7Assembler.ConditionFlag.Always, false, registerConfig.getReturnRegister(CiKind.Int), reg);
+			reg =  retValue.asRegister();
+                        asm.mov(ARMV7Assembler.ConditionFlag.Always, false, registerConfig.getReturnRegister(CiKind.Int), reg);
                         break;
+
                     case Float:
-                        // TODO does it come from the FPREGS or does it go to core
-                    //    asm.movflt( registerConfig.getReturnRegister(CiKind.Float), reg);
+			reg =  retValue.asRegister();
+                        asm.movflt(registerConfig.getReturnRegister(CiKind.Float),reg,CiKind.Float,CiKind.Float);
                         break;
+
                     case Double:
-                        // TODO does it come from the FPREGS or does it go to core
-                        // if it goes to core then will need to go on stack
-               //         asm.movdbl(registerConfig.getReturnRegister(CiKind.Double), reg);
+			reg = retValue.asRegister();
+                        asm.movflt(registerConfig.getReturnRegister(CiKind.Double),reg,CiKind.Double,CiKind.Double);
                         break;
+
                     default:
                         FatalError.unexpected("unexpected kind: " + kind);
                 }
             }
-            // APN broken .... for sure
-            // just made to compile
+            // APN not sure about it, but it seems to be ok.
+	    // DEBUG MARKER
+	    asm.mov32BitConstant(ARMV7.r12,0xfadad0d0);
 
 
             // Push 'pc' to the handler's stack frame and update RSP to point to the pushed value.
@@ -1051,8 +1059,7 @@ public class Stubs {
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r11, fp);
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r13, sp);
             //asm.movq(ARMV7.rsp, sp);
-            //asm.ret(0);
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12);
+            asm.ret(0);
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnwindStub, name, frameSize, code, -1, -1, null, -1);
         } else {

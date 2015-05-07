@@ -842,8 +842,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.sxtb(ConditionFlag.Always, dest.asRegister(), srcRegister);
                 break;
             case I2C:
-                masm.mov32BitConstant(dest.asRegister(), 0xFFFF);
-                masm.and(ConditionFlag.Always, true, dest.asRegister(), srcRegister, dest.asRegister(), 0, 0);
+                masm.mov32BitConstant(ARMV7.r12, 0xFFFF);
+                masm.and(ConditionFlag.Always, true, dest.asRegister(), ARMV7.r12, src.asRegister(), 0, 0);
                 break;
             case I2S:
                 moveRegs(srcRegister, dest.asRegister());
