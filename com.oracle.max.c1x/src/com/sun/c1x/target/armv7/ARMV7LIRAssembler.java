@@ -609,7 +609,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.ldrsb(ConditionFlag.Always, 1, 0, 0, dest.asRegister(), ARMV7.r12, 0);
                 break;
             case Char:
-                masm.ldrb(ConditionFlag.Always, 1, 0, 0, dest.asRegister(), ARMV7.r12, 0);
+                masm.ldruhw(ConditionFlag.Always, 1, 0, 0, dest.asRegister(), ARMV7.r12, 0);
                 break;
             case Short:
                 masm.ldrshw(ConditionFlag.Always, 1, 0, 0, dest.asRegister(), ARMV7.r12, 0);

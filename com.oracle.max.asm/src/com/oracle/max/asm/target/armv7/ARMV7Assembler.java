@@ -662,6 +662,23 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
+    public void ldruhw(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
+        int instruction = 0x005000b0;
+        P = P & 1;
+        U = U & 1;
+        if (imm8 < 0) {
+            U = 0;
+            imm8 = imm8 * -1;
+        }
+        W = W & 1;
+        instruction |= (P << 24) | (U << 23) | (W << 21);
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (Rn.encoding & 0xf) << 16;
+        instruction |= (Rt.encoding & 0xf) << 12;
+        instruction |= 0xf0 | (imm8 & 0xf) | ((0xf0 & imm8) << 4);
+        emitInt(instruction);
+    }
+
     public void ldrshw(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
         int instruction = 0x005000f0;
         P = P & 1;
