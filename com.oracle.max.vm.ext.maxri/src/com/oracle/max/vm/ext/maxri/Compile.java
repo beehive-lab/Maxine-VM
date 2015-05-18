@@ -369,7 +369,7 @@ public class Compile {
             writer = new PrintWriter("codebuffer.c", "UTF-8");
             methodsFound++;
             for (MethodActor methodActor : methods) {
-                System.out.println(methodActor.toString());
+                Log.println(methodActor.toString());
                 writer.println("// " + methodActor.toString());
                 progress.begin(methodActor.toString());
                 Throwable error = compile(compiler, methodActor, true);

@@ -93,8 +93,12 @@ public final class ARMTargetMethodUtil {
      * ARM here we must do a LDMFD and we move the return address to the PC
      *
      */
-    public static final int RET = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28)
-            | (0xd << 21) | (ARMV7.r15.encoding << 12) |  ARMV7.r14.encoding;
+    //public static final int RET = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28)
+            //| (0xd << 21) | (ARMV7.r15.encoding << 12) |  ARMV7.r14.encoding;
+
+     public static final int RET = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28)
+       | (0x8 <<24) | (0xb <<20) |  (0xd << 16) | (1<<15);
+
 
     /**
      * X86 Size (in bytes) of a RIP-relative call instruction.
@@ -358,7 +362,7 @@ public final class ARMTargetMethodUtil {
      * @return {@code true} if the instruction is a jump to the target, false otherwise
      */
     public static boolean isJumpTo(TargetMethod tm, int pos, CodePointer jumpTarget) {
-        System.err.println("ARM isJumpTo WRONG");
+        Log.println("ARM isJumpTo WRONG");
         final Pointer jumpSite = tm.codeAt(pos).toPointer();
         if (jumpSite.readByte(0) == (byte) RIP_JMP) {
             final int disp32 = jumpSite.readInt(1);
@@ -381,7 +385,9 @@ public final class ARMTargetMethodUtil {
             CallEntryPoint.C_ENTRY_POINT.in(tm) :
             CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(tm);
 
-        return entryPoint.equals(current.vmIP()) || current.stackFrameWalker().readByte(current.vmIP().toAddress(), 0) == RET;
+        //return entryPoint.equals(current.vmIP()) || current.stackFrameWalker().readByte(current.vmIP().toAddress(), 0) == RET;
+	return entryPoint.equals(current.vmIP()) || current.stackFrameWalker().readInt(current.vmIP().toAddress(), 0) == RET;
+
     }
 
     @HOSTED_ONLY
@@ -459,6 +465,7 @@ public final class ARMTargetMethodUtil {
     }
 
     public static int callInstructionSize(byte[] code, int pos) {
+	Log.println("ARMTargetMethodUtil.REG RIP_CALL ISSUE");
         if ((code[pos] & 0xFF) == RIP_CALL) {
             return RIP_CALL_INSTRUCTION_SIZE;
         }

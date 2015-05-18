@@ -155,7 +155,9 @@ public class MaxRuntimeCalls {
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.RegisterFinalizer)
     public static void runtimeRegisterFinalizer(Object object) {
+	//Log.print("MaxRuntimeCalls:RegisterFinalizer");
         verifyRefMaps();
+	//Log.println(ObjectAccess.readClassActor(object).toString());
         if (ObjectAccess.readClassActor(object).hasFinalizer()) {
             SpecialReferenceManager.registerFinalizee(object);
         }
