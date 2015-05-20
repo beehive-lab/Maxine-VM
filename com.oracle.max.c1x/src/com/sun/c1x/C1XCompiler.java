@@ -22,6 +22,8 @@
  */
 package com.sun.c1x;
 
+import com.sun.max.vm.type.ARM32Box; // hashCode issues on ARMV7
+
 import com.oracle.max.cri.intrinsics.IntrinsicImpl;
 import com.oracle.max.criutils.TTY;
 import com.sun.c1x.debug.CFGPrinterObserver;
@@ -140,7 +142,7 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
             for (XirTemplate template : xirTemplateStubs) {
                 TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, template.name);
                 try {
-                    stubs.put(template, backend.emit(template));
+                    stubs.put(new ARM32Box(template), backend.emit(template));
                 } finally {
                     filter.remove();
                 }
@@ -153,7 +155,7 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
             }
             TTY.Filter suppressor = new TTY.Filter(C1XOptions.PrintFilter, id);
             try {
-                stubs.put(id, backend.emit(id));
+                stubs.put(new ARM32Box(id), backend.emit(id));
             } finally {
                 suppressor.remove();
             }
@@ -183,22 +185,22 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
     }
 
     public CompilerStub lookupStub(CompilerStub.Id id) {
-        CompilerStub stub = stubs.get(id);
+        CompilerStub stub = stubs.get(new ARM32Box(id));
         assert stub != null || (stub==null && omitStub(id)) : "no stub for compiler stub id: " + id;
         return stub;
     }
 
     public CompilerStub lookupStub(XirTemplate template) {
-        CompilerStub stub = stubs.get(template);
+        CompilerStub stub = stubs.get(new ARM32Box(template));
         assert stub != null : "no stub for XirTemplate: " + template;
         return stub;
     }
 
     public CompilerStub lookupStub(CiRuntimeCall runtimeCall) {
-        CompilerStub stub = stubs.get(runtimeCall);
+        CompilerStub stub = stubs.get(new ARM32Box(runtimeCall));
         if (stub == null) {
             stub = backend.emit(runtimeCall);
-            stubs.put(runtimeCall, stub);
+            stubs.put(new ARM32Box(runtimeCall), stub);
         }
 
         assert stub != null : "could not find compiler stub for runtime call: " + runtimeCall;
