@@ -985,7 +985,39 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
     }
 
-    public void setUpRegister(CiRegister dest, CiAddress addr) {
+public void setUpRegister(CiRegister dest,CiAddress addr) {
+        CiRegister base = addr.base();
+        CiRegister index = addr.index();
+        CiAddress.Scale scale = addr.scale;
+        int disp = addr.displacement;
+        if (addr == CiAddress.Placeholder) {
+            nop(numInstructions(addr)); // 4 instructions, 2 for mov32, 1 for add and 1 for addclsl
+            return;
+        }
+
+        assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
+
+        if (base.isValid() || base.compareTo(CiRegister.Frame) == 0) {
+            if (base == CiRegister.Frame) {
+                base = frameRegister;
+            }
+            if (disp != 0) {
+                mov32BitConstant(dest, disp);
+                addRegisters(ConditionFlag.Always, false, dest, dest, base, 0, 0);
+                if (index.isValid()) {
+                    addlsl(ConditionFlag.Always, false, dest, dest, index, scale.log2);
+                }
+            } else {
+                if (index.isValid()) {
+                    addlsl(ConditionFlag.Always, false, dest, base, index, scale.log2);
+                } else {
+                    mov(ConditionFlag.Always, false, dest, base);
+                }
+            }
+        }
+    }
+
+    /*public void setUpRegister(CiRegister dest, CiAddress addr) {
         CiRegister base = addr.base();
         CiRegister index = addr.index();
         CiAddress.Scale scale = addr.scale;
@@ -1023,6 +1055,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             }
         }
     }
+*/
 
     private int numInstructions(CiAddress addr) {
         CiRegister index = addr.index();

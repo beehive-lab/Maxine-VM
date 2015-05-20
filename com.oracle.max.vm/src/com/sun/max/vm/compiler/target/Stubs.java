@@ -342,7 +342,10 @@ public class Stubs {
      */
     private static Address resolveVirtualCall(Object receiver, int vTableIndex, Pointer pcInCaller) {
         // pcInCaller must be dealt with before any safepoint
+	Log.println("STUBS:resolveVirtualCall");
         CodePointer cpCallSite = CodePointer.from(pcInCaller);
+	Log.print("CALLSITE ");Log.println(cpCallSite);
+
         final TargetMethod caller = cpCallSite.toTargetMethod();
 
         final Hub hub = ObjectAccess.readHub(receiver);
@@ -350,6 +353,7 @@ public class Stubs {
         if (selectedCallee.isAbstract()) {
             throw new AbstractMethodError();
         }
+	Log.println(selectedCallee);
         final TargetMethod selectedCalleeTargetMethod =  selectedCallee.makeTargetMethod(caller);
         FatalError.check(selectedCalleeTargetMethod.invalidated() == null, "resolved virtual method must not be invalidated");
         CodePointer vtableEntryPoint = selectedCalleeTargetMethod.getEntryPoint(VTABLE_ENTRY_POINT);
@@ -475,13 +479,20 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
+	    asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
 
             // now allocate the frame for this method
             asm.subq(ARMV7.r13, frameSize);
 
             // save the index in the scratch register. This register is then callee-saved
             // so that the stack walker can find it.
-            asm.mov32BitConstant(registerConfig.getScratchRegister(), index);
+            //asm.mov32BitConstant(registerConfig.getScratchRegister(), index);
+
+	    asm.mov32BitConstant(ARMV7.r8,index); // hard coded!!!
+	    /* R8 is an "alternate scratch we put the index in here and we added R8 to the end of the trampoline
+	    csl as r12 is used during calculations of stores and gets trashed on ARM
+	    */
+
             if (isHosted() && index == 0) {
                 indexMovInstrPos = asm.codeBuffer.position() -  WordWidth.BITS_32.numberOfBytes;
             }
@@ -503,10 +514,15 @@ public class Stubs {
             // APN shouldnt this be LR r13 ...
             // so if we're constructing an address then please move it back to LR R13
             // NOT yet done.
+            if(!isInterface) asm.mov32BitConstant(ARMV7.r12,0xbeefbeef);// debugging resolveVirtualCall
+
             // we will need to test this carefully
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize));
+            //asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize));
             //asm.movq(args[2].asRegister(), new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize));
-            asm.ldr(ARMV7Assembler.ConditionFlag.Always, args[2].asRegister(), asm.scratchRegister,0);
+            //asm.ldr(ARMV7Assembler.ConditionFlag.Always, args[2].asRegister(), asm.scratchRegister,0);
+	    // We already have the return address in R14 so jus tmove it rather than doing the load from stack
+            asm.mov(ARMV7Assembler.ConditionFlag.Always,false,args[2].asRegister(),ARMV7.r14);
+
 
             asm.alignForPatchableDirectCall(); // insert nops so that the call is in an allowed position
                                             // obeying alignment rules
@@ -525,7 +541,7 @@ public class Stubs {
             // this may well be broken !!!!!!
 
             CiRegister returnReg = registerConfig.getReturnRegister(WordUtil.archKind());
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize - 8));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize - 4));
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize - 8), returnReg);
             asm.str(ARMV7Assembler.ConditionFlag.Always, returnReg, asm.scratchRegister, 0);
 
@@ -535,7 +551,7 @@ public class Stubs {
 
             // Adjust RSP as mentioned above and do the 'ret' that lands us in the
             // trampolined-to method.
-            asm.addq(ARMV7.r13, frameSize - 8);
+            asm.addq(ARMV7.r13, frameSize - 4);
 
             asm.ret(0);
             // APN ok do I need to do a return or can I merely set the PC to the correct instruction.
@@ -670,6 +686,7 @@ public class Stubs {
 
 
             // now allocate the frame for this method
+
             asm.subq(ARMV7.r13, frameSize);
 
             // save all the callee save registers
@@ -825,8 +842,11 @@ public class Stubs {
            // asm.pushfq();
             //asm.pushfq();
 
-            // now allocate the frame for this method (first word of which was allocated by the second pushfq above)
-            asm.subq(ARMV7.r13, frameSize - 8);
+            // no.w allocate the frame for this method (first word of which was allocated by the second pushfq above)
+            //asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
+
+            //asm.subq(ARMV7.r13, frameSize - 8);
+	    asm.subq(ARMV7.r13,frameSize - 8);
 
             // save all the callee save registers
             asm.save(csl, frameToCSA);
@@ -889,8 +909,8 @@ public class Stubs {
             // APN maybe I should have saved and restored the FLAGS?
             // my understanding is that normal handler code will do this?
             // Will r14 be correctly set to the appropriate return address?
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
-            //asm.ret(0);
+            //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
+            asm.ret(0);
 
             byte[] code = asm.codeBuffer.close(true);
 
@@ -1000,6 +1020,8 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
+
+	    asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
 
             CiValue[] args = unwindArgs;
             assert args.length == 3 || args.length == 4;
@@ -1112,9 +1134,10 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
+	    asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
+
+
             asm.sub(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r13, ARMV7.r13,ARMV7.r1,0,0); // rsi is argument (second)?
-            //asm.subq(ARMV7.rsp, ARMV7.rsi);
-            // APN no idea what rsi is used for on X86
 
             CriticalMethod unroll = new CriticalMethod(Deoptimization.class, "unroll", null);
             asm.alignForPatchableDirectCall();
@@ -1171,7 +1194,8 @@ public class Stubs {
         @Override
         void apply() {
             Pointer patchAddr = stub.codeAt(pos).toPointer();
-            patchAddr.writeLong(0, runtimeRoutine.address().toLong());
+            //patchAddr.writeLong(0, runtimeRoutine.address().toLong());
+            patchAddr.writeInt(0, runtimeRoutine.address().toInt());
         }
     }
 
@@ -1364,8 +1388,10 @@ public class Stubs {
 
                         arg4 =   new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
-                        asm.ldr(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
-                        asm.mov(ARMV7Assembler.ConditionFlag.Always, false, returnRegister, ARMV7.r12);
+                        //asm.ldr(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
+                        //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, returnRegister, ARMV7.r12);
+
+            		asm.ldr(ARMV7Assembler.ConditionFlag.Always, returnRegister, asm.scratchRegister, 0);
 
                         break;
 
@@ -1375,17 +1401,18 @@ public class Stubs {
 
                         arg4 =   new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
-                        asm.ldr(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
-                        asm.mov(ARMV7Assembler.ConditionFlag.Always, false, returnRegister, ARMV7.r12);
+                        asm.ldrd(ARMV7Assembler.ConditionFlag.Always,returnRegister,ARMV7.r12,0);
+                        //asm.ldr(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
+                        //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, returnRegister, ARMV7.r12);
 
                         break;
 
                     case Float:
                         CiRegister tmp = args[4].asRegister();
                         if (tmp.number <= 15) {
-                            asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << tmp.number);
+                            //asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << tmp.number);
                         } else {
-                            asm.vpop(ARMV7Assembler.ConditionFlag.Always, tmp, tmp, CiKind.Float, CiKind.Float);
+                            //asm.vpop(ARMV7Assembler.ConditionFlag.Always, tmp, tmp, CiKind.Float, CiKind.Float);
                         }
 
                         break;
@@ -1400,9 +1427,9 @@ public class Stubs {
                             // 32bits --- long/double so multiplying by 4 will give an incorrect offset in general.
                         // broken we need TWO registers so this needs VLDR!!!!!!!!!
                         if (tmp2arg4.number <= 15)  {
-                            asm.pop(ARMV7Assembler.ConditionFlag.Always, (1 << tmp2arg4.number) | (1 << (tmp2arg4.number + 1)));
+                            //asm.pop(ARMV7Assembler.ConditionFlag.Always, (1 << tmp2arg4.number) | (1 << (tmp2arg4.number + 1)));
                         } else {
-                            asm.vpop(ARMV7Assembler.ConditionFlag.Always, tmp2arg4, tmp2arg4, CiKind.Double, CiKind.Double);
+                            //asm.vpop(ARMV7Assembler.ConditionFlag.Always, tmp2arg4, tmp2arg4, CiKind.Double, CiKind.Double);
                         }
 
 
@@ -1461,9 +1488,9 @@ public class Stubs {
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.RSP), scratch);
             asm.subq(ARMV7.r13, 4); // 2nd stack slot.
 
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
+            //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
             // "return" to deopt routine
-            //asm.ret(0);
+            asm.ret(0);
 
             String stubName = runtimeRoutineName + "Stub";
             byte[] code = asm.codeBuffer.close(true);
@@ -1840,7 +1867,8 @@ public class Stubs {
             }
 
             // now allocate the frame for this method
-            //asm.subq(ARMV7.rsp, frameSize);
+
+            asm.subq(ARMV7.rsp, frameSize);
 
             // save all the registers
             asm.save(csl, frameToCSA);

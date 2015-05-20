@@ -512,6 +512,12 @@ public abstract class StackFrameWalker {
      * {@linkplain #reset() resetting} this walker before returning.
      */
     public final void inspect(Pointer ip, Pointer sp, Pointer fp, final RawStackFrameVisitor visitor) {
+//Log.println("RAW INSPECT IP");
+        //Log.println(ip);
+        //Log.println("RAW INSPECT SP");
+        //Log.println(sp);
+        //Log.println("RAW INSPECT FP");
+        //Log.println(fp);
         walk(ip, sp, fp, RAW_INSPECTING, visitor);
         visitor.done();
         reset();

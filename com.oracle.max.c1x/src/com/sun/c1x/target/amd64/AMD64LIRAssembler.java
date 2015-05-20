@@ -2036,7 +2036,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                         int a = ARMV7LIRAssembler.methodCounter.incrementAndGet();
                         masm.movl(compilation.registerConfig.getScratchRegister(), a);
                         try {
-                            ARMV7LIRAssembler.writeDebugMethod(compilation.method.getClass().getName() + "." + compilation.method.name() + ";" + compilation.method.signature(), a);
+                            ARMV7LIRAssembler.writeDebugMethod(compilation.method.holder() + "." + compilation.method.name() + ";" + compilation.method.signature(), a);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

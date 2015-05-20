@@ -376,14 +376,23 @@ public abstract class CodeManager {
      */
     CodeRegion codePointerToCodeRegion(Address codePointer) {
         if (Code.bootCodeRegion().contains(codePointer)) {
+	    //Log.println("IN boot");
+
             return Code.bootCodeRegion();
         }
         if (runtimeBaselineCodeRegion.contains(codePointer)) {
+	    //Log.println("IN runtimebaseline");
+
             return runtimeBaselineCodeRegion;
         }
         if (runtimeOptCodeRegion.contains(codePointer)) {
+            //Log.println("IN runtime");
+
             return runtimeOptCodeRegion;
         }
+	//Log.println("NOT found in any codeRegions");
+        Log.println(codePointer);
+
         return null;
     }
 
