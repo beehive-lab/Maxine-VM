@@ -976,7 +976,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 asm.addRegisters(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r15, 0, 0);
                 asm.ldr(ConditionFlag.Always, reg, r12, 0);
                 int dispPos = pos + asm.codeBuffer.position() - extraOffset - 4;
-                int disp = movqDisp(dispPos, dispFromCodeStart);
+                int disp = movqDisp(dispPos, dispFromCodeStart - extraOffset);
                 asm.codeBuffer.reset();
                 asm.mov32BitConstant(ARMV7.r12, disp);
                 asm.addRegisters(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r15, 0, 0);
