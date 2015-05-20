@@ -731,6 +731,12 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
             }
             distance += scalarLiteralsLength - dataIndex;
         }
+        if (Platform.target().arch.isARM()) {
+            final int size = objectLiteralsLength * Word.size() + Layout.byteArrayLayout().headerSize();
+            if (size % 8 != 0) {
+                distance += 4;
+            }
+        }
         return -distance;
     }
 
