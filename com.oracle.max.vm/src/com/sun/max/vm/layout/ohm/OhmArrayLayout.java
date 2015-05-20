@@ -25,6 +25,7 @@ package com.sun.max.vm.layout.ohm;
 import java.lang.reflect.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
@@ -68,6 +69,9 @@ public class OhmArrayLayout extends OhmGeneralLayout implements ArrayLayout {
 
     @INLINE
     public final Size getArraySize(Kind kind, int length) {
+        if (Platform.target().arch.isARM()) {
+            return Size.fromInt(kind.width.numberOfBytes).times(length).plus(headerSize).doubleWordAligned();
+        }
         return Size.fromInt(kind.width.numberOfBytes).times(length).plus(headerSize).wordAligned();
     }
 
@@ -131,6 +135,9 @@ public class OhmArrayLayout extends OhmGeneralLayout implements ArrayLayout {
 
     @INLINE
     public final Size getArraySize(int length) {
+        if (Platform.target().arch.isARM()) {
+            return getElementOffsetInCell(length).doubleWordAligned().asSize();
+        }
         return getElementOffsetInCell(length).aligned().asSize();
     }
 

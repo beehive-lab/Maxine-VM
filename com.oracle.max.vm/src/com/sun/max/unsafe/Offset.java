@@ -354,6 +354,12 @@ public class Offset extends Word {
     }
 
     @INLINE
+    public Offset doubleWordAligned() {
+        int n = 2 * Word.size();
+        return plus(n - 1).and(Offset.fromInt(n - 1).not());
+    }
+
+    @INLINE
     public boolean isAligned() {
         int n = Word.size();
         return and(n - 1).equals(Offset.zero());

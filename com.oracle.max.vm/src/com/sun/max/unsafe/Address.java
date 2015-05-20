@@ -381,6 +381,11 @@ public class Address extends Word {
     }
 
     @INLINE
+    public Address doubleWordAligned() {
+        return alignUp(2 * Word.size());
+    }
+
+    @INLINE
     public Address alignUp(int alignment) {
         return plus(alignment - 1).alignDown(alignment);
     }

@@ -183,6 +183,12 @@ public final class Size extends Address {
 
     @INLINE
     @Override
+    public Size doubleWordAligned() {
+        return super.doubleWordAligned().asSize();
+    }
+
+    @INLINE
+    @Override
     public Size alignUp(int alignment) {
         return super.alignUp(alignment).asSize();
     }
