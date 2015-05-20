@@ -268,30 +268,36 @@ public final class ARMTargetMethodUtil {
                 }
             }
         } else {
-            System.err.println("fixupCall32Site NOT implemented not hosted");
-        } /*else {
-                assert (0 == 1);
-                oldDisp32 = (code[callOffset + 4] & 0xff) << 24 | (code[callOffset + 3] & 0xff) << 16 | (code[callOffset + 2] & 0xff) << 8 | (code[callOffset + 1] & 0xff) << 0;
-                if (oldDisp32 != disp32) {
-                    // needs to be rewritten
-                    code[callOffset] = (byte) RIP_CALL;
-                    code[callOffset + 1] = (byte) disp32;
-                    code[callOffset + 2] = (byte) (disp32 >> 8);
-                    code[callOffset + 3] = (byte) (disp32 >> 16);
-                    code[callOffset + 4] = (byte) (disp32 >> 24);
-                }
-            }
-        } else {
-            assert (0 == 1);
-            final Pointer callSitePointer = callSite.toPointer();
-            oldDisp32 = (callSitePointer.readByte(4) & 0xff) << 24 | (callSitePointer.readByte(3) & 0xff) << 16 | (callSitePointer.readByte(2) & 0xff) << 8 | (callSitePointer.readByte(1) & 0xff) << 0;
-            if (oldDisp32 != disp32) {
-                callSitePointer.writeByte(0, (byte) RIP_CALL);
-                callSitePointer.writeByte(1, (byte) disp32);
-                callSitePointer.writeByte(2, (byte) (disp32 >> 8));
-                callSitePointer.writeByte(3, (byte) (disp32 >> 16));
-                callSitePointer.writeByte(4, (byte) (disp32 >> 24));
-            }*/
+            System.err.println("fixupCall32Site NOT implemented not hosted in development ........");
+
+	    final Pointer callSitePointer = callSite.toPointer();
+            oldDisp32 =
+                (callSitePointer.readByte(4) & 0xff) << 24 |
+                (callSitePointer.readByte(3) & 0xff) << 16 |
+                (callSitePointer.readByte(2) & 0xff) << 8 |
+                (callSitePointer.readByte(1) & 0xff) << 0;
+		int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
+                    callSitePointer.writeByte(0, (byte) (instruction & 0xff));
+                    callSitePointer.writeByte(1, (byte) ((instruction >> 8) & 0xff));
+                    callSitePointer.writeByte(2,(byte) ((instruction >> 16) & 0xff));
+                    callSitePointer.writeByte(3, (byte) ((instruction >> 24) & 0xff));
+                    int tmp32 = disp32 >> 16;
+                    instruction = ARMV7Assembler.movtHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, tmp32 & 0xffff);
+                callSitePointer.writeByte(4, (byte) (instruction & 0xff));
+                callSitePointer.writeByte(5, (byte) ((instruction >> 8) & 0xff));
+                callSitePointer.writeByte(6, (byte) ((instruction >> 16) & 0xff));
+                callSitePointer.writeByte(7, (byte) ((instruction >> 24) & 0xff));
+                    instruction = ARMV7Assembler.addRegistersHelper(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r15, ARMV7.r12, 0, 0);
+                callSitePointer.writeByte(8, (byte) (instruction & 0xff));
+                callSitePointer.writeByte(9, (byte) ((instruction >> 8) & 0xff));
+                callSitePointer.writeByte(10, (byte) ((instruction >> 16) & 0xff));
+                callSitePointer.writeByte(11, (byte) ((instruction >> 24) & 0xff));
+                    instruction = ARMV7Assembler.blxHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12);
+                 callSitePointer.writeByte(12, (byte) (instruction & 0xff));
+                 callSitePointer.writeByte(13, (byte) ((instruction >> 8) & 0xff));
+                 callSitePointer.writeByte(14, (byte) ((instruction >> 16) & 0xff));
+                 callSitePointer.writeByte(15, (byte) ((instruction >> 24) & 0xff));
+	  }
 
 
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);

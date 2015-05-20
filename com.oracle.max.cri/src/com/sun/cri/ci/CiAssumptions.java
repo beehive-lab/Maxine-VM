@@ -27,6 +27,9 @@ import java.util.*;
 
 import com.sun.cri.ri.*;
 
+// package not found WTF?import com.sun.max.platform.Platform;
+
+
 /**
  * Records optimistic assumptions made during compilation.
  *
@@ -39,6 +42,10 @@ import com.sun.cri.ri.*;
 public final class CiAssumptions implements Serializable, Iterable<CiAssumptions.Assumption> {
 
     public abstract static class Assumption implements Serializable {
+
+    	public int wordSizeHack() {
+		return 32;
+    	}
     }
 
     public abstract static class ContextAssumption extends Assumption {
@@ -55,7 +62,11 @@ public final class CiAssumptions implements Serializable, Iterable<CiAssumptions
 
         @Override
         public int hashCode() {
-            return prime + context.hashCode();
+	    if(wordSizeHack() == 32) {
+            	return 0xfffff & (prime + context.hashCode());
+	    } else {
+            	return prime + context.hashCode();
+	    }
         }
 
     }
@@ -76,7 +87,11 @@ public final class CiAssumptions implements Serializable, Iterable<CiAssumptions
 
         @Override
         public int hashCode() {
-            return super.hashCode() * prime + subtype.hashCode();
+	    if(wordSizeHack() == 32) {
+            	return 0xfffff & (super.hashCode() * prime + subtype.hashCode());
+	    } else {
+            	return super.hashCode() * prime + subtype.hashCode();
+	    }
         }
 
         @Override
@@ -108,9 +123,17 @@ public final class CiAssumptions implements Serializable, Iterable<CiAssumptions
 
         @Override
         public int hashCode() {
-            int result = super.hashCode();
-            result = prime * result + method.hashCode();
-            return prime * result + dependee.hashCode();
+	    int result;
+	    if(wordSizeHack() == 32) {
+	        result = super.hashCode();
+                result = prime * result + (0xfffff & method.hashCode());
+                return 0xfffff & (prime * result + (0xfffff & dependee.hashCode()));
+
+	    } else {
+               	result = super.hashCode();
+            	result = prime * result + method.hashCode();
+            	return prime * result + dependee.hashCode();
+            }
         }
 
         @Override
