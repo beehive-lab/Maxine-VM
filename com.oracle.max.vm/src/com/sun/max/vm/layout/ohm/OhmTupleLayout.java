@@ -24,6 +24,7 @@ package com.sun.max.vm.layout.ohm;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -117,7 +118,7 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
 
     Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors, int headerSize) {
         setInvalidOffsets(fieldActors);
-        final int nAlignmentBytes = Word.size();
+        final int nAlignmentBytes = Platform.target().arch.isARM() ? 2 * Word.size() : Word.size();
         int offset;
         if (superClassActor == null || superClassActor.typeDescriptor == JavaTypeDescriptor.OBJECT || superClassActor.typeDescriptor == JavaTypeDescriptor.HYBRID) {
             offset = headerSize;
