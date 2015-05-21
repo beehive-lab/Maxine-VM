@@ -271,11 +271,7 @@ public final class ARMTargetMethodUtil {
             System.err.println("fixupCall32Site NOT implemented not hosted in development ........");
 
 	    final Pointer callSitePointer = callSite.toPointer();
-            oldDisp32 =
-                (callSitePointer.readByte(4) & 0xff) << 24 |
-                (callSitePointer.readByte(3) & 0xff) << 16 |
-                (callSitePointer.readByte(2) & 0xff) << 8 |
-                (callSitePointer.readByte(1) & 0xff) << 0;
+            oldDisp32 = 0;
 		int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
                     callSitePointer.writeByte(0, (byte) (instruction & 0xff));
                     callSitePointer.writeByte(1, (byte) ((instruction >> 8) & 0xff));
