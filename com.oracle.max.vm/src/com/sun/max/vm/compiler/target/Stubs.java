@@ -831,54 +831,43 @@ public class Stubs {
             int frameToCSA = csl.frameOffsetToCSA;
             CiKind[] handleTrapParameters = CiUtil.signatureToKinds(Trap.handleTrap.classMethodActor);
             CiValue[] args = registerConfig.getCallingConvention(JavaCallee, handleTrapParameters, target(), false).locations;
+ 		
 
-            // the very first instruction must save the flags.
-            // we save them twice and overwrite the first copy with the trap instruction/return address.
-            // APN the stubs should be assumed to be broken ...
-            // On a trap which I presume is an exception the CPSR flags for the APSR are saved to
-            //
-            // MRS  instructions can be used to copy values from the APSR to a general purpose register
-            // and back.
-           // asm.pushfq();
-            //asm.pushfq();
 
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12);      // SAVE r12 ... our save/restore is broken
+            // this will be overwritten with teh RET ADDRESS?
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12);
+            asm.mrsReadAPSR(ARMV7Assembler.ConditionFlag.Always,ARMV7.r12);
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12);
             // no.w allocate the frame for this method (first word of which was allocated by the second pushfq above)
             //asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
 
             //asm.subq(ARMV7.r13, frameSize - 8);
-	    asm.subq(ARMV7.r13,frameSize - 8);
+            asm.subq(ARMV7.r13,frameSize - 8);
 
             // save all the callee save registers
-            asm.save(csl, frameToCSA);
+            asm.save(csl, frameToCSA); // NOTE our save/restore trashes r12 ... that is why we push r12 
 
             // Now that we have saved all general purpose registers (including the scratch register),
             // store the value of the latch register from the thread locals into the trap frame
             //asm.movq(scratch, new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_LATCH_REGISTER.offset));
-
-            // APN being a bit lazy here, might be better to have a setupRegister ...#
-            // also need to encode another str instruction in the assembler ...
-            // ldm/stm not best way
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_LATCH_REGISTER.offset));
-
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameToCSA + csl.offsetOf(latch)), scratch);
-            // scratch has the value we want and we move that value to r0
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_LATCH_REGISTER.offset));
+            asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(),  frameToCSA + csl.offsetOf(latch)));
+            asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12,0);
 
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, asm.scratchRegister); // move it to r0
-            // APN we want to store the value in r0 into the address specified by scratch.
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameToCSA + csl.offsetOf(latch)));
-            asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, asm.scratchRegister, 0);
+            // r8 has the value we want
             // write the return address pointer to the end of the frame
             //asm.movq(scratch, new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, asm.scratchRegister); // move it to r0
-            //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize), scratch);
+            asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize));
-            asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, ARMV7.r12, 0);
-
+            asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12,0);
 
             // load the trap number from the thread locals into the first parameter register
             //asm.movq(args[0].asRegister(), new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_NUMBER.offset));
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue()));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(),TRAP_NUMBER.offset));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, args[0].asRegister(), ARMV7.r12, 0);
 
             // also save the trap number into the trap frame
@@ -888,8 +877,7 @@ public class Stubs {
 
             // load the trap frame pointer into the second parameter register
             //asm.leaq(args[1].asRegister(), new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameToCSA));
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameToCSA));
-            asm.ldr(ARMV7Assembler.ConditionFlag.Always, args[1].asRegister(), asm.scratchRegister, 0);
+            asm.leaq(args[1].asRegister(),new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameToCSA));
 
             // load the fault address from the thread locals into the third parameter register
             //asm.movq(args[2].asRegister(), new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_FAULT_ADDRESS.offset));
@@ -910,6 +898,9 @@ public class Stubs {
             // my understanding is that normal handler code will do this?
             // Will r14 be correctly set to the appropriate return address?
             //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
+            asm.pop(ARMV7Assembler.ConditionFlag.Always, 1<<12);// pops flags so we need to do ...
+            asm.msrWriteAPSR(ARMV7Assembler.ConditionFlag.Always,ARMV7.r12);
+            asm.pop(ARMV7Assembler.ConditionFlag.Always, 1<<12); // POP scratch
             asm.ret(0);
 
             byte[] code = asm.codeBuffer.close(true);

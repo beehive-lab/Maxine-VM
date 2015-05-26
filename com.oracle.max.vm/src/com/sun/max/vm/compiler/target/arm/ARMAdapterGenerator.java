@@ -104,7 +104,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             @Override
             public int callOffsetInPrologue() {
-                return 0;
+                return 4;
             }
 
             @Override
@@ -334,7 +334,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             }
         }
 
-        private static final int PROLOGUE_SIZE = 16; /// determined experimentally12; // setupScratch with movw movt and then the branch?
+        private static final int PROLOGUE_SIZE = 20; /// determined experimentally12; // setupScratch with movw movt and then the branch?
 
         public Baseline2Opt() {
             super(Adapter.Type.BASELINE2OPT);
@@ -364,6 +364,8 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             if (adapter == null) {
                 asm.nop(PROLOGUE_SIZE);
             } else {
+            	asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.encoding);
+
                 asm.call();
 		//System.out.println("SIZE " + asm.codeBuffer.position());
                 asm.align(PROLOGUE_SIZE);
@@ -401,6 +403,10 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // APN TODO this is broken for now we need just to get it to compile then fix all stack stuff!
             //asm.movq(rax, new CiAddress(WordUtil.archKind(), rsp.asValue()));
             // APN so is RAX storing the return address?
+	    asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.encoding);
+
+	    asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
+
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r14, ARMV7.r12);
 
@@ -444,6 +450,11 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13);
             asm.addq(ARMV7.r13,-1*(explicitlyAllocatedFrameSize -4)); // TODO check if the -4 is required
 
+	    Label forever = new Label();
+
+	    asm.bind(forever);
+	    asm.mov32BitConstant(ARMV7.r12,0xb00bb00b);
+	    asm.branch(forever);
             // APN what is menat by a RIP slot?
 
             // At this point, the top of the baseline caller's stack (i.e the last arg to the call) is immediately
@@ -521,7 +532,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                     break;
                 case CHAR:
                     asm.setUpScratch(new CiAddress(CiKind.Char, ARMV7.r13.asValue(), offset32));
-                    asm.ldrb(ARMV7Assembler.ConditionFlag.Always, 1, 1, 0, reg, ARMV7.r12, 0);
+                    asm.ldruhw(ARMV7Assembler.ConditionFlag.Always, 1, 0, 0, reg, ARMV7.r12, 0);
                     break;
                 case INT:
                 case WORD:
@@ -628,6 +639,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             @Override
             public void advance(StackFrameCursor cursor) {
                 int ripAdjustment = MaxineVM.isHosted() ? computeRipAdjustment(cursor) : Word.size();
+		Log.println("ADAPTER advance");
                 StackFrameWalker sfw = cursor.stackFrameWalker();
 
                 Pointer ripPointer = cursor.sp().plus(ripAdjustment);
@@ -646,7 +658,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             @HOSTED_ONLY
             public boolean acceptStackFrameVisitor(StackFrameCursor cursor, StackFrameVisitor visitor) {
                 int ripAdjustment = MaxineVM.isHosted() ? computeRipAdjustment(cursor) : Word.size();
-
+		Log.println("ADAPTER: sfv");
                 Pointer ripPointer = cursor.sp().plus(ripAdjustment);
                 Pointer fp = ripPointer.minus(frameSize());
                 return visitor.visitFrame(new AdapterStackFrame(cursor.stackFrameWalker().calleeStackFrame(), cursor.targetMethod(), cursor.vmIP().toPointer(), fp, cursor.sp()));
@@ -703,7 +715,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             }
         }
 
-        static final int PROLOGUE_SIZE = 36; //29; // calculated by running APN ...
+        static final int PROLOGUE_SIZE = 24; //29; // calculated by running APN ...
         static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = 32;// calculated by running 8;
 
         Opt2Baseline() {
@@ -752,6 +764,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             Label end = new Label();
             // shall we branch to this?
             asm.branch(end);
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
 
             // Pad with nops up to the OPT entry point
             asm.align(OPTIMIZED_ENTRY_POINT.offset());
@@ -760,7 +773,8 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             asm.bind(end);
 
             int size = asm.codeBuffer.position();
-            //System.err.println("ASM " + size + " " + PROLOGUE_SIZE);
+            System.err.println("ASM " + size + " " + PROLOGUE_SIZE);
+	
             assert size == PROLOGUE_SIZE;
             copyIfOutputStream(asm.codeBuffer, out);
             return size;
@@ -783,14 +797,15 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             //asm.mov32BitConstant(ARMV7.r12,0x11);
 
             // On entry to the frame, there are 2 return addresses at [RSP] and [RSP + 8].
+		// CORRECTION [RSP +4] for 32bit ARM
             // The one at [RSP] is the return address of the call in the baseline callee's prologue (which is
-            // also the entry to the main body of the baseline callee) and one at [RSP + 8] is the return
+            // also the entry to the main body of the baseline callee) and one at [RSP + 8 ] is the return
             // address in the OPT caller.
-
+	    asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
             // Save the address of the baseline callee's main body in RAX
             //asm.movq(rax, new CiAddress(WordUtil.archKind(), rsp.asValue()));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r14, ARMV7.r12);
+	    asm.ldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r14,ARMV7.r12,0);  // probably superfluous as the push  puts r14 on stack
             // Initial args are in registers, remaining args are on the stack.
             int baselineArgsSize = frameSizeFor(sig.kinds, BASELINE_SLOT_SIZE);
             assert baselineArgsSize % target().stackAlignment == 0 : "BASELINE_SLOT_SIZE should guarantee parametersSize satifies ABI alignment requirements";
@@ -817,7 +832,12 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // Args are now copied to the baseline locations; call the baseline main body
             int callPos = asm.codeBuffer.position();
             //asm.call(rax); // TODO APN was call RAX
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
+	    Label forever = new Label();
+	    asm.bind(forever);
+	    asm.mov32BitConstant(ARMV7.r12,0xbeefbeef);
+	    asm.branch(forever);
+	    asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12,ARMV7.r14);
+            asm.blx(ARMV7.r12);
             int callSize = asm.codeBuffer.position() - callPos;
 
             // The baseline method will have popped the args off the stack so now

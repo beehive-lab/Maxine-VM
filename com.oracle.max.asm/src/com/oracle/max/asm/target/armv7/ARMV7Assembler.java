@@ -1479,6 +1479,21 @@ public void setUpRegister(CiRegister dest,CiAddress addr) {
             mov(ConditionFlag.Always, false, ARMV7.r15, scratchRegister); // UPDATE the PC to the target
         }
     }
+    public final void mrsReadAPSR(ConditionFlag cond,CiRegister reg) {
+       int instruction = (cond.value() & 0xf) << 28;
+       instruction |= 0x10f0000;
+       instruction |= reg.encoding << 12;
+       emitInt(instruction);
+    }
+    public void msrWriteAPSR(ConditionFlag cond,CiRegister reg) {
+         int bits = 3;
+        int instruction = (cond.value() & 0xf) << 28;
+        instruction |= 0x120f000;
+        instruction |= reg.encoding ;
+       instruction |= bits << 18;
+        emitInt(instruction);
+       
+    }
 
     public final void vmrs(ConditionFlag cond, CiRegister dest) {
         int instruction = (cond.value() & 0xf) << 28;

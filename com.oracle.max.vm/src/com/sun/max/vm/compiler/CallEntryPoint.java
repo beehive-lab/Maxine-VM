@@ -129,12 +129,13 @@ public enum CallEntryPoint {
             e.init(0, 0);
         }
     }
-
     static {
         if (vm().compilationBroker.needsAdapters()) {
-            OPTIMIZED_ENTRY_POINT.init(8, 8);
+            //OPTIMIZED_ENTRY_POINT.init(8, 8);
+            OPTIMIZED_ENTRY_POINT.init(8, 12);
             BASELINE_ENTRY_POINT.init(0, 0);
-            VTABLE_ENTRY_POINT.init(OPTIMIZED_ENTRY_POINT);
+            //VTABLE_ENTRY_POINT.init(OPTIMIZED_ENTRY_POINT);
+            VTABLE_ENTRY_POINT.init(8,8);
             // Calls made from a C_ENTRY_POINT method link to the OPTIMIZED_ENTRY_POINT of the callee
             C_ENTRY_POINT.init(0, OPTIMIZED_ENTRY_POINT.offset());
         } else {
