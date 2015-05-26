@@ -22,6 +22,8 @@
  */
 package com.sun.max.vm.compiler.target;
 
+import com.oracle.max.asm.Label;
+
 import com.oracle.max.asm.target.amd64.AMD64;
 import com.oracle.max.asm.target.amd64.AMD64MacroAssembler;
 import com.oracle.max.asm.target.armv7.ARMV7;
@@ -1187,6 +1189,7 @@ public class Stubs {
             Pointer patchAddr = stub.codeAt(pos).toPointer();
             //patchAddr.writeLong(0, runtimeRoutine.address().toLong());
             patchAddr.writeInt(0, runtimeRoutine.address().toInt());
+	    Log.print("DEOPT PATCH ADDR ");Log.println(patchAddr);
         }
     }
 
@@ -1399,33 +1402,15 @@ public class Stubs {
                         break;
 
                     case Float:
+		    case Double:
                         CiRegister tmp = args[4].asRegister();
-                        if (tmp.number <= 15) {
-                            //asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << tmp.number);
-                        } else {
-                            //asm.vpop(ARMV7Assembler.ConditionFlag.Always, tmp, tmp, CiKind.Float, CiKind.Float);
-                        }
+			if(tmp != returnRegister) {
+				asm.movflt(returnRegister,tmp,kind,kind);
+			}
+	       
 
                         break;
 
-                    case Double:
-                        CiRegister tmp2arg4 = args[4].asRegister();
-                            // aPN TODO this is broken beyond belief
-                            // we will be trying to move a FP reg into a core register?
-                            //        assumptions on where to put float/doubles and if they go on the stack or if they
-                            // are in registers is all hazy so dont expect this to work first time.
-                            // Aslo assumptions about index slot sizes are a bit broken and offsets as some types are bigger than
-                            // 32bits --- long/double so multiplying by 4 will give an incorrect offset in general.
-                        // broken we need TWO registers so this needs VLDR!!!!!!!!!
-                        if (tmp2arg4.number <= 15)  {
-                            //asm.pop(ARMV7Assembler.ConditionFlag.Always, (1 << tmp2arg4.number) | (1 << (tmp2arg4.number + 1)));
-                        } else {
-                            //asm.vpop(ARMV7Assembler.ConditionFlag.Always, tmp2arg4, tmp2arg4, CiKind.Double, CiKind.Double);
-                        }
-
-
-
-                        break;
 
                     default:
                         throw new InternalError("Unexpected parameter kind: " + kind);
@@ -1442,6 +1427,7 @@ public class Stubs {
             CiRegister arg0 = args[0].asRegister();
             //asm.movq(arg0, new CiAddress(WordUtil.archKind(), ARMV7.RSP, DEOPT_RETURN_ADDRESS_OFFSET));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, DEOPT_RETURN_ADDRESS_OFFSET));
+	    //asm.ldr(ARMV7Assembler.ConditionFlag.Always, arg0, asm.scratchRegister, 0);
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg0, ARMV7.r12);
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
@@ -1456,31 +1442,31 @@ public class Stubs {
             CiRegister arg3 = args[3].asRegister();
             asm.xorq(arg3, arg3);
 
+            // Allocate 2 extra stack slots ? one in ARM?
+            asm.subq(ARMV7.r13, 8);
+
             // Put original return address into high slot
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.r13, 4), arg0);
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, 4));
-            asm.str(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r13, ARMV7.r13, 0, 0); // might be the wrong way round
-            // Allocate 2 extra stack slots ? one in ARM?
-            asm.subq(ARMV7.r13, 4);
+            asm.str(ARMV7Assembler.ConditionFlag.Always,  arg0,ARMV7.r12, 0); // might be the wrong way round
 
 
             // Put deopt method entry point into low slot
             //CiRegister scratch = registerConfig.getScratchRegister();
             //asm.movq(scratch, 0xFFFFFFFFFFFFFFFFL);
-            asm.movw(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, 0xffff); // is r8 free ?
-            asm.movt(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, 0xffff);
+            asm.movw(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, 0xffff); // is r8 free ?
+            final int patchPos = asm.codeBuffer.position() - 4; // as we have two by 4 byte instructions to patch
+            asm.movt(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, 0xffff);
             // APN ok not sure if we have spare registers
             // if we return? who does the restore?
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP));
+            asm.setUpRegister(ARMV7.r8,new CiAddress(WordUtil.archKind(), ARMV7.RSP));
 
 
-            asm.str(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r8, ARMV7.r8, 0, 0);
-            final int patchPos = asm.codeBuffer.position() - 8; // as we have two by 4 byte instructions to patch
-            //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.RSP), scratch);
-            asm.subq(ARMV7.r13, 4); // 2nd stack slot.
-
-            //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
-            // "return" to deopt routine
+            asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, ARMV7.r8,  0);
+	    Label forever  = new Label();
+	    asm.bind(forever);
+	    asm.mov32BitConstant(ARMV7.r12,0xfeeff00f);
+	    asm.branch(forever);
             asm.ret(0);
 
             String stubName = runtimeRoutineName + "Stub";

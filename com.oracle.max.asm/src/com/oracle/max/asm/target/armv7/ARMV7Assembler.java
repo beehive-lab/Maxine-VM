@@ -57,7 +57,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             // branch(l.position(), false);
             checkConstraint(-0x800000 <= (l.position() - codeBuffer.position()) && (l.position() - codeBuffer.position()) <= 0x7fffff, "branch must be within  a 24bit offset");
             // emitInt(0x06000000 | (l.position() - codeBuffer.position()) | ConditionFlag.Always.value() & 0xf);
-            emitInt(0x0a000000 | (l.position() - codeBuffer.position() - 8) / 4 | ((ConditionFlag.Always.value() & 0xf) << 28));
+            emitInt(0x0a000000 | (0xffffff&((l.position() - codeBuffer.position() - 8) / 4)) | ((ConditionFlag.Always.value() & 0xf) << 28));
 
         } else {
             // By default, forward jumps are always 24-bit displacements, since
