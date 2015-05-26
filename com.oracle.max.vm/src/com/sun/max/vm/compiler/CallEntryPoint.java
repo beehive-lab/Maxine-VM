@@ -22,14 +22,18 @@
  */
 package com.sun.max.vm.compiler;
 
-import static com.sun.max.vm.MaxineVM.*;
+import com.sun.max.annotate.C_FUNCTION;
+import com.sun.max.annotate.FOLD;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.platform.Platform;
+import com.sun.max.unsafe.CodePointer;
+import com.sun.max.vm.compiler.target.TargetMethod;
+import com.sun.max.vm.jni.JniFunctions;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.jni.*;
+import static com.sun.max.vm.MaxineVM.vm;
 
 /**
  * A {@linkplain TargetMethod target method} may have multiple entry points, depending on the calling convention of the
@@ -131,13 +135,21 @@ public enum CallEntryPoint {
     }
     static {
         if (vm().compilationBroker.needsAdapters()) {
-            //OPTIMIZED_ENTRY_POINT.init(8, 8);
-            OPTIMIZED_ENTRY_POINT.init(8, 12);
-            BASELINE_ENTRY_POINT.init(0, 0);
-            //VTABLE_ENTRY_POINT.init(OPTIMIZED_ENTRY_POINT);
-            VTABLE_ENTRY_POINT.init(8,8);
-            // Calls made from a C_ENTRY_POINT method link to the OPTIMIZED_ENTRY_POINT of the callee
-            C_ENTRY_POINT.init(0, OPTIMIZED_ENTRY_POINT.offset());
+            if (Platform.target().arch.is32bit()) {
+                //OPTIMIZED_ENTRY_POINT.init(8, 8);
+                OPTIMIZED_ENTRY_POINT.init(8, 12);
+                BASELINE_ENTRY_POINT.init(0, 0);
+                //VTABLE_ENTRY_POINT.init(OPTIMIZED_ENTRY_POINT);
+                VTABLE_ENTRY_POINT.init(8, 8);
+                // Calls made from a C_ENTRY_POINT method link to the OPTIMIZED_ENTRY_POINT of the callee
+                C_ENTRY_POINT.init(0, OPTIMIZED_ENTRY_POINT.offset());
+            }else {
+                OPTIMIZED_ENTRY_POINT.init(8, 8);
+                BASELINE_ENTRY_POINT.init(0, 0);
+                VTABLE_ENTRY_POINT.init(OPTIMIZED_ENTRY_POINT);
+                // Calls made from a C_ENTRY_POINT method link to the OPTIMIZED_ENTRY_POINT of the callee
+                C_ENTRY_POINT.init(0, OPTIMIZED_ENTRY_POINT.offset());
+            }
         } else {
             CallEntryPoint.initAllToZero();
         }
