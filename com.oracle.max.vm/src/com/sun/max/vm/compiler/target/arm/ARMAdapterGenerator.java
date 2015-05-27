@@ -721,7 +721,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
         Opt2Baseline() {
             super(Adapter.Type.OPT2BASELINE);
             assert BASELINE_ENTRY_POINT.offset() == 0;
-            assert OPTIMIZED_ENTRY_POINT.offset() == 8;
+            assert OPTIMIZED_ENTRY_POINT.offset() == 20;
         }
 
         @Override

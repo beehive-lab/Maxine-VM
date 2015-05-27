@@ -1828,7 +1828,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         } else {
             moveOp(callAddress, reg.asValue(callAddress.kind), callAddress.kind, null, false);
         }
-        masm.mov32BitConstant(ARMV7.r8, 12);
+        masm.xorq(ARMV7.r8, ARMV7.r8);
         indirectCall(reg, target, info);
     }
 

@@ -198,11 +198,7 @@ public final class ARMTargetMethodUtil {
         }
 
 
-        int disp32 = target.toInt() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toInt() - 8 + 16; // APN 16bytes 4 instructions out?
-        //Log.println("Target: " + target.toInt() + " hex: " + Integer.toHexString(target.toInt()));
-        //Log.println("callsite: " + callSite.toInt() +" hex: " + Integer.toHexString(callSite.toInt()));
-        //Log.println("RIP_CALL_INSTRUCTION_LENGTH: " + RIP_CALL_INSTRUCTION_LENGTH + " hex: " + Integer.toHexString(RIP_CALL_INSTRUCTION_LENGTH));
-        //Log.println("Patching with disp32: " + disp32 + " hex: " + Integer.toHexString(disp32));
+        int disp32 = target.toInt() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toInt() ; // APN 16bytes 4 instructions out?
 
 
         int oldDisp32 = 0;
