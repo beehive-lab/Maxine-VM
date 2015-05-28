@@ -845,7 +845,7 @@ public class Stubs {
             //asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
 
             //asm.subq(ARMV7.r13, frameSize - 8);
-            asm.subq(ARMV7.r13,frameSize - 8);
+            asm.subq(ARMV7.r13,frameSize - 4);
 
             // save all the callee save registers
             asm.save(csl, frameToCSA); // NOTE our save/restore trashes r12 ... that is why we push r12 
@@ -864,7 +864,7 @@ public class Stubs {
             //asm.movq(scratch, new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize+4));// we have sdaved r12 so it is one slot past the end of the frame
             asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12,0);
 
             // load the trap number from the thread locals into the first parameter register
@@ -900,6 +900,7 @@ public class Stubs {
             // my understanding is that normal handler code will do this?
             // Will r14 be correctly set to the appropriate return address?
             //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
+	    asm.addq(ARMV7.r13,frameSize-4); // added
             asm.pop(ARMV7Assembler.ConditionFlag.Always, 1<<12);// pops flags so we need to do ...
             asm.msrWriteAPSR(ARMV7Assembler.ConditionFlag.Always,ARMV7.r12);
             asm.pop(ARMV7Assembler.ConditionFlag.Always, 1<<12); // POP scratch

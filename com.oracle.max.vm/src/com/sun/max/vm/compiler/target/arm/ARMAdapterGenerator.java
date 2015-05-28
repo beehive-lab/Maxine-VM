@@ -716,7 +716,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             }
         }
 
-        static final int PROLOGUE_SIZE = 24; //29; // calculated by running APN ...
+        static final int PROLOGUE_SIZE = 104; //29; // calculated by running APN ...
         static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = 36;// calculated by running 8;
 
         Opt2Baseline() {
