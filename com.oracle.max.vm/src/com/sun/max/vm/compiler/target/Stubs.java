@@ -674,7 +674,7 @@ public class Stubs {
             }
 
             // compute the static trampoline call site
-            CiRegister callSite = registerConfig.getScratchRegister();
+            CiRegister callSite = ARMV7.r8; /// was scratch but we use scratch so use r8
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP));
             //asm.movq(callSite, new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue()));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always,callSite,ARMV7.r12,0); // R12 and call site are the same but it does not matter
@@ -721,11 +721,11 @@ public class Stubs {
             //asm.movq(callSite, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, callSite, asm.scratchRegister,0);
             asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
-            asm.setUpRegister(ARMV7.r8, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
+            asm.setUpRegister(ARMV7.r12, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue()), callSite);
 
             // ok so this should patch the call site address?
-            asm.strImmediate(ARMV7Assembler.ConditionFlag.Always,0,0,0,callSite,ARMV7.r8,0);
+            asm.strImmediate(ARMV7Assembler.ConditionFlag.Always,0,0,0,callSite,ARMV7.r12,0);
             asm.ret(0); // ret(0) is a C3 in X86
 
             String stubName = "strampoline";

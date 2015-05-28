@@ -403,6 +403,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // APN TODO this is broken for now we need just to get it to compile then fix all stack stuff!
             //asm.movq(rax, new CiAddress(WordUtil.archKind(), rsp.asValue()));
             // APN so is RAX storing the return address?
+	    asm.addq(ARMV7.r14,4);
 	    asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.encoding);
 
 	    asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
@@ -583,7 +584,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             @Override
             public int callOffsetInPrologue() {
-                return 8;
+                return 4;
             }
 
             @Override
@@ -716,7 +717,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
         }
 
         static final int PROLOGUE_SIZE = 24; //29; // calculated by running APN ...
-        static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = 32;// calculated by running 8;
+        static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = 36;// calculated by running 8;
 
         Opt2Baseline() {
             super(Adapter.Type.OPT2BASELINE);
@@ -760,6 +761,9 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 return PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;
             }
 
+	    asm.addq(ARMV7.r14,4); // add 4 to the LR so we don push an incorrect address on the stack.
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
+
             // A baseline caller jumps over the call to the OPT2BASELINE adapter
             Label end = new Label();
             // shall we branch to this?
@@ -773,7 +777,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             asm.bind(end);
 
             int size = asm.codeBuffer.position();
-            System.err.println("ASM " + size + " " + PROLOGUE_SIZE);
+            Log.println("ASM " + size + " " + PROLOGUE_SIZE);
 	
             assert size == PROLOGUE_SIZE;
             copyIfOutputStream(asm.codeBuffer, out);

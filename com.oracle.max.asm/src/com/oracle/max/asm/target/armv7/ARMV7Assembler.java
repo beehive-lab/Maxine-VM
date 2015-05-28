@@ -1319,7 +1319,9 @@ public void setUpRegister(CiRegister dest,CiAddress addr) {
     }
 
     public final void int3() {
-        emitInt(0xe1200070);
+        //emitInt(0xe1200070); // this is BKPT
+	emitInt(0xef000000); // replaced with svc 0
+
     }
 
     public final void hlt() {
