@@ -806,6 +806,7 @@ public abstract class T1XCompilation {
         if (template.objectLiterals != null) {
             for (ObjectLiteral literal : template.objectLiterals) {
                 int index = objectLiterals.size();
+		//Log.print("LITERALS "); Log.println(literal.value.toString());
                 objectLiterals.add(literal.value);
                 for (int pos : literal.patchPosns) {
                     int patchPos = pos + buf.position();

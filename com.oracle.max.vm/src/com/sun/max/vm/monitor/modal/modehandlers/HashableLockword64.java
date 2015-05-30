@@ -51,9 +51,9 @@ public class HashableLockword64 extends ModalLockword64 {
     /*
     APN were final (*removed*) to allow initialisation
      */
-    protected static int HASH_FIELD_WIDTH;
-    protected static int HASHCODE_SHIFT;
-    protected static Address HASHCODE_SHIFTED_MASK;
+    protected static final int HASH_FIELD_WIDTH;
+    protected static final int HASHCODE_SHIFT;
+    protected static final Address HASHCODE_SHIFTED_MASK;
 
     static {
         if (Platform.target().arch.is32bit()) {

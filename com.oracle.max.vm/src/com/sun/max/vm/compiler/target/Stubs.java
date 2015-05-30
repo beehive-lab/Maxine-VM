@@ -1031,6 +1031,7 @@ public class Stubs {
 		CiAddress stackAddr = null;
                 CiKind kind = retValue.kind.stackKind();
                 name = "unwind" + kind.name() + "Stub";
+		Log.print("UNWIND ");Log.println(args[3].toString());
                 switch (kind) {
 
                     case Long:
@@ -1342,6 +1343,7 @@ public class Stubs {
              *   mov  [rsp], scratch                           // ... routine into second slot
              *   ret                                           // call deopt method by "returning" to it
              */
+
             CiRegisterConfig registerConfig = registerConfigs.standard;
             CiCalleeSaveLayout csl = registerConfig.csl;
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
@@ -1356,6 +1358,7 @@ public class Stubs {
                 return null;
             }
 
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
             CiKind[] params = CiUtil.signatureToKinds(runtimeRoutine.classMethodActor);
             CiValue[] args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
             if (!kind.isVoid()) {
@@ -1383,23 +1386,17 @@ public class Stubs {
 
                         arg4 =   new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
-                        //asm.ldr(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
-                        //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, returnRegister, ARMV7.r12);
-
-            		asm.ldr(ARMV7Assembler.ConditionFlag.Always, returnRegister, asm.scratchRegister, 0);
-
+            		asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, asm.scratchRegister, 0);
+			// TODO NEEDS TO BE STOREd ON THE STACK
                         break;
 
                     case Long:
-                               // broken needs TWO registers TODO
                         assert args[4].isRegister() == false;
 
                         arg4 =   new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
-                        asm.ldrd(ARMV7Assembler.ConditionFlag.Always,returnRegister,ARMV7.r12,0);
-                        //asm.ldr(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
-                        //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, returnRegister, ARMV7.r12);
-
+                        asm.ldrd(ARMV7Assembler.ConditionFlag.Always,ARMV7.r8,ARMV7.r12,0);
+			// TODO NEEDS TO BE STORED ON THE STACK
                         break;
 
                     case Float:
@@ -1417,7 +1414,6 @@ public class Stubs {
                         throw new InternalError("Unexpected parameter kind: " + kind);
                 }
 
-                //CiRegister arg4 = args[4].asRegister(); // APN we should have a method to load/setup any register
 
 
             }
@@ -1428,8 +1424,8 @@ public class Stubs {
             CiRegister arg0 = args[0].asRegister();
             //asm.movq(arg0, new CiAddress(WordUtil.archKind(), ARMV7.RSP, DEOPT_RETURN_ADDRESS_OFFSET));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, DEOPT_RETURN_ADDRESS_OFFSET));
-	    //asm.ldr(ARMV7Assembler.ConditionFlag.Always, arg0, asm.scratchRegister, 0);
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg0, ARMV7.r12);
+	    asm.ldr(ARMV7Assembler.ConditionFlag.Always, arg0, asm.scratchRegister, 0);
+            //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg0, ARMV7.r12);
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
             //asm.movq(arg1, ARMV7.rsp);
