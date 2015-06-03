@@ -211,17 +211,27 @@ public final class ARMTargetMethodUtil {
 // when it stitches together templates that contain calls.
            // FatalError.unexpected(" invalid patchable call site:  " + targetMethod + "+" + offset + " " +
  //callSite.toHexString());
-            System.err.println("unpatchable call site? " + tm + " "+ callSite.to0xHexString());
+            Log.println("unpatchable call site? " + tm + " "+ callSite.to0xHexString());
         }
 
 
         int disp32 = target.toInt() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toInt() ; // APN 16bytes 4 instructions out?
+        long disp64 = target.toLong() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toLong() ; // APN 16bytes 4 instructions out?
+	int dispcheck = (int) disp64;
+	if (!MaxineVM.isHosted()) {
+		double yy = (double) disp64;
+		Log.print("DISP32 ");Log.println(disp32);
+		Log.print("DISP64 ");Log.println(disp64);
+		Log.print("DISPCHECK ");Log.println(dispcheck);
+	}
+	disp32 = dispcheck;
+	
 
+        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
 
         int oldDisp32 = 0;
 /*        callOffset = callOffset - RIP_CALL_INSTRUCTION_LENGTH;
         disp32 += RIP_CALL_INSTRUCTION_LENGTH;
-        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
 */
         if (MaxineVM.isHosted()) {
             final byte[] code = tm.code();

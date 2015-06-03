@@ -127,7 +127,11 @@ void log_print_char(jchar val) {
 }
 
 void log_print_long(jlong val) {
+#ifdef arm
+	log_print_format("%lld",val);
+#else
 	log_print_format("%ld", val);
+#endif
 }
 
 void log_print_bytes(const jbyte *value, int offset, int len) {
