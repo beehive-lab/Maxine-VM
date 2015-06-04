@@ -119,6 +119,7 @@ public final class CPUSamplingProfiler extends SamplingProfiler {
             super(name);
         }
 
+        @Override
         protected ClassMethodActor getStackTraceGatheringStartMarker(VmThread vmThread) {
             return null;
         }
@@ -131,6 +132,7 @@ public final class CPUSamplingProfiler extends SamplingProfiler {
         }
     }
 
+    @Override
     protected void printSamplesInPeriodUnits(long samples) {
         long milliseconds = samples * samplePeriod;
         printSpacesForLongOfPrintSize(milliseconds, 8);
