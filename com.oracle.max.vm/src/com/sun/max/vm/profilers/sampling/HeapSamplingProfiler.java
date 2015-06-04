@@ -230,6 +230,7 @@ public final class HeapSamplingProfiler extends SamplingProfiler {
         }
     }
 
+    @Override
     protected void printSamplesInPeriodUnits(long samples) {
         long kilobytes = samples * samplePeriod / 1024;
         printSpacesForLongOfPrintSize(kilobytes, 8);
