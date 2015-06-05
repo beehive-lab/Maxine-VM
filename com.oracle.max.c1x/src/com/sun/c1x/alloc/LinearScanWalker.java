@@ -452,7 +452,7 @@ final class LinearScanWalker extends IntervalWalker {
         }
 
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            TTY.println("      splitting at position %d", optimalSplitPos);
+            TTY.println("      splitting at position %d %s", optimalSplitPos, interval.halfToString());
         }
         assert allocator.isBlockBegin(optimalSplitPos) || (optimalSplitPos % 2 == 1) : "split pos must be odd when not on block boundary";
         assert !allocator.isBlockBegin(optimalSplitPos) || (optimalSplitPos % 2 == 0) : "split pos must be even on block boundary";
@@ -1004,7 +1004,6 @@ final class LinearScanWalker extends IntervalWalker {
             return;
         }
         assert registerHint.spillSlot() != null : "must be set when part of interval was spilled";
-
         // modify intervals such that cur gets the same stack slot as registerHint
         // delete use positions to prevent the intervals to get a register at beginning
         interval.setSpillSlot(registerHint.spillSlot());
@@ -1023,7 +1022,7 @@ final class LinearScanWalker extends IntervalWalker {
         }
 
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            TTY.println("      splitParent: %s, insertMoveWhenActivated: %b", interval.splitParent().operandNumber, interval.insertMoveWhenActivated());
+            TTY.println("      splitParent: %s kind: %s index: %s hachode: %s, insertMoveWhenActivated: %b", interval.splitParent().halfToString(),  (interval.spillSlot() != null ? interval.spillSlot().kind : "null"), (interval.spillSlot() != null ? interval.spillSlot().index() : "-1"), (interval.spillSlot() != null ? interval.spillSlot().hashCode() : "-1"), interval.insertMoveWhenActivated());
         }
 
         final CiValue operand = interval.operand;
@@ -1087,7 +1086,6 @@ final class LinearScanWalker extends IntervalWalker {
             insertMove(interval.from(), interval.currentSplitChild(), interval);
         }
         interval.makeCurrentSplitChild();
-
         return result; // true = interval is moved to active list
     }
 
