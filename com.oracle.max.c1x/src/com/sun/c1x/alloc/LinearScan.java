@@ -201,6 +201,16 @@ public final class LinearScan {
         // assign the canonical spill slot of the parent (if a part of the interval
         // is already spilled) or allocate a new spill slot
         if (interval.spillSlot() != null) {
+
+            //TODO
+            // The code below is a hack to fix a non-found yet concurrency (?!) bug in Intervals's spill slots.
+            // Randomly for an unknown reason, the kind of a stack slot changes and does not match the operand's kind.
+            // The code below detects that and revert it back to the its original correct kind.
+            if (interval.kind() != interval.spillSlot().kind) {
+                TTY.println(" Switch kind of spillslot for interval: " + interval.halfToString() + " from kind (spill slot): " + interval.splitParent() + "  to kind (interval): " +
+                                interval.spillSlot().kind + "  index " + interval.spillSlot().index() + "  hashcode " + interval.spillSlot().hashCode());
+                interval.spillSlot().kind = interval.kind();
+            }
             interval.assignLocation(interval.spillSlot());
         } else {
             CiStackSlot slot = allocateSpillSlot(interval.kind());
