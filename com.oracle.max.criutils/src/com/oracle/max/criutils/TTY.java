@@ -33,6 +33,7 @@ import java.util.regex.*;
  */
 public class TTY {
 
+    private static boolean THREAD_ID_PREFIX = false;
     /**
      * Support for thread-local suppression of {@link TTY}.
      */
@@ -134,11 +135,18 @@ public class TTY {
         return out.get();
     }
 
+    private static String printThreadId() {
+        if (THREAD_ID_PREFIX) {
+            return "Thread " + Thread.currentThread().getId() + " ";
+        } else {
+            return "";
+        }
+    }
     /**
      * @see LogStream#print(String)
      */
     public static void print(String s) {
-        out().print(s);
+        out().print(printThreadId() + s);
     }
 
     /**
@@ -187,7 +195,7 @@ public class TTY {
      * @see LogStream#println(String)
      */
     public static void println(String s) {
-        out().println(s);
+        out().println(printThreadId() + s);
     }
 
     /**
@@ -240,11 +248,11 @@ public class TTY {
     }
 
     public static void print(String format, Object... args) {
-        out().printf(format, args);
+        out().printf(printThreadId() + format, args);
     }
 
     public static void println(String format, Object... args) {
-        out().printf(format + "%n", args);
+        out().printf(printThreadId() + format + "%n", args);
     }
 
     public static void fillTo(int i) {
