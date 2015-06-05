@@ -373,7 +373,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             }
             int size = asm.codeBuffer.position();
             if (size != PROLOGUE_SIZE ) {
-		System.out.println("ARMAdapterGenerator ... going to crash " + size + " PROLOGUE_SIZE " + PROLOGUE_SIZE);
+		Log.println("ARMAdapterGenerator ... going to crash " + size + " PROLOGUE_SIZE " + PROLOGUE_SIZE);
 	    }
             assert size == PROLOGUE_SIZE;
             copyIfOutputStream(asm.codeBuffer, out);
@@ -754,7 +754,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             if (adapter == null) {
                 asm.nop(OPTIMIZED_ENTRY_POINT.offset());
                 if(asm.codeBuffer.position() != PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE) {
-			System.out.println("GOING TO CRASH mismatch  PROLOGUE SIZE NOARGS ARMAdapterGenerator " +  asm.codeBuffer.position() + " " + PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE);
+			Log.println("GOING TO CRASH mismatch  PROLOGUE SIZE NOARGS ARMAdapterGenerator " +  asm.codeBuffer.position() + " " + PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE);
 		}
                 assert asm.codeBuffer.position() == PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;
                 copyIfOutputStream(asm.codeBuffer, out);

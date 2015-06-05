@@ -122,6 +122,7 @@ Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean r
   if (address != 0) {
 	  flags |= MAP_FIXED;
   }
+	address = 0x40000000;
   void * result = mmap((void*) address, (size_t) size, prot, flags, -1, 0);
 
 #if log_LOADER

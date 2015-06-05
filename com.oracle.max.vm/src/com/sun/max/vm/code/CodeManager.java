@@ -237,6 +237,8 @@ public abstract class CodeManager {
                 start = Pointer.zero();
             } else {
                 start = currentCodeRegion.allocate(allocationSize, false);
+			                //Log.print("START set to ");Log.println(start);
+
             }
 
             // Allocation in the baseline code region may take another attempt upon contention, after compaction.
@@ -267,6 +269,9 @@ public abstract class CodeManager {
 
         targetMethod.setStart(start);
         targetMethod.setSize(allocationSize);
+        //Log.print("START set again to ");Log.println(start);
+
+
 
         // Initialize the objects in the allocated space so that they appear as a set of contiguous
         // well-formed objects that can be traversed.
@@ -298,6 +303,7 @@ public abstract class CodeManager {
         if (currentCodeRegion == runtimeBaselineCodeRegion) {
             targetMethod.protect();
         }
+	//Log.print("Pointer codeStart set to ");Log.println(codeStart);
 
         if (!MaxineVM.isHosted()) {
             // It is now safe again to perform operations that may block and/or trigger a garbage collection

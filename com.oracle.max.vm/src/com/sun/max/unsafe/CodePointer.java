@@ -46,6 +46,7 @@ import com.sun.max.vm.reference.*;
  */
 public final class CodePointer {
 
+    //private static long baseOffset = (!Platform.target().arch.is32bit() ? 0x1000000000000000L : 0x40000000);
     private static long baseOffset = (Platform.target().arch.is32bit() ? 0x1000000000000000L : 0x40000000);
     private static long BASE_ADDRESS = MaxineVM.isHosted() ? baseOffset : Code.bootCodeRegion().start().toLong();
 
@@ -127,7 +128,7 @@ public final class CodePointer {
         if (isHosted()) {
             return new CodePointer(tag(value));
         }
-        return UnsafeCast.asCodePointer(tag(value));
+        	return UnsafeCast.asCodePointer(tag(value));
     }
 
     @INLINE
@@ -159,7 +160,7 @@ public final class CodePointer {
         if (isHosted()) {
             return tagged;
         }
-        return UnsafeCast.asTaggedLong(this);
+        	return UnsafeCast.asTaggedLong(this);
     }
 
     @INLINE
@@ -167,6 +168,10 @@ public final class CodePointer {
         if (isHosted()) {
             return untag(tagged);
         }
+	if(Platform.target().arch.is32bit()) {
+		return untag((long)UnsafeCast.asInt(this));
+		
+	}
         return untag(UnsafeCast.asLong(this));
     }
 

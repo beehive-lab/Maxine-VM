@@ -1220,6 +1220,7 @@ public abstract class TargetMethod extends MemoryRegion {
         if (pos >= 0 && pos <= code.length) {
             return pos;
         }
+	Log.print ("CODESTART ");Log.print(codeStart.toLong());Log.print( "IP ");Log.println(ip.toLong());
 	Log.print("TargetMethod:posFor -1 ");Log.println(pos);
         return -1;
     }

@@ -46,8 +46,12 @@ public class NearBootRegionCodeManager extends CodeManager {
     @Override
     void initialize() {
         final Address baselineAddress = Code.bootCodeRegion().end().alignUp(Platform.platform().pageSize);
+	Log.print("BASEBASE");Log.println(baselineAddress);
         tryAllocate(runtimeBaselineCodeRegionSize, runtimeBaselineCodeRegion, baselineAddress);
+        Log.print("START ");Log.print(runtimeBaselineCodeRegion.start());Log.print(" SIZE ");Log.println(runtimeBaselineCodeRegion.size());
+
         final Address optAddress = runtimeBaselineCodeRegion.end().alignUp(Platform.platform().pageSize);
+	Log.print("OPTOPT");Log.println(optAddress);
         tryAllocate(runtimeOptCodeRegionSize, runtimeOptCodeRegion, optAddress);
     }
 
