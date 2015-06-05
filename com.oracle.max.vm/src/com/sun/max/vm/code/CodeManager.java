@@ -390,7 +390,7 @@ public abstract class CodeManager {
 
             return runtimeOptCodeRegion;
         }
-	//Log.println("NOT found in any codeRegions");
+	Log.print("NOT found in any codeRegions ");
         Log.println(codePointer);
 
         return null;

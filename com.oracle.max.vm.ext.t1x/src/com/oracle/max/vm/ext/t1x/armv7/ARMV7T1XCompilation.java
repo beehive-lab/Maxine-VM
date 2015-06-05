@@ -514,7 +514,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
       //  int dispPos = buf.position() - 12;
         patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
         asm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
-        asm.str(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,ARMV7.r15,0,0);
+        asm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,0);
 
     }
 
