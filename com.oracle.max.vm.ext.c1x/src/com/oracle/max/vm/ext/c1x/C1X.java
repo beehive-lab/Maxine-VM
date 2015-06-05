@@ -288,16 +288,48 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         return compiler;
     }
 
+   //static String[] faultyClasses = { "com.sun.max.vm.jni.JniFunctions.GetDoubleField(Pointer, JniHandle, FieldID)",
+   //                 "sun.misc.FloatingDecimal.developLongDigits(int, long, long)",
+   //                 "com.sun.max.vm.jni.VMFunctions.GetStackTraceElement(Pointer, JniHandle, int)",
+   //                 "java.util.ResourceBundle.findBundleInCache(ResourceBundle$CacheKey, ResourceBundle$Control)",
+   //                 "com.sun.max.vm.jni.VMFunctions.SetThreadPriority(Pointer, JniHandle, int)",
+   //                 "java.util.zip.Inflater.end(long)", "java.net.URLClassLoader.defineClass(String, Resource)",
+   //                 "com.sun.max.vm.jni.JmmFunctions.GetLastGCStat(Pointer, JniHandle, Pointer)",
+   //                 "com.sun.max.vm.jni.JniFunctions.GetObjectField(Pointer, JniHandle, FieldID)",
+   //                 "sun.misc.NativeSignalHandler.handle0(int, long)",
+   //                 "java.util.zip.ZipFile.getInputStream(ZipEntry)",
+   //                 "com.sun.max.vm.jni.JniFunctions.SetLongArrayRegion(Pointer, JniHandle, int, int, Pointer)",
+   //                 "com.sun.max.vm.jni.JniFunctions.GetDoubleArrayRegion(Pointer, JniHandle, int, int, Pointer)",
+   //                 "sun.misc.NativeSignalHandler.handle0(int, long)",
+   //                 "com.sun.max.vm.jni.JniFunctions.GetShortArrayRegion(Pointer, JniHandle, int, int, Pointer)",
+   //                 "com.sun.max.vm.ext.jvmti.JVMTICallbacks.invokeHeapIterationCallback(Pointer, long, long, Pointer, int, Word)",
+   //                 "com.sun.max.vm.jni.JniFunctions.SetCharArrayRegion(Pointer, JniHandle, int, int, Pointer)"};
+    //public static final Object lock = new Object();
+    //public static final List<String> compiledMethods = new ArrayList<>();
+
     public TargetMethod compile(final ClassMethodActor method, boolean isDeopt, boolean install, CiStatistics stats) {
         CiTargetMethod compiledMethod;
         do {
             DebugInfoLevel debugInfoLevel = method.isTemplate() ? DebugInfoLevel.REF_MAPS : DebugInfoLevel.FULL;
-           // System.out.println(method.compilee());
-            //if (method.compilee().toString().equals("com.oracle.max.vm.ext.t1x.T1X.compile(ClassMethodActor, boolean, boolean, CiStatistics)")) {
-            //    C1XOptions.TraceLinearScanLevel = 4;
+
+
+            //TTY.println(" Thread " + Thread.currentThread().getId() +" Compiling klass: " + method.compilee().toString());
+            //synchronized (lock) {
+            //    for (String cklass : faultyClasses) {
+            //        if (method.compilee().toString().equals(cklass)) {
+            //            C1XOptions.TraceLinearScanLevel = 4;
+            //            compiledMethods.add(method.compilee().toString());
+            //        }
+            //    }
             //}
             compiledMethod = compiler().compileMethod(method, -1, stats, debugInfoLevel).targetMethod();
-            C1XOptions.TraceLinearScanLevel =  0;
+            //synchronized (lock) {
+            //    if (C1XOptions.TraceLinearScanLevel !=0 && compiledMethods.size() == 1) {
+            //        C1XOptions.TraceLinearScanLevel = 0;
+            //    }
+            //    compiledMethods.remove(method.compilee().toString());
+            //}
+
             Dependencies deps = Dependencies.validateDependencies(compiledMethod.assumptions());
             if (deps != Dependencies.INVALID) {
                 if (C1XOptions.PrintTimers) {
