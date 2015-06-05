@@ -167,6 +167,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
 
     public TargetMethod compile(ClassMethodActor method, boolean isDeopt, boolean install, CiStatistics stats) {
         T1X t1x = this;
+	//Log.print("T1XCOMPILE ");Log.println(method.toString());
         if (!MaxineVM.isHosted() && useVMTITemplates(method)) {
             // Use JVMTI templates to create code-related events.
             t1x = vmtiT1X;

@@ -211,14 +211,15 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 assert (srcKind != CiKind.Float);
                 assert (srcKind != CiKind.Double);
                 masm.mov(ConditionFlag.Always, false, dest, src);
-                masm.asr(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.number + 1], src, 31);
+                masm.asr(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.number + 1], dest, 31);
             } else {
                 assert (srcKind != CiKind.Float);
                 assert (srcKind != CiKind.Double);
                 masm.mov(ConditionFlag.Always, false, dest, src);
             }
         } else if (srcKind == CiKind.Int && destKind == CiKind.Long) {
-            masm.asr(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.number + 1], src, 31);
+	    assert(src == dest);
+            masm.asr(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.number + 1], dest, 31);
         }
     }
 
@@ -832,7 +833,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         switch (op.opcode) {
             case I2L:
                 moveRegs(srcRegister, dest.asRegister(), src.kind, dest.kind);
-                masm.asr(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.asRegister().encoding + 1], dest.asRegister(), 31);
+                //masm.asr(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.asRegister().encoding + 1], dest.asRegister(), 31);
                 break;
             case L2I:
                 moveRegs(srcRegister, dest.asRegister(), src.kind, dest.kind);
@@ -1828,7 +1829,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         } else {
             moveOp(callAddress, reg.asValue(callAddress.kind), callAddress.kind, null, false);
         }
-        masm.mov32BitConstant(ARMV7.r8, 8);
+        masm.xorq(ARMV7.r8, ARMV7.r8);
         indirectCall(reg, target, info);
     }
 

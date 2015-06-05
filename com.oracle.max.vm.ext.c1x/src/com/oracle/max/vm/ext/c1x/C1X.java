@@ -309,6 +309,7 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
 
     public TargetMethod compile(final ClassMethodActor method, boolean isDeopt, boolean install, CiStatistics stats) {
         CiTargetMethod compiledMethod;
+	//Log.print("C1XCOMPILE ");Log.println(method.toString());
         do {
             DebugInfoLevel debugInfoLevel = method.isTemplate() ? DebugInfoLevel.REF_MAPS : DebugInfoLevel.FULL;
 

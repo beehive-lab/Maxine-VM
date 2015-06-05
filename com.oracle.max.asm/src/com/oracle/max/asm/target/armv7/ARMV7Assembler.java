@@ -57,7 +57,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             // branch(l.position(), false);
             checkConstraint(-0x800000 <= (l.position() - codeBuffer.position()) && (l.position() - codeBuffer.position()) <= 0x7fffff, "branch must be within  a 24bit offset");
             // emitInt(0x06000000 | (l.position() - codeBuffer.position()) | ConditionFlag.Always.value() & 0xf);
-            emitInt(0x0a000000 | (l.position() - codeBuffer.position() - 8) / 4 | ((ConditionFlag.Always.value() & 0xf) << 28));
+            emitInt(0x0a000000 | (0xffffff&((l.position() - codeBuffer.position() - 8) / 4)) | ((ConditionFlag.Always.value() & 0xf) << 28));
 
         } else {
             // By default, forward jumps are always 24-bit displacements, since
@@ -1319,7 +1319,9 @@ public void setUpRegister(CiRegister dest,CiAddress addr) {
     }
 
     public final void int3() {
-        emitInt(0xe1200070);
+        //emitInt(0xe1200070); // this is BKPT
+	emitInt(0xef000000); // replaced with svc 0
+
     }
 
     public final void hlt() {
@@ -1478,6 +1480,21 @@ public void setUpRegister(CiRegister dest,CiAddress addr) {
             addRegisters(ConditionFlag.Always, false, scratchRegister, ARMV7.r15, scratchRegister, 0, 0);
             mov(ConditionFlag.Always, false, ARMV7.r15, scratchRegister); // UPDATE the PC to the target
         }
+    }
+    public final void mrsReadAPSR(ConditionFlag cond,CiRegister reg) {
+       int instruction = (cond.value() & 0xf) << 28;
+       instruction |= 0x10f0000;
+       instruction |= reg.encoding << 12;
+       emitInt(instruction);
+    }
+    public void msrWriteAPSR(ConditionFlag cond,CiRegister reg) {
+         int bits = 3;
+        int instruction = (cond.value() & 0xf) << 28;
+        instruction |= 0x120f000;
+        instruction |= reg.encoding ;
+       instruction |= bits << 18;
+        emitInt(instruction);
+       
     }
 
     public final void vmrs(ConditionFlag cond, CiRegister dest) {

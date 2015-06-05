@@ -56,16 +56,16 @@ public class LightweightLockword64 extends HashableLockword64 {
      *
      */
 
-    protected static  int RCOUNT_FIELD_WIDTH; // Must be <= 8 (see incrementCount())
-    protected static  int UTIL_FIELD_WIDTH ;
-    protected static  int THREADID_FIELD_WIDTH;
-    protected static  int THREADID_SHIFT;
-    protected static  int UTIL_SHIFT;
-    protected static  int RCOUNT_SHIFT;
-    protected static  Address THREADID_SHIFTED_MASK;
-    protected static  Address UTIL_SHIFTED_MASK;
-    protected static  Address RCOUNT_SHIFTED_MASK;
-    protected static  Address RCOUNT_INC_WORD;
+    protected static  final int RCOUNT_FIELD_WIDTH; // Must be <= 8 (see incrementCount())
+    protected static  final int UTIL_FIELD_WIDTH ;
+    protected static  final int THREADID_FIELD_WIDTH;
+    protected static  final int THREADID_SHIFT;
+    protected static  final int UTIL_SHIFT;
+    protected static  final int RCOUNT_SHIFT;
+    protected static  final Address THREADID_SHIFTED_MASK;
+    protected static  final Address UTIL_SHIFTED_MASK;
+    protected static  final Address RCOUNT_SHIFTED_MASK;
+    protected static  final Address RCOUNT_INC_WORD;
 
     static {
         if (Platform.target().arch.is32bit()) {

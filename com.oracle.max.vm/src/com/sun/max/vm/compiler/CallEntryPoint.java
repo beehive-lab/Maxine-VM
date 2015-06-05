@@ -22,14 +22,18 @@
  */
 package com.sun.max.vm.compiler;
 
-import static com.sun.max.vm.MaxineVM.*;
+import com.sun.max.annotate.C_FUNCTION;
+import com.sun.max.annotate.FOLD;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.platform.Platform;
+import com.sun.max.unsafe.CodePointer;
+import com.sun.max.vm.compiler.target.TargetMethod;
+import com.sun.max.vm.jni.JniFunctions;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.jni.*;
+import static com.sun.max.vm.MaxineVM.vm;
 
 /**
  * A {@linkplain TargetMethod target method} may have multiple entry points, depending on the calling convention of the
@@ -129,14 +133,32 @@ public enum CallEntryPoint {
             e.init(0, 0);
         }
     }
-
     static {
         if (vm().compilationBroker.needsAdapters()) {
-            OPTIMIZED_ENTRY_POINT.init(8, 8);
-            BASELINE_ENTRY_POINT.init(0, 0);
-            VTABLE_ENTRY_POINT.init(OPTIMIZED_ENTRY_POINT);
-            // Calls made from a C_ENTRY_POINT method link to the OPTIMIZED_ENTRY_POINT of the callee
-            C_ENTRY_POINT.init(0, OPTIMIZED_ENTRY_POINT.offset());
+            if (Platform.target().arch.is32bit()) {
+
+        /*
+        RIP_CALL_INSTRUCTION_LENGTH = 16 bytes, ENTRYPOINT IS the push, Start of the CALL is the movw.
+	Adapter call sequence is 20bytes total.
+        The PC at the add is +8
+        push lr CALL TO AN ADAPTER
+        movw    CALLPOS start is the beginning of this instruction
+        movt
+        add r12, r12,PC
+        blx r12 END OF CALL TO AN ADAPTER
+        OPTENTRYPOINT push lr ...
+         */
+                OPTIMIZED_ENTRY_POINT.init(20, 20);
+                BASELINE_ENTRY_POINT.init(0, 0);
+                VTABLE_ENTRY_POINT.init(20, 20);
+                C_ENTRY_POINT.init(0, OPTIMIZED_ENTRY_POINT.offset());
+            }else {
+                OPTIMIZED_ENTRY_POINT.init(8, 8);
+                BASELINE_ENTRY_POINT.init(0, 0);
+                VTABLE_ENTRY_POINT.init(OPTIMIZED_ENTRY_POINT);
+                // Calls made from a C_ENTRY_POINT method link to the OPTIMIZED_ENTRY_POINT of the callee
+                C_ENTRY_POINT.init(0, OPTIMIZED_ENTRY_POINT.offset());
+            }
         } else {
             CallEntryPoint.initAllToZero();
         }
