@@ -511,10 +511,7 @@ public final class Interval {
             assert this.location == null || this.location.isRegister() : "cannot re-assign location for " + this;
             assert location.isStackSlot();
             assert location.kind != CiKind.Illegal;
-            if (location.kind != this.kind) {
-                System.out.println("Location kind, this.kind " + location.kind + " " + this.kind);
-            }
-            assert location.kind == this.kind;
+            assert location.kind == this.kind : "Thread " + Thread.currentThread().getId() + " Interval " + this + " Location kind, this.kind " + location.kind + " " + this.kind;
         }
         this.location = location;
         this.locationHigh = null;
@@ -523,7 +520,6 @@ public final class Interval {
     void assignLocationHigh(CiValue locationHigh) {
         if (locationHigh.isRegister()) {
             assert this.locationHigh == null : "cannot re-assign location for " + this;
-
             if (locationHigh.kind == CiKind.Illegal && kind != CiKind.Illegal) {
                 locationHigh = locationHigh.asRegister().asValue(kind);
             }
@@ -531,10 +527,7 @@ public final class Interval {
             assert this.locationHigh == null || this.locationHigh.isRegister() : "cannot re-assign location for " + this;
             assert locationHigh.isStackSlot();
             assert locationHigh.kind != CiKind.Illegal;
-            if (locationHigh.kind != this.kind) {
-                System.out.println("Location High kind, this.kind " + location.kind + " " + this.kind);
-            }
-            assert locationHigh.kind == this.kind;
+            assert locationHigh.kind == this.kind : "Thread " + Thread.currentThread().getId() + " Interval " + this + " Location kind, this.kind " + locationHigh.kind + " " + this.kind;
         }
         this.locationHigh = locationHigh;
     }
@@ -611,6 +604,7 @@ public final class Interval {
     void setSpillSlot(CiStackSlot slot) {
         Interval parent = splitParent();
         assert parent.spillSlot == null : "connot overwrite existing spill slot";
+        assert slot.kind == this.kind  : "Interval and Spil Slot have different kinds: " + slot.kind + " " + this.kind;
         parent.spillSlot = slot;
     }
 
@@ -1024,9 +1018,9 @@ public final class Interval {
         Interval parent = splitParent();
         Interval result = allocator.createDerivedInterval(parent);
         result.setKind(kind());
-
         result.splitParent = parent;
         result.setLocationHint(parent);
+        assert parent.kind == result.kind : " Splitting intervals Parent kind "+parent.kind + " child parent: " + result.kind;
 
         // insert new interval in children-list of parent
         if (parent.splitChildren.isEmpty()) {
@@ -1190,6 +1184,10 @@ public final class Interval {
         return operandNumber + ":" + operand + (operand.isRegister() ? "" : location) + "[" + from + "," + to + "]";
     }
 
+    public String halfToString() {
+        String location = this.location == null ? "" : "@" + this.location.name();
+        return operandNumber + ":" + operand + (operand.isRegister() ? "" : location) + " kind " + kind;
+    }
     /**
      * Gets the use position information for this interval.
      */
@@ -1240,6 +1238,6 @@ public final class Interval {
             buf.append(usePosList.usePos(i)).append(':').append(usePosList.registerPriority(i));
             prev = usePosList.usePos(i);
         }
-        return buf.append("} spill-state{").append(spillState()).append("}").toString();
+        return buf.append("} spill-state{").append(spillState()).append("}").append(" spill slot kind " + (this.spillSlot!=null ? this.spillSlot.kind : "null")).append(" spill slot index " + (this.spillSlot!=null ? this.spillSlot.index() : "-1")).append(" spill slot hashcode " + (this.spillSlot!=null ? this.spillSlot.hashCode() : "-1")).toString();
     }
 }
