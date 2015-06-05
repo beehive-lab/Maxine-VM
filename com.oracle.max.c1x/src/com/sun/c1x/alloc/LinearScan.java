@@ -207,8 +207,8 @@ public final class LinearScan {
             // Randomly for an unknown reason, the kind of a stack slot changes and does not match the operand's kind.
             // The code below detects that and revert it back to the its original correct kind.
             if (interval.kind() != interval.spillSlot().kind) {
-                TTY.println(" Switch kind of spillslot for interval: " + interval.halfToString() + " from kind (spill slot): " + interval.splitParent() + "  to kind (interval): " +
-                                interval.spillSlot().kind + "  index " + interval.spillSlot().index() + "  hashcode " + interval.spillSlot().hashCode());
+                TTY.println("Warning: Switch kind of spillslot for interval: " + interval.halfToString() + " with split parent:" + interval.splitParent() + " from kind (spill slot): " +
+                                interval.spillSlot().kind + "  to kind (interval): " + interval.kind() + "  index " + interval.spillSlot().index() + "  hashcode " + interval.spillSlot().hashCode());
                 interval.spillSlot().kind = interval.kind();
             }
             interval.assignLocation(interval.spillSlot());
