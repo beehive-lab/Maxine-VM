@@ -106,7 +106,7 @@ public class TupleReferenceMap {
         int lastRefIndex = 0;
         while (iterator.hasPrevious()) {
             int refIndex = iterator.previous();
-            FatalError.check(refIndex > lastRefIndex, "Reference index in tuple reference maps must be ordered");
+            FatalError.check(refIndex >= lastRefIndex, "Reference index in tuple reference maps must be ordered");
             lastRefIndex = refIndex;
             hub.setInt(index, refIndex);
             index++;
