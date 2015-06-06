@@ -35,6 +35,14 @@ Base/loaded-classes.jar
 .project
 .settings/org.eclipse.jdt.core.prefs
 .settings/org.eclipse.jdt.ui.prefs
+# msc
+com.oracle.max.vm.ext.c1xgraal/.factorypath
+com.oracle.max.vm.ext.vma/.factorypath
+com.oracle.max.vm.ext.graal/.factorypath
+com.oracle.max.vma.tools/.factorypath
+mx/eclipse-launches/attach-localhost-8000.launch
+workingsets.xml
+
 
 # switch to regexp syntax
 syntax: regexp
