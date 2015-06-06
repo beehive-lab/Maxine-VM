@@ -109,6 +109,18 @@ static Address check_mmap_result(void *result) {
  * Use PROT_NONE if protNone is true, otherwise set all protection (i.e., allow any type of access).
  */
 Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean reserveSwap, jboolean protNone, int type) {
+  static int attempt = 0;
+  static Address lastAddress = 0x0;   
+
+  if(attempt == 0) { 
+	attempt++;
+	if(address == 0x0) {
+		address = 0x10000000;
+		lastAddress = address;
+	} 
+   }else {
+		address = lastAddress;
+   }
   int flags = MAP_PRIVATE | MAP_ANON;
 #if os_LINUX
   /* For some reason, subsequent calls to mmap to allocate out of the space
@@ -122,7 +134,6 @@ Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean r
   if (address != 0) {
 	  flags |= MAP_FIXED;
   }
-	address = 0x40000000;
   void * result = mmap((void*) address, (size_t) size, prot, flags, -1, 0);
 
 #if log_LOADER
@@ -132,7 +143,10 @@ Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean r
 					protNone==JNI_TRUE ? "none" : "all",
 					result);
 #endif
-  return check_mmap_result(result);
+  //return check_mmap_result(result);
+  address =  check_mmap_result(result);
+  lastAddress = address + size;
+  return address;
 }
 
 

@@ -147,8 +147,6 @@ public abstract class StackFrameWalker {
         current.fp = fp;
         current.isTopFrame = true;
 
-	if(purpose == EXCEPTION_HANDLING) Log.println("WALK EXCEPTION_HANDLING");
-	else if (purpose == REFERENCE_MAP_PREPARING) Log.println("REFERENCE_MAP_PREPARING");
 
         this.purpose = purpose;
         this.currentAnchor = readPointer(LAST_JAVA_FRAME_ANCHOR);
@@ -168,7 +166,6 @@ public abstract class StackFrameWalker {
 
                 checkVmEntrypointCaller(calleeTM, tm);
 
-		Log.println("Walk the frame");
                 // walk the frame
                 if (!walkFrame(current, callee, tm, purpose, context)) {
 
@@ -244,7 +241,6 @@ public abstract class StackFrameWalker {
     private boolean walkFrame(StackFrameCursor current, StackFrameCursor callee, TargetMethod targetMethod, Purpose purpose, Object context) {
         boolean proceed = true;
 	 if (purpose == Purpose.REFERENCE_MAP_PREPARING) {
-            Log.println("WALKING FRAME: REFERENCE_MAP_PREPARING");
             // walk the frame for reference map preparation
             StackReferenceMapPreparer preparer = (StackReferenceMapPreparer) context;
             if (preparer.checkIgnoreCurrentFrame()) {
@@ -257,17 +253,14 @@ public abstract class StackFrameWalker {
                 }
             }
         } else if (purpose == Purpose.EXCEPTION_HANDLING) {
-            Log.println("WALKING FRAME: EXCEPTION_HANDLING");
             // walk the frame for exception handling
             Throwable throwable = ((StackUnwindingContext) context).throwable;
             targetMethod.catchException(current, callee, throwable);
         } else if (MaxineVM.isHosted() && purpose == Purpose.INSPECTING) {
-            Log.println("WALKING FRAME: INSPECTING");
             // walk the frame for inspecting (Java frames)
             StackFrameVisitor visitor = (StackFrameVisitor) context;
             proceed = targetMethod.acceptStackFrameVisitor(current, visitor);
         } else if (purpose == Purpose.RAW_INSPECTING) {
-            Log.println("WALKING FRAME: RAW_INSPECTING");
             // walk the frame for inspect (compiled frames)
             RawStackFrameVisitor visitor = (RawStackFrameVisitor) context;
             proceed = visitor.visitFrame(current, callee);

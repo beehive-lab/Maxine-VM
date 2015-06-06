@@ -151,7 +151,11 @@ public final class CodePointer {
         }
         return UnsafeCast.asCodePointerTagged(value);
     }
+ 
 
+    @INLINE int toTaggedInt() {
+	return UnsafeCast.asTaggedInt(this);
+    }
     /**
      * Get the tagged raw value of a {@code CodePointer}.
      */
@@ -160,6 +164,12 @@ public final class CodePointer {
         if (isHosted()) {
             return tagged;
         }
+
+	if(Platform.target().arch.is32bit()) {
+		long x;
+		x = (long) UnsafeCast.asTaggedInt(this);
+		return x;
+	}
         	return UnsafeCast.asTaggedLong(this);
     }
 

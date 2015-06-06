@@ -95,4 +95,5 @@ public final class UnsafeCast {
     @INTRINSIC(UNSAFE_CAST) public static long                     asLong(CodePointer cp) { return cp.toLong(); }
     @INTRINSIC(UNSAFE_CAST) public static long                     asTaggedLong(CodePointer cp) { return cp.toTaggedLong(); }
     @INTRINSIC(UNSAFE_CAST) public static long                     asInt(CodePointer cp) { return cp.toInt(); }
+    @INTRINSIC(UNSAFE_CAST) public static int                     asTaggedInt(CodePointer cp) { return cp.toTaggedInt(); }
 }

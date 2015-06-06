@@ -476,8 +476,6 @@ Log.print("FIXUP CALL SITE ");Log.print(tm.toString());Log.print(" DISP ");Log.p
         TargetMethod tm = current.targetMethod();
         Pointer sp = current.sp();
         Pointer ripPointer = sp.plus(tm.frameSize());
-	Log.println("STACK  FRAME WALKING ARMTargetMethodUtil: advance");
-	Log.println(tm.toString());
         if (MaxineVM.isHosted()) {
             // Only during a stack walk in the context of the Inspector can execution
             // be anywhere other than at a safepoint.
