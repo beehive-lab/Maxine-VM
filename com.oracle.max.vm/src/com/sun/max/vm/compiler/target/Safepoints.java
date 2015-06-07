@@ -367,7 +367,7 @@ public final class Safepoints {
     public static int safepointPosForCall(int callPos, int callSize) {
         if (platform().isa == ISA.AMD64 || platform().isa == ISA.ARM) {
             return callPos + callSize;
-        } else if (platform().isa == ISA.AARCH64) {
+        } else if (platform().isa == ISA.Aarch64) {
             return callPos + callSize;
         } else {
             throw FatalError.unimplemented();

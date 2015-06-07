@@ -40,7 +40,7 @@ public final class TargetBreakpoint {
             case IA32: {
                 return new byte[] {(byte) 0xCC};
             }
-            case AARCH64: {
+            case Aarch64: {
                 return new byte[] {(byte) 0xCC};
             }
             default: {

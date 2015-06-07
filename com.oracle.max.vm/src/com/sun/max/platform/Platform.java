@@ -165,8 +165,8 @@ public final class Platform {
             } else {
                 throw FatalError.unexpected("Unimplemented stack alignment: " + os);
             }
-        } else if (isa == ISA.AARCH64) {
-            arch = new AARCH64();
+        } else if (isa == ISA.Aarch64) {
+            arch = new Aarch64();
             if (os == OS.LINUX) {
                 // Linux apparently also requires it for functions that pass floating point functions on the stack.
                 // One such function in the Maxine code base is log_print_float() in log.c which passes a float
@@ -547,7 +547,7 @@ public final class Platform {
         map.put("maxve-amd64", new Platform(CPU.AMD64, OS.MAXVE, Ints.K * 8, 32));
         map.put("linux-arm", new Platform(CPU.ARMV7, OS.LINUX, Ints.K * 4, 32));
         map.put("darwin-arm", new Platform(CPU.ARMV7, OS.DARWIN, Ints.K * 4, 32));
-        map.put("linux-aarch64", new Platform(CPU.AARCH64, OS.LINUX, Ints.K * 8, 32));
+        map.put("linux-aarch64", new Platform(CPU.Aarch64, OS.LINUX, Ints.K * 8, 32));
         Supported = Collections.unmodifiableMap(map);
         Default = map.get("linux-amd64");
     }

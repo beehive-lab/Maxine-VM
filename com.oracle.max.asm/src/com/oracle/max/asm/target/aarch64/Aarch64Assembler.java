@@ -5,7 +5,7 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 
-public class AARCH64Assembler extends AbstractAssembler {
+public class Aarch64Assembler extends AbstractAssembler {
     /**
      * The register to which {@link CiRegister#Frame} and {@link CiRegister#CallerFrame} are bound.
      */
@@ -18,7 +18,7 @@ public class AARCH64Assembler extends AbstractAssembler {
      *            {@link CiRegister#CallerFrame} to physical registers. This value can be null if this assembler
      *            instance will not be used to assemble instructions using these logical registers.
      */
-    public AARCH64Assembler(CiTarget target, RiRegisterConfig registerConfig) {
+    public Aarch64Assembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target);
         this.frameRegister = registerConfig == null ? null : registerConfig.getFrameRegister();
     }

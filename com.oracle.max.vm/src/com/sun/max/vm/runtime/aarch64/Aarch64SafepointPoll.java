@@ -36,21 +36,21 @@ import com.sun.max.vm.runtime.*;
  *
  * @see AMD64TrapFrameAccess
  */
-public final class AARCH64SafepointPoll extends SafepointPoll {
+public final class Aarch64SafepointPoll extends SafepointPoll {
 
     /**
      * ATTENTION: must be callee-saved by all C ABIs in use.
      */
-    public static final CiRegister LATCH_REGISTER = AARCH64.r26;
+    public static final CiRegister LATCH_REGISTER = Aarch64.r26;
 
     @HOSTED_ONLY
-    public AARCH64SafepointPoll() {
+    public Aarch64SafepointPoll() {
     }
 
     @HOSTED_ONLY
     @Override
     protected byte[] createCode() {
-        final AARCH64Assembler asm = new AARCH64Assembler(target(), null);
+        final Aarch64Assembler asm = new Aarch64Assembler(target(), null);
         // TODO asm.movq(LATCH_REGISTER, new CiAddress(WordUtil.archKind(), LATCH_REGISTER.asValue()));
         return asm.codeBuffer.close(true);
     }

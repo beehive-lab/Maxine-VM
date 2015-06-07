@@ -4,8 +4,8 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 
-public class AARCH64MacroAssembler extends AARCH64Assembler {
-    public AARCH64MacroAssembler(CiTarget target, RiRegisterConfig registerConfig) {
+public class Aarch64MacroAssembler extends ARMv8Assembler {
+    public Aarch64MacroAssembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target, registerConfig);
     }
 

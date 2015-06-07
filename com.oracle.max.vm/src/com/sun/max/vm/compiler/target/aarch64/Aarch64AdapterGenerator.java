@@ -6,11 +6,11 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
 
 
-public class AARCH64AdapterGenerator extends AdapterGenerator {
+public class Aarch64AdapterGenerator extends AdapterGenerator {
 
     final CiRegister scratch;
 
-    public AARCH64AdapterGenerator(Adapter.Type adapterType) {
+    public Aarch64AdapterGenerator(Adapter.Type adapterType) {
         super(adapterType);
         scratch = opt.getScratchRegister();
     }

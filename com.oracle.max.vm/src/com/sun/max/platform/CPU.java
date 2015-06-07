@@ -36,8 +36,8 @@ public enum CPU {
     PPC(ISA.PPC, new DataModel(WordWidth.BITS_32, Endianness.BIG, 64), MemoryModel.RelaxedMemoryOrder),
     SPARC(ISA.SPARC, new DataModel(WordWidth.BITS_32, Endianness.BIG, 64), MemoryModel.TotalStoreOrder),
     SPARCV9(ISA.SPARC, new DataModel(WordWidth.BITS_64, Endianness.BIG, 64), MemoryModel.TotalStoreOrder),
-    // jiaqi.liu.cs@gmail.com Add AARCH64 (ARM64) CPU
-    AARCH64(ISA.AARCH64, new DataModel(WordWidth.BITS_64, Endianness.LITTLE, 64), MemoryModel.SequentialConsistency);
+    // jiaqi.liu.cs@gmail.com Add Aarch64 (ARM64) CPU
+    Aarch64(ISA.Aarch64, new DataModel(WordWidth.BITS_64, Endianness.LITTLE, 64), MemoryModel.SequentialConsistency);
     public final ISA isa;
 
     public final DataModel defaultDataModel;

@@ -31,6 +31,7 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.util.*;
 
+import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.*;
@@ -656,6 +657,69 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             final Type type = isInterface ? InterfaceTrampoline : VirtualTrampoline;
             return new Stub(type, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
+        } else if (platform().isa == ISA.Aarch64) {
+            CiRegisterConfig registerConfig = registerConfigs.trampoline;
+            Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
+            CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
+            int frameSize = target().alignFrameSize(csl.size);
+            final int frameToCSA = csl.frameOffsetToCSA;
+
+            for (int i = 0; i < prologueSize; ++i) {
+                asm.nop();
+            }
+
+            // now allocate the frame for this method
+//            asm.subq(AMD64.rsp, frameSize);
+
+            // save the index in the scratch register. This register is then callee-saved
+            // so that the stack walker can find it.
+//            asm.movl(registerConfig.getScratchRegister(), index);
+            if (isHosted() && index == 0) {
+                indexMovInstrPos = asm.codeBuffer.position() -  WordWidth.BITS_32.numberOfBytes;
+            }
+
+
+            // save all the callee save registers
+//            asm.save(csl, frameToCSA);
+
+            CiValue[] args = isInterface ? resolveInterfaceCallArgs : resolveVirtualCallArgs;
+
+            // the receiver is already in the first arg register
+            //asm.movq(locations[0].asRegister(), locations[0].asRegister());
+
+            // load the index into the second arg register
+//            asm.movl(args[1].asRegister(), index);
+
+            // load the return address into the third arg register
+//            asm.movq(args[2].asRegister(), new CiAddress(WordUtil.archKind(), AMD64.rsp.asValue(), frameSize));
+
+//            asm.alignForPatchableDirectCall();
+            int callPos = asm.codeBuffer.position();
+            ClassMethodActor callee = isInterface ? resolveInterfaceCall.classMethodActor : resolveVirtualCall.classMethodActor;
+//            asm.call();
+            int callSize = asm.codeBuffer.position() - callPos;
+
+            // Put the entry point of the resolved method on the stack just below the
+            // return address of the trampoline itself. By adjusting RSP to point at
+            // this second return address and executing a 'ret' instruction, execution
+            // continues in the resolved method as if it was called by the trampoline's
+            // caller which is exactly what we want.
+            CiRegister returnReg = registerConfig.getReturnRegister(WordUtil.archKind());
+//            asm.movq(new CiAddress(WordUtil.archKind(), AMD64.rsp.asValue(), frameSize - 8), returnReg);
+
+            // Restore all parameter registers before returning
+            int registerRestoreEpilogueOffset = asm.codeBuffer.position();
+//            asm.restore(csl, frameToCSA);
+
+            // Adjust RSP as mentioned above and do the 'ret' that lands us in the
+            // trampolined-to method.
+//            asm.addq(AMD64.rsp, frameSize - 8);
+//            asm.ret(0);
+
+            asm.nop(); // dummy
+            byte[] code = asm.codeBuffer.close(true);
+            final Type type = isInterface ? InterfaceTrampoline : VirtualTrampoline;
+            return new Stub(type, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else {
             throw FatalError.unimplemented();
         }
@@ -691,7 +755,7 @@ public class Stubs {
     }
 
     @PLATFORM(cpu = "aarch64")
-    private static void patchStaticTrampolineCallSiteAARCH64(Pointer callSite) {
+    private static void patchStaticTrampolineCallSiteAarch64(Pointer callSite) {
         CodePointer cpCallSite = CodePointer.from(callSite);
 
         final TargetMethod caller = cpCallSite.toTargetMethod();
@@ -818,9 +882,9 @@ public class Stubs {
             String stubName = "strampoline";
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(StaticTrampoline, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
-        } else if (platform().isa == ISA.AARCH64) {
+        } else if (platform().isa == ISA.Aarch64) {
             CiRegisterConfig registerConfig = registerConfigs.trampoline;
-            AARCH64MacroAssembler asm = new AARCH64MacroAssembler(target(), registerConfig);
+            Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
             int frameSize = target().alignFrameSize(csl.size);
             int frameToCSA = csl.frameOffsetToCSA;
@@ -831,7 +895,7 @@ public class Stubs {
 
             // compute the static trampoline call site
             CiRegister callSite = registerConfig.getScratchRegister();
-//            asm.movq(callSite, new CiAddress(WordUtil.archKind(), AARCH64.sp.asValue()));
+//            asm.movq(callSite, new CiAddress(WordUtil.archKind(), ARMv8.sp.asValue()));
             //asm.subq(callSite, AARCH64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
 
 
@@ -842,7 +906,7 @@ public class Stubs {
             // save all the callee save registers
             //asm.save(csl, frameToCSA);
 
-            CriticalMethod patchStaticTrampoline = new CriticalMethod(Stubs.class, "patchStaticTrampolineCallSiteAARCH64", null);
+            CriticalMethod patchStaticTrampoline = new CriticalMethod(Stubs.class, "patchStaticTrampolineCallSiteAarch64", null);
             CiKind[] trampolineParameters = CiUtil.signatureToKinds(patchStaticTrampoline.classMethodActor);
             CiValue[] locations = registerConfig.getCallingConvention(JavaCall, trampolineParameters, target(), false).locations;
 
@@ -1016,11 +1080,11 @@ public class Stubs {
             asm.insertForeverLoop();
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(TrapStub, "trapStub", frameSize, code, callPos, callSize, callee, -1);
-        } else if (platform().isa == ISA.AARCH64) {
+        } else if (platform().isa == ISA.Aarch64) {
             CiRegisterConfig registerConfig = registerConfigs.trapStub;
-            AARCH64MacroAssembler asm = new AARCH64MacroAssembler(target(), registerConfig);
+            Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
-            CiRegister latch = AARCH64SafepointPoll.LATCH_REGISTER;
+            CiRegister latch = Aarch64SafepointPoll.LATCH_REGISTER;
             CiRegister scratch = registerConfig.getScratchRegister();
             int frameSize = platform().target.alignFrameSize(csl.size);
             int frameToCSA = csl.frameOffsetToCSA;
@@ -1257,9 +1321,9 @@ public class Stubs {
             asm.ret(0);
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnwindStub, name, frameSize, code, -1, -1, null, -1);
-        } else if (platform().isa == ISA.AARCH64) {
+        } else if (platform().isa == ISA.Aarch64) {
             CiRegisterConfig registerConfig = MaxineVM.vm().stubs.registerConfigs.standard;
-            AARCH64MacroAssembler asm = new AARCH64MacroAssembler(target(), registerConfig);
+            Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(0);
 
             for (int i = 0; i < prologueSize; ++i) {
@@ -1379,9 +1443,9 @@ public class Stubs {
 
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnrollStub, "unrollStub", frameSize, code, callPos, callSize, callee, -1);
-        } else if (platform().isa == ISA.AARCH64) {
+        } else if (platform().isa == ISA.Aarch64) {
             CiRegisterConfig registerConfig = MaxineVM.vm().stubs.registerConfigs.standard;
-            AARCH64MacroAssembler asm = new AARCH64MacroAssembler(target(), registerConfig);
+            Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(0);
 
             for (int i = 0; i < prologueSize; ++i) {
@@ -1697,10 +1761,10 @@ public class Stubs {
             runtimeInits[runtimeInits.length - 1] = patch;
 
             return stub;
-        } else if (platform().isa == ISA.AARCH64) {
+        } else if (platform().isa == ISA.Aarch64) {
             CiRegisterConfig registerConfig = registerConfigs.standard;
             CiCalleeSaveLayout csl = registerConfig.csl;
-            AARCH64MacroAssembler asm = new AARCH64MacroAssembler(target(), registerConfig);
+            Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(csl == null ? 0 : csl.size);
 
             String runtimeRoutineName = "deoptimize" + kind.name();
@@ -2024,10 +2088,10 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             Type stubType = kind == null ? DeoptStubFromSafepoint : DeoptStubFromCompilerStub;
             return new Stub(stubType, stubName, frameSize, code, callPos, callSize, runtimeRoutine.classMethodActor, -1);
-        } else if (platform().isa == ISA.AARCH64) {
+        } else if (platform().isa == ISA.Aarch64) {
 
             CiCalleeSaveLayout csl = registerConfig.csl;
-            AARCH64MacroAssembler asm = new AARCH64MacroAssembler(target(), registerConfig);
+            Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(csl.size);
             int cfo = frameSize + 8; // Caller frame offset
 
