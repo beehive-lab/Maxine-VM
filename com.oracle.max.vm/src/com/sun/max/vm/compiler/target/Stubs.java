@@ -519,8 +519,8 @@ public class Stubs {
         }
     }
 
-    @PLATFORM(cpu = "aarch64")
-    private static void patchStaticTrampolineCallSiteAARCH64(Pointer callSite) {
+    @PLATFORM(cpu = "armv8")
+    private static void patchStaticTrampolineCallSiteARMv8(Pointer callSite) {
         CodePointer cpCallSite = CodePointer.from(callSite);
 
         final TargetMethod caller = cpCallSite.toTargetMethod();
@@ -620,7 +620,7 @@ public class Stubs {
             // save all the callee save registers
             //asm.save(csl, frameToCSA);
 
-            CriticalMethod patchStaticTrampoline = new CriticalMethod(Stubs.class, "patchStaticTrampolineCallSiteAARCH64", null);
+            CriticalMethod patchStaticTrampoline = new CriticalMethod(Stubs.class, "patchStaticTrampolineCallSiteARMv8", null);
             CiKind[] trampolineParameters = CiUtil.signatureToKinds(patchStaticTrampoline.classMethodActor);
             CiValue[] locations = registerConfig.getCallingConvention(JavaCall, trampolineParameters, target(), false).locations;
 
