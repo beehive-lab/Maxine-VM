@@ -22,8 +22,8 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.asm.target.amd64.AMD64;
+import com.oracle.max.asm.target.armv8.*;
 
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
@@ -217,7 +217,7 @@ public class RegisterConfigs {
 
                 return new RegisterConfigs(standard, n2j, trampoline, template, compilerStub, uncommonTrapStub, trapStub);
             }
-        } else if (platform().isa == ISA.AARCH64) {
+        } else if (platform().isa == ISA.ARMv8) {
             OS os = platform().os;
             if (os == OS.LINUX) {
                 /**
@@ -228,70 +228,70 @@ public class RegisterConfigs {
                  * "voo-graal/graal/graal/com.oracle.graal.hotspot.armv8/src/com/oracle/graal/hotspot/armv8/ARMv8HotSpotRegisterConfig.java"
                  */
                 CiRegister[] allocatable = {
-                    AARCH64.r0,  AARCH64.r1,  AARCH64.r2,  AARCH64.r3,  AARCH64.r4,  AARCH64.r5,  AARCH64.r6,  AARCH64.r7,
-                    AARCH64.r8,  AARCH64.r9,  AARCH64.r10, AARCH64.r11, AARCH64.r12, AARCH64.r13, AARCH64.r14, AARCH64.r15,
-                    /*AARCH64.r16, AARCH64.r17, AARCH64.r18,*/
-                    AARCH64.r19, AARCH64.r20, AARCH64.r21, AARCH64.r22, AARCH64.r23,
-                    AARCH64.r24, AARCH64.r25, AARCH64.r26,
+                    ARMv8.r0,  ARMv8.r1,  ARMv8.r2,  ARMv8.r3,  ARMv8.r4,  ARMv8.r5,  ARMv8.r6,  ARMv8.r7,
+                    ARMv8.r8,  ARMv8.r9,  ARMv8.r10, ARMv8.r11, ARMv8.r12, ARMv8.r13, ARMv8.r14, ARMv8.r15,
+                    /*ARMv8.r16, ARMv8.r17, ARMv8.r18,*/
+                    ARMv8.r19, ARMv8.r20, ARMv8.r21, ARMv8.r22, ARMv8.r23,
+                    ARMv8.r24, ARMv8.r25, ARMv8.r26,
                     //r27:heapBaseRegister, r28:threadRegister, r29:fp(framePointer), r30:linkRegister
-                    /*AARCH64.r27, AARCH64.r28, AARCH64.r29, AARCH64.r30,*/
+                    /*ARMv8.r27, ARMv8.r28, ARMv8.r29, ARMv8.r30,*/
                     //r31:sp||zr
-                    /*AARCH64.r31, AARCH64.sp,  AARCH64.zr,*/
-                    AARCH64.v0,  AARCH64.v1,  AARCH64.v2,  AARCH64.v3,  AARCH64.v4,  AARCH64.v5,  AARCH64.v6,  AARCH64.v7,
-                    AARCH64.v8,  AARCH64.v9,  AARCH64.v10, AARCH64.v11, AARCH64.v12, AARCH64.v13, AARCH64.v14, AARCH64.v15,
-                    AARCH64.v16, AARCH64.v17, AARCH64.v18, AARCH64.v19, AARCH64.v20, AARCH64.v21, AARCH64.v22, AARCH64.v23,
-                    AARCH64.v24, AARCH64.v25, AARCH64.v26, AARCH64.v27, AARCH64.v28, AARCH64.v29, AARCH64.v30, AARCH64.v31
+                    /*ARMv8.r31, ARMv8.sp,  ARMv8.zr,*/
+                    ARMv8.v0,  ARMv8.v1,  ARMv8.v2,  ARMv8.v3,  ARMv8.v4,  ARMv8.v5,  ARMv8.v6,  ARMv8.v7,
+                    ARMv8.v8,  ARMv8.v9,  ARMv8.v10, ARMv8.v11, ARMv8.v12, ARMv8.v13, ARMv8.v14, ARMv8.v15,
+                    ARMv8.v16, ARMv8.v17, ARMv8.v18, ARMv8.v19, ARMv8.v20, ARMv8.v21, ARMv8.v22, ARMv8.v23,
+                    ARMv8.v24, ARMv8.v25, ARMv8.v26, ARMv8.v27, ARMv8.v28, ARMv8.v29, ARMv8.v30, ARMv8.v31
                 };
                 CiRegister[] parameters = {
-                    AARCH64.r0, AARCH64.r1, AARCH64.r2, AARCH64.r3,
-                    AARCH64.r4, AARCH64.r5, AARCH64.r6, AARCH64.r7,
-                    AARCH64.v0, AARCH64.v1, AARCH64.v2, AARCH64.v3,
-                    AARCH64.v4, AARCH64.v5, AARCH64.v6, AARCH64.v7
+                    ARMv8.r0, ARMv8.r1, ARMv8.r2, ARMv8.r3,
+                    ARMv8.r4, ARMv8.r5, ARMv8.r6, ARMv8.r7,
+                    ARMv8.v0, ARMv8.v1, ARMv8.v2, ARMv8.v3,
+                    ARMv8.v4, ARMv8.v5, ARMv8.v6, ARMv8.v7
                 };
                 CiRegister[] allRegistersExceptLatch = {
-                    AARCH64.r0,  AARCH64.r1,  AARCH64.r2,  AARCH64.r3,  AARCH64.r4,  AARCH64.r5,  AARCH64.r6,  AARCH64.r7,
-                    AARCH64.r8,  AARCH64.r9,  AARCH64.r10, AARCH64.r11, AARCH64.r12, AARCH64.r13, AARCH64.r14, AARCH64.r15,
-                    AARCH64.r16, AARCH64.r17, AARCH64.r18,
-                    AARCH64.r19, AARCH64.r20, AARCH64.r21, AARCH64.r22, AARCH64.r23,
-                    AARCH64.r24, AARCH64.r25,
+                    ARMv8.r0,  ARMv8.r1,  ARMv8.r2,  ARMv8.r3,  ARMv8.r4,  ARMv8.r5,  ARMv8.r6,  ARMv8.r7,
+                    ARMv8.r8,  ARMv8.r9,  ARMv8.r10, ARMv8.r11, ARMv8.r12, ARMv8.r13, ARMv8.r14, ARMv8.r15,
+                    ARMv8.r16, ARMv8.r17, ARMv8.r18,
+                    ARMv8.r19, ARMv8.r20, ARMv8.r21, ARMv8.r22, ARMv8.r23,
+                    ARMv8.r24, ARMv8.r25,
                     // r26 is personally defined as latch register
-                    /*AARCH64.r26,*/
+                    /*ARMv8.r26,*/
                     //r27:heapBaseRegister, r28:threadRegister, r29:fp(framePointer), r30:linkRegister
-                    AARCH64.r27, AARCH64.r28, AARCH64.r29, AARCH64.r30,
+                    ARMv8.r27, ARMv8.r28, ARMv8.r29, ARMv8.r30,
                     //r31:sp||zr
-                    AARCH64.r31, AARCH64.sp,  AARCH64.zr,
-                    AARCH64.v0,  AARCH64.v1,  AARCH64.v2,  AARCH64.v3,  AARCH64.v4,  AARCH64.v5,  AARCH64.v6,  AARCH64.v7,
-                    AARCH64.v8,  AARCH64.v9,  AARCH64.v10, AARCH64.v11, AARCH64.v12, AARCH64.v13, AARCH64.v14, AARCH64.v15,
-                    AARCH64.v16, AARCH64.v17, AARCH64.v18, AARCH64.v19, AARCH64.v20, AARCH64.v21, AARCH64.v22, AARCH64.v23,
-                    AARCH64.v24, AARCH64.v25, AARCH64.v26, AARCH64.v27, AARCH64.v28, AARCH64.v29, AARCH64.v30, AARCH64.v31
+                    ARMv8.r31, ARMv8.sp,  ARMv8.zr,
+                    ARMv8.v0,  ARMv8.v1,  ARMv8.v2,  ARMv8.v3,  ARMv8.v4,  ARMv8.v5,  ARMv8.v6,  ARMv8.v7,
+                    ARMv8.v8,  ARMv8.v9,  ARMv8.v10, ARMv8.v11, ARMv8.v12, ARMv8.v13, ARMv8.v14, ARMv8.v15,
+                    ARMv8.v16, ARMv8.v17, ARMv8.v18, ARMv8.v19, ARMv8.v20, ARMv8.v21, ARMv8.v22, ARMv8.v23,
+                    ARMv8.v24, ARMv8.v25, ARMv8.v26, ARMv8.v27, ARMv8.v28, ARMv8.v29, ARMv8.v30, ARMv8.v31
                 };
                 CiRegister[] allRegisters = {
-                    AARCH64.r0,  AARCH64.r1,  AARCH64.r2,  AARCH64.r3,  AARCH64.r4,  AARCH64.r5,  AARCH64.r6,  AARCH64.r7,
-                    AARCH64.r8,  AARCH64.r9,  AARCH64.r10, AARCH64.r11, AARCH64.r12, AARCH64.r13, AARCH64.r14, AARCH64.r15,
-                    AARCH64.r16, AARCH64.r17, AARCH64.r18,
-                    AARCH64.r19, AARCH64.r20, AARCH64.r21, AARCH64.r22, AARCH64.r23,
-                    AARCH64.r24, AARCH64.r25, AARCH64.r26,
+                    ARMv8.r0,  ARMv8.r1,  ARMv8.r2,  ARMv8.r3,  ARMv8.r4,  ARMv8.r5,  ARMv8.r6,  ARMv8.r7,
+                    ARMv8.r8,  ARMv8.r9,  ARMv8.r10, ARMv8.r11, ARMv8.r12, ARMv8.r13, ARMv8.r14, ARMv8.r15,
+                    ARMv8.r16, ARMv8.r17, ARMv8.r18,
+                    ARMv8.r19, ARMv8.r20, ARMv8.r21, ARMv8.r22, ARMv8.r23,
+                    ARMv8.r24, ARMv8.r25, ARMv8.r26,
                     //r27:heapBaseRegister, r28:threadRegister, r29:fp(framePointer), r30:linkRegister
-                    AARCH64.r27, AARCH64.r28, AARCH64.r29, AARCH64.r30,
+                    ARMv8.r27, ARMv8.r28, ARMv8.r29, ARMv8.r30,
                     //r31:sp||zr
-                    AARCH64.r31, AARCH64.sp,  AARCH64.zr,
-                    AARCH64.v0,  AARCH64.v1,  AARCH64.v2,  AARCH64.v3,  AARCH64.v4,  AARCH64.v5,  AARCH64.v6,  AARCH64.v7,
-                    AARCH64.v8,  AARCH64.v9,  AARCH64.v10, AARCH64.v11, AARCH64.v12, AARCH64.v13, AARCH64.v14, AARCH64.v15,
-                    AARCH64.v16, AARCH64.v17, AARCH64.v18, AARCH64.v19, AARCH64.v20, AARCH64.v21, AARCH64.v22, AARCH64.v23,
-                    AARCH64.v24, AARCH64.v25, AARCH64.v26, AARCH64.v27, AARCH64.v28, AARCH64.v29, AARCH64.v30, AARCH64.v31
+                    ARMv8.r31, ARMv8.sp,  ARMv8.zr,
+                    ARMv8.v0,  ARMv8.v1,  ARMv8.v2,  ARMv8.v3,  ARMv8.v4,  ARMv8.v5,  ARMv8.v6,  ARMv8.v7,
+                    ARMv8.v8,  ARMv8.v9,  ARMv8.v10, ARMv8.v11, ARMv8.v12, ARMv8.v13, ARMv8.v14, ARMv8.v15,
+                    ARMv8.v16, ARMv8.v17, ARMv8.v18, ARMv8.v19, ARMv8.v20, ARMv8.v21, ARMv8.v22, ARMv8.v23,
+                    ARMv8.v24, ARMv8.v25, ARMv8.v26, ARMv8.v27, ARMv8.v28, ARMv8.v29, ARMv8.v30, ARMv8.v31
                 };
 
                 CiRegister[] calleeSavedRegisters= {
-                    AARCH64.r19, AARCH64.r20, AARCH64.r21, AARCH64.r22, AARCH64.r23,
-                    AARCH64.r24, AARCH64.r25, AARCH64.r26, AARCH64.r27, AARCH64.r28,
+                    ARMv8.r19, ARMv8.r20, ARMv8.r21, ARMv8.r22, ARMv8.r23,
+                    ARMv8.r24, ARMv8.r25, ARMv8.r26, ARMv8.r27, ARMv8.r28,
                 };
 
                 HashMap<Integer, CiRegister> roleMap = new HashMap<Integer, CiRegister>();
-                roleMap.put(CPU_SP, AARCH64.sp);
-                roleMap.put(CPU_FP, AARCH64.r29);
-                roleMap.put(ABI_SP, AARCH64.sp);
-                roleMap.put(ABI_FP, AARCH64.r29);
-                roleMap.put(LATCH, AARCH64.r26);
+                roleMap.put(CPU_SP, ARMv8.sp);
+                roleMap.put(CPU_FP, ARMv8.r29);
+                roleMap.put(ABI_SP, ARMv8.sp);
+                roleMap.put(ABI_FP, ARMv8.r29);
+                roleMap.put(LATCH, ARMv8.r26);
 
                 /**
                  * The register configuration for a normal Java method.
@@ -299,15 +299,15 @@ public class RegisterConfigs {
                  * as inlining is expected to reduce the call overhead sufficiently.
                  */
                 CiRegisterConfig standard = new CiRegisterConfig(
-                                AARCH64.sp,          // frame
-                                AARCH64.r0,          // integral return value
-                                AARCH64.v0,          // floating point return value
-                                AARCH64.r16,         // scratch
+                                ARMv8.sp,          // frame
+                                ARMv8.r0,          // integral return value
+                                ARMv8.v0,          // floating point return value
+                                ARMv8.r16,         // scratch
                                 allocatable,         // allocatable
                                 allocatable,         // caller save
                                 parameters,          // parameter registers
                                 null,                // no callee save
-                                AARCH64.allRegisters,// all AMD64 registers
+                                ARMv8.allRegisters,// all AMD64 registers
                                 roleMap);            // VM register role map
 
 
@@ -320,35 +320,35 @@ public class RegisterConfigs {
                 standard.stackArg0Offsets[RuntimeCall.ordinal()] = javaStackArg0Offset;
                 standard.stackArg0Offsets[NativeCall.ordinal()] = nativeStackArg0Offset;
 
-                setNonZero(standard.getAttributesMap(), AARCH64.r26, AARCH64.sp, AARCH64.fp);
+                setNonZero(standard.getAttributesMap(), ARMv8.r26, ARMv8.sp, ARMv8.fp);
 
                 CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, allRegistersExceptLatch));
-                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, AARCH64.allRegisters));
-                CiRegisterConfig trapStub = new CiRegisterConfig(standard,  new CiCalleeSaveLayout(0, 34*8+32*16, 8, AARCH64.allRegisters));
+                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, ARMv8.allRegisters));
+                CiRegisterConfig trapStub = new CiRegisterConfig(standard,  new CiCalleeSaveLayout(0, 34*8+32*16, 8, ARMv8.allRegisters));
                 CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8,
-                                AARCH64.r0, AARCH64.r1, AARCH64.r2, AARCH64.r3, AARCH64.r4, AARCH64.r5, AARCH64.r6, AARCH64.r7, // parameters
-                                AARCH64.fp,   // must be preserved for baseline compiler ???frame pointer???
+                                ARMv8.r0, ARMv8.r1, ARMv8.r2, ARMv8.r3, ARMv8.r4, ARMv8.r5, ARMv8.r6, ARMv8.r7, // parameters
+                                ARMv8.fp,   // must be preserved for baseline compiler ???frame pointer???
                     standard.getScratchRegister(),    // dynamic dispatch index is saved here for stack frame walker
-                    AARCH64.v0, AARCH64.v1, AARCH64.v2, AARCH64.v3, AARCH64.v4, AARCH64.v5, AARCH64.v6, AARCH64.v7   // parameters
+                    ARMv8.v0, ARMv8.v1, ARMv8.v2, ARMv8.v3, ARMv8.v4, ARMv8.v5, ARMv8.v6, ARMv8.v7   // parameters
                 ));
 
                 CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 8, calleeSavedRegisters));
                 n2j.stackArg0Offsets[JavaCallee.ordinal()] = nativeStackArg0Offset;
 
-                roleMap.put(ABI_FP, AARCH64.r29);
+                roleMap.put(ABI_FP, ARMv8.r29);
                 CiRegisterConfig template = new CiRegisterConfig(
-                                AARCH64.r29,          // frame???
-                                AARCH64.r0,          // integral return value
-                                AARCH64.v0,          // floating point return value
-                                AARCH64.r16,         // scratch
+                                ARMv8.r29,          // frame???
+                                ARMv8.r0,          // integral return value
+                                ARMv8.v0,          // floating point return value
+                                ARMv8.r16,         // scratch
                                 allocatable,         // allocatable
                                 allocatable,         // caller save
                                 parameters,          // parameter registers
                                 null,                // no callee save
-                                AARCH64.allRegisters,        // all AMD64 registers
+                                ARMv8.allRegisters,        // all AMD64 registers
                                 roleMap);            // VM register role map
 
-                setNonZero(template.getAttributesMap(), AARCH64.r26, AARCH64.sp, AARCH64.r29);
+                setNonZero(template.getAttributesMap(), ARMv8.r26, ARMv8.sp, ARMv8.r29);
                 return new RegisterConfigs(standard, n2j, trampoline, template, compilerStub, uncommonTrapStub, trapStub);
             }
         }

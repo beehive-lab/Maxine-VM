@@ -1,4 +1,4 @@
-package com.oracle.max.asm.target.aarch64;
+package com.oracle.max.asm.target.armv8;
 
 import static com.oracle.max.cri.intrinsics.MemoryBarriers.*;
 import static com.sun.cri.ci.CiRegister.RegisterFlag.*;
@@ -8,7 +8,7 @@ import com.sun.cri.ci.CiArchitecture.*;
 import com.sun.cri.ci.CiRegister.*;
 
 
-public class AARCH64 extends CiArchitecture {
+public class ARMv8 extends CiArchitecture {
 
     // General purpose CPU registers
     // r0 - r7 -> arg0 - arg7
@@ -132,8 +132,8 @@ public class AARCH64 extends CiArchitecture {
         return new CiRegister(firstFpRegNumber + nr, nr, 16, "v" + nr, FPU);
     }
 
-    public AARCH64() {
-        super("AARCH64",                        //architecture name
+    public ARMv8() {
+        super("ARMv8",                        //architecture name
               8,                                //word size (8 bytes)
               ByteOrder.LittleEndian,           //endianness
               allRegisters,                     //available registers

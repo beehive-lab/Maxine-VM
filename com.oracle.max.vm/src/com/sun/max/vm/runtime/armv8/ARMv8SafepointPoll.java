@@ -20,12 +20,12 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.sun.max.vm.runtime.aarch64;
+package com.sun.max.vm.runtime.armv8;
 
 import static com.sun.max.platform.Platform.*;
 
-import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.asm.target.armv8.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.compiler.*;
@@ -36,21 +36,21 @@ import com.sun.max.vm.runtime.*;
  *
  * @see AMD64TrapFrameAccess
  */
-public final class AARCH64SafepointPoll extends SafepointPoll {
+public final class ARMv8SafepointPoll extends SafepointPoll {
 
     /**
      * ATTENTION: must be callee-saved by all C ABIs in use.
      */
-    public static final CiRegister LATCH_REGISTER = AARCH64.r26;
+    public static final CiRegister LATCH_REGISTER = ARMv8.r26;
 
     @HOSTED_ONLY
-    public AARCH64SafepointPoll() {
+    public ARMv8SafepointPoll() {
     }
 
     @HOSTED_ONLY
     @Override
     protected byte[] createCode() {
-        final AARCH64Assembler asm = new AARCH64Assembler(target(), null);
+        final ARMv8Assembler asm = new ARMv8Assembler(target(), null);
         // TODO asm.movq(LATCH_REGISTER, new CiAddress(WordUtil.archKind(), LATCH_REGISTER.asValue()));
         return asm.codeBuffer.close(true);
     }
