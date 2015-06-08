@@ -51,6 +51,14 @@ import com.sun.max.vm.type.Kind;
 import com.sun.max.vm.type.SignatureDescriptor;
 
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.Map;
+
+import java.util.concurrent.atomic.AtomicInteger;
+
 
 //import java.io.PrintWriter;
 import java.util.ArrayList;
@@ -66,6 +74,13 @@ import static com.sun.max.vm.stack.JVMSFrameLayout.JVMS_SLOT_SIZE;
 
 public class ARMV7T1XCompilation extends T1XCompilation {
 
+
+    public static AtomicInteger methodCounter = new AtomicInteger(536870912);
+    private static final Object fileLock = new Object();
+    private static File file;
+
+    private static boolean DEBUG_METHODS = true;
+
     protected final ARMV7MacroAssembler asm;
     final PatchInfoARMV7 patchInfo;
     public static boolean FLOATDOUBLEREGISTERS = true;
@@ -75,6 +90,36 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         asm = new ARMV7MacroAssembler(target(), null);
         buf = asm.codeBuffer;
         patchInfo = new PatchInfoARMV7();
+    }
+
+    static {
+        initDebugMethods();
+        }
+
+   public static void initDebugMethods() {
+        if ((file = new File(getDebugMethodsPath() + "debugT1Xmethods")).exists()) {
+            file.delete();
+        }
+            file = new File(getDebugMethodsPath() + "debugT1Xmethods");
+    }
+    public static void writeDebugMethod(String name, int index) throws Exception {
+        synchronized (fileLock) {
+            try {
+                assert DEBUG_METHODS;
+                FileWriter fw = new FileWriter(file.getAbsoluteFile(), true);
+                BufferedWriter bw = new BufferedWriter(fw);
+                bw.write(index + " " + name + "\n");
+                bw.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+    public static String getDebugMethodsPath() {
+        return System.getenv("MAXINE_HOME") + "/maxine-tester/junit-tests/";
+
     }
 
     @Override
@@ -455,7 +500,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     private int framePointerAdjustment() {
         // TODO APN this is required for ARMv7 but it is incorrect at the moment with fakedFrame
-        final int enterSize = frame.frameSize() - Word.size();
+        final int enterSize = frame.frameSize();// Whe we push we adjust the stack ptr - Word.size();
         return enterSize - frame.sizeOfNonParameterLocals();
     }
 
@@ -491,6 +536,15 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 // APN guessing rax is return address.
                 // asm.movq(new CiAddress(WordUtil.archKind(), RSP, -offset), rax);
             }
+        }
+        if (DEBUG_METHODS) {
+              int a = methodCounter.incrementAndGet();
+               asm.mov32BitConstant(ARMV7.r12, a);
+               try {
+                   writeDebugMethod(method.holder() + "." + method.name(), a);
+                   } catch (Exception e) {
+                   e.printStackTrace();
+                   }
         }
         return adapter;
     }

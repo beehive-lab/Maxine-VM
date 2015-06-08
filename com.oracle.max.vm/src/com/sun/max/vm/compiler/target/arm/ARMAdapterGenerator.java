@@ -403,13 +403,13 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // APN TODO this is broken for now we need just to get it to compile then fix all stack stuff!
             //asm.movq(rax, new CiAddress(WordUtil.archKind(), rsp.asValue()));
             // APN so is RAX storing the return address?
-	    asm.addq(ARMV7.r14,4);
+	    //asm.addq(ARMV7.r14,4);
 	    asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.encoding);
 
 	    asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
 
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r14, ARMV7.r12);
+            //asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
+            //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r14, ARMV7.r12);
 
             // Compute the number of stack args needed for the call (i.e. the args that won't
             // be put into registers)
@@ -497,7 +497,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             String description = Type.BASELINE2OPT + "-Adapter" + sig;
             // RSP has been restored to the location holding the address of the OPT main body.
             // The adapter must return to the baseline caller whose RIP is one slot higher up.
-            asm.addq(ARMV7.r13, 8);
+            asm.addq(ARMV7.r13, 4);// WAS 8
 
             assert WordWidth.signedEffective(baselineArgsSize).lessEqual(WordWidth.BITS_16);
             // Retract the stack pointer back to its position before the first argument on the caller's stack.
@@ -584,7 +584,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             @Override
             public int callOffsetInPrologue() {
-                return 4;
+                return 8; // push LR and branch first ...
             }
 
             @Override
@@ -716,7 +716,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             }
         }
 
-        static final int PROLOGUE_SIZE = 104; //29; // calculated by running APN ...
+        static final int PROLOGUE_SIZE = 72; //29; // calculated by running APN ...
         static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = 36;// calculated by running 8;
 
         Opt2Baseline() {
@@ -761,14 +761,12 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 return PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;
             }
 
-	    asm.addq(ARMV7.r14,4); // add 4 to the LR so we don push an incorrect address on the stack.
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
 
             // A baseline caller jumps over the call to the OPT2BASELINE adapter
             Label end = new Label();
             // shall we branch to this?
             asm.branch(end);
-            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
 
             // Pad with nops up to the OPT entry point
             asm.align(OPTIMIZED_ENTRY_POINT.offset());
