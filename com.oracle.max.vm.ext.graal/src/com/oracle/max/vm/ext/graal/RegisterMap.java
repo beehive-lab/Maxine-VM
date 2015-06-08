@@ -41,6 +41,8 @@ public class RegisterMap {
                 return com.oracle.graal.amd64.AMD64.class;
             } else if (klass == com.oracle.graal.amd64.AMD64.class) {
                 return com.oracle.max.asm.target.amd64.AMD64.class;
+            } else if (klass == com.oracle.graal.armv8.ARMv8.class) {
+                return com.oracle.max.asm.target.armv8.ARMv8.class;
             } else {
                 return correspondingFieldClass(klass);
             }
@@ -72,6 +74,7 @@ public class RegisterMap {
 
     static {
         MapUtil.populate(com.oracle.graal.amd64.AMD64.class, Register.class, new Handler());
+        MapUtil.populate(com.oracle.graal.armv8.ARMv8.class, Register.class, new Handler());
         MapUtil.populate(Register.class, Register.class, new Handler());
     }
 
