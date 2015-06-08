@@ -269,7 +269,8 @@ public abstract class CodeManager {
 
         targetMethod.setStart(start);
         targetMethod.setSize(allocationSize);
-        //Log.print("START set again to ");Log.println(start);
+        Log.print("START set again to ");Log.println(start);
+
 
 
 
@@ -303,7 +304,7 @@ public abstract class CodeManager {
         if (currentCodeRegion == runtimeBaselineCodeRegion) {
             targetMethod.protect();
         }
-	//Log.print("Pointer codeStart set to ");Log.println(codeStart);
+	Log.print("Pointer codeStart set to ");Log.println(codeStart);
 
         if (!MaxineVM.isHosted()) {
             // It is now safe again to perform operations that may block and/or trigger a garbage collection
@@ -311,12 +312,18 @@ public abstract class CodeManager {
                 SafepointPoll.enable();
             }
             if (!inHeap) {
+	                Log.println("NOTINHEAP");
+
                 Heap.enableAllocationForCurrentThread();
             }
         }
 
         if (currentCodeRegion != null) {
+		            Log.println("ADDEDTOCURRCODEREGI");
+
             currentCodeRegion.add(targetMethod);
+	Log.println(targetMethod.toString());
+	Log.println(targetMethod.start());
         }
     }
 

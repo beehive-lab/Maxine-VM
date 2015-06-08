@@ -546,6 +546,7 @@ public final class Heap {
      */
     public static boolean isInBootImage(Object object) {
         Pointer origin = Reference.fromJava(object).toOrigin();
+	Log.println(origin);
         return bootHeapRegion.contains(origin) || Code.contains(origin) || ImmortalHeap.contains(origin);
     }
 

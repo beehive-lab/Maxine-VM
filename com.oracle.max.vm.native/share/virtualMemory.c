@@ -108,10 +108,10 @@ static Address check_mmap_result(void *result) {
  * Use MAP_NORESERVE if reserveSwap is false
  * Use PROT_NONE if protNone is true, otherwise set all protection (i.e., allow any type of access).
  */
-Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean reserveSwap, jboolean protNone, int type) {
   static int attempt = 0;
   static Address lastAddress = 0x0;   
 
+Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean reserveSwap, jboolean protNone, int type) {
   if(attempt == 0) { 
 	attempt++;
 	if(address == 0x0) {
@@ -151,7 +151,22 @@ Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean r
 
 
 Address virtualMemory_mapFile(Size size, jint fd, Size offset) {
-	return check_mmap_result(mmap(0, (size_t) size, PROT, MAP_PRIVATE, fd, (off_t) offset));
+	
+	//return check_mmap_result(mmap(0, (size_t) size, PROT, MAP_PRIVATE, fd, (off_t) offset));
+  Address address = 0x0;
+  if(attempt == 0) { 
+	attempt++;
+	if(address == 0x0) {
+		address = 0x10000000;
+		lastAddress = address;
+	} 
+   }else {
+		address = lastAddress;
+   }
+	void *result =  mmap((void *)address, (size_t) size, PROT, MAP_PRIVATE, fd, (off_t) offset);
+  address =  check_mmap_result(result);
+  lastAddress = address + size;
+  return address;
  }
 
 JNIEXPORT jlong JNICALL
@@ -165,10 +180,12 @@ Address virtualMemory_mapFileIn31BitSpace(jint size, jint fd, Size offset) {
 
 JNIEXPORT jlong JNICALL
 Java_com_sun_max_memory_VirtualMemory_virtualMemory_1mapFileIn31BitSpace(JNIEnv *env, jclass c, jint size, jint fd, jlong offset) {
+	printf("31bitmmap\n");
     return virtualMemory_mapFileIn31BitSpace(size, fd, (Size) offset);
 }
 
 Address virtualMemory_mapFileAtFixedAddress(Address address, Size size, jint fd, Size offset) {
+	printf("fixedmmap %x\n",address);
     return check_mmap_result(mmap((void *) address, (size_t) size, PROT, MAP_PRIVATE | MAP_FIXED, fd, (off_t) offset));
 }
 
@@ -214,6 +231,7 @@ Address virtualMemory_deallocate(Address start, Size size, int type) {
 
 boolean virtualMemory_allocateAtFixedAddress(Address address, Size size, int type) {
 #if os_SOLARIS || os_DARWIN  || os_LINUX
+    printf("ALLOCFIXEDADDR\n");
     return check_mmap_result(mmap((void *) address, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_FIXED, -1, (off_t) 0)) != ALLOC_FAILED;
 #elif os_MAXVE
     return (Address) maxve_virtualMemory_allocateAtFixedAddress((unsigned long)address, size, type) != ALLOC_FAILED;

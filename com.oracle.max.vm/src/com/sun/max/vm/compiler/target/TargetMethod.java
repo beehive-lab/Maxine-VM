@@ -456,6 +456,14 @@ public abstract class TargetMethod extends MemoryRegion {
         return CodePointer.from(codeStart.plus(pos));
     }
 
+
+    public final CodePointer dummy(int pos) {
+	Log.println(codeStart.plus(pos));
+	Log.println(CodePointer.from(codeStart.plus(pos)));
+	return CodePointer.from(codeStart.plus(pos));
+
+   }
+
     @INLINE
     public final Address oldStart() {
         return oldStart;
@@ -1000,9 +1008,17 @@ public abstract class TargetMethod extends MemoryRegion {
                     final TargetMethod callee = getTargetMethod(currentDirectCallee);
                     if (callee == null || (!Code.bootCodeRegion().contains(callee.codeStart) && !(callee instanceof Adapter))) {
                         linkedAll = false;
+			if(callee == null) Log.println("CALEENULL");
+			else Log.print("CALLEENONULL ");Log.print(callee.toString());Log.print(" START ");Log.println(callee.start());
+			Log.println("PATCHSTATIC");
                         patchStaticTrampoline(safepointIndex, offset);
                     } else {
                         int callPos = safepoints.causePosAt(safepointIndex);
+			if(callee == null) Log.println("CALEENULL");
+			else {Log.print("CALLEENONULL ");Log.print(callee.toString());Log.print(" START ");Log.print(callee.start());Log.print(" OFF ");Log.println(offset);}
+			 Log.print("CODESTART ");Log.println(callee.codeStart());
+                        Log.print("START ");Log.println(callee.start());
+			Log.print("SEEDUMMY ");Log.println(callee.dummy(offset));
                         fixupCallSite(callPos, callee.codeAt(offset));
                     }
                 }
