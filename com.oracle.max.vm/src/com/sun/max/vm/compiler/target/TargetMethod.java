@@ -1009,7 +1009,7 @@ public abstract class TargetMethod extends MemoryRegion {
                     if (callee == null || (!Code.bootCodeRegion().contains(callee.codeStart) && !(callee instanceof Adapter))) {
                         linkedAll = false;
 			if(callee == null) Log.println("CALEENULL");
-			else Log.print("CALLEENONULL ");Log.print(callee.toString());Log.print(" START ");Log.println(callee.start());
+			else {Log.print("CALLEENONULL ");Log.print(callee.toString());Log.print(" START ");Log.println(callee.start());}
 			Log.println("PATCHSTATIC");
                         patchStaticTrampoline(safepointIndex, offset);
                     } else {
