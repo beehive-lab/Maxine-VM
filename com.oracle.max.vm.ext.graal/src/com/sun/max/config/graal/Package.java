@@ -36,6 +36,7 @@ public class Package extends BootImagePackage {
         super("com.oracle.max.vm.ext.graal.**",
               "com.oracle.graal.alloc.*",
               "com.oracle.graal.amd64.*",
+              "com.oracle.graal.armv8.*",
               "com.oracle.graal.api.*",
               "com.oracle.graal.api.code.*",
               "com.oracle.graal.api.meta.*",
