@@ -237,16 +237,16 @@ public class RegisterConfigs {
                     /*ARMv8.r27, ARMv8.r28, ARMv8.r29, ARMv8.r30,*/
                     //r31:sp||zr
                     /*ARMv8.r31, ARMv8.sp,  ARMv8.zr,*/
-                    ARMv8.v0,  ARMv8.v1,  ARMv8.v2,  ARMv8.v3,  ARMv8.v4,  ARMv8.v5,  ARMv8.v6,  ARMv8.v7,
-                    ARMv8.v8,  ARMv8.v9,  ARMv8.v10, ARMv8.v11, ARMv8.v12, ARMv8.v13, ARMv8.v14, ARMv8.v15,
-                    ARMv8.v16, ARMv8.v17, ARMv8.v18, ARMv8.v19, ARMv8.v20, ARMv8.v21, ARMv8.v22, ARMv8.v23,
-                    ARMv8.v24, ARMv8.v25, ARMv8.v26, ARMv8.v27, ARMv8.v28, ARMv8.v29, ARMv8.v30, ARMv8.v31
+                    ARMv8.d0,  ARMv8.d1,  ARMv8.d2,  ARMv8.d3,  ARMv8.d4,  ARMv8.d5,  ARMv8.d6,  ARMv8.d7,
+                    ARMv8.d8,  ARMv8.d9,  ARMv8.d10, ARMv8.d11, ARMv8.d12, ARMv8.d13, ARMv8.d14, ARMv8.d15,
+                    ARMv8.d16, ARMv8.d17, ARMv8.d18, ARMv8.d19, ARMv8.d20, ARMv8.d21, ARMv8.d22, ARMv8.d23,
+                    ARMv8.d24, ARMv8.d25, ARMv8.d26, ARMv8.d27, ARMv8.d28, ARMv8.d29, ARMv8.d30, ARMv8.d31
                 };
                 CiRegister[] parameters = {
                     ARMv8.r0, ARMv8.r1, ARMv8.r2, ARMv8.r3,
                     ARMv8.r4, ARMv8.r5, ARMv8.r6, ARMv8.r7,
-                    ARMv8.v0, ARMv8.v1, ARMv8.v2, ARMv8.v3,
-                    ARMv8.v4, ARMv8.v5, ARMv8.v6, ARMv8.v7
+                    ARMv8.d0, ARMv8.d1, ARMv8.d2, ARMv8.d3,
+                    ARMv8.d4, ARMv8.d5, ARMv8.d6, ARMv8.d7
                 };
                 CiRegister[] allRegistersExceptLatch = {
                     ARMv8.r0,  ARMv8.r1,  ARMv8.r2,  ARMv8.r3,  ARMv8.r4,  ARMv8.r5,  ARMv8.r6,  ARMv8.r7,
@@ -260,10 +260,10 @@ public class RegisterConfigs {
                     ARMv8.r27, ARMv8.r28, ARMv8.r29, ARMv8.r30,
                     //r31:sp||zr
                     ARMv8.r31, ARMv8.sp,  ARMv8.zr,
-                    ARMv8.v0,  ARMv8.v1,  ARMv8.v2,  ARMv8.v3,  ARMv8.v4,  ARMv8.v5,  ARMv8.v6,  ARMv8.v7,
-                    ARMv8.v8,  ARMv8.v9,  ARMv8.v10, ARMv8.v11, ARMv8.v12, ARMv8.v13, ARMv8.v14, ARMv8.v15,
-                    ARMv8.v16, ARMv8.v17, ARMv8.v18, ARMv8.v19, ARMv8.v20, ARMv8.v21, ARMv8.v22, ARMv8.v23,
-                    ARMv8.v24, ARMv8.v25, ARMv8.v26, ARMv8.v27, ARMv8.v28, ARMv8.v29, ARMv8.v30, ARMv8.v31
+                    ARMv8.d0,  ARMv8.d1,  ARMv8.d2,  ARMv8.d3,  ARMv8.d4,  ARMv8.d5,  ARMv8.d6,  ARMv8.d7,
+                    ARMv8.d8,  ARMv8.d9,  ARMv8.d10, ARMv8.d11, ARMv8.d12, ARMv8.d13, ARMv8.d14, ARMv8.d15,
+                    ARMv8.d16, ARMv8.d17, ARMv8.d18, ARMv8.d19, ARMv8.d20, ARMv8.d21, ARMv8.d22, ARMv8.d23,
+                    ARMv8.d24, ARMv8.d25, ARMv8.d26, ARMv8.d27, ARMv8.d28, ARMv8.d29, ARMv8.d30, ARMv8.d31
                 };
                 CiRegister[] allRegisters = {
                     ARMv8.r0,  ARMv8.r1,  ARMv8.r2,  ARMv8.r3,  ARMv8.r4,  ARMv8.r5,  ARMv8.r6,  ARMv8.r7,
@@ -275,10 +275,10 @@ public class RegisterConfigs {
                     ARMv8.r27, ARMv8.r28, ARMv8.r29, ARMv8.r30,
                     //r31:sp||zr
                     ARMv8.r31, ARMv8.sp,  ARMv8.zr,
-                    ARMv8.v0,  ARMv8.v1,  ARMv8.v2,  ARMv8.v3,  ARMv8.v4,  ARMv8.v5,  ARMv8.v6,  ARMv8.v7,
-                    ARMv8.v8,  ARMv8.v9,  ARMv8.v10, ARMv8.v11, ARMv8.v12, ARMv8.v13, ARMv8.v14, ARMv8.v15,
-                    ARMv8.v16, ARMv8.v17, ARMv8.v18, ARMv8.v19, ARMv8.v20, ARMv8.v21, ARMv8.v22, ARMv8.v23,
-                    ARMv8.v24, ARMv8.v25, ARMv8.v26, ARMv8.v27, ARMv8.v28, ARMv8.v29, ARMv8.v30, ARMv8.v31
+                    ARMv8.d0,  ARMv8.d1,  ARMv8.d2,  ARMv8.d3,  ARMv8.d4,  ARMv8.d5,  ARMv8.d6,  ARMv8.d7,
+                    ARMv8.d8,  ARMv8.d9,  ARMv8.d10, ARMv8.d11, ARMv8.d12, ARMv8.d13, ARMv8.d14, ARMv8.d15,
+                    ARMv8.d16, ARMv8.d17, ARMv8.d18, ARMv8.d19, ARMv8.d20, ARMv8.d21, ARMv8.d22, ARMv8.d23,
+                    ARMv8.d24, ARMv8.d25, ARMv8.d26, ARMv8.d27, ARMv8.d28, ARMv8.d29, ARMv8.d30, ARMv8.d31
                 };
 
                 CiRegister[] calleeSavedRegisters= {
@@ -301,7 +301,7 @@ public class RegisterConfigs {
                 CiRegisterConfig standard = new CiRegisterConfig(
                                 ARMv8.sp,          // frame
                                 ARMv8.r0,          // integral return value
-                                ARMv8.v0,          // floating point return value
+                                ARMv8.d0,          // floating point return value
                                 ARMv8.r16,         // scratch
                                 allocatable,         // allocatable
                                 allocatable,         // caller save
@@ -329,7 +329,7 @@ public class RegisterConfigs {
                                 ARMv8.r0, ARMv8.r1, ARMv8.r2, ARMv8.r3, ARMv8.r4, ARMv8.r5, ARMv8.r6, ARMv8.r7, // parameters
                                 ARMv8.fp,   // must be preserved for baseline compiler ???frame pointer???
                     standard.getScratchRegister(),    // dynamic dispatch index is saved here for stack frame walker
-                    ARMv8.v0, ARMv8.v1, ARMv8.v2, ARMv8.v3, ARMv8.v4, ARMv8.v5, ARMv8.v6, ARMv8.v7   // parameters
+                    ARMv8.d0, ARMv8.d1, ARMv8.d2, ARMv8.d3, ARMv8.d4, ARMv8.d5, ARMv8.d6, ARMv8.d7   // parameters
                 ));
 
                 CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 8, calleeSavedRegisters));
@@ -339,7 +339,7 @@ public class RegisterConfigs {
                 CiRegisterConfig template = new CiRegisterConfig(
                                 ARMv8.r29,          // frame???
                                 ARMv8.r0,          // integral return value
-                                ARMv8.v0,          // floating point return value
+                                ARMv8.d0,          // floating point return value
                                 ARMv8.r16,         // scratch
                                 allocatable,         // allocatable
                                 allocatable,         // caller save
