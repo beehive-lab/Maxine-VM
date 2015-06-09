@@ -151,8 +151,8 @@ public final class CodeCacheValidation extends VmOperation {
             final Address tmUpperBound = tmDataStart.plus(targetMethod.size()).minus(1);
             CodePointer tmCodeEnd = tmCodeStart.plus(tmCodeSize).minus(1);
             assert tmCodeEnd.toAddress().lessEqual(tmUpperBound)
-                : "code exceeds upper bound for " + targetMethod + " code start: " + tmCodeStart.to0xHexString() + " size: " + tmCodeSize.to0xHexString() +
-                  " ends at: " + tmCodeEnd.to0xHexString() + " exceeds: " + tmUpperBound.to0xHexString();
+                    : "code exceeds upper bound for " + targetMethod + " code start: " + tmCodeStart.to0xHexString() + " size: " + tmCodeSize.to0xHexString() +
+                    " ends at: " + tmCodeEnd.to0xHexString() + " exceeds: " + tmUpperBound.to0xHexString();
             return true;
         }
     }
@@ -233,16 +233,22 @@ public final class CodeCacheValidation extends VmOperation {
             if (platform().isa == ISA.AMD64) {
                 final CodePointer callTarget = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
                 final TargetMethod actualCallee = callTarget.toTargetMethod();
-		com.sun.max.vm.Log.print("CALLER ");com.sun.max.vm.Log.println(targetMethod.toString());
-                com.sun.max.vm.Log.print("CALLEE ");com.sun.max.vm.Log.print(actualCallee.toString());com.sun.max.vm.Log.println(callTarget);
+                com.sun.max.vm.Log.print("CALLER ");
+                com.sun.max.vm.Log.println(targetMethod.toString());
+                com.sun.max.vm.Log.print("CALLEE ");
+                com.sun.max.vm.Log.print(actualCallee.toString());
+                com.sun.max.vm.Log.println(callTarget);
 
                 assert validCodeAddress(callTarget) : "invalid call target (address) in direct call from " + targetMethod + "@" + spi + "(pos " + callPos + ") -> " + actualCallee + " (target: " + callTarget.to0xHexString() + ")";
                 assert actualCallee != null && validEntryPoint(callTarget, actualCallee) : "invalid entry point in direct call from " + targetMethod + "@" + spi + " -> " + actualCallee + " (target: " + callTarget.to0xHexString() + ")";
             } else if (platform().isa == ISA.ARM) {
                 final CodePointer callTarget = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
                 final TargetMethod actualCallee = callTarget.toTargetMethod();
-		com.sun.max.vm.Log.print("CALLER ");com.sun.max.vm.Log.println(targetMethod.toString());
-                com.sun.max.vm.Log.print("CALLEE ");com.sun.max.vm.Log.print(actualCallee.toString());com.sun.max.vm.Log.println(callTarget);
+                com.sun.max.vm.Log.print("CALLER ");
+                com.sun.max.vm.Log.println(targetMethod.toString());
+                com.sun.max.vm.Log.print("CALLEE ");
+                com.sun.max.vm.Log.print(actualCallee.toString());
+                com.sun.max.vm.Log.println(callTarget);
 
                 assert validCodeAddress(callTarget) : "invalid call target (address) in direct call from " + targetMethod + "@" + spi + "(pos " + callPos + ") -> " + actualCallee + " (target: " + callTarget.to0xHexString() + ")";
                 assert actualCallee != null && validEntryPoint(callTarget, actualCallee) : "invalid entry point in direct call from " + targetMethod + "@" + spi + " -> " + actualCallee + " (target: " + callTarget.to0xHexString() + ")";
@@ -250,7 +256,8 @@ public final class CodeCacheValidation extends VmOperation {
             } else {
                 throw FatalError.unimplemented();
             }
-	com.sun.max.vm.Log.print("DONE SAFEPT ");com.sun.max.vm.Log.println(spi);
+            com.sun.max.vm.Log.print("DONE SAFEPT ");
+            com.sun.max.vm.Log.println(spi);
         }
     }
 
@@ -270,17 +277,17 @@ public final class CodeCacheValidation extends VmOperation {
         for (int i = istart + 1; i < iend; ++i) { // start iterating at istart+1 because the first entry is null
             final CodePointer p = CodePointer.from(hub.getWord(i));
             assert p.isZero()          // itable entries can be zero
-                || Hub.validItableEntry(p)  // or they can represent a class ID
-                || validCodeAddress(p) // or they can point to code
-                : "invalid itable entry: " + hub + "@" + i + " (it@" + (i - istart) + ") -> " + p.toString();
+                    || Hub.validItableEntry(p)  // or they can represent a class ID
+                    || validCodeAddress(p) // or they can point to code
+                    : "invalid itable entry: " + hub + "@" + i + " (it@" + (i - istart) + ") -> " + p.toString();
         }
     }
 
     private boolean validEntryPoint(CodePointer a, TargetMethod tm) {
         return a.equals(tm.getEntryPoint(BASELINE_ENTRY_POINT))
-            || a.equals(tm.getEntryPoint(OPTIMIZED_ENTRY_POINT))
-            || a.equals(tm.getEntryPoint(VTABLE_ENTRY_POINT))
-            || a.equals(tm.getEntryPoint(C_ENTRY_POINT));
+                || a.equals(tm.getEntryPoint(OPTIMIZED_ENTRY_POINT))
+                || a.equals(tm.getEntryPoint(VTABLE_ENTRY_POINT))
+                || a.equals(tm.getEntryPoint(C_ENTRY_POINT));
     }
 
 }

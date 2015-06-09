@@ -125,14 +125,15 @@ public class CompilationBroker {
 
     @RESET
     static String CompileCommand;
+
     static {
         VMOptions.addFieldOption("-XX:", "CompileCommand", CompilationBroker.class,
-            "Specify which compiler to use for methods matching given patterns. For example, " +
-            "'-XX:CompileCommand=test.output:T1X,com.acme.util.Strings:Graal' specifies that " +
-            "any method whose fully qualified name contains the substring 'test.output' " +
-            "should be compiled with the compiler named 'T1X' and any method whose fully " +
-            "qualified name contains 'com.acme.util.String' should be compiled with the 'Graal' " +
-            "compiler. No checking is done to ensure that a named compiler exists.");
+                "Specify which compiler to use for methods matching given patterns. For example, " +
+                        "'-XX:CompileCommand=test.output:T1X,com.acme.util.Strings:Graal' specifies that " +
+                        "any method whose fully qualified name contains the substring 'test.output' " +
+                        "should be compiled with the compiler named 'T1X' and any method whose fully " +
+                        "qualified name contains 'com.acme.util.String' should be compiled with the 'Graal' " +
+                        "compiler. No checking is done to ensure that a named compiler exists.");
     }
 
     private LinkedHashMap<String, String> compileCommandMap;
@@ -233,7 +234,7 @@ public class CompilationBroker {
             singleton = new CompilationBroker();
         } else {
             try {
-                singleton =  (CompilationBroker) Class.forName(className).newInstance();
+                singleton = (CompilationBroker) Class.forName(className).newInstance();
             } catch (Exception exception) {
                 throw FatalError.unexpected("Error instantiating " + className, exception);
             }
@@ -311,7 +312,7 @@ public class CompilationBroker {
      * @param phase the phase of VM starting up.
      */
     public void initialize(MaxineVM.Phase phase) {
-	Log.println("COMPILATION BROKER INITIALIZE");
+        Log.println("COMPILATION BROKER INITIALIZE");
         optimizingCompiler.initialize(phase);
         if (baselineCompiler != null) {
             baselineCompiler.initialize(phase);
@@ -366,6 +367,7 @@ public class CompilationBroker {
 
     /**
      * Default compilation, not for deopt.
+     *
      * @param cma
      * @param nature
      */
@@ -377,6 +379,7 @@ public class CompilationBroker {
      * Deopt compilation, if necessary.
      * The method is only recompiled if the current target method has been invalidated, which is the normal deopt case.
      * However, a VMTI handler may already have compiled the method before the deoptimzation step happened.
+     *
      * @param cma
      * @param force always compile iff {@code true}.
      */
@@ -402,9 +405,9 @@ public class CompilationBroker {
      * a new compilation is scheduled and its result is returned. Either way, this method
      * waits for the result of a compilation to return it.
      *
-     * @param cma the method for which to make the target method
-     * @param nature the specific type of target method required or {@code null} if any target method is acceptable
-     * @param isDeopt if the compilation is for a deoptimzation
+     * @param cma      the method for which to make the target method
+     * @param nature   the specific type of target method required or {@code null} if any target method is acceptable
+     * @param isDeopt  if the compilation is for a deoptimzation
      * @param failFast don't try recompilation on failure, instead rethrow the exception
      * @return a newly compiled version of a {@code cma}
      * @throws iff failFast the exception that was thrown by first selected compiler
@@ -431,7 +434,7 @@ public class CompilationBroker {
                         doCompile = false;
                     }
                 } else {
-                    Compilations prevCompilations = compilation != null ? compilation.prevCompilations :  (Compilations) compiledState;
+                    Compilations prevCompilations = compilation != null ? compilation.prevCompilations : (Compilations) compiledState;
                     RuntimeCompiler compiler = selectCompiler(cma, nature, isDeopt);
                     if (retryRun) {
                         compiler = selectRetryCompiler(cma, nature, compiler);
@@ -445,7 +448,7 @@ public class CompilationBroker {
                 if (doCompile) {
                     TargetMethod tm = compilation.compile();
                     VMTI.handler().methodCompiled(cma);
-		    //Log.println("DONE VMTI.handler().methodCompiled(cma)");
+                    //Log.println("DONE VMTI.handler().methodCompiled(cma)");
                     return tm;
                 } else {
                     // return result from other thread (which will have send the VMTI event)
@@ -480,8 +483,8 @@ public class CompilationBroker {
     /**
      * Select the appropriate compiler based on the current state of the method.
      *
-     * @param cma the class method actor to compile
-     * @param nature the specific type of target method required or {@code null} if any target method is acceptable
+     * @param cma     the class method actor to compile
+     * @param nature  the specific type of target method required or {@code null} if any target method is acceptable
      * @param isDeopt TODO
      * @return the compiler that should be used to perform the next compilation of the method
      */
@@ -564,8 +567,8 @@ public class CompilationBroker {
      * Select the appropriate compiler to retry compilation based on the current state of the method
      * and the previous compiler.
      *
-     * @param cma the class method actor to compile
-     * @param nature the specific type of target method required or {@code null} if any target method is acceptable
+     * @param cma              the class method actor to compile
+     * @param nature           the specific type of target method required or {@code null} if any target method is acceptable
      * @param previousCompiler compiler compiler that already tried to compile
      * @return the compiler that should be used to perform the next compilation of the method
      */
@@ -593,7 +596,7 @@ public class CompilationBroker {
      * Handles an instrumentation counter overflow upon entry to a profiled method.
      * This method must be called on the thread that overflowed the counter.
      *
-     * @param mpo profiling object (including the method itself)
+     * @param mpo      profiling object (including the method itself)
      * @param receiver the receiver object of the profiled method. This will be {@code null} if the profiled method is static.
      */
     public static void instrumentationCounterOverflow(MethodProfile mpo, Object receiver) {
@@ -853,7 +856,7 @@ public class CompilationBroker {
                     return true;
                 }
                 Pointer ip = current.ipAsPointer();
-                CodePointer callSite = CodePointer.from(ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE));
+                CodePointer callSite = CodePointer.from(ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE + 12));
                 Pointer callSitePointer = callSite.toPointer();
                 if ((callSitePointer.readByte(0) & 0xFF) == ARMTargetMethodUtil.RIP_CALL) {
                     CodePointer target = CodePointer.from(ip.plus(callSitePointer.readInt(1)));
@@ -940,15 +943,19 @@ public class CompilationBroker {
 
         public void initialize(Phase phase) {
         }
+
         public TargetMethod compile(ClassMethodActor classMethodActor, boolean isDeopt, boolean install, CiStatistics stats) {
             return null;
         }
+
         public Nature nature() {
             return nature;
         }
+
         public boolean matches(String compilerName) {
             return true;
         }
+
         @Override
         public String toString() {
             return getClass().getSimpleName() + "@" + Integer.toHexString(hashCode()) + "[" + nature + "]";
