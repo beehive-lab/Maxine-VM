@@ -567,19 +567,28 @@ public class Stubs {
     }
     @PLATFORM(cpu = "armv7")
     private static void patchStaticTrampolineCallSiteARMV7(Pointer callSite) {
-        Log.println("ARM patchStaticTrampoline");
+        Log.println("ENTER-ARM patchStaticTrampoline");
         CodePointer cpCallSite = CodePointer.from(callSite);
+        Log.print("GOT CALL SITE ");Log.println(cpCallSite);
 
         final TargetMethod caller = cpCallSite.toTargetMethod();
+        Log.print("GOT CALLER ");Log.println(caller.toString());
+
         final ClassMethodActor callee = caller.callSiteToCallee(cpCallSite);
+        Log.print("GOT CALLEE ");Log.println(callee.toString());
+
 
         final CodePointer calleeEntryPoint = callee.makeTargetMethod(caller).getEntryPoint(caller.callEntryPoint);
+        Log.print("GOT ENTRYPOINT ");Log.println(calleeEntryPoint);
+
         ARMTargetMethodUtil.mtSafePatchCallDisplacement(caller, cpCallSite, calleeEntryPoint);
+	Log.print("DONT EXPECT tO REACH HERE");
 
         // remember calls from boot code region to baseline code cache
         if (Code.bootCodeRegion().contains(cpCallSite.toAddress()) && Code.getCodeManager().getRuntimeBaselineCodeRegion().contains(calleeEntryPoint.toAddress())) {
             CodeManager.recordBootToBaselineCaller(caller);
         }
+	Log.println("EXIT-ARM patchStaticTrampoline");
     }
     @PLATFORM(cpu = "amd64")
     private static void patchStaticTrampolineCallSiteAMD64(Pointer callSite) {
@@ -669,6 +678,9 @@ public class Stubs {
             int frameSize = target().alignFrameSize(csl.size);
             int frameToCSA = csl.frameOffsetToCSA;
 
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);      // SAVE ret address
+
+		
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
@@ -682,7 +694,7 @@ public class Stubs {
             OK as it is a RIP_CALL in X86 this means it is a relative jump from the PC, based on by best udnerstanding of
             X86
              */
-            asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE); // this will probably be wrong
+            asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE+12); // this will probably be wrong
             // we dont have RIP call instructions. ....
             // we have a branch relative or a mov to PC.
 
@@ -720,7 +732,7 @@ public class Stubs {
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
             //asm.movq(callSite, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, callSite, asm.scratchRegister,0);
-            asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
+            asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE+12);
             asm.setUpRegister(ARMV7.r12, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue()), callSite);
 

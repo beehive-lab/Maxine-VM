@@ -876,10 +876,11 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             // Args are now copied to the baseline locations; call the baseline main body
             int callPos = asm.codeBuffer.position();
             //asm.call(rax); // TODO APN was call RAX
+	    asm.nop(3);
 	    Label forever = new Label();
 	    asm.bind(forever);
-	    asm.mov32BitConstant(ARMV7.r12,0xbeefbeef);
-	    asm.branch(forever);
+	    //asm.mov32BitConstant(ARMV7.r12,0xbeefbeef); REMOVE NOPS and uncooment
+	    //asm.branch(forever);
 	    asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12,ARMV7.r14);
             asm.blx(ARMV7.r12);
             int callSize = asm.codeBuffer.position() - callPos;
