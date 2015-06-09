@@ -81,14 +81,14 @@ public final class AMD64TargetMethodUtil {
         final Address callSiteAddress = callSite.toAddress();
         final Address endOfCallSite = callSiteAddress.plus(RIP_CALL_INSTRUCTION_LENGTH - 1);
         return callSiteAddress.plus(1).isWordAligned() ? true :
-        // last byte of call site:
-        callSiteAddress.roundedDownBy(8).equals(endOfCallSite.roundedDownBy(8));
+                // last byte of call site:
+                callSiteAddress.roundedDownBy(8).equals(endOfCallSite.roundedDownBy(8));
     }
 
     /**
      * Gets the target of a 32-bit relative CALL instruction.
      *
-     * @param tm the method containing the CALL instruction
+     * @param tm      the method containing the CALL instruction
      * @param callPos the offset within the code of {@code targetMethod} of the CALL
      * @return the absolute target address of the CALL
      */
@@ -99,16 +99,16 @@ public final class AMD64TargetMethodUtil {
             final byte[] code = tm.code();
             assert code[0] == (byte) RIP_CALL;
             disp32 =
-                (code[callPos + 4] & 0xff) << 24 |
-                (code[callPos + 3] & 0xff) << 16 |
-                (code[callPos + 2] & 0xff) << 8 |
-                (code[callPos + 1] & 0xff) << 0;
+                    (code[callPos + 4] & 0xff) << 24 |
+                            (code[callPos + 3] & 0xff) << 16 |
+                            (code[callPos + 2] & 0xff) << 8 |
+                            (code[callPos + 1] & 0xff) << 0;
         } else {
             final Pointer callSitePointer = callSite.toPointer();
             assert callSitePointer.readByte(0) == (byte) RIP_CALL
-                // deopt might replace the first call in a method with a jump (redirection)
-                || (callSitePointer.readByte(0) == (byte) RIP_JMP && callPos == 0)
-                : callSitePointer.readByte(0);
+                    // deopt might replace the first call in a method with a jump (redirection)
+                    || (callSitePointer.readByte(0) == (byte) RIP_JMP && callPos == 0)
+                    : callSitePointer.readByte(0);
             disp32 = callSitePointer.readInt(1);
         }
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(disp32);
@@ -118,9 +118,9 @@ public final class AMD64TargetMethodUtil {
     /**
      * Patches the offset operand of a 32-bit relative CALL instruction.
      *
-     * @param tm the method containing the CALL instruction
+     * @param tm         the method containing the CALL instruction
      * @param callOffset the offset within the code of {@code targetMethod} of the CALL to be patched
-     * @param target the absolute target address of the CALL
+     * @param target     the absolute target address of the CALL
      * @return the target of the call prior to patching
      */
     public static CodePointer fixupCall32Site(TargetMethod tm, int callOffset, CodePointer target) {
@@ -140,25 +140,25 @@ public final class AMD64TargetMethodUtil {
 
             final byte[] code = tm.code();
             oldDisp32 =
-               (code[callOffset + 4] & 0xff) << 24 |
-               (code[callOffset + 3] & 0xff) << 16 |
-               (code[callOffset + 2] & 0xff) << 8 |
-               (code[callOffset + 1] & 0xff) << 0;
+                    (code[callOffset + 4] & 0xff) << 24 |
+                            (code[callOffset + 3] & 0xff) << 16 |
+                            (code[callOffset + 2] & 0xff) << 8 |
+                            (code[callOffset + 1] & 0xff) << 0;
             if (oldDisp32 != disp32) {
-               code[callOffset] = (byte) RIP_CALL;
-               code[callOffset + 1] = (byte) disp32;
-               code[callOffset + 2] = (byte) (disp32 >> 8);
-               code[callOffset + 3] = (byte) (disp32 >> 16);
-               code[callOffset + 4] = (byte) (disp32 >> 24);
+                code[callOffset] = (byte) RIP_CALL;
+                code[callOffset + 1] = (byte) disp32;
+                code[callOffset + 2] = (byte) (disp32 >> 8);
+                code[callOffset + 3] = (byte) (disp32 >> 16);
+                code[callOffset + 4] = (byte) (disp32 >> 24);
             }
 
         } else {
             final Pointer callSitePointer = callSite.toPointer();
             oldDisp32 =
-                (callSitePointer.readByte(4) & 0xff) << 24 |
-                (callSitePointer.readByte(3) & 0xff) << 16 |
-                (callSitePointer.readByte(2) & 0xff) << 8 |
-                (callSitePointer.readByte(1) & 0xff) << 0;
+                    (callSitePointer.readByte(4) & 0xff) << 24 |
+                            (callSitePointer.readByte(3) & 0xff) << 16 |
+                            (callSitePointer.readByte(2) & 0xff) << 8 |
+                            (callSitePointer.readByte(1) & 0xff) << 0;
             if (oldDisp32 != disp32) {
                 callSitePointer.writeByte(0, (byte) RIP_CALL);
                 callSitePointer.writeByte(1, (byte) disp32);
@@ -192,7 +192,7 @@ public final class AMD64TargetMethodUtil {
             synchronized (PatchingLock) {
                 // Just to prevent concurrent writing and invalidation to the same instruction cache line
                 // (although the lock excludes ALL concurrent patching)
-                callSitePointer.writeInt(1,  disp32);
+                callSitePointer.writeInt(1, disp32);
                 // Don't need icache invalidation to be correct (see AMD64's Architecture Programmer Manual Vol.2, p173 on self-modifying code)
             }
         }
@@ -202,8 +202,8 @@ public final class AMD64TargetMethodUtil {
     /**
      * Patches a position in a target method with a direct jump to a given target address.
      *
-     * @param tm the target method to be patched
-     * @param pos the position in {@code tm} at which to apply the patch
+     * @param tm     the target method to be patched
+     * @param pos    the position in {@code tm} at which to apply the patch
      * @param target the target of the jump instruction being patched in
      */
     public static void patchWithJump(TargetMethod tm, int pos, CodePointer target) {
@@ -227,8 +227,8 @@ public final class AMD64TargetMethodUtil {
      * Indicate with the instruction in a target method at a given position is a jump to a specified destination.
      * Used in particular for testing if the entry points of a target method were patched to jump to a trampoline.
      *
-     * @param tm a target method
-     * @param pos byte index relative to the start of the method to a call site
+     * @param tm         a target method
+     * @param pos        byte index relative to the start of the method to a call site
      * @param jumpTarget target to compare with the target of the assumed jump instruction
      * @return {@code true} if the instruction is a jump to the target, false otherwise
      */
@@ -252,8 +252,8 @@ public final class AMD64TargetMethodUtil {
         // which means the stack pointer has not been adjusted yet (or has already been adjusted back)
         TargetMethod tm = current.targetMethod();
         CodePointer entryPoint = tm.callEntryPoint.equals(CallEntryPoint.C_ENTRY_POINT) ?
-            CallEntryPoint.C_ENTRY_POINT.in(tm) :
-            CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(tm);
+                CallEntryPoint.C_ENTRY_POINT.in(tm) :
+                CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(tm);
 
         return entryPoint.equals(current.vmIP()) || current.stackFrameWalker().readByte(current.vmIP().toAddress(), 0) == RET;
     }
@@ -280,8 +280,8 @@ public final class AMD64TargetMethodUtil {
      * Advances the stack walker such that {@code current} becomes the callee.
      *
      * @param current the frame just visited by the current stack walk
-     * @param csl the layout of the callee save area in {@code current}
-     * @param csa the address of the callee save area in {@code current}
+     * @param csl     the layout of the callee save area in {@code current}
+     * @param csa     the address of the callee save area in {@code current}
      */
     public static void advance(StackFrameCursor current, CiCalleeSaveLayout csl, Pointer csa) {
         assert csa.isZero() == (csl == null);

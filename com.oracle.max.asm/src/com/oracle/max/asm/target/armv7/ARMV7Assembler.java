@@ -25,8 +25,8 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public enum ConditionFlag {
         Equal(0x0, "="), NotEqual(0x1, "!="), CarrySetUnsignedHigherEqual(0x2, "|carry|"), CarryClearUnsignedLower(0x3, "|ncarry|"), Minus(0x4, "|neg|"), Positive(0x5, "|pos|"), SignedOverflow(0x6,
-                        ".of."), NoSignedOverflow(0x7, "|nof|"), UnsignedHigher(0x8, "|>|"), UnsignedLowerOrEqual(0x9, "|<=|"), SignedGreaterOrEqual(0xA, ".>=."), SignedLesser(0xB, ".<."), SignedGreater(
-                        0xC, ".>."), SignedLowerOrEqual(0xD, ".<=."), Always(0xE, "al"), NeverUse(0xF, "NEVER");
+                ".of."), NoSignedOverflow(0x7, "|nof|"), UnsignedHigher(0x8, "|>|"), UnsignedLowerOrEqual(0x9, "|<=|"), SignedGreaterOrEqual(0xA, ".>=."), SignedLesser(0xB, ".<."), SignedGreater(
+                0xC, ".>."), SignedLowerOrEqual(0xD, ".<=."), Always(0xE, "al"), NeverUse(0xF, "NEVER");
 
         public static final ConditionFlag[] values = values();
 
@@ -57,7 +57,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             // branch(l.position(), false);
             checkConstraint(-0x800000 <= (l.position() - codeBuffer.position()) && (l.position() - codeBuffer.position()) <= 0x7fffff, "branch must be within  a 24bit offset");
             // emitInt(0x06000000 | (l.position() - codeBuffer.position()) | ConditionFlag.Always.value() & 0xf);
-            emitInt(0x0a000000 | (0xffffff&((l.position() - codeBuffer.position() - 8) / 4)) | ((ConditionFlag.Always.value() & 0xf) << 28));
+            emitInt(0x0a000000 | (0xffffff & ((l.position() - codeBuffer.position() - 8) / 4)) | ((ConditionFlag.Always.value() & 0xf) << 28));
 
         } else {
             // By default, forward jumps are always 24-bit displacements, since
@@ -986,7 +986,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
     }
 
-public void setUpRegister(CiRegister dest,CiAddress addr) {
+    public void setUpRegister(CiRegister dest, CiAddress addr) {
         CiRegister base = addr.base();
         CiRegister index = addr.index();
         CiAddress.Scale scale = addr.scale;
@@ -1216,8 +1216,8 @@ public void setUpRegister(CiRegister dest,CiAddress addr) {
     }
 
     public final void xchgq(CiRegister src1, CiRegister src2) {
-        CiRegister tmp =  ARMV7.r8;
-        assert src1 != tmp && src2 !=tmp;
+        CiRegister tmp = ARMV7.r8;
+        assert src1 != tmp && src2 != tmp;
         mov(ConditionFlag.Always, false, tmp, src1);
         mov(ConditionFlag.Always, false, src1, src2);
         mov(ConditionFlag.Always, false, src2, tmp);
@@ -1321,7 +1321,7 @@ public void setUpRegister(CiRegister dest,CiAddress addr) {
 
     public final void int3() {
         //emitInt(0xe1200070); // this is BKPT
-	emitInt(0xef000000); // replaced with svc 0
+        emitInt(0xef000000); // replaced with svc 0
 
     }
 
@@ -1482,20 +1482,22 @@ public void setUpRegister(CiRegister dest,CiAddress addr) {
             mov(ConditionFlag.Always, false, ARMV7.r15, scratchRegister); // UPDATE the PC to the target
         }
     }
-    public final void mrsReadAPSR(ConditionFlag cond,CiRegister reg) {
-       int instruction = (cond.value() & 0xf) << 28;
-       instruction |= 0x10f0000;
-       instruction |= reg.encoding << 12;
-       emitInt(instruction);
+
+    public final void mrsReadAPSR(ConditionFlag cond, CiRegister reg) {
+        int instruction = (cond.value() & 0xf) << 28;
+        instruction |= 0x10f0000;
+        instruction |= reg.encoding << 12;
+        emitInt(instruction);
     }
-    public void msrWriteAPSR(ConditionFlag cond,CiRegister reg) {
-         int bits = 3;
+
+    public void msrWriteAPSR(ConditionFlag cond, CiRegister reg) {
+        int bits = 3;
         int instruction = (cond.value() & 0xf) << 28;
         instruction |= 0x120f000;
-        instruction |= reg.encoding ;
-       instruction |= bits << 18;
+        instruction |= reg.encoding;
+        instruction |= bits << 18;
         emitInt(instruction);
-       
+
     }
 
     public final void vmrs(ConditionFlag cond, CiRegister dest) {
@@ -1860,9 +1862,9 @@ public void setUpRegister(CiRegister dest,CiAddress addr) {
         int vmovDoubleCore = 0x0c400b10; // A8.8.345 // TWO ARM core to doubleword extension
         if (srcKind.isDouble() && destKind.isDouble()) {
             instruction |= (1 << 8) | vmovSameType;
-            instruction |= (dest.encoding >> 4)  << 22;
-            instruction |= (dest.encoding & 0xf)  << 12;
-            instruction |= (src.encoding >> 4)  << 5;
+            instruction |= (dest.encoding >> 4) << 22;
+            instruction |= (dest.encoding & 0xf) << 12;
+            instruction |= (src.encoding >> 4) << 5;
             instruction |= (src.encoding & 0xf);
         } else if (srcKind.isFloat() && destKind.isFloat()) {
             // dest LSB bit 22, and 12-15

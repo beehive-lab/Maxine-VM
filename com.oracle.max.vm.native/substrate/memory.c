@@ -35,13 +35,13 @@
 
 Address memory_allocate(Size size)
 {
-    static int attempts = 0;
-    printf("Attempt %d Allocating %u\n",attempts++,(unsigned int)size);
+    //static int attempts = 0;
+    //printf("Attempt %d Allocating %u\n",attempts++,(unsigned int)size);
     Address mem = (Address) calloc(1, (size_t) size);
     if (mem % sizeof(void *)) {
         log_println("MEMORY ALLOCATED NOT WORD-ALIGNED (size:%d at address:%x, void* size: %d)", size, mem, sizeof(void *));
     }
-    printf("Address %u\n",(unsigned int)mem);
+    //printf("Address %u\n",(unsigned int)mem);
     return mem;
 }
 
