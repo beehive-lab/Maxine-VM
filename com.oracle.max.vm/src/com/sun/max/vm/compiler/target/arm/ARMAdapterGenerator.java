@@ -416,13 +416,14 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // APN TODO this is broken for now we need just to get it to compile then fix all stack stuff!
             //asm.movq(rax, new CiAddress(WordUtil.archKind(), rsp.asValue()));
             // APN so is RAX storing the return address?
-	    asm.addq(ARMV7.r14,4);
+	    //asm.addq(ARMV7.r14,4);
 	    //asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.encoding);
 
 	    //asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
 
-            //asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
-            //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r14, ARMV7.r12);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
+	    asm.ldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r0,ARMV7.r12,0); 
+
 
             // Compute the number of stack args needed for the call (i.e. the args that won't
             // be put into registers)
@@ -502,7 +503,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             // Args are now copied to the OPT locations; call the OPT main body
             int callPos = asm.codeBuffer.position();
-            asm.blx(ARMV7.r14);
+            asm.blx(ARMV7.r0);
 
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
             int callSize = asm.codeBuffer.position() - callPos;
@@ -612,7 +613,8 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
 
             @Override
             public int callOffsetInPrologue() {
-                return 12; // push LR and branch first ... followed by other push lr
+                //return 12; // push LR and branch first ... followed by other push lr
+		return 28;
             }
 
             @Override
@@ -845,7 +847,7 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             //asm.movq(rax, new CiAddress(WordUtil.archKind(), rsp.asValue()));
             //asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
 	    //asm.ldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r14,ARMV7.r12,0);  // probably superfluous as the push  puts r14 on stack
-	    asm.addq(ARMV7.r14, 4);// we need to skip past the return by 4 due to the push of the $lr in the main body.
+	    //asm.addq(ARMV7.r14, 4);// we need to skip past the return by 4 due to the push of the $lr in the main body.
 
             // Initial args are in registers, remaining args are on the stack.
             int baselineArgsSize = frameSizeFor(sig.kinds, BASELINE_SLOT_SIZE);

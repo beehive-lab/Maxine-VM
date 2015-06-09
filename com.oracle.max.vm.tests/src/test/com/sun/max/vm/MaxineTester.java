@@ -225,6 +225,7 @@ public class MaxineTester {
                     new OutputHarness(filterTestClassesBySubstrings(MaxineTesterConfiguration.zeeOutputTests, test.substring("output:".length()).split("\\+"))).run();
                 } else if ("javatester".equals(test)) {
                     // run the JTImage tests
+			System.out.println("RUNNING javatester");
                     new JTImageHarness().run();
                 } else if ("vmoutput".equals(test)) {
                     // run the VM output tests
