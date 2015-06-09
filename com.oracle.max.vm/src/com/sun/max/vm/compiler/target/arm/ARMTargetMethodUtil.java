@@ -370,13 +370,43 @@ Log.print("FIXUP CALL SITE ");Log.print(tm.toString());Log.print(" DISP ");Log.p
         long disp64 = target.toLong() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toLong();
         int disp32 = (int) disp64;
         FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
-        int oldDisp32 = callSitePointer.readInt(1);
+	int oldDisp32 = 0;
+	if (((callSitePointer.readByte(3) & 0xff) == 0xe3) && ((callSitePointer.readByte(4+3) & 0xff) == 0xe3)) {
+                 // just enough checking to make sure it has been patched before ...
+                 // and does not contain nops
+                 oldDisp32 = (callSitePointer.readByte(4+0)&0xff) | ((callSitePointer.readByte(4+1)&0xf)<<8) |((callSitePointer.readByte(4+2) & 0xf) <<12);
+                 oldDisp32 = oldDisp32 << 16;
+                 oldDisp32 += (callSitePointer.readByte(0)&0xff) | ((callSitePointer.readByte(1)&0xf)<<8) |((callSitePointer.readByte(2) & 0xf) <<12);
+                 Log.println(oldDisp32);
+        }       
+        //int oldDisp32 = callSitePointer.readInt(1);
         if (oldDisp32 != disp64) {
             synchronized (PatchingLock) {
                 // Just to prevent concurrent writing and invalidation to the same instruction cache line
                 // (although the lock excludes ALL concurrent patching)
-                callSitePointer.writeInt(1,  disp32);
+                //callSitePointer.writeInt(1,  disp32);
                 // Don't need icache invalidation to be correct (see ARMV7's Architecture Programmer Manual Vol.2, p173 on self-modifying code)
+		int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, oldDisp32 & 0xffff);
+                callSitePointer.writeByte(0, (byte) (instruction & 0xff));
+                callSitePointer.writeByte(1, (byte) ((instruction >> 8) & 0xff));
+                callSitePointer.writeByte(2,(byte) ((instruction >> 16) & 0xff));
+                callSitePointer.writeByte(3, (byte) ((instruction >> 24) & 0xff));
+                int tmp32 = oldDisp32 >> 16;
+                instruction = ARMV7Assembler.movtHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, tmp32 & 0xffff);
+                callSitePointer.writeByte(4, (byte) (instruction & 0xff));
+                callSitePointer.writeByte(5, (byte) ((instruction >> 8) & 0xff));
+                callSitePointer.writeByte(6, (byte) ((instruction >> 16) & 0xff));
+                callSitePointer.writeByte(7, (byte) ((instruction >> 24) & 0xff));
+                instruction = ARMV7Assembler.addRegistersHelper(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r15, ARMV7.r12, 0, 0);
+                callSitePointer.writeByte(8, (byte) (instruction & 0xff));
+                callSitePointer.writeByte(9, (byte) ((instruction >> 8) & 0xff));
+                callSitePointer.writeByte(10, (byte) ((instruction >> 16) & 0xff));
+                callSitePointer.writeByte(11, (byte) ((instruction >> 24) & 0xff));
+                instruction = ARMV7Assembler.blxHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12);
+                callSitePointer.writeByte(12, (byte) (instruction & 0xff));
+                callSitePointer.writeByte(13, (byte) ((instruction >> 8) & 0xff));
+                callSitePointer.writeByte(14, (byte) ((instruction >> 16) & 0xff));
+                callSitePointer.writeByte(15, (byte) ((instruction >> 24) & 0xff));
             }
         }
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);

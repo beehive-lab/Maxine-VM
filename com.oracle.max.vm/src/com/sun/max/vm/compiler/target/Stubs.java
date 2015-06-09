@@ -668,10 +668,7 @@ public class Stubs {
 
             return new Stub(StaticTrampoline, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else if (platform().isa == ISA.ARM) {
-            /*
-            RIP_CALL means a relative JMP/CALL to the current PC
-            REG_CALL is an absolute JMP/CALL
-             */
+
             CiRegisterConfig registerConfig = registerConfigs.trampoline;
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
@@ -689,14 +686,9 @@ public class Stubs {
             CiRegister callSite = ARMV7.r8; /// was scratch but we use scratch so use r8
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP));
             //asm.movq(callSite, new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue()));
-            asm.ldr(ARMV7Assembler.ConditionFlag.Always,callSite,ARMV7.r12,0); // R12 and call site are the same but it does not matter
-            /*
-            OK as it is a RIP_CALL in X86 this means it is a relative jump from the PC, based on by best udnerstanding of
-            X86
-             */
-            asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE+12); // this will probably be wrong
-            // we dont have RIP call instructions. ....
-            // we have a branch relative or a mov to PC.
+            asm.ldr(ARMV7Assembler.ConditionFlag.Always,callSite,ARMV7.r12,0); // we need callSite and r12 to be different registers
+            asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE+12); // this adjusts callSite to contain the correxct
+						//   callSite address
 
 
             // now allocate the frame for this method
@@ -727,10 +719,7 @@ public class Stubs {
             // undo the frame
             asm.addq(ARMV7.r13, frameSize);
 
-            // TODO will be broken and will be overwriting R12 scratch and callsite need to use r8 r9?
-            // patch the return address to re-execute the static call
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
-            //asm.movq(callSite, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, callSite, asm.scratchRegister,0);
             asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE+12);
             asm.setUpRegister(ARMV7.r12, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));

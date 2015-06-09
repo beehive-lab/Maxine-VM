@@ -748,6 +748,7 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
         }
 
         static final int PROLOGUE_SIZE = 76; //29; // calculated by running APN ...
+        //static final int PROLOGUE_SIZE = 72; //29; // calculated by running APN ...
         static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = 36;// calculated by running 8;
 
         Opt2Baseline() {

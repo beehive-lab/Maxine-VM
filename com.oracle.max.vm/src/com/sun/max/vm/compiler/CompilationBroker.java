@@ -853,7 +853,7 @@ public class CompilationBroker {
                     return true;
                 }
                 Pointer ip = current.ipAsPointer();
-                CodePointer callSite = CodePointer.from(ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE));
+                CodePointer callSite = CodePointer.from(ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE+12));
                 Pointer callSitePointer = callSite.toPointer();
                 if ((callSitePointer.readByte(0) & 0xFF) == ARMTargetMethodUtil.RIP_CALL) {
                     CodePointer target = CodePointer.from(ip.plus(callSitePointer.readInt(1)));
