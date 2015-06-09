@@ -182,8 +182,9 @@ public class CiRegisterConfig implements RiRegisterConfig {
     public CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, CiTarget target, boolean stackOnly) {
         CiValue[] locations = new CiValue[parameters.length];
         int currentGeneral = 0;
-        int currentFloats = 0;
+        int currentFloat = 0;
         int currentDouble = 0;
+        int currentFP = 0;
         int firstStackIndex = (stackArg0Offsets[type.ordinal()]) / target.spillSlotSize;
         int currentStackIndex = firstStackIndex;
 
@@ -215,23 +216,34 @@ public class CiRegisterConfig implements RiRegisterConfig {
                     }
                     break;
                 case Float:
-                    if (!stackOnly && currentFloats < fpuParameters.length) {
-                        CiRegister register = fpuParameters[currentFloats++];
+                    if (!stackOnly && currentFP < fpuParameters.length) {
+                        CiRegister register = null;
+                        if (target.arch.is32bit()) {
+                            register = fpuParameters[currentFloat++];
+                            currentFP = currentFloat;
+                        } else {
+                            register = fpuParameters[currentDouble++];
+                            currentFP = currentDouble;
+                        }
                         locations[i] = register.asValue(kind);
                     }
                     break;
                 case Double:
-                    if (!stackOnly && currentFloats < fpuParameters.length ) {
+                    if (!stackOnly && currentFP < fpuParameters.length ) {
                         if (target.arch.is32bit()) {
-                            if ((fpuParameters.length - currentFloats) < 2) {
+                            if ((fpuParameters.length - currentFP) < 2) {
                                 break;
                             }
                         }
                         CiRegister register = fpuParameters[currentDouble++];
                         locations[i] = register.asValue(kind);
                         if (target.arch.is32bit()) {
-                            currentFloats += 2;
+                            currentFloat += 2;
+                            currentFP = currentFloat;
+                        } else {
+                            currentFP = currentDouble;
                         }
+
                     }
 
                     break;
