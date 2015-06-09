@@ -185,7 +185,7 @@ Java_com_sun_max_memory_VirtualMemory_virtualMemory_1mapFileIn31BitSpace(JNIEnv 
 }
 
 Address virtualMemory_mapFileAtFixedAddress(Address address, Size size, jint fd, Size offset) {
-	printf("fixedmmap %x\n",address);
+	//printf("fixedmmap %x\n",address);
     return check_mmap_result(mmap((void *) address, (size_t) size, PROT, MAP_PRIVATE | MAP_FIXED, fd, (off_t) offset));
 }
 

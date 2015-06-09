@@ -221,7 +221,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
                     }
                     break;
                 case Double:
-                    if (!stackOnly && currentFloats < fpuParameters.length) {
+                    if (!stackOnly && currentFloats < fpuParameters.length ) {
                         if (target.arch.is32bit()) {
                             if ((fpuParameters.length - currentFloats) < 2) {
                                 break;
@@ -231,6 +231,8 @@ public class CiRegisterConfig implements RiRegisterConfig {
                         locations[i] = register.asValue(kind);
                         if (target.arch.is32bit()) {
                             currentFloats += 2;
+                        } else {
+                            currentFloats++;
                         }
                     }
 
