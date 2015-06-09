@@ -231,8 +231,6 @@ public class CiRegisterConfig implements RiRegisterConfig {
                         locations[i] = register.asValue(kind);
                         if (target.arch.is32bit()) {
                             currentFloats += 2;
-                        } else {
-                            currentFloats++;
                         }
                     }
 
