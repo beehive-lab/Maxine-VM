@@ -445,6 +445,7 @@ public class CompilationBroker {
                 if (doCompile) {
                     TargetMethod tm = compilation.compile();
                     VMTI.handler().methodCompiled(cma);
+		    //Log.println("DONE VMTI.handler().methodCompiled(cma)");
                     return tm;
                 } else {
                     // return result from other thread (which will have send the VMTI event)

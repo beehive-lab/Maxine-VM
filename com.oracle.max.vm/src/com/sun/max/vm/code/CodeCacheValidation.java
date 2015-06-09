@@ -250,6 +250,7 @@ public final class CodeCacheValidation extends VmOperation {
             } else {
                 throw FatalError.unimplemented();
             }
+	com.sun.max.vm.Log.print("DONE SAFEPT ");com.sun.max.vm.Log.println(spi);
         }
     }
 

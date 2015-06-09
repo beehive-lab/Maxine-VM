@@ -169,6 +169,9 @@ public final class ARMTargetMethodUtil {
                  disp32 += (callSitePointer.readByte(0)&0xff) | ((callSitePointer.readByte(1)&0xf)<<8) |((callSitePointer.readByte(2) & 0xf) <<12);
                  Log.println(disp32);
                 }
+ Log.print("READCALL32TARGET ");Log.print(disp32);Log.print(" ");Log.print(tm.toString());Log.print(" CALLPOS ");
+            Log.println(callPos);
+	Log.println(callSitePointer);
 
 		assert(disp32 != 0);
             /*assert callSitePointer.readByte(0) == (byte) RIP_CALL
@@ -177,9 +180,6 @@ public final class ARMTargetMethodUtil {
                 : callSitePointer.readByte(0);
             disp32 = callSitePointer.readInt(1);
 	*/
- Log.print("READCALL32TARGET ");Log.print(disp32);Log.print(" ");Log.print(tm.toString());Log.print(" CALLPOS ");
-            Log.println(callPos);
-	Log.println(callSitePointer);
 
         }
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(disp32);
@@ -362,6 +362,7 @@ Log.print("FIXUP CALL SITE ");Log.print(tm.toString());Log.print(" DISP ");Log.p
      * @return the target of the call prior to patching
      */
     public static CodePointer mtSafePatchCallDisplacement(TargetMethod tm, CodePointer callSite, CodePointer target) {
+	Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!mtSafePatchCallDisplacement !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         if (!isPatchableCallSite(callSite)) {
             throw FatalError.unexpected(" invalid patchable call site:  " + callSite.toHexString());
         }
@@ -390,6 +391,7 @@ Log.print("FIXUP CALL SITE ");Log.print(tm.toString());Log.print(" DISP ");Log.p
      */
     public static void patchWithJump(TargetMethod tm, int pos, CodePointer target) {
         // We must be at a global safepoint to safely patch TargetMethods
+	Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!patchWithJump!!!!!!!!!!!!!!!!!!!!!!");
         FatalError.check(VmOperation.atSafepoint(), "should only be patching entry points when at a safepoint");
 
         final Pointer patchSite = tm.codeAt(pos).toPointer();
@@ -415,7 +417,7 @@ Log.print("FIXUP CALL SITE ");Log.print(tm.toString());Log.print(" DISP ");Log.p
      * @return {@code true} if the instruction is a jump to the target, false otherwise
      */
     public static boolean isJumpTo(TargetMethod tm, int pos, CodePointer jumpTarget) {
-        Log.println("ARM isJumpTo WRONG");
+        Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ARM isJumpTo WRONG!!!!!!!!!!!!!!!!!!!!!!!");
         final Pointer jumpSite = tm.codeAt(pos).toPointer();
         if (jumpSite.readByte(0) == (byte) RIP_JMP) {
             final int disp32 = jumpSite.readInt(1);
@@ -516,7 +518,7 @@ Log.print("FIXUP CALL SITE ");Log.print(tm.toString());Log.print(" DISP ");Log.p
     }
 
     public static int callInstructionSize(byte[] code, int pos) {
-	Log.println("ARMTargetMethodUtil.REG RIP_CALL ISSUE");
+	Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ARMTargetMethodUtil.REG RIP_CALL ISSUE");
         if ((code[pos] & 0xFF) == RIP_CALL) {
             return RIP_CALL_INSTRUCTION_SIZE;
         }
