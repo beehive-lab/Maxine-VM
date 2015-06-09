@@ -931,7 +931,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public void cmp(final ConditionFlag flag, final CiRegister Rn, final CiRegister Rm, int imm5, int imm2Type) {
         int instruction = 0x01500000;
 
-        //assert (Rn.encoding != Rm.encoding); // defensive assert against scratch problem in ARMV7LIemitCompare ...
+        assert (!(Rn.encoding == 12 && Rn.encoding == Rm.encoding)); // defensive assert against scratch problem in ARMV7LIemitCompare ...
 
         checkConstraint(0 <= imm5 && imm5 <= 31, "0 <= imm5 && imm5 <= 31");
         checkConstraint(0 <= imm2Type && imm2Type <= 3, "0 <= imm2Type && imm2Type <= 3");
