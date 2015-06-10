@@ -220,6 +220,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     SamplingProfiler.create(profValue);
                 }
 
+
                 break;
             }
 
@@ -303,6 +304,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             VMTI.handler().threadStart(VmThread.current());
             // load -javaagent agents
             loadJavaAgents();
+
 
             classKindName = "main";
 

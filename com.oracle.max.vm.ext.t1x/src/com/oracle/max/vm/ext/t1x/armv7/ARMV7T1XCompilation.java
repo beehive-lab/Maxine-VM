@@ -21,7 +21,7 @@ import com.oracle.max.asm.target.armv7.ARMV7;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
 import com.oracle.max.asm.target.armv7.ARMV7MacroAssembler;
-import com.oracle.max.cri.intrinsics.*;
+import com.oracle.max.cri.intrinsics.MemoryBarriers;
 import com.oracle.max.vm.ext.maxri.MaxTargetMethod;
 import com.oracle.max.vm.ext.t1x.*;
 import com.sun.cri.bytecode.BytecodeLookupSwitch;
@@ -50,19 +50,13 @@ import com.sun.max.vm.thread.VmThread;
 import com.sun.max.vm.type.Kind;
 import com.sun.max.vm.type.SignatureDescriptor;
 
-
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Map;
-
-import java.util.concurrent.atomic.AtomicInteger;
-
-
-//import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.oracle.max.asm.target.armv7.ARMV7.*;
 import static com.oracle.max.vm.ext.t1x.T1X.dispFromCodeStart;
@@ -71,6 +65,8 @@ import static com.sun.max.platform.Platform.target;
 import static com.sun.max.vm.classfile.ErrorContext.verifyError;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.JVMS_SLOT_SIZE;
+
+//import java.io.PrintWriter;
 
 public class ARMV7T1XCompilation extends T1XCompilation {
 
@@ -94,14 +90,15 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     static {
         initDebugMethods();
-        }
+    }
 
-   public static void initDebugMethods() {
+    public static void initDebugMethods() {
         if ((file = new File(getDebugMethodsPath() + "debugT1Xmethods")).exists()) {
             file.delete();
         }
-            file = new File(getDebugMethodsPath() + "debugT1Xmethods");
+        file = new File(getDebugMethodsPath() + "debugT1Xmethods");
     }
+
     public static void writeDebugMethod(String name, int index) throws Exception {
         synchronized (fileLock) {
             try {
@@ -157,26 +154,26 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     public void peekObject(CiRegister dst, int index) {
         asm.setUpScratch(spWord(index));
-        asm.ldr(ConditionFlag.Always,  dst, asm.scratchRegister,  0);
+        asm.ldr(ConditionFlag.Always, dst, asm.scratchRegister, 0);
     }
 
     @Override
     public void pokeObject(CiRegister src, int index) {
         asm.setUpScratch(spWord(index));
-        asm.str(ConditionFlag.Always,  src, asm.scratchRegister,  0);
+        asm.str(ConditionFlag.Always, src, asm.scratchRegister, 0);
     }
 
     @Override
     public void peekWord(CiRegister dst, int index) {
         asm.setUpScratch(spWord(index));
-        asm.ldr(ConditionFlag.Always,  dst, asm.scratchRegister,  0);
+        asm.ldr(ConditionFlag.Always, dst, asm.scratchRegister, 0);
 
     }
 
     @Override
     public void pokeWord(CiRegister src, int index) {
         asm.setUpScratch(spWord(index));
-        asm.str(ConditionFlag.Always,  src, asm.scratchRegister,  0);
+        asm.str(ConditionFlag.Always, src, asm.scratchRegister, 0);
     }
 
     @Override
@@ -189,7 +186,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     public void pokeInt(CiRegister src, int index) {
         asm.setUpScratch(spInt(index));
-        asm.str(ConditionFlag.Always,  src, asm.scratchRegister, 0);
+        asm.str(ConditionFlag.Always, src, asm.scratchRegister, 0);
     }
 
     @Override
@@ -281,9 +278,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
          * asm.movq(dst, CiAddress.Placeholder); int dispPos = buf.position() - 4; patchInfo.addObjectLiteral(dispPos,
          * index);
          */
-	asm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
+        asm.addRegisters(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r15, 0, 0);
         int dispPos = buf.position() - 12; // three instructions
-        asm.ldr(ConditionFlag.Always,dst, r12, 0);
+        asm.ldr(ConditionFlag.Always, dst, r12, 0);
         patchInfo.addObjectLiteral(dispPos, index);
     }
 
@@ -304,13 +301,13 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected void loadWord(CiRegister dst, int index) {
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.WORD)));
-        asm.ldr(ConditionFlag.Always,  dst, ARMV7.r12,  0);
+        asm.ldr(ConditionFlag.Always, dst, ARMV7.r12, 0);
     }
 
     @Override
     protected void loadObject(CiRegister dst, int index) {
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.REFERENCE)));
-        asm.ldr(ConditionFlag.Always,  dst,  ARMV7.r12,  0);
+        asm.ldr(ConditionFlag.Always, dst, ARMV7.r12, 0);
     }
 
     @Override
@@ -467,7 +464,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         if (receiverStackIndex >= 0) {
             peekObject(target, receiverStackIndex); // was rdi?
         }
-        asm.mov32BitConstant(ARMV7.r8,8);
+        asm.mov32BitConstant(ARMV7.r8, 8);
         int causePos = buf.position();
         asm.call(target);
         int safepointPos = buf.position();
@@ -538,13 +535,13 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             }
         }
         if (DEBUG_METHODS) {
-              int a = methodCounter.incrementAndGet();
-               asm.mov32BitConstant(ARMV7.r12, a);
-               try {
-                   writeDebugMethod(method.holder() + "." + method.name(), a);
-                   } catch (Exception e) {
-                   e.printStackTrace();
-                   }
+            int a = methodCounter.incrementAndGet();
+            asm.mov32BitConstant(ARMV7.r12, a);
+            try {
+                writeDebugMethod(method.holder() + "." + method.name(), a);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         return adapter;
     }
@@ -555,8 +552,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         objectLiterals.add(T1XTargetMethod.PROTECTED);
         asm.xorq(ARMV7.r8, ARMV7.r8);
         //System.out.println("emitUnProtect partially commented out ... OBJECT LITERALS");
-       // asm.setUpScratch(CiAddress.Placeholder);
-       // asm.str(ConditionFlag.Always,ARMV7.r8,scratch,0);
+        // asm.setUpScratch(CiAddress.Placeholder);
+        // asm.str(ConditionFlag.Always,ARMV7.r8,scratch,0);
         // asm.movq(CiAddress.Placeholder, scratch);
         // TODO store the value ZERO at a Placeholder address
         // TODO buf.emitInt(0);
@@ -565,10 +562,10 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         asm.nop(2);
 
         int dispPos = buf.position() - 8;
-      //  int dispPos = buf.position() - 12;
+        //  int dispPos = buf.position() - 12;
         patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
-        asm.addRegisters(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r15,0,0);
-        asm.strImmediate(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r12,0);
+        asm.addRegisters(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r15, 0, 0);
+        asm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, 0);
 
     }
 
@@ -609,7 +606,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
         // Pop index from stack into scratch
         asm.setUpScratch(new CiAddress(CiKind.Int, RSP));
-        asm.ldr(ConditionFlag.Always,  ARMV7.r8,  asm.scratchRegister, 0);
+        asm.ldr(ConditionFlag.Always, ARMV7.r8, asm.scratchRegister, 0);
         asm.addq(r13, JVMSFrameLayout.JVMS_SLOT_SIZE);
         asm.push(ConditionFlag.Always, 1 << 10 | 1 << 9);
         asm.mov(ConditionFlag.Always, false, ARMV7.r9, ARMV7.r8); // r9 stores index
@@ -689,7 +686,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             }
         } else {
             asm.setUpScratch(new CiAddress(CiKind.Int, RSP));
-            asm.ldr(ConditionFlag.Always,  ARMV7.r8, asm.scratchRegister,  0);
+            asm.ldr(ConditionFlag.Always, ARMV7.r8, asm.scratchRegister, 0);
             asm.addq(ARMV7.r13, JVMSFrameLayout.JVMS_SLOT_SIZE);
             asm.push(ConditionFlag.Always, 1 << 7 | 1 << 9 | 1 << 10);
             asm.mov(ConditionFlag.Always, false, r9, r8); // r9 stores index
@@ -991,7 +988,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             } else if (tag == PatchInfoARMV7.OBJECT_LITERAL) {
                 int dispPos = data[i++];
                 int index = data[i++];
-		int dummyDispPos = dispPos+16; // +8 for PC and +8 for position of PC relative ADD
+                int dummyDispPos = dispPos + 16; // +8 for PC and +8 for position of PC relative ADD
                 assert objectLiterals.get(index) != null;
                 buf.setPosition(dispPos);
                 int dispFromCodeStart = dispFromCodeStart(objectLiterals.size(), 0, index, true);
@@ -999,11 +996,11 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 int disp = movqDisp(dummyDispPos, dispFromCodeStart);
                 buf.setPosition(dispPos);
                 // store  the value in r8 at the PC+ disp.(done at the patch insertion!!!! NOT HERE see emitUnProtectMethod)
-                int val = asm.movwHelper(ConditionFlag.Always,ARMV7.r12,disp&0xffff);
+                int val = asm.movwHelper(ConditionFlag.Always, ARMV7.r12, disp & 0xffff);
                 buf.emitInt(val);
-                val = asm.movtHelper(ConditionFlag.Always,ARMV7.r12,(disp>>16)&0xffff);
+                val = asm.movtHelper(ConditionFlag.Always, ARMV7.r12, (disp >> 16) & 0xffff);
                 buf.emitInt(val);
-               // val = asm.strHelper(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r15,ARMV7.r12,0,0);
+                // val = asm.strHelper(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r15,ARMV7.r12,0,0);
                 //buf.emitInt(val);
 
                 //System.out.println("ARMV7T1XCompilation ... OBJECT LITERAL PAtchInfo HAS BEEN allowed to emitInt need to emit store of r8? to  pc+disp " + disp);
@@ -1052,7 +1049,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
                 writer.println("unsigned char codeArray[" + source.code().length + "]  = { \n");
                 for (int i = 0; i < source.code().length; i += 4) {
                     writer.println("0x" + Integer.toHexString(source.code()[i]) + ", " + "0x" + Integer.toHexString(source.code()[i + 1]) + ", " + "0x" + Integer.toHexString(source.code()[i + 2]) +
-                                    ", " + "0x" + Integer.toHexString(source.code()[i + 3]) + ",\n");
+                            ", " + "0x" + Integer.toHexString(source.code()[i + 3]) + ",\n");
                 }
                 writer.println("0xfe, 0xff, 0xff, 0xea };\n");
                 writer.close();

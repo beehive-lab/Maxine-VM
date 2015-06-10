@@ -582,6 +582,7 @@ public class Stubs {
         Log.print("TRAMPOLINE CALLER ");
         Log.println(caller.toString());
 
+
         final ClassMethodActor callee = caller.callSiteToCallee(cpCallSite);
         Log.print("TRAMPOLINE CALLEE ");
         Log.println(callee.toString());
@@ -602,18 +603,32 @@ public class Stubs {
 
     @PLATFORM(cpu = "amd64")
     private static void patchStaticTrampolineCallSiteAMD64(Pointer callSite) {
+        Log.println("ENTER-AMD patchStaticTrampoline");
+
         CodePointer cpCallSite = CodePointer.from(callSite);
+        Log.print("TRAMPOLINE CALL SITE ");
+        Log.println(cpCallSite);
 
         final TargetMethod caller = cpCallSite.toTargetMethod();
+        Log.print("TRAMPOLINE CALLER ");
+        Log.println(caller.toString());
+
         final ClassMethodActor callee = caller.callSiteToCallee(cpCallSite);
+        Log.print("TRAMPOLINE CALLEE ");
+        Log.println(callee.toString());
 
         final CodePointer calleeEntryPoint = callee.makeTargetMethod(caller).getEntryPoint(caller.callEntryPoint);
+        Log.print("TRAMPOLINE ENTRYPOINT ");
+        Log.println(calleeEntryPoint);
+
         AMD64TargetMethodUtil.mtSafePatchCallDisplacement(caller, cpCallSite, calleeEntryPoint);
 
         // remember calls from boot code region to baseline code cache
         if (Code.bootCodeRegion().contains(cpCallSite.toAddress()) && Code.getCodeManager().getRuntimeBaselineCodeRegion().contains(calleeEntryPoint.toAddress())) {
             CodeManager.recordBootToBaselineCaller(caller);
         }
+        Log.println("EXIT-AMD patchStaticTrampoline");
+
     }
 
     /**
@@ -737,8 +752,8 @@ public class Stubs {
 
             // ok so this should patch the call site address?
             asm.strImmediate(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, callSite, ARMV7.r12, 0);
-	    asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r12,callSite);
-	    asm.flushicache(ARMV7.r12,24);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, callSite);
+            asm.flushicache(ARMV7.r12, 24);
             asm.ret(0); // ret(0) is a C3 in X86
 
             String stubName = "strampoline";
