@@ -41,6 +41,7 @@ import com.sun.max.unsafe.Pointer;
 import com.sun.max.unsafe.Word;
 import com.sun.max.vm.Log;
 import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.VMOptions;
 import com.sun.max.vm.actor.holder.DynamicHub;
 import com.sun.max.vm.actor.holder.Hub;
 import com.sun.max.vm.actor.member.ClassMethodActor;
@@ -348,11 +349,14 @@ public class Stubs {
      */
     private static Address resolveVirtualCall(Object receiver, int vTableIndex, Pointer pcInCaller) {
         // pcInCaller must be dealt with before any safepoint
-        Log.println("STUBS:resolveVirtualCall");
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.println("STUBS:resolveVirtualCall");
+        }
         CodePointer cpCallSite = CodePointer.from(pcInCaller);
-        Log.print("CALLSITE ");
-        Log.println(cpCallSite);
-
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.print("CALLSITE ");
+            Log.println(cpCallSite);
+        }
         final TargetMethod caller = cpCallSite.toTargetMethod();
 
         final Hub hub = ObjectAccess.readHub(receiver);
@@ -360,7 +364,9 @@ public class Stubs {
         if (selectedCallee.isAbstract()) {
             throw new AbstractMethodError();
         }
-        Log.println(selectedCallee);
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.println(selectedCallee);
+        }
         final TargetMethod selectedCalleeTargetMethod = selectedCallee.makeTargetMethod(caller);
         FatalError.check(selectedCalleeTargetMethod.invalidated() == null, "resolved virtual method must not be invalidated");
         CodePointer vtableEntryPoint = selectedCalleeTargetMethod.getEntryPoint(VTABLE_ENTRY_POINT);
@@ -386,9 +392,11 @@ public class Stubs {
      */
     private static Address resolveInterfaceCall(Object receiver, int iIndex, Pointer pcInCaller) {
         // pcInCaller must be dealt with before any safepoint
-        Log.println("pcInCaller");
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.print("pcInCaller");
+            Log.println(pcInCaller);
 
-        Log.println(pcInCaller);
+        }
 
         CodePointer cpCallSite = CodePointer.from(pcInCaller);
         final TargetMethod caller = cpCallSite.toTargetMethod();
@@ -573,24 +581,32 @@ public class Stubs {
 
     @PLATFORM(cpu = "armv7")
     private static void patchStaticTrampolineCallSiteARMV7(Pointer callSite) {
-        Log.println("ENTER-ARM patchStaticTrampoline");
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.println("ENTER-ARM patchStaticTrampoline");
+        }
         CodePointer cpCallSite = CodePointer.from(callSite);
-        Log.print("TRAMPOLINE CALL SITE ");
-        Log.println(cpCallSite);
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.print("TRAMPOLINE CALL SITE ");
+            Log.println(cpCallSite);
+        }
 
         final TargetMethod caller = cpCallSite.toTargetMethod();
-        Log.print("TRAMPOLINE CALLER ");
-        Log.println(caller.toString());
-
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.print("TRAMPOLINE CALLER ");
+            Log.println(caller.toString());
+        }
 
         final ClassMethodActor callee = caller.callSiteToCallee(cpCallSite);
-        Log.print("TRAMPOLINE CALLEE ");
-        Log.println(callee.toString());
-
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.print("TRAMPOLINE CALLEE ");
+            Log.println(callee.toString());
+        }
 
         final CodePointer calleeEntryPoint = callee.makeTargetMethod(caller).getEntryPoint(caller.callEntryPoint);
-        Log.print("TRAMPOLINE ENTRYPOINT ");
-        Log.println(calleeEntryPoint);
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.print("TRAMPOLINE ENTRYPOINT ");
+            Log.println(calleeEntryPoint);
+        }
 
         ARMTargetMethodUtil.mtSafePatchCallDisplacement(caller, cpCallSite, calleeEntryPoint);
 
@@ -598,37 +614,48 @@ public class Stubs {
         if (Code.bootCodeRegion().contains(cpCallSite.toAddress()) && Code.getCodeManager().getRuntimeBaselineCodeRegion().contains(calleeEntryPoint.toAddress())) {
             CodeManager.recordBootToBaselineCaller(caller);
         }
-        Log.println("EXIT-ARM patchStaticTrampoline");
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.println("EXIT-ARM patchStaticTrampoline");
+        }
     }
 
     @PLATFORM(cpu = "amd64")
     private static void patchStaticTrampolineCallSiteAMD64(Pointer callSite) {
-        Log.println("ENTER-AMD patchStaticTrampoline");
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.println("ENTER-AMD patchStaticTrampoline");
+        }
 
         CodePointer cpCallSite = CodePointer.from(callSite);
-        Log.print("TRAMPOLINE CALL SITE ");
-        Log.println(cpCallSite);
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.print("TRAMPOLINE CALL SITE ");
+            Log.println(cpCallSite);
+        }
 
         final TargetMethod caller = cpCallSite.toTargetMethod();
-        Log.print("TRAMPOLINE CALLER ");
-        Log.println(caller.toString());
-
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.print("TRAMPOLINE CALLER ");
+            Log.println(caller.toString());
+        }
         final ClassMethodActor callee = caller.callSiteToCallee(cpCallSite);
-        Log.print("TRAMPOLINE CALLEE ");
-        Log.println(callee.toString());
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.print("TRAMPOLINE CALLEE ");
+            Log.println(callee.toString());
+        }
 
         final CodePointer calleeEntryPoint = callee.makeTargetMethod(caller).getEntryPoint(caller.callEntryPoint);
-        Log.print("TRAMPOLINE ENTRYPOINT ");
-        Log.println(calleeEntryPoint);
-
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.print("TRAMPOLINE ENTRYPOINT ");
+            Log.println(calleeEntryPoint);
+        }
         AMD64TargetMethodUtil.mtSafePatchCallDisplacement(caller, cpCallSite, calleeEntryPoint);
 
         // remember calls from boot code region to baseline code cache
         if (Code.bootCodeRegion().contains(cpCallSite.toAddress()) && Code.getCodeManager().getRuntimeBaselineCodeRegion().contains(calleeEntryPoint.toAddress())) {
             CodeManager.recordBootToBaselineCaller(caller);
         }
-        Log.println("EXIT-AMD patchStaticTrampoline");
-
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.println("EXIT-AMD patchStaticTrampoline");
+        }
     }
 
     /**
@@ -1058,8 +1085,8 @@ public class Stubs {
                 CiAddress stackAddr = null;
                 CiKind kind = retValue.kind.stackKind();
                 name = "unwind" + kind.name() + "Stub";
-                Log.print("UNWIND ");
-                Log.println(args[3].toString());
+                //Log.print("UNWIND ");
+                //Log.println(args[3].toString());
                 switch (kind) {
 
                     case Long:

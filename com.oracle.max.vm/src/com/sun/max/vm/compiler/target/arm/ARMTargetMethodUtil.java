@@ -257,12 +257,9 @@ public final class ARMTargetMethodUtil {
         if (MaxineVM.isHosted()) {
             final byte[] code = tm.code();
 
-            //if (CompilationBroker.OFFLINE) {
             if (true) {
                 if (JUMP_WITH_LINK) {
-                    if ((callOffset + 16) >= code.length) {
 
-                    }
                     int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
                     code[callOffset + 0] = (byte) (instruction & 0xff);
                     code[callOffset + 1] = (byte) ((instruction >> 8) & 0xff);

@@ -494,13 +494,10 @@ public final class MaxineVM {
 	MaxineVM vm = vm();
 	vmConfig().initializeSchemes(MaxineVM.Phase.PRIMORDIAL);
 
-	Log.println("schemes inited");
         vm().stubs.intialize();
-	Log.println("stubs");
         vm.phase = Phase.PRISTINE;
 
         VMOptions.parsePristine(argc, argv);
-	Log.println("parse pristine");
         return exitCode;
 
     }

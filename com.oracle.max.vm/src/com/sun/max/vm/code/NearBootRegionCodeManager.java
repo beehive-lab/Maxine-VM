@@ -36,7 +36,7 @@ import com.sun.max.vm.heap.*;
  * It relies on cooperation with the HeapScheme to reserve up to 1 G of space next to the boot heap region.
  * This guarantees that (1) virtual memory can be allocated at that address, and (2) all code allocated from the code manager will be within a 32-bit displacement from
  * any code in the boot code region.
- *
+ * <p/>
  * See {@link HeapSchemeAdaptor#createCodeManager()}
  */
 public class NearBootRegionCodeManager extends CodeManager {
@@ -46,12 +46,12 @@ public class NearBootRegionCodeManager extends CodeManager {
     @Override
     void initialize() {
         final Address baselineAddress = Code.bootCodeRegion().end().alignUp(Platform.platform().pageSize);
-	Log.print("BASEBASE");Log.println(baselineAddress);
+        //Log.print("BASEBASE");Log.println(baselineAddress);
         tryAllocate(runtimeBaselineCodeRegionSize, runtimeBaselineCodeRegion, baselineAddress);
-        Log.print("START ");Log.print(runtimeBaselineCodeRegion.start());Log.print(" SIZE ");Log.println(runtimeBaselineCodeRegion.size());
+        //Log.print("START ");Log.print(runtimeBaselineCodeRegion.start());Log.print(" SIZE ");Log.println(runtimeBaselineCodeRegion.size());
 
         final Address optAddress = runtimeBaselineCodeRegion.end().alignUp(Platform.platform().pageSize);
-	Log.print("OPTOPT");Log.println(optAddress);
+        //Log.print("OPTOPT");Log.println(optAddress);
         tryAllocate(runtimeOptCodeRegionSize, runtimeOptCodeRegion, optAddress);
     }
 

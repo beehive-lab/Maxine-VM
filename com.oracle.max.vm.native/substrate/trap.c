@@ -48,8 +48,8 @@
 #define ASYNC_INTERRUPT 4
 
 static Address theJavaTrapStub;
-static boolean traceTraps = true;
-//static boolean traceTraps = false;
+//static boolean traceTraps = true;
+static boolean traceTraps = false;
 
 #if !os_MAXVE
 
@@ -171,7 +171,7 @@ static Address getInstructionPointer(UContext *ucontext) {
 }
 
 static void setInstructionPointer(UContext *ucontext, Address stub) {
-printf("SET PC CALLED\n");
+//printf("SET PC CALLED\n");
 log_println("  Instruction Pointer = %p", stub);
 #if os_SOLARIS
 #   if isa_SPARC
@@ -349,7 +349,7 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
     Address ip = getInstructionPointer(ucontext);
     Address faultAddress = getFaultAddress(signalInfo, ucontext);
 
-    printf("vmSignalHandler\n");
+    //printf("vmSignalHandler\n");
     /* Only VM signals should get here. */
     if (trapNumber < 0) {
         logTrap(signal, ip, faultAddress, 0);

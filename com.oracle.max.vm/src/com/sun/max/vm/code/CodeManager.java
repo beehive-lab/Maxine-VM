@@ -22,25 +22,34 @@
  */
 package com.sun.max.vm.code;
 
-import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.VMOptions.*;
-
-import java.util.*;
-
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.target.*;
+import com.sun.max.annotate.INSPECTED;
+import com.sun.max.annotate.NEVER_INLINE;
+import com.sun.max.unsafe.Address;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.unsafe.Size;
+import com.sun.max.vm.Log;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.VMOptions;
+import com.sun.max.vm.VMSizeOption;
+import com.sun.max.vm.actor.holder.ClassActor;
+import com.sun.max.vm.actor.member.MethodActor;
+import com.sun.max.vm.compiler.target.TargetBundleLayout;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.ArrayField;
-import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.debug.*;
-import com.sun.max.vm.layout.*;
-import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.tele.*;
-import com.sun.max.vm.type.*;
+import com.sun.max.vm.compiler.target.TargetMethod;
+import com.sun.max.vm.heap.Cell;
+import com.sun.max.vm.heap.CellVisitor;
+import com.sun.max.vm.heap.Heap;
+import com.sun.max.vm.heap.debug.DebugHeap;
+import com.sun.max.vm.layout.Layout;
+import com.sun.max.vm.reference.Reference;
+import com.sun.max.vm.runtime.SafepointPoll;
+import com.sun.max.vm.tele.InspectableCodeInfo;
+import com.sun.max.vm.type.ClassRegistry;
+
+import java.util.Arrays;
+
+import static com.sun.max.vm.MaxineVM.isHosted;
+import static com.sun.max.vm.VMOptions.register;
 
 /**
  * Target machine code cache management.
@@ -403,8 +412,10 @@ public abstract class CodeManager {
 
             return runtimeOptCodeRegion;
         }
-	Log.print("NOT found in any codeRegions ");
-        Log.println(codePointer);
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.print("NOT found in any codeRegions ");
+            Log.println(codePointer);
+        }
 
         return null;
     }

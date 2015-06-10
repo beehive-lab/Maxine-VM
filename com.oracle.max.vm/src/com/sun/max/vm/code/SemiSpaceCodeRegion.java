@@ -22,16 +22,18 @@
  */
 package com.sun.max.vm.code;
 
-import java.util.*;
+import com.sun.max.annotate.INSPECTED;
+import com.sun.max.program.ProgramError;
+import com.sun.max.unsafe.Address;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.unsafe.Size;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.compiler.target.TargetMethod;
+import com.sun.max.vm.heap.LinearAllocatorRegion;
+import com.sun.max.vm.heap.debug.DebugHeap;
+import com.sun.max.vm.runtime.FatalError;
 
-import com.sun.max.annotate.*;
-import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.debug.*;
-import com.sun.max.vm.runtime.*;
+import java.util.Arrays;
 
 /**
  * A code region with semi-space characteristics.
@@ -132,7 +134,7 @@ public final class SemiSpaceCodeRegion extends CodeRegion {
         }
 
         Pointer oldAllocationMark = mark();
-	Log.print(oldAllocationMark);
+	//Log.print(oldAllocationMark);
         Pointer cell = adjustForDebugTag ? DebugHeap.adjustForDebugTag(oldAllocationMark) : oldAllocationMark;
         Address end = cell.plus(size);
         if (end.greaterThan(topOfSpace)) {
@@ -143,8 +145,8 @@ public final class SemiSpaceCodeRegion extends CodeRegion {
             return Pointer.zero();
         }
         setMark(end);
-	Log.print(" OLDST ALLOCATED ");Log.print(size);Log.print(   "ADDRESS ");Log.println(cell);
-        Log.print(start); Log.print(" SIZE "); Log.println(this.size); 
+	//Log.print(" OLDST ALLOCATED ");Log.print(size);Log.print(   "ADDRESS ");Log.println(cell);
+       // Log.print(start); Log.print(" SIZE "); Log.println(this.size);
 
 
         return cell;

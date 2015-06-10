@@ -163,7 +163,7 @@ static void getImageFilePath(char *result) {
 static void loadImage(void) {
     char imageFilePath[MAX_PATH_LENGTH];
     getImageFilePath(imageFilePath);
-	printf("FILEPATH %s\n",imageFilePath);
+	//printf("FILEPATH %s\n",imageFilePath);
     image_load(imageFilePath);
 }
 
@@ -376,12 +376,12 @@ int maxine(int argc, char *argv[], char *executablePath) {
     max_fd_limit();
 
     loadImage();
-    printf("IMAGE LOADED\n");
+    //printf("IMAGE LOADED\n");
     tla_initialize(image_header()->tlaSize);
-    printf("TLA INITED\n");
+    //printf("TLA INITED\n");
 
     debugger_initialize();
-    printf("DEBUGGER INITED\n");
+    //printf("DEBUGGER INITED\n");
 
     method = image_offset_as_address(VMRunMethod, vmRunMethodOffset);
     //printf("VMRUNMETHODOFFSET 0x%x\n", vmRunMethodOffset);//vmRunMethodOffset);
@@ -389,13 +389,13 @@ int maxine(int argc, char *argv[], char *executablePath) {
     Address tlBlock = threadLocalsBlock_create(PRIMORDIAL_THREAD_ID, 0, 0);
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 #ifdef arm
-    printf("THREAD LOCALS method entry %p NTL %x\n",method,(Address ) ntl);
-    printf("THREAD LOCALS block size %u \n",ntl->tlBlockSize);
-    printf("Main method entry %p\n", method);
+    //printf("THREAD LOCALS method entry %p NTL %x\n",method,(Address ) ntl);
+    //printf("THREAD LOCALS block size %u \n",ntl->tlBlockSize);
+    //printf("Main method entry %p\n", method);
 #else
-    printf("THREAD LOCALS method entry %p NTL %llx\n",method,(Address ) ntl);
-    printf("THREAD LOCALS block size %llu \n",ntl->tlBlockSize);
-    printf("Main method entry %p\n", method);
+    //printf("THREAD LOCALS method entry %p NTL %llx\n",method,(Address ) ntl);
+    //printf("THREAD LOCALS block size %llu \n",ntl->tlBlockSize);
+    //printf("Main method entry %p\n", method);
 #endif
 
 
@@ -403,7 +403,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
     log_println("entering Java by calling MaxineVM.run(tlBlock=%p, bootHeapRegionStart=%p, openLibrary=%p, dlsym=%p, dlerror=%p, vmInterface=%p, jniEnv=%p, jmmInterface=%p, jvmtiInterface=%p, argc=%d, argv=%p)",
                     tlBlock, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
 #endif
-    printf("dlopen %p dlsym %p dlsym %p\n",openLibrary,loadSymbol,dlerror);
+    //printf("dlopen %p dlsym %p dlsym %p\n",openLibrary,loadSymbol,dlerror);
     exitCode = (*method)(tlBlock, ntl->tlBlockSize, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
 
 #if log_LOADER
@@ -412,13 +412,13 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     if (exitCode == 0) {
         // Initialization succeeded: now run the main Java thread
-	printf("ENTERING MAIN JAVA THREAD TO RUN\n");
+	//printf("ENTERING MAIN JAVA THREAD TO RUN\n");
         thread_run((void *) tlBlock);
     } else {
         printf("NON ZERO NATIVE EXIT %d\n",exitCode);
         native_exit(exitCode);
     }
-    printf("NEVER REACHED\n");
+    //printf("NEVER REACHED\n");
     // All exits should be routed through native_exit().
     log_exit(-1, "Should not reach here\n");
 }

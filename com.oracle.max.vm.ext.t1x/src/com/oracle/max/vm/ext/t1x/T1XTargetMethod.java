@@ -218,7 +218,6 @@ public class T1XTargetMethod extends TargetMethod {
         // Allocate and set the code and data buffer
         final TargetBundleLayout targetBundleLayout = new TargetBundleLayout(0, comp.objectLiterals.size(), comp.buf.position());
         if (install) {
-	    Log.println("CODE ALLOCATED");
             Code.allocate(targetBundleLayout, this);
         } else {
             Code.allocateInHeap(targetBundleLayout, this);

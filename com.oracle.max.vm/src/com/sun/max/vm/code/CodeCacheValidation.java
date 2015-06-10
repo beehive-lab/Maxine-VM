@@ -27,6 +27,7 @@ import com.sun.max.unsafe.Address;
 import com.sun.max.unsafe.CodePointer;
 import com.sun.max.unsafe.Offset;
 import com.sun.max.unsafe.Pointer;
+import com.sun.max.vm.VMOptions;
 import com.sun.max.vm.actor.holder.ClassActor;
 import com.sun.max.vm.actor.holder.DynamicHub;
 import com.sun.max.vm.actor.holder.Hub;
@@ -233,22 +234,26 @@ public final class CodeCacheValidation extends VmOperation {
             if (platform().isa == ISA.AMD64) {
                 final CodePointer callTarget = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
                 final TargetMethod actualCallee = callTarget.toTargetMethod();
-                com.sun.max.vm.Log.print("CALLER ");
-                com.sun.max.vm.Log.println(targetMethod.toString());
-                com.sun.max.vm.Log.print("CALLEE ");
-                com.sun.max.vm.Log.print(actualCallee.toString());
-                com.sun.max.vm.Log.println(callTarget);
+                if (VMOptions.verboseOption.verboseCompilation) {
+                    com.sun.max.vm.Log.print("CALLER ");
+                    com.sun.max.vm.Log.println(targetMethod.toString());
+                    com.sun.max.vm.Log.print("CALLEE ");
+                    com.sun.max.vm.Log.print(actualCallee.toString());
+                    com.sun.max.vm.Log.println(callTarget);
+                }
 
                 assert validCodeAddress(callTarget) : "invalid call target (address) in direct call from " + targetMethod + "@" + spi + "(pos " + callPos + ") -> " + actualCallee + " (target: " + callTarget.to0xHexString() + ")";
                 assert actualCallee != null && validEntryPoint(callTarget, actualCallee) : "invalid entry point in direct call from " + targetMethod + "@" + spi + " -> " + actualCallee + " (target: " + callTarget.to0xHexString() + ")";
             } else if (platform().isa == ISA.ARM) {
                 final CodePointer callTarget = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
                 final TargetMethod actualCallee = callTarget.toTargetMethod();
-                com.sun.max.vm.Log.print("CALLER ");
-                com.sun.max.vm.Log.println(targetMethod.toString());
-                com.sun.max.vm.Log.print("CALLEE ");
-                com.sun.max.vm.Log.print(actualCallee.toString());
-                com.sun.max.vm.Log.println(callTarget);
+                if (VMOptions.verboseOption.verboseCompilation) {
+                    com.sun.max.vm.Log.print("CALLER ");
+                    com.sun.max.vm.Log.println(targetMethod.toString());
+                    com.sun.max.vm.Log.print("CALLEE ");
+                    com.sun.max.vm.Log.print(actualCallee.toString());
+                    com.sun.max.vm.Log.println(callTarget);
+                }
 
                 assert validCodeAddress(callTarget) : "invalid call target (address) in direct call from " + targetMethod + "@" + spi + "(pos " + callPos + ") -> " + actualCallee + " (target: " + callTarget.to0xHexString() + ")";
                 assert actualCallee != null && validEntryPoint(callTarget, actualCallee) : "invalid entry point in direct call from " + targetMethod + "@" + spi + " -> " + actualCallee + " (target: " + callTarget.to0xHexString() + ")";
@@ -256,8 +261,10 @@ public final class CodeCacheValidation extends VmOperation {
             } else {
                 throw FatalError.unimplemented();
             }
-            com.sun.max.vm.Log.print("DONE SAFEPT ");
-            com.sun.max.vm.Log.println(spi);
+            if (VMOptions.verboseOption.verboseCompilation) {
+                com.sun.max.vm.Log.print("DONE SAFEPT ");
+                com.sun.max.vm.Log.println(spi);
+            }
         }
     }
 

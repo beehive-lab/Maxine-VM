@@ -311,9 +311,9 @@ static void mapHeapAndCode(int fd) {
     size_t virtualSpaceSize =  1024L * theHeader->reservedVirtualSpaceSize;
 
 #ifdef arm
-    log_println("ReservedVSpace Size %d ActualVSpaceSize(*1Mb) %u",theHeader->reservedVirtualSpaceSize, virtualSpaceSize);
+   // log_println("ReservedVSpace Size %d ActualVSpaceSize(*1Mb) %u",theHeader->reservedVirtualSpaceSize, virtualSpaceSize);
 #else
-    log_println("ReservedVSpace Size %llu ActualVSpaceSize(*1Mb) %llu",theHeader->reservedVirtualSpaceSize, virtualSpaceSize);
+    //log_println("ReservedVSpace Size %llu ActualVSpaceSize(*1Mb) %llu",theHeader->reservedVirtualSpaceSize, virtualSpaceSize);
 #endif
 
     c_ASSERT(virtualMemory_pageAlign((Size) virtualSpaceSize) == (Size) virtualSpaceSize);
@@ -325,14 +325,14 @@ static void mapHeapAndCode(int fd) {
         // In any case,  the VM (mostly the heap scheme) is responsible for releasing unused reserved space.
         reservedVirtualSpace = virtualMemory_allocatePrivateAnon((Address) 0, virtualSpaceSize, JNI_FALSE, JNI_FALSE, HEAP_VM);
 
-	    log_println("Virtual Space starts @  0x%x", reservedVirtualSpace);
+	    //log_println("Virtual Space starts @  0x%x", reservedVirtualSpace);
 
         if (reservedVirtualSpace == ALLOC_FAILED) {
             log_exit(4, "could not reserve requested virtual space");
         }
     }
 
-    log_println("Mapping constraint %d",theHeader->bootRegionMappingConstraint);
+    //log_println("Mapping constraint %d",theHeader->bootRegionMappingConstraint);
 
     if (theHeader->bootRegionMappingConstraint == 1) {
         // Map the boot heap region at the start of the reserved space
@@ -348,7 +348,7 @@ static void mapHeapAndCode(int fd) {
         }
     }
 
-    log_println("Heap start  @ 0x%x heapCode size %d", theHeap, heapAndCodeSize);
+    //log_println("Heap start  @ 0x%x heapCode size %d", theHeap, heapAndCodeSize);
 
     if (virtualMemory_mapFileAtFixedAddress(theHeap, heapAndCodeSize, fd, heapOffsetInImage) == ALLOC_FAILED) {
         log_exit(4, "could not map boot image");

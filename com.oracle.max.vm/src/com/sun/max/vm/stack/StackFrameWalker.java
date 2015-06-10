@@ -22,21 +22,30 @@
  */
 package com.sun.max.vm.stack;
 
-import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
-import static com.sun.max.vm.compiler.target.Stub.*;
-import static com.sun.max.vm.compiler.target.Stub.Type.*;
-import static com.sun.max.vm.stack.StackFrameWalker.Purpose.*;
-import static com.sun.max.vm.thread.VmThreadLocal.*;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.annotate.VM_ENTRY_POINT;
+import com.sun.max.unsafe.Address;
+import com.sun.max.unsafe.CodePointer;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.Log;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.VMOptions;
+import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.actor.member.NativeFunction;
+import com.sun.max.vm.compiler.target.TargetMethod;
+import com.sun.max.vm.jni.NativeStubGenerator;
+import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.runtime.SafepointPoll;
+import com.sun.max.vm.runtime.Snippets;
+import com.sun.max.vm.thread.VmThreadLocal;
 
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.jni.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
+import static com.sun.max.platform.Platform.platform;
+import static com.sun.max.vm.compiler.deopt.Deoptimization.DEOPT_RETURN_ADDRESS_OFFSET;
+import static com.sun.max.vm.compiler.target.Stub.Type.TrapStub;
+import static com.sun.max.vm.compiler.target.Stub.isDeoptStubEntry;
+import static com.sun.max.vm.stack.StackFrameWalker.Purpose.*;
+import static com.sun.max.vm.thread.VmThreadLocal.LAST_JAVA_FRAME_ANCHOR;
 
 /**
  * A walker that iterates over the frames in a thread's stack.
@@ -172,7 +181,6 @@ public abstract class StackFrameWalker {
                     break;
                 }
             } else {
-		Log.println("DID NOT FIND target method in native code");
                 // did not find target method => in native code
                 if (MaxineVM.isHosted() && purpose == INSPECTING) {
                     final StackFrameVisitor stackFrameVisitor = (StackFrameVisitor) context;

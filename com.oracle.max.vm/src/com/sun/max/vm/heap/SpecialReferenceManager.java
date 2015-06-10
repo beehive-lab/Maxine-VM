@@ -23,25 +23,33 @@
 package com.sun.max.vm.heap;
 
 
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
-import static com.sun.max.vm.jdk.JDK_java_lang_ref_ReferenceQueue.*;
-
 import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.unsafe.UnsafeCast;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.Log;
+import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.MaxineVM.Phase;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.jdk.*;
-import com.sun.max.vm.layout.*;
+import com.sun.max.vm.actor.holder.ClassActor;
+import com.sun.max.vm.actor.member.FieldActor;
+import com.sun.max.vm.hosted.WithoutAccessCheck;
+import com.sun.max.vm.jdk.JDK;
+import com.sun.max.vm.jdk.JDK_java_lang_ref_ReferenceQueue;
+import com.sun.max.vm.layout.Layout;
 import com.sun.max.vm.log.VMLog.Record;
-import com.sun.max.vm.log.hosted.*;
-import com.sun.max.vm.monitor.modal.sync.*;
-import com.sun.max.vm.object.*;
-import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.*;
+import com.sun.max.vm.log.hosted.VMLogParam;
+import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager;
+import com.sun.max.vm.object.ObjectAccess;
+import com.sun.max.vm.reference.Reference;
+import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.runtime.GCOperation;
+import com.sun.max.vm.runtime.VmOperation;
+import com.sun.max.vm.runtime.VmOperationThread;
+import com.sun.max.vm.thread.VmThread;
+
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
+import static com.sun.max.vm.jdk.JDK_java_lang_ref_ReferenceQueue.ENQUEUED;
+import static com.sun.max.vm.jdk.JDK_java_lang_ref_ReferenceQueue.NULL;
 
 /**
  * This class implements support for collecting and processing special references
@@ -385,11 +393,11 @@ public class SpecialReferenceManager {
             sentinelAlias.next = sentinel;
             sentinelAlias.referent = null;
             assert sentinelAlias.isInactive();
-	    Log.println("SpecialReferenceManager: trying to start REFHANDLER"); 
+	    //Log.println("SpecialReferenceManager: trying to start REFHANDLER");
             startReferenceHandlerThread();
-	    Log.println("SpecialReferenceManager: trying to start FINALIZER"); 
+	    //Log.println("SpecialReferenceManager: trying to start FINALIZER");
             startFinalizerThread();
-	    Log.println("SpecialReferenceManager: initialize ocmpleted"); 
+	    //Log.println("SpecialReferenceManager: initialize ocmpleted");
         }
     }
 

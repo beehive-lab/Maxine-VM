@@ -38,6 +38,7 @@ import com.sun.max.memory.MemoryRegion;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.Log;
 import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.VMOptions;
 import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.actor.member.MethodActor;
 import com.sun.max.vm.classfile.CodeAttribute;
@@ -980,7 +981,7 @@ public abstract class TargetMethod extends MemoryRegion {
                 if (currentDirectCallee == null) {
                     // template call
                     assert classMethodActor.isTemplate();
-                    Log.println("Patch template call");
+                    //Log.println("Patch template call");
                 } else if (MaxineVM.isHosted()) {
                     final TargetMethod callee = getTargetMethod(currentDirectCallee);
                     if (callee == null) {    // APN this means the code is not yet available
@@ -1008,16 +1009,34 @@ public abstract class TargetMethod extends MemoryRegion {
                     final TargetMethod callee = getTargetMethod(currentDirectCallee);
                     if (callee == null || (!Code.bootCodeRegion().contains(callee.codeStart) && !(callee instanceof Adapter))) {
                         linkedAll = false;
-			if(callee == null) Log.println("CALEENULL");
-			else {Log.print("CALLEENONULL ");Log.print(callee.toString());Log.print(" START ");Log.println(callee.start());}
-			Log.println("PATCHSTATIC");
+                        if (VMOptions.verboseOption.verboseCompilation) {
+                            if (callee == null) Log.println("CALEENULL");
+                            else {
+                                Log.print("CALLEENONULL ");
+                                Log.print(callee.toString());
+                                Log.print(" START ");
+                                Log.println(callee.start());
+                            }
+                            Log.println("PATCHSTATIC");
+                        }
                         patchStaticTrampoline(safepointIndex, offset);
                     } else {
                         int callPos = safepoints.causePosAt(safepointIndex);
-			if(callee == null) Log.println("CALEENULL");
-			else {Log.print("CALLEENONULL ");Log.print(callee.toString());Log.print(" START ");Log.print(callee.start());Log.print(" OFF ");Log.println(offset);}
-			 Log.print("CODESTART ");Log.println(callee.codeStart());
-                        Log.print("START ");Log.println(callee.start());
+                        if (VMOptions.verboseOption.verboseCompilation) {
+                            if (callee == null) Log.println("CALEENULL");
+                            else {
+                                Log.print("CALLEENONULL ");
+                                Log.print(callee.toString());
+                                Log.print(" START ");
+                                Log.print(callee.start());
+                                Log.print(" OFF ");
+                                Log.println(offset);
+                            }
+                            Log.print("CODESTART ");
+                            Log.println(callee.codeStart());
+                            Log.print("START ");
+                            Log.println(callee.start());
+                        }
                         fixupCallSite(callPos, callee.codeAt(offset));
                     }
                 }
@@ -1039,7 +1058,7 @@ public abstract class TargetMethod extends MemoryRegion {
                 if (currentDirectCallee == null) {
                     // template call
                     assert classMethodActor.isTemplate();
-                    Log.println("Patch template call");
+                    //Log.println("Patch template call");
                 } else if (MaxineVM.isHosted()) {
                     final TargetMethod callee = getTargetMethod(currentDirectCallee);
                     if (callee == null) {    // APN this means the code is not yet available
@@ -1235,8 +1254,14 @@ public abstract class TargetMethod extends MemoryRegion {
         if (pos >= 0 && pos <= code.length) {
             return pos;
         }
-	Log.print ("CODESTART ");Log.print(codeStart.toLong());Log.print( "IP ");Log.println(ip.toLong());
-	Log.print("TargetMethod:posFor -1 ");Log.println(pos);
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.print("CODESTART ");
+            Log.print(codeStart.toLong());
+            Log.print("IP ");
+            Log.println(ip.toLong());
+            Log.print("TargetMethod:posFor -1 ");
+            Log.println(pos);
+        }
         return -1;
     }
 
