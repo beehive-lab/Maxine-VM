@@ -592,7 +592,6 @@ public class Stubs {
         Log.println(calleeEntryPoint);
 
         ARMTargetMethodUtil.mtSafePatchCallDisplacement(caller, cpCallSite, calleeEntryPoint);
-        Log.print("DONT EXPECT tO REACH HERE");
 
         // remember calls from boot code region to baseline code cache
         if (Code.bootCodeRegion().contains(cpCallSite.toAddress()) && Code.getCodeManager().getRuntimeBaselineCodeRegion().contains(calleeEntryPoint.toAddress())) {
@@ -738,6 +737,8 @@ public class Stubs {
 
             // ok so this should patch the call site address?
             asm.strImmediate(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, callSite, ARMV7.r12, 0);
+	    asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r12,callSite);
+	    asm.flushicache(ARMV7.r12,24);
             asm.ret(0); // ret(0) is a C3 in X86
 
             String stubName = "strampoline";

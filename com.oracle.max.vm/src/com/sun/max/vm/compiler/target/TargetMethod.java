@@ -1018,7 +1018,6 @@ public abstract class TargetMethod extends MemoryRegion {
 			else {Log.print("CALLEENONULL ");Log.print(callee.toString());Log.print(" START ");Log.print(callee.start());Log.print(" OFF ");Log.println(offset);}
 			 Log.print("CODESTART ");Log.println(callee.codeStart());
                         Log.print("START ");Log.println(callee.start());
-			Log.print("SEEDUMMY ");Log.println(callee.dummy(offset));
                         fixupCallSite(callPos, callee.codeAt(offset));
                     }
                 }

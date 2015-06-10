@@ -1321,8 +1321,46 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void int3() {
         //emitInt(0xe1200070); // this is BKPT
+/*
+	svc implement system calls, r7 holds the system call number and a return value comes backin r0...
+	swi is svc 0, so we load r7 with 0, NOTE we need to save/restore the registers used.
+*/
+        push(ConditionFlag.Always, 1|128 ); // push r0 and r7
+        eor(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r0, ARMV7.r0, 0, 0);
+	eor(ConditionFlag.Always, false, ARMV7.r7, ARMV7.r7, ARMV7.r7, 0, 0);
         emitInt(0xef000000); // replaced with svc 0
+	pop(ConditionFlag.Always, 1 |128 );
 
+
+    }
+    public final void flushicache(CiRegister startAddress, int bytes) {
+
+/*
+http://community.arm.com/groups/processors/blog/2010/02/17/caches-and-self-modifying-code
+
+push {r0-r2, r7}  
+  adr r0, start_label  
+  ldr r1, =end_label  
+  mov r2, #0  
+  ldr r7, =0x000f0002  
+  svc 0  
+  pop {r0-r2, r7}  
+  
+start_label:  
+  
+  ...  @ Patched code.  
+  
+end_label:  
+*/
+	assert(startAddress.encoding == ARMV7.r12.encoding);
+        push(ConditionFlag.Always, 1|2|4|128 );
+        mov(ConditionFlag.Always, false, ARMV7.r0, scratchRegister);
+	mov32BitConstant(ARMV7.r1,bytes);
+        eor(ConditionFlag.Always, false, ARMV7.r2, ARMV7.r2, ARMV7.r2, 0, 0);
+	mov32BitConstant(ARMV7.r7,0x000f0002);
+	addlsl(ConditionFlag.Always,false,ARMV7.r1,ARMV7.r1,ARMV7.r0,0);
+	emitInt(0xef000001); // replaced with svc 0
+        pop(ConditionFlag.Always, 1|2|4|128 );
     }
 
     public final void hlt() {
