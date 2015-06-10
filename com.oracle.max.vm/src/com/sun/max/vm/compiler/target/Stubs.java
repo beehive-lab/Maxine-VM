@@ -575,20 +575,20 @@ public class Stubs {
     private static void patchStaticTrampolineCallSiteARMV7(Pointer callSite) {
         Log.println("ENTER-ARM patchStaticTrampoline");
         CodePointer cpCallSite = CodePointer.from(callSite);
-        Log.print("GOT CALL SITE ");
+        Log.print("TRAMPOLINE CALL SITE ");
         Log.println(cpCallSite);
 
         final TargetMethod caller = cpCallSite.toTargetMethod();
-        Log.print("GOT CALLER ");
+        Log.print("TRAMPOLINE CALLER ");
         Log.println(caller.toString());
 
         final ClassMethodActor callee = caller.callSiteToCallee(cpCallSite);
-        Log.print("GOT CALLEE ");
+        Log.print("TRAMPOLINE CALLEE ");
         Log.println(callee.toString());
 
 
         final CodePointer calleeEntryPoint = callee.makeTargetMethod(caller).getEntryPoint(caller.callEntryPoint);
-        Log.print("GOT ENTRYPOINT ");
+        Log.print("TRAMPOLINE ENTRYPOINT ");
         Log.println(calleeEntryPoint);
 
         ARMTargetMethodUtil.mtSafePatchCallDisplacement(caller, cpCallSite, calleeEntryPoint);

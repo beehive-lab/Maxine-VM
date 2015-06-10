@@ -196,13 +196,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
 
                 // Normally, we would have to initialize tracing this late,
                 // because 'PrintWriter.<init>()' relies on a system property ("line.separator"), which is accessed during 'initializeSystemClass()'.
-                Log.println("initialiszeSyatemClass");
-                /*double x = 23.456d;
-                long y = MaxineVM.d2jlong(x);
-                Log.println("VALUEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE ");
-                Log.println(y);*/
                 initializeSystemClass();
-                Log.println("reinit classes");
 
                 // reinitialise any registered classes
                 for (String className : reinitClasses) {
@@ -225,6 +219,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     profiling = true;
                     SamplingProfiler.create(profValue);
                 }
+
                 break;
             }
 
@@ -247,28 +242,21 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
      */
     protected final void initializeBasicFeatures() {
         MaxineVM vm = vm();
-        Log.println("InitBasicFeatures:vm created");
         vm.phase = MaxineVM.Phase.STARTING;
 
         // Now we can decode all the other VM arguments using the full language
         if (VMOptions.parseStarting()) {
-            Log.println("InitBasicFeatures:parseStarting");
             VMLog.checkLogOptions();
-            Log.println("InitBasicFeatures:chekcLogOptions");
 
             vmConfig().initializeSchemes(MaxineVM.Phase.STARTING);
-            Log.println("InitBasicFeatures:initedSchemes");
             if (Heap.ExcessiveGCFrequency != 0) {
                 new ExcessiveGCDaemon(Heap.ExcessiveGCFrequency).start();
             }
-            Log.println("InitBasicFeatures:ExcessiveGCDaemon");
             if (Deoptimization.DeoptimizeALot != 0 && Deoptimization.UseDeopt) {
                 new DeoptimizeALot(Deoptimization.DeoptimizeALot).start();
             }
-            Log.println("InitBasicFeatures:Deopt");
             // Install the signal handler for dumping threads when SIGHUP is received
             Signal.handle(new Signal("QUIT"), new PrintThreads(false));
-            Log.println("InitBasicFeatures:Signalinstalled");
         }
     }
 
@@ -286,13 +274,10 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         boolean error = true;
         String classKindName = "premain";
         try {
-            Log.println("JavaRunScheme:premain");
             initializeBasicFeatures();
-            Log.println("JavaRunScheme:initBasicFeatures");
             if (VMOptions.earlyVMExitRequested()) {
                 return;
             }
-            Log.println("JavaRunScheme:loadVMExtensions");
 
             loadVMExtensions();
 
@@ -305,23 +290,17 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             if (showVersionOption.isPresent()) {
                 sun.misc.Version.print();
             }
-            Log.println("JavaRunScheme:parseMain");
             if (!parseMain()) {
                 return;
             }
 
             error = true;
-            Log.println("JavaRunScheme:MaxineVM.run");
             MaxineVM vm = vm();
             vm.phase = Phase.RUNNING;
-            Log.println("JavaRunScheme:vm");
             vmConfig().initializeSchemes(MaxineVM.Phase.RUNNING);
-            Log.println("JavaRunScheme:initisaliseSchemesd");
             mainClassName = getMainClassName();
             VMTI.handler().vmInitialized();
-            Log.println("JavaRunScheme:threadstart");
             VMTI.handler().threadStart(VmThread.current());
-            Log.println("JavaRunScheme:loadJavaAgents");
             // load -javaagent agents
             loadJavaAgents();
 
@@ -349,10 +328,10 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             throw invocationTargetException.getCause();
         } catch (IllegalAccessException illegalAccessException) {
             error = true;
-            System.err.println("Illegal access trying to invoke " + classKindName + "method: " + illegalAccessException);
+            Log.println("Illegal access trying to invoke " + classKindName + "method: " + illegalAccessException);
         } catch (IOException ioException) {
             error = true;
-            System.err.println("error reading jar file: " + ioException);
+            Log.println("error reading jar file: " + ioException);
         } catch (ProgramError programError) {
             error = true;
             Log.print("ProgramError: ");

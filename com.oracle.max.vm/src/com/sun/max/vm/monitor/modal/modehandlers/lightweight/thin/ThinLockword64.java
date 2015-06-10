@@ -63,7 +63,7 @@ public class ThinLockword64 extends LightweightLockword64 {
      */
 
 
-    private static  final Address UTIL_MASK;
+    private static  final  Address UTIL_MASK; // was final
     private static  final Address UNLOCKED_MASK;
     static {
         if (Platform.target().arch.is32bit()) {

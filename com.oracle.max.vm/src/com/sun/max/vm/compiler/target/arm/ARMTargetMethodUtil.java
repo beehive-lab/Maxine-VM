@@ -360,8 +360,6 @@ public final class ARMTargetMethodUtil {
                 checkDISP = (callSitePointer.readByte(4 + 0) & 0xff) | ((callSitePointer.readByte(4 + 1) & 0xf) << 8) | ((callSitePointer.readByte(4 + 2) & 0xf) << 12);
                 checkDISP = checkDISP << 16;
                 checkDISP += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
-                Log.print("CHECK DISP is the same? ");
-                Log.println(checkDISP);
             }
         }
 
@@ -399,9 +397,9 @@ public final class ARMTargetMethodUtil {
             Log.println(oldDisp32);
         }
         //int oldDisp32 = callSitePointer.readInt(1);
-	Log.print("OLD ");Log.println(oldDisp32);
-	Log.print("DISP32 ");Log.println(disp32);
-	Log.print("DISP64 ");Log.println(disp64);
+	Log.print("OLD ");Log.println(Integer.toHexString(oldDisp32));
+	Log.print("DISP32 ");Log.println(Integer.toHexString(disp32));
+	Log.print("DISP64 ");Log.println(Long.toHexString(disp64));
         if (oldDisp32 != disp64) {
 	    Log.println("PATCHINGPATCHING");
             synchronized (PatchingLock) {

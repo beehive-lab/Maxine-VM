@@ -506,7 +506,6 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             int callPos = asm.codeBuffer.position();
             asm.blx(ARMV7.r0);
 
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
             int callSize = asm.codeBuffer.position() - callPos;
 
             // Restore RSP and RBP. Given that RBP is never modified by OPT methods and baseline methods always
@@ -979,12 +978,18 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
 
     protected void stackCopy(ARMV7Assembler asm, Kind kind, int sourceStackOffset, int destStackOffset) {
         if (kind.width == WordWidth.BITS_64) {
+	   //asm.movq(scratch, new CiAddress(WordUtil.archKind(), rsp.asValue(), sourceStackOffset));
+            //asm.movq(new CiAddress(WordUtil.archKind(), rsp.asValue(), destStackOffset), scratch);
             assert kind == Kind.LONG || kind == Kind.DOUBLE;
-            asm.ldrd(ConditionFlag.Always, scratch, ARMV7.rsp, sourceStackOffset);
-            asm.strd(ConditionFlag.Always, scratch, ARMV7.rsp, destStackOffset);
+	    asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), sourceStackOffset));
+            asm.ldrd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
+	    asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), destStackOffset));
+            asm.strd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
         } else {
-            asm.ldr(ConditionFlag.Always, scratch, ARMV7.rsp, sourceStackOffset);
-            asm.str(ConditionFlag.Always, scratch, ARMV7.rsp, destStackOffset);
+	    asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), sourceStackOffset));
+            asm.ldr(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
+	    asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), destStackOffset));
+            asm.str(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
         }
     }
 
