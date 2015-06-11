@@ -33,7 +33,7 @@ public class Main {
      * Call with start and end test number as parameters.
      */
     public static void main(String[] args) {
-        int start = 0;
+        int start = -1;
         int end = 10000;
 
         if (args.length > 0) {

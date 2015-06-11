@@ -22,6 +22,7 @@
  */
 package test.com.sun.max.vm.jtrun.all;
 
+import jtt.bytecode.ARM_BC_test_return1;
 import test.com.sun.max.vm.jtrun.*;
 
 /**
@@ -79,6 +80,7 @@ public class JTRuns {
 // GENERATED TEST RUNS
     public static boolean runTest(int num) {
         switch(num) {
+            case -1: jtt_bytecode_ARM_BC_test_return1();break;
             case 0: jtt_bytecode_BC_aaload(); break;
             case 1: jtt_bytecode_BC_aaload_1(); break;
             case 2: jtt_bytecode_BC_aastore(); break;
@@ -829,6 +831,24 @@ public class JTRuns {
         }
         return true;
     }
+
+        static void jtt_bytecode_ARM_BC_test_return1() {
+            begin("jtt.bytecode.ARM_BC_test_return1()");
+            String runString = null;
+
+            try {
+                runString = "(-1)";
+
+                if (2 != jtt.bytecode.ARM_BC_test_return1.test(1)) {
+                    fail(runString);
+                    return;
+                }
+            } catch(Throwable t) {
+                fail(runString, t);
+                return;
+            }
+            pass();
+        }
         static void jtt_bytecode_BC_aaload() {
             begin("jtt.bytecode.BC_aaload");
             String runString = null;
