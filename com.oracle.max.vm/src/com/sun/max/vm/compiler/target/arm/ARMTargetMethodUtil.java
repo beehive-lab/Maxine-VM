@@ -163,17 +163,25 @@ public final class ARMTargetMethodUtil {
                 disp32 = (callSitePointer.readByte(4 + 0) & 0xff) | ((callSitePointer.readByte(4 + 1) & 0xf) << 8) | ((callSitePointer.readByte(4 + 2) & 0xf) << 12);
                 disp32 = disp32 << 16;
                 disp32 += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
-                Log.println(disp32);
+                if (VMOptions.verboseOption.verboseCompilation) {
+                    Log.println(disp32);
+                }
             }
-            Log.print("READCALL32TARGET ");
-            Log.print(disp32);
-            Log.print(" ");
-            Log.print(tm.toString());
-            Log.print(" CALLPOS ");
-            Log.println(callPos);
-            Log.println(callSitePointer);
+            if (VMOptions.verboseOption.verboseCompilation) {
+
+                Log.print("READCALL32TARGET ");
+                Log.print(disp32);
+                Log.print(" ");
+                Log.print(tm.toString());
+                Log.print(" CALLPOS ");
+                Log.println(callPos);
+                Log.println(callSitePointer);
+            }
 
             assert (disp32 != 0);
+            if (VMOptions.verboseOption.verboseCompilation) {
+                Log.println("POTENTIALLy neeed additional checks for DEOPT readCall32Target");
+            }
             /*assert callSitePointer.readByte(0) == (byte) RIP_CALL
                 // deopt might replace the first call in a method with a jump (redirection)
                 || (callSitePointer.readByte(0) == (byte) RIP_JMP && callPos == 0)
@@ -218,29 +226,31 @@ public final class ARMTargetMethodUtil {
         //int disp32 = target.toInt() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toInt() ; // APN 16bytes 4 instructions out?
         long disp64 = target.toLong() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toLong(); // APN 16bytes 4 instructions out?
         int disp32 = (int) disp64;
-        if (!MaxineVM.isHosted()) {
-            Log.print("CALLER ");
-            Log.print(tm.toString());
-            Log.print(" ");
-            Log.println(callSite);
-            if (target.toTargetMethod() != null) {
-                Log.print("CALLEETARGET ");
-                Log.print(target.toTargetMethod().toString());
+        if (VMOptions.verboseOption.verboseCompilation) {
+            if (!MaxineVM.isHosted()) {
+                Log.print("CALLER ");
+                Log.print(tm.toString());
                 Log.print(" ");
-                Log.println(target);
-            } else {
-                Log.print("CALLEETARGET ");
-                Log.print(" NULL ");
-                Log.print(" ");
-                Log.println(target);
-            }
+                Log.println(callSite);
+                if (target.toTargetMethod() != null) {
+                    Log.print("CALLEETARGET ");
+                    Log.print(target.toTargetMethod().toString());
+                    Log.print(" ");
+                    Log.println(target);
+                } else {
+                    Log.print("CALLEETARGET ");
+                    Log.print(" NULL ");
+                    Log.print(" ");
+                    Log.println(target);
+                }
 
-            Log.print(Integer.toString(disp32, 16));
-            Log.print(" DISP32 ");
-            Log.println(disp32);
-            Log.print(Long.toString(disp64, 16));
-            Log.print(" DISP64 ");
-            Log.println(disp64);
+                Log.print(Integer.toString(disp32, 16));
+                Log.print(" DISP32 ");
+                Log.println(disp32);
+                Log.print(Long.toString(disp64, 16));
+                Log.print(" DISP64 ");
+                Log.println(disp64);
+            }
         }
         if (disp64 != disp32) {
 
@@ -248,12 +258,10 @@ public final class ARMTargetMethodUtil {
             disp64 = disp32;
 
         }
-        //FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
+        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
 
         int oldDisp32 = 0;
-/*        callOffset = callOffset - RIP_CALL_INSTRUCTION_LENGTH;
-        disp32 += RIP_CALL_INSTRUCTION_LENGTH;
-*/
+
         if (MaxineVM.isHosted()) {
             final byte[] code = tm.code();
 
@@ -310,15 +318,19 @@ public final class ARMTargetMethodUtil {
                 }
             }
         } else {
-            Log.print("FIXUP CALL SITE ");
-            Log.print(tm.toString());
-            Log.print(" DISP ");
-            Log.print(disp32);
-            Log.print(" CALLOFFSET ");
-            Log.println(callOffset);
-
             final Pointer callSitePointer = callSite.toPointer();
-            Log.println(callSitePointer);
+
+            if (VMOptions.verboseOption.verboseCompilation) {
+
+                Log.print("FIXUP CALL SITE ");
+                Log.print(tm.toString());
+                Log.print(" DISP ");
+                Log.print(disp32);
+                Log.print(" CALLOFFSET ");
+                Log.println(callOffset);
+
+                Log.println(callSitePointer);
+            }
             oldDisp32 = 0;
             if (((callSitePointer.readByte(3) & 0xff) == 0xe3) && ((callSitePointer.readByte(4 + 3) & 0xff) == 0xe3)) {
                 // just enough checking to make sure it has been patched before ...
@@ -326,8 +338,10 @@ public final class ARMTargetMethodUtil {
                 oldDisp32 = (callSitePointer.readByte(4 + 0) & 0xff) | ((callSitePointer.readByte(4 + 1) & 0xf) << 8) | ((callSitePointer.readByte(4 + 2) & 0xf) << 12);
                 oldDisp32 = oldDisp32 << 16;
                 oldDisp32 += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
-                Log.print("oldDisp32 ");
-                Log.println(oldDisp32);
+                if (VMOptions.verboseOption.verboseCompilation) {
+                    Log.print("oldDisp32 ");
+                    Log.println(oldDisp32);
+                }
             }
             int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
             callSitePointer.writeByte(0, (byte) (instruction & 0xff));
@@ -376,7 +390,9 @@ public final class ARMTargetMethodUtil {
      * @return the target of the call prior to patching
      */
     public static CodePointer mtSafePatchCallDisplacement(TargetMethod tm, CodePointer callSite, CodePointer target) {
-        Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!mtSafePatchCallDisplacement !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!mtSafePatchCallDisplacement !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        }
         if (!isPatchableCallSite(callSite)) {
             throw FatalError.unexpected(" invalid patchable call site:  " + callSite.toHexString());
         }
@@ -391,12 +407,20 @@ public final class ARMTargetMethodUtil {
             oldDisp32 = (callSitePointer.readByte(4 + 0) & 0xff) | ((callSitePointer.readByte(4 + 1) & 0xf) << 8) | ((callSitePointer.readByte(4 + 2) & 0xf) << 12);
             oldDisp32 = oldDisp32 << 16;
             oldDisp32 += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
-            Log.println(oldDisp32);
+            if (VMOptions.verboseOption.verboseCompilation) {
+
+                Log.println(oldDisp32);
+            }
         }
         //int oldDisp32 = callSitePointer.readInt(1);
-	Log.print("OLD ");Log.println(Integer.toHexString(oldDisp32));
-	Log.print("DISP32 ");Log.println(Integer.toHexString(disp32));
-	Log.print("DISP64 ");Log.println(Long.toHexString(disp64));
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.print("OLD ");
+            Log.println(Integer.toHexString(oldDisp32));
+            Log.print("DISP32 ");
+            Log.println(Integer.toHexString(disp32));
+            Log.print("DISP64 ");
+            Log.println(Long.toHexString(disp64));
+        }
         if (oldDisp32 != disp64) {
 	    Log.println("PATCHINGPATCHING");
             synchronized (PatchingLock) {

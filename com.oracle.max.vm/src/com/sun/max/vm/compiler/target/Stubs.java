@@ -1246,8 +1246,10 @@ public class Stubs {
             Pointer patchAddr = stub.codeAt(pos).toPointer();
             //patchAddr.writeLong(0, runtimeRoutine.address().toLong());
             patchAddr.writeInt(0, runtimeRoutine.address().toInt());
-            Log.print("DEOPT PATCH ADDR ");
-            Log.println(patchAddr);
+            if (VMOptions.verboseOption.verboseCompilation) {
+                Log.print("!!!!!!!!!!!!!!MODS NEEDED!!!!!!!!!! DEOPT PATCH ADDR ");
+                Log.println(patchAddr);
+            }
         }
     }
 
