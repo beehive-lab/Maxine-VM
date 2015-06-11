@@ -172,7 +172,10 @@ static Address getInstructionPointer(UContext *ucontext) {
 
 static void setInstructionPointer(UContext *ucontext, Address stub) {
 //printf("SET PC CALLED\n");
-log_println("  Instruction Pointer = %p", stub);
+    if (traceTraps || log_TRAP) {
+
+	log_println("  Instruction Pointer = %p", stub);
+    }
 #if os_SOLARIS
 #   if isa_SPARC
     ucontext->uc_mcontext.gregs[REG_nPC] = (greg_t) (stub + 4);
@@ -244,7 +247,9 @@ static boolean handleDivideOverflow(UContext *ucontext) {
     unsigned char *rip = (unsigned char *) getInstructionPointer(ucontext);
 
     boolean is64Bit = false;
+#ifdef arm
     printf("handleDivideOverflow NOT IMPLEMENTED FOR ARM\n");
+#endif
 
     if ((rip[0] & 0xf0) == 0x40) {
         /* Decode REX byte */

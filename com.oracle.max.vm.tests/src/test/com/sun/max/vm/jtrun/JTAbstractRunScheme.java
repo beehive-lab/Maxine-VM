@@ -79,7 +79,7 @@ public abstract class JTAbstractRunScheme extends AbstractTestRunScheme {
                 if (testStart < 0) {
                     testStart = 0;
                 }
-                testStart = -1; // APN HACK FOR NOW
+                //testStart = -1; // APN HACK FOR NOW
                 testEnd = endOption.getValue();
                 if (testEnd < testStart || testEnd > testCount) {
                     testEnd = testCount;

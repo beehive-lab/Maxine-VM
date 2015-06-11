@@ -27,7 +27,6 @@ import com.sun.cri.ci.CiKind;
 import com.sun.cri.ci.CiRuntimeCall;
 import com.sun.cri.ci.CiUtil;
 import com.sun.max.annotate.HOSTED_ONLY;
-import com.sun.max.vm.Log;
 import com.sun.max.vm.MaxineVM;
 import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.compiler.CallEntryPoint;
@@ -165,14 +164,14 @@ public class MaxRuntimeCalls {
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.HandleException)
     public static void runtimeHandleException(Throwable throwable) throws Throwable {
-	Log.println("runtimeHandleException");
+	//Log.println("runtimeHandleException");
         verifyRefMaps();
         Throw.raise(throwable);
     }
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.OSRMigrationEnd)
     public static void runtimeOSRMigrationEnd() {
-	 Log.println("runtimeOSRMigrationEnd");
+	 //Log.println("runtimeOSRMigrationEnd");
         verifyRefMaps();
     }
 
@@ -190,7 +189,7 @@ public class MaxRuntimeCalls {
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.Debug)
     public static void runtimeDebug() {
-	Log.println("runtimeDebug");
+	//Log.println("runtimeDebug");
         verifyRefMaps();
         throw FatalError.unexpected("Debug");
     }
@@ -264,13 +263,13 @@ public class MaxRuntimeCalls {
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.CreateNullPointerException)
     public static Object createNullPointerException() {
-	Log.println("NULL PTR exception");
+	//Log.println("NULL PTR exception");
         return new NullPointerException();
     }
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.CreateOutOfBoundsException)
     public static Object createOutOfBoundsException(int index) {
-	Log.println("OOB Exception");
+	//Log.println("OOB Exception");
         return new ArrayIndexOutOfBoundsException(index);
     }
 

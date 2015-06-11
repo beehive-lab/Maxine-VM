@@ -129,7 +129,7 @@ public final class Throw {
      */
     public static void raise(Throwable throwable, Pointer sp, Pointer fp, CodePointer ip) {
         VMTI.handler().raise(throwable, sp, fp, ip);
-        Log.println("Throwing a stack walk unwind");
+        //Log.println("Throwing a stack walk unwind");
         convertAssertionToFatalError(throwable);
 
         FatalError.check(throwable != null, "Trying to raise an exception with a null Throwable object");
