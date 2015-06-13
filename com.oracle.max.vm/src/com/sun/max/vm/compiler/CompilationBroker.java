@@ -600,34 +600,42 @@ public class CompilationBroker {
      * @param receiver the receiver object of the profiled method. This will be {@code null} if the profiled method is static.
      */
     public static void instrumentationCounterOverflow(MethodProfile mpo, Object receiver) {
+	Log.println("instrumentationCounterOverflow");
         if (mpo.compilationDisabled) {
             mpo.entryCount = Integer.MAX_VALUE;
+	    Log.println("mpo.compilationDisabled");
             return;
         }
         if (Heap.isAllocationDisabledForCurrentThread()) {
+	    Log.println("Heap allocation disabled");
             logCounterOverflow(mpo, "Stopped recompilation because allocation is currently disabled");
             // We don't want to see another counter overflow in the near future
             mpo.entryCount = 1000;
             return;
         }
         if (Compilation.isCompilationRunningInCurrentThread()) {
+	    Log.println("RECOMPILATION in progress");
             logCounterOverflow(mpo, "Stopped recompilation because compilation is running in current thread");
             // We don't want to see another counter overflow in the near future
             mpo.entryCount = 1000;
             return;
         }
-
         ClassMethodActor cma = mpo.method.classMethodActor;
+	Log.println("GOT CMA");
         TargetMethod oldMethod = mpo.method;
         TargetMethod newMethod = Compilations.currentTargetMethod(cma.compiledState, null);
+	Log.print("TM is ");Log.println(newMethod);
 
         if (oldMethod == newMethod || newMethod == null) {
             if (!(cma.compiledState instanceof Compilation)) {
                 // There is no newer compiled version available yet that we could just patch to, so recompile
                 logCounterOverflow(mpo, "");
                 try {
+		    Log.println("TRY COMPILE");
                     newMethod = vm().compilationBroker.compile(cma, Nature.OPT);
+		    Log.print("DONE COMPILE ");Log.println(newMethod);
                 } catch (InternalError e) {
+			Log.println("INTERNAL ERROR");
                     if (VMOptions.verboseOption.verboseCompilation) {
                         e.printStackTrace(Log.out);
                     }
@@ -671,7 +679,7 @@ public class CompilationBroker {
                     }
                 }
             }
-
+	    Log.println(" DO STACK WALK");
             // Look for a static call to 'oldMethod' and patch it.
             // This occurs even if 'cma' is non-static
             // as it may have been called directly.
@@ -681,6 +689,7 @@ public class CompilationBroker {
                     VMRegister.getCpuFramePointer(),
                     patcher);
         }
+	Log.println("intrumentationcounter overlow return");
     }
 
     public static void logCounterOverflow(MethodProfile mpo, String msg) {

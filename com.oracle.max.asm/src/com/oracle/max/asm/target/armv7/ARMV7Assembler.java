@@ -1101,14 +1101,14 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void vsqrt(ConditionFlag cond, CiRegister dst, CiRegister src) {
         assert ((src.number > 15 && src.number < 32 && dst.number > 15 && dst.number < 32) || (src.number > 32 && dst.number > 32));
-        int instruction = 0x0eb10ad0;
+        int instruction = 0x0eb10ac0;
         instruction |= (cond.value() << 28);
         int dp = (src.number < 32) ? 1 : 0;
-        instruction |= dp << 8;
         int dest = dst.encoding;
         int srcr = src.encoding;
-        instruction |= dp << 8;
+        instruction |= dp << 8; // sets the sz bit
         if (dp == 1) {
+	    // in this case we can use the numbers without problem.
             instruction |= srcr;
             instruction |= dest << 12;
         } else {
@@ -1117,7 +1117,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             instruction |= (dest >> 1) << 12;
             instruction |= (dest & 1) << 22;
         }
-
+        assert (instruction!=0xeeb12bd2);
         emitInt(instruction);
     }
 

@@ -335,7 +335,9 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             }
         }
 
-        private static final int PROLOGUE_SIZE = 20; /// determined experimentally12; // setupScratch with movw movt and then the branch?
+        //private static final int PROLOGUE_SIZE = 20; /// determined experimentally12; // setupScratch with movw movt and then the branch?
+        private static final int PROLOGUE_SIZE = 28; /// determined experimentally12; // setupScratch with movw movt and then the branch?
+
 
         public Baseline2Opt() {
             super(Adapter.Type.BASELINE2OPT);
@@ -364,6 +366,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             if (adapter == null) {
                 asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.encoding);
+		asm.mov32BitConstant(ARMV7.r12,0xba5e20af); // signifies BASSE20OPT
                 asm.nop(); // movw
                 asm.nop(); // movt
                 asm.nop(); // add
@@ -373,6 +376,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
                 asm.call();
                 //System.out.println("SIZE " + asm.codeBuffer.position());
+		asm.mov32BitConstant(ARMV7.r12,0xba5e20af); // signifies BASSE20OPT
                 asm.align(PROLOGUE_SIZE);
                 //System.out.println("SIZEAFTER " + asm.codeBuffer.position());
             }
@@ -418,7 +422,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             //asm.movq(rax, new CiAddress(WordUtil.archKind(), rsp.asValue()));
             // APN so is RAX storing the return address?
             //asm.addq(ARMV7.r14,4);
-            //asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.encoding);
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.encoding);
 
             //asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
 
@@ -746,9 +750,11 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             }
         }
 
-        static final int PROLOGUE_SIZE = 76; //29; // calculated by running APN ...
+        static final int PROLOGUE_SIZE = 52; //29; // calculated by running APN ...
+        //static final int PROLOGUE_SIZE = 76; //29; // calculated by running APN ...
         //static final int PROLOGUE_SIZE = 72; //29; // calculated by running APN ...
-        static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = 36;// calculated by running 8;
+        //static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = 36;// calculated by running 8;
+	static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = 52;
 
         Opt2Baseline() {
             super(Adapter.Type.OPT2BASELINE);
@@ -792,7 +798,9 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             ARMV7Assembler asm = out instanceof OutputStream ? new ARMV7Assembler(target(), null) : (ARMV7Assembler) out;
             if (adapter == null) {
                 asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
-                asm.nop(OPTIMIZED_ENTRY_POINT.offset() - 4);
+	     	asm.mov32BitConstant(ARMV7.r12,0x0af2ba5e); // signifies OPT2BASE
+
+                asm.nop(OPTIMIZED_ENTRY_POINT.offset() - 4-8);
                 if (asm.codeBuffer.position() != PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE) {
                     Log.println("GOING TO CRASH mismatch  PROLOGUE SIZE NOARGS ARMAdapterGenerator " + asm.codeBuffer.position() + " " + PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE);
                 }
@@ -807,13 +815,19 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             Label end = new Label();
             // shall we branch to this?
             asm.branch(end);
+	    asm.mov32BitConstant(ARMV7.r12,0x0af2ba5e); // signifies OPT2BASE
 
             // Pad with nops up to the OPT entry point
-            asm.align(OPTIMIZED_ENTRY_POINT.offset());
+            asm.align(OPTIMIZED_ENTRY_POINT.offset()-4);
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
             asm.call();
             asm.bind(end);
 
+	    while(asm.codeBuffer.position() < PROLOGUE_SIZE) 	{
+		// dirty .. just while we are fixing adapters
+		// TODO get hadapters all sorted out
+		asm.nop();
+	    }
             int size = asm.codeBuffer.position();
             Log.println("ASM " + size + " " + PROLOGUE_SIZE);
 
@@ -843,7 +857,8 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             // The one at [RSP] is the return address of the call in the baseline callee's prologue (which is
             // also the entry to the main body of the baseline callee) and one at [RSP + 8 ] is the return
             // address in the OPT caller.
-            //asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, ARMV7.r14);
             // Save the address of the baseline callee's main body in RAX
             //asm.movq(rax, new CiAddress(WordUtil.archKind(), rsp.asValue()));
             //asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
@@ -881,8 +896,7 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             asm.bind(forever);
             //asm.mov32BitConstant(ARMV7.r12,0xbeefbeef); REMOVE NOPS and uncooment
             //asm.branch(forever);
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r14);
-            asm.blx(ARMV7.r12);
+            asm.blx(ARMV7.r0);
             int callSize = asm.codeBuffer.position() - callPos;
 
             // The baseline method will have popped the args off the stack so now

@@ -415,6 +415,7 @@ public abstract class CodeManager {
         if (VMOptions.verboseOption.verboseCompilation) {
             Log.print("NOT found in any codeRegions ");
             Log.println(codePointer);
+	    
         }
 
         return null;

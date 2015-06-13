@@ -226,6 +226,7 @@ public abstract class TypeDescriptor extends Descriptor {
             // This assumes a delegation model where a class loader delegates to class loaders up its class hierarchy only.
             // This will not work with more elaborated loader where delegation may be customized to arbitrary loader, e.g., loader that aren't
             // in its ancestor branch.
+	    //Log.println("TypeDescriptor:resolveType");
             ClassActor classActor = ClassRegistry.get(classLoader, this, true);
             if (classActor != null) {
                 return classActor.javaClass();
