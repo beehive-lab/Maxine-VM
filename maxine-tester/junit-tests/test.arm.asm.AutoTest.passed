@@ -1,0 +1,1 @@
+test_add(test.arm.asm.ARMv8AssemblerTest)

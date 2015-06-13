@@ -1,0 +1,5 @@
+target remote localhost:1234
+file test.elf
+stepi 15000
+info registers
+quit

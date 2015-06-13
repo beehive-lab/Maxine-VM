@@ -1,0 +1,2 @@
+COMMAND     PID      USER   FD   TYPE  DEVICE SIZE/OFF NODE NAME
+qemu-syst 28743 parallels    6u  IPv4 1143426      0t0  TCP *:1234 (LISTEN)
