@@ -154,8 +154,8 @@ public class ARMCodeWriter {
             for (int i = 0; i < totalInstructions; i++) {
                 xxx = instructions[i];
                 val = i * 4;
-                writer.println("code[" + val + "] = " + ( xxx& 0xff) + ";");
-                log("code[" + val + "] = 0x" + Long.toString((xxx ) & 0xff, 16) + ";");
+                writer.println("code[" + val + "] = " + (xxx & 0xff) + ";");
+                log("code[" + val + "] = 0x" + Long.toString((xxx) & 0xff, 16) + ";");
                 val = val + 1;
                 writer.println("code[" + val + "] = " + ((xxx >> 8) & 0xff) + ";");
                 log("code[" + val + "] = 0x" + Long.toString((xxx >> 8) & 0xff, 16) + ";");
@@ -163,12 +163,8 @@ public class ARMCodeWriter {
                 writer.println("code[" + val + "] = " + ((xxx >> 16) & 0xff) + ";");
                 log("code[" + val + "] = 0x" + Long.toString((xxx >> 16) & 0xff, 16) + ";");
                 val = val + 1;
-
-                writer.println("code[" + val + "] = " + (xxx >>24 & 0xff) + ";");
-                log("code[" + val + "] = 0x" + Long.toString(xxx>>24 & 0xff, 16) + ";");
-
-
-
+                writer.println("code[" + val + "] = " + (xxx >> 24 & 0xff) + ";");
+                log("code[" + val + "] = 0x" + Long.toString(xxx >> 24 & 0xff, 16) + ";");
             }
             writer.println("code[" + totalInstructions * 4 + "] = " + 0x0 + ";");
             log("code[" + totalInstructions * 4 + "] = " + 0x0 + ";");

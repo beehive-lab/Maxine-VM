@@ -551,9 +551,7 @@ public class MaxineARMTester {
             if (!enabled) {
                 continue;
             }
-            System.out.println("Line " + line);
             String value = line.split("\\s+")[1];
-            System.out.println("value " + value);
 
             long tmp = Long.parseLong(value.substring(2, value.length()).toString(), 16);
 
