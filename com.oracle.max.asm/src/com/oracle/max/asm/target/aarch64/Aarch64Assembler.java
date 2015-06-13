@@ -34,7 +34,6 @@ public class Aarch64Assembler extends AbstractAssembler {
         instruction |= 1 << 31;
         instruction |= (imm16 & 0xffff) << 5;
         instruction |= (dst.encoding & 0x1f);
-        System.out.println(Integer.toHexString(instruction));
         emitInt(instruction);
     }
 
@@ -44,7 +43,6 @@ public class Aarch64Assembler extends AbstractAssembler {
         instruction |= (Rm.encoding & 0x1f) << 16;
         instruction |= (Rn.encoding & 0x1f) << 5;
         instruction |= (Rd.encoding & 0x1f);
-        System.out.println(Integer.toHexString(instruction));
         emitInt(instruction);
     }
 
