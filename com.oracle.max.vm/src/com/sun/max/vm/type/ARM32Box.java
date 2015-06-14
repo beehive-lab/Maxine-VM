@@ -2,10 +2,8 @@ package com.sun.max.vm.type;
 
 import com.sun.max.platform.Platform;
 
-/**
- * Created by andyn on 14/02/15.
- */
 public class ARM32Box {
+
     private Object value;
 
     public ARM32Box(Object x) {
@@ -31,11 +29,9 @@ public class ARM32Box {
         } else {
             return false;
         }
-
     }
 
     public Object get() {
         return value;
     }
-
 }

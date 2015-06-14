@@ -39,6 +39,7 @@ import com.sun.max.vm.hosted.JavaPrototype;
 import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.Value;
+
 import sun.reflect.Reflection;
 import sun.reflect.ReflectionFactory;
 
@@ -47,8 +48,8 @@ import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import com.sun.max.platform.Platform;
 
+import com.sun.max.platform.Platform;
 
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.Constructor_methodActor;
 import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.Method_methodActor;
@@ -382,26 +383,21 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
      */
     public final InvocationStub makeInvocationStub() {
         ClassRegistry classRegistry = holder().classRegistry();
-        ARM32Box boxOne = classRegistry.get(INVOCATION_STUB, new ARM32Box(this));
-        InvocationStub invocationStub = (InvocationStub) boxOne.get();
+        InvocationStub invocationStub = null;
+        if (Platform.target().arch.is32bit()) {
+            ARM32Box boxOne = classRegistry.get(INVOCATION_STUB, new ARM32Box(this));
+            invocationStub = (InvocationStub) boxOne.get();
+        } else {
+            invocationStub = classRegistry.get(INVOCATION_STUB, this);
+        }
 
-        /*
-        ARM32Box is used to workaround the problem of hashCodes being 32bit, but in ARMV7 (32bit)
-        we needed a masked 0xfffff 20 bit hashcode
-        InvocationStub invocationStub = classRegistry.get(INVOCATION_STUB, this);
-        */
         if (invocationStub == null) {
-
             if (isInstanceInitializer()) {
                 invocationStub = InvocationStub.newConstructorStub(toJavaConstructor(), null, Boxing.VALUE);
             } else {
                 invocationStub = InvocationStub.newMethodStub(toJava(), Boxing.VALUE);
             }
-            classRegistry.set(INVOCATION_STUB, new ARM32Box(this), new ARM32Box(invocationStub));
-
-            /*classRegistry.set(INVOCATION_STUB, this, invocationStub);
-            Replaced with ARM32Box
-             */
+            classRegistry.set(INVOCATION_STUB, (Platform.target().arch.is32bit() ? new ARM32Box(this) : this), invocationStub);
         }
         return invocationStub;
     }

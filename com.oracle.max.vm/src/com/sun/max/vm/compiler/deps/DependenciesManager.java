@@ -24,10 +24,12 @@ package com.sun.max.vm.compiler.deps;
 
 import java.util.*;
 import java.util.concurrent.locks.*;
+
 import com.sun.max.vm.type.ARM32Box;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAssumptions.Assumption;
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -65,7 +67,7 @@ public final class DependenciesManager {
      * This is immutable after image build and we keep an array of the values for fast, allocation free, iteration.
      */
     //public static final Map<Class<? extends CiAssumptions.Assumption>, DependencyProcessor> dependencyProcessors = new HashMap<Class<? extends CiAssumptions.Assumption>, DependencyProcessor>();
-    public static final Map<ARM32Box, DependencyProcessor> dependencyProcessors = new HashMap<ARM32Box, DependencyProcessor>();
+    public static final Map<Object, DependencyProcessor> dependencyProcessors = new HashMap<Object, DependencyProcessor>();
 
     /**
      * The current packed encoding limits the number of {@linkplain DependencyProcessor} instances.
@@ -127,9 +129,7 @@ public final class DependenciesManager {
     @HOSTED_ONLY
     static synchronized int registerDependencyProcessor(DependencyProcessor dependencyProcessor,
                     Class< ? extends CiAssumptions.Assumption> assumptionClass) {
-	//Log.print("REGISTRATION DEPSCLASS "); Log.println(assumptionClass.toString());
-	//Log.println(assumptionClass.hashCode());
-        ProgramError.check(dependencyProcessors.put(new ARM32Box(assumptionClass), dependencyProcessor) == null);
+        ProgramError.check(dependencyProcessors.put((Platform.target().arch.is32bit() ? new ARM32Box(assumptionClass) : assumptionClass), dependencyProcessor) == null);
         ProgramError.check(nextDependencyProcessorId < MAX_DEPENDENCY_PROCESSORS);
         dependencyProcessorList.add(dependencyProcessor);
         return nextDependencyProcessorId++;

@@ -23,11 +23,13 @@
 package com.sun.max.vm.compiler.deps;
 
 import static com.sun.max.vm.compiler.deps.DependenciesManager.*;
+
 import java.util.*;
 
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAssumptions.*;
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.Actor;
 import com.sun.max.vm.actor.holder.*;
@@ -316,7 +318,7 @@ public final class Dependencies {
             for (Assumption a : assumptions) {
                 ClassActor contextClassActor = (ClassActor) ((ContextAssumption) a).context;
                 ClassDeps classDeps = get(packedDeps, contextClassActor);
-                DependencyProcessor dependencyProcessor = DependenciesManager.dependencyProcessors.get(new ARM32Box(a.getClass()));
+                DependencyProcessor dependencyProcessor = DependenciesManager.dependencyProcessors.get((Platform.target().arch.is32bit() ? new ARM32Box(a.getClass()) : a.getClass()));
 
                 if (dependencyProcessor != null) {
                     classDeps.flags |= dependencyProcessor.bitMask;
