@@ -2,7 +2,6 @@ package test.arm.asm;
 
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.aarch64.*;
-import com.oracle.max.asm.target.aarch64.Aarch64Assembler.*;
 import com.sun.cri.ci.*;
 import com.sun.max.ide.*;
 
@@ -14,7 +13,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     private Aarch64Assembler asm;
     private Aarch64MacroAssembler masm;
 
-    private CiTarget aarch64;
+    private CiTarget      aarch64;
     private ARMCodeWriter code;
 
     static final class Pair {

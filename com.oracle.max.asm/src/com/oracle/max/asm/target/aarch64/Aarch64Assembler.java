@@ -46,4 +46,13 @@ public class Aarch64Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
+    public void sub(final CiRegister Rd, final CiRegister Rm, final CiRegister Rn) {
+        int instruction = 0x4B000000;
+        instruction |= 1 << 31;
+        instruction |= (Rm.encoding & 0x1f) << 16;
+        instruction |= (Rn.encoding & 0x1f) << 5;
+        instruction |= (Rd.encoding & 0x1f);
+        emitInt(instruction);
+    }
+
 }
