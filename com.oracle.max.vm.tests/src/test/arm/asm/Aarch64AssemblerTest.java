@@ -1,5 +1,7 @@
 package test.arm.asm;
 
+import java.util.*;
+
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.asm.target.amd64.AMD64Assembler.ConditionFlag;
@@ -151,6 +153,22 @@ public class Aarch64AssemblerTest extends MaxTestCase {
             asm.add(Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i]);
             expectedValues[i] += expectedValues[i];
             testValues[i] = true;
+        }
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
+    public void test_sub() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        asm.codeBuffer.reset();
+        asm.movImmediate(Aarch64.cpuRegisters[10], 2);
+        for (int i = 0; i < 10; i++) {
+            asm.movImmediate(Aarch64.cpuRegisters[i], expectedValues[i]);
+            asm.sub(Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[10]);
+            expectedValues[i] = 2 - expectedValues[i];
+            testValues[i] = true;
+
         }
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
