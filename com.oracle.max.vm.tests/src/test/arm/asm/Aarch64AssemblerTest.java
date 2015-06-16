@@ -1,17 +1,17 @@
 package test.arm.asm;
 
 import com.oracle.max.asm.*;
+import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.asm.target.amd64.AMD64Assembler.ConditionFlag;
-import com.oracle.max.asm.target.armv8.*;
 import com.sun.cri.ci.*;
 import com.sun.max.ide.*;
 
-public class ARMv8AssemblerTest extends MaxTestCase {
+public class Aarch64AssemblerTest extends MaxTestCase {
 
-    private ARMv8Assembler asm;
-    private ARMv8MacroAssembler masm;
+    private Aarch64Assembler asm;
+    private Aarch64MacroAssembler masm;
 
-    private CiTarget armv8;
+    private CiTarget aarch64;
     private ARMCodeWriter code;
 
     static final class Pair {
@@ -25,15 +25,15 @@ public class ARMv8AssemblerTest extends MaxTestCase {
         }
     }
 
-    public ARMv8AssemblerTest() {
-        armv8 = new CiTarget(new ARMv8(), true, 8, 0, 4096, 0, false, false, false);
-        asm = new ARMv8Assembler(armv8, null);
-        masm = new ARMv8MacroAssembler(armv8, null);
+    public Aarch64AssemblerTest() {
+        aarch64 = new CiTarget(new Aarch64(), true, 8, 0, 4096, 0, false, false, false);
+        asm = new Aarch64Assembler(aarch64, null);
+        masm = new Aarch64MacroAssembler(aarch64, null);
         code = null;
     }
 
     public static void main(String[] args) {
-        junit.textui.TestRunner.run(ARMv8AssemblerTest.class);
+        junit.textui.TestRunner.run(Aarch64AssemblerTest.class);
     }
 
     private static int[] valueTestSet = { 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
@@ -147,8 +147,8 @@ public class ARMv8AssemblerTest extends MaxTestCase {
         resetIgnoreValues();
         asm.codeBuffer.reset();
         for (int i = 0; i < 10; i++) {
-            asm.movImmediate(ARMv8.cpuRegisters[i], expectedValues[i]);
-            asm.add(ARMv8.cpuRegisters[i], ARMv8.cpuRegisters[i], ARMv8.cpuRegisters[i]);
+            asm.movImmediate(Aarch64.cpuRegisters[i], expectedValues[i]);
+            asm.add(Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i]);
             expectedValues[i] += expectedValues[i];
             testValues[i] = true;
         }

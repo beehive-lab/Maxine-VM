@@ -1,11 +1,11 @@
-package com.oracle.max.asm.target.armv8;
+package com.oracle.max.asm.target.aarch64;
 
 import com.oracle.max.asm.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
 
-public class ARMv8Assembler extends AbstractAssembler {
+public class Aarch64Assembler extends AbstractAssembler {
     /**
      * The register to which {@link CiRegister#Frame} and {@link CiRegister#CallerFrame} are bound.
      */
@@ -18,7 +18,7 @@ public class ARMv8Assembler extends AbstractAssembler {
      *            {@link CiRegister#CallerFrame} to physical registers. This value can be null if this assembler
      *            instance will not be used to assemble instructions using these logical registers.
      */
-    public ARMv8Assembler(CiTarget target, RiRegisterConfig registerConfig) {
+    public Aarch64Assembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target);
         this.frameRegister = registerConfig == null ? null : registerConfig.getFrameRegister();
     }
@@ -39,10 +39,23 @@ public class ARMv8Assembler extends AbstractAssembler {
 
     public void add(final CiRegister Rd, final CiRegister Rm, final CiRegister Rn) {
         int instruction = 0xB000000;
+        System.out.println(Integer.toBinaryString(instruction));
         instruction |= 1 << 31;
         instruction |= (Rm.encoding & 0x1f) << 16;
         instruction |= (Rn.encoding & 0x1f) << 5;
         instruction |= (Rd.encoding & 0x1f);
+        System.out.println(Integer.toBinaryString(instruction));
+        emitInt(instruction);
+    }
+    
+    public void sub(final CiRegister Rd, final CiRegister Rm, final CiRegister Rn) {
+        int instruction = 0xB000000;
+        System.out.println(Integer.toBinaryString(instruction));
+        instruction |= 1 << 31;
+        instruction |= (Rm.encoding & 0x1f) << 16;
+        instruction |= (Rn.encoding & 0x1f) << 5;
+        instruction |= (Rd.encoding & 0x1f);
+        System.out.println(Integer.toBinaryString(instruction));
         emitInt(instruction);
     }
 

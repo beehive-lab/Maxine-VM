@@ -1,4 +1,4 @@
-package com.sun.max.vm.compiler.target.armv8;
+package com.sun.max.vm.compiler.target.aarch64;
 
 import com.sun.cri.ci.*;
 import com.sun.max.vm.actor.member.*;
@@ -6,11 +6,11 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
 
 
-public class ARMv8AdapterGenerator extends AdapterGenerator {
+public class Aarch64AdapterGenerator extends AdapterGenerator {
 
     final CiRegister scratch;
 
-    public ARMv8AdapterGenerator(Adapter.Type adapterType) {
+    public Aarch64AdapterGenerator(Adapter.Type adapterType) {
         super(adapterType);
         scratch = opt.getScratchRegister();
     }

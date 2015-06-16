@@ -1,10 +1,10 @@
-package com.sun.max.vm.runtime.armv8;
+package com.sun.max.vm.runtime.aarch64;
 
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.runtime.*;
 
 
-public class ARMv8TrapFrameAccess extends TrapFrameAccess {
+public class Aarch64TrapFrameAccess extends TrapFrameAccess {
 
     @Override
     public Pointer getPCPointer(Pointer trapFrame) {
