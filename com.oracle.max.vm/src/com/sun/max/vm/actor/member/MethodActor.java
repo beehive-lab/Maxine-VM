@@ -397,7 +397,7 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
             } else {
                 invocationStub = InvocationStub.newMethodStub(toJava(), Boxing.VALUE);
             }
-            classRegistry.set(INVOCATION_STUB, (Platform.target().arch.is32bit() ? new ARM32Box(this) : this), invocationStub);
+            classRegistry.set(INVOCATION_STUB, (Platform.target().arch.is32bit() ? new ARM32Box(this) : this), (Platform.target().arch.is32bit() ? new ARM32Box(invocationStub) : invocationStub));
         }
         return invocationStub;
     }
