@@ -433,11 +433,12 @@ public class MaxineARMTester {
         while ((line = reader.readLine()) != null) {
             if (line.contains("r0")) {
                 enabled = true;
-                line = line.substring(6, line.length());
+                line = line.substring(12, line.length());
             }
             if (!enabled) {
                 continue;
             }
+
             String value = line.split("\\s+")[1];
             long tmp = Long.parseLong(value.substring(2, value.length()).toString(), 16);
 
