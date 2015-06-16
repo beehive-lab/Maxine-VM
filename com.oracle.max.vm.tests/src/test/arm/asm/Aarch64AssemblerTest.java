@@ -162,13 +162,13 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
-        asm.movImmediate(Aarch64.cpuRegisters[10], 2);
+        asm.movImmediate(Aarch64.cpuRegisters[10], 5);
+        // SUB Xi, Xi, X10  ; X10 = 5
         for (int i = 0; i < 10; i++) {
             asm.movImmediate(Aarch64.cpuRegisters[i], expectedValues[i]);
-            asm.sub(Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[10]);
-            expectedValues[i] = 2 - expectedValues[i];
+            asm.sub(Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[10], Aarch64.cpuRegisters[i]);
+            expectedValues[i] -= 5;
             testValues[i] = true;
-
         }
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
