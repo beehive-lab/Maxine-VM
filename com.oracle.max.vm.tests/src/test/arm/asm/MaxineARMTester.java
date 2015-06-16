@@ -1,6 +1,7 @@
 package test.arm.asm;
 
 import java.io.*;
+import java.math.*;
 
 public class MaxineARMTester {
 
@@ -553,7 +554,7 @@ public class MaxineARMTester {
             }
             String value = line.split("\\s+")[1];
 
-            long tmp = Long.parseLong(value.substring(2, value.length()).toString(), 16);
+            long tmp = new BigInteger(value.substring(2, value.length()).toString(), 16).longValue();
 
             if (tmp > Integer.MAX_VALUE) {
                 expectedValues[i] = (int) (2L * Integer.MIN_VALUE + tmp);
