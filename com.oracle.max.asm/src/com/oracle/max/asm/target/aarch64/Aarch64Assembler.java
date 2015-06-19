@@ -4,24 +4,20 @@ import com.oracle.max.asm.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
+import static com.oracle.max.asm.target.aarch64.Aarch64Assembler.InstructionType.floatFromSize;
+import static com.oracle.max.asm.target.aarch64.Aarch64Assembler.InstructionType.generalFromSize;
+
 
 public class Aarch64Assembler extends AbstractAssembler {
+    private static final int RdOffset = 0;
+    private static final int Rs1Offset = 5;
+    private static final int Rs2Offset = 16;
+    private static final int Rs3Offset = 10;
+    private static final int RtOffset = 0;
     /**
      * The register to which {@link CiRegister#Frame} and {@link CiRegister#CallerFrame} are bound.
      */
     public final CiRegister frameRegister;
-
-    /**
-     * Constructs an assembler for the AMD64 architecture.
-     *
-     * @param registerConfig the register configuration used to bind {@link CiRegister#Frame} and
-     *            {@link CiRegister#CallerFrame} to physical registers. This value can be null if this assembler
-     *            instance will not be used to assemble instructions using these logical registers.
-     */
-    public Aarch64Assembler(CiTarget target, RiRegisterConfig registerConfig) {
-        super(target);
-        this.frameRegister = registerConfig == null ? null : registerConfig.getFrameRegister();
-    }
 
     @Override
     protected void patchJumpTarget(int branch, int target) {
@@ -412,6 +408,121 @@ public class Aarch64Assembler extends AbstractAssembler {
         }
     }
 
+    /**
+     * Constructs an assembler for the AMD64 architecture.
+     *
+     * @param registerConfig the register configuration used to bind {@link CiRegister#Frame} and
+     *            {@link CiRegister#CallerFrame} to physical registers. This value can be null if this assembler
+     *            instance will not be used to assemble instructions using these logical registers.
+     */
+    public Aarch64Assembler(CiTarget target, RiRegisterConfig registerConfig) {
+        super(target);
+        this.frameRegister = registerConfig == null ? null : registerConfig.getFrameRegister();
+    }
+
+    /* Conditional Branch (5.2.1) */
+
+    /**
+     * Branch conditionally.
+     *
+     * @param condition may not be null.
+     * @param imm21 Signed 21-bit offset, has to be word aligned.
+     */
+    protected void b(ConditionFlag condition, int imm21) {
+        b(condition, imm21, -1);
+    }
+
+    /**
+     * Branch conditionally. Inserts instruction into code buffer at pos.
+     *
+     * @param condition may not be null.
+     * @param imm21 Signed 21-bit offset, has to be word aligned.
+     * @param pos Position at which instruction is inserted into buffer. -1 means insert at end.
+     */
+    protected void b(ConditionFlag condition, int imm21, int pos) {
+        if (pos == -1) {
+            codeBuffer.emitInt(
+                    Instruction.BCOND.encoding |
+                    getConditionalBranchImm(imm21) |
+                    condition.encoding);
+        } else {
+            codeBuffer.emitInt(
+                    Instruction.BCOND.encoding |
+                    getConditionalBranchImm(imm21) |
+                    condition.encoding, pos);
+        }
+    }
+
+    /**
+     * Compare register and branch if non-zero.
+     *
+     * @param reg general purpose register. May not be null, zero-register or stackpointer.
+     * @param size Instruction size in bits. Should be either 32 or 64.
+     * @param imm21 Signed 21-bit offset, has to be word aligned.
+     */
+    protected void cbnz(int size, CiRegister reg, int imm21) {
+        conditionalBranchInstruction(reg, imm21, generalFromSize(size), Instruction.CBNZ, -1);
+    }
+
+
+    /**
+     * Compare register and branch if non-zero.
+     *
+     * @param reg general purpose register. May not be null, zero-register or stackpointer.
+     * @param size Instruction size in bits. Should be either 32 or 64.
+     * @param imm21 Signed 21-bit offset, has to be word aligned.
+     * @param pos Position at which instruction is inserted into buffer. -1 means insert at end.
+     */
+    protected void cbnz(int size, CiRegister reg, int imm21, int pos) {
+        conditionalBranchInstruction(reg, imm21, generalFromSize(size), Instruction.CBNZ, pos);
+    }
+
+    /**
+     * Compare and branch if zero.
+     *
+     * @param reg general purpose register. May not be null, zero-register or stackpointer.
+     * @param size Instruction size in bits. Should be either 32 or 64.
+     * @param imm21 Signed 21-bit offset, has to be word aligned.
+     */
+    protected void cbz(int size, CiRegister reg, int imm21) {
+        conditionalBranchInstruction(reg, imm21, generalFromSize(size), Instruction.CBZ, -1);
+    }
+
+    /**
+     * Compare register and branch if zero.
+     *
+     * @param reg general purpose register. May not be null, zero-register or stackpointer.
+     * @param size Instruction size in bits. Should be either 32 or 64.
+     * @param imm21 Signed 21-bit offset, has to be word aligned.
+     * @param pos Position at which instruction is inserted into buffer. -1 means insert at end.
+     */
+    protected void cbz(int size, CiRegister reg, int imm21, int pos) {
+        conditionalBranchInstruction(reg, imm21, generalFromSize(size), Instruction.CBZ, pos);
+    }
+
+    private void conditionalBranchInstruction(CiRegister reg, int imm21, InstructionType type, Instruction instr, int pos) {
+        assert Aarch64.isGeneralPurposeReg(reg);
+        int instrEncoding = instr.encoding | CompareBranchOp;
+        if (pos == -1) {
+            codeBuffer.emitInt(type.encoding |
+                    instrEncoding |
+                    getConditionalBranchImm(imm21) |
+                    rd(reg));
+        } else {
+            codeBuffer.emitInt(type.encoding |
+                    instrEncoding |
+                    getConditionalBranchImm(imm21) |
+                    rd(reg), pos);
+        }
+    }
+
+    private static int getConditionalBranchImm(int imm21) {
+        assert NumUtil.isSignedNbit(21, imm21) && (imm21 & 0x3) == 0
+                : "Immediate has to be 21bit signed number and word aligned";
+        int imm = (imm21 & NumUtil.getNbitNumberInt(21)) >> 2;
+        return imm << ConditionalBranchImmOffset;
+    }
+
     public final void movImmediate(CiRegister dst, int imm16) {
         int instruction = 0x52800000;
         instruction |= 1 << 31;
@@ -438,4 +549,24 @@ public class Aarch64Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
+    /* Helper functions */
+    private static int rd(CiRegister reg) {
+        return reg.getEncoding() << RdOffset;
+    }
+
+    private static int rs1(CiRegister reg) {
+        return reg.getEncoding() << Rs1Offset;
+    }
+
+    private static int rs2(CiRegister reg) {
+        return reg.getEncoding() << Rs2Offset;
+    }
+
+    private static int rs3(CiRegister reg) {
+        return reg.getEncoding() << Rs3Offset;
+    }
+
+    private static int rt(CiRegister reg) {
+        return reg.getEncoding() << RtOffset;
+    }
 }
