@@ -29,6 +29,46 @@ public class Aarch64Assembler extends AbstractAssembler {
 
     }
 
+    /**
+     * Enumeration of all different instruction kinds: General32/64 are the general instructions
+     * (integer, branch, etc.), for 32-, respectively 64-bit operands.
+     * FP32/64 is the encoding for the 32/64bit float operations
+     */
+    protected static enum InstructionType {
+        General32(0x00000000, 32, true),
+        General64(0x80000000, 64, true),
+        FP32(0x00000000, 32, false),
+        FP64(0x00400000, 64, false);
+
+        public final int encoding;
+        public final boolean isGeneral;
+        public final int width;
+
+        private InstructionType(int encoding, int width, boolean isGeneral) {
+            this.encoding = encoding;
+            this.width = width;
+            this.isGeneral = isGeneral;
+        }
+
+        public static InstructionType generalFromSize(int size) {
+            for (InstructionType type : values()) {
+                if (type.isGeneral && type.width == size) {
+                    return type;
+                }
+            }
+            throw new Error("should not reach here");
+        }
+
+        public static InstructionType floatFromSize(int size) {
+            for (InstructionType type : values()) {
+                if (!type.isGeneral && type.width == size) {
+                    return type;
+                }
+            }
+            throw new Error("should not reach here");
+        }
+    }
+
     private static final int ImmediateOffset = 10;
     private static final int ImmediateRotateOffset = 16;
     private static final int ImmediateSizeOffset = 22;
@@ -231,6 +271,146 @@ public class Aarch64Assembler extends AbstractAssembler {
 
     }
 
+    public static enum ShiftType {
+        LSL(0), LSR(1), ASR(2), ROR(3);
+
+        public final int encoding;
+
+        private ShiftType(int encoding) {
+            this.encoding = encoding;
+        }
+    }
+
+    public static enum ExtendType {
+        UXTB(0), UXTH(1), UXTW(2), UXTX(3), SXTB(4), SXTH(5), SXTW(6), SXTX(7);
+
+        public final int encoding;
+
+        private ExtendType(int encoding) {
+            this.encoding = encoding;
+        }
+    }
+
+    /**
+     * Condition Flags for branches. See 4.3
+     */
+    public static enum ConditionFlag {
+        // Integer | Floating-point meanings
+        /**
+         * Equal | Equal.
+         */
+        EQ(0x0),
+        /**
+         * Not Equal | Not equal or unordered.
+         */
+        NE(0x1),
+        /**
+         * Unsigned Higher or Same | Greater than, equal or unordered.
+         */
+        HS(0x2),
+        /**
+         * unsigned lower | less than.
+         */
+        LO(0x3),
+        /**
+         * minus (negative) | less than.
+         */
+        MI(0x4),
+        /**
+         * plus (positive or zero) | greater than, equal or unordered.
+         */
+        PL(0x5),
+        /**
+         * overflow set | unordered.
+         */
+        VS(0x6),
+        /**
+         * overflow clear | ordered.
+         */
+        VC(0x7),
+        /**
+         * unsigned higher | greater than or unordered.
+         */
+        HI(0x8),
+        /**
+         * unsigned lower or same | less than or equal.
+         */
+        LS(0x9),
+        /**
+         * signed greater than or equal | greater than or equal.
+         */
+        GE(0xA),
+        /**
+         * signed less than | less than or unordered.
+         */
+        LT(0xB),
+        /**
+         * signed greater than | greater than.
+         */
+        GT(0xC),
+        /**
+         * signed less than or equal | less than, equal or unordered.
+         */
+        LE(0xD),
+        /**
+         * always | always.
+         */
+        AL(0xE),
+        /**
+         * always | always (identical to AL, just to have valid 0b1111 encoding).
+         */
+        NV(0xF);
+
+        public final int encoding;
+
+        private ConditionFlag(int encoding) {
+            this.encoding = encoding;
+        }
+
+        /**
+         * @return ConditionFlag specified by decoding.
+         */
+        public static ConditionFlag fromEncoding(int encoding) {
+            return values()[encoding];
+        }
+
+        public ConditionFlag negate() {
+            switch (this) {
+            case EQ:
+                return NE;
+            case NE:
+                return EQ;
+            case HS:
+                return LO;
+            case LO:
+                return HS;
+            case MI:
+                return PL;
+            case PL:
+                return MI;
+            case VS:
+                return VC;
+            case VC:
+                return VS;
+            case HI:
+                return LS;
+            case LS:
+                return HI;
+            case GE:
+                return LT;
+            case LT:
+                return GE;
+            case GT:
+                return LE;
+            case LE:
+                return GT;
+            case AL:
+            case NV:
+            default:
+                throw new Error("should not reach here");
+            }
+        }
+    }
 
     public final void movImmediate(CiRegister dst, int imm16) {
         int instruction = 0x52800000;
