@@ -142,4 +142,63 @@ public class Aarch64 extends CiArchitecture {
               32,                               //registerReferenceMapBitCount
               8);                               //returnAddressSize (8 bytes)
     }
+
+    /**
+     * @param reg If null this method return false.
+     * @return true if register is the stackpointer, false otherwise.
+     */
+    public static boolean isSp(CiRegister reg) {
+        assert !r31.equals(reg) : "r31 should not be used.";
+        // Cannot use reg == sp since registers are not singletons for some strange reason.
+        return reg != null && reg.name.equals("SP");
+    }
+
+    /**
+     * @param reg If null this method returns false.
+     * @return true if register is a general purpose register, including the stack pointer and zero register.
+     */
+    public static boolean isIntReg(CiRegister reg) {
+        assert !r31.equals(reg) : "r31 should not be used.";
+        //return reg != null && reg.getRegisterCategory().equals(CPU);
+        return reg != null && reg.isCpu();
+
+    }
+
+    /**
+     * @param reg If null this method returns false..
+     * @return true if register is a floating-point register, false otherwise.
+     */
+    public static boolean isFpuReg(CiRegister reg) {
+        assert !r31.equals(reg) : "r31 should not be used.";
+        //return reg != null && reg.getRegisterCategory().equals(FPU);
+        return reg != null && reg.isFpu();
+    }
+
+    /**
+     * @param reg the register that is checked. If null this method returns false.
+     * @return true if register can be used as a general purpose register.
+     * This means the register is neither null nor the zero/discard/stack pointer register.
+     */
+    public static boolean isGeneralPurposeReg(CiRegister reg) {
+        assert !r31.equals(reg) : "r31 should not be used.";
+        return isIntReg(reg) && !reg.equals(zr) && !reg.equals(sp);
+    }
+
+    /**
+     * @param reg the register that is checked. If null this method returns false.
+     * @return true if register is a general purpose register or the zero register.
+     */
+    public static boolean isGeneralPurposeOrZeroReg(CiRegister reg) {
+        assert !r31.equals(reg) : "r31 should not be used.";
+        return isIntReg(reg) && !reg.equals(sp);
+    }
+
+    /**
+     * @param reg the register that is checked. If null this method returns false.
+     * @return true if register is a general purpose register or the stack pointer.
+     */
+    public static boolean isGeneralPurposeOrSpReg(CiRegister reg) {
+        assert !r31.equals(reg) : "r31 should not be used.";
+        return isIntReg(reg) && !reg.equals(zr);
+    }
 }
