@@ -29,6 +29,209 @@ public class Aarch64Assembler extends AbstractAssembler {
 
     }
 
+    private static final int ImmediateOffset = 10;
+    private static final int ImmediateRotateOffset = 16;
+    private static final int ImmediateSizeOffset = 22;
+    private static final int ExtendTypeOffset = 13;
+
+    private static final int AddSubImmOp = 0x11000000;
+    // If 1 the immediate is interpreted as being left-shifted by 12 bits.
+    private static final int AddSubShiftOffset = 22;
+    private static final int AddSubSetFlag = 0x20000000;
+
+    private static final int LogicalImmOp = 0x12000000;
+
+    private static final int MoveWideImmOp = 0x12800000;
+    private static final int MoveWideImmOffset = 5;
+    private static final int MoveWideShiftOffset = 21;
+
+    private static final int BitfieldImmOp = 0x13000000;
+
+    private static final int AddSubShiftedOp = 0x0B000000;
+    private static final int ShiftTypeOffset = 22;
+
+    private static final int AddSubExtendedOp = 0x0B200000;
+
+    private static final int MulOp = 0x1B000000;
+    private static final int DataProcessing1SourceOp = 0x5AC00000;
+    private static final int DataProcessing2SourceOp = 0x1AC00000;
+
+    private static final int Fp1SourceOp = 0x1E204000;
+    private static final int Fp2SourceOp = 0x1E200800;
+    private static final int Fp3SourceOp = 0x1F000000;
+
+    private static final int FpConvertOp = 0x1E200000;
+    private static final int FpImmOp = 0x1E201000;
+    private static final int FpImmOffset = 13;
+
+    private static final int FpCmpOp = 0x1E202000;
+
+    private static final int PcRelImmHiOffset = 5;
+    private static final int PcRelImmLoOffset = 29;
+
+    private static final int PcRelImmOp = 0x10000000;
+
+    private static final int UnconditionalBranchImmOp = 0x14000000;
+    private static final int UnconditionalBranchRegOp = 0xD6000000;
+    private static final int CompareBranchOp = 0x34000000;
+
+    private static final int ConditionalBranchImmOffset = 5;
+
+    private static final int ConditionalSelectOp = 0x1A800000;
+    private static final int ConditionalConditionOffset = 12;
+
+    private static final int LoadStoreScaledOp = 0x39000000;
+    private static final int LoadStoreUnscaledOp = 0x38000000;
+    private static final int LoadStoreRegisterOp = 0x38200800;
+    private static final int LoadLiteralOp = 0x18000000;
+    private static final int LoadStorePostIndexedOp = 0x38000400;
+    private static final int LoadStorePreIndexedOp = 0x38000C00;
+
+    private static final int LoadStoreUnscaledImmOffset = 12;
+    private static final int LoadStoreScaledImmOffset = 10;
+    private static final int LoadStoreScaledRegOffset = 12;
+    private static final int LoadStoreIndexedImmOffset = 12;
+    private static final int LoadStoreTransferSizeOffset = 30;
+    private static final int LoadStoreFpFlagOffset = 26;
+    private static final int LoadLiteralImmeOffset = 5;
+
+    private static final int LogicalShiftOp = 0x0A000000;
+
+    private static final int ExceptionOp = 0xD4000000;
+    private static final int SystemImmediateOffset = 5;
+
+    private static final int SimdImmediateOffset = 16;
+
+    private static final int BarrierOp = 0xD503301F;
+    private static final int BarrierKindOffset = 8;
+
+    /**
+     * Encoding for all instructions.
+     */
+    private static enum Instruction {
+        BCOND(0x54000000),
+        CBNZ(0x01000000),
+        CBZ(0x00000000),
+
+        B(0x00000000),
+        BL(0x80000000),
+        BR(0x001F0000),
+        BLR(0x003F0000),
+        RET(0x005F0000),
+
+        LDR(0x00000000),
+        LDRS(0x00800000),
+        LDXR(0x081f7c00),
+        LDAR(0x8dffc00),
+        LDAXR(0x85ffc00),
+
+        STR(0x00000000),
+        STXR(0x08007c00),
+        STLR(0x089ffc00),
+        STLXR(0x0800fc00),
+
+        ADR(0x00000000),
+        ADRP(0x80000000),
+
+        ADD(0x00000000),
+        ADDS(ADD.encoding | AddSubSetFlag),
+        SUB(0x40000000),
+        SUBS(SUB.encoding | AddSubSetFlag),
+
+        NOT(0x00200000),
+        AND(0x00000000),
+        BIC(AND.encoding | NOT.encoding),
+        ORR(0x20000000),
+        ORN(ORR.encoding | NOT.encoding),
+        EOR(0x40000000),
+        EON(EOR.encoding | NOT.encoding),
+        ANDS(0x60000000),
+        BICS(ANDS.encoding | NOT.encoding),
+
+        ASRV(0x00002800),
+        RORV(0x00002C00),
+        LSRV(0x00002400),
+        LSLV(0x00002000),
+
+        CLS(0x00001400),
+        CLZ(0x00001000),
+        RBIT(0x00000000),
+        REVX(0x00000C00),
+        REVW(0x00000800),
+
+        MOVN(0x00000000),
+        MOVZ(0x40000000),
+        MOVK(0x60000000),
+
+        CSEL(0x00000000),
+        CSNEG(0x40000400),
+        CSINC(0x00000400),
+
+        BFM(0x20000000),
+        SBFM(0x00000000),
+        UBFM(0x40000000),
+        EXTR(0x13800000),
+
+        MADD(0x00000000),
+        MSUB(0x00008000),
+        SDIV(0x00000C00),
+        UDIV(0x00000800),
+
+        FMOV(0x00000000),
+        FMOVCPU2FPU(0x00070000),
+        FMOVFPU2CPU(0x00060000),
+
+        FCVTDS(0x00028000),
+        FCVTSD(0x00020000),
+
+        FCVTZS(0x00180000),
+        SCVTF(0x00020000),
+
+        FABS(0x00008000),
+        FSQRT(0x00018000),
+        FNEG(0x00010000),
+
+        FRINTZ(0x00058000),
+
+        FADD(0x00002000),
+        FSUB(0x00003000),
+        FMUL(0x00000000),
+        FDIV(0x00001000),
+        FMAX(0x00004000),
+        FMIN(0x00005000),
+
+        FMADD(0x00000000),
+        FMSUB(0x00008000),
+
+        FCMP(0x00000000),
+        FCMPZERO(0x00000008),
+        FCCMP(0x1E200400),
+        FCSEL(0x1E200C00),
+
+        INS(0x4e081c00),
+        UMOV(0x4e083c00),
+
+        CNT(0xe205800),
+        USRA(0x6f001400),
+
+        HLT(0x00400000),
+        BRK(0x00200000),
+
+        CLREX(0xd5033f5f),
+        HINT(0xD503201F),
+        DMB(0x000000A0),
+
+        BLR_NATIVE(0xc0000000);
+
+        public final int encoding;
+
+        private Instruction(int encoding) {
+            this.encoding = encoding;
+        }
+
+    }
+
+
     public final void movImmediate(CiRegister dst, int imm16) {
         int instruction = 0x52800000;
         instruction |= 1 << 31;
