@@ -573,10 +573,12 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
                     asm.ldrd(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0);
                     break;
                 case FLOAT:
+		    assert(reg.number > 15);
                     asm.setUpScratch(new CiAddress(CiKind.Float, ARMV7.r13.asValue(), offset32));
                     asm.vldr(ARMV7Assembler.ConditionFlag.Always,  reg, ARMV7.r12,  0,  CiKind.Float, CiKind.Int);
                     break;
                 case DOUBLE:
+		    assert(reg.number > 15);
                     asm.setUpScratch(new CiAddress(CiKind.Double, ARMV7.r13.asValue(), offset32));
                     asm.vldr(ARMV7Assembler.ConditionFlag.Always,  reg, ARMV7.r12, 0, CiKind.Double, CiKind.Int);
                     break;
@@ -940,12 +942,14 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
                     asm.strd(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0);
                     //asm.movl(new CiAddress(CiKind.Long, ARMV7.r13.asValue(), offset32), reg);  break;
                 case FLOAT:
+		    assert(reg.number > 15);
                     asm.setUpScratch(new CiAddress(CiKind.Float, ARMV7.r13.asValue(), offset32));
                     asm.vstr(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0,CiKind.Float,CiKind.Int);// 32 bit store ...
                     // APN what if the values are in float/coprocessor regs, you need a different instruction
                     //asm.movss(new CiAddress(CiKind.Float, ARMV7.r13.asValue(), offset32), reg);
                     break;
                 case DOUBLE:
+		    assert(reg.number > 15);
                     asm.setUpScratch(new CiAddress(CiKind.Double, ARMV7.r13.asValue(), offset32));
                     asm.vstr(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0,CiKind.Double, CiKind.Int);
                     // APN again what if using FP regs!!!
@@ -1003,6 +1007,8 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
 	    asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), destStackOffset));
             asm.strd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
         } else {
+            assert(kind != Kind.LONG);
+            assert(kind != Kind.DOUBLE);
 	    asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), sourceStackOffset));
             asm.ldr(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
 	    asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), destStackOffset));
