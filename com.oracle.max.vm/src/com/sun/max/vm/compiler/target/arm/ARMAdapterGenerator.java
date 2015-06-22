@@ -110,7 +110,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             @Override
             public int callSizeInPrologue() {
-                return RIP_CALL_INSTRUCTION_SIZE;
+                return RIP_CALL_INSTRUCTION_SIZE+12;
             }
 
             /**
@@ -224,6 +224,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 int frameSlotIndex = preparer.referenceMapBitIndex(current.sp());
                 int byteIndex = 0;
                 long refMap = this.refMap;
+                //for (int i = 0; i < 8; i++) {
                 for (int i = 0; i < 8; i++) {
                     final byte refMapByte = (byte) (refMap & 0xff);
                     preparer.logReferenceMapByteBefore(byteIndex, refMapByte, "Frame");
@@ -400,34 +401,19 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             ARMV7Assembler asm = new ARMV7Assembler(target(), null);
 
-            //asm.movw(ConditionFlag.Always,ARMV7.r12, 2);
-            //asm.movw(ConditionFlag.Always,ARMV7.r12, 2);
-
             // On entry to the frame, there are 2 return addresses on the stack at [RSP] and [RSP + 8].
             // The one at [RSP] is the return address of the call in the OPT callee's prologue (which is
             // also the entry to the main body of the OPT callee) and one at [RSP + 8] is the return
             // address in the baseline caller.
 
-	    /*
-        On ARM we must push the return address on the stack at the entry point, this causes some
-		additonal difficulty, as we must skip over these appropriately.
-		The address at [RSP] will be 4 bytes too short.
-
-		NOTE we are going to use enter/leaeve semantics
-		So we will add 4 to the R14 ... 
-	     */
 
             // Save the address of the OPT callee's main body in RAX
             // APN TODO this is broken for now we need just to get it to compile then fix all stack stuff!
             //asm.movq(rax, new CiAddress(WordUtil.archKind(), rsp.asValue()));
-            // APN so is RAX storing the return address?
-            //asm.addq(ARMV7.r14,4);
-            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.encoding);
+            //asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.encoding);
+	    //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, ARMV7.r14);
 
-            //asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
 
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
-            asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, ARMV7.r12, 0);
 
 
             // Compute the number of stack args needed for the call (i.e. the args that won't
@@ -470,16 +456,18 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // I think enter does push rbp (return address?
             // mv SP -> R11 (rbp)
             // sub SP by an ammount
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r11, ARMV7.r13);
-            asm.addq(ARMV7.r13, -1 * (explicitlyAllocatedFrameSize - 4)); // TODO check if the -4 is required
+            asm.subq(ARMV7.r13, (explicitlyAllocatedFrameSize )); 
 
             Label forever = new Label();
 
             asm.bind(forever);
-            asm.mov32BitConstant(ARMV7.r12, 0xb00bb00b);
+            //asm.mov32BitConstant(ARMV7.r12, 0xb00bb00b);
+	    asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12);
+
             asm.branch(forever);
-            // APN what is menat by a RIP slot?
 
             // At this point, the top of the baseline caller's stack (i.e the last arg to the call) is immediately
             // above the adapter's RIP slot. That is, it's at RSP + adapterFrameSize + OPT_SLOT_SIZE.
@@ -506,8 +494,11 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 baselineStackOffset += BASELINE_SLOT_SIZE;
             }
 
+	    asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, ARMV7.r14);
+
             // Args are now copied to the OPT locations; call the OPT main body
             int callPos = asm.codeBuffer.position();
+	    asm.nop(3); // think this might be necessary pretend it is  movw movt add PC
             asm.blx(ARMV7.r0);
 
             int callSize = asm.codeBuffer.position() - callPos;
@@ -534,7 +525,10 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             // Retract the stack pointer back to its position before the first argument on the caller's stack.
             //System.err.println("removed ret in ARMAdapterGenerator"); ****************************
             // asm.ret(/* to make it compile APN removed (short) baselineArgsSize*/);
-            asm.ret(baselineArgsSize);
+	    asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 8);
+	    asm.addq(ARMV7.r13,baselineArgsSize);
+	    asm.mov(ARMV7Assembler.ConditionFlag.Always,false, ARMV7.r15,ARMV7.r8);	
+            //asm.ret(baselineArgsSize);
 
 
             final byte[] code = asm.codeBuffer.close(true);
@@ -554,15 +548,15 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             switch (kind.asEnum) {
                 case BYTE:
                     asm.setUpScratch(new CiAddress(CiKind.Byte, ARMV7.r13.asValue(), offset32));
-                    asm.ldrsb(ARMV7Assembler.ConditionFlag.Always, 1, 1, 0, reg, ARMV7.r12, 0);
+                    asm.ldrsb(ARMV7Assembler.ConditionFlag.Always, 1, 0, 0, reg, ARMV7.r12, 0);
                     break;
                 case BOOLEAN:
                     asm.setUpScratch(new CiAddress(CiKind.Boolean, ARMV7.r13.asValue(), offset32));
-                    asm.ldrb(ARMV7Assembler.ConditionFlag.Always, 1, 1, 0, reg, ARMV7.r12, 0);
+                    asm.ldrsb(ARMV7Assembler.ConditionFlag.Always, 1, 0, 0, reg, ARMV7.r12, 0);
                     break;
                 case SHORT:
                     asm.setUpScratch(new CiAddress(CiKind.Short, ARMV7.r13.asValue(), offset32));
-                    asm.ldrshw(ARMV7Assembler.ConditionFlag.Always, 1, 1, 0, reg, ARMV7.r12, 0);
+                    asm.ldrshw(ARMV7Assembler.ConditionFlag.Always, 1, 0, 0, reg, ARMV7.r12, 0);
                     break;
                 case CHAR:
                     asm.setUpScratch(new CiAddress(CiKind.Char, ARMV7.r13.asValue(), offset32));
@@ -572,7 +566,7 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
                 case WORD:
                 case REFERENCE:
                     asm.setUpScratch(new CiAddress(CiKind.Int, ARMV7.r13.asValue(), offset32));
-                    asm.ldr(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, reg, ARMV7.r12, ARMV7.r12, 0, 0);
+                    asm.ldrImmediate(ARMV7Assembler.ConditionFlag.Always, 1, 0, 0, reg,  ARMV7.r12,  0);
                     break;
                 case LONG:
                     asm.setUpScratch(new CiAddress(CiKind.Long, ARMV7.r13.asValue(), offset32));
@@ -580,11 +574,11 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
                     break;
                 case FLOAT:
                     asm.setUpScratch(new CiAddress(CiKind.Float, ARMV7.r13.asValue(), offset32));
-                    asm.movss(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, reg, ARMV7.r12, ARMV7.r12, 0, 0, CiKind.Float, CiKind.Float);
+                    asm.vldr(ARMV7Assembler.ConditionFlag.Always,  reg, ARMV7.r12,  0,  CiKind.Float, CiKind.Int);
                     break;
                 case DOUBLE:
                     asm.setUpScratch(new CiAddress(CiKind.Double, ARMV7.r13.asValue(), offset32));
-                    asm.movsd(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, reg, ARMV7.r12, ARMV7.r12, CiKind.Double, CiKind.Double);
+                    asm.vldr(ARMV7Assembler.ConditionFlag.Always,  reg, ARMV7.r12, 0, CiKind.Double, CiKind.Int);
                     break;
                 default:
                     throw ProgramError.unexpected();
@@ -618,12 +612,15 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             @Override
             public int callOffsetInPrologue() {
                 //return 12; // push LR and branch first ... followed by other push lr
-                return 28;
+                //return 28;
+		//return 36;
+		//return 40;
+		return 24;
             }
 
             @Override
             public int callSizeInPrologue() {
-                return RIP_CALL_INSTRUCTION_SIZE;
+                return RIP_CALL_INSTRUCTION_SIZE+12;
             }
 
             /**
@@ -750,11 +747,8 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             }
         }
 
-        static final int PROLOGUE_SIZE = 52; //29; // calculated by running APN ...
-        //static final int PROLOGUE_SIZE = 76; //29; // calculated by running APN ...
-        //static final int PROLOGUE_SIZE = 72; //29; // calculated by running APN ...
-        //static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = 36;// calculated by running 8;
-	static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = 52;
+	static final int PROLOGUE_SIZE = 40;// was 56;
+	static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = 28;// was 52
 
         Opt2Baseline() {
             super(Adapter.Type.OPT2BASELINE);
@@ -785,22 +779,27 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
          * which is where the method body starts. This means that a baseline caller will fall through the {@code nop}s
          * to the method body.
          * <p/>
-         * +0: push lr
-         * +4 branch
-         * +8:
+         * +0: jmp L1 (BRANCH)
+         * +4 debugging movw 0xba5e
+         * +8: debuggin movt 0x0af2
          * +12
          * +16:
          * +20: push $LR OPT ENTRY POINT CALL
-         * +40: method body
+	 * +24: movw r12,
+	 * +28: movt r12
+	 * +32: add r12, r12, pc 
+         * +36: blx r12
+         * +40: BASELINE METHOD ENTRY push $LR
          */
         @Override
         protected int emitPrologue(Object out, Adapter adapter) {
             ARMV7Assembler asm = out instanceof OutputStream ? new ARMV7Assembler(target(), null) : (ARMV7Assembler) out;
             if (adapter == null) {
-                asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
-	     	asm.mov32BitConstant(ARMV7.r12,0x0af2ba5e); // signifies OPT2BASE
 
-                asm.nop(OPTIMIZED_ENTRY_POINT.offset() - 4-8);
+		// Pad with nops up to the OPT entry point
+            	asm.nop((OPTIMIZED_ENTRY_POINT.offset()-asm.codeBuffer.position())/4);
+
+	     	asm.mov32BitConstant(ARMV7.r12,0xba5eba5e); // signifies OPT2BASE
                 if (asm.codeBuffer.position() != PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE) {
                     Log.println("GOING TO CRASH mismatch  PROLOGUE SIZE NOARGS ARMAdapterGenerator " + asm.codeBuffer.position() + " " + PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE);
                 }
@@ -808,8 +807,11 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
                 copyIfOutputStream(asm.codeBuffer, out);
                 return PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;
             }
-
-            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
+	    /*
+	      In the accompanying slides, this corresponds to the JMP to L1
+	    */
+            //asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
+	    //asm.nop();
 
             // A baseline caller jumps over the call to the OPT2BASELINE adapter
             Label end = new Label();
@@ -818,18 +820,14 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
 	    asm.mov32BitConstant(ARMV7.r12,0x0af2ba5e); // signifies OPT2BASE
 
             // Pad with nops up to the OPT entry point
-            asm.align(OPTIMIZED_ENTRY_POINT.offset()-4);
+            asm.nop((OPTIMIZED_ENTRY_POINT.offset()-asm.codeBuffer.position())/4);
+            // REMEMBER AT EVERY ENTRY POINT WE MUST PUSH THE $LR
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
+	    Log.println("OFFSET of CALL " + asm.codeBuffer.position());
             asm.call();
             asm.bind(end);
-
-	    while(asm.codeBuffer.position() < PROLOGUE_SIZE) 	{
-		// dirty .. just while we are fixing adapters
-		// TODO get hadapters all sorted out
-		asm.nop();
-	    }
             int size = asm.codeBuffer.position();
-            Log.println("ASM " + size + " " + PROLOGUE_SIZE);
+            Log.println("ASM " + asm.codeBuffer.position() + " " + PROLOGUE_SIZE);
 
             assert size == PROLOGUE_SIZE;
             copyIfOutputStream(asm.codeBuffer, out);
@@ -858,7 +856,8 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             // also the entry to the main body of the baseline callee) and one at [RSP + 8 ] is the return
             // address in the OPT caller.
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, ARMV7.r14);
+            //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, ARMV7.r14);
+
             // Save the address of the baseline callee's main body in RAX
             //asm.movq(rax, new CiAddress(WordUtil.archKind(), rsp.asValue()));
             //asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
@@ -887,6 +886,8 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
                 adaptArgument(asm, argKind, optArgs[i], baselineStackOffset, adapterFrameSize);
                 baselineStackOffset += BASELINE_SLOT_SIZE;
             }
+	    // Why do we call  the return address ourselves?????
+	    asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, ARMV7.r14);
 
             // Args are now copied to the baseline locations; call the baseline main body
             int callPos = asm.codeBuffer.position();
@@ -905,7 +906,9 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             asm.addq(ARMV7.r13, OPT_SLOT_SIZE);
 
             // Return to the OPT caller
-            asm.ret(0);
+	    asm.pop(ARMV7Assembler.ConditionFlag.Always,1<<8); // r8
+	    asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r15,ARMV7.r8);
+            //asm.ret(0);
 
             final byte[] code = asm.codeBuffer.close(true);
 
@@ -938,13 +941,13 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
                     //asm.movl(new CiAddress(CiKind.Long, ARMV7.r13.asValue(), offset32), reg);  break;
                 case FLOAT:
                     asm.setUpScratch(new CiAddress(CiKind.Float, ARMV7.r13.asValue(), offset32));
-                    asm.str(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0);// 32 bit store ...
+                    asm.vstr(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0,CiKind.Float,CiKind.Int);// 32 bit store ...
                     // APN what if the values are in float/coprocessor regs, you need a different instruction
                     //asm.movss(new CiAddress(CiKind.Float, ARMV7.r13.asValue(), offset32), reg);
                     break;
                 case DOUBLE:
                     asm.setUpScratch(new CiAddress(CiKind.Double, ARMV7.r13.asValue(), offset32));
-                    asm.strd(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0);
+                    asm.vstr(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0,CiKind.Double, CiKind.Int);
                     // APN again what if using FP regs!!!
                     // double is 64 bits so 2 regs?
                     //asm.movsd(new CiAddress(CiKind.Double, ARMV7.r13.asValue(), offset32), reg);

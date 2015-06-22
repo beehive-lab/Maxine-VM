@@ -513,6 +513,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         // stackptr = framepointer -stacksize
 
         int frameSize = frame.frameSize();
+        asm.push(ConditionFlag.Always, 1 << 14); // push return address on stack
         asm.push(ConditionFlag.Always, 1 << 11); // push frame pointer onto STACK
         asm.mov(ConditionFlag.Always, false, ARMV7.r11, ARMV7.r13); // create a new framepointer = stack ptr
         asm.subq(ARMV7.r13, frameSize - Word.size()); // APN is this necessary for  ARM ie push does it anyway?
@@ -575,6 +576,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         final short stackAmountInBytes = (short) frame.sizeOfParameters();
         asm.mov32BitConstant(scratch, stackAmountInBytes);
         asm.addRegisters(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
+	asm.pop(ConditionFlag.Always, 1 << 11); // POP the frame pointer
         asm.ret(); // mov R14 to r15 ,,, who restores the rest of the environment?
     }
 

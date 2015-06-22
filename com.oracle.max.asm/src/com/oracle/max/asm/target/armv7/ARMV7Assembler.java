@@ -819,6 +819,8 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void push(final ConditionFlag flag, final int registerList) {
         int instruction;
+	assert(registerList > 0);
+	assert(registerList < 0x10000);
         instruction = (flag.value() & 0xf) << 28;
         instruction |= 0x9 << 24;
         instruction |= 0x2 << 20;
@@ -1304,7 +1306,9 @@ public class ARMV7Assembler extends AbstractAssembler {
         // Is alignment relevant at all for ARM
         // we do not have the same restrictions as X86.
         if (codeBuffer.position() % modulus != 0) {
-            nop(modulus - (codeBuffer.position() % modulus));
+	 	assert(modulus %4 == 0); // ARM;
+		nop((modulus - codeBuffer.position() )/4);
+            //nop(modulus - (codeBuffer.position() % modulus));
         }
     }
 

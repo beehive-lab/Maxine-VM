@@ -72,6 +72,15 @@ public class MethodInstrumentation {
 
     @INLINE
     public static void recordEntrypoint(MethodProfile mpo, Object receiver) {
+	
+		int x = mpo.entryCount;
+		while (x <= 0) {
+			x = x -1;
+			if (x >= 0) {
+			 x = -5000;
+			}
+		}
+
         if (--mpo.entryCount <= 0) {
             CompilationBroker.instrumentationCounterOverflow(mpo, receiver);
         }
