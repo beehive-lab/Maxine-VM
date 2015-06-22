@@ -494,12 +494,12 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 baselineStackOffset += BASELINE_SLOT_SIZE;
             }
 
-	    asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, ARMV7.r14);
+	    asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r8, ARMV7.r14);
 
             // Args are now copied to the OPT locations; call the OPT main body
             int callPos = asm.codeBuffer.position();
 	    asm.nop(3); // think this might be necessary pretend it is  movw movt add PC
-            asm.blx(ARMV7.r0);
+            asm.blx(ARMV7.r8);
 
             int callSize = asm.codeBuffer.position() - callPos;
 
@@ -887,7 +887,7 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
                 baselineStackOffset += BASELINE_SLOT_SIZE;
             }
 	    // Why do we call  the return address ourselves?????
-	    asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, ARMV7.r14);
+	    asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r8, ARMV7.r14);
 
             // Args are now copied to the baseline locations; call the baseline main body
             int callPos = asm.codeBuffer.position();
@@ -897,7 +897,7 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             asm.bind(forever);
             //asm.mov32BitConstant(ARMV7.r12,0xbeefbeef); REMOVE NOPS and uncooment
             //asm.branch(forever);
-            asm.blx(ARMV7.r0);
+            asm.blx(ARMV7.r8);
             int callSize = asm.codeBuffer.position() - callPos;
 
             // The baseline method will have popped the args off the stack so now

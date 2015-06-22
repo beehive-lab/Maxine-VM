@@ -990,7 +990,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             } else if (tag == PatchInfoARMV7.OBJECT_LITERAL) {
                 int dispPos = data[i++];
                 int index = data[i++];
-                int dummyDispPos = dispPos + 16; // +8 for PC and +8 for position of PC relative ADD
+                int dummyDispPos = dispPos + 12; // +8 for PC and +8 for position of PC relative ADD
                 assert objectLiterals.get(index) != null;
                 buf.setPosition(dispPos);
                 int dispFromCodeStart = dispFromCodeStart(objectLiterals.size(), 0, index, true);
