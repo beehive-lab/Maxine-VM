@@ -53,7 +53,9 @@ maxine-tester/junit-tests/test.arm.asm.AutoTest.stdout
 maxine-tester/junit-tests/test.bin
 maxine-tester/junit-tests/test.elf
 maxine-tester/junit-tests/test.o
-
+com.oracle.max.vm.tests/bind_output
+com.oracle.max.vm.tests/qemu_errors
+com.oracle.max.vm.tests/qemu_output
 
 # switch to regexp syntax
 syntax: regexp
