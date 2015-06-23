@@ -700,7 +700,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param src general purpose register. May not be null or stack-pointer.
      * @param bimm logical immediate.
      */
-    protected void orr(int size, CiRegister dst, CiRegister src, long bimm) {
+    public void orr(int size, CiRegister dst, CiRegister src, long bimm) {
         assert Aarch64.isGeneralPurposeOrSpReg(dst) && Aarch64.isGeneralPurposeOrZeroReg(src);
         logicalImmInstruction(dst, src, bimm, generalFromSize(size), Instruction.ORR);
     }
