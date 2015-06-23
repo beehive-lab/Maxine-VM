@@ -612,6 +612,10 @@ public class Stubs {
 
         // remember calls from boot code region to baseline code cache
         if (Code.bootCodeRegion().contains(cpCallSite.toAddress()) && Code.getCodeManager().getRuntimeBaselineCodeRegion().contains(calleeEntryPoint.toAddress())) {
+		 if (VMOptions.verboseOption.verboseCompilation) {
+            		Log.println("TRAMPOLINE recordBootToBaseline");
+        	}
+
             CodeManager.recordBootToBaselineCaller(caller);
         }
         if (VMOptions.verboseOption.verboseCompilation) {

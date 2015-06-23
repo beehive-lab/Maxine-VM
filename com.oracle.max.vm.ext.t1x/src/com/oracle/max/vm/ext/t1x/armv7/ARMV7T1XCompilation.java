@@ -195,6 +195,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         asm.setUpScratch(spLong(index));
         asm.sub(ConditionFlag.Always, false, ARMV7.r8, scratch, 4, 0);
         asm.ldrd(ConditionFlag.Always, dst, ARMV7.r8, 0); // dst needs to be big enough to hold a long!
+        //asm.ldrd(ConditionFlag.Always, dst, ARMV7.r12, 0); // dst needs to be big enough to hold a long!
     }
 
     @Override
@@ -203,6 +204,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         asm.setUpScratch(spLong(index));
         asm.sub(ConditionFlag.Always, false, ARMV7.r8, scratch, 4, 0);
         asm.strd(ARMV7Assembler.ConditionFlag.Always, src, ARMV7.r8, 0); // put them on the stack on the stack!
+        //asm.strd(ARMV7Assembler.ConditionFlag.Always, src, ARMV7.r12, 0); // put them on the stack on the stack!
     }
 
     @Override
@@ -211,6 +213,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         asm.setUpScratch(spLong(index));
         asm.sub(ConditionFlag.Always, false, ARMV7.r8, scratch, 4, 0);
         asm.vldr(ARMV7Assembler.ConditionFlag.Always, dst, ARMV7.r8, 0, CiKind.Double, CiKind.Int);
+        //asm.vldr(ARMV7Assembler.ConditionFlag.Always, dst, ARMV7.r12, 0, CiKind.Double, CiKind.Int);
 
     }
 
@@ -220,6 +223,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         asm.setUpScratch(spLong(index));
         asm.sub(ConditionFlag.Always, false, ARMV7.r8, scratch, 4, 0);
         asm.vstr(ARMV7Assembler.ConditionFlag.Always, src, ARMV7.r8, 0, CiKind.Double, CiKind.Int);
+        //asm.vstr(ARMV7Assembler.ConditionFlag.Always, src, ARMV7.r12, 0, CiKind.Double, CiKind.Int);
     }
 
     @Override
@@ -296,6 +300,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
         asm.sub(ConditionFlag.Always, false, ARMV7.r8, scratch, 4, 0);
         asm.ldrd(ConditionFlag.Always, dst, ARMV7.r8, 0);
+        //asm.ldrd(ConditionFlag.Always, dst, ARMV7.r12, 0);
     }
 
     @Override
@@ -322,6 +327,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
         asm.sub(ConditionFlag.Always, false, ARMV7.r8, scratch, 4, 0);
         asm.strd(ARMV7Assembler.ConditionFlag.Always, src, ARMV7.r8, 0);
+        //asm.strd(ARMV7Assembler.ConditionFlag.Always, src, ARMV7.r12, 0);
     }
 
     @Override
@@ -465,6 +471,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             peekObject(target, receiverStackIndex); // was rdi?
         }
         asm.mov32BitConstant(ARMV7.r8, 8);
+        //asm.mov32BitConstant(ARMV7.r8, 0);
         int causePos = buf.position();
         asm.call(target);
         int safepointPos = buf.position();
