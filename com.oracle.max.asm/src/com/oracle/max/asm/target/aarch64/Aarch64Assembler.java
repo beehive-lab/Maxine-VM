@@ -6,7 +6,8 @@ import com.sun.cri.ri.*;
 
 import static com.oracle.max.asm.target.aarch64.Aarch64Assembler.InstructionType.floatFromSize;
 import static com.oracle.max.asm.target.aarch64.Aarch64Assembler.InstructionType.generalFromSize;
-
+import static com.oracle.max.asm.target.aarch64.FunctionalUtils.Predicate;
+import static com.oracle.max.asm.target.aarch64.FunctionalUtils.all;
 
 public class Aarch64Assembler extends AbstractAssembler {
     private static final int RdOffset = 0;
@@ -428,7 +429,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param condition may not be null.
      * @param imm21 Signed 21-bit offset, has to be word aligned.
      */
-    protected void b(ConditionFlag condition, int imm21) {
+    public void b(ConditionFlag condition, int imm21) {
         b(condition, imm21, -1);
     }
 
@@ -439,7 +440,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param imm21 Signed 21-bit offset, has to be word aligned.
      * @param pos Position at which instruction is inserted into buffer. -1 means insert at end.
      */
-    protected void b(ConditionFlag condition, int imm21, int pos) {
+    public void b(ConditionFlag condition, int imm21, int pos) {
         if (pos == -1) {
             codeBuffer.emitInt(
                     Instruction.BCOND.encoding |
@@ -460,7 +461,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param size Instruction size in bits. Should be either 32 or 64.
      * @param imm21 Signed 21-bit offset, has to be word aligned.
      */
-    protected void cbnz(int size, CiRegister reg, int imm21) {
+    public void cbnz(int size, CiRegister reg, int imm21) {
         conditionalBranchInstruction(reg, imm21, generalFromSize(size), Instruction.CBNZ, -1);
     }
 
@@ -473,7 +474,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param imm21 Signed 21-bit offset, has to be word aligned.
      * @param pos Position at which instruction is inserted into buffer. -1 means insert at end.
      */
-    protected void cbnz(int size, CiRegister reg, int imm21, int pos) {
+    public void cbnz(int size, CiRegister reg, int imm21, int pos) {
         conditionalBranchInstruction(reg, imm21, generalFromSize(size), Instruction.CBNZ, pos);
     }
 
@@ -484,7 +485,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param size Instruction size in bits. Should be either 32 or 64.
      * @param imm21 Signed 21-bit offset, has to be word aligned.
      */
-    protected void cbz(int size, CiRegister reg, int imm21) {
+    public void cbz(int size, CiRegister reg, int imm21) {
         conditionalBranchInstruction(reg, imm21, generalFromSize(size), Instruction.CBZ, -1);
     }
 
@@ -496,7 +497,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param imm21 Signed 21-bit offset, has to be word aligned.
      * @param pos Position at which instruction is inserted into buffer. -1 means insert at end.
      */
-    protected void cbz(int size, CiRegister reg, int imm21, int pos) {
+    public void cbz(int size, CiRegister reg, int imm21, int pos) {
         conditionalBranchInstruction(reg, imm21, generalFromSize(size), Instruction.CBZ, pos);
     }
 
@@ -531,23 +532,150 @@ public class Aarch64Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public void add(final CiRegister Rd, final CiRegister Rm, final CiRegister Rn) {
-        int instruction = 0xB000000;
-        instruction |= 1 << 31;
-        instruction |= (Rm.encoding & 0x1f) << 16;
-        instruction |= (Rn.encoding & 0x1f) << 5;
-        instruction |= (Rd.encoding & 0x1f);
-        emitInt(instruction);
+//    public void add(final CiRegister Rd, final CiRegister Rm, final CiRegister Rn) {
+//        int instruction = 0xB000000;
+//        instruction |= 1 << 31;
+//        instruction |= (Rm.encoding & 0x1f) << 16;
+//        instruction |= (Rn.encoding & 0x1f) << 5;
+//        instruction |= (Rd.encoding & 0x1f);
+//        emitInt(instruction);
+//    }
+//
+//    public void sub(final CiRegister Rd, final CiRegister Rm, final CiRegister Rn) {
+//        int instruction = 0x4B000000;
+//        instruction |= 1 << 31;
+//        instruction |= (Rm.encoding & 0x1f) << 16;
+//        instruction |= (Rn.encoding & 0x1f) << 5;
+//        instruction |= (Rd.encoding & 0x1f);
+//        emitInt(instruction);
+//    }
+
+    /* Arithmetic (Immediate) (5.4.1) */
+
+    /**
+     * dst = src + aimm.
+     *
+     * @param size register size. Has to be 32 or 64.
+     * @param dst general purpose register. May not be null or zero-register.
+     * @param src general purpose register. May not be null or zero-register.
+     * @param aimm arithmetic immediate. Either unsigned 12-bit value or unsigned 24-bit value with the
+     *             lower 12-bit cleared.
+     */
+    protected void add(int size, CiRegister dst, CiRegister src, int aimm) {
+        assert all(IS_GENERAL_PURPOSE_OR_SP_REG, dst, src);
+        addSubImmInstruction(dst, src, aimm, generalFromSize(size), Instruction.ADD);
     }
 
-    public void sub(final CiRegister Rd, final CiRegister Rm, final CiRegister Rn) {
-        int instruction = 0x4B000000;
-        instruction |= 1 << 31;
-        instruction |= (Rm.encoding & 0x1f) << 16;
-        instruction |= (Rn.encoding & 0x1f) << 5;
-        instruction |= (Rd.encoding & 0x1f);
-        emitInt(instruction);
+    /**
+     * dst = src + aimm and sets condition flags.
+     *
+     * @param size register size. Has to be 32 or 64.
+     * @param dst general purpose register. May not be null or stackpointer.
+     * @param src general purpose register. May not be null or zero-register.
+     * @param aimm arithmetic immediate. Either unsigned 12-bit value or unsigned 24-bit value with the
+     *             lower 12-bit cleared.
+     */
+    protected void adds(int size, CiRegister dst, CiRegister src, int aimm) {
+        assert Aarch64.isGeneralPurposeOrZeroReg(dst) && Aarch64.isGeneralPurposeOrSpReg(src);
+        addSubImmInstruction(dst, src, aimm, generalFromSize(size), Instruction.ADDS);
     }
+
+    /**
+     * dst = src - aimm.
+     *
+     * @param size register size. Has to be 32 or 64.
+     * @param dst general purpose register. May not be null or zero-register.
+     * @param src general purpose register. May not be null or zero-register.
+     * @param aimm arithmetic immediate. Either unsigned 12-bit value or unsigned 24-bit value with the
+     *             lower 12-bit cleared.
+     */
+    protected void sub(int size, CiRegister dst, CiRegister src, int aimm) {
+        assert all(IS_GENERAL_PURPOSE_OR_SP_REG, dst, src);
+        addSubImmInstruction(dst, src, aimm, generalFromSize(size), Instruction.SUB);
+    }
+
+    /**
+     * dst = src - aimm and sets condition flags.
+     *
+     * @param size register size. Has to be 32 or 64.
+     * @param dst general purpose register. May not be null or stackpointer.
+     * @param src general purpose register. May not be null or zero-register.
+     * @param aimm arithmetic immediate. Either unsigned 12-bit value or unsigned 24-bit value with the
+     *             lower 12-bit cleared.
+     */
+    protected void subs(int size, CiRegister dst, CiRegister src, int aimm) {
+        assert Aarch64.isGeneralPurposeOrZeroReg(dst) && Aarch64.isGeneralPurposeOrSpReg(src);
+        addSubImmInstruction(dst, src, aimm, generalFromSize(size), Instruction.SUBS);
+    }
+
+    private void addSubImmInstruction(CiRegister dst, CiRegister src, int aimm,
+                                      InstructionType type, Instruction instr) {
+        int instrEncoding = instr.encoding | AddSubImmOp;
+        emitInt(type.encoding |
+                instrEncoding |
+                encodeAimm(aimm) |
+                rd(dst) |
+                rs1(src));
+    }
+
+    /**
+     * Encodes arithmetic immediate.
+     *
+     * @param imm Immediate has to be either an unsigned 12bit value or un unsigned 24bit value with
+     *            the lower 12 bits 0.
+     * @return Representation of immediate for use with arithmetic instructions.
+     */
+    private static int encodeAimm(int imm) {
+        assert isAimm(imm) : "Immediate has to be legal arithmetic immediate value " + imm;
+        if (NumUtil.isUnsignedNbit(12, imm)) {
+            return imm << ImmediateOffset;
+        } else {
+            // First 12 bit are 0, so shift immediate 12 bit and set flag to indicate
+            // shifted immediate value.
+            return (imm >>> 12 << ImmediateOffset) | (1 << AddSubShiftOffset);
+        }
+    }
+
+    /**
+     * Checks whether immediate can be encoded as an arithmetic immediate.
+     *
+     * @param imm Immediate has to be either an unsigned 12bit value or un unsigned 24bit value with
+     *            the lower 12 bits 0.
+     * @return true if valid arithmetic immediate, false otherwise.
+     */
+    protected static boolean isAimm(int imm) {
+        return NumUtil.isUnsignedNbit(12, imm) ||
+                NumUtil.isUnsignedNbit(12, imm >>> 12) && (imm & 0xfff) == 0;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     /* Helper functions */
     private static int rd(CiRegister reg) {
@@ -569,4 +697,33 @@ public class Aarch64Assembler extends AbstractAssembler {
     private static int rt(CiRegister reg) {
         return reg.getEncoding() << RtOffset;
     }
+
+    private static final Predicate<CiRegister> IS_GENERAL_PURPOSE_REG = new Predicate<CiRegister>() {
+        @Override
+        public boolean test(CiRegister register) {
+            return Aarch64.isGeneralPurposeReg(register);
+        }
+    };
+
+    private static final Predicate<CiRegister> IS_GENERAL_PURPOSE_OR_ZERO_REG = new Predicate<CiRegister>() {
+        @Override
+        public boolean test(CiRegister register) {
+            return Aarch64.isGeneralPurposeOrZeroReg(register);
+        }
+    };
+
+    private static final Predicate<CiRegister> IS_GENERAL_PURPOSE_OR_SP_REG = new Predicate<CiRegister>() {
+        @Override
+        public boolean test(CiRegister register) {
+            return Aarch64.isGeneralPurposeOrSpReg(register);
+        }
+    };
+
+    private static final Predicate<CiRegister> IS_FPU_REG = new Predicate<CiRegister>() {
+        @Override
+        public boolean test(CiRegister register) {
+            return Aarch64.isFpuReg(register);
+        }
+    };
+
 }
