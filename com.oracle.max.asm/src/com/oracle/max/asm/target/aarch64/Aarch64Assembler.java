@@ -550,6 +550,8 @@ public class Aarch64Assembler extends AbstractAssembler {
 //        emitInt(instruction);
 //    }
 
+
+
     /* Arithmetic (Immediate) (5.4.1) */
 
     /**
@@ -561,7 +563,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param aimm arithmetic immediate. Either unsigned 12-bit value or unsigned 24-bit value with the
      *             lower 12-bit cleared.
      */
-    protected void add(int size, CiRegister dst, CiRegister src, int aimm) {
+    public void add(int size, CiRegister dst, CiRegister src, int aimm) {
         assert all(IS_GENERAL_PURPOSE_OR_SP_REG, dst, src);
         addSubImmInstruction(dst, src, aimm, generalFromSize(size), Instruction.ADD);
     }
@@ -575,7 +577,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param aimm arithmetic immediate. Either unsigned 12-bit value or unsigned 24-bit value with the
      *             lower 12-bit cleared.
      */
-    protected void adds(int size, CiRegister dst, CiRegister src, int aimm) {
+    public void adds(int size, CiRegister dst, CiRegister src, int aimm) {
         assert Aarch64.isGeneralPurposeOrZeroReg(dst) && Aarch64.isGeneralPurposeOrSpReg(src);
         addSubImmInstruction(dst, src, aimm, generalFromSize(size), Instruction.ADDS);
     }
@@ -589,7 +591,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param aimm arithmetic immediate. Either unsigned 12-bit value or unsigned 24-bit value with the
      *             lower 12-bit cleared.
      */
-    protected void sub(int size, CiRegister dst, CiRegister src, int aimm) {
+    public void sub(int size, CiRegister dst, CiRegister src, int aimm) {
         assert all(IS_GENERAL_PURPOSE_OR_SP_REG, dst, src);
         addSubImmInstruction(dst, src, aimm, generalFromSize(size), Instruction.SUB);
     }
@@ -603,7 +605,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param aimm arithmetic immediate. Either unsigned 12-bit value or unsigned 24-bit value with the
      *             lower 12-bit cleared.
      */
-    protected void subs(int size, CiRegister dst, CiRegister src, int aimm) {
+    public void subs(int size, CiRegister dst, CiRegister src, int aimm) {
         assert Aarch64.isGeneralPurposeOrZeroReg(dst) && Aarch64.isGeneralPurposeOrSpReg(src);
         addSubImmInstruction(dst, src, aimm, generalFromSize(size), Instruction.SUBS);
     }
@@ -639,7 +641,7 @@ public class Aarch64Assembler extends AbstractAssembler {
     /**
      * Checks whether immediate can be encoded as an arithmetic immediate.
      *
-     * @param imm Immediate has to be either an unsigned 12bit value or un unsigned 24bit value with
+     * @param imm Immediate has to be either an unsigned 12bit value or an unsigned 24bit value with
      *            the lower 12 bits 0.
      * @return true if valid arithmetic immediate, false otherwise.
      */
@@ -649,6 +651,76 @@ public class Aarch64Assembler extends AbstractAssembler {
     }
 
 
+    /* Logical (immediate) (5.4.2) */
+
+    /**
+     * dst = src & bimm.
+     *
+     * @param size register size. Has to be 32 or 64.
+     * @param dst general purpose register. May not be null or zero-register.
+     * @param src general purpose register. May not be null or stack-pointer.
+     * @param bimm logical immediate.
+     */
+    public void and(int size, CiRegister dst, CiRegister src, long bimm) {
+        assert Aarch64.isGeneralPurposeOrSpReg(dst) && Aarch64.isGeneralPurposeOrZeroReg(src);
+        logicalImmInstruction(dst, src, bimm, generalFromSize(size), Instruction.AND);
+    }
+
+    /**
+     * dst = src & bimm and sets condition flags.
+     *
+     * @param size register size. Has to be 32 or 64.
+     * @param dst general purpose register. May not be null or stack-pointer.
+     * @param src general purpose register. May not be null or stack-pointer.
+     * @param bimm logical immediate.
+     */
+    public void ands(int size, CiRegister dst, CiRegister src, long bimm) {
+        assert Aarch64.isGeneralPurposeOrZeroReg(dst) && Aarch64.isGeneralPurposeOrZeroReg(src);
+        logicalImmInstruction(dst, src, bimm, generalFromSize(size), Instruction.ANDS);
+    }
+
+    /**
+     * dst = src ^ bimm.
+     *
+     * @param size register size. Has to be 32 or 64.
+     * @param dst general purpose register. May not be null or zero-register.
+     * @param src general purpose register. May not be null or stack-pointer.
+     * @param bimm logical immediate.
+     */
+    public void eor(int size, CiRegister dst, CiRegister src, long bimm) {
+        assert Aarch64.isGeneralPurposeOrSpReg(dst) && Aarch64.isGeneralPurposeOrZeroReg(src);
+        logicalImmInstruction(dst, src, bimm, generalFromSize(size), Instruction.EOR);
+    }
+
+    /**
+     * dst = src | bimm.
+     *
+     * @param size register size. Has to be 32 or 64.
+     * @param dst general purpose register. May not be null or zero-register.
+     * @param src general purpose register. May not be null or stack-pointer.
+     * @param bimm logical immediate.
+     */
+    protected void orr(int size, CiRegister dst, CiRegister src, long bimm) {
+        assert Aarch64.isGeneralPurposeOrSpReg(dst) && Aarch64.isGeneralPurposeOrZeroReg(src);
+        logicalImmInstruction(dst, src, bimm, generalFromSize(size), Instruction.ORR);
+    }
+
+    protected void logicalImmInstruction(CiRegister dst, CiRegister src, long bimm,
+                                       InstructionType type, Instruction instr) {
+        // Mask higher bits off, since we always pass longs around even for the 32-bit instruction.
+        if (type == InstructionType.General32) {
+            assert (bimm >> 32) == 0 || (bimm >> 32) == -1L :
+                    "Higher order bits for 32-bit instruction must either all be 0 or 1.";
+            bimm &= NumUtil.getNbitNumberLong(32);
+        }
+        int immEncoding = Aarch64LogicalImmediateTable.getLogicalImmEncoding(type == InstructionType.General64, bimm);
+        int instrEncoding = instr.encoding | LogicalImmOp;
+        emitInt(type.encoding |
+                instrEncoding |
+                immEncoding |
+                rd(dst) |
+                rs1(src));
+    }
 
 
 
