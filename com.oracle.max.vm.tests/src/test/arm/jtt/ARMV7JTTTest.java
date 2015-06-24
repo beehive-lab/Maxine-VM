@@ -280,6 +280,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             c1x = (C1X) CompilationBroker.addCompiler("c1x", optimizingCompilerName);
             c1x.initializeOffline(Phase.HOSTED_COMPILING);
             theCompiler = (ARMV7T1XCompilation) t1x.getT1XCompilation();
+            theCompiler.setDebug(false);
         } catch (Exception e) {
             System.out.println(e);
             e.printStackTrace();
@@ -428,7 +429,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_T1X_jtt_BC_iadd2() throws Exception {
+    public void test_T1X_jtt_BC_iadd2() throws Exception {
         byte argsOne[] = { 1, 0, 33, 1, -128, 127};
         byte argsTwo[] = { 2, -1, 67, -1, 1, 1};
         initTests();
@@ -444,10 +445,10 @@ public class ARMV7JTTTest extends MaxTestCase {
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, argsOne[i]);
             masm.mov32BitConstant(ARMV7.r1, argsTwo[i]);
-            masm.mov32BitConstant(ARMV7.r2, -99);
+            //masm.mov32BitConstant(ARMV7.r2, -99);
             masm.push(ConditionFlag.Always, 1);
             masm.push(ConditionFlag.Always, 2);
-            masm.push(ConditionFlag.Always, 4);
+            //masm.push(ConditionFlag.Always, 4);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
@@ -577,22 +578,20 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void ignore_jtt_BC_iadd() throws Exception {
+    public void test_jtt_BC_iadd() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
-        int answer = jtt.bytecode.BC_iadd.test(50, 50);
+        int answer = jtt.bytecode.BC_iadd.test(50, -49);
         expectedValues[0] = answer;
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_iadd");
         initialiseFrameForCompilation(code, "(II)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 50);
-        masm.mov32BitConstant(ARMV7.r1, 50);
-        masm.mov32BitConstant(ARMV7.r2, -99);
+        masm.mov32BitConstant(ARMV7.r1, -49);
         masm.push(ConditionFlag.Always, 1);
         masm.push(ConditionFlag.Always, 2);
-        masm.push(ConditionFlag.Always, 4);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -2439,7 +2438,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_i2f() throws Exception {
+    public void ignore_jtt_BC_i2f() throws Exception {
         String klassName = getKlassName("jtt.bytecode.BC_i2f");
         MaxineARMTester.DEBUGOBJECTS = false;
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -2475,7 +2474,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_b2f() throws Exception {
+    public void ignore_jtt_BC_b2f() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         CompilationBroker.SIMULATEADAPTER = true;
         initTests();

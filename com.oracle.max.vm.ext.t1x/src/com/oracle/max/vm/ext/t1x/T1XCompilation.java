@@ -576,6 +576,8 @@ public abstract class T1XCompilation {
         int endPos = buf.position();
         fixup();
         buf.setPosition(endPos);
+        emitEpilogue();
+
     }
 
     /**

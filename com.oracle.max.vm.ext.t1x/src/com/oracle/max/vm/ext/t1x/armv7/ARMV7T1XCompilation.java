@@ -88,6 +88,10 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         patchInfo = new PatchInfoARMV7();
     }
 
+    public void setDebug(boolean value) {
+        DEBUG_METHODS = value;
+    }
+
     static {
         initDebugMethods();
     }
@@ -498,7 +502,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     private int framePointerAdjustment() {
         // TODO APN this is required for ARMv7 but it is incorrect at the moment with fakedFrame
-        final int enterSize = frame.frameSize();// Whe we push we adjust the stack ptr - Word.size();
+        final int enterSize = frame.frameSize() - Word.size();// Whe we push we adjust the stack ptr - Word.size();
         return enterSize - frame.sizeOfNonParameterLocals();
     }
 
@@ -574,9 +578,9 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected void emitEpilogue() {
         asm.addq(ARMV7.r11, framePointerAdjustment()); // we might be missing some kind of pop here?
-	asm.mov(ConditionFlag.Always, true, ARMV7.r13,ARMV7.r11);
+        asm.mov(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r11);
         final short stackAmountInBytes = (short) frame.sizeOfParameters();
-	asm.pop(ConditionFlag.Always, 1 << 11); // POP the frame pointer
+        asm.pop(ConditionFlag.Always, 1 << 11); // POP the frame pointer
         asm.mov32BitConstant(scratch, stackAmountInBytes);
         asm.addRegisters(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
         asm.ret(); // mov R14 to r15 ,,, who restores the rest of the environment?
