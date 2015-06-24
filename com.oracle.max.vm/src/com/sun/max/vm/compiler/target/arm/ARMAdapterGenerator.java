@@ -525,8 +525,8 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             // Retract the stack pointer back to its position before the first argument on the caller's stack.
             //System.err.println("removed ret in ARMAdapterGenerator"); ****************************
             // asm.ret(/* to make it compile APN removed (short) baselineArgsSize*/);
-	    asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 8);
 	    asm.addq(ARMV7.r13,baselineArgsSize);
+	    asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 8);
 	    asm.mov(ARMV7Assembler.ConditionFlag.Always,false, ARMV7.r15,ARMV7.r8);	
             //asm.ret(baselineArgsSize);
 
