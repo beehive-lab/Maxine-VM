@@ -222,6 +222,8 @@ def image(args):
             os.environ['MAXINE_LOG_FILE'] = arg.split('=', 1)[1]
         elif arg.startswith('--XX:+DebugMethods'):
         	os.environ['DEBUG_METHODS']='1'
+	elif arg.startswith('--XX:+FloatIDIV'):
+		os.environ['FLOAT_IDIV']='1'
         elif arg.startswith('--XX:+PrintCFGToFile'):
         	os.environ['PRINT_CFG']='1'
         elif arg.startswith('--XX:+PrintHIR'):

@@ -15,12 +15,25 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final CiRegister frameRegister;
     public final CiRegister scratchRegister;
     public final RiRegisterConfig registerConfig;
+    public static boolean FLOAT_IDIV; // if set then we use FLOAT to do IDIV
+    // used for ARM platforms where IDIV is not available.
 
     public ARMV7Assembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target);
         this.registerConfig = registerConfig;
         this.scratchRegister = registerConfig == null ? ARMV7.r12 : registerConfig.getScratchRegister();
         this.frameRegister = registerConfig == null ? null : registerConfig.getFrameRegister();
+    }
+    static {
+        initDebugMethods();
+    }
+    public static void initDebugMethods() {
+        String value = System.getenv("FLOAT_IDIV");
+        if (value == null || value.isEmpty()) {
+            FLOAT_IDIV = false;
+        } else {
+            FLOAT_IDIV = Integer.parseInt(value) == 1 ? true : false;
+        }
     }
 
     public enum ConditionFlag {
@@ -1827,6 +1840,10 @@ end_label:
 
     public final void sdiv(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
         // A8.8.165
+        if(FLOAT_IDIV) {
+            floatDIV(true,cond,dest,rn,rm);
+            return;
+        }
         int instruction = (cond.value() & 0xf) << 28;
         instruction |= 0x0710f010;
         instruction |= (rm.encoding & 0xf) << 8;
@@ -1834,11 +1851,37 @@ end_label:
         instruction |= rn.encoding & 0xf;
         emitInt(instruction);
     }
+    public final void floatDIV(boolean signed, ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
+        /*case I2F:
+        masm.vmov(ConditionFlag.Always, ARMV7.s30, srcRegister, null, CiKind.Float, src.kind);
+        masm.vcvt(ConditionFlag.Always, dest.asRegister(), false, true, ARMV7.s30, CiKind.Float, CiKind.Int);
+        break;
+        case F2I: {
+            assert srcRegister.isFpu() && dest.isRegister() : "must both be S-register (no fpu stack)";
+            masm.vcvt(ConditionFlag.Always, ARMV7.s30, true, true, src.asRegister(), CiKind.Float, src.kind);
+            masm.vmov(ConditionFlag.Always, dest.asRegister(), ARMV7.s30, null, dest.kind, CiKind.Float);
+            break;
+        }*/
+        vpush(ConditionFlag.Always,ARMV7.s30,ARMV7.s31,CiKind.Float,CiKind.Float);
+        vmov(ConditionFlag.Always, ARMV7.s30, rn, null, CiKind.Float,CiKind.Int);
+        vmov(ConditionFlag.Always, ARMV7.s31, rm, null, CiKind.Float,CiKind.Int);
+        vcvt(ConditionFlag.Always, ARMV7.s30, false, signed, ARMV7.s30, CiKind.Float, CiKind.Int);
+        vcvt(ConditionFlag.Always, ARMV7.s31, false, signed, ARMV7.s31, CiKind.Float, CiKind.Int);
+        vdiv(cond,ARMV7.s30,ARMV7.s30,ARMV7.s31,CiKind.Float);
+        vcvt(ConditionFlag.Always, ARMV7.s30, true, signed, ARMV7.s30, CiKind.Float, CiKind.Int);// rounding?
+        vmov(cond, dest, ARMV7.s30, null, CiKind.Int,CiKind.Float);
+        vpop(ConditionFlag.Always,ARMV7.s30,ARMV7.s31,CiKind.Float,CiKind.Float);
+    }
 
     public final void udiv(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
         // A8.8.248
         // TODO we need a subroutine for this as most of the ARM hardware we have will not
         // have a hardware integer unit, so the instruction will be undefined/not implemented.
+        if (FLOAT_IDIV) {
+            floatDIV(false,cond,dest,rn,rm);
+            return;
+
+        }
         int instruction = (cond.value() & 0xf) << 28;
         instruction |= 0x0730f010;
         instruction |= (rm.encoding & 0xf) << 8;
