@@ -461,13 +461,13 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r11, ARMV7.r13);
             asm.subq(ARMV7.r13, (explicitlyAllocatedFrameSize )); 
 
-            Label forever = new Label();
+            //Label forever = new Label();
 
-            asm.bind(forever);
+            //asm.bind(forever);
             //asm.mov32BitConstant(ARMV7.r12, 0xb00bb00b);
-	    asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12);
+	    //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12);
 
-            asm.branch(forever);
+            //asm.branch(forever);
 
             // At this point, the top of the baseline caller's stack (i.e the last arg to the call) is immediately
             // above the adapter's RIP slot. That is, it's at RSP + adapterFrameSize + OPT_SLOT_SIZE.

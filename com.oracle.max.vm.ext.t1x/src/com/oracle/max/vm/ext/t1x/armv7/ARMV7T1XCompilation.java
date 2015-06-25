@@ -580,10 +580,17 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         asm.addq(ARMV7.r11, framePointerAdjustment()); // we might be missing some kind of pop here?
         asm.mov(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r11);
         final short stackAmountInBytes = (short) frame.sizeOfParameters();
+	// ALTERED MOVED POP to before RET
+        //asm.mov32BitConstant(scratch, stackAmountInBytes);
+        //asm.addRegisters(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
         asm.pop(ConditionFlag.Always, 1 << 11); // POP the frame pointer
-        asm.mov32BitConstant(scratch, stackAmountInBytes);
-        asm.addRegisters(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
-        asm.ret(); // mov R14 to r15 ,,, who restores the rest of the environment?
+	asm.pop(ConditionFlag.Always, 1 << 8); // POP return address into r8
+	asm.mov32BitConstant(scratch, stackAmountInBytes);
+	asm.addRegisters(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
+	asm.mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r8); // RETURN
+
+	
+        //asm.ret(); // mov R14 to r15 ,,, who restores the rest oI//f the environment?
     }
 
     @Override
