@@ -3041,7 +3041,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void work_jtt_BC_irem() throws Exception {
+    public void test_jtt_BC_irem() throws Exception {
         initTests();
         int argsOne[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         int argsTwo[] = { 2, 2, 2, 3, 3, 3, 3, 3, 3, 3};
@@ -3095,6 +3095,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
     public void test_C1X_FLOATIDIV_jtt_BC_div() throws Exception {
+        CompilationBroker.OFFLINE = initialised;
+        CompilationBroker.SIMULATEADAPTER = true;
         initTests();
         ARMV7Assembler.FLOAT_IDIV = true;
         /*
@@ -3110,7 +3112,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         String klassName = getKlassName("jtt.bytecode.BC_idiv");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         CompilationBroker.OFFLINE = true;
-        initialiseCodeBuffers(methods, "BC_idiv.java", "int test(short, short)");
+        CompilationBroker.SIMULATEADAPTER = false;
+        initialiseCodeBuffers(methods, "BC_idiv.java", "int test(int, int)");
 
         int expectedValue = 0;
         for (int i = 0; i < argsOne.length; i++) {

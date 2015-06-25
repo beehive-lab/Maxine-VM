@@ -1458,7 +1458,15 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
             Label continuation = new Label();
 
-            if (C1XOptions.GenSpecialDivChecks) {
+            //if (C1XOptions.GenSpecialDivChecks) {
+            /******
+             *  On ARMV7 we need these special div checks if we want to comply with tests
+             *  concerning the unusal corner cases of division.
+             *
+             *  We might want to set the flag to a default value so it matches the exact case.
+             *
+             *
+             */
                 // check for special case of Integer.MIN_VALUE / -1
                 Label normalCase = new Label();
                 masm.mov32BitConstant(ARMV7.r12, Integer.MIN_VALUE);
@@ -1475,7 +1483,16 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
                 // handle normal case
                 masm.bind(normalCase);
-            }
+
+            /*
+            *
+            * //} // TODO comment me back in and use the compiler flags
+            *
+            *
+            *
+            *
+            *
+             */
             // masm.cdql();
             masm.mov(ConditionFlag.Always, false, ARMV7.r8, lreg);
             int offset = masm.codeBuffer.position();

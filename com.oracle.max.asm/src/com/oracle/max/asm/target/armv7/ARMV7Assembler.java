@@ -1862,7 +1862,9 @@ end_label:
             masm.vmov(ConditionFlag.Always, dest.asRegister(), ARMV7.s30, null, dest.kind, CiKind.Float);
             break;
         }*/
-        vpush(ConditionFlag.Always,ARMV7.s30,ARMV7.s31,CiKind.Float,CiKind.Float);
+        //vpush(ConditionFlag.Always,ARMV7.s30,ARMV7.s30,CiKind.Float,CiKind.Float);
+        //vpush(ConditionFlag.Always,ARMV7.s31,ARMV7.s31,CiKind.Float,CiKind.Float);
+
         vmov(ConditionFlag.Always, ARMV7.s30, rn, null, CiKind.Float,CiKind.Int);
         vmov(ConditionFlag.Always, ARMV7.s31, rm, null, CiKind.Float,CiKind.Int);
         vcvt(ConditionFlag.Always, ARMV7.s30, false, signed, ARMV7.s30, CiKind.Float, CiKind.Int);
@@ -1870,13 +1872,16 @@ end_label:
         vdiv(cond,ARMV7.s30,ARMV7.s30,ARMV7.s31,CiKind.Float);
         vcvt(ConditionFlag.Always, ARMV7.s30, true, signed, ARMV7.s30, CiKind.Float, CiKind.Int);// rounding?
         vmov(cond, dest, ARMV7.s30, null, CiKind.Int,CiKind.Float);
-        vpop(ConditionFlag.Always,ARMV7.s30,ARMV7.s31,CiKind.Float,CiKind.Float);
+        //vpop(ConditionFlag.Always,ARMV7.s30,ARMV7.s30,CiKind.Float,CiKind.Float);
+        //vpop(ConditionFlag.Always,ARMV7.s31,ARMV7.s31,CiKind.Float,CiKind.Float);
+
     }
 
     public final void udiv(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
         // A8.8.248
         // TODO we need a subroutine for this as most of the ARM hardware we have will not
         // have a hardware integer unit, so the instruction will be undefined/not implemented.
+
         if (FLOAT_IDIV) {
             floatDIV(false,cond,dest,rn,rm);
             return;
