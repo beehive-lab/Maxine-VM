@@ -390,7 +390,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         entryPoint = entryPoint - minimumValue;
     }
 
-    public void ignore_jtt_UsageOfStaticMethods() throws Exception {
+    public void test_T1X_jtt_UsageOfStaticMethods() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -401,8 +401,6 @@ public class ARMV7JTTTest extends MaxTestCase {
         initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 12);
-        masm.mov32BitConstant(ARMV7.r1, 12);
-        masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r2)
         masm.push(ConditionFlag.Always, 1); // local slot 0 is return (int is one slot) last push to stack is 0
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -457,7 +455,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_T1X_jtt_BC_iadd3() throws Exception {
+    public void test_T1X_jtt_BC_iadd3() throws Exception {
         initTests();
         short argsOne[] = { 1, 0, 33, 1, -128, 127, -32768, 32767};
         short argsTwo[] = { 2, -1, 67, -1, 1, 1, 1, 1};
@@ -474,10 +472,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, argsOne[i]);
             masm.mov32BitConstant(ARMV7.r1, argsTwo[i]);
-            masm.mov32BitConstant(ARMV7.r2, -99);
             masm.push(ConditionFlag.Always, 1);
             masm.push(ConditionFlag.Always, 2);
-            masm.push(ConditionFlag.Always, 4);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
@@ -486,7 +482,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_imul() throws Exception {
+    public void test_T1X_jtt_BC_imul() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -498,10 +494,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 10);
         masm.mov32BitConstant(ARMV7.r1, 12);
-        masm.mov32BitConstant(ARMV7.r2, -99);
         masm.push(ConditionFlag.Always, 1);
         masm.push(ConditionFlag.Always, 2);
-        masm.push(ConditionFlag.Always, 4);
+
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "imul");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -510,7 +505,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void ignore_jtt_BC_isub() throws Exception {
+    public void test_T1X_jtt_BC_isub() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -522,10 +517,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 100);
         masm.mov32BitConstant(ARMV7.r1, 50);
-        masm.mov32BitConstant(ARMV7.r2, -99);
         masm.push(ConditionFlag.Always, 1);
         masm.push(ConditionFlag.Always, 2);
-        masm.push(ConditionFlag.Always, 4);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "isub");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -534,7 +527,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void ignore_jtt_BC_ineg() throws Exception {
+    public void test_T1X_jtt_BC_ineg() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -545,9 +538,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 100);
-        masm.mov32BitConstant(ARMV7.r1, -99);
         masm.push(ConditionFlag.Always, 1);
-        masm.push(ConditionFlag.Always, 2);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ineg");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -556,7 +547,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void ignore_jtt_BC_ineg_1() throws Exception {
+    public void test_T1X_jtt_BC_ineg_1() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -567,9 +558,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, -100);
-        masm.mov32BitConstant(ARMV7.r1, -99);
         masm.push(ConditionFlag.Always, 1);
-        masm.push(ConditionFlag.Always, 2);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ineg");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -578,7 +567,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_iadd() throws Exception {
+    public void test_T1X_jtt_BC_iadd() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -600,7 +589,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void ignore_jtt_BC_ior() throws Exception {
+    public void test_T1X_jtt_BC_ior() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -612,10 +601,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 50);
         masm.mov32BitConstant(ARMV7.r1, 100);
-        masm.mov32BitConstant(ARMV7.r2, -99);
         masm.push(ConditionFlag.Always, 1);
         masm.push(ConditionFlag.Always, 2);
-        masm.push(ConditionFlag.Always, 4);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ior");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -624,7 +611,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void ignore_jtt_BC_ixor() throws Exception {
+    public void test_T1X_jtt_BC_ixor() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -636,10 +623,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 50);
         masm.mov32BitConstant(ARMV7.r1, 39);
-        masm.mov32BitConstant(ARMV7.r2, -99);
         masm.push(ConditionFlag.Always, 1);
         masm.push(ConditionFlag.Always, 2);
-        masm.push(ConditionFlag.Always, 4);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ixor");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -648,7 +633,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void ignore_T1X_jtt_BC_iand() throws Exception {
+    public void test_T1X_jtt_BC_iand() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -660,10 +645,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 50);
         masm.mov32BitConstant(ARMV7.r1, 39);
-        masm.mov32BitConstant(ARMV7.r2, -99);
         masm.push(ConditionFlag.Always, 1);
         masm.push(ConditionFlag.Always, 2);
-        masm.push(ConditionFlag.Always, 4);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iand");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -695,7 +678,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void work_jtt_BC_ishl() throws Exception {
+    public void test_T1X_jtt_BC_ishl() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -707,10 +690,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 10);
         masm.mov32BitConstant(ARMV7.r1, 2);
-        masm.mov32BitConstant(ARMV7.r2, -99);
         masm.push(ConditionFlag.Always, 1);
         masm.push(ConditionFlag.Always, 2);
-        masm.push(ConditionFlag.Always, 4);
+
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ishl");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -793,7 +775,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void work_jtt_BC_ishr() throws Exception {
+    public void test_T1X_jtt_BC_ishr() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -805,10 +787,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 2048);
         masm.mov32BitConstant(ARMV7.r1, 2);
-        masm.mov32BitConstant(ARMV7.r2, -99);
         masm.push(ConditionFlag.Always, 1);
         masm.push(ConditionFlag.Always, 2);
-        masm.push(ConditionFlag.Always, 4);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ishr");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -817,7 +797,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void work_jtt_BC_ishr_1() throws Exception {
+    public void test_T1X_jtt_BC_ishr_1() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -829,10 +809,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, -2147483648);
         masm.mov32BitConstant(ARMV7.r1, 16);
-        masm.mov32BitConstant(ARMV7.r2, -99);
         masm.push(ConditionFlag.Always, 1);
         masm.push(ConditionFlag.Always, 2);
-        masm.push(ConditionFlag.Always, 4);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ishr");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -841,7 +819,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void work_jtt_BC_iushr() throws Exception {
+    public void test_T1X_jtt_BC_iushr() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -853,10 +831,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, -2147483648);
         masm.mov32BitConstant(ARMV7.r1, 16);
-        masm.mov32BitConstant(ARMV7.r2, -99);
         masm.push(ConditionFlag.Always, 1);
         masm.push(ConditionFlag.Always, 2);
-        masm.push(ConditionFlag.Always, 4);
+
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iushr");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -865,7 +842,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void ignore_T1X_jtt_BC_i2b() throws Exception {
+    public void test_T1X_jtt_BC_i2b() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
         CompilationBroker.SIMULATEADAPTER = true;
@@ -880,9 +857,6 @@ public class ARMV7JTTTest extends MaxTestCase {
         CompilationBroker.SIMULATEADAPTER = false;
         masm.nop(4);
         masm.mov32BitConstant(ARMV7.r0, 255);
-        masm.mov32BitConstant(ARMV7.r1, 255);
-        masm.push(ConditionFlag.Always, 1);
-        masm.push(ConditionFlag.Always, 2);
         masm.push(ConditionFlag.Always, 1);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2b");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
@@ -912,7 +886,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_i2b_1() throws Exception {
+    public void test_T1X_jtt_BC_i2b_1() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -923,9 +897,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, -1);
-        masm.mov32BitConstant(ARMV7.r1, -99);
         masm.push(ConditionFlag.Always, 1);
-        masm.push(ConditionFlag.Always, 2);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2b");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -934,7 +906,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void ignore_jtt_BC_i2b_2() throws Exception {
+    public void test_T1X_jtt_BC_i2b_2() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -945,9 +917,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 128);
-        masm.mov32BitConstant(ARMV7.r1, -99);
         masm.push(ConditionFlag.Always, 1);
-        masm.push(ConditionFlag.Always, 2);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2b");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -956,7 +926,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void work_jtt_BC_i2s() throws Exception {
+    public void test_T1X_jtt_BC_i2s() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -967,9 +937,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 65535);
-        masm.mov32BitConstant(ARMV7.r1, -99);
         masm.push(ConditionFlag.Always, 1);
-        masm.push(ConditionFlag.Always, 2);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2s");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -978,7 +946,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void work_jtt_BC_i2s_1() throws Exception {
+    public void test_T1X_jtt_BC_i2s_1() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -989,9 +957,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 32768);
-        masm.mov32BitConstant(ARMV7.r1, -99);
         masm.push(ConditionFlag.Always, 1);
-        masm.push(ConditionFlag.Always, 2);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2s");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -1000,7 +966,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void work_jtt_BC_i2s_2() throws Exception {
+    public void test_T1X_jtt_BC_i2s_2() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -1011,9 +977,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, -1);
-        masm.mov32BitConstant(ARMV7.r1, -99);
         masm.push(ConditionFlag.Always, 1);
-        masm.push(ConditionFlag.Always, 2);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2s");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -1022,7 +986,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void ignore_jtt_BC_i2c() throws Exception {
+    public void test_T1X_jtt_BC_i2c() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -1033,9 +997,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, -1);
-        masm.mov32BitConstant(ARMV7.r1, -99);
         masm.push(ConditionFlag.Always, 1);
-        masm.push(ConditionFlag.Always, 2);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2c");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -1044,7 +1006,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void ignore_jtt_BC_i2c_1() throws Exception {
+    public void test_T1X_jtt_BC_i2c_1() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -1055,9 +1017,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 65535);
-        masm.mov32BitConstant(ARMV7.r1, -99);
         masm.push(ConditionFlag.Always, 1);
-        masm.push(ConditionFlag.Always, 2);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2c");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -1066,7 +1026,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void ignore_jtt_BC_ireturn() throws Exception {
+    public void test_T1X_jtt_BC_ireturn() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -1076,9 +1036,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, -1);
-        masm.mov32BitConstant(ARMV7.r1, -99);
         masm.push(ConditionFlag.Always, 1);
-        masm.push(ConditionFlag.Always, 2);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -1087,7 +1045,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void ignore_T1X_jtt_BC_ireturn() throws Exception {
+    public void test2_T1X_jtt_BC_ireturn() throws Exception {
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -1097,9 +1055,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(ARMV7.r0, 256);
-        masm.mov32BitConstant(ARMV7.r1, -99);
         masm.push(ConditionFlag.Always, 1);
-        masm.push(ConditionFlag.Always, 2);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
@@ -1279,7 +1235,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_tableswitch() throws Exception {
+    public void test_T1X_jtt_BC_tableswitch() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1, 42));
@@ -1300,9 +1256,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int[] registerValues = generateAndTest( expectedValues, testvalues, bitmasks);
@@ -1311,7 +1265,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_tableswitch_2() throws Exception {
+    public void test_T1X_jtt_BC_tableswitch_2() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1, 11));
@@ -1331,9 +1285,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
@@ -1343,7 +1295,7 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     // TODO: Fix this, there is no assertion
-    public void ignore_jtt_BC_XXXXfdiv() throws Exception {
+    public void test_T1X_jtt_BC_XXXXfdiv() throws Exception {
         MaxineARMTester.DEBUGOBJECTS = false;
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
@@ -1359,7 +1311,6 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.mov32BitConstant(ARMV7.s0, Float.floatToRawIntBits(argOne[i]));
             masm.mov32BitConstant(ARMV7.s1, -Float.floatToRawIntBits(argTwo[i]));
             masm.vpush(ConditionFlag.Always, ARMV7.s0, ARMV7.s1, CiKind.Float, CiKind.Float);
-            masm.push(ConditionFlag.Always, 1);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "fdiv");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.vpop(ConditionFlag.Always, ARMV7.s0, ARMV7.s0, CiKind.Float, CiKind.Float);
@@ -1369,7 +1320,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_tableswitch_3() throws Exception {
+    public void test_T1X_jtt_BC_tableswitch_3() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1, 11));
@@ -1389,9 +1340,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
@@ -1400,7 +1349,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_tableswitch_4() throws Exception {
+    public void test_T1X_jtt_BC_tableswitch_4() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1, 11));
@@ -1420,9 +1369,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
@@ -1431,7 +1378,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_lookupswitch_1() throws Exception {
+    public void test_T1X_jtt_BC_lookupswitch_1() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 42));
@@ -1461,9 +1408,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
@@ -1472,7 +1417,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_lookupswitch_2() throws Exception {
+    public void test_T1X_jtt_BC_lookupswitch_2() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 42));
@@ -1505,9 +1450,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
@@ -1516,7 +1459,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_lookupswitch_3() throws Exception {
+    public void test_T1X_jtt_BC_lookupswitch_3() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 42));
@@ -1550,9 +1493,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
@@ -1561,7 +1502,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_lookupswitch_4() throws Exception {
+    public void test_T1X_jtt_BC_lookupswitch_4() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 42));
@@ -1595,9 +1536,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
@@ -1606,7 +1545,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_iinc_1() throws Exception {
+    public void test_T1X_jtt_BC_iinc_1() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 2));
@@ -1623,9 +1562,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iinc_1");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
@@ -1635,7 +1572,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_iinc_2() throws Exception {
+    public void test_T1X_jtt_BC_iinc_2() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 3));
@@ -1652,9 +1589,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iinc_2");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
@@ -1664,7 +1599,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_iinc_3() throws Exception {
+    public void test_T1X_jtt_BC_iinc_3() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 52));
@@ -1681,9 +1616,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iinc_3");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
@@ -1693,7 +1626,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_iinc_4() throws Exception {
+    public void test_T1X_jtt_BC_iinc_4() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 513));
@@ -1710,9 +1643,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iinc_4");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
@@ -1722,7 +1653,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_iload_0() throws Exception {
+    public void test_T1X_jtt_BC_iload_0() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
@@ -1739,9 +1670,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_0");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
@@ -1751,7 +1680,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_iload_0_1() throws Exception {
+    public void test_T1X_jtt_BC_iload_0_1() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 1));
@@ -1769,9 +1698,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_0_1");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
@@ -1781,7 +1708,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_iload_0_2() throws Exception {
+    public void test_T1X_jtt_BC_iload_0_2() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
@@ -1798,9 +1725,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1); // local slot is argument r0
-            masm.push(ConditionFlag.Always, 2); // local slot 1 is argument (r1)
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_0_2");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
@@ -1810,7 +1735,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_iload_1() throws Exception {
+    public void test_T1X_jtt_BC_iload_1() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 0));
@@ -1828,10 +1753,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
             masm.mov32BitConstant(ARMV7.r1, pair.second);
-            masm.mov32BitConstant(ARMV7.r2, -99);
             masm.push(ConditionFlag.Always, 1);
             masm.push(ConditionFlag.Always, 2);
-            masm.push(ConditionFlag.Always, 4);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
@@ -1840,7 +1763,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_iload_1_1() throws Exception {
+    public void test_t1X_jtt_BC_iload_1_1() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
@@ -1858,9 +1781,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_1_1");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
@@ -1870,7 +1791,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_iload_2() throws Exception {
+    public void test_T1X_jtt_BC_iload_2() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 1, 0));
@@ -1889,11 +1810,9 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.mov32BitConstant(ARMV7.r0, pair.first);
             masm.mov32BitConstant(ARMV7.r1, pair.second);
             masm.mov32BitConstant(ARMV7.r2, pair.third);
-            masm.mov32BitConstant(ARMV7.r3, -99);
             masm.push(ConditionFlag.Always, 1);
             masm.push(ConditionFlag.Always, 2);
             masm.push(ConditionFlag.Always, 4);
-            masm.push(ConditionFlag.Always, 8);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_2");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
@@ -1903,7 +1822,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_iload_3() throws Exception {
+    public void test_T1X_jtt_BC_iload_3() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 1, 1, 0));
@@ -1923,12 +1842,10 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.mov32BitConstant(ARMV7.r1, pair.second);
             masm.mov32BitConstant(ARMV7.r2, pair.third);
             masm.mov32BitConstant(ARMV7.r3, pair.fourth);
-            masm.mov32BitConstant(ARMV7.r4, -99);
             masm.push(ConditionFlag.Always, 1);
             masm.push(ConditionFlag.Always, 2);
             masm.push(ConditionFlag.Always, 4);
             masm.push(ConditionFlag.Always, 8);
-            masm.push(ConditionFlag.Always, 16);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_3");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
@@ -1938,7 +1855,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_T1X_jtt_BC_iconst() throws Exception {
+    public void test_T1X_jtt_BC_iconst() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
@@ -1959,9 +1876,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iconst");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
@@ -1994,7 +1909,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_ifeq() throws Exception {
+    public void test_T1X_jtt_BC_ifeq() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 2));
@@ -2011,9 +1926,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifeq");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
@@ -2023,7 +1936,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_ifeq_2() throws Exception {
+    public void test_T1X_jtt_BC_ifeq_2() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 1));
@@ -2038,9 +1951,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
             int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
@@ -2049,7 +1960,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_ifeq_3() throws Exception {
+    public void test_T1X_jtt_BC_ifeq_3() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
@@ -2065,9 +1976,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifeq_3");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
@@ -2077,7 +1986,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_ifge() throws Exception {
+    public void test_T1X_jtt_BC_ifge() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
@@ -2094,9 +2003,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifeq_3");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
@@ -2106,7 +2013,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_ifgt() throws Exception {
+    public void test_T1X_jtt_BC_ifgt() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
@@ -2123,9 +2030,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifgt");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
@@ -2135,7 +2040,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_ifle() throws Exception {
+    public void test_T1X_jtt_BC_ifle() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
@@ -2152,9 +2057,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifle");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
@@ -2164,7 +2067,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_ifne() throws Exception {
+    public void test_T1X_jtt_BC_ifne() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
@@ -2181,9 +2084,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifne");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
@@ -2193,7 +2094,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_iflt() throws Exception {
+    public void test_T1X_jtt_BC_iflt() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
@@ -2210,9 +2111,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iflt");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
@@ -2222,7 +2121,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_ificmplt1() throws Exception {
+    public void test_T1X_jtt_BC_ificmplt1() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
@@ -2239,9 +2138,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iflt");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
@@ -2251,7 +2148,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_ificmplt2() throws Exception {
+    public void test_T1X_jtt_BC_ificmplt2() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
@@ -2268,9 +2165,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iflt");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
@@ -2280,7 +2175,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_ificmpne1() throws Exception {
+    public void test_T1X_jtt_BC_ificmpne1() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
@@ -2297,9 +2192,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iflt");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
@@ -2309,7 +2202,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_ificmpne2() throws Exception {
+    public void test_jtt_BC_ificmpne2() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
@@ -2326,9 +2219,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, pair.first);
-            masm.mov32BitConstant(ARMV7.r1, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iflt");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
@@ -2338,7 +2229,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_jtt_BC_ifge_3() throws Exception {
+    public void test_T1X_jtt_BC_ifge_3() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 1));
@@ -2360,7 +2251,6 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.mov32BitConstant(ARMV7.r1, pair.second);
             masm.push(ConditionFlag.Always, 1);
             masm.push(ConditionFlag.Always, 2);
-            masm.push(ConditionFlag.Always, 2);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifgt");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
@@ -2371,7 +2261,7 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     // TODO: Fix extra arg stack issue??
-    public void ignore_jtt_BC_ifge_2() throws Exception {
+    public void test_T1X_jtt_BC_ifge_2() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 2));
@@ -2391,7 +2281,6 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.mov32BitConstant(ARMV7.r1, pair.second);
             masm.push(ConditionFlag.Always, 1);
             masm.push(ConditionFlag.Always, 2);
-            masm.push(ConditionFlag.Always, 2); // Extra arg to fix stack issue?
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
             int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
@@ -2524,7 +2413,7 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     // TODO: Implement functionality
-    public void broken_T1X_jtt_BC_d2i02() throws Exception {
+    public void test_T1X_jtt_BC_d2i02() throws Exception {
         initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -2536,10 +2425,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(code, "(I)D", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, i);
-            masm.mov32BitConstant(ARMV7.r1, -99);
-            masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
-            masm.push(ConditionFlag.Always, 2);
+           masm.push(ConditionFlag.Always, 1);
 
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifge_2");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
@@ -3114,7 +3000,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void ignore_T1X_jtt_BC_getstatic_i() throws Exception {
+    public void test_T1X_jtt_BC_getstatic_i() throws Exception {
         int argsOne[] = { 0, -1, 2, 4};
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
@@ -3128,9 +3014,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             initialiseFrameForCompilation(anActor.constantPool(), code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(ARMV7.r0, argsOne[i]);
-            masm.mov32BitConstant(ARMV7.r2, -99);
             masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
             int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
