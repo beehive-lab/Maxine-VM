@@ -520,13 +520,13 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             // RSP has been restored to the location holding the address of the OPT main body.
             // The adapter must return to the baseline caller whose RIP is one slot higher up.
             asm.addq(ARMV7.r13, 4);// WAS 8 might need to adjust? the LRon the stack prior to the pop
+	    asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 8); // POP return address
 
             assert WordWidth.signedEffective(baselineArgsSize).lessEqual(WordWidth.BITS_16);
             // Retract the stack pointer back to its position before the first argument on the caller's stack.
             //System.err.println("removed ret in ARMAdapterGenerator"); ****************************
             // asm.ret(/* to make it compile APN removed (short) baselineArgsSize*/);
 	    asm.addq(ARMV7.r13,baselineArgsSize);
-	    asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 8);
 	    asm.mov(ARMV7Assembler.ConditionFlag.Always,false, ARMV7.r15,ARMV7.r8);	
             //asm.ret(baselineArgsSize);
 
@@ -895,8 +895,6 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             int callPos = asm.codeBuffer.position();
             //asm.call(rax); // TODO APN was call RAX
             asm.nop(3);
-            Label forever = new Label();
-            asm.bind(forever);
             //asm.mov32BitConstant(ARMV7.r12,0xbeefbeef); REMOVE NOPS and uncooment
             //asm.branch(forever);
             asm.blx(ARMV7.r8);
