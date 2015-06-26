@@ -22,6 +22,9 @@
  */
 package com.oracle.max.asm;
 
+import java.io.*;
+import java.util.concurrent.atomic.*;
+
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiArchitecture.*;
 
@@ -31,6 +34,8 @@ import com.sun.cri.ci.CiArchitecture.*;
 public abstract class AbstractAssembler {
     public final CiTarget target;
     public final Buffer codeBuffer;
+    public static boolean DEBUG_METHODS;
+    public static AtomicInteger methodCounter = new AtomicInteger(536870912);
 
     public AbstractAssembler(CiTarget target) {
         this.target = target;
@@ -40,6 +45,7 @@ public abstract class AbstractAssembler {
         } else {
             this.codeBuffer = new Buffer.LittleEndian();
         }
+        initDebugMethods();
     }
 
     public final void bind(Label l) {
@@ -68,5 +74,42 @@ public abstract class AbstractAssembler {
 
     public final void offlineAddToBuffer(byte[] b) {
         codeBuffer.offlineCopyBuffer(b);
+    }
+
+    private static File file;
+    private static final Object fileLock = new Object();
+    private static boolean debugEnabled = false;
+
+    public static synchronized void initDebugMethods() {
+        if (debugEnabled) {
+            return;
+        }
+        if (AbstractAssembler.DEBUG_METHODS) {
+            debugEnabled = true;
+            if ((file = new File(getDebugMethodsPath() + "debug_methods")).exists()) {
+                file.delete();
+            }
+            file = new File(getDebugMethodsPath() + "debug_methods");
+        }
+    }
+
+    public static void writeDebugMethod(String name, int index) throws Exception {
+        synchronized (fileLock) {
+            try {
+                assert AbstractAssembler.DEBUG_METHODS;
+                FileWriter fw = new FileWriter(file.getAbsoluteFile(), true);
+                BufferedWriter bw = new BufferedWriter(fw);
+                bw.write(index + " " + name + "\n");
+                bw.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+    public static String getDebugMethodsPath() {
+        return System.getenv("MAXINE_HOME") + "/maxine-tester/junit-tests/";
+
     }
 }

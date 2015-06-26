@@ -32,7 +32,6 @@ import java.util.*;
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.asm.target.amd64.AMD64Assembler.ConditionFlag;
-import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.criutils.*;
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
@@ -66,10 +65,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     final CiTarget target;
     final AMD64MacroAssembler masm;
     final CiRegister rscratch1;
-
-    static {
-        ARMV7LIRAssembler.initDebugMethods();
-    }
 
     public AMD64LIRAssembler(C1XCompilation compilation, TargetMethodAssembler tasm) {
         super(compilation, tasm);
@@ -2032,11 +2027,11 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                         masm.save(csl, frameToCSA);
                     }
 
-                    if (ARMV7LIRAssembler.DEBUG_METHODS) {
-                        int a = ARMV7LIRAssembler.methodCounter.incrementAndGet();
+                    if (AbstractAssembler.DEBUG_METHODS) {
+                        int a = AbstractAssembler.methodCounter.incrementAndGet();
                         masm.movl(compilation.registerConfig.getScratchRegister(), a);
                         try {
-                            ARMV7LIRAssembler.writeDebugMethod(compilation.method.holder() + "." + compilation.method.name() + ";" + compilation.method.signature(), a);
+                            AbstractAssembler.writeDebugMethod(compilation.method.holder() + "." + compilation.method.name() + ";" + compilation.method.signature(), a);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

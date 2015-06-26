@@ -25,6 +25,7 @@ package com.sun.max.vm.hosted;
 import java.io.*;
 import java.util.*;
 
+import com.oracle.max.asm.*;
 import com.sun.max.*;
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;
@@ -96,6 +97,8 @@ public final class BootImageGenerator {
                     "Uses out of line runtime stubs when generating inlined TLAB allocations with XIR");
 
     // Options shared with the Inspector
+
+    private static final Option<Boolean> debugMethods  = options.newBooleanOption("debug-methods", false, "");
 
     public static final OptionSet inspectorSharedOptions = new OptionSet();
 
@@ -233,6 +236,7 @@ public final class BootImageGenerator {
             enableProxyClassFileDumping();
 
             nativeTests = testNative.getValue();
+            AbstractAssembler.DEBUG_METHODS = debugMethods.getValue();
 
             final File vmDirectory = getDefaultVMDirectory(true);
             vmDirectory.mkdirs();
@@ -245,7 +249,6 @@ public final class BootImageGenerator {
 
             Heap.genInlinedTLAB = inlinedTLABOption.getValue(); // TODO: cleanup. Just for evaluating impact on performance of inlined tlab alloc.
             Heap.useOutOfLineStubs = useOutOfLineStubs.getValue(); // TODO: cleanup.
-
             DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(treeOption.getValue());
 
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();

@@ -220,8 +220,6 @@ def image(args):
             systemProps += ['-Dmax.' + name + '=' + value]
         elif arg.startswith('--XX:LogFile='):
             os.environ['MAXINE_LOG_FILE'] = arg.split('=', 1)[1]
-        elif arg.startswith('--XX:+DebugMethods'):
-        	os.environ['DEBUG_METHODS']='1'
         elif arg.startswith('--XX:+PrintCFGToFile'):
         	os.environ['PRINT_CFG']='1'
         elif arg.startswith('--XX:+PrintHIR'):
@@ -556,7 +554,8 @@ def t1xgen(args):
 
 def test(args):
     """run some or all of the Maxine tests
-
+    
+        
     The Maxine sources include a variety of tests that can be run by a
     special launcher. These include JUnit tests, VM micro tests, certain
     benchmark suites and output comparison tests, amongst others.
