@@ -88,6 +88,10 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         patchInfo = new PatchInfoARMV7();
     }
 
+    public void setDebug(boolean value) {
+        DEBUG_METHODS = value;
+    }
+
     static {
         initDebugMethods();
     }
@@ -465,6 +469,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             peekObject(target, receiverStackIndex); // was rdi?
         }
         asm.mov32BitConstant(ARMV7.r8, 8);
+        //asm.mov32BitConstant(ARMV7.r8, 0);
         int causePos = buf.position();
         asm.call(target);
         int safepointPos = buf.position();
@@ -497,7 +502,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     private int framePointerAdjustment() {
         // TODO APN this is required for ARMv7 but it is incorrect at the moment with fakedFrame
-        final int enterSize = frame.frameSize();// Whe we push we adjust the stack ptr - Word.size();
+        final int enterSize = frame.frameSize() - Word.size();// Whe we push we adjust the stack ptr - Word.size();
         return enterSize - frame.sizeOfNonParameterLocals();
     }
 
@@ -513,6 +518,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         // stackptr = framepointer -stacksize
 
         int frameSize = frame.frameSize();
+        asm.push(ConditionFlag.Always, 1 << 14); // push return address on stack
         asm.push(ConditionFlag.Always, 1 << 11); // push frame pointer onto STACK
         asm.mov(ConditionFlag.Always, false, ARMV7.r11, ARMV7.r13); // create a new framepointer = stack ptr
         asm.subq(ARMV7.r13, frameSize - Word.size()); // APN is this necessary for  ARM ie push does it anyway?
@@ -572,10 +578,19 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected void emitEpilogue() {
         asm.addq(ARMV7.r11, framePointerAdjustment()); // we might be missing some kind of pop here?
+        asm.mov(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r11);
         final short stackAmountInBytes = (short) frame.sizeOfParameters();
-        asm.mov32BitConstant(scratch, stackAmountInBytes);
-        asm.addRegisters(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
-        asm.ret(); // mov R14 to r15 ,,, who restores the rest of the environment?
+	// ALTERED MOVED POP to before RET
+        //asm.mov32BitConstant(scratch, stackAmountInBytes);
+        //asm.addRegisters(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
+        asm.pop(ConditionFlag.Always, 1 << 11); // POP the frame pointer
+	asm.pop(ConditionFlag.Always, 1 << 8); // POP return address into r8
+	asm.mov32BitConstant(scratch, stackAmountInBytes);
+	asm.addRegisters(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
+	asm.mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r8); // RETURN
+
+	
+        //asm.ret(); // mov R14 to r15 ,,, who restores the rest oI//f the environment?
     }
 
     @Override
@@ -988,7 +1003,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             } else if (tag == PatchInfoARMV7.OBJECT_LITERAL) {
                 int dispPos = data[i++];
                 int index = data[i++];
-                int dummyDispPos = dispPos + 16; // +8 for PC and +8 for position of PC relative ADD
+                int dummyDispPos = dispPos + 12; // +8 for PC and +8 for position of PC relative ADD
                 assert objectLiterals.get(index) != null;
                 buf.setPosition(dispPos);
                 int dispFromCodeStart = dispFromCodeStart(objectLiterals.size(), 0, index, true);

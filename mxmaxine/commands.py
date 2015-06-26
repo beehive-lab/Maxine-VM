@@ -220,6 +220,8 @@ def image(args):
             systemProps += ['-Dmax.' + name + '=' + value]
         elif arg.startswith('--XX:LogFile='):
             os.environ['MAXINE_LOG_FILE'] = arg.split('=', 1)[1]
+	    elif arg.startswith('--XX:+FloatIDIV'):
+            os.environ['FLOAT_IDIV']='1'
         elif arg.startswith('--XX:+PrintCFGToFile'):
         	os.environ['PRINT_CFG']='1'
         elif arg.startswith('--XX:+PrintHIR'):

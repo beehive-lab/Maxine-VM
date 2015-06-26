@@ -245,13 +245,17 @@ public class SimpleExample {
     public static int test(int args) {
 
         SimpleExample bm = new SimpleExample();
+	System.out.println("Created Class");
 
         bm.parseCommandLine(args);
+	System.out.println("Initialised valirable");
         try {
             bm.setupBenchmark();
+	    System.out.println("Read image & initialised filter");
 
             bm.runBenchmark();
-            bm.printResults();
+	    System.out.println("Performed filtering and saved raw image");
+            //bm.printResults();
 
         } catch (Exception e) {
             e.printStackTrace();

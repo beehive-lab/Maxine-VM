@@ -22,16 +22,16 @@
  */
 package com.sun.max.vm.stack.armv7;
 
-import static com.sun.max.platform.Platform.*;
+import com.oracle.max.asm.target.armv7.ARMV7;
+import com.oracle.max.cri.intrinsics.UnsignedMath;
+import com.sun.cri.ci.CiRegister;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.collect.ByteArrayBitMap;
+import com.sun.max.vm.compiler.target.TargetMethod;
+import com.sun.max.vm.stack.JVMSFrameLayout;
 
-import com.oracle.max.asm.target.armv7.*;
-import com.oracle.max.cri.intrinsics.*;
-import com.sun.cri.ci.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.collect.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.stack.*;
+import static com.sun.max.platform.Platform.target;
 
 /**
  * Describes a stack frame for a ARMV7 method whose frame conforms with the JVMS.

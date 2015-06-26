@@ -422,12 +422,9 @@ public final class ARMTargetMethodUtil {
             Log.println(Long.toHexString(disp64));
         }
         if (oldDisp32 != disp64) {
-	    Log.println("PATCHINGPATCHING");
             synchronized (PatchingLock) {
                 // Just to prevent concurrent writing and invalidation to the same instruction cache line
-                // (although the lock excludes ALL concurrent patching)
                 //callSitePointer.writeInt(1,  disp32);
-                // Don't need icache invalidation to be correct (see ARMV7's Architecture Programmer Manual Vol.2, p173 on self-modifying code)
                 int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
                 callSitePointer.writeByte(0, (byte) (instruction & 0xff));
                 callSitePointer.writeByte(1, (byte) ((instruction >> 8) & 0xff));
