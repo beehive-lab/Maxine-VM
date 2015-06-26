@@ -1562,6 +1562,13 @@ end_label:
         emitInt(instruction);
     }
 
+    public final void vmsr(ConditionFlag cond, CiRegister dest) {
+        int instruction = (cond.value() & 0xf) << 28;
+        instruction |= 0x0ee10a10;
+        instruction |= dest.encoding << 12;
+        emitInt(instruction);
+    }
+
     public final void vmul(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm, CiKind destKind) {
         int instruction = (cond.value() & 0xf) << 28;
         instruction |= 0x0e200a00;
@@ -1621,6 +1628,7 @@ end_label:
         if (signed) {
             if (toInt) {
                 opc2 = 5;
+		op = 1; // use round to zero mdoe NOT!!! NOT!!! FPSCR rounding mode!!!!
             } else {
                 opc2 = 0;
                 op = 1;
@@ -1628,6 +1636,7 @@ end_label:
         } else {
             if (toInt) {
                 opc2 = 4;
+		op = 1; // use round to zero mdoe NOT!!! NOT!!! FPSCR rounding mode!!!!
             } else {
                 opc2 = 0;
             }
@@ -1780,11 +1789,11 @@ end_label:
             sz = 1;
         }
         if (sz == 1) {
-            instruction |= 0x0cbd0c00;
+            instruction |= 0x0cbd0b00;
             instruction |= (first.encoding & 0xf) << 12;
             instruction |= (last.encoding - first.encoding + 1) << 1;
         } else {
-            instruction |= 0x0cbd0b00;
+            instruction |= 0x0cbd0a00;
             instruction |= (first.encoding & 0x1) << 22;
             instruction |= (first.encoding >> 1) << 12;
             instruction |= (last.encoding - first.encoding + 1);
@@ -1862,18 +1871,22 @@ end_label:
             masm.vmov(ConditionFlag.Always, dest.asRegister(), ARMV7.s30, null, dest.kind, CiKind.Float);
             break;
         }*/
-        vpush(ConditionFlag.Always,ARMV7.s30,ARMV7.s31,CiKind.Float,CiKind.Float);
-        //vpush(ConditionFlag.Always,ARMV7.s31,ARMV7.s31,CiKind.Float,CiKind.Float);
+	push(ConditionFlag.Always,1<<8|1<<9);
+	vmrs(ConditionFlag.Always,ARMV7.r8);
+	mov32BitConstant(ARMV7.r9,0xc00000);
+	orr(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r8,ARMV7.r9,0,0);
+	vmsr(ConditionFlag.Always,ARMV7.r8);
+	pop(ConditionFlag.Always,1<<8|1<<9);
 
-        vmov(ConditionFlag.Always, ARMV7.s30, rn, null, CiKind.Float,CiKind.Int);
-        vmov(ConditionFlag.Always, ARMV7.s31, rm, null, CiKind.Float,CiKind.Int);
-        vcvt(ConditionFlag.Always, ARMV7.s30, false, signed, ARMV7.s30, CiKind.Float, CiKind.Int);
-        vcvt(ConditionFlag.Always, ARMV7.s31, false, signed, ARMV7.s31, CiKind.Float, CiKind.Int);
-        vdiv(cond,ARMV7.s30,ARMV7.s30,ARMV7.s31,CiKind.Float);
-        vcvt(ConditionFlag.Always, ARMV7.s30, true, signed, ARMV7.s30, CiKind.Float, CiKind.Int);// rounding?
-        vmov(cond, dest, ARMV7.s30, null, CiKind.Int,CiKind.Float);
-        vpop(ConditionFlag.Always,ARMV7.s30,ARMV7.s31,CiKind.Float,CiKind.Float);
-        //vpop(ConditionFlag.Always,ARMV7.s31,ARMV7.s31,CiKind.Float,CiKind.Float);
+        vpush(ConditionFlag.Always, ARMV7.s14, ARMV7.s15,CiKind.Double,CiKind.Double);
+        vmov(ConditionFlag.Always, ARMV7.s28, rn, null, CiKind.Float,CiKind.Int);
+        vmov(ConditionFlag.Always, ARMV7.s30, rm, null, CiKind.Float,CiKind.Int);
+        vcvt(ConditionFlag.Always, ARMV7.s14, false, signed, ARMV7.s28, CiKind.Double, CiKind.Int);
+        vcvt(ConditionFlag.Always, ARMV7.s15, false, signed, ARMV7.s30, CiKind.Double, CiKind.Int);
+        vdiv(ConditionFlag.Always, ARMV7.s14, ARMV7.s14,ARMV7.s15,CiKind.Double);
+        vcvt(ConditionFlag.Always, ARMV7.s28, true, signed, ARMV7.s14, CiKind.Int, CiKind.Double);// rounding?
+        vmov(cond, dest, ARMV7.s28, null, CiKind.Int, CiKind.Float);
+        vpop(ConditionFlag.Always, ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double);
 
     }
 
