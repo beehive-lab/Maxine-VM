@@ -1787,7 +1787,7 @@ end_label:
             instruction |= 0x0cbd0b00;
             instruction |= (first.encoding & 0x1) << 22;
             instruction |= (first.encoding >> 1) << 12;
-            instruction |= (last.encoding - first.encoding + 1) << 1;
+            instruction |= (last.encoding - first.encoding + 1);
         }
         emitInt(instruction);
     }
@@ -1809,7 +1809,7 @@ end_label:
             instruction |= 0x0d2d0a00;
             instruction |= (first.encoding & 0x1) << 22;
             instruction |= (first.encoding >> 1) << 12;
-            instruction |= (last.encoding - first.encoding + 1) << 1;
+            instruction |= (last.encoding - first.encoding + 1);
         }
         emitInt(instruction);
     }
@@ -1862,7 +1862,7 @@ end_label:
             masm.vmov(ConditionFlag.Always, dest.asRegister(), ARMV7.s30, null, dest.kind, CiKind.Float);
             break;
         }*/
-        //vpush(ConditionFlag.Always,ARMV7.s30,ARMV7.s30,CiKind.Float,CiKind.Float);
+        vpush(ConditionFlag.Always,ARMV7.s30,ARMV7.s31,CiKind.Float,CiKind.Float);
         //vpush(ConditionFlag.Always,ARMV7.s31,ARMV7.s31,CiKind.Float,CiKind.Float);
 
         vmov(ConditionFlag.Always, ARMV7.s30, rn, null, CiKind.Float,CiKind.Int);
@@ -1872,7 +1872,7 @@ end_label:
         vdiv(cond,ARMV7.s30,ARMV7.s30,ARMV7.s31,CiKind.Float);
         vcvt(ConditionFlag.Always, ARMV7.s30, true, signed, ARMV7.s30, CiKind.Float, CiKind.Int);// rounding?
         vmov(cond, dest, ARMV7.s30, null, CiKind.Int,CiKind.Float);
-        //vpop(ConditionFlag.Always,ARMV7.s30,ARMV7.s30,CiKind.Float,CiKind.Float);
+        vpop(ConditionFlag.Always,ARMV7.s30,ARMV7.s31,CiKind.Float,CiKind.Float);
         //vpop(ConditionFlag.Always,ARMV7.s31,ARMV7.s31,CiKind.Float,CiKind.Float);
 
     }
