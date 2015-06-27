@@ -653,6 +653,16 @@ public class Aarch64Assembler extends AbstractAssembler {
 
     /* Logical (immediate) (5.4.2) */
 
+   /*
+    * The logical immediate instructions accept a bitmask immediate bimm32 or bimm64.
+    * Such an immediate consists EITHER of a single consecutive sequence with at
+    * least one non-zero bit, and at least one zero bit, within an element of 2, 4, 8, 16, 32 or 64 bits;
+    * the element then being replicated across the register width, or the bitwise inverse of such a value.
+    * The immediate values of all-zero and all-ones may not be encoded as a bitmask immediate,
+    * so an assembler must either generate an error for a logical instruction with such an immediate, or a
+    * programmer-friendly assembler may transform it into some other instruction which achieves the intended result.
+    */
+
     /**
      * dst = src & bimm.
      *
@@ -660,6 +670,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param dst general purpose register. May not be null or zero-register.
      * @param src general purpose register. May not be null or stack-pointer.
      * @param bimm logical immediate.
+     *
      */
     public void and(int size, CiRegister dst, CiRegister src, long bimm) {
         assert Aarch64.isGeneralPurposeOrSpReg(dst) && Aarch64.isGeneralPurposeOrZeroReg(src);
@@ -722,6 +733,60 @@ public class Aarch64Assembler extends AbstractAssembler {
                 rs1(src));
     }
 
+    /* Move (wide immediate) (5.4.3) */
+
+    /**
+     * dst = uimm16 << shiftAmt.
+     *
+     * @param size register size. Has to be 32 or 64.
+     * @param dst general purpose register. May not be null, stackpointer or zero-register.
+     * @param uimm16 16-bit unsigned immediate
+     * @param shiftAmt amount by which uimm16 is left shifted. Can be any multiple of 16 smaller than size.
+     */
+    public void movz(int size, CiRegister dst, int uimm16, int shiftAmt) {
+        moveWideImmInstruction(dst, uimm16, shiftAmt, generalFromSize(size), Instruction.MOVZ);
+    }
+
+    /**
+     * dst = ~(uimm16 << shiftAmt).
+     *
+     * @param size register size. Has to be 32 or 64.
+     * @param dst general purpose register. May not be null, stackpointer or zero-register.
+     * @param uimm16 16-bit unsigned immediate
+     * @param shiftAmt amount by which uimm16 is left shifted. Can be any multiple of 16 smaller than size.
+     */
+    public void movn(int size, CiRegister dst, int uimm16, int shiftAmt) {
+        moveWideImmInstruction(dst, uimm16, shiftAmt, generalFromSize(size), Instruction.MOVN);
+    }
+
+    /**
+     * dst<pos+15:pos> = uimm16.
+     *
+     * @param size register size. Has to be 32 or 64.
+     * @param dst general purpose register. May not be null, stackpointer or zero-register.
+     * @param uimm16 16-bit unsigned immediate
+     * @param pos position into which uimm16 is inserted. Can be any multiple of 16 smaller than size.
+     */
+    public void movk(int size, CiRegister dst, int uimm16, int pos) {
+        // TODO unit test
+        moveWideImmInstruction(dst, uimm16, pos, generalFromSize(size), Instruction.MOVK);
+    }
+
+    private void moveWideImmInstruction(CiRegister dst, int uimm16, int shiftAmt,
+                                        InstructionType type, Instruction instr) {
+        assert Aarch64.isGeneralPurposeReg(dst);
+        assert NumUtil.isUnsignedNbit(16, uimm16) : "Immediate has to be unsigned 16bit";
+        assert shiftAmt == 0 || shiftAmt == 16 ||
+                (type == InstructionType.General64 && (shiftAmt == 32 || shiftAmt == 48)) :
+                "Invalid shift amount: " + shiftAmt;
+        shiftAmt >>= 4;
+        int instrEncoding = instr.encoding | MoveWideImmOp;
+        emitInt(type.encoding |
+                instrEncoding |
+                rd(dst) |
+                uimm16 << MoveWideImmOffset |
+                shiftAmt << MoveWideShiftOffset);
+    }
 
 
 
