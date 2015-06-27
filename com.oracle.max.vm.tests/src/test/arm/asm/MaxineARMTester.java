@@ -56,8 +56,8 @@ public class MaxineARMTester {
     private Process gdb;
     private BitsFlag[] bitMasks;
     private char[] chars;
-    private int[] expectRegs = new int[NUM_REGS];
-    private int[] gotRegs = new int[NUM_REGS];
+    private long[] expectRegs = new long[NUM_REGS];
+    private long[] gotRegs = new long[NUM_REGS];
     private boolean[] testRegs = new boolean[NUM_REGS];
     public static int oldpos = 0;
 
@@ -240,7 +240,7 @@ public class MaxineARMTester {
         return simulatedRegisters;
     }
 
-    public int[] runRegisteredSimulation() throws Exception {
+    public long[] runRegisteredSimulation() throws Exception {
         ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb");
         gdbProcess.redirectInput(gdbInput);
         gdbProcess.redirectOutput(gdbOutput);
@@ -273,7 +273,7 @@ public class MaxineARMTester {
             cleanProcesses();
             System.exit(-1);
         }
-        int[] simulatedRegisters = parseRegistersToFile(gdbOutput.getName());
+        long[] simulatedRegisters = parseRegistersToFile(gdbOutput.getName());
         return simulatedRegisters;
     }
 
@@ -312,13 +312,13 @@ public class MaxineARMTester {
             cleanProcesses();
             System.exit(-1);
         }
-        int[] simulatedRegisters = parseRegistersToFile(gdbOutput.getName());
+        long[] simulatedRegisters = parseRegistersToFile(gdbOutput.getName());
         if (!validateRegisters(simulatedRegisters, expectRegs, testRegs)) {
             cleanProcesses();
             assert false : "Error while validating registers";
         }
     }
-    public int [] runSimulationRegisters() throws Exception {
+    public long [] runSimulationRegisters() throws Exception {
         cleanFiles();
         ProcessBuilder gdbProcess = new ProcessBuilder("aarch64-none-elf-gdb");
         gdbProcess.redirectInput(gdbInput);
@@ -353,16 +353,16 @@ public class MaxineARMTester {
             cleanProcesses();
             System.exit(-1);
         }
-        int[] simulatedRegisters = parseRegistersToFile(gdbOutput.getName());
+        long[] simulatedRegisters = parseRegistersToFile(gdbOutput.getName());
         return simulatedRegisters;
     }
 
-    private boolean validateRegisters(int[] simRegisters, int[] expectedRegisters, boolean[] testRegisters) {
+    private boolean validateRegisters(long[] simRegisters, long[] expectedRegisters, boolean[] testRegisters) {
         for (int i = 0; i < NUM_REGS; i++) {
             log(i + " sim: " + simRegisters[i] + " exp: " + expectedRegisters[i] + " test: " + testRegisters[i]);
         }
         boolean result = true;
-        int bitmask = 0;
+        long bitmask = 0;
         for (int i = 0; i < NUM_REGS; i++) {
             long simulatedRegister = simRegisters[i] & bitMasks[i].value();
             long expectedRegister = expectedRegisters[i];
@@ -381,7 +381,7 @@ public class MaxineARMTester {
         return result;
     }
 
-    public MaxineARMTester(int[] expected, boolean[] test, BitsFlag[] range) {
+    public MaxineARMTester(long[] expected, boolean[] test, BitsFlag[] range) {
         initializeQemu();
         bitMasks = range;
         for (int i = 0; i < NUM_REGS; i++) {
@@ -390,19 +390,19 @@ public class MaxineARMTester {
         }
     }
 
-    public MaxineARMTester(long[] expected, boolean[] test, BitsFlag[] range) {
-        initializeQemu();
-        bitMasks = range;
-        int j = 0;
-        for (int i = 0; i < NUM_REGS; i++) {
-            if (test[i]) {
-                expectRegs[j] = (int) ((expected[i] >> 32) & 0xffffffff);
-                expectRegs[j + 1] = (int) (expected[i] & 0xffffffff);
-                testRegs[j] = testRegs[j + 1] = test[i];
-                j = +2;
-            }
-        }
-    }
+//    public MaxineARMTester(long[] expected, boolean[] test, BitsFlag[] range) {
+//        initializeQemu();
+//        bitMasks = range;
+//        int j = 0;
+//        for (int i = 0; i < NUM_REGS; i++) {
+//            if (test[i]) {
+//                expectRegs[j] = (int) ((expected[i] >> 32) & 0xffffffff);
+//                expectRegs[j + 1] = (int) (expected[i] & 0xffffffff);
+//                testRegs[j] = testRegs[j + 1] = test[i];
+//                j = +2;
+//            }
+//        }
+//    }
     public MaxineARMTester() {
         initializeQemu();
         for (int i = 0; i < NUM_REGS; i++) {
@@ -538,12 +538,12 @@ public class MaxineARMTester {
         return expectedValues;
     }
 
-    private int[] parseRegistersToFile(String file) throws IOException {
+    private long[] parseRegistersToFile(String file) throws IOException {
         BufferedReader reader = new BufferedReader(new FileReader(file));
         String line = null;
         boolean enabled = false;
         int i = 0;
-        int[] expectedValues = new int[NUM_REGS];
+        long[] expectedValues = new long[NUM_REGS];
         while ((line = reader.readLine()) != null) {
             if (line.contains(" x0")) {
                 enabled = true;
@@ -556,10 +556,10 @@ public class MaxineARMTester {
 
             long tmp = new BigInteger(value.substring(2, value.length()).toString(), 16).longValue();
 
-            if (tmp > Integer.MAX_VALUE) {
-                expectedValues[i] = (int) (2L * Integer.MIN_VALUE + tmp);
+            if (tmp > Long.MAX_VALUE) {
+                expectedValues[i] = (long) (2L * Long.MIN_VALUE + tmp);
             } else {
-                expectedValues[i] = (int) tmp;
+                expectedValues[i] = (long) tmp;
             }
             i++;
             if (line.contains("sp")) {
