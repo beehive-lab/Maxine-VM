@@ -79,7 +79,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
     // The following values will be updated
     // to those expected to be found in a register after simulated execution of code.
-    private static int[] expectedValues = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21 , 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
+    private static long[] expectedValues = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21 , 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
 
     private static long[] expectedLongValues = { Long.MAX_VALUE - 100, Long.MAX_VALUE};
 
@@ -95,7 +95,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         }
     }
 
-    private void generateAndTest(int[] expected, boolean[] tests, MaxineARMTester.BitsFlag[] masks, Buffer codeBuffer) throws Exception {
+    private void generateAndTest(long[] expected, boolean[] tests, MaxineARMTester.BitsFlag[] masks, Buffer codeBuffer) throws Exception {
         ARMCodeWriter code = new ARMCodeWriter(codeBuffer);
         code.createCodeFile();
         MaxineARMTester r = new MaxineARMTester(expected, tests, masks);
@@ -110,10 +110,10 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         r.runSimulation();
         r.reset();
     }
-    private int [] generate() throws Exception {
+    private long [] generate() throws Exception {
         ARMCodeWriter code = new ARMCodeWriter(asm.codeBuffer);
         code.createCodeFile();
-        int [] retArr;
+        long [] retArr;
         MaxineARMTester r = new MaxineARMTester();
         if (!MaxineARMTester.ENABLE_SIMULATOR) {
             System.out.println("Code Generation is disabled!");
@@ -146,76 +146,108 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         r.reset();
     }
 
-    public void test_add_imm() throws Exception {
+//    public void test_add_imm() throws Exception {
+//        initialiseExpectedValues();
+//        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
+//        resetIgnoreValues();
+//        asm.codeBuffer.reset();
+//        // ADD Xi, Xi, valueof(Xi) ; Xi's value should double
+//        for (int i = 0; i < 10; i++) {
+//            // expected values must not be larger than an integer in order to be converted to an int correctly
+//            assert (expectedValues[i] < Integer.MAX_VALUE);
+//            asm.movImmediate(Aarch64.cpuRegisters[i], (int) expectedValues[i]);
+//            asm.add(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], (int) expectedValues[i]);
+//            expectedValues[i] += expectedValues[i];
+//            testValues[i] = true;
+//        }
+//        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+//    }
+//
+//    public void test_sub_imm() throws Exception {
+//        initialiseExpectedValues();
+//        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
+//        resetIgnoreValues();
+//        asm.codeBuffer.reset();
+//        // SUB Xi, Xi, valueof(Xi) ; Xi should then be 0
+//        for (int i = 0; i < 10; i++) {
+//            // expected values must not be larger than an integer in order to be converted to an int correctly
+//            assert (expectedValues[i] < Integer.MAX_VALUE);
+//            asm.movImmediate(Aarch64.cpuRegisters[i], (int) expectedValues[i]);
+//            asm.sub(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], (int) expectedValues[i]);
+//            expectedValues[i] = 0; //expectedValues[i] -= expectedValues[i];
+//            testValues[i] = true;
+//        }
+//        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+//    }
+//
+//    public void test_and_imm() throws Exception {
+//        initialiseExpectedValues();
+//        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
+//        resetIgnoreValues();
+//        asm.codeBuffer.reset();
+//        // AND Xi, Xi, 0x1
+//        for (int i = 0; i < 10; i++) {
+//            asm.movImmediate(Aarch64.cpuRegisters[i], (int) expectedValues[i]);
+//            asm.and(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], 0x1);
+//            expectedValues[i] &= 0x1;
+//            testValues[i] = true;
+//        }
+//        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+//    }
+//
+//    public void test_eor_imm() throws Exception {
+//        initialiseExpectedValues();
+//        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
+//        resetIgnoreValues();
+//        asm.codeBuffer.reset();
+//        // EOR Xi, Xi, 0x1
+//        for (int i = 0; i < 10; i++) {
+//            asm.movImmediate(Aarch64.cpuRegisters[i], (int) expectedValues[i]);
+//            asm.eor(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], 0x1);
+//            expectedValues[i] ^= 0x1;
+//            testValues[i] = true;
+//        }
+//        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+//    }
+//
+//    public void test_orr_imm() throws Exception {
+//        initialiseExpectedValues();
+//        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
+//        resetIgnoreValues();
+//        asm.codeBuffer.reset();
+//        // ORR Xi, Xi, 0x1
+//        for (int i = 0; i < 10; i++) {
+//            asm.movImmediate(Aarch64.cpuRegisters[i], (int) expectedValues[i]);
+//            asm.orr(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], 0x1);
+//            expectedValues[i] |= 0x1;
+//            testValues[i] = true;
+//        }
+//        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+//    }
+
+    public void test_movz_imm() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
-        // ADD Xi, Xi, valueof(Xi) ; Xi's value should double
-        for (int i = 0; i < 10; i++) {
-            asm.movImmediate(Aarch64.cpuRegisters[i], expectedValues[i]);
-            asm.add(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], expectedValues[i]);
-            expectedValues[i] += expectedValues[i];
+        // MOVZ Xi, 0x1, LSL #0x10
+        for (int i = 0; i < 1; i++) {
+            asm.movz(VARIANT_64, Aarch64.cpuRegisters[i], 0x1, 32);
+            expectedValues[i] = (long) 1 << 32;
             testValues[i] = true;
         }
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void test_sub_imm() throws Exception {
+    public void test_movn_imm() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
-        // SUB Xi, Xi, valueof(Xi) ; Xi should then be 0
-        for (int i = 0; i < 10; i++) {
-            asm.movImmediate(Aarch64.cpuRegisters[i], expectedValues[i]);
-            asm.sub(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], expectedValues[i]);
-            expectedValues[i] = 0; //expectedValues[i] -= expectedValues[i];
-            testValues[i] = true;
-        }
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-    }
-
-    public void test_and_imm() throws Exception {
-        initialiseExpectedValues();
-        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
-        resetIgnoreValues();
-        asm.codeBuffer.reset();
-        // AND Xi, Xi, 0x1
-        for (int i = 0; i < 10; i++) {
-            asm.movImmediate(Aarch64.cpuRegisters[i], expectedValues[i]);
-            asm.and(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], 0x1);
-            expectedValues[i] &= 0x1;
-            testValues[i] = true;
-        }
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-    }
-
-    public void test_eor_imm() throws Exception {
-        initialiseExpectedValues();
-        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
-        resetIgnoreValues();
-        asm.codeBuffer.reset();
-        // EOR Xi, Xi, 0x1
-        for (int i = 0; i < 10; i++) {
-            asm.movImmediate(Aarch64.cpuRegisters[i], expectedValues[i]);
-            asm.eor(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], 0x1);
-            expectedValues[i] ^= 0x1;
-            testValues[i] = true;
-        }
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-    }
-
-    public void test_orr_imm() throws Exception {
-        initialiseExpectedValues();
-        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
-        resetIgnoreValues();
-        asm.codeBuffer.reset();
-        // ORR Xi, Xi, 0x1
-        for (int i = 0; i < 10; i++) {
-            asm.movImmediate(Aarch64.cpuRegisters[i], expectedValues[i]);
-            asm.orr(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], 0x1);
-            expectedValues[i] |= 0x1;
+        // MOVZ Xi, 0x1, LSL #0x10
+        for (int i = 0; i < 1; i++) {
+            asm.movn(VARIANT_64, Aarch64.cpuRegisters[i], 0x1, 32);
+            expectedValues[i] = ~((long) 1 << 32);
             testValues[i] = true;
         }
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
