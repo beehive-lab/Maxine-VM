@@ -46,6 +46,7 @@ import com.sun.cri.xir.CiXirAssembler.XirLabel;
 import com.sun.cri.xir.CiXirAssembler.XirMark;
 import com.sun.cri.xir.XirSnippet;
 import com.sun.cri.xir.XirTemplate;
+import com.sun.max.vm.Log;
 import com.sun.max.vm.compiler.CompilationBroker;
 
 import java.util.Map;
@@ -1546,7 +1547,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert left.isRegister() : "left must be register";
         assert right.isRegister() : "right must be register";
         assert result.isRegister() : "result must be register";
-        System.out.println("arithmeticLudiv not implemented");
+        Log.println("arithmeticLudiv not implemented");
         CiRegister lreg = left.asRegister();
         CiRegister dreg = result.asRegister();
         CiRegister rreg = right.asRegister();

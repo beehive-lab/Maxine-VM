@@ -549,7 +549,7 @@ public abstract class T1XCompilation {
         methodProfileBuilder = MethodInstrumentation.createMethodProfile(method);
         startBlock(0);
         initFrame(method, codeAttribute);
-        // initHandlers(method, code);
+        initHandlers(method, code);
         // End of initCompile
 
         // TODO Fill in the appropriate calls to correctly and appropriately fake the stack frame and to correctly
@@ -557,11 +557,12 @@ public abstract class T1XCompilation {
         // "real" java compiled class method.
         emitPrologue();
         emitUnprotectMethod(); // partially removed causing an issue with an OBJECT_LITERAL pointing to before the codebuffer
-        // do_profileMethodEntry();
+        do_profileMethodEntry();
         do_methodTraceEntry();
-        // do_synchronizedMethodAcquire();
+        do_synchronizedMethodAcquire();
         int bci = 0;
         int endBCI = stream.endBCI();
+        hardStop = endBCI;
         while (bci < endBCI) {
             if (bci >= hardStop) {
                 break;
