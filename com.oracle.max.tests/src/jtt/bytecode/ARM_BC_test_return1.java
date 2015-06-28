@@ -8,7 +8,6 @@ public class ARM_BC_test_return1 {
        int i;
         i =arg;
         i++;
-        System.out.println("HELLO WORLD");
         return i;
     }
 
