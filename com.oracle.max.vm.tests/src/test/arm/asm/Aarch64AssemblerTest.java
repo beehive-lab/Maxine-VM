@@ -224,34 +224,65 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //        }
 //        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
 //    }
+//
+//    public void test_movz_imm() throws Exception {
+//        initialiseExpectedValues();
+//        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
+//        resetIgnoreValues();
+//        asm.codeBuffer.reset();
+//        // MOVZ Xi, 0x1, LSL #0x10
+//        for (int i = 0; i < 1; i++) {
+//            asm.movz(VARIANT_64, Aarch64.cpuRegisters[i], 0x1, 32);
+//            expectedValues[i] = (long) 1 << 32;
+//            testValues[i] = true;
+//        }
+//        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+//    }
+//
+//    public void test_movn_imm() throws Exception {
+//        initialiseExpectedValues();
+//        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
+//        resetIgnoreValues();
+//        asm.codeBuffer.reset();
+//        // MOVZ Xi, 0x1, LSL #0x10
+//        for (int i = 0; i < 1; i++) {
+//            asm.movn(VARIANT_64, Aarch64.cpuRegisters[i], 0x1, 32);
+//            expectedValues[i] = ~((long) 1 << 32);
+//            testValues[i] = true;
+//        }
+//        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+//    }
 
-    public void test_movz_imm() throws Exception {
+    public void test_bfm() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
-        // MOVZ Xi, 0x1, LSL #0x10
-        for (int i = 0; i < 1; i++) {
-            asm.movz(VARIANT_64, Aarch64.cpuRegisters[i], 0x1, 32);
-            expectedValues[i] = (long) 1 << 32;
-            testValues[i] = true;
-        }
+
+        asm.movn(VARIANT_64, Aarch64.cpuRegisters[10], 0x0, 0);
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 0x0, 0);
+
+        asm.bfm(VARIANT_64, Aarch64.cpuRegisters[0], Aarch64.cpuRegisters[10], 3, 5);
+        expectedValues[0] = 0b111111l >>> 3;
+        testValues[0] = true;
+
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void test_movn_imm() throws Exception {
-        initialiseExpectedValues();
-        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
-        resetIgnoreValues();
-        asm.codeBuffer.reset();
-        // MOVZ Xi, 0x1, LSL #0x10
-        for (int i = 0; i < 1; i++) {
-            asm.movn(VARIANT_64, Aarch64.cpuRegisters[i], 0x1, 32);
-            expectedValues[i] = ~((long) 1 << 32);
-            testValues[i] = true;
-        }
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 //
