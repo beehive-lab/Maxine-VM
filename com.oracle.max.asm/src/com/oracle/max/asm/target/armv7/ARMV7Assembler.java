@@ -1862,29 +1862,20 @@ end_label:
         emitInt(instruction);
     }
     public final void floatDIV(boolean signed, ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
-        /*case I2F:
-        masm.vmov(ConditionFlag.Always, ARMV7.s30, srcRegister, null, CiKind.Float, src.kind);
-        masm.vcvt(ConditionFlag.Always, dest.asRegister(), false, true, ARMV7.s30, CiKind.Float, CiKind.Int);
-        break;
-        case F2I: {
-            assert srcRegister.isFpu() && dest.isRegister() : "must both be S-register (no fpu stack)";
-            masm.vcvt(ConditionFlag.Always, ARMV7.s30, true, true, src.asRegister(), CiKind.Float, src.kind);
-            masm.vmov(ConditionFlag.Always, dest.asRegister(), ARMV7.s30, null, dest.kind, CiKind.Float);
-            break;
-        }*/
-	push(ConditionFlag.Always,1<<8|1<<9);
-	vmrs(ConditionFlag.Always,ARMV7.r8);
-	mov32BitConstant(ARMV7.r9,0xc00000);
-	orr(ConditionFlag.Always,false,ARMV7.r8,ARMV7.r8,ARMV7.r9,0,0);
-	vmsr(ConditionFlag.Always,ARMV7.r8);
-	pop(ConditionFlag.Always,1<<8|1<<9);
 
-        vpush(ConditionFlag.Always, ARMV7.s14, ARMV7.s15,CiKind.Double,CiKind.Double);
-        vmov(ConditionFlag.Always, ARMV7.s28, rn, null, CiKind.Float,CiKind.Int);
-        vmov(ConditionFlag.Always, ARMV7.s30, rm, null, CiKind.Float,CiKind.Int);
+        push(ConditionFlag.Always, 1 << 8 | 1 << 9);
+        vmrs(ConditionFlag.Always, ARMV7.r8);
+        mov32BitConstant(ARMV7.r9, 0xc00000);
+        orr(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, ARMV7.r9, 0, 0);
+        vmsr(ConditionFlag.Always, ARMV7.r8);
+        pop(ConditionFlag.Always, 1 << 8 | 1 << 9);
+
+        vpush(ConditionFlag.Always, ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double);
+        vmov(ConditionFlag.Always, ARMV7.s28, rn, null, CiKind.Float, CiKind.Int);
+        vmov(ConditionFlag.Always, ARMV7.s30, rm, null, CiKind.Float, CiKind.Int);
         vcvt(ConditionFlag.Always, ARMV7.s14, false, signed, ARMV7.s28, CiKind.Double, CiKind.Int);
         vcvt(ConditionFlag.Always, ARMV7.s15, false, signed, ARMV7.s30, CiKind.Double, CiKind.Int);
-        vdiv(ConditionFlag.Always, ARMV7.s14, ARMV7.s14,ARMV7.s15,CiKind.Double);
+        vdiv(ConditionFlag.Always, ARMV7.s14, ARMV7.s14, ARMV7.s15, CiKind.Double);
         vcvt(ConditionFlag.Always, ARMV7.s28, true, signed, ARMV7.s14, CiKind.Int, CiKind.Double);// rounding?
         vmov(cond, dest, ARMV7.s28, null, CiKind.Int, CiKind.Float);
         vpop(ConditionFlag.Always, ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double);
