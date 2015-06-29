@@ -105,7 +105,7 @@ ifeq ($(TARGETOS),Linux)
         else
             ISA := $a
             ISA := arm
-            OTHER_CFLAGS := -marm -O0 -g
+            OTHER_CFLAGS := -marm -O0 -g -mcpu=cortex-a9
             TARGET_WORD_SIZE := w32
         endif
     endif

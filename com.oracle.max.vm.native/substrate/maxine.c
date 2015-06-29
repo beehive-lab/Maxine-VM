@@ -37,6 +37,7 @@
 #include <time.h>
 #include <sys/param.h>
 #include <sys/resource.h>
+#include <math.h>
 #include "log.h"
 #include "image.h"
 #include "threads.h"
@@ -52,10 +53,16 @@
 
 
 jlong d2long(double x) {
+	if(isnan(x)) {
+		return (jlong)0;
+	}
 	return (jlong)x;
 }
 
 jlong f2long(float x) {
+	if(isnan(x)) {
+		return (jlong)0;
+	}
 	return (jlong)x;
 }
 

@@ -558,8 +558,8 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         objectLiterals.add(T1XTargetMethod.PROTECTED);
         asm.xorq(ARMV7.r8, ARMV7.r8);
         //System.out.println("emitUnProtect partially commented out ... OBJECT LITERALS");
-        asm.setUpScratch(CiAddress.Placeholder);
-        asm.str(ConditionFlag.Always,ARMV7.r8,scratch,0);
+        //asm.setUpScratch(CiAddress.Placeholder);
+        //asm.str(ConditionFlag.Always,ARMV7.r8,scratch,0);
         asm.nop(2);
 
         int dispPos = buf.position() - 8;

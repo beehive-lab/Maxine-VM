@@ -34,6 +34,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         } else {
             FLOAT_IDIV = Integer.parseInt(value) == 1 ? true : false;
         }
+	//FLOAT_IDIV= true;
     }
 
     public enum ConditionFlag {
