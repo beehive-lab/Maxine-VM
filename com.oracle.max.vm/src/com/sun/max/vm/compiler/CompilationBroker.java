@@ -868,8 +868,12 @@ public class CompilationBroker {
                 Pointer ip = current.ipAsPointer();
                 CodePointer callSite = CodePointer.from(ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE + 12));
                 Pointer callSitePointer = callSite.toPointer();
-                if ((callSitePointer.readByte(0) & 0xFF) == ARMTargetMethodUtil.RIP_CALL) {
-                    CodePointer target = CodePointer.from(ip.plus(callSitePointer.readInt(1)));
+
+                //if ((callSitePointer.readByte(0) & 0xFF) == ARMTargetMethodUtil.RIP_CALL) {
+                if(ARMTargetMethodUtil.isARMV7RIPCall(current.targetMethod(),callSite)) {
+                    //CodePointer target = CodePointer.from(ip.plus(callSitePointer.readInt(1)));
+                    CodePointer target = CodePointer.from(ip.plus(ARMTargetMethodUtil.ripCallOFFSET(current.targetMethod(),callSite)));
+                    //callSitePointer.readInt(1)));
                     if (target.equals(oldMethod.getEntryPoint(BASELINE_ENTRY_POINT))) {
                         final CodePointer to = newMethod.getEntryPoint(BASELINE_ENTRY_POINT);
                         final TargetMethod tm = current.targetMethod();

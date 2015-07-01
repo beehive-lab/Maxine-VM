@@ -384,6 +384,73 @@ public final class ARMTargetMethodUtil {
 
     private static final int RIP_JMP_INSTRUCTION_LENGTH = 4;  // ARM it's one instruction the B branch
 
+    public static int ripCallOFFSET(TargetMethod tm, CodePointer callSite) {
+        final Pointer callSitePointer = callSite.toPointer();
+        int addInstrn = ARMV7Assembler.addRegistersHelper(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r15, ARMV7.r12, 0, 0);
+        int oldDisp32 = 0;
+
+
+        if (((callSitePointer.readByte(3) & 0xff) == 0xe3) && ((callSitePointer.readByte(4 + 3) & 0xff) == 0xe3)) {
+                // just enough checking to make sure it has been patched before ...
+                // and does not contain nops
+                oldDisp32 = (callSitePointer.readByte(4 + 0) & 0xff) | ((callSitePointer.readByte(4 + 1) & 0xf) << 8) | ((callSitePointer.readByte(4 + 2) & 0xf) << 12);
+                oldDisp32 = oldDisp32 << 16;
+                oldDisp32 += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
+                oldDisp32 += 16;
+                // +8 as ARM PC is +8 ahead
+                // another +8 as the ADD instruction is 8 bytes ahead of the first movw
+
+
+                /*
+                * HERE WE ARE CALCULATING THE NUMBER TO ADD TO THE pc BASED ON THE VALUE OF THE PC
+                * AT THE MOVW IN THE MOVW MOVT ADD, BLX SEQUENCE
+                * BECAUSE IT HAS TO WORK WITH   CompilationBroker.visitFrame
+                * THEREFORE, the offset in the movw movt, is the offset needed at the ADD, and it ACTUALLY OMITS
+                * THE +8 that the ARM internal CPU PC is ahead of the actual PC-value of the ADD instruction.
+                *
+                *
+
+                 */
+                if (VMOptions.verboseOption.verboseCompilation) {
+
+                    Log.println("ripCALLOFFSET " +oldDisp32);
+
+                }
+
+                return oldDisp32;
+        }
+
+
+
+
+        return 0;
+    }
+    public static boolean isARMV7RIPCall(TargetMethod tm, CodePointer callSite) {
+        final Pointer callSitePointer = callSite.toPointer();
+        int addInstrn = ARMV7Assembler.addRegistersHelper(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r15, ARMV7.r12, 0, 0);
+
+        if (((callSitePointer.readByte(3) & 0xff) == 0xe3)  && ((callSitePointer.readByte(4 + 3) & 0xff) == 0xe3)) {
+            // basic match of movw movt
+
+            if(((callSitePointer.readByte(3+8) & 0xff) == ((addInstrn&0xff000000) >> 24)) &&
+                    ((callSitePointer.readByte(3+8) & 0xff) == ((addInstrn&0xff0000) >> 16)) &&
+                            ((callSitePointer.readByte(3+8) & 0xff) == ((addInstrn&0xff00) >> 8)) &&
+                                    ((callSitePointer.readByte(3+8) & 0xff) == (addInstrn&0xff))) {
+                // full match of add r12,r12,pc
+                if (VMOptions.verboseOption.verboseCompilation) {
+
+                    Log.println("MATCHED RIP CALL");
+                }
+                    return true;
+            }
+
+        }
+        if (VMOptions.verboseOption.verboseCompilation) {
+
+            Log.println("NOT RIP CALL");
+        }
+        return false;
+    }
     /**
      * Thread safe patching of the displacement field in a direct call.
      *
