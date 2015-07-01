@@ -384,10 +384,10 @@ public final class ARMTargetMethodUtil {
 
     private static final int RIP_JMP_INSTRUCTION_LENGTH = 4;  // ARM it's one instruction the B branch
 
-    public static int ripCallOFFSET(TargetMethod tm, CodePointer callSite) {
+    public static CodePointer ripCallOFFSET(TargetMethod tm, CodePointer callSite) {
         final Pointer callSitePointer = callSite.toPointer();
-        int addInstrn = ARMV7Assembler.addRegistersHelper(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r15, ARMV7.r12, 0, 0);
         int oldDisp32 = 0;
+	// based on readCall32Target .... so should be ok.
 
 
         if (((callSitePointer.readByte(3) & 0xff) == 0xe3) && ((callSitePointer.readByte(4 + 3) & 0xff) == 0xe3)) {
@@ -396,7 +396,6 @@ public final class ARMTargetMethodUtil {
                 oldDisp32 = (callSitePointer.readByte(4 + 0) & 0xff) | ((callSitePointer.readByte(4 + 1) & 0xf) << 8) | ((callSitePointer.readByte(4 + 2) & 0xf) << 12);
                 oldDisp32 = oldDisp32 << 16;
                 oldDisp32 += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
-                oldDisp32 += 16;
                 // +8 as ARM PC is +8 ahead
                 // another +8 as the ADD instruction is 8 bytes ahead of the first movw
 
@@ -413,17 +412,15 @@ public final class ARMTargetMethodUtil {
                  */
                 if (VMOptions.verboseOption.verboseCompilation) {
 
-                    Log.println("ripCALLOFFSET " +oldDisp32);
+                    //Log.println("ripCALLOFFSET " +oldDisp32);
 
                 }
 
-                return oldDisp32;
         }
+	assert(oldDisp32 != 0);
+	return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);
 
 
-
-
-        return 0;
     }
     public static boolean isARMV7RIPCall(TargetMethod tm, CodePointer callSite) {
         final Pointer callSitePointer = callSite.toPointer();
@@ -439,7 +436,7 @@ public final class ARMTargetMethodUtil {
                 // full match of add r12,r12,pc
                 if (VMOptions.verboseOption.verboseCompilation) {
 
-                    Log.println("MATCHED RIP CALL");
+                    //Log.println("MATCHED RIP CALL");
                 }
                     return true;
             }
