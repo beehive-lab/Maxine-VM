@@ -494,7 +494,7 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
-            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
+            // EXPERIMENT comment out asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
 
             // now allocate the frame for this method
             asm.subq(ARMV7.r13, frameSize);

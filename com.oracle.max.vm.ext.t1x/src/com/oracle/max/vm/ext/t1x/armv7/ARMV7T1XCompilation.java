@@ -510,7 +510,6 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     protected Adapter emitPrologue() {
         Adapter adapter = null;
         if (adapterGenerator != null) {
-            System.out.println("ADAPTER GENERATOR NON NULL");
             adapter = adapterGenerator.adapt(method, asm);
         }
         // stacksize = imm16

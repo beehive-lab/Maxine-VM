@@ -22,16 +22,16 @@
  */
 package com.sun.max.vm.stack.amd64;
 
-import static com.sun.max.platform.Platform.*;
+import com.oracle.max.asm.target.amd64.AMD64;
+import com.oracle.max.cri.intrinsics.UnsignedMath;
+import com.sun.cri.ci.CiRegister;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.actor.member.ClassMethodActor;
+import com.sun.max.vm.collect.ByteArrayBitMap;
+import com.sun.max.vm.compiler.target.TargetMethod;
+import com.sun.max.vm.stack.JVMSFrameLayout;
 
-import com.oracle.max.asm.target.amd64.*;
-import com.oracle.max.cri.intrinsics.*;
-import com.sun.cri.ci.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.collect.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.stack.*;
+import static com.sun.max.platform.Platform.target;
 
 /**
  * Describes a stack frame for a AMD64 method whose frame conforms with the JVMS.
@@ -55,7 +55,7 @@ import com.sun.max.vm.stack.*;
  *          [+(T-1)] | template spill slot (T-1)      | Template            |
  *                   |     ...                        | spill               |
  *              [+0] | template spill slot 0          | area            frameSize()
- *  FP (%RBP)  ==>   +--------------------------------+----------------     |
+ *  FP (%RBP)  ==>   +----(----------------------------+----------------     |
  *              [-J] | Java non-parameter local 0     | Java                |
  *                   |     ...                        | non-parameters      |
  *          [-(L*J)] | Java non-parameter local (L-1) | locals              v
