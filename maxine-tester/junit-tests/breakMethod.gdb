@@ -7,9 +7,11 @@ break maxine.c:407
 run
 set logging overwrite on
 info proc mappings
-shell echo set \$lower=$(grep maxine.vm gdb.txt | tail -1f | awk '{print $1}') >/tmp/foo.gdb
+shell echo set \$l=$(grep maxine.vm gdb.txt | tail -1f | awk '{print $1}') >/tmp/foo.gdb1
+source /tmp/foo.gdb1
+shell echo set \$u=$(grep maxine.vm gdb.txt | tail -1f | awk '{print $2}') >/tmp/foo.gdb2
+source /tmp/foo.gdb2
+shell echo set \$t=$(../junit-tests/findCodeSequence LeastSignificantBit.test | awk '{print $3}') > /tmp/foo.gdb
 source /tmp/foo.gdb
-shell echo set \$upper=$(grep maxine.vm gdb.txt | tail -1f | awk '{print $1}') >/tmp/foo.gdb
-source /tmp/foo.gdb
-shell echo set \$target=$(../junit-tests/findCodeSequence LeastSignificantBit.test | awk '{print $3}')
-find /g $lower,$upper,$target
+set logging off
+find /g $l,$u,$t
