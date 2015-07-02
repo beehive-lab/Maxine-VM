@@ -466,10 +466,11 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected int callIndirect(CiRegister target, int receiverStackIndex) {
         if (receiverStackIndex >= 0) {
-            peekObject(target, receiverStackIndex); // was rdi?
+	
+            peekObject(ARMV7.r1, receiverStackIndex); // was rdi?
         }
-        asm.mov32BitConstant(ARMV7.r8, 8);
-        //asm.mov32BitConstant(ARMV7.r8, 0);
+        //asm.mov32BitConstant(ARMV7.r8, 8);
+        asm.xorq(ARMV7.r8,ARMV7.r8);
         int causePos = buf.position();
         asm.call(target);
         int safepointPos = buf.position();
