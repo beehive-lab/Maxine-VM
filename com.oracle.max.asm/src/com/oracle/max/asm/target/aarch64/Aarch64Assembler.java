@@ -1,6 +1,7 @@
 package com.oracle.max.asm.target.aarch64;
 
 import com.oracle.max.asm.*;
+import com.oracle.max.asm.target.aarch64.Aarch64Address.AddressingMode;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 
@@ -524,33 +525,362 @@ public class Aarch64Assembler extends AbstractAssembler {
         return imm << ConditionalBranchImmOffset;
     }
 
-    public final void movImmediate(CiRegister dst, int imm16) {
-        int instruction = 0x52800000;
-        instruction |= 1 << 31;
-        instruction |= (imm16 & 0xffff) << 5;
-        instruction |= (dst.encoding & 0x1f);
-        emitInt(instruction);
+    /* Unconditional Branch (immediate) (5.2.2) */
+
+    /**
+     * @param imm28 Signed 28-bit offset, has to be word aligned.
+     */
+    public void b(int imm28) {
+        unconditionalBranchImmInstruction(imm28, Instruction.B, -1);
     }
 
-//    public void add(final CiRegister Rd, final CiRegister Rm, final CiRegister Rn) {
-//        int instruction = 0xB000000;
-//        instruction |= 1 << 31;
-//        instruction |= (Rm.encoding & 0x1f) << 16;
-//        instruction |= (Rn.encoding & 0x1f) << 5;
-//        instruction |= (Rd.encoding & 0x1f);
-//        emitInt(instruction);
-//    }
-//
-//    public void sub(final CiRegister Rd, final CiRegister Rm, final CiRegister Rn) {
-//        int instruction = 0x4B000000;
-//        instruction |= 1 << 31;
-//        instruction |= (Rm.encoding & 0x1f) << 16;
-//        instruction |= (Rn.encoding & 0x1f) << 5;
-//        instruction |= (Rd.encoding & 0x1f);
-//        emitInt(instruction);
+    /**
+     *
+     * @param imm28 Signed 28-bit offset, has to be word aligned.
+     * @param pos Position where instruction is inserted into code buffer.
+     */
+    public void b(int imm28, int pos) {
+        unconditionalBranchImmInstruction(imm28, Instruction.B, pos);
+    }
+
+    /**
+     * Branch and link return address to register X30.
+     *
+     * @param imm28 Signed 28-bit offset, has to be word aligned.
+     */
+    public void bl(int imm28) {
+        unconditionalBranchImmInstruction(imm28, Instruction.BL, -1);
+    }
+
+    private void unconditionalBranchImmInstruction(int imm28, Instruction instr, int pos) {
+        assert NumUtil.isSignedNbit(28, imm28) && (imm28 & 0x3) == 0
+                : "Immediate has to be 28bit signed number and word aligned";
+        int imm = (imm28 & NumUtil.getNbitNumberInt(28)) >> 2;
+        int instrEncoding = instr.encoding | UnconditionalBranchImmOp;
+        if (pos == -1) {
+            codeBuffer.emitInt(instrEncoding | imm);
+        } else {
+            codeBuffer.emitInt(instrEncoding | imm, pos);
+        }
+    }
+
+    /* Unconditional Branch (register) (5.2.3) */
+
+    /**
+     * Branches to address in register and writes return address into register X30.
+     *
+     * @param target general purpose register. May not be null, zero-register or stackpointer.
+     */
+    public void blr(CiRegister target) {
+        unconditionalBranchRegInstruction(target, Instruction.BLR);
+    }
+
+    /**
+     * Branches to address in register.
+     *
+     * @param target general purpose register. May not be null, zero-register or stackpointer.
+     */
+    public void br(CiRegister target) {
+        unconditionalBranchRegInstruction(target, Instruction.BR);
+    }
+
+    /**
+     * Return to address in register.
+     *
+     * @param target general purpose register. May not be null, zero-register or stackpointer.
+     */
+    public void ret(CiRegister target) {
+        unconditionalBranchRegInstruction(target, Instruction.RET);
+    }
+
+    private void unconditionalBranchRegInstruction(CiRegister target, Instruction instr) {
+        assert Aarch64.isGeneralPurposeReg(target);
+        int instrEncoding = instr.encoding | UnconditionalBranchRegOp;
+        emitInt(instrEncoding |
+                rs1(target));
+    }
+
+    /* Load-Store Single Register (5.3.1) */
+
+    /**
+     * Loads a srcSize value from address into rt zero-extending it.
+     *
+     * @param srcSize size of memory read in bits. Must be 8, 16, 32 or 64.
+     * @param rt general purpose register. May not be null or stackpointer.
+     * @param address all addressing modes allowed. May not be null.
+     * */
+    public void ldr(int srcSize, CiRegister rt, Aarch64Address address) {
+        assert Aarch64.isGeneralPurposeOrZeroReg(rt);
+        assert srcSize == 8 || srcSize == 16 || srcSize == 32 || srcSize == 64;
+        int transferSize = NumUtil.log2Ceil(srcSize / 8);
+        loadStoreInstruction(rt, address, InstructionType.General32, Instruction.LDR, transferSize);
+    }
+
+    /**
+     * Loads a srcSize value from address into rt sign-extending it.
+     *
+     * @param targetSize size of target register in bits. Must be 32 or 64.
+     * @param srcSize size of memory read in bits. Must be 8, 16 or 32, but may not be equivalent to targetSize.
+     * @param rt general purpose register. May not be null or stackpointer.
+     * @param address all addressing modes allowed. May not be null.
+     */
+    public void ldrs(int targetSize, int srcSize, CiRegister rt, Aarch64Address address) {
+        assert Aarch64.isGeneralPurposeOrZeroReg(rt);
+        assert (srcSize == 8 || srcSize == 16 || srcSize == 32) && srcSize != targetSize;
+        int transferSize = NumUtil.log2Ceil(srcSize / 8);
+        loadStoreInstruction(rt, address, generalFromSize(targetSize), Instruction.LDRS, transferSize);
+    }
+
+    /**
+     * Stores register rt into memory pointed by address.
+     *
+     * @param destSize number of bits written to memory. Must be 8, 16, 32 or 64.
+     * @param rt general purpose register. May not be null or stackpointer.
+     * @param address all addressing modes allowed. May not be null.
+     */
+    public void str(int destSize, CiRegister rt, Aarch64Address address) {
+        assert Aarch64.isGeneralPurposeOrZeroReg(rt);
+        assert destSize == 8 || destSize == 16 || destSize == 32 || destSize == 64;
+        int transferSize = NumUtil.log2Ceil(destSize / 8);
+        loadStoreInstruction(rt, address, InstructionType.General64, Instruction.STR, transferSize);
+    }
+
+    private void loadStoreInstruction(CiRegister reg, Aarch64Address address, InstructionType type,
+                                      Instruction instr, int log2TransferSize) {
+        assert log2TransferSize >= 0 && log2TransferSize < 4;
+        int transferSizeEncoding = log2TransferSize << LoadStoreTransferSizeOffset;
+        int is32Bit = type.width == 32 ? 1 << ImmediateSizeOffset : 0;
+        int isFloat = !type.isGeneral ? 1 << LoadStoreFpFlagOffset : 0;
+        int memop = instr.encoding |
+                transferSizeEncoding |
+                is32Bit |
+                isFloat |
+                rt(reg);
+        switch (address.getAddressingMode()) {
+        case IMMEDIATE_SCALED:
+            emitInt(memop |
+                    LoadStoreScaledOp |
+                    address.getImmediate() << LoadStoreScaledImmOffset |
+                    rs1(address.getBase()));
+            break;
+        case IMMEDIATE_UNSCALED:
+            emitInt(memop |
+                    LoadStoreUnscaledOp |
+                    address.getImmediate() << LoadStoreUnscaledImmOffset |
+                    rs1(address.getBase()));
+            break;
+        case BASE_REGISTER_ONLY:
+            emitInt(memop | LoadStoreScaledOp | rs1(address.getBase()));
+            break;
+        case EXTENDED_REGISTER_OFFSET:
+        case REGISTER_OFFSET:
+            ExtendType extendType = address.getAddressingMode() == AddressingMode.EXTENDED_REGISTER_OFFSET ?
+                    address.getExtendType() : ExtendType.UXTX;
+            boolean shouldScale = address.isScaled() && log2TransferSize != 0;
+            emitInt(memop |
+                    LoadStoreRegisterOp |
+                    rs2(address.getOffset()) |
+                    extendType.encoding << ExtendTypeOffset |
+                    (shouldScale ? 1 : 0) << LoadStoreScaledRegOffset |
+                    rs1(address.getBase()));
+            break;
+        case PC_LITERAL:
+            assert log2TransferSize >= 2 : "PC literal loads only works for load/stores of 32-bit and larger";
+            transferSizeEncoding = (log2TransferSize - 2) << LoadStoreTransferSizeOffset;
+            emitInt(transferSizeEncoding |
+                    isFloat |
+                    LoadLiteralOp |
+                    rd(reg) |
+                    address.getImmediate() << LoadLiteralImmeOffset);
+            break;
+        case IMMEDIATE_POST_INDEXED:
+            emitInt(memop |
+                    LoadStorePostIndexedOp |
+                    rs1(address.getBase()) |
+                    address.getImmediate() << LoadStoreIndexedImmOffset);
+            break;
+        case IMMEDIATE_PRE_INDEXED:
+            emitInt(memop |
+                    LoadStorePreIndexedOp |
+                    rs1(address.getBase()) |
+                    address.getImmediate() << LoadStoreIndexedImmOffset);
+            break;
+        default:
+            throw new Error("should not reach here");
+        }
+    }
+
+    /* Load-Store Exclusive (5.3.6) */
+
+    /**
+     * Load address exclusive. Natural alignment of address is required.
+     *
+     * @param size size of memory read in bits. Must be 8, 16, 32 or 64.
+     * @param rt general purpose register. May not be null or stackpointer.
+     * @param address Has to be {@link com.oracle.graal.asm.armv8.ARMv8Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
+     *                May not be null.
+     */
+    public void ldxr(int size, CiRegister rt, Aarch64Address address) {
+        assert size == 8 || size == 16 || size == 32 || size == 64;
+        int transferSize = NumUtil.log2Ceil(size / 8);
+        exclusiveLoadInstruction(rt, address, transferSize, Instruction.LDXR);
+    }
+
+    /**
+     * Store address exclusive. Natural alignment of address is required. rs and rt may not point to the same register.
+     *
+     * @param size size of bits written to memory. Must be 8, 16, 32 or 64.
+     * @param rs general purpose register. Set to exclusive access status. 0 means success, everything else failure.
+     *           May not be null, or stackpointer.
+     * @param rt general purpose register. May not be null or stackpointer.
+     * @param address Has to be {@link com.oracle.graal.asm.armv8.ARMv8Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
+     *                May not be null.
+     */
+    public void stxr(int size, CiRegister rs, CiRegister rt, Aarch64Address address) {
+        assert size == 8 || size == 16 || size == 32 || size == 64;
+        int transferSize = NumUtil.log2Ceil(size / 8);
+        exclusiveStoreInstruction(rs, rt, address, transferSize, Instruction.STXR);
+    }
+
+    /* Load-Acquire/Store-Release (5.3.7) */
+
+    /* non exclusive access */
+    /**
+     * Load acquire. Natural alignment of address is required.
+     *
+     * @param size size of memory read in bits. Must be 8, 16, 32 or 64.
+     * @param rt general purpose register. May not be null or stackpointer.
+     * @param address Has to be {@link com.oracle.graal.asm.armv8.ARMv8Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
+     *                May not be null.
+     */
+    public void ldar(int size, CiRegister rt, Aarch64Address address) {
+        assert size == 8 || size == 16 || size == 32 || size == 64;
+        int transferSize = NumUtil.log2Ceil(size / 8);
+        exclusiveLoadInstruction(rt, address, transferSize, Instruction.LDAR);
+    }
+
+    /**
+     * Store-release. Natural alignment of address is required.
+     *
+     * @param size size of bits written to memory. Must be 8, 16, 32 or 64.
+     * @param rt general purpose register. May not be null or stackpointer.
+     * @param address Has to be {@link com.oracle.graal.asm.armv8.ARMv8Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
+     *                May not be null.
+     */
+    public void stlr(int size, CiRegister rt, Aarch64Address address) {
+        assert size == 8 || size == 16 || size == 32 || size == 64;
+        int transferSize = NumUtil.log2Ceil(size / 8);
+        // Hack: Passing the zero-register means it is ignored when building the encoding.
+        exclusiveStoreInstruction(Aarch64.r0, rt, address, transferSize, Instruction.STLR);
+    }
+
+    /* exclusive access */
+    /**
+     * Load acquire exclusive. Natural alignment of address is required.
+     *
+     * @param size size of memory read in bits. Must be 8, 16, 32 or 64.
+     * @param rt general purpose register. May not be null or stackpointer.
+     * @param address Has to be {@link com.oracle.graal.asm.armv8.ARMv8Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
+     *                May not be null.
+     */
+    public void ldaxr(int size, CiRegister rt, Aarch64Address address) {
+        assert size == 8 || size == 16 || size == 32 || size == 64;
+        int transferSize = NumUtil.log2Ceil(size / 8);
+        exclusiveLoadInstruction(rt, address, transferSize, Instruction.LDAXR);
+    }
+
+    /**
+     * Store-release exclusive. Natural alignment of address is required. rs and rt may not point to the same register.
+     *
+     * @param size size of bits written to memory. Must be 8, 16, 32 or 64.
+     * @param rs general purpose register. Set to exclusive access status. 0 means success, everything else failure. May not be null, or stackpointer.
+     * @param rt general purpose register. May not be null or stackpointer.
+     * @param address Has to be {@link com.oracle.graal.asm.armv8.ARMv8Address.AddressingMode#BASE_REGISTER_ONLY BASE_REGISTER_ONLY}.
+     *                May not be null.
+     */
+    public void stlxr(int size, CiRegister rs, CiRegister rt, Aarch64Address address) {
+        assert size == 8 || size == 16 || size == 32 || size == 64;
+        int transferSize = NumUtil.log2Ceil(size / 8);
+        exclusiveStoreInstruction(rs, rt, address, transferSize, Instruction.STLXR);
+    }
+
+    private void exclusiveLoadInstruction(CiRegister reg, Aarch64Address address,
+                                          int log2TransferSize, Instruction instr) {
+        assert address.getAddressingMode() == AddressingMode.BASE_REGISTER_ONLY;
+        assert log2TransferSize >= 0 && log2TransferSize < 4;
+        assert Aarch64.isGeneralPurposeOrZeroReg(reg);
+        int transferSizeEncoding = log2TransferSize << LoadStoreTransferSizeOffset;
+        int instrEncoding = instr.encoding;
+        emitInt(transferSizeEncoding |
+                instrEncoding |
+                1 << ImmediateSizeOffset |
+                rt(reg) |
+                rs1(address.getBase()));
+    }
+
+    /**
+     * Stores data from rt into address and sets rs to the returned exclusive access status.
+     *
+     * @param rs               general purpose register into which the exclusive access status is written. May not be null.
+     * @param rt               general purpose register containing data to be written to memory at address. May not be null
+     * @param address          Address in base register without offset form specifying where rt is written
+     *                         to.
+     * @param log2TransferSize log2Ceil of memory transfer size.
+     */
+    private void exclusiveStoreInstruction(CiRegister rs, CiRegister rt,
+                                           Aarch64Address address, int log2TransferSize,
+                                           Instruction instr) {
+        assert address.getAddressingMode() == AddressingMode.BASE_REGISTER_ONLY;
+        assert log2TransferSize >= 0 && log2TransferSize < 4;
+        assert Aarch64.isGeneralPurposeOrZeroReg(rt) && Aarch64.isGeneralPurposeOrZeroReg(rs) && !rs.equals(rt);
+        int transferSizeEncoding = log2TransferSize << LoadStoreTransferSizeOffset;
+        int instrEncoding = instr.encoding;
+        emitInt(transferSizeEncoding | instrEncoding | rs2(rs) | rt(rt) |
+                rs1(address.getBase()));
+    }
+
+    /* PC-relative Address Calculation (5.4.4) */
+
+    /**
+     * Address of page: sign extends 21-bit offset, shifts if left by 12 and adds it to the value of the PC with
+     * its bottom 12-bits cleared, writing the result to dst.
+     *
+     * @param dst general purpose register. May not be null, zero-register or stackpointer.
+     * @param imm Signed 33-bit offset with lower 12bits clear.
+     */
+//    public void adrp(Register dst, long imm) {
+//        assert (imm & NumUtil.getNbitNumberInt(12)) == 0 : "Lower 12-bit of immediate must be zero.";
+//        assert NumUtil.isSignedNbit(33, imm);
+//        addressCalculationInstruction(dst, (int) (imm >>> 12), Instruction.ADRP);
 //    }
 
+    /**
+     * Adds a 21-bit signed offset to the program counter and writes the result to dst.
+     *
+     * @param dst general purpose register. May not be null, zero-register or stackpointer.
+     * @param imm21 Signed 21-bit offset.
+     */
+    public void adr(CiRegister dst, int imm21) {
+        addressCalculationInstruction(dst, imm21, Instruction.ADR);
+    }
 
+    private void addressCalculationInstruction(CiRegister dst, int imm21, Instruction instr) {
+        assert Aarch64.isGeneralPurposeReg(dst);
+        int instrEncoding = instr.encoding | PcRelImmOp;
+        emitInt(instrEncoding |
+                rd(dst) |
+                getPcRelativeImmEncoding(imm21));
+    }
+
+    private static int getPcRelativeImmEncoding(int imm21) {
+        assert NumUtil.isSignedNbit(21, imm21);
+        int imm = imm21 & NumUtil.getNbitNumberInt(21);
+        // higher 19 bit
+        int immHi = (imm >> 2) << PcRelImmHiOffset;
+        // lower 2 bit
+        int immLo = (imm & 0x3) << PcRelImmLoOffset;
+        return immHi | immLo;
+    }
 
     /* Arithmetic (Immediate) (5.4.1) */
 
@@ -906,6 +1236,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param imm must be in range 0 to size - 1.
      */
     public void adds(int size, CiRegister dst, CiRegister src1, CiRegister src2, ShiftType shiftType, int imm) {
+        // TODO how to access cpsr in unit test
         addSubShiftedInstruction(dst, src1, src2, shiftType, imm, generalFromSize(size), Instruction.ADDS);
     }
 
@@ -934,6 +1265,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param imm must be in range 0 to size - 1.
      */
     public void subs(int size, CiRegister dst, CiRegister src1, CiRegister src2, ShiftType shiftType, int imm) {
+        // TODO how to access cpsr in unit test
         addSubShiftedInstruction(dst, src1, src2, shiftType, imm, generalFromSize(size), Instruction.SUBS);
     }
 
@@ -980,6 +1312,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param shiftAmt must be in range 0 to 4.
      */
     public void adds(int size, CiRegister dst, CiRegister src1, CiRegister src2, ExtendType extendType, int shiftAmt) {
+        //TODO unit test CPSR
         assert all(IS_GENERAL_PURPOSE_OR_ZERO_REG, dst, src2) && Aarch64.isGeneralPurposeOrSpReg(src1);
         addSubExtendedInstruction(dst, src1, src2, extendType, shiftAmt, generalFromSize(size), Instruction.ADDS);
     }
@@ -1010,6 +1343,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param shiftAmt must be in range 0 to 4.
      */
     public void subs(int size, CiRegister dst, CiRegister src1, CiRegister src2, ExtendType extendType, int shiftAmt) {
+        //TODO unit test CPSR
         assert all(IS_GENERAL_PURPOSE_OR_ZERO_REG, dst, src2) && Aarch64.isGeneralPurposeOrSpReg(src1);
         addSubExtendedInstruction(dst, src1, src2, extendType, shiftAmt, generalFromSize(size), Instruction.SUBS);
     }
@@ -1392,52 +1726,36 @@ public class Aarch64Assembler extends AbstractAssembler {
                 rs1(src));
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     /* Floating point operations */
 
-//    /* Load-Store Single FP register (5.7.1.1) */
-//    /**
-//     * Floating point load.
-//     *
-//     * @param size number of bits read from memory into rt. Must be 32 or 64.
-//     * @param rt floating point register. May not be null.
-//     * @param address all addressing modes allowed. May not be null.
-//     */
-//    public void fldr(int size, CiRegister rt, ARMv8Address address) {
-//        assert Aarch64.isFpuReg(rt);
-//        assert size == 32 || size == 64;
-//        int transferSize = NumUtil.log2Ceil(size / 8);
-//        loadStoreInstruction(rt, address, InstructionType.FP32, Instruction.LDR, transferSize);
-//    }
-//
-//    /**
-//     * Floating point store.
-//     *
-//     * @param size number of bits read from memory into rt. Must be 32 or 64.
-//     * @param rt floating point register. May not be null.
-//     * @param address all addressing modes allowed. May not be null.
-//     */
-//    public void fstr(int size, CiRegister rt, ARMv8Address address) {
-//        assert Aarch64.isFpuReg(rt);
-//        assert size == 32 || size == 64;
-//        int transferSize = NumUtil.log2Ceil(size / 8);
-//        loadStoreInstruction(rt, address, InstructionType.FP64, Instruction.STR, transferSize);
-//    }
+    /* Load-Store Single FP register (5.7.1.1) */
+    /**
+     * Floating point load.
+     *
+     * @param size number of bits read from memory into rt. Must be 32 or 64.
+     * @param rt floating point register. May not be null.
+     * @param address all addressing modes allowed. May not be null.
+     */
+    public void fldr(int size, CiRegister rt, Aarch64Address address) {
+        assert Aarch64.isFpuReg(rt);
+        assert size == 32 || size == 64;
+        int transferSize = NumUtil.log2Ceil(size / 8);
+        loadStoreInstruction(rt, address, InstructionType.FP32, Instruction.LDR, transferSize);
+    }
+
+    /**
+     * Floating point store.
+     *
+     * @param size number of bits read from memory into rt. Must be 32 or 64.
+     * @param rt floating point register. May not be null.
+     * @param address all addressing modes allowed. May not be null.
+     */
+    public void fstr(int size, CiRegister rt, Aarch64Address address) {
+        assert Aarch64.isFpuReg(rt);
+        assert size == 32 || size == 64;
+        int transferSize = NumUtil.log2Ceil(size / 8);
+        loadStoreInstruction(rt, address, InstructionType.FP64, Instruction.STR, transferSize);
+    }
 
     /* Floating-point Move (register) (5.7.2) */
 
@@ -2010,24 +2328,9 @@ public class Aarch64Assembler extends AbstractAssembler {
 //                // Void functions use a result of Kind.Illegal apparently
 //                return 0;
 //            default:
-//                throw GraalInternalError.shouldNotReachHere("Illegal kind");
+//                throw new Error("should not reach here!!! Illegal kind");
 //        }
 //    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     /* Helper functions */
     private static int rd(CiRegister reg) {
@@ -2078,4 +2381,11 @@ public class Aarch64Assembler extends AbstractAssembler {
         }
     };
 
+    public final void movImmediate(CiRegister dst, int imm16) {
+        int instruction = 0x52800000;
+        instruction |= 1 << 31;
+        instruction |= (imm16 & 0xffff) << 5;
+        instruction |= (dst.encoding & 0x1f);
+        emitInt(instruction);
+    }
 }
