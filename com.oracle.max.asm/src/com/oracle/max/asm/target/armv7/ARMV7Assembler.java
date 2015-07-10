@@ -1332,9 +1332,15 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void pause() {
         // YIELD instruction hint, intended to improve spinlock performance
-        int instruction = 0x0320f001;
+        /*int instruction = 0x0320f001;
         instruction |= (ConditionFlag.Always.value() << 28);
         emitInt(instruction);
+	*/
+        push(ConditionFlag.Always, 1|2|4|128 );
+        mov32BitConstant(ARMV7.r7,158); // sched_yield
+        emitInt(0xef000000); // replaced with svc 0
+        pop(ConditionFlag.Always, 1|2|4|128 );
+
     }
 
     public final void int3() {
@@ -1371,14 +1377,17 @@ start_label:
 end_label:  
 */
 	assert(startAddress.encoding == ARMV7.r12.encoding);
-        push(ConditionFlag.Always, 1|2|4|128 );
+        push(ConditionFlag.Always, 1|2|4|8|128 );
         mov(ConditionFlag.Always, false, ARMV7.r0, scratchRegister);
 	mov32BitConstant(ARMV7.r1,bytes);
         eor(ConditionFlag.Always, false, ARMV7.r2, ARMV7.r2, ARMV7.r2, 0, 0);
 	mov32BitConstant(ARMV7.r7,0x000f0002);
 	addlsl(ConditionFlag.Always,false,ARMV7.r1,ARMV7.r1,ARMV7.r0,0);
-	emitInt(0xef000001); // replaced with svc 0
-        pop(ConditionFlag.Always, 1|2|4|128 );
+	emitInt(0xef000000); // replaced with svc 0
+        pop(ConditionFlag.Always, 1|2|4|8|128 );
+	//emitInt(0xf57ff06f);
+	//pause();// try a sched_yield here as well.
+	
     }
 
     public final void hlt() {

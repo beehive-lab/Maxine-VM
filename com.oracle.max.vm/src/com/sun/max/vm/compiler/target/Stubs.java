@@ -393,7 +393,7 @@ public class Stubs {
     private static Address resolveInterfaceCall(Object receiver, int iIndex, Pointer pcInCaller) {
         // pcInCaller must be dealt with before any safepoint
         if (VMOptions.verboseOption.verboseCompilation) {
-            Log.print("pcInCaller");
+            Log.print("STUBS:resolveInterfaceCall");
             Log.println(pcInCaller);
 
         }
@@ -495,6 +495,13 @@ public class Stubs {
                 asm.nop();
             }
             // EXPERIMENT comment out asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
+	    asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
+		
+
+	    //Label forever = new Label();
+            //asm.bind(forever);
+            //asm.mov32BitConstant(ARMV7.r12, 0x11111111);
+            //asm.branch(forever);
 
             // now allocate the frame for this method
             asm.subq(ARMV7.r13, frameSize);
@@ -525,11 +532,8 @@ public class Stubs {
             // load the index into the second arg register
             asm.mov32BitConstant(args[1].asRegister(), index);
 
-            // load the return address into the third arg register
-            // APN shouldnt this be LR r13 ...
-            // so if we're constructing an address then please move it back to LR R13
-            // NOT yet done.
             if (!isInterface) asm.mov32BitConstant(ARMV7.r12, 0xbeefbeef);// debugging resolveVirtualCall
+            // load the return address into the third arg register
 
             // we will need to test this carefully
             //asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize));
@@ -556,7 +560,8 @@ public class Stubs {
             // this may well be broken !!!!!!
 
             CiRegister returnReg = registerConfig.getReturnRegister(WordUtil.archKind());
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize - 4));
+	    //asm.addq(returnReg,4); // BECAUSE IT IS NOT A CALL/BLX AND THE RETURN REGI IS ALREADY PUSHED TO THE STACK
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize-4    ));
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize - 8), returnReg);
             asm.str(ARMV7Assembler.ConditionFlag.Always, returnReg, asm.scratchRegister, 0);
 
@@ -566,9 +571,21 @@ public class Stubs {
 
             // Adjust RSP as mentioned above and do the 'ret' that lands us in the
             // trampolined-to method.
-            asm.addq(ARMV7.r13, frameSize - 4);
+            asm.addq(ARMV7.r13, frameSize-4  ); // points at entry point of trampolined method`
 
-            asm.ret(0);
+	    //Label forever2 = new Label();
+            //asm.bind(forever2);
+            //asm.mov32BitConstant(ARMV7.r12, 0x22222222);
+            //asm.branch(forever2);
+            //asm.ret(0);
+	    //asm.ret(0);
+	    asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), 4));
+	    asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r14, asm.scratchRegister,0); // set up R14 as if it were a blx.
+	    asm.addq(ARMV7.r13,8);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), -8));
+	    asm.ldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r15,ARMV7.r12,0); 
+
+		
             // APN ok do I need to do a return or can I merely set the PC to the correct instruction.
 
             byte[] code = asm.codeBuffer.close(true);
@@ -775,6 +792,9 @@ public class Stubs {
             // undo the frame
             asm.addq(ARMV7.r13, frameSize);
 
+	    // SAVe r8?
+	    asm.push(ARMV7Assembler.ConditionFlag.Always, 1<< 8);
+
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, callSite, asm.scratchRegister, 0);
             asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE + 12);
@@ -782,9 +802,17 @@ public class Stubs {
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue()), callSite);
 
             // ok so this should patch the call site address?
+	    /*
+	    THIS CODE PATCHES AN ADDRESS ON THE STACK THAT IS THE TARGET OF THE MOVW MOT ADD BLX CALL SEQUENCE, SO WE ARE OK TO POP
+	    IT OFF THE STACK AND THEN THE BLX IS OK
+
+	    NOTE FOR genDyanmicTrampoline,  WE MUST FAKE THE CORRECT $LR AND THEN DO THE RET, AS WE DO ***not**** ACTUALLY DO A BLX TO GET TO THE
+	   ENTRY POINT
+	    */
             asm.strImmediate(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, callSite, ARMV7.r12, 0);
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, callSite);
-            asm.flushicache(ARMV7.r12, 24);
+            //asm.flushicache(ARMV7.r12, 24);
+	    asm.pop(ARMV7Assembler.ConditionFlag.Always, 1<< 8);
             asm.ret(0); // ret(0) is a C3 in X86
 
             String stubName = "strampoline";
@@ -1199,6 +1227,10 @@ public class Stubs {
             ClassMethodActor callee = unroll.classMethodActor;
             asm.call();
             int callSize = asm.codeBuffer.position() - callPos;
+	    Label forever = new Label();
+            asm.bind(forever);
+            asm.mov32BitConstant(ARMV7.r12, 0x50115011);
+            asm.branch(forever);
 
             // Should never reach here
             asm.hlt();
@@ -1822,6 +1854,11 @@ public class Stubs {
 
             // should never reach here
             asm.int3();
+	    Label forever = new Label();
+            asm.bind(forever);
+            asm.mov32BitConstant(ARMV7.r12, 0xc5a0c5a0);
+            asm.branch(forever);
+
 
             String stubName = runtimeRoutineName + "StubWithCSA";
             byte[] code = asm.codeBuffer.close(true);
@@ -1937,6 +1974,11 @@ public class Stubs {
 
             // Should never reach here
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
+	    Label forever = new Label();
+            asm.bind(forever);
+            asm.mov32BitConstant(ARMV7.r12, 0x55555555);
+            asm.branch(forever);
+
             asm.hlt();
 
             String stubName = name + "Stub";

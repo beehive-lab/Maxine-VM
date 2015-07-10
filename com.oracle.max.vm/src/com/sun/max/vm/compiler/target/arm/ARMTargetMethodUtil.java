@@ -163,24 +163,26 @@ public final class ARMTargetMethodUtil {
                 disp32 = (callSitePointer.readByte(4 + 0) & 0xff) | ((callSitePointer.readByte(4 + 1) & 0xf) << 8) | ((callSitePointer.readByte(4 + 2) & 0xf) << 12);
                 disp32 = disp32 << 16;
                 disp32 += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
-                if (VMOptions.verboseOption.verboseCompilation) {
+                /*if (VMOptions.verboseOption.verboseCompilation) {
                     Log.println(disp32);
                 }
+		*/
             }
             if (VMOptions.verboseOption.verboseCompilation) {
 
-                Log.print("READCALL32TARGET ");
+                /*Log.print("READCALL32TARGET ");
                 Log.print(disp32);
                 Log.print(" ");
                 Log.print(tm.toString());
                 Log.print(" CALLPOS ");
                 Log.println(callPos);
                 Log.println(callSitePointer);
+		*/
             }
 
             assert (disp32 != 0);
             if (VMOptions.verboseOption.verboseCompilation) {
-                Log.println("POTENTIALLy neeed additional checks for DEOPT readCall32Target");
+                //Log.println("POTENTIALLy neeed additional checks for DEOPT readCall32Target");
             }
             /*assert callSitePointer.readByte(0) == (byte) RIP_CALL
                 // deopt might replace the first call in a method with a jump (redirection)
@@ -226,6 +228,7 @@ public final class ARMTargetMethodUtil {
         //int disp32 = target.toInt() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toInt() ; // APN 16bytes 4 instructions out?
         long disp64 = target.toLong() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toLong(); // APN 16bytes 4 instructions out?
         int disp32 = (int) disp64;
+	/*
         if (VMOptions.verboseOption.verboseCompilation) {
             if (!MaxineVM.isHosted()) {
                 Log.print("CALLER ");
@@ -252,6 +255,7 @@ public final class ARMTargetMethodUtil {
                 Log.println(disp64);
             }
         }
+	*/
         if (disp64 != disp32) {
 
             Log.println("Code displacement out of 32-bit range");
@@ -320,7 +324,7 @@ public final class ARMTargetMethodUtil {
         } else {
             final Pointer callSitePointer = callSite.toPointer();
 
-            if (VMOptions.verboseOption.verboseCompilation) {
+            /*if (VMOptions.verboseOption.verboseCompilation) {
 
                 Log.print("FIXUP CALL SITE ");
                 Log.print(tm.toString());
@@ -331,6 +335,7 @@ public final class ARMTargetMethodUtil {
 
                 Log.println(callSitePointer);
             }
+	    */
             oldDisp32 = 0;
             if (((callSitePointer.readByte(3) & 0xff) == 0xe3) && ((callSitePointer.readByte(4 + 3) & 0xff) == 0xe3)) {
                 // just enough checking to make sure it has been patched before ...
@@ -338,10 +343,11 @@ public final class ARMTargetMethodUtil {
                 oldDisp32 = (callSitePointer.readByte(4 + 0) & 0xff) | ((callSitePointer.readByte(4 + 1) & 0xf) << 8) | ((callSitePointer.readByte(4 + 2) & 0xf) << 12);
                 oldDisp32 = oldDisp32 << 16;
                 oldDisp32 += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
-                if (VMOptions.verboseOption.verboseCompilation) {
+                /*if (VMOptions.verboseOption.verboseCompilation) {
                     Log.print("oldDisp32 ");
                     Log.println(oldDisp32);
                 }
+		*/
             }
             int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
             callSitePointer.writeByte(0, (byte) (instruction & 0xff));
@@ -448,6 +454,10 @@ public final class ARMTargetMethodUtil {
         }
         return false;
     }
+
+
+    @C_FUNCTION
+    public static native void maxine_cacheflush(Pointer start, int  length);
     /**
      * Thread safe patching of the displacement field in a direct call.
      *
@@ -455,7 +465,7 @@ public final class ARMTargetMethodUtil {
      */
     public static CodePointer mtSafePatchCallDisplacement(TargetMethod tm, CodePointer callSite, CodePointer target) {
         if (VMOptions.verboseOption.verboseCompilation) {
-            Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!mtSafePatchCallDisplacement !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            //Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!mtSafePatchCallDisplacement !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
         }
         if (!isPatchableCallSite(callSite)) {
             throw FatalError.unexpected(" invalid patchable call site:  " + callSite.toHexString());
@@ -473,11 +483,11 @@ public final class ARMTargetMethodUtil {
             oldDisp32 += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
             if (VMOptions.verboseOption.verboseCompilation) {
 
-                Log.println(oldDisp32);
+                //Log.println(oldDisp32);
             }
         }
         //int oldDisp32 = callSitePointer.readInt(1);
-        if (VMOptions.verboseOption.verboseCompilation) {
+        /*if (VMOptions.verboseOption.verboseCompilation) {
             Log.print("OLD ");
             Log.println(Integer.toHexString(oldDisp32));
             Log.print("DISP32 ");
@@ -485,6 +495,7 @@ public final class ARMTargetMethodUtil {
             Log.print("DISP64 ");
             Log.println(Long.toHexString(disp64));
         }
+	*/
         if (oldDisp32 != disp64) {
             synchronized (PatchingLock) {
                 // Just to prevent concurrent writing and invalidation to the same instruction cache line
@@ -510,6 +521,7 @@ public final class ARMTargetMethodUtil {
                 callSitePointer.writeByte(13, (byte) ((instruction >> 8) & 0xff));
                 callSitePointer.writeByte(14, (byte) ((instruction >> 16) & 0xff));
                 callSitePointer.writeByte(15, (byte) ((instruction >> 24) & 0xff));
+		maxine_cacheflush(callSitePointer,24);
             }
         }
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);

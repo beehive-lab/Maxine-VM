@@ -531,7 +531,15 @@ void *native_properties(void) {
 #endif
     return &nativeProperties;
 }
+void maxine_cacheflush(char *start, int length) {
+#ifdef arm
+	char * end = start + length;
+	//printf("FLUSHED CACHE \n");
+	__clear_cache(start, end);
 
+#endif
+
+}
 float native_parseFloat(const char* cstring, float nan) {
 #if os_MAXVE
     // TODO

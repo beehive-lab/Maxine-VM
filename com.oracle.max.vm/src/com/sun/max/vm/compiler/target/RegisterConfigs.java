@@ -164,9 +164,9 @@ public class RegisterConfigs {
                 CiRegisterConfig trapStub = new CiRegisterConfig(standard, ARMTrapFrameAccess.CSL);
 
                 CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 4, r0, r1, r2, r3, r4, r5, r6, r7,
-                                com.oracle.max.asm.target.armv7.ARMV7.r8, com.oracle.max.asm.target.armv7.ARMV7.r9, com.oracle.max.asm.target.armv7.ARMV7.r11, standard.getScratchRegister(),
+                                /*com.oracle.max.asm.target.armv7.ARMV7.r8,*/ com.oracle.max.asm.target.armv7.ARMV7.r9, com.oracle.max.asm.target.armv7.ARMV7.r11, standard.getScratchRegister(),
                                 ARMV7.r14, ARMV7.s0, ARMV7.s1, ARMV7.s2, ARMV7.s3, ARMV7.s4, ARMV7.s5, ARMV7.s6, ARMV7.s7, ARMV7.s8, ARMV7.s9, ARMV7.s10, 
-				ARMV7.s11, ARMV7.s12, ARMV7.s13, ARMV7.s14, ARMV7.s15, ARMV7.r8 )); // ARMV7.r8 added on end for resolveVirtualCall see genDynamicTrampoline
+				ARMV7.s11, ARMV7.s12, ARMV7.s13, ARMV7.s14, ARMV7.s15, com.oracle.max.asm.target.armv7.ARMV7.r8 )); // ARMV7.r8 added on end for resolveVirtualCall see genDynamicTrampoline
 
                 CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 4, r4, r5, r6, r7, com.oracle.max.asm.target.armv7.ARMV7.r8,
                                 com.oracle.max.asm.target.armv7.ARMV7.r9, com.oracle.max.asm.target.armv7.ARMV7.r10, com.oracle.max.asm.target.armv7.ARMV7.r11));

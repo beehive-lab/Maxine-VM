@@ -116,7 +116,7 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
 
     @Override
     public Pointer getSP(Pointer trapFrame) {
-        return trapFrame.plus(vm().stubs.trapStub().frameSize() + 8);
+        return trapFrame.plus(vm().stubs.trapStub().frameSize() + 4);
     }
 
     @Override
