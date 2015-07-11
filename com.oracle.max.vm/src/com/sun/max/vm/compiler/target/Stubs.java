@@ -350,13 +350,13 @@ public class Stubs {
     private static Address resolveVirtualCall(Object receiver, int vTableIndex, Pointer pcInCaller) {
         // pcInCaller must be dealt with before any safepoint
         if (VMOptions.verboseOption.verboseCompilation) {
-            Log.println("STUBS:resolveVirtualCall");
+            //Log.println("STUBS:resolveVirtualCall");
         }
         CodePointer cpCallSite = CodePointer.from(pcInCaller);
-        if (VMOptions.verboseOption.verboseCompilation) {
+        /*if (VMOptions.verboseOption.verboseCompilation) {
             Log.print("CALLSITE ");
             Log.println(cpCallSite);
-        }
+        }*/
         final TargetMethod caller = cpCallSite.toTargetMethod();
 
         final Hub hub = ObjectAccess.readHub(receiver);
@@ -365,7 +365,7 @@ public class Stubs {
             throw new AbstractMethodError();
         }
         if (VMOptions.verboseOption.verboseCompilation) {
-            Log.println(selectedCallee);
+            //Log.println(selectedCallee);
         }
         final TargetMethod selectedCalleeTargetMethod = selectedCallee.makeTargetMethod(caller);
         FatalError.check(selectedCalleeTargetMethod.invalidated() == null, "resolved virtual method must not be invalidated");
@@ -392,11 +392,12 @@ public class Stubs {
      */
     private static Address resolveInterfaceCall(Object receiver, int iIndex, Pointer pcInCaller) {
         // pcInCaller must be dealt with before any safepoint
-        if (VMOptions.verboseOption.verboseCompilation) {
+        /*if (VMOptions.verboseOption.verboseCompilation) {
             Log.print("STUBS:resolveInterfaceCall");
             Log.println(pcInCaller);
 
         }
+	*/
 
         CodePointer cpCallSite = CodePointer.from(pcInCaller);
         final TargetMethod caller = cpCallSite.toTargetMethod();
@@ -599,30 +600,30 @@ public class Stubs {
     @PLATFORM(cpu = "armv7")
     private static void patchStaticTrampolineCallSiteARMV7(Pointer callSite) {
         if (VMOptions.verboseOption.verboseCompilation) {
-            Log.println("ENTER-ARM patchStaticTrampoline");
+            //Log.println("ENTER-ARM patchStaticTrampoline");
         }
         CodePointer cpCallSite = CodePointer.from(callSite);
         if (VMOptions.verboseOption.verboseCompilation) {
-            Log.print("TRAMPOLINE CALL SITE ");
-            Log.println(cpCallSite);
+            //Log.print("TRAMPOLINE CALL SITE ");
+            //Log.println(cpCallSite);
         }
 
         final TargetMethod caller = cpCallSite.toTargetMethod();
         if (VMOptions.verboseOption.verboseCompilation) {
-            Log.print("TRAMPOLINE CALLER ");
-            Log.println(caller.toString());
+            //Log.print("TRAMPOLINE CALLER ");
+            //Log.println(caller.toString());
         }
 
         final ClassMethodActor callee = caller.callSiteToCallee(cpCallSite);
         if (VMOptions.verboseOption.verboseCompilation) {
-            Log.print("TRAMPOLINE CALLEE ");
-            Log.println(callee.toString());
+            //Log.print("TRAMPOLINE CALLEE ");
+            //Log.println(callee.toString());
         }
 
         final CodePointer calleeEntryPoint = callee.makeTargetMethod(caller).getEntryPoint(caller.callEntryPoint);
         if (VMOptions.verboseOption.verboseCompilation) {
-            Log.print("TRAMPOLINE ENTRYPOINT ");
-            Log.println(calleeEntryPoint);
+            //Log.print("TRAMPOLINE ENTRYPOINT ");
+            //Log.println(calleeEntryPoint);
         }
 
         ARMTargetMethodUtil.mtSafePatchCallDisplacement(caller, cpCallSite, calleeEntryPoint);
@@ -630,13 +631,13 @@ public class Stubs {
         // remember calls from boot code region to baseline code cache
         if (Code.bootCodeRegion().contains(cpCallSite.toAddress()) && Code.getCodeManager().getRuntimeBaselineCodeRegion().contains(calleeEntryPoint.toAddress())) {
 		 if (VMOptions.verboseOption.verboseCompilation) {
-            		Log.println("TRAMPOLINE recordBootToBaseline");
+            		//Log.println("TRAMPOLINE recordBootToBaseline");
         	}
 
             CodeManager.recordBootToBaselineCaller(caller);
         }
         if (VMOptions.verboseOption.verboseCompilation) {
-            Log.println("EXIT-ARM patchStaticTrampoline");
+            //Log.println("EXIT-ARM patchStaticTrampoline");
         }
     }
 

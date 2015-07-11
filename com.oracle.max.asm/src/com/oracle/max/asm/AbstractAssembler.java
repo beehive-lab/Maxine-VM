@@ -65,15 +65,6 @@ public abstract class AbstractAssembler {
     }
 
     protected final void emitInt(int x) {
-	assert(x != 0x96d2aedc);
-	assert(x != 0x96d2af80);
-	assert(x != 0x96d28df8);
-	assert(x != 0x108eac90);
-	assert(x != 0x96d2d054);
-	assert(x != 0x107c4160);
-	assert(x != 0x107bbae0);
-	assert(x != 0x101f9f68);
-	assert(x != 0x96d2aef4);
         codeBuffer.emitInt(x);
     }
 

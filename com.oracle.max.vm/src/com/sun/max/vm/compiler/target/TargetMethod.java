@@ -1009,7 +1009,7 @@ public abstract class TargetMethod extends MemoryRegion {
                     final TargetMethod callee = getTargetMethod(currentDirectCallee);
                     if (callee == null || (!Code.bootCodeRegion().contains(callee.codeStart) && !(callee instanceof Adapter))) {
                         linkedAll = false;
-                        if (VMOptions.verboseOption.verboseCompilation) {
+                        /*if (VMOptions.verboseOption.verboseCompilation) {
                             if (callee == null) Log.println("CALEENULL");
                             else {
                                 Log.print("CALLEENONULL ");
@@ -1018,11 +1018,11 @@ public abstract class TargetMethod extends MemoryRegion {
                                 Log.println(callee.start());
                             }
                             Log.println("PATCHSTATIC");
-                        }
+                        }*/
                         patchStaticTrampoline(safepointIndex, offset);
                     } else {
                         int callPos = safepoints.causePosAt(safepointIndex);
-                        if (VMOptions.verboseOption.verboseCompilation) {
+                        /*if (VMOptions.verboseOption.verboseCompilation) {
                             if (callee == null) Log.println("CALEENULL");
                             else {
                                 Log.print("CALLEENONULL ");
@@ -1036,7 +1036,7 @@ public abstract class TargetMethod extends MemoryRegion {
                             Log.println(callee.codeStart());
                             Log.print("START ");
                             Log.println(callee.start());
-                        }
+                        }*/
                         fixupCallSite(callPos, callee.codeAt(offset));
                     }
                 }

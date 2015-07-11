@@ -510,7 +510,7 @@ public class CompilationBroker {
                 reason = null;
                 compiler = null;
                 if (VMOptions.verboseOption.verboseCompilation) {
-                    Log.println("attempting to set compiler as " + compilerName);
+                    //Log.println("attempting to set compiler as " + compilerName);
                 }
                 if (compilerName != null) {
                     if (optimizingCompiler != null && optimizingCompiler.matches(compilerName)) {

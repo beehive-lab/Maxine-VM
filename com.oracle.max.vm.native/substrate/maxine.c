@@ -535,7 +535,14 @@ void maxine_cacheflush(char *start, int length) {
 #ifdef arm
 	char * end = start + length;
 	//printf("FLUSHED CACHE \n");
+	asm volatile("isb ");
+	asm volatile("dsb ");
+	asm volatile("dmb ");
 	__clear_cache(start, end);
+	asm volatile("isb ");
+	asm volatile("dsb ");
+	asm volatile("dmb ");
+
 
 #endif
 

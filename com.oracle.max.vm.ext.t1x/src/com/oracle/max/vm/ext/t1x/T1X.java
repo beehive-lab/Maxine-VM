@@ -181,7 +181,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
             c = t1x.t1XCompilationFactory.newT1XCompilation(t1x);
             reentrant = true;
             if (VMOptions.verboseOption.verboseCompilation || PrintCompilation) {
-                Log.println("Created temporary compilation object for re-entrant T1X compilation");
+                Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Created temporary compilation object for re-entrant T1X compilation");
             }
         }
 

@@ -1442,13 +1442,16 @@ end_label:
 
     public void membar(int barriers) {
         int instruction = 0xF57FF050;
-        if (target.isMP) {
+        //if (target.isMP) {
             // We only have to handle StoreLoad
-            if (barriers == -1 || ((barriers & STORE_LOAD) != 0)) {
+            //if (barriers == -1 || ((barriers & STORE_LOAD) != 0)) {
                 instruction |= 0xf;
                 emitInt(instruction);
-            }
-        }
+                emitInt(0xf57ff04f); //DSB
+		emitInt(0xf57ff06f); // ISB
+                emitInt(instruction);
+            //}
+        //}
     }
 
     public void enter(short imm16) {
