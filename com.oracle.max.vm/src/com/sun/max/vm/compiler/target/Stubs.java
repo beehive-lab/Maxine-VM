@@ -495,7 +495,6 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
-            // EXPERIMENT comment out asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
 	    asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
 		
 
@@ -519,8 +518,6 @@ public class Stubs {
             if (isHosted() && index == 0) {
                 indexMovInstrPos = asm.codeBuffer.position() - WordWidth.BITS_32.numberOfBytes;
             }
-
-            // APN will need to change some of this as arguments will be in wrong registers?
 
             // save all the callee save registers
             asm.save(csl, frameToCSA);
@@ -582,12 +579,15 @@ public class Stubs {
 	    //asm.ret(0);
 	    asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), 4));
 	    asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r14, asm.scratchRegister,0); // set up R14 as if it were a blx.
-	    asm.addq(ARMV7.r13,8);
+            // the stack slot +4  holds the return address of the caller originially pushed onto the stack
+	    asm.addq(ARMV7.r13,8); // basicall we need to get the stack back to the state where it was
+			// on entry to this method, so that when we LDR R15 then we will 
+			// be able to push the LR back onto the stack etc.
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), -8));
 	    asm.ldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r15,ARMV7.r12,0); 
+	    // essentially the LDR does a jump to the trampolined to method.
 
 		
-            // APN ok do I need to do a return or can I merely set the PC to the correct instruction.
 
             byte[] code = asm.codeBuffer.close(true);
             final Type type = isInterface ? InterfaceTrampoline : VirtualTrampoline;
@@ -794,7 +794,7 @@ public class Stubs {
             asm.addq(ARMV7.r13, frameSize);
 
 	    // SAVe r8?
-	    asm.push(ARMV7Assembler.ConditionFlag.Always, 1<< 8);
+	    //asm.push(ARMV7Assembler.ConditionFlag.Always, 1<< 8);
 
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, callSite, asm.scratchRegister, 0);
@@ -813,7 +813,7 @@ public class Stubs {
             asm.strImmediate(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, callSite, ARMV7.r12, 0);
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, callSite);
             //asm.flushicache(ARMV7.r12, 24);
-	    asm.pop(ARMV7Assembler.ConditionFlag.Always, 1<< 8);
+	    //asm.pop(ARMV7Assembler.ConditionFlag.Always, 1<< 8);
             asm.ret(0); // ret(0) is a C3 in X86
 
             String stubName = "strampoline";

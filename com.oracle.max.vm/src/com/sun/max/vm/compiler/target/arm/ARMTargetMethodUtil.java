@@ -442,7 +442,7 @@ public final class ARMTargetMethodUtil {
                 // full match of add r12,r12,pc
                 if (VMOptions.verboseOption.verboseCompilation) {
 
-                    //Log.println("MATCHED RIP CALL");
+                   Log.println("MATCHED RIP CALL");
                 }
                     return true;
             }
