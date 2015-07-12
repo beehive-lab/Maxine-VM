@@ -350,7 +350,8 @@ public class Stubs {
     private static Address resolveVirtualCall(Object receiver, int vTableIndex, Pointer pcInCaller) {
         // pcInCaller must be dealt with before any safepoint
         if (VMOptions.verboseOption.verboseCompilation) {
-            //Log.println("STUBS:resolveVirtualCall");
+            Log.println("STUBS:resolveVirtualCall");
+	    //Log.println(receiver);
         }
         CodePointer cpCallSite = CodePointer.from(pcInCaller);
         /*if (VMOptions.verboseOption.verboseCompilation) {
@@ -360,6 +361,9 @@ public class Stubs {
         final TargetMethod caller = cpCallSite.toTargetMethod();
 
         final Hub hub = ObjectAccess.readHub(receiver);
+        if (VMOptions.verboseOption.verboseCompilation) {
+		Log.print("HUB ");Log.println(hub);
+	}
         final VirtualMethodActor selectedCallee = hub.classActor.getVirtualMethodActorByVTableIndex(vTableIndex);
         if (selectedCallee.isAbstract()) {
             throw new AbstractMethodError();

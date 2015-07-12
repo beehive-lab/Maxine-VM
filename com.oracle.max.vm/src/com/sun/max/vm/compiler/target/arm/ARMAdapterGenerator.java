@@ -939,6 +939,7 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
                     asm.setUpScratch(new CiAddress(CiKind.Long, ARMV7.r13.asValue(), offset32));     // longs occupy two regists in ARM
                     asm.strd(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0);
                     //asm.movl(new CiAddress(CiKind.Long, ARMV7.r13.asValue(), offset32), reg);  break;
+                    break;
                 case FLOAT:
 		    //assert(reg.number > 15);
                     asm.setUpScratch(new CiAddress(CiKind.Float, ARMV7.r13.asValue(), offset32));
@@ -1006,7 +1007,7 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
     }
 
     protected void stackCopy(ARMV7Assembler asm, Kind kind, int sourceStackOffset, int destStackOffset) {
-	asm.push(ConditionFlag.Always,1<<8|1<<9);
+	//asm.push(ConditionFlag.Always,1<<8|1<<9);
         if (kind.width == WordWidth.BITS_64) {
 	   //asm.movq(scratch, new CiAddress(WordUtil.archKind(), rsp.asValue(), sourceStackOffset));
             //asm.movq(new CiAddress(WordUtil.archKind(), rsp.asValue(), destStackOffset), scratch);
@@ -1024,7 +1025,7 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             asm.str(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
         }
 
-	asm.pop	(ConditionFlag.Always,1<<8|1<<9);
+	//asm.pop	(ConditionFlag.Always,1<<8|1<<9);
     }
 
     protected abstract void adapt(ARMV7Assembler asm, Kind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize);
