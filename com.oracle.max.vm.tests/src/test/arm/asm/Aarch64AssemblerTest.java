@@ -1,12 +1,8 @@
 package test.arm.asm;
 
-import java.util.*;
-
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.aarch64.*;
-import com.oracle.max.asm.target.aarch64.Aarch64Assembler.ExtendType;
-import com.oracle.max.asm.target.aarch64.Aarch64Assembler.ShiftType;
-import com.oracle.max.asm.target.amd64.AMD64Assembler.ConditionFlag;
+
 import com.sun.cri.ci.*;
 import com.sun.max.ide.*;
 
@@ -402,29 +398,52 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //        }
 //        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
 //    }
-
-    /* Bit Operations (5.5.5) */
-
-    public void test_cls() throws Exception {
-        initialiseExpectedValues();
-        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
-        resetIgnoreValues();
-        asm.codeBuffer.reset();
-        asm.movn(VARIANT_64, Aarch64.cpuRegisters[30], 0x0, 0);
-        asm.movz(VARIANT_64, Aarch64.cpuRegisters[10], 0x0, 0);
-
-            asm.cls(VARIANT_64, Aarch64.cpuRegisters[30], Aarch64.cpuRegisters[10]);
-            expectedValues[30] = 63;
-            testValues[30] = true;
-
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-    }
+//
+//    /* Bit Operations (5.5.5) */
+//
+//    public void test_cls() throws Exception {
+//        initialiseExpectedValues();
+//        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
+//        resetIgnoreValues();
+//        asm.codeBuffer.reset();
+//        asm.movn(VARIANT_64, Aarch64.cpuRegisters[30], 0x0, 0);
+//        asm.movz(VARIANT_64, Aarch64.cpuRegisters[10], 0x0, 0);
+//
+//            asm.cls(VARIANT_64, Aarch64.cpuRegisters[30], Aarch64.cpuRegisters[10]);
+//            expectedValues[30] = 63;
+//            testValues[30] = true;
+//
+//        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+//    }
 
     /* Integer Multiply/Divide (5.6) */
 
 
+    /* Floating-point Move (register) (5.7.2) */
+    public void test_fmov() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        asm.codeBuffer.reset();
 
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 10, 0);
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[1], 11, 0);
 
+        asm.fmovCpu2Fpu(VARIANT_64, Aarch64.fpuRegisters[0], Aarch64.cpuRegisters[0]);
+        asm.fabs(VARIANT_64, Aarch64.fpuRegisters[0], Aarch64.fpuRegisters[0]);
+//        asm.fmovCpu2Fpu(VARIANT_64, Aarch64.fpuRegisters[1], Aarch64.cpuRegisters[1]);
+//
+//        asm.fmovFpu2Cpu(VARIANT_64, Aarch64.cpuRegisters[2], Aarch64.fpuRegisters[0]);
+//        asm.fmovFpu2Cpu(VARIANT_64, Aarch64.cpuRegisters[3], Aarch64.fpuRegisters[1]);
+
+        expectedValues[0] = 10;
+        testValues[0] = true;
+        expectedValues[1] = 11;
+        testValues[1] = true;
+
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+
+    }
 
 
 

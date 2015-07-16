@@ -11,6 +11,7 @@ public class MaxineARMTester {
     public static final String ENABLE_QEMU = "max.arm.qemu";
     public static boolean ENABLE_SIMULATOR = true;
     public static final int NUM_REGS = 32;
+    public static final int NUM_SIMD_REGS = 32;
     public static final int NUM_DP_REGS = 16;
 
     public enum BitsFlag {
@@ -127,7 +128,7 @@ public class MaxineARMTester {
 
     public void compile() {
         final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.bin", "test.elf");
-        final ProcessBuilder compile = new ProcessBuilder("aarch64-none-elf-gcc", "-c", "-march=armv8-a", "-g", "test.c", "-o", "test.o");
+        final ProcessBuilder compile = new ProcessBuilder("aarch64-none-elf-gcc", "-c", "-march=armv8-a+simd", "-mgeneral-regs-only", "-g", "test.c", "-o", "test.o");
         compile.redirectOutput(gccOutput);
         compile.redirectError(gccErrors);
         try {
