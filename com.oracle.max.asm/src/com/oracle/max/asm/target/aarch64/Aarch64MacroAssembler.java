@@ -23,24 +23,33 @@
 
 package com.oracle.max.asm.target.aarch64;
 
-import static com.oracle.max.asm.target.aarch64.Aarch64.zr;
-import static com.oracle.max.asm.target.aarch64.Aarch64Address.AddressingMode.*;
-import static com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler.AddressGenerationPlan.WorkPlan.*;
-
+import com.oracle.max.asm.target.aarch64.Aarch64;
 import com.oracle.max.asm.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
+
+import static com.oracle.max.asm.target.aarch64.Aarch64.zr;
+import static com.oracle.max.asm.target.aarch64.Aarch64Address.AddressingMode.BASE_REGISTER_ONLY;
+import static com.oracle.max.asm.target.aarch64.Aarch64Address.AddressingMode.EXTENDED_REGISTER_OFFSET;
+import static com.oracle.max.asm.target.aarch64.Aarch64Address.AddressingMode.IMMEDIATE_SCALED;
+import static com.oracle.max.asm.target.aarch64.Aarch64Address.AddressingMode.IMMEDIATE_UNSCALED;
+import static com.oracle.max.asm.target.aarch64.Aarch64Address.AddressingMode.REGISTER_OFFSET;
+import static com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler.AddressGenerationPlan.WorkPlan.ADD_TO_BASE;
+import static com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler.AddressGenerationPlan.WorkPlan.ADD_TO_INDEX;
+import static com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler.AddressGenerationPlan.WorkPlan.NO_WORK;
 
 public class Aarch64MacroAssembler extends Aarch64Assembler {
 
     public Aarch64MacroAssembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target, registerConfig);
     }
+
     /**
      * Specifies what actions have to be taken to turn an arbitrary address of the form
      * {@code base + displacement [+ index [<< scale]]} into a valid Aarch64Address.
      */
     public static class AddressGenerationPlan {
+
         public final WorkPlan workPlan;
         public final Aarch64Address.AddressingMode addressingMode;
         public final boolean needsScratch;
@@ -61,9 +70,9 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         }
 
         /**
-         * @param workPlan       Work necessary to generate a valid address.
+         * @param workPlan Work necessary to generate a valid address.
          * @param addressingMode Addressing mode of generated address.
-         * @param needsScratch   True if generating address needs a scatch register, false otherwise.
+         * @param needsScratch True if generating address needs a scatch register, false otherwise.
          */
         public AddressGenerationPlan(WorkPlan workPlan, Aarch64Address.AddressingMode addressingMode, boolean needsScratch) {
             this.workPlan = workPlan;
@@ -79,9 +88,9 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param displacement an arbitrary displacement.
      * @param hasIndexRegister true if the address uses an index register, false otherwise. non null
      * @param transferSize the memory transfer size in bytes. The log2 of this specifies how much the index register is
-     *                     scaled. If 0 no scaling is assumed. Can be 0, 1, 2, 4 or 8.
-     * @return  AddressGenerationPlan that specifies the actions necessary to generate a valid Aarch64Address for the
-     *          given parameters.
+     *            scaled. If 0 no scaling is assumed. Can be 0, 1, 2, 4 or 8.
+     * @return AddressGenerationPlan that specifies the actions necessary to generate a valid Aarch64Address for the
+     *         given parameters.
      */
     public static AddressGenerationPlan generateAddressPlan(long displacement, boolean hasIndexRegister, int transferSize) {
         assert transferSize == 0 || transferSize == 1 || transferSize == 2 || transferSize == 4 || transferSize == 8;
@@ -120,58 +129,55 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param base general purpose register. May not be null or the zero register.
      * @param displacement arbitrary displacement added to base.
      * @param index general purpose register. May not be null or the stack pointer.
-     * @param signExtendIndex if true consider index register a word register that should be sign-extended before
-     *                        being added.
+     * @param signExtendIndex if true consider index register a word register that should be sign-extended before being
+     *            added.
      * @param transferSize the memory transfer size in bytes. The log2 of this specifies how much the index register is
-     *                     scaled. If 0 no scaling is assumed. Can be 0, 1, 2, 4 or 8.
+     *            scaled. If 0 no scaling is assumed. Can be 0, 1, 2, 4 or 8.
      * @param additionalReg additional register used either as a scratch register or as part of the final address,
-     *                      depending on whether allowOverwrite is true or not. May not be null or stackpointer.
+     *            depending on whether allowOverwrite is true or not. May not be null or stackpointer.
      * @param allowOverwrite if true allows to change value of base or index register to generate address.
      * @return Aarch64Address pointing to memory at {@code base + displacement + index << log2(transferSize)}.
      */
-    public Aarch64Address makeAddress(CiRegister base, long displacement,
-                                    CiRegister index, boolean signExtendIndex, int transferSize,
-                                    CiRegister additionalReg, boolean allowOverwrite) {
-        assert Aarch64.isGeneralPurposeOrSpReg(base) && Aarch64.isGeneralPurposeOrZeroReg(index) &&
-                Aarch64.isGeneralPurposeOrZeroReg(additionalReg);
+    public Aarch64Address makeAddress(CiRegister base, long displacement, CiRegister index, boolean signExtendIndex, int transferSize, CiRegister additionalReg, boolean allowOverwrite) {
+        assert Aarch64.isGeneralPurposeOrSpReg(base) && Aarch64.isGeneralPurposeOrZeroReg(index) && Aarch64.isGeneralPurposeOrZeroReg(additionalReg);
         AddressGenerationPlan plan = generateAddressPlan(displacement, !index.equals(zr), transferSize);
-        assert allowOverwrite || !zr.equals(additionalReg) || plan.workPlan == NO_WORK;
-        assert !plan.needsScratch || !zr.equals(additionalReg);
+        assert allowOverwrite || !Aarch64.zr.equals(additionalReg) || plan.workPlan == NO_WORK;
+        assert !plan.needsScratch || !Aarch64.zr.equals(additionalReg);
         int log2Scale = NumUtil.log2Ceil(transferSize);
         long scaledDisplacement = displacement >> log2Scale;
         int immediate;
         switch (plan.workPlan) {
-        case NO_WORK:
-            if (plan.addressingMode == IMMEDIATE_SCALED) {
-                immediate = (int) scaledDisplacement;
-            } else {
-                immediate = (int) displacement;
-            }
-            break;
-        case ADD_TO_INDEX:
-            CiRegister oldIndex = index;
-            index = allowOverwrite ? index : additionalReg;
-            if (plan.needsScratch) {
-                mov(additionalReg, scaledDisplacement);
-                add(signExtendIndex ? 32 : 64, index, oldIndex, additionalReg);
-            } else {
-                add(signExtendIndex ? 32 : 64, index, oldIndex, (int) scaledDisplacement);
-            }
-            immediate = 0;
-            break;
-        case ADD_TO_BASE:
-            CiRegister oldBase = base;
-            base = allowOverwrite ? base : additionalReg;
-            if (plan.needsScratch) {
-                mov(additionalReg, displacement);
-                add(64, base, oldBase, additionalReg);
-            } else {
-                add(64, base, oldBase, (int) displacement);
-            }
-            immediate = 0;
-            break;
-        default:
-            throw new Error("should not reach here");
+            case NO_WORK:
+                if (plan.addressingMode == IMMEDIATE_SCALED) {
+                    immediate = (int) scaledDisplacement;
+                } else {
+                    immediate = (int) displacement;
+                }
+                break;
+            case ADD_TO_INDEX:
+                CiRegister oldIndex = index;
+                index = allowOverwrite ? index : additionalReg;
+                if (plan.needsScratch) {
+                    mov(additionalReg, scaledDisplacement);
+                    add(signExtendIndex ? 32 : 64, index, oldIndex, additionalReg);
+                } else {
+                    add(signExtendIndex ? 32 : 64, index, oldIndex, (int) scaledDisplacement);
+                }
+                immediate = 0;
+                break;
+            case ADD_TO_BASE:
+                CiRegister oldBase = base;
+                base = allowOverwrite ? base : additionalReg;
+                if (plan.needsScratch) {
+                    mov(additionalReg, displacement);
+                    add(64, base, oldBase, additionalReg);
+                } else {
+                    add(64, base, oldBase, (int) displacement);
+                }
+                immediate = 0;
+                break;
+            default:
+                throw new Error("should not reach here");
         }
         Aarch64Address.AddressingMode addressingMode = plan.addressingMode;
         ExtendType extendType = null;
@@ -194,79 +200,112 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param displacement arbitrary displacement added to base.
      * @param transferSize the memory transfer size in bytes.
      * @param additionalReg additional register used either as a scratch register or as part of the final address,
-     *                      depending on whether allowOverwrite is true or not.
-     *                      May not be null, zero register or stackpointer.
+     *            depending on whether allowOverwrite is true or not. May not be null, zero register or stackpointer.
      * @param allowOverwrite if true allows to change value of base or index register to generate address.
      * @return Aarch64Address pointing to memory at {@code base + displacement}.
      */
-    public Aarch64Address makeAddress(CiRegister base, long displacement, CiRegister additionalReg,
-                                    int transferSize, boolean allowOverwrite) {
+    public Aarch64Address makeAddress(CiRegister base, long displacement, CiRegister additionalReg, int transferSize, boolean allowOverwrite) {
         assert Aarch64.isGeneralPurposeReg(additionalReg);
-        return makeAddress(base, displacement, zr, /*sign-extend*/false, transferSize, additionalReg, allowOverwrite);
+        return makeAddress(base, displacement, zr, /* sign-extend */false, transferSize, additionalReg, allowOverwrite);
     }
 
     /**
-     * Returns an Aarch64Address pointing to {@code base + displacement}.
-     * Fails if address cannot be represented without overwriting base register or using a scratch register.
+     * Returns an Aarch64Address pointing to {@code base + displacement}. Fails if address cannot be represented without
+     * overwriting base register or using a scratch register.
      *
      * @param base general purpose register. May not be null or the zero register.
      * @param displacement arbitrary displacement added to base.
      * @param transferSize the memory transfer size in bytes. The log2 of this specifies how much the index register is
-     *                     scaled. If 0 no scaling is assumed. Can be 0, 1, 2, 4 or 8.
+     *            scaled. If 0 no scaling is assumed. Can be 0, 1, 2, 4 or 8.
      * @return Aarch64Address pointing to memory at {@code base + displacement}.
      */
     public Aarch64Address makeAddress(CiRegister base, long displacement, int transferSize) {
-        return makeAddress(base, displacement, zr, /*signExtend*/false,
-                transferSize, zr, /*allowOverwrite*/false);
+        return makeAddress(base, displacement, Aarch64.zr, /* signExtend */false, transferSize, Aarch64.zr, /* allowOverwrite */false);
     }
 
     /**
      * Loads memory address into register.
      *
      * @param dst general purpose register. May not be null, zero-register or stackpointer.
-     * @param address address whose value is loaded into dst. May not be null, {@link com.oracle.graal.asm.armv8.Aarch64Address.AddressingMode#IMMEDIATE_POST_INDEXED IMMEDIATE_POST_INDEXED}
-     *                or {@link com.oracle.graal.asm.armv8.Aarch64Address.AddressingMode#IMMEDIATE_PRE_INDEXED IMMEDIATE_PRE_INDEXED}.
+     * @param address address whose value is loaded into dst. May not be null,
+     *            {@link com.oracle.graal.asm.armv8.Aarch64Address.AddressingMode#IMMEDIATE_POST_INDEXED
+     *            IMMEDIATE_POST_INDEXED} or
+     *            {@link com.oracle.graal.asm.armv8.Aarch64Address.AddressingMode#IMMEDIATE_PRE_INDEXED
+     *            IMMEDIATE_PRE_INDEXED}.
      * @param transferSize the memory transfer size in bytes. The log2 of this specifies how much the index register is
-     *                     scaled. Can be 1, 2, 4 or 8.
+     *            scaled. Can be 1, 2, 4 or 8.
      */
     public void loadAddress(CiRegister dst, Aarch64Address address, int transferSize) {
         assert transferSize == 1 || transferSize == 2 || transferSize == 4 || transferSize == 8;
         assert Aarch64.isGeneralPurposeReg(dst);
         int shiftAmt = NumUtil.log2Ceil(transferSize);
         switch (address.getAddressingMode()) {
-        case IMMEDIATE_SCALED:
-            int scaledImmediate = address.getImmediateRaw() << shiftAmt;
-            int lowerBits = scaledImmediate & NumUtil.getNbitNumberInt(12);
-            int higherBits = scaledImmediate & ~NumUtil.getNbitNumberInt(12);
-            boolean firstAdd = true;
-            if (lowerBits != 0) {
-                add(64, dst, address.getBase(), lowerBits);
-                firstAdd = false;
-            }
-            if (higherBits != 0) {
-                CiRegister src = firstAdd ? address.getBase() : dst;
-                add(64, dst, src, higherBits);
-            }
-            break;
-        case IMMEDIATE_UNSCALED:
-            int immediate = address.getImmediateRaw();
-            add(64, dst, address.getBase(), immediate);
-            break;
-        case REGISTER_OFFSET:
-            add(64, dst, address.getBase(), address.getOffset(), ShiftType.LSL, address.isScaled() ? shiftAmt : 0);
-            break;
-        case EXTENDED_REGISTER_OFFSET:
-            add(64, dst, address.getBase(), address.getOffset(), address.getExtendType(),
-                    address.isScaled() ? shiftAmt : 0);
-            break;
-        case PC_LITERAL:
-            super.adr(dst, address.getImmediateRaw());
-            break;
-        case BASE_REGISTER_ONLY:
-            movx(dst, address.getBase());
-            break;
-        default:
-            throw new Error("should not reach here");        }
+            case IMMEDIATE_SCALED:
+                int scaledImmediate = address.getImmediateRaw() << shiftAmt;
+                int lowerBits = scaledImmediate & NumUtil.getNbitNumberInt(12);
+                int higherBits = scaledImmediate & ~NumUtil.getNbitNumberInt(12);
+                boolean firstAdd = true;
+                if (lowerBits != 0) {
+                    add(64, dst, address.getBase(), lowerBits);
+                    firstAdd = false;
+                }
+                if (higherBits != 0) {
+                    CiRegister src = firstAdd ? address.getBase() : dst;
+                    add(64, dst, src, higherBits);
+                }
+                break;
+            case IMMEDIATE_UNSCALED:
+                int immediate = address.getImmediateRaw();
+                add(64, dst, address.getBase(), immediate);
+                break;
+            case REGISTER_OFFSET:
+                add(64, dst, address.getBase(), address.getOffset(), ShiftType.LSL, address.isScaled() ? shiftAmt : 0);
+                break;
+            case EXTENDED_REGISTER_OFFSET:
+                add(64, dst, address.getBase(), address.getOffset(), address.getExtendType(), address.isScaled() ? shiftAmt : 0);
+                break;
+            case PC_LITERAL:
+                super.adr(dst, address.getImmediateRaw());
+                break;
+            case BASE_REGISTER_ONLY:
+                movx(dst, address.getBase());
+                break;
+            default:
+                throw new Error("should not reach here");
+        }
+    }
+
+
+    /**
+     * Calculate the address and emit an appropriate branch instruction.
+     * @param cc - the condition code
+     * @param target - the target address
+     */
+//    public void jcc(ConditionFlag cc, int target) {
+//    	adrp(scratch, codeBuffer.position(), target);
+//    }
+
+    /**
+     * Calculate the required offset for a given address relative to a position and construct
+     * the appropriate adrp instruction
+     * @param pos - the position (synthetic program counter)
+     * @param address - the address of the 'label'
+     */
+//    public void adrp(CiRegister reg, int pos, int addr) {
+//    	super.adrp(reg, (addr >> 12) - (pos >> 12));
+//    }
+
+
+    /**
+     * Move 32 bit constant into a register as a 32bit register.
+     * Unoptimised uses 2 instructions.
+     *
+     * @param reg
+     * @param imm32
+     */
+    public void mov32BitConstant (CiRegister reg, int imm32) {
+        movz(32, reg, imm32 & 0xFFFF, 0);
+        movk(32, reg, (imm32 >> 16) & 0xFFFF, 16);
     }
 
     public void movx(CiRegister dst, CiRegister src) {
@@ -280,12 +319,30 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         if (Aarch64.isSp(dst) || Aarch64.isSp(src)) {
             add(size, dst, src, 0);
         } else {
-            or(size, dst, src, zr);
+            or(size, dst, src, Aarch64.zr);
         }
     }
 
+
+    /**
+     * Push a register onto the stack using 16byte alignment.
+     * @param reg
+     */
+    public void push (int size, CiRegister reg) {
+        str(size, reg, Aarch64Address.createPreIndexedImmediateAddress(Aarch64.sp, -16));
+    }
+
+    /**
+     * Pop the value from the top of the stack into register. Uses 16byte alignment.
+     * @param size
+     * @param reg
+     */
+    public void pop (int size, CiRegister reg) {
+        ldr(size, reg, Aarch64Address.createPostIndexedImmediateAddress(Aarch64.sp, 16));
+    }
     /**
      * Generates a move 64-bit immediate code sequence. The immediate may later be updated by HotSpot.
+     *
      * @param dst general purpose register. May not be null, stackpointer or zero-register.
      * @param imm
      */
@@ -308,11 +365,12 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     public void forceMov(CiRegister dst, long imm) {
-        forceMov(dst, imm, /*optimize*/ false);
+        forceMov(dst, imm, /* optimize */false);
     }
 
     /**
      * Generates a move 64-bit immediate code sequence. The immediate may later be updated by HotSpot.
+     *
      * @param dst general purpose register. May not be null, stackpointer or zero-register.
      */
     public void forceMov(CiRegister dst, int imm) {
@@ -328,11 +386,10 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     public void mov(CiRegister dst, long imm) {
         assert Aarch64.isGeneralPurposeReg(dst);
         if (imm == 0L) {
-            movx(dst, zr);
+            movx(dst, Aarch64.zr);
         } else if (Aarch64LogicalImmediateTable.isRepresentable(true, imm) != Aarch64LogicalImmediateTable.Representable.NO) {
-            or(64, dst, zr, imm);
-        } else if (imm >> 32 == -1L && (int) imm < 0 &&
-                        Aarch64LogicalImmediateTable.isRepresentable((int) imm) != Aarch64LogicalImmediateTable.Representable.NO) {
+            or(64, dst, Aarch64.zr, imm);
+        } else if (imm >> 32 == -1L && (int) imm < 0 && Aarch64LogicalImmediateTable.isRepresentable((int) imm) != Aarch64LogicalImmediateTable.Representable.NO) {
             // If the higher 32-bit are 1s and the sign bit of the lower 32-bits is set *and* we can
             // represent the lower 32 bits as a logical immediate we can create the lower 32-bit and then sign extend
             // them. This allows us to cover immediates like ~1L with 2 instructions.
@@ -350,19 +407,30 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param imm immediate loaded into register.
      */
     public void mov(CiRegister dst, int imm) {
-        mov(dst, NumUtil.asZeroExtendedLong(imm));
+        mov(dst, (long)imm);
     }
+
+    /**
+     * Applies a delta value to the contents of reg as a 32bit quantity.
+     * @param reg
+     * @param delta
+     */
+    public void increment32 (CiRegister reg, int delta) {
+        assert(reg != Aarch64.r16);
+        mov32BitConstant(Aarch64.r16, delta);
+        add(32, reg, reg, Aarch64.r16, ShiftType.LSL, 0);
+    }
+
+
 
     /**
      * @return Number of instructions necessary to load immediate into register.
      */
     public static int nrInstructionsToMoveImmediate(long imm) {
-        if (imm == 0L ||
-                Aarch64LogicalImmediateTable.isRepresentable(true, imm) != Aarch64LogicalImmediateTable.Representable.NO) {
+        if (imm == 0L || Aarch64LogicalImmediateTable.isRepresentable(true, imm) != Aarch64LogicalImmediateTable.Representable.NO) {
             return 1;
         }
-        if (imm >> 32 == -1L && (int) imm < 0 &&
-                Aarch64LogicalImmediateTable.isRepresentable((int) imm) != Aarch64LogicalImmediateTable.Representable.NO) {
+        if (imm >> 32 == -1L && (int) imm < 0 && Aarch64LogicalImmediateTable.isRepresentable((int) imm) != Aarch64LogicalImmediateTable.Representable.NO) {
             // If the higher 32-bit are 1s and the sign bit of the lower 32-bits is set *and* we can
             // represent the lower 32 bits as a logical immediate we can create the lower 32-bit and then sign extend
             // them. This allows us to cover immediates like ~1L with 2 instructions.
@@ -484,7 +552,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param src general purpose register. May not be null or stackpointer.
      */
     public void neg(int size, CiRegister dst, CiRegister src) {
-        sub(size, dst, zr, src);
+        sub(size, dst, Aarch64.zr, src);
     }
 
     /**
@@ -530,7 +598,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param src2 general purpose register. May not be null or the stackpointer.
      */
     public void mul(int size, CiRegister dst, CiRegister src1, CiRegister src2) {
-        super.madd(size, dst, src1, src2, zr);
+        super.madd(size, dst, src1, src2, Aarch64.zr);
     }
 
     /**
@@ -594,7 +662,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
             return false;
         }
         // We can shift the necessary part of the immediate (i.e. everything between the first and
-        // last set bit)  by as much as 16 - length around to arrive at a valid shift amount
+        // last set bit) by as much as 16 - length around to arrive at a valid shift amount
         int tolerance = 16 - length;
         int prevMultiple = NumUtil.roundDown(start, 16);
         int nextMultiple = NumUtil.roundUp(start, 16);
@@ -729,8 +797,8 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param size register size. Has to be 32 or 64.
      * @param dst general purpose register. May not be null or zero-register.
      * @param src general purpose register. May not be null or stack-pointer.
-     * @param bimm logical immediate. See {@link com.oracle.graal.asm.armv8.Aarch64LogicalImmediateTable Aarch64LogicalImmediateTable}
-     *             for exact definition.
+     * @param bimm logical immediate. See {@link com.oracle.graal.asm.armv8.Aarch64LogicalImmediateTable
+     *            Aarch64LogicalImmediateTable} for exact definition.
      */
     public void or(int size, CiRegister dst, CiRegister src, long bimm) {
         super.orr(size, dst, src, bimm);
@@ -744,7 +812,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param src general purpose register. May not be null or stackpointer.
      */
     public void not(int size, CiRegister dst, CiRegister src) {
-        super.orn(size, dst, zr, src, ShiftType.LSL, 0);
+        super.orn(size, dst, Aarch64.zr, src, ShiftType.LSL, 0);
     }
 
     /**
@@ -758,9 +826,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     public void sxt(int destSize, int srcSize, CiRegister dst, CiRegister src) {
         assert (destSize == 32 || destSize == 64) && srcSize < destSize;
         assert srcSize == 8 || srcSize == 16 || srcSize == 32;
-        int[] srcSizeValues = {
-                7, 15, 31
-        };
+        int[] srcSizeValues = { 7, 15, 31};
         super.sbfm(destSize, dst, src, 0, srcSizeValues[NumUtil.log2Ceil(srcSize / 8)]);
     }
 
@@ -798,8 +864,8 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param size register size. Has to be 32 or 64.
      * @param dst Either floating-point or general-purpose register. If general-purpose register may not be stackpointer
      *            or zero register. Cannot be null in any case.
-     * @param src Either floating-point or general-purpose register. If general-purpose register may not be stackpointer.
-     *            Cannot be null in any case.
+     * @param src Either floating-point or general-purpose register. If general-purpose register may not be
+     *            stackpointer. Cannot be null in any case.
      */
     @Override
     public void fmov(int size, CiRegister dst, CiRegister src) {
@@ -820,16 +886,15 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      *
      * @param size register size. Has to be 32 or 64.
      * @param dst floating point register. May not be null.
-     * @param imm immediate that is loaded into dst. If size is 32 only float immediates can be loaded, i.e.
-     *            (float) imm == imm must be true.
-     *            In all cases {@code isFloatImmediate}, respectively {@code #isDoubleImmediate}
+     * @param imm immediate that is loaded into dst. If size is 32 only float immediates can be loaded, i.e. (float) imm
+     *            == imm must be true. In all cases {@code isFloatImmediate}, respectively {@code #isDoubleImmediate}
      *            must be true depending on size.
      */
     @Override
     public void fmov(int size, CiRegister dst, double imm) {
         if (imm == 0.0) {
             assert Double.doubleToRawLongBits(imm) == 0L : "-0.0 is no valid immediate.";
-            super.fmovCpu2Fpu(size, dst, zr);
+            super.fmovCpu2Fpu(size, dst, Aarch64.zr);
         } else {
             super.fmov(size, dst, imm);
         }
@@ -890,7 +955,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param y general purpose register. May not be null or stackpointer.
      */
     public void cmp(int size, CiRegister x, CiRegister y) {
-        super.subs(size, zr, x, y, ShiftType.LSL, 0);
+        super.subs(size, Aarch64.zr, x, y, ShiftType.LSL, 0);
     }
 
     /**
@@ -902,9 +967,9 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      */
     public void cmp(int size, CiRegister x, int y) {
         if (y < 0) {
-            super.adds(size, zr, x, -y);
+            super.adds(size, Aarch64.zr, x, -y);
         } else {
-            super.subs(size, zr, x, y);
+            super.subs(size, Aarch64.zr, x, y);
         }
     }
 
@@ -918,6 +983,33 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      */
     public void ands(int size, CiRegister dst, CiRegister x, CiRegister y) {
         super.ands(size, dst, x, y, ShiftType.LSL, 0);
+    }
+
+    /**
+     * When patching up Labels we have to know what kind of code to generate.
+     */
+    public static enum PatchLabelKind {
+        BRANCH_CONDITIONALLY(0x0), BRANCH_UNCONDITIONALLY(0x1), BRANCH_NONZERO(0x2), BRANCH_ZERO(0x3), JUMP_ADDRESS(0x4);
+
+        /**
+         * Offset by which additional information for branch conditionally, branch zero and branch non zero has to be
+         * shifted.
+         */
+        public static final int INFORMATION_OFFSET = 5;
+
+        public final int encoding;
+
+        private PatchLabelKind(int encoding) {
+            this.encoding = encoding;
+        }
+
+        /**
+         * @return PatchLabelKind with given encoding.
+         */
+        private static PatchLabelKind fromEncoding(int encoding) {
+            return values()[encoding & NumUtil.getNbitNumberInt(INFORMATION_OFFSET)];
+        }
+
     }
 
     /**
@@ -937,9 +1029,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
             int regEncoding = cmp.getEncoding() << (PatchLabelKind.INFORMATION_OFFSET + 1);
             int sizeEncoding = (size == 64 ? 1 : 0) << PatchLabelKind.INFORMATION_OFFSET;
             // Encode condition flag so that we know how to patch the instruction later
-            emitInt(PatchLabelKind.BRANCH_NONZERO.encoding |
-                    regEncoding |
-                    sizeEncoding);
+            emitInt(PatchLabelKind.BRANCH_NONZERO.encoding | regEncoding | sizeEncoding);
         }
     }
 
@@ -960,9 +1050,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
             int regEncoding = cmp.getEncoding() << (PatchLabelKind.INFORMATION_OFFSET + 1);
             int sizeEncoding = (size == 64 ? 1 : 0) << PatchLabelKind.INFORMATION_OFFSET;
             // Encode condition flag so that we know how to patch the instruction later
-            emitInt(PatchLabelKind.BRANCH_ZERO.encoding |
-                    regEncoding |
-                    sizeEncoding);
+            emitInt(PatchLabelKind.BRANCH_ZERO.encoding | regEncoding | sizeEncoding);
         }
     }
 
@@ -980,8 +1068,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         } else {
             label.addPatchAt(codeBuffer.position());
             // Encode condition flag so that we know how to patch the instruction later
-            emitInt(PatchLabelKind.BRANCH_CONDITIONALLY.encoding |
-                    condition.encoding << PatchLabelKind.INFORMATION_OFFSET);
+            emitInt(PatchLabelKind.BRANCH_CONDITIONALLY.encoding | condition.encoding << PatchLabelKind.INFORMATION_OFFSET);
         }
     }
 
@@ -995,22 +1082,33 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         super.b(condition, 0);
     }
 
-//    /**
-//     * Jumps to label.
-//     *
-//     * param label Can only handle signed 28-bit offsets. May be unbound. Non null.
-//     */
-//    @Override
-//    public void jmp(Label label) {
-//        // TODO Handle case where offset is too large for a single jump instruction
-//        if (label.isBound()) {
-//            int offset = label.position() - codeBuffer.position();
-//            super.b(offset);
-//        } else {
-//            label.addPatchAt(codeBuffer.position());
-//            emitInt(PatchLabelKind.BRANCH_UNCONDITIONALLY.encoding);
-//        }
-//    }
+    public void save(CiCalleeSaveLayout csl, int frameToCSA) {
+        for (CiRegister r : csl.registers) {
+            int offset = csl.offsetOf(r);
+//            System.out.println("@save");
+//            System.out.println("@save reg: " + r.name + " num: " + r.number);
+//            System.out.println("@save frameToCSA: " + frameToCSA);
+//            System.out.println("@save offset:     " + offset);
+            str(64, r, Aarch64Address.createUnscaledImmediateAddress(frameRegister, frameToCSA + offset));
+        }
+    }
+
+// /**
+// * Jumps to label.
+// *
+// * param label Can only handle signed 28-bit offsets. May be unbound. Non null.
+// */
+// @Override
+// public void jmp(Label label) {
+// // TODO Handle case where offset is too large for a single jump instruction
+// if (label.isBound()) {
+// int offset = label.position() - codeBuffer.position();
+// super.b(offset);
+// } else {
+// label.addPatchAt(codeBuffer.position());
+// emitInt(PatchLabelKind.BRANCH_UNCONDITIONALLY.encoding);
+// }
+// }
 
     /**
      * Jump to address in dest.
@@ -1040,7 +1138,8 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     /* system instructions */
 
     /**
-     * Halting mode software breakpoint: Enters halting mode debug state if enabled, else treated as UNALLOCATED instruction.
+     * Halting mode software breakpoint: Enters halting mode debug state if enabled, else treated as UNALLOCATED
+     * instruction.
      *
      * @param exceptionCode exception code specifying why halt was called. Non null.
      */
@@ -1057,99 +1156,93 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         super.brk(exceptionCode.encoding);
     }
 
-    /**
-     * Executes no-op instruction. No registers or flags are updated, except for PC.
-     */
-    public void nop() {
-        super.hint(SystemHint.NOP);
-    }
-
-    /**
-     * Same as {@link #nop()}.
-     */
     public void ensureUniquePC() {
         nop();
     }
 
-//    /**
-//     * Aligns PC.
-//     *
-//     * @param modulus Has to be positive multiple of 4.
-//     */
-//    @Override
-//    public void align(int modulus) {
-//        assert modulus > 0 && (modulus & 0x3) == 0 : "Modulus has to be a positive multiple of 4.";
-//        if (codeBuffer.position() % modulus == 0) {
-//            return;
-//        }
-//        int offset = modulus - codeBuffer.position() % modulus;
-//        for (int i = 0; i < offset; i += 4) {
-//            nop();
-//        }
-//    }
+    public final void call() {
+        nop(4);
+    }
 
-//    /**
-//     * Patches jump targets when label gets bound.
-//     */
-//    @Override
-//    protected void patchJumpTarget(int branch, int jumpTarget) {
-//        int instruction = codeBuffer.getInt(branch);
-//        int branchOffset = jumpTarget - branch;
-//        PatchLabelKind type = PatchLabelKind.fromEncoding(instruction);
-//        switch (type) {
-//        case BRANCH_CONDITIONALLY:
-//            ConditionFlag cf = ConditionFlag.fromEncoding(instruction >>> PatchLabelKind.INFORMATION_OFFSET);
-//            super.b(cf, branchOffset, /* pos */branch);
-//            break;
-//        case BRANCH_UNCONDITIONALLY:
-//            super.b(branchOffset, /* pos */branch);
-//            break;
-//        case JUMP_ADDRESS:
-//            codeBuffer.emitInt(jumpTarget, /* pos */branch);
-//            break;
-//        case BRANCH_NONZERO: {
-//            int information = instruction >>> PatchLabelKind.INFORMATION_OFFSET;
-//            int sizeEncoding = information & 1;
-//            int regEncoding = information >>> 1;
-//            CiRegister reg = Aarch64.cpuRegisters[regEncoding];
-//            // 1 => 64; 0 => 32
-//            int size = sizeEncoding * 32 + 32;
-//            super.cbnz(size, reg, branchOffset, /* pos */branch);
-//            }
-//            break;
-//        case BRANCH_ZERO: {
-//            int information = instruction >>> PatchLabelKind.INFORMATION_OFFSET;
-//            int sizeEncoding = information & 1;
-//            int regEncoding = information >>> 1;
-//            CiRegister reg = Aarch64.cpuRegisters[regEncoding];
-//            // 1 => 64; 0 => 32
-//            int size = sizeEncoding * 32 + 32;
-//            super.cbz(size, reg, branchOffset, /* pos */branch);
-//            }
-//            break;
-//        default:
-//            throw new Error("should not reach here");
-//            }
-//    }
+// /**
+// * Aligns PC.
+// *
+// * @param modulus Has to be positive multiple of 4.
+// */
+// @Override
+// public void align(int modulus) {
+// assert modulus > 0 && (modulus & 0x3) == 0 : "Modulus has to be a positive multiple of 4.";
+// if (codeBuffer.position() % modulus == 0) {
+// return;
+// }
+// int offset = modulus - codeBuffer.position() % modulus;
+// for (int i = 0; i < offset; i += 4) {
+// nop();
+// }
+// }
 
-//    /**
-//     * Generates an address of the form {@code base + displacement}.
-//     *
-//     * Does not change base register to fulfil this requirement. Will fail if displacement cannot be represented
-//     * directly as address.
-//     *
-//     * @param base general purpose register. May not be null or the zero register.
-//     * @param displacement arbitrary displacement added to base.
-//     * @return Aarch64Address referencing memory at {@code base + displacement}.
-//     */
-//    @Override
-//    public Aarch64Address makeAddress(CiRegister base, int displacement) {
-//        return makeAddress(base, displacement, Aarch64.zr, /*signExtend*/false, /*transferSize*/0,
-//                Aarch64.zr, /*allowOverwrite*/false);
-//    }
+// /**
+// * Patches jump targets when label gets bound.
+// */
+// @Override
+// protected void patchJumpTarget(int branch, int jumpTarget) {
+// int instruction = codeBuffer.getInt(branch);
+// int branchOffset = jumpTarget - branch;
+// PatchLabelKind type = PatchLabelKind.fromEncoding(instruction);
+// switch (type) {
+// case BRANCH_CONDITIONALLY:
+// ConditionFlag cf = ConditionFlag.fromEncoding(instruction >>> PatchLabelKind.INFORMATION_OFFSET);
+// super.b(cf, branchOffset, /* pos */branch);
+// break;
+// case BRANCH_UNCONDITIONALLY:
+// super.b(branchOffset, /* pos */branch);
+// break;
+// case JUMP_ADDRESS:
+// codeBuffer.emitInt(jumpTarget, /* pos */branch);
+// break;
+// case BRANCH_NONZERO: {
+// int information = instruction >>> PatchLabelKind.INFORMATION_OFFSET;
+// int sizeEncoding = information & 1;
+// int regEncoding = information >>> 1;
+// CiRegister reg = Aarch64.cpuRegisters[regEncoding];
+// // 1 => 64; 0 => 32
+// int size = sizeEncoding * 32 + 32;
+// super.cbnz(size, reg, branchOffset, /* pos */branch);
+// }
+// break;
+// case BRANCH_ZERO: {
+// int information = instruction >>> PatchLabelKind.INFORMATION_OFFSET;
+// int sizeEncoding = information & 1;
+// int regEncoding = information >>> 1;
+// CiRegister reg = Aarch64.cpuRegisters[regEncoding];
+// // 1 => 64; 0 => 32
+// int size = sizeEncoding * 32 + 32;
+// super.cbz(size, reg, branchOffset, /* pos */branch);
+// }
+// break;
+// default:
+// throw new Error("should not reach here");
+// }
+// }
 
-//    @Override
-//    public AbstractAddress getPlaceholder() {
-//        return Aarch64Address.PLACEHOLDER;
-//    }
+// /**
+// * Generates an address of the form {@code base + displacement}.
+// *
+// * Does not change base register to fulfil this requirement. Will fail if displacement cannot be represented
+// * directly as address.
+// *
+// * @param base general purpose register. May not be null or the zero register.
+// * @param displacement arbitrary displacement added to base.
+// * @return Aarch64Address referencing memory at {@code base + displacement}.
+// */
+// @Override
+// public Aarch64Address makeAddress(CiRegister base, int displacement) {
+// return makeAddress(base, displacement, Aarch64.zr, /*signExtend*/false, /*transferSize*/0,
+// Aarch64.zr, /*allowOverwrite*/false);
+// }
+
+// @Override
+// public AbstractAddress getPlaceholder() {
+// return Aarch64Address.PLACEHOLDER;
+// }
 }
