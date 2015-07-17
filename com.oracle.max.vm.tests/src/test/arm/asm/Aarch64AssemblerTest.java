@@ -430,16 +430,14 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         asm.movz(VARIANT_64, Aarch64.cpuRegisters[1], 11, 0);
 
         asm.fmovCpu2Fpu(VARIANT_64, Aarch64.fpuRegisters[0], Aarch64.cpuRegisters[0]);
-        asm.fabs(VARIANT_64, Aarch64.fpuRegisters[0], Aarch64.fpuRegisters[0]);
-//        asm.fmovCpu2Fpu(VARIANT_64, Aarch64.fpuRegisters[1], Aarch64.cpuRegisters[1]);
-//
-//        asm.fmovFpu2Cpu(VARIANT_64, Aarch64.cpuRegisters[2], Aarch64.fpuRegisters[0]);
-//        asm.fmovFpu2Cpu(VARIANT_64, Aarch64.cpuRegisters[3], Aarch64.fpuRegisters[1]);
+        asm.fmovCpu2Fpu(VARIANT_64, Aarch64.fpuRegisters[1], Aarch64.cpuRegisters[1]);
+        asm.fmovFpu2Cpu(VARIANT_64, Aarch64.cpuRegisters[2], Aarch64.fpuRegisters[0]);
+        asm.fmovFpu2Cpu(VARIANT_64, Aarch64.cpuRegisters[3], Aarch64.fpuRegisters[1]);
 
-        expectedValues[0] = 10;
-        testValues[0] = true;
-        expectedValues[1] = 11;
-        testValues[1] = true;
+        expectedValues[2] = 10;
+        testValues[2] = true;
+        expectedValues[3] = 11;
+        testValues[3] = true;
 
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
 
