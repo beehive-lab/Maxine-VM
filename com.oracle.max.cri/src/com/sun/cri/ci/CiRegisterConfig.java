@@ -202,6 +202,9 @@ public class CiRegisterConfig implements RiRegisterConfig {
                     if (!stackOnly && currentGeneral < cpuParameters.length) {
                         if (kind.isLong() && target.arch.is32bit()) {
                             if ((cpuParameters.length - currentGeneral) < 2) {
+				currentGeneral = cpuParameters.length; // APN added to make adapters work
+				// as if we have exhausted space then we expect to use stack
+				// might break a few things though ...
                                 break;
                             }
                             if ((currentGeneral) % 2 != 0) {

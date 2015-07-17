@@ -456,8 +456,24 @@ public final class ARMTargetMethodUtil {
     }
 
 
+    /*
+    Returns the address of a page sized buffer that we will use to insturmentation traces to
+    Initially we assume this is 4096 bytes long 
+    
+    Initialises *(buffer+4092) to point to the the start of the buffer
+    */
+    @C_FUNCTION
+    public static native int  maxine_instrumentationBuffer();
+	
+    @C_FUNCTION
+    public static native int maxine_flush_instrumentationBuffer();
+
+
+    /* does icache flushin of an address range*/
     @C_FUNCTION
     public static native void maxine_cacheflush(Pointer start, int  length);
+
+
     /**
      * Thread safe patching of the displacement field in a direct call.
      *

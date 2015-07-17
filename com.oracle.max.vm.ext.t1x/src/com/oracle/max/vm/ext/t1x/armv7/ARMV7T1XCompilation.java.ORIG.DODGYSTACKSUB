@@ -57,7 +57,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
-import com.oracle.max.criutils.NativeCMethodinVM;
 
 import static com.oracle.max.asm.target.armv7.ARMV7.*;
 import static com.oracle.max.vm.ext.t1x.T1X.dispFromCodeStart;
@@ -69,7 +68,7 @@ import static com.sun.max.vm.stack.JVMSFrameLayout.JVMS_SLOT_SIZE;
 
 //import java.io.PrintWriter;
 
-public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethodinVM {
+public class ARMV7T1XCompilation extends T1XCompilation {
 
 
     public static AtomicInteger methodCounter = new AtomicInteger(536870912);
@@ -85,32 +84,15 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     public ARMV7T1XCompilation(T1X compiler) {
         super(compiler);
         asm = new ARMV7MacroAssembler(target(), null);
-	if(com.sun.max.vm.MaxineVM.isHosted() == false)
-		asm.maxineflush = this; // dirty hacky .... do it properly
         buf = asm.codeBuffer;
         patchInfo = new PatchInfoARMV7();
-    }
-
-    public void setDebug(boolean value) {
-        DEBUG_METHODS = value;
     }
 
     static {
         initDebugMethods();
     }
- 
-    @Override
-    public int maxine_instrumentationBuffer() {
-		return com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.maxine_instrumentationBuffer();
-    }
-    @Override
-    public int maxine_flush_instrumentationBuffer() {
-		// returns the int address of the method in C ... ugly but fast dynamic linking ....
-		// should really do it the proper way by CriticalMethods etc etc
-		return com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.maxine_flush_instrumentationBuffer();
-    }
-    public static void initDebugMethods() {
 
+    public static void initDebugMethods() {
         if ((file = new File(getDebugMethodsPath() + "debugT1Xmethods")).exists()) {
             file.delete();
         }
@@ -213,6 +195,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.setUpScratch(spLong(index));
         asm.sub(ConditionFlag.Always, false, ARMV7.r8, scratch, 4, 0);
         asm.ldrd(ConditionFlag.Always, dst, ARMV7.r8, 0); // dst needs to be big enough to hold a long!
+        //asm.ldrd(ConditionFlag.Always, dst, ARMV7.r12, 0); // dst needs to be big enough to hold a long!
     }
 
     @Override
@@ -221,6 +204,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.setUpScratch(spLong(index));
         asm.sub(ConditionFlag.Always, false, ARMV7.r8, scratch, 4, 0);
         asm.strd(ARMV7Assembler.ConditionFlag.Always, src, ARMV7.r8, 0); // put them on the stack on the stack!
+        //asm.strd(ARMV7Assembler.ConditionFlag.Always, src, ARMV7.r12, 0); // put them on the stack on the stack!
     }
 
     @Override
@@ -229,6 +213,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.setUpScratch(spLong(index));
         asm.sub(ConditionFlag.Always, false, ARMV7.r8, scratch, 4, 0);
         asm.vldr(ARMV7Assembler.ConditionFlag.Always, dst, ARMV7.r8, 0, CiKind.Double, CiKind.Int);
+        //asm.vldr(ARMV7Assembler.ConditionFlag.Always, dst, ARMV7.r12, 0, CiKind.Double, CiKind.Int);
 
     }
 
@@ -238,6 +223,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.setUpScratch(spLong(index));
         asm.sub(ConditionFlag.Always, false, ARMV7.r8, scratch, 4, 0);
         asm.vstr(ARMV7Assembler.ConditionFlag.Always, src, ARMV7.r8, 0, CiKind.Double, CiKind.Int);
+        //asm.vstr(ARMV7Assembler.ConditionFlag.Always, src, ARMV7.r12, 0, CiKind.Double, CiKind.Int);
     }
 
     @Override
@@ -314,6 +300,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
         asm.sub(ConditionFlag.Always, false, ARMV7.r8, scratch, 4, 0);
         asm.ldrd(ConditionFlag.Always, dst, ARMV7.r8, 0);
+        //asm.ldrd(ConditionFlag.Always, dst, ARMV7.r12, 0);
     }
 
     @Override
@@ -340,6 +327,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
         asm.sub(ConditionFlag.Always, false, ARMV7.r8, scratch, 4, 0);
         asm.strd(ARMV7Assembler.ConditionFlag.Always, src, ARMV7.r8, 0);
+        //asm.strd(ARMV7Assembler.ConditionFlag.Always, src, ARMV7.r12, 0);
     }
 
     @Override
@@ -480,11 +468,10 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     @Override
     protected int callIndirect(CiRegister target, int receiverStackIndex) {
         if (receiverStackIndex >= 0) {
-	
-            peekObject(ARMV7.r1, receiverStackIndex); // was rdi?
+            peekObject(target, receiverStackIndex); // was rdi?
         }
-        //asm.mov32BitConstant(ARMV7.r8, 8);
-        asm.xorq(ARMV7.r8,ARMV7.r8);
+        asm.mov32BitConstant(ARMV7.r8, 8);
+        //asm.mov32BitConstant(ARMV7.r8, 0);
         int causePos = buf.position();
         asm.call(target);
         int safepointPos = buf.position();
@@ -517,7 +504,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
     private int framePointerAdjustment() {
         // TODO APN this is required for ARMv7 but it is incorrect at the moment with fakedFrame
-        final int enterSize = frame.frameSize() - Word.size();// Whe we push we adjust the stack ptr - Word.size();
+        final int enterSize = frame.frameSize();// Whe we push we adjust the stack ptr - Word.size();
         return enterSize - frame.sizeOfNonParameterLocals();
     }
 
@@ -573,11 +560,17 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         objectLiterals.add(T1XTargetMethod.PROTECTED);
         asm.xorq(ARMV7.r8, ARMV7.r8);
         //System.out.println("emitUnProtect partially commented out ... OBJECT LITERALS");
-        //asm.setUpScratch(CiAddress.Placeholder);
-        //asm.str(ConditionFlag.Always,ARMV7.r8,scratch,0);
+        // asm.setUpScratch(CiAddress.Placeholder);
+        // asm.str(ConditionFlag.Always,ARMV7.r8,scratch,0);
+        // asm.movq(CiAddress.Placeholder, scratch);
+        // TODO store the value ZERO at a Placeholder address
+        // TODO buf.emitInt(0);
+        // TODO buf.emitInt(0);
+        // TODO
         asm.nop(2);
 
         int dispPos = buf.position() - 8;
+        //  int dispPos = buf.position() - 12;
         patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
         asm.addRegisters(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r15, 0, 0);
         asm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, 0);
@@ -587,19 +580,11 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     @Override
     protected void emitEpilogue() {
         asm.addq(ARMV7.r11, framePointerAdjustment()); // we might be missing some kind of pop here?
-        asm.mov(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r11);
         final short stackAmountInBytes = (short) frame.sizeOfParameters();
-	// ALTERED MOVED POP to before RET
-        //asm.mov32BitConstant(scratch, stackAmountInBytes);
-        //asm.addRegisters(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
-        asm.pop(ConditionFlag.Always, 1 << 11); // POP the frame pointer
-	asm.pop(ConditionFlag.Always, 1 << 8); // POP return address into r8
-	asm.mov32BitConstant(scratch, stackAmountInBytes);
-	asm.addRegisters(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
-	asm.mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r8); // RETURN
-
-	
-        //asm.ret(); // mov R14 to r15 ,,, who restores the rest oI//f the environment?
+        asm.mov32BitConstant(scratch, stackAmountInBytes);
+        asm.addRegisters(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
+	asm.pop(ConditionFlag.Always, 1 << 11); // POP the frame pointer
+        asm.ret(); // mov R14 to r15 ,,, who restores the rest of the environment?
     }
 
     @Override

@@ -547,6 +547,31 @@ void maxine_cacheflush(char *start, int length) {
 #endif
 
 }
+static unsigned int *simPtr = (0);
+jint  maxine_instrumentationBuffer()  {
+	if(simPtr != (0)) {
+		printf("Really bad ERROR!!!!!!!! multiple initialisations of simptr in substrate");
+	}
+	simPtr = (unsigned int *) malloc(sizeof(unsigned int)*4096);
+	*(simPtr +1023) = (unsigned int)simPtr;
+	printf("ALLOCATED at %u last element %u\n",(unsigned int)simPtr,*(simPtr +1023));
+	return (jint)simPtr;
+}
+void  real_maxine_flush_instrumentationBuffer() {
+	unsigned int i;
+	if((*(simPtr +1023)) != (unsigned int)(simPtr +1023)) {
+		printf("ERROR VALSTORED %u VALEXPECTED %u SIMPTR %u\n", *(simPtr +1023) ,((unsigned int) (simPtr))+4*1023,(unsigned int)simPtr);
+	}
+	*(simPtr +1023) = (unsigned int)simPtr;
+	printf("FLUSHING at %u\n",(unsigned int)simPtr);
+	for(i = 0;i < 1024;i++) {
+		printf("%u\n",*(simPtr+i));
+	}
+}
+jint  maxine_flush_instrumentationBuffer() {
+	return (jint) real_maxine_flush_instrumentationBuffer; // dirty yes ... but it should work	
+}
+
 float native_parseFloat(const char* cstring, float nan) {
 #if os_MAXVE
     // TODO

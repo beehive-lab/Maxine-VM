@@ -545,6 +545,7 @@ public final class MaxineVM {
     @C_FUNCTION
     public static native long arithmeticludiv(long x, long y);
 
+
     /*
      * Global native functions: these functions implement a thin layer over basic native
      * services that are needed to implement higher-level Java VM services. Note that

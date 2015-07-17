@@ -8,6 +8,35 @@ import com.sun.cri.ci.CiRegister;
 import com.sun.cri.ci.CiTarget;
 import com.sun.cri.ri.RiRegisterConfig;
 
+
+	
+
+/*
+	ANDY NISBET comments/ramblings
+	instrumentation support for the Xilinx Zynq platform is currently being added.
+
+	We obtain a buffer using a C call. 	
+	We had to add an interface to do this in order to avoid a circular dependence.
+	
+	ARMV7T1XCompilation static instance variable simBuf stores the address of the page length (4096 byte buffer)
+	simOffset is actually stored at offset int [1023], which means it is
+	@byte offset 4092
+	The instance variable simOffset was there only for initial debugging
+	CORRECTION WE STORE THE CURRENT ADDRESS TO BE WRITTEN TO AT INT[1023]
+	IT MAKES THE ASSEMBLER EASIER
+
+	When we want to update the buffer with a new address tha thas been loaded or stored then we must
+	use ldrex strex to update the buffer and the int[1023] offset.
+
+	If we take this approach then it will be thread safe.
+	THE INITIAL VERSION WILL NOT DO THE LDREX STREX.
+
+	iF THE ADDRESS WE WANT TO WRITE TO IS THE LAST INT[1022] STORING DATA ADDRESSES READ/WRITTEN
+	THEN we need to flush the buffer.
+
+	WE WILL IMPLEMENT THIS BY incrementing after the write and then checking to see if it matches the address of the simOffset in the int[1023]
+	
+*/
 import static com.oracle.max.cri.intrinsics.MemoryBarriers.STORE_LOAD;
 
 public class ARMV7Assembler extends AbstractAssembler {
@@ -17,7 +46,11 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final RiRegisterConfig registerConfig;
     public static boolean FLOAT_IDIV; // if set then we use FLOAT to do IDIV
     // used for ARM platforms where IDIV is not available.
-
+    public static boolean INSTRUMENT = false;
+    public static int	simBuf = 0;
+    public static int	simBuffOffset = 0; // testing only not used in real simulation
+    public static int	maxineFlushAddress = 0;
+    public static com.oracle.max.criutils.NativeCMethodinVM maxineflush = null;
     public ARMV7Assembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target);
         this.registerConfig = registerConfig;
@@ -763,8 +796,163 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= ((imm8 & 0xff) >> 4) << 8;
         emitInt(instruction);
     }
+    private void instrument(boolean read,boolean data, boolean add, final CiRegister base, int immediate) {
+	if(simBuf == 0) {
+		simBuf = maxineflush.maxine_instrumentationBuffer();
+	}	
+	if(maxineFlushAddress == 0) {
+		maxineFlushAddress  = maxineflush.maxine_flush_instrumentationBuffer();
+	}
+	assert(maxineFlushAddress != 0);
+	simBuffOffset = 1023*4;
+	// save some registers to the stack using a 
+
+	/* Format bottom 2 bits used/
+2 instruction read
+1 data write
+0 data read
+i.e.
+bit 0 = Write
+bit 1 = Instruction 
+	Instruction Operation
+	Bit 1       Bit 0
+-----------------------------
+DATAREAD     0           0
+DATAWRITE    0		 1
+CODEREAD     1		 0
+CODEWRITE    1		 1
+    public static boolean INSTRUMENT = false;
+    public static int	simBuf = 0;
+    public static int	simBuffOffset = 0;
+	*/
+	CiRegister immReg = null;
+	CiRegister spareAddress = null;
+	CiRegister spareImm = null;
+	CiRegister destAddress = null;
+	CiRegister valAddress = null;
+	switch(base.encoding) {
+		/*
+		r0 r1 r2 r8 r9 r12
+		are pushed
+		*/
+		case 0:
+			spareAddress = ARMV7.r8;
+			spareImm = ARMV7.r9;	
+			destAddress = ARMV7.r1;
+			valAddress = ARMV7.r12;
+			immReg = ARMV7.r2;
+		break;
+		case 8:
+			spareAddress = ARMV7.r0;
+			spareImm = ARMV7.r1;	
+			destAddress = ARMV7.r1;
+			valAddress = ARMV7.r12;
+			immReg = ARMV7.r9;
+		break;
+			
+		case 9:
+			spareAddress = ARMV7.r0;
+			spareImm = ARMV7.r1;	
+			destAddress = ARMV7.r2;
+			valAddress = ARMV7.r12;
+			immReg = ARMV7.r8;
+		break;
+		case 1:
+			spareAddress = ARMV7.r0;
+			spareImm = ARMV7.r2;	
+			destAddress = ARMV7.r8;
+			valAddress = ARMV7.r12;
+			immReg = ARMV7.r9;
+		break;
+		case 2:
+			spareAddress = ARMV7.r0;
+			spareImm = ARMV7.r1;	
+			destAddress = ARMV7.r8;
+			valAddress = ARMV7.r12;
+			immReg = ARMV7.r9;
+		break;
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+		case 10:
+		case 11:
+		case 14:
+			spareAddress = ARMV7.r0;
+			spareImm = ARMV7.r1;	
+			destAddress = ARMV7.r2;
+			valAddress = ARMV7.r12;
+			immReg = ARMV7.r8;
+		break;
+		case 12:
+			destAddress = ARMV7.r0;
+			valAddress = ARMV7.r1;
+			immReg = ARMV7.r2;
+			spareAddress = ARMV7.r8;
+			spareImm = ARMV7.r9;	
+		break;
+		default:
+			assert 0 == 1 : "ERROR insturmentation uses illegal base register";	
+		break;
+	}	
+	instrumentPush(ConditionFlag.Always,1 | 2| 4| 1<<12|1<<8|1<<9);
+	int address = simBuf;
+	int orint = 0;
+
+	if(!read)  {
+
+		orint |= 1;
+	}
+
+	if(!data) {
+
+		orint |= 2;
+	}
+
+	mov32BitConstant(destAddress,address); // currently this is simBuf
+	mov32BitConstant(valAddress,simBuffOffset); // constructing the address of where actual offset is STORED
+	addRegisters(ConditionFlag.Always, false, spareAddress, valAddress, destAddress, 0, 0); // spareAddress contains the address of the offset
+	// spareAddress now holds the address of simBuf[1023] in C-style format, this holds the ADDRESS to write into the buffer
+	ldr(ConditionFlag.Always, spareImm,spareAddress,0); // spareImm after this instr, contains the address to write into
+	// spareImm holds the Address to write into
+
+	mov32BitConstant(valAddress,immediate);
+	addRegisters(ConditionFlag.Always, false, valAddress, valAddress, base, 0, 0); // forms the address to be read/written
+	or(ConditionFlag.Always, false, valAddress, valAddress, orint); // ors the read/write code/data bits
+	str(ConditionFlag.Always,  valAddress, spareImm, 0);	// updates the buffer
+	
+	// so now we need to update the offset.
+	add(ConditionFlag.Always, false, spareImm, spareImm, 4, 0); // we added 4 to the address to write to in the buffer!
+	cmp(ConditionFlag.Always, spareImm, spareAddress, 0, 0);
+	Label bufferNotFull = new Label();
+	Label complete = new Label();
+	jcc(ConditionFlag.CarryClearUnsignedLower,bufferNotFull);
+	//maxineflush.maxine_flush_InstrumentationBuffer();
+	//Label forever= new Label();
+	//bind(forever);
+	//jcc(ConditionFlag.Always,forever);
+	instrumentPush(ConditionFlag.Always,1|2|4|8|16|32|64|128|256|512|1024|2048|4096|/*8192|*/16384);
+	mov32BitConstant(spareAddress,maxineFlushAddress);
+	blx(spareAddress);
+	instrumentPop(ConditionFlag.Always,1|2|4|8|16|32|64|128|256|512|1024|2048|4096|/*8192|*/16384);
+	jcc(ConditionFlag.Always, complete);
+	bind(bufferNotFull);	// UPDATE the offset
+	str(ConditionFlag.Always,spareImm,spareAddress, 0);
+	bind(complete);
+	instrumentPop(ConditionFlag.Always, 1|2|4|1<<12|1<<8|1<<9);
+
+
+	return;
+
+
+
+    }
 
     public void ldrImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm12) {
+if(maxineflush != null) {
+                instrumentTest();
+        }
         int instruction = 0x04100000;
         P = P & 1;
         U = U & 1;
@@ -831,6 +1019,38 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
+    public void instrumentPush(final ConditionFlag flag, final int registerList) {
+        int instruction;
+        assert(registerList > 0);
+        assert(registerList < 0x10000);
+        instruction = (flag.value() & 0xf) << 28;
+        instruction |= 0x9 << 24;
+        instruction |= 0x2 << 20;
+        instruction |= 0xd << 16;
+        instruction |= 0xffff & registerList;
+        emitInt(instruction);
+    }
+
+    private void instrumentTest() {
+	if(simBuf == 0) {
+		simBuf = maxineflush.maxine_instrumentationBuffer();
+		
+	} 
+	boolean read = false;
+	boolean data = false;
+	push(ConditionFlag.Always, 1<<8);
+	for(int i = 0; i <1028 ;i++)	{
+		if(i% 4 == 0) {
+			read = !read;
+		}
+		if(i % 3 == 0) {
+			data =  !data;
+		}
+		mov32BitConstant(ARMV7.r8,i);
+		instrument(read,data,true,ARMV7.r8,0);
+	}
+	pop(ConditionFlag.Always, 1<<8);
+    }
     public void push(final ConditionFlag flag, final int registerList) {
         int instruction;
 	assert(registerList > 0);
@@ -850,6 +1070,15 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void restoreRegister(int reg) {
         pop(ConditionFlag.Always, 1 << reg);
+    }
+    public void instrumentPop(final ConditionFlag flag, final int registerList) {
+  	int instruction;
+        instruction = (flag.value() & 0xf) << 28;
+        instruction |= 0x8 << 24;
+        instruction |= 0xb << 20;
+        instruction |= 0xd << 16;
+        instruction |= 0xffff & registerList;
+        emitInt(instruction);
     }
 
     public void pop(final ConditionFlag flag, final int registerList) {
@@ -1406,6 +1635,7 @@ end_label:
         // TODO ret() implements an X86 return from subroutine this needs to pop the return value of the stack TODO we
         // might need to push the value of r14 onto the stack in order to make this work for a call from the C harness
         // TODO for testing of the methods
+
 
         // ldmea(ConditionFlag.Always,ARMV7.r11,1<<11|1<<13|1<<15);
         pop(ConditionFlag.Always, 1 << 15);

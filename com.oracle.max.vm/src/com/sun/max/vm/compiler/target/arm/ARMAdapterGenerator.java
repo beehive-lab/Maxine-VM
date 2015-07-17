@@ -478,6 +478,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 Kind kind = sig.kinds[i];
 
                 if (!kind.isCategory1) {
+		    // again --- moved this ifblock position from before the adaptArgumentCall
                     // Skip over the second slot of a long or double
                     baselineStackOffset += BASELINE_SLOT_SIZE;
                     baselineArgsSize += BASELINE_SLOT_SIZE;
@@ -676,7 +677,7 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             @Override
             public void advance(StackFrameCursor cursor) {
                 int ripAdjustment = MaxineVM.isHosted() ? computeRipAdjustment(cursor) : Word.size();
-                Log.println("ADAPTER advance");
+                //Log.println("ADAPTER advance");
                 StackFrameWalker sfw = cursor.stackFrameWalker();
 
                 Pointer ripPointer = cursor.sp().plus(ripAdjustment);
@@ -880,8 +881,10 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             for (int i = optArgs.length - 1; i >= 0; i--) {
                 Kind argKind = sig.kinds[i];
                 if (!argKind.isCategory1) {
-                    // Skip over the second slot of a long or double
+		    // APN previously this ifblock came before the adaptArgument call ...
+                    // Skip over the first slot of a long or double
                     baselineStackOffset += BASELINE_SLOT_SIZE;
+		    
                 }
                 adaptArgument(asm, argKind, optArgs[i], baselineStackOffset, adapterFrameSize);
                 baselineStackOffset += BASELINE_SLOT_SIZE;

@@ -1,0 +1,7 @@
+break maxine.c:407
+break *0x12eb8a60
+hbreak *0x13044d04
+hbreak *0x1c1e5058
+hbreak *0x141e5530
+hbreak *$lr
+hbreak *$lr

@@ -62,6 +62,7 @@ project@com.oracle.max.hcfdis@dependencies=com.oracle.max.asmdis,com.oracle.max.
 project@com.oracle.max.hcfdis@checkstyle=com.oracle.max.base
 project@com.oracle.max.hcfdis@javaCompliance=1.7
 
+
 project@com.oracle.max.asm@sourceDirs=src
 project@com.oracle.max.asm@dependencies=com.oracle.max.criutils
 project@com.oracle.max.asm@checkstyle=com.oracle.max.base
