@@ -559,8 +559,8 @@ jint  maxine_instrumentationBuffer()  {
 }
 void  real_maxine_flush_instrumentationBuffer() {
 	unsigned int i;
-	if((*(simPtr +1023)) != (unsigned int)(simPtr +1023)) {
-		printf("ERROR VALSTORED %u VALEXPECTED %u SIMPTR %u\n", *(simPtr +1023) ,((unsigned int) (simPtr))+4*1023,(unsigned int)simPtr);
+	if((*(simPtr +1023)) != (unsigned int)(simPtr +1022)) {
+		printf("ERROR VALSTORED %u VALEXPECTED %u SIMPTR %u\n", *(simPtr +1023) ,((unsigned int) (simPtr))+4*1022,(unsigned int)simPtr);
 	}
 	*(simPtr +1023) = (unsigned int)simPtr;
 	printf("FLUSHING at %u\n",(unsigned int)simPtr);
