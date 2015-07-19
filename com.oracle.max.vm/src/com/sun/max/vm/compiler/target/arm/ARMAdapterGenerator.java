@@ -337,6 +337,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
         }
 
         private static final int PROLOGUE_SIZE = 20; /// determined experimentally12; // setupScratch with movw movt and then the branch?
+        //private static final int PROLOGUE_SIZE = 140; // with instrumentation
         //private static final int PROLOGUE_SIZE = 28; /// determined experimentally12; // setupScratch with movw movt and then the branch?
 
 
@@ -377,7 +378,6 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
                 asm.call();
                 //System.out.println("SIZE " + asm.codeBuffer.position());
-		//asm.mov32BitConstant(ARMV7.r12,0xba5e20af); // signifies BASSE20OPT
                 asm.align(PROLOGUE_SIZE);
                 //System.out.println("SIZEAFTER " + asm.codeBuffer.position());
             }

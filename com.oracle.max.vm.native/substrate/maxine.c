@@ -551,21 +551,26 @@ static unsigned int *simPtr = (0);
 jint  maxine_instrumentationBuffer()  {
 	if(simPtr != (0)) {
 		printf("Really bad ERROR!!!!!!!! multiple initialisations of simptr in substrate");
+		printf("NEEDS EXTENSION to work correctly with multiple thrreads\n");
 	}
 	simPtr = (unsigned int *) malloc(sizeof(unsigned int)*4096);
 	*(simPtr +1023) = (unsigned int)simPtr;
-	printf("ALLOCATED at %u last element %u\n",(unsigned int)simPtr,*(simPtr +1023));
+	//printf("ALLOCATED at %u last element %u\n",(unsigned int)simPtr,*(simPtr +1023));
 	return (jint)simPtr;
 }
-void  real_maxine_flush_instrumentationBuffer() {
+void  real_maxine_flush_instrumentationBuffer(unsigned int *bufPtr) {
 	unsigned int i;
 	if((*(simPtr +1023)) != (unsigned int)(simPtr +1022)) {
 		printf("ERROR VALSTORED %u VALEXPECTED %u SIMPTR %u\n", *(simPtr +1023) ,((unsigned int) (simPtr))+4*1022,(unsigned int)simPtr);
 	}
 	*(simPtr +1023) = (unsigned int)simPtr;
-	printf("FLUSHING at %u\n",(unsigned int)simPtr);
-	for(i = 0;i < 1024;i++) {
-		printf("%u\n",*(simPtr+i));
+	//printf("FLUSHING at %u\n",(unsigned int)simPtr);
+	
+	for(i = 0;i < 1023;i++) {
+		//printf("%x\n",*(simPtr+i));
+		printf("%x\n",*(bufPtr+i));
+		*(bufPtr+i) = 0;
+		
 	}
 }
 jint  maxine_flush_instrumentationBuffer() {
