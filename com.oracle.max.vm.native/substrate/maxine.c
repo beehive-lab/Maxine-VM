@@ -50,6 +50,45 @@
 #if os_MAXVE
 #include "maxve.h"
 #endif
+static unsigned int *simPtr = (0);
+static FILE *simFile = (0);
+jint  maxine_instrumentationBuffer()  {
+        if(simPtr != (0)) {
+                printf("Really bad ERROR!!!!!!!! multiple initialisations of simptr in substrate");
+                printf("NEEDS EXTENSION to work correctly with multiple thrreads\n");
+        }
+        simPtr = (unsigned int *) malloc(sizeof(unsigned int)*4096);
+        *(simPtr +1023) = (unsigned int)simPtr;
+        //printf("ALLOCATED at %u last element %u\n",(unsigned int)simPtr,*(simPtr +1023));
+        return (jint)simPtr;
+}
+void  maxine_close() {
+        if(simFile != (0)) {
+                fclose(simFile);
+        }
+}
+void  real_maxine_flush_instrumentationBuffer(unsigned int *bufPtr) {
+        unsigned int i;
+        if((*(simPtr +1023)) != (unsigned int)(simPtr +1022)) {
+                printf("ERROR VALSTORED %u VALEXPECTED %u SIMPTR %u\n", *(simPtr +1023) ,((unsigned int) (simPtr))+4*1022,(unsigned int)simPtr);
+        }
+        //printf("FLUSHING at %u\n",(unsigned int)simPtr);
+
+        if(simFile == (0)) {
+                simFile = fopen("address.trace","w");
+        }    
+        for(i = 0;i < *(simPtr + 1023);i++) {
+                //printf("%x\n",*(simPtr+i));
+                //printf("%x\n",*(bufPtr+i));
+                fprintf(simFile,"%x\n",*(bufPtr+i));
+                *(bufPtr+i) = 0;
+    
+        }
+        *(simPtr +1023) = (unsigned int)simPtr;
+}
+jint  maxine_flush_instrumentationBuffer() {
+        return (jint) real_maxine_flush_instrumentationBuffer; // dirty yes ... but it should work      
+}
 
 
 jlong d2long(double x) {
@@ -423,6 +462,8 @@ int maxine(int argc, char *argv[], char *executablePath) {
         thread_run((void *) tlBlock);
     } else {
         printf("NON ZERO NATIVE EXIT %d\n",exitCode);
+	real_maxine_flush_instrumentationBuffer(simPtr);
+	maxine_close();
         native_exit(exitCode);
     }
     //printf("NEVER REACHED\n");
@@ -547,7 +588,9 @@ void maxine_cacheflush(char *start, int length) {
 #endif
 
 }
+/*
 static unsigned int *simPtr = (0);
+static FILE *simFile = (0);
 jint  maxine_instrumentationBuffer()  {
 	if(simPtr != (0)) {
 		printf("Really bad ERROR!!!!!!!! multiple initialisations of simptr in substrate");
@@ -558,25 +601,34 @@ jint  maxine_instrumentationBuffer()  {
 	//printf("ALLOCATED at %u last element %u\n",(unsigned int)simPtr,*(simPtr +1023));
 	return (jint)simPtr;
 }
+void  maxine_close() {
+	if(simFile != (0)) {
+		fclose(simFile);
+	}
+}
 void  real_maxine_flush_instrumentationBuffer(unsigned int *bufPtr) {
 	unsigned int i;
 	if((*(simPtr +1023)) != (unsigned int)(simPtr +1022)) {
 		printf("ERROR VALSTORED %u VALEXPECTED %u SIMPTR %u\n", *(simPtr +1023) ,((unsigned int) (simPtr))+4*1022,(unsigned int)simPtr);
 	}
-	*(simPtr +1023) = (unsigned int)simPtr;
 	//printf("FLUSHING at %u\n",(unsigned int)simPtr);
-	
-	for(i = 0;i < 1023;i++) {
+
+	if(simFile == (0)) {
+		simFile = fopen("address.trace","w");
+	}	
+	for(i = 0;i < *(simPtr + 1023);i++) {
 		//printf("%x\n",*(simPtr+i));
 		printf("%x\n",*(bufPtr+i));
+		fprintf(simFile,"%x\n",*(bufPtr+i));
 		*(bufPtr+i) = 0;
 		
 	}
+	*(simPtr +1023) = (unsigned int)simPtr;
 }
 jint  maxine_flush_instrumentationBuffer() {
 	return (jint) real_maxine_flush_instrumentationBuffer; // dirty yes ... but it should work	
 }
-
+*/
 float native_parseFloat(const char* cstring, float nan) {
 #if os_MAXVE
     // TODO
