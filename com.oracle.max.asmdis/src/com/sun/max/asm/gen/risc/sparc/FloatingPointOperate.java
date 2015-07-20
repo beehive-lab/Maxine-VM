@@ -60,6 +60,13 @@ public class FloatingPointOperate extends SPARCInstructionDescriptionCreator {
         define("f" + name + type, head, opf(opfContents), frs2Field, frdField);
     }
 
+    private void createVis(String name, int opf, Object rd) {
+        createVis(name, opf, rd, bits_4_0(0));
+    }
+
+    /**
+     * VIS OPCOdes (op=0x2, op3=0x36)
+     */
     private void createVis(String name, int opf, Object rd, Object rs2) {
         assert opf > 0 && opf < (1 << 10) : opf;
         define(name, op(2), op3(0x36), bits_18_14(0x00), opf(opf), rs2, rd);

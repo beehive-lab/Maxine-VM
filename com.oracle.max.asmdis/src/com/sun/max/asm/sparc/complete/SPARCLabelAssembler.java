@@ -30,7 +30,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
 
 // START GENERATED LABEL ASSEMBLER METHODS
     /**
-     * Pseudo-external assembler syntax: {@code brz{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code brz[,a][,pn|,pt]  }<i>rs1</i>, <i>label</i>
      * Example disassembly syntax: {@code brz,pn        %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
@@ -45,7 +45,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code brlez{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code brlez[,a][,pn|,pt]  }<i>rs1</i>, <i>label</i>
      * Example disassembly syntax: {@code brlez,pn      %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
@@ -60,7 +60,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code brlz{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code brlz[,a][,pn|,pt]  }<i>rs1</i>, <i>label</i>
      * Example disassembly syntax: {@code brlz,pn       %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
@@ -75,7 +75,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code brnz{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code brnz[,a][,pn|,pt]  }<i>rs1</i>, <i>label</i>
      * Example disassembly syntax: {@code brnz,pn       %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
@@ -90,7 +90,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code brgz{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code brgz[,a][,pn|,pt]  }<i>rs1</i>, <i>label</i>
      * Example disassembly syntax: {@code brgz,pn       %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
@@ -105,7 +105,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code brgez{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code brgez[,a][,pn|,pt]  }<i>rs1</i>, <i>label</i>
      * Example disassembly syntax: {@code brgez,pn      %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
@@ -210,7 +210,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code br[z|lez|lz|nz|gz|gez]{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code br[z|lez|lz|nz|gz|gez][,a][,pn|,pt]  }<i>rs1</i>, <i>label</i>
      * Example disassembly syntax: {@code brz,pn        %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
@@ -225,7 +225,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fba{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fba[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fba           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -240,7 +240,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbn{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbn[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbn           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -255,7 +255,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbu{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbu[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbu           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -270,7 +270,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbg{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbg[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbg           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -285,7 +285,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbug{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbug[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbug          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -300,7 +300,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbl{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbl[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbl           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -315,7 +315,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbul{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbul[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbul          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -330,7 +330,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fblg{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fblg[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fblg          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -345,7 +345,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbne{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbne[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbne          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -360,7 +360,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbe{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbe[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbe           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -375,7 +375,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbue{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbue[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbue          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -390,7 +390,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbge{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbge[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbge          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -405,7 +405,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbuge{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbuge[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbuge         L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -420,7 +420,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fble{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fble[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fble          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -435,7 +435,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbule{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbule[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbule         L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -450,7 +450,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbo{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbo[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbo           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -705,7 +705,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fb[a|n|u|g|ug|l|ul|lg|ne|e|ue|ge|uge|le|ule|o]{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fb[a|n|u|g|ug|l|ul|lg|ne|e|ue|ge|uge|le|ule|o][,a]  }<i>label</i>
      * Example disassembly syntax: {@code fba           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -720,7 +720,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fba{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fba[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fba,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -735,7 +735,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbn{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbn[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbn,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -750,7 +750,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbu{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbu[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbu,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -765,7 +765,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbg{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbg[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbg,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -780,7 +780,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbug{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbug[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbug,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -795,7 +795,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbl{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbl[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbl,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -810,7 +810,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbul{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbul[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbul,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -825,7 +825,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fblg{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fblg[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fblg,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -840,7 +840,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbne{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbne[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbne,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -855,7 +855,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbe{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbe[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbe,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -870,7 +870,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbue{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbue[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbue,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -885,7 +885,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbge{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbge[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbge,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -900,7 +900,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbuge{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbuge[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbuge,pn      %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -915,7 +915,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fble{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fble[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fble,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -930,7 +930,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbule{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbule[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbule,pn      %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -945,7 +945,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbo{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbo[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbo,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -1200,7 +1200,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fb[a|n|u|g|ug|l|ul|lg|ne|e|ue|ge|uge|le|ule|o]{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fb[a|n|u|g|ug|l|ul|lg|ne|e|ue|ge|uge|le|ule|o][,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fba,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -1215,7 +1215,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code ba{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code ba[,a]  }<i>label</i>
      * Example disassembly syntax: {@code ba            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -1230,7 +1230,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bn{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bn[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bn            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -1245,7 +1245,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bne{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bne[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bne           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -1260,7 +1260,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code be{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code be[,a]  }<i>label</i>
      * Example disassembly syntax: {@code be            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -1275,7 +1275,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bg{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bg[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bg            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -1290,7 +1290,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code ble{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code ble[,a]  }<i>label</i>
      * Example disassembly syntax: {@code ble           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -1305,7 +1305,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bge{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bge[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bge           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -1320,7 +1320,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bl{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bl[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bl            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -1335,7 +1335,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bgu{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bgu[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bgu           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -1350,7 +1350,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bleu{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bleu[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bleu          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -1365,7 +1365,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bcc{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bcc[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bcc           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -1380,7 +1380,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bcs{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bcs[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bcs           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -1395,7 +1395,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bpos{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bpos[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bpos          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -1410,7 +1410,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bneg{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bneg[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bneg          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -1425,7 +1425,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bvc{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bvc[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bvc           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -1440,7 +1440,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bvs{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bvs[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bvs           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -1695,7 +1695,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code b[a|n|ne|e|g|le|ge|l|gu|leu|cc|cs|pos|neg|vc|vs]{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code b[a|n|ne|e|g|le|ge|l|gu|leu|cc|cs|pos|neg|vc|vs][,a]  }<i>label</i>
      * Example disassembly syntax: {@code ba            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -1710,7 +1710,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code ba{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code ba[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code ba,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -1725,7 +1725,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bn{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bn[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bn,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -1740,7 +1740,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bne{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bne[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bne,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -1755,7 +1755,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code be{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code be[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code be,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -1770,7 +1770,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bg{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bg[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bg,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -1785,7 +1785,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code ble{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code ble[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code ble,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -1800,7 +1800,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bge{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bge[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bge,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -1815,7 +1815,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bl{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bl[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bl,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -1830,7 +1830,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bgu{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bgu[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bgu,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -1845,7 +1845,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bleu{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bleu[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bleu,pn       %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -1860,7 +1860,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bcc{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bcc[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bcc,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -1875,7 +1875,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bcs{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bcs[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bcs,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -1890,7 +1890,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bpos{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bpos[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bpos,pn       %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -1905,7 +1905,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bneg{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bneg[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bneg,pn       %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -1920,7 +1920,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bvc{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bvc[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bvc,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -1935,7 +1935,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bvs{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bvs[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bvs,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -2190,7 +2190,7 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code b[a|n|ne|e|g|le|ge|l|gu|leu|cc|cs|pos|neg|vc|vs]{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code b[a|n|ne|e|g|le|ge|l|gu|leu|cc|cs|pos|neg|vc|vs][,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code ba,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -2220,6 +2220,874 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
     }
 
     /**
+     * Pseudo-external assembler syntax: {@code cxbne  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbne         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 147, Serial#: 376
+    public void cxbne(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbne_376(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbne  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbne         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 148, Serial#: 377
+    public void cxbne(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbne_377(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbne  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbne         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 149, Serial#: 378
+    public void cwbne(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbne_378(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbne  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbne         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 150, Serial#: 379
+    public void cwbne(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbne_379(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbe  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbe          %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 151, Serial#: 380
+    public void cxbe(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbe_380(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbe  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbe          %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 152, Serial#: 381
+    public void cxbe(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbe_381(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbe  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbe          %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 153, Serial#: 382
+    public void cwbe(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbe_382(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbe  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbe          %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 154, Serial#: 383
+    public void cwbe(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbe_383(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbg  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbg          %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 155, Serial#: 384
+    public void cxbg(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbg_384(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbg  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbg          %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 156, Serial#: 385
+    public void cxbg(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbg_385(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbg  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbg          %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 157, Serial#: 386
+    public void cwbg(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbg_386(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbg  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbg          %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 158, Serial#: 387
+    public void cwbg(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbg_387(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxble  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxble         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 159, Serial#: 388
+    public void cxble(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxble_388(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxble  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxble         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 160, Serial#: 389
+    public void cxble(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxble_389(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwble  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwble         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 161, Serial#: 390
+    public void cwble(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwble_390(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwble  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwble         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 162, Serial#: 391
+    public void cwble(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwble_391(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbge  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbge         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 163, Serial#: 392
+    public void cxbge(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbge_392(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbge  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbge         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 164, Serial#: 393
+    public void cxbge(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbge_393(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbge  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbge         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 165, Serial#: 394
+    public void cwbge(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbge_394(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbge  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbge         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 166, Serial#: 395
+    public void cwbge(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbge_395(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbl  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbl          %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 167, Serial#: 396
+    public void cxbl(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbl_396(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbl  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbl          %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 168, Serial#: 397
+    public void cxbl(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbl_397(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbl  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbl          %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 169, Serial#: 398
+    public void cwbl(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbl_398(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbl  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbl          %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 170, Serial#: 399
+    public void cwbl(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbl_399(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbgu  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbgu         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 171, Serial#: 400
+    public void cxbgu(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbgu_400(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbgu  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbgu         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 172, Serial#: 401
+    public void cxbgu(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbgu_401(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbgu  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbgu         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 173, Serial#: 402
+    public void cwbgu(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbgu_402(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbgu  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbgu         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 174, Serial#: 403
+    public void cwbgu(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbgu_403(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbleu  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbleu        %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 175, Serial#: 404
+    public void cxbleu(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbleu_404(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbleu  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbleu        %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 176, Serial#: 405
+    public void cxbleu(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbleu_405(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbleu  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbleu        %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 177, Serial#: 406
+    public void cwbleu(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbleu_406(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbleu  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbleu        %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 178, Serial#: 407
+    public void cwbleu(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbleu_407(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbcc  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbcc         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 179, Serial#: 408
+    public void cxbcc(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbcc_408(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbcc  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbcc         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 180, Serial#: 409
+    public void cxbcc(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbcc_409(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbcc  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbcc         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 181, Serial#: 410
+    public void cwbcc(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbcc_410(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbcc  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbcc         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 182, Serial#: 411
+    public void cwbcc(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbcc_411(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbcs  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbcs         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 183, Serial#: 412
+    public void cxbcs(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbcs_412(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbcs  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbcs         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 184, Serial#: 413
+    public void cxbcs(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbcs_413(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbcs  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbcs         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 185, Serial#: 414
+    public void cwbcs(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbcs_414(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbcs  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbcs         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 186, Serial#: 415
+    public void cwbcs(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbcs_415(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbpos  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbpos        %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 187, Serial#: 416
+    public void cxbpos(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbpos_416(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbpos  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbpos        %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 188, Serial#: 417
+    public void cxbpos(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbpos_417(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbpos  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbpos        %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 189, Serial#: 418
+    public void cwbpos(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbpos_418(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbpos  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbpos        %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 190, Serial#: 419
+    public void cwbpos(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbpos_419(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbneg  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbneg        %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 191, Serial#: 420
+    public void cxbneg(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbneg_420(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbneg  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbneg        %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 192, Serial#: 421
+    public void cxbneg(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbneg_421(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbneg  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbneg        %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 193, Serial#: 422
+    public void cwbneg(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbneg_422(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbneg  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbneg        %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 194, Serial#: 423
+    public void cwbneg(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbneg_423(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbvc  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbvc         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 195, Serial#: 424
+    public void cxbvc(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbvc_424(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbvc  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbvc         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 196, Serial#: 425
+    public void cxbvc(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbvc_425(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbvc  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbvc         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 197, Serial#: 426
+    public void cwbvc(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbvc_426(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbvc  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbvc         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 198, Serial#: 427
+    public void cwbvc(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbvc_427(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbvs  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbvs         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 199, Serial#: 428
+    public void cxbvs(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbvs_428(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbvs  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbvs         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 200, Serial#: 429
+    public void cxbvs(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cxbvs_429(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbvs  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbvs         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 201, Serial#: 430
+    public void cwbvs(final GPR rs1, final GPR rs2, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbvs_430(startPosition, 4, rs1, rs2, label);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbvs  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbvs         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 202, Serial#: 431
+    public void cwbvs(final GPR rs1, final int shcnt32, final Label label) {
+        final int startPosition = currentPosition();
+        emitInt(0);
+        new cwbvs_431(startPosition, 4, rs1, shcnt32, label);
+    }
+
+    /**
      * Pseudo-external assembler syntax: {@code iprefetch  }<i>label</i>
      * Example disassembly syntax: {@code iprefetch     L1: -1048576}
      * <p>
@@ -2231,11 +3099,11 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 147, Serial#: 638
+    // Template#: 203, Serial#: 694
     public void iprefetch(final Label label) {
         final int startPosition = currentPosition();
         emitInt(0);
-        new iprefetch_638(startPosition, 4, label);
+        new iprefetch_694(startPosition, 4, label);
     }
 
     class brz_190 extends InstructionWithOffset {
@@ -4098,8 +4966,792 @@ public abstract class SPARCLabelAssembler extends SPARCRawAssembler {
         }
     }
 
-    class iprefetch_638 extends InstructionWithOffset {
-        iprefetch_638(int startPosition, int endPosition, Label label) {
+    class cxbne_376 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cxbne_376(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbne(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cxbne_377 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cxbne_377(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbne(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cwbne_378 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cwbne_378(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbne(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cwbne_379 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cwbne_379(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbne(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cxbe_380 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cxbe_380(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbe(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cxbe_381 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cxbe_381(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbe(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cwbe_382 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cwbe_382(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbe(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cwbe_383 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cwbe_383(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbe(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cxbg_384 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cxbg_384(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbg(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cxbg_385 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cxbg_385(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbg(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cwbg_386 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cwbg_386(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbg(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cwbg_387 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cwbg_387(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbg(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cxble_388 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cxble_388(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxble(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cxble_389 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cxble_389(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxble(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cwble_390 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cwble_390(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwble(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cwble_391 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cwble_391(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwble(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cxbge_392 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cxbge_392(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbge(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cxbge_393 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cxbge_393(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbge(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cwbge_394 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cwbge_394(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbge(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cwbge_395 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cwbge_395(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbge(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cxbl_396 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cxbl_396(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbl(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cxbl_397 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cxbl_397(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbl(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cwbl_398 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cwbl_398(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbl(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cwbl_399 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cwbl_399(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbl(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cxbgu_400 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cxbgu_400(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbgu(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cxbgu_401 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cxbgu_401(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbgu(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cwbgu_402 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cwbgu_402(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbgu(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cwbgu_403 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cwbgu_403(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbgu(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cxbleu_404 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cxbleu_404(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbleu(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cxbleu_405 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cxbleu_405(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbleu(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cwbleu_406 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cwbleu_406(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbleu(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cwbleu_407 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cwbleu_407(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbleu(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cxbcc_408 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cxbcc_408(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbcc(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cxbcc_409 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cxbcc_409(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbcc(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cwbcc_410 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cwbcc_410(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbcc(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cwbcc_411 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cwbcc_411(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbcc(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cxbcs_412 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cxbcs_412(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbcs(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cxbcs_413 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cxbcs_413(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbcs(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cwbcs_414 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cwbcs_414(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbcs(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cwbcs_415 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cwbcs_415(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbcs(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cxbpos_416 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cxbpos_416(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbpos(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cxbpos_417 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cxbpos_417(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbpos(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cwbpos_418 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cwbpos_418(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbpos(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cwbpos_419 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cwbpos_419(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbpos(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cxbneg_420 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cxbneg_420(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbneg(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cxbneg_421 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cxbneg_421(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbneg(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cwbneg_422 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cwbneg_422(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbneg(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cwbneg_423 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cwbneg_423(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbneg(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cxbvc_424 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cxbvc_424(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbvc(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cxbvc_425 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cxbvc_425(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbvc(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cwbvc_426 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cwbvc_426(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbvc(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cwbvc_427 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cwbvc_427(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbvc(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cxbvs_428 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cxbvs_428(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbvs(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cxbvs_429 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cxbvs_429(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cxbvs(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class cwbvs_430 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final GPR rs2;
+        cwbvs_430(int startPosition, int endPosition, GPR rs1, GPR rs2, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.rs2 = rs2;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbvs(rs1, rs2, offsetAsInt());
+        }
+    }
+
+    class cwbvs_431 extends InstructionWithOffset {
+        private final GPR rs1;
+        private final int shcnt32;
+        cwbvs_431(int startPosition, int endPosition, GPR rs1, int shcnt32, Label label) {
+            super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
+            this.rs1 = rs1;
+            this.shcnt32 = shcnt32;
+        }
+        @Override
+        protected void assemble() throws AssemblyException {
+            cwbvs(rs1, shcnt32, offsetAsInt());
+        }
+    }
+
+    class iprefetch_694 extends InstructionWithOffset {
+        iprefetch_694(int startPosition, int endPosition, Label label) {
             super(SPARCLabelAssembler.this, startPosition, currentPosition(), label);
         }
         @Override

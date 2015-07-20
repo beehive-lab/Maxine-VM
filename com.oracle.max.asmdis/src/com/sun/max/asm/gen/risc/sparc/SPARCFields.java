@@ -50,10 +50,22 @@ public final class SPARCFields {
         return bits_29_27.constant(value);
     }
 
+    private static final ConstantField bits_27_25 = ConstantField.createDescending(27, 25);
+
+    public static RiscConstant bits_27_25(int value) {
+        return bits_27_25.constant(value);
+    }
+
     private static final ConstantField bits_28_28 = ConstantField.createDescending(28, 28);
 
     public static RiscConstant bits_28_28(int value) {
         return bits_28_28.constant(value);
+    }
+
+    private static final ConstantField bits_21_21 = ConstantField.createDescending(21, 21);
+
+    public static RiscConstant bits_21_21(int value) {
+        return bits_21_21.constant(value);
     }
 
     private static final ConstantField bits_24_22 = ConstantField.createDescending(24, 22);
@@ -84,6 +96,12 @@ public final class SPARCFields {
 
     public static RiscConstant cond_17_14(int value) {
         return cond_17_14.constant(value);
+    }
+
+    private static final ConstantField bits_4_0 = ConstantField.createDescending(4, 0);
+
+    public static RiscConstant bits_4_0(int value) {
+        return bits_4_0.constant(value);
     }
 
     private static final ConstantField fcnc = ConstantField.createDescending(29, 25);
@@ -193,6 +211,7 @@ public final class SPARCFields {
     public static final BranchDisplacementOperandField disp22 = BranchDisplacementOperandField.createDescendingBranchDisplacementOperandField(21, 0);
     public static final BranchDisplacementOperandField disp19 = BranchDisplacementOperandField.createDescendingBranchDisplacementOperandField(18, 0);
     public static final BranchDisplacementOperandField d16 = BranchDisplacementOperandField.createDescendingBranchDisplacementOperandField(21, 20, 13, 0);
+    public static final BranchDisplacementOperandField d10 = BranchDisplacementOperandField.createDescendingBranchDisplacementOperandField(20, 19, 12, 5);
 
     public static final SymbolicOperandField<MembarOperand> membarMask = SymbolicOperandField.createDescending(MembarOperand.SYMBOLIZER, 6, 0);
 
@@ -320,6 +339,7 @@ public final class SPARCFields {
     public static final ReservedField res_10_7 = ReservedField.createDescending(10, 7);
     public static final ReservedField res_10_5 = ReservedField.createDescending(10, 5);
     public static final ReservedField res_9_5 = ReservedField.createDescending(9, 5);
+    public static final ReservedField res_4_0 = ReservedField.createDescending(4, 0);
     public static final ReservedField impl_dep = ReservedField.createDescending(29, 25, 18, 0);
 
     // Checkstyle: resume constant name checks

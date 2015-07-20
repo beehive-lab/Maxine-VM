@@ -3223,7 +3223,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code brz{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code brz[,a][,pn|,pt]  }<i>rs1</i>, <i>label</i>
      * Example disassembly syntax: {@code brz,pn        %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
@@ -3242,7 +3242,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code brlez{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code brlez[,a][,pn|,pt]  }<i>rs1</i>, <i>label</i>
      * Example disassembly syntax: {@code brlez,pn      %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
@@ -3261,7 +3261,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code brlz{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code brlz[,a][,pn|,pt]  }<i>rs1</i>, <i>label</i>
      * Example disassembly syntax: {@code brlz,pn       %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
@@ -3280,7 +3280,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code brnz{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code brnz[,a][,pn|,pt]  }<i>rs1</i>, <i>label</i>
      * Example disassembly syntax: {@code brnz,pn       %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
@@ -3299,7 +3299,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code brgz{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code brgz[,a][,pn|,pt]  }<i>rs1</i>, <i>label</i>
      * Example disassembly syntax: {@code brgz,pn       %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
@@ -3318,7 +3318,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code brgez{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code brgez[,a][,pn|,pt]  }<i>rs1</i>, <i>label</i>
      * Example disassembly syntax: {@code brgez,pn      %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
@@ -3439,7 +3439,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code br[z|lez|lz|nz|gz|gez]{,a}{,pn|,pt}  }<i>rs1</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code br[z|lez|lz|nz|gz|gez][,a][,pn|,pt]  }<i>rs1</i>, <i>label</i>
      * Example disassembly syntax: {@code brz,pn        %g0, L1: -131072}
      * <p>
      * Constraint: {@code (-131072 <= label && label <= 131068) && ((label % 4) == 0)}<br />
@@ -3459,7 +3459,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fba{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fba[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fba           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -3476,7 +3476,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbn{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbn[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbn           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -3493,7 +3493,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbu{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbu[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbu           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -3510,7 +3510,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbg{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbg[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbg           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -3527,7 +3527,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbug{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbug[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbug          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -3544,7 +3544,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbl{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbl[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbl           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -3561,7 +3561,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbul{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbul[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbul          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -3578,7 +3578,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fblg{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fblg[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fblg          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -3595,7 +3595,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbne{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbne[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbne          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -3612,7 +3612,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbe{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbe[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbe           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -3629,7 +3629,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbue{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbue[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbue          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -3646,7 +3646,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbge{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbge[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbge          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -3663,7 +3663,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbuge{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbuge[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbuge         L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -3680,7 +3680,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fble{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fble[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fble          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -3697,7 +3697,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbule{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbule[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbule         L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -3714,7 +3714,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbo{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fbo[,a]  }<i>label</i>
      * Example disassembly syntax: {@code fbo           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -3987,7 +3987,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fb[a|n|u|g|ug|l|ul|lg|ne|e|ue|ge|uge|le|ule|o]{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code fb[a|n|u|g|ug|l|ul|lg|ne|e|ue|ge|uge|le|ule|o][,a]  }<i>label</i>
      * Example disassembly syntax: {@code fba           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -4005,7 +4005,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fba{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fba[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fba,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -4024,7 +4024,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbn{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbn[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbn,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -4043,7 +4043,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbu{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbu[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbu,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -4062,7 +4062,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbg{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbg[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbg,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -4081,7 +4081,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbug{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbug[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbug,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -4100,7 +4100,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbl{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbl[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbl,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -4119,7 +4119,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbul{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbul[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbul,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -4138,7 +4138,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fblg{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fblg[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fblg,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -4157,7 +4157,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbne{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbne[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbne,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -4176,7 +4176,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbe{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbe[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbe,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -4195,7 +4195,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbue{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbue[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbue,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -4214,7 +4214,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbge{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbge[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbge,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -4233,7 +4233,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbuge{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbuge[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbuge,pn      %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -4252,7 +4252,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fble{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fble[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fble,pn       %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -4271,7 +4271,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbule{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbule[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbule,pn      %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -4290,7 +4290,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fbo{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fbo[,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fbo,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -4581,7 +4581,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code fb[a|n|u|g|ug|l|ul|lg|ne|e|ue|ge|uge|le|ule|o]{,a}{,pn|,pt}  }<i>n</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code fb[a|n|u|g|ug|l|ul|lg|ne|e|ue|ge|uge|le|ule|o][,a][,pn|,pt]  }<i>n</i>, <i>label</i>
      * Example disassembly syntax: {@code fba,pn        %fcc0, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -4601,7 +4601,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code ba{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code ba[,a]  }<i>label</i>
      * Example disassembly syntax: {@code ba            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -4618,7 +4618,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bn{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bn[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bn            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -4635,7 +4635,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bne{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bne[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bne           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -4652,7 +4652,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code be{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code be[,a]  }<i>label</i>
      * Example disassembly syntax: {@code be            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -4669,7 +4669,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bg{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bg[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bg            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -4686,7 +4686,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code ble{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code ble[,a]  }<i>label</i>
      * Example disassembly syntax: {@code ble           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -4703,7 +4703,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bge{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bge[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bge           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -4720,7 +4720,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bl{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bl[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bl            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -4737,7 +4737,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bgu{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bgu[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bgu           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -4754,7 +4754,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bleu{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bleu[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bleu          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -4771,7 +4771,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bcc{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bcc[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bcc           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -4788,7 +4788,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bcs{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bcs[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bcs           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -4805,7 +4805,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bpos{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bpos[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bpos          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -4822,7 +4822,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bneg{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bneg[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bneg          L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -4839,7 +4839,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bvc{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bvc[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bvc           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -4856,7 +4856,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bvs{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code bvs[,a]  }<i>label</i>
      * Example disassembly syntax: {@code bvs           L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -5129,7 +5129,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code b[a|n|ne|e|g|le|ge|l|gu|leu|cc|cs|pos|neg|vc|vs]{,a}  }<i>label</i>
+     * Pseudo-external assembler syntax: {@code b[a|n|ne|e|g|le|ge|l|gu|leu|cc|cs|pos|neg|vc|vs][,a]  }<i>label</i>
      * Example disassembly syntax: {@code ba            L1: -8388608}
      * <p>
      * Constraint: {@code (-8388608 <= label && label <= 8388604) && ((label % 4) == 0)}<br />
@@ -5147,7 +5147,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code ba{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code ba[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code ba,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -5166,7 +5166,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bn{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bn[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bn,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -5185,7 +5185,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bne{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bne[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bne,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -5204,7 +5204,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code be{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code be[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code be,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -5223,7 +5223,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bg{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bg[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bg,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -5242,7 +5242,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code ble{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code ble[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code ble,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -5261,7 +5261,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bge{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bge[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bge,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -5280,7 +5280,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bl{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bl[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bl,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -5299,7 +5299,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bgu{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bgu[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bgu,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -5318,7 +5318,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bleu{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bleu[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bleu,pn       %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -5337,7 +5337,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bcc{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bcc[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bcc,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -5356,7 +5356,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bcs{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bcs[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bcs,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -5375,7 +5375,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bpos{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bpos[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bpos,pn       %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -5394,7 +5394,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bneg{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bneg[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bneg,pn       %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -5413,7 +5413,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bvc{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bvc[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bvc,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -5432,7 +5432,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code bvs{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code bvs[,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code bvs,pn        %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -5723,7 +5723,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
-     * Pseudo-external assembler syntax: {@code b[a|n|ne|e|g|le|ge|l|gu|leu|cc|cs|pos|neg|vc|vs]{,a}{,pn|,pt}  }<i>i_or_x_cc</i>, <i>label</i>
+     * Pseudo-external assembler syntax: {@code b[a|n|ne|e|g|le|ge|l|gu|leu|cc|cs|pos|neg|vc|vs][,a][,pn|,pt]  }<i>i_or_x_cc</i>, <i>label</i>
      * Example disassembly syntax: {@code ba,pn         %icc, L1: -1048576}
      * <p>
      * Constraint: {@code (-1048576 <= label && label <= 1048572) && ((label % 4) == 0)}<br />
@@ -6407,12 +6407,1076 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
     }
 
     /**
+     * Pseudo-external assembler syntax: {@code cxbne  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbne         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 376, Serial#: 376
+    public void cxbne(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x32E00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbne  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbne         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 377, Serial#: 377
+    public void cxbne(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x32E02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbne  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbne         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 378, Serial#: 378
+    public void cwbne(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x32C00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbne  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbne         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 379, Serial#: 379
+    public void cwbne(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x32C02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbe  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbe          %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 380, Serial#: 380
+    public void cxbe(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x12E00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbe  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbe          %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 381, Serial#: 381
+    public void cxbe(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x12E02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbe  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbe          %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 382, Serial#: 382
+    public void cwbe(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x12C00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbe  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbe          %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 383, Serial#: 383
+    public void cwbe(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x12C02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbg  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbg          %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 384, Serial#: 384
+    public void cxbg(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x34E00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbg  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbg          %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 385, Serial#: 385
+    public void cxbg(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x34E02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbg  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbg          %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 386, Serial#: 386
+    public void cwbg(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x34C00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbg  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbg          %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 387, Serial#: 387
+    public void cwbg(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x34C02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxble  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxble         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 388, Serial#: 388
+    public void cxble(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x14E00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxble  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxble         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 389, Serial#: 389
+    public void cxble(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x14E02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwble  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwble         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 390, Serial#: 390
+    public void cwble(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x14C00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwble  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwble         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 391, Serial#: 391
+    public void cwble(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x14C02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbge  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbge         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 392, Serial#: 392
+    public void cxbge(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x36E00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbge  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbge         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 393, Serial#: 393
+    public void cxbge(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x36E02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbge  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbge         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 394, Serial#: 394
+    public void cwbge(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x36C00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbge  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbge         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 395, Serial#: 395
+    public void cwbge(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x36C02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbl  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbl          %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 396, Serial#: 396
+    public void cxbl(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x16E00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbl  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbl          %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 397, Serial#: 397
+    public void cxbl(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x16E02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbl  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbl          %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 398, Serial#: 398
+    public void cwbl(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x16C00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbl  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbl          %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 399, Serial#: 399
+    public void cwbl(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x16C02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbgu  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbgu         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 400, Serial#: 400
+    public void cxbgu(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x38E00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbgu  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbgu         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 401, Serial#: 401
+    public void cxbgu(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x38E02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbgu  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbgu         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 402, Serial#: 402
+    public void cwbgu(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x38C00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbgu  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbgu         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 403, Serial#: 403
+    public void cwbgu(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x38C02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbleu  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbleu        %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 404, Serial#: 404
+    public void cxbleu(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x18E00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbleu  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbleu        %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 405, Serial#: 405
+    public void cxbleu(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x18E02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbleu  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbleu        %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 406, Serial#: 406
+    public void cwbleu(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x18C00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbleu  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbleu        %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 407, Serial#: 407
+    public void cwbleu(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x18C02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbcc  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbcc         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 408, Serial#: 408
+    public void cxbcc(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x3AE00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbcc  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbcc         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 409, Serial#: 409
+    public void cxbcc(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x3AE02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbcc  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbcc         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 410, Serial#: 410
+    public void cwbcc(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x3AC00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbcc  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbcc         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 411, Serial#: 411
+    public void cwbcc(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x3AC02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbcs  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbcs         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 412, Serial#: 412
+    public void cxbcs(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x1AE00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbcs  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbcs         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 413, Serial#: 413
+    public void cxbcs(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x1AE02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbcs  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbcs         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 414, Serial#: 414
+    public void cwbcs(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x1AC00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbcs  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbcs         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 415, Serial#: 415
+    public void cwbcs(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x1AC02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbpos  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbpos        %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 416, Serial#: 416
+    public void cxbpos(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x3CE00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbpos  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbpos        %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 417, Serial#: 417
+    public void cxbpos(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x3CE02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbpos  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbpos        %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 418, Serial#: 418
+    public void cwbpos(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x3CC00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbpos  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbpos        %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 419, Serial#: 419
+    public void cwbpos(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x3CC02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbneg  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbneg        %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 420, Serial#: 420
+    public void cxbneg(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x1CE00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbneg  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbneg        %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 421, Serial#: 421
+    public void cxbneg(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x1CE02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbneg  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbneg        %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 422, Serial#: 422
+    public void cwbneg(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x1CC00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbneg  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbneg        %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 423, Serial#: 423
+    public void cwbneg(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x1CC02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbvc  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbvc         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 424, Serial#: 424
+    public void cxbvc(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x3EE00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbvc  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbvc         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 425, Serial#: 425
+    public void cxbvc(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x3EE02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbvc  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbvc         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 426, Serial#: 426
+    public void cwbvc(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x3EC00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbvc  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbvc         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 427, Serial#: 427
+    public void cwbvc(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x3EC02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbvs  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbvs         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 428, Serial#: 428
+    public void cxbvs(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x1EE00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cxbvs  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cxbvs         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 429, Serial#: 429
+    public void cxbvs(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x1EE02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbvs  }<i>rs1</i>, <i>rs2</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbvs         %g0, %g0, L1: -2048}
+     * <p>
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 430, Serial#: 430
+    public void cwbvs(final GPR rs1, final GPR rs2, final int label) {
+        int instruction = 0x1EC00000;
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (rs2.value() & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
+     * Pseudo-external assembler syntax: {@code cwbvs  }<i>rs1</i>, <i>shcnt32</i>, <i>label</i>
+     * Example disassembly syntax: {@code cwbvs         %g0, 0x0, L1: -2048}
+     * <p>
+     * Constraint: {@code 0 <= shcnt32 && shcnt32 <= 31}<br />
+     * Constraint: {@code (-2048 <= label && label <= 2044) && ((label % 4) == 0)}<br />
+     *
+     * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section OSA2011"
+     */
+    // Template#: 431, Serial#: 431
+    public void cwbvs(final GPR rs1, final int shcnt32, final int label) {
+        int instruction = 0x1EC02000;
+        checkConstraint(0 <= shcnt32 && shcnt32 <= 31, "0 <= shcnt32 && shcnt32 <= 31");
+        checkConstraint((-2048 <= label && label <= 2044) && ((label % 4) == 0), "(-2048 <= label && label <= 2044) && ((label % 4) == 0)");
+        instruction |= ((rs1.value() & 0x1f) << 14);
+        instruction |= (shcnt32 & 0x1f);
+        instruction |= (((label >> 2) & 0xff) << 5) | ((((label >> 2) >> 8) & 0x3) << 19);
+        emitInt(instruction);
+    }
+
+    /**
      * Pseudo-external assembler syntax: {@code fmovrse  }<i>rs1</i>, <i>rs2</i>, <i>rd</i>
      * Example disassembly syntax: {@code fmovrse       %g0, %f0, %f0}
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.34"
      */
-    // Template#: 376, Serial#: 376
+    // Template#: 432, Serial#: 432
     public void fmovrse(final GPR rs1, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A804A0;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6427,7 +7491,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.34"
      */
-    // Template#: 377, Serial#: 377
+    // Template#: 433, Serial#: 433
     public void fmovrde(final GPR rs1, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A804C0;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6442,7 +7506,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.34"
      */
-    // Template#: 378, Serial#: 378
+    // Template#: 434, Serial#: 434
     public void fmovrqe(final GPR rs1, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A804E0;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6457,7 +7521,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.36"
      */
-    // Template#: 379, Serial#: 379
+    // Template#: 435, Serial#: 435
     public void movre(final GPR rs1, final GPR rs2, final GPR rd) {
         int instruction = 0x81780400;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6474,7 +7538,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.36"
      */
-    // Template#: 380, Serial#: 380
+    // Template#: 436, Serial#: 436
     public void movre(final GPR rs1, final int simm10, final GPR rd) {
         int instruction = 0x81782400;
         checkConstraint(-512 <= simm10 && simm10 <= 511, "-512 <= simm10 && simm10 <= 511");
@@ -6490,7 +7554,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.34"
      */
-    // Template#: 381, Serial#: 381
+    // Template#: 437, Serial#: 437
     public void fmovrslez(final GPR rs1, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A808A0;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6505,7 +7569,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.34"
      */
-    // Template#: 382, Serial#: 382
+    // Template#: 438, Serial#: 438
     public void fmovrdlez(final GPR rs1, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A808C0;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6520,7 +7584,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.34"
      */
-    // Template#: 383, Serial#: 383
+    // Template#: 439, Serial#: 439
     public void fmovrqlez(final GPR rs1, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A808E0;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6535,7 +7599,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.36"
      */
-    // Template#: 384, Serial#: 384
+    // Template#: 440, Serial#: 440
     public void movrlez(final GPR rs1, final GPR rs2, final GPR rd) {
         int instruction = 0x81780800;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6552,7 +7616,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.36"
      */
-    // Template#: 385, Serial#: 385
+    // Template#: 441, Serial#: 441
     public void movrlez(final GPR rs1, final int simm10, final GPR rd) {
         int instruction = 0x81782800;
         checkConstraint(-512 <= simm10 && simm10 <= 511, "-512 <= simm10 && simm10 <= 511");
@@ -6568,7 +7632,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.34"
      */
-    // Template#: 386, Serial#: 386
+    // Template#: 442, Serial#: 442
     public void fmovrslz(final GPR rs1, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A80CA0;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6583,7 +7647,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.34"
      */
-    // Template#: 387, Serial#: 387
+    // Template#: 443, Serial#: 443
     public void fmovrdlz(final GPR rs1, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A80CC0;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6598,7 +7662,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.34"
      */
-    // Template#: 388, Serial#: 388
+    // Template#: 444, Serial#: 444
     public void fmovrqlz(final GPR rs1, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A80CE0;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6613,7 +7677,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.36"
      */
-    // Template#: 389, Serial#: 389
+    // Template#: 445, Serial#: 445
     public void movrlz(final GPR rs1, final GPR rs2, final GPR rd) {
         int instruction = 0x81780C00;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6630,7 +7694,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.36"
      */
-    // Template#: 390, Serial#: 390
+    // Template#: 446, Serial#: 446
     public void movrlz(final GPR rs1, final int simm10, final GPR rd) {
         int instruction = 0x81782C00;
         checkConstraint(-512 <= simm10 && simm10 <= 511, "-512 <= simm10 && simm10 <= 511");
@@ -6646,7 +7710,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.34"
      */
-    // Template#: 391, Serial#: 391
+    // Template#: 447, Serial#: 447
     public void fmovrsne(final GPR rs1, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A814A0;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6661,7 +7725,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.34"
      */
-    // Template#: 392, Serial#: 392
+    // Template#: 448, Serial#: 448
     public void fmovrdne(final GPR rs1, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A814C0;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6676,7 +7740,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.34"
      */
-    // Template#: 393, Serial#: 393
+    // Template#: 449, Serial#: 449
     public void fmovrqne(final GPR rs1, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A814E0;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6691,7 +7755,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.36"
      */
-    // Template#: 394, Serial#: 394
+    // Template#: 450, Serial#: 450
     public void movrne(final GPR rs1, final GPR rs2, final GPR rd) {
         int instruction = 0x81781400;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6708,7 +7772,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.36"
      */
-    // Template#: 395, Serial#: 395
+    // Template#: 451, Serial#: 451
     public void movrne(final GPR rs1, final int simm10, final GPR rd) {
         int instruction = 0x81783400;
         checkConstraint(-512 <= simm10 && simm10 <= 511, "-512 <= simm10 && simm10 <= 511");
@@ -6724,7 +7788,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.34"
      */
-    // Template#: 396, Serial#: 396
+    // Template#: 452, Serial#: 452
     public void fmovrsgz(final GPR rs1, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A818A0;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6739,7 +7803,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.34"
      */
-    // Template#: 397, Serial#: 397
+    // Template#: 453, Serial#: 453
     public void fmovrdgz(final GPR rs1, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A818C0;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6754,7 +7818,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.34"
      */
-    // Template#: 398, Serial#: 398
+    // Template#: 454, Serial#: 454
     public void fmovrqgz(final GPR rs1, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A818E0;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6769,7 +7833,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.36"
      */
-    // Template#: 399, Serial#: 399
+    // Template#: 455, Serial#: 455
     public void movrgz(final GPR rs1, final GPR rs2, final GPR rd) {
         int instruction = 0x81781800;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6786,7 +7850,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.36"
      */
-    // Template#: 400, Serial#: 400
+    // Template#: 456, Serial#: 456
     public void movrgz(final GPR rs1, final int simm10, final GPR rd) {
         int instruction = 0x81783800;
         checkConstraint(-512 <= simm10 && simm10 <= 511, "-512 <= simm10 && simm10 <= 511");
@@ -6802,7 +7866,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.34"
      */
-    // Template#: 401, Serial#: 401
+    // Template#: 457, Serial#: 457
     public void fmovrsgez(final GPR rs1, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A81CA0;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6817,7 +7881,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.34"
      */
-    // Template#: 402, Serial#: 402
+    // Template#: 458, Serial#: 458
     public void fmovrdgez(final GPR rs1, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A81CC0;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6832,7 +7896,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.34"
      */
-    // Template#: 403, Serial#: 403
+    // Template#: 459, Serial#: 459
     public void fmovrqgez(final GPR rs1, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A81CE0;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6847,7 +7911,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.36"
      */
-    // Template#: 404, Serial#: 404
+    // Template#: 460, Serial#: 460
     public void movrgez(final GPR rs1, final GPR rs2, final GPR rd) {
         int instruction = 0x81781C00;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -6864,7 +7928,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.36"
      */
-    // Template#: 405, Serial#: 405
+    // Template#: 461, Serial#: 461
     public void movrgez(final GPR rs1, final int simm10, final GPR rd) {
         int instruction = 0x81783C00;
         checkConstraint(-512 <= simm10 && simm10 <= 511, "-512 <= simm10 && simm10 <= 511");
@@ -6880,7 +7944,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 406, Serial#: 406
+    // Template#: 462, Serial#: 462
     public void fmovsa(final ICCOperand i_or_x_cc, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81AA2020;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -6895,7 +7959,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 407, Serial#: 407
+    // Template#: 463, Serial#: 463
     public void fmovda(final ICCOperand i_or_x_cc, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81AA2040;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -6910,7 +7974,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 408, Serial#: 408
+    // Template#: 464, Serial#: 464
     public void fmovqa(final ICCOperand i_or_x_cc, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81AA2060;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -6927,7 +7991,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 409, Serial#: 409
+    // Template#: 465, Serial#: 465
     public void mova(final ICCOperand i_or_x_cc, final int simm11, final GPR rd) {
         int instruction = 0x81662000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -6943,7 +8007,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 410, Serial#: 410
+    // Template#: 466, Serial#: 466
     public void mova(final ICCOperand i_or_x_cc, final GPR rs2, final GPR rd) {
         int instruction = 0x81660000;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -6958,7 +8022,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 411, Serial#: 411
+    // Template#: 467, Serial#: 467
     public void fmovsn(final ICCOperand i_or_x_cc, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A82020;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -6973,7 +8037,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 412, Serial#: 412
+    // Template#: 468, Serial#: 468
     public void fmovdn(final ICCOperand i_or_x_cc, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A82040;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -6988,7 +8052,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 413, Serial#: 413
+    // Template#: 469, Serial#: 469
     public void fmovqn(final ICCOperand i_or_x_cc, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A82060;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7005,7 +8069,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 414, Serial#: 414
+    // Template#: 470, Serial#: 470
     public void movn(final ICCOperand i_or_x_cc, final int simm11, final GPR rd) {
         int instruction = 0x81642000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -7021,7 +8085,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 415, Serial#: 415
+    // Template#: 471, Serial#: 471
     public void movn(final ICCOperand i_or_x_cc, final GPR rs2, final GPR rd) {
         int instruction = 0x81640000;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7036,7 +8100,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 416, Serial#: 416
+    // Template#: 472, Serial#: 472
     public void fmovsne(final ICCOperand i_or_x_cc, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81AA6020;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7051,7 +8115,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 417, Serial#: 417
+    // Template#: 473, Serial#: 473
     public void fmovdne(final ICCOperand i_or_x_cc, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81AA6040;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7066,7 +8130,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 418, Serial#: 418
+    // Template#: 474, Serial#: 474
     public void fmovqne(final ICCOperand i_or_x_cc, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81AA6060;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7083,7 +8147,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 419, Serial#: 419
+    // Template#: 475, Serial#: 475
     public void movne(final ICCOperand i_or_x_cc, final int simm11, final GPR rd) {
         int instruction = 0x81666000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -7099,7 +8163,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 420, Serial#: 420
+    // Template#: 476, Serial#: 476
     public void movne(final ICCOperand i_or_x_cc, final GPR rs2, final GPR rd) {
         int instruction = 0x81664000;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7114,7 +8178,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 421, Serial#: 421
+    // Template#: 477, Serial#: 477
     public void fmovse(final ICCOperand i_or_x_cc, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A86020;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7129,7 +8193,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 422, Serial#: 422
+    // Template#: 478, Serial#: 478
     public void fmovde(final ICCOperand i_or_x_cc, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A86040;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7144,7 +8208,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 423, Serial#: 423
+    // Template#: 479, Serial#: 479
     public void fmovqe(final ICCOperand i_or_x_cc, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A86060;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7161,7 +8225,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 424, Serial#: 424
+    // Template#: 480, Serial#: 480
     public void move(final ICCOperand i_or_x_cc, final int simm11, final GPR rd) {
         int instruction = 0x81646000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -7177,7 +8241,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 425, Serial#: 425
+    // Template#: 481, Serial#: 481
     public void move(final ICCOperand i_or_x_cc, final GPR rs2, final GPR rd) {
         int instruction = 0x81644000;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7192,7 +8256,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 426, Serial#: 426
+    // Template#: 482, Serial#: 482
     public void fmovsg(final ICCOperand i_or_x_cc, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81AAA020;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7207,7 +8271,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 427, Serial#: 427
+    // Template#: 483, Serial#: 483
     public void fmovdg(final ICCOperand i_or_x_cc, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81AAA040;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7222,7 +8286,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 428, Serial#: 428
+    // Template#: 484, Serial#: 484
     public void fmovqg(final ICCOperand i_or_x_cc, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81AAA060;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7239,7 +8303,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 429, Serial#: 429
+    // Template#: 485, Serial#: 485
     public void movg(final ICCOperand i_or_x_cc, final int simm11, final GPR rd) {
         int instruction = 0x8166A000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -7255,7 +8319,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 430, Serial#: 430
+    // Template#: 486, Serial#: 486
     public void movg(final ICCOperand i_or_x_cc, final GPR rs2, final GPR rd) {
         int instruction = 0x81668000;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7270,7 +8334,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 431, Serial#: 431
+    // Template#: 487, Serial#: 487
     public void fmovsle(final ICCOperand i_or_x_cc, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A8A020;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7285,7 +8349,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 432, Serial#: 432
+    // Template#: 488, Serial#: 488
     public void fmovdle(final ICCOperand i_or_x_cc, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A8A040;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7300,7 +8364,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 433, Serial#: 433
+    // Template#: 489, Serial#: 489
     public void fmovqle(final ICCOperand i_or_x_cc, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A8A060;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7317,7 +8381,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 434, Serial#: 434
+    // Template#: 490, Serial#: 490
     public void movle(final ICCOperand i_or_x_cc, final int simm11, final GPR rd) {
         int instruction = 0x8164A000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -7333,7 +8397,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 435, Serial#: 435
+    // Template#: 491, Serial#: 491
     public void movle(final ICCOperand i_or_x_cc, final GPR rs2, final GPR rd) {
         int instruction = 0x81648000;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7348,7 +8412,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 436, Serial#: 436
+    // Template#: 492, Serial#: 492
     public void fmovsge(final ICCOperand i_or_x_cc, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81AAE020;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7363,7 +8427,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 437, Serial#: 437
+    // Template#: 493, Serial#: 493
     public void fmovdge(final ICCOperand i_or_x_cc, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81AAE040;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7378,7 +8442,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 438, Serial#: 438
+    // Template#: 494, Serial#: 494
     public void fmovqge(final ICCOperand i_or_x_cc, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81AAE060;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7395,7 +8459,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 439, Serial#: 439
+    // Template#: 495, Serial#: 495
     public void movge(final ICCOperand i_or_x_cc, final int simm11, final GPR rd) {
         int instruction = 0x8166E000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -7411,7 +8475,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 440, Serial#: 440
+    // Template#: 496, Serial#: 496
     public void movge(final ICCOperand i_or_x_cc, final GPR rs2, final GPR rd) {
         int instruction = 0x8166C000;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7426,7 +8490,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 441, Serial#: 441
+    // Template#: 497, Serial#: 497
     public void fmovsl(final ICCOperand i_or_x_cc, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A8E020;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7441,7 +8505,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 442, Serial#: 442
+    // Template#: 498, Serial#: 498
     public void fmovdl(final ICCOperand i_or_x_cc, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A8E040;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7456,7 +8520,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 443, Serial#: 443
+    // Template#: 499, Serial#: 499
     public void fmovql(final ICCOperand i_or_x_cc, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A8E060;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7473,7 +8537,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 444, Serial#: 444
+    // Template#: 500, Serial#: 500
     public void movl(final ICCOperand i_or_x_cc, final int simm11, final GPR rd) {
         int instruction = 0x8164E000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -7489,7 +8553,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 445, Serial#: 445
+    // Template#: 501, Serial#: 501
     public void movl(final ICCOperand i_or_x_cc, final GPR rs2, final GPR rd) {
         int instruction = 0x8164C000;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7504,7 +8568,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 446, Serial#: 446
+    // Template#: 502, Serial#: 502
     public void fmovsgu(final ICCOperand i_or_x_cc, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81AB2020;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7519,7 +8583,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 447, Serial#: 447
+    // Template#: 503, Serial#: 503
     public void fmovdgu(final ICCOperand i_or_x_cc, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81AB2040;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7534,7 +8598,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 448, Serial#: 448
+    // Template#: 504, Serial#: 504
     public void fmovqgu(final ICCOperand i_or_x_cc, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81AB2060;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7551,7 +8615,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 449, Serial#: 449
+    // Template#: 505, Serial#: 505
     public void movgu(final ICCOperand i_or_x_cc, final int simm11, final GPR rd) {
         int instruction = 0x81672000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -7567,7 +8631,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 450, Serial#: 450
+    // Template#: 506, Serial#: 506
     public void movgu(final ICCOperand i_or_x_cc, final GPR rs2, final GPR rd) {
         int instruction = 0x81670000;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7582,7 +8646,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 451, Serial#: 451
+    // Template#: 507, Serial#: 507
     public void fmovsleu(final ICCOperand i_or_x_cc, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A92020;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7597,7 +8661,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 452, Serial#: 452
+    // Template#: 508, Serial#: 508
     public void fmovdleu(final ICCOperand i_or_x_cc, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A92040;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7612,7 +8676,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 453, Serial#: 453
+    // Template#: 509, Serial#: 509
     public void fmovqleu(final ICCOperand i_or_x_cc, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A92060;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7629,7 +8693,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 454, Serial#: 454
+    // Template#: 510, Serial#: 510
     public void movleu(final ICCOperand i_or_x_cc, final int simm11, final GPR rd) {
         int instruction = 0x81652000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -7645,7 +8709,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 455, Serial#: 455
+    // Template#: 511, Serial#: 511
     public void movleu(final ICCOperand i_or_x_cc, final GPR rs2, final GPR rd) {
         int instruction = 0x81650000;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7660,7 +8724,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 456, Serial#: 456
+    // Template#: 512, Serial#: 512
     public void fmovscc(final ICCOperand i_or_x_cc, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81AB6020;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7675,7 +8739,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 457, Serial#: 457
+    // Template#: 513, Serial#: 513
     public void fmovdcc(final ICCOperand i_or_x_cc, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81AB6040;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7690,7 +8754,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 458, Serial#: 458
+    // Template#: 514, Serial#: 514
     public void fmovqcc(final ICCOperand i_or_x_cc, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81AB6060;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7707,7 +8771,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 459, Serial#: 459
+    // Template#: 515, Serial#: 515
     public void movcc(final ICCOperand i_or_x_cc, final int simm11, final GPR rd) {
         int instruction = 0x81676000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -7723,7 +8787,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 460, Serial#: 460
+    // Template#: 516, Serial#: 516
     public void movcc(final ICCOperand i_or_x_cc, final GPR rs2, final GPR rd) {
         int instruction = 0x81674000;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7738,7 +8802,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 461, Serial#: 461
+    // Template#: 517, Serial#: 517
     public void fmovscs(final ICCOperand i_or_x_cc, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A96020;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7753,7 +8817,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 462, Serial#: 462
+    // Template#: 518, Serial#: 518
     public void fmovdcs(final ICCOperand i_or_x_cc, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A96040;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7768,7 +8832,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 463, Serial#: 463
+    // Template#: 519, Serial#: 519
     public void fmovqcs(final ICCOperand i_or_x_cc, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A96060;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7785,7 +8849,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 464, Serial#: 464
+    // Template#: 520, Serial#: 520
     public void movcs(final ICCOperand i_or_x_cc, final int simm11, final GPR rd) {
         int instruction = 0x81656000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -7801,7 +8865,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 465, Serial#: 465
+    // Template#: 521, Serial#: 521
     public void movcs(final ICCOperand i_or_x_cc, final GPR rs2, final GPR rd) {
         int instruction = 0x81654000;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7816,7 +8880,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 466, Serial#: 466
+    // Template#: 522, Serial#: 522
     public void fmovspos(final ICCOperand i_or_x_cc, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81ABA020;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7831,7 +8895,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 467, Serial#: 467
+    // Template#: 523, Serial#: 523
     public void fmovdpos(final ICCOperand i_or_x_cc, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81ABA040;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7846,7 +8910,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 468, Serial#: 468
+    // Template#: 524, Serial#: 524
     public void fmovqpos(final ICCOperand i_or_x_cc, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81ABA060;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7863,7 +8927,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 469, Serial#: 469
+    // Template#: 525, Serial#: 525
     public void movpos(final ICCOperand i_or_x_cc, final int simm11, final GPR rd) {
         int instruction = 0x8167A000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -7879,7 +8943,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 470, Serial#: 470
+    // Template#: 526, Serial#: 526
     public void movpos(final ICCOperand i_or_x_cc, final GPR rs2, final GPR rd) {
         int instruction = 0x81678000;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7894,7 +8958,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 471, Serial#: 471
+    // Template#: 527, Serial#: 527
     public void fmovsneg(final ICCOperand i_or_x_cc, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A9A020;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7909,7 +8973,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 472, Serial#: 472
+    // Template#: 528, Serial#: 528
     public void fmovdneg(final ICCOperand i_or_x_cc, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A9A040;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7924,7 +8988,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 473, Serial#: 473
+    // Template#: 529, Serial#: 529
     public void fmovqneg(final ICCOperand i_or_x_cc, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A9A060;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7941,7 +9005,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 474, Serial#: 474
+    // Template#: 530, Serial#: 530
     public void movneg(final ICCOperand i_or_x_cc, final int simm11, final GPR rd) {
         int instruction = 0x8165A000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -7957,7 +9021,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 475, Serial#: 475
+    // Template#: 531, Serial#: 531
     public void movneg(final ICCOperand i_or_x_cc, final GPR rs2, final GPR rd) {
         int instruction = 0x81658000;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7972,7 +9036,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 476, Serial#: 476
+    // Template#: 532, Serial#: 532
     public void fmovsvc(final ICCOperand i_or_x_cc, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81ABE020;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -7987,7 +9051,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 477, Serial#: 477
+    // Template#: 533, Serial#: 533
     public void fmovdvc(final ICCOperand i_or_x_cc, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81ABE040;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -8002,7 +9066,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 478, Serial#: 478
+    // Template#: 534, Serial#: 534
     public void fmovqvc(final ICCOperand i_or_x_cc, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81ABE060;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -8019,7 +9083,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 479, Serial#: 479
+    // Template#: 535, Serial#: 535
     public void movvc(final ICCOperand i_or_x_cc, final int simm11, final GPR rd) {
         int instruction = 0x8167E000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -8035,7 +9099,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 480, Serial#: 480
+    // Template#: 536, Serial#: 536
     public void movvc(final ICCOperand i_or_x_cc, final GPR rs2, final GPR rd) {
         int instruction = 0x8167C000;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -8050,7 +9114,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 481, Serial#: 481
+    // Template#: 537, Serial#: 537
     public void fmovsvs(final ICCOperand i_or_x_cc, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A9E020;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -8065,7 +9129,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 482, Serial#: 482
+    // Template#: 538, Serial#: 538
     public void fmovdvs(final ICCOperand i_or_x_cc, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A9E040;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -8080,7 +9144,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 483, Serial#: 483
+    // Template#: 539, Serial#: 539
     public void fmovqvs(final ICCOperand i_or_x_cc, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A9E060;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -8097,7 +9161,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 484, Serial#: 484
+    // Template#: 540, Serial#: 540
     public void movvs(final ICCOperand i_or_x_cc, final int simm11, final GPR rd) {
         int instruction = 0x8165E000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -8113,7 +9177,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 485, Serial#: 485
+    // Template#: 541, Serial#: 541
     public void movvs(final ICCOperand i_or_x_cc, final GPR rs2, final GPR rd) {
         int instruction = 0x8165C000;
         instruction |= ((i_or_x_cc.value() & 0x3) << 11);
@@ -8128,7 +9192,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 486, Serial#: 486
+    // Template#: 542, Serial#: 542
     public void fmovsa(final FCCOperand n, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81AA0020;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8143,7 +9207,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 487, Serial#: 487
+    // Template#: 543, Serial#: 543
     public void fmovda(final FCCOperand n, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81AA0040;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8158,7 +9222,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 488, Serial#: 488
+    // Template#: 544, Serial#: 544
     public void fmovqa(final FCCOperand n, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81AA0060;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8175,7 +9239,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 489, Serial#: 489
+    // Template#: 545, Serial#: 545
     public void mova(final FCCOperand n, final int simm11, final GPR rd) {
         int instruction = 0x81622000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -8191,7 +9255,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 490, Serial#: 490
+    // Template#: 546, Serial#: 546
     public void mova(final FCCOperand n, final GPR rs2, final GPR rd) {
         int instruction = 0x81620000;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8206,7 +9270,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 491, Serial#: 491
+    // Template#: 547, Serial#: 547
     public void fmovsn(final FCCOperand n, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A80020;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8221,7 +9285,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 492, Serial#: 492
+    // Template#: 548, Serial#: 548
     public void fmovdn(final FCCOperand n, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A80040;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8236,7 +9300,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 493, Serial#: 493
+    // Template#: 549, Serial#: 549
     public void fmovqn(final FCCOperand n, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A80060;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8253,7 +9317,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 494, Serial#: 494
+    // Template#: 550, Serial#: 550
     public void movn(final FCCOperand n, final int simm11, final GPR rd) {
         int instruction = 0x81602000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -8269,7 +9333,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 495, Serial#: 495
+    // Template#: 551, Serial#: 551
     public void movn(final FCCOperand n, final GPR rs2, final GPR rd) {
         int instruction = 0x81600000;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8284,7 +9348,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 496, Serial#: 496
+    // Template#: 552, Serial#: 552
     public void fmovsu(final FCCOperand n, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A9C020;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8299,7 +9363,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 497, Serial#: 497
+    // Template#: 553, Serial#: 553
     public void fmovdu(final FCCOperand n, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A9C040;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8314,7 +9378,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 498, Serial#: 498
+    // Template#: 554, Serial#: 554
     public void fmovqu(final FCCOperand n, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A9C060;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8331,7 +9395,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 499, Serial#: 499
+    // Template#: 555, Serial#: 555
     public void movu(final FCCOperand n, final int simm11, final GPR rd) {
         int instruction = 0x8161E000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -8347,7 +9411,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 500, Serial#: 500
+    // Template#: 556, Serial#: 556
     public void movu(final FCCOperand n, final GPR rs2, final GPR rd) {
         int instruction = 0x8161C000;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8362,7 +9426,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 501, Serial#: 501
+    // Template#: 557, Serial#: 557
     public void fmovsg(final FCCOperand n, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A98020;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8377,7 +9441,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 502, Serial#: 502
+    // Template#: 558, Serial#: 558
     public void fmovdg(final FCCOperand n, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A98040;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8392,7 +9456,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 503, Serial#: 503
+    // Template#: 559, Serial#: 559
     public void fmovqg(final FCCOperand n, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A98060;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8409,7 +9473,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 504, Serial#: 504
+    // Template#: 560, Serial#: 560
     public void movg(final FCCOperand n, final int simm11, final GPR rd) {
         int instruction = 0x8161A000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -8425,7 +9489,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 505, Serial#: 505
+    // Template#: 561, Serial#: 561
     public void movg(final FCCOperand n, final GPR rs2, final GPR rd) {
         int instruction = 0x81618000;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8440,7 +9504,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 506, Serial#: 506
+    // Template#: 562, Serial#: 562
     public void fmovsug(final FCCOperand n, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A94020;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8455,7 +9519,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 507, Serial#: 507
+    // Template#: 563, Serial#: 563
     public void fmovdug(final FCCOperand n, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A94040;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8470,7 +9534,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 508, Serial#: 508
+    // Template#: 564, Serial#: 564
     public void fmovqug(final FCCOperand n, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A94060;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8487,7 +9551,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 509, Serial#: 509
+    // Template#: 565, Serial#: 565
     public void movug(final FCCOperand n, final int simm11, final GPR rd) {
         int instruction = 0x81616000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -8503,7 +9567,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 510, Serial#: 510
+    // Template#: 566, Serial#: 566
     public void movug(final FCCOperand n, final GPR rs2, final GPR rd) {
         int instruction = 0x81614000;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8518,7 +9582,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 511, Serial#: 511
+    // Template#: 567, Serial#: 567
     public void fmovsl(final FCCOperand n, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A90020;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8533,7 +9597,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 512, Serial#: 512
+    // Template#: 568, Serial#: 568
     public void fmovdl(final FCCOperand n, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A90040;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8548,7 +9612,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 513, Serial#: 513
+    // Template#: 569, Serial#: 569
     public void fmovql(final FCCOperand n, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A90060;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8565,7 +9629,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 514, Serial#: 514
+    // Template#: 570, Serial#: 570
     public void movl(final FCCOperand n, final int simm11, final GPR rd) {
         int instruction = 0x81612000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -8581,7 +9645,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 515, Serial#: 515
+    // Template#: 571, Serial#: 571
     public void movl(final FCCOperand n, final GPR rs2, final GPR rd) {
         int instruction = 0x81610000;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8596,7 +9660,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 516, Serial#: 516
+    // Template#: 572, Serial#: 572
     public void fmovsul(final FCCOperand n, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A8C020;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8611,7 +9675,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 517, Serial#: 517
+    // Template#: 573, Serial#: 573
     public void fmovdul(final FCCOperand n, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A8C040;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8626,7 +9690,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 518, Serial#: 518
+    // Template#: 574, Serial#: 574
     public void fmovqul(final FCCOperand n, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A8C060;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8643,7 +9707,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 519, Serial#: 519
+    // Template#: 575, Serial#: 575
     public void movul(final FCCOperand n, final int simm11, final GPR rd) {
         int instruction = 0x8160E000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -8659,7 +9723,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 520, Serial#: 520
+    // Template#: 576, Serial#: 576
     public void movul(final FCCOperand n, final GPR rs2, final GPR rd) {
         int instruction = 0x8160C000;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8674,7 +9738,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 521, Serial#: 521
+    // Template#: 577, Serial#: 577
     public void fmovslg(final FCCOperand n, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A88020;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8689,7 +9753,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 522, Serial#: 522
+    // Template#: 578, Serial#: 578
     public void fmovdlg(final FCCOperand n, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A88040;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8704,7 +9768,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 523, Serial#: 523
+    // Template#: 579, Serial#: 579
     public void fmovqlg(final FCCOperand n, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A88060;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8721,7 +9785,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 524, Serial#: 524
+    // Template#: 580, Serial#: 580
     public void movlg(final FCCOperand n, final int simm11, final GPR rd) {
         int instruction = 0x8160A000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -8737,7 +9801,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 525, Serial#: 525
+    // Template#: 581, Serial#: 581
     public void movlg(final FCCOperand n, final GPR rs2, final GPR rd) {
         int instruction = 0x81608000;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8752,7 +9816,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 526, Serial#: 526
+    // Template#: 582, Serial#: 582
     public void fmovsne(final FCCOperand n, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A84020;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8767,7 +9831,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 527, Serial#: 527
+    // Template#: 583, Serial#: 583
     public void fmovdne(final FCCOperand n, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A84040;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8782,7 +9846,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 528, Serial#: 528
+    // Template#: 584, Serial#: 584
     public void fmovqne(final FCCOperand n, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A84060;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8799,7 +9863,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 529, Serial#: 529
+    // Template#: 585, Serial#: 585
     public void movne(final FCCOperand n, final int simm11, final GPR rd) {
         int instruction = 0x81606000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -8815,7 +9879,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 530, Serial#: 530
+    // Template#: 586, Serial#: 586
     public void movne(final FCCOperand n, final GPR rs2, final GPR rd) {
         int instruction = 0x81604000;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8830,7 +9894,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 531, Serial#: 531
+    // Template#: 587, Serial#: 587
     public void fmovse(final FCCOperand n, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81AA4020;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8845,7 +9909,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 532, Serial#: 532
+    // Template#: 588, Serial#: 588
     public void fmovde(final FCCOperand n, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81AA4040;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8860,7 +9924,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 533, Serial#: 533
+    // Template#: 589, Serial#: 589
     public void fmovqe(final FCCOperand n, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81AA4060;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8877,7 +9941,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 534, Serial#: 534
+    // Template#: 590, Serial#: 590
     public void move(final FCCOperand n, final int simm11, final GPR rd) {
         int instruction = 0x81626000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -8893,7 +9957,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 535, Serial#: 535
+    // Template#: 591, Serial#: 591
     public void move(final FCCOperand n, final GPR rs2, final GPR rd) {
         int instruction = 0x81624000;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8908,7 +9972,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 536, Serial#: 536
+    // Template#: 592, Serial#: 592
     public void fmovsue(final FCCOperand n, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81AA8020;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8923,7 +9987,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 537, Serial#: 537
+    // Template#: 593, Serial#: 593
     public void fmovdue(final FCCOperand n, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81AA8040;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8938,7 +10002,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 538, Serial#: 538
+    // Template#: 594, Serial#: 594
     public void fmovque(final FCCOperand n, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81AA8060;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8955,7 +10019,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 539, Serial#: 539
+    // Template#: 595, Serial#: 595
     public void movue(final FCCOperand n, final int simm11, final GPR rd) {
         int instruction = 0x8162A000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -8971,7 +10035,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 540, Serial#: 540
+    // Template#: 596, Serial#: 596
     public void movue(final FCCOperand n, final GPR rs2, final GPR rd) {
         int instruction = 0x81628000;
         instruction |= ((n.value() & 0x3) << 11);
@@ -8986,7 +10050,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 541, Serial#: 541
+    // Template#: 597, Serial#: 597
     public void fmovsge(final FCCOperand n, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81AAC020;
         instruction |= ((n.value() & 0x3) << 11);
@@ -9001,7 +10065,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 542, Serial#: 542
+    // Template#: 598, Serial#: 598
     public void fmovdge(final FCCOperand n, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81AAC040;
         instruction |= ((n.value() & 0x3) << 11);
@@ -9016,7 +10080,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 543, Serial#: 543
+    // Template#: 599, Serial#: 599
     public void fmovqge(final FCCOperand n, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81AAC060;
         instruction |= ((n.value() & 0x3) << 11);
@@ -9033,7 +10097,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 544, Serial#: 544
+    // Template#: 600, Serial#: 600
     public void movge(final FCCOperand n, final int simm11, final GPR rd) {
         int instruction = 0x8162E000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -9049,7 +10113,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 545, Serial#: 545
+    // Template#: 601, Serial#: 601
     public void movge(final FCCOperand n, final GPR rs2, final GPR rd) {
         int instruction = 0x8162C000;
         instruction |= ((n.value() & 0x3) << 11);
@@ -9064,7 +10128,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 546, Serial#: 546
+    // Template#: 602, Serial#: 602
     public void fmovsuge(final FCCOperand n, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81AB0020;
         instruction |= ((n.value() & 0x3) << 11);
@@ -9079,7 +10143,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 547, Serial#: 547
+    // Template#: 603, Serial#: 603
     public void fmovduge(final FCCOperand n, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81AB0040;
         instruction |= ((n.value() & 0x3) << 11);
@@ -9094,7 +10158,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 548, Serial#: 548
+    // Template#: 604, Serial#: 604
     public void fmovquge(final FCCOperand n, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81AB0060;
         instruction |= ((n.value() & 0x3) << 11);
@@ -9111,7 +10175,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 549, Serial#: 549
+    // Template#: 605, Serial#: 605
     public void movuge(final FCCOperand n, final int simm11, final GPR rd) {
         int instruction = 0x81632000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -9127,7 +10191,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 550, Serial#: 550
+    // Template#: 606, Serial#: 606
     public void movuge(final FCCOperand n, final GPR rs2, final GPR rd) {
         int instruction = 0x81630000;
         instruction |= ((n.value() & 0x3) << 11);
@@ -9142,7 +10206,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 551, Serial#: 551
+    // Template#: 607, Serial#: 607
     public void fmovsle(final FCCOperand n, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81AB4020;
         instruction |= ((n.value() & 0x3) << 11);
@@ -9157,7 +10221,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 552, Serial#: 552
+    // Template#: 608, Serial#: 608
     public void fmovdle(final FCCOperand n, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81AB4040;
         instruction |= ((n.value() & 0x3) << 11);
@@ -9172,7 +10236,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 553, Serial#: 553
+    // Template#: 609, Serial#: 609
     public void fmovqle(final FCCOperand n, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81AB4060;
         instruction |= ((n.value() & 0x3) << 11);
@@ -9189,7 +10253,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 554, Serial#: 554
+    // Template#: 610, Serial#: 610
     public void movle(final FCCOperand n, final int simm11, final GPR rd) {
         int instruction = 0x81636000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -9205,7 +10269,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 555, Serial#: 555
+    // Template#: 611, Serial#: 611
     public void movle(final FCCOperand n, final GPR rs2, final GPR rd) {
         int instruction = 0x81634000;
         instruction |= ((n.value() & 0x3) << 11);
@@ -9220,7 +10284,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 556, Serial#: 556
+    // Template#: 612, Serial#: 612
     public void fmovsule(final FCCOperand n, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81AB8020;
         instruction |= ((n.value() & 0x3) << 11);
@@ -9235,7 +10299,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 557, Serial#: 557
+    // Template#: 613, Serial#: 613
     public void fmovdule(final FCCOperand n, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81AB8040;
         instruction |= ((n.value() & 0x3) << 11);
@@ -9250,7 +10314,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 558, Serial#: 558
+    // Template#: 614, Serial#: 614
     public void fmovqule(final FCCOperand n, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81AB8060;
         instruction |= ((n.value() & 0x3) << 11);
@@ -9267,7 +10331,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 559, Serial#: 559
+    // Template#: 615, Serial#: 615
     public void movule(final FCCOperand n, final int simm11, final GPR rd) {
         int instruction = 0x8163A000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -9283,7 +10347,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 560, Serial#: 560
+    // Template#: 616, Serial#: 616
     public void movule(final FCCOperand n, final GPR rs2, final GPR rd) {
         int instruction = 0x81638000;
         instruction |= ((n.value() & 0x3) << 11);
@@ -9298,7 +10362,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 561, Serial#: 561
+    // Template#: 617, Serial#: 617
     public void fmovso(final FCCOperand n, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81ABC020;
         instruction |= ((n.value() & 0x3) << 11);
@@ -9313,7 +10377,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 562, Serial#: 562
+    // Template#: 618, Serial#: 618
     public void fmovdo(final FCCOperand n, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81ABC040;
         instruction |= ((n.value() & 0x3) << 11);
@@ -9328,7 +10392,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.33"
      */
-    // Template#: 563, Serial#: 563
+    // Template#: 619, Serial#: 619
     public void fmovqo(final FCCOperand n, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81ABC060;
         instruction |= ((n.value() & 0x3) << 11);
@@ -9345,7 +10409,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 564, Serial#: 564
+    // Template#: 620, Serial#: 620
     public void movo(final FCCOperand n, final int simm11, final GPR rd) {
         int instruction = 0x8163E000;
         checkConstraint(-1024 <= simm11 && simm11 <= 1023, "-1024 <= simm11 && simm11 <= 1023");
@@ -9361,7 +10425,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.35"
      */
-    // Template#: 565, Serial#: 565
+    // Template#: 621, Serial#: 621
     public void movo(final FCCOperand n, final GPR rs2, final GPR rd) {
         int instruction = 0x8163C000;
         instruction |= ((n.value() & 0x3) << 11);
@@ -9376,7 +10440,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.21"
      */
-    // Template#: 566, Serial#: 566
+    // Template#: 622, Serial#: 622
     public void flushw() {
         int instruction = 0x81580000;
         emitInt(instruction);
@@ -9388,7 +10452,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.45"
      */
-    // Template#: 567, Serial#: 567
+    // Template#: 623, Serial#: 623
     public void save(final GPR rs1, final GPR rs2, final GPR rd) {
         int instruction = 0x81E00000;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -9405,7 +10469,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.45"
      */
-    // Template#: 568, Serial#: 568
+    // Template#: 624, Serial#: 624
     public void save(final GPR rs1, final int simm13, final GPR rd) {
         int instruction = 0x81E02000;
         checkConstraint(-4096 <= simm13 && simm13 <= 4095, "-4096 <= simm13 && simm13 <= 4095");
@@ -9421,7 +10485,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.45"
      */
-    // Template#: 569, Serial#: 569
+    // Template#: 625, Serial#: 625
     public void restore(final GPR rs1, final GPR rs2, final GPR rd) {
         int instruction = 0x81E80000;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -9438,7 +10502,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.45"
      */
-    // Template#: 570, Serial#: 570
+    // Template#: 626, Serial#: 626
     public void restore(final GPR rs1, final int simm13, final GPR rd) {
         int instruction = 0x81E82000;
         checkConstraint(-4096 <= simm13 && simm13 <= 4095, "-4096 <= simm13 && simm13 <= 4095");
@@ -9454,7 +10518,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.46"
      */
-    // Template#: 571, Serial#: 571
+    // Template#: 627, Serial#: 627
     public void saved() {
         int instruction = 0x81880000;
         emitInt(instruction);
@@ -9466,7 +10530,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.46"
      */
-    // Template#: 572, Serial#: 572
+    // Template#: 628, Serial#: 628
     public void restored() {
         int instruction = 0x83880000;
         emitInt(instruction);
@@ -9478,7 +10542,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.43"
      */
-    // Template#: 573, Serial#: 573
+    // Template#: 629, Serial#: 629
     public void rd(final StateRegister rs1, final GPR rd) {
         int instruction = 0x81400000;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -9492,7 +10556,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.62"
      */
-    // Template#: 574, Serial#: 574
+    // Template#: 630, Serial#: 630
     public void wr(final GPR rs1, final GPR rs2, final StateRegister.Writable rd) {
         int instruction = 0x81800000;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -9509,7 +10573,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.62"
      */
-    // Template#: 575, Serial#: 575
+    // Template#: 631, Serial#: 631
     public void wr(final GPR rs1, final int simm13, final StateRegister.Writable rd) {
         int instruction = 0x81802000;
         checkConstraint(-4096 <= simm13 && simm13 <= 4095, "-4096 <= simm13 && simm13 <= 4095");
@@ -9525,7 +10589,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.42"
      */
-    // Template#: 576, Serial#: 576
+    // Template#: 632, Serial#: 632
     public void rdpr(final PrivilegedRegister rs1, final GPR rd) {
         int instruction = 0x81500000;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -9539,7 +10603,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.61"
      */
-    // Template#: 577, Serial#: 577
+    // Template#: 633, Serial#: 633
     public void wrpr(final GPR rs1, final GPR rs2, final PrivilegedRegister.Writable rd) {
         int instruction = 0x81900000;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -9556,7 +10620,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.61"
      */
-    // Template#: 578, Serial#: 578
+    // Template#: 634, Serial#: 634
     public void wrpr(final GPR rs1, final int simm13, final PrivilegedRegister.Writable rd) {
         int instruction = 0x81902000;
         checkConstraint(-4096 <= simm13 && simm13 <= 4095, "-4096 <= simm13 && simm13 <= 4095");
@@ -9572,7 +10636,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.12"
      */
-    // Template#: 579, Serial#: 579
+    // Template#: 635, Serial#: 635
     public void fadds(final SFPR rs1, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A00820;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -9587,7 +10651,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.12"
      */
-    // Template#: 580, Serial#: 580
+    // Template#: 636, Serial#: 636
     public void faddd(final DFPR rs1, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A00840;
         instruction |= (((rs1.value() >>> 1) & 0xf) << 15) | (((rs1.value() >>> 5) & 0x1) << 14);
@@ -9602,7 +10666,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.12"
      */
-    // Template#: 581, Serial#: 581
+    // Template#: 637, Serial#: 637
     public void faddq(final QFPR rs1, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A00860;
         instruction |= (((rs1.value() >>> 2) & 0x7) << 16) | (((rs1.value() >>> 5) & 0x1) << 14);
@@ -9617,7 +10681,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.12"
      */
-    // Template#: 582, Serial#: 582
+    // Template#: 638, Serial#: 638
     public void fsubs(final SFPR rs1, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A008A0;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -9632,7 +10696,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.12"
      */
-    // Template#: 583, Serial#: 583
+    // Template#: 639, Serial#: 639
     public void fsubd(final DFPR rs1, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A008C0;
         instruction |= (((rs1.value() >>> 1) & 0xf) << 15) | (((rs1.value() >>> 5) & 0x1) << 14);
@@ -9647,7 +10711,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.12"
      */
-    // Template#: 584, Serial#: 584
+    // Template#: 640, Serial#: 640
     public void fsubq(final QFPR rs1, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A008E0;
         instruction |= (((rs1.value() >>> 2) & 0x7) << 16) | (((rs1.value() >>> 5) & 0x1) << 14);
@@ -9662,7 +10726,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.13"
      */
-    // Template#: 585, Serial#: 585
+    // Template#: 641, Serial#: 641
     public void fcmps(final FCCOperand n, final SFPR rs1, final SFPR rs2) {
         int instruction = 0x81A80A20;
         instruction |= ((n.value() & 0x3) << 25);
@@ -9677,7 +10741,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.13"
      */
-    // Template#: 586, Serial#: 586
+    // Template#: 642, Serial#: 642
     public void fcmpd(final FCCOperand n, final DFPR rs1, final DFPR rs2) {
         int instruction = 0x81A80A40;
         instruction |= ((n.value() & 0x3) << 25);
@@ -9692,7 +10756,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.13"
      */
-    // Template#: 587, Serial#: 587
+    // Template#: 643, Serial#: 643
     public void fcmpq(final FCCOperand n, final QFPR rs1, final QFPR rs2) {
         int instruction = 0x81A80A60;
         instruction |= ((n.value() & 0x3) << 25);
@@ -9707,7 +10771,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.13"
      */
-    // Template#: 588, Serial#: 588
+    // Template#: 644, Serial#: 644
     public void fcmpes(final FCCOperand n, final SFPR rs1, final SFPR rs2) {
         int instruction = 0x81A80AA0;
         instruction |= ((n.value() & 0x3) << 25);
@@ -9722,7 +10786,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.13"
      */
-    // Template#: 589, Serial#: 589
+    // Template#: 645, Serial#: 645
     public void fcmped(final FCCOperand n, final DFPR rs1, final DFPR rs2) {
         int instruction = 0x81A80AC0;
         instruction |= ((n.value() & 0x3) << 25);
@@ -9737,7 +10801,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.13"
      */
-    // Template#: 590, Serial#: 590
+    // Template#: 646, Serial#: 646
     public void fcmpeq(final FCCOperand n, final QFPR rs1, final QFPR rs2) {
         int instruction = 0x81A80AE0;
         instruction |= ((n.value() & 0x3) << 25);
@@ -9752,7 +10816,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.14"
      */
-    // Template#: 591, Serial#: 591
+    // Template#: 647, Serial#: 647
     public void fstox(final SFPR rs2, final DFPR rd) {
         int instruction = 0x81A01020;
         instruction |= (rs2.value() & 0x1f);
@@ -9766,7 +10830,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.14"
      */
-    // Template#: 592, Serial#: 592
+    // Template#: 648, Serial#: 648
     public void fdtox(final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A01040;
         instruction |= (((rs2.value() >>> 1) & 0xf) << 1) | ((rs2.value() >>> 5) & 0x1);
@@ -9780,7 +10844,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.14"
      */
-    // Template#: 593, Serial#: 593
+    // Template#: 649, Serial#: 649
     public void fqtox(final QFPR rs2, final DFPR rd) {
         int instruction = 0x81A01060;
         instruction |= (((rs2.value() >>> 2) & 0x7) << 2) | ((rs2.value() >>> 5) & 0x1);
@@ -9794,7 +10858,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.14"
      */
-    // Template#: 594, Serial#: 594
+    // Template#: 650, Serial#: 650
     public void fstoi(final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A01A20;
         instruction |= (rs2.value() & 0x1f);
@@ -9808,7 +10872,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.14"
      */
-    // Template#: 595, Serial#: 595
+    // Template#: 651, Serial#: 651
     public void fdtoi(final DFPR rs2, final SFPR rd) {
         int instruction = 0x81A01A40;
         instruction |= (((rs2.value() >>> 1) & 0xf) << 1) | ((rs2.value() >>> 5) & 0x1);
@@ -9822,7 +10886,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.14"
      */
-    // Template#: 596, Serial#: 596
+    // Template#: 652, Serial#: 652
     public void fqtoi(final QFPR rs2, final SFPR rd) {
         int instruction = 0x81A01A60;
         instruction |= (((rs2.value() >>> 2) & 0x7) << 2) | ((rs2.value() >>> 5) & 0x1);
@@ -9836,7 +10900,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.15"
      */
-    // Template#: 597, Serial#: 597
+    // Template#: 653, Serial#: 653
     public void fstod(final SFPR rs2, final DFPR rd) {
         int instruction = 0x81A01920;
         instruction |= (rs2.value() & 0x1f);
@@ -9850,7 +10914,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.15"
      */
-    // Template#: 598, Serial#: 598
+    // Template#: 654, Serial#: 654
     public void fstoq(final SFPR rs2, final QFPR rd) {
         int instruction = 0x81A019A0;
         instruction |= (rs2.value() & 0x1f);
@@ -9864,7 +10928,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.15"
      */
-    // Template#: 599, Serial#: 599
+    // Template#: 655, Serial#: 655
     public void fdtos(final DFPR rs2, final SFPR rd) {
         int instruction = 0x81A018C0;
         instruction |= (((rs2.value() >>> 1) & 0xf) << 1) | ((rs2.value() >>> 5) & 0x1);
@@ -9878,7 +10942,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.15"
      */
-    // Template#: 600, Serial#: 600
+    // Template#: 656, Serial#: 656
     public void fdtoq(final DFPR rs2, final QFPR rd) {
         int instruction = 0x81A019C0;
         instruction |= (((rs2.value() >>> 1) & 0xf) << 1) | ((rs2.value() >>> 5) & 0x1);
@@ -9892,7 +10956,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.15"
      */
-    // Template#: 601, Serial#: 601
+    // Template#: 657, Serial#: 657
     public void fqtos(final QFPR rs2, final SFPR rd) {
         int instruction = 0x81A018E0;
         instruction |= (((rs2.value() >>> 2) & 0x7) << 2) | ((rs2.value() >>> 5) & 0x1);
@@ -9906,7 +10970,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.15"
      */
-    // Template#: 602, Serial#: 602
+    // Template#: 658, Serial#: 658
     public void fqtod(final QFPR rs2, final DFPR rd) {
         int instruction = 0x81A01960;
         instruction |= (((rs2.value() >>> 2) & 0x7) << 2) | ((rs2.value() >>> 5) & 0x1);
@@ -9920,7 +10984,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.16"
      */
-    // Template#: 603, Serial#: 603
+    // Template#: 659, Serial#: 659
     public void fxtos(final DFPR rs2, final SFPR rd) {
         int instruction = 0x81A01080;
         instruction |= (((rs2.value() >>> 1) & 0xf) << 1) | ((rs2.value() >>> 5) & 0x1);
@@ -9934,7 +10998,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.16"
      */
-    // Template#: 604, Serial#: 604
+    // Template#: 660, Serial#: 660
     public void fitos(final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A01880;
         instruction |= (rs2.value() & 0x1f);
@@ -9948,7 +11012,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.16"
      */
-    // Template#: 605, Serial#: 605
+    // Template#: 661, Serial#: 661
     public void fxtod(final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A01100;
         instruction |= (((rs2.value() >>> 1) & 0xf) << 1) | ((rs2.value() >>> 5) & 0x1);
@@ -9962,7 +11026,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.16"
      */
-    // Template#: 606, Serial#: 606
+    // Template#: 662, Serial#: 662
     public void fitod(final SFPR rs2, final DFPR rd) {
         int instruction = 0x81A01900;
         instruction |= (rs2.value() & 0x1f);
@@ -9976,7 +11040,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.16"
      */
-    // Template#: 607, Serial#: 607
+    // Template#: 663, Serial#: 663
     public void fxtoq(final DFPR rs2, final QFPR rd) {
         int instruction = 0x81A01180;
         instruction |= (((rs2.value() >>> 1) & 0xf) << 1) | ((rs2.value() >>> 5) & 0x1);
@@ -9990,7 +11054,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.16"
      */
-    // Template#: 608, Serial#: 608
+    // Template#: 664, Serial#: 664
     public void fitoq(final SFPR rs2, final QFPR rd) {
         int instruction = 0x81A01980;
         instruction |= (rs2.value() & 0x1f);
@@ -10004,7 +11068,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.17"
      */
-    // Template#: 609, Serial#: 609
+    // Template#: 665, Serial#: 665
     public void fmovs(final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A00020;
         instruction |= (rs2.value() & 0x1f);
@@ -10018,7 +11082,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.17"
      */
-    // Template#: 610, Serial#: 610
+    // Template#: 666, Serial#: 666
     public void fmovd(final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A00040;
         instruction |= (((rs2.value() >>> 1) & 0xf) << 1) | ((rs2.value() >>> 5) & 0x1);
@@ -10032,7 +11096,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.17"
      */
-    // Template#: 611, Serial#: 611
+    // Template#: 667, Serial#: 667
     public void fmovq(final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A00060;
         instruction |= (((rs2.value() >>> 2) & 0x7) << 2) | ((rs2.value() >>> 5) & 0x1);
@@ -10046,7 +11110,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.17"
      */
-    // Template#: 612, Serial#: 612
+    // Template#: 668, Serial#: 668
     public void fnegs(final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A000A0;
         instruction |= (rs2.value() & 0x1f);
@@ -10060,7 +11124,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.17"
      */
-    // Template#: 613, Serial#: 613
+    // Template#: 669, Serial#: 669
     public void fnegd(final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A000C0;
         instruction |= (((rs2.value() >>> 1) & 0xf) << 1) | ((rs2.value() >>> 5) & 0x1);
@@ -10074,7 +11138,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.17"
      */
-    // Template#: 614, Serial#: 614
+    // Template#: 670, Serial#: 670
     public void fnegq(final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A000E0;
         instruction |= (((rs2.value() >>> 2) & 0x7) << 2) | ((rs2.value() >>> 5) & 0x1);
@@ -10088,7 +11152,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.17"
      */
-    // Template#: 615, Serial#: 615
+    // Template#: 671, Serial#: 671
     public void fabss(final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A00120;
         instruction |= (rs2.value() & 0x1f);
@@ -10102,7 +11166,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.17"
      */
-    // Template#: 616, Serial#: 616
+    // Template#: 672, Serial#: 672
     public void fabsd(final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A00140;
         instruction |= (((rs2.value() >>> 1) & 0xf) << 1) | ((rs2.value() >>> 5) & 0x1);
@@ -10116,7 +11180,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.17"
      */
-    // Template#: 617, Serial#: 617
+    // Template#: 673, Serial#: 673
     public void fabsq(final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A00160;
         instruction |= (((rs2.value() >>> 2) & 0x7) << 2) | ((rs2.value() >>> 5) & 0x1);
@@ -10130,7 +11194,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.18"
      */
-    // Template#: 618, Serial#: 618
+    // Template#: 674, Serial#: 674
     public void fmuls(final SFPR rs1, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A00920;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -10145,7 +11209,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.18"
      */
-    // Template#: 619, Serial#: 619
+    // Template#: 675, Serial#: 675
     public void fmuld(final DFPR rs1, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A00940;
         instruction |= (((rs1.value() >>> 1) & 0xf) << 15) | (((rs1.value() >>> 5) & 0x1) << 14);
@@ -10160,7 +11224,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.18"
      */
-    // Template#: 620, Serial#: 620
+    // Template#: 676, Serial#: 676
     public void fmulq(final QFPR rs1, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A00960;
         instruction |= (((rs1.value() >>> 2) & 0x7) << 16) | (((rs1.value() >>> 5) & 0x1) << 14);
@@ -10175,7 +11239,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.18"
      */
-    // Template#: 621, Serial#: 621
+    // Template#: 677, Serial#: 677
     public void fdivs(final SFPR rs1, final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A009A0;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -10190,7 +11254,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.18"
      */
-    // Template#: 622, Serial#: 622
+    // Template#: 678, Serial#: 678
     public void fdivd(final DFPR rs1, final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A009C0;
         instruction |= (((rs1.value() >>> 1) & 0xf) << 15) | (((rs1.value() >>> 5) & 0x1) << 14);
@@ -10205,7 +11269,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.18"
      */
-    // Template#: 623, Serial#: 623
+    // Template#: 679, Serial#: 679
     public void fdivq(final QFPR rs1, final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A009E0;
         instruction |= (((rs1.value() >>> 2) & 0x7) << 16) | (((rs1.value() >>> 5) & 0x1) << 14);
@@ -10220,7 +11284,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.18"
      */
-    // Template#: 624, Serial#: 624
+    // Template#: 680, Serial#: 680
     public void fsmuld(final SFPR rs1, final SFPR rs2, final DFPR rd) {
         int instruction = 0x81A00D20;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -10235,7 +11299,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.18"
      */
-    // Template#: 625, Serial#: 625
+    // Template#: 681, Serial#: 681
     public void fdmulq(final DFPR rs1, final DFPR rs2, final QFPR rd) {
         int instruction = 0x81A00DC0;
         instruction |= (((rs1.value() >>> 1) & 0xf) << 15) | (((rs1.value() >>> 5) & 0x1) << 14);
@@ -10250,7 +11314,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.19"
      */
-    // Template#: 626, Serial#: 626
+    // Template#: 682, Serial#: 682
     public void fsqrts(final SFPR rs2, final SFPR rd) {
         int instruction = 0x81A00520;
         instruction |= (rs2.value() & 0x1f);
@@ -10264,7 +11328,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.19"
      */
-    // Template#: 627, Serial#: 627
+    // Template#: 683, Serial#: 683
     public void fsqrtd(final DFPR rs2, final DFPR rd) {
         int instruction = 0x81A00540;
         instruction |= (((rs2.value() >>> 1) & 0xf) << 1) | ((rs2.value() >>> 5) & 0x1);
@@ -10278,7 +11342,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.19"
      */
-    // Template#: 628, Serial#: 628
+    // Template#: 684, Serial#: 684
     public void fsqrtq(final QFPR rs2, final QFPR rd) {
         int instruction = 0x81A00560;
         instruction |= (((rs2.value() >>> 2) & 0x7) << 2) | ((rs2.value() >>> 5) & 0x1);
@@ -10292,7 +11356,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.23"
      */
-    // Template#: 629, Serial#: 629
+    // Template#: 685, Serial#: 685
     public void impdep1() {
         int instruction = 0x81B00000;
         emitInt(instruction);
@@ -10304,7 +11368,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.23"
      */
-    // Template#: 630, Serial#: 630
+    // Template#: 686, Serial#: 686
     public void impdep2() {
         int instruction = 0x81B80000;
         emitInt(instruction);
@@ -10320,7 +11384,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section A.39"
      */
-    // Template#: 631, Serial#: 631
+    // Template#: 687, Serial#: 687
     public void nop() {
         int instruction = 0x01000000;
         emitInt(instruction);
@@ -10336,7 +11400,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 632, Serial#: 632
+    // Template#: 688, Serial#: 688
     public void cmp(final GPR rs1, final GPR rs2) {
         int instruction = 0x80A00000;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -10356,7 +11420,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 633, Serial#: 633
+    // Template#: 689, Serial#: 689
     public void cmp(final GPR rs1, final int simm13) {
         int instruction = 0x80A02000;
         checkConstraint(-4096 <= simm13 && simm13 <= 4095, "-4096 <= simm13 && simm13 <= 4095");
@@ -10375,7 +11439,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 634, Serial#: 634
+    // Template#: 690, Serial#: 690
     public void jmp(final GPR rs1, final GPR rs2) {
         int instruction = 0x81C00000;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -10395,7 +11459,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 635, Serial#: 635
+    // Template#: 691, Serial#: 691
     public void jmp(final GPR rs1, final int simm13) {
         int instruction = 0x81C02000;
         checkConstraint(-4096 <= simm13 && simm13 <= 4095, "-4096 <= simm13 && simm13 <= 4095");
@@ -10414,7 +11478,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 636, Serial#: 636
+    // Template#: 692, Serial#: 692
     public void call(final GPR rs1, final GPR rs2) {
         int instruction = 0x9FC00000;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -10434,7 +11498,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 637, Serial#: 637
+    // Template#: 693, Serial#: 693
     public void call(final GPR rs1, final int simm13) {
         int instruction = 0x9FC02000;
         checkConstraint(-4096 <= simm13 && simm13 <= 4095, "-4096 <= simm13 && simm13 <= 4095");
@@ -10455,7 +11519,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 638, Serial#: 638
+    // Template#: 694, Serial#: 694
     public void iprefetch(final int label) {
         int instruction = 0x20680000;
         checkConstraint((-1048576 <= label && label <= 1048572) && ((label % 4) == 0), "(-1048576 <= label && label <= 1048572) && ((label % 4) == 0)");
@@ -10473,7 +11537,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 639, Serial#: 639
+    // Template#: 695, Serial#: 695
     public void tst(final GPR rs2) {
         int instruction = 0x80900000;
         instruction |= (rs2.value() & 0x1f);
@@ -10490,7 +11554,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 640, Serial#: 640
+    // Template#: 696, Serial#: 696
     public void ret() {
         int instruction = 0x81C7E008;
         emitInt(instruction);
@@ -10506,7 +11570,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 641, Serial#: 641
+    // Template#: 697, Serial#: 697
     public void retl() {
         int instruction = 0x81C3E008;
         emitInt(instruction);
@@ -10522,7 +11586,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 642, Serial#: 642
+    // Template#: 698, Serial#: 698
     public void restore() {
         int instruction = 0x81E80000;
         emitInt(instruction);
@@ -10538,7 +11602,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 643, Serial#: 643
+    // Template#: 699, Serial#: 699
     public void save() {
         int instruction = 0x81E00000;
         emitInt(instruction);
@@ -10554,7 +11618,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 644, Serial#: 644
+    // Template#: 700, Serial#: 700
     public void signx(final GPR rs1, final GPR rd) {
         int instruction = 0x81380000;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -10572,7 +11636,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 645, Serial#: 645
+    // Template#: 701, Serial#: 701
     public void signx(final GPR rd) {
         int instruction = 0x81380000;
         instruction |= ((rd.value() & 0x1f) << 14);
@@ -10590,7 +11654,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 646, Serial#: 646
+    // Template#: 702, Serial#: 702
     public void not(final GPR rs1, final GPR rd) {
         int instruction = 0x80380000;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -10608,7 +11672,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 647, Serial#: 647
+    // Template#: 703, Serial#: 703
     public void not(final GPR rd) {
         int instruction = 0x80380000;
         instruction |= ((rd.value() & 0x1f) << 14);
@@ -10626,7 +11690,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 648, Serial#: 648
+    // Template#: 704, Serial#: 704
     public void neg(final GPR rs2, final GPR rd) {
         int instruction = 0x80200000;
         instruction |= (rs2.value() & 0x1f);
@@ -10644,7 +11708,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 649, Serial#: 649
+    // Template#: 705, Serial#: 705
     public void neg(final GPR rd) {
         int instruction = 0x80200000;
         instruction |= (rd.value() & 0x1f);
@@ -10662,7 +11726,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 650, Serial#: 650
+    // Template#: 706, Serial#: 706
     public void cas(final GPR rs1, final GPR rs2, final GPR rd) {
         int instruction = 0xC1E01000;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -10681,7 +11745,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 651, Serial#: 651
+    // Template#: 707, Serial#: 707
     public void casl(final GPR rs1, final GPR rs2, final GPR rd) {
         int instruction = 0xC1E01100;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -10700,7 +11764,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 652, Serial#: 652
+    // Template#: 708, Serial#: 708
     public void casx(final GPR rs1, final GPR rs2, final GPR rd) {
         int instruction = 0xC1F01000;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -10719,7 +11783,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 653, Serial#: 653
+    // Template#: 709, Serial#: 709
     public void casxl(final GPR rs1, final GPR rs2, final GPR rd) {
         int instruction = 0xC1F01100;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -10738,7 +11802,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 654, Serial#: 654
+    // Template#: 710, Serial#: 710
     public void inc(final GPR rd) {
         int instruction = 0x80002001;
         instruction |= ((rd.value() & 0x1f) << 14);
@@ -10758,7 +11822,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 655, Serial#: 655
+    // Template#: 711, Serial#: 711
     public void inc(final int simm13, final GPR rd) {
         int instruction = 0x80002000;
         checkConstraint(-4096 <= simm13 && simm13 <= 4095, "-4096 <= simm13 && simm13 <= 4095");
@@ -10778,7 +11842,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 656, Serial#: 656
+    // Template#: 712, Serial#: 712
     public void inccc(final GPR rd) {
         int instruction = 0x80802001;
         instruction |= ((rd.value() & 0x1f) << 14);
@@ -10798,7 +11862,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 657, Serial#: 657
+    // Template#: 713, Serial#: 713
     public void inccc(final int simm13, final GPR rd) {
         int instruction = 0x80802000;
         checkConstraint(-4096 <= simm13 && simm13 <= 4095, "-4096 <= simm13 && simm13 <= 4095");
@@ -10818,7 +11882,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 658, Serial#: 658
+    // Template#: 714, Serial#: 714
     public void dec(final GPR rd) {
         int instruction = 0x80202001;
         instruction |= ((rd.value() & 0x1f) << 14);
@@ -10838,7 +11902,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 659, Serial#: 659
+    // Template#: 715, Serial#: 715
     public void dec(final int simm13, final GPR rd) {
         int instruction = 0x80202000;
         checkConstraint(-4096 <= simm13 && simm13 <= 4095, "-4096 <= simm13 && simm13 <= 4095");
@@ -10858,7 +11922,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 660, Serial#: 660
+    // Template#: 716, Serial#: 716
     public void deccc(final GPR rd) {
         int instruction = 0x80A02001;
         instruction |= ((rd.value() & 0x1f) << 14);
@@ -10878,7 +11942,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 661, Serial#: 661
+    // Template#: 717, Serial#: 717
     public void deccc(final int simm13, final GPR rd) {
         int instruction = 0x80A02000;
         checkConstraint(-4096 <= simm13 && simm13 <= 4095, "-4096 <= simm13 && simm13 <= 4095");
@@ -10898,7 +11962,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 662, Serial#: 662
+    // Template#: 718, Serial#: 718
     public void btst(final GPR rs2, final GPR rs1) {
         int instruction = 0x80880000;
         instruction |= (rs2.value() & 0x1f);
@@ -10918,7 +11982,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 663, Serial#: 663
+    // Template#: 719, Serial#: 719
     public void btst(final int simm13, final GPR rs1) {
         int instruction = 0x80882000;
         checkConstraint(-4096 <= simm13 && simm13 <= 4095, "-4096 <= simm13 && simm13 <= 4095");
@@ -10937,7 +12001,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 664, Serial#: 664
+    // Template#: 720, Serial#: 720
     public void bset(final GPR rs2, final GPR rd) {
         int instruction = 0x80100000;
         instruction |= ((rd.value() & 0x1f) << 14);
@@ -10958,7 +12022,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 665, Serial#: 665
+    // Template#: 721, Serial#: 721
     public void bset(final int simm13, final GPR rd) {
         int instruction = 0x80102000;
         checkConstraint(-4096 <= simm13 && simm13 <= 4095, "-4096 <= simm13 && simm13 <= 4095");
@@ -10978,7 +12042,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 666, Serial#: 666
+    // Template#: 722, Serial#: 722
     public void bclr(final GPR rs2, final GPR rd) {
         int instruction = 0x80280000;
         instruction |= ((rd.value() & 0x1f) << 14);
@@ -10999,7 +12063,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 667, Serial#: 667
+    // Template#: 723, Serial#: 723
     public void bclr(final int simm13, final GPR rd) {
         int instruction = 0x80282000;
         checkConstraint(-4096 <= simm13 && simm13 <= 4095, "-4096 <= simm13 && simm13 <= 4095");
@@ -11019,7 +12083,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 668, Serial#: 668
+    // Template#: 724, Serial#: 724
     public void btog(final GPR rs2, final GPR rd) {
         int instruction = 0x80180000;
         instruction |= ((rd.value() & 0x1f) << 14);
@@ -11040,7 +12104,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 669, Serial#: 669
+    // Template#: 725, Serial#: 725
     public void btog(final int simm13, final GPR rd) {
         int instruction = 0x80182000;
         checkConstraint(-4096 <= simm13 && simm13 <= 4095, "-4096 <= simm13 && simm13 <= 4095");
@@ -11060,7 +12124,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 670, Serial#: 670
+    // Template#: 726, Serial#: 726
     public void clr(final GPR rd) {
         int instruction = 0x80100000;
         instruction |= ((rd.value() & 0x1f) << 25);
@@ -11077,7 +12141,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 671, Serial#: 671
+    // Template#: 727, Serial#: 727
     public void clrb(final GPR rs1, final GPR rs2) {
         int instruction = 0xC0280000;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -11097,7 +12161,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 672, Serial#: 672
+    // Template#: 728, Serial#: 728
     public void clrb(final GPR rs1, final int simm13) {
         int instruction = 0xC0282000;
         checkConstraint(-4096 <= simm13 && simm13 <= 4095, "-4096 <= simm13 && simm13 <= 4095");
@@ -11116,7 +12180,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 673, Serial#: 673
+    // Template#: 729, Serial#: 729
     public void clrh(final GPR rs1, final GPR rs2) {
         int instruction = 0xC0300000;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -11136,7 +12200,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 674, Serial#: 674
+    // Template#: 730, Serial#: 730
     public void clrh(final GPR rs1, final int simm13) {
         int instruction = 0xC0302000;
         checkConstraint(-4096 <= simm13 && simm13 <= 4095, "-4096 <= simm13 && simm13 <= 4095");
@@ -11155,7 +12219,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 675, Serial#: 675
+    // Template#: 731, Serial#: 731
     public void clr(final GPR rs1, final GPR rs2) {
         int instruction = 0xC0200000;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -11175,7 +12239,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 676, Serial#: 676
+    // Template#: 732, Serial#: 732
     public void clr(final GPR rs1, final int simm13) {
         int instruction = 0xC0202000;
         checkConstraint(-4096 <= simm13 && simm13 <= 4095, "-4096 <= simm13 && simm13 <= 4095");
@@ -11194,7 +12258,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 677, Serial#: 677
+    // Template#: 733, Serial#: 733
     public void clrx(final GPR rs1, final GPR rs2) {
         int instruction = 0xC0700000;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -11214,7 +12278,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 678, Serial#: 678
+    // Template#: 734, Serial#: 734
     public void clrx(final GPR rs1, final int simm13) {
         int instruction = 0xC0702000;
         checkConstraint(-4096 <= simm13 && simm13 <= 4095, "-4096 <= simm13 && simm13 <= 4095");
@@ -11233,7 +12297,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 679, Serial#: 679
+    // Template#: 735, Serial#: 735
     public void clruw(final GPR rs1, final GPR rd) {
         int instruction = 0x81300000;
         instruction |= ((rs1.value() & 0x1f) << 14);
@@ -11251,7 +12315,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 680, Serial#: 680
+    // Template#: 736, Serial#: 736
     public void clruw(final GPR rd) {
         int instruction = 0x81300000;
         instruction |= ((rd.value() & 0x1f) << 14);
@@ -11269,7 +12333,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 681, Serial#: 681
+    // Template#: 737, Serial#: 737
     public void mov(final GPR rs2, final GPR rd) {
         int instruction = 0x80100000;
         instruction |= (rs2.value() & 0x1f);
@@ -11289,7 +12353,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 682, Serial#: 682
+    // Template#: 738, Serial#: 738
     public void mov(final int simm13, final GPR rd) {
         int instruction = 0x80102000;
         checkConstraint(-4096 <= simm13 && simm13 <= 4095, "-4096 <= simm13 && simm13 <= 4095");
@@ -11311,7 +12375,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 683, Serial#: 683
+    // Template#: 739, Serial#: 739
     public void mov(final StateRegister rs1, final GPR rd) {
         int instruction = 0x81400000;
         checkConstraint(rs1.isYorASR(), "rs1.isYorASR()");
@@ -11333,7 +12397,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 684, Serial#: 684
+    // Template#: 740, Serial#: 740
     public void mov(final GPR rs2, final StateRegister.Writable rd) {
         int instruction = 0x81800000;
         checkConstraint(rd.isYorASR(), "rd.isYorASR()");
@@ -11356,7 +12420,7 @@ public abstract class SPARCRawAssembler extends AbstractSPARCAssembler {
      *
      * @see "<a href="http://developers.sun.com/solaris/articles/sparcv9.pdf">The SPARC Architecture Manual, Version 9</a> - Section G.3"
      */
-    // Template#: 685, Serial#: 685
+    // Template#: 741, Serial#: 741
     public void mov(final int simm13, final StateRegister.Writable rd) {
         int instruction = 0x81802000;
         checkConstraint(-4096 <= simm13 && simm13 <= 4095, "-4096 <= simm13 && simm13 <= 4095");
