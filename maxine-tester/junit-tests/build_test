@@ -1,0 +1,4 @@
+aarch64-none-elf-as -march=armv8-a -g startup.s -o startup.o
+aarch64-none-elf-gcc -c -march=armv8-a -g test.c -o test.o
+aarch64-none-elf-ld -T test.ld test.o startup.o -o test.elf
+aarch64-none-elf-objcopy -O binary test.elf test.bin
