@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2017, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,34 +26,20 @@ package com.sun.max.vm.runtime.aarch64;
 
 import static com.sun.max.platform.Platform.*;
 
-import com.oracle.max.asm.target.aarch64.*;
-import com.oracle.max.asm.target.amd64.*;
-import com.sun.cri.ci.*;
-import com.sun.max.annotate.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.runtime.*;
+import com.sun.max.config.*;
+import com.sun.max.lang.*;
+import com.sun.max.vm.*;
 
 /**
- * The safepoint poll implementation for AMD64.
- *
- * @see AMD64TrapFrameAccess
  */
-public final class Aarch64SafepointPoll extends SafepointPoll {
-
-    /**
-     * ATTENTION: must be callee-saved by all C ABIs in use.
-     */
-    public static final CiRegister LATCH_REGISTER = Aarch64.r26;
-
-    @HOSTED_ONLY
-    public Aarch64SafepointPoll() {
+public class Package extends BootImagePackage {
+    public Package() {
+        super();
     }
 
-    @HOSTED_ONLY
     @Override
-    protected byte[] createCode() {
-        final Aarch64Assembler asm = new Aarch64Assembler(target(), null);
-        // TODO asm.movq(LATCH_REGISTER, new CiAddress(WordUtil.archKind(), LATCH_REGISTER.asValue()));
-        return asm.codeBuffer.close(true);
+    public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
+        return platform().isa == ISA.Aarch64;
     }
+
 }
