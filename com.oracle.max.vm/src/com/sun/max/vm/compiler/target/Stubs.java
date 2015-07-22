@@ -38,6 +38,7 @@ import com.oracle.max.asm.target.amd64.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -1457,6 +1458,57 @@ public class Stubs {
             // Copy original frame pointer into arg 3 (i.e. 'fp')
             CiRegister arg3 = args[3].asRegister();
             asm.movq(arg3, AMD64.rbp);
+
+            asm.alignForPatchableDirectCall();
+            int callPos = asm.codeBuffer.position();
+            ClassMethodActor callee = uncommonTrap.classMethodActor;
+            asm.call();
+            int callSize = asm.codeBuffer.position() - callPos;
+
+            // Should never reach here
+            int registerRestoreEpilogueOffset = asm.codeBuffer.position();
+            asm.hlt();
+
+            String stubName = name + "Stub";
+            byte[] code = asm.codeBuffer.close(true);
+            return new Stub(UncommonTrapStub, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
+        } else if (platform().isa == ISA.Aarch64) {
+            CiRegisterConfig registerConfig = registerConfigs.uncommonTrapStub;
+            Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
+            CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
+            int frameSize = platform().target.alignFrameSize(csl.size);
+            int frameToCSA = csl.frameOffsetToCSA;
+
+            for (int i = 0; i < prologueSize; ++i) {
+                asm.nop();
+            }
+
+            // now allocate the frame for this method
+            asm.sub(64, AMD64.rsp, AMD64.rsp, frameSize);
+
+            // save all the registers
+            asm.save(csl, frameToCSA);
+
+            String name = "uncommonTrap";
+            final CriticalMethod uncommonTrap = new CriticalMethod(Deoptimization.class, name, null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+
+            //CiValue[] args = registerConfig.getCallingConvention(JavaCall, new CiKind[] {WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind()}, target(), false).locations;
+
+            // Copy callee save area address into arg 0 (i.e. 'csa')
+            //CiRegister arg0 = args[0].asRegister();
+            //asm.leaq(arg0, new CiAddress(WordUtil.archKind(), AMD64.RSP, frameToCSA));
+
+            // Copy return address into arg 1 (i.e. 'ip')
+            //CiRegister arg1 = args[1].asRegister();
+            //asm.movq(arg1, new CiAddress(WordUtil.archKind(), AMD64.RSP, frameSize));
+
+            // Copy stack pointer into arg 2 (i.e. 'sp')
+            //CiRegister arg2 = args[2].asRegister();
+            //asm.leaq(arg2, new CiAddress(WordUtil.archKind(), AMD64.RSP, frameSize + 8));
+
+            // Copy original frame pointer into arg 3 (i.e. 'fp')
+            //CiRegister arg3 = args[3].asRegister();
+            //asm.movq(arg3, AMD64.rbp);
 
             asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();

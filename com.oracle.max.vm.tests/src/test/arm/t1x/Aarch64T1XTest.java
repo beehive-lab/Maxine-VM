@@ -128,15 +128,15 @@ public class Aarch64T1XTest extends MaxTestCase {
             RuntimeCompiler.optimizingCompilerOption.setValue(optimizingCompilerName);
             if (initialised == false) {
                 vmConfigurator.create();
-          //      CompilationBroker.OFFLINE = true;
+                CompilationBroker.OFFLINE = true;
                 JavaPrototype.initialize(false);
                 initialised = true;
             }
             t1x = (T1X) CompilationBroker.addCompiler("t1x", baselineCompilerName);
-            c1x = (C1X) CompilationBroker.addCompiler("c1x", optimizingCompilerName);
+           // c1x = (C1X) CompilationBroker.addCompiler("c1x", optimizingCompilerName);
 
-           // c1x.initializeOffline(Phase.HOSTED_COMPILING);
-          //  theCompiler = (AARCH64T1XCompilation) t1x.getT1XCompilation();
+            //c1x.initializeOffline(Phase.HOSTED_COMPILING);
+            theCompiler = (AARCH64T1XCompilation) t1x.getT1XCompilation();
             theCompiler.setDebug(false);
         } catch (Exception e) {
             System.out.println(e);
@@ -149,23 +149,21 @@ public class Aarch64T1XTest extends MaxTestCase {
     }
 
     public void ignore_DecStack() throws Exception {
-        int assemblerStatements;
-        Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
-        theCompiler.incStack(3);
-   //     masm.mov(Aarch64Assembler.ConditionFlag.Always, false, Aarch64.x0, Aarch64.r13); // copy stack value into r0
-        theCompiler.decStack(1);
-   //     masm.mov(Aarch64Assembler.ConditionFlag.Always, false, Aarch64.r1, Aarch64.r13); // copy stack value onto r1
-        theCompiler.decStack(2);
-   //     masm.mov(Aarch64Assembler.ConditionFlag.Always, false, Aarch64.r2, Aarch64.r13);
-        assemblerStatements = masm.codeBuffer.position() / 4;
-        long[] simulatedValues = generateAndTest(expectedValues, testvalues, bitmasks);
-        for (int i = 0; i < 16; i++) {
-            assert 2 * (simulatedValues[1] - simulatedValues[0]) == (simulatedValues[2] - simulatedValues[1]) : "Register " + i + " Value " + simulatedValues[i];
-        }
+
     }
 
-    public void ignore_IncStack() throws Exception {
+    public void test_IncStack() throws Exception {
+        Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.mov(64, Aarch64.r0, Aarch64.sp); // copy stack value into r0
+        theCompiler.incStack(1);
+        masm.mov(64, Aarch64.r1, Aarch64.sp); // copy stack value onto r1
+        theCompiler.incStack(2);
+        masm.mov(64, Aarch64.r2, Aarch64.sp);
 
+        long[] simulatedValues = generateAndTest(expectedValues, testvalues, bitmasks);
+        for (int i = 0; i < 16; i++) {
+            assert 2 * (simulatedValues[0] - simulatedValues[1]) == (simulatedValues[1] - simulatedValues[2]) : "Register " + i + " Value " + simulatedValues[i];
+        }
     }
 
     public void ignore_AdjustReg() throws Exception {
@@ -204,7 +202,7 @@ public class Aarch64T1XTest extends MaxTestCase {
 
     }
 
-    public void test_AssignDouble() throws Exception {
+    public void ignore_AssignDouble() throws Exception {
 
     }
 

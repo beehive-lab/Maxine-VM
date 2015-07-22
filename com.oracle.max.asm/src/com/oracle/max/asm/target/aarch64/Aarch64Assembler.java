@@ -443,15 +443,9 @@ public class Aarch64Assembler extends AbstractAssembler {
      */
     public void b(ConditionFlag condition, int imm21, int pos) {
         if (pos == -1) {
-            codeBuffer.emitInt(
-                    Instruction.BCOND.encoding |
-                    getConditionalBranchImm(imm21) |
-                    condition.encoding);
+            codeBuffer.emitInt(Instruction.BCOND.encoding | getConditionalBranchImm(imm21) | condition.encoding);
         } else {
-            codeBuffer.emitInt(
-                    Instruction.BCOND.encoding |
-                    getConditionalBranchImm(imm21) |
-                    condition.encoding, pos);
+            codeBuffer.emitInt(Instruction.BCOND.encoding | getConditionalBranchImm(imm21) | condition.encoding, pos);
         }
     }
 
@@ -465,7 +459,6 @@ public class Aarch64Assembler extends AbstractAssembler {
     public void cbnz(int size, CiRegister reg, int imm21) {
         conditionalBranchInstruction(reg, imm21, generalFromSize(size), Instruction.CBNZ, -1);
     }
-
 
     /**
      * Compare register and branch if non-zero.
@@ -500,6 +493,21 @@ public class Aarch64Assembler extends AbstractAssembler {
      */
     public void cbz(int size, CiRegister reg, int imm21, int pos) {
         conditionalBranchInstruction(reg, imm21, generalFromSize(size), Instruction.CBZ, pos);
+    }
+
+    public final void alignForPatchableDirectCall() {
+        int dispStart = codeBuffer.position() + 1;
+        int mask = target.wordSize - 1;
+        if ((dispStart & ~mask) != ((dispStart + 3) & ~mask)) {
+            nop(target.wordSize - (dispStart & mask));
+            assert ((codeBuffer.position() + 1) & mask) == 0;
+        }
+    }
+
+    public void nop(int number) {
+        for (int i = 0; i < number; i++) {
+            nop();
+        }
     }
 
     private void conditionalBranchInstruction(CiRegister reg, int imm21, InstructionType type, Instruction instr, int pos) {
@@ -639,7 +647,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param address all addressing modes allowed. May not be null.
      */
     public void str(int destSize, CiRegister rt, Aarch64Address address) {
-        assert Aarch64.isGeneralPurposeOrZeroReg(rt);
+        //assert Aarch64.isGeneralPurposeOrSpReg(rt);
         assert destSize == 8 || destSize == 16 || destSize == 32 || destSize == 64;
         int transferSize = NumUtil.log2Ceil(destSize / 8);
         loadStoreInstruction(rt, address, InstructionType.General64, Instruction.STR, transferSize);
@@ -2222,6 +2230,19 @@ public class Aarch64Assembler extends AbstractAssembler {
         }
     }
 
+    //TODO Fix hlt
+    public final void hlt() {
+        nop(4);
+        //int3();
+    }
+
+    /**
+     * Executes no-op instruction. No registers or flags are updated, except for PC.
+     */
+    public void nop() {
+        hint(SystemHint.NOP);
+    }
+
     /**
      * Architectural hints.
      *
@@ -2238,6 +2259,7 @@ public class Aarch64Assembler extends AbstractAssembler {
         emitInt(instrEncoding |
                 uimm16 << SystemImmediateOffset);
     }
+
 
     /**
      * Clear Exclusive: clears the local record of the executing processor that an address has had a request for

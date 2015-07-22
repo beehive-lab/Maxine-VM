@@ -114,7 +114,8 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     public void incStack(int numberOfSlots) {
-
+        assert numberOfSlots > 0;
+        asm.sub(64, sp, sp, numberOfSlots * JVMS_SLOT_SIZE);
     }
 
     @Override
