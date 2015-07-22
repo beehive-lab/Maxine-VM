@@ -300,7 +300,10 @@ public final class Heap {
 
     @INLINE
     public static Object createArray(DynamicHub hub, int length) {
+	//com.sun.max.vm.Log.print("createarray  "); com.sun.max.vm.Log.println(length);
         final Object array = heapScheme().createArray(hub, length);
+	//com.sun.max.vm.Log.println("done createarray");
+
         if (Heap.logAllocation()) {
             allocationLogger.logCreateArray(hub, length, array);
         }

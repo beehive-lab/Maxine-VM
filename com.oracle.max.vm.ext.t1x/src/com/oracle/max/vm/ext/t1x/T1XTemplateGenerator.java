@@ -884,6 +884,8 @@ public class T1XTemplateGenerator {
         startMethodGeneration();
         generateTemplateTag("MULTIANEWARRAY%s", prefixDollar(resolved));
         out.printf("    public static Reference multianewarray(%s %s, int[] lengths%s) {%n", t, v, suffixParams(true));
+        //out.printf("com.sun.max.vm.Log.println(\"multi from T1XTemplate\");");
+
         if (resolved.equals("")) {
             out.printf("        ClassActor arrayClassActor = Snippets.resolveClass(guard);%n");
         }

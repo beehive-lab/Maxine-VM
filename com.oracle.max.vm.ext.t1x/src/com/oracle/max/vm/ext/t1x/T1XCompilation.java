@@ -1057,7 +1057,7 @@ public abstract class T1XCompilation {
      *
      * @param name the expected name of the parameter
      */
-    final void assignWordReg(int n, String name, CiRegister src) {
+    final protected void assignWordReg(int n, String name, CiRegister src) {
         assignWordReg(reg(n, name, Kind.WORD), src);
     }
 

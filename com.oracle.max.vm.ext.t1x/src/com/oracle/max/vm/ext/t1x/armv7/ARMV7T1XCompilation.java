@@ -49,6 +49,10 @@ import com.sun.max.vm.stack.armv7.ARMV7JVMSFrameLayout;
 import com.sun.max.vm.thread.VmThread;
 import com.sun.max.vm.type.Kind;
 import com.sun.max.vm.type.SignatureDescriptor;
+import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.actor.holder.ArrayClassActor;
+import com.sun.max.vm.actor.holder.ClassActor;
+
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -86,7 +90,8 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         super(compiler);
         asm = new ARMV7MacroAssembler(target(), null);
 	if(com.sun.max.vm.MaxineVM.isHosted() == false)
-		asm.maxineflush = this; // dirty hacky .... do it properly
+		//asm.maxineflush = this; // dirty hacky .... do it properly
+		asm.maxineflush = null; // this is the way to turn off instrumentation
         buf = asm.codeBuffer;
         patchInfo = new PatchInfoARMV7();
     }
@@ -273,6 +278,45 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.movt(ConditionFlag.Always, ARMV7.cpuRegisters[dst.encoding + 1], (int) (((value >> 48) & 0xffff)));
     }
 
+    @Override
+    protected void do_multianewarray(int index, int numberOfDimensions) {
+        CiRegister lengths;
+	/*
+	X86-64 has a different return register to argument register set, but ARM as we have tried to follow AARPCS DOESNT
+	so we need to save the r0 and restore it to r1
+	Hoepfully with will work ... as long as the SP is not used for any arguments inbetween 
+	*/
+        {
+            start(T1XTemplateTag.CREATE_MULTIANEWARRAY_DIMENSIONS);
+            assignWordReg(0, "sp", sp);
+            assignInt(1, "n", numberOfDimensions);
+            lengths = template.sig.out.reg;
+            finish();
+            decStack(numberOfDimensions);
+	    asm.push(ConditionFlag.Always,1<<0);
+
+        }
+        ClassConstant classRef = cp.classAt(index);
+        if (classRef.isResolvableWithoutClassLoading(cp)) {
+            start(T1XTemplateTag.MULTIANEWARRAY$resolved);
+            ClassActor arrayClassActor = classRef.resolve(cp, index); // index+1? IF we pushed?
+            assert arrayClassActor.isArrayClass();
+            assert arrayClassActor.numberOfDimensions() >= numberOfDimensions : "dimensionality of array class constant smaller that dimension operand";
+            assignObject(0, "arrayClassActor", arrayClassActor);
+            //assignObjectReg(1, "lengths", lengths);
+	    //asm.pop(ConditionFlag.Always,1<<1);
+	    asm.pop(ConditionFlag.Always, 1 <<reg(1,"lengths",Kind.REFERENCE).encoding );
+            finish();
+        } else {
+            // Unresolved case
+            start(T1XTemplateTag.MULTIANEWARRAY);
+            assignObject(0, "guard", cp.makeResolutionGuard(index)); //index+1 if we pushed?
+            //assignObjectReg(1, "lengths", lengths);
+	    //asm.pop(ConditionFlag.Always,1<<1);
+	    asm.pop(ConditionFlag.Always, 1 <<reg(1,"lengths",Kind.REFERENCE).encoding );
+            finish();
+        }
+    }
     @Override
     protected void assignObject(CiRegister dst, Object value) {
         if (value == null) {

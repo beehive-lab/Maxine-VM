@@ -476,8 +476,12 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     @INLINE
     @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
     public final Object createArray(DynamicHub dynamicHub, int length) {
+	//com.sun.max.vm.Log.println(length);
         final Size size = Layout.getArraySize(dynamicHub.classActor.componentClassActor().kind, length);
+	//com.sun.max.vm.Log.print("Got size ");com.sun.max.vm.Log.println(size);
         final Pointer cell = tlabAllocate(size);
+	//com.sun.max.vm.Log.println("Got cell");
+
 
         return Cell.plantArray(cell, size, dynamicHub, length);
     }
