@@ -122,6 +122,10 @@ public class Aarch64 extends CiArchitecture {
         d25, d26, d27, d28, d29, d30, d31
     };
 
+    public static final CiRegister[] calleeSavedRegisters = {
+        r19, r20, r21, r22, r23, r24, r25, r26, r27, r28
+    };
+
     private static CiRegister gpCiRegister(int nr) {
         return new CiRegister(nr, nr, 8, "r"+nr, CPU, RegisterFlag.Byte);
     }
