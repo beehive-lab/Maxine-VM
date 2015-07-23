@@ -95,7 +95,7 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
 
     public static final CiCalleeSaveLayout CSL;
     static {
-        CiRegister[] csaRegs = {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r13, r14/*, r15*/};
+        CiRegister[] csaRegs = {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r13, r14};
 
         int size = 4 * 15;
         TRAP_NUMBER_OFFSET = size;
@@ -110,7 +110,14 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
      */
     @Override
     public Pointer getPCPointer(Pointer trapFrame) {
-        return trapFrame.plus(vm().stubs.trapStub().frameSize());
+	/*
+	Used to experimentally determine where the PC was saved.
+	for(int i = -12; i < 32;i+=4) {
+        com.sun.max.vm.Log.print(i);
+	com.sun.max.vm.Log.print(" ");
+	com.sun.max.vm.Log.println(trapFrame.plus(vm().stubs.trapStub().frameSize()).readWord(i));
+	}*/
+	return trapFrame.plus(vm().stubs.trapStub().frameSize()+4);
 
     }
 

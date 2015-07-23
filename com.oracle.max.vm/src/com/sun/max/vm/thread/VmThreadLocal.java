@@ -429,6 +429,7 @@ public class VmThreadLocal implements FormatWithToString {
     }
 
     public static boolean inJava(Pointer tla) {
+
         return JavaFrameAnchor.inJava(JavaFrameAnchor.from(tla));
     }
 

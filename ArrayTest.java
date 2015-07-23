@@ -1,5 +1,7 @@
 public class ArrayTest {
 
+static Object []array = { null, null, ""};
+public static Object test(int arg) { final Object[] obj = arg == -2 ? null : array; return obj[arg];}
 public static void main(String []args) {
 
 	int x[] = new int[100];
@@ -8,6 +10,10 @@ public static void main(String []args) {
 		//System.out.println(Integer.toString(x[i]));
 	}
 	System.out.println("1D-Int array");
+	for(int i =0 ; i < array.length;i++)
+	System.out.println(test(0));	
+	System.out.println(test(-1));
+	System.out.println("DONE TEST");
 	int y[][] = new int[100][100];
 	System.out.println("Created 2D int array");
 	System.out.println("REALLY");
@@ -40,13 +46,13 @@ public static void main(String []args) {
 	double [][]dd = new double[100][100];
 	for(int i = 0; i < 100; i++)	{
 		dd[i][i] = (double)i;
-		int j = (int) dd[i][i];
+		int j = (int)((float) dd[i][i]);
 		System.out.println("2DDoubles " + Integer.toString(j));
 	}
 	long ll[][] = new long[100][100];
 	for(int i = 0; i < 100;i++)	{
 		ll[i][i] = (long)i;
-		System.out.println("2DLONGS" + Integer.toString((int) ll[i][i]));
+		System.out.println("2DLONGS " + Integer.toString((int) ll[i][i]));
 	}
 	System.out.println("2D Double ... should print 0..99) above");
 	float [][]ddd = new float[100][100];
