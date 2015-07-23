@@ -1484,7 +1484,7 @@ public class Stubs {
             }
 
             // now allocate the frame for this method
-            asm.sub(64, AMD64.rsp, AMD64.rsp, frameSize);
+            asm.sub(64, Aarch64.sp, Aarch64.sp, frameSize);
 
             // save all the registers
             asm.save(csl, frameToCSA);

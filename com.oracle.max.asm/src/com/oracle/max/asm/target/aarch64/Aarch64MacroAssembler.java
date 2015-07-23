@@ -1017,6 +1017,10 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     public void save(CiCalleeSaveLayout csl, int frameToCSA) {
         for (CiRegister r : csl.registers) {
             int offset = csl.offsetOf(r);
+//            System.out.println("@save");
+//            System.out.println("@save reg: " + r.name + " num: " + r.number);
+//            System.out.println("@save frameToCSA: " + frameToCSA);
+//            System.out.println("@save offset:     " + offset);
             str(64, r, Aarch64Address.createUnscaledImmediateAddress(frameRegister, frameToCSA + offset));
         }
     }

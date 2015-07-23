@@ -208,22 +208,38 @@ public final class Aarch64Address extends AbstractAddress {
         assert Aarch64.isIntReg(base) && Aarch64.isIntReg(offset);
         switch (addressingMode) {
         case IMMEDIATE_SCALED:
+//            System.out.println("@IMMEDIATE_SCALED");
             return !base.equals(zr) && offset.equals(zr) && extendType == null && NumUtil.isUnsignedNbit(12, immediate);
         case IMMEDIATE_UNSCALED:
+//            System.out.println("@IMMEDIATE_UNSCALED");
+//            System.out.println("!base.equals(zr): "                             + (!base.equals(zr)));
+//            System.out.println("offset.equals(zr): "                            + (offset.equals(zr)));
+//            System.out.println("extendType == null: "                           + (extendType == null));
+//            System.out.println("NumUtil.isSignedNbit(9, "+ immediate +"): "     + (NumUtil.isSignedNbit(9, immediate)));
             return !base.equals(zr) &&  offset.equals(zr) && extendType == null && NumUtil.isSignedNbit(9, immediate);
         case BASE_REGISTER_ONLY:
+//            System.out.println("@BASE_REGISTER_ONLY");
             return !base.equals(zr) && offset.equals(zr) && extendType == null && immediate == 0;
         case REGISTER_OFFSET:
+//            System.out.println("@REGISTER_OFFSET");
             return !base.equals(zr) && Aarch64.isGeneralPurposeReg(offset) && extendType == null && immediate == 0;
         case EXTENDED_REGISTER_OFFSET:
+//            System.out.println("@EXTENDED_REGISTER_OFFSET");
             return !base.equals(zr) && Aarch64.isGeneralPurposeReg(offset) &&
                     (extendType == Aarch64Assembler.ExtendType.SXTW || extendType == Aarch64Assembler.ExtendType.UXTW) &&
                     immediate == 0;
         case PC_LITERAL:
+//            System.out.println("@PC_LITERAL");
+//            System.out.println("base.equals(zr):"                              + base.equals(zr));
+//            System.out.println("offset.equals(zr): "                            + offset.equals(zr));
+//            System.out.println("extendType == null: "                           + (extendType == null));
+//            System.out.println("NumUtil.isSignedNbit(21, immediate): "          + NumUtil.isSignedNbit(21, immediate));
+//            System.out.println("(immediate & 0x3) == 0: "                       + ((immediate & 0x3) == 0));
             return base.equals(zr) && offset.equals(zr) && extendType == null &&
                     NumUtil.isSignedNbit(21, immediate) && ((immediate & 0x3) == 0);
         case IMMEDIATE_POST_INDEXED:
         case IMMEDIATE_PRE_INDEXED:
+//            System.out.println("@IMMEDIATE_POST_INDEXED|IMMEDIATE_PRE_INDEXED");
             return !base.equals(zr) && offset.equals(zr) && extendType == null && NumUtil.isSignedNbit(9, immediate);
         default:
             throw new Error("should not reach here");

@@ -322,9 +322,9 @@ public class RegisterConfigs {
 
                 setNonZero(standard.getAttributesMap(), Aarch64.r26, Aarch64.sp, Aarch64.fp);
 
-                CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, allRegistersExceptLatch));
-                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, Aarch64.allRegisters));
-                CiRegisterConfig trapStub = new CiRegisterConfig(standard,  new CiCalleeSaveLayout(0, 34*8+32*16, 8, Aarch64.allRegisters));
+                CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, calleeSavedRegisters));
+                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, Aarch64.calleeSavedRegisters));
+                CiRegisterConfig trapStub = new CiRegisterConfig(standard,  new CiCalleeSaveLayout(0, 34*8+32*16, 8, Aarch64.calleeSavedRegisters));
                 CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8,
                                 Aarch64.r0, Aarch64.r1, Aarch64.r2, Aarch64.r3, Aarch64.r4, Aarch64.r5, Aarch64.r6, Aarch64.r7, // parameters
                                 Aarch64.fp,   // must be preserved for baseline compiler ???frame pointer???
