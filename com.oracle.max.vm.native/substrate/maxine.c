@@ -53,6 +53,7 @@
 static unsigned int *simPtr = (0);
 static FILE *simFile = (0);
 jint  maxine_instrumentationBuffer()  {
+#ifdef arm
         if(simPtr != (0)) {
                 printf("Really bad ERROR!!!!!!!! multiple initialisations of simptr in substrate");
                 printf("NEEDS EXTENSION to work correctly with multiple thrreads\n");
@@ -61,6 +62,10 @@ jint  maxine_instrumentationBuffer()  {
         *(simPtr +1023) = (unsigned int)simPtr;
         //printf("ALLOCATED at %u last element %u\n",(unsigned int)simPtr,*(simPtr +1023));
         return (jint)simPtr;
+#else
+	printf("INSTRUMENTATION for simulation not implemented for non armv7 platforms yet\n");
+	return (jint)0;
+#endif
 }
 void  maxine_close() {
         if(simFile != (0)) {
@@ -68,6 +73,7 @@ void  maxine_close() {
         }
 }
 void  real_maxine_flush_instrumentationBuffer(unsigned int *bufPtr) {
+#ifdef arm
         unsigned int i;
         if((*(simPtr +1023)) != (unsigned int)(simPtr +1022)) {
                 printf("ERROR VALSTORED %u VALEXPECTED %u SIMPTR %u\n", *(simPtr +1023) ,((unsigned int) (simPtr))+4*1022,(unsigned int)simPtr);
@@ -85,9 +91,19 @@ void  real_maxine_flush_instrumentationBuffer(unsigned int *bufPtr) {
     
         }
         *(simPtr +1023) = (unsigned int)simPtr;
+#else
+	printf("INSTRUMENTATION for simulation not implemented for non armv7 platforms yet\n");
+
+#endif
 }
 jint  maxine_flush_instrumentationBuffer() {
+#ifdef arm
+
         return (jint) real_maxine_flush_instrumentationBuffer; // dirty yes ... but it should work      
+#else
+	printf("INSTRUMENTATION for simulation not implemented for non armv7 platforms yet\n");
+	return (jint)0;
+#endif
 }
 
 
