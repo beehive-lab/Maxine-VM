@@ -723,6 +723,11 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         return platform().isa == ISA.ARM;
     }
 
+    @FOLD
+    public static boolean isAARCH64() {
+        return platform().isa == ISA.Aarch64;
+    }
+
     /**
      * Called to denote some functionality is not yet implemented for the target ISA.
      */
