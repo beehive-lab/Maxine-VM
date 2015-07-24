@@ -22,6 +22,7 @@
  */
 package com.oracle.max.vm.ext.t1x;
 
+import com.oracle.max.vm.ext.t1x.aarch64.*;
 import com.oracle.max.vm.ext.t1x.amd64.*;
 
 /**
@@ -31,6 +32,8 @@ public class T1XCompilationFactory {
     public T1XCompilation newT1XCompilation(T1X t1x) {
         if (T1X.isAMD64()) {
             return new AMD64T1XCompilation(t1x);
+        } else if (T1X.isAARCH64()) {
+            return new AARCH64T1XCompilation(t1x);
         } else {
             throw T1X.unimplISA();
         }

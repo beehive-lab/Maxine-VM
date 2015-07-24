@@ -89,9 +89,35 @@ public class Aarch64T1XTest extends MaxTestCase {
             bitmasks[i] = MaxineARMTester.BitsFlag.All32Bits;
         }
     }
-    private static long[] expectedValues = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    private static boolean[] testvalues = new boolean[17];
+    private static boolean[] testValues = new boolean[MaxineARMTester.NUM_REGS];
 
+    private static void setIgnoreValue(int i, boolean value, boolean all) {
+        testValues[i] = value;
+    }
+
+    private static void resetIgnoreValues() {
+        for (int i = 0; i < testValues.length; i++) {
+            testValues[i] = false;
+        }
+    }
+
+    // The following values will be updated
+    // to those expected to be found in a register after simulated execution of code.
+    private static long[] expectedValues = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21 , 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
+
+    private static long[] expectedLongValues = { Long.MAX_VALUE - 100, Long.MAX_VALUE};
+
+    private static void initialiseExpectedValues() {
+        for (int i = 0; i < MaxineARMTester.NUM_REGS; i++) {
+            expectedValues[i] = i;
+        }
+    }
+
+    private static void initialiseTestValues() {
+        for (int i = 0; i < MaxineARMTester.NUM_REGS; i++) {
+            testValues[i] = false;
+        }
+    }
     private long[] generateAndTest(long[] expected, boolean[] tests, MaxineARMTester.BitsFlag[] masks) throws Exception {
         ARMCodeWriter code = new ARMCodeWriter(theCompiler.getMacroAssembler().codeBuffer);
         code.createCodeFile();
@@ -160,7 +186,7 @@ public class Aarch64T1XTest extends MaxTestCase {
         theCompiler.incStack(2);
         masm.mov(64, Aarch64.r2, Aarch64.sp);
 
-        long[] simulatedValues = generateAndTest(expectedValues, testvalues, bitmasks);
+        long[] simulatedValues = generateAndTest(expectedValues, testValues, bitmasks);
         for (int i = 0; i < 16; i++) {
             assert 2 * (simulatedValues[0] - simulatedValues[1]) == (simulatedValues[1] - simulatedValues[2]) : "Register " + i + " Value " + simulatedValues[i];
         }
