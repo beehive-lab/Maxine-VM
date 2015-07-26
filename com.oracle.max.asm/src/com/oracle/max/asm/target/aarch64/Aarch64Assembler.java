@@ -259,7 +259,12 @@ public class Aarch64Assembler extends AbstractAssembler {
         HINT(0xD503201F),
         DMB(0x000000A0),
 
-        BLR_NATIVE(0xc0000000);
+        BLR_NATIVE(0xc0000000),
+
+//      MRS: 0b11010101001 << 21
+//      MSR: 0b11010101000 << 21
+        MRS(0xd5200000),
+        MSR(0xd5000000);
 
         public final int encoding;
 
@@ -410,6 +415,20 @@ public class Aarch64Assembler extends AbstractAssembler {
         }
     }
 
+    /**
+     * This enum is used to indicate how system registers are encoded.
+     * See ARM ARM section C5.3
+     */
+    public static enum SystemRegisters {
+        NZCV(0b1101101000010000),
+        SPSR_EL1(0b1100001000000000);
+
+        public final int encoding;
+
+        private SystemRegisters(int encoding) {
+            this.encoding = encoding;
+        }
+    }
     /**
      * Constructs an assembler for the AMD64 architecture.
      *
@@ -2197,6 +2216,31 @@ public class Aarch64Assembler extends AbstractAssembler {
                 rs1(src1) |
                 rs2(src2) |
                 condition.encoding << ConditionalConditionOffset);
+    }
+
+    /**
+     * dst = sysReg
+     * Read system register to general purpose register
+     *
+     * @param dst general purpose register. May not be SP or ZP.
+     * @param srcSysReg system register.
+     */
+    public void mrs(CiRegister dst, SystemRegisters srcSysReg) {
+        assert all(IS_GENERAL_PURPOSE_REG, dst);
+
+        emitInt(Instruction.MRS.encoding |
+                sysRegEncoding(srcSysReg) |
+                rt(dst));
+    }
+
+    private int sysRegEncoding(SystemRegisters sysReg) {
+        switch (sysReg) {
+            case NZCV:
+            case SPSR_EL1:
+                return (sysReg.encoding << 5);
+            default:
+                throw new Error("Error!!! Undefined system register: " + sysReg);
+        }
     }
 
 /*********/
