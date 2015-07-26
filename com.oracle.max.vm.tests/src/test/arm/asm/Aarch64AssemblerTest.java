@@ -145,6 +145,52 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         r.reset();
     }
 
+  /**
+  * branch
+  */
+    public void test_b() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        asm.codeBuffer.reset();
+
+        asm.b(8);
+        asm.add(VARIANT_64, Aarch64.cpuRegisters[10], Aarch64.cpuRegisters[10], 0);     // dummy instruction to take 4 bytes memory space
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 0x123, 0);        // b(8) should jump here
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[1], 0x123, 0);        // and then reach here
+
+        expectedValues[0] = 0x123;
+        testValues[0] = true;
+        expectedValues[1] = 0x123;
+        testValues[1] = true;
+
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
+
+    /**
+     * load and store instructions
+     */
+    public void test_ldr_str() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        asm.codeBuffer.reset();
+
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 0x123, 0);        // value to be stored to stack
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[10], 8, 0);           // offset
+        Aarch64Address address = Aarch64Address.createRegisterOffsetAddress(Aarch64.sp,  Aarch64.cpuRegisters[10], false); // stack address
+        asm.str(VARIANT_64,  Aarch64.cpuRegisters[0], address);         // store value to stack
+        asm.ldr(VARIANT_64, Aarch64.cpuRegisters[1], address);          // load value from stack
+
+        expectedValues[0] = 0x123;
+        testValues[0] = true;
+        expectedValues[1] = 0x123;
+        testValues[1] = true;
+
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
     public void test_add_imm() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
@@ -488,7 +534,6 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
     /**
      * frintz, fabs, fneg, fsqrt
-     *
      */
     public void test_float2() throws Exception {
         initialiseExpectedValues();
@@ -535,9 +580,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
     /**
      * fmadd, fmsub
-     *
      */
-
     public void test_float3() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
@@ -569,21 +612,38 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
+    /**
+     *  fstr, fldr
+     */
+    public void test_float4() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        asm.codeBuffer.reset();
 
-//
-//    public void test_cbz() throws Exception {
-//        initialiseExpectedValues();
-//        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
-//        resetIgnoreValues();
-//        asm.codeBuffer.reset();
-//        //asm.movImmediate(Aarch64.cpuRegisters[10], 5);
-//        // SUB Xi, Xi, X10  ; X10 = 5
-//        asm.movImmediate(Aarch64.cpuRegisters[0], 0x0);
-//        for (int i = 0; i < 1; i++) {
-//            asm.cbz(VARIANT_64, Aarch64.cpuRegisters[0],0);
-//        }
-//        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//    }
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 0x123, 0);        // value to be stored to stack
+        asm.scvtf(VARIANT_64, VARIANT_64, Aarch64.fpuRegisters[0], Aarch64.cpuRegisters[0]);
+
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[10], 8, 0);           // offset
+        Aarch64Address address = Aarch64Address.createRegisterOffsetAddress(Aarch64.sp,  Aarch64.cpuRegisters[10], false); // stack address
+
+        asm.fstr(VARIANT_64, Aarch64.fpuRegisters[0], address);         // store value to stack
+        asm.fldr(VARIANT_64, Aarch64.fpuRegisters[1], address);          // load value from stack
+
+        asm.fcvtzs(VARIANT_64, VARIANT_64,  Aarch64.cpuRegisters[1],  Aarch64.fpuRegisters[1]);
+
+        expectedValues[0] = 0x123;
+        testValues[0] = true;
+        expectedValues[1] = 0x123;
+        testValues[1] = true;
+
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
+
+
+
+
 
     /*
     public void ignore_Ldrb() throws Exception {
