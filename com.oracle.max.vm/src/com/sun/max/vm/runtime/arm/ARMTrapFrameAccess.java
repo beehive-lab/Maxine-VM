@@ -117,19 +117,13 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
 	com.sun.max.vm.Log.print(" PC  ");
 	com.sun.max.vm.Log.println(trapFrame.plus(vm().stubs.trapStub().frameSize()+i).readWord(0));
 	}
-	return trapFrame.plus(vm().stubs.trapStub().frameSize()+4);
+	return trapFrame.plus(vm().stubs.trapStub().frameSize());
 
     }
 
     @Override
     public Pointer getSP(Pointer trapFrame) {
-	for(int i = -12; i< 32;i+=4)	{
-		com.sun.max.vm.Log.print(i);
-        com.sun.max.vm.Log.print(" SP ");
-        com.sun.max.vm.Log.println(trapFrame.plus(vm().stubs.trapStub().frameSize()+i).readWord(0));
-
-	}
-        return trapFrame.plus(vm().stubs.trapStub().frameSize() +  0xc);
+        return trapFrame.plus(vm().stubs.trapStub().frameSize() +  0x8);
     }
 
     @Override

@@ -909,9 +909,9 @@ public class Stubs {
         } else if (platform().isa == ISA.ARM) {
 
             /*
-            DONT EXPECT THIS TO WORK --- PORTED AT AN EARLY STAGE AND NEEDS THE CORRESPONDING C CODE TO BE ALTERED AS WELL
-            APN this is going to be a pretty brain damaged attempt
-            ...at first I'm only attempting to get this to compile then I will
+	    This needs to be aligned with what is expected to happen in Trap.java TrapFrameAccess.java and ARMTrapFrameAccess.java
+            TODO Currently there seems to be an issue with the offsets etc and where we save things. We will need to get this right.
+
             check the information on ARM linux regarding what is returned and do
             something appropriate to attempt to recover from the error/issue causing
             the trap.
@@ -927,17 +927,15 @@ public class Stubs {
             CiValue[] args = registerConfig.getCallingConvention(JavaCallee, handleTrapParameters, target(), false).locations;
 
 
-	    asm.push(ARMV7Assembler.ConditionFlag.Always,1<<14); // we always push the LR
-            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12);      // SAVE r12 ... our save/restore is broken
-            // this will be overwritten with teh RET ADDRESS?
+	    //asm.push(ARMV7Assembler.ConditionFlag.Always,1<<14); // we always push the LR
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12);      // SAVE r12 ... our save/restore uses r12 so we must push it here
+            // this will be overwritten with the RETURN  ADDRESS of the trapping instruction
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12);
             asm.mrsReadAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12);
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12);
             // no.w allocate the frame for this method (first word of which was allocated by the second pushfq above)
-            //asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
 
-            //asm.subq(ARMV7.r13, frameSize - 8);
-            asm.subq(ARMV7.r13, frameSize - 4);
+            asm.subq(ARMV7.r13, frameSize - 8/*4*/);
 
             // save all the callee save registers
             asm.save(csl, frameToCSA); // NOTE our save/restore trashes r12 ... that is why we push r12 
@@ -956,7 +954,7 @@ public class Stubs {
             //asm.movq(scratch, new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize + 4));// we have sdaved r12 so it is one slot past the end of the frame
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize /*+ 4*/));// we have sdaved r12 so it is one slot past the end of the frame
             asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
 
             // load the trap number from the thread locals into the first parameter register
@@ -992,7 +990,7 @@ public class Stubs {
             // my understanding is that normal handler code will do this?
             // Will r14 be correctly set to the appropriate return address?
             //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
-            asm.addq(ARMV7.r13, frameSize - 4); // added
+            asm.addq(ARMV7.r13, frameSize - 8/*4*/); // added
             asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 12);// pops flags so we need to do ...
             asm.msrWriteAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12);
             asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 12); // POP scratch

@@ -310,7 +310,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     }
 
     private CodePointer throwAddressToCatchAddress(CodePointer throwAddress, Throwable exception, CatchExceptionInfo info) {
-	        com.sun.max.vm.Log.println("MaxTargetMETHOD");
+	        //com.sun.max.vm.Log.println("MaxTargetMETHOD");
 
         final int exceptionPos = throwAddress.minus(codeStart()).toInt();
         int count = getExceptionHandlerCount();
@@ -318,11 +318,11 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
             int codePos = getExceptionPosAt(i);
             int catchPos = getCatchPosAt(i);
             ClassActor catchType = getCatchTypeAt(i);
-		       com.sun.max.vm.Log.print("CODEPOS "); com.sun.max.vm.Log.println(codePos);
-		       com.sun.max.vm.Log.print("CATCH "); com.sun.max.vm.Log.println(catchPos);
-		       com.sun.max.vm.Log.print("EXCEPTPOS  "); com.sun.max.vm.Log.println(exceptionPos);
-			com.sun.max.vm.Log.print("CHECKTYPE ");com.sun.max.vm.Log.print(checkType(exception, catchType));
-		com.sun.max.vm.Log.println("\n");
+		       //com.sun.max.vm.Log.print("CODEPOS "); com.sun.max.vm.Log.println(codePos);
+		       //com.sun.max.vm.Log.print("CATCH "); com.sun.max.vm.Log.println(catchPos);
+		       //com.sun.max.vm.Log.print("EXCEPTPOS  "); com.sun.max.vm.Log.println(exceptionPos);
+			//com.sun.max.vm.Log.print("CHECKTYPE ");com.sun.max.vm.Log.print(checkType(exception, catchType));
+		//com.sun.max.vm.Log.println("\n");
 
             if ( (codePos == exceptionPos) && checkType(exception, catchType)) {
                 if (info != null) {

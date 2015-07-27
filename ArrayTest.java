@@ -16,16 +16,19 @@ public static void main(String []args) {
 	System.out.println(test(-1));
 	} catch(Throwable e) {
 		System.out.println("EXPECT java.lang.ArrayIndexOutOfBoundsException " +e.getClass());
+		e.printStackTrace();
 	}
 	try {
 	System.out.println(test(-2));
 	} catch(Throwable e) {
 		System.out.println("EXPECT java.lang.NullPointerException " +e.getClass());
+		e.printStackTrace();
 	}
 	try {
         System.out.println("EXPECT null " + test(0));
         } catch(Throwable e) {
                 System.out.println("ERROR");
+		e.printStackTrace();
         }
 
 	System.out.println("DONE TEST");
@@ -37,6 +40,8 @@ public static void main(String []args) {
 		
 	} catch(Throwable e) {
 		System.out.println("EXPECT java.lang.ArrayIndexOutOfBoundsException " +e.getClass());
+		e.printStackTrace();
+
 	}
 	int y[][] = new int[100][100];
 	System.out.println("Created 2D int array");
