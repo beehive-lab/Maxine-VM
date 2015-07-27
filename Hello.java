@@ -12,13 +12,13 @@ public static void main(String []args) {
 	}
 	//System.err.println(j);
 	System.err.println(args[0]);
-	System.err.println(new Date());
 	System.err.println("HELLO WORLD");
 	for(int i = 0; i < args.length;i++)	{
 
 		System.err.println(args[i]);
 
 	}
+	System.err.println(new Date());
 
 }
 

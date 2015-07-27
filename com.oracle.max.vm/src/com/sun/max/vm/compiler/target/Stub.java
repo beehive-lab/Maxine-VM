@@ -305,6 +305,8 @@ public final class Stub extends TargetMethod {
 
     @Override
     public CodePointer throwAddressToCatchAddress(CodePointer throwAddress, Throwable exception) {
+	        com.sun.max.vm.Log.println("STUB");
+
         return CodePointer.zero();
     }
 

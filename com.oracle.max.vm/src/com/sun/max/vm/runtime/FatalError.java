@@ -183,6 +183,9 @@ public final class FatalError extends Error {
         final boolean lockDisabledSafepoints = Log.lock();
         if (vmThread != null) {
 	    Log.println("FatalError: stack reset position two");
+	    if(message != null) {
+		Log.println(message);
+	    }
             vmThread.stackDumpStackFrameWalker().reset();
         }
 

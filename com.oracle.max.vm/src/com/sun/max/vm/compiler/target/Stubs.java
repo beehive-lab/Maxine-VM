@@ -927,6 +927,7 @@ public class Stubs {
             CiValue[] args = registerConfig.getCallingConvention(JavaCallee, handleTrapParameters, target(), false).locations;
 
 
+	    asm.push(ARMV7Assembler.ConditionFlag.Always,1<<14); // we always push the LR
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12);      // SAVE r12 ... our save/restore is broken
             // this will be overwritten with teh RET ADDRESS?
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12);

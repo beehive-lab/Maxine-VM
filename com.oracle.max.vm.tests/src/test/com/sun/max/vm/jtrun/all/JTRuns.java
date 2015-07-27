@@ -7635,6 +7635,7 @@ public class JTRuns {
                     return;
                 } catch (Throwable e) {
                     if (e.getClass() != java.lang.NullPointerException.class) {
+			System.err.println("jtt.except.BC_aaload0.test(-2) class was " + e.getClass());
                         fail(runString, e);
                         return;
                     }
@@ -7647,6 +7648,7 @@ public class JTRuns {
                     return;
                 } catch (Throwable e) {
                     if (e.getClass() != java.lang.ArrayIndexOutOfBoundsException.class) {
+			System.err.println("jtt.except.BC_aaload0.test(-1) class was " +  e.getClass());
                         fail(runString, e);
                         return;
                     }
@@ -7654,6 +7656,7 @@ public class JTRuns {
             // (0) == null
                 runString = "(0)";
                 if (null != jtt.except.BC_aaload0.test(0)) {
+	            System.err.println("jtt.except.BC_aaload0.test(0) failed a snon null return");
                     fail(runString);
                     return;
                 }

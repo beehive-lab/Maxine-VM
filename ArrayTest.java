@@ -11,9 +11,33 @@ public static void main(String []args) {
 	}
 	System.out.println("1D-Int array");
 	for(int i =0 ; i < array.length;i++)
-	System.out.println(test(0));	
+	System.out.println("EXPECT  null " + test(0));	
+	try {
 	System.out.println(test(-1));
+	} catch(Throwable e) {
+		System.out.println("EXPECT java.lang.ArrayIndexOutOfBoundsException " +e.getClass());
+	}
+	try {
+	System.out.println(test(-2));
+	} catch(Throwable e) {
+		System.out.println("EXPECT java.lang.NullPointerException " +e.getClass());
+	}
+	try {
+        System.out.println("EXPECT null " + test(0));
+        } catch(Throwable e) {
+                System.out.println("ERROR");
+        }
+
 	System.out.println("DONE TEST");
+	jtt.except.BC_aaload1 xz = new jtt.except.BC_aaload1();
+	try {
+		System.out.println("EXPECT null " +xz.test(0));
+		System.out.println("EXPECT null " +xz.test(-2));
+		xz.test(-1);
+		
+	} catch(Throwable e) {
+		System.out.println("EXPECT java.lang.ArrayIndexOutOfBoundsException " +e.getClass());
+	}
 	int y[][] = new int[100][100];
 	System.out.println("Created 2D int array");
 	System.out.println("REALLY");

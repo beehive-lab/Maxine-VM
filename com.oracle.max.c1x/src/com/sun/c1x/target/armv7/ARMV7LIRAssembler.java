@@ -322,20 +322,28 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case Boolean:
             case Byte:
                 masm.mov32BitConstant(ARMV7.r8, constant.asInt() & 0xFF);
+		nullCheckHere = codePos(); // ADDED EXCEPTION
+
                 masm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, 0);
                 break;
             case Char:
             case Short:
                 masm.mov32BitConstant(ARMV7.r8, constant.asInt() & 0xFFFF);
+		nullCheckHere = codePos(); // ADDED EXCEPTION
+
                 masm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, 0);
                 break;
             case Jsr:
             case Int:
                 masm.mov32BitConstant(ARMV7.r8, constant.asInt());
+		nullCheckHere = codePos(); // ADDED EXCEPTION
+
                 masm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, 0);
                 break;
             case Float:
                 masm.mov32BitConstant(ARMV7.r8, Float.floatToRawIntBits(constant.asFloat()));
+		nullCheckHere = codePos(); // ADDED EXCEPTION
+
                 masm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, 0);
                 break;
             case Object:
@@ -416,35 +424,54 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     protected void reg2mem(CiValue src, CiValue dest, CiKind kind, LIRDebugInfo info, boolean unaligned) {
         CiAddress toAddr = (CiAddress) dest;
         if (info != null) {
-            tasm.recordImplicitException(codePos(), info);
+            //tasm.recordImplicitException(codePos(), info);
         }
 
         // Checkstyle: off
         switch (kind) {
             case Float:
                 masm.movflt(toAddr, src.asRegister());
+        	if (info != null) { // ADDEDEXCEPT
+            		tasm.recordImplicitException(codePos()-4, info);
+        	}
                 break;
             case Double:
                 masm.movflt(toAddr, src.asRegister());
+		if (info != null) { // ADDEDEXCEPT
+                        tasm.recordImplicitException(codePos()-4, info);
+                }
+
                 break;
             case Jsr:
             case Object:
             case Int:
                 masm.setUpScratch(toAddr);
+        	if (info != null) { // ADDEDEXCEPT
+            		tasm.recordImplicitException(codePos(), info);
+        	}
                 masm.strImmediate(ConditionFlag.Always, 1, 0, 0, src.asRegister(), ARMV7.r12, 0);
                 break;
             case Long:
                 masm.setUpScratch(toAddr);
+        	if (info != null) { // ADDEDEXCEPT
+            		tasm.recordImplicitException(codePos(), info);
+        	}
                 masm.strDualImmediate(ConditionFlag.Always, 1, 0, 0, src.asRegister(), ARMV7.r12, 0);
                 break;
             case Char:
             case Short:
                 masm.setUpScratch(toAddr);
+        	if (info != null) { // ADDEDEXCEPT
+            		tasm.recordImplicitException(codePos(), info);
+        	}
                 masm.strHImmediate(ConditionFlag.Always, 1, 0, 0, src.asRegister(), ARMV7.r12, 0);
                 break;
             case Byte:
             case Boolean:
                 masm.setUpScratch(toAddr);
+        	if (info != null) { // ADDEDEXCEPT
+            		tasm.recordImplicitException(codePos(), info);
+        	}
                 masm.strbImmediate(ConditionFlag.Always, 1, 0, 0, src.asRegister(), ARMV7.r12, 0);
                 break;
             default:
@@ -540,11 +567,11 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert src.isAddress();
         assert dest.isRegister() : "dest=" + dest;
         CiAddress addr = (CiAddress) src;
+        masm.setUpScratch(addr);
         if (info != null) {
             tasm.recordImplicitException(codePos(), info);
         }
         // Checkstyle: off
-        masm.setUpScratch(addr);
         switch (kind) {
             case Float:
                 masm.vldr(ConditionFlag.Always, dest.asRegister(), ARMV7.r12, 0, CiKind.Float, CiKind.Int);
@@ -706,9 +733,13 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
         if (op.cond() == Condition.TRUE) {
             if (op.info != null) {
-                tasm.recordImplicitException(codePos(), op.info);
+                //tasm.recordImplicitException(codePos(), op.info);
             }
             masm.jmp(op.label());
+	    if (op.info != null) {
+                tasm.recordImplicitException(codePos()-4, op.info); // ADDED EXCEPTION 
+            }
+
         } else {
             ConditionFlag acond = ConditionFlag.Always;
             if (op.code == LIROpcode.CondFloatBranch) {
@@ -2132,23 +2163,30 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 }
                 case PointerLoad: {
                     if ((Boolean) inst.extra && info != null) {
-                        tasm.recordImplicitException(codePos(), info);
+                        //tasm.recordImplicitException(codePos(), info);
                     }
                     CiValue result = operands[inst.result.index];
                     CiValue pointer = operands[inst.x().index];
                     CiRegisterValue register = assureInRegister(pointer);
                     moveOp(new CiAddress(inst.kind, register, 0), result, inst.kind, null, false);
+                    if ((Boolean) inst.extra && info != null) {
+                        tasm.recordImplicitException(codePos()-4, info);
+                    }
                     break;
                 }
                 case PointerStore: {
                     if ((Boolean) inst.extra && info != null) {
-                        tasm.recordImplicitException(codePos(), info);
+                        //tasm.recordImplicitException(codePos(), info);
                     }
 
                     CiValue value = operands[inst.y().index];
                     CiValue pointer = operands[inst.x().index];
                     assert pointer.isVariableOrRegister();
                     moveOp(value, new CiAddress(inst.kind, pointer, 0), inst.kind, null, false);
+			if ((Boolean) inst.extra && info != null) {
+                        tasm.recordImplicitException(codePos()-4, info);
+                    }
+
                     break;
                 }
                 case PointerLoadDisp: {

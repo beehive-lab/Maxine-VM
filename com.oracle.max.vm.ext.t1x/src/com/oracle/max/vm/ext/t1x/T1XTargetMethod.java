@@ -657,6 +657,8 @@ public class T1XTargetMethod extends TargetMethod {
     }
 
     private CodePointer throwAddressToCatchAddress(CodePointer ip, Throwable exception, CatchExceptionInfo info) {
+	        com.sun.max.vm.Log.println("T1XTargetMETHOD");
+
         if (handlers.length != 0) {
             final int exceptionPos = posFor(ip);
             int exceptionBCI = bciForPos(exceptionPos);

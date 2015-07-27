@@ -153,6 +153,8 @@ public abstract class Adapter extends TargetMethod {
 
     @Override
     public CodePointer throwAddressToCatchAddress(CodePointer throwAddress, Throwable exception) {
+	        com.sun.max.vm.Log.println("ADAPTER");
+
         return CodePointer.zero();
     }
 

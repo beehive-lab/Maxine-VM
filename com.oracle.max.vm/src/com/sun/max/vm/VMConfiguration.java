@@ -237,6 +237,7 @@ public final class VMConfiguration {
                 //Log.println(phase.name());
                 vmSchemes.get(i).initialize(phase);
             } catch (Throwable t) {
+		System.out.println(t);
                 FatalError.unexpected("Error initializing scheme " + vmSchemes.get(i).name() + " in phase " + phase.name(), t);
             }
         }
