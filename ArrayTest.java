@@ -4,6 +4,29 @@ static Object []array = { null, null, ""};
 public static Object test(int arg) { final Object[] obj = arg == -2 ? null : array; return obj[arg];}
 public static void main(String []args) {
 
+	        jtt.except.BC_aastore0 aastore0 = new jtt.except.BC_aastore0();
+        int zz;
+        try {
+        zz = aastore0.test(true,-2);
+        } catch(Throwable e) {
+                System.out.println("EXPECT java.lang.NullPointerException " + e.getClass());
+        }
+        try {
+        zz = aastore0.test(true,-1);
+        } catch(Throwable e) {
+                System.out.println("EXPECT java.lang.ArrayIndexOutOfBoundsException " + e.getClass());
+        }
+        for(int yy = 0; yy <= 2;yy++) {
+                zz = aastore0.test(true,yy);
+                System.out.println("EXPECT equals " + yy + " " + zz);
+
+        }
+        try {
+        zz = aastore0.test(true,3);
+        } catch(Throwable e) {
+                System.out.println("EXPECT java.lang.ArrayIndexOutOfBoundsException " + e.getClass());
+        }
+
 	int x[] = new int[100];
 	for(int i = 0; i < 100;i++)	{
 		x[i] = i;
