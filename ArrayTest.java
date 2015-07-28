@@ -6,6 +6,10 @@ public static void main(String []args) {
 
 	        jtt.except.BC_aastore0 aastore0 = new jtt.except.BC_aastore0();
         int zz;
+	jtt.bytecode.BC_f2l02 zzz = new jtt.bytecode.BC_f2l02();
+	for(zz = 0; zz < 5;zz++) {
+		System.out.println("ITER " + zz + " RESULT " +zzz.test(zz));
+	}
         try {
         zz = aastore0.test(true,-2);
         } catch(Throwable e) {

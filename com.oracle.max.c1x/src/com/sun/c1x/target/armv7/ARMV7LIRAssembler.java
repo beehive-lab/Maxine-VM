@@ -436,7 +436,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         	}
                 break;
             case Double:
-                masm.movflt(toAddr, src.asRegister());
+                masm.movdbl(toAddr, src.asRegister());
 		if (info != null) { // ADDEDEXCEPT
                         tasm.recordImplicitException(codePos()-4, info);
                 }
@@ -860,7 +860,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 if (dest.asRegister().isFpu()) {
                     masm.vcvt(ConditionFlag.Always, dest.asRegister(), true, true, src.asRegister(), dest.kind, src.kind);
                 } else {
-                    masm.vcvt(ConditionFlag.Always, ARMV7.s30, true, true, src.asRegister(), CiKind.Float, src.kind);
+                    masm.vcvt(ConditionFlag.Always, ARMV7.s30, true, true, src.asRegister(), dest.kind /*CiKind.Float*/, src.kind);
                     masm.vmov(ConditionFlag.Always, dest.asRegister(), ARMV7.s30, null, dest.kind, CiKind.Float);
                 }
                 break;

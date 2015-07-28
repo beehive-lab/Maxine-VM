@@ -933,8 +933,8 @@ public class Stubs {
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12);
             asm.mrsReadAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12);
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12);
-            // no.w allocate the frame for this method (first word of which was allocated by the second pushfq above)
 
+            // NOW allocate the frame for this method (note TWO wordas of which WERE allocated by the second push above)
             asm.subq(ARMV7.r13, frameSize - 8/*4*/);
 
             // save all the callee save registers

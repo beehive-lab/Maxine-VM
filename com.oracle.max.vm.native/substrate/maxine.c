@@ -108,6 +108,7 @@ jint  maxine_flush_instrumentationBuffer() {
 
 
 jlong d2long(double x) {
+	//printf("As a long long %lld %lf\n",(long long) x,x);
 	if(isnan(x)) {
 		return (jlong)0;
 	}

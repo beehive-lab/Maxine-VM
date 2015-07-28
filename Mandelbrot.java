@@ -2,18 +2,21 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import javax.swing.JFrame;
  
-public class Mandelbrot {
+public class Mandelbrot extends JFrame {
  
     private final int MAX_ITER = 570;
     private final double ZOOM = 150;
-    private static float I[][] = new float[100][800];
+    private BufferedImage I;
     private double zx, zy, cX, cY, tmp;
  
     public Mandelbrot() {
-        //setBounds(100, 100, 800, 600);
-        //I = new double[100][800];
-        for (int y = 0; y < 800; y++) {
-            for (int x = 0; x < 100; x++) {
+        super("Mandelbrot Set");
+        setBounds(100, 100, 800, 600);
+        setResizable(false);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        I = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
+        for (int y = 0; y < getHeight(); y++) {
+            for (int x = 0; x < getWidth(); x++) {
                 zx = zy = 0;
                 cX = (x - 400) / ZOOM;
                 cY = (y - 300) / ZOOM;
@@ -24,16 +27,18 @@ public class Mandelbrot {
                     zx = tmp;
                     iter--;
                 }
-		System.out.println("x is "+ x);
-		System.out.println("y is " + y);
-		I[x][y] = iter | (iter << 8);
-                //I.setRGB(x, y, iter | (iter << 8));
+                I.setRGB(x, y, iter | (iter << 8));
             }
         }
     }
  
+    @Override
+    public void paint(Graphics g) {
+        g.drawImage(I, 0, 0, this);
+    }
  
     public static void main(String[] args) {
-        new Mandelbrot();//.setVisible(true);
+        new Mandelbrot().setVisible(true);
     }
 }
+
