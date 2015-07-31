@@ -3,8 +3,9 @@ package test.arm.asm;
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.asm.target.aarch64.Aarch64Assembler.ExtendType;
+import com.oracle.max.asm.target.aarch64.Aarch64Assembler.PStateField;
 import com.oracle.max.asm.target.aarch64.Aarch64Assembler.ShiftType;
-import com.oracle.max.asm.target.aarch64.Aarch64Assembler.SystemRegisters;
+import com.oracle.max.asm.target.aarch64.Aarch64Assembler.SystemRegister;
 import com.sun.cri.ci.*;
 import com.sun.max.ide.*;
 
@@ -640,7 +641,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //
 //        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
 //    }
-
+//
     /**
      * mrs
      */
@@ -659,28 +660,80 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         asm.movz(VARIANT_64, Aarch64.cpuRegisters[1], 0, 0);
         asm.movz(VARIANT_64, Aarch64.cpuRegisters[2], 0, 0);
 
-        asm.mrs(Aarch64.cpuRegisters[0], SystemRegisters.NZCV);
+        asm.mrs(Aarch64.cpuRegisters[0], SystemRegister.NZCV);
 
         asm.subs(VARIANT_64, Aarch64.cpuRegisters[15], Aarch64.cpuRegisters[10], Aarch64.cpuRegisters[11], ShiftType.LSL, 0);
-        asm.mrs(Aarch64.cpuRegisters[1], SystemRegisters.NZCV);
+        asm.mrs(Aarch64.cpuRegisters[1], SystemRegister.NZCV);
 
         asm.subs(VARIANT_64, Aarch64.cpuRegisters[15], Aarch64.cpuRegisters[13], Aarch64.cpuRegisters[12], ShiftType.LSL, 0);
-        asm.mrs(Aarch64.cpuRegisters[2], SystemRegisters.NZCV);
+        asm.mrs(Aarch64.cpuRegisters[2], SystemRegister.NZCV);
 
         asm.subs(VARIANT_64, Aarch64.cpuRegisters[15], Aarch64.cpuRegisters[12], Aarch64.cpuRegisters[13], ShiftType.LSL, 0);
-        asm.mrs(Aarch64.cpuRegisters[3], SystemRegisters.NZCV);
+        asm.mrs(Aarch64.cpuRegisters[3], SystemRegister.NZCV);
 
-        expectedValues[0] = 0;
+        expectedValues[0] = 0b0110l << 28;
         testValues[0] = true;
-        expectedValues[1] = 0;
+        expectedValues[1] = 0b0110l << 28;
         testValues[1] = true;
-        expectedValues[2] = 0;
+        expectedValues[2] = 0b0010l << 28;
         testValues[2] = true;
-        expectedValues[3] = 0;
+        expectedValues[3] = 0b1000l << 28;
         testValues[3] = true;
 
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
+//
+//    /**
+//     * mrs_reg
+//     */
+//    public void test_mrs_reg() throws Exception {
+//        initialiseExpectedValues();
+//        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
+//        resetIgnoreValues();
+//        asm.codeBuffer.reset();
+//
+//        asm.movz(VARIANT_64, Aarch64.cpuRegisters[1], 0b1111, 0);
+//        asm.msr(SystemRegister.SPSR_EL1, Aarch64.cpuRegisters[1]);
+//        asm.mrs(Aarch64.cpuRegisters[0], SystemRegister.SPSR_EL1);
+//
+//        expectedValues[0] = 0b1111;
+//        testValues[0] = true;
+//
+//        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+//    }
+//
+//    /**
+//     * mrs_imm
+//     */
+//    public void test_mrs_imm() throws Exception {
+//        initialiseExpectedValues();
+//        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
+//        resetIgnoreValues();
+//        asm.codeBuffer.reset();
+//
+//        asm.msr(PStateField.PSTATEField_DAIFClr, 0b1111);
+//        asm.msr(PStateField.PSTATEField_DAIFSet, 0b1001);
+//        asm.mrs(Aarch64.cpuRegisters[0], SystemRegister.DAIF);
+//
+//        // if dst == PSTATEField_SP, then the first 3 digits of the operand is ignored, which means only the last bit is used to set SPSel.
+//        asm.msr(PStateField.PSTATEField_SP, 0b0001);
+//        asm.mrs(Aarch64.cpuRegisters[1], SystemRegister.SPSel);
+//        asm.msr(PStateField.PSTATEField_SP, 0b0000);
+//        asm.mrs(Aarch64.cpuRegisters[2], SystemRegister.SPSel);
+//
+//        expectedValues[0] = 0b1001 << 6;
+//        testValues[0] = true;
+//        expectedValues[1] = 0b1 << 0;
+//        testValues[1] = true;
+//        expectedValues[2] = 0b0 << 0;
+//        testValues[2] = true;
+//
+//        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+//    }
+
+
+
+
 
 
 

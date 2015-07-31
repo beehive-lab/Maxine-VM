@@ -261,10 +261,12 @@ public class Aarch64Assembler extends AbstractAssembler {
 
         BLR_NATIVE(0xc0000000),
 
-//      MRS: 0b11010101001 << 21
-//      MSR: 0b11010101000 << 21
+//      MRS:     0b11010101001 << 21
+//      MSR_REG: 0b11010101000 << 21
+//      MSR_IMM: 0b11010101000000000100000000011111
         MRS(0xd5200000),
-        MSR(0xd5000000);
+        MSR_REG(0xd5000000),
+        MSR_IMM(0xd500401f);
 
         public final int encoding;
 
@@ -419,16 +421,44 @@ public class Aarch64Assembler extends AbstractAssembler {
      * This enum is used to indicate how system registers are encoded.
      * See ARM ARM section C5.3
      */
-    public static enum SystemRegisters {
-        NZCV(0b1101101000010000),
+    public static enum SystemRegister {
+        NZCV    (0b1101101000010000),
+        DAIF    (0b1101101000010001),
+        SPSel   (0b1100001000010000),
         SPSR_EL1(0b1100001000000000);
 
         public final int encoding;
 
-        private SystemRegisters(int encoding) {
+        private SystemRegister(int encoding) {
             this.encoding = encoding;
         }
     }
+
+    /**
+     * This enum is used to indicate how PState fields are encoded.
+     * Each PStateField takes 14 bits.
+     * The first 3 and last 3 bits are op1 and op3 respectively.
+     * In section C6.6.130:
+     *
+     * SPSel   when op1 = 000, op2 = 101
+     * DAIFSet when op1 = 011, op2 = 110
+     * DAIFClr when op1 = 011, op2 = 111
+     *
+     * Between op1 and op2 there are 8 bits used to represent other parts of the instruction encoding.
+     * So these 8 bits are set to zeros here.
+     */
+    public static enum PStateField {
+        PSTATEField_SP     (0b00000000000101),
+        PSTATEField_DAIFSet(0b01100000000110),
+        PSTATEField_DAIFClr(0b01100000000111);
+
+        public final int encoding;
+
+        private PStateField(int encoding) {
+            this.encoding = encoding;
+        }
+    }
+
     /**
      * Constructs an assembler for the AMD64 architecture.
      *
@@ -2225,22 +2255,43 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param dst general purpose register. May not be SP or ZP.
      * @param srcSysReg system register.
      */
-    public void mrs(CiRegister dst, SystemRegisters srcSysReg) {
+    public void mrs(CiRegister dst, SystemRegister srcSysReg) {
         assert all(IS_GENERAL_PURPOSE_REG, dst);
 
         emitInt(Instruction.MRS.encoding |
-                sysRegEncoding(srcSysReg) |
+                (srcSysReg.encoding << 5) |
                 rt(dst));
     }
 
-    private int sysRegEncoding(SystemRegisters sysReg) {
-        switch (sysReg) {
-            case NZCV:
-            case SPSR_EL1:
-                return (sysReg.encoding << 5);
-            default:
-                throw new Error("Error!!! Undefined system register: " + sysReg);
-        }
+    /**
+     * dstSysReg = src
+     * Set system register with the value in a general purpose register
+     *
+     * @param dstSysReg system register.
+     * @param src general purpose register. May not be SP or ZP.
+     */
+    public void msr(SystemRegister dstSysReg, CiRegister src) {
+        assert all(IS_GENERAL_PURPOSE_REG, src);
+
+        emitInt(Instruction.MSR_REG.encoding |
+                (dstSysReg.encoding << 5) |
+                rt(src));
+    }
+
+    /**
+     * PStateField = uimm4
+     * Set PSTATEField with an unsigned 4-bit immediate value
+     *
+     * @param pStateField PStateField
+     * @param uimm4 unsigned 4-bit immediate value
+     */
+    public void msr(PStateField pStateField, int uimm4) {
+        assert NumUtil.isUnsignedNbit(4, uimm4);
+
+        emitInt(Instruction.MSR_IMM.encoding |
+                (pStateField.encoding << 5) |
+                (uimm4 << 8) |
+                0b11111);
     }
 
 /*********/
