@@ -1484,10 +1484,11 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 	   // BEGIN ADD EXCEPT
             masm.eor(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
 	    masm.cmp(ConditionFlag.Always,ARMV7.r12,rreg,0,0);
+	    masm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r15, null, CiKind.Float, CiKind.Int);
 	    masm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r12, null, CiKind.Float, CiKind.Int);
 	    masm.vcvt(ConditionFlag.Always,ARMV7.s31, false, true, ARMV7.s31, CiKind.Float, CiKind.Int );
 	    int offset = masm.codeBuffer.position();
-	    masm.vdiv(ConditionFlag.Equal, ARMV7.s31,ARMV7.s31,ARMV7.s31,CiKind.Float); 
+	    masm.vdiv(ConditionFlag.Equal, ARMV7.s31,ARMV7.s30,ARMV7.s31,CiKind.Float); 
 	    // END ADD EXCEPTION
 
             masm.sdiv(ConditionFlag.Always, dreg, lreg, rreg);
@@ -1522,7 +1523,17 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         CiRegister rreg = right.asRegister();
 
         masm.mov(ConditionFlag.Always, false, ARMV7.r8, lreg);
-        int offset = masm.codeBuffer.position();
+        //int offset = masm.codeBuffer.position();
+	// PUT IN FOR NO EXCEPT int offset = masm.codeBuffer.position();
+           // BEGIN ADD EXCEPT
+            masm.eor(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
+            masm.cmp(ConditionFlag.Always,ARMV7.r12,rreg,0,0);
+            masm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r15, null, CiKind.Float, CiKind.Int);
+            masm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r12, null, CiKind.Float, CiKind.Int);
+            masm.vcvt(ConditionFlag.Always,ARMV7.s31, false, true, ARMV7.s31, CiKind.Float, CiKind.Int );
+            int offset = masm.codeBuffer.position();
+            masm.vdiv(ConditionFlag.Equal, ARMV7.s31,ARMV7.s30,ARMV7.s31,CiKind.Float);
+            // END ADD EXCEPTION
 
         masm.udiv(ConditionFlag.Always, dreg, lreg, rreg);
         tasm.recordImplicitException(offset, info);

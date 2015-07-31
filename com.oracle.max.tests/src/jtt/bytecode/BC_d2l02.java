@@ -32,7 +32,7 @@ public class BC_d2l02 {
     private static double[] inputs = {-1.3e44d, Double.NEGATIVE_INFINITY, Double.NaN, Double.POSITIVE_INFINITY, 1.3e44d};
 
     public static long test(int i) {
-	System.out.println("D2L02 " + (float)inputs[i]);
+	//System.out.println("D2L02 " + (float)inputs[i]);
         return (long) inputs[i];
     }
     public static double get(int i ) {

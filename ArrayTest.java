@@ -6,6 +6,13 @@ public static void main(String []args) {
 
 	System.out.println("D2F " + jtt.bytecode.BC_d2f.test(1.0d));
 	System.out.println("D2I " + jtt.bytecode.BC_d2i01.test(1.0d));
+	try {
+	float one = 1.0f;
+	System.out.println(one/0.0f);
+	} catch(Exception e) {
+		e.printStackTrace();
+		System.err.println(e);
+	}
 	for(int yy = 0; yy < 5;yy++)	{
 		System.out.println("BC_D2l01 " + yy+ " VAL " + jtt.bytecode.BC_d2l01.test((double)75+yy));
 		System.out.println("BC_f2l01 " + yy+ " VAL " + jtt.bytecode.BC_f2l01.test((float)80+yy));

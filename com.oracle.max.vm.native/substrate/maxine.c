@@ -50,6 +50,9 @@
 #if os_MAXVE
 #include "maxve.h"
 #endif
+#ifdef arm
+void divideByZeroExceptions();
+#endif
 static unsigned int *simPtr = (0);
 static FILE *simFile = (0);
 jint  maxine_instrumentationBuffer()  {
@@ -482,6 +485,10 @@ int maxine(int argc, char *argv[], char *executablePath) {
     //printf("Main method entry %p\n", method);
 #endif
 
+        
+#ifdef arm
+	divideByZeroExceptions();
+#endif
 
 #if log_LOADER
     log_println("entering Java by calling MaxineVM.run(tlBlock=%p, bootHeapRegionStart=%p, openLibrary=%p, dlsym=%p, dlerror=%p, vmInterface=%p, jniEnv=%p, jmmInterface=%p, jvmtiInterface=%p, argc=%d, argv=%p)",
@@ -514,6 +521,9 @@ int maxine(int argc, char *argv[], char *executablePath) {
  * from the C language and environment.
  */
 void *native_executablePath() {
+#ifdef arm
+	divideByZeroExceptions();
+#endif
     static char result[MAX_PATH_LENGTH];
     getExecutablePath(result);
     return result;
@@ -609,6 +619,12 @@ void *native_properties(void) {
     log_println("native_properties: user_dir=%s", nativeProperties.user_dir);
 #endif
     return &nativeProperties;
+}
+void divideByZeroExceptions() {
+	asm volatile("vmrs r12, FPSCR");
+	asm volatile("movw r0,0x100");
+	asm volatile("orr r12,r12,r0");
+	asm volatile("vmsr FPSCR,r12");
 }
 void maxine_cacheflush(char *start, int length) {
 #ifdef arm

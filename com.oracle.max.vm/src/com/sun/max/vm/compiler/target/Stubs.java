@@ -957,6 +957,23 @@ public class Stubs {
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize /*+ 4*/));// we have sdaved r12 so it is one slot past the end of the frame
             asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
 
+	    // BEGIN  DIRTY HACK
+	    // WE READ THE fpsrc AND IF A DIV ZERO HAS OCCURED
+	    // WE CHANGE THE TRAP NUMBER	
+	    asm.vmrs(ARMV7Assembler.ConditionFlag.Always,ARMV7.r12);
+	    asm.movw(ARMV7Assembler.ConditionFlag.Always,ARMV7.r8,2); // DZC is updated to 1 -- means it is a  divide by zero
+	    asm.and(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r12,ARMV7.r8,ARMV7.r12, 0, 0);	
+	    asm.cmp(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8,ARMV7.r12,0 ,0);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_NUMBER.offset));
+	    asm.mov32BitConstant(ARMV7.r8,3); // TRAP 3 is arithmetic
+	    asm.str(ARMV7Assembler.ConditionFlag.Equal,ARMV7.r8,ARMV7.r12, 0);
+	    asm.mov32BitConstant(ARMV7.r12,0xffffff00);
+	    asm.vmrs(ARMV7Assembler.ConditionFlag.Always,ARMV7.r12); 
+	    asm.and(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r8,ARMV7.r8,ARMV7.r12, 0, 0);
+	    asm.vmsr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r8);
+	    // WE ALSO NEED TO RESET THE divz AS above --- ie clear and FPExceptions
+	    // END DIRTY HACK
+	    
             // load the trap number from the thread locals into the first parameter register
             //asm.movq(args[0].asRegister(), new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_NUMBER.offset));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_NUMBER.offset));
