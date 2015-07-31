@@ -4,11 +4,35 @@ static Object []array = { null, null, ""};
 public static Object test(int arg) { final Object[] obj = arg == -2 ? null : array; return obj[arg];}
 public static void main(String []args) {
 
-	        jtt.except.BC_aastore0 aastore0 = new jtt.except.BC_aastore0();
+	System.out.println("D2F " + jtt.bytecode.BC_d2f.test(1.0d));
+	System.out.println("D2I " + jtt.bytecode.BC_d2i01.test(1.0d));
+	for(int yy = 0; yy < 5;yy++)	{
+		System.out.println("BC_D2l01 " + yy+ " VAL " + jtt.bytecode.BC_d2l01.test((double)75+yy));
+		System.out.println("BC_f2l01 " + yy+ " VAL " + jtt.bytecode.BC_f2l01.test((float)80+yy));
+		System.out.println("BC_D2l02 " + yy+ " VAL " + (float)-1.3e44d + " " + jtt.bytecode.BC_d2l02.test(yy));
+		System.out.println("BC_F2l02 " + yy+ " VAL " + (float)-1.3e44d + " " + jtt.bytecode.BC_f2l02.test(yy));
+
+	}
+
+	        /*jtt.except.BC_aastore0 aastore0 = new jtt.except.BC_aastore0();
+	try {
+		//System.out.println("FAULTING 0.0f/0.0f" + 0.0f/0.0f);
+		//System.out.println("FAULTING 0.0d/0.0d" + 0.0d/0.0d);
+		//System.out.println("FAULTING 0/0." + 0/0);
+		//System.out.println("FAULTING 0L/0L" + 0L/0L);
+	System.out.println( jtt.except.BC_invokespecial01.test(1) );
+	System.out.println( jtt.except.BC_invokespecial01.test(1) );
+	} catch(Throwable e) {
+		  System.out.println("EXPECT java.lang.NullPointerException " + e.getClass());
+		  e.printStackTrace();
+
+	}
+		
         int zz;
-	jtt.bytecode.BC_f2l02 zzz = new jtt.bytecode.BC_f2l02();
+	jtt.bytecode.BC_d2l02 zzz = new jtt.bytecode.BC_d2l02();
 	for(zz = 0; zz < 5;zz++) {
-		System.out.println("ITER " + zz + " RESULT " +zzz.test(zz));
+		System.out.println("ALIVE");
+		System.out.println("ITER " + zz + " RESULT " +zzz.test(zz) + " GET " + zzz.get(zz));
 	}
         try {
         zz = aastore0.test(true,-2);
@@ -30,7 +54,7 @@ public static void main(String []args) {
         } catch(Throwable e) {
                 System.out.println("EXPECT java.lang.ArrayIndexOutOfBoundsException " + e.getClass());
         }
-
+	*/
 	int x[] = new int[100];
 	for(int i = 0; i < 100;i++)	{
 		x[i] = i;

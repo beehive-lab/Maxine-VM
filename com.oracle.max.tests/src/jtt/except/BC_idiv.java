@@ -30,6 +30,7 @@ package jtt.except;
 
 public class BC_idiv {
     public static int test(int a, int b) {
+	System.out.println(" denominator is " + b);
         return a / b;
     }
 }

@@ -75,6 +75,8 @@ void  maxine_close() {
 void  real_maxine_flush_instrumentationBuffer(unsigned int *bufPtr) {
 #ifdef arm
         unsigned int i;
+	printf("INSTRUMENTATION NEEDS to be rewritten to identify thread %lu\n", (unsigned long int)thread_self());
+	printf("and to push a single address at a time");
         if((*(simPtr +1023)) != (unsigned int)(simPtr +1022)) {
                 printf("ERROR VALSTORED %u VALEXPECTED %u SIMPTR %u\n", *(simPtr +1023) ,((unsigned int) (simPtr))+4*1022,(unsigned int)simPtr);
         }
@@ -107,34 +109,53 @@ jint  maxine_flush_instrumentationBuffer() {
 }
 
 
-jlong d2long(double x) {
+long long d2long(double x) {
 	//printf("As a long long %lld %lf\n",(long long) x,x);
 	if(isnan(x)) {
-		return (jlong)0;
+		return (long long)0;
 	}
-	return (jlong)x;
+	if (x <= (double)((long long)-9223372036854775808ULL))  return -9223372036854775808ULL;
+	if (x >= (double)((long long)9223372036854775807ULL)) return 9223372036854775807ULL;
+	return (long long)x;
 }
 
-jlong f2long(float x) {
+long long  f2long(float x) {
 	if(isnan(x)) {
 		return (jlong)0;
 	}
-	return (jlong)x;
+	if (x <= (float)((long long)-9223372036854775808ULL))  return -9223372036854775808ULL;
+        if (x >= (float)((long long)9223372036854775807ULL)) return 9223372036854775807ULL;
+
+	return (long long)x;
 }
 
 jlong arithmeticldiv(jlong x, jlong y) {
+	if (y == 0) {
+		//raise(SIGFPE);
+	}
 	return x/y;
 }
 
 jlong arithmeticlrem(jlong x, jlong y) {
+	if(y == 0) {
+		//raise(SIGFPE);
+		float zz = 1.0f;
+		zz = zz /0.0f;
+	}
 	return x % y; 
 }
 
 unsigned long long  arithmeticludiv(unsigned long long x , unsigned long long y) {
+	if(y == 0 ) {
+		//raise(SIGFPE);
+	}
 	return x/y; 
 }
 
 unsigned long long  arithmeticlurem(unsigned long long x , unsigned long long y) {
+	if(y == 0 ) {
+		//raise(SIGFPE);
+	}
 	return x%y; 
 }
 

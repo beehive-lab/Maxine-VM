@@ -216,24 +216,24 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     public void peekLong(CiRegister dst, int index) {
         assert dst.encoding < 10;
         asm.setUpScratch(spLong(index));
-        asm.sub(ConditionFlag.Always, false, ARMV7.r8, scratch, 4, 0);
-        asm.ldrd(ConditionFlag.Always, dst, ARMV7.r8, 0); // dst needs to be big enough to hold a long!
+        //asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
+        asm.ldrd(ConditionFlag.Always, dst, scratch, 0); // dst needs to be big enough to hold a long!
     }
 
     @Override
     public void pokeLong(CiRegister src, int index) {
         assert src.encoding < 10;
         asm.setUpScratch(spLong(index));
-        asm.sub(ConditionFlag.Always, false, ARMV7.r8, scratch, 4, 0);
-        asm.strd(ARMV7Assembler.ConditionFlag.Always, src, ARMV7.r8, 0); // put them on the stack on the stack!
+        //asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
+        asm.strd(ARMV7Assembler.ConditionFlag.Always, src, scratch, 0); // put them on the stack on the stack!
     }
 
     @Override
     public void peekDouble(CiRegister dst, int index) {
         assert dst.isFpu();
         asm.setUpScratch(spLong(index));
-        asm.sub(ConditionFlag.Always, false, ARMV7.r8, scratch, 4, 0);
-        asm.vldr(ARMV7Assembler.ConditionFlag.Always, dst, ARMV7.r8, 0, CiKind.Double, CiKind.Int);
+        //asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
+        asm.vldr(ARMV7Assembler.ConditionFlag.Always, dst, scratch, 0, CiKind.Double, CiKind.Int);
 
     }
 
@@ -241,8 +241,8 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     public void pokeDouble(CiRegister src, int index) {
         assert src.isFpu();
         asm.setUpScratch(spLong(index));
-        asm.sub(ConditionFlag.Always, false, ARMV7.r8, scratch, 4, 0);
-        asm.vstr(ARMV7Assembler.ConditionFlag.Always, src, ARMV7.r8, 0, CiKind.Double, CiKind.Int);
+        //asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
+        asm.vstr(ARMV7Assembler.ConditionFlag.Always, src, scratch, 0, CiKind.Double, CiKind.Int);
     }
 
     @Override
@@ -356,8 +356,8 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     protected void loadLong(CiRegister dst, int index) {
         assert dst.number < 10; // to prevent screwing up scratch 2 registers required for double!
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
-        asm.sub(ConditionFlag.Always, false, ARMV7.r8, scratch, 4, 0);
-        asm.ldrd(ConditionFlag.Always, dst, ARMV7.r8, 0);
+        //asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
+        asm.ldrd(ConditionFlag.Always, dst, scratch, 0);
     }
 
     @Override
@@ -382,8 +382,8 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     protected void storeLong(CiRegister src, int index) {
         assert src.number < 10; // sanity checking longs must not screw up scratch
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
-        asm.sub(ConditionFlag.Always, false, ARMV7.r8, scratch, 4, 0);
-        asm.strd(ARMV7Assembler.ConditionFlag.Always, src, ARMV7.r8, 0);
+        //asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
+        asm.strd(ARMV7Assembler.ConditionFlag.Always, src, scratch, 0);
     }
 
     @Override

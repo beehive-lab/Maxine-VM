@@ -79,6 +79,7 @@ int getTrapNumber(int signal) {
 #endif
         return MEMORY_FAULT;
     case SIGFPE:
+	printf("WE GOT AN SIGFPE\n");
         return ARITHMETIC_EXCEPTION;
 #if !os_MAXVE
     case SIGUSR1:

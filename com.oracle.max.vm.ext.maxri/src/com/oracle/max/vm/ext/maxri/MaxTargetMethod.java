@@ -331,6 +331,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
                 return codeAt(catchPos);
             }
         }
+	//com.sun.max.vm.Log.println("MAXTARGET returning ZERO");
         return CodePointer.zero();
     }
 

@@ -101,13 +101,22 @@ public class MaxRuntimeCalls {
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.d2long)
     public static long runtimeJd2jlong(double val) {
         verifyRefMaps();
-        return Snippets.d2long(val);
+	//com.sun.max.vm.Log.print("D2L maxruntimecall ");com.sun.max.vm.Log.println((float)val);
+        //return Snippets.d2long(val);
+	//long x = Snippets.d2long(val);
+	 //com.sun.max.vm.Log.print("D2L maxruntimecall retval "); com.sun.max.vm.Log.print(x);
+	return Snippets.d2long(val);
+
     }
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.f2long)
-    public static long runtimeJd2jlong(float val) {
+    public static long runtimeJf2jlong(float val) {
         verifyRefMaps();
+        //return Snippets.f2long(val);
+	//long x = Snippets.f2long(val);
+	 //com.sun.max.vm.Log.print("F2L maxruntimecall retval "); com.sun.max.vm.Log.print(x);
         return Snippets.f2long(val);
+
     }
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.l2double)

@@ -393,8 +393,14 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
             mov64BitConstant(dst, ARMV7.cpuRegisters[dst.encoding + 1], src);
         } else {
             assert dstKind.isDouble() : "Dst reg must be double";
-            mov64BitConstant(ARMV7.r8, ARMV7.r12, src);
-            vmov(ConditionFlag.Always, dst, ARMV7.r8, ARMV7.r12, dstKind, CiKind.Long);
+	    // Will not work due to encoding of vmovm
+            //mov64BitConstant(ARMV7.r8, ARMV7.r12, src);
+            //vmov(ConditionFlag.Always, dst, ARMV7.r8, ARMV7.r12, dstKind, CiKind.Long);
+	    saveRegister(9);
+	    mov64BitConstant(ARMV7.r8, ARMV7.r9, src);
+	    vmov(ConditionFlag.Always, dst, ARMV7.r8, ARMV7.r9, dstKind, CiKind.Long);
+	    restoreRegister(9);
+	
         }
     }
 

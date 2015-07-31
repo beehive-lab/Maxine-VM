@@ -689,6 +689,7 @@ public class T1XTargetMethod extends TargetMethod {
                 }
             }
         }
+	com.sun.max.vm.Log.println("ZERO CodePointer for catch address");
         return CodePointer.zero();
     }
 

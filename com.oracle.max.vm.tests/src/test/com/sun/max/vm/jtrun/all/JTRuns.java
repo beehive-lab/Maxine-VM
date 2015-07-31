@@ -1396,6 +1396,7 @@ public class JTRuns {
             // (1.0) == 1.0
                 runString = "(1.0)";
                 if (1.0f != jtt.bytecode.BC_d2f.test(1.0)) {
+	            com.sun.max.vm.Log.println("BC_d2f expected 1.0f got " + jtt.bytecode.BC_d2f.test(1.0));
                     fail(runString);
                     return;
                 }
@@ -2338,18 +2339,22 @@ public class JTRuns {
             // (0) == -9223372036854775808
                 runString = "(0)";
                 if (-9223372036854775808L != jtt.bytecode.BC_f2l02.test(0)) {
+		    System.out.println("GOT " + jtt.bytecode.BC_f2l02.test(0) + "EXPECTED " + -9223372036854775808L);
                     fail(runString);
                     return;
                 }
             // (1) == -9223372036854775808
                 runString = "(1)";
                 if (-9223372036854775808L != jtt.bytecode.BC_f2l02.test(1)) {
+	            System.out.println("GOT " + jtt.bytecode.BC_f2l02.test(1) + "EXPECTED " + -9223372036854775808L);
                     fail(runString);
                     return;
                 }
             // (2) == 0
                 runString = "(2)";
                 if (0L != jtt.bytecode.BC_f2l02.test(2)) {
+		    System.out.println("GOT " + jtt.bytecode.BC_f2l02.test(2) + "EXPECTED " + 0L);
+
                     fail(runString);
                     return;
                 }

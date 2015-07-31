@@ -733,6 +733,7 @@ public class Snippets {
         if (MaxineVM.isHosted()) {
             return (long) x;
         }
+	//com.sun.max.vm.Log.print("d2long ");com.sun.max.vm.Log.println(x);
         return d2long(x);
     }
 

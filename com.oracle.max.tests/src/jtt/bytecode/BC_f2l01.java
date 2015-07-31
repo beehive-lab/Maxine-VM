@@ -28,6 +28,8 @@ package jtt.bytecode;
  */
 public class BC_f2l01 {
     public static long test(float d) {
+	//long x = (long) d;
+	//System.out.println("INSIDE " + x);
         return (long) d;
     }
 }

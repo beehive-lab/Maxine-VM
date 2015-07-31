@@ -884,7 +884,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, ARMV7.cpuRegisters[srcRegister.encoding + 1], CiKind.Double, CiKind.Long);
                 break;
             case MOV_F2I:
-                masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, null, CiKind.Int, CiKind.Float);
+                masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister , null, CiKind.Int, CiKind.Float);
                 break;
             case MOV_D2L:
                 masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, null, CiKind.Long, CiKind.Double);
@@ -1480,7 +1480,15 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
              */
             // masm.cdql();
             masm.mov(ConditionFlag.Always, false, ARMV7.r8, lreg);
-            int offset = masm.codeBuffer.position();
+           // PUT IN FOR NO EXCEPT int offset = masm.codeBuffer.position();
+	   // BEGIN ADD EXCEPT
+            masm.eor(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
+	    masm.cmp(ConditionFlag.Always,ARMV7.r12,rreg,0,0);
+	    masm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r12, null, CiKind.Float, CiKind.Int);
+	    masm.vcvt(ConditionFlag.Always,ARMV7.s31, false, true, ARMV7.s31, CiKind.Float, CiKind.Int );
+	    int offset = masm.codeBuffer.position();
+	    masm.vdiv(ConditionFlag.Equal, ARMV7.s31,ARMV7.s31,ARMV7.s31,CiKind.Float); 
+	    // END ADD EXCEPTION
 
             masm.sdiv(ConditionFlag.Always, dreg, lreg, rreg);
 

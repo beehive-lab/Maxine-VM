@@ -116,6 +116,13 @@ int main(int argc, char**argv) {
 	}
 	
 	printf(" %lld\n",yy);
+	if(yy == 0) {
+	printf("FDIV gives %f\n",1.0f/0.0f);
+	printf("DIV by zero reetues %d\n",1/((int)yy));
+	printf("DEAD\n");
+	return 0;
+	printf("DONE\n");
+	}
 	compare(7LL,6LL);
 	compareeq(7LL,6LL);
 	comparene(6LL,8LL);	

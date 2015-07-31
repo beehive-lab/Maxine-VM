@@ -165,11 +165,11 @@ public final class Platform {
         } else if (isa == ISA.ARM) {
             arch = new ARMV7();
             if (os == OS.DARWIN) {
-        	stackAlignment = 4;
+        	stackAlignment = 8;
             } else if (os == OS.SOLARIS || os == OS.LINUX) {
-                stackAlignment = 4;
+                stackAlignment = 8;
             } else if (os == OS.MAXVE) {
-                stackAlignment = 4;
+                stackAlignment = 8;
             } else {
                 throw FatalError.unexpected("Unimplemented stack alignment: " + os);
             }
