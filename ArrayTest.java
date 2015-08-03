@@ -9,7 +9,7 @@ public static void main(String []args) {
 	try {
 	float one = 1.0f;
 	System.out.println(one/0.0f);
-	} catch(Exception e) {
+	} catch(Throwable e) {
 		e.printStackTrace();
 		System.err.println(e);
 	}

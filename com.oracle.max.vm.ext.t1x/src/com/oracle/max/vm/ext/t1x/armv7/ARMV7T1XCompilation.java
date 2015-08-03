@@ -90,8 +90,10 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         super(compiler);
         asm = new ARMV7MacroAssembler(target(), null);
 	if(com.sun.max.vm.MaxineVM.isHosted() == false)
+		// TO TURN SIMULATION ON ... CHANGE THE COMMENTING OUT HERE
 		//asm.maxineflush = this; // dirty hacky .... do it properly
 		asm.maxineflush = null; // this is the way to turn off instrumentation
+		// END TO TURN SIMULATION ON
         buf = asm.codeBuffer;
         patchInfo = new PatchInfoARMV7();
     }

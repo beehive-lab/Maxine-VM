@@ -27,9 +27,13 @@ LIB = jvm
 
 SOURCES = c.c condition.c log.c image.c $(ISA).c jni.c jvm.c maxine.c memory.c mutex.c \
           relocation.c dataio.c runtime.c  snippet.c threads.c threadLocals.c time.c trap.c \
-          virtualMemory.c jnitests.c sync.c signal.c jmm.c jvmti.c
+          virtualMemory.c jnitests.c sync.c signal.c jmm.c jvmti.c simulation.c
+
 
 SOURCE_DIRS = platform share substrate
+
+#CXXSOURCES=simulation.cxx
+
 
 include $(PROJECT)/platform/platform.mk
 include $(PROJECT)/share/share.mk

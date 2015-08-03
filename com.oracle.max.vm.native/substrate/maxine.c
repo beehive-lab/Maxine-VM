@@ -44,7 +44,6 @@
 #include "os.h"
 #include "vm.h"
 #include "virtualMemory.h"
-
 #include "maxine.h"
 
 #if os_MAXVE
@@ -52,9 +51,12 @@
 #endif
 #ifdef arm
 void divideByZeroExceptions();
+#   include <pthread.h>
+
 #endif
 static unsigned int *simPtr = (0);
 static FILE *simFile = (0);
+
 jint  maxine_instrumentationBuffer()  {
 #ifdef arm
         if(simPtr != (0)) {
@@ -74,6 +76,15 @@ void  maxine_close() {
         if(simFile != (0)) {
                 fclose(simFile);
         }
+}
+void real_maxine_instrumentation(unsigned int address) {
+	// the address has been altered to have a r/1 and a code/data bit set
+#ifdef arm
+	extern unsigned int getTID(unsigned int);
+	unsigned int tid  = pthread_self();
+	tid = getTID(tid);
+	printf("THREAD ID is %u ADDRESS %x\n",tid,address);
+#endif
 }
 void  real_maxine_flush_instrumentationBuffer(unsigned int *bufPtr) {
 #ifdef arm
@@ -104,7 +115,8 @@ void  real_maxine_flush_instrumentationBuffer(unsigned int *bufPtr) {
 jint  maxine_flush_instrumentationBuffer() {
 #ifdef arm
 
-        return (jint) real_maxine_flush_instrumentationBuffer; // dirty yes ... but it should work      
+        //return (jint) real_maxine_flush_instrumentationBuffer; // dirty yes ... but it should work      
+	return (jint) real_maxine_instrumentation;
 #else
 	printf("INSTRUMENTATION for simulation not implemented for non armv7 platforms yet\n");
 	return (jint)0;
@@ -507,7 +519,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
         thread_run((void *) tlBlock);
     } else {
         printf("NON ZERO NATIVE EXIT %d\n",exitCode);
-	real_maxine_flush_instrumentationBuffer(simPtr);
+	//real_maxine_flush_instrumentationBuffer(simPtr);
 	maxine_close();
         native_exit(exitCode);
     }

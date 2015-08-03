@@ -665,6 +665,9 @@ public class T1XTargetMethod extends TargetMethod {
             if (exceptionBCI != -1) {
                 for (CiExceptionHandler e : handlers) {
                     if (e.catchTypeCPI != SYNC_METHOD_CATCH_TYPE_CPI) {
+			com.sun.max.vm.Log.print("T1XEXCEPTPOS: ");com.sun.max.vm.Log.println(exceptionPos);
+			com.sun.max.vm.Log.print("T1XEXCEPTBCI: ");com.sun.max.vm.Log.println(exceptionBCI);
+			com.sun.max.vm.Log.print("T1XEXCEPT start ");com.sun.max.vm.Log.print(e.startBCI);com.sun.max.vm.Log.print(" end "); com.sun.max.vm.Log.println(e.endBCI);
                         if (e.startBCI <= exceptionBCI && exceptionBCI < e.endBCI) {
                             ClassActor catchType = (ClassActor) e.catchType;
                             if (catchType == null || catchType.isAssignableFrom(ObjectAccess.readClassActor(exception))) {
@@ -682,6 +685,8 @@ public class T1XTargetMethod extends TargetMethod {
             }
             if (handlers[handlers.length - 1].catchTypeCPI == SYNC_METHOD_CATCH_TYPE_CPI) {
                 CiExceptionHandler syncMethodHandler = handlers[handlers.length - 1];
+		com.sun.max.vm.Log.print("T1XEXCEPTPOS2 ");com.sun.max.vm.Log.println(exceptionPos);
+		com.sun.max.vm.Log.print("T1XEXCEPT start ");com.sun.max.vm.Log.print(syncMethodHandler.startBCI);com.sun.max.vm.Log.print(" end ");com.sun.max.vm.Log.println(syncMethodHandler.endBCI);
                 if (syncMethodHandler.startBCI <= exceptionPos && exceptionPos < syncMethodHandler.endBCI) {
                     int handlerPos = syncMethodHandler.handlerBCI;
                     checkHandler(exceptionPos, exceptionBCI, -1, handlerPos);

@@ -25,7 +25,7 @@ PROJECT = ../../..
 LIB = hosted
 
 SOURCES = c.c log.c platform.c relocation.c dataio.c mutex.c
-
+CXXSOURCES=
 SOURCE_DIRS = platform hosted share substrate
 
 include $(PROJECT)/platform/platform.mk

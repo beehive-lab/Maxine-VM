@@ -35,6 +35,13 @@ import com.sun.cri.ri.RiRegisterConfig;
 	THEN we need to flush the buffer.
 
 	WE WILL IMPLEMENT THIS BY incrementing after the write and then checking to see if it matches the address of the simOffset in the int[1023]
+
+	The above refers to the method OLDinstrument() ...
+	
+
+	The new way, calls out to C to enable the address loaded/stored with modifications to the LSBS to 
+	be written to an appropriate buffer based on the currently executing thread. In this way we can allow the simulator to control over the buffer that the address
+is written to, where a buffer is tied to a thread. 
 	
 */
 import static com.oracle.max.cri.intrinsics.MemoryBarriers.STORE_LOAD;
@@ -867,19 +874,140 @@ public class ARMV7Assembler extends AbstractAssembler {
 	if(maxineFlushAddress == 0) {
 		maxineFlushAddress  = maxineflush.maxine_flush_instrumentationBuffer();
 	}
+	// save some registers to the stack using a 
+
+	/* Format bottom 2 bits used/
+	2 instruction read
+	1 data write
+	0 data read
+	i.e.
+	bit 0 = Write
+	bit 1 = Instruction 
+		Instruction Operation
+		Bit 1       Bit 0
+-----------------------------
+DATAREAD     0           0
+DATAWRITE    0		 1
+CODEREAD     1		 0
+CODEWRITE    1		 1
+    public static boolean INSTRUMENT = false;
+    public static int	simBuf = 0;
+    public static int	simBuffOffset = 0;
+	*/
+	CiRegister immReg = null;
+	CiRegister spareAddress = null;
+	CiRegister spareImm = null;
+	CiRegister destAddress = null;
+	CiRegister valAddress = null;
+	switch(base.encoding) {
+		/*
+		r0 r1 r2 r8 r9 r12
+		are pushed
+		*/
+		case 0:
+			spareAddress = ARMV7.r8;
+			spareImm = ARMV7.r9;	
+			destAddress = ARMV7.r1;
+			valAddress = ARMV7.r12;
+			immReg = ARMV7.r2;
+		break;
+		case 8:
+			spareAddress = ARMV7.r0;
+			spareImm = ARMV7.r1;	
+			destAddress = ARMV7.r1;
+			valAddress = ARMV7.r12;
+			immReg = ARMV7.r9;
+		break;
+			
+		case 9:
+			spareAddress = ARMV7.r0;
+			spareImm = ARMV7.r1;	
+			destAddress = ARMV7.r2;
+			valAddress = ARMV7.r12;
+			immReg = ARMV7.r8;
+		break;
+		case 1:
+			spareAddress = ARMV7.r0;
+			spareImm = ARMV7.r2;	
+			destAddress = ARMV7.r8;
+			valAddress = ARMV7.r12;
+			immReg = ARMV7.r9;
+		break;
+		case 2:
+			spareAddress = ARMV7.r0;
+			spareImm = ARMV7.r1;	
+			destAddress = ARMV7.r8;
+			valAddress = ARMV7.r12;
+			immReg = ARMV7.r9;
+		break;
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+		case 10:
+		case 11:
+		case 14:
+			spareAddress = ARMV7.r0;
+			spareImm = ARMV7.r1;	
+			destAddress = ARMV7.r2;
+			valAddress = ARMV7.r12;
+			immReg = ARMV7.r8;
+		break;
+		case 12:
+		case 13:
+			destAddress = ARMV7.r0;
+			valAddress = ARMV7.r1;
+			immReg = ARMV7.r2;
+			spareAddress = ARMV7.r8;
+			spareImm = ARMV7.r9;	
+		break;
+		default:
+			assert 0 == 1 : "ERROR insturmentation uses illegal base register";	
+		break;
+	}	
+	int orint = 0;
+	if(!read)  {
+
+		orint |= 1;
+	}
+
+	if(!data) {
+
+		orint |= 2;
+	}
+
+	instrumentPush(ConditionFlag.Always,1|2|4|8|16|32|64|128|256|512|1024|2048|4096|/*8192|*/16384);
+	mov32BitConstant(valAddress,immediate);
+	addRegisters(ConditionFlag.Always, false, valAddress, valAddress, base, 0, 0); // forms the address to be read/written
+	or(ConditionFlag.Always, false, valAddress, valAddress, orint); // ors the read/write code/data bits
+        mov(ConditionFlag.Always, false, ARMV7.r0, valAddress);
+	mov32BitConstant(ARMV7.r12,maxineFlushAddress);
+        blx(ARMV7.r12);
+        instrumentPop(ConditionFlag.Always,1|2|4|8|16|32|64|128|256|512|1024|2048|4096|/*8192|*/16384);
+        return;
+
+}
+    private void OLDinstrument(boolean read,boolean data, boolean add, final CiRegister base, int immediate) {
+	if(simBuf == 0) {
+		simBuf = maxineflush.maxine_instrumentationBuffer();
+	}	
+	if(maxineFlushAddress == 0) {
+		maxineFlushAddress  = maxineflush.maxine_flush_instrumentationBuffer();
+	}
 	assert(maxineFlushAddress != 0);
 	simBuffOffset = 1023*4;
 	// save some registers to the stack using a 
 
 	/* Format bottom 2 bits used/
-2 instruction read
-1 data write
-0 data read
-i.e.
-bit 0 = Write
-bit 1 = Instruction 
-	Instruction Operation
-	Bit 1       Bit 0
+	2 instruction read
+	1 data write
+	0 data read
+	i.e.
+	bit 0 = Write
+	bit 1 = Instruction 
+		Instruction Operation
+		Bit 1       Bit 0
 -----------------------------
 DATAREAD     0           0
 DATAWRITE    0		 1
