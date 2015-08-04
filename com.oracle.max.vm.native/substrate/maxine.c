@@ -53,10 +53,10 @@
 void divideByZeroExceptions();
 #   include <pthread.h>
 
-#endif
 static unsigned int *simPtr = (0);
 static FILE *simFile = (0);
 
+#endif
 jint  maxine_instrumentationBuffer()  {
 #ifdef arm
         if(simPtr != (0)) {
@@ -72,11 +72,13 @@ jint  maxine_instrumentationBuffer()  {
 	return (jint)0;
 #endif
 }
+#ifdef arm
 void  maxine_close() {
         if(simFile != (0)) {
                 fclose(simFile);
         }
 }
+#endif
 void real_maxine_instrumentation(unsigned int address) {
 	// the address has been altered to have a r/1 and a code/data bit set
 #ifdef arm
@@ -520,7 +522,9 @@ int maxine(int argc, char *argv[], char *executablePath) {
     } else {
         printf("NON ZERO NATIVE EXIT %d\n",exitCode);
 	//real_maxine_flush_instrumentationBuffer(simPtr);
+#ifdef arm
 	maxine_close();
+#endif
         native_exit(exitCode);
     }
     //printf("NEVER REACHED\n");
@@ -633,10 +637,12 @@ void *native_properties(void) {
     return &nativeProperties;
 }
 void divideByZeroExceptions() {
+#ifdef arm
 	asm volatile("vmrs r12, FPSCR");
 	asm volatile("movw r0,0x100");
 	asm volatile("orr r12,r12,r0");
 	asm volatile("vmsr FPSCR,r12");
+#endif
 }
 void maxine_cacheflush(char *start, int length) {
 #ifdef arm
