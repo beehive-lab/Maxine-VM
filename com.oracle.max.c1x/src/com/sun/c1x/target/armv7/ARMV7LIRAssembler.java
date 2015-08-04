@@ -1484,7 +1484,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 	   // BEGIN ADD EXCEPT
             masm.eor(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
 	    masm.cmp(ConditionFlag.Always,ARMV7.r12,rreg,0,0);
-	    masm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r15, null, CiKind.Float, CiKind.Int);
+	    masm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r13, null, CiKind.Float, CiKind.Int);
 	    masm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r12, null, CiKind.Float, CiKind.Int);
 	    masm.vcvt(ConditionFlag.Always,ARMV7.s31, false, true, ARMV7.s31, CiKind.Float, CiKind.Int );
 	    int offset = masm.codeBuffer.position();
@@ -1528,7 +1528,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
            // BEGIN ADD EXCEPT
             masm.eor(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
             masm.cmp(ConditionFlag.Always,ARMV7.r12,rreg,0,0);
-            masm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r15, null, CiKind.Float, CiKind.Int);
+            masm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r13, null, CiKind.Float, CiKind.Int);
             masm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r12, null, CiKind.Float, CiKind.Int);
             masm.vcvt(ConditionFlag.Always,ARMV7.s31, false, true, ARMV7.s31, CiKind.Float, CiKind.Int );
             int offset = masm.codeBuffer.position();

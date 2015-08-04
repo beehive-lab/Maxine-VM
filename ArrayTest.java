@@ -7,6 +7,7 @@ public static void main(String []args) {
 	System.out.println("D2F " + jtt.bytecode.BC_d2f.test(1.0d));
 	System.out.println("D2I " + jtt.bytecode.BC_d2i01.test(1.0d));
 	try {
+	System.out.println(jtt.except.BC_idiv.test(11,0));
 	float one = 1.0f;
 	System.out.println(one/0.0f);
 	} catch(Throwable e) {

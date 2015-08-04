@@ -967,7 +967,7 @@ public class Stubs {
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_NUMBER.offset));
 	    asm.mov32BitConstant(ARMV7.r8,3); // TRAP 3 is arithmetic
 	    asm.str(ARMV7Assembler.ConditionFlag.Equal,ARMV7.r8,ARMV7.r12, 0);
-	    asm.mov32BitConstant(ARMV7.r12,0xffffff00);
+	    asm.mov32BitConstant(ARMV7.r8,0xffffff00);
 	    asm.vmrs(ARMV7Assembler.ConditionFlag.Always,ARMV7.r12); 
 	    asm.and(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r8,ARMV7.r8,ARMV7.r12, 0, 0);
 	    asm.vmsr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r8);

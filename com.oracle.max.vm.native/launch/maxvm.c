@@ -30,6 +30,15 @@
 #include "maxine.h"
 
 typedef int (*MaxineFunction)(int argc, char *argv[], char *executablePath);
+#ifdef arm
+void divideByZeroExceptions() {
+        asm volatile("vmrs r12, FPSCR");
+        asm volatile("movw r0,0x100");
+        asm volatile("orr r12,r12,r0");
+        asm volatile("vmsr FPSCR,r12");
+}
+
+#endif
 
 #if os_DARWIN
 #include <unistd.h>
@@ -95,6 +104,11 @@ int main(int argc, char *argv[] MAIN_EXTRA_ARGS) {
      * Note that a similiar work-around is necessary for Java_com_sun_max_tele_channel_natives_TeleChannelNatives_createChild()
      * in com.oracle.max.vm.native/tele/darwin/darwinTeleProcess.c.
      */
+
+#ifdef arm
+divideByZeroExceptions();
+
+#endif arm
     if (getenv("DYLD_LIBRARY_PATH") == NULL) {
         char *dyldLibraryPathDef;
         char *programDir = dirname(programPath);
