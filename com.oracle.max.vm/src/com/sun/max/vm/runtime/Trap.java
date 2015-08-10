@@ -231,6 +231,8 @@ public abstract class Trap {
                 case ARITHMETIC_EXCEPTION:
                     // integer divide by zero
 		     com.sun.max.vm.Log.println("DIVZEROFAULT");
+	             com.sun.max.vm.Log.print("STACKPTR ");com.sun.max.vm.Log.println(sp);
+	             com.sun.max.vm.Log.print("PCPTR ");com.sun.max.vm.Log.println(vmIP);
                     raiseImplicitException(trapFrame, targetMethod, ArithmeticException.class, sp, fp, vmIP);
                     break; // unreachable
                 case STACK_FATAL:

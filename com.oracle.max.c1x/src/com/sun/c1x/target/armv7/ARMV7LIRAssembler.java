@@ -1482,9 +1482,11 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             masm.mov(ConditionFlag.Always, false, ARMV7.r8, lreg);
            // PUT IN FOR NO EXCEPT int offset = masm.codeBuffer.position();
 	   // BEGIN ADD EXCEPT
+	    masm.movw(ConditionFlag.Always,ARMV7.r12,1);
+	    masm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r12, null, CiKind.Float, CiKind.Int);
+	    masm.vcvt(ConditionFlag.Always,ARMV7.s30, false, true, ARMV7.s30, CiKind.Float, CiKind.Int );
             masm.eor(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
 	    masm.cmp(ConditionFlag.Always,ARMV7.r12,rreg,0,0);
-	    masm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r13, null, CiKind.Float, CiKind.Int);
 	    masm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r12, null, CiKind.Float, CiKind.Int);
 	    masm.vcvt(ConditionFlag.Always,ARMV7.s31, false, true, ARMV7.s31, CiKind.Float, CiKind.Int );
 	    int offset = masm.codeBuffer.position();
@@ -1526,9 +1528,11 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         //int offset = masm.codeBuffer.position();
 	// PUT IN FOR NO EXCEPT int offset = masm.codeBuffer.position();
            // BEGIN ADD EXCEPT
+	    masm.movw(ConditionFlag.Always,ARMV7.r12,1);
+            masm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r12, null, CiKind.Float, CiKind.Int);
+            masm.vcvt(ConditionFlag.Always,ARMV7.s30, false, true, ARMV7.s30, CiKind.Float, CiKind.Int );
             masm.eor(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
             masm.cmp(ConditionFlag.Always,ARMV7.r12,rreg,0,0);
-            masm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r13, null, CiKind.Float, CiKind.Int);
             masm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r12, null, CiKind.Float, CiKind.Int);
             masm.vcvt(ConditionFlag.Always,ARMV7.s31, false, true, ARMV7.s31, CiKind.Float, CiKind.Int );
             int offset = masm.codeBuffer.position();
@@ -2061,8 +2065,13 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         if (C1XOptions.NullCheckUniquePc) {
             masm.nop();
         }
-        tasm.recordImplicitException(codePos(), info);
-        masm.nullCheck(src.asRegister());
+	masm.nullCheck(src.asRegister());
+        tasm.recordImplicitException(codePos()-4, info);
+        //masm.nullCheck(src.asRegister());
+	/*
+	nullCheck just did a cmp ... here we do a load of the address
+	if its null or an illegal address then it will cause a fault
+	*/
     }
 
     @Override

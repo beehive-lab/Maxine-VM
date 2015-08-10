@@ -35,6 +35,8 @@ public abstract class AbstractAssembler {
     public final CiTarget target;
     public final Buffer codeBuffer;
     public static boolean DEBUG_METHODS;
+    public static boolean SIMULATE_PLATFORM; // on if we use the FPGA simulation platform
+    public static boolean FLOAT_IDIV; // on arm platforms we set this to true when do not have  an integer divide unit
     public static AtomicInteger methodCounter = new AtomicInteger(536870912);
 
     public AbstractAssembler(CiTarget target) {

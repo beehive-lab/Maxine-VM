@@ -51,8 +51,6 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final CiRegister frameRegister;
     public final CiRegister scratchRegister;
     public final RiRegisterConfig registerConfig;
-    public static boolean FLOAT_IDIV; // if set then we use FLOAT to do IDIV
-    // used for ARM platforms where IDIV is not available.
     public static boolean INSTRUMENT = false;
     public static int	simBuf = 0;
     public static int	simBuffOffset = 0; // testing only not used in real simulation
@@ -68,13 +66,14 @@ public class ARMV7Assembler extends AbstractAssembler {
         initDebugMethods();
     }
     public static void initDebugMethods() {
-        String value = System.getenv("FLOAT_IDIV");
+        /*String value = System.getenv("FLOAT_IDIV");
         if (value == null || value.isEmpty()) {
             FLOAT_IDIV = false;
         } else {
             FLOAT_IDIV = Integer.parseInt(value) == 1 ? true : false;
         }
 	//FLOAT_IDIV= true;
+	*/
     }
 
     public enum ConditionFlag {
@@ -1895,7 +1894,16 @@ end_label:
     }
 
     public void nullCheck(CiRegister r) {
-        emitInt((0xe << 28) | (0x3 << 24) | (0x5 << 20) | (r.encoding << 16) | 0); // sets condition flags
+        //emitInt((0xe << 28) | (0x3 << 24) | (0x5 << 20) | (r.encoding << 16) | 0); // sets condition flags
+	if(r == ARMV7.r8) {
+		emitInt((0xe << 28) | (0x3 << 24) | (0x5 << 20) | (r.encoding << 16) | 0); // sets condition flags
+		ldr(ConditionFlag.Equal,ARMV7.r12,r,0);
+
+	}else {
+	 	emitInt((0xe << 28) | (0x3 << 24) | (0x5 << 20) | (r.encoding << 16) | 0); // sets condition flags
+	       ldr(ConditionFlag.Equal,ARMV7.r8, r,0);
+
+	}
     }
 
     public void membar(int barriers) {

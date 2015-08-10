@@ -45,11 +45,22 @@
 #include "vm.h"
 #include "virtualMemory.h"
 #include "maxine.h"
+#include <fenv.h>
 
 #if os_MAXVE
 #include "maxve.h"
 #endif
 #ifdef arm
+//beginning of simulation platform functions
+// defined in libCCluster.a
+extern void reportCounters();
+extern int initialiseMemoryCluster();
+extern int getCoreCount();
+extern void reportSpec();
+extern void pushDLD(unsigned int address);
+extern void pushILD(unsigned int address);
+extern void pushDSTR(unsigned int address);
+// end of simulation platform functions
 void divideByZeroExceptions();
 #   include <pthread.h>
 
@@ -82,10 +93,26 @@ void  maxine_close() {
 void real_maxine_instrumentation(unsigned int address) {
 	// the address has been altered to have a r/1 and a code/data bit set
 #ifdef arm
-	extern unsigned int getTID(unsigned int);
+	/*extern unsigned int getTID(unsigned int);
 	unsigned int tid  = pthread_self();
 	tid = getTID(tid);
 	printf("THREAD ID is %u ADDRESS %x\n",tid,address);
+	*/
+
+	int isInstruction = 0;
+	int isStore = 0;
+	isInstruction = address & 0x2;
+	isStore = address & 0x1;
+	address = address & 0xfffffffd;
+	if(isInstruction) {
+		pushILD(address);
+	} else {
+		if(isStore) {
+			pushDSTR(address);
+		} else {
+			pushDLD(address);
+		}
+	}
 #endif
 }
 void  real_maxine_flush_instrumentationBuffer(unsigned int *bufPtr) {
@@ -98,6 +125,7 @@ void  real_maxine_flush_instrumentationBuffer(unsigned int *bufPtr) {
         }
         //printf("FLUSHING at %u\n",(unsigned int)simPtr);
 
+// defined in libCCluster.a
         if(simFile == (0)) {
                 simFile = fopen("address.trace","w");
         }    
@@ -149,6 +177,7 @@ long long  f2long(float x) {
 jlong arithmeticldiv(jlong x, jlong y) {
 	if (y == 0) {
 		//raise(SIGFPE);
+		return 0;
 	}
 	return x/y;
 }
@@ -156,15 +185,16 @@ jlong arithmeticldiv(jlong x, jlong y) {
 jlong arithmeticlrem(jlong x, jlong y) {
 	if(y == 0) {
 		//raise(SIGFPE);
-		float zz = 1.0f;
-		zz = zz /0.0f;
+		return 0;
 	}
+	
 	return x % y; 
 }
 
 unsigned long long  arithmeticludiv(unsigned long long x , unsigned long long y) {
 	if(y == 0 ) {
 		//raise(SIGFPE);
+		return 0;
 	}
 	return x/y; 
 }
@@ -172,6 +202,7 @@ unsigned long long  arithmeticludiv(unsigned long long x , unsigned long long y)
 unsigned long long  arithmeticlurem(unsigned long long x , unsigned long long y) {
 	if(y == 0 ) {
 		//raise(SIGFPE);
+		return 0;
 	}
 	return x%y; 
 }
@@ -499,9 +530,11 @@ int maxine(int argc, char *argv[], char *executablePath) {
     //printf("Main method entry %p\n", method);
 #endif
 
-        
 #ifdef arm
-	divideByZeroExceptions();
+divideByZeroExceptions();        
+#ifdef SIMULATIONPLATFORM
+initialiseMemoryCluster();
+#endif
 #endif
 
 #if log_LOADER
@@ -523,6 +556,10 @@ int maxine(int argc, char *argv[], char *executablePath) {
         printf("NON ZERO NATIVE EXIT %d\n",exitCode);
 	//real_maxine_flush_instrumentationBuffer(simPtr);
 #ifdef arm
+#ifdef SIMULATIONPLATFORM
+	printf("ABOUT to report counters\n");
+	reportCounters();
+#endif
 	maxine_close();
 #endif
         native_exit(exitCode);
@@ -559,6 +596,13 @@ void native_exit(jint code) {
     // (just) the current thread block since we are exiting anyway,
     // but it is a bad idea if we crashed because it calls back into the VM,
     // which can cause a recursive crash.
+#ifdef arm
+#ifdef SIMUATIONPLATFORM
+	printf("NATIVE EXIT ABOUT to report counters\n");
+	reportCounters();
+#endif
+	maxine_close();
+#endif
     if (code != 11) {
         cleanupCurrentThreadBlockBeforeExit();
     }
@@ -636,16 +680,22 @@ void *native_properties(void) {
 #endif
     return &nativeProperties;
 }
+#ifdef arm
 void divideByZeroExceptions() {
 #ifdef arm
 	asm volatile("vmrs r12, FPSCR");
 	asm volatile("movw r0,0x100");
 	asm volatile("orr r12,r12,r0");
 	asm volatile("vmsr FPSCR,r12");
+/* need to setup the environment variable appropriately 
+	int x =feenableexcept(FE_DIVBYZERO);
+	printf("feenableexcepts %d\n",x);
+	x = fegetexcept();
+	printf("feget %d\n",x);
+*/
 #endif
 }
 void maxine_cacheflush(char *start, int length) {
-#ifdef arm
 	char * end = start + length;
 	//printf("FLUSHED CACHE \n");
 	asm volatile("isb ");

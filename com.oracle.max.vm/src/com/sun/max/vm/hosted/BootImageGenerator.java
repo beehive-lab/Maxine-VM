@@ -99,6 +99,10 @@ public final class BootImageGenerator {
     // Options shared with the Inspector
 
     private static final Option<Boolean> debugMethods  = options.newBooleanOption("debug-methods", false, "");
+    private static final Option<Boolean> simulationPlatform = options.newBooleanOption("simulation", false, "");
+    
+    private static final Option<Boolean> floatIdiv = options.newBooleanOption("floatidiv", false, "");
+
 
     public static final OptionSet inspectorSharedOptions = new OptionSet();
 
@@ -237,6 +241,12 @@ public final class BootImageGenerator {
 
             nativeTests = testNative.getValue();
             AbstractAssembler.DEBUG_METHODS = debugMethods.getValue();
+	    AbstractAssembler.SIMULATE_PLATFORM = simulationPlatform.getValue();
+	    if(AbstractAssembler.SIMULATE_PLATFORM) {
+	    	AbstractAssembler.FLOAT_IDIV = true;
+	    } else {
+	       AbstractAssembler.FLOAT_IDIV = floatIdiv.getValue();
+	    }
 
             final File vmDirectory = getDefaultVMDirectory(true);
             vmDirectory.mkdirs();

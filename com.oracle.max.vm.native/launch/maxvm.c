@@ -30,15 +30,7 @@
 #include "maxine.h"
 
 typedef int (*MaxineFunction)(int argc, char *argv[], char *executablePath);
-#ifdef arm
-void divideByZeroExceptions() {
-        asm volatile("vmrs r12, FPSCR");
-        asm volatile("movw r0,0x100");
-        asm volatile("orr r12,r12,r0");
-        asm volatile("vmsr FPSCR,r12");
-}
 
-#endif
 
 #if os_DARWIN
 #include <unistd.h>

@@ -179,7 +179,26 @@ public class Stubs {
      */
     public int getDispatchTableIndex(TargetMethod stub) {
         assert stub.is(VirtualTrampoline) || stub.is(InterfaceTrampoline);
-        final int index = stub.codeStart().toPointer().readInt(indexMovInstrPos);
+	int tmpindex = 0;
+        if (platform().isa == ISA.ARM) {
+	        Pointer callSitePointer = stub.codeStart().toPointer();
+
+                if (((callSitePointer.readByte(3) & 0xff) == 0xe3) && ((callSitePointer.readByte(4 + 3) & 0xff) == 0xe3)) {
+                	tmpindex = (callSitePointer.readByte(4 + 0) & 0xff) | ((callSitePointer.readByte(4 + 1) & 0xf) << 8) | ((callSitePointer.readByte(4 + 2) & 0xf) << 12);
+                	tmpindex = tmpindex << 16;
+                	tmpindex += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
+
+		} else {
+			assert 0 == 1 : "Failed to obtian correct getDispatchTableIndex for ARM indexMovInstrn wrong\n";
+		}
+	} else  if(platform().isa == ISA.AMD64) {
+        	tmpindex = stub.codeStart().toPointer().readInt(indexMovInstrPos);
+	} else {
+	 	throw FatalError.unimplemented();
+
+	}
+	final int index = tmpindex;
+        //final int index = stub.codeStart().toPointer().readInt(indexMovInstrPos);
         assert stub.is(VirtualTrampoline) ? (virtualTrampolines.size() > index && virtualTrampolines.get(index) == stub) : (interfaceTrampolines.size() > index && interfaceTrampolines.get(index) == stub);
         return index;
     }
@@ -362,8 +381,11 @@ public class Stubs {
 
         final Hub hub = ObjectAccess.readHub(receiver);
         if (VMOptions.verboseOption.verboseCompilation) {
+		Log.print("RECEIVER ");Log.println(receiver.getClass());
 		Log.print("HUB ");Log.println(hub);
+		Log.print("index ");Log.println(vTableIndex);
 	}
+
         final VirtualMethodActor selectedCallee = hub.classActor.getVirtualMethodActorByVTableIndex(vTableIndex);
         if (selectedCallee.isAbstract()) {
             throw new AbstractMethodError();
@@ -396,12 +418,12 @@ public class Stubs {
      */
     private static Address resolveInterfaceCall(Object receiver, int iIndex, Pointer pcInCaller) {
         // pcInCaller must be dealt with before any safepoint
-        /*if (VMOptions.verboseOption.verboseCompilation) {
+        if (VMOptions.verboseOption.verboseCompilation) {
             Log.print("STUBS:resolveInterfaceCall");
             Log.println(pcInCaller);
 
         }
-	*/
+	
 
         CodePointer cpCallSite = CodePointer.from(pcInCaller);
         final TargetMethod caller = cpCallSite.toTargetMethod();
@@ -520,7 +542,7 @@ public class Stubs {
 	    */
 
             if (isHosted() && index == 0) {
-                indexMovInstrPos = asm.codeBuffer.position() - WordWidth.BITS_32.numberOfBytes;
+                indexMovInstrPos = asm.codeBuffer.position() -8;// 2*WordWidth.BITS_32.numberOfBytes;
             }
 
             // save all the callee save registers
@@ -563,6 +585,7 @@ public class Stubs {
 
             CiRegister returnReg = registerConfig.getReturnRegister(WordUtil.archKind());
 	    //asm.addq(returnReg,4); // BECAUSE IT IS NOT A CALL/BLX AND THE RETURN REGI IS ALREADY PUSHED TO THE STACK
+	    // this is done so when we load this to the PC we do not push the return address!
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize-4    ));
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize - 8), returnReg);
             asm.str(ARMV7Assembler.ConditionFlag.Always, returnReg, asm.scratchRegister, 0);
@@ -570,6 +593,10 @@ public class Stubs {
             // Restore all parameter registers before returning
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
             asm.restore(csl, frameToCSA);
+	    // NEW
+	    //asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize    ));
+	    //asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r14,ARMV7.r12, 0);
+
 
             // Adjust RSP as mentioned above and do the 'ret' that lands us in the
             // trampolined-to method.
@@ -579,16 +606,21 @@ public class Stubs {
             //asm.bind(forever2);
             //asm.mov32BitConstant(ARMV7.r12, 0x22222222);
             //asm.branch(forever2);
-            //asm.ret(0);
-	    //asm.ret(0);
+
 	    asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), 4));
 	    asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r14, asm.scratchRegister,0); // set up R14 as if it were a blx.
             // the stack slot +4  holds the return address of the caller originially pushed onto the stack
+
+
+	    //asm.addq(ARMV7.r13,8); // basicall we need to get the stack back to the state where it was
 	    asm.addq(ARMV7.r13,8); // basicall we need to get the stack back to the state where it was
 			// on entry to this method, so that when we LDR R15 then we will 
 			// be able to push the LR back onto the stack etc.
+            //asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), -8));
+	    //asm.ldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r15,ARMV7.r12,0); 
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), -8));
 	    asm.ldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r15,ARMV7.r12,0); 
+	    
 	    // essentially the LDR does a jump to the trampolined to method.
 
 		
@@ -967,7 +999,7 @@ public class Stubs {
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_NUMBER.offset));
 	    asm.mov32BitConstant(ARMV7.r8,3); // TRAP 3 is arithmetic
 	    asm.str(ARMV7Assembler.ConditionFlag.Equal,ARMV7.r8,ARMV7.r12, 0);
-	    asm.mov32BitConstant(ARMV7.r8,0xffffff00);
+	    asm.mov32BitConstant(ARMV7.r8,0xfffffd00);
 	    asm.vmrs(ARMV7Assembler.ConditionFlag.Always,ARMV7.r12); 
 	    asm.and(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r8,ARMV7.r8,ARMV7.r12, 0, 0);
 	    asm.vmsr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r8);
@@ -1997,7 +2029,8 @@ public class Stubs {
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
 	    Label forever = new Label();
             asm.bind(forever);
-            asm.mov32BitConstant(ARMV7.r12, 0x55555555);
+            asm.mov32BitConstant(ARMV7.r12, 0xffffffff);
+	    asm.blx(ARMV7.r12); //expect it to crash
             asm.branch(forever);
 
             asm.hlt();

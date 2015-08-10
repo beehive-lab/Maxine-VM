@@ -238,6 +238,10 @@ void *thread_run(void *arg) {
      *      GC is blocked and cannot occur until we completed the upcall to
      *      VmThread.add().
      */
+#ifdef arm
+	extern void divideByZeroExceptions();
+	divideByZeroExceptions();
+#endif
 #if log_THREADS
     log_println("thread_run: t=%p acquiring global thread lock", nativeThread);
 #endif

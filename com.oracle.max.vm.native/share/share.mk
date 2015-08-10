@@ -44,7 +44,7 @@ LIBRARY = $(LIB_PREFIX)$(LIB)$(LIB_SUFFIX)
 ifneq ($(OS),maxve)
 
 $(LIBRARY) : $(OBJECTS)
-	$(LINK_LIB) $(OBJECTS) -o $(LIBRARY) $(LINK_LIB_POSTFIX)
+	$(LINK_LIB) $(OBJECTS) $(MAXINE_HOME)/com.oracle.max.vm.native/build/linux/substrate/libCCluster.a -o $(LIBRARY) $(LINK_LIB_POSTFIX)
 	mkdir -p $(PROJECT)/generated/$(OS)
 	cp -f $(LIBRARY) $(PROJECT)/generated/$(OS)
 

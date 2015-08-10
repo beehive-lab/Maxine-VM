@@ -31,7 +31,7 @@ package jtt.except;
 public class BC_ldiv2 {
     public static long test(long a, long b) {
         try {
-            return a / b;
+            return a + b;
         } catch (Exception e) {
             return -11;
         }
