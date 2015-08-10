@@ -570,7 +570,7 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
                 case WORD:
                 case REFERENCE:
                     asm.setUpScratch(new CiAddress(CiKind.Int, ARMV7.r13.asValue(), offset32));
-                    asm.ldrImmediate(ARMV7Assembler.ConditionFlag.Always, 1, 0, 0, reg,  ARMV7.r12,  0);
+                    asm.ldr(ARMV7Assembler.ConditionFlag.Always,  reg,  ARMV7.r12,  0);
                     break;
                 case LONG:
                     asm.setUpScratch(new CiAddress(CiKind.Long, ARMV7.r13.asValue(), offset32));

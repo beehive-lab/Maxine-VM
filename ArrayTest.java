@@ -7,9 +7,26 @@ public static void main(String []args) {
 	System.out.println("D2F " + jtt.bytecode.BC_d2f.test(1.0d));
 	System.out.println("D2I " + jtt.bytecode.BC_d2i01.test(1.0d));
 	try {
-	System.out.println(jtt.except.BC_idiv.test(11,0));
-	float one = 1.0f;
-	System.out.println(one/0.0f);
+	boolean y  = jtt.except.BC_invokevirtual01.test(0);
+	y = jtt.except.BC_invokevirtual02.test(0);
+	System.out.println("NO FAULTS");
+	y = jtt.except.BC_invokevirtual02.test(1);
+	y = jtt.except.BC_invokevirtual01.test(1);
+	if(y== true)
+	System.out.println("true");
+	else
+	System.out.println("false");
+	//System.out.println(y);
+	y = jtt.except.BC_invokespecial01.test(1);
+	System.out.println("SHOULDHAVEFAULTED");
+	System.out.println(y);
+	int x  =jtt.except.BC_idiv.test(11,0);
+	//x  =jtt.except.BC_idiv.test(11,0);
+	//System.out.println(jtt.except.BC_idiv.test(11,0));
+	//System.out.println(jtt.except.BC_idiv.test(11,0));
+	//float one = 1.0f;
+	//float two = one/0.0f;
+	//System.out.println(one/0.0f);
 	} catch(Throwable e) {
 		e.printStackTrace();
 		System.err.println(e);

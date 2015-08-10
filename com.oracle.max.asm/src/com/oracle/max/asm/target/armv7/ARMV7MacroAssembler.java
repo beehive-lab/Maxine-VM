@@ -324,6 +324,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         if (value == 0) {
             return;
         }
+	assert(reg != ARMV7.r12);
         addq(reg, value);
     }
 

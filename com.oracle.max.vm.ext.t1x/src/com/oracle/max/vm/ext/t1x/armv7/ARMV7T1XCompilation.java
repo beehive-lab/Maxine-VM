@@ -52,7 +52,7 @@ import com.sun.max.vm.type.SignatureDescriptor;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.actor.holder.ArrayClassActor;
 import com.sun.max.vm.actor.holder.ClassActor;
-
+import com.sun.max.vm.actor.member.VirtualMethodActor;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -90,10 +90,14 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         super(compiler);
         asm = new ARMV7MacroAssembler(target(), null);
 	if(com.sun.max.vm.MaxineVM.isHosted() == false)
-		// TO TURN SIMULATION ON ... CHANGE THE COMMENTING OUT HERE
-		//asm.maxineflush = this; // dirty hacky .... do it properly
-		asm.maxineflush = null; // this is the way to turn off instrumentation
-		// END TO TURN SIMULATION ON
+		// TO TURN SIMULATION ON ... 
+		if(com.oracle.max.asm.AbstractAssembler.SIMULATE_PLATFORM) {
+			asm.maxineflush = this; // dirty hacky .... do it properly
+			// END TO TURN SIMULATION ON
+		} else {
+			asm.maxineflush = null;
+			// END TO TURN SIMULATION OFF
+		}
         buf = asm.codeBuffer;
         patchInfo = new PatchInfoARMV7();
     }
@@ -204,7 +208,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     @Override
     public void peekInt(CiRegister dst, int index) {
         asm.setUpScratch(spInt(index));
-        asm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, dst, asm.scratchRegister, 0);
+        asm.ldr(ConditionFlag.Always,  dst, asm.scratchRegister, 0);
 
     }
 
@@ -280,6 +284,61 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.movt(ConditionFlag.Always, ARMV7.cpuRegisters[dst.encoding + 1], (int) (((value >> 48) & 0xffff)));
     }
 
+@Override
+protected void do_invokevirtual(int index) {
+        ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
+        SignatureDescriptor signature = classMethodRef.signature(cp);
+
+        if (classMethodRef.holder(cp).toKind().isWord) {
+            // Dynamic dispatch on Word types is not possible, since raw pointers do not have any method tables.
+            do_invokespecial(index);
+            return;
+        }
+
+        Kind kind = invokeKind(signature);
+        T1XTemplateTag tag = T1XTemplateTag.INVOKEVIRTUALS.get(kind.asEnum);
+        int receiverStackIndex = receiverStackIndex(signature);
+        try {
+            if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
+                try {
+                    VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
+                    if (processIntrinsic(virtualMethodActor)) {
+                        return;
+                    }
+                    if (virtualMethodActor.isPrivate() || virtualMethodActor.isFinal() || virtualMethodActor.holder().isFinal()) {
+                        // this is an invokevirtual to a private or final method, treat it like invokespecial
+                        do_invokespecial_resolved(tag, virtualMethodActor, receiverStackIndex);
+
+                        int safepoint = callDirect();
+                        finishCall(tag, kind, safepoint, virtualMethodActor);
+                        return;
+                    }
+                    // emit an unprofiled virtual dispatch
+                    start(tag.resolved);
+                    CiRegister target = template.sig.out.reg;
+                    assignInvokeVirtualTemplateParameters(virtualMethodActor, receiverStackIndex);
+                    finish();
+                    int safepoint = callIndirect(target, receiverStackIndex);
+                    finishCall(tag, kind, safepoint, null);
+                    return;
+                } catch (LinkageError e) {
+                    // fall through
+                }
+            }
+        } catch (LinkageError error) {
+            // Fall back on unresolved template that will cause the error to be rethrown at runtime.
+        }
+        start(tag);
+        CiRegister target = template.sig.out.reg;
+        assignObject(0, "guard", cp.makeResolutionGuard(index));
+        peekObject(1, "receiver", receiverStackIndex);
+        finish();
+	System.out.println("DO CALL indirect");
+        int safepoint = callIndirect(target, receiverStackIndex);
+	System.out.println("DOING CALL INDIRECT");
+        finishCall(tag, kind, safepoint, null);
+	System.out.println("DONE finishcall");
+    }
     @Override
     protected void do_multianewarray(int index, int numberOfDimensions) {
         CiRegister lengths;
@@ -351,7 +410,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     @Override
     protected void loadInt(CiRegister dst, int index) {
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.INT)));
-        asm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, dst, ARMV7.r12, 0);
+        asm.ldr(ConditionFlag.Always,  dst, ARMV7.r12, 0);
     }
 
     @Override
@@ -704,7 +763,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
         // Load jump table entry into r15 and jump to it
         asm.setUpScratch(new CiAddress(CiKind.Int, r7.asValue(), r9.asValue(), Scale.Times4, 0));
-        asm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, r12, ARMV7.r12, 0);
+        asm.ldr(ConditionFlag.Always, r12, ARMV7.r12, 0);
         asm.addRegisters(ConditionFlag.Always, false, r12, ARMV7.r15, r12, 0, 0); // need to be careful are we using the right add!
         asm.add(ConditionFlag.Always, false, r12, r12, 8, 0);
         asm.mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12);
@@ -773,7 +832,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
             // Compare the value against the key
             asm.setUpScratch(new CiAddress(CiKind.Int, r6.asValue(), r7.asValue(), Scale.Times4, 0));
-            asm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, r12, r12, 0);
+            asm.ldr(ConditionFlag.Always,  r12, r12, 0);
             asm.cmpl(ARMV7.r9, ARMV7.r12);
 
             // If equal, exit loop
@@ -800,7 +859,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
             // Load jump table entry into r15 and jump to it
             asm.setUpScratch(new CiAddress(CiKind.Int, r6.asValue(), r7.asValue(), Scale.Times4, 4));
-            asm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, r12, r12, 0);
+            asm.ldr(ConditionFlag.Always,  r12, r12, 0);
             asm.addRegisters(ConditionFlag.Always, false, r12, r15, r12, 0, 0);
             asm.add(ConditionFlag.Always, false, r12, r12, 8, 0);
             asm.mov(ConditionFlag.Always, true, r15, r12);

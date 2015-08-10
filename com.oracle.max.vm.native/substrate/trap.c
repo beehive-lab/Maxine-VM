@@ -77,12 +77,14 @@ int getTrapNumber(int signal) {
 #if !os_MAXVE
     case SIGBUS:
 #endif
+	printf("MEMFAULT\n");
         return MEMORY_FAULT;
     case SIGFPE:
 	printf("WE GOT AN SIGFPE\n");
         return ARITHMETIC_EXCEPTION;
 #if !os_MAXVE
     case SIGUSR1:
+	 printf("ASYNCINT\n");
         return ASYNC_INTERRUPT;
 #endif
     }
@@ -441,6 +443,7 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
     ucontext->r14 = (Address) dtla;
 #elif isa_ARM
     tla_store3(dtla,TRAP_LATCH_REGISTER, ucontext->uc_mcontext.arm_r10);
+    ucontext->uc_mcontext.arm_r10 = (Address) dtla;
 
 #else
     c_UNIMPLEMENTED();
@@ -498,6 +501,10 @@ void nativeTrapInitialize(Address javaTrapStub) {
     thread_setSignalMask(SIG_BLOCK, &allSignals, NULL);
     thread_setSignalMask(SIG_UNBLOCK, &vmSignals, NULL);
 #endif
+#ifdef arm
+	extern void divideByZeroExceptions();
+	divideByZeroExceptions(); 
+#endif 
 }
 
 /**

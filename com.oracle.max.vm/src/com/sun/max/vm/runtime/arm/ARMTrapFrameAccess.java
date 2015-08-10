@@ -96,12 +96,36 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
     public static final CiCalleeSaveLayout CSL;
     static {
         CiRegister[] csaRegs = {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, /*r13,*/ r14};
-
         int size = 4 * 14;
         TRAP_NUMBER_OFFSET = size;
         size += 4;
         FLAGS_OFFSET = size;
         size += 4;
+	/*struct sigcontext {
+        unsigned long trap_no;
+        unsigned long error_code;
+        unsigned long oldmask;
+        unsigned long arm_r0;
+        unsigned long arm_r1;
+        unsigned long arm_r2;
+        unsigned long arm_r3;
+        unsigned long arm_r4;
+        unsigned long arm_r5;
+        unsigned long arm_r6;
+        unsigned long arm_r7;
+        unsigned long arm_r8;
+        unsigned long arm_r9;
+        unsigned long arm_r10;
+        unsigned long arm_fp;
+        unsigned long arm_ip;
+        unsigned long arm_sp;
+        unsigned long arm_lr;
+        unsigned long arm_pc;
+        unsigned long arm_cpsr;
+        unsigned long fault_address;
+};
+	*/
+	
         CSL = new CiCalleeSaveLayout(0, size, 4, csaRegs);
     }
 

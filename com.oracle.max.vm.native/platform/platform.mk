@@ -249,9 +249,19 @@ ifeq ($(OS),linux)
     LINK_MAIN = $(CC) -z execstack -g -rdynamic -Xlinker -rpath -Xlinker $(shell cd $(PROJECT)/generated/$(OS) && /bin/pwd) -o $(MAIN)
     # Libraries must be specified after the actual source files, so the POSTFIX variable is used for that
     # (Introduced to solve a linking problem on Ubuntu 11.10)
-    LINK_MAIN_POSTFIX = -lc -lm -lpthread -ldl
+    ifeq ($(ISA),arm) 
+        LINK_MAIN_POSTFIX = $(MAXINE_HOME)/com.oracle.max.vm.native/build/linux/substrate/libCCluster.a -lstdc++ -lc -lm -lpthread -ldl
+    endif
+    ifneq ($(ISA),arm)
+    	LINK_MAIN_POSTFIX = -lc -lm -lpthread -ldl
+    endif
     LINK_LIB = $(CC) -g -shared
-    LINK_LIB_POSTFIX = -lc -lm -lpthread 
+    ifeq ($(ISA),arm)
+	LINK_LIB_POSTFIX = $(MAXINE_HOME)/com.oracle.max.vm.native/build/linux/substrate/libCCluster.a -lstdc++ -lc -lm -lpthread
+    endif
+    ifneq ($(ISA),arm)
+    	LINK_LIB_POSTFIX = -lc -lm -lpthread 
+    endif
     LIB_PREFIX = lib
     LIB_SUFFIX = .so
 endif
