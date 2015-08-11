@@ -174,7 +174,7 @@ long long  f2long(float x) {
 	return (long long)x;
 }
 
-jlong arithmeticldiv(jlong x, jlong y) {
+long long  arithmeticldiv(long long x, long long y) {
 	if (y == 0) {
 		//raise(SIGFPE);
 		return 0;

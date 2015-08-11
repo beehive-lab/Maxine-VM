@@ -8,9 +8,9 @@ public static void main(String []args) {
 	System.out.println("D2I " + jtt.bytecode.BC_d2i01.test(1.0d));
 	try {
 	System.out.println("INVOKESPECIALTEST\n");
-	boolean y = jtt.except.BC_invokespecial01.test(1);
-	System.out.println("SHOULDHAVEFAULTED");
-	y  = jtt.except.BC_invokevirtual01.test(0);
+	long zzz = jtt.except.BC_ldiv.test(1,2);
+	System.out.println("SHOULDHAVEFAULTED" + zzz);
+	boolean y  = jtt.except.BC_invokevirtual01.test(0);
 	System.out.println(y);
 	y = jtt.except.BC_invokevirtual02.test(0);
 	System.out.println("NO FAULTS");
