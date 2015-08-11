@@ -640,6 +640,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case Lurem:
                 arithmeticLudiv(op.code, op.opr1(), op.opr2(), op.result(), op.info);
                 break;
+	    case LDivExceptionCheck:
+		arithmeticLDivExceptionCheck(op.opr1(),op.opr2(), op.result(), op.info);
+	    break;
             default:
                 throw Util.shouldNotReachHere();
         }
@@ -1489,8 +1492,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 	    masm.cmp(ConditionFlag.Always,ARMV7.r12,rreg,0,0);
 	    masm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r12, null, CiKind.Float, CiKind.Int);
 	    masm.vcvt(ConditionFlag.Always,ARMV7.s31, false, true, ARMV7.s31, CiKind.Float, CiKind.Int );
-	    int offset = masm.codeBuffer.position();
 	    masm.vdiv(ConditionFlag.Equal, ARMV7.s31,ARMV7.s30,ARMV7.s31,CiKind.Float); 
+	    int offset = masm.codeBuffer.position();
+	    masm.vldr(ConditionFlag.Equal, ARMV7.s30, ARMV7.r12, 0, CiKind.Float, CiKind.Int); // fault if EQUAL
+
 	    // END ADD EXCEPTION
 
             masm.sdiv(ConditionFlag.Always, dreg, lreg, rreg);
@@ -1513,6 +1518,28 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
             }
         }
+    } 
+    void arithmeticLDivExceptionCheck(CiValue dividend,CiValue divisor,CiValue result,LIRDebugInfo info) {
+	assert divisor.isRegister() : "the divisor needs to be a register LDIVE exception checks";
+	CiRegister denominator = divisor.asRegister();
+
+        masm.eor(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
+
+        masm.cmp(ConditionFlag.Always,ARMV7.r12,denominator,0,0);
+	masm.cmp(ConditionFlag.Equal,ARMV7.r12, ARMV7.cpuRegisters[denominator.encoding+1],0,0);
+
+	masm.movw(ConditionFlag.Equal,ARMV7.r12,1);
+        masm.vmov(ConditionFlag.Equal, ARMV7.s30, ARMV7.r12, null, CiKind.Float, CiKind.Int);
+        masm.vcvt(ConditionFlag.Equal,ARMV7.s30, false, true, ARMV7.s30, CiKind.Float, CiKind.Int ); // s30 has 1.0f
+	masm.eor(ConditionFlag.Equal, false, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
+        masm.vmov(ConditionFlag.Equal, ARMV7.s31, ARMV7.r12, null, CiKind.Float, CiKind.Int);
+        masm.vcvt(ConditionFlag.Equal,ARMV7.s31, false, true, ARMV7.s31, CiKind.Float, CiKind.Int ); // s31 has 0.0f
+        masm.vdiv(ConditionFlag.Equal, ARMV7.s31,ARMV7.s30,ARMV7.s31,CiKind.Float);
+        int offset = masm.codeBuffer.position();
+	masm.vldr(ConditionFlag.Equal, ARMV7.s30, ARMV7.r12, 0, CiKind.Float, CiKind.Int); // fault if EQUAL
+	tasm.recordImplicitException(offset, info);
+
+
     }
 
     void arithmeticIudiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
@@ -1535,8 +1562,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             masm.cmp(ConditionFlag.Always,ARMV7.r12,rreg,0,0);
             masm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r12, null, CiKind.Float, CiKind.Int);
             masm.vcvt(ConditionFlag.Always,ARMV7.s31, false, true, ARMV7.s31, CiKind.Float, CiKind.Int );
-            int offset = masm.codeBuffer.position();
             masm.vdiv(ConditionFlag.Equal, ARMV7.s31,ARMV7.s30,ARMV7.s31,CiKind.Float);
+            int offset = masm.codeBuffer.position();
+            masm.vldr(ConditionFlag.Equal, ARMV7.s30, ARMV7.r12, 0, CiKind.Float, CiKind.Int); // fault if EQUAL
+
             // END ADD EXCEPTION
 
         masm.udiv(ConditionFlag.Always, dreg, lreg, rreg);

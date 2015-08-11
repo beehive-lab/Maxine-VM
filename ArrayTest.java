@@ -7,7 +7,11 @@ public static void main(String []args) {
 	System.out.println("D2F " + jtt.bytecode.BC_d2f.test(1.0d));
 	System.out.println("D2I " + jtt.bytecode.BC_d2i01.test(1.0d));
 	try {
-	boolean y  = jtt.except.BC_invokevirtual01.test(0);
+	System.out.println("INVOKESPECIALTEST\n");
+	boolean y = jtt.except.BC_invokespecial01.test(1);
+	System.out.println("SHOULDHAVEFAULTED");
+	y  = jtt.except.BC_invokevirtual01.test(0);
+	System.out.println(y);
 	y = jtt.except.BC_invokevirtual02.test(0);
 	System.out.println("NO FAULTS");
 	y = jtt.except.BC_invokevirtual02.test(1);
@@ -17,9 +21,6 @@ public static void main(String []args) {
 	else
 	System.out.println("false");
 	//System.out.println(y);
-	y = jtt.except.BC_invokespecial01.test(1);
-	System.out.println("SHOULDHAVEFAULTED");
-	System.out.println(y);
 	int x  =jtt.except.BC_idiv.test(11,0);
 	//x  =jtt.except.BC_idiv.test(11,0);
 	//System.out.println(jtt.except.BC_idiv.test(11,0));

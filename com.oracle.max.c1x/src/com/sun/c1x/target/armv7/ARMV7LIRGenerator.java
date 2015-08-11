@@ -211,20 +211,25 @@ public class ARMV7LIRGenerator extends LIRGenerator {
             if (opcode == Bytecodes.LREM) {
                 resultReg = RETURNREG_L;//RDX_L; // remainder result is produced in rdx
                 //lir.lremt(dividend, divisor, resultReg, LDIV_TMP, info);
+		lir.insertLongDivExceptionCheck(dividend,divisor,resultReg, LDIV_TMP,info);
                 resultReg = callRuntime(CiRuntimeCall.arithmeticlrem, null, dividend,divisor);
             } else if (opcode == Bytecodes.LDIV) {
                 //resultReg = RAX_L; // division result is produced in rax
                 //lir.ldiv(dividend, divisor, resultReg, LDIV_TMP, info);
+			resultReg = RETURNREG_L;
+			lir.insertLongDivExceptionCheck(dividend,divisor,resultReg, LDIV_TMP,info);
 	            resultReg = callRuntime(CiRuntimeCall.arithmeticldiv, null, dividend,divisor); // HERE call the native method
 
             } else if (opcode == Op2.UREM) {
                 resultReg = RETURNREG_L; // remainder result is produced in rdx
                 //lir.lurem(dividend, divisor, resultReg, LDIV_TMP, info);
+		lir.insertLongDivExceptionCheck(dividend,divisor,resultReg, LDIV_TMP,info);
                 resultReg = callRuntime(CiRuntimeCall.arithmeticlurem, null, dividend,divisor); // HERE call the native method
 
             } else if (opcode == Op2.UDIV) {
                 resultReg = RETURNREG_L; // division result is produced in rax
                 //lir.ludiv(dividend, divisor, resultReg, LDIV_TMP, info);
+			lir.insertLongDivExceptionCheck(dividend,divisor,resultReg, LDIV_TMP,info);
 		        resultReg = callRuntime(CiRuntimeCall.arithmeticludiv, null, dividend,divisor); // HERE call the native method
 
             } else {
