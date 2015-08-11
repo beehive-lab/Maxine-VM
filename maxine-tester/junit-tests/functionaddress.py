@@ -40,6 +40,6 @@ theExpr = movtNum << 32;
 theExpr = theExpr + movwNum
 print 'find /g ', hex(theExpr)
 # print w
-os.execv('/bin/grep',['/bin/grep',str(w) , './debug_methods']);
+# os.execv('/bin/grep',['/bin/grep',str(w) , './debug_methods']);
 # print w
 
