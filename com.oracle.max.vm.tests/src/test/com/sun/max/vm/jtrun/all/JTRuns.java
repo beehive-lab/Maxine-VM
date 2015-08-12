@@ -10044,6 +10044,7 @@ public class JTRuns {
                     return;
                 }
             } catch (Throwable t) {
+		System.out.println("thrown " + t);
                 fail(runString, t);
                 return;
             }

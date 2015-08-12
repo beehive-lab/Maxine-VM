@@ -2446,9 +2446,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     break;
                 }
                 case NullCheck: {
-                    tasm.recordImplicitException(codePos(), info);
                     CiValue pointer = operands[inst.x().index];
                     masm.nullCheck(pointer.asRegister());
+                    tasm.recordImplicitException(codePos()-4, info);
                     break;
                 }
                 case Align: {

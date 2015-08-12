@@ -7,6 +7,9 @@ public static void main(String []args) {
 	System.out.println("D2F " + jtt.bytecode.BC_d2f.test(1.0d));
 	System.out.println("D2I " + jtt.bytecode.BC_d2i01.test(1.0d));
 	try {
+	System.out.println("RETURNED " + jtt.except.Catch_NPE_06.test(""));
+        System.out.println("expect -1 " + jtt.except.Catch_NPE_06.test(null)) ;
+
 	System.out.println("INVOKESPECIALTEST\n");
 	long zzz = jtt.except.BC_ldiv.test(1,2);
 	System.out.println("SHOULDHAVEFAULTED" + zzz);
