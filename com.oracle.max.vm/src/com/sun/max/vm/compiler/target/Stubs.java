@@ -370,13 +370,14 @@ public class Stubs {
         // pcInCaller must be dealt with before any safepoint
         if (VMOptions.verboseOption.verboseCompilation) {
             Log.println("STUBS:resolveVirtualCall");
-	    //Log.println(receiver);
+	    Log.println(receiver);
+	   Log.println(pcInCaller);
         }
         CodePointer cpCallSite = CodePointer.from(pcInCaller);
-        /*if (VMOptions.verboseOption.verboseCompilation) {
+        if (VMOptions.verboseOption.verboseCompilation) {
             Log.print("CALLSITE ");
             Log.println(cpCallSite);
-        }*/
+        }
         final TargetMethod caller = cpCallSite.toTargetMethod();
 
         final Hub hub = ObjectAccess.readHub(receiver);
