@@ -431,23 +431,46 @@ public final class ARMTargetMethodUtil {
     public static boolean isARMV7RIPCall(TargetMethod tm, CodePointer callSite) {
         final Pointer callSitePointer = callSite.toPointer();
         int addInstrn = ARMV7Assembler.addRegistersHelper(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r15, ARMV7.r12, 0, 0);
-
-        if (((callSitePointer.readByte(3) & 0xff) == 0xe3)  && ((callSitePointer.readByte(4 + 3) & 0xff) == 0xe3)) {
+	int temp = 0;
+        if (((callSitePointer.readByte(3) & 0xff) == 0xe3)  && ((callSitePointer.readByte(4 + 3) & 0xff) == 0xe3) &&
+		((callSitePointer.readByte(2)>>4) == 0x0) && ((callSitePointer.readByte(4 + 2) >> 4) == 4)) {
             // basic match of movw movt
 
-            if(((callSitePointer.readByte(3+8) & 0xff) == ((addInstrn&0xff000000) >> 24)) &&
-                    ((callSitePointer.readByte(3+8) & 0xff) == ((addInstrn&0xff0000) >> 16)) &&
-                            ((callSitePointer.readByte(3+8) & 0xff) == ((addInstrn&0xff00) >> 8)) &&
-                                    ((callSitePointer.readByte(3+8) & 0xff) == (addInstrn&0xff))) {
+		temp = (callSitePointer.readByte(3) << 24) | (callSitePointer.readByte(2) << 16) | (callSitePointer.readByte(1) << 8) | callSitePointer.readByte(0);
+		Log.print("MOVW ");Log.println(temp);
+		temp = 0;
+		temp = (callSitePointer.readByte(3+4) << 24) | (callSitePointer.readByte(2+4) << 16) | (callSitePointer.readByte(1+4) << 8) | callSitePointer.readByte(0+4);
+		Log.print("MOVT ");Log.println(temp);
+		temp = 0;
+		temp = ((callSitePointer.readByte(3+8) << 24)&0xff000000) | ((callSitePointer.readByte(2+8) << 16)&0xff0000) | ((callSitePointer.readByte(1+8) << 8)&0xff00) | (callSitePointer.readByte(0+8)&0xff);
+		Log.print("ADD ");Log.println(temp);
+		temp = 0;
+		temp = ((callSitePointer.readByte(3+12) << 24)&0xff000000) | ((callSitePointer.readByte(2+12) << 16)&0xff0000) | ((callSitePointer.readByte(1+12) << 8)&0xff00) | (callSitePointer.readByte(0+12)&0xff);
+		Log.print("BLX ");Log.println(temp);
+		Log.print(callSitePointer.readByte(3+12));Log.print(" ");Log.print(callSitePointer.readByte(2+12));Log.print(" "); Log.print(callSitePointer.readByte(1+12));Log.print(" ");Log.println(callSitePointer.readByte(0+12));
+
+		Log.print("EXPECTED ADD ");Log.println(addInstrn);
+		
+
+
+            if(((callSitePointer.readByte(3+8) & 0xff) == ((addInstrn >> 24)&0xff)) &&
+                    ((callSitePointer.readByte(2+8) & 0xff) == ((addInstrn >> 16) &0xff)) &&
+                            ((callSitePointer.readByte(1+8) & 0xff) == ((addInstrn >> 8)&0xff)) &&
+                                    ((callSitePointer.readByte(0+8) & 0xff) == (addInstrn&0xff))) {
                 // full match of add r12,r12,pc
                 if (VMOptions.verboseOption.verboseCompilation) {
 
                    Log.println("MATCHED RIP CALL");
                 }
                     return true;
-            }
-
+            } else if (VMOptions.verboseOption.verboseCompilation) {
+                Log.println("DIDNOT match ADD");
         }
+
+
+        }else if(VMOptions.verboseOption.verboseCompilation) {
+		Log.println("DIDNOT match movwmovt");
+	}
         if (VMOptions.verboseOption.verboseCompilation) {
 
             Log.println("NOT RIP CALL");

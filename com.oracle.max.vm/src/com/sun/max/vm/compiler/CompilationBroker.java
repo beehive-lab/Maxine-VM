@@ -624,6 +624,7 @@ public class CompilationBroker {
 	Log.println("GOT CMA");
         TargetMethod oldMethod = mpo.method;
         TargetMethod newMethod = Compilations.currentTargetMethod(cma.compiledState, null);
+	Log.print("OLD TM is ");Log.println(oldMethod);
 	Log.print("TM is ");Log.println(newMethod);
 
         if (oldMethod == newMethod || newMethod == null) {
@@ -648,6 +649,7 @@ public class CompilationBroker {
 
 
         if (oldMethod == newMethod || newMethod == null) {
+	   Log.println("OLDMETHOD == NEWMETHOD");
             // No compiled method available yet, maybe compilation is pending.
             // We don't want to see another counter overflow in the near future.
             mpo.entryCount = 10000;
@@ -663,6 +665,7 @@ public class CompilationBroker {
                 // Simply overwrite all vtable slots containing 'oldMethod' with 'newMethod'.
                 // These updates can be made atomically without need for a lock.
                 Hub hub = ObjectAccess.readHub(receiver);
+		Log.println("VTABLE ITERATEPATCH");
                 for (int i = 0; i < hub.vTableLength(); i++) {
                     int index = Hub.vTableStartIndex() + i;
                     if (hub.getWord(index).equals(from)) {
@@ -670,7 +673,7 @@ public class CompilationBroker {
                         hub.setWord(index, to);
                     }
                 }
-
+	        Log.println("ITABLE ITERATEPATCH");
                 for (int i = 0; i < hub.iTableLength; i++) {
                     int index = hub.iTableStartIndex + i;
                     if (hub.getWord(index).equals(from)) {
@@ -864,17 +867,25 @@ public class CompilationBroker {
                 if (current.isTopFrame()) {
                     return true;
                 }
-		Log.println("!!!!!!!!!!!!!!!!CompilationBroker.visitFrame NEEDS REWRITING");
                 Pointer ip = current.ipAsPointer();
                 CodePointer callSite = CodePointer.from(ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE + 12));
                 Pointer callSitePointer = callSite.toPointer();
+		//int ii = 0;
+		Log.println("!!!!!!!!!!!!!!!!CompilationBroker.visitFrame NEEDS TESTING");
+		/*for(ii = -16; ii <= 16;ii+=4) {
+			if(ARMTargetMethodUtil.isARMV7RIPCall(current.targetMethod(),CodePointer.from(ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE + ii)))) {
+				Log.print("MATCHED with offset ");
+				 Log.println(ii);
+			}else Log.println("NO MATCH");
+		}*/
 
-                //if ((callSitePointer.readByte(0) & 0xFF) == ARMTargetMethodUtil.RIP_CALL) {
                 if(ARMTargetMethodUtil.isARMV7RIPCall(current.targetMethod(),callSite)) {
                     //CodePointer target = CodePointer.from(ip.plus(callSitePointer.readInt(1)));
                     CodePointer target = ARMTargetMethodUtil.ripCallOFFSET(current.targetMethod(),callSite);
+		    Log.println("MATCHED RIPCALL");
                     //callSitePointer.readInt(1)));
                     if (target.equals(oldMethod.getEntryPoint(BASELINE_ENTRY_POINT))) {
+			Log.println("matched OLD method BASELINE entry point");
                         final CodePointer to = newMethod.getEntryPoint(BASELINE_ENTRY_POINT);
                         final TargetMethod tm = current.targetMethod();
                         final int dcIndex = directCalleePosition(tm, callSite);
@@ -883,8 +894,9 @@ public class CompilationBroker {
                         ARMTargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
                         // Stop traversing the stack after a direct call site has been patched
                         return false;
-                    }
+                    } else
                     if (target.equals(oldMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT))) {
+			Log.println("matched OLD method OPTIMIZED entry point");
                         final CodePointer to = newMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT);
                         final TargetMethod tm = current.targetMethod();
                         final int dcIndex = directCalleePosition(tm, callSite);
@@ -893,7 +905,9 @@ public class CompilationBroker {
                         ARMTargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
                         // Stop traversing the stack after a direct call site has been patched
                         return false;
-                    }
+                    } else {
+			//assert 0==1 : " CompilationBroker.visitFrame ERROR trying to patch -- neither OPT or BASELINE entry point";
+			}
                 }
                 if (++frameCount > FRAME_SEARCH_LIMIT) {
                     logNoFurtherStaticCallPatching();

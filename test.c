@@ -77,6 +77,11 @@ int main(int argc, char**argv) {
 	long long yy = -2147483648LL;
 	int y;
 	int x;
+	printf("ADD %x\n", -16372);
+	printf("BLX %x\n", -196);
+	printf("BLX2 %x\n", -516948164);
+	printf("EXPECTED ADD %x\n",-527450100);
+
 	sscanf(argv[1],"%d",&y);
 	switch(y) {
 		case 0:
