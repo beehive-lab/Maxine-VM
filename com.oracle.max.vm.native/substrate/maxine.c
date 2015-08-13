@@ -707,9 +707,9 @@ void maxine_cacheflush(char *start, int length) {
 	asm volatile("dmb ");
 
 
-#endif
 
 }
+#endif
 /*
 static unsigned int *simPtr = (0);
 static FILE *simFile = (0);
