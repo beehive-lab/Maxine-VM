@@ -709,6 +709,10 @@ void maxine_cacheflush(char *start, int length) {
 
 
 }
+#else
+void maxine_cacheflush(char *start, int length) {
+}
+
 #endif
 /*
 static unsigned int *simPtr = (0);
