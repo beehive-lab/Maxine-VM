@@ -99,8 +99,8 @@ int main(int argc, char *argv[] MAIN_EXTRA_ARGS) {
 
 #ifdef arm
 divideByZeroExceptions();
+#endif
 
-#endif arm
     if (getenv("DYLD_LIBRARY_PATH") == NULL) {
         char *dyldLibraryPathDef;
         char *programDir = dirname(programPath);
