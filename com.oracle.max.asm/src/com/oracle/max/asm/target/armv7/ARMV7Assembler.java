@@ -96,7 +96,12 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
 
     }
-
+    public void insertForeverLoop() {
+	
+        Label forever = new Label();
+        bind(forever);
+        jcc(ConditionFlag.Always,forever);
+    }
     public void branch(Label l) {
         if (l.isBound()) {
             /*

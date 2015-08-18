@@ -285,6 +285,15 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     }
 
 @Override
+protected void assignInvokeVirtualTemplateParameters(VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
+	//asm.insertForeverLoop();
+	
+        assignInt(0, "vTableIndex", virtualMethodActor.vTableIndex()  );
+        peekObject(1, "receiver", receiverStackIndex);
+	//asm.insertForeverLoop();
+    }
+
+@Override
 protected void do_invokevirtual(int index) {
         ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
         SignatureDescriptor signature = classMethodRef.signature(cp);
@@ -298,24 +307,31 @@ protected void do_invokevirtual(int index) {
         Kind kind = invokeKind(signature);
         T1XTemplateTag tag = T1XTemplateTag.INVOKEVIRTUALS.get(kind.asEnum);
         int receiverStackIndex = receiverStackIndex(signature);
+	System.out.println("do_invokevirtual kind is " + kind);
+	System.out.println("do_invokevirtual RECEIVERSTAKCINDEX " + receiverStackIndex);
         try {
             if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
+		System.out.println("do_invokevirtual resolvablewithoutclass loading");
                 try {
                     VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
+		     System.out.println("do_invokevirtual vma " +virtualMethodActor);
                     if (processIntrinsic(virtualMethodActor)) {
                         return;
                     }
                     if (virtualMethodActor.isPrivate() || virtualMethodActor.isFinal() || virtualMethodActor.holder().isFinal()) {
                         // this is an invokevirtual to a private or final method, treat it like invokespecial
+			System.out.println("do_invokevirtual do_invokespecial_resolve");
                         do_invokespecial_resolved(tag, virtualMethodActor, receiverStackIndex);
 
                         int safepoint = callDirect();
                         finishCall(tag, kind, safepoint, virtualMethodActor);
                         return;
                     }
+		     System.out.println("do_invokevirtual emit an unprofiled virtual dispatch");
                     // emit an unprofiled virtual dispatch
                     start(tag.resolved);
                     CiRegister target = template.sig.out.reg;
+		    System.out.println("TARGET REGISTER is "+ target.encoding);
                     assignInvokeVirtualTemplateParameters(virtualMethodActor, receiverStackIndex);
                     finish();
                     int safepoint = callIndirect(target, receiverStackIndex);
@@ -328,6 +344,7 @@ protected void do_invokevirtual(int index) {
         } catch (LinkageError error) {
             // Fall back on unresolved template that will cause the error to be rethrown at runtime.
         }
+	System.out.println("do_invokevirtual endcase");
         start(tag);
         CiRegister target = template.sig.out.reg;
         assignObject(0, "guard", cp.makeResolutionGuard(index));
@@ -1377,6 +1394,56 @@ protected void do_invokevirtual(int index) {
         peekWord(ARMV7.r9, 1);
         pokeWord(ARMV7.r8, 1);
         pokeWord(ARMV7.r9, 0);
+    }
+
+@Override
+   protected void do_ldc(int index) {
+        PoolConstant constant = cp.at(index);
+        switch (constant.tag()) {
+            case CLASS: {
+                ClassConstant classConstant = (ClassConstant) constant;
+                if (classConstant.isResolvableWithoutClassLoading(cp)) {
+                    Object mirror = ((ClassActor) classConstant.value(cp, index).asObject()).javaClass();
+                    incStack(1);
+                    assignObject(ARMV7.r8, mirror); // we need to make sure no ARMV7s use scratch
+                    pokeObject(ARMV7.r8, 0); // as they will be overwritten by setupscratch
+                } else {
+                    start(T1XTemplateTag.LDC$reference);
+                    assignObject(0, "guard", cp.makeResolutionGuard(index));
+                    finish();
+                }
+                break;
+            }
+            case INTEGER: {
+                IntegerConstant integerConstant = (IntegerConstant) constant;
+                do_iconst(integerConstant.value());
+                break;
+            }
+            case LONG: {
+                LongConstant longConstant = (LongConstant) constant;
+                do_lconst(longConstant.value());
+                break;
+            }
+            case FLOAT: {
+                FloatConstant floatConstant = (FloatConstant) constant;
+                do_fconst(floatConstant.value());
+                break;
+            }
+            case DOUBLE: {
+                DoubleConstant doubleConstant = (DoubleConstant) constant;
+                do_dconst(doubleConstant.value());
+                break;
+            }
+            case STRING: {
+                StringConstant stringConstant = (StringConstant) constant;
+                do_oconst(stringConstant.value);
+                break;
+            }
+            default: {
+                assert false : "ldc for unexpected constant tag: " + constant.tag();
+                break;
+            }
+        }
     }
 
     @Override

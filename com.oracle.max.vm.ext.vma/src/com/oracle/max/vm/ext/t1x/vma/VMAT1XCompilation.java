@@ -159,8 +159,10 @@ public class VMAT1XCompilation extends AMD64T1XCompilation {
     @Override
     protected void assignInvokeVirtualTemplateParameters(VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
         if (templates == defaultTemplates) {
+	    System.out.println("templates==defaultTemplates");
             super.assignInvokeVirtualTemplateParameters(virtualMethodActor, receiverStackIndex);
         } else {
+	    System.out.println("VMA assignInvoke");
             assignObject(0, "methodActor", virtualMethodActor);
             peekObject(1, "receiver", receiverStackIndex);
         }

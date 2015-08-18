@@ -522,7 +522,8 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             String description = Type.BASELINE2OPT + "-Adapter" + sig;
             // RSP has been restored to the location holding the address of the OPT main body.
             // The adapter must return to the baseline caller whose RIP is one slot higher up.
-            asm.addq(ARMV7.r13, 4);// WAS 8 might need to adjust? the LRon the stack prior to the pop
+            //asm.addq(ARMV7.r13, 4);// WAS 8 might need to adjust? the LRon the stack prior to the pop
+	    asm.addq(ARMV7.r13, OPT_SLOT_SIZE);
 	    asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 8); // POP return address
 
             assert WordWidth.signedEffective(baselineArgsSize).lessEqual(WordWidth.BITS_16);
