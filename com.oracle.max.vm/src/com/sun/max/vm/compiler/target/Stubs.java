@@ -370,13 +370,15 @@ public class Stubs {
         // pcInCaller must be dealt with before any safepoint
         if (VMOptions.verboseOption.verboseCompilation) {
             Log.println("STUBS:resolveVirtualCall");
-	    //Log.println(receiver);
+	  Log.print("INDEX ");Log.print(vTableIndex);
+	    Log.print("CALLERPC "); Log.println(pcInCaller);
+	    Log.print("RECEIVER ");Log.println(receiver);
         }
         CodePointer cpCallSite = CodePointer.from(pcInCaller);
-        /*if (VMOptions.verboseOption.verboseCompilation) {
+        if (VMOptions.verboseOption.verboseCompilation) {
             Log.print("CALLSITE ");
             Log.println(cpCallSite);
-        }*/
+        }
         final TargetMethod caller = cpCallSite.toTargetMethod();
 
         final Hub hub = ObjectAccess.readHub(receiver);
@@ -420,16 +422,27 @@ public class Stubs {
         // pcInCaller must be dealt with before any safepoint
         if (VMOptions.verboseOption.verboseCompilation) {
             Log.print("STUBS:resolveInterfaceCall");
+	    Log.println(receiver);
             Log.println(pcInCaller);
+
 
         }
 	
 
         CodePointer cpCallSite = CodePointer.from(pcInCaller);
         final TargetMethod caller = cpCallSite.toTargetMethod();
+	if (VMOptions.verboseOption.verboseCompilation) {
+		Log.print("CALLSITE ");Log.println(cpCallSite);
+                Log.print("RECEIVER ");Log.println(receiver.getClass());
+                Log.print("index ");Log.println(iIndex);
+        }
 
         final Hub hub = ObjectAccess.readHub(receiver);
         final VirtualMethodActor selectedCallee = hub.classActor.getVirtualMethodActorByIIndex(iIndex);
+	if (VMOptions.verboseOption.verboseCompilation) {
+		Log.print("HUB ");Log.println(hub);
+		Log.print("CALLEE " );Log.println(selectedCallee);
+	}
         if (selectedCallee.isAbstract()) {
             throw new AbstractMethodError();
         }
@@ -443,7 +456,9 @@ public class Stubs {
         if (Code.bootCodeRegion().contains(cpCallSite.toAddress()) && Code.getCodeManager().getRuntimeBaselineCodeRegion().contains(adjustedEntryPoint.toAddress())) {
             CodeManager.recordBootToBaselineCaller(caller);
         }
-
+	 if (VMOptions.verboseOption.verboseCompilation) {
+                Log.print("ADJUSTEDENTRY ");Log.println(adjustedEntryPoint.toAddress());
+	}
         return adjustedEntryPoint.toAddress();
     }
 
