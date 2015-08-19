@@ -29,6 +29,7 @@ package com.sun.c1x.ir;
  */
 public abstract class ValueVisitor {
     // Checkstyle: off
+    public abstract void visitDebugMethodID(DebugMethodID i);
     public abstract void visitArithmeticOp(ArithmeticOp i);
     public abstract void visitArrayCopy(ArrayCopy arrayCopy);
     public abstract void visitArrayLength(ArrayLength i);

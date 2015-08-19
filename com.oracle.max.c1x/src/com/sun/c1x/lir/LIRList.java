@@ -90,6 +90,10 @@ public final class LIRList {
         append(new LIRMemoryBarrier(barriers));
     }
 
+    public void debugMethodID(int bci, String parentMethod, String inlinedMethod) {
+        append(new LIRDebugMethodID(bci, parentMethod, inlinedMethod));
+    }
+
     public void osrEntry(CiValue osrPointer) {
         append(new LIROp0(LIROpcode.OsrEntry, osrPointer));
     }

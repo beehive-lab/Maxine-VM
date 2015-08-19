@@ -780,6 +780,11 @@ public abstract class LIRGenerator extends ValueVisitor {
         lir.move(src, dst);
     }
 
+    @Override
+    public void visitDebugMethodID(DebugMethodID i) {
+        lir.debugMethodID(i.getBci(), i.getParentMethod(), i.getInlinedMethod());
+    }
+
     /**
      * For note on volatile fields, see {@link #visitStoreField(StoreField)}.
      */

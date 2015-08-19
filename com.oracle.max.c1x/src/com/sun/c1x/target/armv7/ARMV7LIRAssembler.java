@@ -67,12 +67,14 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     final CiTarget target;
     final ARMV7MacroAssembler masm;
     final CiRegister rscratch1;
+    private int methodID;
 
     public ARMV7LIRAssembler(C1XCompilation compilation, TargetMethodAssembler tasm) {
         super(compilation, tasm);
         masm = (ARMV7MacroAssembler) tasm.asm;
         target = compilation.target;
         rscratch1 = compilation.registerConfig.getScratchRegister();
+        methodID = LIRAssembler.methodCounter.incrementAndGet();
     }
 
     private CiAddress asAddress(CiValue value) {
@@ -740,7 +742,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             }
             masm.jmp(op.label());
 	    if (op.info != null) {
-                tasm.recordImplicitException(codePos()-4, op.info); // ADDED EXCEPTION 
+                tasm.recordImplicitException(codePos()-4, op.info); // ADDED EXCEPTION
             }
 
         } else {
@@ -1492,7 +1494,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 	    masm.cmp(ConditionFlag.Always,ARMV7.r12,rreg,0,0);
 	    masm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r12, null, CiKind.Float, CiKind.Int);
 	    masm.vcvt(ConditionFlag.Always,ARMV7.s31, false, true, ARMV7.s31, CiKind.Float, CiKind.Int );
-	    masm.vdiv(ConditionFlag.Equal, ARMV7.s31,ARMV7.s30,ARMV7.s31,CiKind.Float); 
+	    masm.vdiv(ConditionFlag.Equal, ARMV7.s31,ARMV7.s30,ARMV7.s31,CiKind.Float);
 	    int offset = masm.codeBuffer.position();
 	    masm.vldr(ConditionFlag.Equal, ARMV7.s30, ARMV7.r12, 0, CiKind.Float, CiKind.Int); // fault if EQUAL
 
@@ -1518,7 +1520,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
             }
         }
-    } 
+    }
     void arithmeticLDivExceptionCheck(CiValue dividend,CiValue divisor,CiValue result,LIRDebugInfo info) {
 	assert divisor.isRegister() : "the divisor needs to be a register LDIVE exception checks";
 	CiRegister denominator = divisor.asRegister();
@@ -2134,6 +2136,11 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     }
 
     @Override
+    protected void emitDebugID(String methodName, String inlinedMethodName) {
+        appendDebugMethodBuffer(methodID + " " + inlinedMethodName + " " + Integer.toHexString(masm.codeBuffer.position()) + " " + masm.codeBuffer.position());
+    }
+
+    @Override
     protected void doPeephole(LIRList list) {
         // Do nothing for now
     }
@@ -2514,10 +2521,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     }
 
                     if (AbstractAssembler.DEBUG_METHODS) {
-                        int a = AbstractAssembler.methodCounter.incrementAndGet();
-                        masm.mov32BitConstant(ARMV7.r12, a);
+                        masm.mov32BitConstant(ARMV7.r12, methodID);
                         try {
-                            AbstractAssembler.writeDebugMethod(compilation.method.holder() + "." + compilation.method.name(), a);
+                           appendDebugMethodBuffer(methodID + " " +compilation.method.holder() + "." + compilation.method.name() + ";" + compilation.method.signature());
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

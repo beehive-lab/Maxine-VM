@@ -1855,6 +1855,7 @@ public final class GraphBuilder {
     private void inline(RiResolvedMethod target, Value[] args, boolean forcedInline) {
         if (!forcedInline && C1XOptions.UseAssumptions) {
             compilation.assumptions.recordInlinedMethod(compilation.method, target);
+            append(new DebugMethodID(bci(), compilation.method.name(), target.toString()));
         }
         BlockBegin orig = curBlock;
         if (!forcedInline && !isStatic(target.accessFlags())) {
