@@ -39,6 +39,7 @@ public class DefaultValueVisitor extends ValueVisitor {
     }
 
     // Checkstyle: off
+    @Override public void visitDebugMethodID(DebugMethodID i) { visit(i); }
     @Override public void visitArithmeticOp(ArithmeticOp i) { visit(i); }
     @Override public void visitArrayCopy(ArrayCopy i) { visit(i); }
     @Override public void visitArrayLength(ArrayLength i) { visit(i); }

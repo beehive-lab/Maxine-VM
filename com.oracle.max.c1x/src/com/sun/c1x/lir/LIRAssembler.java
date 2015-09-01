@@ -41,9 +41,11 @@ import com.sun.cri.ci.CiValue;
 import com.sun.cri.ri.RiMethod;
 import com.sun.cri.xir.CiXirAssembler.XirMark;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.*;
 
 /**
  * The {@code LIRAssembler} class definition.
@@ -60,6 +62,9 @@ public abstract class LIRAssembler {
     protected final List<BlockBegin> branchTargetBlocks;
 
     private int lastDecodeStart;
+
+    public static AtomicInteger methodCounter = new AtomicInteger(536870912);
+
 
     protected static class SlowPath {
         public final LIRXirInstruction instruction;
@@ -80,6 +85,49 @@ public abstract class LIRAssembler {
         this.frameMap = compilation.frameMap();
         this.branchTargetBlocks = new ArrayList<BlockBegin>();
         this.xirSlowPath = new ArrayList<SlowPath>();
+        initDebugMethods();
+    }
+
+    private static File file;
+    private static final Object fileLock = new Object();
+    private static boolean debugEnabled = false;
+    private StringBuffer debugMethodBuffer = new StringBuffer();
+
+    public static synchronized void initDebugMethods() {
+        if (debugEnabled) {
+            return;
+        }
+        if (AbstractAssembler.DEBUG_METHODS) {
+            debugEnabled = true;
+            if ((file = new File(getDebugMethodsPath() + "debug_methods")).exists()) {
+                file.delete();
+            }
+            file = new File(getDebugMethodsPath() + "debug_methods");
+        }
+    }
+
+    public void appendDebugMethodBuffer(String name) {
+        debugMethodBuffer.append(name + "\n");
+    }
+
+    public void flushDebugMethodBuffer() throws Exception {
+        synchronized (fileLock) {
+            try {
+                assert AbstractAssembler.DEBUG_METHODS;
+                FileWriter fw = new FileWriter(file.getAbsoluteFile(), true);
+                BufferedWriter bw = new BufferedWriter(fw);
+                bw.write(debugMethodBuffer.toString());
+                bw.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        }
+    }
+
+    public static String getDebugMethodsPath() {
+        return System.getenv("MAXINE_HOME") + "/maxine-tester/junit-tests/";
+
     }
 
     protected RiMethod method() {
@@ -533,6 +581,8 @@ public abstract class LIRAssembler {
 
     protected abstract void emitMemoryBarriers(int barriers);
 
+    protected abstract void emitDebugID(String method, String inlinedMethod);
+
     protected abstract void emitOsrEntry();
 
     protected abstract void reg2stack(CiValue src, CiValue dest, CiKind kind);
@@ -556,4 +606,5 @@ public abstract class LIRAssembler {
     protected abstract void stack2reg(CiValue src, CiValue dest, CiKind kind);
 
     protected abstract void reg2reg(CiValue src, CiValue dest);
+
 }

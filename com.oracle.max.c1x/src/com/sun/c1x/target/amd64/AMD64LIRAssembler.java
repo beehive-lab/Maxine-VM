@@ -61,6 +61,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     private static final CiRegister SHIFTCount = AMD64.rcx;
 
     private static final long DoubleSignMask = 0x7FFFFFFFFFFFFFFFL;
+    private int methodID;
 
     final CiTarget target;
     final AMD64MacroAssembler masm;
@@ -71,6 +72,7 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         masm = (AMD64MacroAssembler) tasm.asm;
         target = compilation.target;
         rscratch1 = compilation.registerConfig.getScratchRegister();
+        methodID = LIRAssembler.methodCounter.incrementAndGet();
     }
 
     private CiAddress asAddress(CiValue value) {
@@ -95,6 +97,11 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     protected void emitReturn(CiValue result) {
         // TODO: Consider adding safepoint polling at return!
         masm.ret(0);
+    }
+
+    @Override
+    protected void emitDebugID(String methodName, String inlinedMethodName) {
+        appendDebugMethodBuffer(methodID + " " + inlinedMethodName + " " + Integer.toHexString(masm.codeBuffer.position()) + " " + masm.codeBuffer.position());
     }
 
     @Override
@@ -2028,10 +2035,9 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                     }
 
                     if (AbstractAssembler.DEBUG_METHODS) {
-                        int a = AbstractAssembler.methodCounter.incrementAndGet();
-                        masm.movl(compilation.registerConfig.getScratchRegister(), a);
+                        masm.movl(compilation.registerConfig.getScratchRegister(), methodID);
                         try {
-                            AbstractAssembler.writeDebugMethod(compilation.method.holder() + "." + compilation.method.name() + ";" + compilation.method.signature(), a);
+                           appendDebugMethodBuffer(methodID + " " +compilation.method.holder() + "." + compilation.method.name() + ";" + compilation.method.signature());
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

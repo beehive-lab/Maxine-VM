@@ -302,6 +302,14 @@ public final class C1XCompilation {
             if (C1XOptions.PrintTimers) {
                 C1XTimers.CODE_CREATE.stop();
             }
+
+            if (AbstractAssembler.DEBUG_METHODS) {
+                try {
+                    lirAssembler.flushDebugMethodBuffer();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             return targetMethod;
         }
 
