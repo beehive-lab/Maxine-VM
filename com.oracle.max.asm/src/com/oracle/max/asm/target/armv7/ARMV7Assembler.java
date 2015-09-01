@@ -2244,7 +2244,8 @@ end_label:
         instruction |= src.encoding << 16;
         if (destKind.isDouble()) {
             instruction |= 0x0d100b00;
-            instruction |= dest.encoding << 12;
+	    instruction |= (dest.encoding>> 4) << 22;
+            instruction |= (dest.encoding & 0xf)  << 12;
         } else {
             instruction |= 0xd100a00;
             instruction |= (dest.encoding >> 1) << 12;
@@ -2267,6 +2268,9 @@ end_label:
             instruction |= (rn.encoding & 0xf) << 16;
             instruction |= (dest.encoding & 0xf) << 12;
             instruction |= rm.encoding & 0xf;
+	    instruction |= (rn.encoding >> 4) << 7;
+            instruction |= (dest.encoding >> 4) << 22;
+            instruction |= (rm.encoding >> 4) << 5;
         } else {
             instruction |= (rn.encoding & 1) << 7;
             instruction |= (rn.encoding >> 1) << 16;

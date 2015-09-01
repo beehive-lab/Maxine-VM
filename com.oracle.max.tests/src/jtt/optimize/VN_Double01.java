@@ -29,9 +29,9 @@ package jtt.optimize;
  */
 public class VN_Double01 {
     public static double test(double arg) {
-        if (arg == 0) {
-	     while (arg == 0) ;
-	    System.out.println(arg + " RETURNINGVN " + Double.toString(add(arg+10)));
+        if (arg == 0.0) {
+	    System.out.println("ARG is 0.0 " );
+	
             return add(arg + 10);
         }
         if (arg == 1) {
@@ -46,6 +46,9 @@ public class VN_Double01 {
         return 0;
     }
     public static double add(double x) {
+	if(x == 10.0) {
+		System.out.println("Adding 10.0");
+	}
         double c = 1;
         double t = x + c;
         double u = x + c;

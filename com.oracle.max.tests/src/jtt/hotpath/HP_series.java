@@ -55,6 +55,7 @@ public class HP_series {
                 sum += testArray[j][i];
             }
         }
+	System.out.println("RETURNING " +  (sum+error));
         return sum + error;
     }
 
