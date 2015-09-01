@@ -67,6 +67,7 @@ final class JDK_java_lang_Object {
         if (Platform.target().arch.is32bit()) {
             return 0xfffff & ObjectAccess.makeHashCode(this);
         } else {
+	    com.sun.max.vm.Log.println("NEVER OBJECT!!!!");
             return ObjectAccess.makeHashCode(this);
         }
     }

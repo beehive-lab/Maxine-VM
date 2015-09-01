@@ -156,6 +156,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             }
             final InflatedMonitorLockword64 lockword = readMiscAndProtectBinding(object);
             if (lockword.isBound()) {
+		com.sun.max.vm.Log.println("inflated make hashcode bound");
                 return makeBoundHashCode(object, lockword);
             }
             int hashcode = lockword.getHashcode();
@@ -164,9 +165,12 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
                 final HashableLockword64 newLockword = lockword.setHashcode(hashcode);
                 final Word answer = ObjectAccess.compareAndSwapMisc(object, lockword, newLockword);
                 if (!answer.equals(lockword)) {
+		    com.sun.max.vm.Log.println("inflated make hashcode lockword");
+
                     return makeHashCode(object);
                 }
             }
+	    com.sun.max.vm.Log.println("inflated make hashcode");
             return hashcode;
         }
 

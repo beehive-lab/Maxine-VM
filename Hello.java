@@ -9,8 +9,8 @@ public static void main(String []args) {
 	for(j = 0; j < 1024;j++) {
 		x[j] = j;
 		String xx = Integer.toString(x[j]);
+		//System.err.println(xx);
 	}
-	//System.err.println(j);
 	System.err.println(args[0]);
 	System.err.println("HELLO WORLD");
 	for(int i = 0; i < args.length;i++)	{

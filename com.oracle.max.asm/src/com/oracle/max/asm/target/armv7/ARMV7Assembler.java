@@ -771,7 +771,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (Rn.encoding & 0xf) << 16;
         instruction |= (Rt.encoding & 0xf) << 12;
-        instruction |= 0xf0 | (imm8 & 0xf) | ((0xf0 & imm8) << 4);
+        instruction |=  (imm8 & 0xf) | ((0xf0 & imm8) << 4);
         emitInt(instruction);
     }
 
@@ -1639,8 +1639,15 @@ CODEWRITE    1		 1
         emitInt(instruction);
     }
 
+    public final void newIndirectT1XCall(CiRegister target) {
+	int instruction = blxHelper(ConditionFlag.Always, ARMV7.r8);
+        emitInt(instruction);
+
+    }
     public final void call(CiRegister target) {
-        addRegisters(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, target, 0, 0);
+	if(ARMV7.r8 != target ) {
+        	addRegisters(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, target, 0, 0);
+	}
         int instruction = blxHelper(ConditionFlag.Always, ARMV7.r8);
         emitInt(instruction);
     }

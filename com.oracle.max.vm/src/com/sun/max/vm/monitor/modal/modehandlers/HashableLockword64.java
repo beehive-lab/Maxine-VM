@@ -119,6 +119,7 @@ public class HashableLockword64 extends ModalLockword64 {
      */
     @INLINE
     public final HashableLockword64 setHashcode(int hashcode) {
+	assert ((hashcode & 0xfff00000) == 0);
         return HashableLockword64.from(asAddress().or(Address.fromUnsignedInt(hashcode).shiftedLeft(HASHCODE_SHIFT)));
     }
 }

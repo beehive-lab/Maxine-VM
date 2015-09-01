@@ -372,7 +372,7 @@ public class Stubs {
             Log.println("STUBS:resolveVirtualCall");
 	  Log.print("INDEX ");Log.print(vTableIndex);
 	    Log.print("CALLERPC "); Log.println(pcInCaller);
-	    Log.print("RECEIVER ");Log.println(receiver);
+	    Log.print("RECEIVER ");Log.println(receiver.getClass());
         }
         CodePointer cpCallSite = CodePointer.from(pcInCaller);
         if (VMOptions.verboseOption.verboseCompilation) {
@@ -383,8 +383,8 @@ public class Stubs {
 
         final Hub hub = ObjectAccess.readHub(receiver);
         if (VMOptions.verboseOption.verboseCompilation) {
-		Log.print("RECEIVER ");Log.println(receiver.getClass());
-		Log.print("HUB ");Log.println(hub);
+		//Log.print("RECEIVER ");Log.println(receiver.getClass());
+		//Log.print("HUB ");Log.println(hub);
 		Log.print("index ");Log.println(vTableIndex);
 	}
 
@@ -406,7 +406,10 @@ public class Stubs {
         if (Code.bootCodeRegion().contains(cpCallSite.toAddress()) && Code.getCodeManager().getRuntimeBaselineCodeRegion().contains(adjustedEntryPoint.toAddress())) {
             CodeManager.recordBootToBaselineCaller(caller);
         }
-
+if (VMOptions.verboseOption.verboseCompilation) {
+            Log.print("STUBS:resolvevirtual returns ");Log.println(adjustedEntryPoint.toAddress());
+            Log.print("ORIGINAL pcInCaller ");Log.println(pcInCaller);
+        }
         return adjustedEntryPoint.toAddress();
     }
 
@@ -421,8 +424,8 @@ public class Stubs {
     private static Address resolveInterfaceCall(Object receiver, int iIndex, Pointer pcInCaller) {
         // pcInCaller must be dealt with before any safepoint
         if (VMOptions.verboseOption.verboseCompilation) {
-            Log.print("STUBS:resolveInterfaceCall");
-	    Log.println(receiver);
+            Log.println("STUBS:resolveInterfaceCall");
+	    Log.println(receiver.getClass());
             Log.println(pcInCaller);
 
 
@@ -575,11 +578,11 @@ public class Stubs {
             // load the return address into the third arg register
 
             // we will need to test this carefully
-            //asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize));
             //asm.movq(args[2].asRegister(), new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize));
-            //asm.ldr(ARMV7Assembler.ConditionFlag.Always, args[2].asRegister(), asm.scratchRegister,0);
+            asm.ldr(ARMV7Assembler.ConditionFlag.Always, args[2].asRegister(), asm.scratchRegister,0);
             // We already have the return address in R14 so jus tmove it rather than doing the load from stack
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, args[2].asRegister(), ARMV7.r14);
+            //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, args[2].asRegister(), ARMV7.r14);
 
 
             asm.alignForPatchableDirectCall(); // insert nops so that the call is in an allowed position
@@ -599,8 +602,9 @@ public class Stubs {
             // this may well be broken !!!!!!
 
             CiRegister returnReg = registerConfig.getReturnRegister(WordUtil.archKind());
-	    //asm.addq(returnReg,4); // BECAUSE IT IS NOT A CALL/BLX AND THE RETURN REGI IS ALREADY PUSHED TO THE STACK
+	    asm.addq(returnReg,4); // BECAUSE IT IS NOT A CALL/BLX AND THE RETURN REGI IS ALREADY PUSHED TO THE STACK
 	    // this is done so when we load this to the PC we do not push the return address!
+	    //NOTE this is the slot used by r12 which we do not really need to restore?
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize-4    ));
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize - 8), returnReg);
             asm.str(ARMV7Assembler.ConditionFlag.Always, returnReg, asm.scratchRegister, 0);
@@ -615,28 +619,34 @@ public class Stubs {
 
             // Adjust RSP as mentioned above and do the 'ret' that lands us in the
             // trampolined-to method.
-            asm.addq(ARMV7.r13, frameSize-4  ); // points at entry point of trampolined method`
-
+            //----asm.addq(ARMV7.r13, frameSize-4  ); // points at entry point of trampolined method`
+	    asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize-4    ));
+	    asm.ldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r8, ARMV7.r12, 0);
+	    asm.addq(ARMV7.r13, frameSize);
+	    asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15,ARMV7.r8);
 	    //Label forever2 = new Label();
             //asm.bind(forever2);
             //asm.mov32BitConstant(ARMV7.r12, 0x22222222);
             //asm.branch(forever2);
 
-	    asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), 4));
-	    asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r14, asm.scratchRegister,0); // set up R14 as if it were a blx.
+	    //AUGasm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), 4));
+	    //AUGasm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r14, asm.scratchRegister,0); // set up R14 as if it were a blx.
             // the stack slot +4  holds the return address of the caller originially pushed onto the stack
 
 
 	    //asm.addq(ARMV7.r13,8); // basicall we need to get the stack back to the state where it was
-	    asm.addq(ARMV7.r13,8); // basicall we need to get the stack back to the state where it was
+	    //AUGasm.addq(ARMV7.r13,8); // basicall we need to get the stack back to the state where it was
 			// on entry to this method, so that when we LDR R15 then we will 
 			// be able to push the LR back onto the stack etc.
             //asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), -8));
 	    //asm.ldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r15,ARMV7.r12,0); 
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), -8));
-	    asm.ldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r15,ARMV7.r12,0); 
+            //AUGasm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), -8));
+	    //AUGasm.ldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r15,ARMV7.r12,0); 
+	    
 	    
 	    // essentially the LDR does a jump to the trampolined to method.
+	    asm.insertForeverLoop();
+	    //asm.ret(0);
 
 		
 

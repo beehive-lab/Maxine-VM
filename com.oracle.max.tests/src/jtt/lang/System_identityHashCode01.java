@@ -31,18 +31,28 @@ public class System_identityHashCode01 {
     private static final Object object1 = new Object();
     private static final Object object2 = new Object();
 
+    //private static final int hash0 = System.identityHashCode(object0);
     private static final int hash0 = System.identityHashCode(object0);
     private static final int hash1 = System.identityHashCode(object1);
     private static final int hash2 = System.identityHashCode(object2);
 
     public static boolean test(int i) {
+	    System.out.println("HASH0 " + hash0);
+	    System.out.println("HASH1 " + hash1);
+	    System.out.println("HASH2 " + hash2);
+	    System.out.println("OBJECT0 " + object0.hashCode());
         if (i == 0) {
+	    System.out.println("SYSTEM " + System.identityHashCode(object0));
             return hash0 == System.identityHashCode(object0);
         }
         if (i == 1) {
+	    System.out.println("HASH1 " + hash1);
+	    System.out.println("SYSTEM " + System.identityHashCode(object1));
             return hash1 == System.identityHashCode(object1);
         }
         if (i == 2) {
+	    System.out.println("HASH2 " + hash2);
+	    System.out.println("SYSTEM " + System.identityHashCode(object2));
             return hash2 == System.identityHashCode(object2);
         }
         return false;

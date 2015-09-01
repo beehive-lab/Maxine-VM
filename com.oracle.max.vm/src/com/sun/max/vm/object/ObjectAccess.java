@@ -36,6 +36,8 @@ import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.platform.Platform;
+
 
 /**
  * This class implements a facade for the {@link Layout Layout} class, which
@@ -150,6 +152,10 @@ public final class ObjectAccess {
      * @return a new identity hashcode for the specified object
      */
     public static int makeHashCode(Object object) {
+        if (Platform.target().arch.is32bit()) {
+            return 0xfffff & Monitor.makeHashCode(object);
+	}
+	com.sun.max.vm.Log.println("NEVER ObjectAccess makeHashCode");
         return Monitor.makeHashCode(object);
     }
 

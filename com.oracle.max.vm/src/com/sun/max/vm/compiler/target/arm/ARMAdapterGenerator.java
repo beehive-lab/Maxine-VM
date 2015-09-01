@@ -550,6 +550,7 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
         // Checkstyle: stop
         @Override
         protected void adapt(ARMV7Assembler asm, Kind kind, CiRegister reg, int offset32) {
+		System.out.println("BASE2OPTADAPT " + kind.asEnum + " " + reg.encoding + " offset " + offset32);
             switch (kind.asEnum) {
                 case BYTE:
                     asm.setUpScratch(new CiAddress(CiKind.Byte, ARMV7.r13.asValue(), offset32));
@@ -557,7 +558,7 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
                     break;
                 case BOOLEAN:
                     asm.setUpScratch(new CiAddress(CiKind.Boolean, ARMV7.r13.asValue(), offset32));
-                    asm.ldrsb(ARMV7Assembler.ConditionFlag.Always, 1, 0, 0, reg, ARMV7.r12, 0);
+                    asm.ldrb(ARMV7Assembler.ConditionFlag.Always, 1, 0, 0, reg, ARMV7.r12, 0);
                     break;
                 case SHORT:
                     asm.setUpScratch(new CiAddress(CiKind.Short, ARMV7.r13.asValue(), offset32));
@@ -923,6 +924,11 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
         // Checkstyle: stop
         @Override
         protected void adapt(ARMV7Assembler asm, Kind kind, CiRegister reg, int offset32) {
+		                System.out.println("OPT2BASEADAPT " + kind.asEnum + " " + reg.encoding + " offset " + offset32);
+				System.out.println("OPTSLOTSIZE " +OPT_SLOT_SIZE);
+				System.out.println("BASELINESLOTSIZE " +BASELINE_SLOT_SIZE);
+	
+	
             switch (kind.asEnum) {
                 // APN in X86 if we mov ADDRESS <-- reg, are we storing?
                 // APN can the address include base, scale and index ....
@@ -1016,10 +1022,13 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
 	   //asm.movq(scratch, new CiAddress(WordUtil.archKind(), rsp.asValue(), sourceStackOffset));
             //asm.movq(new CiAddress(WordUtil.archKind(), rsp.asValue(), destStackOffset), scratch);
             assert kind == Kind.LONG || kind == Kind.DOUBLE;
+	    asm.vmov(ConditionFlag.Always,ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
 	    asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), sourceStackOffset));
             asm.ldrd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
 	    asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), destStackOffset));
             asm.strd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
+	    asm.vmov(ConditionFlag.Always,ARMV7.r9,  ARMV7.s31, null,  CiKind.Int, CiKind.Float);
+
         } else {
             assert(kind != Kind.LONG);
             assert(kind != Kind.DOUBLE);

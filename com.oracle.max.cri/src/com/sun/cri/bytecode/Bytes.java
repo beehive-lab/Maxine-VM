@@ -63,6 +63,7 @@ public class Bytes {
      * @return the unsigned 2-byte, big-endian, value at index {@code bci} in array {@code data}
      */
     public static int beU2(byte[] data, int bci) {
+        //System.out.println("FIRST " + (data[bci] & 0xff << 8)+ " SECOND " + (data[bci + 1] & 0xff));
         return ((data[bci] & 0xff) << 8) | (data[bci + 1] & 0xff);
     }
 

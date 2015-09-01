@@ -654,6 +654,7 @@ public abstract class T1XCompilation {
             for (int i = 0; i < sig.in.length; i++) {
                 Arg a = sig.in[i];
                 if (a.isStack()) {
+		    System.out.println("STACK-start-template " + a.reg.encoding + " " + a.reg.number);
                     initializedArgs |= 1 << i;
                     switch (a.kind.asEnum) {
                         case INT:
@@ -677,7 +678,12 @@ public abstract class T1XCompilation {
                         default:
                             assert false;
                     }
-                }
+                } else {
+			assignInt(scratch,0xdeaddead);
+		                    System.out.println("REG -start-template " + a.reg.encoding + " " + a.reg.number);
+
+		}		
+
             }
         }
     }
@@ -688,9 +694,9 @@ public abstract class T1XCompilation {
     protected void finish() {
         assert template != null;
         assert assertArgsAreInitialized();
-
+	assignInt(scratch,0xd0d0d0d0);
         emitAndRecordSafepoints(template);
-
+	assignInt(scratch,0xbeefd0d0);
         // Adjust the stack to model the net effect of the template including
         // the slot for the value pushed (if any) by the template.
         Sig sig = template.sig;
@@ -729,6 +735,7 @@ public abstract class T1XCompilation {
                 default:
                     assert false : out.kind;
             }
+	System.out.println("PUSHRESONSTACK " + out.reg.encoding + " " + out.reg.number);
         }
         template = null;
         initializedArgs = 0;
@@ -746,6 +753,15 @@ public abstract class T1XCompilation {
         initializedArgs |= argBit;
         return true;
     }
+    protected final boolean assertInitializeArgARMV7(Arg a, int n) {
+	int argBit = 1 << n;
+        if ((initializedArgs & argBit) != 0) {
+            throw new AssertionError(template + ": parameter " + n + " (\"" + a.name + "\") is already initialized");
+        }
+        initializedArgs |= argBit;
+        return true;
+
+     }
 
     /**
      * Asserts that all the arguments of the current template have been initialized.
@@ -1541,7 +1557,10 @@ public abstract class T1XCompilation {
      * @param fieldActor
      */
     protected void assignFieldAccessParameter(T1XTemplateTag tag, FieldActor fieldActor) {
+	System.out.println("ASSIGNFIELDACCESS");
+	assignInt(scratch,0x10101010);
         assignInt(1, "offset", fieldActor.offset());
+	assignInt(scratch,0x20202020);
     }
 
     /**
@@ -1560,6 +1579,7 @@ public abstract class T1XCompilation {
                 if (fieldActor.isStatic()) {
                     if (fieldActor.holder().isInitialized()) {
                         start(tag.initialized);
+			System.out.println("field AssignOBJECT");
                         assignObject(0, "staticTuple", fieldActor.holder().staticTuple());
                         assignFieldAccessParameter(tag, fieldActor);
                         finish();
@@ -1580,6 +1600,7 @@ public abstract class T1XCompilation {
             }
         }
         start(tag);
+	System.out.println("do_fieldAccess assignObject");
         assignObject(0, "guard", cp.makeResolutionGuard(index));
         finish();
     }

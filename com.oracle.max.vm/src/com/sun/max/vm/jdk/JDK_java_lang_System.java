@@ -374,6 +374,7 @@ public final class JDK_java_lang_System {
         if (Platform.target().arch.is32bit()) {
             return 0xfffff & ObjectAccess.makeHashCode(object);
         } else {
+	    com.sun.max.vm.Log.println("NEVER SYSTEM");
             return ObjectAccess.makeHashCode(object);
         }
     }

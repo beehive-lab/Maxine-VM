@@ -670,12 +670,16 @@ public class T1XTargetMethod extends TargetMethod {
 			com.sun.max.vm.Log.print("T1XEXCEPT start ");com.sun.max.vm.Log.print(e.startBCI);com.sun.max.vm.Log.print(" end "); com.sun.max.vm.Log.println(e.endBCI);
                         if (e.startBCI <= exceptionBCI && exceptionBCI < e.endBCI) {
                             ClassActor catchType = (ClassActor) e.catchType;
+				com.sun.max.vm.Log.print("T1XEXCEPT CATCHTYPE ");com.sun.max.vm.Log.println(catchType);
+				com.sun.max.vm.Log.print("T1XEXCEPT RCLASSA ");com.sun.max.vm.Log.println(ObjectAccess.readClassActor(exception));
                             if (catchType == null || catchType.isAssignableFrom(ObjectAccess.readClassActor(exception))) {
+				com.sun.max.vm.Log.println("T1XEXCEPT will be retting");
                                 int handlerPos = posForBci(e.handlerBCI());
                                 checkHandler(exceptionPos, exceptionBCI, e.handlerBCI, handlerPos);
                                 if (info != null) {
                                     info.bci = e.handlerBCI();
                                 }
+				com.sun.max.vm.Log.print("T1XEXCEPT the code is "); com.sun.max.vm.Log.println(codeAt(handlerPos));
                                 return codeAt(handlerPos);
 
                             }

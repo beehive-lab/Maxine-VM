@@ -30,6 +30,8 @@ package jtt.optimize;
 public class VN_Double01 {
     public static double test(double arg) {
         if (arg == 0) {
+	     while (arg == 0) ;
+	    System.out.println(arg + " RETURNINGVN " + Double.toString(add(arg+10)));
             return add(arg + 10);
         }
         if (arg == 1) {
