@@ -2079,7 +2079,7 @@ end_label:
         } else {
             instruction |= (dest.encoding >> 1) << 12;
             instruction |= (rn.encoding >> 1) << 16;
-            instruction |= rm.encoding >> 1;
+            instruction |= (rm.encoding >> 1);
             instruction |= (dest.encoding & 0x1) << 22;
             instruction |= (rn.encoding & 0x1) << 7;
             instruction |= (rm.encoding & 0x1) << 5;

@@ -1188,7 +1188,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                             masm.vsub(ConditionFlag.Always, lreg, lreg, ARMV7.s30, CiKind.Double);
                             break;
                         case Mul:
-                            masm.vmul(ConditionFlag.Always, lreg, lreg, ARMV7.s3, CiKind.Double);
+                            masm.vmul(ConditionFlag.Always, lreg, lreg, ARMV7.s30, CiKind.Double);
                             break;
                         case Div:
                             masm.vdiv(ConditionFlag.Always, lreg, lreg, ARMV7.s30, left.kind);
@@ -1278,6 +1278,19 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert value.kind.isDouble();
         switch (code) {
             case Abs:
+		if (dest.asRegister() != value.asRegister()) {
+			masm.vmov(ConditionFlag.Always, dest.asRegister(), value.asRegister(), null, CiKind.Double, CiKind.Double);
+
+		//masm.movdbl(dest.asRegister(), value.asRegister()); 
+                }
+		masm.push(ConditionFlag.Always, 1<< 9);
+		masm.mov32BitConstant(ARMV7.r12,0xefffffff);
+		masm.vmov(ConditionFlag.Always, ARMV7.r8, ARMV7.r9, dest.asRegister(), CiKind.Long, CiKind.Double);
+		masm.and(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r3, ARMV7.r12, 0, 0);
+		masm.vmov(ConditionFlag.Always, dest.asRegister(), ARMV7.r8, ARMV7.r9, CiKind.Double, CiKind.Long);
+		masm.pop(ConditionFlag.Always, 1<<9);
+
+		
                 /*
                  * if (dest.asRegister() != value.asRegister()) { masm.movdbl(dest.asRegister(), value.asRegister()); }
                  * int op1, op2; op1 = dest.asRegister().encoding; op2 = value.asRegister().encoding; //TODO: Fix that

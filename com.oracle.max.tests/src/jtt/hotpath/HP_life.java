@@ -44,7 +44,8 @@ public class HP_life {
                 sum += (row * 15223242 + col * 21623234) ^ ((value ? 1 : 0) * 15323142);
             }
         }
-	System.out.println("RETURNING " + sum);
+	//`System.out.print("RETURNING ");
+	//`System.out.println ( Integer.toString(sum));
         return sum;
     }
 
