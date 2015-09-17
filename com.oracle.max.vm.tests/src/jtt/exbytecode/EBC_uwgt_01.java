@@ -30,6 +30,13 @@ import com.oracle.max.cri.intrinsics.*;
 
 public class EBC_uwgt_01 {
     public static boolean test(long a, long b) {
+	boolean value = false;
+	System.out.println(a);
+	System.out.println(b);
+	do {
+		value = UnsignedMath.aboveThan(a, b);
+
+	} while(value == false) ;
         return UnsignedMath.aboveThan(a, b);
     }
 

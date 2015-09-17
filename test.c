@@ -38,18 +38,16 @@ int comparege(long long a , long long b) {
 }
 
 int comparelt(long long a , long long b) {
-	int x = 5;
-	if(a<b) x = 1;
-	else x = 0;
-	return x;
+	return a < b;
 }
 int comparegt(long long a , long long b) {
-        int x = 5;
-        if(a>b) x = 1;
-	else x = 0;
-        return x;
+        return a > b;
 }
 
+int aboveThan(long long a,long long b) {
+return (a < b) ^ ((a < 0) != (b < 0));
+
+}
 int compare2(long long a, long long b) {
 	int x = 5;
 	if(a!=b) x = 1;
@@ -77,6 +75,8 @@ int main(int argc, char**argv) {
 	long long yy = -2147483648LL;
 	int y;
 	int x;
+	printf("ABOVE THANK %d\n", comparegt(64,47));
+	printf("ABOVE THANK %d\n", comparegt(64,-47));
 	printf("ADD %x\n", -16372);
 	printf("BLX %x\n", -196);
 	printf("BLX2 %x\n", -516948164);

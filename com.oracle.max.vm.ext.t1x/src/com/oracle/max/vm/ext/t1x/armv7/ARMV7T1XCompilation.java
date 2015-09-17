@@ -378,7 +378,10 @@ protected void do_invokestatic(int index) {
 
 
                     assignObject(0, "methodActor", interfaceMethod);
+		    asm.mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r0);
                     peekObject(1, "receiver", receiverStackIndex);
+		    asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
+		    target = ARMV7.r8;
                     finish();
 
                     int safepoint = callIndirect(target, receiverStackIndex);
@@ -403,7 +406,9 @@ protected void do_invokestatic(int index) {
 
         System.out.println("ARMV7T1XCompilation resolv einterface class load");
         assignObject(0, "guard", cp.makeResolutionGuard(index));
+	asm.mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r0);
         peekObject(1, "receiver", receiverStackIndex);
+	asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
         finish();
 
         int safepoint = callIndirect(target, receiverStackIndex);
@@ -443,9 +448,12 @@ protected void do_invokestatic(int index) {
 
 
         assignObject(0, "guard", cp.makeResolutionGuard(index));
+	asm.mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r0);
         peekObject(1, "receiver", receiverStackIndex);
-        finish();
+	asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
 
+        finish();
+	target = ARMV7.r8;
         int safepoint = callIndirect(target, receiverStackIndex);
 	asm.mov32BitConstant(ARMV7.r8,0xdead0004);
         finishCall(tag, kind, safepoint, null);
@@ -583,7 +591,8 @@ protected void do_invokevirtual(int index) {
             assignObject(0, "guard", cp.makeResolutionGuard(index)); //index+1 if we pushed?
             //assignObjectReg(1, "lengths", lengths);
 	    //asm.pop(ConditionFlag.Always,1<<1);
-	    asm.pop(ConditionFlag.Always, 1 <<reg(1,"lengths",Kind.REFERENCE).encoding );
+	    //asm.pop(ConditionFlag.Always, 1 <<reg(1,"lengths",Kind.REFERENCE).encoding );
+	    asm.vmov(ConditionFlag.Always, reg(1,"lengths",Kind.REFERENCE), ARMV7.s31, null, CiKind.Int, CiKind.Float);
             finish();
         }
     }
@@ -1145,6 +1154,8 @@ protected void do_invokevirtual(int index) {
         ConditionFlag cc;
         // Important: the compare instructions must come after the stack
         // adjustment instructions as both affect the condition flags.
+        asm.vmov(ConditionFlag.Always,ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
+
         switch (opcode) {
             case Bytecodes.IFEQ:
                 peekInt(r8, 0);
@@ -1282,6 +1293,8 @@ protected void do_invokevirtual(int index) {
                 throw new InternalError("Unknown branch opcode: " + Bytecodes.nameOf(opcode));
 
         }
+	asm.vmov(ConditionFlag.Always,ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
+
 
         int pos = buf.position();
         if (bci < targetBCI) {

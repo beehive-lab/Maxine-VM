@@ -1286,7 +1286,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 		masm.push(ConditionFlag.Always, 1<< 9);
 		masm.mov32BitConstant(ARMV7.r12,0xefffffff);
 		masm.vmov(ConditionFlag.Always, ARMV7.r8, ARMV7.r9, dest.asRegister(), CiKind.Long, CiKind.Double);
-		masm.and(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r3, ARMV7.r12, 0, 0);
+		masm.and(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, ARMV7.r12, 0, 0);
 		masm.vmov(ConditionFlag.Always, dest.asRegister(), ARMV7.r8, ARMV7.r9, CiKind.Double, CiKind.Long);
 		masm.pop(ConditionFlag.Always, 1<<9);
 

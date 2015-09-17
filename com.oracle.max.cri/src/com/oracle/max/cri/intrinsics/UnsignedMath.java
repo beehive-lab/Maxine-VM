@@ -74,7 +74,9 @@ public class UnsignedMath {
      */
     @INTRINSIC(UCMP_AT)
     public static boolean aboveThan(long a, long b) {
-        return (a > b) ^ ((a < 0) != (b < 0));
+        //return (a > b) ^ ((a < 0) != (b < 0));
+        return (a > b) ^ ((a < 0L) != (b < 0L));
+
     }
 
     /**

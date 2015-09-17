@@ -661,30 +661,30 @@ if (VMOptions.verboseOption.verboseCompilation) {
     @PLATFORM(cpu = "armv7")
     private static void patchStaticTrampolineCallSiteARMV7(Pointer callSite) {
         if (VMOptions.verboseOption.verboseCompilation) {
-            //Log.println("ENTER-ARM patchStaticTrampoline");
+            Log.println("ENTER-ARM patchStaticTrampoline");
         }
         CodePointer cpCallSite = CodePointer.from(callSite);
         if (VMOptions.verboseOption.verboseCompilation) {
-            //Log.print("TRAMPOLINE CALL SITE ");
-            //Log.println(cpCallSite);
+            Log.print("TRAMPOLINE CALL SITE ");
+            Log.println(cpCallSite);
         }
 
         final TargetMethod caller = cpCallSite.toTargetMethod();
         if (VMOptions.verboseOption.verboseCompilation) {
-            //Log.print("TRAMPOLINE CALLER ");
-            //Log.println(caller.toString());
+            Log.print("TRAMPOLINE CALLER ");
+            Log.println(caller.toString());
         }
 
         final ClassMethodActor callee = caller.callSiteToCallee(cpCallSite);
         if (VMOptions.verboseOption.verboseCompilation) {
-            //Log.print("TRAMPOLINE CALLEE ");
-            //Log.println(callee.toString());
+            Log.print("TRAMPOLINE CALLEE ");
+            Log.println(callee.toString());
         }
 
         final CodePointer calleeEntryPoint = callee.makeTargetMethod(caller).getEntryPoint(caller.callEntryPoint);
         if (VMOptions.verboseOption.verboseCompilation) {
-            //Log.print("TRAMPOLINE ENTRYPOINT ");
-            //Log.println(calleeEntryPoint);
+            Log.print("TRAMPOLINE ENTRYPOINT ");
+            Log.println(calleeEntryPoint);
         }
 
         ARMTargetMethodUtil.mtSafePatchCallDisplacement(caller, cpCallSite, calleeEntryPoint);
@@ -692,13 +692,13 @@ if (VMOptions.verboseOption.verboseCompilation) {
         // remember calls from boot code region to baseline code cache
         if (Code.bootCodeRegion().contains(cpCallSite.toAddress()) && Code.getCodeManager().getRuntimeBaselineCodeRegion().contains(calleeEntryPoint.toAddress())) {
 		 if (VMOptions.verboseOption.verboseCompilation) {
-            		//Log.println("TRAMPOLINE recordBootToBaseline");
+            		Log.println("TRAMPOLINE recordBootToBaseline");
         	}
 
             CodeManager.recordBootToBaselineCaller(caller);
         }
         if (VMOptions.verboseOption.verboseCompilation) {
-            //Log.println("EXIT-ARM patchStaticTrampoline");
+            Log.println("EXIT-ARM patchStaticTrampoline");
         }
     }
 

@@ -371,10 +371,15 @@ public final class JDK_java_lang_System {
         if (object == null) {
             return 0;
         }
+	int xxx;
         if (Platform.target().arch.is32bit()) {
-            return 0xfffff & ObjectAccess.makeHashCode(object);
+            xxx = 0xfffff & ObjectAccess.makeHashCode(object);
+	    if(MaxineVM.isRunning()) {
+	    	com.sun.max.vm.Log.print("SYTEMID"); com.sun.max.vm.Log.println(xxx);
+	    }
+		return xxx;
         } else {
-	    com.sun.max.vm.Log.println("NEVER SYSTEM");
+	    com.sun.max.vm.Log.print("NEVER SYSTEM");
             return ObjectAccess.makeHashCode(object);
         }
     }

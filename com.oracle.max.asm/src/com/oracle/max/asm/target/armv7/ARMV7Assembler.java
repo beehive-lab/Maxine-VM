@@ -1679,6 +1679,14 @@ CODEWRITE    1		 1
 
     }
 
+    public final void cmpImmediate(ConditionFlag condition,CiRegister src, int imm12) {
+	int instruction = 0x3500000;
+	imm12 = imm12 & 0xfff;
+        instruction |= (condition.value() << 28);
+	instruction |= imm12;
+	instruction |= src.encoding << 16;
+	emitInt(instruction);
+    }
     public final void cmpl(CiRegister src1, CiAddress src2) {
         assert src1.isValid();
         setUpScratch(src2); // APN not sure if this requires a load!
@@ -1691,11 +1699,24 @@ CODEWRITE    1		 1
     }
 
     public final void lcmpl(ConditionFlag condition, CiRegister src1, CiRegister src2) {
+	/* although this may seem to be badly coded, and it is, it is merely a copy of what gcc does for long long comparisons */
+	if(condition == ConditionFlag.SignedGreater) {
+		CiRegister tmp = src1;
+		src1 = src2;
+		src2 = tmp;
+	}
         cmp(ConditionFlag.Always, src1, src2, 0, 0);
         if (condition == ConditionFlag.Equal || condition == ConditionFlag.NotEqual) {
             cmp(ConditionFlag.Equal, ARMV7.cpuRegisters[src1.number + 1], ARMV7.cpuRegisters[src2.number + 1], 0, 0);
         } else {
             sbc(ConditionFlag.Always, true, scratchRegister, ARMV7.cpuRegisters[src1.number + 1], ARMV7.cpuRegisters[src2.number + 1], 0, 0);
+		if(condition == ConditionFlag.SignedGreater) {
+			// lt need to make greater than true
+			movw(ConditionFlag.SignedLesser,ARMV7.r12,1);
+			// ge neead to make greater than falso
+			movw(ConditionFlag.SignedGreaterOrEqual,ARMV7.r12,0);
+			cmpImmediate (ConditionFlag.Always,ARMV7.r12,0);
+		}
         }
     }
 
