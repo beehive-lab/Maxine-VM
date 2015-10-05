@@ -169,7 +169,7 @@ public class RegisterConfigs {
 				ARMV7.s11, ARMV7.s12, ARMV7.s13, ARMV7.s14, ARMV7.s15, com.oracle.max.asm.target.armv7.ARMV7.r8 )); // ARMV7.r8 added on end for resolveVirtualCall see genDynamicTrampoline*/
 		CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 4, r0, r1, r2, r3, com.oracle.max.asm.target.armv7.ARMV7.r8,
 			/*com.oracle.max.asm.target.armv7.ARMV7.r9,*/ com.oracle.max.asm.target.armv7.ARMV7.r11, /*standard.getScratchRegister(),
-			ARMV7.r14,*/ ARMV7.s0, ARMV7.s1, ARMV7.s2, ARMV7.s3, ARMV7.s4, ARMV7.s5, ARMV7.s6, ARMV7.s7, ARMV7.s8, ARMV7.s9, ARMV7.s10, 
+			ARMV7.r14,*/ ARMV7.r14, ARMV7.s0, ARMV7.s1, ARMV7.s2, ARMV7.s3, ARMV7.s4, ARMV7.s5, ARMV7.s6, ARMV7.s7, ARMV7.s8, ARMV7.s9, ARMV7.s10, 
                        ARMV7.s11, ARMV7.s12, ARMV7.s13, ARMV7.s14, ARMV7.s15, com.oracle.max.asm.target.armv7.ARMV7.r12 )); 
 			// r12 is unecessary, but the idea is that we canuse this to save the return address from the resolveVirtual/InterfaceCall in the slot for r12
 			// that we then  call

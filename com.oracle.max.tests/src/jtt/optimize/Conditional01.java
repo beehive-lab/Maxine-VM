@@ -30,36 +30,77 @@ import java.util.*;
  * @Runs: 0=0; 10=10; 20=20; 40=38;
  */
 public class Conditional01 {
+    public int negative;
     private static final int RAM_SIZE = 0x100;
 
+    public Conditional01() {
+	negative = -5;
+    }
     public static int test(int arg) {
+	//System.out.println("ENTEREDTEST");
         Conditional01 c = new Conditional01();
+	System.out.println("DONECONDITIONAL01");
         Random rnd = new Random();
+	System.out.println("DONERANDOM");
         for (int i = 0; i < arg; i++) {
             CPC i2 = new CPC();
+	    System.out.println("DONECPC");
+	        if(i2.negative != -1) System.out.println("BROKEN");
+
             i2.r1 = new Register();
+	    System.out.println("DONEREGISTER");
             i2.r1.val = i;
             i2.r1.num = i + RAM_SIZE - 20;
             i2.r2 = new Register();
+	    //System.out.println(rnd);
+	    System.out.println("DONEREGISTER2");
+	    // ADDED
+	    i2.setNegative();
+	    System.out.println("DONESETNEG");
+	    // END ADDED
             i2.r2.val = rnd.nextInt();
+
+	    System.out.println("DONENEXTINT");
+		
             i2.r2.num = rnd.nextInt(RAM_SIZE);
+	    System.out.println("DONENEXTINT2");
             try {
+		        if(i2.negative != -1) System.out.println("BROKEN");
+
                 c.visit(i2);
+		System.out.println("DONEVISIT");
             } catch (RuntimeException re) {
 
             }
         }
+	System.out.println("DONELOOP");
+	
         return c.cyclesConsumed;
     }
 
     private static class Register {
+	int negative;
         int val;
         int num;
+	Register() { /// added 
+		negative =  -8;
+		val = -2;
+		num = -3;
+	}
     }
 
     private static class CPC {
+        public int negative;
         public Register r1;
         public Register r2;
+	CPC() {// ADDED
+		negative = -1;	
+		r1 = new Register();
+		r2 = new Register();
+	}
+    public void setNegative() { // ADDED
+	negative = -1;
+	}
 
     }
 
@@ -75,10 +116,17 @@ public class Conditional01 {
     private int[] sram = new int[RAM_SIZE];
 
     public void visit(CPC i) {
+	System.out.println("INSIDE VISIT");
+	if(i.negative != -1) System.out.println("BROKEN");
         nextPC = pc + 2;
+	System.out.println("DONE NEXTPC");
         int tmp_0 = getRegisterByte(i.r1);
+	System.out.println("DONE getRegisterByte");
         int tmp_1 = getRegisterByte(i.r2);
+	System.out.println("DONE getRegisterByte2");
+
         int tmp_2 = bit(C);
+	System.out.println("BITC");
         int tmp_3 = tmp_0 - tmp_1 - tmp_2;
         boolean tmp_4 = ((tmp_0 & 128) != 0);
         boolean tmp_5 = ((tmp_1 & 128) != 0);
@@ -96,9 +144,14 @@ public class Conditional01 {
     }
 
     public int getRegisterByte(Register r1) {
+	System.out.println("INSIDE getRegByte");
         if ((r1.val % 10) == 0) {
+		System.out.println("INSIDE mod");
+
             return sram [r1.num];
         }
+	System.out.println("INSIDE prior to return");
+
         return r1.val;
     }
 

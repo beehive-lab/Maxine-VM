@@ -7,9 +7,14 @@ public static void main(String []args) {
 	boolean xxx = false;
 	i = 0;
 	i = i+0xbeeff0d0;
-	//System.out.println("BOOSHAKA");
+	System.out.println("BOOSHAKA");
 	try {
-	jtt.reflect.Field_get02.test(1);
+	jtt.optimize.Conditional01.test(1);
+	System.out.println("BOOSHAKA1");
+	jtt.optimize.Conditional01.test(10);
+	System.out.println("BOOSHAKA10");
+	jtt.optimize.Conditional01.test(48);
+	System.out.println("BOOSHAKA48");
 	} catch(Exception e) {
 		System.err.println(e);
 		e.printStackTrace();

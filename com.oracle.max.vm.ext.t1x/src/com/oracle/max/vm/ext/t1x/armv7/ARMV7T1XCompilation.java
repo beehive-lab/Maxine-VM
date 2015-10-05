@@ -77,6 +77,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
 
     public static AtomicInteger methodCounter = new AtomicInteger(536870912);
+    public static int invokeDebugCounter = 0;
     private static final Object fileLock = new Object();
     private static File file;
 
@@ -333,12 +334,16 @@ protected void do_invokestatic(int index) {
 	//CiRegister target = ARMV7.r8;
 	asm.mov32BitConstant(ARMV7.r8,0xdead0001);
         //asm.mov(ConditionFlag.Always, false, target, template.sig.out.reg);
-
+        asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r1, null, CiKind.Float, CiKind.Int);
+	
         assignObject(0, "guard", cp.makeResolutionGuard(index));
         finish();
 
 	//asm.insertForeverLoop();
-        //asm.mov(ConditionFlag.Always, false, target, template.sig.out.reg);
+	target = ARMV7.r8;
+        asm.mov(ConditionFlag.Always, false, target, ARMV7.r0);
+        asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
+        asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s30, null, CiKind.Int, CiKind.Float);
         int safepoint = callIndirect(target, -1);
 	asm.mov32BitConstant(ARMV7.r8,0xdead0001);
 	//asm.insertForeverLoop();
@@ -375,15 +380,19 @@ protected void do_invokestatic(int index) {
 
                     //asm.mov(ConditionFlag.Always, false, target, template.sig.out.reg);
 	            //asm.insertForeverLoop();
-
+		    System.out.println("INDEX " + index);
+	            System.out.println("RXERINDEX "+ receiverStackIndex);
+        	    asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r1, null, CiKind.Float, CiKind.Int);
 
                     assignObject(0, "methodActor", interfaceMethod);
-		    asm.mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r0);
                     peekObject(1, "receiver", receiverStackIndex);
-		    asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
 		    target = ARMV7.r8;
                     finish();
+		    asm.mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r0);
+		    asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
+	/* added above */
 
+	            asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s30, null, CiKind.Int, CiKind.Float);
                     int safepoint = callIndirect(target, receiverStackIndex);
 		    asm.mov32BitConstant(ARMV7.r8,0xdead0002);
                     finishCall(tag, kind, safepoint, null);
@@ -405,12 +414,16 @@ protected void do_invokestatic(int index) {
 
 
         System.out.println("ARMV7T1XCompilation resolv einterface class load");
-        assignObject(0, "guard", cp.makeResolutionGuard(index));
-	asm.mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r0);
-        peekObject(1, "receiver", receiverStackIndex);
-	asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
-        finish();
+	asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r1, null, CiKind.Float, CiKind.Int);
 
+        assignObject(0, "guard", cp.makeResolutionGuard(index));
+        peekObject(1, "receiver", receiverStackIndex);
+        finish();
+	// added begin
+	asm.mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r0);
+	asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
+	target = ARMV7.r8; // added end
+        asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s30, null, CiKind.Int, CiKind.Float);
         int safepoint = callIndirect(target, receiverStackIndex);
         asm.mov32BitConstant(ARMV7.r8,0xdead0003);
         finishCall(tag, kind, safepoint, null);
@@ -446,14 +459,19 @@ protected void do_invokestatic(int index) {
         //asm.mov(ConditionFlag.Always, false, target, template.sig.out.reg);
         //asm.insertForeverLoop();
 
+ 	System.out.println("INDEX " + index);
+        System.out.println("RXERINDEX "+ receiverStackIndex);
+
+        asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r1, null, CiKind.Float, CiKind.Int);
 
         assignObject(0, "guard", cp.makeResolutionGuard(index));
-	asm.mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r0);
         peekObject(1, "receiver", receiverStackIndex);
-	asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
 
         finish();
+	asm.mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r0);
+	asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
 	target = ARMV7.r8;
+	asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s30, null, CiKind.Int, CiKind.Float);
         int safepoint = callIndirect(target, receiverStackIndex);
 	asm.mov32BitConstant(ARMV7.r8,0xdead0004);
         finishCall(tag, kind, safepoint, null);
@@ -504,14 +522,20 @@ protected void do_invokevirtual(int index) {
                         return;
                     }
 		     System.out.println("do_invokevirtual emit an unprofiled virtual dispatch");
+		     System.out.println("INVOKEDEBUG " + invokeDebugCounter);
                     // emit an unprofiled virtual dispatch
                     start(tag.resolved);
                     CiRegister target = template.sig.out.reg;
 		    //CiRegister target = ARMV7.r8;	
 		    asm.mov32BitConstant(ARMV7.r8,0xdead0005);
+		    asm.mov32BitConstant(ARMV7.r12,invokeDebugCounter++);
 
-		    //asm.mov(ConditionFlag.Always, false, target, template.sig.out.reg);
+
 		    //asm.insertForeverLoop();
+ 			System.out.println("INDEX " + index);
+                    System.out.println("RXERINDEX "+ receiverStackIndex);
+        	    asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r1, null, CiKind.Float, CiKind.Int);
+
 
 		    //CiRegister target = ARMV7.r8;
 		    System.out.println("TARGET REGISTER is "+ target.encoding);
@@ -519,7 +543,10 @@ protected void do_invokevirtual(int index) {
 		    asm.mov32BitConstant(ARMV7.r8,0xdead0005);
                     finish();
 		    asm.mov32BitConstant(ARMV7.r8,0xdead0005);
-
+		    target = ARMV7.r8;
+		    asm.mov(ConditionFlag.Always, false, target, ARMV7.r0);
+		    asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
+		    asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s30, null, CiKind.Int, CiKind.Float);
                     int safepoint = callIndirect(target, receiverStackIndex);
                     asm.mov32BitConstant(ARMV7.r8,0xdead0005);
 		    System.out.println("SAFPOINT " + safepoint);
@@ -538,14 +565,21 @@ protected void do_invokevirtual(int index) {
 	//CiRegister target = ARMV7.r8;
         asm.mov32BitConstant(ARMV7.r8,0xdead0006);
 
-	asm.mov(ConditionFlag.Always, false, target, template.sig.out.reg);
+	//asm.mov(ConditionFlag.Always, false, target, template.sig.out.reg);
         //asm.insertForeverLoop();
 
+	System.out.println("INDEX " + index);
+	 System.out.println("RXERINDEX " + receiverStackIndex);
+	asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r1, null, CiKind.Float, CiKind.Int);
 
         assignObject(0, "guard", cp.makeResolutionGuard(index));
         peekObject(1, "receiver", receiverStackIndex);
         finish();
 	System.out.println("DO CALL indirect");
+	target = ARMV7.r8;
+	asm.mov(ConditionFlag.Always, false, target, ARMV7.r0);
+	asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
+	asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s30, null, CiKind.Int, CiKind.Float);
         int safepoint = callIndirect(target, receiverStackIndex);
         asm.mov32BitConstant(ARMV7.r8,0xdead0006);
 	System.out.println("DOING CALL INDIRECT");
