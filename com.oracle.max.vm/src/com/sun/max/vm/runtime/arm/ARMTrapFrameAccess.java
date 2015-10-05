@@ -136,11 +136,12 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
     public Pointer getPCPointer(Pointer trapFrame) {
 	
 	//Used to experimentally determine where the PC was saved.
-	for(int i = -12; i < 32;i+=4) {
+	/*for(int i = -12; i < 32;i+=4) {
         com.sun.max.vm.Log.print(i);
 	com.sun.max.vm.Log.print(" PC  ");
 	com.sun.max.vm.Log.println(trapFrame.plus(vm().stubs.trapStub().frameSize()+i).readWord(0));
 	}
+	*/
 	return trapFrame.plus(vm().stubs.trapStub().frameSize());
 
     }

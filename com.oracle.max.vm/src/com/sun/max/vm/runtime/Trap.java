@@ -467,11 +467,11 @@ public abstract class Trap {
                 return;
             }
         }
-	 com.sun.max.vm.Log.println("CATCH ADDRESS in raiseImplicitException is ZERO, probably means recordImplicitException is not using the correct codeOffset");
-	com.sun.max.vm.Log.println("in ARMV7LIRAssembler ... exampine call sites and the generated assembler enable prints in ");
-	 com.sun.max.vm.Log.println("throwAddresstoCatch address MAxTargetMEthod T1XTargetMEthod as necessary");
-	 com.sun.max.vm.Log.println("DO Throw.raise raiseImplicitException");
+	 //com.sun.max.vm.Log.println("CATCH ADDRESS in raiseImplicitException is ZERO, probably means recordImplicitException is not using the correct codeOffset");
+	//com.sun.max.vm.Log.println("in ARMV7LIRAssembler ... exampine call sites and the generated assembler enable prints in ");
+	 //com.sun.max.vm.Log.println("throwAddresstoCatch address MAxTargetMEthod T1XTargetMEthod as necessary");
+	 com.sun.max.vm.Log.println("DO Trap.java Throw.raise raiseImplicitException");
         Throw.raise(throwable, sp, fp, ip);
-	 com.sun.max.vm.Log.println("DONE Throw.raise raiseImplicitException");
+	 //com.sun.max.vm.Log.println("DONE Throw.raise raiseImplicitException");
     }
 }

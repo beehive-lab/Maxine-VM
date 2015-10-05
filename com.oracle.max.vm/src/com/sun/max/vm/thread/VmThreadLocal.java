@@ -429,8 +429,8 @@ public class VmThreadLocal implements FormatWithToString {
     }
 
     public static boolean inJava(Pointer tla) {
-	com.sun.max.vm.Log.print("inJAVA FALSE wanted ");  com.sun.max.vm.Log.println(JavaFrameAnchor.from(tla).isZero());
-	com.sun.max.vm.Log.print("inJAVA TRUE wanted ");  com.sun.max.vm.Log.println(JavaFrameAnchor.PC.get(JavaFrameAnchor.from(tla)).isZero());
+	//com.sun.max.vm.Log.print("inJAVA FALSE wanted ");  com.sun.max.vm.Log.println(JavaFrameAnchor.from(tla).isZero());
+	//com.sun.max.vm.Log.print("inJAVA TRUE wanted ");  com.sun.max.vm.Log.println(JavaFrameAnchor.PC.get(JavaFrameAnchor.from(tla)).isZero());
         return JavaFrameAnchor.inJava(JavaFrameAnchor.from(tla));
     }
 

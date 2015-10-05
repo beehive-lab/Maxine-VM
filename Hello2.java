@@ -14,6 +14,7 @@ public static void main(String []args) {
 	jtt.optimize.Conditional01.test(10);
 	System.out.println("BOOSHAKA10");
 	jtt.optimize.Conditional01.test(48);
+	jtt.optimize.Conditional01.test(40);
 	System.out.println("BOOSHAKA48");
 	} catch(Exception e) {
 		System.err.println(e);

@@ -550,7 +550,7 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
         // Checkstyle: stop
         @Override
         protected void adapt(ARMV7Assembler asm, Kind kind, CiRegister reg, int offset32) {
-		System.out.println("BASE2OPTADAPT " + kind.asEnum + " " + reg.encoding + " offset " + offset32);
+		//System.out.println("BASE2OPTADAPT " + kind.asEnum + " " + reg.encoding + " offset " + offset32);
             switch (kind.asEnum) {
                 case BYTE:
                     asm.setUpScratch(new CiAddress(CiKind.Byte, ARMV7.r13.asValue(), offset32));
@@ -698,7 +698,7 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             @HOSTED_ONLY
             public boolean acceptStackFrameVisitor(StackFrameCursor cursor, StackFrameVisitor visitor) {
                 int ripAdjustment = MaxineVM.isHosted() ? computeRipAdjustment(cursor) : Word.size();
-                Log.println("ADAPTER: sfv");
+                //Log.println("ADAPTER: sfv");
                 Pointer ripPointer = cursor.sp().plus(ripAdjustment);
                 Pointer fp = ripPointer.minus(frameSize());
                 return visitor.visitFrame(new AdapterStackFrame(cursor.stackFrameWalker().calleeStackFrame(), cursor.targetMethod(), cursor.vmIP().toPointer(), fp, cursor.sp()));
@@ -924,9 +924,9 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
         // Checkstyle: stop
         @Override
         protected void adapt(ARMV7Assembler asm, Kind kind, CiRegister reg, int offset32) {
-		                System.out.println("OPT2BASEADAPT " + kind.asEnum + " " + reg.encoding + " offset " + offset32);
-				System.out.println("OPTSLOTSIZE " +OPT_SLOT_SIZE);
-				System.out.println("BASELINESLOTSIZE " +BASELINE_SLOT_SIZE);
+		                //System.out.println("OPT2BASEADAPT " + kind.asEnum + " " + reg.encoding + " offset " + offset32);
+				//System.out.println("OPTSLOTSIZE " +OPT_SLOT_SIZE);
+				//System.out.println("BASELINESLOTSIZE " +BASELINE_SLOT_SIZE);
 	
 	
             switch (kind.asEnum) {
