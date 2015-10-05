@@ -22,6 +22,7 @@ import com.oracle.max.asm.target.armv7.ARMV7Assembler;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
 import com.oracle.max.asm.target.armv7.ARMV7MacroAssembler;
 import com.oracle.max.cri.intrinsics.MemoryBarriers;
+import com.oracle.max.criutils.NativeCMethodinVM;
 import com.oracle.max.vm.ext.maxri.MaxTargetMethod;
 import com.oracle.max.vm.ext.t1x.*;
 import com.sun.cri.bytecode.BytecodeLookupSwitch;
@@ -36,9 +37,12 @@ import com.sun.cri.ci.CiTargetMethod.JumpTable;
 import com.sun.cri.ci.CiTargetMethod.LookupTable;
 import com.sun.max.annotate.HOSTED_ONLY;
 import com.sun.max.unsafe.Word;
+import com.sun.max.vm.actor.holder.ClassActor;
 import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.actor.member.FieldActor;
+import com.sun.max.vm.actor.member.VirtualMethodActor;
 import com.sun.max.vm.classfile.CodeAttribute;
+import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.WordUtil;
 import com.sun.max.vm.compiler.target.Adapter;
 import com.sun.max.vm.compiler.target.Safepoints;
@@ -49,10 +53,6 @@ import com.sun.max.vm.stack.armv7.ARMV7JVMSFrameLayout;
 import com.sun.max.vm.thread.VmThread;
 import com.sun.max.vm.type.Kind;
 import com.sun.max.vm.type.SignatureDescriptor;
-import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.actor.holder.ArrayClassActor;
-import com.sun.max.vm.actor.holder.ClassActor;
-import com.sun.max.vm.actor.member.VirtualMethodActor;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -61,7 +61,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
-import com.oracle.max.criutils.NativeCMethodinVM;
 
 import static com.oracle.max.asm.target.armv7.ARMV7.*;
 import static com.oracle.max.vm.ext.t1x.T1X.dispFromCodeStart;
@@ -90,15 +89,15 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     public ARMV7T1XCompilation(T1X compiler) {
         super(compiler);
         asm = new ARMV7MacroAssembler(target(), null);
-	if(com.sun.max.vm.MaxineVM.isHosted() == false)
-		// TO TURN SIMULATION ON ... 
-		if(com.oracle.max.asm.AbstractAssembler.SIMULATE_PLATFORM) {
-			asm.maxineflush = this; // dirty hacky .... do it properly
-			// END TO TURN SIMULATION ON
-		} else {
-			asm.maxineflush = null;
-			// END TO TURN SIMULATION OFF
-		}
+        if (com.sun.max.vm.MaxineVM.isHosted() == false)
+            // TO TURN SIMULATION ON ...
+            if (com.oracle.max.asm.AbstractAssembler.SIMULATE_PLATFORM) {
+                asm.maxineflush = this; // dirty hacky .... do it properly
+                // END TO TURN SIMULATION ON
+            } else {
+                asm.maxineflush = null;
+                // END TO TURN SIMULATION OFF
+            }
         buf = asm.codeBuffer;
         patchInfo = new PatchInfoARMV7();
     }
@@ -110,17 +109,19 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     static {
         initDebugMethods();
     }
- 
+
     @Override
     public int maxine_instrumentationBuffer() {
-		return com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.maxine_instrumentationBuffer();
+        return com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.maxine_instrumentationBuffer();
     }
+
     @Override
     public int maxine_flush_instrumentationBuffer() {
-		// returns the int address of the method in C ... ugly but fast dynamic linking ....
-		// should really do it the proper way by CriticalMethods etc etc
-		return com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.maxine_flush_instrumentationBuffer();
+        // returns the int address of the method in C ... ugly but fast dynamic linking ....
+        // should really do it the proper way by CriticalMethods etc etc
+        return com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.maxine_flush_instrumentationBuffer();
     }
+
     public static void initDebugMethods() {
 
         if ((file = new File(getDebugMethodsPath() + "debugT1Xmethods")).exists()) {
@@ -209,7 +210,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     @Override
     public void peekInt(CiRegister dst, int index) {
         asm.setUpScratch(spInt(index));
-        asm.ldr(ConditionFlag.Always,  dst, asm.scratchRegister, 0);
+        asm.ldr(ConditionFlag.Always, dst, asm.scratchRegister, 0);
 
     }
 
@@ -284,31 +285,32 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.movw(ConditionFlag.Always, ARMV7.cpuRegisters[dst.encoding + 1], (int) (((value >> 32) & 0xffff)));
         asm.movt(ConditionFlag.Always, ARMV7.cpuRegisters[dst.encoding + 1], (int) (((value >> 48) & 0xffff)));
     }
-/*@Override
-protected void assignInvokeVirtualTemplateParameters(VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
-	//asm.insertForeverLoop();
-	
-        //assignInt(0, "vTableIndex", virtualMethodActor.vTableIndex()  );
-	// replaced by an MANUAL inlining of the call  the argument and return registers on ARMV7 are the same for integers so we need a workaround here
-	//The problem is that $r0 had the Object receiver address and we overwrote this with the target address of the Stub that is used to call the
-	//resolveVirtualCall method so we have this dirty hack here ....
 
-        assignInt(ARMV7.r8, virtualMethodActor.vTableIndex());
-	asm.addRegisters(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, ARMV7.r0, 0, 0);
+    /*@Override
+    protected void assignInvokeVirtualTemplateParameters(VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
+        //asm.insertForeverLoop();
+
+            //assignInt(0, "vTableIndex", virtualMethodActor.vTableIndex()  );
+        // replaced by an MANUAL inlining of the call  the argument and return registers on ARMV7 are the same for integers so we need a workaround here
+        //The problem is that $r0 had the Object receiver address and we overwrote this with the target address of the Stub that is used to call the
+        //resolveVirtualCall method so we have this dirty hack here ....
+
+            assignInt(ARMV7.r8, virtualMethodActor.vTableIndex());
+        asm.addRegisters(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, ARMV7.r0, 0, 0);
 
 
-	//assignInt(8, "vTableIndex", virtualMethodActor.vTableIndex()  );
-	T1XTemplate.Arg a = template.sig.in[0];
-	assert assertInitializeArgARMV7(a,0);	
-        assert 0 >= 0 && 0 < template.sig.in.length : template + ": parameter " + 0 + " is out of bounds";
-        assert a.kind == Kind.INT : template + ": expected " + a.kind + " value for parameter " + 0 + " (\"" + a.name + "\"), not " + Kind.INT;
-        assert a.name.equals("vTableIndex") : template + ": expected name of parameter " + 0 + " to be \"" + a.name + "\", not \"" + "vTableIndex" + "\"";
-        peekObject(1, "receiver", receiverStackIndex);
-	//asm.insertForeverLoop();
-    }
-*/
-@Override 
-protected void do_invokestatic(int index) {
+        //assignInt(8, "vTableIndex", virtualMethodActor.vTableIndex()  );
+        T1XTemplate.Arg a = template.sig.in[0];
+        assert assertInitializeArgARMV7(a,0);
+            assert 0 >= 0 && 0 < template.sig.in.length : template + ": parameter " + 0 + " is out of bounds";
+            assert a.kind == Kind.INT : template + ": expected " + a.kind + " value for parameter " + 0 + " (\"" + a.name + "\"), not " + Kind.INT;
+            assert a.name.equals("vTableIndex") : template + ": expected name of parameter " + 0 + " to be \"" + a.name + "\", not \"" + "vTableIndex" + "\"";
+            peekObject(1, "receiver", receiverStackIndex);
+        //asm.insertForeverLoop();
+        }
+    */
+    @Override
+    protected void do_invokestatic(int index) {
         ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
         Kind kind = invokeKind(classMethodRef.signature(cp));
         T1XTemplateTag tag = T1XTemplateTag.INVOKESTATICS.get(kind.asEnum);
@@ -331,28 +333,28 @@ protected void do_invokestatic(int index) {
         }
         start(tag);
         CiRegister target = template.sig.out.reg;
-	//CiRegister target = ARMV7.r8;
-	asm.mov32BitConstant(ARMV7.r8,0xdead0001);
+        //CiRegister target = ARMV7.r8;
+        asm.mov32BitConstant(ARMV7.r8, 0xdead0001);
         //asm.mov(ConditionFlag.Always, false, target, template.sig.out.reg);
         asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r1, null, CiKind.Float, CiKind.Int);
-	
+
         assignObject(0, "guard", cp.makeResolutionGuard(index));
         finish();
 
-	//asm.insertForeverLoop();
-	target = ARMV7.r8;
+        //asm.insertForeverLoop();
+        target = ARMV7.r8;
         asm.mov(ConditionFlag.Always, false, target, ARMV7.r0);
         asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
         asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s30, null, CiKind.Int, CiKind.Float);
         int safepoint = callIndirect(target, -1);
-	asm.mov32BitConstant(ARMV7.r8,0xdead0001);
-	//asm.insertForeverLoop();
+        asm.mov32BitConstant(ARMV7.r8, 0xdead0001);
+        //asm.insertForeverLoop();
 
         finishCall(tag, kind, safepoint, null);
     }
 
-@Override
- protected void do_invokeinterface(int index) {
+    @Override
+    protected void do_invokeinterface(int index) {
         InterfaceMethodRefConstant interfaceMethodRef = cp.interfaceMethodAt(index);
         SignatureDescriptor signature = interfaceMethodRef.signature(cp);
 
@@ -368,33 +370,28 @@ protected void do_invokestatic(int index) {
         try {
             if (interfaceMethodRef.isResolvableWithoutClassLoading(cp)) {
                 try {
-                    System.out.println("ARMV7T1XCompilation rsolve interface");
                     com.sun.max.vm.actor.member.MethodActor interfaceMethod = interfaceMethodRef.resolve(cp, index);
                     if (processIntrinsic(interfaceMethod)) {
                         return;
                     }
                     start(tag.resolved);
                     CiRegister target = template.sig.out.reg;
-		    //CiRegister target = ARMV7.r8;
-	            asm.mov32BitConstant(ARMV7.r8,0xdead0002);
+                    asm.mov32BitConstant(ARMV7.r8, 0xdead0002);
 
-                    //asm.mov(ConditionFlag.Always, false, target, template.sig.out.reg);
-	            //asm.insertForeverLoop();
-		    System.out.println("INDEX " + index);
-	            System.out.println("RXERINDEX "+ receiverStackIndex);
-        	    asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r1, null, CiKind.Float, CiKind.Int);
+                    //System.out.println("INDEX " + index);
+                    //System.out.println("RXERINDEX "+ receiverStackIndex);
+                    asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r1, null, CiKind.Float, CiKind.Int);
 
                     assignObject(0, "methodActor", interfaceMethod);
                     peekObject(1, "receiver", receiverStackIndex);
-		    target = ARMV7.r8;
+                    target = ARMV7.r8;
                     finish();
-		    asm.mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r0);
-		    asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
-	/* added above */
+                    asm.mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r0);
+                    asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
 
-	            asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s30, null, CiKind.Int, CiKind.Float);
+                    asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s30, null, CiKind.Int, CiKind.Float);
                     int safepoint = callIndirect(target, receiverStackIndex);
-		    asm.mov32BitConstant(ARMV7.r8,0xdead0002);
+                    asm.mov32BitConstant(ARMV7.r8, 0xdead0002);
                     finishCall(tag, kind, safepoint, null);
                     return;
                 } catch (LinkageError e) {
@@ -406,30 +403,25 @@ protected void do_invokestatic(int index) {
         }
         start(tag);
         CiRegister target = template.sig.out.reg;
-	//CiRegister target = ARMV7.r8;
-	asm.mov32BitConstant(ARMV7.r8,0xdead0003);
-
-        //asm.mov(ConditionFlag.Always, false, target, template.sig.out.reg);
-	        //asm.insertForeverLoop();
+        asm.mov32BitConstant(ARMV7.r8, 0xdead0003);
 
 
-        System.out.println("ARMV7T1XCompilation resolv einterface class load");
-	asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r1, null, CiKind.Float, CiKind.Int);
+        //System.out.println("ARMV7T1XCompilation resolv einterface class load");
+        asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r1, null, CiKind.Float, CiKind.Int);
 
         assignObject(0, "guard", cp.makeResolutionGuard(index));
         peekObject(1, "receiver", receiverStackIndex);
         finish();
-	// added begin
-	asm.mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r0);
-	asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
-	target = ARMV7.r8; // added end
+        asm.mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r0);
+        asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
+        target = ARMV7.r8;
         asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s30, null, CiKind.Int, CiKind.Float);
         int safepoint = callIndirect(target, receiverStackIndex);
-        asm.mov32BitConstant(ARMV7.r8,0xdead0003);
+        asm.mov32BitConstant(ARMV7.r8, 0xdead0003);
         finishCall(tag, kind, safepoint, null);
     }
 
-@Override
+    @Override
     protected void do_invokespecial(int index) {
         ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
         Kind kind = invokeKind(classMethodRef.signature(cp));
@@ -453,14 +445,11 @@ protected void do_invokestatic(int index) {
         }
         start(tag);
         CiRegister target = template.sig.out.reg;
-	//CiRegister target = ARMV7.r8;
-	asm.mov32BitConstant(ARMV7.r8,0xdead0004);
+        asm.mov32BitConstant(ARMV7.r8, 0xdead0004);
 
-        //asm.mov(ConditionFlag.Always, false, target, template.sig.out.reg);
-        //asm.insertForeverLoop();
 
- 	System.out.println("INDEX " + index);
-        System.out.println("RXERINDEX "+ receiverStackIndex);
+        //System.out.println("INDEX " + index);
+        //System.out.println("RXERINDEX "+ receiverStackIndex);
 
         asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r1, null, CiKind.Float, CiKind.Int);
 
@@ -468,31 +457,33 @@ protected void do_invokestatic(int index) {
         peekObject(1, "receiver", receiverStackIndex);
 
         finish();
-	asm.mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r0);
-	asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
-	target = ARMV7.r8;
-	asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s30, null, CiKind.Int, CiKind.Float);
+        asm.mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r0);
+        asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
+        target = ARMV7.r8;
+        asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s30, null, CiKind.Int, CiKind.Float);
         int safepoint = callIndirect(target, receiverStackIndex);
-	asm.mov32BitConstant(ARMV7.r8,0xdead0004);
+        asm.mov32BitConstant(ARMV7.r8, 0xdead0004);
         finishCall(tag, kind, safepoint, null);
     }
-@Override 
-protected void do_invokespecial_resolved(T1XTemplateTag tag, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
+
+    @Override
+    protected void do_invokespecial_resolved(T1XTemplateTag tag, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
         peekObject(ARMV7.r8, receiverStackIndex);
         int safepoint = nullCheck(ARMV7.r8);
         safepointsBuilder.addSafepoint(stream.currentBCI(), safepoint, null);
-	asm.mov(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r8);
+        asm.mov(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r8);
 
     }
-@Override
-protected void do_invokevirtual(int index) {
+
+    @Override
+    protected void do_invokevirtual(int index) {
         ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
-	System.out.println("CLASSMETHODREF " + classMethodRef);
+        //System.out.println("CLASSMETHODREF " + classMethodRef);
         SignatureDescriptor signature = classMethodRef.signature(cp);
 
         if (classMethodRef.holder(cp).toKind().isWord) {
             // Dynamic dispatch on Word types is not possible, since raw pointers do not have any method tables.
-	    System.out.println("do_invokevirtual special " + index);
+            //System.out.println("do_invokevirtual special " + index);
             do_invokespecial(index);
             return;
         }
@@ -500,56 +491,53 @@ protected void do_invokevirtual(int index) {
         Kind kind = invokeKind(signature);
         T1XTemplateTag tag = T1XTemplateTag.INVOKEVIRTUALS.get(kind.asEnum);
         int receiverStackIndex = receiverStackIndex(signature);
-	System.out.println("do_invokevirtual kind is " + kind);
-	System.out.println("do_invokevirtual RECEIVERSTAKCINDEX " + receiverStackIndex);
+        //System.out.println("do_invokevirtual kind is " + kind);
+        //System.out.println("do_invokevirtual RECEIVERSTAKCINDEX " + receiverStackIndex);
         try {
             if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
-		System.out.println("do_invokevirtual resolvablewithoutclass loading");
+                //System.out.println("do_invokevirtual resolvablewithoutclass loading");
                 try {
                     VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
-		     System.out.println("do_invokevirtual vma " +virtualMethodActor + " index " + index);
+                    // System.out.println("do_invokevirtual vma " +virtualMethodActor + " index " + index);
                     if (processIntrinsic(virtualMethodActor)) {
-			System.out.println("prcoessed intrinsic");
+                        //System.out.println("prcoessed intrinsic");
                         return;
                     }
                     if (virtualMethodActor.isPrivate() || virtualMethodActor.isFinal() || virtualMethodActor.holder().isFinal()) {
                         // this is an invokevirtual to a private or final method, treat it like invokespecial
-			System.out.println("do_invokevirtual do_invokespecial_resolve");
+                        //System.out.println("do_invokevirtual do_invokespecial_resolve");
                         do_invokespecial_resolved(tag, virtualMethodActor, receiverStackIndex);
 
                         int safepoint = callDirect();
                         finishCall(tag, kind, safepoint, virtualMethodActor);
                         return;
                     }
-		     System.out.println("do_invokevirtual emit an unprofiled virtual dispatch");
-		     System.out.println("INVOKEDEBUG " + invokeDebugCounter);
+                    //System.out.println("do_invokevirtual emit an unprofiled virtual dispatch");
+                    //System.out.println("INVOKEDEBUG " + invokeDebugCounter);
                     // emit an unprofiled virtual dispatch
                     start(tag.resolved);
                     CiRegister target = template.sig.out.reg;
-		    //CiRegister target = ARMV7.r8;	
-		    asm.mov32BitConstant(ARMV7.r8,0xdead0005);
-		    asm.mov32BitConstant(ARMV7.r12,invokeDebugCounter++);
+                    //CiRegister target = ARMV7.r8;
+                    asm.mov32BitConstant(ARMV7.r8, 0xdead0005);
+                    asm.mov32BitConstant(ARMV7.r12, invokeDebugCounter++);
 
 
-		    //asm.insertForeverLoop();
- 			System.out.println("INDEX " + index);
-                    System.out.println("RXERINDEX "+ receiverStackIndex);
-        	    asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r1, null, CiKind.Float, CiKind.Int);
+                    //System.out.println("INDEX " + index);
+                    //System.out.println("RXERINDEX "+ receiverStackIndex);
+                    asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r1, null, CiKind.Float, CiKind.Int);
 
 
-		    //CiRegister target = ARMV7.r8;
-		    System.out.println("TARGET REGISTER is "+ target.encoding);
                     assignInvokeVirtualTemplateParameters(virtualMethodActor, receiverStackIndex);
-		    asm.mov32BitConstant(ARMV7.r8,0xdead0005);
+                    asm.mov32BitConstant(ARMV7.r8, 0xdead0005);
                     finish();
-		    asm.mov32BitConstant(ARMV7.r8,0xdead0005);
-		    target = ARMV7.r8;
-		    asm.mov(ConditionFlag.Always, false, target, ARMV7.r0);
-		    asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
-		    asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s30, null, CiKind.Int, CiKind.Float);
+                    asm.mov32BitConstant(ARMV7.r8, 0xdead0005);
+                    target = ARMV7.r8;
+                    asm.mov(ConditionFlag.Always, false, target, ARMV7.r0);
+                    asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
+                    asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s30, null, CiKind.Int, CiKind.Float);
                     int safepoint = callIndirect(target, receiverStackIndex);
-                    asm.mov32BitConstant(ARMV7.r8,0xdead0005);
-		    System.out.println("SAFPOINT " + safepoint);
+                    asm.mov32BitConstant(ARMV7.r8, 0xdead0005);
+                    //System.out.println("SAFPOINT " + safepoint);
                     finishCall(tag, kind, safepoint, null);
                     return;
                 } catch (LinkageError e) {
@@ -559,37 +547,35 @@ protected void do_invokevirtual(int index) {
         } catch (LinkageError error) {
             // Fall back on unresolved template that will cause the error to be rethrown at runtime.
         }
-	System.out.println("do_invokevirtual endcase");
+        //System.out.println("do_invokevirtual endcase");
         start(tag);
         CiRegister target = template.sig.out.reg;
-	//CiRegister target = ARMV7.r8;
-        asm.mov32BitConstant(ARMV7.r8,0xdead0006);
+        asm.mov32BitConstant(ARMV7.r8, 0xdead0006);
 
-	//asm.mov(ConditionFlag.Always, false, target, template.sig.out.reg);
-        //asm.insertForeverLoop();
 
-	System.out.println("INDEX " + index);
-	 System.out.println("RXERINDEX " + receiverStackIndex);
-	asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r1, null, CiKind.Float, CiKind.Int);
+        //System.out.println("INDEX " + index);
+        //System.out.println("RXERINDEX " + receiverStackIndex);
+        asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r1, null, CiKind.Float, CiKind.Int);
 
         assignObject(0, "guard", cp.makeResolutionGuard(index));
         peekObject(1, "receiver", receiverStackIndex);
         finish();
-	System.out.println("DO CALL indirect");
-	target = ARMV7.r8;
-	asm.mov(ConditionFlag.Always, false, target, ARMV7.r0);
-	asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
-	asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s30, null, CiKind.Int, CiKind.Float);
+        //System.out.println("DO CALL indirect");
+        target = ARMV7.r8;
+        asm.mov(ConditionFlag.Always, false, target, ARMV7.r0);
+        asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
+        asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s30, null, CiKind.Int, CiKind.Float);
         int safepoint = callIndirect(target, receiverStackIndex);
-        asm.mov32BitConstant(ARMV7.r8,0xdead0006);
-	System.out.println("DOING CALL INDIRECT");
+        asm.mov32BitConstant(ARMV7.r8, 0xdead0006);
+        //System.out.println("DOING CALL INDIRECT");
         finishCall(tag, kind, safepoint, null);
-	System.out.println("DONE finishcall");
+        //System.out.println("DONE finishcall");
     }
+
     @Override
     protected void do_multianewarray(int index, int numberOfDimensions) {
         CiRegister lengths;
-	/*
+    /*
 	X86-64 has a different return register to argument register set, but ARM as we have tried to follow AARPCS DOESNT
 	so we need to save the r0 and restore it to r1
 	Hoepfully with will work ... as long as the SP is not used for any arguments inbetween 
@@ -601,8 +587,8 @@ protected void do_invokevirtual(int index) {
             lengths = template.sig.out.reg;
             finish();
             //decStack(numberOfDimensions);
-	    //asm.push(ConditionFlag.Always,1<<0);
-	    asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r0, null, CiKind.Float, CiKind.Int);
+            //asm.push(ConditionFlag.Always,1<<0);
+            asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r0, null, CiKind.Float, CiKind.Int);
 
 
         }
@@ -615,8 +601,8 @@ protected void do_invokevirtual(int index) {
             assignObject(0, "arrayClassActor", arrayClassActor);
             //assignObjectReg(1, "lengths", lengths);
 
-	    //asm.pop(ConditionFlag.Always, 1 <<reg(1,"lengths",Kind.REFERENCE).encoding );
-	    asm.vmov(ConditionFlag.Always, reg(1,"lengths",Kind.REFERENCE), ARMV7.s31, null, CiKind.Int, CiKind.Float);
+            //asm.pop(ConditionFlag.Always, 1 <<reg(1,"lengths",Kind.REFERENCE).encoding );
+            asm.vmov(ConditionFlag.Always, reg(1, "lengths", Kind.REFERENCE), ARMV7.s31, null, CiKind.Int, CiKind.Float);
 
             finish();
         } else {
@@ -624,12 +610,13 @@ protected void do_invokevirtual(int index) {
             start(T1XTemplateTag.MULTIANEWARRAY);
             assignObject(0, "guard", cp.makeResolutionGuard(index)); //index+1 if we pushed?
             //assignObjectReg(1, "lengths", lengths);
-	    //asm.pop(ConditionFlag.Always,1<<1);
-	    //asm.pop(ConditionFlag.Always, 1 <<reg(1,"lengths",Kind.REFERENCE).encoding );
-	    asm.vmov(ConditionFlag.Always, reg(1,"lengths",Kind.REFERENCE), ARMV7.s31, null, CiKind.Int, CiKind.Float);
+            //asm.pop(ConditionFlag.Always,1<<1);
+            //asm.pop(ConditionFlag.Always, 1 <<reg(1,"lengths",Kind.REFERENCE).encoding );
+            asm.vmov(ConditionFlag.Always, reg(1, "lengths", Kind.REFERENCE), ARMV7.s31, null, CiKind.Int, CiKind.Float);
             finish();
         }
     }
+
     @Override
     protected void assignObject(CiRegister dst, Object value) {
         if (value == null) {
@@ -662,7 +649,7 @@ protected void do_invokevirtual(int index) {
     @Override
     protected void loadInt(CiRegister dst, int index) {
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.INT)));
-        asm.ldr(ConditionFlag.Always,  dst, ARMV7.r12, 0);
+        asm.ldr(ConditionFlag.Always, dst, ARMV7.r12, 0);
     }
 
     @Override
@@ -740,13 +727,13 @@ protected void do_invokevirtual(int index) {
                 break;
             case LONG:
             case DOUBLE:
-		// TODO potential corruption of r9 need to use floatreg as stackoperation in progress
-		// cnanot push r9 to stack
-		asm.vmov(ConditionFlag.Always,ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
+                // TODO potential corruption of r9 need to use floatreg as stackoperation in progress
+                // cnanot push r9 to stack
+                asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
                 peekLong(ARMV7.r8, 0);
                 decStack(2);
                 storeLong(ARMV7.r8, index);
-		asm.vmov(ConditionFlag.Always,ARMV7.r9,  ARMV7.s31, null,  CiKind.Int, CiKind.Float);
+                asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
                 break;
             default:
                 throw new InternalError("Unexpected kind: " + kind);
@@ -770,14 +757,14 @@ protected void do_invokevirtual(int index) {
                 break;
             case LONG:
             case DOUBLE:
-		// TODO potential corruption of r9
-		// TODO potential corruption of r9 need to use floatreg as stackoperation in progress
-		// cnanot push r9 to stack
-		asm.vmov(ConditionFlag.Always,ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
+                // TODO potential corruption of r9
+                // TODO potential corruption of r9 need to use floatreg as stackoperation in progress
+                // cnanot push r9 to stack
+                asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
                 loadLong(ARMV7.r8, index); // uses FP not stack
                 incStack(2);
                 pokeLong(ARMV7.r8, 0);
-		asm.vmov(ConditionFlag.Always,ARMV7.r9,  ARMV7.s31, null,  CiKind.Int, CiKind.Float);
+                asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
                 break;
             default:
                 throw new InternalError("Unexpected kind: " + kind);
@@ -814,34 +801,34 @@ protected void do_invokevirtual(int index) {
 
     @Override
     protected void do_dconst(double value) {
-	// potential corruption of r9
-        asm.vmov(ConditionFlag.Always,ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
+        // potential corruption of r9
+        asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
         assignLong(ARMV7.r8, Double.doubleToRawLongBits(value));
         incStack(2);
         pokeLong(ARMV7.r8, 0);
-	asm.vmov(ConditionFlag.Always,ARMV7.r9,  ARMV7.s31, null,  CiKind.Int, CiKind.Float);
-	
+        asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
+
     }
 
     @Override
     protected void do_lconst(long value) {
-	// potential corruption of r9
-	asm.vmov(ConditionFlag.Always,ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
+        // potential corruption of r9
+        asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
         assignLong(ARMV7.r8, value);
         incStack(2);
         pokeLong(ARMV7.r8, 0);
-	asm.vmov(ConditionFlag.Always,ARMV7.r9,  ARMV7.s31, null,  CiKind.Int, CiKind.Float);
+        asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
 
     }
 
     @Override
     protected void assignDouble(CiRegister dst, double value) {
         assert dst.isFpu();
-	// potential corruption of r9
-	asm.push(ConditionFlag.Always, 1 << 9);
+        // potential corruption of r9
+        asm.push(ConditionFlag.Always, 1 << 9);
         assignLong(ARMV7.r8, Double.doubleToRawLongBits(value));
-        asm.vmov(ConditionFlag.Always, dst, ARMV7.r8, ARMV7.r9,   CiKind.Double, CiKind.Int);
-	asm.pop(ConditionFlag.Always, 1 << 9);
+        asm.vmov(ConditionFlag.Always, dst, ARMV7.r8, ARMV7.r9, CiKind.Double, CiKind.Int);
+        asm.pop(ConditionFlag.Always, 1 << 9);
     }
 
     @Override
@@ -856,27 +843,24 @@ protected void do_invokevirtual(int index) {
 
     @Override
     protected int callIndirect(CiRegister target, int receiverStackIndex) {
-	if(target != ARMV7.r8) {
-		asm.mov(ConditionFlag.Always, false, ARMV7.r8, target); // ctry to fix the problem
-		target = ARMV7.r8;
+        if (target != ARMV7.r8) {
+            asm.mov(ConditionFlag.Always, false, ARMV7.r8, target); // ctry to fix the problem
+            target = ARMV7.r8;
 
-	}
-        if (receiverStackIndex >= 0) {
-	
-            //peekObject(ARMV7.r1, receiverStackIndex); // was rdi?
-	    peekObject(ARMV7.r0, receiverStackIndex);
         }
-	System.out.println("callIndirect TARGET REG is " +target.encoding);
-        //asm.mov32BitConstant(ARMV7.r8, 8);
-	if(target.encoding != ARMV7.r8.encoding) {
-        	asm.xorq(ARMV7.r8,ARMV7.r8);
-	}
-	// make r8 the target
+        if (receiverStackIndex >= 0) {
+
+            //peekObject(ARMV7.r1, receiverStackIndex); // was rdi?
+            peekObject(ARMV7.r0, receiverStackIndex);
+        }
+        //System.out.println("callIndirect TARGET REG is " +target.encoding);
+        if (target.encoding != ARMV7.r8.encoding) {
+            asm.xorq(ARMV7.r8, ARMV7.r8);
+        }
+        // make r8 the target
         int causePos = buf.position();
-	//int causePos = buf.position()+4; // the xorq r8 was has an add prior to the call
-	System.out.println("CAUSEPOS " + causePos);
+        //System.out.println("CAUSEPOS " + causePos);
         asm.call(target);
-	//asm.newIndirectT1XCall(target);
         int safepointPos = buf.position();
         asm.nop(); // nop separates any potential safepoint emitted as a successor to the call
         return Safepoints.make(safepointPos, causePos, INDIRECT_CALL, TEMPLATE_CALL);
@@ -979,16 +963,16 @@ protected void do_invokevirtual(int index) {
         asm.addq(ARMV7.r11, framePointerAdjustment()); // we might be missing some kind of pop here?
         asm.mov(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r11);
         final short stackAmountInBytes = (short) frame.sizeOfParameters();
-	// ALTERED MOVED POP to before RET
+        // ALTERED MOVED POP to before RET
         //asm.mov32BitConstant(scratch, stackAmountInBytes);
         //asm.addRegisters(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
         asm.pop(ConditionFlag.Always, 1 << 11); // POP the frame pointer
-	asm.pop(ConditionFlag.Always, 1 << 8); // POP return address into r8
-	asm.mov32BitConstant(scratch, stackAmountInBytes);
-	asm.addRegisters(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
-	asm.mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r8); // RETURN
+        asm.pop(ConditionFlag.Always, 1 << 8); // POP return address into r8
+        asm.mov32BitConstant(scratch, stackAmountInBytes);
+        asm.addRegisters(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
+        asm.mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r8); // RETURN
 
-	
+
         //asm.ret(); // mov R14 to r15 ,,, who restores the rest oI//f the environment?
     }
 
@@ -1117,7 +1101,7 @@ protected void do_invokevirtual(int index) {
 
             // Compare the value against the key
             asm.setUpScratch(new CiAddress(CiKind.Int, r6.asValue(), r7.asValue(), Scale.Times4, 0));
-            asm.ldr(ConditionFlag.Always,  r12, r12, 0);
+            asm.ldr(ConditionFlag.Always, r12, r12, 0);
             asm.cmpl(ARMV7.r9, ARMV7.r12);
 
             // If equal, exit loop
@@ -1144,7 +1128,7 @@ protected void do_invokevirtual(int index) {
 
             // Load jump table entry into r15 and jump to it
             asm.setUpScratch(new CiAddress(CiKind.Int, r6.asValue(), r7.asValue(), Scale.Times4, 4));
-            asm.ldr(ConditionFlag.Always,  r12, r12, 0);
+            asm.ldr(ConditionFlag.Always, r12, r12, 0);
             asm.addRegisters(ConditionFlag.Always, false, r12, r15, r12, 0, 0);
             asm.add(ConditionFlag.Always, false, r12, r12, 8, 0);
             asm.mov(ConditionFlag.Always, true, r15, r12);
@@ -1188,7 +1172,7 @@ protected void do_invokevirtual(int index) {
         ConditionFlag cc;
         // Important: the compare instructions must come after the stack
         // adjustment instructions as both affect the condition flags.
-        asm.vmov(ConditionFlag.Always,ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
+        asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
 
         switch (opcode) {
             case Bytecodes.IFEQ:
@@ -1327,7 +1311,7 @@ protected void do_invokevirtual(int index) {
                 throw new InternalError("Unknown branch opcode: " + Bytecodes.nameOf(opcode));
 
         }
-	asm.vmov(ConditionFlag.Always,ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
+        asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
 
 
         int pos = buf.position();
@@ -1380,7 +1364,6 @@ protected void do_invokevirtual(int index) {
                 int targetBCI = data[i++];
                 int target = bciToPos[targetBCI];
                 assert target != 0;
-                //Log.println("assert commented out in ARMV7T1XCompilaton");
                 buf.setPosition(pos);
                 asm.jmp(target, true);
             } else if (tag == PatchInfoARMV7.JUMP_TABLE_ENTRY) {
@@ -1418,10 +1401,6 @@ protected void do_invokevirtual(int index) {
                 buf.emitInt(val);
                 val = asm.movtHelper(ConditionFlag.Always, ARMV7.r12, (disp >> 16) & 0xffff);
                 buf.emitInt(val);
-                // val = asm.strHelper(ConditionFlag.Always,0,0,0,ARMV7.r8,ARMV7.r15,ARMV7.r12,0,0);
-                //buf.emitInt(val);
-
-                //System.out.println("ARMV7T1XCompilation ... OBJECT LITERAL PAtchInfo HAS BEEN allowed to emitInt need to emit store of r8? to  pc+disp " + disp);
 
             } else {
                 throw FatalError.unexpected(String.valueOf(tag));
@@ -1662,17 +1641,17 @@ protected void do_invokevirtual(int index) {
 
     @Override
     protected void do_swap() {
-	asm.vmov(ConditionFlag.Always,ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
+        asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
 
         peekWord(ARMV7.r8, 0);
         peekWord(ARMV7.r9, 1);
         pokeWord(ARMV7.r8, 1);
         pokeWord(ARMV7.r9, 0);
-	asm.vmov(ConditionFlag.Always,ARMV7.r9, ARMV7.s31 , null, CiKind.Int, CiKind.Float);
+        asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
     }
 
-@Override
-   protected void do_ldc(int index) {
+    @Override
+    protected void do_ldc(int index) {
         PoolConstant constant = cp.at(index);
         switch (constant.tag()) {
             case CLASS: {

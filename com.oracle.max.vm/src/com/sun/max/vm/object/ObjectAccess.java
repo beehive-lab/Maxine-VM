@@ -22,21 +22,30 @@
  */
 package com.sun.max.vm.object;
 
-import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
-
-import java.lang.reflect.*;
-import java.nio.*;
-
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.heap.*;
-import com.sun.max.vm.jdk.*;
-import com.sun.max.vm.layout.*;
-import com.sun.max.vm.monitor.*;
-import com.sun.max.vm.reference.*;
+import com.sun.max.annotate.ALIAS;
+import com.sun.max.annotate.INLINE;
+import com.sun.max.annotate.INTRINSIC;
 import com.sun.max.platform.Platform;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.unsafe.Size;
+import com.sun.max.unsafe.UnsafeCast;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.actor.holder.ClassActor;
+import com.sun.max.vm.actor.holder.Hub;
+import com.sun.max.vm.actor.holder.StaticTuple;
+import com.sun.max.vm.heap.Heap;
+import com.sun.max.vm.jdk.JDK;
+import com.sun.max.vm.layout.ArrayLayout;
+import com.sun.max.vm.layout.HybridLayout;
+import com.sun.max.vm.layout.Layout;
+import com.sun.max.vm.monitor.Monitor;
+import com.sun.max.vm.reference.Reference;
+
+import java.lang.reflect.Array;
+import java.nio.ByteBuffer;
+
+import static com.sun.max.vm.MaxineVM.isHosted;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
 
 
 /**
@@ -155,7 +164,6 @@ public final class ObjectAccess {
         if (Platform.target().arch.is32bit()) {
             return 0xfffff & Monitor.makeHashCode(object);
 	}
-	com.sun.max.vm.Log.println("NEVER ObjectAccess makeHashCode");
         return Monitor.makeHashCode(object);
     }
 

@@ -111,7 +111,7 @@ public class HashableLockword64 extends ModalLockword64 {
     /**
      * Installs the given hashcode into a <i>copy</i> of this {@code HashableLockword64}. The copied
      * lock word is returned.
-     *
+     * <p/>
      * Note: It is assumed that this lock word does not contain an existing hashcode.
      *
      * @param hashcode the hashcode to install
@@ -119,7 +119,6 @@ public class HashableLockword64 extends ModalLockword64 {
      */
     @INLINE
     public final HashableLockword64 setHashcode(int hashcode) {
-	assert ((hashcode & 0xfff00000) == 0);
         return HashableLockword64.from(asAddress().or(Address.fromUnsignedInt(hashcode).shiftedLeft(HASHCODE_SHIFT)));
     }
 }

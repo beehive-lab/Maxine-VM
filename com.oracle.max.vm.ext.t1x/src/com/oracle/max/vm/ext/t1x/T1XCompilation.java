@@ -65,7 +65,7 @@ import static com.sun.max.vm.stack.JVMSFrameLayout.JVMS_SLOT_SIZE;
 
 /**
  * T1X per-compilation information.
- * <p>
+ * <p/>
  * This class is designed such that a single instance can be re-used for
  * separate compilations.
  */
@@ -100,7 +100,7 @@ public abstract class T1XCompilation {
             SP_WORD_ADDRESSES_CACHE[i] = new CiAddress(WordUtil.archKind(), SP, i * JVMS_SLOT_SIZE);
         }
         for (int i = 0; i < SP_LONG_ADDRESSES_CACHE.length; i++) {
-            SP_LONG_ADDRESSES_CACHE[i] = new CiAddress(CiKind.Long, SP,  (i + 1) * JVMS_SLOT_SIZE);
+            SP_LONG_ADDRESSES_CACHE[i] = new CiAddress(CiKind.Long, SP, (i + 1) * JVMS_SLOT_SIZE);
         }
         for (int i = 0; i < SP_INT_ADDRESSES_CACHE.length; i++) {
             SP_INT_ADDRESSES_CACHE[i] = new CiAddress(CiKind.Int, SP, (i * JVMS_SLOT_SIZE) + HALFWORD_OFFSET_IN_WORD);
@@ -117,7 +117,7 @@ public abstract class T1XCompilation {
      *
      * @param index an operand stack index where 0 is the top slot, 1 is the slot below it etc
      * @return the effective address of the operand stack slot at index {@code index} from the top stack slot. This
-     *         value can be used for a word-sized access to the operand stack.
+     * value can be used for a word-sized access to the operand stack.
      */
     protected static CiAddress spWord(int index) {
         assert index >= 0;
@@ -132,7 +132,7 @@ public abstract class T1XCompilation {
      *
      * @param index an operand stack index where 0 is the top slot, 1 is the slot below it etc
      * @return the effective address of the operand stack slot at index {@code index} from the top stack slot. This
-     *         value can be used for a int-sized access to the operand stack.
+     * value can be used for a int-sized access to the operand stack.
      */
     protected static CiAddress spInt(int index) {
         assert index >= 0;
@@ -147,7 +147,7 @@ public abstract class T1XCompilation {
      *
      * @param index an operand stack index where 0 is the top slot, 1 is the slot below it etc
      * @return the effective address of the operand stack slot at index {@code index} from the top stack slot. This
-     *         value can be used for accessing a long or double value on the operand stack.
+     * value can be used for accessing a long or double value on the operand stack.
      */
     protected static CiAddress spLong(int index) {
         assert index >= 0;
@@ -419,6 +419,7 @@ public abstract class T1XCompilation {
     class UnsupportedSubroutineException extends RuntimeException {
         final int bci;
         final int opcode;
+
         public UnsupportedSubroutineException(int opcode, int bci) {
             super(Bytecodes.nameOf(opcode) + "@" + bci + " in " + method);
             this.bci = bci;
@@ -463,7 +464,6 @@ public abstract class T1XCompilation {
 
         return newT1XTargetMethod(this, false);
     }
-
 
 
     private T1XTargetMethod compile1(ClassMethodActor method, CodeAttribute codeAttribute, boolean install) {
@@ -583,6 +583,7 @@ public abstract class T1XCompilation {
 
     /**
      * Create a new (subclass) of {@link T1XTargetMethod}.
+     *
      * @param comp
      * @param install
      */
@@ -623,6 +624,7 @@ public abstract class T1XCompilation {
      * By default, returns the template in the associated {@link #compiler compiler}
      * templates array, but may be overridden by a subclass to make the behavior
      * more context sensitive.
+     *
      * @param tag
      */
     protected T1XTemplate getTemplate(T1XTemplateTag tag) {
@@ -639,7 +641,7 @@ public abstract class T1XCompilation {
      * Starts the process of emitting a template.
      * This includes emitting code to copy any arguments from the stack to the
      * relevant parameter locations.
-     * <p>
+     * <p/>
      * A call to this method must be matched with a call to {@link #finish()} or {@link #finish(ClassMethodActor, boolean)}
      * once the code for initializing the non-stack-based template parameters has been emitted.
      *
@@ -654,7 +656,6 @@ public abstract class T1XCompilation {
             for (int i = 0; i < sig.in.length; i++) {
                 Arg a = sig.in[i];
                 if (a.isStack()) {
-		    System.out.println("STACK-start-template " + a.reg.encoding + " " + a.reg.number);
                     initializedArgs |= 1 << i;
                     switch (a.kind.asEnum) {
                         case INT:
@@ -679,10 +680,9 @@ public abstract class T1XCompilation {
                             assert false;
                     }
                 } else {
-			assignInt(scratch,0xdeaddead);
-		                    System.out.println("REG -start-template " + a.reg.encoding + " " + a.reg.number);
+                    //assignInt(scratch,0xdeaddead);
 
-		}		
+                }
 
             }
         }
@@ -694,9 +694,9 @@ public abstract class T1XCompilation {
     protected void finish() {
         assert template != null;
         assert assertArgsAreInitialized();
-	assignInt(scratch,0xd0d0d0d0);
+        assignInt(scratch, 0xd0d0d0d0);
         emitAndRecordSafepoints(template);
-	assignInt(scratch,0xbeefd0d0);
+        assignInt(scratch, 0xbeefd0d0);
         // Adjust the stack to model the net effect of the template including
         // the slot for the value pushed (if any) by the template.
         Sig sig = template.sig;
@@ -735,7 +735,6 @@ public abstract class T1XCompilation {
                 default:
                     assert false : out.kind;
             }
-	System.out.println("PUSHRESONSTACK " + out.reg.encoding + " " + out.reg.number);
         }
         template = null;
         initializedArgs = 0;
@@ -753,15 +752,16 @@ public abstract class T1XCompilation {
         initializedArgs |= argBit;
         return true;
     }
+
     protected final boolean assertInitializeArgARMV7(Arg a, int n) {
-	int argBit = 1 << n;
+        int argBit = 1 << n;
         if ((initializedArgs & argBit) != 0) {
             throw new AssertionError(template + ": parameter " + n + " (\"" + a.name + "\") is already initialized");
         }
         initializedArgs |= argBit;
         return true;
 
-     }
+    }
 
     /**
      * Asserts that all the arguments of the current template have been initialized.
@@ -825,7 +825,7 @@ public abstract class T1XCompilation {
         if (template.objectLiterals != null) {
             for (ObjectLiteral literal : template.objectLiterals) {
                 int index = objectLiterals.size();
-		//Log.print("LITERALS "); Log.println(literal.value.toString());
+                //Log.print("LITERALS "); Log.println(literal.value.toString());
                 objectLiterals.add(literal.value);
                 for (int pos : literal.patchPosns) {
                     int patchPos = pos + buf.position();
@@ -839,7 +839,7 @@ public abstract class T1XCompilation {
     /**
      * Records a patch site for a load of an object literal.
      *
-     * @param index the index in {@link #objectLiterals} of the object
+     * @param index    the index in {@link #objectLiterals} of the object
      * @param patchPos the position in the generated code that must be {@linkplain T1XCompilation#fixup() patched}
      */
     protected abstract void addObjectLiteralPatch(int index, int patchPos);
@@ -860,13 +860,19 @@ public abstract class T1XCompilation {
     }
 
     protected abstract void loadInt(CiRegister dst, int index);
+
     protected abstract void loadLong(CiRegister dst, int index);
+
     protected abstract void loadWord(CiRegister dst, int index);
+
     protected abstract void loadObject(CiRegister dst, int index);
 
     protected abstract void storeInt(CiRegister src, int index);
+
     protected abstract void storeLong(CiRegister src, int index);
+
     protected abstract void storeWord(CiRegister src, int index);
+
     protected abstract void storeObject(CiRegister src, int index);
 
     /**
@@ -1030,11 +1036,11 @@ public abstract class T1XCompilation {
     /**
      * Emits an indirect call instruction.
      *
-     * @param target the register holding the address of the call target
+     * @param target             the register holding the address of the call target
      * @param receiverStackIndex the index of the receiver which must be copied from the stack to the receiver register
-     *            used by the optimizing compiler. This is required so that dynamic trampolines can find the receiver in
-     *            the expected register. If {@code receiverStackIndex == -1}, then the copy is not emitted as
-     *            {@code target} is guaranteed to not be the address of a trampoline.
+     *                           used by the optimizing compiler. This is required so that dynamic trampolines can find the receiver in
+     *                           the expected register. If {@code receiverStackIndex == -1}, then the copy is not emitted as
+     *                           {@code target} is guaranteed to not be the address of a trampoline.
      * @return the {@linkplain Safepoints safepoint} for the call
      */
     protected abstract int callIndirect(CiRegister target, int receiverStackIndex);
@@ -1044,7 +1050,7 @@ public abstract class T1XCompilation {
      * When assertions are enabled, this method also checks the index, name and kind
      * of the parameter and ensures it is not being initialized more than once.
      *
-     * @param n the index of the parameter
+     * @param n    the index of the parameter
      * @param name the expected name of the parameter
      * @param kind the expected kind of the parameter
      * @return the register for parameter {@code n} of the current template.
@@ -1202,210 +1208,606 @@ public abstract class T1XCompilation {
         beginBytecode(opcode);
         switch (opcode) {
             // Checkstyle: stop
-            case Bytecodes.NOP                : bciToPos[stream.currentBCI()] = buf.position(); break;
-            case Bytecodes.AALOAD             : do_aaload(); break;
-            case Bytecodes.AASTORE            : do_aastore(); break;
-            case Bytecodes.ACONST_NULL        : do_oconst(null); break;
-            case Bytecodes.ARRAYLENGTH        : do_arraylength(); break;
-            case Bytecodes.ATHROW             : do_athrow(); break;
-            case Bytecodes.BALOAD             : do_baload(); break;
-            case Bytecodes.BASTORE            : do_bastore(); break;
-            case Bytecodes.CALOAD             : do_caload(); break;
-            case Bytecodes.CASTORE            : do_castore(); break;
-            case Bytecodes.D2F                : do_d2f(); break;
-            case Bytecodes.D2I                : do_d2i(); break;
-            case Bytecodes.D2L                : do_d2l(); break;
-            case Bytecodes.DADD               : do_dadd(); break;
-            case Bytecodes.DALOAD             : do_daload(); break;
-            case Bytecodes.DASTORE            : do_dastore(); break;
-            case Bytecodes.DCMPG              : do_dcmpg(); break;
-            case Bytecodes.DCMPL              : do_dcmpl(); break;
-            case Bytecodes.DDIV               : do_ddiv(); break;
-            case Bytecodes.DMUL               : do_dmul(); break;
-            case Bytecodes.DREM               : do_drem(); break;
-            case Bytecodes.DSUB               : do_dsub(); break;
-            case Bytecodes.DUP                : do_dup(); break;
-            case Bytecodes.DUP2               : do_dup2(); break;
-            case Bytecodes.DUP2_X1            : do_dup2_x1(); break;
-            case Bytecodes.DUP2_X2            : do_dup2_x2(); break;
-            case Bytecodes.DUP_X1             : do_dup_x1(); break;
-            case Bytecodes.DUP_X2             : do_dup_x2(); break;
-            case Bytecodes.F2D                : do_f2d(); break;
-            case Bytecodes.F2I                : do_f2i(); break;
-            case Bytecodes.F2L                : do_f2l(); break;
-            case Bytecodes.FADD               : do_fadd(); break;
-            case Bytecodes.FALOAD             : do_faload(); break;
-            case Bytecodes.FASTORE            : do_fastore(); break;
-            case Bytecodes.FCMPG              : do_fcmpg(); break;
-            case Bytecodes.FCMPL              : do_fcmpl(); break;
-            case Bytecodes.FDIV               : do_fdiv(); break;
-            case Bytecodes.FMUL               : do_fmul(); break;
-            case Bytecodes.FREM               : do_frem(); break;
-            case Bytecodes.FSUB               : do_fsub(); break;
-            case Bytecodes.I2B                : do_i2b(); break;
-            case Bytecodes.I2C                : do_i2c(); break;
-            case Bytecodes.I2D                : do_i2d(); break;
-            case Bytecodes.I2F                : do_i2f(); break;
-            case Bytecodes.I2L                : do_i2l(); break;
-            case Bytecodes.I2S                : do_i2s(); break;
-            case Bytecodes.IADD               : do_iadd(); break;
-            case Bytecodes.IALOAD             : do_iaload(); break;
-            case Bytecodes.IAND               : do_iand(); break;
-            case Bytecodes.IASTORE            : do_iastore(); break;
-            case Bytecodes.ICONST_0           : do_iconst(0); break;
-            case Bytecodes.ICONST_1           : do_iconst(1); break;
-            case Bytecodes.ICONST_2           : do_iconst(2); break;
-            case Bytecodes.ICONST_3           : do_iconst(3); break;
-            case Bytecodes.ICONST_4           : do_iconst(4); break;
-            case Bytecodes.ICONST_5           : do_iconst(5); break;
-            case Bytecodes.ICONST_M1          : do_iconst(-1); break;
-            case Bytecodes.IDIV               : do_idiv(); break;
-            case Bytecodes.IMUL               : do_imul(); break;
-            case Bytecodes.INEG               : do_ineg(); break;
-            case Bytecodes.IOR                : do_ior(); break;
-            case Bytecodes.IREM               : do_irem(); break;
-            case Bytecodes.ISHL               : do_ishl(); break;
-            case Bytecodes.ISHR               : do_ishr(); break;
-            case Bytecodes.ISUB               : do_isub(); break;
-            case Bytecodes.IUSHR              : do_iushr(); break;
-            case Bytecodes.IXOR               : do_ixor(); break;
-            case Bytecodes.L2D                : do_l2d(); break;
-            case Bytecodes.L2F                : do_l2f(); break;
-            case Bytecodes.L2I                : do_l2i(); break;
-            case Bytecodes.LADD               : do_ladd(); break;
-            case Bytecodes.LALOAD             : do_laload(); break;
-            case Bytecodes.LAND               : do_land(); break;
-            case Bytecodes.LASTORE            : do_lastore(); break;
-            case Bytecodes.LCMP               : do_lcmp(); break;
-            case Bytecodes.LDIV               : do_ldiv(); break;
-            case Bytecodes.LMUL               : do_lmul(); break;
-            case Bytecodes.LNEG               : do_lneg(); break;
-            case Bytecodes.LOR                : do_lor(); break;
-            case Bytecodes.LREM               : do_lrem(); break;
-            case Bytecodes.LSHL               : do_lshl(); break;
-            case Bytecodes.LSHR               : do_lshr(); break;
-            case Bytecodes.LSUB               : do_lsub(); break;
-            case Bytecodes.LUSHR              : do_lushr(); break;
-            case Bytecodes.LXOR               : do_lxor(); break;
-            case Bytecodes.MONITORENTER       : do_monitorenter(); break;
-            case Bytecodes.MONITOREXIT        : do_monitorexit(); break;
-            case Bytecodes.POP                : do_pop(); break;
-            case Bytecodes.POP2               : do_pop2(); break;
-            case Bytecodes.SALOAD             : do_saload(); break;
-            case Bytecodes.SASTORE            : do_sastore(); break;
-            case Bytecodes.SWAP               : do_swap(); break;
-            case Bytecodes.LCONST_0           : do_lconst(0L); break;
-            case Bytecodes.LCONST_1           : do_lconst(1L); break;
-            case Bytecodes.DCONST_0           : do_dconst(0D); break;
-            case Bytecodes.DCONST_1           : do_dconst(1D); break;
-            case Bytecodes.DNEG               : do_dneg(); break;
-            case Bytecodes.FCONST_0           : do_fconst(0F); break;
-            case Bytecodes.FCONST_1           : do_fconst(1F); break;
-            case Bytecodes.FCONST_2           : do_fconst(2F); break;
-            case Bytecodes.FNEG               : do_fneg(); break;
-            case Bytecodes.ARETURN            : do_return(ARETURN, ARETURN$unlock); break;
-            case Bytecodes.DRETURN            : do_return(DRETURN, DRETURN$unlock); break;
-            case Bytecodes.FRETURN            : do_return(FRETURN, FRETURN$unlock); break;
-            case Bytecodes.IRETURN            : do_return(IRETURN, IRETURN$unlock); break;
-            case Bytecodes.LRETURN            : do_return(LRETURN, LRETURN$unlock); break;
-            case Bytecodes.RETURN             : do_return(RETURN, RETURN$unlock); break;
-            case Bytecodes.ALOAD              : do_load(stream.readLocalIndex(), Kind.REFERENCE); break;
-            case Bytecodes.ALOAD_0            : do_load(0, Kind.REFERENCE); break;
-            case Bytecodes.ALOAD_1            : do_load(1, Kind.REFERENCE); break;
-            case Bytecodes.ALOAD_2            : do_load(2, Kind.REFERENCE); break;
-            case Bytecodes.ALOAD_3            : do_load(3, Kind.REFERENCE); break;
-            case Bytecodes.ASTORE             : do_store(stream.readLocalIndex(), Kind.REFERENCE); break;
-            case Bytecodes.ASTORE_0           : do_store(0, Kind.REFERENCE); break;
-            case Bytecodes.ASTORE_1           : do_store(1, Kind.REFERENCE); break;
-            case Bytecodes.ASTORE_2           : do_store(2, Kind.REFERENCE); break;
-            case Bytecodes.ASTORE_3           : do_store(3, Kind.REFERENCE); break;
-            case Bytecodes.DLOAD              : do_load(stream.readLocalIndex(), Kind.DOUBLE); break;
-            case Bytecodes.DLOAD_0            : do_load(0, Kind.DOUBLE); break;
-            case Bytecodes.DLOAD_1            : do_load(1, Kind.DOUBLE); break;
-            case Bytecodes.DLOAD_2            : do_load(2, Kind.DOUBLE); break;
-            case Bytecodes.DLOAD_3            : do_load(3, Kind.DOUBLE); break;
-            case Bytecodes.DSTORE             : do_store(stream.readLocalIndex(), Kind.DOUBLE); break;
-            case Bytecodes.DSTORE_0           : do_store(0, Kind.DOUBLE); break;
-            case Bytecodes.DSTORE_1           : do_store(1, Kind.DOUBLE); break;
-            case Bytecodes.DSTORE_2           : do_store(2, Kind.DOUBLE); break;
-            case Bytecodes.DSTORE_3           : do_store(3, Kind.DOUBLE); break;
-            case Bytecodes.FLOAD              : do_load(stream.readLocalIndex(), Kind.FLOAT); break;
-            case Bytecodes.FLOAD_0            : do_load(0, Kind.FLOAT); break;
-            case Bytecodes.FLOAD_1            : do_load(1, Kind.FLOAT); break;
-            case Bytecodes.FLOAD_2            : do_load(2, Kind.FLOAT); break;
-            case Bytecodes.FLOAD_3            : do_load(3, Kind.FLOAT); break;
-            case Bytecodes.FSTORE             : do_store(stream.readLocalIndex(), Kind.FLOAT); break;
-            case Bytecodes.FSTORE_0           : do_store(0, Kind.FLOAT); break;
-            case Bytecodes.FSTORE_1           : do_store(1, Kind.FLOAT); break;
-            case Bytecodes.FSTORE_2           : do_store(2, Kind.FLOAT); break;
-            case Bytecodes.FSTORE_3           : do_store(3, Kind.FLOAT); break;
-            case Bytecodes.ILOAD              : do_load(stream.readLocalIndex(), Kind.INT); break;
-            case Bytecodes.ILOAD_0            : do_load(0, Kind.INT); break;
-            case Bytecodes.ILOAD_1            : do_load(1, Kind.INT); break;
-            case Bytecodes.ILOAD_2            : do_load(2, Kind.INT); break;
-            case Bytecodes.ILOAD_3            : do_load(3, Kind.INT); break;
-            case Bytecodes.ISTORE             : do_store(stream.readLocalIndex(), Kind.INT); break;
-            case Bytecodes.ISTORE_0           : do_store(0, Kind.INT); break;
-            case Bytecodes.ISTORE_1           : do_store(1, Kind.INT); break;
-            case Bytecodes.ISTORE_2           : do_store(2, Kind.INT); break;
-            case Bytecodes.ISTORE_3           : do_store(3, Kind.INT); break;
-            case Bytecodes.LLOAD              : do_load(stream.readLocalIndex(), Kind.LONG); break;
-            case Bytecodes.LLOAD_0            : do_load(0, Kind.LONG); break;
-            case Bytecodes.LLOAD_1            : do_load(1, Kind.LONG); break;
-            case Bytecodes.LLOAD_2            : do_load(2, Kind.LONG); break;
-            case Bytecodes.LLOAD_3            : do_load(3, Kind.LONG); break;
-            case Bytecodes.LSTORE             : do_store(stream.readLocalIndex(), Kind.LONG); break;
-            case Bytecodes.LSTORE_0           : do_store(0, Kind.LONG); break;
-            case Bytecodes.LSTORE_1           : do_store(1, Kind.LONG); break;
-            case Bytecodes.LSTORE_2           : do_store(2, Kind.LONG); break;
-            case Bytecodes.LSTORE_3           : do_store(3, Kind.LONG); break;
-            case Bytecodes.IFEQ               : do_branch(Bytecodes.IFEQ, stream.readBranchDest()); break;
-            case Bytecodes.IFNE               : do_branch(Bytecodes.IFNE, stream.readBranchDest()); break;
-            case Bytecodes.IFLE               : do_branch(Bytecodes.IFLE, stream.readBranchDest()); break;
-            case Bytecodes.IFLT               : do_branch(Bytecodes.IFLT, stream.readBranchDest()); break;
-            case Bytecodes.IFGE               : do_branch(Bytecodes.IFGE, stream.readBranchDest()); break;
-            case Bytecodes.IFGT               : do_branch(Bytecodes.IFGT, stream.readBranchDest()); break;
-            case Bytecodes.IF_ICMPEQ          : do_branch(Bytecodes.IF_ICMPEQ, stream.readBranchDest()); break;
-            case Bytecodes.IF_ICMPNE          : do_branch(Bytecodes.IF_ICMPNE, stream.readBranchDest()); break;
-            case Bytecodes.IF_ICMPGE          : do_branch(Bytecodes.IF_ICMPGE, stream.readBranchDest()); break;
-            case Bytecodes.IF_ICMPGT          : do_branch(Bytecodes.IF_ICMPGT, stream.readBranchDest()); break;
-            case Bytecodes.IF_ICMPLE          : do_branch(Bytecodes.IF_ICMPLE, stream.readBranchDest()); break;
-            case Bytecodes.IF_ICMPLT          : do_branch(Bytecodes.IF_ICMPLT, stream.readBranchDest()); break;
-            case Bytecodes.IF_ACMPEQ          : do_branch(Bytecodes.IF_ACMPEQ, stream.readBranchDest()); break;
-            case Bytecodes.IF_ACMPNE          : do_branch(Bytecodes.IF_ACMPNE, stream.readBranchDest()); break;
-            case Bytecodes.IFNULL             : do_branch(Bytecodes.IFNULL, stream.readBranchDest()); break;
-            case Bytecodes.IFNONNULL          : do_branch(Bytecodes.IFNONNULL, stream.readBranchDest()); break;
-            case Bytecodes.GOTO               : do_branch(Bytecodes.GOTO, stream.readBranchDest()); break;
-            case Bytecodes.GOTO_W             : do_branch(Bytecodes.GOTO_W, stream.readFarBranchDest()); break;
-            case Bytecodes.GETFIELD           : do_fieldAccess(GETFIELDS, stream.readCPI()); break;
-            case Bytecodes.GETSTATIC          : do_fieldAccess(GETSTATICS, stream.readCPI()); break;
-            case Bytecodes.PUTFIELD           : do_fieldAccess(PUTFIELDS, stream.readCPI()); break;
-            case Bytecodes.PUTSTATIC          : do_fieldAccess(PUTSTATICS, stream.readCPI()); break;
-            case Bytecodes.ANEWARRAY          : do_anewarray(stream.readCPI()); break;
-            case Bytecodes.CHECKCAST          : do_checkcast(stream.readCPI()); break;
-            case Bytecodes.INSTANCEOF         : do_instanceof(stream.readCPI()); break;
-            case Bytecodes.BIPUSH             : do_iconst(stream.readByte()); break;
-            case Bytecodes.SIPUSH             : do_iconst(stream.readShort()); break;
-            case Bytecodes.NEW                : do_new(stream.readCPI()); break;
-            case Bytecodes.INVOKESPECIAL      : do_invokespecial(stream.readCPI()); break;
-            case Bytecodes.INVOKESTATIC       : do_invokestatic(stream.readCPI()); break;
-            case Bytecodes.INVOKEVIRTUAL      : do_invokevirtual(stream.readCPI()); break;
-            case Bytecodes.INVOKEINTERFACE    : do_invokeinterface(stream.readCPI()); break;
-            case Bytecodes.NEWARRAY           : do_newarray(stream.readLocalIndex()); break;
-            case Bytecodes.LDC                : do_ldc(stream.readCPI()); break;
-            case Bytecodes.LDC_W              : do_ldc(stream.readCPI()); break;
-            case Bytecodes.LDC2_W             : do_ldc(stream.readCPI()); break;
-            case Bytecodes.TABLESWITCH        : do_tableswitch(); break;
-            case Bytecodes.LOOKUPSWITCH       : do_lookupswitch(); break;
-            case Bytecodes.IINC               : do_iinc(stream.readLocalIndex(), stream.readIncrement()); break;
-            case Bytecodes.MULTIANEWARRAY     : do_multianewarray(stream.readCPI(), stream.readUByte(stream.currentBCI() + 3)); break;
-            case Bytecodes.RET                :
-            case Bytecodes.JSR_W              :
-            case Bytecodes.JSR                : throw new UnsupportedSubroutineException(opcode, stream.currentBCI());
+            case Bytecodes.NOP:
+                bciToPos[stream.currentBCI()] = buf.position();
+                break;
+            case Bytecodes.AALOAD:
+                do_aaload();
+                break;
+            case Bytecodes.AASTORE:
+                do_aastore();
+                break;
+            case Bytecodes.ACONST_NULL:
+                do_oconst(null);
+                break;
+            case Bytecodes.ARRAYLENGTH:
+                do_arraylength();
+                break;
+            case Bytecodes.ATHROW:
+                do_athrow();
+                break;
+            case Bytecodes.BALOAD:
+                do_baload();
+                break;
+            case Bytecodes.BASTORE:
+                do_bastore();
+                break;
+            case Bytecodes.CALOAD:
+                do_caload();
+                break;
+            case Bytecodes.CASTORE:
+                do_castore();
+                break;
+            case Bytecodes.D2F:
+                do_d2f();
+                break;
+            case Bytecodes.D2I:
+                do_d2i();
+                break;
+            case Bytecodes.D2L:
+                do_d2l();
+                break;
+            case Bytecodes.DADD:
+                do_dadd();
+                break;
+            case Bytecodes.DALOAD:
+                do_daload();
+                break;
+            case Bytecodes.DASTORE:
+                do_dastore();
+                break;
+            case Bytecodes.DCMPG:
+                do_dcmpg();
+                break;
+            case Bytecodes.DCMPL:
+                do_dcmpl();
+                break;
+            case Bytecodes.DDIV:
+                do_ddiv();
+                break;
+            case Bytecodes.DMUL:
+                do_dmul();
+                break;
+            case Bytecodes.DREM:
+                do_drem();
+                break;
+            case Bytecodes.DSUB:
+                do_dsub();
+                break;
+            case Bytecodes.DUP:
+                do_dup();
+                break;
+            case Bytecodes.DUP2:
+                do_dup2();
+                break;
+            case Bytecodes.DUP2_X1:
+                do_dup2_x1();
+                break;
+            case Bytecodes.DUP2_X2:
+                do_dup2_x2();
+                break;
+            case Bytecodes.DUP_X1:
+                do_dup_x1();
+                break;
+            case Bytecodes.DUP_X2:
+                do_dup_x2();
+                break;
+            case Bytecodes.F2D:
+                do_f2d();
+                break;
+            case Bytecodes.F2I:
+                do_f2i();
+                break;
+            case Bytecodes.F2L:
+                do_f2l();
+                break;
+            case Bytecodes.FADD:
+                do_fadd();
+                break;
+            case Bytecodes.FALOAD:
+                do_faload();
+                break;
+            case Bytecodes.FASTORE:
+                do_fastore();
+                break;
+            case Bytecodes.FCMPG:
+                do_fcmpg();
+                break;
+            case Bytecodes.FCMPL:
+                do_fcmpl();
+                break;
+            case Bytecodes.FDIV:
+                do_fdiv();
+                break;
+            case Bytecodes.FMUL:
+                do_fmul();
+                break;
+            case Bytecodes.FREM:
+                do_frem();
+                break;
+            case Bytecodes.FSUB:
+                do_fsub();
+                break;
+            case Bytecodes.I2B:
+                do_i2b();
+                break;
+            case Bytecodes.I2C:
+                do_i2c();
+                break;
+            case Bytecodes.I2D:
+                do_i2d();
+                break;
+            case Bytecodes.I2F:
+                do_i2f();
+                break;
+            case Bytecodes.I2L:
+                do_i2l();
+                break;
+            case Bytecodes.I2S:
+                do_i2s();
+                break;
+            case Bytecodes.IADD:
+                do_iadd();
+                break;
+            case Bytecodes.IALOAD:
+                do_iaload();
+                break;
+            case Bytecodes.IAND:
+                do_iand();
+                break;
+            case Bytecodes.IASTORE:
+                do_iastore();
+                break;
+            case Bytecodes.ICONST_0:
+                do_iconst(0);
+                break;
+            case Bytecodes.ICONST_1:
+                do_iconst(1);
+                break;
+            case Bytecodes.ICONST_2:
+                do_iconst(2);
+                break;
+            case Bytecodes.ICONST_3:
+                do_iconst(3);
+                break;
+            case Bytecodes.ICONST_4:
+                do_iconst(4);
+                break;
+            case Bytecodes.ICONST_5:
+                do_iconst(5);
+                break;
+            case Bytecodes.ICONST_M1:
+                do_iconst(-1);
+                break;
+            case Bytecodes.IDIV:
+                do_idiv();
+                break;
+            case Bytecodes.IMUL:
+                do_imul();
+                break;
+            case Bytecodes.INEG:
+                do_ineg();
+                break;
+            case Bytecodes.IOR:
+                do_ior();
+                break;
+            case Bytecodes.IREM:
+                do_irem();
+                break;
+            case Bytecodes.ISHL:
+                do_ishl();
+                break;
+            case Bytecodes.ISHR:
+                do_ishr();
+                break;
+            case Bytecodes.ISUB:
+                do_isub();
+                break;
+            case Bytecodes.IUSHR:
+                do_iushr();
+                break;
+            case Bytecodes.IXOR:
+                do_ixor();
+                break;
+            case Bytecodes.L2D:
+                do_l2d();
+                break;
+            case Bytecodes.L2F:
+                do_l2f();
+                break;
+            case Bytecodes.L2I:
+                do_l2i();
+                break;
+            case Bytecodes.LADD:
+                do_ladd();
+                break;
+            case Bytecodes.LALOAD:
+                do_laload();
+                break;
+            case Bytecodes.LAND:
+                do_land();
+                break;
+            case Bytecodes.LASTORE:
+                do_lastore();
+                break;
+            case Bytecodes.LCMP:
+                do_lcmp();
+                break;
+            case Bytecodes.LDIV:
+                do_ldiv();
+                break;
+            case Bytecodes.LMUL:
+                do_lmul();
+                break;
+            case Bytecodes.LNEG:
+                do_lneg();
+                break;
+            case Bytecodes.LOR:
+                do_lor();
+                break;
+            case Bytecodes.LREM:
+                do_lrem();
+                break;
+            case Bytecodes.LSHL:
+                do_lshl();
+                break;
+            case Bytecodes.LSHR:
+                do_lshr();
+                break;
+            case Bytecodes.LSUB:
+                do_lsub();
+                break;
+            case Bytecodes.LUSHR:
+                do_lushr();
+                break;
+            case Bytecodes.LXOR:
+                do_lxor();
+                break;
+            case Bytecodes.MONITORENTER:
+                do_monitorenter();
+                break;
+            case Bytecodes.MONITOREXIT:
+                do_monitorexit();
+                break;
+            case Bytecodes.POP:
+                do_pop();
+                break;
+            case Bytecodes.POP2:
+                do_pop2();
+                break;
+            case Bytecodes.SALOAD:
+                do_saload();
+                break;
+            case Bytecodes.SASTORE:
+                do_sastore();
+                break;
+            case Bytecodes.SWAP:
+                do_swap();
+                break;
+            case Bytecodes.LCONST_0:
+                do_lconst(0L);
+                break;
+            case Bytecodes.LCONST_1:
+                do_lconst(1L);
+                break;
+            case Bytecodes.DCONST_0:
+                do_dconst(0D);
+                break;
+            case Bytecodes.DCONST_1:
+                do_dconst(1D);
+                break;
+            case Bytecodes.DNEG:
+                do_dneg();
+                break;
+            case Bytecodes.FCONST_0:
+                do_fconst(0F);
+                break;
+            case Bytecodes.FCONST_1:
+                do_fconst(1F);
+                break;
+            case Bytecodes.FCONST_2:
+                do_fconst(2F);
+                break;
+            case Bytecodes.FNEG:
+                do_fneg();
+                break;
+            case Bytecodes.ARETURN:
+                do_return(ARETURN, ARETURN$unlock);
+                break;
+            case Bytecodes.DRETURN:
+                do_return(DRETURN, DRETURN$unlock);
+                break;
+            case Bytecodes.FRETURN:
+                do_return(FRETURN, FRETURN$unlock);
+                break;
+            case Bytecodes.IRETURN:
+                do_return(IRETURN, IRETURN$unlock);
+                break;
+            case Bytecodes.LRETURN:
+                do_return(LRETURN, LRETURN$unlock);
+                break;
+            case Bytecodes.RETURN:
+                do_return(RETURN, RETURN$unlock);
+                break;
+            case Bytecodes.ALOAD:
+                do_load(stream.readLocalIndex(), Kind.REFERENCE);
+                break;
+            case Bytecodes.ALOAD_0:
+                do_load(0, Kind.REFERENCE);
+                break;
+            case Bytecodes.ALOAD_1:
+                do_load(1, Kind.REFERENCE);
+                break;
+            case Bytecodes.ALOAD_2:
+                do_load(2, Kind.REFERENCE);
+                break;
+            case Bytecodes.ALOAD_3:
+                do_load(3, Kind.REFERENCE);
+                break;
+            case Bytecodes.ASTORE:
+                do_store(stream.readLocalIndex(), Kind.REFERENCE);
+                break;
+            case Bytecodes.ASTORE_0:
+                do_store(0, Kind.REFERENCE);
+                break;
+            case Bytecodes.ASTORE_1:
+                do_store(1, Kind.REFERENCE);
+                break;
+            case Bytecodes.ASTORE_2:
+                do_store(2, Kind.REFERENCE);
+                break;
+            case Bytecodes.ASTORE_3:
+                do_store(3, Kind.REFERENCE);
+                break;
+            case Bytecodes.DLOAD:
+                do_load(stream.readLocalIndex(), Kind.DOUBLE);
+                break;
+            case Bytecodes.DLOAD_0:
+                do_load(0, Kind.DOUBLE);
+                break;
+            case Bytecodes.DLOAD_1:
+                do_load(1, Kind.DOUBLE);
+                break;
+            case Bytecodes.DLOAD_2:
+                do_load(2, Kind.DOUBLE);
+                break;
+            case Bytecodes.DLOAD_3:
+                do_load(3, Kind.DOUBLE);
+                break;
+            case Bytecodes.DSTORE:
+                do_store(stream.readLocalIndex(), Kind.DOUBLE);
+                break;
+            case Bytecodes.DSTORE_0:
+                do_store(0, Kind.DOUBLE);
+                break;
+            case Bytecodes.DSTORE_1:
+                do_store(1, Kind.DOUBLE);
+                break;
+            case Bytecodes.DSTORE_2:
+                do_store(2, Kind.DOUBLE);
+                break;
+            case Bytecodes.DSTORE_3:
+                do_store(3, Kind.DOUBLE);
+                break;
+            case Bytecodes.FLOAD:
+                do_load(stream.readLocalIndex(), Kind.FLOAT);
+                break;
+            case Bytecodes.FLOAD_0:
+                do_load(0, Kind.FLOAT);
+                break;
+            case Bytecodes.FLOAD_1:
+                do_load(1, Kind.FLOAT);
+                break;
+            case Bytecodes.FLOAD_2:
+                do_load(2, Kind.FLOAT);
+                break;
+            case Bytecodes.FLOAD_3:
+                do_load(3, Kind.FLOAT);
+                break;
+            case Bytecodes.FSTORE:
+                do_store(stream.readLocalIndex(), Kind.FLOAT);
+                break;
+            case Bytecodes.FSTORE_0:
+                do_store(0, Kind.FLOAT);
+                break;
+            case Bytecodes.FSTORE_1:
+                do_store(1, Kind.FLOAT);
+                break;
+            case Bytecodes.FSTORE_2:
+                do_store(2, Kind.FLOAT);
+                break;
+            case Bytecodes.FSTORE_3:
+                do_store(3, Kind.FLOAT);
+                break;
+            case Bytecodes.ILOAD:
+                do_load(stream.readLocalIndex(), Kind.INT);
+                break;
+            case Bytecodes.ILOAD_0:
+                do_load(0, Kind.INT);
+                break;
+            case Bytecodes.ILOAD_1:
+                do_load(1, Kind.INT);
+                break;
+            case Bytecodes.ILOAD_2:
+                do_load(2, Kind.INT);
+                break;
+            case Bytecodes.ILOAD_3:
+                do_load(3, Kind.INT);
+                break;
+            case Bytecodes.ISTORE:
+                do_store(stream.readLocalIndex(), Kind.INT);
+                break;
+            case Bytecodes.ISTORE_0:
+                do_store(0, Kind.INT);
+                break;
+            case Bytecodes.ISTORE_1:
+                do_store(1, Kind.INT);
+                break;
+            case Bytecodes.ISTORE_2:
+                do_store(2, Kind.INT);
+                break;
+            case Bytecodes.ISTORE_3:
+                do_store(3, Kind.INT);
+                break;
+            case Bytecodes.LLOAD:
+                do_load(stream.readLocalIndex(), Kind.LONG);
+                break;
+            case Bytecodes.LLOAD_0:
+                do_load(0, Kind.LONG);
+                break;
+            case Bytecodes.LLOAD_1:
+                do_load(1, Kind.LONG);
+                break;
+            case Bytecodes.LLOAD_2:
+                do_load(2, Kind.LONG);
+                break;
+            case Bytecodes.LLOAD_3:
+                do_load(3, Kind.LONG);
+                break;
+            case Bytecodes.LSTORE:
+                do_store(stream.readLocalIndex(), Kind.LONG);
+                break;
+            case Bytecodes.LSTORE_0:
+                do_store(0, Kind.LONG);
+                break;
+            case Bytecodes.LSTORE_1:
+                do_store(1, Kind.LONG);
+                break;
+            case Bytecodes.LSTORE_2:
+                do_store(2, Kind.LONG);
+                break;
+            case Bytecodes.LSTORE_3:
+                do_store(3, Kind.LONG);
+                break;
+            case Bytecodes.IFEQ:
+                do_branch(Bytecodes.IFEQ, stream.readBranchDest());
+                break;
+            case Bytecodes.IFNE:
+                do_branch(Bytecodes.IFNE, stream.readBranchDest());
+                break;
+            case Bytecodes.IFLE:
+                do_branch(Bytecodes.IFLE, stream.readBranchDest());
+                break;
+            case Bytecodes.IFLT:
+                do_branch(Bytecodes.IFLT, stream.readBranchDest());
+                break;
+            case Bytecodes.IFGE:
+                do_branch(Bytecodes.IFGE, stream.readBranchDest());
+                break;
+            case Bytecodes.IFGT:
+                do_branch(Bytecodes.IFGT, stream.readBranchDest());
+                break;
+            case Bytecodes.IF_ICMPEQ:
+                do_branch(Bytecodes.IF_ICMPEQ, stream.readBranchDest());
+                break;
+            case Bytecodes.IF_ICMPNE:
+                do_branch(Bytecodes.IF_ICMPNE, stream.readBranchDest());
+                break;
+            case Bytecodes.IF_ICMPGE:
+                do_branch(Bytecodes.IF_ICMPGE, stream.readBranchDest());
+                break;
+            case Bytecodes.IF_ICMPGT:
+                do_branch(Bytecodes.IF_ICMPGT, stream.readBranchDest());
+                break;
+            case Bytecodes.IF_ICMPLE:
+                do_branch(Bytecodes.IF_ICMPLE, stream.readBranchDest());
+                break;
+            case Bytecodes.IF_ICMPLT:
+                do_branch(Bytecodes.IF_ICMPLT, stream.readBranchDest());
+                break;
+            case Bytecodes.IF_ACMPEQ:
+                do_branch(Bytecodes.IF_ACMPEQ, stream.readBranchDest());
+                break;
+            case Bytecodes.IF_ACMPNE:
+                do_branch(Bytecodes.IF_ACMPNE, stream.readBranchDest());
+                break;
+            case Bytecodes.IFNULL:
+                do_branch(Bytecodes.IFNULL, stream.readBranchDest());
+                break;
+            case Bytecodes.IFNONNULL:
+                do_branch(Bytecodes.IFNONNULL, stream.readBranchDest());
+                break;
+            case Bytecodes.GOTO:
+                do_branch(Bytecodes.GOTO, stream.readBranchDest());
+                break;
+            case Bytecodes.GOTO_W:
+                do_branch(Bytecodes.GOTO_W, stream.readFarBranchDest());
+                break;
+            case Bytecodes.GETFIELD:
+                do_fieldAccess(GETFIELDS, stream.readCPI());
+                break;
+            case Bytecodes.GETSTATIC:
+                do_fieldAccess(GETSTATICS, stream.readCPI());
+                break;
+            case Bytecodes.PUTFIELD:
+                do_fieldAccess(PUTFIELDS, stream.readCPI());
+                break;
+            case Bytecodes.PUTSTATIC:
+                do_fieldAccess(PUTSTATICS, stream.readCPI());
+                break;
+            case Bytecodes.ANEWARRAY:
+                do_anewarray(stream.readCPI());
+                break;
+            case Bytecodes.CHECKCAST:
+                do_checkcast(stream.readCPI());
+                break;
+            case Bytecodes.INSTANCEOF:
+                do_instanceof(stream.readCPI());
+                break;
+            case Bytecodes.BIPUSH:
+                do_iconst(stream.readByte());
+                break;
+            case Bytecodes.SIPUSH:
+                do_iconst(stream.readShort());
+                break;
+            case Bytecodes.NEW:
+                do_new(stream.readCPI());
+                break;
+            case Bytecodes.INVOKESPECIAL:
+                do_invokespecial(stream.readCPI());
+                break;
+            case Bytecodes.INVOKESTATIC:
+                do_invokestatic(stream.readCPI());
+                break;
+            case Bytecodes.INVOKEVIRTUAL:
+                do_invokevirtual(stream.readCPI());
+                break;
+            case Bytecodes.INVOKEINTERFACE:
+                do_invokeinterface(stream.readCPI());
+                break;
+            case Bytecodes.NEWARRAY:
+                do_newarray(stream.readLocalIndex());
+                break;
+            case Bytecodes.LDC:
+                do_ldc(stream.readCPI());
+                break;
+            case Bytecodes.LDC_W:
+                do_ldc(stream.readCPI());
+                break;
+            case Bytecodes.LDC2_W:
+                do_ldc(stream.readCPI());
+                break;
+            case Bytecodes.TABLESWITCH:
+                do_tableswitch();
+                break;
+            case Bytecodes.LOOKUPSWITCH:
+                do_lookupswitch();
+                break;
+            case Bytecodes.IINC:
+                do_iinc(stream.readLocalIndex(), stream.readIncrement());
+                break;
+            case Bytecodes.MULTIANEWARRAY:
+                do_multianewarray(stream.readCPI(), stream.readUByte(stream.currentBCI() + 3));
+                break;
+            case Bytecodes.RET:
+            case Bytecodes.JSR_W:
+            case Bytecodes.JSR:
+                throw new UnsupportedSubroutineException(opcode, stream.currentBCI());
 
-            case Bytecodes.JNICALL            :
-            default                           : throw new CiBailout("Unsupported opcode" + errorSuffix());
-            // Checkstyle: resume
+            case Bytecodes.JNICALL:
+            default:
+                throw new CiBailout("Unsupported opcode" + errorSuffix());
+                // Checkstyle: resume
         }
     }
 
@@ -1505,7 +1907,7 @@ public abstract class T1XCompilation {
     }
 
     protected void do_load(int index, Kind kind) {
-        switch(kind.asEnum) {
+        switch (kind.asEnum) {
             case INT:
             case FLOAT:
                 loadInt(scratch, index);
@@ -1529,7 +1931,7 @@ public abstract class T1XCompilation {
     }
 
     protected void do_store(int index, Kind kind) {
-        switch(kind.asEnum) {
+        switch (kind.asEnum) {
             case INT:
             case FLOAT:
                 peekInt(scratch, 0);
@@ -1552,20 +1954,22 @@ public abstract class T1XCompilation {
         }
     }
 
-    /** Similar to {@link #assignInvokeVirtualTemplateParameters}, allows
+    /**
+     * Similar to {@link #assignInvokeVirtualTemplateParameters}, allows
      * VMA override to consistently pass the {@link FieldActor} to the (VMA) template.
+     *
      * @param fieldActor
      */
     protected void assignFieldAccessParameter(T1XTemplateTag tag, FieldActor fieldActor) {
-	System.out.println("ASSIGNFIELDACCESS");
-	assignInt(scratch,0x10101010);
+        //assignInt(scratch,0x10101010);
         assignInt(1, "offset", fieldActor.offset());
-	assignInt(scratch,0x20202020);
+        //assignInt(scratch,0x20202020);
     }
 
     /**
      * Emit template for a bytecode operating on a (static or dynamic) field.
-     * @param index Index to the field ref constant.
+     *
+     * @param index    Index to the field ref constant.
      * @param template one of getfield, putfield, getstatic, putstatic
      */
     protected void do_fieldAccess(EnumMap<KindEnum, T1XTemplateTag> tags, int index) {
@@ -1579,7 +1983,6 @@ public abstract class T1XCompilation {
                 if (fieldActor.isStatic()) {
                     if (fieldActor.holder().isInitialized()) {
                         start(tag.initialized);
-			System.out.println("field AssignOBJECT");
                         assignObject(0, "staticTuple", fieldActor.holder().staticTuple());
                         assignFieldAccessParameter(tag, fieldActor);
                         finish();
@@ -1600,7 +2003,6 @@ public abstract class T1XCompilation {
             }
         }
         start(tag);
-	System.out.println("do_fieldAccess assignObject");
         assignObject(0, "guard", cp.makeResolutionGuard(index));
         finish();
     }

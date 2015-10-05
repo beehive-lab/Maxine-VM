@@ -93,10 +93,10 @@ public class T1XTargetMethod extends TargetMethod {
 
     /**
      * The frame and register reference maps for this target method.
-     *
+     * <p/>
      * The format of this byte array is described by the following pseudo C declaration:
-     * <p>
-     *
+     * <p/>
+     * <p/>
      * <pre>
      * referenceMaps {
      *     {
@@ -132,7 +132,7 @@ public class T1XTargetMethod extends TargetMethod {
      * <li>A {@link VmThread} instance. This represents a target method whose ref maps are being finalized (by the denoted thread).</li>
      * <li>A {@code null} value. This represents a target method whose ref maps are finalized.</li>
      * </ol>
-     *
+     * <p/>
      * Only the transition from state 1 to state 2 is atomic.
      *
      * @see #finalizeReferenceMaps()
@@ -335,11 +335,11 @@ public class T1XTargetMethod extends TargetMethod {
             CiExceptionHandler[] handlers = comp.handlers;
             CiExceptionHandler[] newHandlers = Arrays.copyOf(handlers, handlers.length + 1);
             CiExceptionHandler syncMethodHandler =
-                new CiExceptionHandler(comp.syncHandlerStartPos,
-                                       comp.syncHandlerEndPos,
-                                       comp.syncMethodHandlerPos,
-                                       SYNC_METHOD_CATCH_TYPE_CPI,
-                                       null);
+                    new CiExceptionHandler(comp.syncHandlerStartPos,
+                            comp.syncHandlerEndPos,
+                            comp.syncMethodHandlerPos,
+                            SYNC_METHOD_CATCH_TYPE_CPI,
+                            null);
             newHandlers[handlers.length] = syncMethodHandler;
 
             // Update the reference maps to cover the local variable holding the copy of the receiver
@@ -401,7 +401,7 @@ public class T1XTargetMethod extends TargetMethod {
         if (isAMD64()) {
             return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else if (isARM()) {
-            return  ARMTargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+            return ARMTargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else {
             return null;
         }
@@ -501,8 +501,8 @@ public class T1XTargetMethod extends TargetMethod {
                 actualValues[i] = toLiveSlot(fa, accessValue);
             }
             debugFrame = new CiFrame(debugFrame.caller(), debugFrame.method, debugFrame.bci,
-                            debugFrame.rethrowException, actualValues,
-                            debugFrame.numLocals, debugFrame.numStack, debugFrame.numLocks);
+                    debugFrame.rethrowException, actualValues,
+                    debugFrame.numLocals, debugFrame.numStack, debugFrame.numLocks);
         }
         return new CiDebugInfo(debugFrame, regRefMap, frameRefMap);
     }
@@ -535,9 +535,9 @@ public class T1XTargetMethod extends TargetMethod {
      *
      * @param ip an instruction pointer that may denote an instruction in this target method
      * @return the start position of the bytecode instruction that is implemented at the instruction pointer or -1 if
-     *         {@code instructionPointer} denotes an instruction that does not correlate to any bytecode.  This will be
-     *         the case when {@code instructionPointer} is not in this target method or is in the adapter frame stub
-     *         code, prologue or epilogue.
+     * {@code instructionPointer} denotes an instruction that does not correlate to any bytecode.  This will be
+     * the case when {@code instructionPointer} is not in this target method or is in the adapter frame stub
+     * code, prologue or epilogue.
      */
     public int bciFor(CodePointer ip) {
         assert bciToPos != null;
@@ -552,8 +552,8 @@ public class T1XTargetMethod extends TargetMethod {
      *
      * @param pos a target code position that may denote an instruction in this method correlated with a bytecode
      * @return the start position of the bytecode instruction that is implemented at {@code pos} or -1 if
-     *         {@code pos} is outside the range(s) of target code positions in this target method that
-     *         correlate with a bytecode.
+     * {@code pos} is outside the range(s) of target code positions in this target method that
+     * correlate with a bytecode.
      */
     public int bciForPos(int pos) {
         assert bciToPos != null;
@@ -657,7 +657,7 @@ public class T1XTargetMethod extends TargetMethod {
     }
 
     private CodePointer throwAddressToCatchAddress(CodePointer ip, Throwable exception, CatchExceptionInfo info) {
-	        //com.sun.max.vm.Log.println("T1XTargetMETHOD");
+        //com.sun.max.vm.Log.println("T1XTargetMETHOD");
 
         if (handlers.length != 0) {
             final int exceptionPos = posFor(ip);
@@ -665,21 +665,21 @@ public class T1XTargetMethod extends TargetMethod {
             if (exceptionBCI != -1) {
                 for (CiExceptionHandler e : handlers) {
                     if (e.catchTypeCPI != SYNC_METHOD_CATCH_TYPE_CPI) {
-			//com.sun.max.vm.Log.print("T1XEXCEPTPOS: ");com.sun.max.vm.Log.println(exceptionPos);
-			//com.sun.max.vm.Log.print("T1XEXCEPTBCI: ");com.sun.max.vm.Log.println(exceptionBCI);
-			//com.sun.max.vm.Log.print("T1XEXCEPT start ");com.sun.max.vm.Log.print(e.startBCI);com.sun.max.vm.Log.print(" end "); com.sun.max.vm.Log.println(e.endBCI);
+                        //com.sun.max.vm.Log.print("T1XEXCEPTPOS: ");com.sun.max.vm.Log.println(exceptionPos);
+                        //com.sun.max.vm.Log.print("T1XEXCEPTBCI: ");com.sun.max.vm.Log.println(exceptionBCI);
+                        //com.sun.max.vm.Log.print("T1XEXCEPT start ");com.sun.max.vm.Log.print(e.startBCI);com.sun.max.vm.Log.print(" end "); com.sun.max.vm.Log.println(e.endBCI);
                         if (e.startBCI <= exceptionBCI && exceptionBCI < e.endBCI) {
                             ClassActor catchType = (ClassActor) e.catchType;
-				//com.sun.max.vm.Log.print("T1XEXCEPT CATCHTYPE ");com.sun.max.vm.Log.println(catchType);
-				//com.sun.max.vm.Log.print("T1XEXCEPT RCLASSA ");com.sun.max.vm.Log.println(ObjectAccess.readClassActor(exception));
+                            //com.sun.max.vm.Log.print("T1XEXCEPT CATCHTYPE ");com.sun.max.vm.Log.println(catchType);
+                            //com.sun.max.vm.Log.print("T1XEXCEPT RCLASSA ");com.sun.max.vm.Log.println(ObjectAccess.readClassActor(exception));
                             if (catchType == null || catchType.isAssignableFrom(ObjectAccess.readClassActor(exception))) {
-				//com.sun.max.vm.Log.println("T1XEXCEPT will be retting");
+                                //com.sun.max.vm.Log.println("T1XEXCEPT will be retting");
                                 int handlerPos = posForBci(e.handlerBCI());
                                 checkHandler(exceptionPos, exceptionBCI, e.handlerBCI, handlerPos);
                                 if (info != null) {
                                     info.bci = e.handlerBCI();
                                 }
-				//com.sun.max.vm.Log.print("T1XEXCEPT the code is "); com.sun.max.vm.Log.println(codeAt(handlerPos));
+                                //com.sun.max.vm.Log.print("T1XEXCEPT the code is "); com.sun.max.vm.Log.println(codeAt(handlerPos));
                                 return codeAt(handlerPos);
 
                             }
@@ -689,8 +689,8 @@ public class T1XTargetMethod extends TargetMethod {
             }
             if (handlers[handlers.length - 1].catchTypeCPI == SYNC_METHOD_CATCH_TYPE_CPI) {
                 CiExceptionHandler syncMethodHandler = handlers[handlers.length - 1];
-		//com.sun.max.vm.Log.print("T1XEXCEPTPOS2 ");com.sun.max.vm.Log.println(exceptionPos);
-		//com.sun.max.vm.Log.print("T1XEXCEPT start ");com.sun.max.vm.Log.print(syncMethodHandler.startBCI);com.sun.max.vm.Log.print(" end ");com.sun.max.vm.Log.println(syncMethodHandler.endBCI);
+                //com.sun.max.vm.Log.print("T1XEXCEPTPOS2 ");com.sun.max.vm.Log.println(exceptionPos);
+                //com.sun.max.vm.Log.print("T1XEXCEPT start ");com.sun.max.vm.Log.print(syncMethodHandler.startBCI);com.sun.max.vm.Log.print(" end ");com.sun.max.vm.Log.println(syncMethodHandler.endBCI);
                 if (syncMethodHandler.startBCI <= exceptionPos && exceptionPos < syncMethodHandler.endBCI) {
                     int handlerPos = syncMethodHandler.handlerBCI;
                     checkHandler(exceptionPos, exceptionBCI, -1, handlerPos);
@@ -698,7 +698,7 @@ public class T1XTargetMethod extends TargetMethod {
                 }
             }
         }
-	com.sun.max.vm.Log.println("T1XEXCEPT ZERO CodePointer for catch address");
+        com.sun.max.vm.Log.println("T1XEXCEPT ZERO CodePointer for catch address");
         return CodePointer.zero();
     }
 
@@ -718,11 +718,11 @@ public class T1XTargetMethod extends TargetMethod {
     private static int getInvokeCPI(byte[] code, int invokeBCI) {
         assert invokeBCI >= 0 : "illegal bytecode index";
         assert
-            code[invokeBCI] == (byte) Bytecodes.INVOKEINTERFACE
-         || code[invokeBCI] == (byte) Bytecodes.INVOKESPECIAL
-         || code[invokeBCI] == (byte) Bytecodes.INVOKESTATIC
-         || code[invokeBCI] == (byte) Bytecodes.INVOKEVIRTUAL
-         :  "expected invoke bytecode at index " + invokeBCI + ", found " + String.format("0x%h", code[invokeBCI]);
+                code[invokeBCI] == (byte) Bytecodes.INVOKEINTERFACE
+                        || code[invokeBCI] == (byte) Bytecodes.INVOKESPECIAL
+                        || code[invokeBCI] == (byte) Bytecodes.INVOKESTATIC
+                        || code[invokeBCI] == (byte) Bytecodes.INVOKEVIRTUAL
+                : "expected invoke bytecode at index " + invokeBCI + ", found " + String.format("0x%h", code[invokeBCI]);
         return ((code[invokeBCI + 1] & 0xff) << 8) | (code[invokeBCI + 2] & 0xff);
     }
 
@@ -732,7 +732,7 @@ public class T1XTargetMethod extends TargetMethod {
      * are covered by a reference map in the callee if necessary. They <b>cannot</b> be covered by a reference map in
      * the T1X method as these slots are seen as local variables in a T1X callee and as such can be overwritten with
      * non-reference values.
-     *
+     * <p/>
      * However, in the case where a T1X method calls into a trampoline, the reference parameters of the call are not
      * covered by any reference map. In this situation, we need to analyze the invokeXXX bytecode at the call site to
      * derive the signature of the call which in turn allows us to mark the parameter stack slots that contain
@@ -1057,7 +1057,7 @@ public class T1XTargetMethod extends TargetMethod {
             if (!wasDisabled) {
                 SafepointPoll.enable();
             }
-        } else  if (isARM()) {
+        } else if (isARM()) {
             StackFrameWalker sfw = current.stackFrameWalker();
             int dispToRip = frameSize() - sizeOfNonParameterLocals();
             Pointer returnRIP = current.fp().plus(dispToRip);
@@ -1104,7 +1104,7 @@ public class T1XTargetMethod extends TargetMethod {
         if (isAMD64() || isARM()) {
             int dispToRip = frameSize() - sizeOfNonParameterLocals();
             return frame.fp().plus(dispToRip);
-        } else  {
+        } else {
             throw unimplISA();
         }
     }
@@ -1215,9 +1215,9 @@ public class T1XTargetMethod extends TargetMethod {
      * Finds the address at which deoptimized execution will continue in this target method
      * based on a BCI specifying the bytecode instruction that should be resumed.
      *
-     * @param info details of current deoptimization
+     * @param info      details of current deoptimization
      * @param exception if non-null, then the returned address will be for the handler of this exception
-     * @param bci the BCI specified by a debug info {@linkplain CiFrame frame}
+     * @param bci       the BCI specified by a debug info {@linkplain CiFrame frame}
      * @param reexecute specifies if the instruction at {@code bci} is to be re-executed
      */
     private CodePointer findContinuationIP(Info info, Throwable exception, int bci, boolean reexecute) throws FatalError {
@@ -1243,8 +1243,8 @@ public class T1XTargetMethod extends TargetMethod {
     /**
      * Finds the address of the instruction after a template call.
      *
-     * @param info details of current deoptimization
-     * @param bci BCI of the bytecode invoke instruction that was translated to a template call
+     * @param info   details of current deoptimization
+     * @param bci    BCI of the bytecode invoke instruction that was translated to a template call
      * @param callee the callee method at bci in this target method, or null if none.
      */
     protected CodePointer findTemplateCallReturnAddress(Info info, int bci, RiMethod callee) throws FatalError {
@@ -1294,12 +1294,11 @@ public class T1XTargetMethod extends TargetMethod {
 @HOSTED_ONLY
 @PLATFORM(cpu = "armv7")
 enum FramePointerStateARMV7 {
-     /**
+    /**
      * RBP holds the frame pointer of the current method activation. caller's RIP is at [RBP + FrameSize], caller's
      * frame pointer is at [RBP + FrameSize -1]
      */
     IN_RBP {
-
         @Override
         Pointer localVariablesBase(StackFrameCursor current) {
             return current.fp();
@@ -1323,7 +1322,6 @@ enum FramePointerStateARMV7 {
      * method or exiting it.
      */
     CALLER_FRAME_IN_RBP {
-
         @Override
         Pointer localVariablesBase(StackFrameCursor current) {
             int offsetToSaveArea = current.targetMethod().frameSize();
@@ -1346,7 +1344,6 @@ enum FramePointerStateARMV7 {
      * WordSize].
      */
     CALLER_FRAME_AT_RBP {
-
         @Override
         Pointer localVariablesBase(StackFrameCursor current) {
             T1XTargetMethod targetMethod = (T1XTargetMethod) current.targetMethod();
@@ -1370,7 +1367,6 @@ enum FramePointerStateARMV7 {
      * The frame pointer for the current activation record is 'RSP + stack slot size'.
      */
     RETURNING_FROM_RUNTIME {
-
         @Override
         Pointer localVariablesBase(StackFrameCursor current) {
             return current.stackFrameWalker().readWord(current.sp(), 0).asPointer();
@@ -1403,6 +1399,7 @@ enum FramePointerStateARMV7 {
 
 
 }
+
 @HOSTED_ONLY
 @PLATFORM(cpu = "amd64")
 enum FramePointerStateAMD64 {
@@ -1411,7 +1408,6 @@ enum FramePointerStateAMD64 {
      * frame pointer is at [RBP + FrameSize -1]
      */
     IN_RBP {
-
         @Override
         Pointer localVariablesBase(StackFrameCursor current) {
             return current.fp();
@@ -1435,7 +1431,6 @@ enum FramePointerStateAMD64 {
      * method or exiting it.
      */
     CALLER_FRAME_IN_RBP {
-
         @Override
         Pointer localVariablesBase(StackFrameCursor current) {
             int offsetToSaveArea = current.targetMethod().frameSize();
@@ -1458,7 +1453,6 @@ enum FramePointerStateAMD64 {
      * WordSize].
      */
     CALLER_FRAME_AT_RBP {
-
         @Override
         Pointer localVariablesBase(StackFrameCursor current) {
             T1XTargetMethod targetMethod = (T1XTargetMethod) current.targetMethod();
@@ -1482,7 +1476,6 @@ enum FramePointerStateAMD64 {
      * The frame pointer for the current activation record is 'RSP + stack slot size'.
      */
     RETURNING_FROM_RUNTIME {
-
         @Override
         Pointer localVariablesBase(StackFrameCursor current) {
             return current.stackFrameWalker().readWord(current.sp(), 0).asPointer();

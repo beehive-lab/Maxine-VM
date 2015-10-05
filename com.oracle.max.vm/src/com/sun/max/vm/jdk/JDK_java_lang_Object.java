@@ -49,8 +49,9 @@ final class JDK_java_lang_Object {
 
     /**
      * Gets the class of this object.
-     * @see java.lang.Object#getClass()
+     *
      * @return the class of this object
+     * @see java.lang.Object#getClass()
      */
     @SUBSTITUTE("getClass")
     public Class getClass_SUBSTITUTE() {
@@ -59,25 +60,26 @@ final class JDK_java_lang_Object {
 
     /**
      * Computes the hashcode of this object.
-     * @see java.lang.Object#hashCode()
+     *
      * @return an integer representing a default hashcode for this object
+     * @see java.lang.Object#hashCode()
      */
     @SUBSTITUTE("hashCode")
     public int hashCode_SUBSTITUTE() {
         if (Platform.target().arch.is32bit()) {
             return 0xfffff & ObjectAccess.makeHashCode(this);
         } else {
-	    com.sun.max.vm.Log.println("NEVER OBJECT!!!!");
             return ObjectAccess.makeHashCode(this);
         }
     }
 
     /**
      * Clone this object, if the operation is supported.
-     * @see java.lang.Object#clone()
+     *
      * @return a new instance of this object, if this operation is supported
      * @throws CloneNotSupportedException if this object does not implement the
-     * {@link java.lang.Cloneable Cloneable} interface
+     *                                    {@link java.lang.Cloneable Cloneable} interface
+     * @see java.lang.Object#clone()
      */
     @SUBSTITUTE("clone")
     public Object clone_SUBSTITUTE() throws CloneNotSupportedException {
@@ -93,6 +95,7 @@ final class JDK_java_lang_Object {
 
     /**
      * Notify one thread waiting on this object's condition variable.
+     *
      * @see java.lang.Object#notify()
      */
     @SUBSTITUTE("notify")
@@ -102,6 +105,7 @@ final class JDK_java_lang_Object {
 
     /**
      * Notify all threads waiting on this object's condition variable.
+     *
      * @see java.lang.Object#notifyAll()
      */
     @SUBSTITUTE("notifyAll")
@@ -113,7 +117,7 @@ final class JDK_java_lang_Object {
      * Wait for this object's condition variable.
      *
      * @param timeout the maximum number of milliseconds to wait; with {@code 0}
-     * indicating an indefinite wait
+     *                indicating an indefinite wait
      * @throws InterruptedException if this thread is interrupted during the wait
      */
     @SUBSTITUTE("wait")

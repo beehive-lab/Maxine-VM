@@ -179,25 +179,25 @@ public class Stubs {
      */
     public int getDispatchTableIndex(TargetMethod stub) {
         assert stub.is(VirtualTrampoline) || stub.is(InterfaceTrampoline);
-	int tmpindex = 0;
+        int tmpindex = 0;
         if (platform().isa == ISA.ARM) {
-	        Pointer callSitePointer = stub.codeStart().toPointer();
+            Pointer callSitePointer = stub.codeStart().toPointer();
 
-                if (((callSitePointer.readByte(3) & 0xff) == 0xe3) && ((callSitePointer.readByte(4 + 3) & 0xff) == 0xe3)) {
-                	tmpindex = (callSitePointer.readByte(4 + 0) & 0xff) | ((callSitePointer.readByte(4 + 1) & 0xf) << 8) | ((callSitePointer.readByte(4 + 2) & 0xf) << 12);
-                	tmpindex = tmpindex << 16;
-                	tmpindex += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
+            if (((callSitePointer.readByte(3) & 0xff) == 0xe3) && ((callSitePointer.readByte(4 + 3) & 0xff) == 0xe3)) {
+                tmpindex = (callSitePointer.readByte(4 + 0) & 0xff) | ((callSitePointer.readByte(4 + 1) & 0xf) << 8) | ((callSitePointer.readByte(4 + 2) & 0xf) << 12);
+                tmpindex = tmpindex << 16;
+                tmpindex += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
 
-		} else {
-			assert 0 == 1 : "Failed to obtian correct getDispatchTableIndex for ARM indexMovInstrn wrong\n";
-		}
-	} else  if(platform().isa == ISA.AMD64) {
-        	tmpindex = stub.codeStart().toPointer().readInt(indexMovInstrPos);
-	} else {
-	 	throw FatalError.unimplemented();
+            } else {
+                assert 0 == 1 : "Failed to obtian correct getDispatchTableIndex for ARM indexMovInstrn wrong\n";
+            }
+        } else if (platform().isa == ISA.AMD64) {
+            tmpindex = stub.codeStart().toPointer().readInt(indexMovInstrPos);
+        } else {
+            throw FatalError.unimplemented();
 
-	}
-	final int index = tmpindex;
+        }
+        final int index = tmpindex;
         //final int index = stub.codeStart().toPointer().readInt(indexMovInstrPos);
         assert stub.is(VirtualTrampoline) ? (virtualTrampolines.size() > index && virtualTrampolines.get(index) == stub) : (interfaceTrampolines.size() > index && interfaceTrampolines.get(index) == stub);
         return index;
@@ -370,9 +370,12 @@ public class Stubs {
         // pcInCaller must be dealt with before any safepoint
         if (VMOptions.verboseOption.verboseCompilation) {
             Log.println("STUBS:resolveVirtualCall");
-	  Log.print("INDEX ");Log.print(vTableIndex);
-	    Log.print("CALLERPC "); Log.println(pcInCaller);
-	    Log.print("RECEIVER ");Log.println(receiver.getClass());
+            Log.print("INDEX ");
+            Log.print(vTableIndex);
+            Log.print("CALLERPC ");
+            Log.println(pcInCaller);
+            Log.print("RECEIVER ");
+            Log.println(receiver.getClass());
         }
         CodePointer cpCallSite = CodePointer.from(pcInCaller);
         if (VMOptions.verboseOption.verboseCompilation) {
@@ -383,10 +386,11 @@ public class Stubs {
 
         final Hub hub = ObjectAccess.readHub(receiver);
         if (VMOptions.verboseOption.verboseCompilation) {
-		//Log.print("RECEIVER ");Log.println(receiver.getClass());
-		//Log.print("HUB ");Log.println(hub);
-		Log.print("index ");Log.println(vTableIndex);
-	}
+            //Log.print("RECEIVER ");Log.println(receiver.getClass());
+            //Log.print("HUB ");Log.println(hub);
+            Log.print("index ");
+            Log.println(vTableIndex);
+        }
 
         final VirtualMethodActor selectedCallee = hub.classActor.getVirtualMethodActorByVTableIndex(vTableIndex);
         if (selectedCallee.isAbstract()) {
@@ -406,9 +410,11 @@ public class Stubs {
         if (Code.bootCodeRegion().contains(cpCallSite.toAddress()) && Code.getCodeManager().getRuntimeBaselineCodeRegion().contains(adjustedEntryPoint.toAddress())) {
             CodeManager.recordBootToBaselineCaller(caller);
         }
-if (VMOptions.verboseOption.verboseCompilation) {
-            Log.print("STUBS:resolvevirtual returns ");Log.println(adjustedEntryPoint.toAddress());
-            Log.print("ORIGINAL pcInCaller ");Log.println(pcInCaller);
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.print("STUBS:resolvevirtual returns ");
+            Log.println(adjustedEntryPoint.toAddress());
+            Log.print("ORIGINAL pcInCaller ");
+            Log.println(pcInCaller);
         }
         return adjustedEntryPoint.toAddress();
     }
@@ -425,27 +431,32 @@ if (VMOptions.verboseOption.verboseCompilation) {
         // pcInCaller must be dealt with before any safepoint
         if (VMOptions.verboseOption.verboseCompilation) {
             Log.println("STUBS:resolveInterfaceCall");
-	    Log.println(receiver.getClass());
+            Log.println(receiver.getClass());
             Log.println(pcInCaller);
 
 
         }
-	
+
 
         CodePointer cpCallSite = CodePointer.from(pcInCaller);
         final TargetMethod caller = cpCallSite.toTargetMethod();
-	if (VMOptions.verboseOption.verboseCompilation) {
-		Log.print("CALLSITE ");Log.println(cpCallSite);
-                Log.print("RECEIVER ");Log.println(receiver.getClass());
-                Log.print("index ");Log.println(iIndex);
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.print("CALLSITE ");
+            Log.println(cpCallSite);
+            Log.print("RECEIVER ");
+            Log.println(receiver.getClass());
+            Log.print("index ");
+            Log.println(iIndex);
         }
 
         final Hub hub = ObjectAccess.readHub(receiver);
         final VirtualMethodActor selectedCallee = hub.classActor.getVirtualMethodActorByIIndex(iIndex);
-	if (VMOptions.verboseOption.verboseCompilation) {
-		Log.print("HUB ");Log.println(hub);
-		Log.print("CALLEE " );Log.println(selectedCallee);
-	}
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.print("HUB ");
+            Log.println(hub);
+            Log.print("CALLEE ");
+            Log.println(selectedCallee);
+        }
         if (selectedCallee.isAbstract()) {
             throw new AbstractMethodError();
         }
@@ -459,9 +470,10 @@ if (VMOptions.verboseOption.verboseCompilation) {
         if (Code.bootCodeRegion().contains(cpCallSite.toAddress()) && Code.getCodeManager().getRuntimeBaselineCodeRegion().contains(adjustedEntryPoint.toAddress())) {
             CodeManager.recordBootToBaselineCaller(caller);
         }
-	 if (VMOptions.verboseOption.verboseCompilation) {
-                Log.print("ADJUSTEDENTRY ");Log.println(adjustedEntryPoint.toAddress());
-	}
+        if (VMOptions.verboseOption.verboseCompilation) {
+            Log.print("ADJUSTEDENTRY ");
+            Log.println(adjustedEntryPoint.toAddress());
+        }
         return adjustedEntryPoint.toAddress();
     }
 
@@ -539,10 +551,10 @@ if (VMOptions.verboseOption.verboseCompilation) {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
-	    asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
-		
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
 
-	    //Label forever = new Label();
+
+            //Label forever = new Label();
             //asm.bind(forever);
             //asm.mov32BitConstant(ARMV7.r12, 0x11111111);
             //asm.branch(forever);
@@ -560,7 +572,7 @@ if (VMOptions.verboseOption.verboseCompilation) {
 	    */
 
             if (isHosted() && index == 0) {
-                indexMovInstrPos = asm.codeBuffer.position() -8;// 2*WordWidth.BITS_32.numberOfBytes;
+                indexMovInstrPos = asm.codeBuffer.position() - 8;// 2*WordWidth.BITS_32.numberOfBytes;
             }
 
             // save all the callee save registers
@@ -580,7 +592,7 @@ if (VMOptions.verboseOption.verboseCompilation) {
             // we will need to test this carefully
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize));
             //asm.movq(args[2].asRegister(), new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize));
-            asm.ldr(ARMV7Assembler.ConditionFlag.Always, args[2].asRegister(), asm.scratchRegister,0);
+            asm.ldr(ARMV7Assembler.ConditionFlag.Always, args[2].asRegister(), asm.scratchRegister, 0);
             // We already have the return address in R14 so jus tmove it rather than doing the load from stack
             //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, args[2].asRegister(), ARMV7.r14);
 
@@ -602,53 +614,52 @@ if (VMOptions.verboseOption.verboseCompilation) {
             // this may well be broken !!!!!!
 
             CiRegister returnReg = registerConfig.getReturnRegister(WordUtil.archKind());
-	    asm.addq(returnReg,4); // BECAUSE IT IS NOT A CALL/BLX AND THE RETURN REGI IS ALREADY PUSHED TO THE STACK
-	    // this is done so when we load this to the PC we do not push the return address!
-	    //NOTE this is the slot used by r12 which we do not really need to restore?
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize-4    ));
+            asm.addq(returnReg, 4); // BECAUSE IT IS NOT A CALL/BLX AND THE RETURN REGI IS ALREADY PUSHED TO THE STACK
+            // this is done so when we load this to the PC we do not push the return address!
+            //NOTE this is the slot used by r12 which we do not really need to restore?
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize - 4));
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize - 8), returnReg);
             asm.str(ARMV7Assembler.ConditionFlag.Always, returnReg, asm.scratchRegister, 0);
 
             // Restore all parameter registers before returning
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
             asm.restore(csl, frameToCSA);
-	    // NEW
-	    //asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize    ));
-	    //asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r14,ARMV7.r12, 0);
+            // NEW
+            //asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize    ));
+            //asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r14,ARMV7.r12, 0);
 
 
             // Adjust RSP as mentioned above and do the 'ret' that lands us in the
             // trampolined-to method.
             //----asm.addq(ARMV7.r13, frameSize-4  ); // points at entry point of trampolined method`
-	    asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize-4    ));
-	    asm.ldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r8, ARMV7.r12, 0);
-	    asm.addq(ARMV7.r13, frameSize);
-	    asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15,ARMV7.r8);
-	    //Label forever2 = new Label();
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize - 4));
+            asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
+            asm.addq(ARMV7.r13, frameSize);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r8);
+            //Label forever2 = new Label();
             //asm.bind(forever2);
             //asm.mov32BitConstant(ARMV7.r12, 0x22222222);
             //asm.branch(forever2);
 
-	    //AUGasm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), 4));
-	    //AUGasm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r14, asm.scratchRegister,0); // set up R14 as if it were a blx.
+            //AUGasm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), 4));
+            //AUGasm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r14, asm.scratchRegister,0); // set up R14 as if it were a blx.
             // the stack slot +4  holds the return address of the caller originially pushed onto the stack
 
 
-	    //asm.addq(ARMV7.r13,8); // basicall we need to get the stack back to the state where it was
-	    //AUGasm.addq(ARMV7.r13,8); // basicall we need to get the stack back to the state where it was
-			// on entry to this method, so that when we LDR R15 then we will 
-			// be able to push the LR back onto the stack etc.
+            //asm.addq(ARMV7.r13,8); // basicall we need to get the stack back to the state where it was
+            //AUGasm.addq(ARMV7.r13,8); // basicall we need to get the stack back to the state where it was
+            // on entry to this method, so that when we LDR R15 then we will
+            // be able to push the LR back onto the stack etc.
             //asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), -8));
-	    //asm.ldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r15,ARMV7.r12,0); 
+            //asm.ldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r15,ARMV7.r12,0);
             //AUGasm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), -8));
-	    //AUGasm.ldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r15,ARMV7.r12,0); 
-	    
-	    
-	    // essentially the LDR does a jump to the trampolined to method.
-	    asm.insertForeverLoop();
-	    //asm.ret(0);
+            //AUGasm.ldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r15,ARMV7.r12,0);
 
-		
+
+            // essentially the LDR does a jump to the trampolined to method.
+            asm.insertForeverLoop();
+            //asm.ret(0);
+
 
             byte[] code = asm.codeBuffer.close(true);
             final Type type = isInterface ? InterfaceTrampoline : VirtualTrampoline;
@@ -691,9 +702,9 @@ if (VMOptions.verboseOption.verboseCompilation) {
 
         // remember calls from boot code region to baseline code cache
         if (Code.bootCodeRegion().contains(cpCallSite.toAddress()) && Code.getCodeManager().getRuntimeBaselineCodeRegion().contains(calleeEntryPoint.toAddress())) {
-		 if (VMOptions.verboseOption.verboseCompilation) {
-            		Log.println("TRAMPOLINE recordBootToBaseline");
-        	}
+            if (VMOptions.verboseOption.verboseCompilation) {
+                Log.println("TRAMPOLINE recordBootToBaseline");
+            }
 
             CodeManager.recordBootToBaselineCaller(caller);
         }
@@ -854,8 +865,8 @@ if (VMOptions.verboseOption.verboseCompilation) {
             // undo the frame
             asm.addq(ARMV7.r13, frameSize);
 
-	    // SAVe r8?
-	    //asm.push(ARMV7Assembler.ConditionFlag.Always, 1<< 8);
+            // SAVe r8?
+            //asm.push(ARMV7Assembler.ConditionFlag.Always, 1<< 8);
 
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, callSite, asm.scratchRegister, 0);
@@ -864,7 +875,7 @@ if (VMOptions.verboseOption.verboseCompilation) {
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue()), callSite);
 
             // ok so this should patch the call site address?
-	    /*
+        /*
 	    THIS CODE PATCHES AN ADDRESS ON THE STACK THAT IS THE TARGET OF THE MOVW MOT ADD BLX CALL SEQUENCE, SO WE ARE OK TO POP
 	    IT OFF THE STACK AND THEN THE BLX IS OK
 
@@ -874,7 +885,7 @@ if (VMOptions.verboseOption.verboseCompilation) {
             asm.strImmediate(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, callSite, ARMV7.r12, 0);
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, callSite);
             //asm.flushicache(ARMV7.r12, 24);
-	    //asm.pop(ARMV7Assembler.ConditionFlag.Always, 1<< 8);
+            //asm.pop(ARMV7Assembler.ConditionFlag.Always, 1<< 8);
             asm.ret(0); // ret(0) is a C3 in X86
 
             String stubName = "strampoline";
@@ -984,7 +995,7 @@ if (VMOptions.verboseOption.verboseCompilation) {
             CiValue[] args = registerConfig.getCallingConvention(JavaCallee, handleTrapParameters, target(), false).locations;
 
 
-	    //asm.push(ARMV7Assembler.ConditionFlag.Always,1<<14); // we always push the LR
+            //asm.push(ARMV7Assembler.ConditionFlag.Always,1<<14); // we always push the LR
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12);      // SAVE r12 ... our save/restore uses r12 so we must push it here
             // this will be overwritten with the RETURN  ADDRESS of the trapping instruction
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12);
@@ -1014,23 +1025,23 @@ if (VMOptions.verboseOption.verboseCompilation) {
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize /*+ 4*/));// we have sdaved r12 so it is one slot past the end of the frame
             asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
 
-	    // BEGIN  DIRTY HACK
-	    // WE READ THE fpsrc AND IF A DIV ZERO HAS OCCURED
-	    // WE CHANGE THE TRAP NUMBER	
-	    asm.vmrs(ARMV7Assembler.ConditionFlag.Always,ARMV7.r12);
-	    asm.movw(ARMV7Assembler.ConditionFlag.Always,ARMV7.r8,2); // DZC is updated to 1 -- means it is a  divide by zero
-	    asm.and(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r12,ARMV7.r8,ARMV7.r12, 0, 0);	
-	    asm.cmp(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8,ARMV7.r12,0 ,0);
+            // BEGIN  DIRTY HACK
+            // WE READ THE fpsrc AND IF A DIV ZERO HAS OCCURED
+            // WE CHANGE THE TRAP NUMBER
+            asm.vmrs(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12);
+            asm.movw(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, 2); // DZC is updated to 1 -- means it is a  divide by zero
+            asm.and(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r8, ARMV7.r12, 0, 0);
+            asm.cmp(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0, 0);
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_NUMBER.offset));
-	    asm.mov32BitConstant(ARMV7.r8,3); // TRAP 3 is arithmetic
-	    asm.str(ARMV7Assembler.ConditionFlag.Equal,ARMV7.r8,ARMV7.r12, 0);
-	    asm.mov32BitConstant(ARMV7.r8,0xfffffd00);
-	    asm.vmrs(ARMV7Assembler.ConditionFlag.Always,ARMV7.r12); 
-	    asm.and(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r8,ARMV7.r8,ARMV7.r12, 0, 0);
-	    asm.vmsr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r8);
-	    // WE ALSO NEED TO RESET THE divz AS above --- ie clear and FPExceptions
-	    // END DIRTY HACK
-	    
+            asm.mov32BitConstant(ARMV7.r8, 3); // TRAP 3 is arithmetic
+            asm.str(ARMV7Assembler.ConditionFlag.Equal, ARMV7.r8, ARMV7.r12, 0);
+            asm.mov32BitConstant(ARMV7.r8, 0xfffffd00);
+            asm.vmrs(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12);
+            asm.and(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, ARMV7.r12, 0, 0);
+            asm.vmsr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8);
+            // WE ALSO NEED TO RESET THE divz AS above --- ie clear and FPExceptions
+            // END DIRTY HACK
+
             // load the trap number from the thread locals into the first parameter register
             //asm.movq(args[0].asRegister(), new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_NUMBER.offset));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_NUMBER.offset));
@@ -1305,7 +1316,7 @@ if (VMOptions.verboseOption.verboseCompilation) {
             ClassMethodActor callee = unroll.classMethodActor;
             asm.call();
             int callSize = asm.codeBuffer.position() - callPos;
-	    Label forever = new Label();
+            Label forever = new Label();
             asm.bind(forever);
             asm.mov32BitConstant(ARMV7.r12, 0x50115011);
             asm.branch(forever);
@@ -1932,7 +1943,7 @@ if (VMOptions.verboseOption.verboseCompilation) {
 
             // should never reach here
             asm.int3();
-	    Label forever = new Label();
+            Label forever = new Label();
             asm.bind(forever);
             asm.mov32BitConstant(ARMV7.r12, 0xc5a0c5a0);
             asm.branch(forever);
@@ -2052,10 +2063,10 @@ if (VMOptions.verboseOption.verboseCompilation) {
 
             // Should never reach here
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
-	    Label forever = new Label();
+            Label forever = new Label();
             asm.bind(forever);
             asm.mov32BitConstant(ARMV7.r12, 0xffffffff);
-	    asm.blx(ARMV7.r12); //expect it to crash
+            asm.blx(ARMV7.r12); //expect it to crash
             asm.branch(forever);
 
             asm.hlt();
