@@ -2078,7 +2078,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitAlignment() {
-        masm.align(target.wordSize);
+	// we need 8 byte stack alignment?
+	masm.align(8);
+        //masm.align(target.wordSize);
     }
 
     @Override

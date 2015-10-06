@@ -119,6 +119,7 @@ public class RegisterConfigs {
         OS os = platform().os;
 
         CiRegister[] allocatable = null;
+        CiRegister[] allocatableANDSpecialFloat = null;
         CiRegister[] parameters = null;
         CiRegister[] allRegistersExceptLatch = null;
 
@@ -134,20 +135,22 @@ public class RegisterConfigs {
          */
         if (platform().isa == ISA.ARM) {
             if (os == OS.LINUX || os == OS.DARWIN) {
+                allocatableANDSpecialFloat = new CiRegister[] { r0, r1, r2, r3, r4, r5, r6, r7, ARMV7.r9, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16,
+                                s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29,s30,s31};
                 allocatable = new CiRegister[] { r0, r1, r2, r3, r4, r5, r6, r7, ARMV7.r9, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16,
                                 s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29};
                 parameters = new CiRegister[] { r0, r1, r2, r3, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15};
                 allRegistersExceptLatch = new CiRegister[] { r0, r1, r2, r3, r4, r5, r6, r7, com.oracle.max.asm.target.armv7.ARMV7.r8, com.oracle.max.asm.target.armv7.ARMV7.r9,
                                 com.oracle.max.asm.target.armv7.ARMV7.r11, com.oracle.max.asm.target.armv7.ARMV7.r12, com.oracle.max.asm.target.armv7.ARMV7.r13,
                                 com.oracle.max.asm.target.armv7.ARMV7.r14, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16,
-                                s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29};
+                                s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31};
                 roleMap.put(CPU_SP, com.oracle.max.asm.target.armv7.ARMV7.r13);
                 roleMap.put(CPU_FP, com.oracle.max.asm.target.armv7.ARMV7.r11);
                 roleMap.put(ABI_SP, com.oracle.max.asm.target.armv7.ARMV7.r13);
                 roleMap.put(ABI_FP, com.oracle.max.asm.target.armv7.ARMV7.r13);
                 roleMap.put(LATCH, com.oracle.max.asm.target.armv7.ARMV7.r10);
 
-                standard = new CiRegisterConfig(com.oracle.max.asm.target.armv7.ARMV7.r13, r0, s0, com.oracle.max.asm.target.armv7.ARMV7.r12, allocatable, allocatable, parameters, null,
+                standard = new CiRegisterConfig(com.oracle.max.asm.target.armv7.ARMV7.r13, r0, s0, com.oracle.max.asm.target.armv7.ARMV7.r12, allocatable, allocatableANDSpecialFloat, parameters, null,
                                 com.oracle.max.asm.target.armv7.ARMV7.allRegisters, roleMap);
 
                 // Account for the word at the bottom of the frame used
@@ -170,15 +173,15 @@ public class RegisterConfigs {
 		CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 4, r0, r1, r2, r3, com.oracle.max.asm.target.armv7.ARMV7.r8,
 			/*com.oracle.max.asm.target.armv7.ARMV7.r9,*/ com.oracle.max.asm.target.armv7.ARMV7.r11, /*standard.getScratchRegister(),
 			ARMV7.r14,*/ ARMV7.r14, ARMV7.s0, ARMV7.s1, ARMV7.s2, ARMV7.s3, ARMV7.s4, ARMV7.s5, ARMV7.s6, ARMV7.s7, ARMV7.s8, ARMV7.s9, ARMV7.s10, 
-                       ARMV7.s11, ARMV7.s12, ARMV7.s13, ARMV7.s14, ARMV7.s15, com.oracle.max.asm.target.armv7.ARMV7.r12 )); 
+                       ARMV7.s11, ARMV7.s12, ARMV7.s13, ARMV7.s14, ARMV7.s15, ARMV7.s30, ARMV7.s31, com.oracle.max.asm.target.armv7.ARMV7.r12 )); 
 			// r12 is unecessary, but the idea is that we canuse this to save the return address from the resolveVirtual/InterfaceCall in the slot for r12
 			// that we then  call
-                CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 4, r4, r5, r6, r7, com.oracle.max.asm.target.armv7.ARMV7.r8,
+                CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 4, r4, r5, r6, r7, com.oracle.max.asm.target.armv7.ARMV7.r8, ARMV7.s30, ARMV7.s31,
                                 com.oracle.max.asm.target.armv7.ARMV7.r9, com.oracle.max.asm.target.armv7.ARMV7.r10, com.oracle.max.asm.target.armv7.ARMV7.r11));
 
                 n2j.stackArg0Offsets[JavaCallee.ordinal()] = nativeStackArg0Offset;
                 roleMap.put(ABI_FP, com.oracle.max.asm.target.armv7.ARMV7.r11);
-                CiRegisterConfig template = new CiRegisterConfig(com.oracle.max.asm.target.armv7.ARMV7.r11, r0, s0, com.oracle.max.asm.target.armv7.ARMV7.r12, allocatable, allocatable, parameters,
+                CiRegisterConfig template = new CiRegisterConfig(com.oracle.max.asm.target.armv7.ARMV7.r11, r0, s0, com.oracle.max.asm.target.armv7.ARMV7.r12, allocatable, allocatableANDSpecialFloat, parameters,
                                 null, com.oracle.max.asm.target.armv7.ARMV7.allRegisters, roleMap);
 
                 setNonZero(template.getAttributesMap(), com.oracle.max.asm.target.armv7.ARMV7.r10, com.oracle.max.asm.target.armv7.ARMV7.r13, com.oracle.max.asm.target.armv7.ARMV7.r11);

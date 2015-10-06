@@ -1810,8 +1810,9 @@ CODEWRITE    1		 1
         // we do not have the same restrictions as X86.
         if (codeBuffer.position() % modulus != 0) {
 	 	assert(modulus %4 == 0); // ARM;
-		nop((modulus - codeBuffer.position() )/4);
-            //nop(modulus - (codeBuffer.position() % modulus));
+		// WRONG nop((modulus - codeBuffer.position() )/4);
+		//System.out.println("modulus " + modulus + " POS " +codeBuffer.position() + " POS % modulus " + (codeBuffer.position() % modulus));
+		nop((modulus - (codeBuffer.position() % modulus))/4);
         }
     }
 

@@ -336,7 +336,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         //CiRegister target = ARMV7.r8;
         asm.mov32BitConstant(ARMV7.r8, 0xdead0001);
         //asm.mov(ConditionFlag.Always, false, target, template.sig.out.reg);
-        asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r1, null, CiKind.Float, CiKind.Int);
+        //asm.vmov(ConditionFlag.Always, ARMV7.s28, ARMV7.r1, null, CiKind.Float, CiKind.Int);
 
         assignObject(0, "guard", cp.makeResolutionGuard(index));
         finish();
@@ -345,7 +345,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         target = ARMV7.r8;
         asm.mov(ConditionFlag.Always, false, target, ARMV7.r0);
         asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
-        asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s30, null, CiKind.Int, CiKind.Float);
+        //asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s28, null, CiKind.Int, CiKind.Float);
         int safepoint = callIndirect(target, -1);
         asm.mov32BitConstant(ARMV7.r8, 0xdead0001);
         //asm.insertForeverLoop();
@@ -380,7 +380,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
                     //System.out.println("INDEX " + index);
                     //System.out.println("RXERINDEX "+ receiverStackIndex);
-                    asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r1, null, CiKind.Float, CiKind.Int);
+                    asm.vmov(ConditionFlag.Always, ARMV7.s28, ARMV7.r1, null, CiKind.Float, CiKind.Int);
 
                     assignObject(0, "methodActor", interfaceMethod);
                     peekObject(1, "receiver", receiverStackIndex);
@@ -389,7 +389,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                     asm.mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r0);
                     asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
 
-                    asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s30, null, CiKind.Int, CiKind.Float);
+                    asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s28, null, CiKind.Int, CiKind.Float);
                     int safepoint = callIndirect(target, receiverStackIndex);
                     asm.mov32BitConstant(ARMV7.r8, 0xdead0002);
                     finishCall(tag, kind, safepoint, null);
@@ -407,7 +407,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
 
         //System.out.println("ARMV7T1XCompilation resolv einterface class load");
-        asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r1, null, CiKind.Float, CiKind.Int);
+        asm.vmov(ConditionFlag.Always, ARMV7.s28, ARMV7.r1, null, CiKind.Float, CiKind.Int);
 
         assignObject(0, "guard", cp.makeResolutionGuard(index));
         peekObject(1, "receiver", receiverStackIndex);
@@ -415,7 +415,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r0);
         asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
         target = ARMV7.r8;
-        asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s30, null, CiKind.Int, CiKind.Float);
+        asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s28, null, CiKind.Int, CiKind.Float);
         int safepoint = callIndirect(target, receiverStackIndex);
         asm.mov32BitConstant(ARMV7.r8, 0xdead0003);
         finishCall(tag, kind, safepoint, null);
@@ -451,7 +451,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         //System.out.println("INDEX " + index);
         //System.out.println("RXERINDEX "+ receiverStackIndex);
 
-        asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r1, null, CiKind.Float, CiKind.Int);
+        asm.vmov(ConditionFlag.Always, ARMV7.s28, ARMV7.r1, null, CiKind.Float, CiKind.Int);
 
         assignObject(0, "guard", cp.makeResolutionGuard(index));
         peekObject(1, "receiver", receiverStackIndex);
@@ -460,7 +460,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r0);
         asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
         target = ARMV7.r8;
-        asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s30, null, CiKind.Int, CiKind.Float);
+        asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s28, null, CiKind.Int, CiKind.Float);
         int safepoint = callIndirect(target, receiverStackIndex);
         asm.mov32BitConstant(ARMV7.r8, 0xdead0004);
         finishCall(tag, kind, safepoint, null);
@@ -524,9 +524,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
                     //System.out.println("INDEX " + index);
                     //System.out.println("RXERINDEX "+ receiverStackIndex);
-                    asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r1, null, CiKind.Float, CiKind.Int);
-
-
+                    asm.vmov(ConditionFlag.Always, ARMV7.s28, ARMV7.r1, null, CiKind.Float, CiKind.Int);
                     assignInvokeVirtualTemplateParameters(virtualMethodActor, receiverStackIndex);
                     asm.mov32BitConstant(ARMV7.r8, 0xdead0005);
                     finish();
@@ -534,7 +532,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                     target = ARMV7.r8;
                     asm.mov(ConditionFlag.Always, false, target, ARMV7.r0);
                     asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
-                    asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s30, null, CiKind.Int, CiKind.Float);
+                    asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s28, null, CiKind.Int, CiKind.Float);
                     int safepoint = callIndirect(target, receiverStackIndex);
                     asm.mov32BitConstant(ARMV7.r8, 0xdead0005);
                     //System.out.println("SAFPOINT " + safepoint);
@@ -555,7 +553,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
         //System.out.println("INDEX " + index);
         //System.out.println("RXERINDEX " + receiverStackIndex);
-        asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r1, null, CiKind.Float, CiKind.Int);
+        asm.vmov(ConditionFlag.Always, ARMV7.s28, ARMV7.r1, null, CiKind.Float, CiKind.Int);
 
         assignObject(0, "guard", cp.makeResolutionGuard(index));
         peekObject(1, "receiver", receiverStackIndex);
@@ -564,7 +562,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         target = ARMV7.r8;
         asm.mov(ConditionFlag.Always, false, target, ARMV7.r0);
         asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
-        asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s30, null, CiKind.Int, CiKind.Float);
+        asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s28, null, CiKind.Int, CiKind.Float);
         int safepoint = callIndirect(target, receiverStackIndex);
         asm.mov32BitConstant(ARMV7.r8, 0xdead0006);
         //System.out.println("DOING CALL INDIRECT");

@@ -56,15 +56,17 @@ public class Conditional01 {
             //System.out.println(rnd);
             System.out.println("DONEREGISTER2");
             // ADDED
-            i2.setNegative();
+            //i2.setNegative();
             System.out.println("DONESETNEG");
+	    //int xxx;
+	    //xxx = -3;
             // END ADDED
             i2.r2.val = rnd.nextInt();
 
             System.out.println("DONENEXTINT");
 
             i2.r2.num = rnd.nextInt(RAM_SIZE);
-            System.out.println("DONENEXTINT2");
+            //System.out.println("DONENEXTINT2");
             try {
                 if (i2.negative != -1) System.out.println("BROKEN");
 
@@ -120,7 +122,7 @@ public class Conditional01 {
     private int[] sram = new int[RAM_SIZE];
 
     public void visit(CPC i) {
-        System.out.println("INSIDE VISIT");
+        //System.out.println("INSIDE VISIT");
         if (i.negative != -1) System.out.println("BROKEN");
         nextPC = pc + 2;
         System.out.println("DONE NEXTPC");
