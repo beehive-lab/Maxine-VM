@@ -614,7 +614,8 @@ public class Stubs {
             // this may well be broken !!!!!!
 
             CiRegister returnReg = registerConfig.getReturnRegister(WordUtil.archKind());
-            asm.addq(returnReg, 4); // BECAUSE IT IS NOT A CALL/BLX AND THE RETURN REGI IS ALREADY PUSHED TO THE STACK
+	    // TEST COMMENT OUT OCTOBER ...
+            //asm.addq(returnReg, 4); // BECAUSE IT IS NOT A CALL/BLX AND THE RETURN REGI IS ALREADY PUSHED TO THE STACK
             // this is done so when we load this to the PC we do not push the return address!
             //NOTE this is the slot used by r12 which we do not really need to restore?
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize - 4));
@@ -634,7 +635,10 @@ public class Stubs {
             //----asm.addq(ARMV7.r13, frameSize-4  ); // points at entry point of trampolined method`
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize - 4));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
-            asm.addq(ARMV7.r13, frameSize);
+            //asm.addq(ARMV7.r13, frameSize); OCTOBER
+	    asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize));
+	    asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r14, ARMV7.r12,0);
+	    asm.addq(ARMV7.r13, frameSize+4);
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r8);
             //Label forever2 = new Label();
             //asm.bind(forever2);

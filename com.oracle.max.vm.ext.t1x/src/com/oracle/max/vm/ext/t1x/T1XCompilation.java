@@ -632,6 +632,7 @@ public abstract class T1XCompilation {
     }
 
     protected void start(T1XTemplateTag tag) {
+	assignInt(scratch,0x5555d00d);
         T1XTemplate template = getTemplate(tag);
         assert template != null : "template for tag " + tag + " is null";
         start(template);
@@ -694,9 +695,9 @@ public abstract class T1XCompilation {
     protected void finish() {
         assert template != null;
         assert assertArgsAreInitialized();
-        assignInt(scratch, 0xd0d0d0d0);
+        assignInt(scratch, 0xd00dd00d);
         emitAndRecordSafepoints(template);
-        assignInt(scratch, 0xbeefd0d0);
+        assignInt(scratch, 0xbeefd00d);
         // Adjust the stack to model the net effect of the template including
         // the slot for the value pushed (if any) by the template.
         Sig sig = template.sig;
@@ -738,6 +739,8 @@ public abstract class T1XCompilation {
         }
         template = null;
         initializedArgs = 0;
+	assignInt(scratch, 0xdeadd00d);
+
     }
 
     /**

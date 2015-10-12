@@ -47,14 +47,21 @@ public class Conditional01 {
             CPC i2 = new CPC();
             System.out.println("DONECPC");
             if (i2.negative != -1) System.out.println("BROKEN");
+	    while(i2.negative != -1);
 
             i2.r1 = new Register();
             System.out.println("DONEREGISTER");
+		 if (i2.negative != -1) System.out.println("BROKEN");
+            while(i2.negative != -1);
+
             i2.r1.val = i;
             i2.r1.num = i + RAM_SIZE - 20;
             i2.r2 = new Register();
             //System.out.println(rnd);
-            System.out.println("DONEREGISTER2");
+            System.out.println("DONREGISTER2");
+	 if (i2.negative != -1) System.out.println("BROKEN");
+            while(i2.negative != -1);
+
             // ADDED
             //i2.setNegative();
             System.out.println("DONESETNEG");
@@ -64,14 +71,26 @@ public class Conditional01 {
             i2.r2.val = rnd.nextInt();
 
             System.out.println("DONENEXTINT");
+		 if (i2.negative != -1) System.out.println("BROKEN");
+		else System.out.println("OK");
+            while(i2.negative != -1);
 
-            i2.r2.num = rnd.nextInt(RAM_SIZE);
-            //System.out.println("DONENEXTINT2");
+
+            //i2.r2.num = rnd.nextInt(RAM_SIZE);
+            i2.r2.num = rnd.nextInt(0x100);
+            System.out.println("DONENEXTINT2");
             try {
                 if (i2.negative != -1) System.out.println("BROKEN");
+		 else System.out.println("OK");
+
+		            while(i2.negative != -1);
+
 
                 c.visit(i2);
                 System.out.println("DONEVISIT");
+		 if (i2.negative != -1) System.out.println("BROKEN");
+            while(i2.negative != -1);
+
             } catch (RuntimeException re) {
 
             }
@@ -124,6 +143,8 @@ public class Conditional01 {
     public void visit(CPC i) {
         //System.out.println("INSIDE VISIT");
         if (i.negative != -1) System.out.println("BROKEN");
+	            while(i.negative != -1);
+
         nextPC = pc + 2;
         System.out.println("DONE NEXTPC");
         int tmp_0 = getRegisterByte(i.r1);
