@@ -825,12 +825,12 @@ public class Stubs {
             int frameSize = target().alignFrameSize(csl.size);
             int frameToCSA = csl.frameOffsetToCSA;
 
-            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);      // SAVE ret address
 
 
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);      // SAVE ret address
 
             // compute the static trampoline call site
             CiRegister callSite = ARMV7.r8; /// was scratch but we use scratch so use r8
