@@ -18,7 +18,11 @@ public static void main(String []args) {
 		System.err.println(args[i]);
 
 	}
-	System.err.println(new Date());
+System.err.println(new Date());
+long xx = System.currentTimeMillis();
+
+Date currentDate = new Date(xx);
+System.err.println(currentDate);
 
 }
 

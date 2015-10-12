@@ -107,7 +107,12 @@ jlong native_nanoTime(void) {
     if (clock_gettime_func != NULL) {
         struct timespec tp;
         clock_gettime_func(CLOCK_MONOTONIC, &tp);
+#ifdef arm
+	return ((long long)tp.tv_sec) * (1000 * 1000 * 1000) + (long long) tp.tv_nsec;
+#else
         return ((jlong)tp.tv_sec) * (1000 * 1000 * 1000) + (jlong) tp.tv_nsec;
+#endif
+
     }
 
     /* worst case: fallback to gettimeofday(). */
@@ -117,15 +122,21 @@ jlong native_nanoTime(void) {
     jlong usecs = ((jlong) time.tv_sec) * (1000 * 1000) + (jlong) time.tv_usec;
     return 1000 * usecs;
 #else
+	printf("TIMELINUX THREE\n");
 	return 1;
 #endif
 }
 
-jlong native_currentTimeMillis(void) {
+jlong  native_currentTimeMillis(void) {
 #if os_SOLARIS || os_DARWIN || os_LINUX
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
-	return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+	jlong temp;
+	temp = (tv.tv_sec);
+	temp *= 1000;
+	temp += (tv.tv_usec / 10000);
+	//return (jlong) ((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
+	return temp;
 #else
 	return 1;
 #endif
