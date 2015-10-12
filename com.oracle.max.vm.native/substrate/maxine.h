@@ -28,8 +28,8 @@
 
 //extern jlong native_nanoTime(void);
 //extern jlong native_currentTimeMillis(void);
-extern long long native_nanoTime(void);
-extern long long native_currentTimeMillis(void);
+extern jlong native_nanoTime(void);
+extern jlong native_currentTimeMillis(void);
 extern void *native_executablePath(void);
 extern void  native_exit(int code);
 extern void *native_environment(void);
