@@ -173,6 +173,7 @@ public final class Stub extends TargetMethod {
         }
         if (!isHosted()) {
             linkDirectCalls();
+	    ARMTargetMethodUtil.maxine_cacheflush(codeStart().toPointer(), code().length);
         } else {
 
         }

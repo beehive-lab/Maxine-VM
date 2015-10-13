@@ -152,6 +152,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
         if (!isHosted()) {
             if (install) {
                 linkDirectCalls();
+		ARMTargetMethodUtil.maxine_cacheflush(codeStart().toPointer(), code().length);
             } else {
                 // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
             }
