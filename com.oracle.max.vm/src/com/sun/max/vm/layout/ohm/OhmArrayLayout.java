@@ -59,7 +59,7 @@ public class OhmArrayLayout extends OhmGeneralLayout implements ArrayLayout {
 
     OhmArrayLayout(Kind elementKind) {
         lengthOffset = miscOffset + Word.size();
-        headerSize = lengthOffset + Word.size();
+        headerSize = lengthOffset + 2*Word.size();
         this.elementKind = elementKind;
     }
 
