@@ -375,7 +375,7 @@ public abstract class Hub extends Hybrid {
      * if a hub is viewed as a word array, the returned value is the length of the array.
      */
     protected static int computeLength(int referenceMapStartIndex, int referenceMapLength) {
-        int referenceMapSize = Ints.roundUnsignedUpByPowerOfTwo((referenceMapStartIndex + referenceMapLength) * Ints.SIZE, Word.size());
+        int referenceMapSize = Ints.roundUnsignedUpByPowerOfTwo((referenceMapStartIndex + referenceMapLength) * Ints.SIZE, 2*Word.size());
         return UnsignedMath.divide(referenceMapSize, Word.size());
     }
 
