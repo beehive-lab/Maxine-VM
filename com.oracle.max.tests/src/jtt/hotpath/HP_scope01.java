@@ -48,7 +48,7 @@ public class HP_scope01 {
                 sum += d;
             }
         }
-	System.out.println("SUM IS " + sum);
+	//System.out.println("SUM IS " + sum);
         for (int k = 0; k < count; k++) {
             if (k < 20) {
                 int i = 1;
@@ -75,7 +75,7 @@ public class HP_scope01 {
             int i = 3;
             sum += i;
         }
-	System.out.println("RETUNNING " + Integer.toString(sum));
+	//System.out.println("RETUNNING " + Integer.toString(sum));
         return sum;
     }
 }

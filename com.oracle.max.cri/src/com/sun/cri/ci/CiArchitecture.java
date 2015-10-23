@@ -87,6 +87,7 @@ public abstract class CiArchitecture {
      * @return the value of {@code barriers} minus the barriers unnecessary on this architecture
      */
     public final int requiredBarriers(int barriers) {
+	//return Integer.MAX_VALUE;
         return barriers & ~implicitMemoryBarriers;
     }
 

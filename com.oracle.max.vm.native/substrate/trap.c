@@ -72,19 +72,22 @@ static sigset_t vmAndDefaultSignals;
 #endif
 
 int getTrapNumber(int signal) {
+char stackAlloc[4096];
     switch (signal) {
     case SIGSEGV:
 #if !os_MAXVE
     case SIGBUS:
 #endif
 	printf("MEMFAULT\n");
+	stackAlloc[0] = (char) signal;
+	signal  = (int) stackAlloc[0];
         return MEMORY_FAULT;
     case SIGFPE:
 	printf("WE GOT AN SIGFPE\n");
         return ARITHMETIC_EXCEPTION;
 #if !os_MAXVE
     case SIGUSR1:
-	 printf("ASYNCINT\n");
+	printf("ASYNCINT\n");
         return ASYNC_INTERRUPT;
 #endif
     }

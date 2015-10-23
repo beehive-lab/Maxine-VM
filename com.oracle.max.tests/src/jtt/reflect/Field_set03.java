@@ -58,7 +58,11 @@ public class Field_set03 {
             Field_set03.class.getField("floatField").setFloat(object, 16);
             return object.floatField == 16;
         } else if (arg == 6) {
-            Field_set03.class.getField("doubleField").setDouble(object, 17);
+		//System.out.println("BEFORE" + (int)(object.doubleField));
+            	Field_set03.class.getField("doubleField").setDouble(object, 17);
+		//System.out.println("AFTER " + (int)(object.doubleField));
+            	Field_set03.class.getField("doubleField").setDouble(object, 17);
+		//System.out.println("AFTER " + (int)(object.doubleField));
             return object.doubleField == 17;
         } else if (arg == 7) {
             Field_set03.class.getField("booleanField").setBoolean(object, true);

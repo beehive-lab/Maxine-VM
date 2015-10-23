@@ -33,7 +33,7 @@ public enum CPU {
     /* Generic default cores: */
     // TODO: Obtain the cache alignment at runtime, e.g. by using sysconf(_SC_LEVEL2_CACHE_LINESIZE)
     AMD64(ISA.AMD64, new DataModel(WordWidth.BITS_64, Endianness.LITTLE, 64), MemoryModel.AMD64),
-    ARMV7(ISA.ARM, new DataModel(WordWidth.BITS_32, Endianness.LITTLE, 64), MemoryModel.SequentialConsistency),
+    ARMV7(ISA.ARM, new DataModel(WordWidth.BITS_32, Endianness.LITTLE, 32), MemoryModel.RelaxedMemoryOrder),
     IA32(ISA.IA32, new DataModel(WordWidth.BITS_32, Endianness.LITTLE, 64), MemoryModel.RelaxedMemoryOrder),
     PPC(ISA.PPC, new DataModel(WordWidth.BITS_32, Endianness.BIG, 64), MemoryModel.RelaxedMemoryOrder),
     SPARC(ISA.SPARC, new DataModel(WordWidth.BITS_32, Endianness.BIG, 64), MemoryModel.TotalStoreOrder),

@@ -96,6 +96,20 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
 
     }
+    public void insertDIVIDEMarker() {
+	/*
+	See Trap.java could not get tla to work without going out to C repeatedly so using this to identify an
+	I/U divide by zero trap.
+	*/
+        Label continuation = new Label();
+        jcc(ConditionFlag.Always, continuation);
+        emitInt(0xf1d0beef);
+        emitInt(0xf1d0beef);
+        bind(continuation);
+	eor(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
+
+	
+    }
     public void insertForeverLoop() {
 	
         Label forever = new Label();
@@ -1947,9 +1961,9 @@ end_label:
             //if (barriers == -1 || ((barriers & STORE_LOAD) != 0)) {
                 instruction |= 0xf;
                 emitInt(instruction);
-                emitInt(0xf57ff04f); //DSB
-		emitInt(0xf57ff06f); // ISB
-                emitInt(instruction);
+                //emitInt(0xf57ff04f); //DSB
+		//emitInt(0xf57ff06f); // ISB
+                //emitInt(instruction);
             //}
         //}
     }
@@ -2445,12 +2459,16 @@ end_label:
         int sz = 0;
         if (destKind.isDouble()) {
             sz = 1;
+	
         }
         instruction |= sz << 8;
         if (sz == 1) {
             instruction |= (rn.encoding & 0xf) << 16;
             instruction |= (dest.encoding & 0xf) << 12;
             instruction |= rm.encoding & 0xf;
+	    instruction |= (dest.encoding >> 4) << 22;
+	    instruction |= (rn.encoding >> 4) << 7;
+	    instruction |= (rm.encoding >>4) << 5;
         } else {
             instruction |= (dest.encoding >> 1) << 12;
             instruction |= (dest.encoding & 1) << 22;

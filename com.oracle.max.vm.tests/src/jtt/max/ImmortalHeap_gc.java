@@ -39,30 +39,37 @@ public final class ImmortalHeap_gc {
     public static boolean test(int nrObjects) {
         String[] strings;
         ImmortalMemoryRegion immortalMemoryRegion = ImmortalHeap.getImmortalHeap();
+	System.out.println("GOT ImmortalMemoryRegion");
         Pointer oldMark = immortalMemoryRegion.mark();
-
+	System.out.println("DONE MARK");
         try {
             Heap.enableImmortalMemoryAllocation();
+	    System.out.println("DONE ENABLEALLOC");
             strings = new String[nrObjects];
+	    System.out.println("DONE ALLOC");
         } finally {
             Heap.disableImmortalMemoryAllocation();
         }
-
+	System.out.println("DONE DISABLE");
         if (immortalMemoryRegion.mark().equals(oldMark)) {
+	    System.out.println("DONE and EQUALS");
             return false;
         }
-
+	System.out.println("DONE and NEQ");
         oldMark = immortalMemoryRegion.mark();
+	System.out.println("DONE MARK2");
 
         for (int i = 0; i < nrObjects; i++) {
             strings[i] = new String("" + i);
         }
 
         if (!immortalMemoryRegion.mark().equals(oldMark)) {
+	    System.out.println("DONE and EQUALS2");
             return false;
         }
-
+	System.out.println("BEFORE GC");
         System.gc();
+	System.out.println("DONE GC");
 
         if (!immortalMemoryRegion.mark().equals(oldMark)) {
             return false;

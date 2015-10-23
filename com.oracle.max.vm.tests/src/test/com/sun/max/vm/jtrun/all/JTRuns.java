@@ -11529,8 +11529,12 @@ public class JTRuns {
             String runString = null;
             try {
             // (5) == -1756613086
+		int xx;
                 runString = "(5)";
-                if (-1756613086 != jtt.hotpath.HP_life.test(5)) {
+		xx = jtt.hotpath.HP_life.test(5);
+                //if (-1756613086 != jtt.hotpath.HP_life.test(5)) {
+		if(-1756613086 != xx) {
+		    System.out.println("EXPECTED " + -1756613086 + " GOT " + xx);
                     fail(runString);
                     return;
                 }
@@ -11615,8 +11619,13 @@ public class JTRuns {
             String runString = null;
             try {
             // (100) == 0.6248571921291398
+		double xx; 
                 runString = "(100)";
-                if (0.6248571921291398 != jtt.hotpath.HP_series.test(100)) {
+		xx = jtt.hotpath.HP_series.test(100);
+
+	        if( 0.6248571921291398 != xx) {
+		System.out.println("EXPECTED " + 0.6248571921291398  + " GOT " + xx);
+                //if (0.6248571921291398 != jtt.hotpath.HP_series.test(100)) {
                     fail(runString);
                     return;
                 }
@@ -25847,6 +25856,7 @@ public class JTRuns {
                     return;
                 }
             } catch (Throwable t) {
+		System.err.println(t);
                 fail(runString, t);
                 return;
             }

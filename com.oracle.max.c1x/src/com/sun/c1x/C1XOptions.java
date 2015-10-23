@@ -140,7 +140,7 @@ public final class C1XOptions {
 
     public static boolean EmitNopAfterCall              = true;
 
-    public static boolean GenSpecialDivChecks           = ____;
+    public static boolean GenSpecialDivChecks           = ____; 
     public static boolean GenAssertionCode              = ____;
     public static boolean AlignDirectCallsForPatching   = true;
     public static boolean NullCheckUniquePc             = ____;

@@ -303,7 +303,7 @@ public final class Heap {
 	//com.sun.max.vm.Log.print("createarray  "); com.sun.max.vm.Log.println(length);
         final Object array = heapScheme().createArray(hub, length);
 	//com.sun.max.vm.Log.println("done createarray");
-       allocationLogger.assertArray(array, hub.classActor);
+       //allocationLogger.assertArray(array, hub.classActor);
         if (Heap.logAllocation()) {
             allocationLogger.logCreateArray(hub, length, array);
         }
@@ -313,7 +313,7 @@ public final class Heap {
     @INLINE
     public static Object createTuple(Hub hub) {
         final Object object = heapScheme().createTuple(hub);
-allocationLogger.assertTuple(object, hub.classActor);
+//allocationLogger.assertTuple(object, hub.classActor);
         if (Heap.logAllocation()) {
             allocationLogger.logCreateTuple(hub, object);
         }
@@ -323,7 +323,7 @@ allocationLogger.assertTuple(object, hub.classActor);
     @INLINE
     public static Object createHybrid(DynamicHub hub) {
         final Object hybrid = heapScheme().createHybrid(hub);
-allocationLogger.assertHybrid(hybrid, hub.classActor);
+//allocationLogger.assertHybrid(hybrid, hub.classActor);
         if (Heap.logAllocation()) {
             allocationLogger.logCreateHybrid(hub, hybrid);
         }
@@ -333,7 +333,7 @@ allocationLogger.assertHybrid(hybrid, hub.classActor);
     @INLINE
     public static Hybrid expandHybrid(Hybrid hybrid, int length) {
         final Hybrid expandedHybrid = heapScheme().expandHybrid(hybrid, length);
-allocationLogger.assertHybrid(ObjectAccess.readHub(hybrid), ObjectAccess.readHub(hybrid).classActor);
+//allocationLogger.assertHybrid(ObjectAccess.readHub(hybrid), ObjectAccess.readHub(hybrid).classActor);
         if (Heap.logAllocation()) {
             allocationLogger.logExpandHybrid(ObjectAccess.readHub(hybrid), expandedHybrid);
         }

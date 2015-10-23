@@ -132,6 +132,11 @@ public final class ImmortalHeap {
         return cell;
     }
 
+    /*public static void printSIZE() {
+	com.sun.max.vm.Log.print("IMMMMMMMORRRRRRRRRRRRTAL HEAP SIZE!!!!!!!" );
+	com.sun.max.vm.Log.println(immortalHeap.size());
+    }
+    */
     /**
      * Initialize the immortal heap memory.
      */

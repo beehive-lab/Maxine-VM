@@ -144,6 +144,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     protected void emitIfBit(CiValue address, CiValue bitNo) {
         assert 0 == 1 : "emitIfBit ARMV7IRAssembler";
 
+	masm.insertForeverLoop();
+
         // masm.btli((CiAddress) address, ((CiConstant) bitNo).asInt());
     }
 
@@ -1488,26 +1490,13 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.bind(normalCase);
 
             } // TODO comment me back in and use the compiler flags
-            /*
-            *
-            * //*
-            *
-            *
-            *
-            *
-             */
             // masm.cdql();
             masm.mov(ConditionFlag.Always, false, ARMV7.r8, lreg);
            // PUT IN FOR NO EXCEPT int offset = masm.codeBuffer.position();
-	   // BEGIN ADD EXCEPT
-	    masm.movw(ConditionFlag.Always,ARMV7.r12,1);
-	    masm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r12, null, CiKind.Float, CiKind.Int);
-	    masm.vcvt(ConditionFlag.Always,ARMV7.s30, false, true, ARMV7.s30, CiKind.Float, CiKind.Int );
-            masm.eor(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
+            // EXAMPLE to do VmThreadLocal vq(scratch, new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_LATCH_REGISTER.offset));
+	    masm.eor(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
 	    masm.cmp(ConditionFlag.Always,ARMV7.r12,rreg,0,0);
-	    masm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r12, null, CiKind.Float, CiKind.Int);
-	    masm.vcvt(ConditionFlag.Always,ARMV7.s31, false, true, ARMV7.s31, CiKind.Float, CiKind.Int );
-	    masm.vdiv(ConditionFlag.Equal, ARMV7.s31,ARMV7.s30,ARMV7.s31,CiKind.Float);
+	    masm.insertDIVIDEMarker();
 	    int offset = masm.codeBuffer.position();
 	    masm.vldr(ConditionFlag.Equal, ARMV7.s30, ARMV7.r12, 0, CiKind.Float, CiKind.Int); // fault if EQUAL
 
@@ -1537,19 +1526,12 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     void arithmeticLDivExceptionCheck(CiValue dividend,CiValue divisor,CiValue result,LIRDebugInfo info) {
 	assert divisor.isRegister() : "the divisor needs to be a register LDIVE exception checks";
 	CiRegister denominator = divisor.asRegister();
-
+ // EXAMPLE to do VmThreadLocal vq(scratch, new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_LATCH_REGISTER.offset));
         masm.eor(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
-
         masm.cmp(ConditionFlag.Always,ARMV7.r12,denominator,0,0);
 	masm.cmp(ConditionFlag.Equal,ARMV7.r12, ARMV7.cpuRegisters[denominator.encoding+1],0,0);
+        masm.insertDIVIDEMarker();
 
-	masm.movw(ConditionFlag.Equal,ARMV7.r12,1);
-        masm.vmov(ConditionFlag.Equal, ARMV7.s30, ARMV7.r12, null, CiKind.Float, CiKind.Int);
-        masm.vcvt(ConditionFlag.Equal,ARMV7.s30, false, true, ARMV7.s30, CiKind.Float, CiKind.Int ); // s30 has 1.0f
-	masm.eor(ConditionFlag.Equal, false, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
-        masm.vmov(ConditionFlag.Equal, ARMV7.s31, ARMV7.r12, null, CiKind.Float, CiKind.Int);
-        masm.vcvt(ConditionFlag.Equal,ARMV7.s31, false, true, ARMV7.s31, CiKind.Float, CiKind.Int ); // s31 has 0.0f
-        masm.vdiv(ConditionFlag.Equal, ARMV7.s31,ARMV7.s30,ARMV7.s31,CiKind.Float);
         int offset = masm.codeBuffer.position();
 	masm.vldr(ConditionFlag.Equal, ARMV7.s30, ARMV7.r12, 0, CiKind.Float, CiKind.Int); // fault if EQUAL
 	tasm.recordImplicitException(offset, info);
@@ -1569,17 +1551,13 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         masm.mov(ConditionFlag.Always, false, ARMV7.r8, lreg);
         //int offset = masm.codeBuffer.position();
 	// PUT IN FOR NO EXCEPT int offset = masm.codeBuffer.position();
-           // BEGIN ADD EXCEPT
-	    masm.movw(ConditionFlag.Always,ARMV7.r12,1);
-            masm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r12, null, CiKind.Float, CiKind.Int);
-            masm.vcvt(ConditionFlag.Always,ARMV7.s30, false, true, ARMV7.s30, CiKind.Float, CiKind.Int );
-            masm.eor(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
-            masm.cmp(ConditionFlag.Always,ARMV7.r12,rreg,0,0);
-            masm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r12, null, CiKind.Float, CiKind.Int);
-            masm.vcvt(ConditionFlag.Always,ARMV7.s31, false, true, ARMV7.s31, CiKind.Float, CiKind.Int );
-            masm.vdiv(ConditionFlag.Equal, ARMV7.s31,ARMV7.s30,ARMV7.s31,CiKind.Float);
-            int offset = masm.codeBuffer.position();
-            masm.vldr(ConditionFlag.Equal, ARMV7.s30, ARMV7.r12, 0, CiKind.Float, CiKind.Int); // fault if EQUAL
+ // EXAMPLE to do VmThreadLocal vq(scratch, new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_LATCH_REGISTER.offset));
+ 	masm.eor(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
+        masm.cmp(ConditionFlag.Always,ARMV7.r12,rreg,0,0);
+        masm.insertDIVIDEMarker();
+
+        int offset = masm.codeBuffer.position();
+        masm.vldr(ConditionFlag.Equal, ARMV7.s30, ARMV7.r12, 0, CiKind.Float, CiKind.Int); // fault if EQUAL
 
             // END ADD EXCEPTION
 

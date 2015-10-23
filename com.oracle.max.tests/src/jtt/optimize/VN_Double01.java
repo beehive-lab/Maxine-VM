@@ -39,6 +39,7 @@ public class VN_Double01 {
             return mul(arg + 10);
         }
         if (arg == 3) {
+	    System.out.println("ARG is 3");
             return div(arg + 10);
         }
         return 0;
@@ -63,8 +64,17 @@ public class VN_Double01 {
     }
     public static double div(double x) {
         double c = 1;
+	System.out.println("c is " + c);
         double t = x / c;
+	
+	System.out.println("t is " + t);
+	System.out.println("c is " + c);
+	do {
+	t = x / c;
+	} while (t != 13.0);
         double u = x / c;
+	System.out.println("x " + x + " t " + t + " u " + u + " t/u " + t/u);
+	System.out.println("c is " + c);
         return t / u;
     }
 }

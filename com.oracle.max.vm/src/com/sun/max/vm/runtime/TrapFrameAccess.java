@@ -81,7 +81,7 @@ public abstract class TrapFrameAccess {
      */
     public final void setPC(Pointer trapFrame, Pointer value) {
 	if(Platform.platform().cpu == CPU.ARMV7) {
-		com.sun.max.vm.Log.print("SETTING PC ");com.sun.max.vm.Log.println(value);
+		//com.sun.max.vm.Log.print("SETTING PC ");com.sun.max.vm.Log.println(value);
         	getPCPointer(trapFrame).writeWord(0, value);
 	} else {
         	getPCPointer(trapFrame).writeWord(0, value);

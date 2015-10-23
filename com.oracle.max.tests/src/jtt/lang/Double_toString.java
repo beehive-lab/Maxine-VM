@@ -35,8 +35,8 @@ public final class Double_toString {
         double z1 = 0.4363485526704198;
         double z2 = -0.43536514763046896;
         double z3 = z1 + z2;
-	String temp = Double.toString(z3);
-	System.out.println(temp);
+	//String temp = Double.toString(z3);
+	//System.out.println(temp);
         return Double.toString(z3);
     }
 }

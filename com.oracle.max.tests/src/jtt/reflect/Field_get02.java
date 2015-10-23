@@ -41,16 +41,7 @@ public class Field_get02 {
 
     public static boolean test(int arg) throws NoSuchFieldException, IllegalAccessException {
         if (arg == 0) {
-            //return Field_get02.class.getField("byteField").get(object).equals(object.byteField);
-            java.lang.reflect.Field xx =  Field_get02.class.getField("byteField");
-	    System.out.println("GETFIELD:did the get");
-	    Object yy = null;
-	    yy = xx.get(object);
-	    System.out.println("GETFIELD:did the SECOND get");
-	    boolean zz = yy.equals(object.byteField);
-	    if(true == zz) System.out.println("GETFIELD:true");
-	    else System.out.println("GETFIELD:false");
-	    return zz;
+            return Field_get02.class.getField("byteField").get(object).equals(object.byteField);
         } else if (arg == 1) {
             return Field_get02.class.getField("shortField").get(object).equals(object.shortField);
         } else if (arg == 2) {

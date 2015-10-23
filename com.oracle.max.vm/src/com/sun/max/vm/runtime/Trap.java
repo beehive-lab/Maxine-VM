@@ -29,6 +29,7 @@ import static com.sun.max.vm.runtime.Trap.Number.*;
 import static com.sun.max.vm.thread.VmThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 
+import com.sun.max.platform.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
@@ -206,6 +207,16 @@ public abstract class Trap {
         final TrapFrameAccess tfa = vm().trapFrameAccess;
         final Pointer pc = tfa.getPC(trapFrame);
         final Object origin = checkTrapOrigin(trapNumber, trapFrame, faultAddress, pc);
+        if(Platform.target().arch.isARM()) {
+		if(pc.readInt(0) == 0xd9cfa00 )	{	// We are a vldr of the form used to indicate integer div by zero
+			if((pc.readInt(-4) == 0xe02cc00c) && (pc.readInt(-8) == 0xf1d0beef)) {
+				// see ARMV7Assembler.insertDIVIDEMark()
+				// could check -12 to be same as -8
+				trapNumber = ARITHMETIC_EXCEPTION;
+			}
+		}
+	}
+	
         if (origin instanceof TargetMethod) {
             // the trap occurred in Java
             final TargetMethod targetMethod = (TargetMethod) origin;
@@ -223,14 +234,14 @@ public abstract class Trap {
 
                     // the native trap handler unprotected the yellow zone -
                     // propagate this to the thread object
-		     com.sun.max.vm.Log.println("STACKFAULT");
+		    com.sun.max.vm.Log.println("STACKFAULT");
                     VmThread.current().nativeTrapHandlerUnprotectedYellowZone();
 
                     raiseImplicitException(trapFrame, targetMethod, StackOverflowError.class, sp, fp, vmIP);
                     break; // unreachable, except when returning to a local exception handler
                 case ARITHMETIC_EXCEPTION:
                     // integer divide by zero
-		     com.sun.max.vm.Log.println("DIVZEROFAULT");
+		    com.sun.max.vm.Log.println("DIVZEROFAULT");
 	             com.sun.max.vm.Log.print("STACKPTR ");com.sun.max.vm.Log.println(sp);
 	             com.sun.max.vm.Log.print("PCPTR ");com.sun.max.vm.Log.println(vmIP);
                     raiseImplicitException(trapFrame, targetMethod, ArithmeticException.class, sp, fp, vmIP);

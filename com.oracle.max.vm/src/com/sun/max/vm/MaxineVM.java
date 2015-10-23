@@ -498,6 +498,7 @@ public final class MaxineVM {
         vm.phase = Phase.PRISTINE;
 
         VMOptions.parsePristine(argc, argv);
+	//ImmortalHeap.printSIZE();
         return exitCode;
 
     }
