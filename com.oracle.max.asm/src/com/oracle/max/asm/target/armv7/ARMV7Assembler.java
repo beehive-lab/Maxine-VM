@@ -1263,7 +1263,7 @@ CODEWRITE    1		 1
 	} 
 	boolean read = false;
 	boolean data = false;
-	push(ConditionFlag.Always, 1<<8);
+	push(ConditionFlag.Always, 1<<8|1<<9); // Added 1<<9 so that stack is 8 byte aligned
 	for(int i = 0; i <1028 ;i++)	{
 		if(i% 4 == 0) {
 			read = !read;
@@ -1274,7 +1274,8 @@ CODEWRITE    1		 1
 		mov32BitConstant(ARMV7.r8,i);
 		instrument(read,data,true,ARMV7.r8,0);
 	}
-	pop(ConditionFlag.Always, 1<<8);
+	pop(ConditionFlag.Always, 1<<8|1<<9); // Added 1<<9 so that stack is 8 byte aligned
+
     }
     public void push(final ConditionFlag flag, final int registerList) {
 	if(maxineflush != null) {
@@ -1300,12 +1301,12 @@ CODEWRITE    1		 1
     }
 
     // Wee need that method due to limited number of registers when we process long values in 32 bit space.
-    public void saveRegister(int reg) {
-        push(ConditionFlag.Always, 1 << reg);
+    public void saveRegister(int reg,int reg2) {
+        push(ConditionFlag.Always, (1 << reg) | (1<< reg2));
     }
 
-    public void restoreRegister(int reg) {
-        pop(ConditionFlag.Always, 1 << reg);
+    public void restoreRegister(int reg,int reg2) {
+        pop(ConditionFlag.Always, (1 << reg) | (1<< reg2));
     }
     public void instrumentPop(final ConditionFlag flag, final int registerList) {
   	int instruction;
@@ -1847,6 +1848,12 @@ CODEWRITE    1		 1
 
     }
 
+    public final void crashme() {
+	eor(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
+	ldr(ConditionFlag.Always,ARMV7.r12,ARMV7.r12,0);
+	insertForeverLoop();
+
+    }
     public final void int3() {
         //emitInt(0xe1200070); // this is BKPT
 /*
@@ -1881,14 +1888,14 @@ start_label:
 end_label:  
 */
 	assert(startAddress.encoding == ARMV7.r12.encoding);
-        push(ConditionFlag.Always, 1|2|4|8|128 );
+        push(ConditionFlag.Always, 1|2|4|8|16|128 ); // added 16 to ensure that stack is 8byte aligned!
         mov(ConditionFlag.Always, false, ARMV7.r0, scratchRegister);
 	mov32BitConstant(ARMV7.r1,bytes);
         eor(ConditionFlag.Always, false, ARMV7.r2, ARMV7.r2, ARMV7.r2, 0, 0);
 	mov32BitConstant(ARMV7.r7,0x000f0002);
 	addlsl(ConditionFlag.Always,false,ARMV7.r1,ARMV7.r1,ARMV7.r0,0);
 	emitInt(0xef000000); // replaced with svc 0
-        pop(ConditionFlag.Always, 1|2|4|8|128 );
+        pop(ConditionFlag.Always, 1|2|4|8|16|128 ); // added 16 (r4) to ensure stack is 8 byte aligned EVEN NO REGS PUSHED/POPPED
 	//emitInt(0xf57ff06f);
 	//pause();// try a sched_yield here as well.
 	

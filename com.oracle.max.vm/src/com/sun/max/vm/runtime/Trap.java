@@ -226,7 +226,7 @@ public abstract class Trap {
 
             switch (trapNumber) {
                 case MEMORY_FAULT:
-		    com.sun.max.vm.Log.println("MEMORYFAUILT");
+		    //com.sun.max.vm.Log.println("MEMORYFAUILT");
                     handleMemoryFault(vmIP, targetMethod, sp, fp, trapFrame, faultAddress);
                     break;
                 case STACK_FAULT:
@@ -234,16 +234,16 @@ public abstract class Trap {
 
                     // the native trap handler unprotected the yellow zone -
                     // propagate this to the thread object
-		    com.sun.max.vm.Log.println("STACKFAULT");
+		    //com.sun.max.vm.Log.println("STACKFAULT");
                     VmThread.current().nativeTrapHandlerUnprotectedYellowZone();
 
                     raiseImplicitException(trapFrame, targetMethod, StackOverflowError.class, sp, fp, vmIP);
                     break; // unreachable, except when returning to a local exception handler
                 case ARITHMETIC_EXCEPTION:
                     // integer divide by zero
-		    com.sun.max.vm.Log.println("DIVZEROFAULT");
-	             com.sun.max.vm.Log.print("STACKPTR ");com.sun.max.vm.Log.println(sp);
-	             com.sun.max.vm.Log.print("PCPTR ");com.sun.max.vm.Log.println(vmIP);
+		    //com.sun.max.vm.Log.println("DIVZEROFAULT");
+	             //com.sun.max.vm.Log.print("STACKPTR ");com.sun.max.vm.Log.println(sp);
+	             //com.sun.max.vm.Log.print("PCPTR ");com.sun.max.vm.Log.println(vmIP);
                     raiseImplicitException(trapFrame, targetMethod, ArithmeticException.class, sp, fp, vmIP);
                     break; // unreachable
                 case STACK_FATAL:

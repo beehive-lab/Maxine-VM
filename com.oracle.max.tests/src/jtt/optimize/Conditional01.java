@@ -38,65 +38,29 @@ public class Conditional01 {
     }
 
     public static int test(int arg) {
-        //System.out.println("ENTEREDTEST");
+        System.out.println("ENTEREDTEST"); // left in as the indirect calls via  ARMV7.r8 
+					   // are useful for debugging
         Conditional01 c = new Conditional01();
-        //System.out.println("DONECONDITIONAL01");
+        System.out.println("DONECONDITIONAL01");
         Random rnd = new Random();
-        //System.out.println("DONERANDOM");
         for (int i = 0; i < arg; i++) {
+	    System.out.println("LOOP " + i);
             CPC i2 = new CPC();
-            //System.out.println("DONECPC");
-            //if (i2.negative != -1) System.out.println("BROKEN");
-	    //while(i2.negative != -1);
 
             i2.r1 = new Register();
-            //System.out.println("DONEREGISTER");
-		 //if (i2.negative != -1) System.out.println("BROKEN");
-            //while(i2.negative != -1);
-
             i2.r1.val = i;
             i2.r1.num = i + RAM_SIZE - 20;
             i2.r2 = new Register();
-            //System.out.println(rnd);
-            //System.out.println("DONREGISTER2");
-	 //if (i2.negative != -1) System.out.println("BROKEN");
-            //while(i2.negative != -1);
-
-            // ADDED
-            //i2.setNegative();
-            //System.out.println("DONESETNEG");
-	    //int xxx;
-	    //xxx = -3;
-            // END ADDED
             i2.r2.val = rnd.nextInt();
-
-            //System.out.println("DONENEXTINT");
-		 //if (i2.negative != -1) System.out.println("BROKEN");
-		//else System.out.println("OK");
-            while(i2.negative != -1);
-
-
-            //i2.r2.num = rnd.nextInt(RAM_SIZE);
             i2.r2.num = rnd.nextInt(0x100);
-            //System.out.println("DONENEXTINT2");
             try {
-                //if (i2.negative != -1) System.out.println("BROKEN");
-		 //else System.out.println("OK");
-
-		            while(i2.negative != -1);
-
 
                 c.visit(i2);
-                //System.out.println("DONEVISIT");
-		 //if (i2.negative != -1) System.out.println("BROKEN");
-            //while(i2.negative != -1);
 
             } catch (RuntimeException re) {
-
+		System.err.println(re);
             }
         }
-        //System.out.println("DONELOOP");
-        //System.out.println("TEST " + c.cyclesConsumed);
         return c.cyclesConsumed;
     }
 
@@ -141,19 +105,10 @@ public class Conditional01 {
     private int[] sram = new int[RAM_SIZE];
 
     public void visit(CPC i) {
-        //System.out.println("INSIDE VISIT");
-        //if (i.negative != -1) System.out.println("BROKEN");
-	            //while(i.negative != -1);
-
         nextPC = pc + 2;
-        //System.out.println("DONE NEXTPC");
         int tmp_0 = getRegisterByte(i.r1);
-        //System.out.println("DONE getRegisterByte");
         int tmp_1 = getRegisterByte(i.r2);
-        //System.out.println("DONE getRegisterByte2");
-
         int tmp_2 = bit(C);
-        //System.out.println("BITC");
         int tmp_3 = tmp_0 - tmp_1 - tmp_2;
         boolean tmp_4 = ((tmp_0 & 128) != 0);
         boolean tmp_5 = ((tmp_1 & 128) != 0);
@@ -171,14 +126,9 @@ public class Conditional01 {
     }
 
     public int getRegisterByte(Register r1) {
-        //System.out.println("INSIDE getRegByte");
         if ((r1.val % 10) == 0) {
-            //System.out.println("INSIDE mod");
-
             return sram[r1.num];
         }
-        //System.out.println("INSIDE prior to return");
-
         return r1.val;
     }
 

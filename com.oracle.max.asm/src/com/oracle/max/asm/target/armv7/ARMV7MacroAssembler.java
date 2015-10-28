@@ -115,7 +115,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert (ARMV7.r0 == cmpValue);
         Label atomicFail = new Label();
         Label notEqualTocmpValue = new Label();
-        saveRegister(9);
+	saveRegister(8,9);
         bind(atomicFail);
         membar(-1);
         setUpScratch(address); // r12 has the address to CAS
@@ -134,7 +134,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         bind(notEqualTocmpValue);
         cmp(ConditionFlag.Always, newValue, cmpValue, 0, 0);
         cmp(ConditionFlag.Equal, ARMV7.cpuRegisters[newValue.number + 1], ARMV7.cpuRegisters[cmpValue.number + 1], 0, 0);
-        restoreRegister(9);
+        restoreRegister(8,9);
     }
 
     public final void casLongAsmTest(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
@@ -397,10 +397,10 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 	    // Will not work due to encoding of vmovm
             //mov64BitConstant(ARMV7.r8, ARMV7.r12, src);
             //vmov(ConditionFlag.Always, dst, ARMV7.r8, ARMV7.r12, dstKind, CiKind.Long);
-	    saveRegister(9);
+	    saveRegister(8,9);
 	    mov64BitConstant(ARMV7.r8, ARMV7.r9, src);
 	    vmov(ConditionFlag.Always, dst, ARMV7.r8, ARMV7.r9, dstKind, CiKind.Long);
-	    restoreRegister(9);
+	    restoreRegister(8,9);
 	
         }
     }

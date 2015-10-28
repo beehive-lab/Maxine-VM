@@ -25829,12 +25829,14 @@ public class JTRuns {
             try {
             // (0,0) == true
                 runString = "(0,0)";
+		System.out.println("0  0");
                 if (true != jtt.threads.Thread_isInterrupted02.test(0, 0)) {
                     fail(runString);
                     return;
                 }
             // (1,500) == true
                 runString = "(1,500)";
+		System.out.println("1  500");
                 if (true != jtt.threads.Thread_isInterrupted02.test(1, 500)) {
                     fail(runString);
                     return;

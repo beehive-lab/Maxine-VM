@@ -125,18 +125,18 @@ static struct timespec* compute_abstime(struct timespec* abstime, jlong millis) 
     struct timeval now;
     int status = gettimeofday(&now, NULL);
     c_ASSERT(status == 0);
-    jlong seconds = millis / 1000;
+    jlong seconds = millis / 1000UL;
     millis %= 1000;
-    if (seconds > 50000000) { // see man cond_timedwait(3T)
-        seconds = 50000000;
+    if (seconds > 50000000L) { // see man cond_timedwait(3T)
+        seconds = 50000000L;
     }
     abstime->tv_sec = now.tv_sec  + seconds;
-    long       usec = now.tv_usec + millis * 1000;
+    jlong       usec = now.tv_usec + (jlong) millis * 1000UL;
     if (usec >= 1000000) {
         abstime->tv_sec += 1;
         usec -= 1000000;
     }
-    abstime->tv_nsec = usec * 1000;
+    abstime->tv_nsec = usec * 1000UL;
     return abstime;
 }
 #endif
