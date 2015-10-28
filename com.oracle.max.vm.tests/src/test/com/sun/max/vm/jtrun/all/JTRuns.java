@@ -22,7 +22,7 @@
  */
 package test.com.sun.max.vm.jtrun.all;
 
-import jtt.bootimagetest.SimpleExample;
+import jtt.bootimagetest.*;
 import jtt.bytecode.ARM_BC_test_return1;
 import test.com.sun.max.vm.jtrun.*;
 
@@ -834,9 +834,24 @@ public class JTRuns {
             case 744: jtt_max_Unsigned_irem01(); break;
             case 745: jtt_max_Unsigned_ldiv01(); break;
             case 746: jtt_max_Unsigned_lrem01(); break;
+	    case 747: jtt_bootimagetest_TestHeapAllocation(); break;
         }
         return true;
     }
+	static void jtt_bootimagetest_TestHeapAllocation() {
+
+	begin("jtt.bootimagetest.TestAllocation");
+	try {
+		String runString = null;
+		if(TestHeapAllocation.test() != true) {
+			fail(runString);
+		}
+
+	} catch (Throwable t) {
+			fail("void",t);
+		}
+		pass();
+	}	
 	static void jtt_bootimagetest_SimpleExample() {
         begin("jtt.bootimagetest.SimpleExample()");
         String runString = null;
