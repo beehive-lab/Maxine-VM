@@ -27,7 +27,7 @@ package jtt.bytecode;
 
 /*
  * @Harness: java
- * @Runs: 1L, 1 = 1; -3L, 1 = 1; 10000L, 1 = 1
+ * @Runs: (1L, 1) = 1; (-3L, 1) = 1; (10000L, 1) = 1
  */
 public class BC_lload_4 {
 
