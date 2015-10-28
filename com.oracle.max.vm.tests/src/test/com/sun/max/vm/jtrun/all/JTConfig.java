@@ -32,6 +32,7 @@ public class JTConfig {
 
 // GENERATED TEST CLASS LIST
     private static final Class<?>[] classList = {
+        jtt.bootimagetest.TestHeapAllocation.class,
         jtt.bytecode.BC_aaload.class,
         jtt.bytecode.BC_aaload_1.class,
         jtt.bytecode.BC_aastore.class,
@@ -68,6 +69,8 @@ public class JTConfig {
         jtt.bytecode.BC_dcmp09.class,
         jtt.bytecode.BC_dcmp10.class,
         jtt.bytecode.BC_ddiv.class,
+        jtt.bytecode.BC_dload.class,
+        jtt.bytecode.BC_dload_2.class,
         jtt.bytecode.BC_dmul.class,
         jtt.bytecode.BC_dneg.class,
         jtt.bytecode.BC_dneg2.class,
@@ -96,6 +99,7 @@ public class JTConfig {
         jtt.bytecode.BC_fdiv.class,
         jtt.bytecode.BC_fload.class,
         jtt.bytecode.BC_fload_2.class,
+        jtt.bytecode.BC_fload_5.class,
         jtt.bytecode.BC_fmul.class,
         jtt.bytecode.BC_fneg.class,
         jtt.bytecode.BC_frem.class,
@@ -183,6 +187,7 @@ public class JTConfig {
         jtt.bytecode.BC_ladd2.class,
         jtt.bytecode.BC_laload.class,
         jtt.bytecode.BC_land.class,
+        jtt.bytecode.BC_land_const.class,
         jtt.bytecode.BC_lastore.class,
         jtt.bytecode.BC_lcmp.class,
         jtt.bytecode.BC_ldc_01.class,
@@ -198,6 +203,7 @@ public class JTConfig {
         jtt.bytecode.BC_lload_1.class,
         jtt.bytecode.BC_lload_2.class,
         jtt.bytecode.BC_lload_3.class,
+        jtt.bytecode.BC_lload_4.class,
         jtt.bytecode.BC_lmul.class,
         jtt.bytecode.BC_lneg.class,
         jtt.bytecode.BC_lookupswitch01.class,
