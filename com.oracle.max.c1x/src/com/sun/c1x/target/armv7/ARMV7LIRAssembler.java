@@ -335,16 +335,25 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 movoop(frameMap.toStackAddress(slot), c);
                 break;
             case Long:
-		masm.saveRegister(8,9);
+		//masm.saveRegister(8,9);
+		masm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r9, null, CiKind.Float, CiKind.Int);
+
                 masm.movlong(ARMV7.r8, c.asLong(), CiKind.Long);
                 masm.strd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
-		masm.restoreRegister(8,9);
+		masm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s30, null, CiKind.Int, CiKind.Float);
+
+		//masm.restoreRegister(8,9);
                 break;
             case Double:
-                masm.saveRegister(8,9);
+                //masm.saveRegister(8,9);
+		// TODO RECODE INEFFICIENT
+		masm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r9, null, CiKind.Float, CiKind.Int);
+
                 masm.movlong(ARMV7.r8, Double.doubleToRawLongBits(c.asDouble()), CiKind.Long);
                 masm.strd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
-                masm.restoreRegister(8,9);
+		masm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s30, null, CiKind.Int, CiKind.Float);
+
+                //masm.restoreRegister(8,9);
                 break;
             default:
                 throw Util.shouldNotReachHere("Unknown constant kind for const2stack: " + c.kind);
@@ -598,12 +607,16 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     @Override
     protected void stack2stack(CiValue src, CiValue dest, CiKind kind) {
         if (src.kind == CiKind.Long || src.kind == CiKind.Double) {
-            masm.saveRegister(8,9);
+            //masm.saveRegister(8,9);
+	    // must not perturb the stack when doing a stack copy operation!!!!
+            masm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r9, null, CiKind.Float, CiKind.Int);
             masm.setUpScratch(frameMap.toStackAddress((CiStackSlot) src));
             masm.ldrd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
             masm.setUpScratch(frameMap.toStackAddress((CiStackSlot) dest));
             masm.strd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
-            masm.restoreRegister(8,9);
+            //masm.restoreRegister(8,9);
+	    masm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s30, null, CiKind.Int, CiKind.Float);
+
         } else {
             masm.setUpScratch(frameMap.toStackAddress((CiStackSlot) src));
             masm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, ARMV7.r8, ARMV7.r12, 0);
@@ -1252,7 +1265,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         // register - stack
                         assert (right.kind == CiKind.Long);
                         CiAddress raddr = frameMap.toStackAddress(((CiStackSlot) right));
-			masm.saveRegister(8,9);
+			//masm.saveRegister(8,9);
+			masm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r9, null, CiKind.Float, CiKind.Int);
+
                         masm.setUpScratch(raddr);
                         masm.ldrd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
                         switch (code) {
@@ -1265,7 +1280,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                             default:
                                 throw Util.shouldNotReachHere();
                         }
-			masm.restoreRegister(8,9);
+			masm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s30, null, CiKind.Int, CiKind.Float);
+
+			//masm.restoreRegister(8,9);
                     } else {
                         // register - constant
                         assert right.isConstant();
@@ -1778,11 +1795,16 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         masm.cmpl(reg1, frameMap.toStackAddress(opr2Slot));
                         break;
                     case Long:
-                        masm.saveRegister(8,9);
+                        //masm.saveRegister(8,9);
+			// must not perturb the stack when doing a stack copy operation!!!!
+            		masm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r9, null, CiKind.Float, CiKind.Int);
+
                         masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
                         masm.ldrd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
                         masm.lcmpl(convertCondition(condition), reg1, ARMV7.r8);
-                        masm.restoreRegister(8,9);
+			masm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s30, null, CiKind.Int, CiKind.Float);
+	
+                        //masm.restoreRegister(8,9);
                         break;
                     case Object:
                         masm.cmpptr(reg1, frameMap.toStackAddress(opr2Slot));

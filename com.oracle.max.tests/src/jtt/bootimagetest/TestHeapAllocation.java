@@ -11,6 +11,7 @@ public class TestHeapAllocation {
     }
 
     public static boolean test(int a) {
+	while(a != -99);
 	System.out.println("TestHeapAllocation.test ENTER");
         TestHeapAllocation  tmp = new TestHeapAllocation();
 	System.out.println("TestHeapAllocation.test DONEALLOC");
