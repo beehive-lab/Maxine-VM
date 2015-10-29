@@ -2011,15 +2011,15 @@ public class JTRuns {
             begin("jtt.bytecode.BC_dload_2");
             String runString = null;
             try {
-            // (-1.0,0) == -1.0
+            // (-1.0,0) == 0.0
                 runString = "(-1.0,0)";
-                if (-1.0 != jtt.bytecode.BC_dload_2.test(-1.0, 0)) {
+                if (0.0 != jtt.bytecode.BC_dload_2.test(-1.0, 0)) {
                     fail(runString);
                     return;
                 }
-            // (-1.01,10) == -1.01
+            // (-1.01,10) == 10.0
                 runString = "(-1.01,10)";
-                if (-1.01 != jtt.bytecode.BC_dload_2.test(-1.01, 10)) {
+                if (10.0 != jtt.bytecode.BC_dload_2.test(-1.01, 10)) {
                     fail(runString);
                     return;
                 }
@@ -2871,15 +2871,15 @@ public class JTRuns {
             begin("jtt.bytecode.BC_fload_5");
             String runString = null;
             try {
-            // (0.0,1.0,2.0,0.0,-1.0) == -1.0
+            // (0.0,1.0,2.0,0.0,-1.0) == false
                 runString = "(0.0,1.0,2.0,0.0,-1.0)";
-                if (-1.0f != jtt.bytecode.BC_fload_5.test(0.0f, 1.0f, 2.0f, 0.0f, -1.0f)) {
+                if (false != jtt.bytecode.BC_fload_5.test(0.0f, 1.0f, 2.0f, 0.0f, -1.0f)) {
                     fail(runString);
                     return;
                 }
-            // (0.0,1.0,2.0,0.0,-1.01) == -1.01
+            // (0.0,1.0,2.0,0.0,-1.01) == false
                 runString = "(0.0,1.0,2.0,0.0,-1.01)";
-                if (-1.01f != jtt.bytecode.BC_fload_5.test(0.0f, 1.0f, 2.0f, 0.0f, -1.01f)) {
+                if (false != jtt.bytecode.BC_fload_5.test(0.0f, 1.0f, 2.0f, 0.0f, -1.01f)) {
                     fail(runString);
                     return;
                 }

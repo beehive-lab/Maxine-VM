@@ -393,8 +393,8 @@ public abstract class Trap {
 	    //com.sun.max.vm.Log.println("is in JAVA");
             tfa.setTrapNumber(trapFrame, Number.NULL_POINTER_EXCEPTION);
             // null pointer exception
-	    com.sun.max.vm.Log.print("STACK PTR " );com.sun.max.vm.Log.println(stackPointer);
-	    com.sun.max.vm.Log.print("PC PTR ");com.sun.max.vm.Log.println(instructionPointer);
+	    //com.sun.max.vm.Log.print("STACK PTR " );com.sun.max.vm.Log.println(stackPointer);
+	    //com.sun.max.vm.Log.print("PC PTR ");com.sun.max.vm.Log.println(instructionPointer);
             raiseImplicitException(trapFrame, targetMethod, NullPointerException.class, stackPointer, framePointer, instructionPointer);
 	    //com.sun.max.vm.Log.println("RETURNED from raiseImplicitException");
         } else {
@@ -429,7 +429,7 @@ public abstract class Trap {
      */
     private static void raiseImplicitException(Pointer trapFrame, TargetMethod tm, Class<? extends Throwable> throwableClass, Pointer sp, Pointer fp, CodePointer ip) {
         if (DeoptOnImplicitException && !tm.isBaseline() && tm.deoptOnImplicitException() && throwableClass != StackOverflowError.class) {
-	    com.sun.max.vm.Log.println("DEOPT inside raiseImplicitException NOT YET IMPLEMENTED");
+	    com.sun.max.vm.Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DEOPT inside raiseImplicitException NOT YET IMPLEMENTED");
             Stub stub = vm().stubs.deoptStubForSafepointPoll();
             CodePointer to = stub.codeStart();
             final TrapFrameAccess tfa = vm().trapFrameAccess;
@@ -471,9 +471,9 @@ public abstract class Trap {
                 VmThread.current().storeExceptionForHandler(throwable, tm, tm.posFor(catchAddress));
 
                 final TrapFrameAccess tfa = vm().trapFrameAccess;
-		com.sun.max.vm.Log.println("DO set PC raiseImplicitException");
+		//com.sun.max.vm.Log.println("DO set PC raiseImplicitException");
                 tfa.setPC(trapFrame, catchAddress.toPointer());
-		 com.sun.max.vm.Log.println("DONE set PC raiseImplicitException");
+		 //com.sun.max.vm.Log.println("DONE set PC raiseImplicitException");
 
                 return;
             }
@@ -481,7 +481,7 @@ public abstract class Trap {
 	 //com.sun.max.vm.Log.println("CATCH ADDRESS in raiseImplicitException is ZERO, probably means recordImplicitException is not using the correct codeOffset");
 	//com.sun.max.vm.Log.println("in ARMV7LIRAssembler ... exampine call sites and the generated assembler enable prints in ");
 	 //com.sun.max.vm.Log.println("throwAddresstoCatch address MAxTargetMEthod T1XTargetMEthod as necessary");
-	 com.sun.max.vm.Log.println("DO Trap.java Throw.raise raiseImplicitException");
+	 //com.sun.max.vm.Log.println("DO Trap.java Throw.raise raiseImplicitException");
         Throw.raise(throwable, sp, fp, ip);
 	 //com.sun.max.vm.Log.println("DONE Throw.raise raiseImplicitException");
     }

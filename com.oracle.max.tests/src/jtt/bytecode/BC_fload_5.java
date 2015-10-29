@@ -27,7 +27,7 @@ package jtt.bytecode;
 
 /*
  * @Harness: java
- * @Runs: (0f,1f,2f,0f,-1f) = -1f; (0f,1f,2f,0f,-1.01f) = -1.01f
+ * @Runs: (0f,1f,2f,0f,-1f) = false; (0f,1f,2f,0f,-1.01f) = false
  */
 public class BC_fload_5 {
 

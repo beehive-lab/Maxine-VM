@@ -27,7 +27,7 @@ package jtt.bytecode;
 
 /*
  * @Harness: java
- * @Runs: (-1d,0) = -1d; (-1.01d,10) = -1.01d
+ * @Runs: (-1d,0) = 0d; (-1.01d,10) = 10d
  */
 public class BC_dload_2 {
 
