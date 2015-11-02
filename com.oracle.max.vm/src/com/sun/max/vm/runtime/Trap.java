@@ -22,23 +22,34 @@
  */
 package com.sun.max.vm.runtime;
 
-import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.VMOptions.*;
-import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
-import static com.sun.max.vm.runtime.Trap.Number.*;
-import static com.sun.max.vm.thread.VmThread.*;
-import static com.sun.max.vm.thread.VmThreadLocal.*;
+import com.sun.max.annotate.C_FUNCTION;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.lang.Ints;
+import com.sun.max.platform.Platform;
+import com.sun.max.unsafe.Address;
+import com.sun.max.unsafe.CodePointer;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.Log;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.VMBooleanOption;
+import com.sun.max.vm.VMOptions;
+import com.sun.max.vm.code.Code;
+import com.sun.max.vm.compiler.CallEntryPoint;
+import com.sun.max.vm.compiler.target.Stub;
+import com.sun.max.vm.compiler.target.Stubs;
+import com.sun.max.vm.compiler.target.TargetMethod;
+import com.sun.max.vm.reference.Reference;
+import com.sun.max.vm.thread.VmThread;
+import com.sun.max.vm.thread.VmThreadLocal;
 
-import com.sun.max.platform.*;
-import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.reference.*;
-import com.sun.max.vm.thread.*;
+import static com.sun.max.vm.MaxineVM.vm;
+import static com.sun.max.vm.VMOptions.register;
+import static com.sun.max.vm.compiler.deopt.Deoptimization.DEOPT_RETURN_ADDRESS_OFFSET;
+import static com.sun.max.vm.compiler.deopt.Deoptimization.deoptLogger;
+import static com.sun.max.vm.runtime.Trap.Number.*;
+import static com.sun.max.vm.thread.VmThread.currentTLA;
+import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 /**
  * This class handles synchronous operating systems signals used to implement the following VM features:
@@ -133,7 +144,7 @@ public abstract class Trap {
     /**
      * Whether to bang on the stack in the method prologue.
      */
-    public static final boolean STACK_BANGING = false;
+    public static final boolean STACK_BANGING = true;
 
     /**
      * The number of bytes reserved in the stack as a guard area.

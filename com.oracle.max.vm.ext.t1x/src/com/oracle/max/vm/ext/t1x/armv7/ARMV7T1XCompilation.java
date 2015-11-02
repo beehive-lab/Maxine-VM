@@ -920,7 +920,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 offset = offset - frameSize;
                 // RSP is r13!
                 asm.setUpScratch(new CiAddress(WordUtil.archKind(), RSP, -offset));
-                asm.strImmediate(ConditionFlag.Always, 0, 0, 0, LR, asm.scratchRegister, 0);
+                asm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r0, asm.scratchRegister, 0); // was LR
                 // APN guessing rax is return address.
                 // asm.movq(new CiAddress(WordUtil.archKind(), RSP, -offset), rax);
             }

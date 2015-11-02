@@ -134,7 +134,7 @@ jlong  native_currentTimeMillis(void) {
 	jlong temp;
 	temp = (tv.tv_sec);
 	temp *= 1000;
-	temp += (tv.tv_usec / 10000);
+	temp += (tv.tv_usec / 1000);
 	//return (jlong) ((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
 	return temp;
 #else

@@ -37,17 +37,12 @@ public class Math_abs {
     public static class NaN extends Throwable { }
 
     public static double test(double arg) throws NaN {
-	/*if(arg == 5.0d) { 
-		System.out.println("MATCHED 5.0");
-		while(arg == 5.0d);
-	}*/
+
         double v = Math.abs(arg);
         if (Double.isNaN(v)) {
             // NaN can't be tested against itself
             throw new NaN();
         }
-	//if(v == 5.0d) System.out.println("STILL MATCHED 5.0");
-	System.out.println("OUTPUT " + v);
         return v;
     }
 }
