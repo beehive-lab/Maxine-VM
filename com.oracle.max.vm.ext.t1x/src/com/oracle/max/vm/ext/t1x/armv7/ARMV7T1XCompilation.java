@@ -463,9 +463,10 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     @Override
     protected void do_invokespecial_resolved(T1XTemplateTag tag, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
         peekObject(ARMV7.r8, receiverStackIndex);
-        int safepoint = nullCheck(ARMV7.r8);
-        safepointsBuilder.addSafepoint(stream.currentBCI(), safepoint, null);
-        asm.mov(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r8);
+        //int safepoint = nullCheck(ARMV7.r8);
+        nullCheck(ARMV7.r8);
+        //safepointsBuilder.addSafepoint(stream.currentBCI(), safepoint, null);
+        //asm.mov(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r8);
 
     }
 
@@ -863,11 +864,11 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     }
 
     @Override
-    protected int nullCheck(CiRegister src) {
+    protected void nullCheck(CiRegister src) {
         // nullCheck on AMD64 testl(AMD64.rax, new CiAddress(Word, r.asValue(Word), 0));
-        int safepointPos = buf.position();
+        //int safepointPos = buf.position();
         asm.nullCheck(src);
-        return Safepoints.make(safepointPos);
+        //return Safepoints.make(safepointPos);
 
     }
 
