@@ -403,18 +403,25 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 movoop(addr, constant);
                 break;
             case Long:
-                masm.saveRegister(8,9);
+                //masm.saveRegister(8,9);
+                masm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r9, null, CiKind.Float, CiKind.Int);
+
                 masm.movlong(ARMV7.r8, constant.asLong(), CiKind.Long);
                 nullCheckHere = codePos();
                 masm.strd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
-                masm.restoreRegister(8,9);
+		masm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s30, null, CiKind.Int, CiKind.Float);
+
+                //masm.restoreRegister(8,9);
                 break;
             case Double:
-                masm.saveRegister(8,9);
+                //masm.saveRegister(8,9);
+		masm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r9, null, CiKind.Float, CiKind.Int);
                 masm.movlong(ARMV7.r8, Double.doubleToRawLongBits(constant.asDouble()), CiKind.Long);
                 nullCheckHere = codePos();
                 masm.strd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
-                masm.restoreRegister(8,9);
+		masm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s30, null, CiKind.Int, CiKind.Float);
+
+                //masm.restoreRegister(8,9);
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -1351,9 +1358,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 		//masm.movdbl(dest.asRegister(), value.asRegister()); 
                 }
 		masm.push(ConditionFlag.Always, 1<< 9);
-		masm.mov32BitConstant(ARMV7.r12,0xefffffff);
-		masm.vmov(ConditionFlag.Always, ARMV7.r8, ARMV7.r9, dest.asRegister(), CiKind.Long, CiKind.Double);
-		masm.and(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, ARMV7.r12, 0, 0);
+		masm.mov32BitConstant(ARMV7.r12,0x7fffffff);
+		masm.vmov(ConditionFlag.Always, ARMV7.r8,  dest.asRegister(), null, CiKind.Long, CiKind.Double);
+		masm.and(ConditionFlag.Always, false, ARMV7.r9, ARMV7.r9, ARMV7.r12, 0, 0);
 		masm.vmov(ConditionFlag.Always, dest.asRegister(), ARMV7.r8, ARMV7.r9, CiKind.Double, CiKind.Long);
 		masm.pop(ConditionFlag.Always, 1<<9);
 
@@ -1786,6 +1793,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             } else if (opr2.isStackSlot()) {
                 // register - stack
                 CiStackSlot opr2Slot = (CiStackSlot) opr2;
+		//assert opr1 != ARMV7.r12;
+		if(reg1 == ARMV7.r12) {
+			System.err.println("ERROR emitCompare R12 is going to get trashed");
+		}
                 switch (opr1.kind) {
                     case Boolean:
                     case Byte:

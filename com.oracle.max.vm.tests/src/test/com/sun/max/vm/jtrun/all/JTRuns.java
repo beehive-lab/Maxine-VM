@@ -851,6 +851,12 @@ public class JTRuns {
                     fail(runString);
                     return;
                 }
+            // (0) == false
+                runString = "(0)";
+                if (false != jtt.bootimagetest.TestHeapAllocation.test(0)) {
+                    fail(runString);
+                    return;
+                }
             } catch (Throwable t) {
                 fail(runString, t);
                 return;

@@ -1794,12 +1794,24 @@ CODEWRITE    1		 1
         int instruction = 0x0eb40a40;
         int dpOperation = 0;
         int quietNAN = nanExceptions ? 0 : 1;
+	//assert src1Kind == src2Kind;
+	if(src1Kind.isDouble() && src2Kind.isFloat()) 	{
+		System.err.println("VCMP incompatible types ");
+	}
+	if(src2Kind.isDouble() && src1Kind.isFloat()) 	{
+		System.err.println("VCMP incompatible types ");
+	}
+	//assert src1.encoding != src2.encoding;
 
         if (src1Kind.isDouble()) {
             assert src2Kind.isDouble();
             dpOperation = 1;
-            instruction |= (src1.encoding << 12);
-            instruction |= (src2.encoding);
+            instruction |= ((src1.encoding&0xf) << 12);
+	    instruction |= (src1.encoding>>4) <<22;
+            instruction |= (src2.encoding&0xf);
+            instruction |= (src2.encoding>>4) << 5;
+	
+		
         } else {
             assert src2Kind.isFloat();
             instruction |= (src1.encoding >> 1) << 12;
@@ -2517,6 +2529,9 @@ end_label:
         int vmovSameType = 0x0eb00a40; // A8.8.340
         int vmovSingleCore = 0x0e000a10; // A8.8.343 full word only // ARM core to scalar
         int vmovDoubleCore = 0x0c400b10; // A8.8.345 // TWO ARM core to doubleword extension
+	if(srcKind.isDouble() && destKind.isLong()) {
+		assert src2 == null;
+	}
         if (srcKind.isDouble() && destKind.isDouble()) {
             instruction |= (1 << 8) | vmovSameType;
             instruction |= (dest.encoding >> 4) << 22;
@@ -2544,6 +2559,7 @@ end_label:
                 instruction |= dest.encoding << 12;
                 instruction |= (dest.encoding + 1) << 16;
                 instruction |= src.encoding;
+		instruction |= ((src.encoding >> 4) & 0x1) << 5;
             } else {
                 assert src2 != null;
                 checkConstraint((src.encoding) <= 14, "vmov core to doubleword core register > 14");

@@ -89,7 +89,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         ldrex(ConditionFlag.Always, ARMV7.r8, scratchRegister); // r8 has the current Value
         cmp(ConditionFlag.Always, cmpValue, ARMV7.r8, 0, 0); // compare r8 with cmpValue
         strex(ConditionFlag.Equal, ARMV7.r8, newValue, scratchRegister); // if equal, store newValue to address and result to r8
-        mov(ConditionFlag.NotEqual, false, cmpValue, ARMV7.r8);// Updated cmpValue to have the value loaded
+        //mov(ConditionFlag.NotEqual, false, cmpValue, ARMV7.r8);// Updated cmpValue to have the value loaded
         jcc(ConditionFlag.NotEqual, notEqualTocmpValue); // we were not equal to the cmpValue
         /*
         If the Condition isa Equal then the strex took place but it MIGHT have failed so we need to test for this.
@@ -123,8 +123,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         lcmpl(ConditionFlag.Equal, cmpValue, ARMV7.r8); // compare r8,r9 with cmpValue
         // if equal, store newValue to address and store result to r8
         strexd(ConditionFlag.Equal, ARMV7.r8, newValue, ARMV7.r12);
-        mov(ConditionFlag.NotEqual, false, cmpValue, ARMV7.r8);// Updated cmpValue to have the value loaded
-        mov(ConditionFlag.NotEqual, false, ARMV7.cpuRegisters[cmpValue.number + 1], ARMV7.r9);
+        //mov(ConditionFlag.NotEqual, false, cmpValue, ARMV7.r8);// Updated cmpValue to have the value loaded
+        //mov(ConditionFlag.NotEqual, false, ARMV7.cpuRegisters[cmpValue.number + 1], ARMV7.r9);
         jcc(ConditionFlag.NotEqual, notEqualTocmpValue); // we were not equal to the cmpValue
         // If the Condition isa Equal then the strex took place but it might have failed so we need to test for this.
         mov32BitConstant(ARMV7.r12, 1); // r12 has value 1
