@@ -2106,6 +2106,25 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         // masm.notq(result); // twos complement?
         masm.rsb(ConditionFlag.Always, false, result, result, 0, 0); // negate
         masm.incq(result); // add 1 to get to the twos completent
+	if(src.kind.isLong()) {
+		System.out.println("LONG --------------significant bit op");
+	}
+	else if(src.kind.isInt()) {
+		System.out.println("INT --------------significant bit op");
+        }
+	else if(src.kind.isFloat()) {
+		 System.out.println("FLOAT --------------significant bit op");
+        }
+        else if(src.kind.isDouble()) {
+
+		System.out.println("DOUBLE --------------significant bit op");
+
+	} else {
+		System.out.println("UNKKNOWN --------------significant bit op");
+
+	}
+
+	
         if (src.isRegister()) {
             CiRegister value = src.asRegister();
             assert value != result;
@@ -2115,9 +2134,19 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.clz(ConditionFlag.Always, result, value);
                 // NOTE wILL RETURN 32 if zero!!!
                 // masm.bsrq(result, value);
+		masm.mov32BitConstant(ARMV7.r12,32);
+		masm.isub(result, ARMV7.r12, result);
+		masm.mov32BitConstant(ARMV7.r12, 1);
+		masm.isub(result, result, ARMV7.r12);	
+
+		//masm.cmp(ConditionFlag.Always,result,ARMV7.r12,0,0);
+		//masm.mov32BitConstant(ConditionFlag.Equal,result,-1);
             } else {
                 masm.rbit(ConditionFlag.Always, ARMV7.r12, value);
                 masm.clz(ConditionFlag.Always, result, ARMV7.r12);
+		masm.mov32BitConstant(ARMV7.r12,32);
+		masm.cmp(ConditionFlag.Always,result,ARMV7.r12,0,0);
+		masm.mov32BitConstant(ConditionFlag.Equal,result,-1);
                 // masm.bsfq(result, value);
             }
         } else {
@@ -2131,6 +2160,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 // masm.bsfq(result, laddr);
                 masm.rbit(ConditionFlag.Always, ARMV7.r12, ARMV7.r12);
                 masm.clz(ConditionFlag.Always, result, ARMV7.r12);
+		masm.mov32BitConstant(ARMV7.r12,32);
+                masm.cmp(ConditionFlag.Always,result,ARMV7.r12,0,0);
+                masm.mov32BitConstant(ConditionFlag.Equal,result,-1);
             }
         }
     }

@@ -32,11 +32,6 @@ import com.sun.max.unsafe.*;
 public class LeastSignificantBit {
 
     public static int test(long singleWordBitmap) {
-	int retval;
-	com.sun.max.vm.Log.print(" INPUT LSB ");com.sun.max.vm.Log.println(singleWordBitmap);
-        retval =  Address.fromLong(singleWordBitmap).leastSignificantBitSet();
-	com.sun.max.vm.Log.print(" GOT ");com.sun.max.vm.Log.println(retval);
-	return retval;
-        //return Address.fromLong(singleWordBitmap).leastSignificantBitSet();
+        return Address.fromLong(singleWordBitmap).leastSignificantBitSet();
     }
 }

@@ -136,6 +136,13 @@ public class MaxineTesterConfiguration {
 
         jtt(jtt.threads.Thread_isInterrupted02.class,     FAIL_LINUX);
         jtt(jtt.hotspot.Test6959129.class,     FAIL_ALL);
+	if(Platform.target().arch.is32bit()) {
+		//jtt(jtt.max.LeastSignificantBit.class, FAIL_LINUX);
+		//jtt(jtt.max.MostSignificantBit.class, FAIL_LINUX);
+		System.out.println("On 32 bit platforms we expect to fail jtt.max.LeastSignificantBit.test(0x100000000L) because it is greater than the word size!!!");	
+		System.out.println("On 32 bit platforms we expect to fail jtt.max.MostSignificantBit.test(0x100000000L) because it is greater than the word size!!!"); 
+
+	}
 
         dacapo2006("antlr");
         dacapo2006("bloat");
@@ -270,7 +277,7 @@ public class MaxineTesterConfiguration {
         imageConfig("java", "-run=java");
         imageConfig("c1xgraal", opt_c1xgraal);
         imageConfig("c1xgraal-boot", opt_c1xgraal, "--XX:+GraalForBoot");
-        imageConfig("jtt-t1xc1x", opt_c1x,"--J @ \" -Xms512M -Xmx1G -esa -ea\"","-heap=com.sun.max.vm.heap.sequential.semiSpace","-threads=4",  "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", testCallerT1X);
+        imageConfig("jtt-t1xc1x", opt_c1x,"--J @ \" -Xms512M -Xmx1G -esa -ea\"","-heap=com.sun.max.vm.heap.sequential.semiSpace","-threads=4","-debug-methods",  "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", testCallerT1X);
         imageConfig("jtt-c1xt1x", opt_c1x,"--J @ \" -Xms512M -Xmx1G -esa -ea\"","-heap=com.sun.max.vm.heap.sequential.semiSpace","-threads=4",  "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", testCalleeT1X, "--XX:+FailOverCompilation");
         imageConfig("jtt-t1xt1x", opt_c1x,"--J @ \" -Xms512M -Xmx1G -esa -ea\"","-heap=com.sun.max.vm.heap.sequential.semiSpace","-threads=4",  "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", joinCompileCommands(testCallerT1X, testCalleeT1X), "--XX:+FailOverCompilation");
         //imageConfig("jtt-c1xc1x", opt_c1x,"--J @" + "\"" + " -Xms512M -Xmx1G -esa -ea" +"\"","-heap=com.sun.max.vm.heap.sequential.semiSpace","-threads=4","-debug-methods",

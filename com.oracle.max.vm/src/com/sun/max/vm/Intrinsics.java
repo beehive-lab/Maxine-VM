@@ -45,6 +45,7 @@ public class Intrinsics {
         if (l == 0) {
             return -1;
         }
+	
         return Long.numberOfTrailingZeros(l);
     }
 

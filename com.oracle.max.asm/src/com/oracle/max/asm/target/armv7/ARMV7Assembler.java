@@ -1579,6 +1579,21 @@ CODEWRITE    1		 1
         sub(ConditionFlag.Always, false, dst, dst, scratchRegister, 0, 0);
     }
 
+    public final void mov32BitConstant(ConditionFlag when,CiRegister dst, int imm32) {
+        if (dst.number < 16) {
+            movw(when, dst, imm32 & 0xffff);
+            imm32 = imm32 >> 16;
+            imm32 = imm32 & 0xffff;
+            movt(when, dst, imm32 & 0xffff);
+        } else {
+	    // ok for Float ?
+            // what about doubles
+            mov32BitConstant(when, ARMV7.r12, imm32);
+	    
+            vmov(when, dst, ARMV7.r12, null, CiKind.Float, CiKind.Int);
+        }
+    }
+
     public final void mov32BitConstant(CiRegister dst, int imm32) {
         if (dst.number < 16) {
             movw(ConditionFlag.Always, dst, imm32 & 0xffff);

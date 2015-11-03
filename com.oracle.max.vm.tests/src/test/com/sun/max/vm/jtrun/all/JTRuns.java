@@ -27407,9 +27407,9 @@ public class JTRuns {
                     fail(runString);
                     return;
                 }
-            // (-1) == 63
+            // (-1) == 31
                 runString = "(-1)";
-                if (63 != jtt.max.MostSignificantBit.test(-1L)) {
+                if (31 != jtt.max.MostSignificantBit.test(-1L)) {
                     fail(runString);
                     return;
                 }
