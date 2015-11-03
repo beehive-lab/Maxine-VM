@@ -1,5 +1,6 @@
 package jtt.bootimagetest;
 
+import java.util.concurrent.atomic.*;
 /*
  * @Harness: java
  * @Runs: 1 = true;
@@ -11,10 +12,13 @@ public class TestHeapAllocation {
     }
 
     public static boolean test(int a) {
-	while(a != -99);
-	System.out.println("TestHeapAllocation.test ENTER");
-        TestHeapAllocation  tmp = new TestHeapAllocation();
-	System.out.println("TestHeapAllocation.test DONEALLOC");
-	return tmp != null;
+System.out.println("TestHeapAllocation.test ENTER");
+AtomicLong bb = new AtomicLong(0);
+bb.compareAndSet(0, 1);
+        AtomicLong aa = new AtomicLong(1);
+        aa.compareAndSet(1, 2);
+System.out.println("TestHeapAllocation.test EXIT");
+	return true;
+
    }
 }
