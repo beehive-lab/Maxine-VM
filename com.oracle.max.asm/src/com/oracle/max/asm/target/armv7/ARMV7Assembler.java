@@ -1730,6 +1730,38 @@ CODEWRITE    1		 1
 
     public final void lcmpl(ConditionFlag condition, CiRegister src1, CiRegister src2) {
 	/* although this may seem to be badly coded, and it is, it is merely a copy of what gcc does for long long comparisons */
+	if(condition == ConditionFlag.UnsignedHigher) {
+		cmp(ConditionFlag.Always, ARMV7.cpuRegisters[src1.number + 1], ARMV7.cpuRegisters[src2.number + 1], 0, 0);
+ 		cmp(ConditionFlag.Equal, src1, src2, 0, 0);
+		Label isFalse = new Label();
+		Label isEnd = new Label();
+		jcc(ConditionFlag.UnsignedLowerOrEqual,isFalse);
+		mov32BitConstant(ARMV7.r12,1);
+		cmpImmediate(ConditionFlag.Always,ARMV7.r12,0);
+		jcc(ConditionFlag.Always,isEnd);
+		bind(isFalse);
+		mov32BitConstant(ARMV7.r12,0);
+		cmpImmediate(ConditionFlag.Always,ARMV7.r12,1);
+		bind(isEnd);
+		return;
+
+		/*
+   	0x00008740 <uaboveThan+12>:	strd	r0, [r11, #-12]
+   	0x00008744 <uaboveThan+16>:	strd	r2, [r11, #-20]	; 0xffffffec
+	=> 0x00008748 <uaboveThan+20>:	ldrd	r0, [r11, #-12]
+   	0x0000874c <uaboveThan+24>:	ldrd	r2, [r11, #-20]	; 0xffffffec
+   	0x00008750 <uaboveThan+28>:	cmp	r1, r3
+   	0x00008754 <uaboveThan+32>:	cmpeq	r0, r2
+   	0x00008758 <uaboveThan+36>:	movhi	r3, #1
+   	0x0000875c <uaboveThan+40>:	movls	r3, #0
+   	0x00008760 <uaboveThan+44>:	uxtb	r3, r3
+   	0x00008764 <uaboveThan+48>:	mov	r0, r3
+   	0x00008768 <uaboveThan+52>:	sub	sp, r11, #0
+   	0x0000876c <uaboveThan+56>:	pop	{r11}		; (ldr r11, [sp], #4)
+   	0x00008770 <uaboveThan+60>:	bx	lr
+
+	*/
+	}
 	if(condition == ConditionFlag.SignedGreater) {
 		CiRegister tmp = src1;
 		src1 = src2;

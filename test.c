@@ -40,6 +40,12 @@ int comparege(long long a , long long b) {
 int comparelt(long long a , long long b) {
 	return a < b;
 }
+
+int uaboveThan(unsigned long long a,
+		unsigned long long b) {
+
+	return a > b;
+}
 int comparegt(long long a , long long b) {
         return a > b;
 }
@@ -75,6 +81,7 @@ int main(int argc, char**argv) {
 	long long yy = -2147483648LL;
 	int y;
 	int x;
+	printf("ABOVETHAN %d\n",uaboveThan(64,47));
 	printf("ABOVE THANK %d\n", comparegt(64,47));
 	printf("ABOVE THANK %d\n", comparegt(64,-47));
 	printf("ADD %x\n", -16372);

@@ -256,12 +256,9 @@ public class CiRegisterConfig implements RiRegisterConfig {
 
             if (locations[i] == null) {
                // System.out.println("Index " + i + " cStackIndex " + currentStackIndex);
-if (target.arch.is32bit() && kind.stackKind() == CiKind.Long && ((currentStackIndex *  target.spillSlotSize) % 8 != 0)) {
-                    currentStackIndex++;
-                }
                 locations[i] = CiStackSlot.get(kind.stackKind(), currentStackIndex, !type.out);
                 currentStackIndex += target.spillSlots(kind);
-            }
+	    }
         }
         return new CiCallingConvention(locations, (currentStackIndex - firstStackIndex) * target.spillSlotSize);
     }

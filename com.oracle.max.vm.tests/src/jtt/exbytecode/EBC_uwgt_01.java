@@ -30,44 +30,6 @@ import com.oracle.max.cri.intrinsics.*;
 
 public class EBC_uwgt_01 {
     public static boolean test(long a, long b) {
-	boolean value = false;
-	System.out.println(a);
-	System.out.println(b);
-	boolean trues[] = {false, true, false, true};
-	boolean falses[] = {false, false, true,  true};
-
-	for(int i = 0; i < trues.length;i++)	{
-		System.out.println( i + " IS " + (trues[i] ^ falses[i]));
-	}
-/*
-@INTRINSIC(UCMP_AT)
-    public static boolean aboveThan(long a, long b) {
-        //return (a > b) ^ ((a < 0) != (b < 0));
-        return (a > b) ^ ((a < 0L) != (b < 0L));
-*/
-	boolean termAgtB = a >b;
-	boolean termAlt0 = a < 0;
-	boolean termBlt0 = b < 0;
-	boolean termRHS = (termAlt0 != termBlt0);
-	boolean resVal = termAgtB ^ termRHS;
-	System.out.println("(a>b) " + termAgtB);
-	System.out.println("(a<0) " +termAlt0);
-	System.out.println("(b < 0) " + termBlt0);
-	System.out.println("((a<0) != (b<0) " + termRHS);
-	System.out.println("(a>b) ^ (rhs) " + resVal);
-
-	int zz = 0;
-	do {
-		value = UnsignedMath.aboveThan(a, b);
-		if(zz++ < 20) {
-			System.out.println("print max 20times... were ina  loop");
-			System.out.println(" above than 64 47 " +  UnsignedMath.aboveThan(64L, 47L));
-			System.out.println(" above than 11 11 " +  UnsignedMath.aboveThan(11L, 11L));
-			System.out.println(" above than -2,1 " +  UnsignedMath.aboveThan(-2L, 1L));
-
-		}
-			
-	} while(value == false) ;
         return UnsignedMath.aboveThan(a, b);
     }
 
