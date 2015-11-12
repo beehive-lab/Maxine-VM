@@ -303,7 +303,7 @@ public final class Heap {
 	//com.sun.max.vm.Log.print("createarray  "); com.sun.max.vm.Log.println(length);
         final Object array = heapScheme().createArray(hub, length);
 	//com.sun.max.vm.Log.println("done createarray");
-       //allocationLogger.assertArray(array, hub.classActor);
+       allocationLogger.assertArray(array, hub.classActor);
         if (Heap.logAllocation()) {
             allocationLogger.logCreateArray(hub, length, array);
         }
@@ -313,7 +313,7 @@ public final class Heap {
     @INLINE
     public static Object createTuple(Hub hub) {
         final Object object = heapScheme().createTuple(hub);
-//allocationLogger.assertTuple(object, hub.classActor);
+allocationLogger.assertTuple(object, hub.classActor);
         if (Heap.logAllocation()) {
             allocationLogger.logCreateTuple(hub, object);
         }
@@ -323,7 +323,7 @@ public final class Heap {
     @INLINE
     public static Object createHybrid(DynamicHub hub) {
         final Object hybrid = heapScheme().createHybrid(hub);
-//allocationLogger.assertHybrid(hybrid, hub.classActor);
+allocationLogger.assertHybrid(hybrid, hub.classActor);
         if (Heap.logAllocation()) {
             allocationLogger.logCreateHybrid(hub, hybrid);
         }
@@ -333,7 +333,7 @@ public final class Heap {
     @INLINE
     public static Hybrid expandHybrid(Hybrid hybrid, int length) {
         final Hybrid expandedHybrid = heapScheme().expandHybrid(hybrid, length);
-//allocationLogger.assertHybrid(ObjectAccess.readHub(hybrid), ObjectAccess.readHub(hybrid).classActor);
+allocationLogger.assertHybrid(ObjectAccess.readHub(hybrid), ObjectAccess.readHub(hybrid).classActor);
         if (Heap.logAllocation()) {
             allocationLogger.logExpandHybrid(ObjectAccess.readHub(hybrid), expandedHybrid);
         }
@@ -669,7 +669,7 @@ public final class Heap {
     /**
      * A logger for object allocation, only visible in a DEBUG image build.
      */
-    public static final AllocationLogger allocationLogger = MaxineVM.isDebug() ? new AllocationLogger(true) : new AllocationLogger();
+    public static final AllocationLogger allocationLogger = /*MaxineVM.isDebug() ?*/ new AllocationLogger(true)/* : new AllocationLogger()*/;
 
     /**
      * A pseudo-logger that exists solely to define the {@code LogGC and TraceGC} options,
@@ -704,7 +704,7 @@ public final class Heap {
      */
     @INLINE
     public static boolean logAllocation() {
-        return MaxineVM.isDebug() && allocationLogger.enabled();
+        return /*MaxineVM.isDebug() && */allocationLogger.enabled();
     }
 
     /**
@@ -851,13 +851,14 @@ public final class Heap {
 	@NEVER_INLINE
         void assertArray(Object array, ClassActor classActor) {
             if (Layout.originToCell(ObjectAccess.toOrigin(array)).toLong() % 8 != 0) {
-                Log.print(classActor.name.string);
+                Log.print("Error Alignment Array ");
+		Log.print(classActor.name.string);
                 Log.print(" at ");
                 Log.print(Layout.originToCell(ObjectAccess.toOrigin(array)).toLong());
                 Log.print(" [");
                 Log.print(Layout.size((ObjectAccess.toOrigin(array))));
                 Log.println(" bytes]");
-                assert false;
+                //assert false;
             }
 
         }
@@ -865,13 +866,14 @@ public final class Heap {
         @NEVER_INLINE
         void assertTuple(Object array, ClassActor classActor) {
             if (Layout.originToCell(ObjectAccess.toOrigin(array)).toLong() % 8 != 0) {
-                Log.print(classActor.name.string);
+                Log.print("Error Alignment Tuple ");
+		Log.print(classActor.name.string);
                 Log.print(" at ");
                 Log.print(Layout.originToCell(ObjectAccess.toOrigin(array)).toLong());
                 Log.print(" [");
                 Log.print(Layout.size((ObjectAccess.toOrigin(array))));
                 Log.println(" bytes]");
-                assert false;
+                //assert false;
             }
 
         }
@@ -879,13 +881,14 @@ public final class Heap {
         @NEVER_INLINE
         void assertHybrid(Object array, ClassActor classActor) {
             if (Layout.originToCell(ObjectAccess.toOrigin(array)).toLong() % 8 != 0) {
-                Log.print(classActor.name.string);
+                Log.print("Error Alignment Hybrid ");
+		Log.print(classActor.name.string);
                 Log.print(" at ");
                 Log.print(Layout.originToCell(ObjectAccess.toOrigin(array)).toLong());
                 Log.print(" [");
                 Log.print(Layout.size((ObjectAccess.toOrigin(array))));
                 Log.println(" bytes]");
-                assert false;
+                //assert false;
             }
 
         }

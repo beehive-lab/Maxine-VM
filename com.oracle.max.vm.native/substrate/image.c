@@ -332,7 +332,7 @@ static void mapHeapAndCode(int fd) {
         }
     }
 
-    //log_println("Mapping constraint %d",theHeader->bootRegionMappingConstraint);
+    log_println("Mapping constraint %d",theHeader->bootRegionMappingConstraint);
 
     if (theHeader->bootRegionMappingConstraint == 1) {
         // Map the boot heap region at the start of the reserved space
@@ -371,6 +371,11 @@ static void mapHeapAndCode(int fd) {
     theCodeEnd = theCode + theHeader->codeSize;
     //printf("CODE  0x%x CODE-END  0x%x\n",theCode,theCodeEnd);
 
+    log_println("ReservedVSpace Size %d ActualVSpaceSize(*1Mb) %u",theHeader->reservedVirtualSpaceSize, virtualSpaceSize);
+    log_println("boot heap start at %p", theHeap);
+    log_println("code heap start at %p", theCode);
+    log_println("application heap start at %p", theCode + theHeader->codeSize);
+    log_println("application heap stop at %p", theHeap + virtualSpaceSize);
 }
 
 static void relocate(int fd) {
