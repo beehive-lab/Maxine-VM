@@ -38,15 +38,10 @@ public class Conditional01 {
     }
 
     public static int test(int arg) {
-        System.out.println("ENTEREDTEST"); // left in as the indirect calls via  ARMV7.r8 
-					   // are useful for debugging
         Conditional01 c = new Conditional01();
-        System.out.println("DONECONDITIONAL01");
         Random rnd = new Random();
         for (int i = 0; i < arg; i++) {
-	    System.out.println("LOOP " + i);
             CPC i2 = new CPC();
-
             i2.r1 = new Register();
             i2.r1.val = i;
             i2.r1.num = i + RAM_SIZE - 20;
@@ -54,11 +49,8 @@ public class Conditional01 {
             i2.r2.val = rnd.nextInt();
             i2.r2.num = rnd.nextInt(0x100);
             try {
-
                 c.visit(i2);
-
             } catch (RuntimeException re) {
-		System.err.println(re);
             }
         }
         return c.cyclesConsumed;
