@@ -310,12 +310,6 @@ static void mapHeapAndCode(int fd) {
     Address reservedVirtualSpace = (Address) 0;
     size_t virtualSpaceSize =  1024L * theHeader->reservedVirtualSpaceSize;
 
-#ifdef arm
-   // log_println("ReservedVSpace Size %d ActualVSpaceSize(*1Mb) %u",theHeader->reservedVirtualSpaceSize, virtualSpaceSize);
-#else
-    //log_println("ReservedVSpace Size %llu ActualVSpaceSize(*1Mb) %llu",theHeader->reservedVirtualSpaceSize, virtualSpaceSize);
-#endif
-
     c_ASSERT(virtualMemory_pageAlign((Size) virtualSpaceSize) == (Size) virtualSpaceSize);
     if (virtualSpaceSize != 0) {
         // VM configuration asks for reserving an address space of size reservedVirtualSpaceSize.
@@ -325,14 +319,10 @@ static void mapHeapAndCode(int fd) {
         // In any case,  the VM (mostly the heap scheme) is responsible for releasing unused reserved space.
         reservedVirtualSpace = virtualMemory_allocatePrivateAnon((Address) 0, virtualSpaceSize, JNI_FALSE, JNI_FALSE, HEAP_VM);
 
-	    //log_println("Virtual Space starts @  0x%x", reservedVirtualSpace);
-
         if (reservedVirtualSpace == ALLOC_FAILED) {
             log_exit(4, "could not reserve requested virtual space");
         }
     }
-
-    log_println("Mapping constraint %d",theHeader->bootRegionMappingConstraint);
 
     if (theHeader->bootRegionMappingConstraint == 1) {
         // Map the boot heap region at the start of the reserved space
@@ -347,8 +337,6 @@ static void mapHeapAndCode(int fd) {
             log_exit(4, "could not reserve virtual space for boot image");
         }
     }
-
-    //log_println("Heap start  @ 0x%x heapCode size %d", theHeap, heapAndCodeSize);
 
     if (virtualMemory_mapFileAtFixedAddress(theHeap, heapAndCodeSize, fd, heapOffsetInImage) == ALLOC_FAILED) {
         log_exit(4, "could not map boot image");
@@ -365,17 +353,14 @@ static void mapHeapAndCode(int fd) {
     theHeap = maxve_remap_boot_code_region(theHeap, heapAndCodeSize);
 #endif
 #if log_LOADER
-    log_println("boot heap mapped at %p", theHeap);
-#endif
-    theCode = theHeap + theHeader->heapSize;
-    theCodeEnd = theCode + theHeader->codeSize;
-    //printf("CODE  0x%x CODE-END  0x%x\n",theCode,theCodeEnd);
-
     log_println("ReservedVSpace Size %d ActualVSpaceSize(*1Mb) %u",theHeader->reservedVirtualSpaceSize, virtualSpaceSize);
     log_println("boot heap start at %p", theHeap);
     log_println("code heap start at %p", theCode);
     log_println("application heap start at %p", theCode + theHeader->codeSize);
     log_println("application heap stop at %p", theHeap + virtualSpaceSize);
+#endif
+    theCode = theHeap + theHeader->heapSize;
+    theCodeEnd = theCode + theHeader->codeSize;
 }
 
 static void relocate(int fd) {
