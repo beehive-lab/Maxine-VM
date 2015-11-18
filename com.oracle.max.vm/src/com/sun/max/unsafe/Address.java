@@ -395,7 +395,7 @@ public class Address extends Word {
         return and(Address.fromInt(alignment - 1).not());
     }
 
-   @INLINE
+    @INLINE
     public boolean isDoubleWordAligned() {
         final int n = 2 * Word.size();
         return and(n - 1).equals(Address.zero());
@@ -414,20 +414,7 @@ public class Address extends Word {
 
     @INLINE
     public final boolean isBitSet(int index) {
-	//if (Word.width() == 64) {
-//boolean b = false;
-//         if (MaxineVM.isPristine()) {
-        //Log.println(" Address toLong: ");
-        //Log.println(toLong());
-  //      boolean a = (toLong() & (1L << index)) != 0;
-   //     Log.println( "isSet? ");
-   //     Log.println(a);
-//b=(toLong() & (1L << index)) != 0;
-//	}
         return (toLong() & (1L << index)) != 0;
-	//}else{
-	//return (toInt() & (1 <<index)) !=0;
-	//}
     }
 
     @INLINE
