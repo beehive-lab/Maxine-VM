@@ -205,6 +205,12 @@ public final class Size extends Address {
         return super.isWordAligned();
     }
 
+   @INLINE
+    @Override
+    public boolean isDoubleWordAligned() {
+        return super.isDoubleWordAligned();
+    }
+
     @INLINE
     @Override
     public Size bitSet(int index) {

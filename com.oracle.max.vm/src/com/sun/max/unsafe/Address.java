@@ -395,6 +395,12 @@ public class Address extends Word {
         return and(Address.fromInt(alignment - 1).not());
     }
 
+   @INLINE
+    public boolean isDoubleWordAligned() {
+        final int n = 2 * Word.size();
+        return and(n - 1).equals(Address.zero());
+    }
+
     @INLINE
     public boolean isWordAligned() {
         final int n = Word.size();

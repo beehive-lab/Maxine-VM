@@ -409,7 +409,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     @INLINE
     @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
     protected final Pointer tlabAllocate(Size size) {
-        if (MaxineVM.isDebug() && !size.isWordAligned()) {
+        if (MaxineVM.isDebug() && !size.isDoubleWordAligned()) {
             FatalError.unexpected("size is not word aligned in heap allocation request");
         }
         final Pointer etla = ETLA.load(currentTLA());
@@ -559,7 +559,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         tlabReset(currentTLA());
     }
 
-    public static final TLABLogger logger = MaxineVM.isDebug() ? new TLABLogger(true) : new TLABLogger();
+    public static final TLABLogger logger = /*MaxineVM.isDebug() ?*/ new TLABLogger(true) /*: new TLABLogger()*/;
 
     @HOSTED_ONLY
     @VMLoggerInterface(defaultConstructor = true)
@@ -580,6 +580,12 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             @VMLogParam(name = "vmThread") VmThread vmThread,
             @VMLogParam(name = "tlabMark") Pointer tlabMark,
             @VMLogParam(name = "padWords") int padWords);
+
+        void allocate(
+            @VMLogParam(name = "vmThread") VmThread vmThread,
+            @VMLogParam(name = "allocationMark") Pointer tlabMark,
+            @VMLogParam(name = "size") int padWords);
+     
     }
 
     public static final class TLABLogger extends TLabLoggerAuto {
@@ -596,7 +602,18 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             checkDominantLoggerOptions(Heap.gcAllLogger);
         }
 
+
         @Override
+        protected void traceAllocate(VmThread vmThread, Pointer allocationMark, int size) {
+            Log.printThread(vmThread, false);
+            Log.print(": Allocated TLAB at ");
+            Log.print(allocationMark);
+            Log.print(" [size=");
+            Log.print(size);
+            Log.println("]");
+       }
+      
+  @Override
         protected void traceReset(VmThread vmThread, Pointer tlabTop, Pointer tlabMark) {
             Log.printThread(vmThread, false);
             Log.print(": Resetting TLAB [TOP=");
@@ -635,7 +652,8 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 // START GENERATED CODE
     private static abstract class TLabLoggerAuto extends com.sun.max.vm.log.VMLogger {
         public enum Operation {
-            Pad, Refill, Reset;
+            Allocate, Pad, Refill,
+            Reset;
 
             @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
@@ -654,6 +672,12 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         public String operationName(int opCode) {
             return Operation.VALUES[opCode].name();
         }
+
+        @INLINE
+        public final void logAllocate(VmThread vmThread, Pointer allocationMark, int size) {
+            log(Operation.Allocate.ordinal(), vmThreadArg(vmThread), allocationMark, intArg(size));
+        }
+        protected abstract void traceAllocate(VmThread vmThread, Pointer allocationMark, int size);
 
         @INLINE
         public final void logPad(VmThread vmThread, Pointer tlabMark, int padWords) {
@@ -676,15 +700,19 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         @Override
         protected void trace(Record r) {
             switch (r.getOperation()) {
-                case 0: { //Pad
+                case 0: { //Allocate
+                    traceAllocate(toVmThread(r, 1), toPointer(r, 2), toInt(r, 3));
+                    break;
+                }
+                case 1: { //Pad
                     tracePad(toVmThread(r, 1), toPointer(r, 2), toInt(r, 3));
                     break;
                 }
-                case 1: { //Refill
+                case 2: { //Refill
                     traceRefill(toVmThread(r, 1), toPointer(r, 2), toPointer(r, 3), toPointer(r, 4), toInt(r, 5));
                     break;
                 }
-                case 2: { //Reset
+                case 3: { //Reset
                     traceReset(toVmThread(r, 1), toPointer(r, 2), toPointer(r, 3));
                     break;
                 }

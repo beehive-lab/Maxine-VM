@@ -343,7 +343,8 @@ allocationLogger.assertHybrid(ObjectAccess.readHub(hybrid), ObjectAccess.readHub
     @INLINE
     public static Object clone(Object object) {
         final Object clone = heapScheme().clone(object);
-        if (Heap.logAllocation()) {
+   allocationLogger.assertTuple(object, ObjectAccess.readHub(object).classActor);
+             if (Heap.logAllocation()) {
             allocationLogger.logClone(ObjectAccess.readHub(object), clone);
         }
         return clone;
@@ -854,7 +855,7 @@ allocationLogger.assertHybrid(ObjectAccess.readHub(hybrid), ObjectAccess.readHub
                 Log.print("Error Alignment Array ");
 		Log.print(classActor.name.string);
                 Log.print(" at ");
-                Log.print(Layout.originToCell(ObjectAccess.toOrigin(array)).toLong());
+                Log.print(Long.toHexString(Layout.originToCell(ObjectAccess.toOrigin(array)).toLong()));
                 Log.print(" [");
                 Log.print(Layout.size((ObjectAccess.toOrigin(array))));
                 Log.println(" bytes]");
@@ -869,7 +870,7 @@ allocationLogger.assertHybrid(ObjectAccess.readHub(hybrid), ObjectAccess.readHub
                 Log.print("Error Alignment Tuple ");
 		Log.print(classActor.name.string);
                 Log.print(" at ");
-                Log.print(Layout.originToCell(ObjectAccess.toOrigin(array)).toLong());
+                Log.print(Long.toHexString(Layout.originToCell(ObjectAccess.toOrigin(array)).toLong()));
                 Log.print(" [");
                 Log.print(Layout.size((ObjectAccess.toOrigin(array))));
                 Log.println(" bytes]");
@@ -884,13 +885,12 @@ allocationLogger.assertHybrid(ObjectAccess.readHub(hybrid), ObjectAccess.readHub
                 Log.print("Error Alignment Hybrid ");
 		Log.print(classActor.name.string);
                 Log.print(" at ");
-                Log.print(Layout.originToCell(ObjectAccess.toOrigin(array)).toLong());
+                Log.print(Long.toHexString(Layout.originToCell(ObjectAccess.toOrigin(array)).toLong()));
                 Log.print(" [");
                 Log.print(Layout.size((ObjectAccess.toOrigin(array))));
                 Log.println(" bytes]");
                 //assert false;
             }
-
         }
 
         @NEVER_INLINE

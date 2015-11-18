@@ -266,7 +266,7 @@ public abstract class HeapSchemeAdaptor extends AbstractVMScheme implements Heap
 
     @INLINE
     public int objectAlignment() {
-        return Word.size();
+        return 2 * Word.size();
     }
 
     @INLINE

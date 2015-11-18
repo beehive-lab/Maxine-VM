@@ -72,7 +72,7 @@ ifeq ($(TARGETOS),Darwin)
         		DARWIN_GCC_MFLAG := -m64 -DMaverick
     	    	ISA := amd64
             else
-            	ifeq ($(DARWIN_RELEASE),14)
+            	ifeq ($(DARWIN_RELEASE),15)
         			DARWIN_GCC_MFLAG := -m64 -DMaverick
     	    		ISA := amd64
            	    else
