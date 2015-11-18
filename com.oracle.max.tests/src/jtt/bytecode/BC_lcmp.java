@@ -27,10 +27,8 @@ package jtt.bytecode;
  * @Runs: (0L, -1L) = false; (77L, 78L) = true; (-1L, 0L) = true
  */
 public class BC_lcmp {
+
     public static boolean test(long a, long b) {
-	System.out.println("ZZZZZZZZZZ");
-	System.out.println(Long.toString(a));
-	System.out.println(Long.toString(b));
         return a < b;
     }
 }
