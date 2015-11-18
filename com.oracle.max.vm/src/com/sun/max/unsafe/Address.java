@@ -30,7 +30,6 @@ import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.program.*;
-import com.sun.max.vm.*;
 
 /**
  * A machine word interpreted as a linear address.
