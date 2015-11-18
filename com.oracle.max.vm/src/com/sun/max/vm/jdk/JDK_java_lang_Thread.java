@@ -75,6 +75,9 @@ public final class JDK_java_lang_Thread {
     @ALIAS(declaringClass = Thread.class)
     private static native int nextThreadNum();
 
+    @ALIAS(declaringClass = Thread.class)
+    private native void exit();
+
     @ALIAS(declaringClass = ThreadGroup.class)
     private native void add(Thread thread);
 
@@ -101,6 +104,11 @@ public final class JDK_java_lang_Thread {
 
     @INTRINSIC(UNSAFE_CAST)
     static native JDK_java_lang_Thread asThis(Thread t);
+
+    public static void exitThread(Thread javaThread) {
+        JDK_java_lang_Thread thisThread = asThis(javaThread);
+        thisThread.exit();
+    }
 
     public static Thread createThreadForAttach(VmThread vmThread, String name, ThreadGroup group, boolean daemon) throws Throwable {
         FatalError.check(group != null, "ThreadGroup for attaching thread cannot be null");
