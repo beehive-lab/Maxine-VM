@@ -868,9 +868,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             }
             // Allocate an initial TLAB and a refill policy. For simplicity, this one is allocated from the TLAB (see comment below).
             final Size tlabSize = initialTlabSize();
-            final VmThread vmThread = UnsafeCast.asVmThread(VM_THREAD.loadRef(ETLA.load(currentTLA())).toJava());
-            HeapSchemeWithTLAB.logger.logAllocate(vmThread, Pointer.zero(), tlabSize.toInt());
-
             allocateAndRefillTLAB(etla, tlabSize);
             // Let's do a bit of meta-circularity. The TLAB is refilled, and no-one except the current thread can use it.
             // So the TLAB allocation is going to succeed here
@@ -880,12 +877,8 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             return tlabAllocate(size);
         }
         final Size nextTLABSize = refillPolicy.nextTlabSize();
-        final VmThread vmThread = UnsafeCast.asVmThread(VM_THREAD.loadRef(ETLA.load(currentTLA())).toJava());
-        HeapSchemeWithTLAB.logger.logAllocate(vmThread, Pointer.zero(), nextTLABSize.toInt());
-     
-        if (size.greaterThan(nextTLABSize)) {
-            HeapSchemeWithTLAB.logger.logAllocate(vmThread, Pointer.zero().plus(1), size.toInt());
 
+        if (size.greaterThan(nextTLABSize)) {
             // This couldn't be allocated in a TLAB, so go directly to direct allocation routine.
             // NOTE: this is where we always go if we don't use TLABs (the "never refill" TLAB policy
             // always return zero for the next TLAB size.
@@ -893,13 +886,9 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         }
         if (!refillPolicy.shouldRefill(size, tlabMark)) {
             // Size would fit in a new tlab, but the policy says we shouldn't refill the TLAB yet, so allocate directly in the heap.
-            HeapSchemeWithTLAB.logger.logAllocate(vmThread, Pointer.zero().plus(2), size.toInt());
-
             return retryAllocate(size, true);
         }
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
-                    HeapSchemeWithTLAB.logger.logAllocate(vmThread, Pointer.zero().plus(3), size.toInt());
-
 	allocateAndRefillTLAB(etla, nextTLABSize);
         return tlabAllocate(size);
     }
