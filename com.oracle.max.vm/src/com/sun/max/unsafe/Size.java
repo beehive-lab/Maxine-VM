@@ -205,7 +205,7 @@ public final class Size extends Address {
         return super.isWordAligned();
     }
 
-   @INLINE
+    @INLINE
     @Override
     public boolean isDoubleWordAligned() {
         return super.isDoubleWordAligned();
