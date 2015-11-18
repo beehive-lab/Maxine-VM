@@ -268,6 +268,7 @@ public class MaxineTesterConfiguration {
         String testCalleeGraal = "--XX:CompileCommand=jtt.:Graal";
 
         imageConfig("java", "-run=java");
+        imageConfig("c1x", opt_c1x);
         imageConfig("c1xgraal", opt_c1xgraal);
         imageConfig("c1xgraal-boot", opt_c1xgraal, "--XX:+GraalForBoot");
         imageConfig("jtt-t1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", testCallerT1X);
