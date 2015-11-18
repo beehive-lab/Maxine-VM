@@ -28,6 +28,7 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -409,7 +410,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     @INLINE
     @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
     protected final Pointer tlabAllocate(Size size) {
-        if (MaxineVM.isDebug() && !size.isDoubleWordAligned()) {
+        if (MaxineVM.isDebug() && ((!size.isDoubleWordAligned() && Platform.target().arch.isARM()) || (!size.isWordAligned() && !Platform.target().arch.isARM()))) {
             FatalError.unexpected("size is not word aligned in heap allocation request");
         }
         final Pointer etla = ETLA.load(currentTLA());
@@ -479,13 +480,8 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     @INLINE
     @NO_SAFEPOINT_POLLS("object allocation and initialization must be atomic")
     public final Object createArray(DynamicHub dynamicHub, int length) {
-	//com.sun.max.vm.Log.println(length);
         final Size size = Layout.getArraySize(dynamicHub.classActor.componentClassActor().kind, length);
-	//com.sun.max.vm.Log.print("Got size ");com.sun.max.vm.Log.println(size);
         final Pointer cell = tlabAllocate(size);
-	//com.sun.max.vm.Log.println("Got cell");
-
-
         return Cell.plantArray(cell, size, dynamicHub, length);
     }
 
@@ -506,7 +502,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
     public final Object createHybrid(DynamicHub hub) {
         final Size size = hub.tupleSize;
         final Pointer cell = tlabAllocate(size);
-
         return Cell.plantHybrid(cell, size, hub);
     }
 
@@ -559,7 +554,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
         tlabReset(currentTLA());
     }
 
-    public static final TLABLogger logger = /*MaxineVM.isDebug() ?*/ new TLABLogger(true) /*: new TLABLogger()*/;
+    public static final TLABLogger logger = MaxineVM.isDebug() ? new TLABLogger(true) : new TLABLogger();
 
     @HOSTED_ONLY
     @VMLoggerInterface(defaultConstructor = true)
@@ -585,7 +580,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             @VMLogParam(name = "vmThread") VmThread vmThread,
             @VMLogParam(name = "allocationMark") Pointer tlabMark,
             @VMLogParam(name = "size") int padWords);
-     
     }
 
     public static final class TLABLogger extends TLabLoggerAuto {
@@ -611,9 +605,9 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             Log.print(" [size=");
             Log.print(size);
             Log.println("]");
-       }
-      
-  @Override
+        }
+
+        @Override
         protected void traceReset(VmThread vmThread, Pointer tlabTop, Pointer tlabMark) {
             Log.printThread(vmThread, false);
             Log.print(": Resetting TLAB [TOP=");
@@ -646,7 +640,6 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             Log.print(initialTlabSize);
             Log.println("]");
         }
-
     }
 
 // START GENERATED CODE
