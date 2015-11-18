@@ -300,10 +300,10 @@ public final class Heap {
 
     @INLINE
     public static Object createArray(DynamicHub hub, int length) {
-	//com.sun.max.vm.Log.print("createarray  "); com.sun.max.vm.Log.println(length);
         final Object array = heapScheme().createArray(hub, length);
-	//com.sun.max.vm.Log.println("done createarray");
-       allocationLogger.assertArray(array, hub.classActor);
+        if (MaxineVM.isDebug()) {
+            allocationLogger.logUnalignedArray(array, hub.classActor);
+        }
         if (Heap.logAllocation()) {
             allocationLogger.logCreateArray(hub, length, array);
         }
@@ -313,7 +313,9 @@ public final class Heap {
     @INLINE
     public static Object createTuple(Hub hub) {
         final Object object = heapScheme().createTuple(hub);
-allocationLogger.assertTuple(object, hub.classActor);
+        if (MaxineVM.isDebug()) {
+            allocationLogger.logUnalignedTuple(object, hub.classActor);
+        }
         if (Heap.logAllocation()) {
             allocationLogger.logCreateTuple(hub, object);
         }
@@ -323,7 +325,9 @@ allocationLogger.assertTuple(object, hub.classActor);
     @INLINE
     public static Object createHybrid(DynamicHub hub) {
         final Object hybrid = heapScheme().createHybrid(hub);
-allocationLogger.assertHybrid(hybrid, hub.classActor);
+        if (MaxineVM.isDebug()) {
+            allocationLogger.logUnalignedHybrid(hybrid, hub.classActor);
+        }
         if (Heap.logAllocation()) {
             allocationLogger.logCreateHybrid(hub, hybrid);
         }
@@ -333,7 +337,9 @@ allocationLogger.assertHybrid(hybrid, hub.classActor);
     @INLINE
     public static Hybrid expandHybrid(Hybrid hybrid, int length) {
         final Hybrid expandedHybrid = heapScheme().expandHybrid(hybrid, length);
-allocationLogger.assertHybrid(ObjectAccess.readHub(hybrid), ObjectAccess.readHub(hybrid).classActor);
+        if (MaxineVM.isDebug()) {
+            allocationLogger.logUnalignedHybrid(ObjectAccess.readHub(hybrid), ObjectAccess.readHub(hybrid).classActor);
+        }
         if (Heap.logAllocation()) {
             allocationLogger.logExpandHybrid(ObjectAccess.readHub(hybrid), expandedHybrid);
         }
@@ -343,8 +349,10 @@ allocationLogger.assertHybrid(ObjectAccess.readHub(hybrid), ObjectAccess.readHub
     @INLINE
     public static Object clone(Object object) {
         final Object clone = heapScheme().clone(object);
-   allocationLogger.assertTuple(object, ObjectAccess.readHub(object).classActor);
-             if (Heap.logAllocation()) {
+        if (MaxineVM.isDebug()) {
+            allocationLogger.logUnalignedTuple(object, ObjectAccess.readHub(object).classActor);
+        }
+        if (Heap.logAllocation()) {
             allocationLogger.logClone(ObjectAccess.readHub(object), clone);
         }
         return clone;
@@ -553,7 +561,6 @@ allocationLogger.assertHybrid(ObjectAccess.readHub(hybrid), ObjectAccess.readHub
      */
     public static boolean isInBootImage(Object object) {
         Pointer origin = Reference.fromJava(object).toOrigin();
-	//Log.println(origin);
         return bootHeapRegion.contains(origin) || Code.contains(origin) || ImmortalHeap.contains(origin);
     }
 
@@ -794,9 +801,6 @@ allocationLogger.assertHybrid(ObjectAccess.readHub(hybrid), ObjectAccess.readHub
         }
     }
 
-    /*
-     * Logging of object allocation.
-     */
 
     /**
      * Allocation logging interface.
@@ -847,49 +851,43 @@ allocationLogger.assertHybrid(ObjectAccess.readHub(hybrid), ObjectAccess.readHub
         AllocationLogger() {
             super();
         }
-        
 
-	@NEVER_INLINE
-        void assertArray(Object array, ClassActor classActor) {
+        @NEVER_INLINE
+        void logUnalignedArray(Object array, ClassActor classActor) {
             if (Layout.originToCell(ObjectAccess.toOrigin(array)).toLong() % 8 != 0) {
                 Log.print("Error Alignment Array ");
-		Log.print(classActor.name.string);
+                Log.print(classActor.name.string);
                 Log.print(" at ");
                 Log.print(Long.toHexString(Layout.originToCell(ObjectAccess.toOrigin(array)).toLong()));
                 Log.print(" [");
                 Log.print(Layout.size((ObjectAccess.toOrigin(array))));
                 Log.println(" bytes]");
-                //assert false;
             }
-
         }
 
         @NEVER_INLINE
-        void assertTuple(Object array, ClassActor classActor) {
+        void logUnalignedTuple(Object array, ClassActor classActor) {
             if (Layout.originToCell(ObjectAccess.toOrigin(array)).toLong() % 8 != 0) {
                 Log.print("Error Alignment Tuple ");
-		Log.print(classActor.name.string);
+                Log.print(classActor.name.string);
                 Log.print(" at ");
                 Log.print(Long.toHexString(Layout.originToCell(ObjectAccess.toOrigin(array)).toLong()));
                 Log.print(" [");
                 Log.print(Layout.size((ObjectAccess.toOrigin(array))));
                 Log.println(" bytes]");
-                //assert false;
             }
-
         }
 
         @NEVER_INLINE
-        void assertHybrid(Object array, ClassActor classActor) {
+        void logUnalignedHybrid(Object array, ClassActor classActor) {
             if (Layout.originToCell(ObjectAccess.toOrigin(array)).toLong() % 8 != 0) {
                 Log.print("Error Alignment Hybrid ");
-		Log.print(classActor.name.string);
+                Log.print(classActor.name.string);
                 Log.print(" at ");
                 Log.print(Long.toHexString(Layout.originToCell(ObjectAccess.toOrigin(array)).toLong()));
                 Log.print(" [");
                 Log.print(Layout.size((ObjectAccess.toOrigin(array))));
                 Log.println(" bytes]");
-                //assert false;
             }
         }
 
