@@ -76,6 +76,12 @@ public class DebugHeap {
     @INLINE
     public static Pointer adjustForDebugTag(Pointer mark) {
         if (isTagging()) {
+	    if(com.sun.max.platform.Platform.target().arch.is32bit()) {
+	       //com.sun.max.vm.Log.println("TAGGING upped to TWO words for alignment");
+	       //return mark.plusWords(2);
+		return mark.plusWords(1);
+
+	    }
             return mark.plusWords(1);
         }
         return mark;
