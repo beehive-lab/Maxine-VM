@@ -682,18 +682,24 @@ void *native_properties(void) {
 }
 #ifdef arm
 void divideByZeroExceptions() {
-#ifdef arm
-	asm volatile("vmrs r12, FPSCR");
-	asm volatile("movw r0,0x100");
-	asm volatile("orr r12,r12,r0");
-	asm volatile("vmsr FPSCR,r12");
-/* need to setup the environment variable appropriately 
+/*
+
+
+	NO LONGER USED
+
+*/
+//#ifdef arm
+//	asm volatile("vmrs r12, FPSCR");
+//	asm volatile("movw r0,0x100");
+//	asm volatile("orr r12,r12,r0");
+//	asm volatile("vmsr FPSCR,r12");
+/* iNO LONGER USEDneed to setup the environment variable appropriately 
 	int x =feenableexcept(FE_DIVBYZERO);
 	printf("feenableexcepts %d\n",x);
 	x = fegetexcept();
 	printf("feget %d\n",x);
-*/
 #endif
+*/
 }
 void maxine_cacheflush(char *start, int length) {
 	char * end = start + length;

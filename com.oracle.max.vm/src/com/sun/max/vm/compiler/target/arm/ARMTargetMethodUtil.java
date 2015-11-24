@@ -575,7 +575,8 @@ public final class ARMTargetMethodUtil {
      */
     public static void patchWithJump(TargetMethod tm, int pos, CodePointer target) {
         // We must be at a global safepoint to safely patch TargetMethods
-        Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!patchWithJump!!!!!!!!!!!!!!!!!!!!!!");
+        Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!patchWithJump!!!!hould only occur with Deoptimisation? isJumpToStaticTrampoline will need fixing!!!!!!!!!!!!!!!!!");
+	FatalError.check(false,"pathWithJump not implemented");
         FatalError.check(VmOperation.atSafepoint(), "should only be patching entry points when at a safepoint");
 
         final Pointer patchSite = tm.codeAt(pos).toPointer();
@@ -601,7 +602,8 @@ public final class ARMTargetMethodUtil {
      * @return {@code true} if the instruction is a jump to the target, false otherwise
      */
     public static boolean isJumpTo(TargetMethod tm, int pos, CodePointer jumpTarget) {
-        Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ARM isJumpTo WRONG!!!!!!!!!!!!!!!!!!!!!!!");
+	return false;
+        /*Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ARM isJumpTo WRONG!!!!!!!!!!!!!!!!!!!!!!!");
         final Pointer jumpSite = tm.codeAt(pos).toPointer();
         if (jumpSite.readByte(0) == (byte) RIP_JMP) {
             final int disp32 = jumpSite.readInt(1);
@@ -609,6 +611,7 @@ public final class ARMTargetMethodUtil {
             return jumpTarget.toPointer().equals(target);
         }
         return false;
+	*/
     }
 
     // Disable instance creation.

@@ -338,7 +338,7 @@ public class DebugHeap {
                 checkNonNullRefTag(ref);
             }
             final Pointer origin = ref.toOrigin();
-           		
+
             if (Heap.bootHeapRegion.contains(origin) || Code.contains(origin) || ImmortalHeap.contains(origin)) {
                 return;
             }

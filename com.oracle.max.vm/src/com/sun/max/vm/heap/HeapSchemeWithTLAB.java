@@ -414,10 +414,27 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             FatalError.unexpected("size is not word aligned in heap allocation request");
         }
         final Pointer etla = ETLA.load(currentTLA());
+	 //com.sun.max.vm.Log.print("ETLA ");
+	 //com.sun.max.vm.Log.println(etla);
         final Pointer oldAllocationMark = TLAB_MARK.load(etla);
+	if(oldAllocationMark.toInt() % 8 != 0) {
+		//com.sun.max.vm.Log.print("OLD ALLOC NOT ALIGNED ");
+		//com.sun.max.vm.Log.println(oldAllocationMark);
+	}
+
         final Pointer tlabEnd = TLAB_TOP.load(etla);
         final Pointer cell = DebugHeap.adjustForDebugTag(oldAllocationMark);
         final Pointer end = cell.plus(size);
+
+	if(cell.toInt() % 8 != 0) {
+                //com.sun.max.vm.Log.print("CELL NOT ALIGNED ");
+                //com.sun.max.vm.Log.println(cell);
+        }
+	if(end.toInt() % 8 != 0) {
+                //com.sun.max.vm.Log.print("END NOT ALIGNED ");
+                //com.sun.max.vm.Log.println(end);
+        }
+
         if (end.greaterThan(tlabEnd)) {
             return slowPathAllocate(size, etla, oldAllocationMark, tlabEnd);
         }
