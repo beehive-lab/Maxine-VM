@@ -33,6 +33,7 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.debug.*;
+import com.sun.max.platform.*;
 
 public final class ImmortalHeap_allocation {
     private ImmortalHeap_allocation() {
@@ -49,7 +50,7 @@ public final class ImmortalHeap_allocation {
         Pointer oldMark = immortalMemoryRegion.mark();
         ImmortalHeap.allocate(Size.fromInt(size), true);
         if (DebugHeap.isTagging()) {
-            size += Word.size();
+            size += Platform.target().arch.is64bit() ? Word.size() : 2 * Word.size();
         }
         if (immortalMemoryRegion.mark().equals(oldMark.plus(Size.fromInt(size).wordAligned()))) {
             resetImmortalHeap(immortalMemoryRegion, oldMark);
