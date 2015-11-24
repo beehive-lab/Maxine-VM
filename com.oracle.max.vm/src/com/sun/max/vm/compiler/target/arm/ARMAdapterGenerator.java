@@ -160,8 +160,10 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 int ripAdjustment = frameSize();
                 if (MaxineVM.isHosted()) {
                     // Inspector context only
-                    int state = computeFrameState(frame);
-                    ripAdjustment = state & ~1;
+                    //int state = computeFrameState(frame);
+                    //ripAdjustment = state & ~1;
+
+		   // commented out as we have not ported this code to ARM
                 }
 
                 return frame.sp().plus(ripAdjustment);
@@ -174,9 +176,13 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 boolean rbpSaved = true;
                 if (MaxineVM.isHosted()) {
                     // Inspector context only
-                    int state = computeFrameState(current);
+                    /*int state = computeFrameState(current);
                     ripAdjustment = state & ~1;
                     rbpSaved = (state & 1) == 1;
+		    */
+		   
+			// we have not ported the inspector so we have commented out the computation
+			// above as it has not been ported to ARM!!! 
                 }
 
                 Pointer ripPointer = current.sp().plus(ripAdjustment);
@@ -194,7 +200,8 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             @Override
             @HOSTED_ONLY
             public boolean acceptStackFrameVisitor(StackFrameCursor current, StackFrameVisitor visitor) {
-                int ripAdjustment = computeFrameState(current) & ~1;
+                //int ripAdjustment = computeFrameState(current) & ~1;
+		int ripAdjustment = frameSize();
                 Pointer ripPointer = current.sp().plus(ripAdjustment);
                 Pointer fp = ripPointer.minus(frameSize());
                 return visitor.visitFrame(new AdapterStackFrame(current.stackFrameWalker().calleeStackFrame(), current.targetMethod(), current.vmIP().toPointer(), fp, current.sp()));
@@ -424,6 +431,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                     CiStackSlot slot = (CiStackSlot) optArgs[i];
                     int offset = slot.index() * OPT_SLOT_SIZE;
                     int end = offset + OPT_SLOT_SIZE;
+		    if(!sig.kinds[i].isCategory1) end += OPT_SLOT_SIZE; // our slots ar enot big enough for doubles/longs 32 bit word size!!!
                     if (end > stackArgumentsSize) {
                         stackArgumentsSize = end;
                     }
@@ -645,7 +653,8 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             @HOSTED_ONLY
             private int computeRipAdjustment(StackFrameCursor cursor) {
                 int ripAdjustment = frameSize();
-                StackFrameWalker sfw = cursor.stackFrameWalker();
+		// commented out as we have not ported it ....
+                /*StackFrameWalker sfw = cursor.stackFrameWalker();
                 int position = cursor.vmIP().minus(codeStart()).toInt();
                 if (!cursor.isTopFrame()) {
                     // Inside call to baseline body. The value of RSP in cursor is now the value
@@ -667,6 +676,7 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
                             ripAdjustment = 0;
                     }
                 }
+		*/
                 return ripAdjustment;
             }
 

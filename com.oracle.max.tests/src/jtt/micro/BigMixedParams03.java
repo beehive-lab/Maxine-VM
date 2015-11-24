@@ -40,7 +40,6 @@ package jtt.micro;
 public class BigMixedParams03 {
     static int executed = 0;
     public static double test(int choice, int i0, int i1, int i2, int i3, double p0, double p1, double p2, double p3, int i4, int i5, double p4, double p5, double p6, double p7, double p8) {
-	System.out.println("EXECUTED " + executed++);
         switch (choice) {
             case 0:
                 return p0;

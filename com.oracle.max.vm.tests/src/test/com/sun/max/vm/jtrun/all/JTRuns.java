@@ -11479,7 +11479,10 @@ public class JTRuns {
             try {
             // (80) == 3160
                 runString = "(80)";
-                if (3160 != jtt.hotpath.HP_demo01.test(80)) {
+		int xx = jtt.hotpath.HP_demo01.test(80);
+		if(xx != 3160) {
+                //if (3160 != jtt.hotpath.HP_demo01.test(80)) {
+		    System.out.println("RETURNED " + xx + "NOT 80");
                     fail(runString);
                     return;
                 }

@@ -999,16 +999,20 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
             throw verifyError("Low must be less than or equal to high in TABLESWITCH");
         }
 
+	//asm.insertForeverLoop();
+
         // Pop index from stack into scratch
         asm.setUpScratch(new CiAddress(CiKind.Int, RSP));
         asm.ldr(ConditionFlag.Always, ARMV7.r8, asm.scratchRegister, 0);
         asm.addq(r13, JVMSFrameLayout.JVMS_SLOT_SIZE);
-        asm.push(ConditionFlag.Always, 1 << 10 | 1 << 9);
+        asm.push(ConditionFlag.Always, 1 << 10 | 1 << 9 | 1<< 7);
         asm.mov(ConditionFlag.Always, false, ARMV7.r9, ARMV7.r8); // r9 stores index
 
         // Jump to default target if index is not within the jump table
         startBlock(ts.defaultTarget());
         asm.cmpl(r9, lowMatch);
+
+	asm.pop(ConditionFlag.SignedLesser, 1 << 10 | 1 << 9 | 1<< 7);
         int pos = buf.position();
         patchInfo.addJCC(ConditionFlag.SignedLesser, pos, ts.defaultTarget());
         asm.jcc(ConditionFlag.SignedLesser, 0, true);
@@ -1018,6 +1022,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         } else {
             asm.cmpl(r9, highMatch);
         }
+	asm.pop(ConditionFlag.SignedGreater,  1 << 10 | 1 << 9 | 1<< 7);
         pos = buf.position();
         patchInfo.addJCC(ConditionFlag.SignedGreater, pos, ts.defaultTarget());
         asm.jcc(ConditionFlag.SignedGreater, 0, true);
@@ -1032,13 +1037,13 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.ldr(ConditionFlag.Always, r12, ARMV7.r12, 0);
         asm.addRegisters(ConditionFlag.Always, false, r12, ARMV7.r15, r12, 0, 0); // need to be careful are we using the right add!
         asm.add(ConditionFlag.Always, false, r12, r12, 8, 0);
+        asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10 | 1<< 7); // restore r9/r10
         asm.mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12);
-        asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10); // restore r9/r10
 
-        // Inserting padding so that jump table address is 4-byte aligned
-        if ((buf.position() & 0x3) != 0) {
-            asm.nop(4 - (buf.position() & 0x3));
-        }
+        // NOT NECESARY FOR ARMV7  Inserting padding so that jump table address is 4-byte aligned
+        //if ((buf.position() & 0x3) != 0) {
+            //asm.nop(4 - (buf.position() & 0x3));
+        //}
 
         // Patch LEA instruction above now that we know the position of the jump table
         int jumpTablePos = buf.position();
@@ -1128,8 +1133,8 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
             asm.ldr(ConditionFlag.Always, r12, r12, 0);
             asm.addRegisters(ConditionFlag.Always, false, r12, r15, r12, 0, 0);
             asm.add(ConditionFlag.Always, false, r12, r12, 8, 0);
-            asm.mov(ConditionFlag.Always, true, r15, r12);
             asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10 | 1 << 7);
+            asm.mov(ConditionFlag.Always, true, r15, r12);
 
             // Inserting padding so that lookup table address is 4-byte aligned
             while ((buf.position() & 0x3) != 0) {
