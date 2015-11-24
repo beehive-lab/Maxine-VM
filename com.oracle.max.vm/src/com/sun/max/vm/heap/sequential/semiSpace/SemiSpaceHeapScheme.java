@@ -802,7 +802,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     public Pointer gcAllocate(Size size) {
         Pointer cell = allocationMark().asPointer();
         if (DebugHeap.isTagging()) {
-            cell = cell.plusWords(1);
+            cell = Platform.target().arch.is64bit() ? cell.plusWords(1) : cell.plusWords(2);
         }
         toSpace.mark.set(cell.plus(size));
         FatalError.check(allocationMark().lessThan(top), "GC allocation overflow");

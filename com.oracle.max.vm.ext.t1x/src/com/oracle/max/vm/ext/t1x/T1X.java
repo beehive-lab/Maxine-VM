@@ -720,7 +720,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     public static int dispFromCodeStart(int objectLiteralsLength, int scalarLiteralsLength, int dataIndex, boolean isObject) {
         int distance = Layout.byteArrayLayout().headerSize();
         if (DebugHeap.isTagging()) {
-            distance += Word.size();
+            distance += Platform.target().arch.is64bit() ? Word.size() : 2 * Word.size();
         }
         if (isObject) {
             distance += (objectLiteralsLength - dataIndex) * Word.size();
@@ -728,7 +728,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
             distance += objectLiteralsLength * Word.size();
             distance += Layout.referenceArrayLayout().headerSize();
             if (DebugHeap.isTagging()) {
-                distance += Word.size();
+                distance += Platform.target().arch.is64bit() ? Word.size() : 2 * Word.size();
             }
             distance += scalarLiteralsLength - dataIndex;
         }
