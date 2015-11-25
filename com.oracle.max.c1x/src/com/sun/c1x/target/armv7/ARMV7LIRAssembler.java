@@ -1261,7 +1261,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                             masm.vmul(ConditionFlag.Always, lreg, lreg, ARMV7.s30, CiKind.Double);
                             break;
                         case Div:
-                            masm.vdiv(ConditionFlag.Always, lreg, lreg, ARMV7.s30, left.kind);
+                            masm.vdiv(ConditionFlag.Always, lreg, lreg, ARMV7.s30, CiKind.Double);
                             break;
                         default:
                             throw Util.shouldNotReachHere();

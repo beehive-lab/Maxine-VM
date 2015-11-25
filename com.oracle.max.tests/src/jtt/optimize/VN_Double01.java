@@ -75,6 +75,9 @@ public class VN_Double01 {
         double u = x / c;
 	System.out.println("x " + x + " t " + t + " u " + u + " t/u " + t/u);
 	System.out.println("c is " + c);
+	do{ 
+		x = t/u;
+	} while(x != 1.0);
         return t / u;
     }
 }
