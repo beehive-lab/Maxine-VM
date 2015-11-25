@@ -134,15 +134,15 @@ public class MaxineTesterConfiguration {
 
         vmoutput(findOutputTests("test.vm.output."));
 
-        jtt(jtt.threads.Thread_isInterrupted02.class,     FAIL_LINUX);
-        jtt(jtt.hotspot.Test6959129.class,     FAIL_ALL);
-	if(Platform.target().arch.is32bit()) {
-		//jtt(jtt.max.LeastSignificantBit.class, FAIL_LINUX);
-		//jtt(jtt.max.MostSignificantBit.class, FAIL_LINUX);
-		System.out.println("On 32 bit platforms we expect to fail jtt.max.LeastSignificantBit.test(0x100000000L) because it is greater than the word size!!!");
-		System.out.println("On 32 bit platforms we expect to fail jtt.max.MostSignificantBit.test(0x100000000L) because it is greater than the word size!!!");
-
-	}
+        jtt(jtt.threads.Thread_isInterrupted02.class, FAIL_LINUX);
+        jtt(jtt.hotspot.Test6959129.class, FAIL_ALL);
+        if (Platform.target().arch.is32bit()) {
+            jtt(jtt.max.LeastSignificantBit64.class, FAIL_ALL);
+            jtt(jtt.max.MostSignificantBit64.class, FAIL_ALL);
+        } else {
+            jtt(jtt.max.LeastSignificantBit32.class, FAIL_ALL);
+            jtt(jtt.max.MostSignificantBit32.class, FAIL_ALL);
+        }
 
         dacapo2006("antlr");
         dacapo2006("bloat");

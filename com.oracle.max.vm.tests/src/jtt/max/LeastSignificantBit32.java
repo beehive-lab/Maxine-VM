@@ -24,20 +24,14 @@ package jtt.max;
 
 import com.sun.max.unsafe.*;
 
-// For armv7 the word size is 32 bits so for -1L =  31 NOT 63 and we values
-//  greater than 32 bitsa re turncated to ints!!!
+
 /*
  * @Harness: java
- * @Runs: 1l = 0;  2l = 1; 0l = -1; -1l = 31; 0xf000l = 15;  0x80000000l = 31; 0x100000000l = 32;
+ * @Runs: 1l = 0;  2l = 1; 0l = -1; -1l = 0; 0xf000l = 12;  0x80000000l = 31; 0x100000000l = 32
  */
-public class MostSignificantBit {
+public class LeastSignificantBit32 {
 
     public static int test(long singleWordBitmap) {
-	int retval;
-	System.out.println("INPUT " + singleWordBitmap);
-	retval = Address.fromLong(singleWordBitmap).mostSignificantBitSet();
-	System.out.println("OUTPUT " + retval);
-	return retval;
-        //return Address.fromLong(singleWordBitmap).mostSignificantBitSet();
+        return Address.fromLong(singleWordBitmap).leastSignificantBitSet();
     }
 }
