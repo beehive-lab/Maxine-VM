@@ -9,15 +9,15 @@ import com.sun.cri.ci.CiTarget;
 import com.sun.cri.ri.RiRegisterConfig;
 
 
-	
+
 
 /*
 	ANDY NISBET comments/ramblings
 	instrumentation support for the Xilinx Zynq platform is currently being added.
 
-	We obtain a buffer using a C call. 	
+	We obtain a buffer using a C call.
 	We had to add an interface to do this in order to avoid a circular dependence.
-	
+
 	ARMV7T1XCompilation static instance variable simBuf stores the address of the page length (4096 byte buffer)
 	simOffset is actually stored at offset int [1023], which means it is
 	@byte offset 4092
@@ -37,12 +37,12 @@ import com.sun.cri.ri.RiRegisterConfig;
 	WE WILL IMPLEMENT THIS BY incrementing after the write and then checking to see if it matches the address of the simOffset in the int[1023]
 
 	The above refers to the method OLDinstrument() ...
-	
 
-	The new way, calls out to C to enable the address loaded/stored with modifications to the LSBS to 
+
+	The new way, calls out to C to enable the address loaded/stored with modifications to the LSBS to
 	be written to an appropriate buffer based on the currently executing thread. In this way we can allow the simulator to control over the buffer that the address
-is written to, where a buffer is tied to a thread. 
-	
+is written to, where a buffer is tied to a thread.
+
 */
 import static com.oracle.max.cri.intrinsics.MemoryBarriers.STORE_LOAD;
 
@@ -108,10 +108,10 @@ public class ARMV7Assembler extends AbstractAssembler {
         bind(continuation);
 	eor(ConditionFlag.Always,false,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
 
-	
+
     }
     public void insertForeverLoop() {
-	
+
         Label forever = new Label();
         bind(forever);
         jcc(ConditionFlag.Always,forever);
@@ -441,6 +441,17 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void movror(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rm, final int shift_imm) {
         int instruction = 0x01A00060;
+        checkConstraint(0 <= shift_imm && shift_imm <= 31, "0 <= shift_imm && shift_imm <= 31");
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (s ? 1 : 0) << 20;
+        instruction |= (Rd.encoding & 0xf) << 12;
+        instruction |= Rm.encoding & 0xf;
+        instruction |= (shift_imm & 0x1f) << 7;
+        emitInt(instruction);
+    }
+
+    public void mvn(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rm, final int shift_imm) {
+        int instruction = 0x1E00000;
         checkConstraint(0 <= shift_imm && shift_imm <= 31, "0 <= shift_imm && shift_imm <= 31");
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (s ? 1 : 0) << 20;
@@ -846,7 +857,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     private int modifyImmediate(int imm12) {
-	// TODO implement the modified immediate arithmetic to include shifts etc. 
+	// TODO implement the modified immediate arithmetic to include shifts etc.
 	return imm12;
     }
 
@@ -888,11 +899,11 @@ public class ARMV7Assembler extends AbstractAssembler {
     private void instrument(boolean read,boolean data, boolean add, final CiRegister base, int immediate) {
 	if(simBuf == 0) {
 		simBuf = maxineflush.maxine_instrumentationBuffer();
-	}	
+	}
 	if(maxineFlushAddress == 0) {
 		maxineFlushAddress  = maxineflush.maxine_flush_instrumentationBuffer();
 	}
-	// save some registers to the stack using a 
+	// save some registers to the stack using a
 
 	/* Format bottom 2 bits used/
 	2 instruction read
@@ -900,7 +911,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 	0 data read
 	i.e.
 	bit 0 = Write
-	bit 1 = Instruction 
+	bit 1 = Instruction
 		Instruction Operation
 		Bit 1       Bit 0
 -----------------------------
@@ -924,36 +935,36 @@ CODEWRITE    1		 1
 		*/
 		case 0:
 			spareAddress = ARMV7.r8;
-			spareImm = ARMV7.r9;	
+			spareImm = ARMV7.r9;
 			destAddress = ARMV7.r1;
 			valAddress = ARMV7.r12;
 			immReg = ARMV7.r2;
 		break;
 		case 8:
 			spareAddress = ARMV7.r0;
-			spareImm = ARMV7.r1;	
+			spareImm = ARMV7.r1;
 			destAddress = ARMV7.r1;
 			valAddress = ARMV7.r12;
 			immReg = ARMV7.r9;
 		break;
-			
+
 		case 9:
 			spareAddress = ARMV7.r0;
-			spareImm = ARMV7.r1;	
+			spareImm = ARMV7.r1;
 			destAddress = ARMV7.r2;
 			valAddress = ARMV7.r12;
 			immReg = ARMV7.r8;
 		break;
 		case 1:
 			spareAddress = ARMV7.r0;
-			spareImm = ARMV7.r2;	
+			spareImm = ARMV7.r2;
 			destAddress = ARMV7.r8;
 			valAddress = ARMV7.r12;
 			immReg = ARMV7.r9;
 		break;
 		case 2:
 			spareAddress = ARMV7.r0;
-			spareImm = ARMV7.r1;	
+			spareImm = ARMV7.r1;
 			destAddress = ARMV7.r8;
 			valAddress = ARMV7.r12;
 			immReg = ARMV7.r9;
@@ -967,7 +978,7 @@ CODEWRITE    1		 1
 		case 11:
 		case 14:
 			spareAddress = ARMV7.r0;
-			spareImm = ARMV7.r1;	
+			spareImm = ARMV7.r1;
 			destAddress = ARMV7.r2;
 			valAddress = ARMV7.r12;
 			immReg = ARMV7.r8;
@@ -978,12 +989,12 @@ CODEWRITE    1		 1
 			valAddress = ARMV7.r1;
 			immReg = ARMV7.r2;
 			spareAddress = ARMV7.r8;
-			spareImm = ARMV7.r9;	
+			spareImm = ARMV7.r9;
 		break;
 		default:
-			assert 0 == 1 : "ERROR insturmentation uses illegal base register";	
+			assert 0 == 1 : "ERROR insturmentation uses illegal base register";
 		break;
-	}	
+	}
 	int orint = 0;
 	if(!read)  {
 
@@ -1009,13 +1020,13 @@ CODEWRITE    1		 1
     private void OLDinstrument(boolean read,boolean data, boolean add, final CiRegister base, int immediate) {
 	if(simBuf == 0) {
 		simBuf = maxineflush.maxine_instrumentationBuffer();
-	}	
+	}
 	if(maxineFlushAddress == 0) {
 		maxineFlushAddress  = maxineflush.maxine_flush_instrumentationBuffer();
 	}
 	assert(maxineFlushAddress != 0);
 	simBuffOffset = 1023*4;
-	// save some registers to the stack using a 
+	// save some registers to the stack using a
 
 	/* Format bottom 2 bits used/
 	2 instruction read
@@ -1023,7 +1034,7 @@ CODEWRITE    1		 1
 	0 data read
 	i.e.
 	bit 0 = Write
-	bit 1 = Instruction 
+	bit 1 = Instruction
 		Instruction Operation
 		Bit 1       Bit 0
 -----------------------------
@@ -1047,36 +1058,36 @@ CODEWRITE    1		 1
 		*/
 		case 0:
 			spareAddress = ARMV7.r8;
-			spareImm = ARMV7.r9;	
+			spareImm = ARMV7.r9;
 			destAddress = ARMV7.r1;
 			valAddress = ARMV7.r12;
 			immReg = ARMV7.r2;
 		break;
 		case 8:
 			spareAddress = ARMV7.r0;
-			spareImm = ARMV7.r1;	
+			spareImm = ARMV7.r1;
 			destAddress = ARMV7.r1;
 			valAddress = ARMV7.r12;
 			immReg = ARMV7.r9;
 		break;
-			
+
 		case 9:
 			spareAddress = ARMV7.r0;
-			spareImm = ARMV7.r1;	
+			spareImm = ARMV7.r1;
 			destAddress = ARMV7.r2;
 			valAddress = ARMV7.r12;
 			immReg = ARMV7.r8;
 		break;
 		case 1:
 			spareAddress = ARMV7.r0;
-			spareImm = ARMV7.r2;	
+			spareImm = ARMV7.r2;
 			destAddress = ARMV7.r8;
 			valAddress = ARMV7.r12;
 			immReg = ARMV7.r9;
 		break;
 		case 2:
 			spareAddress = ARMV7.r0;
-			spareImm = ARMV7.r1;	
+			spareImm = ARMV7.r1;
 			destAddress = ARMV7.r8;
 			valAddress = ARMV7.r12;
 			immReg = ARMV7.r9;
@@ -1090,7 +1101,7 @@ CODEWRITE    1		 1
 		case 11:
 		case 14:
 			spareAddress = ARMV7.r0;
-			spareImm = ARMV7.r1;	
+			spareImm = ARMV7.r1;
 			destAddress = ARMV7.r2;
 			valAddress = ARMV7.r12;
 			immReg = ARMV7.r8;
@@ -1101,12 +1112,12 @@ CODEWRITE    1		 1
 			valAddress = ARMV7.r1;
 			immReg = ARMV7.r2;
 			spareAddress = ARMV7.r8;
-			spareImm = ARMV7.r9;	
+			spareImm = ARMV7.r9;
 		break;
 		default:
-			assert 0 == 1 : "ERROR insturmentation uses illegal base register";	
+			assert 0 == 1 : "ERROR insturmentation uses illegal base register";
 		break;
-	}	
+	}
 	instrumentPush(ConditionFlag.Always,1 | 2| 4| 1<<12|1<<8|1<<9);
 	int address = simBuf;
 	int orint = 0;
@@ -1132,7 +1143,7 @@ CODEWRITE    1		 1
 	addRegisters(ConditionFlag.Always, false, valAddress, valAddress, base, 0, 0); // forms the address to be read/written
 	or(ConditionFlag.Always, false, valAddress, valAddress, orint); // ors the read/write code/data bits
 	instrumentStr(ConditionFlag.Always,  valAddress, spareImm, 0);	// updates the buffer
-	
+
 	// so now we need to update the offset.
 	add(ConditionFlag.Always, false, spareImm, spareImm, 4, 0); // we added 4 to the address to write to in the buffer!
 	cmp(ConditionFlag.Always, spareImm, spareAddress, 0, 0);
@@ -1259,8 +1270,8 @@ CODEWRITE    1		 1
     private void instrumentTest() {
 	if(simBuf == 0) {
 		simBuf = maxineflush.maxine_instrumentationBuffer();
-		
-	} 
+
+	}
 	boolean read = false;
 	boolean data = false;
 	push(ConditionFlag.Always, 1<<8|1<<9); // Added 1<<9 so that stack is 8 byte aligned
@@ -1589,7 +1600,7 @@ CODEWRITE    1		 1
 	    // ok for Float ?
             // what about doubles
             mov32BitConstant(when, ARMV7.r12, imm32);
-	    
+
             vmov(when, dst, ARMV7.r12, null, CiKind.Float, CiKind.Int);
         }
     }
@@ -1857,8 +1868,8 @@ CODEWRITE    1		 1
 	    instruction |= (src1.encoding>>4) <<22;
             instruction |= (src2.encoding&0xf);
             instruction |= (src2.encoding>>4) << 5;
-	
-		
+
+
         } else {
             assert src2Kind.isFloat();
             instruction |= (src1.encoding >> 1) << 12;
@@ -1932,19 +1943,19 @@ CODEWRITE    1		 1
 /*
 http://community.arm.com/groups/processors/blog/2010/02/17/caches-and-self-modifying-code
 
-push {r0-r2, r7}  
-  adr r0, start_label  
-  ldr r1, =end_label  
-  mov r2, #0  
-  ldr r7, =0x000f0002  
-  svc 0  
-  pop {r0-r2, r7}  
-  
-start_label:  
-  
-  ...  @ Patched code.  
-  
-end_label:  
+push {r0-r2, r7}
+  adr r0, start_label
+  ldr r1, =end_label
+  mov r2, #0
+  ldr r7, =0x000f0002
+  svc 0
+  pop {r0-r2, r7}
+
+start_label:
+
+  ...  @ Patched code.
+
+end_label:
 */
 	assert(startAddress.encoding == ARMV7.r12.encoding);
         push(ConditionFlag.Always, 1|2|4|8|16|128 ); // added 16 to ensure that stack is 8byte aligned!
@@ -1957,7 +1968,7 @@ end_label:
         pop(ConditionFlag.Always, 1|2|4|8|16|128 ); // added 16 (r4) to ensure stack is 8 byte aligned EVEN NO REGS PUSHED/POPPED
 	//emitInt(0xf57ff06f);
 	//pause();// try a sched_yield here as well.
-	
+
     }
 
     public final void hlt() {
@@ -2525,7 +2536,7 @@ end_label:
         int sz = 0;
         if (destKind.isDouble()) {
             sz = 1;
-	
+
         }
         instruction |= sz << 8;
         if (sz == 1) {
