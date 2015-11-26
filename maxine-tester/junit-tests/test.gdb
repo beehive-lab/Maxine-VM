@@ -2,7 +2,7 @@
 set breakpoint pending on
 set logging overwrite on
 set logging on
-break maxine.c:407
+break maxine.c:545
 run > temp.txt
 shell echo set \$x=$(grep "Main method" temp.txt | cut -d' ' -f4) >/tmp/foo.gdb
 source /tmp/foo.gdb
