@@ -201,7 +201,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                  xx |= 0xffff;
 
             masm.mov32BitConstant(ARMV7.r12,xx);
-            
+
         }
         if (src != dest) {
             if (srcKind == CiKind.Long && destKind == CiKind.Long) {
@@ -1355,7 +1355,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 		if (dest.asRegister() != value.asRegister()) {
 			masm.vmov(ConditionFlag.Always, dest.asRegister(), value.asRegister(), null, CiKind.Double, CiKind.Double);
 
-		//masm.movdbl(dest.asRegister(), value.asRegister()); 
+		//masm.movdbl(dest.asRegister(), value.asRegister());
                 }
 		masm.push(ConditionFlag.Always, 1<< 9);
 		masm.mov32BitConstant(ARMV7.r12,0x7fffffff);
@@ -1364,7 +1364,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 		masm.vmov(ConditionFlag.Always, dest.asRegister(), ARMV7.r8, ARMV7.r9, CiKind.Double, CiKind.Long);
 		masm.pop(ConditionFlag.Always, 1<<9);
 
-		
+
                 /*
                  * if (dest.asRegister() != value.asRegister()) { masm.movdbl(dest.asRegister(), value.asRegister()); }
                  * int op1, op2; op1 = dest.asRegister().encoding; op2 = value.asRegister().encoding; //TODO: Fix that
@@ -1814,7 +1814,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         masm.ldrd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
                         masm.lcmpl(convertCondition(condition), reg1, ARMV7.r8);
 			masm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s30, null, CiKind.Int, CiKind.Float);
-	
+
                         //masm.restoreRegister(8,9);
                         break;
                     case Object:
@@ -2103,51 +2103,23 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert dst.isRegister();
         CiRegister result = dst.asRegister();
         masm.xorq(result, result);
-        // masm.notq(result); // twos complement?
-        masm.rsb(ConditionFlag.Always, false, result, result, 0, 0); // negate
-        masm.incq(result); // add 1 to get to the twos completent
-	if(src.kind.isLong()) {
-		System.out.println("LONG --------------significant bit op");
-	}
-	else if(src.kind.isInt()) {
-		System.out.println("INT --------------significant bit op");
-        }
-	else if(src.kind.isFloat()) {
-		 System.out.println("FLOAT --------------significant bit op");
-        }
-        else if(src.kind.isDouble()) {
+        masm.neg(ConditionFlag.Always, false, result, result, 0);
 
-		System.out.println("DOUBLE --------------significant bit op");
-
-	} else {
-		System.out.println("UNKKNOWN --------------significant bit op");
-
-	}
-
-	
         if (src.isRegister()) {
             CiRegister value = src.asRegister();
             assert value != result;
-            // System.out.println("CHECK Semantics of clz versus bsrq concerning reutrn value  BITOPS emitSignificantBitOp");
             if (most) {
-
                 masm.clz(ConditionFlag.Always, result, value);
-                // NOTE wILL RETURN 32 if zero!!!
-                // masm.bsrq(result, value);
-		masm.mov32BitConstant(ARMV7.r12,32);
-		masm.isub(result, ARMV7.r12, result);
-		masm.mov32BitConstant(ARMV7.r12, 1);
-		masm.isub(result, result, ARMV7.r12);	
-
-		//masm.cmp(ConditionFlag.Always,result,ARMV7.r12,0,0);
-		//masm.mov32BitConstant(ConditionFlag.Equal,result,-1);
+                masm.mov32BitConstant(ARMV7.r12, 32);
+                masm.isub(result, ARMV7.r12, result);
+                masm.mov32BitConstant(ARMV7.r12, 1);
+                masm.isub(result, result, ARMV7.r12);
             } else {
                 masm.rbit(ConditionFlag.Always, ARMV7.r12, value);
                 masm.clz(ConditionFlag.Always, result, ARMV7.r12);
-		masm.mov32BitConstant(ARMV7.r12,32);
-		masm.cmp(ConditionFlag.Always,result,ARMV7.r12,0,0);
-		masm.mov32BitConstant(ConditionFlag.Equal,result,-1);
-                // masm.bsfq(result, value);
+                masm.mov32BitConstant(ARMV7.r12, 32);
+                masm.cmp(ConditionFlag.Always, result, ARMV7.r12, 0, 0);
+                masm.mov32BitConstant(ConditionFlag.Equal, result, -1);
             }
         } else {
             CiAddress laddr = asAddress(src);
@@ -2155,23 +2127,19 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             masm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, ARMV7.r12, ARMV7.r12, 0);
             if (most) {
                 masm.clz(ConditionFlag.Always, result, ARMV7.r12);
-                // masm.bsrq(result, laddr);
             } else {
-                // masm.bsfq(result, laddr);
                 masm.rbit(ConditionFlag.Always, ARMV7.r12, ARMV7.r12);
                 masm.clz(ConditionFlag.Always, result, ARMV7.r12);
-		masm.mov32BitConstant(ARMV7.r12,32);
-                masm.cmp(ConditionFlag.Always,result,ARMV7.r12,0,0);
-                masm.mov32BitConstant(ConditionFlag.Equal,result,-1);
+                masm.mov32BitConstant(ARMV7.r12, 32);
+                masm.cmp(ConditionFlag.Always, result, ARMV7.r12, 0, 0);
+                masm.mov32BitConstant(ConditionFlag.Equal, result, -1);
             }
         }
     }
 
     @Override
     protected void emitAlignment() {
-	// we need 8 byte stack alignment?
 	masm.align(8);
-        //masm.align(target.wordSize);
     }
 
     @Override
@@ -2427,7 +2395,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         CiConstant constantIndex = (CiConstant) index;
                         dst = new CiAddress(inst.kind, pointer, IllegalValue, scale, constantIndex.asInt() * scale.value + displacement);
 			 //masm.mov32BitConstant(ARMV7.r12,0x66666666);
-			
+
                     } else {
                         dst = new CiAddress(inst.kind, pointer, index, scale, displacement);
 			//masm.mov32BitConstant(ARMV7.r12,0x77777777);
