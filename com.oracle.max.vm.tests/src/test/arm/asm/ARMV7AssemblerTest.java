@@ -258,7 +258,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         }
     }
 
-    public void test_VPushPop() throws Exception {
+    public void ignore_VPushPop() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         resetIgnoreValues();
@@ -289,7 +289,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void test_Vdiv() throws Exception {
+    public void ignore_Vdiv() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         resetIgnoreValues();
@@ -314,7 +314,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void test_Vcvt_int2float() throws Exception {
+    public void ignore_Vcvt_int2float() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         resetIgnoreValues();
@@ -336,7 +336,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void test_Vcvt_int2double() throws Exception {
+    public void ignore_Vcvt_int2double() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         resetIgnoreValues();
@@ -360,7 +360,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
 
 
 
-    public void test_Vcvt_double2float() throws Exception {
+    public void ignore_Vcvt_double2float() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         resetIgnoreValues();
@@ -381,7 +381,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     }
 
 
-    public void test_VAdd() throws Exception {
+    public void ignore_VAdd() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         resetIgnoreValues();
@@ -404,7 +404,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void test_VSub() throws Exception {
+    public void ignore_VSub() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         resetIgnoreValues();
@@ -427,7 +427,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void test_VcvtvMul() throws Exception {
+    public void ignore_VcvtvMul() throws Exception {
         initialiseExpectedValues();
         resetIgnoreValues();
         asm.codeBuffer.reset();
@@ -449,7 +449,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void test_VldrStr() throws Exception {
+    public void ignore_VldrStr() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         resetIgnoreValues();
@@ -482,7 +482,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void test_Vldr() throws Exception {
+    public void ignore_Vldr() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         resetIgnoreValues();
@@ -505,7 +505,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void test_MVov() throws Exception {
+    public void ignore_MVov() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         resetIgnoreValues();
@@ -623,6 +623,20 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, 1, 0, 0, ARMV7.cpuRegisters[i], ARMV7.cpuRegisters[13], ARMV7.cpuRegisters[12], i * 4, 0);
         }
         generateAndTest( expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
+    public void test_neg() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
+        expectedValues[1] = -1;
+        resetIgnoreValues();
+        asm.codeBuffer.reset();
+        asm.mov32BitConstant(ARMV7.cpuRegisters[0], 32);
+        asm.mov32BitConstant(ARMV7.cpuRegisters[1], -1);
+        testValues[1] = true;
+        asm.xorq(ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0]);
+        asm.mvn(ConditionFlag.Always, false, ARMV7.cpuRegisters[1], ARMV7.cpuRegisters[0], 0);
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
     public void ignore_Ldr() throws Exception {
@@ -914,7 +928,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         generateAndTest(expectedLongValues, testValues, bitmasks);
     }
 
-    public void test_casInt() throws Exception {
+    public void ignore_casInt() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         resetIgnoreValues();
@@ -935,7 +949,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void test_casLong() throws Exception {
+    public void ignore_casLong() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         resetIgnoreValues();
@@ -962,7 +976,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void test_decrementl() throws Exception {
+    public void ignore_decrementl() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         resetIgnoreValues();
@@ -1002,7 +1016,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void test_incrementl() throws Exception {
+    public void ignore_incrementl() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
         resetIgnoreValues();
