@@ -180,9 +180,9 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                     ripAdjustment = state & ~1;
                     rbpSaved = (state & 1) == 1;
 		    */
-		   
+
 			// we have not ported the inspector so we have commented out the computation
-			// above as it has not been ported to ARM!!! 
+			// above as it has not been ported to ARM!!!
                 }
 
                 Pointer ripPointer = current.sp().plus(ripAdjustment);
@@ -375,7 +375,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             if (adapter == null) {
                 asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.encoding);
-		asm.mov32BitConstant(ARMV7.r12,0xba5e20af); // signifies BASSE20OPT
+		asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12,0xba5e20af); // signifies BASSE20OPT
                 //asm.nop(); // movw
                 //asm.nop(); // movt
                 asm.nop(); // add
@@ -467,7 +467,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r11, ARMV7.r13);
-            asm.subq(ARMV7.r13, (explicitlyAllocatedFrameSize )); 
+            asm.subq(ARMV7.r13, (explicitlyAllocatedFrameSize ));
 
             //Label forever = new Label();
 
@@ -540,7 +540,7 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             // asm.ret(/* to make it compile APN removed (short) baselineArgsSize*/);
 	    // EXPERIMENT ECCOOP asm.addq(ARMV7.r13,baselineArgsSize);
 	    asm.addq(ARMV7.r13,baselineArgsSize );
-	    asm.mov(ARMV7Assembler.ConditionFlag.Always,false, ARMV7.r15,ARMV7.r8);	
+	    asm.mov(ARMV7Assembler.ConditionFlag.Always,false, ARMV7.r15,ARMV7.r8);
             //asm.ret(baselineArgsSize);
 
 
@@ -805,7 +805,7 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
          * +20: push $LR OPT ENTRY POINT CALL
 	 * +24: movw r12,
 	 * +28: movt r12
-	 * +32: add r12, r12, pc 
+	 * +32: add r12, r12, pc
          * +36: blx r12
          * +40: BASELINE METHOD ENTRY push $LR
          */
@@ -817,7 +817,7 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
 		// Pad with nops up to the OPT entry point
             	asm.nop((OPTIMIZED_ENTRY_POINT.offset()-asm.codeBuffer.position())/4);
 
-	     	asm.mov32BitConstant(ARMV7.r12,0xba5eba5e); // signifies OPT2BASE
+	     	asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12,0xba5eba5e); // signifies OPT2BASE
                 if (asm.codeBuffer.position() != PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE) {
                     Log.println("GOING TO CRASH mismatch  PROLOGUE SIZE NOARGS ARMAdapterGenerator " + asm.codeBuffer.position() + " " + PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE);
                 }
@@ -896,7 +896,7 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
 		    // APN previously this ifblock came before the adaptArgument call ...
                     // Skip over the first slot of a long or double
                     baselineStackOffset += BASELINE_SLOT_SIZE;
-		    
+
                 }
                 adaptArgument(asm, argKind, optArgs[i], baselineStackOffset, adapterFrameSize);
                 baselineStackOffset += BASELINE_SLOT_SIZE;
@@ -937,8 +937,8 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
 		                //System.out.println("OPT2BASEADAPT " + kind.asEnum + " " + reg.encoding + " offset " + offset32);
 				//System.out.println("OPTSLOTSIZE " +OPT_SLOT_SIZE);
 				//System.out.println("BASELINESLOTSIZE " +BASELINE_SLOT_SIZE);
-	
-	
+
+
             switch (kind.asEnum) {
                 // APN in X86 if we mov ADDRESS <-- reg, are we storing?
                 // APN can the address include base, scale and index ....
