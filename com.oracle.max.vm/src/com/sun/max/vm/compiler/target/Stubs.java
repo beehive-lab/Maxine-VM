@@ -23,12 +23,12 @@
 package com.sun.max.vm.compiler.target;
 
 import com.oracle.max.asm.Label;
-
 import com.oracle.max.asm.target.amd64.AMD64;
 import com.oracle.max.asm.target.amd64.AMD64MacroAssembler;
 import com.oracle.max.asm.target.armv7.ARMV7;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler;
 import com.oracle.max.asm.target.armv7.ARMV7MacroAssembler;
+import com.oracle.max.asm.target.armv7.ARMV7Assembler.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.HOSTED_ONLY;
 import com.sun.max.annotate.NEVER_INLINE;
@@ -567,7 +567,7 @@ public class Stubs {
             // so that the stack walker can find it.
             //asm.mov32BitConstant(registerConfig.getScratchRegister(), index);
 
-            asm.mov32BitConstant(ARMV7.r8, index); // hard coded!!!
+            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, index); // hard coded!!!
         /* R8 is an "alternate scratch we put the index in here and we added R8 to the end of the trampoline
         csl as r12 is used during calculations of stores and gets trashed on ARM
 	    */
@@ -585,9 +585,9 @@ public class Stubs {
             //asm.movq(locations[0].asRegister(), locations[0].asRegister());
 
             // load the index into the second arg register
-            asm.mov32BitConstant(args[1].asRegister(), index);
+            asm.mov32BitConstant(ConditionFlag.Always, args[1].asRegister(), index);
 
-            if (!isInterface) asm.mov32BitConstant(ARMV7.r12, 0xbeefbeef);// debugging resolveVirtualCall
+            if (!isInterface) asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xbeefbeef);// debugging resolveVirtualCall
             // load the return address into the third arg register
 
             // we will need to test this carefully
@@ -1011,7 +1011,7 @@ public class Stubs {
             asm.subq(ARMV7.r13, frameSize - 8/*4*/);
 
             // save all the callee save registers
-            asm.save(csl, frameToCSA); // NOTE our save/restore trashes r12 ... that is why we push r12 
+            asm.save(csl, frameToCSA); // NOTE our save/restore trashes r12 ... that is why we push r12
 
             // Now that we have saved all general purpose registers (including the scratch register),
             // store the value of the latch register from the thread locals into the trap frame
@@ -1245,7 +1245,7 @@ public class Stubs {
             }
             // APN not sure about it, but it seems to be ok.
             // DEBUG MARKER
-            asm.mov32BitConstant(ARMV7.r12, 0xfadad0d0);
+            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xfadad0d0);
 
 
             // Push 'pc' to the handler's stack frame and update RSP to point to the pushed value.
@@ -1325,7 +1325,7 @@ public class Stubs {
             int callSize = asm.codeBuffer.position() - callPos;
             Label forever = new Label();
             asm.bind(forever);
-            asm.mov32BitConstant(ARMV7.r12, 0x50115011);
+            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0x50115011);
             asm.branch(forever);
 
             // Should never reach here
@@ -1653,7 +1653,7 @@ public class Stubs {
             asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, ARMV7.r8, 0);
             Label forever = new Label();
             asm.bind(forever);
-            asm.mov32BitConstant(ARMV7.r12, 0xfeeff00f);
+            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xfeeff00f);
             asm.branch(forever);
             asm.ret(0);
 
@@ -1955,7 +1955,7 @@ public class Stubs {
             asm.int3();
             Label forever = new Label();
             asm.bind(forever);
-            asm.mov32BitConstant(ARMV7.r12, 0xc5a0c5a0);
+            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xc5a0c5a0);
             asm.branch(forever);
 
 
@@ -2075,7 +2075,7 @@ public class Stubs {
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
             Label forever = new Label();
             asm.bind(forever);
-            asm.mov32BitConstant(ARMV7.r12, 0xffffffff);
+            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xffffffff);
             asm.blx(ARMV7.r12); //expect it to crash
             asm.branch(forever);
 
