@@ -70,10 +70,9 @@ import static com.sun.max.vm.classfile.ErrorContext.verifyError;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.JVMS_SLOT_SIZE;
 
-//import java.io.PrintWriter;
+// import java.io.PrintWriter;
 
 public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethodinVM {
-
 
     public static AtomicInteger methodCounter = new AtomicInteger(536870912);
     public static int invokeDebugCounter = 0;
@@ -224,7 +223,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     public void peekLong(CiRegister dst, int index) {
         assert dst.encoding < 10;
         asm.setUpScratch(spLong(index));
-        //asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
+        // asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
         asm.ldrd(ConditionFlag.Always, dst, scratch, 0); // dst needs to be big enough to hold a long!
     }
 
@@ -232,7 +231,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     public void pokeLong(CiRegister src, int index) {
         assert src.encoding < 10;
         asm.setUpScratch(spLong(index));
-        //asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
+        // asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
         asm.strd(ARMV7Assembler.ConditionFlag.Always, src, scratch, 0); // put them on the stack on the stack!
     }
 
@@ -240,7 +239,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     public void peekDouble(CiRegister dst, int index) {
         assert dst.isFpu();
         asm.setUpScratch(spLong(index));
-        //asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
+        // asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
         asm.vldr(ARMV7Assembler.ConditionFlag.Always, dst, scratch, 0, CiKind.Double, CiKind.Int);
 
     }
@@ -249,7 +248,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     public void pokeDouble(CiRegister src, int index) {
         assert src.isFpu();
         asm.setUpScratch(spLong(index));
-        //asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
+        // asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
         asm.vstr(ARMV7Assembler.ConditionFlag.Always, src, scratch, 0, CiKind.Double, CiKind.Int);
     }
 
@@ -288,11 +287,10 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
     @Override
     protected void assignInvokeVirtualTemplateParameters(VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
-        //asm.insertForeverLoop();
+        assignInt(0, "vTableIndex", virtualMethodActor.vTableIndex());
+        peekObject(1, "receiver", receiverStackIndex);
+    }
 
-            assignInt(0, "vTableIndex", virtualMethodActor.vTableIndex()  );
-            peekObject(1, "receiver", receiverStackIndex);
-        }
     @Override
     protected void do_invokestatic(int index) {
         ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
@@ -317,26 +315,14 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         }
         start(tag);
         CiRegister target = template.sig.out.reg;
-        //CiRegister target = ARMV7.r8;
-        asm.mov32BitConstant(ARMV7.r8, 0xdead0001);
-	asm.mov32BitConstant(ARMV7.r12, index);
-
-        //asm.mov(ConditionFlag.Always, false, target, template.sig.out.reg);
-        //asm.vmov(ConditionFlag.Always, ARMV7.s28, ARMV7.r0, null, CiKind.Float, CiKind.Int);
-
+        asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, 0xdead0001);
+        asm.mov32BitConstant(ConditionFlag.Always,ARMV7.r12, index);
         assignObject(0, "guard", cp.makeResolutionGuard(index));
         finish();
-
-        //asm.insertForeverLoop();
         target = ARMV7.r8;
         asm.mov(ConditionFlag.Always, false, target, ARMV7.r0);
-	
-        //EXTRAasm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
-        //asm.vmov(ConditionFlag.Always, ARMV7.r0, ARMV7.s28, null, CiKind.Int, CiKind.Float);
         int safepoint = callIndirect(target, -1);
-        asm.mov32BitConstant(ARMV7.r8, 0xdead0001);
-        //asm.insertForeverLoop();
-
+        asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, 0xdead0001);
         finishCall(tag, kind, safepoint, null);
     }
 
@@ -363,26 +349,18 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                     }
                     start(tag.resolved);
                     CiRegister target = template.sig.out.reg;
-                    asm.mov32BitConstant(ARMV7.r8, 0xdead0002);
-                    asm.mov32BitConstant(ARMV7.r12, index);
-
-
-                    //System.out.println("INDEX " + index);
-                    //System.out.println("RXERINDEX "+ receiverStackIndex);
-
+                    asm.mov32BitConstant(ConditionFlag.Always,ARMV7.r8, 0xdead0002);
+                    asm.mov32BitConstant(ConditionFlag.Always,ARMV7.r12, index);
                     assignObject(0, "methodActor", interfaceMethod);
                     peekObject(1, "receiver", receiverStackIndex);
-		    asm.vmov(ConditionFlag.Always, ARMV7.s27, ARMV7.r1, null, CiKind.Float, CiKind.Int);
-		    /// TRY savinf before we do the assign ...
-
+                    asm.vmov(ConditionFlag.Always, ARMV7.s27, ARMV7.r1, null, CiKind.Float, CiKind.Int);
                     target = ARMV7.r8;
                     finish();
                     asm.mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r0);
                     asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
 
-
                     int safepoint = callIndirect(target, receiverStackIndex);
-                    asm.mov32BitConstant(ARMV7.r8, 0xdead0002);
+                    asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, 0xdead0002);
                     finishCall(tag, kind, safepoint, null);
                     return;
                 } catch (LinkageError e) {
@@ -394,14 +372,9 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         }
         start(tag);
         CiRegister target = template.sig.out.reg;
-        asm.mov32BitConstant(ARMV7.r8, 0xdead0003);
-        asm.mov32BitConstant(ARMV7.r12, index);
-
-
-
-        //System.out.println("ARMV7T1XCompilation resolv einterface class load");
+        asm.mov32BitConstant(ConditionFlag.Always,ARMV7.r8, 0xdead0003);
+        asm.mov32BitConstant(ConditionFlag.Always,ARMV7.r12, index);
         asm.vmov(ConditionFlag.Always, ARMV7.s27, ARMV7.r1, null, CiKind.Float, CiKind.Int);
-
 
         assignObject(0, "guard", cp.makeResolutionGuard(index));
         peekObject(1, "receiver", receiverStackIndex);
@@ -409,9 +382,8 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r0);
         asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
         target = ARMV7.r8;
-
         int safepoint = callIndirect(target, receiverStackIndex);
-        asm.mov32BitConstant(ARMV7.r8, 0xdead0003);
+        asm.mov32BitConstant(ConditionFlag.Always,ARMV7.r8, 0xdead0003);
         finishCall(tag, kind, safepoint, null);
     }
 
@@ -439,14 +411,8 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         }
         start(tag);
         CiRegister target = template.sig.out.reg;
-        asm.mov32BitConstant(ARMV7.r8, 0xdead0004);
-        asm.mov32BitConstant(ARMV7.r12, index);
-
-
-        //System.out.println("INDEX " + index);
-        //System.out.println("RXERINDEX "+ receiverStackIndex);
-
-
+        asm.mov32BitConstant(ConditionFlag.Always,ARMV7.r8, 0xdead0004);
+        asm.mov32BitConstant(ConditionFlag.Always,ARMV7.r12, index);
         assignObject(0, "guard", cp.makeResolutionGuard(index));
         peekObject(1, "receiver", receiverStackIndex);
 
@@ -454,31 +420,23 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r0);
         asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
         target = ARMV7.r8;
-
         int safepoint = callIndirect(target, receiverStackIndex);
-        asm.mov32BitConstant(ARMV7.r8, 0xdead0004);
+        asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, 0xdead0004);
         finishCall(tag, kind, safepoint, null);
     }
 
     @Override
     protected void do_invokespecial_resolved(T1XTemplateTag tag, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
         peekObject(ARMV7.r8, receiverStackIndex);
-        //int safepoint = nullCheck(ARMV7.r8);
         nullCheck(ARMV7.r8);
-        //safepointsBuilder.addSafepoint(stream.currentBCI(), safepoint, null);
-        //asm.mov(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r8);
-
     }
 
     @Override
     protected void do_invokevirtual(int index) {
         ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
-        //System.out.println("CLASSMETHODREF " + classMethodRef);
         SignatureDescriptor signature = classMethodRef.signature(cp);
 
         if (classMethodRef.holder(cp).toKind().isWord) {
-            // Dynamic dispatch on Word types is not possible, since raw pointers do not have any method tables.
-            //System.out.println("do_invokevirtual special " + index);
             do_invokespecial(index);
             return;
         }
@@ -486,53 +444,34 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         Kind kind = invokeKind(signature);
         T1XTemplateTag tag = T1XTemplateTag.INVOKEVIRTUALS.get(kind.asEnum);
         int receiverStackIndex = receiverStackIndex(signature);
-        //System.out.println("do_invokevirtual kind is " + kind);
-        //System.out.println("do_invokevirtual RECEIVERSTAKCINDEX " + receiverStackIndex);
         try {
             if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
-                //System.out.println("do_invokevirtual resolvablewithoutclass loading");
                 try {
                     VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
-                    // System.out.println("do_invokevirtual vma " +virtualMethodActor + " index " + index);
                     if (processIntrinsic(virtualMethodActor)) {
-                        //System.out.println("prcoessed intrinsic");
                         return;
                     }
                     if (virtualMethodActor.isPrivate() || virtualMethodActor.isFinal() || virtualMethodActor.holder().isFinal()) {
-                        // this is an invokevirtual to a private or final method, treat it like invokespecial
-                        //System.out.println("do_invokevirtual do_invokespecial_resolve");
                         do_invokespecial_resolved(tag, virtualMethodActor, receiverStackIndex);
-
                         int safepoint = callDirect();
                         finishCall(tag, kind, safepoint, virtualMethodActor);
                         return;
                     }
-                    //System.out.println("do_invokevirtual emit an unprofiled virtual dispatch");
-                    //System.out.println("INVOKEDEBUG " + invokeDebugCounter);
-                    // emit an unprofiled virtual dispatch
                     start(tag.resolved);
                     CiRegister target = template.sig.out.reg;
-                    //CiRegister target = ARMV7.r8;
-                    asm.mov32BitConstant(ARMV7.r8, 0xdead0005);
-                    asm.mov32BitConstant(ARMV7.r12, index);
-
-
-                    //System.out.println("INDEX " + index);
-                    //System.out.println("RXERINDEX "+ receiverStackIndex);
+                    asm.mov32BitConstant(ConditionFlag.Always,ARMV7.r8, 0xdead0005);
+                    asm.mov32BitConstant(ConditionFlag.Always,ARMV7.r12, index);
                     asm.vmov(ConditionFlag.Always, ARMV7.s29, ARMV7.r1, null, CiKind.Float, CiKind.Int);
-		    asm.vmov(ConditionFlag.Always, ARMV7.s28, ARMV7.r0, null, CiKind.Float, CiKind.Int);
-
+                    asm.vmov(ConditionFlag.Always, ARMV7.s28, ARMV7.r0, null, CiKind.Float, CiKind.Int);
                     assignInvokeVirtualTemplateParameters(virtualMethodActor, receiverStackIndex);
-                    asm.mov32BitConstant(ARMV7.r8, 0xdead0005);
+                    asm.mov32BitConstant(ConditionFlag.Always,ARMV7.r8, 0xdead0005);
                     finish();
-                    asm.mov32BitConstant(ARMV7.r8, 0xdead0005);
+                    asm.mov32BitConstant(ConditionFlag.Always,ARMV7.r8, 0xdead0005);
                     target = ARMV7.r8;
                     asm.mov(ConditionFlag.Always, false, target, ARMV7.r0);
-
                     asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
                     int safepoint = callIndirect(target, receiverStackIndex);
-                    asm.mov32BitConstant(ARMV7.r8, 0xdead0005);
-                    //System.out.println("SAFPOINT " + safepoint);
+                    asm.mov32BitConstant(ConditionFlag.Always,ARMV7.r8, 0xdead0005);
                     finishCall(tag, kind, safepoint, null);
                     return;
                 } catch (LinkageError e) {
@@ -542,51 +481,38 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         } catch (LinkageError error) {
             // Fall back on unresolved template that will cause the error to be rethrown at runtime.
         }
-        //System.out.println("do_invokevirtual endcase");
         start(tag);
         CiRegister target = template.sig.out.reg;
-        asm.mov32BitConstant(ARMV7.r8, 0xdead0006);
-        asm.mov32BitConstant(ARMV7.r12, index);
-
-
-        //System.out.println("INDEX " + index);
-        //System.out.println("RXERINDEX " + receiverStackIndex);
-
+        asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, 0xdead0006);
+        asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, index);
         assignObject(0, "guard", cp.makeResolutionGuard(index));
         peekObject(1, "receiver", receiverStackIndex);
         asm.vmov(ConditionFlag.Always, ARMV7.s28, ARMV7.r1, null, CiKind.Float, CiKind.Int);
         finish();
-        //System.out.println("DO CALL indirect");
         target = ARMV7.r8;
         asm.mov(ConditionFlag.Always, false, target, ARMV7.r0);
-	asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
+        asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
         asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s28, null, CiKind.Int, CiKind.Float);
-
         int safepoint = callIndirect(target, receiverStackIndex);
-        asm.mov32BitConstant(ARMV7.r8, 0xdead0006);
-        //System.out.println("DOING CALL INDIRECT");
+        asm.mov32BitConstant(ConditionFlag.Always,ARMV7.r8, 0xdead0006);
         finishCall(tag, kind, safepoint, null);
-        //System.out.println("DONE finishcall");
     }
 
     @Override
     protected void do_multianewarray(int index, int numberOfDimensions) {
         CiRegister lengths;
-    /*
-	X86-64 has a different return register to argument register set, but ARM as we have tried to follow AARPCS DOESNT
-	so we need to save the r0 and restore it to r1
-	Hoepfully with will work ... as long as the SP is not used for any arguments inbetween 
-	*/
+        /*
+         * X86-64 has a different return register to argument register set, but ARM as we have tried to follow AARPCS
+         * DOESNT so we need to save the r0 and restore it to r1 Hoepfully with will work ... as long as the SP is not
+         * used for any arguments inbetween
+         */
         {
             start(T1XTemplateTag.CREATE_MULTIANEWARRAY_DIMENSIONS);
             assignWordReg(0, "sp", sp);
             assignInt(1, "n", numberOfDimensions);
             lengths = template.sig.out.reg;
             finish();
-            //decStack(numberOfDimensions);
-            //asm.push(ConditionFlag.Always,1<<0);
             asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r0, null, CiKind.Float, CiKind.Int);
-
 
         }
         ClassConstant classRef = cp.classAt(index);
@@ -596,19 +522,12 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
             assert arrayClassActor.isArrayClass();
             assert arrayClassActor.numberOfDimensions() >= numberOfDimensions : "dimensionality of array class constant smaller that dimension operand";
             assignObject(0, "arrayClassActor", arrayClassActor);
-            //assignObjectReg(1, "lengths", lengths);
-
-            //asm.pop(ConditionFlag.Always, 1 <<reg(1,"lengths",Kind.REFERENCE).encoding );
             asm.vmov(ConditionFlag.Always, reg(1, "lengths", Kind.REFERENCE), ARMV7.s31, null, CiKind.Int, CiKind.Float);
-
             finish();
         } else {
             // Unresolved case
             start(T1XTemplateTag.MULTIANEWARRAY);
-            assignObject(0, "guard", cp.makeResolutionGuard(index)); //index+1 if we pushed?
-            //assignObjectReg(1, "lengths", lengths);
-            //asm.pop(ConditionFlag.Always,1<<1);
-            //asm.pop(ConditionFlag.Always, 1 <<reg(1,"lengths",Kind.REFERENCE).encoding );
+            assignObject(0, "guard", cp.makeResolutionGuard(index)); // index+1 if we pushed?
             asm.vmov(ConditionFlag.Always, reg(1, "lengths", Kind.REFERENCE), ARMV7.s31, null, CiKind.Int, CiKind.Float);
             finish();
         }
@@ -653,7 +572,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     protected void loadLong(CiRegister dst, int index) {
         assert dst.number < 10; // to prevent screwing up scratch 2 registers required for double!
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
-        //asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
         asm.ldrd(ConditionFlag.Always, dst, scratch, 0);
     }
 
@@ -679,7 +597,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     protected void storeLong(CiRegister src, int index) {
         assert src.number < 10; // sanity checking longs must not screw up scratch
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
-        //asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
+        // asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
         asm.strd(ARMV7Assembler.ConditionFlag.Always, src, scratch, 0);
     }
 
@@ -697,13 +615,13 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
     @Override
     public void assignInt(CiRegister dst, int value) {
-        asm.mov32BitConstant(dst, value);
+        asm.mov32BitConstant(ConditionFlag.Always,dst, value);
     }
 
     @Override
     protected void assignFloat(CiRegister dst, float value) {
         assert dst.number >= ARMV7.s0.number && dst.number <= ARMV7.s31.number;
-        asm.mov32BitConstant(ARMV7.r12, Float.floatToRawIntBits(value));
+        asm.mov32BitConstant(ConditionFlag.Always,ARMV7.r12, Float.floatToRawIntBits(value));
         asm.vmov(ConditionFlag.Always, dst, ARMV7.r12, null, CiKind.Float, CiKind.Int);
     }
 
@@ -847,16 +765,16 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         }
         if (receiverStackIndex >= 0) {
 
-            //peekObject(ARMV7.r1, receiverStackIndex); // was rdi?
+            // peekObject(ARMV7.r1, receiverStackIndex); // was rdi?
             peekObject(ARMV7.r0, receiverStackIndex);
         }
-        //System.out.println("callIndirect TARGET REG is " +target.encoding);
+        // System.out.println("callIndirect TARGET REG is " +target.encoding);
         if (target.encoding != ARMV7.r8.encoding) {
             asm.xorq(ARMV7.r8, ARMV7.r8);
         }
         // make r8 the target
         int causePos = buf.position();
-        //System.out.println("CAUSEPOS " + causePos);
+        // System.out.println("CAUSEPOS " + causePos);
         asm.call(target);
         int safepointPos = buf.position();
         asm.nop(); // nop separates any potential safepoint emitted as a successor to the call
@@ -866,9 +784,9 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     @Override
     protected void nullCheck(CiRegister src) {
         // nullCheck on AMD64 testl(AMD64.rax, new CiAddress(Word, r.asValue(Word), 0));
-        //int safepointPos = buf.position();
+        // int safepointPos = buf.position();
         asm.nullCheck(src);
-        //return Safepoints.make(safepointPos);
+        // return Safepoints.make(safepointPos);
 
     }
 
@@ -907,10 +825,10 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.push(ConditionFlag.Always, 1 << 14); // push return address on stack
         asm.push(ConditionFlag.Always, 1 << 11); // push frame pointer onto STACK
         asm.mov(ConditionFlag.Always, false, ARMV7.r11, ARMV7.r13); // create a new framepointer = stack ptr
-        asm.subq(ARMV7.r13, frameSize - Word.size()); // APN is this necessary for  ARM ie push does it anyway?
+        asm.subq(ARMV7.r13, frameSize - Word.size()); // APN is this necessary for ARM ie push does it anyway?
         asm.subq(ARMV7.r11, framePointerAdjustment()); // TODO FP/SP not being set up correctly ...
 
-        //TODO: Fix below
+        // TODO: Fix below
         if (Trap.STACK_BANGING) {
             int pageSize = platform().pageSize;
             int framePages = frameSize / pageSize;
@@ -928,7 +846,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         }
         if (DEBUG_METHODS) {
             int a = methodCounter.incrementAndGet();
-            asm.mov32BitConstant(ARMV7.r12, a);
+            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, a);
             try {
                 writeDebugMethod(method.holder() + "." + method.name(), a);
             } catch (Exception e) {
@@ -943,9 +861,9 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         protectionLiteralIndex = objectLiterals.size();
         objectLiterals.add(T1XTargetMethod.PROTECTED);
         asm.xorq(ARMV7.r8, ARMV7.r8);
-        //System.out.println("emitUnProtect partially commented out ... OBJECT LITERALS");
-        //asm.setUpScratch(CiAddress.Placeholder);
-        //asm.str(ConditionFlag.Always,ARMV7.r8,scratch,0);
+        // System.out.println("emitUnProtect partially commented out ... OBJECT LITERALS");
+        // asm.setUpScratch(CiAddress.Placeholder);
+        // asm.str(ConditionFlag.Always,ARMV7.r8,scratch,0);
         asm.nop(2);
 
         int dispPos = buf.position() - 8;
@@ -960,17 +878,11 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.addq(ARMV7.r11, framePointerAdjustment()); // we might be missing some kind of pop here?
         asm.mov(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r11);
         final short stackAmountInBytes = (short) frame.sizeOfParameters();
-        // ALTERED MOVED POP to before RET
-        //asm.mov32BitConstant(scratch, stackAmountInBytes);
-        //asm.addRegisters(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
         asm.pop(ConditionFlag.Always, 1 << 11); // POP the frame pointer
         asm.pop(ConditionFlag.Always, 1 << 8); // POP return address into r8
-        asm.mov32BitConstant(scratch, stackAmountInBytes);
+        asm.mov32BitConstant(ConditionFlag.Always, scratch, stackAmountInBytes);
         asm.addRegisters(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
         asm.mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r8); // RETURN
-
-
-        //asm.ret(); // mov R14 to r15 ,,, who restores the rest oI//f the environment?
     }
 
     @Override
@@ -999,20 +911,20 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
             throw verifyError("Low must be less than or equal to high in TABLESWITCH");
         }
 
-	//asm.insertForeverLoop();
+        // asm.insertForeverLoop();
 
         // Pop index from stack into scratch
         asm.setUpScratch(new CiAddress(CiKind.Int, RSP));
         asm.ldr(ConditionFlag.Always, ARMV7.r8, asm.scratchRegister, 0);
         asm.addq(r13, JVMSFrameLayout.JVMS_SLOT_SIZE);
-        asm.push(ConditionFlag.Always, 1 << 10 | 1 << 9 | 1<< 7);
+        asm.push(ConditionFlag.Always, 1 << 10 | 1 << 9 | 1 << 7);
         asm.mov(ConditionFlag.Always, false, ARMV7.r9, ARMV7.r8); // r9 stores index
 
         // Jump to default target if index is not within the jump table
         startBlock(ts.defaultTarget());
         asm.cmpl(r9, lowMatch);
 
-	asm.pop(ConditionFlag.SignedLesser, 1 << 10 | 1 << 9 | 1<< 7);
+        asm.pop(ConditionFlag.SignedLesser, 1 << 10 | 1 << 9 | 1 << 7);
         int pos = buf.position();
         patchInfo.addJCC(ConditionFlag.SignedLesser, pos, ts.defaultTarget());
         asm.jcc(ConditionFlag.SignedLesser, 0, true);
@@ -1022,7 +934,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         } else {
             asm.cmpl(r9, highMatch);
         }
-	asm.pop(ConditionFlag.SignedGreater,  1 << 10 | 1 << 9 | 1<< 7);
+        asm.pop(ConditionFlag.SignedGreater, 1 << 10 | 1 << 9 | 1 << 7);
         pos = buf.position();
         patchInfo.addJCC(ConditionFlag.SignedGreater, pos, ts.defaultTarget());
         asm.jcc(ConditionFlag.SignedGreater, 0, true);
@@ -1035,15 +947,16 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         // Load jump table entry into r15 and jump to it
         asm.setUpScratch(new CiAddress(CiKind.Int, r7.asValue(), r9.asValue(), Scale.Times4, 0));
         asm.ldr(ConditionFlag.Always, r12, ARMV7.r12, 0);
-        asm.addRegisters(ConditionFlag.Always, false, r12, ARMV7.r15, r12, 0, 0); // need to be careful are we using the right add!
+        asm.addRegisters(ConditionFlag.Always, false, r12, ARMV7.r15, r12, 0, 0); // need to be careful are we using the
+// right add!
         asm.add(ConditionFlag.Always, false, r12, r12, 8, 0);
-        asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10 | 1<< 7); // restore r9/r10
+        asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10 | 1 << 7); // restore r9/r10
         asm.mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12);
 
-        // NOT NECESARY FOR ARMV7  Inserting padding so that jump table address is 4-byte aligned
-        //if ((buf.position() & 0x3) != 0) {
-            //asm.nop(4 - (buf.position() & 0x3));
-        //}
+        // NOT NECESARY FOR ARMV7 Inserting padding so that jump table address is 4-byte aligned
+        // if ((buf.position() & 0x3) != 0) {
+        // asm.nop(4 - (buf.position() & 0x3));
+        // }
 
         // Patch LEA instruction above now that we know the position of the jump table
         int jumpTablePos = buf.position();
@@ -1097,7 +1010,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
             int afterLea = buf.position();
 
             // Initialize r7 to index of last entry
-            asm.mov32BitConstant(r7, (ls.numberOfCases() - 1) * 2);
+            asm.mov32BitConstant(ConditionFlag.Always, r7, (ls.numberOfCases() - 1) * 2);
 
             int loopPos = buf.position();
 
@@ -1315,7 +1228,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         }
         asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
 
-
         int pos = buf.position();
         if (bci < targetBCI) {
             // Forward branch
@@ -1395,10 +1307,11 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 assert objectLiterals.get(index) != null;
                 buf.setPosition(dispPos);
                 int dispFromCodeStart = dispFromCodeStart(objectLiterals.size(), 0, index, true);
-                //int disp = movqDisp(dispPos, dispFromCodeStart);
+                // int disp = movqDisp(dispPos, dispFromCodeStart);
                 int disp = movqDisp(dummyDispPos, dispFromCodeStart);
                 buf.setPosition(dispPos);
-                // store  the value in r8 at the PC+ disp.(done at the patch insertion!!!! NOT HERE see emitUnProtectMethod)
+                // store the value in r8 at the PC+ disp.(done at the patch insertion!!!! NOT HERE see
+// emitUnProtectMethod)
                 int val = asm.movwHelper(ConditionFlag.Always, ARMV7.r12, disp & 0xffff);
                 buf.emitInt(val);
                 val = asm.movtHelper(ConditionFlag.Always, ARMV7.r12, (disp >> 16) & 0xffff);
@@ -1430,7 +1343,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 int dispPos = pos + asm.codeBuffer.position() - extraOffset - 4;
                 int disp = movqDisp(dispPos, dispFromCodeStart - extraOffset);
                 asm.codeBuffer.reset();
-                asm.mov32BitConstant(ARMV7.r12, disp);
+                asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, disp);
                 asm.addRegisters(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r15, 0, 0);
                 asm.ldr(ConditionFlag.Always, reg, r12, 0);
                 byte[] pattern = asm.codeBuffer.close(true);
@@ -1448,7 +1361,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 writer.println("unsigned char codeArray[" + source.code().length + "]  = { \n");
                 for (int i = 0; i < source.code().length; i += 4) {
                     writer.println("0x" + Integer.toHexString(source.code()[i]) + ", " + "0x" + Integer.toHexString(source.code()[i + 1]) + ", " + "0x" + Integer.toHexString(source.code()[i + 2]) +
-                            ", " + "0x" + Integer.toHexString(source.code()[i + 3]) + ",\n");
+                                    ", " + "0x" + Integer.toHexString(source.code()[i + 3]) + ",\n");
                 }
                 writer.println("0xfe, 0xff, 0xff, 0xea };\n");
                 writer.close();
