@@ -2008,21 +2008,24 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert left == dest : "left and dest must be equal";
         assert tmp.isIllegal() : "wasting a register if tmp is allocated";
         assert left.isRegister();
-
+	assert count.asRegister() != ARMV7.r12 : "count register must not be scratch";
         if (left.kind.isInt()) {
             CiRegister value = left.asRegister();
             assert value != SHIFTCount : "left cannot be r8";
 
+	    masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12,0x1f); 	 
+ 	    masm.and(ConditionFlag.Always, false, ARMV7.r12, count.asRegister(), ARMV7.r12, 0, 0);
             // Checkstyle: off
             switch (code) {
                 case Shl:
-                    masm.ishl(dest.asRegister(), value, count.asRegister());
+                    masm.ishl(dest.asRegister(), value,  ARMV7.r12);
                     break;
                 case Shr:
-                    masm.ishr(dest.asRegister(), value, count.asRegister());
+			
+                    masm.ishr(dest.asRegister(), value, ARMV7.r12);
                     break;
                 case Ushr:
-                    masm.iushr(dest.asRegister(), value, count.asRegister());
+                    masm.iushr(dest.asRegister(), value, ARMV7.r12);
                     break;
                 default:
                     throw Util.shouldNotReachHere();
@@ -2077,7 +2080,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
             // first move left into dest so that left is not destroyed by the shift
             CiRegister value = dest.asRegister();
-            count = count & 0x1F; // Java spec
+            count = count & 0x3F; // Java spec
 
             moveRegs(left.asRegister(), value, left.kind, dest.kind);
             masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, count);

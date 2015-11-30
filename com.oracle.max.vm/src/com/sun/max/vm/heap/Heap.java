@@ -678,7 +678,7 @@ public final class Heap {
     /**
      * A logger for object allocation, only visible in a DEBUG image build.
      */
-    public static final AllocationLogger allocationLogger = /*MaxineVM.isDebug() ?*/ new AllocationLogger(true)/* : new AllocationLogger()*/;
+    public static final AllocationLogger allocationLogger = MaxineVM.isDebug() ? new AllocationLogger(true) : new AllocationLogger();
 
     /**
      * A pseudo-logger that exists solely to define the {@code LogGC and TraceGC} options,
@@ -713,7 +713,7 @@ public final class Heap {
      */
     @INLINE
     public static boolean logAllocation() {
-        return /*MaxineVM.isDebug() && */allocationLogger.enabled();
+        return MaxineVM.isDebug() && allocationLogger.enabled();
     }
 
     /**

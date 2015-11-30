@@ -64,6 +64,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.oracle.max.asm.target.armv7.ARMV7.*;
 import static com.oracle.max.vm.ext.t1x.T1X.dispFromCodeStart;
+import static com.oracle.max.vm.ext.t1x.T1X.dispFromCodeStartREQUIREDPADDING;
 import static com.sun.max.platform.Platform.platform;
 import static com.sun.max.platform.Platform.target;
 import static com.sun.max.vm.classfile.ErrorContext.verifyError;
@@ -1303,11 +1304,10 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
             } else if (tag == PatchInfoARMV7.OBJECT_LITERAL) {
                 int dispPos = data[i++];
                 int index = data[i++];
-                int dummyDispPos = dispPos + 12; // +8 for PC and +8 for position of PC relative ADD
+                int dummyDispPos = dispPos + 12; // was 12 ... +8 for PC and +8 for position of PC relative ADD
                 assert objectLiterals.get(index) != null;
                 buf.setPosition(dispPos);
                 int dispFromCodeStart = dispFromCodeStart(objectLiterals.size(), 0, index, true);
-                // int disp = movqDisp(dispPos, dispFromCodeStart);
                 int disp = movqDisp(dummyDispPos, dispFromCodeStart);
                 buf.setPosition(dispPos);
                 // store the value in r8 at the PC+ disp.(done at the patch insertion!!!! NOT HERE see
