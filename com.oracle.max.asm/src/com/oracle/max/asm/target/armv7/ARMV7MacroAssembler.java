@@ -60,7 +60,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         /*
         If the Condition isa Equal then the strex took place but it MIGHT have failed so we need to test for this.
         */
-        mov32BitConstant(ARMV7.r12, 1); // r12 has value 1
+        mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 1); // r12 has value 1
         cmp(ConditionFlag.Equal, ARMV7.r8, ARMV7.r12, 0, 0);
         /* If r8 is eqaul to r12 then there was an issue with atomicity so do the operation again
         */
@@ -94,7 +94,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         /*
         If the Condition isa Equal then the strex took place but it MIGHT have failed so we need to test for this.
         */
-        mov32BitConstant(ARMV7.r12, 1); // r12 has value 1
+        mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 1); // r12 has value 1
         cmp(ConditionFlag.Equal, ARMV7.r8, ARMV7.r12, 0, 0);
         /* If r8 is eqaul to r12 then there was an issue with atomicity so do the operation again
         */
@@ -127,7 +127,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         //mov(ConditionFlag.NotEqual, false, ARMV7.cpuRegisters[cmpValue.number + 1], ARMV7.r9);
         jcc(ConditionFlag.NotEqual, notEqualTocmpValue); // we were not equal to the cmpValue
         // If the Condition isa Equal then the strex took place but it might have failed so we need to test for this.
-        mov32BitConstant(ARMV7.r12, 1); // r12 has value 1
+        mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 1); // r12 has value 1
         cmp(ConditionFlag.Equal, ARMV7.r8, ARMV7.r12, 0, 0);
         // If r8 is equal to r12 then there was an issue with atomicity so do the operation again
         jcc(ConditionFlag.Equal, atomicFail);
@@ -158,7 +158,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         /*
         If the Condition isa Equal then the strex took place but it MIGHT have failed so we need to test for this.
         */
-        mov32BitConstant(ARMV7.r12, 1); // r12 has value 1
+        mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 1); // r12 has value 1
         cmp(ConditionFlag.Equal,ARMV7.r8,ARMV7.r12,0,0);
         /* If r8 is eqaul to r12 then there was an issue with atomicity so do the operation again
         */
@@ -234,17 +234,17 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         ucomisd(opr1, opr2, opr1Kind, opr2Kind);
         Label l = new Label();
         if (unorderedIsLess) {
-            mov32BitConstant(dst, -1);
+            mov32BitConstant(ConditionFlag.Always, dst, -1);
             jcc(ConditionFlag.SignedOverflow, l);
             jcc(ConditionFlag.CarryClearUnsignedLower, l);
-            mov32BitConstant(dst, 0);
+            mov32BitConstant(ConditionFlag.Always, dst, 0);
             jcc(ConditionFlag.Equal, l); // NEW
             incrementl(dst, 1);
         } else { // unordered is greater
-            mov32BitConstant(dst, 1);
+            mov32BitConstant(ConditionFlag.Always, dst, 1);
             jcc(ConditionFlag.SignedOverflow, l);
             jcc(ConditionFlag.SignedGreater, l);
-            mov32BitConstant(dst, 0);
+            mov32BitConstant(ConditionFlag.Always, dst, 0);
             jcc(ConditionFlag.Equal, l);
             decrementl(dst, 1);
         }
@@ -257,17 +257,17 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         ucomisd(opr1, opr2, opr1Kind, opr2Kind);
         Label l = new Label();
         if (unorderedIsLess) {
-            mov32BitConstant(dst, -1);
+            mov32BitConstant(ConditionFlag.Always, dst, -1);
             jcc(ConditionFlag.SignedOverflow, l);
             jcc(ConditionFlag.CarryClearUnsignedLower, l);
-            mov32BitConstant(dst, 0);
+            mov32BitConstant(ConditionFlag.Always, dst, 0);
             jcc(ConditionFlag.Equal, l);
             incrementl(dst, 1);
         } else { // unordered is greater
-            mov32BitConstant(dst, 1);
+            mov32BitConstant(ConditionFlag.Always, dst, 1);
             jcc(ConditionFlag.SignedOverflow, l);
             jcc(ConditionFlag.SignedGreater, l);
-            mov32BitConstant(dst, 0);
+            mov32BitConstant(ConditionFlag.Always, dst, 0);
             jcc(ConditionFlag.Equal, l); // NEW
             decrementl(dst, 1);
         }
@@ -291,19 +291,19 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void cmpptr(CiRegister src1, int src2) {
         assert (ARMV7.r12.number != src1.number);
-        mov32BitConstant(ARMV7.r12, src2);
+        mov32BitConstant(ConditionFlag.Always, ARMV7.r12, src2);
         cmp(ConditionFlag.Always, src1, ARMV7.r12, 0, 0);
     }
 
     public void cmpptr(CiAddress src1, int src2) {
         setUpScratch(src1);
-        mov32BitConstant(ARMV7.r8, src2);
+        mov32BitConstant(ConditionFlag.Always, ARMV7.r8, src2);
         cmp(ConditionFlag.Always, ARMV7.r12, ARMV7.r8, 0, 0);
     }
 
     public void decrementl(CiRegister reg, int value) {
         assert reg == ARMV7.r12 || reg != ARMV7.r8 : "Reg " + reg;
-        mov32BitConstant(ARMV7.r8, value);
+        mov32BitConstant(ConditionFlag.Always, ARMV7.r8, value);
         sub(ConditionFlag.Always, false, reg, reg, ARMV7.r8, 0, 0);
     }
 
@@ -313,7 +313,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         }
         setUpScratch(dst);
         ldr(ConditionFlag.Always, ARMV7.r12, ARMV7.r12, 0);
-        mov32BitConstant(ARMV7.r8, value);
+        mov32BitConstant(ConditionFlag.Always, ARMV7.r8, value);
         sub(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r8, 0, 0);
         mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r12);
         setUpScratch(dst); //Recalculate address to save scratch
@@ -333,7 +333,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
             return;
         }
         setUpScratch(dst);
-        mov32BitConstant(ARMV7.r8, value);
+        mov32BitConstant(ConditionFlag.Always, ARMV7.r8, value);
         ldr(ConditionFlag.Always, r12, r12, 0);
         addRegisters(ConditionFlag.Always, false, r12, r12, ARMV7.r8, 0, 0);
         mov(ConditionFlag.Always, false, ARMV7.r8, r12);
@@ -391,17 +391,13 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void movlong(CiRegister dst, long src, CiKind dstKind) {
         if (dstKind.isGeneral()) {
-            mov64BitConstant(dst, ARMV7.cpuRegisters[dst.encoding + 1], src);
+            mov64BitConstant(ConditionFlag.Always,  dst, ARMV7.cpuRegisters[dst.encoding + 1], src);
         } else {
             assert dstKind.isDouble() : "Dst reg must be double";
-	    // Will not work due to encoding of vmovm
-            //mov64BitConstant(ARMV7.r8, ARMV7.r12, src);
-            //vmov(ConditionFlag.Always, dst, ARMV7.r8, ARMV7.r12, dstKind, CiKind.Long);
 	    saveRegister(8,9);
-	    mov64BitConstant(ARMV7.r8, ARMV7.r9, src);
+	    mov64BitConstant(ConditionFlag.Always,  ARMV7.r8, ARMV7.r9, src);
 	    vmov(ConditionFlag.Always, dst, ARMV7.r8, ARMV7.r9, dstKind, CiKind.Long);
 	    restoreRegister(8,9);
-	
         }
     }
 
@@ -537,7 +533,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert left == dest;
         assert right == ARMV7.r1;
         assert left != ARMV7.r8;
-        mov32BitConstant(ARMV7.r12, 0x3f); // We really need another register!!!!!!
+        mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0x3f); // We really need another register!!!!!!
         and(ConditionFlag.Always, false, right, right, ARMV7.r12, 0, 0);
         sub(ConditionFlag.Always, false, ARMV7.r12, right, 32, 0);
         rsb(ConditionFlag.Always, false, ARMV7.r8, right, 32, 0);
@@ -560,7 +556,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert right == ARMV7.r1;
         assert left != ARMV7.r1;
         assert dest.encoding % 2 == 0;
-        mov32BitConstant(ARMV7.r12, 0x3f);
+        mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0x3f);
         and(ConditionFlag.Always, false, right, right, ARMV7.r12, 0, 0);
         rsb(ConditionFlag.Always, false, ARMV7.r12, right, 32, 0);
         sub(ConditionFlag.Always, true, ARMV7.r8, right, 32, 0);
@@ -583,7 +579,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert dest.encoding % 2 == 0;
         assert right == ARMV7.r1;
         assert left != ARMV7.r1;
-        mov32BitConstant(ARMV7.r12, 0x3f);
+        mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0x3f);
         and(ConditionFlag.Always, false, right, right, ARMV7.r12, 0, 0);
         rsb(ConditionFlag.Always, false, ARMV7.r12, right, 32, 0);
         sub(ConditionFlag.Always, false, ARMV7.r8, right, 32, 0);
