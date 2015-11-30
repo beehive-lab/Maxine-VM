@@ -181,19 +181,19 @@ public class ARMV7T1XTest extends MaxTestCase {
 
     public void test_AdjustReg() throws Exception {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(ARMV7.r0, 0);
-        masm.mov32BitConstant(ARMV7.r1, 1);
-        masm.mov32BitConstant(ARMV7.r2, Integer.MIN_VALUE);
-        masm.mov32BitConstant(ARMV7.r3, Integer.MAX_VALUE);
-        masm.mov32BitConstant(ARMV7.r4, 0);
-        masm.mov32BitConstant(ARMV7.r5, 0);
+        masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r0, 0);
+        masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r1, 1);
+        masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r2, Integer.MIN_VALUE);
+        masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r3, Integer.MAX_VALUE);
+        masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r4, 0);
+        masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r5, 0);
         masm.incrementl(ARMV7.r0, 1);
         masm.incrementl(ARMV7.r1, -1);
         masm.incrementl(ARMV7.r2, -1);
         masm.incrementl(ARMV7.r3, 1);
         masm.incrementl(ARMV7.r4, Integer.MAX_VALUE);
         masm.incrementl(ARMV7.r5, 0);
-        masm.mov32BitConstant(ARMV7.r6, -10);
+        masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r6, -10);
         masm.incrementl(ARMV7.r6, -1);
 
         int[] simulatedValues = generateAndTest(expectedValues, testvalues, bitmasks);
@@ -218,14 +218,14 @@ public class ARMV7T1XTest extends MaxTestCase {
         expectedValues[4] = 40;
         expectedValues[5] = -40;
         for (int i = 0; i < 6; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], i);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], i);
         }
         masm.push(ARMV7Assembler.ConditionFlag.Always, 4 | 8);
         masm.push(ARMV7Assembler.ConditionFlag.Always, 1);
         masm.push(ARMV7Assembler.ConditionFlag.Always, 2);
         masm.push(ARMV7Assembler.ConditionFlag.Always, 16);
         for (int i = 0; i <= 5; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], expectedValues[i]);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
         }
         theCompiler.pokeInt(ARMV7.cpuRegisters[0], 5);
         theCompiler.pokeInt(ARMV7.cpuRegisters[1], 4);
@@ -234,7 +234,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.pokeInt(ARMV7.cpuRegisters[4], 1);
         theCompiler.pokeInt(ARMV7.cpuRegisters[5], 0);
         for (int i = 0; i <= 5; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], -25);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], -25);
         }
         theCompiler.peekInt(ARMV7.cpuRegisters[0], 5);
         theCompiler.peekInt(ARMV7.cpuRegisters[1], 4);
@@ -295,7 +295,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         masm.push(ARMV7Assembler.ConditionFlag.Always, 64 | 128); // index 1
         masm.push(ARMV7Assembler.ConditionFlag.Always, 256 | 512); // index 0
         for (int i = 0; i <= 10; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], -25);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], -25);
         }
         theCompiler.peekLong(ARMV7.cpuRegisters[0], 8);
         theCompiler.peekLong(ARMV7.cpuRegisters[2], 6);
@@ -339,7 +339,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.pokeLong(ARMV7.cpuRegisters[6], 2);
         theCompiler.pokeLong(ARMV7.cpuRegisters[8], 0);
         for (int i = 0; i <= 10; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], -5);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], -5);
         }
         theCompiler.peekLong(ARMV7.cpuRegisters[0], 8);
         theCompiler.peekLong(ARMV7.cpuRegisters[2], 6);
@@ -367,7 +367,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         expectedValues[4] = 40;
         expectedValues[5] = -40;
         for (int i = 0; i < 6; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], expectedValues[i]);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
         }
         masm.push(ARMV7Assembler.ConditionFlag.Always, 4 | 8);
         masm.push(ARMV7Assembler.ConditionFlag.Always, 1); // index 5
@@ -377,7 +377,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         masm.push(ARMV7Assembler.ConditionFlag.Always, 16); // index 1
         masm.push(ARMV7Assembler.ConditionFlag.Always, 32); // index 0
         for (int i = 0; i <= 5; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], -25);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], -25);
         }
         theCompiler.peekInt(ARMV7.cpuRegisters[0], 5);
         theCompiler.peekInt(ARMV7.cpuRegisters[1], 4);
@@ -413,7 +413,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         masm.vpush(ARMV7Assembler.ConditionFlag.Always, dRegs[3], dRegs[3], CiKind.Double, CiKind.Double); // index 2
         masm.vpush(ARMV7Assembler.ConditionFlag.Always, dRegs[4], dRegs[4], CiKind.Double, CiKind.Double); // index 0
         for (int i = 0; i <= 9; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], -25);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], -25);
         }
         expectedLongValues[0] = Double.doubleToRawLongBits(-100.1);
         expectedLongValues[1] = Double.doubleToRawLongBits(-200.2);
@@ -470,7 +470,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         expectedLongValues[4] = Float.floatToRawIntBits(2.5f);
         expectedLongValues[5] = Float.floatToRawIntBits(-100.75f);
         for (int i = 0; i < 6; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], (int) expectedLongValues[i]);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], (int) expectedLongValues[i]);
         }
         masm.push(ARMV7Assembler.ConditionFlag.Always, 1); // index 5
         masm.push(ARMV7Assembler.ConditionFlag.Always, 2); // index 4
@@ -479,7 +479,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         masm.push(ARMV7Assembler.ConditionFlag.Always, 16); // index 1
         masm.push(ARMV7Assembler.ConditionFlag.Always, 32); // index 0
         for (int i = 0; i <= 5; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], -25);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], -25);
         }
         theCompiler.peekFloat(ARMV7.s0, 5);
         theCompiler.peekFloat(ARMV7.s1, 4);
@@ -511,7 +511,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         expectedLongValues[4] = Float.floatToRawIntBits(2.5f);
         expectedLongValues[5] = Float.floatToRawIntBits(-100.75f);
         for (int i = 0; i < 6; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], (int) expectedLongValues[i]);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], (int) expectedLongValues[i]);
         }
         masm.push(ARMV7Assembler.ConditionFlag.Always, 4 | 8); // this is to check/debug issues about wrong address //
         masm.push(ARMV7Assembler.ConditionFlag.Always, 1); // index 5
@@ -524,7 +524,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         for (int i = 0; i < 6; i++) {
             expectedLongValues[i] = Float.floatToRawIntBits(value);
             value = value + -1.2f;
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], (int) expectedLongValues[i]);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], (int) expectedLongValues[i]);
             masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.allRegisters[i + 16], ARMV7.cpuRegisters[i], null, CiKind.Float, CiKind.Int);
         }
         theCompiler.pokeFloat(ARMV7.s0, 5);
@@ -566,7 +566,7 @@ public class ARMV7T1XTest extends MaxTestCase {
             theCompiler.assignDoubleTest(ARMV7.allRegisters[16 + i], Double.longBitsToDouble(expectedLongValues[i]));
         }
         for (int i = 0; i <= 9; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], -25);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], -25);
         }
         masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, ARMV7.s0, null, CiKind.Int, CiKind.Double);
         masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, ARMV7.s1, null, CiKind.Int, CiKind.Double);
@@ -604,7 +604,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         masm.vpush(ARMV7Assembler.ConditionFlag.Always, dRegs[3], dRegs[3], CiKind.Double, CiKind.Double); // index 2
         masm.vpush(ARMV7Assembler.ConditionFlag.Always, dRegs[4], dRegs[4], CiKind.Double, CiKind.Double); // index 0
         for (int i = 0; i <= 9; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], -25);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], -25);
         }
         theCompiler.peekDouble(dRegs[0], 8);
         theCompiler.peekDouble(dRegs[1], 6);
@@ -636,8 +636,8 @@ public class ARMV7T1XTest extends MaxTestCase {
         expectedLongValues[6] = 0;
         expectedLongValues[7] = 1;
         masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r2, ARMV7.r13); // copy stack pointer to r2
-        masm.mov32BitConstant(ARMV7.r6, 0);
-        masm.mov32BitConstant(ARMV7.r7, 1); // r6 and r7 are used as temporaries,
+        masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r6, 0);
+        masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r7, 1); // r6 and r7 are used as temporaries,
         theCompiler.do_lconstTests(0xffffffff0000ffffL);
         masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r3, ARMV7.r13); // copy revised stack pointer to r3
         theCompiler.peekLong(ARMV7.r0, 0);
@@ -660,8 +660,8 @@ public class ARMV7T1XTest extends MaxTestCase {
         expectedLongValues[6] = 0;
         expectedLongValues[7] = 1;
         masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r2, ARMV7.r13); // copy stack pointer to r2
-        masm.mov32BitConstant(ARMV7.r6, 0);
-        masm.mov32BitConstant(ARMV7.r7, 1); // r6 and r7 are used as temporaries,
+        masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r6, 0);
+        masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r7, 1); // r6 and r7 are used as temporaries,
         theCompiler.do_dconstTests(myVal);
         masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r3, ARMV7.r13); // copy revised stack pointer to r3
         theCompiler.peekLong(ARMV7.r0, 0);
@@ -682,8 +682,8 @@ public class ARMV7T1XTest extends MaxTestCase {
         returnValue = Float.floatToRawIntBits(myVal);
         expectedLongValues[0] = returnValue;
         masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r2, ARMV7.r13); // copy stack pointer to r2
-        masm.mov32BitConstant(ARMV7.r6, 0);
-        masm.mov32BitConstant(ARMV7.r7, 1); // r6 and r7 are used as temporaries,
+        masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r6, 0);
+        masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r7, 1); // r6 and r7 are used as temporaries,
         theCompiler.do_fconstTests(myVal);
         masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r3, ARMV7.r13); // copy revised stack pointer to r3
         theCompiler.peekInt(ARMV7.r0, 0);
@@ -711,19 +711,19 @@ public class ARMV7T1XTest extends MaxTestCase {
         expectedValues[9] = 7;
         expectedValues[10] = 8;
         for (int i = 0; i < 11; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], expectedValues[i]);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
         }
         masm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
         masm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
         masm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
         masm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
         for (int i = 0; i <= 10; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], -25);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], -25);
         }
         for (int i = 0; i < 5; i++) {
             theCompiler.do_loadTests(i, Kind.INT);
             masm.pop(ARMV7Assembler.ConditionFlag.Always, 1);
-            masm.mov32BitConstant(ARMV7.r0, 100 + i);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r0, 100 + i);
             masm.push(ARMV7Assembler.ConditionFlag.Always, 1);
             theCompiler.do_storeTests(i, Kind.INT);
         }
@@ -794,13 +794,13 @@ public class ARMV7T1XTest extends MaxTestCase {
         expectedValues[1] = 671351040;
         expectedValues[2] = 407111936;
         for (int i = 0; i < 3; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], expectedValues[i]);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
         }
         masm.push(ARMV7Assembler.ConditionFlag.Always, 1); // index 5
         masm.push(ARMV7Assembler.ConditionFlag.Always, 2); // index 4
         masm.push(ARMV7Assembler.ConditionFlag.Always, 4); // index 3
         for (int i = 0; i <= 3; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], -25);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], -25);
         }
         theCompiler.peekWord(ARMV7.cpuRegisters[0], 2);
         theCompiler.peekWord(ARMV7.cpuRegisters[1], 1);
@@ -818,20 +818,20 @@ public class ARMV7T1XTest extends MaxTestCase {
         expectedValues[1] = 671351040;
         expectedValues[2] = 407111936;
         for (int i = 0; i < 3; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], i);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], i);
         }
         masm.push(ARMV7Assembler.ConditionFlag.Always, 4 | 8);
         masm.push(ARMV7Assembler.ConditionFlag.Always, 1);
         masm.push(ARMV7Assembler.ConditionFlag.Always, 2);
         masm.push(ARMV7Assembler.ConditionFlag.Always, 16);
         for (int i = 0; i <= 5; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], expectedValues[i]);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
         }
         theCompiler.pokeWord(ARMV7.cpuRegisters[0], 2);
         theCompiler.pokeWord(ARMV7.cpuRegisters[1], 1);
         theCompiler.pokeWord(ARMV7.cpuRegisters[2], 0);
         for (int i = 0; i < 3; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], -25);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], -25);
         }
         theCompiler.peekWord(ARMV7.cpuRegisters[0], 2);
         theCompiler.peekWord(ARMV7.cpuRegisters[1], 1);
@@ -849,13 +849,13 @@ public class ARMV7T1XTest extends MaxTestCase {
         expectedValues[1] = 671351040;
         expectedValues[2] = 407111936;
         for (int i = 0; i < 3; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], expectedValues[i]);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
         }
         masm.push(ARMV7Assembler.ConditionFlag.Always, 1); // index 5
         masm.push(ARMV7Assembler.ConditionFlag.Always, 2); // index 4
         masm.push(ARMV7Assembler.ConditionFlag.Always, 4); // index 3
         for (int i = 0; i <= 3; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], -25);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], -25);
         }
         theCompiler.peekObject(ARMV7.cpuRegisters[0], 2);
         theCompiler.peekObject(ARMV7.cpuRegisters[1], 1);
@@ -873,19 +873,19 @@ public class ARMV7T1XTest extends MaxTestCase {
         expectedValues[1] = 671351040;
         expectedValues[2] = 407111936;
         for (int i = 0; i < 3; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], i);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], i);
         }
         masm.push(ARMV7Assembler.ConditionFlag.Always, 1); // index 5
         masm.push(ARMV7Assembler.ConditionFlag.Always, 2); // index 4
         masm.push(ARMV7Assembler.ConditionFlag.Always, 4); // index 3
         for (int i = 0; i < 3; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], expectedValues[i]);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
         }
         theCompiler.pokeObject(ARMV7.cpuRegisters[0], 2);
         theCompiler.pokeObject(ARMV7.cpuRegisters[1], 1);
         theCompiler.pokeObject(ARMV7.cpuRegisters[2], 0);
         for (int i = 0; i < 3; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], -25);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], -25);
         }
         theCompiler.peekObject(ARMV7.cpuRegisters[0], 2);
         theCompiler.peekObject(ARMV7.cpuRegisters[1], 1);
@@ -904,14 +904,14 @@ public class ARMV7T1XTest extends MaxTestCase {
         expectedValues[2] = 1;
         expectedValues[3] = 2;
         for (int i = 0; i < 4; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], expectedValues[i]);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
         }
         masm.push(ARMV7Assembler.ConditionFlag.Always, 1);
         masm.push(ARMV7Assembler.ConditionFlag.Always, 2);
         masm.push(ARMV7Assembler.ConditionFlag.Always, 4);
         masm.push(ARMV7Assembler.ConditionFlag.Always, 8);
         for (int i = 0; i < 4; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], -1);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], -1);
         }
 
         theCompiler.peekInt(ARMV7.cpuRegisters[0], 0);
@@ -933,14 +933,14 @@ public class ARMV7T1XTest extends MaxTestCase {
         expectedValues[2] = 1;
         expectedValues[3] = 1;
         for (int i = 0; i < 4; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], expectedValues[i]);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
         }
         masm.push(ARMV7Assembler.ConditionFlag.Always, 1);
         masm.push(ARMV7Assembler.ConditionFlag.Always, 2);
         masm.push(ARMV7Assembler.ConditionFlag.Always, 4);
         masm.push(ARMV7Assembler.ConditionFlag.Always, 8);
         for (int i = 0; i < 4; i++) {
-            masm.mov32BitConstant(ARMV7.cpuRegisters[i], -1);
+            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], -1);
         }
 
         theCompiler.peekInt(ARMV7.cpuRegisters[0], 0);
