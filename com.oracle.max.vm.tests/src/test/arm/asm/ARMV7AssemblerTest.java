@@ -715,22 +715,22 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             testValues[0] =true;
             asm.codeBuffer.reset();
 
-            asm.mov64BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[1], input[i]);
+            asm.mov64BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[1], input[i]); //12
             // msb
-            asm.cmpImmediate(ConditionFlag.Always, ARMV7.cpuRegisters[1], 0);
-            asm.jcc(ConditionFlag.NotEqual, 40, false);
-            asm.cmpImmediate(ConditionFlag.Equal, ARMV7.cpuRegisters[0], 0);
-            asm.mov32BitConstant(ConditionFlag.Equal, ARMV7.cpuRegisters[0], -1);
-            asm.jcc(ConditionFlag.Equal, 84, false);
-            asm.clz(ConditionFlag.Always, ARMV7.cpuRegisters[2], ARMV7.cpuRegisters[1]);
-            asm.cmpImmediate(ConditionFlag.Always, ARMV7.cpuRegisters[2], 32);
-            asm.jcc(ConditionFlag.Equal, 72, false);
-            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[0], 63);
-            asm.sub(ConditionFlag.Always, false, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[2], 0, 0);
-            asm.clz(ConditionFlag.Always, ARMV7.cpuRegisters[1], ARMV7.cpuRegisters[0]);
-            asm.jcc(ConditionFlag.Always, 84, false);
-            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[0], 31);
-            asm.sub(ConditionFlag.Always, false, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[1], 0, 0);
+            asm.cmpImmediate(ConditionFlag.Always, ARMV7.cpuRegisters[1], 0); //16
+            asm.jcc(ConditionFlag.NotEqual, 40, false); //20
+            asm.cmpImmediate(ConditionFlag.Equal, ARMV7.cpuRegisters[0], 0); //24
+            asm.mov32BitConstant(ConditionFlag.Equal, ARMV7.cpuRegisters[0], -1); //32
+            asm.jcc(ConditionFlag.Equal, 84, false);//36
+            asm.clz(ConditionFlag.Always, ARMV7.cpuRegisters[2], ARMV7.cpuRegisters[1]); //40
+            asm.cmpImmediate(ConditionFlag.Always, ARMV7.cpuRegisters[2], 32); //44
+            asm.jcc(ConditionFlag.Equal, 72, false); //48
+            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[0], 63); //56
+            asm.sub(ConditionFlag.Always, false, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[2], 0, 0); //60
+            asm.clz(ConditionFlag.Always, ARMV7.cpuRegisters[1], ARMV7.cpuRegisters[0]); //64
+            asm.jcc(ConditionFlag.Always, 84, false); //68
+            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[0], 31); //72
+            asm.sub(ConditionFlag.Always, false, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[1], 0, 0);//80
             generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
         }
     }
@@ -752,23 +752,23 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             testValues[0] =true;
             asm.codeBuffer.reset();
 
-            asm.mov64BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[1], input[i]); //16
+            asm.mov64BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[1], input[i]); //12
             // lsb
-            asm.cmpImmediate(ConditionFlag.Always, ARMV7.cpuRegisters[1], 0); //20
-            asm.jcc(ConditionFlag.NotEqual, 40, false); //24
-            asm.cmpImmediate(ConditionFlag.Always, ARMV7.cpuRegisters[0], 0); //28
-            asm.mov32BitConstant(ConditionFlag.Equal, ARMV7.cpuRegisters[0], -1); //36
-            asm.jcc(ConditionFlag.Equal, 84, false); //40
-            asm.rbit(ConditionFlag.Always, ARMV7.cpuRegisters[2], ARMV7.cpuRegisters[0]); //44
-            asm.rbit(ConditionFlag.Always, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[1]); //48
-            asm.mov(ConditionFlag.Always, false, ARMV7.cpuRegisters[1], ARMV7.cpuRegisters[2]); //52
-            asm.clz(ConditionFlag.Always, ARMV7.cpuRegisters[2], ARMV7.cpuRegisters[1]); //56
-            asm.cmpImmediate(ConditionFlag.Always, ARMV7.cpuRegisters[2], 32); //60
-            asm.mov(ConditionFlag.NotEqual, false, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[2]);
-            asm.jcc(ConditionFlag.NotEqual, 84, false); //68
+            asm.cmpImmediate(ConditionFlag.Always, ARMV7.cpuRegisters[1], 0); //16
+            asm.jcc(ConditionFlag.NotEqual, 40, false); //20
+            asm.cmpImmediate(ConditionFlag.Always, ARMV7.cpuRegisters[0], 0); //24
+            asm.mov32BitConstant(ConditionFlag.Equal, ARMV7.cpuRegisters[0], -1); //32
+            asm.jcc(ConditionFlag.Equal, 84, false); //36
+            asm.rbit(ConditionFlag.Always, ARMV7.cpuRegisters[2], ARMV7.cpuRegisters[0]); //40
+            asm.rbit(ConditionFlag.Always, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[1]); //44
+            asm.mov(ConditionFlag.Always, false, ARMV7.cpuRegisters[1], ARMV7.cpuRegisters[2]); //48
+            asm.clz(ConditionFlag.Always, ARMV7.cpuRegisters[2], ARMV7.cpuRegisters[1]); //52
+            asm.cmpImmediate(ConditionFlag.Always, ARMV7.cpuRegisters[2], 32); //56
+            asm.mov(ConditionFlag.NotEqual, false, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[2]); //60
+            asm.jcc(ConditionFlag.NotEqual, 84, false); //64
             asm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[2], 32); //72
-            asm.clz(ConditionFlag.Always, ARMV7.cpuRegisters[1], ARMV7.cpuRegisters[0]); //74
-            asm.addRegisters(ConditionFlag.Always, false, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[2], ARMV7.cpuRegisters[1], 0, 0); //78
+            asm.clz(ConditionFlag.Always, ARMV7.cpuRegisters[1], ARMV7.cpuRegisters[0]); //76
+            asm.addRegisters(ConditionFlag.Always, false, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[2], ARMV7.cpuRegisters[1], 0, 0); //80
             generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
         }
     }
