@@ -46,8 +46,6 @@ public final class Class_isInstance01 {
         if (i == 2) {
             object = thisObject;
         }
-        System.out.println("do is instance");
-        System.out.println("obj.clas" + obj.getClass());
         return Object.class.isInstance(object);
     }
 

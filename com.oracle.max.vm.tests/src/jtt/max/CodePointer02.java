@@ -36,27 +36,19 @@ public final class CodePointer02 {
         switch (arg) {
             case 0: {
                 CodePointer cp = CodePointer.from(LONG_VALUE);
-		System.out.println("BEFORE GC");
                 System.gc();
-		System.out.println("AFTER GC");
                 return LONG_VALUE == cp.toLong();
             }
             case 1: {
                 Address address = Address.fromLong(LONG_VALUE);
                 CodePointer cp = CodePointer.from(address);
-		System.out.println("BEFORE GC");
                 System.gc();
-	        System.out.println("AFTER GC");
-
                 return LONG_VALUE == cp.toAddress().toLong();
             }
             case 2: {
                 Pointer pointer = Pointer.fromLong(LONG_VALUE);
                 CodePointer cp = CodePointer.from(pointer);
-		System.out.println("BEFORE GC");
                 System.gc();
-		System.out.println("AFTER GC");
-
                 return LONG_VALUE == cp.toPointer().toLong();
             }
             default:
