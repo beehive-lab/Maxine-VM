@@ -835,7 +835,11 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             Label end = new Label();
             // shall we branch to this?
             asm.branch(end);
+<<<<<<< local
 	    asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12,0x0af2ba5e); // signifies OPT2BASE
+=======
+	    asm.mov32BitConstant(ARMV7Assembler.ConditionFlag.Always,ARMV7.r12, 0x0af2ba5e); // signifies OPT2BASE
+>>>>>>> other
 
             // Pad with nops up to the OPT entry point
             asm.nop((OPTIMIZED_ENTRY_POINT.offset()-asm.codeBuffer.position())/4);

@@ -30,7 +30,6 @@ public class HP_demo01 {
 
     public static int test(int count) {
         int sum = 0;
-
         for (int i = 0; i < count; i++) {
             int[] ia = new int[count];
             long[] la = new long[count];
@@ -38,7 +37,6 @@ public class HP_demo01 {
             double[] da = new double[count];
             sum += ia[i] = (int) (la[i] = (long) (fa[i] = (float) (da[i] = i)));
         }
-
         return sum;
     }
 }

@@ -255,9 +255,9 @@ public class CiRegisterConfig implements RiRegisterConfig {
             }
 
             if (locations[i] == null) {
-		//if (target.arch.is32bit() && (kind.stackKind() == CiKind.Long || kind.stackKind() == CiKind.Double) && ((currentStackIndex *  target.spillSlotSize) % 8 != 0)) {
-                    //currentStackIndex++;
-                //}
+		if (target.arch.is32bit() && (kind.stackKind() == CiKind.Long || kind.stackKind() == CiKind.Double) && ((currentStackIndex *  target.spillSlotSize) % 8 != 0)) {
+                    currentStackIndex++;
+                }
                 locations[i] = CiStackSlot.get(kind.stackKind(), currentStackIndex, !type.out);
                 currentStackIndex += target.spillSlots(kind);
 	    }

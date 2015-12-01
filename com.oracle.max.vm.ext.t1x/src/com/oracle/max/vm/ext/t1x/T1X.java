@@ -733,13 +733,50 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
             distance += scalarLiteralsLength - dataIndex;
         }
         if (Platform.target().arch.isARM()) {
+	    // The object literals are allocated as 2 separate regions
+	    // They will need alignment individually
+	    int scalarsNeedAlignment = 0;
+	    int objectsNeedAlignment = 0;
+	    if(scalarLiteralsLength % 8 != 0) {
+		scalarsNeedAlignment = 4;
+	    }
+	    if((objectLiteralsLength * Word.size() + Layout.byteArrayLayout().headerSize()) % 8 != 0) {
+		objectsNeedAlignment = 4;
+	    }
+	    distance = distance + scalarsNeedAlignment + objectsNeedAlignment; 
+	   
+	 
             final int size = objectLiteralsLength * Word.size() + Layout.byteArrayLayout().headerSize();
             if (size % 8 != 0) {
-                distance += 4;
+                //distance += 4;
             }
         }
         return -distance;
     }
+public static boolean dispFromCodeStartREQUIREDPADDING(int objectLiteralsLength, int scalarLiteralsLength, int dataIndex, boolean isObject) {
+        int distance = Layout.byteArrayLayout().headerSize();
+        if (DebugHeap.isTagging()) {
+            distance += Platform.target().arch.is64bit() ? Word.size() : 2 * Word.size();
+        }
+        if (isObject) {
+            distance += (objectLiteralsLength - dataIndex) * Word.size();
+        } else {
+            distance += objectLiteralsLength * Word.size();
+            distance += Layout.referenceArrayLayout().headerSize();
+            if (DebugHeap.isTagging()) {
+                distance += Platform.target().arch.is64bit() ? Word.size() : 2 * Word.size();
+            }
+            distance += scalarLiteralsLength - dataIndex;
+        }
+        if (Platform.target().arch.isARM()) {
+            final int size = objectLiteralsLength * Word.size() + Layout.byteArrayLayout().headerSize();
+            if (size % 8 != 0) {
+		return true;
+            }
+        }
+        return false;
+    }
+
 
     /**
      * Determines if the target ISA is AMD64.
