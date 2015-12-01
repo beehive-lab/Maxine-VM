@@ -29,7 +29,7 @@ import com.sun.max.unsafe.*;
  * @Harness: java
  * @Runs: 1l = 0;  2l = 1; 0l = -1; -1l = 0; 0xf000l = 12;  0x80000000l = 31; 0x100000000l = 32
  */
-public class LeastSignificantBit32 {
+public class LeastSignificantBit {
 
     public static int test(long singleWordBitmap) {
         return Address.fromLong(singleWordBitmap).leastSignificantBitSet();

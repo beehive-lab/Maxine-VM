@@ -28,9 +28,9 @@ import com.sun.max.unsafe.*;
  * @Harness: java
  * @Runs: 1l = 0;  2l = 1; 0l = -1; -1l = 63; 0xf000l = 15;  0x80000000l = 31; 0x100000000l = 32;
  */
-public class MostSignificantBit32 {
+public class MostSignificantBit {
 
     public static int test(long singleWordBitmap) {
-        return Address.fromLong(singleWordBitmap).mostSignificantBitSet();
+	return Address.fromLong(singleWordBitmap).mostSignificantBitSet();
     }
 }

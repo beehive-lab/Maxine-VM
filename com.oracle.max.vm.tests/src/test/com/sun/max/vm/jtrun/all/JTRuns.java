@@ -831,15 +831,13 @@ public class JTRuns {
             case 743: jtt_max_ImmortalHeap_switching(); break;
             case 744: jtt_max_Inline01(); break;
             case 745: jtt_max_Invoke_except01(); break;
-            case 746: jtt_max_LeastSignificantBit32(); break;
-            case 747: jtt_max_LeastSignificantBit64(); break;
-            case 748: jtt_max_MostSignificantBit32(); break;
-            case 749: jtt_max_MostSignificantBit64(); break;
-            case 750: jtt_max_Prototyping01(); break;
-            case 751: jtt_max_Unsigned_idiv01(); break;
-            case 752: jtt_max_Unsigned_irem01(); break;
-            case 753: jtt_max_Unsigned_ldiv01(); break;
-            case 754: jtt_max_Unsigned_lrem01(); break;
+            case 746: jtt_max_LeastSignificantBit(); break;
+            case 747: jtt_max_MostSignificantBit(); break;
+            case 748: jtt_max_Prototyping01(); break;
+            case 749: jtt_max_Unsigned_idiv01(); break;
+            case 750: jtt_max_Unsigned_irem01(); break;
+            case 751: jtt_max_Unsigned_ldiv01(); break;
+            case 752: jtt_max_Unsigned_lrem01(); break;
         }
         return true;
     }
@@ -27335,49 +27333,49 @@ public class JTRuns {
             }
             pass();
         }
-        static void jtt_max_LeastSignificantBit32() {
-            begin("jtt.max.LeastSignificantBit32");
+        static void jtt_max_LeastSignificantBit() {
+            begin("jtt.max.LeastSignificantBit");
             String runString = null;
             try {
             // (1) == 0
                 runString = "(1)";
-                if (0 != jtt.max.LeastSignificantBit32.test(1L)) {
+                if (0 != jtt.max.LeastSignificantBit.test(1L)) {
                     fail(runString);
                     return;
                 }
             // (2) == 1
                 runString = "(2)";
-                if (1 != jtt.max.LeastSignificantBit32.test(2L)) {
+                if (1 != jtt.max.LeastSignificantBit.test(2L)) {
                     fail(runString);
                     return;
                 }
             // (0) == -1
                 runString = "(0)";
-                if (-1 != jtt.max.LeastSignificantBit32.test(0L)) {
+                if (-1 != jtt.max.LeastSignificantBit.test(0L)) {
                     fail(runString);
                     return;
                 }
             // (-1) == 0
                 runString = "(-1)";
-                if (0 != jtt.max.LeastSignificantBit32.test(-1L)) {
+                if (0 != jtt.max.LeastSignificantBit.test(-1L)) {
                     fail(runString);
                     return;
                 }
             // (61440) == 12
                 runString = "(61440)";
-                if (12 != jtt.max.LeastSignificantBit32.test(61440L)) {
+                if (12 != jtt.max.LeastSignificantBit.test(61440L)) {
                     fail(runString);
                     return;
                 }
             // (2147483648) == 31
                 runString = "(2147483648)";
-                if (31 != jtt.max.LeastSignificantBit32.test(2147483648L)) {
+                if (31 != jtt.max.LeastSignificantBit.test(2147483648L)) {
                     fail(runString);
                     return;
                 }
             // (4294967296) == 32
                 runString = "(4294967296)";
-                if (32 != jtt.max.LeastSignificantBit32.test(4294967296L)) {
+                if (32 != jtt.max.LeastSignificantBit.test(4294967296L)) {
                     fail(runString);
                     return;
                 }
@@ -27387,153 +27385,49 @@ public class JTRuns {
             }
             pass();
         }
-        static void jtt_max_LeastSignificantBit64() {
-            begin("jtt.max.LeastSignificantBit64");
+        static void jtt_max_MostSignificantBit() {
+            begin("jtt.max.MostSignificantBit");
             String runString = null;
             try {
             // (1) == 0
                 runString = "(1)";
-                if (0 != jtt.max.LeastSignificantBit64.test(1L)) {
+                if (0 != jtt.max.MostSignificantBit.test(1L)) {
                     fail(runString);
                     return;
                 }
             // (2) == 1
                 runString = "(2)";
-                if (1 != jtt.max.LeastSignificantBit64.test(2L)) {
+                if (1 != jtt.max.MostSignificantBit.test(2L)) {
                     fail(runString);
                     return;
                 }
             // (0) == -1
                 runString = "(0)";
-                if (-1 != jtt.max.LeastSignificantBit64.test(0L)) {
-                    fail(runString);
-                    return;
-                }
-            // (-1) == 0
-                runString = "(-1)";
-                if (0 != jtt.max.LeastSignificantBit64.test(-1L)) {
-                    fail(runString);
-                    return;
-                }
-            // (61440) == 12
-                runString = "(61440)";
-                if (12 != jtt.max.LeastSignificantBit64.test(61440L)) {
-                    fail(runString);
-                    return;
-                }
-            // (2147483648) == 31
-                runString = "(2147483648)";
-                if (31 != jtt.max.LeastSignificantBit64.test(2147483648L)) {
-                    fail(runString);
-                    return;
-                }
-            // (4294967296) == 32
-                runString = "(4294967296)";
-                if (32 != jtt.max.LeastSignificantBit64.test(4294967296L)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_max_MostSignificantBit32() {
-            begin("jtt.max.MostSignificantBit32");
-            String runString = null;
-            try {
-            // (1) == 0
-                runString = "(1)";
-                if (0 != jtt.max.MostSignificantBit32.test(1L)) {
-                    fail(runString);
-                    return;
-                }
-            // (2) == 1
-                runString = "(2)";
-                if (1 != jtt.max.MostSignificantBit32.test(2L)) {
-                    fail(runString);
-                    return;
-                }
-            // (0) == -1
-                runString = "(0)";
-                if (-1 != jtt.max.MostSignificantBit32.test(0L)) {
+                if (-1 != jtt.max.MostSignificantBit.test(0L)) {
                     fail(runString);
                     return;
                 }
             // (-1) == 63
                 runString = "(-1)";
-                if (63 != jtt.max.MostSignificantBit32.test(-1L)) {
+                if (63 != jtt.max.MostSignificantBit.test(-1L)) {
                     fail(runString);
                     return;
                 }
             // (61440) == 15
                 runString = "(61440)";
-                if (15 != jtt.max.MostSignificantBit32.test(61440L)) {
+                if (15 != jtt.max.MostSignificantBit.test(61440L)) {
                     fail(runString);
                     return;
                 }
             // (2147483648) == 31
                 runString = "(2147483648)";
-                if (31 != jtt.max.MostSignificantBit32.test(2147483648L)) {
+                if (31 != jtt.max.MostSignificantBit.test(2147483648L)) {
                     fail(runString);
                     return;
                 }
             // (4294967296) == 32
                 runString = "(4294967296)";
-                if (32 != jtt.max.MostSignificantBit32.test(4294967296L)) {
-                    fail(runString);
-                    return;
-                }
-            } catch (Throwable t) {
-                fail(runString, t);
-                return;
-            }
-            pass();
-        }
-        static void jtt_max_MostSignificantBit64() {
-            begin("jtt.max.MostSignificantBit64");
-            String runString = null;
-            try {
-            // (1) == 0
-                runString = "(1)";
-                if (0 != jtt.max.MostSignificantBit64.test(1L)) {
-                    fail(runString);
-                    return;
-                }
-            // (2) == 1
-                runString = "(2)";
-                if (1 != jtt.max.MostSignificantBit64.test(2L)) {
-                    fail(runString);
-                    return;
-                }
-            // (0) == -1
-                runString = "(0)";
-                if (-1 != jtt.max.MostSignificantBit64.test(0L)) {
-                    fail(runString);
-                    return;
-                }
-            // (-1) == 63
-                runString = "(-1)";
-                if (63 != jtt.max.MostSignificantBit64.test(-1L)) {
-                    fail(runString);
-                    return;
-                }
-            // (61440) == 15
-                runString = "(61440)";
-                if (15 != jtt.max.MostSignificantBit64.test(61440L)) {
-                    fail(runString);
-                    return;
-                }
-            // (2147483648) == 31
-                runString = "(2147483648)";
-                if (31 != jtt.max.MostSignificantBit64.test(2147483648L)) {
-                    fail(runString);
-                    return;
-                }
-            // (4294967296) == 32
-                runString = "(4294967296)";
-                if (32 != jtt.max.MostSignificantBit64.test(4294967296L)) {
+                if (32 != jtt.max.MostSignificantBit.test(4294967296L)) {
                     fail(runString);
                     return;
                 }
