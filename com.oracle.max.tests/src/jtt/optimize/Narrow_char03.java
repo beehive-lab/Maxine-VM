@@ -32,8 +32,6 @@ public class Narrow_char03 {
 
     public static char test(char b) {
         val[0] = b;
-	        System.out.println(((int)b) + " in the array "+ val[0]);
-
         return val[0];
     }
 }
