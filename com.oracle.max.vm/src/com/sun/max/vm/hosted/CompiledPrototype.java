@@ -850,7 +850,6 @@ public class CompiledPrototype extends Prototype {
             compiledSome = compileWorklist();
             compiledAny |= compiledSome;
         } while (compiledSome);
-
         return compiledAny;
     }
 
@@ -858,10 +857,6 @@ public class CompiledPrototype extends Prototype {
         Trace.begin(1, "linkNonVirtualCalls");
         for (TargetMethod targetMethod : Code.bootCodeRegion().copyOfTargetMethods()) {
             if (!(targetMethod instanceof Adapter)) {
-                if(targetMethod.classMethodActor() != null)
-                if(targetMethod.classMethodActor().isVmEntryPoint() && targetMethod.name().compareTo("run")== 0)
-                    System.out.println("DEBUG ME");
-
                 targetMethod.linkDirectCalls();
             }
         }

@@ -486,7 +486,6 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public static int movtHelper(final ConditionFlag cond, final CiRegister Rd, final int imm16) {
         int instruction = 0x03400000;
-        // checkConstraint(0 <= imm16 && imm16 <= 65535, "0<= imm16 && imm16 <= 65535 ");
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (imm16 >> 12) << 16;
         instruction |= (Rd.encoding & 0xf) << 12;
@@ -496,10 +495,6 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public static int movwHelper(final ConditionFlag cond, final CiRegister Rd, final int imm16) {
         int instruction = 0x03000000;
-        if (imm16 == 0xfe4c) {
-            // System.out.println("DEBUG ME");
-        }
-        // checkConstraint(0 <= imm16 && imm16 <= 65535, "0<= imm16 && imm16 <= 65535 ");
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (imm16 >> 12) << 16;
         instruction |= (Rd.encoding & 0xf) << 12;
@@ -534,7 +529,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void sub(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int immed_8, final int rotate_amount) {
-        int instruction = 0x02400000; // subract of an immediate
+        int instruction = 0x02400000; // subtract of an immediate
         checkConstraint(0 <= immed_8 && immed_8 <= 255, "0 <= immed_8 && immed_8 <= 255");
         checkConstraint(0 <= rotate_amount && rotate_amount <= 15, "0 <= rotate_amount && rotate_amount  <= 15");
         instruction |= (cond.value() & 0xf) << 28;

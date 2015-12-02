@@ -76,26 +76,6 @@ public final class ARMISAInstructionDecoder {
 
     private static void patchDisp32(byte[] code, int pos, int offset) {
         int instruction;
-
-
-        /*assert code[pos] == 0xe3;
-        assert code[pos + 1] == 0x20;
-        assert code[pos + 2] == 0xf0;
-        assert code[pos + 3] == 0x00;
-        assert code[pos +4] == 0xe3;
-        assert code[pos + 5] == 0x20;
-        assert code[pos + 6] == 0xf0;
-        assert code[pos + 7] == 0x00;*/
-        //System.out.println("PATCHING in ARMISA " + pos + " " + offset);
-        // TODO sort
-        //out irritation from signed Java stuff in bytes causing me a pain in the arse
-        // patches the scratch register r12 to hold an address.
-        // it might be an offset, or it might be relative
-        // TODO this is unknown at the momemt
-        // currently Im assuming an absolute address.
-        // TODO probably wrong as looks like relative
-
-
         instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always,ARMV7.r12,offset & 0xffff);
         code[pos] = (byte) (instruction & 0xFF);
         code[pos+1] = (byte) ((instruction >> 8) & 0xFF);
@@ -112,9 +92,6 @@ public final class ARMISAInstructionDecoder {
     }
     private static int movt( final int imm16) {
         int instruction = 0xe3400000;
-        /*if(imm16 == 0xfe4c) {
-            System.out.println("DEBUG ME movt");
-        }*/
         instruction |= (imm16 >> 12) << 16;
         instruction |= (12 & 0xf) << 12;
         instruction |= imm16 & 0xfff;
@@ -123,10 +100,7 @@ public final class ARMISAInstructionDecoder {
 
     private static int movw( final int imm16) {
         int instruction = 0xe3000000;
-        /*if(imm16 == 0xfe4c) {
-            System.out.println("DEBUG ME movw");
-        }*/
-        instruction |= (imm16 >> 12) << 16;
+           instruction |= (imm16 >> 12) << 16;
         instruction |= (12 & 0xf) << 12;
         instruction |= imm16 & 0xfff;
         return instruction;
