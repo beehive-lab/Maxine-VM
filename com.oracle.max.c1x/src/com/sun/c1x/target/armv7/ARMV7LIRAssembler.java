@@ -2178,15 +2178,73 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         } else {
             CiAddress laddr = asAddress(src);
             masm.setUpScratch(laddr);
-            masm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, ARMV7.r12, ARMV7.r12, 0);
             if (most) {
-                masm.clz(ConditionFlag.Always, result, ARMV7.r12);
+                if (src.kind.isLong()) {
+                    assert !Platform.target().arch.is32bit();
+                    masm.ldrd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
+                    Label normal = new Label();
+                    Label normal2 = new Label();
+                    Label exit = new Label();
+                    masm.cmpImmediate(ConditionFlag.Always, ARMV7.r9, 0);
+                    masm.jcc(ConditionFlag.NotEqual, normal);
+                    masm.cmpImmediate(ConditionFlag.Equal, ARMV7.r9, 0);
+                    masm.mov32BitConstant(ConditionFlag.Equal, result, -1);
+                    masm.jcc(ConditionFlag.Equal, exit);
+                    masm.bind(normal);
+                    masm.clz(ConditionFlag.Always, ARMV7.r12, ARMV7.r9);
+                    masm.cmpImmediate(ConditionFlag.Always, ARMV7.r12, 32);
+                    masm.jcc(ConditionFlag.Equal, normal2);
+                    masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, 63);
+                    masm.sub(ConditionFlag.Always, false, result, ARMV7.r8, ARMV7.r12, 0, 0);
+                    masm.jcc(ConditionFlag.Always, exit);
+                    masm.bind(normal2);
+                    masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, 31);
+                    masm.sub(ConditionFlag.Always, false, result, ARMV7.r8, ARMV7.r9, 0, 0);
+                    masm.bind(exit);
+                } else {
+                    masm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, ARMV7.r12, ARMV7.r12, 0);
+                    Label exit = new Label();
+                    masm.cmpImmediate(ConditionFlag.Always, ARMV7.r12, 0);
+                    masm.mov32BitConstant(ConditionFlag.Equal, result, -1);
+                    masm.jcc(ConditionFlag.Equal, exit);
+                    masm.clz(ConditionFlag.Always, ARMV7.r8, ARMV7.r12);
+                    masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 31);
+                    masm.sub(ConditionFlag.Always, false, result, ARMV7.r12, ARMV7.r8, 0, 0);
+                    masm.bind(exit);
+                }
             } else {
-                masm.rbit(ConditionFlag.Always, ARMV7.r12, ARMV7.r12);
-                masm.clz(ConditionFlag.Always, result, ARMV7.r12);
-                masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 32);
-                masm.cmp(ConditionFlag.Always, result, ARMV7.r12, 0, 0);
-                masm.mov32BitConstant(ConditionFlag.Equal, result, -1);
+                if (src.kind.isLong()) {
+                    assert !Platform.target().arch.is32bit();
+                    masm.ldrd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
+                    Label normal = new Label();
+                    Label exit = new Label();
+                    masm.cmpImmediate(ConditionFlag.Always, ARMV7.r9, 0);
+                    masm.jcc(ConditionFlag.NotEqual, normal);
+                    masm.cmpImmediate(ConditionFlag.Always, ARMV7.r8, 0);
+                    masm.mov32BitConstant(ConditionFlag.Equal, result, -1);
+                    masm.jcc(ConditionFlag.Equal, exit);
+                    masm.bind(normal);
+                    masm.rbit(ConditionFlag.Always, ARMV7.r12, ARMV7.r8);
+                    masm.rbit(ConditionFlag.Always, ARMV7.r8, ARMV7.r9);
+                    masm.mov(ConditionFlag.Always, false, ARMV7.r9, ARMV7.r12);
+                    masm.clz(ConditionFlag.Always, ARMV7.r12, ARMV7.r9);
+                    masm.cmpImmediate(ConditionFlag.Always, ARMV7.r12, 32);
+                    masm.mov(ConditionFlag.NotEqual, false, result, ARMV7.r12);
+                    masm.jcc(ConditionFlag.NotEqual, exit);
+                    masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 32);
+                    masm.clz(ConditionFlag.Always, ARMV7.r9, ARMV7.r8);
+                    masm.addRegisters(ConditionFlag.Always, false, result, ARMV7.r12, ARMV7.r9, 0, 0);
+                    masm.bind(exit);
+                } else {
+                    masm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, ARMV7.r12, ARMV7.r12, 0);
+                    Label exit = new Label();
+                    masm.cmpImmediate(ConditionFlag.Always, ARMV7.r12, 0);
+                    masm.mov32BitConstant(ConditionFlag.Equal, result, -1);
+                    masm.jcc(ConditionFlag.Equal, exit);
+                    masm.rbit(ConditionFlag.Always, ARMV7.r12, ARMV7.r12);
+                    masm.clz(ConditionFlag.Always, result, ARMV7.r12);
+                    masm.bind(exit);
+                }
             }
         }
     }
