@@ -2621,6 +2621,42 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
+    public void test_C1X_jtt_MSB32() throws Exception {
+        long[] input = new long[] {1l, 2l, 0l, -1l, 61440l, 2147483648l};
+        int[] output = new int[] { 0, 1, -1, 31, 15, 31};
+
+        String klassName = getKlassName("jtt.max.MostSignificantBit32");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        initialiseCodeBuffers(methods, "MostSignificantBit32.java", "int test(long)");
+        for (int i = 0; i < input.length; i++) {
+            int answer = jtt.max.MostSignificantBit64.test(input[i]);
+            int expectedValue = output[i];
+            String functionPrototype = ARMCodeWriter.preAmble("int", "long long", Long.toString(input[i]) + "LL");
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+
+    public void test_C1X_jtt_LSB32() throws Exception {
+        long[] input = new long[] {1l, 2l, 0l, -1l, 61440l};
+        int[] output = new int[] { 0, 1, -1, 0, 12};
+
+        String klassName = getKlassName("jtt.max.LeastSignificantBit32");
+        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
+        CompilationBroker.OFFLINE = true;
+        initialiseCodeBuffers(methods, "LeastSignificantBit32.java", "int test(long)");
+        for (int i = 0; i < input.length; i++) {
+            int answer = jtt.max.LeastSignificantBit64.test(input[i]);
+            int expectedValue = output[i];
+            String functionPrototype = ARMCodeWriter.preAmble("int", "long long", Long.toString(input[i]) + "LL");
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+
     public void work_C1X_jtt_BC_dcmp03() throws Exception {
         initTests();
         CompilationBroker.OFFLINE = initialised;
@@ -3165,7 +3201,6 @@ public class ARMV7JTTTest extends MaxTestCase {
 
         for (Args pair : pairs) {
             long expectedValue = jtt.bytecode.BC_ldiv.test(pair.lfirst, pair.lsecond);
-            System.out.println("LDIV  "+ expectedValue);
             String functionPrototype = ARMCodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             long returnValue = connectRegs(registerValues[0], registerValues[1]);
@@ -3173,6 +3208,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+
     public void ignore_C1X_FLOATIDIV_jtt_BC_div() throws Exception {
         CompilationBroker.OFFLINE = initialised;
         CompilationBroker.SIMULATEADAPTER = true;
