@@ -702,7 +702,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
      * @Runs: -1l = 63;  0x80000000l = 31; 0x100000000l = 32;
      */
 
-    public void work_msb_long() throws Exception {
+    public void test_msb_long() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
 
@@ -727,7 +727,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             asm.jcc(ConditionFlag.Equal, 72, false); //48
             asm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[0], 63); //56
             asm.sub(ConditionFlag.Always, false, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[2], 0, 0); //60
-            asm.clz(ConditionFlag.Always, ARMV7.cpuRegisters[1], ARMV7.cpuRegisters[0]); //64
+            asm.nop();
             asm.jcc(ConditionFlag.Always, 84, false); //68
             asm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[0], 31); //72
             asm.sub(ConditionFlag.Always, false, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[1], 0, 0);//80
