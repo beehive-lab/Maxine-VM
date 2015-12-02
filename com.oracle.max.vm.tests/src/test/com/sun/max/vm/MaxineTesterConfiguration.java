@@ -136,6 +136,13 @@ public class MaxineTesterConfiguration {
 
         jtt(jtt.threads.Thread_isInterrupted02.class, FAIL_LINUX);
         jtt(jtt.hotspot.Test6959129.class, FAIL_ALL);
+        if (Platform.target().arch.is32bit()) {
+            jtt(jtt.max.LeastSignificantBit64.class, FAIL_ALL);
+            jtt(jtt.max.MostSignificantBit64.class, FAIL_ALL);
+        } else {
+            jtt(jtt.max.LeastSignificantBit32.class, FAIL_ALL);
+            jtt(jtt.max.MostSignificantBit32.class, FAIL_ALL);
+        }
 
         if (Platform.target().arch.is32bit()) {
             jtt(jtt.max.LeastSignificantBit64.class, FAIL_ALL);
