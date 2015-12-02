@@ -126,7 +126,7 @@ public class MaxineARMTester {
 
     public void compile() {
         final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.bin", "test.elf");
-        final ProcessBuilder compile = new ProcessBuilder("arm-none-eabi-gcc", "-c", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-march=armv7-a", "-g", "test.c", "-o", "test.o");
+        final ProcessBuilder compile = new ProcessBuilder("arm-none-eabi-gcc", "-c", "-DSTATIC" ,"-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-march=armv7-a", "-g", "test.c", "-o", "test.o");
         compile.redirectOutput(gccOutput);
         compile.redirectError(gccErrors);
         try {

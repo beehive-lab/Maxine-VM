@@ -9,9 +9,11 @@ void print_uart0(const char *s) {
 
 #include "./codebuffer.c"
 
+#ifdef STATIC
 void (*pf)(int) = (void (*))(code);
 print_uart0("changed test.c!\n");
 (*pf)(1);
 asm volatile("forever: b forever");
+#endif
 }
 
