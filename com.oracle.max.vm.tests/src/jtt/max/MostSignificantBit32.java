@@ -26,7 +26,7 @@ import com.sun.max.unsafe.*;
 
 /*
  * @Harness: java
- * @Runs: 1l = 0;  2l = 1; 0l = -1; -1l = 32; 0xf000l = 15;  0x80000000l = 31;
+ * @Runs: 1l = 0;  2l = 1; 0l = -1; -1l = 31; 0xf000l = 15;  0x80000000l = 31;
  */
 public class MostSignificantBit32 {
 
