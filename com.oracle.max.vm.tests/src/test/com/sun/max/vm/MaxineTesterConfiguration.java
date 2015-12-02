@@ -144,14 +144,6 @@ public class MaxineTesterConfiguration {
             jtt(jtt.max.MostSignificantBit32.class, FAIL_ALL);
         }
 
-        if (Platform.target().arch.is32bit()) {
-            jtt(jtt.max.LeastSignificantBit64.class, FAIL_ALL);
-            jtt(jtt.max.MostSignificantBit64.class, FAIL_ALL);
-        } else {
-            jtt(jtt.max.LeastSignificantBit32.class, FAIL_ALL);
-            jtt(jtt.max.MostSignificantBit32.class, FAIL_ALL);
-        }
-
         dacapo2006("antlr");
         dacapo2006("bloat");
         dacapo2006("xalan");
@@ -291,11 +283,10 @@ public class MaxineTesterConfiguration {
         imageConfig("jtt-t1xt1x", opt_c1x, "--J @ \" -Xms512M -Xmx1G -esa -ea\"", "-heap=com.sun.max.vm.heap.sequential.semiSpace","-debug-methods", "-threads=4", "-run=test.com.sun.max.vm.jtrun.all",
                         "-native-tests", joinCompileCommands(testCallerT1X, testCalleeT1X), "--XX:+FailOverCompilation");
         String tmpVMArgs = "--J @\" -Xms512M -Xmx1G -esa -ea\"";
-        imageConfig("jtt-c1xc1x", opt_c1x, tmpVMArgs, "-heap=com.sun.max.vm.heap.sequential.semiSpace", "-threads=4", "-debug-methods","-build=DEBUG", "--XX:+PrintCFGToFile",
-                        "--XX:PrintFilter=com.sun.max.tests.jtt.bootimagetest.SimpleExample.debugme", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
+        imageConfig("jtt-c1xc1x", opt_c1x, tmpVMArgs, "-heap=com.sun.max.vm.heap.sequential.semiSpace", "-threads=4", "-debug-methods","-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
         imageConfig("jtt-c1xgraal", opt_c1xgraal, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", joinCompileCommands(testCallerT1X, testCalleeGraal));
 
-    imageConfig("jtt-msc1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", testCalleeT1X);
+        imageConfig("jtt-msc1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", testCalleeT1X);
         imageConfig("jtt-mst1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", testCallerT1X);
         imageConfig("jtt-mst1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", joinCompileCommands(testCallerT1X, testCalleeT1X));
         imageConfig("jtt-msc1xc1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests");
