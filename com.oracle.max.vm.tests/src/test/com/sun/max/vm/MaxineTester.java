@@ -84,7 +84,7 @@ public class MaxineTester {
     private static final Option<Integer> javaTesterTimeOutOption = options.newIntegerOption("java-tester-timeout", 50,
                     "The number of seconds to wait for the Java tester tests to complete before " +
                     "timing out and killing it.");
-    private static final Option<Integer> javaRunTimeOutOption = options.newIntegerOption("timeout-max", 600,
+    private static final Option<Integer> javaRunTimeOutOption = options.newIntegerOption("timeout-max", 700,
                     "The maximum number of seconds to wait for the target VM to complete before " +
                     "timing out and killing it when running user programs.");
     private static final Option<Integer> javaRunTimeOutScale = options.newIntegerOption("timeout-scale", 20,

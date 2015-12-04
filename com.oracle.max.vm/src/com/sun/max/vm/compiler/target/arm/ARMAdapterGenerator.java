@@ -503,27 +503,17 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 baselineStackOffset += BASELINE_SLOT_SIZE;
             }
 
-	    //EXPERIMENT THURS asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r8, ARMV7.r14);
 	    asm.nop();
 
             // Args are now copied to the OPT locations; call the OPT main body
             int callPos = asm.codeBuffer.position();
 	    asm.nop(3); // think this might be necessary pretend it is  movw movt add PC
-            // EXPERIMENT THURSasm.blx(ARMV7.r8);
 	    asm.blx(ARMV7.r14);
 
             int callSize = asm.codeBuffer.position() - callPos;
 
-            // Restore RSP and RBP. Given that RBP is never modified by OPT methods and baseline methods always
+            // Restore RSP r13 and RBP r11. Given that RBP r11 is never modified by OPT methods and baseline methods always
             // restore it, RBP is guaranteed to be pointing to the slot holding the caller's RBP
-		/*mov esp,ebp
-pop ebp
-
-asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
-468             asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r11,ARMV7.r13);
-
-            asm.leave();
-		*/
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r13, ARMV7.r11);
             asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 11);// pop r11 -- rbp
 
@@ -536,12 +526,8 @@ asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
 
             assert WordWidth.signedEffective(baselineArgsSize).lessEqual(WordWidth.BITS_16);
             // Retract the stack pointer back to its position before the first argument on the caller's stack.
-            //System.err.println("removed ret in ARMAdapterGenerator"); ****************************
-            // asm.ret(/* to make it compile APN removed (short) baselineArgsSize*/);
-	    // EXPERIMENT ECCOOP asm.addq(ARMV7.r13,baselineArgsSize);
 	    asm.addq(ARMV7.r13,baselineArgsSize );
 	    asm.mov(ARMV7Assembler.ConditionFlag.Always,false, ARMV7.r15,ARMV7.r8);
-            //asm.ret(baselineArgsSize);
 
 
             final byte[] code = asm.codeBuffer.close(true);

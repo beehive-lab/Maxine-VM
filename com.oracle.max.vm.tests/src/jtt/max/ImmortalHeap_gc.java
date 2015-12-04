@@ -39,39 +39,40 @@ public final class ImmortalHeap_gc {
     public static boolean test(int nrObjects) {
         String[] strings;
         ImmortalMemoryRegion immortalMemoryRegion = ImmortalHeap.getImmortalHeap();
-	System.out.println("GOT ImmortalMemoryRegion");
+	//System/out.println("GOT ImmortalMemoryRegion");
         Pointer oldMark = immortalMemoryRegion.mark();
-	System.out.println("DONE MARK");
+	//System/out.println("DONE MARK");
         try {
             Heap.enableImmortalMemoryAllocation();
-	    System.out.println("DONE ENABLEALLOC");
+	    //System/out.println("DONE ENABLEALLOC");
             strings = new String[nrObjects];
-	    System.out.println("DONE ALLOC");
+	    //System/out.println("DONE ALLOC");
         } finally {
             Heap.disableImmortalMemoryAllocation();
         }
-	System.out.println("DONE DISABLE");
+	//System/out.println("DONE DISABLE");
         if (immortalMemoryRegion.mark().equals(oldMark)) {
-	    System.out.println("DONE and EQUALS");
+	    //System/out.println("DONE and EQUALS");
             return false;
         }
-	System.out.println("DONE and NEQ");
+	//System/out.println("DONE and NEQ");
         oldMark = immortalMemoryRegion.mark();
-	System.out.println("DONE MARK2");
+	//System/out.println("DONE MARK2");
 
         for (int i = 0; i < nrObjects; i++) {
             strings[i] = new String("" + i);
         }
-
+	//System/out.println("DONE STRINGS");
         if (!immortalMemoryRegion.mark().equals(oldMark)) {
-	    System.out.println("DONE and EQUALS2");
+	    //System/out.println("DONE and EQUALS2");
             return false;
         }
-	System.out.println("BEFORE GC");
+	//System/out.println("BEFORE GC");
         System.gc();
-	System.out.println("DONE GC");
+	//System/out.println("DONE GC");
 
         if (!immortalMemoryRegion.mark().equals(oldMark)) {
+	    //System/out.println("DONE and EQAULS3");
             return false;
         }
 
@@ -81,10 +82,12 @@ public final class ImmortalHeap_gc {
             expected += i;
             result += strings[i];
         }
-
+	//System/out.println("DONE STRINGS");
         if (expected.equals(result)) {
+	    //System/out.println("DONE EQUALS3");
             return true;
         }
+	//System/out.println("DONE false");
 
         return false;
     }
