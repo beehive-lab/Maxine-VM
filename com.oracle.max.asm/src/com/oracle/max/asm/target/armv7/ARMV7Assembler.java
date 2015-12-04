@@ -1724,11 +1724,17 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void int3() {
-        push(ConditionFlag.Always, 1 | 128); // push r0 and r7
-        eor(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r0, ARMV7.r0, 0, 0);
-        eor(ConditionFlag.Always, false, ARMV7.r7, ARMV7.r7, ARMV7.r7, 0, 0);
+        push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 128); // push r0-r3 and r7
+	mov32BitConstant(ConditionFlag.Always, ARMV7.r0,10);
+        //eor(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r0, ARMV7.r0, 0, 0);
+        eor(ConditionFlag.Always, false, ARMV7.r1, ARMV7.r1, ARMV7.r1, 0, 0);
+        eor(ConditionFlag.Always, false, ARMV7.r2, ARMV7.r2, ARMV7.r2, 0, 0);
+        eor(ConditionFlag.Always, false, ARMV7.r3, ARMV7.r3, ARMV7.r3, 0, 0);
+	mov32BitConstant(ConditionFlag.Always, ARMV7.r7,67);
+        //eor(ConditionFlag.Always, false, ARMV7.r7, ARMV7.r7, ARMV7.r7, 0, 0);
         emitInt(0xef000000); // replaced with svc 0
-        pop(ConditionFlag.Always, 1 | 128);
+        pop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 128);
+	//emitInt(0xe1200070); // emit a BKPT instruction?
     }
 
     public final void flushicache(CiRegister startAddress, int bytes) {

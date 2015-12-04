@@ -31,9 +31,11 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void pushptr(CiAddress src) {
+	crashme();
     }
 
     public void popptr(CiAddress src) {
+	crashme();
     }
 
     public final void casInt(CiRegister newValue, CiRegister cmpValue, CiAddress address) {

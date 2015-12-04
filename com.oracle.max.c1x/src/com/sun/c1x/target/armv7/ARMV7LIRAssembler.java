@@ -1501,51 +1501,21 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         if (right.isConstant()) {
             Util.shouldNotReachHere("cwi: I assume this is dead code, notify me if I'm wrong...");
 
-            int divisor = ((CiConstant) right).asInt();
-            assert divisor > 0 && CiUtil.isPowerOf2(divisor) : "divisor must be power of two";
-            if (code == LIROpcode.Idiv) {
-                // assert lreg == ARMV7.rax : "dividend must be rax";
-                // masm.cdql(); // sign extend into rdx:rax
-                if (divisor == 2) {
-                    // masm.subl(lreg, ARMV7.rdx);
-                } else {
-                    // masm.andl(ARMV7.rdx, divisor - 1);
-                    // masm.addl(lreg, ARMV7.rdx);
-                }
-                // masm.sarl(lreg, CiUtil.log2(divisor));
-                moveRegs(lreg, dreg, left.kind, result.kind);
-            } else {
-                assert code == LIROpcode.Irem;
-                Label done = new Label();
-                masm.mov(ConditionFlag.Always, false, dreg, lreg);
-                // masm.andl(dreg, 0x80000000 | (divisor - 1));
-                // masm.jcc(ConditionFlag.positive, done);
-                masm.jcc(ConditionFlag.Positive, done);
-                masm.decrementl(dreg, 1);
-                // masm.orl(dreg, ~(divisor - 1));
-                masm.incrementl(dreg, 1);
-                masm.bind(done);
-            }
         } else {
             CiRegister rreg = right.asRegister();
-
-            // assert lreg == ARMV7.r6 : "left register must be r6-ax";
-            // assert rreg != ARMV7.rdx : "right register must not be rdx";
-
-            // moveRegs(lreg, ARMV7.rax);
 
             Label continuation = new Label();
 
             if (C1XOptions.GenSpecialDivChecks) {
-            /******
-             *  On ARMV7 we need these special div checks if we want to comply with tests
-             *  concerning the unusual corner cases of division.
-             *
-             *  We might want to set the flag to a default value so it matches the exact case.
-             *
-             *
-             *******/
-                // check for special case of Integer.MIN_VALUE / -1
+               /******
+                *  On ARMV7 we need these special div checks if we want to comply with tests
+                *  concerning the unusual corner cases of division.
+                *
+                *  We might want to set the flag to a default value so it matches the exact case.
+                *
+                *
+                *******/
+                // SEE JVMS check for special case of Integer.MIN_VALUE / -1
                 Label normalCase = new Label();
                 masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, Integer.MIN_VALUE);
                 masm.cmp(ConditionFlag.Always, lreg, ARMV7.r12, 0, 0);
@@ -1553,7 +1523,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.jcc(ConditionFlag.NotEqual, normalCase);
                 if (code == LIROpcode.Irem) {
                     // prepare X86Register.rdx for possible special case where remainder = 0
-                    masm.eor(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, ARMV7.r8, 0, 0);
+            	    masm.eor(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, ARMV7.r8, 0, 0);
                 }
                 masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, -1);
                 masm.cmp(ConditionFlag.Always, rreg, ARMV7.r12, 0, 0);
@@ -1562,18 +1532,23 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 // handle normal case
                 masm.bind(normalCase);
 
-            } // TODO comment me back in and use the compiler flags
-            // masm.cdql();
+            } 
+
+	    // BEGIN IDIV ZERO EXCEPTION HANDLING CODE
             masm.mov(ConditionFlag.Always, false, ARMV7.r8, lreg);
-           // PUT IN FOR NO EXCEPT int offset = masm.codeBuffer.position();
-            // EXAMPLE to do VmThreadLocal vq(scratch, new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_LATCH_REGISTER.offset));
 	    masm.eor(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
 	    masm.cmp(ConditionFlag.Always,ARMV7.r12,rreg,0,0);
 	    masm.insertDIVIDEMarker();
+	    /* 
+		We insert a special illegal code sequence to signal that a divide by zero has occurred
+		We jump over this code sequence 
+		we look for this in the trap handling code on ARMV7 platforms
+		see Trap.java
+	    */
 	    int offset = masm.codeBuffer.position();
-	    masm.vldr(ConditionFlag.Equal, ARMV7.s30, ARMV7.r12, 0, CiKind.Float, CiKind.Int); // fault if EQUAL
+	    masm.vldr(ConditionFlag.Equal, ARMV7.s30, ARMV7.r12, 0, CiKind.Float, CiKind.Int); 
 
-	    // END ADD EXCEPTION
+	    // END DIV ZERO EXCEPTION HANDLING CODE
 
             masm.sdiv(ConditionFlag.Always, dreg, lreg, rreg);
 
@@ -1587,6 +1562,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                  */
                 masm.mul(ConditionFlag.Always, false, lreg, dreg, rreg);
                 masm.sub(ConditionFlag.Always, false, dreg, ARMV7.r8, lreg, 0, 0);
+		// The above calculates the remainder for modulus operation
 
             } else {
                 assert code == LIROpcode.Idiv;
