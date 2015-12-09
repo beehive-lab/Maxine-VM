@@ -2630,7 +2630,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         CompilationBroker.OFFLINE = true;
         initialiseCodeBuffers(methods, "MostSignificantBit32.java", "int test(long)");
         for (int i = 0; i < input.length; i++) {
-            int answer = jtt.max.MostSignificantBit64.test(input[i]);
+            int answer = jtt.max.MostSignificantBit32.test(input[i]);
             int expectedValue = output[i];
             String functionPrototype = ARMCodeWriter.preAmble("int", "long long", Long.toString(input[i]) + "LL");
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
@@ -2639,7 +2639,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_LSB32() throws Exception {
+    public void work_C1X_jtt_LSB32() throws Exception {
         long[] input = new long[] {1l, 2l, 0l, -1l, 61440l};
         int[] output = new int[] { 0, 1, -1, 0, 12};
 

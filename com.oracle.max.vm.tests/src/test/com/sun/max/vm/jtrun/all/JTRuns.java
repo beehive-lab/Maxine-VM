@@ -27449,9 +27449,9 @@ public class JTRuns {
                     fail(runString);
                     return;
                 }
-            // (-1) == 32
+            // (-1) == 31
                 runString = "(-1)";
-                if (32 != jtt.max.MostSignificantBit32.test(-1L)) {
+                if (31 != jtt.max.MostSignificantBit32.test(-1L)) {
                     fail(runString);
                     return;
                 }
