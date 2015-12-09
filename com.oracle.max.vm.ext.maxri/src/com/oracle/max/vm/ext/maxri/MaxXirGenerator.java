@@ -38,7 +38,7 @@ import com.sun.max.Utils;
 import com.sun.max.annotate.FOLD;
 import com.sun.max.annotate.HOSTED_ONLY;
 import com.sun.max.annotate.INLINE;
-import com.sun.max.platform.CPU;
+import com.sun.max.platform.*;
 import com.sun.max.program.ProgramError;
 import com.sun.max.unsafe.Pointer;
 import com.sun.max.unsafe.Size;
@@ -990,16 +990,29 @@ public class MaxXirGenerator implements RiXirGenerator {
 
         int elemSize = target().sizeInBytes(kind);
         Scale scale = Scale.fromInt(elemSize);
-
-        if (elemSize == vmConfig().heapScheme().objectAlignment()) {
-            // Assumed here that header size is already aligned.
+        if (Platform.target().arch.isX86()) {
+            if (elemSize == vmConfig().heapScheme().objectAlignment()) {
+                // Assumed here that header size is already aligned.
+                asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
+                asm.lea(arraySize, arraySize, length, 0, scale);
+            } else {
+                // Very x86 / x64 way of doing alignment.
+                asm.mov(arraySize, asm.i(arrayLayout().headerSize() + minObjectAlignmentMask()));
+                asm.lea(arraySize, arraySize, length, 0, scale);
+                asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
+            }
+        } else {
+            assert Platform.target().arch.isARM();
+            XirOperand scratch = asm.createRegisterTemp("scratch", WordUtil.archKind(), ARMV7.r8);
+            XirLabel aligned = asm.createInlineLabel("aligned");
             asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
             asm.lea(arraySize, arraySize, length, 0, scale);
-        } else {
-            // Very x86 / x64 way of doing alignment.
+            asm.and(scratch, arraySize, asm.i(vmConfig().heapScheme().objectAlignment() - 1));
+            asm.jeq(aligned, scratch, asm.i(0));
             asm.mov(arraySize, asm.i(arrayLayout().headerSize() + minObjectAlignmentMask()));
             asm.lea(arraySize, arraySize, length, 0, scale);
             asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
+            asm.bindInline(aligned);
         }
 
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
@@ -1051,15 +1064,29 @@ public class MaxXirGenerator implements RiXirGenerator {
         int elemSize = target().sizeInBytes(kind);
         Scale scale = Scale.fromInt(elemSize);
 
-        if (elemSize == vmConfig().heapScheme().objectAlignment()) {
-            // Assumed here that header size is already aligned.
+        if (Platform.target().arch.isX86()) {
+            if (elemSize == vmConfig().heapScheme().objectAlignment()) {
+                // Assumed here that header size is already aligned.
+                asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
+                asm.lea(arraySize, arraySize, length, 0, scale);
+            } else {
+                // Very x86 / x64 way of doing alignment.
+                asm.mov(arraySize, asm.i(arrayLayout().headerSize() + minObjectAlignmentMask()));
+                asm.lea(arraySize, arraySize, length, 0, scale);
+                asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
+            }
+        } else {
+            assert Platform.target().arch.isARM();
+            XirOperand scratch = asm.createRegisterTemp("scratch", WordUtil.archKind(), ARMV7.r8);
+            XirLabel aligned = asm.createInlineLabel("aligned");
             asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
             asm.lea(arraySize, arraySize, length, 0, scale);
-        } else {
-            // Very x86 / x64 way of doing alignment.
+            asm.and(scratch, arraySize, asm.i(vmConfig().heapScheme().objectAlignment() - 1));
+            asm.jeq(aligned, scratch, asm.i(0));
             asm.mov(arraySize, asm.i(arrayLayout().headerSize() + minObjectAlignmentMask()));
             asm.lea(arraySize, arraySize, length, 0, scale);
             asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
+            asm.bindInline(aligned);
         }
 
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
