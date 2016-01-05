@@ -90,7 +90,7 @@ void  maxine_close() {
         }
 }
 #endif
-void real_maxine_instrumentation(unsigned int address) {
+void real_maxine_instrumentation(int address, unsigned int newpc, int totalPages) { // R0 R1 R2
 	// the address has been altered to have a r/1 and a code/data bit set
 #ifdef arm
 	/*extern unsigned int getTID(unsigned int);
@@ -98,21 +98,69 @@ void real_maxine_instrumentation(unsigned int address) {
 	tid = getTID(tid);
 	printf("THREAD ID is %u ADDRESS %x\n",tid,address);
 	*/
+	switch (address) {
+		case -2:
+			/*
+			METHOD ENTRY AT PUSH FRAME ---  THIS IS DIFFERENT TO AN 
+			ADAPTER -- CURRENTLY WE DO *****NOT******* INSTRUMENT ADAPTERS
 
-	int isInstruction = 0;
-	int isStore = 0;
-	isInstruction = address & 0x2;
-	isStore = address & 0x1;
-	address = address & 0xfffffffd;
-	if(isInstruction) {
-		pushILD(address);
-	} else {
-		if(isStore) {
-			pushDSTR(address);
-		} else {
-			pushDLD(address);
+			we need to handle the virtual address pages issues ...
+
+			Absolute address  this refers to a mov to the PC, a blx/bx with a register.
+			or even a branch to an absolute address
+			*/
+			return;
+			printf("NEWPC METHODENTRY 0x%x\n",newpc);
+		break; // break  only while debugging the various cases ...
+			/* 
+			We DELIBERATELY FALL THROUGH TO CASE 3 THAT IS ALSO AN absolute ADDRESS 
+			*/
+		case -3:
+			return;
+			printf("NEWPC --- ABSOLUTE 0x%x\n\n",newpc);
+		break;
+		case -1:
+			return;
+			printf("RELATIVE NEWPCBRANCH --- 0x%x\n\n",newpc);
+			/*
+			this is a relative branch/jmp of some kind .....
+			*/
+		break;
+		default:
+			/* this is a non-negative value therefor it means we are doing LD/ST tracing ....
+			*/
+			return;
+			if(address &0x1) {
+				address = ((unsigned)address) -1;
+				log_println("ST 0x%x\n\n",address);
+
+			}else if((address & 0x1) == 0) {
+				log_println("LD 0x%x\n\n",address);
+			}else {
+				log_println("ERROR address 0x%x\n\n",address);
+			}
+			if(address & 0x2) 	{
+				log_println("INSTRUCTION 0x%x\n\n",address);
+			}
+			printf("real_maxine_instrumentation maxine.c LD/STC commmented out\n");
+			return;
+		{	int isInstruction = 0;
+			int isStore = 0;
+			isInstruction = address & 0x2; // this is irrelevant we now do this by PC changes ...
+			isStore = address & 0x1;
+			address = address & 0xfffffffd;
+			if(isInstruction) {
+				pushILD(address);
+			} else {
+				if(isStore) {
+					pushDSTR(address);
+				} else {
+					pushDLD(address);
+				}
+			}
 		}
-	}
+		break;
+	}	
 #endif
 }
 void  real_maxine_flush_instrumentationBuffer(unsigned int *bufPtr) {

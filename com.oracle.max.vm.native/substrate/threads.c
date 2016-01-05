@@ -502,6 +502,8 @@ jboolean thread_sleep(jlong numberOfMilliSeconds) {
 
     time.tv_sec = numberOfMilliSeconds / 1000;
     time.tv_nsec = (numberOfMilliSeconds % 1000) * 1000000;
+    remainder.tv_sec = 0; // added by APN
+    remainder.tv_nsec = 0; // added by APN
     int value = nanosleep(&time, &remainder);
 
     if (value == -1) {
@@ -509,6 +511,8 @@ jboolean thread_sleep(jlong numberOfMilliSeconds) {
         if (error != EINTR && error != 0) {
             /*log_println("Call to nanosleep failed (other than by being interrupted): %s [remaining sec: %d, remaining nano sec: %d]", strerror(error), remainder.tv_sec, remainder.tv_nsec); */
         }
+		time.tv_sec = remainder.tv_sec; // added by APN
+		time.tv_nsec =  remainder.tv_nsec; // added by APN
     }
     return value;
 #endif

@@ -2462,8 +2462,15 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     // We only Push LR as that is what X86 does
                     // this means we can reuse all their
                     // stack unwinding code
-                    masm.push(ConditionFlag.Always, 1 << 14);
-                    masm.decrementq(ARMV7.r13, frameSize);// DIRTY HACK TO get STACK to work
+                    masm.instrumentPush(ConditionFlag.Always, 1 << 14);
+                    // REMOVED as need reproducability masm.decrementq(ARMV7.r13, frameSize); // 3 instructions
+		    masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, frameSize);
+		    masm.sub(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
+		  
+		    // taken flag , not taken flag , isAbsoluteAddress, CiRegister , adjustment, isMethodEntry
+		    masm.instrumentNEWAbsolutePC(ConditionFlag.Always, ConditionFlag.NeverUse, true, ARMV7.r15, -16,true);
+			
+		
 
                     if (C1XOptions.ZapStackOnMethodEntry) {
                         final int intSize = 4;
