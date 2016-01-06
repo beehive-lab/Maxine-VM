@@ -2161,21 +2161,22 @@ public class ARMV7Assembler extends AbstractAssembler {
             // System.out.println("JMP PATCHAT "+ codeBuffer.position());
 	    // 
 	    if(maxineflush != null) {
-		instrumentPush(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
+		/* OK this is for a patched jmp it needs to be patched or it will fail */
+		//instrumentPush(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
 		//vpush( ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // need to be changed to instrumentVPUSH
 
 		
-		mov32BitConstant(ConditionFlag.Always, ARMV7.r0,-1);
-		mov32BitConstant(ConditionFlag.Always,ARMV7.r12,maxineFlushAddress);
-		emitInt(ConditionFlag.NeverUse.value() << 28 | 0xb0b<<16 | 0xbeef); // JMP CODE for the PATCH
-		emitInt(ConditionFlag.NeverUse.value() << 28 | 0xb0b<<16 | 0xbeef); // JMP CODE for the PATCH
+		//mov32BitConstant(ConditionFlag.Always, ARMV7.r0,-1);
+		//mov32BitConstant(ConditionFlag.Always,ARMV7.r12,maxineFlushAddress);
+		//emitInt(ConditionFlag.NeverUse.value() << 28 | 0xb0b<<16 | 0xbeef); // JMP CODE for the PATCH
+		//emitInt(ConditionFlag.NeverUse.value() << 28 | 0xb0b<<16 | 0xbeef); // JMP CODE for the PATCH
 		// we need to put the address into ARMV7.r1 when we have patched
-		addRegisters(ConditionFlag.Always, false, ARMV7.r1, ARMV7.r15, ARMV7.r1, 0, 0);
-		int instruction = blxHelper(ConditionFlag.Always, ARMV7.r12);
-                emitInt(instruction);
+		//addRegisters(ConditionFlag.Always, false, ARMV7.r1, ARMV7.r15, ARMV7.r1, 0, 0);
+		//int instruction = blxHelper(ConditionFlag.Always, ARMV7.r12);
+                //emitInt(instruction);
 		//vpop( ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // need to be changed to instrumentVPUSH
 
-                instrumentPop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
+                //instrumentPop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
 	    }
             l.addPatchAt(codeBuffer.position());
             emitInt(ConditionFlag.NeverUse.value() << 28 | 0xbeef); // JMP CODE for the PATCH
