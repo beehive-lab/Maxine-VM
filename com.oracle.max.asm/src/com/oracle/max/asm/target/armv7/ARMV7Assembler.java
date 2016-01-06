@@ -199,7 +199,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             // branch(l.position(), false);
 	    if(maxineflush != null) {
 		int disp = l.position() - codeBuffer.position() - 8;
-		//disp = instrumentPCChange(ConditionFlag.Always,ConditionFlag.NeverUse,disp);
+		disp = instrumentPCChange(ConditionFlag.Always,ConditionFlag.NeverUse,disp);
 	        checkConstraint(-0x800000 <= (disp) && disp <= 0x7fffff, "branch must be within  a 24bit offset");
 		// Have already done -8
 		emitInt(0x0a000000 | (0xffffff & ((disp ) / 4)) | ((ConditionFlag.Always.value() & 0xf) << 28));
@@ -568,11 +568,11 @@ public class ARMV7Assembler extends AbstractAssembler {
         int instruction = 0x01a00000;
         assert (Rd.encoding < 16 && Rm.encoding < 16); // CORE Register move only!
 	if(maxineflush != null && Rd == ARMV7.r15) {
-		//`instrumentPush(ConditionFlag.Always, 1<<12| 1<<8);
-		//mov(cond, false,ARMV7.r12, Rm);
+		instrumentPush(ConditionFlag.Always, 1<<12| 1<<8);
+		mov(cond, false,ARMV7.r12, Rm);
 		ConditionFlag tmp = cond.inverse();
 		instrumentNEWAbsolutePC(cond,tmp, true, ARMV7.r12, 0, false);
-		//instrumentPop(ConditionFlag.Always, 1<<12| 1<<8);
+		instrumentPop(ConditionFlag.Always, 1<<12| 1<<8);
 	}
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (s ? 1 : 0) << 20;
@@ -1917,8 +1917,8 @@ public class ARMV7Assembler extends AbstractAssembler {
         // might need to push the value of r14 onto the stack in order to make this work for a call from the C harness
         // TODO for testing of the methods
 	if(maxineflush != null) {
-		//ldr(ConditionFlag.Always,  ARMV7.r12, ARMV7.r13, 0);    	
-		//instrumentNEWAbsolutePC(ConditionFlag.Always,ConditionFlag.NeverUse, true, ARMV7.r12, 0, false);
+		ldr(ConditionFlag.Always,  ARMV7.r12, ARMV7.r13, 0);    	
+		instrumentNEWAbsolutePC(ConditionFlag.Always,ConditionFlag.NeverUse, true, ARMV7.r12, 0, false);
 		// TODO  instrument the POP which is a READ!!!
 	}
         pop(ConditionFlag.Always, 1 << 15);
@@ -1978,7 +1978,6 @@ public class ARMV7Assembler extends AbstractAssembler {
 	if(maxineflush == null) {
 		return 0;
 	}
-	if(maxineflush != null) return 0 ;
 	if(maxineFlushAddress == 0) {
 		maxineFlushAddress = maxineflush.maxine_flush_instrumentationBuffer();
 	}
@@ -2003,9 +2002,9 @@ public class ARMV7Assembler extends AbstractAssembler {
 	// We will need to search for the correct instruction pattern in the C code .... to check the offsets ...
         emitInt(instruction);
 	//vpop( ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // need to be changed to instrumentVPOP
-        instrumentPop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); 
 	instrumentPop(ConditionFlag.Always, 1<<4);
 	msrWriteAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4);
+        instrumentPop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); 
 	// 3*8 +4*4 = 24+16 = 40 CALCULATION  is now WRONG!!!
 	return 40;// not necessary to be correct	
     }
@@ -2041,9 +2040,9 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
 	//vpop( ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // need to be changed to instrumentVPOP
 	
-        instrumentPop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
 	instrumentPop(ConditionFlag.Always, 1<<4);
 	msrWriteAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4);
+        instrumentPop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
 
 	
 	// disp = disp - 3*(8 bytes due to mov32BitConstant)  - 3*(4bytes) - 2*(4Bytes pop and restore APSR)

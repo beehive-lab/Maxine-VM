@@ -115,7 +115,7 @@ void real_maxine_instrumentation(int address, unsigned int newpc, int totalPages
 			We DELIBERATELY FALL THROUGH TO CASE 3 THAT IS ALSO AN absolute ADDRESS 
 			*/
 		case -3:
-			printf("NEWPC --- ABSOLUTE 0x%x\n\n",newpc);
+			//printf("NEWPC --- ABSOLUTE 0x%x\n\n",newpc);
 		break;
 		case -1:
 			printf("RELATIVE NEWPCBRANCH --- 0x%x\n\n",newpc);
