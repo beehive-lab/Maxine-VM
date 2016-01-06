@@ -128,17 +128,17 @@ void real_maxine_instrumentation(int address, unsigned int newpc, int totalPages
 			*/
 			if(address &0x1) {
 				address = ((unsigned)address) -1;
-				log_println("ST 0x%x\n\n",address);
+				//log_println("ST 0x%x\n\n",address);
 
 			}else if((address & 0x1) == 0) {
-				log_println("LD 0x%x\n\n",address);
+				//log_println("LD 0x%x\n\n",address);
 			}else {
 				log_println("ERROR address 0x%x\n\n",address);
 			}
 			if(address & 0x2) 	{
-				log_println("INSTRUCTION 0x%x\n\n",address);
+				////log_println("INSTRUCTION 0x%x\n\n",address);
 			}
-			printf("real_maxine_instrumentation maxine.c LD/STC commmented out\n");
+			//printf("real_maxine_instrumentation maxine.c LD/STC commmented out\n");
 			return;
 		{	int isInstruction = 0;
 			int isStore = 0;
