@@ -215,7 +215,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             // the forward jump will not run beyond 24-bits bytes, then its ok
 	    if(maxineflush != null) {
 		// will need to be patched inside patchJumpTarget
-	    	//instrumentPCChange(ConditionFlag.Always,ConditionFlag.NeverUse,-1);
+	    	instrumentPCChange(ConditionFlag.Always,ConditionFlag.NeverUse,-2);
 	    }
             l.addPatchAt(codeBuffer.position());
             // emitByte(0xE9);
@@ -2095,7 +2095,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             if(maxineflush != null) {
 		ConditionFlag tmp = ConditionFlag.Always;
 		tmp = cc.inverse();
-		//instrumentPCChange(cc, tmp, -1);
+		instrumentPCChange(cc, tmp, -1);
 		// will need patching
 	    } 
             l.addPatchAt(codeBuffer.position());
@@ -2111,6 +2111,8 @@ public class ARMV7Assembler extends AbstractAssembler {
             addRegisters(cc, false, ARMV7.r15, ARMV7.r12, ARMV7.r15, 0, 0);
 	    /* We do not instrument the addregisters, we leave this upto the 
 		instrumentPCChange ... but this will need patching
+		NOTE NOTE There are cases where addRegisters and addRegistersHelper might be used to
+		perform a PC alteration WE DO NOT TRACK THESE AT PRESENT!!!
 	    */
 
  
@@ -2179,6 +2181,10 @@ public class ARMV7Assembler extends AbstractAssembler {
 		//vpop( ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // need to be changed to instrumentVPUSH
 
                 //instrumentPop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
+		ConditionFlag tmp = ConditionFlag.Always;
+                tmp = tmp.inverse();
+                instrumentPCChange(ConditionFlag.Always, tmp, -3);
+
 	    }
             l.addPatchAt(codeBuffer.position());
             emitInt(ConditionFlag.NeverUse.value() << 28 | 0xbeef); // JMP CODE for the PATCH
@@ -2201,11 +2207,6 @@ public class ARMV7Assembler extends AbstractAssembler {
             } else if (disp < 0) {
                 disp = disp - 16;
             }
-	    /*if(maxineflush != null) {
-                        ConditionFlag tmp = ConditionFlag.Always;
-                        tmp = ConditionFlag.Always.inverse();
-                        disp = instrumentPCChange(ConditionFlag.Always,tmp,disp);
-            } NOT REQUIRED AS HANDLED BY THE MOV to PC*/
 
             mov32BitConstant(ConditionFlag.Always, scratchRegister, disp);
             addRegisters(ConditionFlag.Always, false, scratchRegister, ARMV7.r15, scratchRegister, 0, 0);
