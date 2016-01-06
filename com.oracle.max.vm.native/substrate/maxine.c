@@ -109,18 +109,15 @@ void real_maxine_instrumentation(int address, unsigned int newpc, int totalPages
 			Absolute address  this refers to a mov to the PC, a blx/bx with a register.
 			or even a branch to an absolute address
 			*/
-			return;
 			printf("NEWPC METHODENTRY 0x%x\n",newpc);
 		break; // break  only while debugging the various cases ...
 			/* 
 			We DELIBERATELY FALL THROUGH TO CASE 3 THAT IS ALSO AN absolute ADDRESS 
 			*/
 		case -3:
-			return;
 			printf("NEWPC --- ABSOLUTE 0x%x\n\n",newpc);
 		break;
 		case -1:
-			return;
 			printf("RELATIVE NEWPCBRANCH --- 0x%x\n\n",newpc);
 			/*
 			this is a relative branch/jmp of some kind .....
@@ -129,7 +126,6 @@ void real_maxine_instrumentation(int address, unsigned int newpc, int totalPages
 		default:
 			/* this is a non-negative value therefor it means we are doing LD/ST tracing ....
 			*/
-			return;
 			if(address &0x1) {
 				address = ((unsigned)address) -1;
 				log_println("ST 0x%x\n\n",address);

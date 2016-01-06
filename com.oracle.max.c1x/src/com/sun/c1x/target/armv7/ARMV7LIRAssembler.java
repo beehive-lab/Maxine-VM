@@ -2468,7 +2468,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 		    masm.sub(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
 		  
 		    // taken flag , not taken flag , isAbsoluteAddress, CiRegister , adjustment, isMethodEntry
-		    masm.instrumentNEWAbsolutePC(ConditionFlag.Always, ConditionFlag.NeverUse, true, ARMV7.r15, -16,true);
+		    //masm.instrumentNEWAbsolutePC(ConditionFlag.Always, ConditionFlag.NeverUse, true, ARMV7.r15, -16,true);
 			
 		
 
