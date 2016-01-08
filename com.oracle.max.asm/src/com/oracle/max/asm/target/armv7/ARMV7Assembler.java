@@ -187,6 +187,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
 	}
     public void branch(Label l) {
+	boolean instrumentMe = (maxineflush != null);
         if (l.isBound()) {
             /*
              * REMEMBER -- the current stored value of the PC is 8 bytes larger than that of the currently executing
@@ -216,8 +217,15 @@ public class ARMV7Assembler extends AbstractAssembler {
 	    if(maxineflush != null) {
 		// will need to be patched inside patchJumpTarget
 	    	instrumentPCChange(ConditionFlag.Always,ConditionFlag.NeverUse,-2);
+		/*
+		We determine the offsets for patching --- by gdb of an exectuion of ... mx vm -Xopt App
+		We break on real_maxine_instrumentation --- case of PCCHANGE  then do a disas of $lr -0x50,$lr +0x40 
+		and  do a print /x STARTARRDRESSNEXTINSTR - ADDRESSOFmovwmovtINSTRS
+		NOTE: there may be a true/nottrue ie lt or ge destination, or there may be 
+		a ConditionFlag.Always only one movw movt to patch
+		*/
 	    }
-            l.addPatchAt(codeBuffer.position());
+            l.addPatchAt(codeBuffer.position(),instrumentMe);
             // emitByte(0xE9);
             // emitInt(0);
             nop();
@@ -225,7 +233,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     @Override
-    protected void patchJumpTarget(int branch, int target) {
+    protected void patchJumpTarget(int branch, int target, boolean instrumented) {
         // b, bl & bx goes here .. could do an ADD PC,reg if too big
         // if(branch == 76) return; // hack for dcmp01 to see what happens
         checkConstraint(-0x800000 <= (target - branch) && (target - branch) <= 0x7fffff, "branch must be within  a 24bit offset");
@@ -233,6 +241,14 @@ public class ARMV7Assembler extends AbstractAssembler {
         int disp = target - branch - 16;
         int instruction = 0;
         int operation = codeBuffer.getInt(branch);
+	int firstPATCH = 44;
+	int secondPATCH = 56;
+        int firstPATCHOperation = 0;
+        int secondPATCHOperation = 0;
+	if(instrumented) {
+ 		firstPATCHOperation = codeBuffer.getInt(branch-firstPATCH); 
+		secondPATCHOperation = codeBuffer.getInt(branch-secondPATCH);
+	}
         if (operation == (ConditionFlag.NeverUse.value() << 28 | 0xdead)) { // JCC
             //
             // System.out.println("MATCHED JCC " + branch + " target " + target);
@@ -243,12 +259,40 @@ public class ARMV7Assembler extends AbstractAssembler {
             codeBuffer.emitInt(instruction, branch + 4);
 
 	    //System.out.println("JUMP CASE ONE");
+	    if(instrumented) {
+                System.out.println("JUMP CASE ONE");
+                if((0xf & (firstPATCHOperation >>28)) == ConditionFlag.Always.value()) {
+                        System.out.println("We have an ALWAYS TAKEN BRANCH");
+			disp = disp + 4 + firstPATCH;
+			instruction = movwHelper(ConditionFlag.Always,ARMV7.r1, disp & 0xffff);
+			codeBuffer.emitInt(instruction, branch - firstPATCH);
+			instruction = movtHelper(ConditionFlag.Always,ARMV7.r1, disp & 0xffff);
+			codeBuffer.emitInt(instruction, branch - firstPATCH+4);
+
+                }else {
+                        System.out.println("We have a NOTTAKEN BRANCH " + (0xf &(firstPATCHOperation >>28)));
+                        System.out.println("TAKEN BRANCH " + (0xf &(secondPATCHOperation >> 28)));
+
+                }
+            }
+
 
 	    
         } else if (operation == (ConditionFlag.NeverUse.value() << 28 | 0xbeef)) { // JMP
             // disp += 8;
 	    checkConstraint(-0x800000 <= (disp) && disp <= 0x7fffff, "patchJumpTarget TWO must be within  a 24bit offset");
             disp += 8;
+	    if(instrumented) {
+                System.out.println("JUMP CASE TWO");
+                if((0xf&(firstPATCHOperation >>28)) == ConditionFlag.Always.value()) {
+                        System.out.println("We have an ALWAYS TAKEN BRANCH");
+                }else {
+                        System.out.println("We have a NOTTAKEN BRANCH " + (0xf & (firstPATCHOperation >>28)));
+                        System.out.println("TAKEN BRANCH " + (0xf & (secondPATCHOperation >> 28)));
+
+                }
+            }
+
 
             disp = disp / 4;
             // System.out.println("MATCHED OTHER DISP " + (target-branch) + " bran "+ branch + " target " + target);
@@ -266,6 +310,17 @@ public class ARMV7Assembler extends AbstractAssembler {
             disp = disp / 4;
 
             codeBuffer.emitInt(0x0a000000 | (disp & 0xffffff) | ((ConditionFlag.Always.value() & 0xf) << 28), branch);
+	    if(instrumented) {
+		System.out.println("JUMP CASE THREE");
+                if((0xf & (firstPATCHOperation >>28)) == ConditionFlag.Always.value()) {
+                        System.out.println("We have an ALWAYS TAKEN BRANCH");
+                }else {
+                        System.out.println("We have a NOTTAKEN BRANCH " + (0xf & (firstPATCHOperation >>28)));
+                        System.out.println("TAKEN BRANCH " + (0xf & (secondPATCHOperation >> 28)));
+
+                }
+            }
+
 	    //System.out.println("JUMP CASE THREE");
             // System.out.println("DISP was "+ (target - branch)+ " " + target+ " "+ branch);
             /*
@@ -275,16 +330,31 @@ public class ARMV7Assembler extends AbstractAssembler {
              */
 
         } else {
-             //com.sun.max.vm.Log.println("JUMP was "+ (target - branch)+ " " + target+ " "+ branch);
-
-// System.out.println("ASSUMING JMP: check this came from an emitPrologue as a result of hosted mode ARM ..patchjumpTarget NOT MATCHED "
-// + branch + " " + target);
 	    checkConstraint(-0x800000 <= (disp) && disp <= 0x7fffff, "patchJumpTarget FOUR must be within  a 24bit offset");
             disp += 8;
+	    int truePatchDisp = disp;
+	    int falsePatchDisp = disp;
             disp = disp / 4;
 
             codeBuffer.emitInt(0x0a000000 | (disp & 0xffffff) | ((ConditionFlag.Always.value() & 0xf) << 28), branch);
-            // assert 0 == 1;
+	    /*
+		OFFSETS determined by gdb ...
+		-44 and -56 - we might be out by 4 if there is a no inserted.
+		Check that -44 we have a movw movt
+		Identify if we have ConditionFlag.Always --- if so we only have on condition to patch
+		 and that is the TAKEN condition ie related to the disp ....
+		ELSE we have the NOTTAKEN condition at -44 and the TAKEN condition at the -56
+	    */	
+	    if(instrumented) {
+		System.out.println("JUMP CASE DEFAULT");
+	    	if((0xf &(firstPATCHOperation >>28)) == ConditionFlag.Always.value()) {
+			System.out.println("We have an ALWAYS TAKEN BRANCH");
+	    	}else {
+			System.out.println("We have a NOTTAKEN BRANCH " + (0xf &(firstPATCHOperation >>28)));
+			System.out.println("TAKEN BRANCH " + (0xf &(secondPATCHOperation >> 28)));
+		
+	    	}
+	    }
         }
 
         // codeBuffer.emitInt(0x0a000000 | (target - branch) | ((ConditionFlag.Always.value() & 0xf) << 28),branch);
@@ -1098,7 +1168,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         if (!data) {
             orint |= 2;
         }
-
+	emitInt(0xeaffffff); // this is the branch to next instruction ... ie the instrumentPush
         instrumentPush(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384);
 	mrsReadAPSR(ARMV7Assembler.ConditionFlag.Always, valAddress);
         instrumentPush(ConditionFlag.Always, 1<<valAddress.encoding);
@@ -1983,6 +2053,12 @@ public class ARMV7Assembler extends AbstractAssembler {
 	}
 	assert isAbsoluteAddress == true: "instrumentNEWAbsolutePC only works for absolute addresses";
 	assert !isMethodEntry || (isMethodEntry && (pcAdjustment == -4 || pcAdjustment == -16)) : "instrumentNEWAbsolutePC point is after the push $LR and decrement SP";
+
+	/*
+	Remember needs changing to ensure that it in VERSION 2 of instrumentation it passes the next PC addrsss
+	NEEDS CAREFUL THOUGHT ... USED BY METHOD ENTRY
+	*/
+	emitInt(0xeaffffff); // this is the branch to next instruction ... ie the instrumentPush
         instrumentPush(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
 	mrsReadAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4);
         instrumentPush(ConditionFlag.Always, 1<<4);
@@ -2013,28 +2089,75 @@ public class ARMV7Assembler extends AbstractAssembler {
 	*	Generally used to instrument a PC relative branch 
 	*	Taken and not taken are instrumented with a single call
 	*
+ 0x1c3af214:	eor	r8, r8, r8
+   0x1c3af218:	cmp	r2, r8
+   -12 0x1c3af21c:	push	{r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, lr} <-- save regs
+   -12 0x1c3af220:	mrs	r4, CPSR <--- SAVE APSRC FLAGS
+   -12 0x1c3af224:	stmfd	sp!, {r4}
+   -12 0x1c3af228:	movwne	r1, #65523	; 0xfff3
+   -12 0x1c3af22c:	movtne	r1, #65535	; 0xffff
+   -12 0x1c3af230:	addne	r1, pc, r1 <--- in pathcJumpTarget search for 0x08f1001
+   -12 0x1c3af234:	movweq	r1, #36	; 0x24
+   -12 0x1c3af238:	movteq	r1, #0
+   -12 0x1c3af23c:	addeq	r1, pc, r1 <---- in pathcJumpTarget search for 0x08f1001
+   -12 0x1c3af240:	movw	r0, #65535	; 0xffff
+   -12 0x1c3af244:	movt	r0, #65535	; 0xffff
+   -12 0x1c3af248:	movw	r12, #34832	; 0x8810
+   -12 0x1c3af24c:	movt	r12, #46825	; 0xb6e9
+   -12 0x1c3af250:	blx	r12
+   -12 0x1c3af254:	ldmfd	sp!, {r4}
+   -8 0x1c3af258:	msr	CPSR_fs, r4 <--- restore APSR FLAGS
+   -4 0x1c3af25c:	pop	{r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, lr} <--- end of instrumentPCChange
+   0x1c3af260:	movw	r12, #1924	; 0x784 <---- displacement
+   0x1c3af264:	movt	r12, #0
+   0x1c3af268:	nop	{0}
+   0x1c3af26c:	addne	pc, r12, pc <---- a conditional branch
+
 	*/
 	if(maxineFlushAddress == 0) {
 		maxineFlushAddress = maxineflush.maxine_flush_instrumentationBuffer();
 	}
 	int instructions = 0;
 	int notTakenDisp = 0;
+	/*Label l = new Label();
+	instrumentBranch(l);	
+	bind(l); // not a real instruction binds label to the push, makes the branch a NOP
+	Same effect as         emitInt(0xeaffffff);
+	It avoids it needing to be patched!
+
+	*/
+	emitInt(0xeaffffff); // this is the branch to next instruction ... ie the instrumentPush
+	/* 
+	in the initial implementation John will stop at the branch, then he will go to where we tell him from 
+	this call out to C real_maxine_instrumentation
+	
+	In the second implementation -- to validation cycle accuracy we will  tell him the address of the instruction 
+	causing the PC change and also the result of that PC change
+	*/
         instrumentPush(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
         mrsReadAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4);
 	instrumentPush(ConditionFlag.Always, 1<<4);
 	//vpush(ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // needs to be changed to instrumentVPUSH
 
-	disp = disp -12; //-4 one instruction aboive // -8 two instructions above , -12 THREE INSTR
+	disp = disp -16; //-4 one instruction aboive // -8 two instructions above , -12 THREE INSTR
+	/* this instruction will be either -36 or -48 bytes from a patch */
 	mov32BitConstant(taken, ARMV7.r1, disp);
+	/* this instruction will be either -28 OR -40 bytes from a patch */
         addRegisters(taken, false, ARMV7.r1, ARMV7.r15, ARMV7.r1, 0, 0);
 	if (notTaken != ConditionFlag.NeverUse) {
 		notTakenDisp = 8*2+4*2+ 3*4;
+		/* if present this instruction will be -36 bytes offset from a patch */
 		mov32BitConstant(notTaken, ARMV7.r1,notTakenDisp);
+		/* if present this instruction will  br -28 bytes offset from a patch */
 		addRegisters(notTaken, false, ARMV7.r1, ARMV7.r15, ARMV7.r1, 0, 0);
 		notTakenDisp = 12; // 3 instructions
 	}
 	// at this point the ARMV7.r1 register has the target PC address.
+	/* 
+	This instruction will be -24 bytes offset from a patch
+	*/
 	mov32BitConstant(ConditionFlag.Always, ARMV7.r0,-1); // r0 has -1 to signify it  is a PC change
+	
         mov32BitConstant(ConditionFlag.Always, ARMV7.r12, maxineFlushAddress);
   	int instruction = blxHelper(ConditionFlag.Always, ARMV7.r12);
         emitInt(instruction);
@@ -2081,6 +2204,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void jcc(ConditionFlag cc, Label l) {
+	boolean instrumentMe = (maxineflush != null);
         assert (0 <= cc.value) && (cc.value < 16) : "illegal cc";
         if (l.isBound()) {
             // System.out.println("LABEL bound jcc no need to patch");
@@ -2096,9 +2220,12 @@ public class ARMV7Assembler extends AbstractAssembler {
 		ConditionFlag tmp = ConditionFlag.Always;
 		tmp = cc.inverse();
 		instrumentPCChange(cc, tmp, -1);
+		
 		// will need patching
+		// FOR the NOT taken CONDITION we end up past the addRegisters(cc, false, ARMV7.r15, ARMV7.r12, ARMV7.r15, 0, 0);
+		//+16bytes past the end of the instrumentation
 	    } 
-            l.addPatchAt(codeBuffer.position());
+            l.addPatchAt(codeBuffer.position(),instrumentMe);
             // System.out.println("ADDED JCC PATCH AT" + codeBuffer.position());
             emitInt(ConditionFlag.NeverUse.value() << 28 | 0xdead); // JCC CODE for the PATCH
             nop(2);
@@ -2155,6 +2282,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void jmp(Label l) {
+	boolean instrumentMe = (maxineflush != null);
         if (l.isBound()) {
             jmp(l.position(), false);
         } else {
@@ -2186,7 +2314,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                 instrumentPCChange(ConditionFlag.Always, tmp, -3);
 
 	    }
-            l.addPatchAt(codeBuffer.position());
+            l.addPatchAt(codeBuffer.position(),instrumentMe);
             emitInt(ConditionFlag.NeverUse.value() << 28 | 0xbeef); // JMP CODE for the PATCH
             // TODO fix this it will not work ....
             nop(1);

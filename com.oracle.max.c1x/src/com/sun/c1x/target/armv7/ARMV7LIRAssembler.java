@@ -2469,6 +2469,11 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 		  
 		    // taken flag , not taken flag , isAbsoluteAddress, CiRegister , adjustment, isMethodEntry
 		    masm.instrumentNEWAbsolutePC(ConditionFlag.Always, ConditionFlag.NeverUse, true, ARMV7.r15, -16,true);
+		    /*
+		    We need TO THINK CAREFULLY HERE. WE NEED TO BE ABLE TO TELL THE SIMULATION PLATFORM THAT
+		    WE ARE A METHOD ENTRY ... WHERE WE START OK AS WE ARE ONLY CONSIDERING c1x COMPILED THEN WE
+		    ALWAYS ENTER AT THE OPTIMISED ENTRY POINT 
+		    */
 			
 		
 

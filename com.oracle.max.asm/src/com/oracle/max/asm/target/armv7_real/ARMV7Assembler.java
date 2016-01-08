@@ -53,7 +53,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     @Override
-    protected void patchJumpTarget(int branch, int target) {
+    protected void patchJumpTarget(int branch, int target, boolean insturmented) {
         // b, bl & bx goes here
     }
 

@@ -2849,7 +2849,10 @@ public class AMD64Assembler extends AbstractAssembler {
     }
 
     @Override
-    protected final void patchJumpTarget(int branch, int branchTarget) {
+    protected final void patchJumpTarget(int branch, int branchTarget,boolean instrument) {
+	/*
+	instrument is unused in X86
+	*/
         int op = codeBuffer.getByte(branch);
         assert op == 0xE8 // call
             || op == 0x00 // jump table entry

@@ -118,7 +118,7 @@ void real_maxine_instrumentation(int address, unsigned int newpc, int totalPages
 			//printf("NEWPC --- ABSOLUTE 0x%x\n\n",newpc);
 		break;
 		case -1:
-			printf("RELATIVE NEWPCBRANCH --- 0x%x\n\n",newpc);
+			//printf("RELATIVE NEWPCBRANCH --- 0x%x\n\n",newpc);
 			/*
 			this is a relative branch/jmp of some kind .....
 			*/
