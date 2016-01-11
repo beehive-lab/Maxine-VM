@@ -343,20 +343,21 @@ public class ARMV7Assembler extends AbstractAssembler {
 			codeBuffer.emitInt(instruction, branch - firstPATCH+4);
 
                 }else {
-                        System.out.println("We have an NOTTAKEN TAKEN BRANCH");
-			disp = disp +  firstPATCH;
-			tmp = ConditionFlag.which(0xf & (firstPATCHOperation >>28));
-			instruction = movwHelper(tmp ,ARMV7.r1, disp & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - firstPATCH);
-                        instruction = movtHelper(tmp ,ARMV7.r1, (disp >> 16) & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - firstPATCH+4);
-
-			tmp = ConditionFlag.which(0xf & (secondPATCHOperation >> 28));	
-			disp = disp + 12; // might be wrong
+                        System.out.println("We have an TAKEN NOTTAKEN BRANCH");
+			disp = disp +  secondPATCH;
+			// patch operations are therefore reversed
+			tmp = ConditionFlag.which(0xf & (secondPATCHOperation >>28));
 			instruction = movwHelper(tmp ,ARMV7.r1, disp & 0xffff);
                         codeBuffer.emitInt(instruction, branch - secondPATCH);
                         instruction = movtHelper(tmp ,ARMV7.r1, (disp >> 16) & 0xffff);
                         codeBuffer.emitInt(instruction, branch - secondPATCH+4);
+
+			tmp = ConditionFlag.which(0xf & (firstPATCHOperation >> 28));	
+			disp = 44;
+			instruction = movwHelper(tmp ,ARMV7.r1, disp & 0xffff);
+                        codeBuffer.emitInt(instruction, branch - firstPATCH);
+                        instruction = movtHelper(tmp ,ARMV7.r1, (disp >> 16) & 0xffff);
+                        codeBuffer.emitInt(instruction, branch - firstPATCH+4);
                 }
             }
 
@@ -379,19 +380,19 @@ public class ARMV7Assembler extends AbstractAssembler {
 
                 }else {
 			System.out.println("WE HAVE  ATAKEN + NOTTAKEN TO PATCH");
-                        tmpDisp = disp +  firstPATCH;
-                        tmp = ConditionFlag.which(0xf & (firstPATCHOperation >>28));
-                        instruction = movwHelper(tmp ,ARMV7.r1, tmpDisp & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - firstPATCH);
-                        instruction = movtHelper(tmp ,ARMV7.r1, (tmpDisp >> 16) & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - firstPATCH+4);
-
-                        tmp = ConditionFlag.which(0xf & (secondPATCHOperation >> 28));
-                        tmpDisp = disp + 12; // might be wrong
+                        tmpDisp = disp +  secondPATCH;
+                        tmp = ConditionFlag.which(0xf & (secondPATCHOperation >>28));
                         instruction = movwHelper(tmp ,ARMV7.r1, tmpDisp & 0xffff);
                         codeBuffer.emitInt(instruction, branch - secondPATCH);
                         instruction = movtHelper(tmp ,ARMV7.r1, (tmpDisp >> 16) & 0xffff);
                         codeBuffer.emitInt(instruction, branch - secondPATCH+4);
+
+                        tmp = ConditionFlag.which(0xf & (firstPATCHOperation >> 28));
+                        tmpDisp = 44;
+                        instruction = movwHelper(tmp ,ARMV7.r1, tmpDisp & 0xffff);
+                        codeBuffer.emitInt(instruction, branch - firstPATCH);
+                        instruction = movtHelper(tmp ,ARMV7.r1, (tmpDisp >> 16) & 0xffff);
+                        codeBuffer.emitInt(instruction, branch - firstPATCH+4);
                 }
 
 		
@@ -426,19 +427,19 @@ public class ARMV7Assembler extends AbstractAssembler {
                         codeBuffer.emitInt(instruction, branch - firstPATCH+4);
 
                 }else {
-                        disp = disp +  firstPATCH;
-                        tmp = ConditionFlag.which(0xf & (firstPATCHOperation >>28));
-                        instruction = movwHelper(tmp ,ARMV7.r1, disp & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - firstPATCH);
-                        instruction = movtHelper(tmp ,ARMV7.r1, (disp >> 16) & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - firstPATCH+4);
-
-                        tmp = ConditionFlag.which(0xf & (secondPATCHOperation >> 28));
-                        disp = disp + 12; // might be wrong
+                        disp = disp +  secondPATCH;
+                        tmp = ConditionFlag.which(0xf & (secondPATCHOperation >>28));
                         instruction = movwHelper(tmp ,ARMV7.r1, disp & 0xffff);
                         codeBuffer.emitInt(instruction, branch - secondPATCH);
                         instruction = movtHelper(tmp ,ARMV7.r1, (disp >> 16) & 0xffff);
                         codeBuffer.emitInt(instruction, branch - secondPATCH+4);
+
+                        tmp = ConditionFlag.which(0xf & (firstPATCHOperation >> 28));
+                        disp = 44;
+                        instruction = movwHelper(tmp ,ARMV7.r1, disp & 0xffff);
+                        codeBuffer.emitInt(instruction, branch - firstPATCH);
+                        instruction = movtHelper(tmp ,ARMV7.r1, (disp >> 16) & 0xffff);
+                        codeBuffer.emitInt(instruction, branch - firstPATCH+4);
                 }
 
             }
@@ -477,19 +478,19 @@ public class ARMV7Assembler extends AbstractAssembler {
                         codeBuffer.emitInt(instruction, branch - firstPATCH+4);
 
                 }else {
-                        disp = disp +  firstPATCH;
-                        tmp = ConditionFlag.which(0xf & (firstPATCHOperation >>28));
-                        instruction = movwHelper(tmp ,ARMV7.r1, disp & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - firstPATCH);
-                        instruction = movtHelper(tmp ,ARMV7.r1, (disp >> 16) & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - firstPATCH+4);
-
-                        tmp = ConditionFlag.which(0xf & (secondPATCHOperation >> 28));
-                        disp = disp + 12; // might be wrong
+                        disp = disp +  secondPATCH;
+                        tmp = ConditionFlag.which(0xf & (secondPATCHOperation >>28));
                         instruction = movwHelper(tmp ,ARMV7.r1, disp & 0xffff);
                         codeBuffer.emitInt(instruction, branch - secondPATCH);
                         instruction = movtHelper(tmp ,ARMV7.r1, (disp >> 16) & 0xffff);
                         codeBuffer.emitInt(instruction, branch - secondPATCH+4);
+
+                        tmp = ConditionFlag.which(0xf & (firstPATCHOperation >> 28));
+                        disp = 44;
+                        instruction = movwHelper(tmp ,ARMV7.r1, disp & 0xffff);
+                        codeBuffer.emitInt(instruction, branch - firstPATCH);
+                        instruction = movtHelper(tmp ,ARMV7.r1, (disp >> 16) & 0xffff);
+                        codeBuffer.emitInt(instruction, branch - firstPATCH+4);
                 }
 
 	    }
@@ -2125,11 +2126,13 @@ public class ARMV7Assembler extends AbstractAssembler {
         // might need to push the value of r14 onto the stack in order to make this work for a call from the C harness
         // TODO for testing of the methods
 	if(maxineflush != null) {
+		/* changed to do the load and then to state it is a PC altering operation */
+		instrument(true, true, true, ARMV7.r13, 0);
 		ldr(ConditionFlag.Always,  ARMV7.r12, ARMV7.r13, 0);    	
 		instrumentNEWAbsolutePC(ConditionFlag.Always,ConditionFlag.NeverUse, true, ARMV7.r12, 0, false);
 		// TODO  instrument the POP which is a READ!!!
 	}
-        pop(ConditionFlag.Always, 1 << 15);
+        instrumentPop(ConditionFlag.Always, 1 << 15);
     }
 
     public final void ret(int imm16) {
@@ -2191,6 +2194,10 @@ public class ARMV7Assembler extends AbstractAssembler {
 	}
 	assert isAbsoluteAddress == true: "instrumentNEWAbsolutePC only works for absolute addresses";
 	assert !isMethodEntry || (isMethodEntry && (pcAdjustment == -4 || pcAdjustment == -16)) : "instrumentNEWAbsolutePC point is after the push $LR and decrement SP";
+	if(isMethodEntry) {
+		pcAdjustment = pcAdjustment -16; // this will take us to the movw movt but we are not instrumenting the
+		//push of the LR at a C1X optimised method entry point
+	}
 
 	/*
 	Remember needs changing to ensure that it in VERSION 2 of instrumentation it passes the next PC addrsss
