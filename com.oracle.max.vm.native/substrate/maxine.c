@@ -51,6 +51,7 @@
 #include "maxve.h"
 #endif
 #ifdef arm
+/*
 //beginning of simulation platform functions
 // defined in libCCluster.a
 extern void reportCounters();
@@ -60,6 +61,11 @@ extern void reportSpec();
 extern void pushDLD(unsigned int address);
 extern void pushILD(unsigned int address);
 extern void pushDSTR(unsigned int address);
+*/
+// defined in libFPGAsim.a
+extern int initialiseTimingModel();
+extern void pushJumpAddress(int address);
+extern int reportTimingCounters();
 // end of simulation platform functions
 void divideByZeroExceptions();
 #   include <pthread.h>
@@ -109,21 +115,27 @@ void real_maxine_instrumentation(int address, unsigned int newpc, int totalPages
 			Absolute address  this refers to a mov to the PC, a blx/bx with a register.
 			or even a branch to an absolute address
 			*/
-			printf("NEWPC METHODENTRY 0x%x\n",newpc);
+			//printf("NEWPC METHODENTRY 0x%x\n",newpc);
+			pushJumpAddress(newpc);
 		break; // break  only while debugging the various cases ...
 			/* 
 			We DELIBERATELY FALL THROUGH TO CASE 3 THAT IS ALSO AN absolute ADDRESS 
 			*/
 		case -3:
 			//printf("NEWPC --- ABSOLUTE 0x%x\n\n",newpc);
+			pushJumpAddress(newpc);
 		break;
 		case -1:
 			//printf("RELATIVE NEWPCBRANCH --- 0x%x\n\n",newpc);
 			/*
 			this is a relative branch/jmp of some kind .....
 			*/
+			pushJumpAddress(newpc);
 		break;
 		default:
+			printf("Currently we are configured to do PC changing addrsses\n");
+			printf("It looks like we have missed a LD/ST/PUSH/POP/VPUSH/VPOP instrumentation that we have not commented out\n");
+			printf("EXPECT this to crash the FPGA");
 			/* this is a non-negative value therefor it means we are doing LD/ST tracing ....
 			*/
 			if(address &0x1) {
@@ -146,12 +158,12 @@ void real_maxine_instrumentation(int address, unsigned int newpc, int totalPages
 			isStore = address & 0x1;
 			address = address & 0xfffffffd;
 			if(isInstruction) {
-				pushILD(address);
+				//pushILD(address);
 			} else {
 				if(isStore) {
-					pushDSTR(address);
+					//pushDSTR(address);
 				} else {
-					pushDLD(address);
+					//pushDLD(address);
 				}
 			}
 		}
@@ -576,9 +588,12 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
 #ifdef arm
 divideByZeroExceptions();        
-#ifdef SIMULATIONPLATFORM
-initialiseMemoryCluster();
-#endif
+//#define SIMULATION_PLATFORM 1
+//#ifdef SIMULATIONPLATFORM
+//initialiseMemoryCluster();
+printf("INITIALISE TIMING\n");
+initialiseTimingModel();
+//#endif
 #endif
 
 #if log_LOADER
@@ -602,7 +617,8 @@ initialiseMemoryCluster();
 #ifdef arm
 #ifdef SIMULATIONPLATFORM
 	printf("ABOUT to report counters\n");
-	reportCounters();
+	reportTimingResults();
+	//reportCounters();
 #endif
 	maxine_close();
 #endif

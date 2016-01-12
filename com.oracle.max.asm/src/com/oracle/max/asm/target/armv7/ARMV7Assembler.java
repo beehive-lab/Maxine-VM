@@ -1220,23 +1220,24 @@ public class ARMV7Assembler extends AbstractAssembler {
         if (maxineFlushAddress == 0) {
             maxineFlushAddress = maxineflush.maxine_flush_instrumentationBuffer();
         }
+	/* TEMPORARILY COMMENTED OUT FOR DEBUGGING OF PC CHANGES
         // save some registers to the stack using a
 
-        /*
-         * Format bottom 2 bits used/ 2 instruction read 1 data write 0 data read i.e. bit 0 = Write bit 1 = Instruction
-         * Instruction Operation Bit 1 Bit 0 ----------------------------- DATAREAD 0 0 DATAWRITE 0 1 CODEREAD 1 0
-         * CODEWRITE 1 1 public static boolean INSTRUMENT = false; public static int simBuf = 0; public static int
-         * simBuffOffset = 0;
-         */
+        //
+         // Format bottom 2 bits used/ 2 instruction read 1 data write 0 data read i.e. bit 0 = Write bit 1 = Instruction
+         // Instruction Operation Bit 1 Bit 0 ----------------------------- DATAREAD 0 0 DATAWRITE 0 1 CODEREAD 1 0
+         // CODEWRITE 1 1 public static boolean INSTRUMENT = false; public static int simBuf = 0; public static int
+         // simBuffOffset = 0;
+	//
         CiRegister immReg = null;
         CiRegister spareAddress = null;
         CiRegister spareImm = null;
         CiRegister destAddress = null;
         CiRegister valAddress = null;
         switch (base.encoding) {
-	/*
-         * r0 r1 r2 r8 r9 r12 are pushed
-         */
+	//
+        // r0 r1 r2 r8 r9 r12 are pushed
+        //
             case 0:
                 spareAddress = ARMV7.r8;
                 spareImm = ARMV7.r9;
@@ -1324,9 +1325,8 @@ public class ARMV7Assembler extends AbstractAssembler {
 	instrumentPop(ConditionFlag.Always, 1<<valAddress.encoding);
 	msrWriteAPSR(ARMV7Assembler.ConditionFlag.Always, valAddress);
 
-        instrumentPop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | /*
-                                                                                                                   * 8192|
-                                                                                                                   */16384);
+        instrumentPop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384);
+*/
         return;
     }
 
