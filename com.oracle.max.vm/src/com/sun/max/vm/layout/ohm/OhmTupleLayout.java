@@ -57,7 +57,7 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
         return hub.tupleSize;
     }
 
-    private final int headerSize = 2 * Word.size();
+    private final int headerSize = Platform.target().arch.is32bit() ? 3 * Word.size() : 2 * Word.size();
 
     @INLINE
     public int headerSize() {
@@ -65,7 +65,11 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
     }
 
     public HeaderField[] headerFields() {
-        return new HeaderField[] {HeaderField.HUB, HeaderField.MISC};
+        if (Platform.target().arch.is64bit()) {
+            return new HeaderField[] { HeaderField.HUB, HeaderField.MISC};
+        } else {
+            return new HeaderField[] { HeaderField.HUB, HeaderField.MISC, HeaderField.HASH};
+        }
     }
 
     @INLINE
