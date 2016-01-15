@@ -25,18 +25,18 @@ package com.sun.max.vm.monitor.modal.modehandlers.inflated;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.*;
 /**
  * Abstracts access to an inflated lock word's bit fields.
  */
 public class InflatedMonitorLockword64 extends HashableLockword64 {
 
     /*
-     * Field layout:
+     * Field layout (64 Bit) :
      *
      * bit [63............................... 1  0]     Shape         Binding   Lock-state
      *
@@ -44,9 +44,16 @@ public class InflatedMonitorLockword64 extends HashableLockword64 {
      *     [ Pointer to JavaMonitor object  ][1][1]     Inflated      Bound     Unlocked or locked
      *     [           Undefined            ][m][0]     Lightweight
      *
+     * Field layout (32 Bit) :
+     *
+     * bit [31.................................0]     Shape         Binding   Lock-state
+     *
+     *                  0                    [0][1]     Inflated      Unbound   Unlocked
+     *                                       [1][1]     Inflated      Bound     Unlocked or locked
+     *                                       [m][0]     Lightweight
      */
 
-    private static final Address MONITOR_MASK = Word.allOnes().asAddress().shiftedLeft(NUMBER_OF_MODE_BITS);
+    private static final Address MONITOR_MASK = Platform.target().arch.is64bit() ? Word.allOnes().asAddress().shiftedLeft(NUMBER_OF_MODE_BITS) : Word.allOnes().asAddress();
 
     @HOSTED_ONLY
     public InflatedMonitorLockword64(long value) {
@@ -97,7 +104,17 @@ public class InflatedMonitorLockword64 extends HashableLockword64 {
      */
     @INLINE
     public static final InflatedMonitorLockword64 boundFromMonitor(JavaMonitor monitor) {
-        return from(Reference.fromJava(monitor).toOrigin().asAddress().bitSet(SHAPE_BIT_INDEX).bitSet(MISC_BIT_INDEX));
+        if (Platform.target().arch.is64bit()) {
+            return from(Reference.fromJava(monitor).toOrigin().asAddress().bitSet(SHAPE_BIT_INDEX).bitSet(MISC_BIT_INDEX));
+        } else {
+            return from(Reference.fromJava(monitor).toOrigin().asAddress());
+        }
+    }
+
+    @INLINE
+    public static final InflatedMonitorLockword64 boundFromZero() {
+        assert Platform.target().arch.is32bit() : "This function must be called only in 32 bit archs!";
+        return InflatedMonitorLockword64.from(HashableLockword64.from(Address.zero()).asAddress().bitSet(SHAPE_BIT_INDEX).bitSet(MISC_BIT_INDEX));
     }
 
     /**
@@ -129,6 +146,16 @@ public class InflatedMonitorLockword64 extends HashableLockword64 {
      */
     @INLINE
     public static final InflatedMonitorLockword64 unboundFromHashcode(int hashcode) {
-        return InflatedMonitorLockword64.from(HashableLockword64.from(Address.zero()).setHashcode(hashcode).asAddress().bitSet(SHAPE_BIT_INDEX));
+        if (Platform.target().arch.is64bit()) {
+            return InflatedMonitorLockword64.from(HashableLockword64.from(Address.zero()).setHashcode(hashcode).asAddress().bitSet(SHAPE_BIT_INDEX));
+        } else {
+            return InflatedMonitorLockword64.from(HashableLockword64.from(Address.zero()).asAddress().bitSet(SHAPE_BIT_INDEX));
+        }
+    }
+
+    @INLINE
+    public static final InflatedMonitorLockword64 fromHashcode(int hashcode) {
+        assert Platform.target().arch.is32bit() : "This function must be called only on 32 bit machines!";
+        return InflatedMonitorLockword64.from(HashableLockword64.from(Address.zero()).setHashcode(hashcode).asAddress());
     }
 }
