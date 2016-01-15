@@ -21,9 +21,10 @@
  * questions.
  */
 package com.sun.max.vm.monitor.modal.sync;
-
+import com.sun.max.vm.reference.*;
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -44,6 +45,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     protected volatile VmThread ownerThread;
     protected int recursionCount;
     private final AtomicWord displacedMiscWord = new AtomicWord();
+    private final AtomicWord displacedHashWord = new AtomicWord();
 
     protected BindingProtection bindingProtection;
     private Word preGCLockword;
@@ -85,11 +87,24 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
         return displacedMiscWord.compareAndSwap(expectedValue, newValue);
     }
 
+    public final Word displacedHash() {
+        return displacedHashWord.get();
+    }
+
+    public final void setDisplacedHash(Word hash) {
+        displacedHashWord.set(hash);
+    }
+
+    public final Word compareAndSwapDisplacedHash(Word expectedValue, Word newValue) {
+        return displacedHashWord.compareAndSwap(expectedValue, newValue);
+    }
+
     public void reset() {
         boundObject = null;
         ownerThread = null;
         recursionCount = 0;
         displacedMiscWord.set(Word.zero());
+        displacedHashWord.set(Word.zero());
         preGCLockword = Word.zero();
         bindingProtection = BindingProtection.PRE_ACQUIRE;
     }
@@ -119,7 +134,12 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     }
 
     public final void refreshBoundObject() {
-        ObjectAccess.writeMisc(boundObject, InflatedMonitorLockword64.boundFromMonitor(this));
+        if (Platform.target().arch.is64bit()) {
+            ObjectAccess.writeMisc(boundObject, InflatedMonitorLockword64.boundFromMonitor(this));
+        } else {
+            ObjectAccess.writeMisc(boundObject, InflatedMonitorLockword64.boundFromZero());
+            ObjectAccess.writeHash(boundObject, Reference.fromJava(this).toOrigin());
+        }
     }
 
     public final BindingProtection bindingProtection() {
