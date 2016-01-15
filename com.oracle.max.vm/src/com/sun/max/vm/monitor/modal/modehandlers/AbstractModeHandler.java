@@ -149,6 +149,8 @@ public abstract class AbstractModeHandler implements ModeHandler {
          */
         Word createMisc(Object object);
 
+        int createHash(Object object);
+
         /**
          * Tests if the given VmThread owns the given Object's monitor.
          *
