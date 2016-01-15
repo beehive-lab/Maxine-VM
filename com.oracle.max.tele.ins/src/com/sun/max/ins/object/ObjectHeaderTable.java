@@ -37,10 +37,11 @@ import com.sun.max.ins.memory.*;
 import com.sun.max.ins.type.*;
 import com.sun.max.ins.util.*;
 import com.sun.max.ins.value.*;
+import com.sun.max.platform.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.object.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.layout.Layout.HeaderField;
+import com.sun.max.vm.layout.Layout.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -313,6 +314,9 @@ public final class ObjectHeaderTable extends InspectorTable {
                     };
                 } else if (headerField == HeaderField.MISC) {
                     labels[row] = new MiscWordLabel(inspection, object);
+                } else if (headerField == HeaderField.HASH) {
+                    assert Platform.target().arch.is32bit();
+                    labels[row] = new PrimitiveValueLabel(inspection, Kind.WORD);
                 } else if (headerField == HeaderField.LENGTH) {
                     switch (object.kind()) {
                         case ARRAY:
