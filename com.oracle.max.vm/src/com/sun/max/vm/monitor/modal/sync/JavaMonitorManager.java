@@ -27,11 +27,12 @@ import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.monitor.*;
-import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.ManagedMonitor.BindingProtection;
+import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.ManagedMonitor.*;
 import com.sun.max.vm.monitor.modal.sync.nat.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
@@ -121,6 +122,7 @@ public class JavaMonitorManager {
      */
     public interface UnboundMiscWordWriter {
         void writeUnboundMiscWord(Object object, Word preBindingMiscWord);
+        void writeUnboundHashWord(Object object, Word preBindingMiscWord);
     }
 
     @CONSTANT_WHEN_NOT_ZERO
@@ -162,6 +164,9 @@ public class JavaMonitorManager {
             for (ManagedMonitor monitor : stickyMonitors) {
                 monitor.allocate();
                 monitor.setDisplacedMisc(ObjectAccess.readMisc(monitor.boundObject()));
+                if (Platform.target().arch.is32bit()) {
+                    monitor.setDisplacedHash(ObjectAccess.readHash(monitor.boundObject()));
+                }
                 monitor.refreshBoundObject();
             }
             if (Monitor.TraceMonitors && stickyMonitors.length > 0) {
@@ -511,6 +516,9 @@ public class JavaMonitorManager {
                 }
                 // Write the object's new misc word
                 unboundMiscWordWriter.writeUnboundMiscWord(monitor.boundObject(), monitor.displacedMisc());
+                if (Platform.target().arch.is32bit()) {
+                    unboundMiscWordWriter.writeUnboundHashWord(monitor.boundObject(), monitor.displacedHash());
+                }
                 monitor.reset();
                 // Put the monitor back on the unbound list.
                 // This is thread-safe as mutator thread access to the free-list is
