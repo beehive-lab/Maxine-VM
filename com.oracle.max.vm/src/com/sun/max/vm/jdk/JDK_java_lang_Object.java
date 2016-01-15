@@ -66,11 +66,7 @@ final class JDK_java_lang_Object {
      */
     @SUBSTITUTE("hashCode")
     public int hashCode_SUBSTITUTE() {
-        if (Platform.target().arch.is32bit()) {
-            return 0xfffff & ObjectAccess.makeHashCode(this);
-        } else {
-            return ObjectAccess.makeHashCode(this);
-        }
+        return ObjectAccess.makeHashCode(this);
     }
 
     /**
