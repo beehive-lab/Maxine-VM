@@ -25,13 +25,13 @@ package com.sun.max.vm.layout.xohm;
 import static com.sun.max.vm.VMConfiguration.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.HeaderField;
-import com.sun.max.vm.layout.SpecificLayout.ObjectCellVisitor;
-import com.sun.max.vm.layout.SpecificLayout.ObjectMirror;
+import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.layout.SpecificLayout.*;
 import com.sun.max.vm.layout.ohm.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -151,6 +151,7 @@ public class XOhmGeneralLayout extends AbstractLayout implements GeneralLayout {
     public final int xtraCount;
 
     public XOhmGeneralLayout() {
+        assert !Platform.target().arch.is32bit() : "XOhmGeneral Layout not implemented for 32 bit archs!";
         miscOffset = hubOffset + Word.size();
         xOffset = miscOffset + Word.size();
         final String countProp = System.getProperty(XOHM_WORDS_PROPERTY);
@@ -356,4 +357,15 @@ public class XOhmGeneralLayout extends AbstractLayout implements GeneralLayout {
         return true;
     }
 
+    public Word readHash(Accessor accessor) {
+        throw ProgramError.unexpected();
+    }
+
+    public Word compareAndSwapHash(Accessor accessor, Word expectedValue, Word newValue) {
+        throw ProgramError.unexpected();
+    }
+
+    public void writeHash(Accessor accessor, Word value) {
+        throw ProgramError.unexpected();
+    }
 }
