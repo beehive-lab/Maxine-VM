@@ -22,30 +22,20 @@
  */
 package com.sun.max.vm.object;
 
-import com.sun.max.annotate.ALIAS;
-import com.sun.max.annotate.INLINE;
-import com.sun.max.annotate.INTRINSIC;
-import com.sun.max.platform.Platform;
-import com.sun.max.unsafe.Pointer;
-import com.sun.max.unsafe.Size;
-import com.sun.max.unsafe.UnsafeCast;
-import com.sun.max.unsafe.Word;
-import com.sun.max.vm.actor.holder.ClassActor;
-import com.sun.max.vm.actor.holder.Hub;
-import com.sun.max.vm.actor.holder.StaticTuple;
-import com.sun.max.vm.heap.Heap;
-import com.sun.max.vm.jdk.JDK;
-import com.sun.max.vm.layout.ArrayLayout;
-import com.sun.max.vm.layout.HybridLayout;
-import com.sun.max.vm.layout.Layout;
-import com.sun.max.vm.monitor.Monitor;
-import com.sun.max.vm.reference.Reference;
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
-import java.lang.reflect.Array;
-import java.nio.ByteBuffer;
+import java.lang.reflect.*;
+import java.nio.*;
 
-import static com.sun.max.vm.MaxineVM.isHosted;
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.jdk.*;
+import com.sun.max.vm.layout.*;
+import com.sun.max.vm.monitor.*;
+import com.sun.max.vm.reference.*;
 
 
 /**
@@ -161,9 +151,6 @@ public final class ObjectAccess {
      * @return a new identity hashcode for the specified object
      */
     public static int makeHashCode(Object object) {
-        if (Platform.target().arch.is32bit()) {
-            return 0xfffff & Monitor.makeHashCode(object);
-	}
         return Monitor.makeHashCode(object);
     }
 
@@ -204,5 +191,20 @@ public final class ObjectAccess {
         asThis(buffer).init(address, capacity);
         ByteBuffer directBuffer = (ByteBuffer) buffer;
         return directBuffer;
+    }
+
+    @INLINE
+    public static Word readHash(Object object) {
+        return Layout.readHash(Reference.fromJava(object));
+    }
+
+    @INLINE
+    public static void writeHash(Object object, Word value) {
+        Layout.writeHash(Reference.fromJava(object), value);
+    }
+
+    @INLINE
+    public static Word compareAndSwapHash(Object object, Word expectedValue, Word newValue) {
+        return Layout.compareAndSwapHash(Reference.fromJava(object), expectedValue, newValue);
     }
 }
