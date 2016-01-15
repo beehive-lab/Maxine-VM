@@ -25,7 +25,6 @@ package com.sun.max.vm.compiler.deps;
 import java.util.*;
 import java.util.concurrent.locks.*;
 
-import com.sun.max.vm.type.ARM32Box;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAssumptions.Assumption;
 import com.sun.max.annotate.*;
@@ -129,7 +128,7 @@ public final class DependenciesManager {
     @HOSTED_ONLY
     static synchronized int registerDependencyProcessor(DependencyProcessor dependencyProcessor,
                     Class< ? extends CiAssumptions.Assumption> assumptionClass) {
-        ProgramError.check(dependencyProcessors.put((Platform.target().arch.is32bit() ? new ARM32Box(assumptionClass) : assumptionClass), dependencyProcessor) == null);
+        ProgramError.check(dependencyProcessors.put(assumptionClass, dependencyProcessor) == null);
         ProgramError.check(nextDependencyProcessorId < MAX_DEPENDENCY_PROCESSORS);
         dependencyProcessorList.add(dependencyProcessor);
         return nextDependencyProcessorId++;
