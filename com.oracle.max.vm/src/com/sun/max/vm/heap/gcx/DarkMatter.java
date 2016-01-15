@@ -26,13 +26,14 @@ import static com.sun.max.vm.heap.gcx.HeapFreeChunk.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.VMLog.*;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -97,6 +98,9 @@ public final class DarkMatter {
             final Pointer origin = Layout.cellToOrigin(darkMatter.asPointer());
             Layout.writeHubReference(origin, Reference.fromJava(hub()));
             Layout.writeMisc(origin, Word.zero());
+            if (Platform.target().arch.is32bit()) {
+                Layout.writeHash(origin, Word.zero());
+            }
             // FIXME: Tracing  here may lead to issue with GC if used when retiring TLABs during mutator allocation.
             if (logger.enabled()) {
                 logger.logFormatSmall(darkMatter);
@@ -229,6 +233,9 @@ public final class DarkMatter {
         final int length = size.minus(darkMatterHeaderSize()).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
         Layout.writeHubReference(origin, Reference.fromJava(hub()));
         Layout.writeMisc(origin, Word.zero());
+        if (Platform.target().arch.is32bit()) {
+            Layout.writeHash(origin, Word.zero());
+        }
         if (MaxineVM.isDebug()) {
             origin.writeWord(Layout.arrayLayout().arrayLengthOffset(), Word.zero());
         }
