@@ -22,9 +22,10 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
-import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.ModeDelegate.DelegatedThreadHoldsMonitorResult;
+import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.ModeDelegate.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -422,6 +423,11 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
         @Override
         public void beforeGarbageCollection() {
             super.beforeGarbageCollection();
+        }
+
+        public int createHash(Object object) {
+            FatalError.unimplemented();
+            return 0;
         }
     }
 }
