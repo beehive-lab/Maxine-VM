@@ -332,6 +332,12 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
             // Not a biased lock; delegate.
             return delegate().delegateMakeHashcode(object, lockword);
         }
+
+        public int createHash(Object object) {
+            FatalError.unimplemented();
+            return 0;
+        }
+
     }
 
     static final class FastPathWithEpoch extends BiasedLockModeHandler {
@@ -552,6 +558,11 @@ public abstract class BiasedLockModeHandler extends AbstractModeHandler implemen
                 hub.biasedLockEpoch = epoch.increment();
                 postRebiasLockword = revokeBias(object);
             }
+        }
+
+        public int createHash(Object object) {
+            FatalError.unimplemented();
+            return 0;
         }
     }
 }
