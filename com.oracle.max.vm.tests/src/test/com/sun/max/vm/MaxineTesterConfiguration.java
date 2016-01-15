@@ -283,7 +283,7 @@ public class MaxineTesterConfiguration {
         imageConfig("jtt-t1xt1x", opt_c1x, "--J @ \" -Xms512M -Xmx1G -esa -ea\"", "-heap=com.sun.max.vm.heap.sequential.semiSpace","-debug-methods", "-threads=4", "-run=test.com.sun.max.vm.jtrun.all",
                         "-native-tests", joinCompileCommands(testCallerT1X, testCalleeT1X), "--XX:+FailOverCompilation");
         String tmpVMArgs = "--J @\" -Xms512M -Xmx1G -esa -ea\"";
-        imageConfig("jtt-c1xc1x", opt_c1x, tmpVMArgs, "-heap=com.sun.max.vm.heap.sequential.semiSpace", "-threads=4", "-debug-methods","-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
+        imageConfig("jtt-c1xc1x", opt_c1x, tmpVMArgs, "-heap=com.sun.max.vm.heap.sequential.semiSpace", "-monitor=com.sun.max.vm.monitor.modal.schemes.inflated_only", "-threads=4", "-debug-methods","-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
         imageConfig("jtt-c1xgraal", opt_c1xgraal, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", joinCompileCommands(testCallerT1X, testCalleeGraal));
 
         imageConfig("jtt-msc1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", testCalleeT1X);
