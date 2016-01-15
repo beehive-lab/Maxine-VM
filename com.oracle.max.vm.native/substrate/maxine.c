@@ -51,6 +51,7 @@
 #include "maxve.h"
 #endif
 #ifdef arm
+/*
 //beginning of simulation platform functions
 // defined in libCCluster.a
 extern void reportCounters();
@@ -60,6 +61,11 @@ extern void reportSpec();
 extern void pushDLD(unsigned int address);
 extern void pushILD(unsigned int address);
 extern void pushDSTR(unsigned int address);
+*/
+// defined in libFPGAsim.a
+extern int initialiseTimingModel();
+extern void pushJumpAddress(int address);
+extern int reportTimingCounters();
 // end of simulation platform functions
 void divideByZeroExceptions();
 #   include <pthread.h>
@@ -90,7 +96,7 @@ void  maxine_close() {
         }
 }
 #endif
-void real_maxine_instrumentation(unsigned int address) {
+void real_maxine_instrumentation(int address, unsigned int newpc, int totalPages) { // R0 R1 R2
 	// the address has been altered to have a r/1 and a code/data bit set
 #ifdef arm
 	/*extern unsigned int getTID(unsigned int);
@@ -98,21 +104,71 @@ void real_maxine_instrumentation(unsigned int address) {
 	tid = getTID(tid);
 	printf("THREAD ID is %u ADDRESS %x\n",tid,address);
 	*/
+	switch (address) {
+		case -2:
+			/*
+			METHOD ENTRY AT PUSH FRAME ---  THIS IS DIFFERENT TO AN 
+			ADAPTER -- CURRENTLY WE DO *****NOT******* INSTRUMENT ADAPTERS
 
-	int isInstruction = 0;
-	int isStore = 0;
-	isInstruction = address & 0x2;
-	isStore = address & 0x1;
-	address = address & 0xfffffffd;
-	if(isInstruction) {
-		pushILD(address);
-	} else {
-		if(isStore) {
-			pushDSTR(address);
-		} else {
-			pushDLD(address);
+			we need to handle the virtual address pages issues ...
+
+			Absolute address  this refers to a mov to the PC, a blx/bx with a register.
+			or even a branch to an absolute address
+			*/
+			//printf("NEWPC METHODENTRY 0x%x\n",newpc);
+			pushJumpAddress(newpc);
+		break; // break  only while debugging the various cases ...
+			/* 
+			We DELIBERATELY FALL THROUGH TO CASE 3 THAT IS ALSO AN absolute ADDRESS 
+			*/
+		case -3:
+			//printf("NEWPC --- ABSOLUTE 0x%x\n\n",newpc);
+			pushJumpAddress(newpc);
+		break;
+		case -1:
+			//printf("RELATIVE NEWPCBRANCH --- 0x%x\n\n",newpc);
+			/*
+			this is a relative branch/jmp of some kind .....
+			*/
+			pushJumpAddress(newpc);
+		break;
+		default:
+			printf("Currently we are configured to do PC changing addrsses\n");
+			printf("It looks like we have missed a LD/ST/PUSH/POP/VPUSH/VPOP instrumentation that we have not commented out\n");
+			printf("EXPECT this to crash the FPGA");
+			/* this is a non-negative value therefor it means we are doing LD/ST tracing ....
+			*/
+			if(address &0x1) {
+				address = ((unsigned)address) -1;
+				//log_println("ST 0x%x\n\n",address);
+
+			}else if((address & 0x1) == 0) {
+				//log_println("LD 0x%x\n\n",address);
+			}else {
+				log_println("ERROR address 0x%x\n\n",address);
+			}
+			if(address & 0x2) 	{
+				////log_println("INSTRUCTION 0x%x\n\n",address);
+			}
+			//printf("real_maxine_instrumentation maxine.c LD/STC commmented out\n");
+			return;
+		{	int isInstruction = 0;
+			int isStore = 0;
+			isInstruction = address & 0x2; // this is irrelevant we now do this by PC changes ...
+			isStore = address & 0x1;
+			address = address & 0xfffffffd;
+			if(isInstruction) {
+				//pushILD(address);
+			} else {
+				if(isStore) {
+					//pushDSTR(address);
+				} else {
+					//pushDLD(address);
+				}
+			}
 		}
-	}
+		break;
+	}	
 #endif
 }
 void  real_maxine_flush_instrumentationBuffer(unsigned int *bufPtr) {
@@ -532,9 +588,12 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
 #ifdef arm
 divideByZeroExceptions();        
-#ifdef SIMULATIONPLATFORM
-initialiseMemoryCluster();
-#endif
+//#define SIMULATION_PLATFORM 1
+//#ifdef SIMULATIONPLATFORM
+//initialiseMemoryCluster();
+printf("INITIALISE TIMING\n");
+initialiseTimingModel();
+//#endif
 #endif
 
 #if log_LOADER
@@ -558,7 +617,8 @@ initialiseMemoryCluster();
 #ifdef arm
 #ifdef SIMULATIONPLATFORM
 	printf("ABOUT to report counters\n");
-	reportCounters();
+	reportTimingResults();
+	//reportCounters();
 #endif
 	maxine_close();
 #endif

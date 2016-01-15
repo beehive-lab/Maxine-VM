@@ -33,8 +33,10 @@
 #define THREAD_CONDVAR_FORMAT "thread=%p, condvar=%p"
 
 void condition_initialize(Condition condition) {
+//void condition_initialize(pthread_cond_t * condition) {
 #if log_MONITORS
     log_println("condition_initialize(" THREAD_CONDVAR_FORMAT ")", thread_self(), condition);
+    //printf("CONDITION ADDRESS IS %p\n",condition);
 #endif
 #if os_SOLARIS
     if (cond_init(condition, NULL, NULL) != 0) {

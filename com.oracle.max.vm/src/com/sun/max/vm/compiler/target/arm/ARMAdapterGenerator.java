@@ -374,16 +374,16 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             ARMV7Assembler asm = out instanceof OutputStream ? new ARMV7Assembler(target(), null) : (ARMV7Assembler) out;
 
             if (adapter == null) {
-                asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.encoding);
+                asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.encoding);
 		asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12,0xba5e20af); // signifies BASSE20OPT
                 //asm.nop(); // movw
                 //asm.nop(); // movt
                 asm.nop(); // add
                 asm.nop(); // blx
             } else {
-                asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.encoding);
+                asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.encoding); // does not instrument
 
-                asm.call();
+                asm.call(); // does not instrument
                 //System.out.println("SIZE " + asm.codeBuffer.position());
                 asm.align(PROLOGUE_SIZE);
                 //System.out.println("SIZEAFTER " + asm.codeBuffer.position());
@@ -464,10 +464,12 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // I think enter does push rbp (return address?
             // mv SP -> R11 (rbp)
             // sub SP by an ammount
-            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
-            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
+            asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
+            asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r11, ARMV7.r13);
             asm.subq(ARMV7.r13, (explicitlyAllocatedFrameSize ));
+	    asm.vmov(ConditionFlag.Always,ARMV7.s30, ARMV7.r14, null, CiKind.Float, CiKind.Int);
+
 
             //Label forever = new Label();
 
@@ -507,7 +509,11 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             // Args are now copied to the OPT locations; call the OPT main body
             int callPos = asm.codeBuffer.position();
-	    asm.nop(3); // think this might be necessary pretend it is  movw movt add PC
+	    //asm.nop(3); // think this might be necessary pretend it is  movw movt add PC
+	    asm.nop(2); // think this might be necessary pretend it is  movw movt add PC
+
+
+	    asm.vmov(ConditionFlag.Always,ARMV7.r14,  ARMV7.s30, null,  CiKind.Int, CiKind.Float);
 	    asm.blx(ARMV7.r14);
 
             int callSize = asm.codeBuffer.position() - callPos;
@@ -515,19 +521,19 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // Restore RSP r13 and RBP r11. Given that RBP r11 is never modified by OPT methods and baseline methods always
             // restore it, RBP is guaranteed to be pointing to the slot holding the caller's RBP
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r13, ARMV7.r11);
-            asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 11);// pop r11 -- rbp
+            asm.instrumentPop(ARMV7Assembler.ConditionFlag.Always, 1 << 11);// pop r11 -- rbp DOES NOt INSTRUMENT
 
             String description = Type.BASELINE2OPT + "-Adapter" + sig;
             // RSP has been restored to the location holding the address of the OPT main body.
             // The adapter must return to the baseline caller whose RIP is one slot higher up.
             //asm.addq(ARMV7.r13, 4);// WAS 8 might need to adjust? the LRon the stack prior to the pop
 	    asm.addq(ARMV7.r13, OPT_SLOT_SIZE);
-	    asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 8); // POP return address
+	    asm.instrumentPop(ARMV7Assembler.ConditionFlag.Always, 1 << 8); // POP return address
 
             assert WordWidth.signedEffective(baselineArgsSize).lessEqual(WordWidth.BITS_16);
             // Retract the stack pointer back to its position before the first argument on the caller's stack.
 	    asm.addq(ARMV7.r13,baselineArgsSize );
-	    asm.mov(ARMV7Assembler.ConditionFlag.Always,false, ARMV7.r15,ARMV7.r8);
+	    asm.instrumentMov(ARMV7Assembler.ConditionFlag.Always,false, ARMV7.r15,ARMV7.r8);
 
 
             final byte[] code = asm.codeBuffer.close(true);
@@ -820,13 +826,13 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // A baseline caller jumps over the call to the OPT2BASELINE adapter
             Label end = new Label();
             // shall we branch to this?
-            asm.branch(end);
+            asm.instrumentBranch(end);
 	    asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12,0x0af2ba5e); // signifies OPT2BASE
 
             // Pad with nops up to the OPT entry point
             asm.nop((OPTIMIZED_ENTRY_POINT.offset()-asm.codeBuffer.position())/4);
             // REMEMBER AT EVERY ENTRY POINT WE MUST PUSH THE $LR
-            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
+            asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
 	    //Log.println("OFFSET of CALL " + asm.codeBuffer.position());
             asm.call();
             asm.bind(end);
@@ -854,8 +860,8 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // The one at [RSP] is the return address of the call in the baseline callee's prologue (which is
             // also the entry to the main body of the baseline callee) and one at [RSP + 8 ] is the return
             // address in the OPT caller.
-            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14); // PUSH  HE RETURN ADDRESS OF THE CALL IN THE PROLOGUE ONTO THE STACK
-            //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, ARMV7.r14);
+            asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << 14); // PUSH  HE RETURN ADDRESS OF THE CALL IN THE PROLOGUE ONTO THE STACK
+	    asm.vmov(ConditionFlag.Always,ARMV7.s30, ARMV7.r14, null, CiKind.Float, CiKind.Int);
 
             // Save the address of the baseline callee's main body in RAX
             //asm.movq(rax, new CiAddress(WordUtil.archKind(), rsp.asValue()));
@@ -894,9 +900,10 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // Args are now copied to the baseline locations; call the baseline main body
             int callPos = asm.codeBuffer.position();
             //asm.call(rax); // TODO APN was call RAX
-            asm.nop(3);
+            asm.nop(2);
             //asm.mov32BitConstant(ARMV7.r12,0xbeefbeef); REMOVE NOPS and uncooment
             //asm.branch(forever);
+	    asm.vmov(ConditionFlag.Always,ARMV7.r14,  ARMV7.s30, null,  CiKind.Int, CiKind.Float);
             asm.blx(ARMV7.r14);
             int callSize = asm.codeBuffer.position() - callPos;
 
@@ -906,9 +913,9 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             asm.addq(ARMV7.r13, OPT_SLOT_SIZE);
 
             // Return to the OPT caller
-	    asm.pop(ARMV7Assembler.ConditionFlag.Always,1<<8); // r8
+	    asm.instrumentPop(ARMV7Assembler.ConditionFlag.Always,1<<8); // r8
 
-	    asm.mov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r15,ARMV7.r8);
+	    asm.instrumentMov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r15,ARMV7.r8);
             //asm.ret(0);
 
             final byte[] code = asm.codeBuffer.close(true);

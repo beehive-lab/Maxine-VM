@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <signal.h>
 
 
 int convert(long long yy) {
@@ -8,7 +9,8 @@ long long mulme(long long a,long long b) {
 	return a*b;
 }
 int compare(long long a, long long b) {
-	asm volatile("BKPT");
+	signal(SIGUSR1,(0));
+	signal(SIGTRAP,(0));
 
 	int x = 0;
 	if(a<b) x = -1;

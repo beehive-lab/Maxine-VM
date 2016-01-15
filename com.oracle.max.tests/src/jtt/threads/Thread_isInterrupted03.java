@@ -33,19 +33,13 @@ public class Thread_isInterrupted03 {
     public static boolean test(int i) throws InterruptedException {
         final Thread1 thread = new Thread1();
         thread.start();
-	System.out.println("THREAD started");
         Thread.sleep(1000);
-	System.out.println("THREAD awake");
         thread.interrupt();
-	System.out.println("THREAD asked to be interrupted");
         Thread.sleep(1000);
-	System.out.println("THREAD awake again");
         // Did thread get interrupted?
         final boolean result = thread.getInterrupted();
-	System.out.println("THREAD did we wake up");
         // This stops the thread even if the interrupt didn't!
         thread.setInterrupted(true);
-	System.out.println("THREAD end");
         return result;
     }
 

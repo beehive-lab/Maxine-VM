@@ -55,7 +55,7 @@ public abstract class AbstractAssembler {
         l.patchInstructions(this);
     }
 
-    protected abstract void patchJumpTarget(int branch, int target);
+    protected abstract void patchJumpTarget(int branch, int target, boolean instrumented);
 
     protected final void emitByte(int x) {
         codeBuffer.emitByte(x);

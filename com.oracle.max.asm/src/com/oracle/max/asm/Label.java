@@ -35,8 +35,8 @@ public final class Label {
      * These instructions need to be patched when the label is bound
      * using the {@link #patchInstructions(AbstractAssembler)} method.
      */
-    private ArrayList<Integer> patchPositions = new ArrayList<Integer>(4);
-
+    private ArrayList<Integer> patchPositions = new ArrayList<Integer>(4); // was 4
+    private ArrayList<Boolean> patchInstrumentation = new ArrayList<Boolean>(4);
     /**
      * Returns the position of this label in the code buffer.
      * @return the position
@@ -65,6 +65,12 @@ public final class Label {
     public void addPatchAt(int branchLocation) {
         assert !isBound() : "Label is already bound";
         patchPositions.add(branchLocation);
+	patchInstrumentation.add(false);
+    }
+    public void addPatchAt (int branchLocation, boolean instrumentationPatch) {
+	assert !isBound() : "Label is already bound";
+	patchPositions.add(branchLocation);
+	patchInstrumentation.add(instrumentationPatch);
     }
 
     protected void patchInstructions(AbstractAssembler masm) {
@@ -72,7 +78,7 @@ public final class Label {
         int target = position;
         for (int i = 0; i < patchPositions.size(); ++i) {
             int pos = patchPositions.get(i);
-            masm.patchJumpTarget(pos, target);
+            masm.patchJumpTarget(pos, target, patchInstrumentation.get(i));
         }
     }
 

@@ -424,7 +424,7 @@ public final class ARMTargetMethodUtil {
 
         }
 	assert(oldDisp32 != 0);
-	return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);
+	return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32).plus(8);
 
 
     }
@@ -437,19 +437,19 @@ public final class ARMTargetMethodUtil {
             // basic match of movw movt
 
 		temp = (callSitePointer.readByte(3) << 24) | (callSitePointer.readByte(2) << 16) | (callSitePointer.readByte(1) << 8) | callSitePointer.readByte(0);
-		Log.print("MOVW ");Log.println(temp);
+		//Log.print("MOVW ");Log.println(temp);
 		temp = 0;
 		temp = (callSitePointer.readByte(3+4) << 24) | (callSitePointer.readByte(2+4) << 16) | (callSitePointer.readByte(1+4) << 8) | callSitePointer.readByte(0+4);
-		Log.print("MOVT ");Log.println(temp);
+		//Log.print("MOVT ");Log.println(temp);
 		temp = 0;
 		temp = ((callSitePointer.readByte(3+8) << 24)&0xff000000) | ((callSitePointer.readByte(2+8) << 16)&0xff0000) | ((callSitePointer.readByte(1+8) << 8)&0xff00) | (callSitePointer.readByte(0+8)&0xff);
-		Log.print("ADD ");Log.println(temp);
+		//Log.print("ADD ");Log.println(temp);
 		temp = 0;
 		temp = ((callSitePointer.readByte(3+12) << 24)&0xff000000) | ((callSitePointer.readByte(2+12) << 16)&0xff0000) | ((callSitePointer.readByte(1+12) << 8)&0xff00) | (callSitePointer.readByte(0+12)&0xff);
-		Log.print("BLX ");Log.println(temp);
-		Log.print(callSitePointer.readByte(3+12));Log.print(" ");Log.print(callSitePointer.readByte(2+12));Log.print(" "); Log.print(callSitePointer.readByte(1+12));Log.print(" ");Log.println(callSitePointer.readByte(0+12));
+		//Log.print("BLX ");Log.println(temp);
+		//Log.print(callSitePointer.readByte(3+12));Log.print(" ");Log.print(callSitePointer.readByte(2+12));Log.print(" "); Log.print(callSitePointer.readByte(1+12));Log.print(" ");Log.println(callSitePointer.readByte(0+12));
 
-		Log.print("EXPECTED ADD ");Log.println(addInstrn);
+		//Log.print("EXPECTED ADD ");Log.println(addInstrn);
 		
 
 

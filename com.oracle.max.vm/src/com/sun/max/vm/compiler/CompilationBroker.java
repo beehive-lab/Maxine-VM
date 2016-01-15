@@ -69,13 +69,27 @@ import static com.sun.max.vm.compiler.RuntimeCompiler.*;
 import static com.sun.max.vm.compiler.target.Safepoints.DIRECT_CALL;
 import static com.sun.max.vm.intrinsics.Infopoints.here;
 
+import com.oracle.max.criutils.NativeCMethodinVM;
+
+
 /**
  * This class implements an adaptive compilation system with multiple compilers with different compilation time / code
  * quality tradeoffs. It encapsulates the necessary infrastructure for recording profiling data, selecting what and when
  * to recompile, etc.
  */
-public class CompilationBroker {
+public class CompilationBroker implements NativeCMethodinVM {
 
+    @Override
+    public int maxine_instrumentationBuffer() {
+        return com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.maxine_instrumentationBuffer();
+    }
+
+    @Override
+    public int maxine_flush_instrumentationBuffer() {
+        // returns the int address of the method in C ... ugly but fast dynamic linking ....
+        // should really do it the proper way by CriticalMethods etc etc
+        return com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.maxine_flush_instrumentationBuffer();
+    }
     /**
      * The threshold at which a recompilation is triggered from the baseline compiler to the next level
      * of optimization. This is typically the number of invocations of the method.
@@ -354,6 +368,16 @@ public class CompilationBroker {
                 compilationThread.start();
             }
         } else if (phase == Phase.RUNNING) {
+		// HOSTED is false here	 ADDED BY APN
+		if(com.oracle.max.asm.AbstractAssembler.SIMULATE_PLATFORM) {
+			// simulation platform is turned on this means we instrument load/stores and
+			// C1X compiled code, but not adapters
+			if (platform().isa == ISA.ARM && opt) {
+				com.oracle.max.asm.target.armv7.ARMV7MacroAssembler.maxineflush = this;
+			} else {	
+				com.oracle.max.asm.target.armv7.ARMV7MacroAssembler.maxineflush = null;
+			}
+		}
             if (PrintCodeCacheMetrics != 0) {
                 Runtime.getRuntime().addShutdownHook(new Thread("CodeCacheMetricsPrinter") {
                     @Override
@@ -600,39 +624,31 @@ public class CompilationBroker {
      * @param receiver the receiver object of the profiled method. This will be {@code null} if the profiled method is static.
      */
     public static void instrumentationCounterOverflow(MethodProfile mpo, Object receiver) {
-	Log.println("instrumentationCounterOverflow");
         if (mpo.compilationDisabled) {
             mpo.entryCount = Integer.MAX_VALUE;
-	    Log.println("mpo.compilationDisabled");
             return;
         }
         if (Heap.isAllocationDisabledForCurrentThread()) {
-	    Log.println("Heap allocation disabled");
             logCounterOverflow(mpo, "Stopped recompilation because allocation is currently disabled");
             // We don't want to see another counter overflow in the near future
             mpo.entryCount = 1000;
             return;
         }
         if (Compilation.isCompilationRunningInCurrentThread()) {
-	    Log.println("RECOMPILATION in progress");
             logCounterOverflow(mpo, "Stopped recompilation because compilation is running in current thread");
             // We don't want to see another counter overflow in the near future
             mpo.entryCount = 1000;
             return;
         }
         ClassMethodActor cma = mpo.method.classMethodActor;
-	Log.println("GOT CMA");
         TargetMethod oldMethod = mpo.method;
         TargetMethod newMethod = Compilations.currentTargetMethod(cma.compiledState, null);
-	Log.print("OLD TM is ");Log.println(oldMethod);
-	Log.print("TM is ");Log.println(newMethod);
 
         if (oldMethod == newMethod || newMethod == null) {
             if (!(cma.compiledState instanceof Compilation)) {
                 // There is no newer compiled version available yet that we could just patch to, so recompile
                 logCounterOverflow(mpo, "");
                 try {
-		    Log.println("TRY COMPILE");
                     newMethod = vm().compilationBroker.compile(cma, Nature.OPT);
 		    Log.print("DONE COMPILE ");Log.println(newMethod);
                 } catch (InternalError e) {
@@ -649,7 +665,6 @@ public class CompilationBroker {
 
 
         if (oldMethod == newMethod || newMethod == null) {
-	   Log.println("OLDMETHOD == NEWMETHOD");
             // No compiled method available yet, maybe compilation is pending.
             // We don't want to see another counter overflow in the near future.
             mpo.entryCount = 10000;
@@ -657,7 +672,8 @@ public class CompilationBroker {
             assert newMethod != null : oldMethod;
             logPatching(cma, oldMethod, newMethod);
             mpo.entryCount = 0;
-
+	Log.print("OLD TM is ");Log.println(oldMethod);
+	Log.print("TM is ");Log.println(newMethod);
             if (receiver != null) {
                 Address from = oldMethod.getEntryPoint(VTABLE_ENTRY_POINT).toAddress();
                 Address to = newMethod.getEntryPoint(VTABLE_ENTRY_POINT).toAddress();
@@ -665,7 +681,6 @@ public class CompilationBroker {
                 // Simply overwrite all vtable slots containing 'oldMethod' with 'newMethod'.
                 // These updates can be made atomically without need for a lock.
                 Hub hub = ObjectAccess.readHub(receiver);
-		Log.println("VTABLE ITERATEPATCH");
                 for (int i = 0; i < hub.vTableLength(); i++) {
                     int index = Hub.vTableStartIndex() + i;
                     if (hub.getWord(index).equals(from)) {
@@ -673,7 +688,7 @@ public class CompilationBroker {
                         hub.setWord(index, to);
                     }
                 }
-	        Log.println("ITABLE ITERATEPATCH");
+		Log.println("DONE VTABLE");
                 for (int i = 0; i < hub.iTableLength; i++) {
                     int index = hub.iTableStartIndex + i;
                     if (hub.getWord(index).equals(from)) {
@@ -682,7 +697,7 @@ public class CompilationBroker {
                     }
                 }
             }
-	    Log.println(" DO STACK WALK");
+	    Log.println("RECEIVER WAs NULL");
             // Look for a static call to 'oldMethod' and patch it.
             // This occurs even if 'cma' is non-static
             // as it may have been called directly.
@@ -692,7 +707,7 @@ public class CompilationBroker {
                     VMRegister.getCpuFramePointer(),
                     patcher);
         }
-	Log.println("intrumentationcounter overlow return");
+	Log.println("DONE PATCHER");
     }
 
     public static void logCounterOverflow(MethodProfile mpo, String msg) {
@@ -867,10 +882,10 @@ public class CompilationBroker {
                 if (current.isTopFrame()) {
                     return true;
                 }
+		VMOptions.verboseOption.verboseCompilation = true;
                 Pointer ip = current.ipAsPointer();
                 CodePointer callSite = CodePointer.from(ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE + 12));
                 Pointer callSitePointer = callSite.toPointer();
-		//int ii = 0;
 		Log.println("!!!!!!!!!!!!!!!!CompilationBroker.visitFrame NEEDS TESTING");
 		/*for(ii = -16; ii <= 16;ii+=4) {
 			if(ARMTargetMethodUtil.isARMV7RIPCall(current.targetMethod(),CodePointer.from(ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE + ii)))) {
@@ -882,8 +897,12 @@ public class CompilationBroker {
                 if(ARMTargetMethodUtil.isARMV7RIPCall(current.targetMethod(),callSite)) {
                     //CodePointer target = CodePointer.from(ip.plus(callSitePointer.readInt(1)));
                     CodePointer target = ARMTargetMethodUtil.ripCallOFFSET(current.targetMethod(),callSite);
+		    target = target.minus(8); // 8 too big or 8 too small ...
 		    Log.println("MATCHED RIPCALL");
                     //callSitePointer.readInt(1)));
+		    Log.println("target is " + target);
+		    Log.println("BASELINE TARGET" +oldMethod.getEntryPoint(BASELINE_ENTRY_POINT));
+		    Log.println("OPTIMISED  TARGET" +oldMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT));
                     if (target.equals(oldMethod.getEntryPoint(BASELINE_ENTRY_POINT))) {
 			Log.println("matched OLD method BASELINE entry point");
                         final CodePointer to = newMethod.getEntryPoint(BASELINE_ENTRY_POINT);
@@ -894,7 +913,7 @@ public class CompilationBroker {
                         ARMTargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
                         // Stop traversing the stack after a direct call site has been patched
                         return false;
-                    } else
+                    } 
                     if (target.equals(oldMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT))) {
 			Log.println("matched OLD method OPTIMIZED entry point");
                         final CodePointer to = newMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT);
@@ -905,10 +924,12 @@ public class CompilationBroker {
                         ARMTargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
                         // Stop traversing the stack after a direct call site has been patched
                         return false;
-                    } else {
-			//assert 0==1 : " CompilationBroker.visitFrame ERROR trying to patch -- neither OPT or BASELINE entry point";
-			}
-                }
+                    } 
+		
+			
+                } else {
+			Log.println("FAILED to match RIPCALL in visitFrame");
+		}
                 if (++frameCount > FRAME_SEARCH_LIMIT) {
                     logNoFurtherStaticCallPatching();
                     return false;
