@@ -12566,6 +12566,8 @@ public class JTRuns {
                     return;
                 }
             } catch (Throwable t) {
+		System.err.println(t);
+		t.printStackTrace();
                 fail(runString, t);
                 return;
             }
@@ -12678,6 +12680,9 @@ public class JTRuns {
                     return;
                 }
             } catch (Throwable t) {
+		System.err.println(t);
+                t.printStackTrace();
+
                 fail(runString, t);
                 return;
             }
@@ -13028,6 +13033,9 @@ public class JTRuns {
                     return;
                 }
             } catch (Throwable t) {
+		System.err.println(t);
+                t.printStackTrace();
+
                 fail(runString, t);
                 return;
             }
@@ -13120,6 +13128,9 @@ public class JTRuns {
                     return;
                 }
             } catch (Throwable t) {
+		System.err.println(t);
+                t.printStackTrace();
+
                 fail(runString, t);
                 return;
             }
@@ -23653,11 +23664,16 @@ public class JTRuns {
                     return;
                 } catch (Throwable e) {
                     if (e.getClass() != java.lang.NegativeArraySizeException.class) {
+			System.err.println(e);
+                	e.printStackTrace();
                         fail(runString, e);
                         return;
                     }
                 }
             } catch (Throwable t) {
+		System.err.println(t);
+                t.printStackTrace();
+
                 fail(runString, t);
                 return;
             }
@@ -23726,6 +23742,9 @@ public class JTRuns {
                     return;
                 }
             } catch (Throwable t) {
+		System.err.println(t);
+                t.printStackTrace();
+
                 fail(runString, t);
                 return;
             }
@@ -23766,6 +23785,9 @@ public class JTRuns {
                     }
                 }
             } catch (Throwable t) {
+		System.err.println(t);
+                t.printStackTrace();
+
                 fail(runString, t);
                 return;
             }
@@ -23846,6 +23868,9 @@ public class JTRuns {
                     return;
                 }
             } catch (Throwable t) {
+		System.err.println(t);
+                t.printStackTrace();
+
                 fail(runString, t);
                 return;
             }
@@ -24596,6 +24621,8 @@ public class JTRuns {
                     return;
                 }
             } catch (Throwable t) {
+		System.err.println(t);
+		t.printStackTrace();
                 fail(runString, t);
                 return;
             }
@@ -24733,6 +24760,9 @@ public class JTRuns {
                     return;
                 } catch (Throwable e) {
                     if (e.getClass() != java.lang.Exception.class) {
+			System.err.println(e);
+                	e.printStackTrace();
+
                         fail(runString, e);
                         return;
                     }
@@ -24744,6 +24774,9 @@ public class JTRuns {
                     return;
                 }
             } catch (Throwable t) {
+		System.err.println(t);
+                t.printStackTrace();
+
                 fail(runString, t);
                 return;
             }
@@ -24808,6 +24841,9 @@ public class JTRuns {
                     return;
                 }
             } catch (Throwable t) {
+		System.err.println(t);
+                t.printStackTrace();
+
                 fail(runString, t);
                 return;
             }
@@ -24872,6 +24908,9 @@ public class JTRuns {
                     return;
                 }
             } catch (Throwable t) {
+		System.err.println(t);
+                t.printStackTrace();
+
                 fail(runString, t);
                 return;
             }
@@ -24936,6 +24975,9 @@ public class JTRuns {
                     return;
                 }
             } catch (Throwable t) {
+		System.err.println(t);
+                t.printStackTrace();
+
                 fail(runString, t);
                 return;
             }
@@ -25000,6 +25042,9 @@ public class JTRuns {
                     return;
                 }
             } catch (Throwable t) {
+		System.err.println(t);
+                t.printStackTrace();
+
                 fail(runString, t);
                 return;
             }
@@ -25128,6 +25173,9 @@ public class JTRuns {
                     return;
                 }
             } catch (Throwable t) {
+		System.err.println(t);
+                t.printStackTrace();
+
                 fail(runString, t);
                 return;
             }
@@ -25192,6 +25240,9 @@ public class JTRuns {
                     return;
                 }
             } catch (Throwable t) {
+		System.err.println(t);
+                t.printStackTrace();
+
                 fail(runString, t);
                 return;
             }
@@ -25256,6 +25307,9 @@ public class JTRuns {
                     return;
                 }
             } catch (Throwable t) {
+		System.err.println(t);
+                t.printStackTrace();
+
                 fail(runString, t);
                 return;
             }
@@ -25285,6 +25339,8 @@ public class JTRuns {
                     return;
                 } catch (Throwable e) {
                     if (e.getClass() != java.lang.reflect.InvocationTargetException.class) {
+			System.err.println(e);
+			e.printStackTrace();
                         fail(runString, e);
                         return;
                     }
@@ -25297,6 +25353,9 @@ public class JTRuns {
                     return;
                 } catch (Throwable e) {
                     if (e.getClass() != java.lang.IllegalArgumentException.class) {
+			System.err.println(e);
+                        e.printStackTrace();
+
                         fail(runString, e);
                         return;
                     }
@@ -25309,11 +25368,16 @@ public class JTRuns {
                     return;
                 } catch (Throwable e) {
                     if (e.getClass() != java.lang.IllegalArgumentException.class) {
+			System.err.println(e);
+                        e.printStackTrace();
+
                         fail(runString, e);
                         return;
                     }
                 }
             } catch (Throwable t) {
+		System.err.println(t);
+		t.printStackTrace();
                 fail(runString, t);
                 return;
             }
@@ -25336,6 +25400,9 @@ public class JTRuns {
                     return;
                 }
             } catch (Throwable t) {
+		System.err.println(t);
+                t.printStackTrace();
+
                 fail(runString, t);
                 return;
             }
@@ -25358,6 +25425,9 @@ public class JTRuns {
                     return;
                 }
             } catch (Throwable t) {
+		System.err.println(t);
+                t.printStackTrace();
+
                 fail(runString, t);
                 return;
             }
@@ -25380,6 +25450,9 @@ public class JTRuns {
                     return;
                 }
             } catch (Throwable t) {
+		System.err.println(t);
+                t.printStackTrace();
+
                 fail(runString, t);
                 return;
             }
@@ -25396,6 +25469,8 @@ public class JTRuns {
                     return;
                 }
             } catch (Throwable t) {
+		System.err.println(t);
+		t.printStackTrace();
                 fail(runString, t);
                 return;
             }

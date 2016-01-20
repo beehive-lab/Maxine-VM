@@ -592,7 +592,7 @@ divideByZeroExceptions();
 //#ifdef SIMULATIONPLATFORM
 //initialiseMemoryCluster();
 printf("INITIALISE TIMING\n");
-initialiseTimingModel();
+//initialiseTimingModel();
 //#endif
 #endif
 
