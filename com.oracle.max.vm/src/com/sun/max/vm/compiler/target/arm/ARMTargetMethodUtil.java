@@ -576,12 +576,16 @@ public final class ARMTargetMethodUtil {
     public static void patchWithJump(TargetMethod tm, int pos, CodePointer target) {
         // We must be at a global safepoint to safely patch TargetMethods
         Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!patchWithJump!!!!hould only occur with Deoptimisation? isJumpToStaticTrampoline will need fixing!!!!!!!!!!!!!!!!!");
-	FatalError.check(false,"pathWithJump not implemented");
+	FatalError.check(true,"patchWithJump under debug ");
         FatalError.check(VmOperation.atSafepoint(), "should only be patching entry points when at a safepoint");
 
         final Pointer patchSite = tm.codeAt(pos).toPointer();
+	Log.println("PATCH site is " + tm.codeAt(pos));
+	/* ok lets assume we can do the normal movw movt addpc blx */
+	mtSafePatchCallDisplacement(tm, tm.codeAt(pos),  target);
 
-        long disp64 = target.toLong() - patchSite.plus(RIP_JMP_INSTRUCTION_LENGTH).toLong();
+
+        /*long disp64 = target.toLong() - patchSite.plus(RIP_JMP_INSTRUCTION_LENGTH).toLong();
         int disp32 = (int) disp64;
         FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
 
@@ -589,7 +593,7 @@ public final class ARMTargetMethodUtil {
         patchSite.writeByte(1, (byte) disp32);
         patchSite.writeByte(2, (byte) (disp32 >> 8));
         patchSite.writeByte(3, (byte) (disp32 >> 16));
-        patchSite.writeByte(4, (byte) (disp32 >> 24));
+        patchSite.writeByte(4, (byte) (disp32 >> 24));*/
     }
 
     /**

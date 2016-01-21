@@ -31,6 +31,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.FatalError;
 
 /**
  * A {@code CodePointer} is a tagged pointer that is known to reference native code.
@@ -111,6 +112,7 @@ public final class CodePointer {
     private static long untag(long value) {
         return BASE_ADDRESS + (value >> 1);
     }
+
 
     /**t
      * Relocates a {@code CodePointer} by a given {@link Offset}.
