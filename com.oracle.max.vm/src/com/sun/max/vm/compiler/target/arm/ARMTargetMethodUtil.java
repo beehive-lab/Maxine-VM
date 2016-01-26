@@ -606,7 +606,10 @@ public final class ARMTargetMethodUtil {
      * @return {@code true} if the instruction is a jump to the target, false otherwise
      */
     public static boolean isJumpTo(TargetMethod tm, int pos, CodePointer jumpTarget) {
-	return false;
+	return readCall32Target(tm, pos).equals(jumpTarget);
+	/* Here we need to remmember that we use movw movt add,blx to implement a PC-relative JUMP on
+	ARMV7
+	*/
         /*Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ARM isJumpTo WRONG!!!!!!!!!!!!!!!!!!!!!!!");
         final Pointer jumpSite = tm.codeAt(pos).toPointer();
         if (jumpSite.readByte(0) == (byte) RIP_JMP) {

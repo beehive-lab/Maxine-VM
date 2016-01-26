@@ -125,9 +125,10 @@ void* setSignalHandler(int signal, SignalHandlerFunction handler) {
     memset((char *) &newSigaction, 0, sizeof(newSigaction));
     sigemptyset(&newSigaction.sa_mask);
     newSigaction.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
+
 #if os_SOLARIS || os_LINUX || os_DARWIN
     if (signal == SIGUSR1) {
-        newSigaction.sa_flags = SA_SIGINFO | SA_ONSTACK;
+    	newSigaction.sa_flags = SA_SIGINFO |  SA_ONSTACK;
     }
 #endif
     newSigaction.sa_sigaction = handler;
@@ -162,7 +163,7 @@ static Address getInstructionPointer(UContext *ucontext) {
 #   elif isa_IA32
     return ucontext->uc_mcontext.gregs[REG_EIP];
 #elif isa_ARM
-	return ucontext->uc_mcontext.arm_pc;
+	return ucontext->uc_mcontext.arm_pc ; 
 #   endif
 #elif os_DARWIN
     return ucontext->uc_mcontext->__ss.__rip;
@@ -353,10 +354,17 @@ static void logTrap(int signal, Address ip, Address fault, TLA dtla) {
  * The handler for signals dealt with by Stubs.trapStub.
  */
 static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
+
     int trapNumber = getTrapNumber(signal);
     Address ip = getInstructionPointer(ucontext);
     Address faultAddress = getFaultAddress(signalInfo, ucontext);
 
+#if isa_ARM
+	if (ucontext->uc_mcontext.arm_cpsr & 0x20 ) {
+		ip = ip | 0x1; // make sure we get thumb mode!!!
+		ucontext->uc_mcontext.arm_cpsr = ucontext->uc_mcontext.arm_cpsr & 0xffffffdf;
+	}
+#endif
     //printf("vmSignalHandler\n");
     /* Only VM signals should get here. */
     if (trapNumber < 0) {
@@ -424,7 +432,8 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
 
     /* save the trap information in the thread locals */
     tla_store3(dtla, TRAP_NUMBER, trapNumber);
-    tla_store3(dtla, TRAP_INSTRUCTION_POINTER, getInstructionPointer(ucontext));
+    //tla_store3(dtla, TRAP_INSTRUCTION_POINTER, getInstructionPointer(ucontext));
+    tla_store3(dtla, TRAP_INSTRUCTION_POINTER, ip);
     tla_store3(dtla, TRAP_FAULT_ADDRESS, faultAddress);
 
 #if os_SOLARIS && isa_SPARC
@@ -448,7 +457,7 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
 #else
     c_UNIMPLEMENTED();
 #endif
-
+	
     setInstructionPointer(ucontext, theJavaTrapStub);
 }
 
@@ -502,8 +511,9 @@ void nativeTrapInitialize(Address javaTrapStub) {
     thread_setSignalMask(SIG_UNBLOCK, &vmSignals, NULL);
 #endif
 #ifdef arm
-	extern void divideByZeroExceptions();
-	divideByZeroExceptions(); 
+	// NO LONGER REQURIED
+	//extern void divideByZeroExceptions();
+	//divideByZeroExceptions(); 
 #endif 
 }
 

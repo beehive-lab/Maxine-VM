@@ -352,9 +352,8 @@ public class Stubs {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.isJumpTo(tm, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(vm().stubs.staticTrampoline()));
         } else if (platform().isa == ISA.ARM) {
-		  com.sun.max.vm.Log.println("ARMTargetMethoUtil.isJumpTo needs to be implemented");
-		 return true;
-            //return ARMTargetMethodUtil.isJumpTo(tm, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(vm().stubs.staticTrampoline()));
+	    com.sun.max.vm.Log.println("ARMTargetMethoUtil.isJumpTo needs to be tested");
+            return ARMTargetMethodUtil.isJumpTo(tm, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(vm().stubs.staticTrampoline()));
         } else {
             throw FatalError.unimplemented();
         }
@@ -1001,7 +1000,6 @@ public class Stubs {
             CiValue[] args = registerConfig.getCallingConvention(JavaCallee, handleTrapParameters, target(), false).locations;
 
 
-            //asm.push(ARMV7Assembler.ConditionFlag.Always,1<<14); // we always push the LR
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12);      // SAVE r12 ... our save/restore uses r12 so we must push it here
             // this will be overwritten with the RETURN  ADDRESS of the trapping instruction
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12);
@@ -1009,7 +1007,7 @@ public class Stubs {
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12);
 
             // NOW allocate the frame for this method (note TWO wordas of which WERE allocated by the second push above)
-            asm.subq(ARMV7.r13, frameSize - 8/*4*/);
+            asm.subq(ARMV7.r13, frameSize -8/*was 8*/);
 
             // save all the callee save registers
             asm.save(csl, frameToCSA); // NOTE our save/restore trashes r12 ... that is why we push r12
@@ -1031,24 +1029,6 @@ public class Stubs {
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize /*+ 4*/));// we have sdaved r12 so it is one slot past the end of the frame
             asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
 
-            // BEGIN  DIRTY HACK
-
-            // WE READ THE fpsrc AND IF A DIV ZERO HAS OCCURED
-            // WE CHANGE THE TRAP NUMBER
-            /*asm.vmrs(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12);
-            asm.movw(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, 2); // DZC is updated to 1 -- means it is a  divide by zero
-            asm.and(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r8, ARMV7.r12, 0, 0);
-            asm.cmp(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0, 0);
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_NUMBER.offset));
-            asm.mov32BitConstant(ARMV7.r8, 3); // TRAP 3 is arithmetic
-            asm.str(ARMV7Assembler.ConditionFlag.Equal, ARMV7.r8, ARMV7.r12, 0);
-            asm.mov32BitConstant(ARMV7.r8, 0xfffffd00);
-            asm.vmrs(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12);
-            asm.and(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, ARMV7.r12, 0, 0);
-            asm.vmsr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8);
-	    */
-            // WE ALSO NEED TO RESET THE divz AS above --- ie clear and FPExceptions
-            // END DIRTY HACK
 
             // load the trap number from the thread locals into the first parameter register
             //asm.movq(args[0].asRegister(), new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_NUMBER.offset));
@@ -1083,7 +1063,7 @@ public class Stubs {
             // my understanding is that normal handler code will do this?
             // Will r14 be correctly set to the appropriate return address?
             //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
-            asm.addq(ARMV7.r13, frameSize - 8/*4*/); // added
+            asm.addq(ARMV7.r13, frameSize - 8/*was 8*/); // added
             asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 12);// pops flags so we need to do ...
             asm.msrWriteAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12);
             asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 12); // POP scratch
