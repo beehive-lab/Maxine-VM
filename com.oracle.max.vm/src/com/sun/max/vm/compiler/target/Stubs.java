@@ -1520,7 +1520,8 @@ public class Stubs {
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(csl == null ? 0 : csl.size);
 
-	                asm.insertForeverLoop();
+		asm.mov32BitConstant(ConditionFlag.Always,ARMV7.r12,0xdef2def2);
+                asm.insertForeverLoop();
 
             String runtimeRoutineName = "deoptimize" + kind.name();
             final CriticalMethod runtimeRoutine;
@@ -1783,6 +1784,7 @@ public class Stubs {
             int frameSize = platform().target.alignFrameSize(csl.size);
             int cfo = frameSize + 4; // APN 4 bytes for ARM? Caller frame offset
 
+	    asm.mov32BitConstant(ConditionFlag.Always,ARMV7.r12,0xdef1def1);
 	    asm.insertForeverLoop();
             String runtimeRoutineName;
             if (kind == null) {
