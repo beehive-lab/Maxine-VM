@@ -55,6 +55,7 @@ public class Thread_isInterrupted02 {
 
     private static class Thread extends java.lang.Thread {
         private boolean interrupted;
+	public  boolean isInterrupted() {return interrupted;} // new for test
         @Override
         public void run() {
             try {
@@ -66,6 +67,7 @@ public class Thread_isInterrupted02 {
                     // wait for the condition, which should be interrupted
                     if (waitTime == 0) {
                         start.wait();
+
                     } else {
                         start.wait(waitTime);
                     }
