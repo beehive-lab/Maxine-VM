@@ -1,24 +1,19 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
+ * OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package com.oracle.max.vm.ext.maxri;
 
@@ -48,8 +43,7 @@ import java.lang.reflect.Method;
 import static com.sun.max.vm.MaxineVM.vm;
 
 /**
- * This class contains the implementation of runtime calls that are called by
- * code emitted by the CRI compilers.
+ * This class contains the implementation of runtime calls that are called by code emitted by the CRI compilers.
  */
 public class MaxRuntimeCalls {
 
@@ -59,6 +53,7 @@ public class MaxRuntimeCalls {
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
     public @interface MAX_RUNTIME_ENTRYPOINT {
+
         CiRuntimeCall runtimeCall() default CiRuntimeCall.GenericCallback;
     }
 
@@ -101,20 +96,13 @@ public class MaxRuntimeCalls {
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.d2long)
     public static long runtimeJd2jlong(double val) {
         verifyRefMaps();
-	//com.sun.max.vm.Log.print("D2L maxruntimecall ");com.sun.max.vm.Log.println((float)val);
-        //return Snippets.d2long(val);
-	//long x = Snippets.d2long(val);
-	 //com.sun.max.vm.Log.print("D2L maxruntimecall retval "); com.sun.max.vm.Log.print(x);
-	return Snippets.d2long(val);
+        return Snippets.d2long(val);
 
     }
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.f2long)
     public static long runtimeJf2jlong(float val) {
         verifyRefMaps();
-        //return Snippets.f2long(val);
-	//long x = Snippets.f2long(val);
-	 //com.sun.max.vm.Log.print("F2L maxruntimecall retval "); com.sun.max.vm.Log.print(x);
         return Snippets.f2long(val);
 
     }
@@ -163,9 +151,7 @@ public class MaxRuntimeCalls {
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.RegisterFinalizer)
     public static void runtimeRegisterFinalizer(Object object) {
-	//Log.print("MaxRuntimeCalls:RegisterFinalizer");
         verifyRefMaps();
-	//Log.println(ObjectAccess.readClassActor(object).toString());
         if (ObjectAccess.readClassActor(object).hasFinalizer()) {
             SpecialReferenceManager.registerFinalizee(object);
         }
@@ -173,14 +159,12 @@ public class MaxRuntimeCalls {
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.HandleException)
     public static void runtimeHandleException(Throwable throwable) throws Throwable {
-	//Log.println("runtimeHandleException");
         verifyRefMaps();
         Throw.raise(throwable);
     }
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.OSRMigrationEnd)
     public static void runtimeOSRMigrationEnd() {
-	 //Log.println("runtimeOSRMigrationEnd");
         verifyRefMaps();
     }
 
@@ -198,7 +182,6 @@ public class MaxRuntimeCalls {
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.Debug)
     public static void runtimeDebug() {
-	//Log.println("runtimeDebug");
         verifyRefMaps();
         throw FatalError.unexpected("Debug");
     }
@@ -272,13 +255,11 @@ public class MaxRuntimeCalls {
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.CreateNullPointerException)
     public static Object createNullPointerException() {
-	//Log.println("NULL PTR exception");
         return new NullPointerException();
     }
 
     @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.CreateOutOfBoundsException)
     public static Object createOutOfBoundsException(int index) {
-	//Log.println("OOB Exception");
         return new ArrayIndexOutOfBoundsException(index);
     }
 
