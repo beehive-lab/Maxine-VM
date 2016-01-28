@@ -352,9 +352,7 @@ public class Stubs {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.isJumpTo(tm, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(vm().stubs.staticTrampoline()));
         } else if (platform().isa == ISA.ARM) {
-		  com.sun.max.vm.Log.println("ARMTargetMethoUtil.isJumpTo needs to be implemented");
-		 return true;
-            //return ARMTargetMethodUtil.isJumpTo(tm, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(vm().stubs.staticTrampoline()));
+            return ARMTargetMethodUtil.isJumpTo(tm, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(vm().stubs.staticTrampoline()));
         } else {
             throw FatalError.unimplemented();
         }
