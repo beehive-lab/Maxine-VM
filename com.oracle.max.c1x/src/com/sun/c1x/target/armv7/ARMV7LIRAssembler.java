@@ -93,7 +93,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case HERE:
                 tasm.recordSafepoint(codePos(), info);
                 int beforeLea = masm.codeBuffer.position();
-                masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, ARMV7.r15.asValue(), 0));
+                masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, ARMV7.r15.asValue(), -1));
                 int afterLea = masm.codeBuffer.position();
                 masm.codeBuffer.setPosition(beforeLea);
                 masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, ARMV7.r15.asValue(), beforeLea - afterLea));
@@ -2466,16 +2466,16 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     // REMOVED as need reproducability masm.decrementq(ARMV7.r13, frameSize); // 3 instructions
 		    masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, frameSize);
 		    masm.sub(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
-		  
+
 		    // taken flag , not taken flag , isAbsoluteAddress, CiRegister , adjustment, isMethodEntry
 		    masm.instrumentNEWAbsolutePC(ConditionFlag.Always, ConditionFlag.NeverUse, true, ARMV7.r15, -16,true);
 		    /*
 		    We need TO THINK CAREFULLY HERE. WE NEED TO BE ABLE TO TELL THE SIMULATION PLATFORM THAT
 		    WE ARE A METHOD ENTRY ... WHERE WE START OK AS WE ARE ONLY CONSIDERING c1x COMPILED THEN WE
-		    ALWAYS ENTER AT THE OPTIMISED ENTRY POINT 
+		    ALWAYS ENTER AT THE OPTIMISED ENTRY POINT
 		    */
-			
-		
+
+
 
                     if (C1XOptions.ZapStackOnMethodEntry) {
                         final int intSize = 4;
