@@ -22,18 +22,28 @@
  */
 package com.sun.max.vm.compiler.target.arm;
 
-import com.oracle.max.asm.target.armv7.*;
-import com.oracle.max.cri.intrinsics.*;
-import com.sun.cri.ci.*;
-import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.runtime.*;
+import com.oracle.max.asm.target.armv7.ARMV7;
+import com.oracle.max.asm.target.armv7.ARMV7Assembler;
+import com.oracle.max.cri.intrinsics.UnsignedMath;
+import com.sun.cri.ci.CiCalleeSaveLayout;
+import com.sun.max.annotate.C_FUNCTION;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.lang.Bytes;
+import com.sun.max.unsafe.Address;
+import com.sun.max.unsafe.CodePointer;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.Log;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.VMOptions;
+import com.sun.max.vm.compiler.CallEntryPoint;
+import com.sun.max.vm.compiler.target.AdapterGenerator;
+import com.sun.max.vm.compiler.target.TargetMethod;
+import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.runtime.SafepointPoll;
+import com.sun.max.vm.runtime.VmOperation;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.armv7.*;
+import com.sun.max.vm.stack.armv7.ARMV7JavaStackFrame;
 
 /**
  * A utility class factoring out code common to all ARMV7 target method.
@@ -510,6 +520,7 @@ public final class ARMTargetMethodUtil {
             throw FatalError.unexpected(" invalid patchable call site:  " + callSite.toHexString());
         }
         final Pointer callSitePointer = callSite.toPointer();
+
         long disp64 = target.toLong() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toLong();
         int disp32 = (int) disp64;
         FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");

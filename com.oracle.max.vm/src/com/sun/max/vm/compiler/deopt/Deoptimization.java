@@ -319,6 +319,17 @@ public class Deoptimization extends VmOperation {
     @NEVER_INLINE
     public static void unroll(Info info) {
 	com.sun.max.vm.Log.println("inside unroll in deoptimization");
+	com.sun.max.vm.Log.println(info.ip.asPointer());
+                                com.sun.max.vm.Log.println(info.sp);
+                                com.sun.max.vm.Log.println(info.fp);
+	if(info.returnValue != null) {
+		if(info.returnValue.kind.stackKind() == CiKind.Object) {
+                                com.sun.max.vm.Log.println(info.returnValue.asObject());
+		}
+	} else {
+		 com.sun.max.vm.Log.println("NO return value info as null");
+	}
+
         ArrayList<CiConstant> slots = info.slots;
         Pointer sp = info.slotsAddr.plus(info.slotsSize() - STACK_SLOT_SIZE);
         if (deoptLogger.enabled()) {
@@ -427,6 +438,7 @@ public class Deoptimization extends VmOperation {
 	com.sun.max.vm.Log.println("DEOPTDOUBLE");
         deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forDouble(returnValue));
     }
+
 
     /**
      * Called from the {@code Word} {@linkplain Stubs#deoptStub(CiKind, boolean) deoptimization stub} for.
@@ -722,6 +734,8 @@ public class Deoptimization extends VmOperation {
         TargetMethod tm = info.tm;
         Throwable pendingException = VmThread.current().pendingException();
 
+	com.sun.max.vm.Log.println("deoptimize tm is ");
+	com.sun.max.vm.Log.println(tm);
         int safepointIndex = tm.findSafepointIndex(ip);
         assert safepointIndex >= 0 : "no safepoint index for " + tm + "+" + tm.posFor(ip);
 
