@@ -93,7 +93,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case HERE:
                 tasm.recordSafepoint(codePos(), info);
                 int beforeLea = masm.codeBuffer.position();
-                masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, ARMV7.r15.asValue(), -1));
+                masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, ARMV7.r15.asValue(), CiAddress.Placeholder));
                 int afterLea = masm.codeBuffer.position();
                 masm.codeBuffer.setPosition(beforeLea);
                 masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, ARMV7.r15.asValue(), beforeLea - afterLea - 4)); // The -4 offset accounts for the pc+32 that ARM has.
@@ -2247,10 +2247,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     CiValue result = operands[inst.result.index];
                     CiRegister dst = result.asRegister();
                     int beforeLea = masm.codeBuffer.position();
-                    masm.leaq(dst, new CiAddress(target.wordKind, ARMV7.r15.asValue(), 0));
+                    masm.leaq(dst, new CiAddress(target.wordKind, ARMV7.r15.asValue(), CiAddress.Placeholder));
                     int afterLea = masm.codeBuffer.position();
                     masm.codeBuffer.setPosition(beforeLea);
-                    masm.leaq(dst, new CiAddress(target.wordKind, ARMV7.r15.asValue(), beforeLea - afterLea));
+                    masm.leaq(dst, new CiAddress(target.wordKind, ARMV7.r15.asValue(), beforeLea - afterLea - 4));
                     break;
                 }
                 case LoadEffectiveAddress: {
