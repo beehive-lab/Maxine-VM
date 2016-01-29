@@ -591,7 +591,7 @@ divideByZeroExceptions();
 //#define SIMULATION_PLATFORM 1
 //#ifdef SIMULATIONPLATFORM
 //initialiseMemoryCluster();
-printf("INITIALISE TIMING\n");
+//printf("INITIALISE TIMING\n");
 //initialiseTimingModel();
 //#endif
 #endif
