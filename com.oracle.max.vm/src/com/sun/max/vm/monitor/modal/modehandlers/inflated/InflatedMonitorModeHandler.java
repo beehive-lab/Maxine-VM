@@ -66,7 +66,6 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
     @INLINE
     protected final InflatedMonitorLockword64 readMiscAndProtectBinding(Object object) {
         final InflatedMonitorLockword64 lockword = InflatedMonitorLockword64.from(ObjectAccess.readMisc(object));
-
         if (Platform.target().arch.is64bit()) {
             if (lockword.isBound()) {
                 JavaMonitorManager.protectBinding(lockword.getBoundMonitor());
@@ -83,13 +82,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
     protected int makeBoundHashCode(Object object, InflatedMonitorLockword64 lockword, InflatedMonitorLockword64 hashword) {
         assert hashword.isZero() || Platform.target().arch.is32bit() : " Hashword != null in 64 bit mode ";
         final JavaMonitor monitor = Platform.target().arch.is64bit() ? lockword.getBoundMonitor() : hashword.getBoundMonitor();
-	/* DEBUGGING if(monitor == null) {
-		com.sun.max.vm.Log.lock();
-		com.sun.max.vm.Log.println(object);
-	}*/
-	
 	assert monitor != null  : "null monitor in makeboundHashCode";
-
         final HashableLockword64 swappedLockword = Platform.target().arch.is64bit() ? HashableLockword64.from(monitor.displacedMisc()) : HashableLockword64.from(monitor.displacedHash());
         int hashcode = swappedLockword.getHashcode();
         if (hashcode == 0) {
@@ -197,17 +190,16 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             if (hashcode == 0) {
                 hashcode = monitorScheme().createHashCode(object);
                 final HashableLockword64 newLockword = Platform.target().arch.is64bit() ? lockword.setHashcode(hashcode) : hashword.setHashcode(hashcode);
-                final Word answer =  Platform.target().arch.is64bit() ? ObjectAccess.compareAndSwapMisc(object, lockword, newLockword) : ObjectAccess.compareAndSwapHash(object, hashword, newLockword);
-		if(Platform.target().arch.is64bit()) {
-                if (!answer.equals(lockword)) {
-                    return makeHashCode(object);
+                final Word answer = Platform.target().arch.is64bit() ? ObjectAccess.compareAndSwapMisc(object, lockword, newLockword) : ObjectAccess.compareAndSwapHash(object, hashword, newLockword);
+                if (Platform.target().arch.is64bit()) {
+                    if (!answer.equals(lockword)) {
+                        return makeHashCode(object);
+                    }
+                } else {
+                    if (!answer.equals(hashword)) {
+                        return makeHashCode(object);
+                    }
                 }
-		} else {
-		 if (!answer.equals(hashword)) {
-                    return makeHashCode(object);
-                }
-
-		}
             }
             return hashcode;
         }
@@ -232,12 +224,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
                         JavaMonitorManager.unbindMonitor(monitor);
                     }
                     final JavaMonitor boundMonitor = Platform.target().arch.is64bit() ? lockword.getBoundMonitor() : hashword.getBoundMonitor();
-		    /*DEBUGGING if(boundMonitor == null) {
-			    com.sun.max.vm.Log.lock();
-			    com.sun.max.vm.Log.println(object);
-		    }*/
 		    assert boundMonitor != null  : "Null boundMonitor monitorEnter";
-
                     boundMonitor.monitorEnter();
                     return;
                 } else if (monitor == null) {
@@ -373,6 +360,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
         }
 
         public DelegatedThreadHoldsMonitorResult delegateThreadHoldsMonitor(Object object, ModalLockword64 lockword, VmThread thread, int lockwordThreadID) {
+            assert Platform.target().arch.is64bit() : "Delegates are not implemented in 32Bit mode";
             final InflatedMonitorLockword64 inflatedLockword = readMiscAndProtectBinding(object);
             if (!inflatedLockword.isBound()) {
                 return DelegatedThreadHoldsMonitorResult.NOT_THIS_MODE;
