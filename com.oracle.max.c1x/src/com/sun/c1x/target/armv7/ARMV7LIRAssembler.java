@@ -96,7 +96,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, ARMV7.r15.asValue(), -1));
                 int afterLea = masm.codeBuffer.position();
                 masm.codeBuffer.setPosition(beforeLea);
-                masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, ARMV7.r15.asValue(), beforeLea - afterLea));
+                masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, ARMV7.r15.asValue(), beforeLea - afterLea - 4)); // The -4 offset accounts for the pc+32 that ARM has.
                 break;
             case UNCOMMON_TRAP:
                 directCall(CiRuntimeCall.Deoptimize, info);
