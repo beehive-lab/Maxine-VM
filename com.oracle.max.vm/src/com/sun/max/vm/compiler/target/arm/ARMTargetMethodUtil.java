@@ -586,25 +586,20 @@ public final class ARMTargetMethodUtil {
      */
     public static void patchWithJump(TargetMethod tm, int pos, CodePointer target) {
         // We must be at a global safepoint to safely patch TargetMethods
-        Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!patchWithJump!!!!hould only occur with Deoptimisation? isJumpToStaticTrampoline will need fixing!!!!!!!!!!!!!!!!!");
+        Log.println("ARMV7TargetMethodUtil patchWithJump under DEBUG for Deoptimisation (uses movw motv add blx) and its interaction with isJumpTo called from isJumpToStaticTrampoline");
 	FatalError.check(true,"patchWithJump under debug ");
         FatalError.check(VmOperation.atSafepoint(), "should only be patching entry points when at a safepoint");
 
         final Pointer patchSite = tm.codeAt(pos).toPointer();
-	Log.println("PATCH site is " + tm.codeAt(pos));
-	/* ok lets assume we can do the normal movw movt addpc blx */
+	//Log.println("PATCH site is " + tm.codeAt(pos));
+	/* ok lets assume we can do the normal movw movt addpc blx 
+	POTENTIALLY there may be problems in Stubs or other bits of code for ARMV7 that expect an address to be directly
+	written into the CODE, on ARMV7 we made the decision to use movw movt add PC, or at least movw movt to
+	generate 32bit addresses instead of reading them from the code.
+	*/
 	mtSafePatchCallDisplacement(tm, tm.codeAt(pos),  target);
 
 
-        /*long disp64 = target.toLong() - patchSite.plus(RIP_JMP_INSTRUCTION_LENGTH).toLong();
-        int disp32 = (int) disp64;
-        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
-
-        patchSite.writeByte(0, (byte) RIP_JMP);
-        patchSite.writeByte(1, (byte) disp32);
-        patchSite.writeByte(2, (byte) (disp32 >> 8));
-        patchSite.writeByte(3, (byte) (disp32 >> 16));
-        patchSite.writeByte(4, (byte) (disp32 >> 24));*/
     }
 
     /**
@@ -619,16 +614,7 @@ public final class ARMTargetMethodUtil {
     public static boolean isJumpTo(TargetMethod tm, int pos, CodePointer jumpTarget) {
 	return readCall32Target(tm, pos).equals(jumpTarget);
 	/* Here we need to remmember that we use movw movt add,blx to implement a PC-relative JUMP on
-	ARMV7
-	*/
-        /*Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ARM isJumpTo WRONG!!!!!!!!!!!!!!!!!!!!!!!");
-        final Pointer jumpSite = tm.codeAt(pos).toPointer();
-        if (jumpSite.readByte(0) == (byte) RIP_JMP) {
-            final int disp32 = jumpSite.readInt(1);
-            final Pointer target = jumpSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(disp32);
-            return jumpTarget.toPointer().equals(target);
-        }
-        return false;
+	ARMV7 THe only problem might be if it really needs to be a jump rather than a PC-relative JMP
 	*/
     }
 

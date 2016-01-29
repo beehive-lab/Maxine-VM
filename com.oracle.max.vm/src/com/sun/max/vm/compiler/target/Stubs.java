@@ -1356,7 +1356,7 @@ public class Stubs {
         @Override
         void apply() {
             Pointer patchAddr = stub.codeAt(pos).toPointer();
-	    com.sun.max.vm.Log.println("ARMV7DeoptStubPatch:apply needs to be altered to do movw movt");
+	    com.sun.max.vm.Log.println("UNTESTED:Deoptimization ARMV7DeoptStubPatch:apply has been altered to do movw movt");
             //patchAddr.writeLong(0, runtimeRoutine.address().toLong());
 	    int disp = runtimeRoutine.address().toInt();
 	    int instruction = ARMV7Assembler.movwHelper(ConditionFlag.Always, ARMV7.r12, disp & 0xffff);
@@ -1367,7 +1367,7 @@ public class Stubs {
 
             // WAS patchAddr.writeInt(0, runtimeRoutine.address().toInt());
             if (VMOptions.verboseOption.verboseCompilation) {
-                Log.print("!!!!!!!!!!!!!!MODS NEEDED!!!!!!!!!! DEOPT PATCH ADDR ");
+                Log.print("ARMV7 DEOPT PATCH ADDR ");
                 Log.println(patchAddr);
             }
         }
