@@ -318,6 +318,7 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void unroll(Info info) {
+	com.sun.max.vm.Log.println("inside unroll in deoptimization");
         ArrayList<CiConstant> slots = info.slots;
         Pointer sp = info.slotsAddr.plus(info.slotsSize() - STACK_SLOT_SIZE);
         if (deoptLogger.enabled()) {
@@ -337,12 +338,13 @@ public class Deoptimization extends VmOperation {
             }
             sp = sp.minus(STACK_SLOT_SIZE);
         }
+	com.sun.max.vm.Log.println("written words to slots in deoptimization");
 
         // Checkstyle: stop
         if (info.returnValue == null) {
             // Re-enable safepoints
             SafepointPoll.enable();
-
+	    com.sun.max.vm.Log.println("about to unwind in deoptimization");
             Stubs.unwind(info.ip.asPointer(), info.sp, info.fp);
         } else {
             if (StackReferenceMapPreparer.VerifyRefMaps || deoptLogger.enabled() || DeoptimizeALot != 0) {
@@ -351,7 +353,32 @@ public class Deoptimization extends VmOperation {
 
             // Re-enable safepoints
             SafepointPoll.enable();
-
+	    com.sun.max.vm.Log.println("about to do unwindKind in deoptimisation");
+	    switch (info.returnValue.kind.stackKind()) {
+			case Int:
+				com.sun.max.vm.Log.println("INT");
+			break;
+			case Float:
+				com.sun.max.vm.Log.println("FLOAT");
+			
+			break;
+			case Long:
+				com.sun.max.vm.Log.println("LONG");
+			break;
+			case Double:
+				com.sun.max.vm.Log.println("DOUBLE");
+			break;
+			case Object:
+				com.sun.max.vm.Log.println("OBJECT");
+				com.sun.max.vm.Log.println(info.ip.asPointer());
+				com.sun.max.vm.Log.println(info.sp);
+				com.sun.max.vm.Log.println(info.fp);
+				com.sun.max.vm.Log.println(info.returnValue.asObject());
+			break;
+			default:
+				com.sun.max.vm.Log.println("DEFAULT ERROR");
+			break;	
+	    }
             switch (info.returnValue.kind.stackKind()) {
                 case Int:     Stubs.unwindInt(info.ip.asPointer(), info.sp, info.fp, info.returnValue.asInt());
                 case Float:   Stubs.unwindFloat(info.ip.asPointer(), info.sp, info.fp, info.returnValue.asFloat());
@@ -362,6 +389,7 @@ public class Deoptimization extends VmOperation {
             }
         }
         // Checkstyle: resume
+	com.sun.max.vm.Log.println("done unwind in deopt");
     }
 
     /**
@@ -369,6 +397,7 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeInt(Pointer ip, Pointer sp, Pointer fp, Pointer csa, int returnValue) {
+	com.sun.max.vm.Log.println("DEOPTINT");
         deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forInt(returnValue));
     }
 
@@ -377,6 +406,7 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeFloat(Pointer ip, Pointer sp, Pointer fp, Pointer csa, float returnValue) {
+	com.sun.max.vm.Log.println("DEOPTFLOAT");
         deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forFloat(returnValue));
     }
 
@@ -385,6 +415,7 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeLong(Pointer ip, Pointer sp, Pointer fp, Pointer csa, long returnValue) {
+	com.sun.max.vm.Log.println("DEOPTLONG");
         deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forLong(returnValue));
     }
 
@@ -393,6 +424,7 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeDouble(Pointer ip, Pointer sp, Pointer fp, Pointer csa, double returnValue) {
+	com.sun.max.vm.Log.println("DEOPTDOUBLE");
         deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forDouble(returnValue));
     }
 
@@ -401,6 +433,7 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeWord(Pointer ip, Pointer sp, Pointer fp, Pointer csa, Word returnValue) {
+	com.sun.max.vm.Log.println("DEOPTWORD");
         deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, WordUtil.archConstant(returnValue));
     }
 
@@ -409,6 +442,7 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeObject(Pointer ip, Pointer sp, Pointer fp, Pointer csa, Object returnValue) {
+	com.sun.max.vm.Log.println("DEOPTOBJ");
         deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forObject(returnValue));
     }
 
@@ -417,6 +451,7 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeVoid(Pointer ip, Pointer sp, Pointer fp, Pointer csa) {
+	com.sun.max.vm.Log.println("DEOPTVOID");
         deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, null);
     }
 
@@ -672,6 +707,7 @@ public class Deoptimization extends VmOperation {
      * @param returnValue the value being returned (will be {@code null} if returning from a void method or not deoptimizing upon return)
      */
     public static void deoptimize(CodePointer ip, Pointer sp, Pointer fp, Pointer csa, CiCalleeSaveLayout csl, CiConstant returnValue) {
+	com.sun.max.vm.Log.println("into deoptimize");
         SafepointPoll.disable();
         Info info = new Info(VmThread.current(), ip.toPointer(), sp, fp);
 
@@ -699,6 +735,7 @@ public class Deoptimization extends VmOperation {
         FatalError.check(topFrame != null, "No frame info found at deopt site: " + tm.posFor(ip));
 
         if (pendingException != null) {
+	    com.sun.max.vm.Log.println("about to unwind in deopt");
             topFrame = unwindToHandlerFrame(topFrame, pendingException);
             assert topFrame != null : "could not (re)find handler for " + pendingException +
                                        " thrown at " + tm + "+" + ip.to0xHexString();
@@ -716,6 +753,7 @@ public class Deoptimization extends VmOperation {
         final TopFrameContinuation topCont = new TopFrameContinuation();
         Continuation cont = topCont;
         for (CiFrame frame = topFrame; frame != null; frame = frame.caller()) {
+	    com.sun.max.vm.Log.println("about to do compile in deopt");
             ClassMethodActor method = (ClassMethodActor) frame.method;
             TargetMethod compiledMethod = vm().compilationBroker.compileForDeopt(method);
             FatalError.check(compiledMethod.isBaseline(), compiledMethod + " should be a deopt target");
@@ -724,7 +762,9 @@ public class Deoptimization extends VmOperation {
             if (frame == topFrame && !Safepoints.isCall(tm.safepoints().safepointAt(safepointIndex))) {
                 reexecute = true;
             }
+	    com.sun.max.vm.Log.println("about to createDeoptimized frame in deoptimize");
             cont = compiledMethod.createDeoptimizedFrame(info, frame, cont, pendingException, reexecute);
+	    com.sun.max.vm.Log.println("done createDeoptimized in deoptimize");
 
             // The exception (if any) must be handled in the top frame
             pendingException = null;
@@ -774,7 +814,9 @@ public class Deoptimization extends VmOperation {
         // executes with enough stack space below it to unroll the deoptimized frames
         int used = info.sp.minus(VMRegister.getCpuStackPointer()).toInt() + tm.frameSize();
         int frameSize = Platform.target().alignFrameSize(Math.max(slotsSize - used, 0));
+	com.sun.max.vm.Log.println("about to unroll in deoptimize");
         Stubs.unroll(info, frameSize);
+	com.sun.max.vm.Log.println("unrolled in deoptimize error");
         FatalError.unexpected("should not reach here");
     }
 

@@ -410,7 +410,6 @@ public class VmOperation {
         Pointer instructionPointer;
         Pointer stackPointer;
         Pointer framePointer;
-        Log.println("callDoThread");
         Pointer frameAnchor = JavaFrameAnchor.from(tla);
         VmThread vmThread = VmThread.fromTLA(tla);
         if (frameAnchor.isZero()) {
