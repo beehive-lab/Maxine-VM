@@ -50,6 +50,9 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     protected BindingProtection bindingProtection;
     private Word preGCLockword;
 
+    //Only for ARM32 bit
+    private Word preGCMiscword;
+
     // Support for direct linked lists of JavaMonitors.
     private ManagedMonitor next;
 
@@ -106,6 +109,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
         displacedMiscWord.set(Word.zero());
         displacedHashWord.set(Word.zero());
         preGCLockword = Word.zero();
+        preGCMiscword = Word.zero();
         bindingProtection = BindingProtection.PRE_ACQUIRE;
     }
 
@@ -122,15 +126,19 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     }
 
     public final boolean isHardBound() {
-        return isBound() && ObjectAccess.readMisc(boundObject).equals(InflatedMonitorLockword64.boundFromMonitor(this));
+        return isBound() && (Platform.target().arch.is64bit() ? ObjectAccess.readMisc(boundObject).equals(InflatedMonitorLockword64.boundFromMonitor(this))
+                        : ObjectAccess.readHash(boundObject).equals(InflatedMonitorLockword64.boundFromMonitor(this)));
     }
 
     public final void preGCPrepare() {
         preGCLockword = InflatedMonitorLockword64.boundFromMonitor(this);
+        if (Platform.target().arch.is32bit()) {
+            preGCMiscword = InflatedMonitorLockword64.boundFromZero();
+        }
     }
 
     public final boolean requiresPostGCRefresh() {
-        return isBound() && ObjectAccess.readMisc(boundObject).equals(preGCLockword);
+        return isBound() && (Platform.target().arch.is64bit() ? ObjectAccess.readMisc(boundObject).equals(preGCLockword) :  ObjectAccess.readHash(boundObject).equals(preGCLockword));
     }
 
     public final void refreshBoundObject() {
