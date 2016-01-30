@@ -364,6 +364,9 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
 		ip = ip | 0x1; // make sure we get thumb mode!!!
 			       // in the fault address IP that we return to .
 		ucontext->uc_mcontext.arm_cpsr = ucontext->uc_mcontext.arm_cpsr & 0xffffffdf;
+		if(ucontext->uc_mcontext.arm_cpsr & 0x0600fc00) {
+			printf("IT block bits are set and trap taken in Thumb mode, potentially we might have a problem\n");
+		}
 		// make sure we get ARM mode in the JAVA trapStub
 	/* TODO BUG ISSUE
 	Note that there is still a bug in this implementation, however it will

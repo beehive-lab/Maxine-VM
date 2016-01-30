@@ -17,6 +17,16 @@
  */
 package com.sun.max.unsafe;
 
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.annotate.INLINE;
+import com.sun.max.platform.Platform;
+import com.sun.max.program.ProgramError;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.code.Code;
+import com.sun.max.vm.code.CodeRegion;
+import com.sun.max.vm.compiler.target.TargetMethod;
+import com.sun.max.vm.reference.Reference;
+
 import static com.sun.max.vm.MaxineVM.*;
 
 import com.sun.max.annotate.*;

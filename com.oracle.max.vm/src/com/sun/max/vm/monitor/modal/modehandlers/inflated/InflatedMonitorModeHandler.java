@@ -235,7 +235,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
                 if (Platform.target().arch.is32bit()) {
                     monitor.setDisplacedHash(hashword);
                 }
-                // 64Bit: monitor+bits, 32Bit: monitor
+                // 64Bit: monitor+bits, 32Bit: monitor address
                 final InflatedMonitorLockword64 newLockword = InflatedMonitorLockword64.boundFromMonitor(monitor);
                 // 64Bit: CAS monitor+bits @ miscWord, 32Bit: CAS monitor @ hashWord
                 final Word answer = Platform.target().arch.is64bit() ? ObjectAccess.compareAndSwapMisc(object, lockword, newLockword) : ObjectAccess.compareAndSwapHash(object, hashword, newLockword);
