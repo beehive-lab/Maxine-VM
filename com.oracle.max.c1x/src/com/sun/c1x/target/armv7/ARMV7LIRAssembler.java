@@ -96,7 +96,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.leaq(dst.asRegister(), CiAddress.Placeholder);
                 int afterLea = masm.codeBuffer.position();
                 masm.codeBuffer.setPosition(beforeLea);
-                masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, ARMV7.r15.asValue(), beforeLea - afterLea)); // The -4 offset accounts for the pc+32 that ARM has.
+                masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, ARMV7.rip.asValue(), beforeLea - afterLea)); // The -4 offset accounts for the pc+32 that ARM has.
                 break;
             case UNCOMMON_TRAP:
                 directCall(CiRuntimeCall.Deoptimize, info);
@@ -2250,7 +2250,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     masm.leaq(dst, CiAddress.Placeholder);
                     int afterLea = masm.codeBuffer.position();
                     masm.codeBuffer.setPosition(beforeLea);
-                    masm.leaq(dst, new CiAddress(target.wordKind, ARMV7.r15.asValue(), beforeLea - afterLea));
+                    masm.leaq(dst, new CiAddress(target.wordKind, ARMV7.rip.asValue(), beforeLea - afterLea));
                     break;
                 }
                 case LoadEffectiveAddress: {
