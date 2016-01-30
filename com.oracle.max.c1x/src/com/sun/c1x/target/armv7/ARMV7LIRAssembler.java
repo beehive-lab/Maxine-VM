@@ -96,7 +96,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.leaq(dst.asRegister(), CiAddress.Placeholder);
                 int afterLea = masm.codeBuffer.position();
                 masm.codeBuffer.setPosition(beforeLea);
-                masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, ARMV7.r15.asValue(), beforeLea - afterLea - 4)); // The -4 offset accounts for the pc+32 that ARM has.
+                masm.leaq(dst.asRegister(), new CiAddress(target.wordKind, ARMV7.r15.asValue(), beforeLea - afterLea)); // The -4 offset accounts for the pc+32 that ARM has.
                 break;
             case UNCOMMON_TRAP:
                 directCall(CiRuntimeCall.Deoptimize, info);
@@ -2250,7 +2250,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     masm.leaq(dst, CiAddress.Placeholder);
                     int afterLea = masm.codeBuffer.position();
                     masm.codeBuffer.setPosition(beforeLea);
-                    masm.leaq(dst, new CiAddress(target.wordKind, ARMV7.r15.asValue(), beforeLea - afterLea - 4));
+                    masm.leaq(dst, new CiAddress(target.wordKind, ARMV7.r15.asValue(), beforeLea - afterLea));
                     break;
                 }
                 case LoadEffectiveAddress: {
@@ -2412,7 +2412,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 }
                 case Safepoint: {
                     assert info != null : "Must have debug info in order to create a safepoint.";
-                    tasm.recordSafepoint(codePos(), info);
+                    int offset = (Integer) inst.extra;
+                    assert offset == 0 || Platform.target().arch.is32bit();
+                    tasm.recordSafepoint(codePos() + offset, info);
                     break;
                 }
                 case NullCheck: {

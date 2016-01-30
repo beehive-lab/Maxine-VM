@@ -782,8 +782,8 @@ public abstract class CiXirAssembler {
         append(new XirInstruction(CiKind.Void, l, Bind, null));
     }
 
-    public void safepoint() {
-        append(new XirInstruction(CiKind.Void, null, Safepoint, null));
+    public void safepoint(int offset) {
+        append(new XirInstruction(CiKind.Void, offset, Safepoint, null));
     }
 
     public void align(int multiple) {
