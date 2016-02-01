@@ -769,9 +769,11 @@ public class Deoptimization extends VmOperation {
         for (CiFrame frame = topFrame; frame != null; frame = frame.caller()) {
 	    com.sun.max.vm.Log.println("about to do compile in deopt");
             ClassMethodActor method = (ClassMethodActor) frame.method;
+	    com.sun.max.vm.Log.println(method);
             TargetMethod compiledMethod = vm().compilationBroker.compileForDeopt(method);
             FatalError.check(compiledMethod.isBaseline(), compiledMethod + " should be a deopt target");
             cont.tm = compiledMethod;
+	    com.sun.max.vm.Log.println(compiledMethod);
             boolean reexecute = false;
             if (frame == topFrame && !Safepoints.isCall(tm.safepoints().safepointAt(safepointIndex))) {
                 reexecute = true;
@@ -794,6 +796,8 @@ public class Deoptimization extends VmOperation {
 
         // Fix up the caller details for the bottom most deoptimized frame
         cont.tm = info.callerTM();
+	com.sun.max.vm.Log.print("CALLER METHOD ");
+	com.sun.max.vm.Log.println(cont.tm);
         cont.setIP(info, info.returnIP.asPointer());
         cont.setSP(info, WordUtil.archConstant(info.callerSP));
         cont.setFP(info, WordUtil.archConstant(info.callerFP));
