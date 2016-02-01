@@ -322,10 +322,10 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
         }
 
         public int delegateMakeHashcode(Object object, ModalLockword64 lockword) {
-            assert Platform.target().arch.is64bit() : "Delegates are not implemented in 32Bit mode";
             final InflatedMonitorLockword64 inflatedLockword = readMiscAndProtectBinding(object);
             if (inflatedLockword.isBound()) {
-                return makeBoundHashCode(object, inflatedLockword, InflatedMonitorLockword64.from(Word.zero()));
+                return makeBoundHashCode(object, inflatedLockword,
+                                Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(Word.zero()) : InflatedMonitorLockword64.from(ObjectAccess.readHash(object)));
             }
             return 0;
         }
@@ -346,26 +346,27 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
         }
 
         public void delegateMonitorNotify(Object object, boolean all, ModalLockword64 lockword) {
-            assert Platform.target().arch.is64bit() : "Delegates are not implemented in 32Bit mode";
-            monitorNotify(object, all, InflatedMonitorLockword64.from(lockword), InflatedMonitorLockword64.from(Word.zero()));
+            monitorNotify(object, all, InflatedMonitorLockword64.from(lockword),
+                            Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(Word.zero()) : InflatedMonitorLockword64.from(ObjectAccess.readHash(object)));
         }
 
         public void delegateMonitorWait(Object object, long timeout, ModalLockword64 lockword) throws InterruptedException {
-            assert Platform.target().arch.is64bit() : "Delegates are not implemented in 32Bit mode";
             final InflatedMonitorLockword64 inflatedLockword = InflatedMonitorLockword64.from(lockword);
             if (inflatedLockword.isBound()) {
-                JavaMonitorManager.protectBinding(inflatedLockword.getBoundMonitor());
+                JavaMonitorManager.protectBinding(Platform.target().arch.is64bit() ? inflatedLockword.getBoundMonitor() : InflatedMonitorLockword64.from(ObjectAccess.readHash(object)).getBoundMonitor());
             }
-            monitorWait(object, timeout, inflatedLockword, InflatedMonitorLockword64.from(Word.zero()));
+            monitorWait(object, timeout, inflatedLockword,
+                            Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(Word.zero()) : InflatedMonitorLockword64.from(ObjectAccess.readHash(object)));
         }
 
         public DelegatedThreadHoldsMonitorResult delegateThreadHoldsMonitor(Object object, ModalLockword64 lockword, VmThread thread, int lockwordThreadID) {
-            assert Platform.target().arch.is64bit() : "Delegates are not implemented in 32Bit mode";
             final InflatedMonitorLockword64 inflatedLockword = readMiscAndProtectBinding(object);
             if (!inflatedLockword.isBound()) {
                 return DelegatedThreadHoldsMonitorResult.NOT_THIS_MODE;
             }
-            return super.threadHoldsMonitor(inflatedLockword, InflatedMonitorLockword64.from(Word.zero()), thread) ? DelegatedThreadHoldsMonitorResult.TRUE : DelegatedThreadHoldsMonitorResult.FALSE;
+            return super.threadHoldsMonitor(inflatedLockword,
+                            Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(Word.zero()) : InflatedMonitorLockword64.from(ObjectAccess.readHash(object)), thread)
+                                            ? DelegatedThreadHoldsMonitorResult.TRUE : DelegatedThreadHoldsMonitorResult.FALSE;
         }
 
         public void delegateAfterGarbageCollection() {
@@ -409,6 +410,9 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             // FIXME: What if the VmThread is null?
             final JavaMonitor monitor = JavaMonitorManager.bindMonitor(object);
             monitor.setDisplacedMisc(thinLockword.asUnlocked());
+            if (Platform.target().arch.is32bit()) {
+                monitor.setDisplacedHash(ObjectAccess.readHash(object));
+            }
             if (!thinLockword.equals(thinLockword.asUnlocked())) {
                 final VmThread owner = VmThreadMap.ACTIVE.getVmThreadForID(decodeLockwordThreadID(thinLockword.getLockOwnerID()));
                 monitor.monitorPrivateAcquire(owner, thinLockword.getRecursionCount());
@@ -418,10 +422,15 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             return InflatedMonitorLockword64.boundFromMonitor(monitor);
         }
 
-        public ModalLockword64 reprepareModalLockword(ModalLockword64 preparedLockword, ModalLockword64 currentLockword) {
+        public ModalLockword64 reprepareModalLockword(ModalLockword64 preparedLockword, ModalLockword64 currentLockword, ModalLockword64 hash) {
+            assert hash.isZero() || Platform.target().arch.is64bit();
             final ThinLockword64 thinLockword = ThinLockword64.from(currentLockword);
-            final JavaMonitor monitor = InflatedMonitorLockword64.from(preparedLockword).getBoundMonitor();
+            final JavaMonitor monitor = Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(preparedLockword).getBoundMonitor() :
+                InflatedMonitorLockword64.from(hash).getBoundMonitor();
             monitor.setDisplacedMisc(thinLockword);
+            if (Platform.target().arch.is32bit()) {
+                monitor.setDisplacedHash(hash);
+            }
             if (!thinLockword.equals(thinLockword.asUnlocked())) {
                 final VmThread owner = VmThreadMap.ACTIVE.getVmThreadForID(decodeLockwordThreadID(thinLockword.getLockOwnerID()));
                 monitor.monitorPrivateAcquire(owner, thinLockword.getRecursionCount());
@@ -452,6 +461,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
                     ObjectAccess.writeHash(object, hashWord);
                 }
             });
+            assert Platform.target().arch.is64bit() : "Biased locking not implemented for 32 bit";
         }
 
         @Override
@@ -476,7 +486,8 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             return newLockword;
         }
 
-        public ModalLockword64 reprepareModalLockword(ModalLockword64 preparedLockword, ModalLockword64 currentLockword) {
+        public ModalLockword64 reprepareModalLockword(ModalLockword64 preparedLockword, ModalLockword64 currentLockword, ModalLockword64 hash) {
+            assert Platform.target().arch.is64bit() : "Biased locking is not implemented in 32 bit";
             final BiasedLockword64 biasedLockword = BiasedLockword64.from(currentLockword);
             final JavaMonitor monitor = InflatedMonitorLockword64.from(preparedLockword).getBoundMonitor();
             monitor.setDisplacedMisc(biasedLockword);

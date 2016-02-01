@@ -177,7 +177,7 @@ public abstract class AbstractModeHandler implements ModeHandler {
      */
     public interface ModeDelegate extends ModeHandler {
         ModalLockword64 prepareModalLockword(Object object, ModalLockword64 currentLockword);
-        ModalLockword64 reprepareModalLockword(ModalLockword64 preparedLockword, ModalLockword64 currentLockword);
+        ModalLockword64 reprepareModalLockword(ModalLockword64 preparedLockword, ModalLockword64 currentLockword, ModalLockword64 hash);
         void cancelPreparedModalLockword(ModalLockword64 preparedLockword);
         boolean delegateMonitorEnter(Object object, ModalLockword64 lockword, int lockwordThreadID);
         void delegateMonitorExit(Object object, ModalLockword64 lockword);
