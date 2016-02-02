@@ -332,10 +332,10 @@ public class ARMV7Assembler extends AbstractAssembler {
 
 	    //System.out.println("JUMP CASE ONE");
 	    if(instrumented) {
-                //System.out.println("JUMP CASE ONE");
+                System.out.println("JUMP CASE ONE");
 		disp = disp + 4;
                 if((0xf & (firstPATCHOperation >>28)) == ConditionFlag.Always.value()) {
-                        //System.out.println("We have an ALWAYS TAKEN BRANCH");
+                        System.out.println("We have an ALWAYS TAKEN BRANCH");
 			disp = disp +  firstPATCH;
 			instruction = movwHelper(ConditionFlag.Always,ARMV7.r1, disp & 0xffff);
 			codeBuffer.emitInt(instruction, branch - firstPATCH);
@@ -364,14 +364,16 @@ public class ARMV7Assembler extends AbstractAssembler {
 
 	    
         } else if (operation == (ConditionFlag.NeverUse.value() << 28 | 0xbeef)) { // JMP
-            // disp += 8;
+	    /*
+		Matches a jmp to an unbound label -- this should in theory be a forward jump.
+	    */
 	    checkConstraint(-0x800000 <= (disp) && disp <= 0x7fffff, "patchJumpTarget TWO must be within  a 24bit offset");
             disp += 8;
 	    if(instrumented) {
-                //System.out.println("JUMP CASE TWO");
+                System.out.println("JUMP CASE TWO");
 		if((0xf & (firstPATCHOperation >>28)) == ConditionFlag.Always.value()) {
-                        //System.out.println("We have an ALWAYS TAKEN BRANCH");
-                        tmpDisp = disp +  firstPATCH;
+                        System.out.println("We have an ALWAYS TAKEN BRANCH  "+ branch);
+                        tmpDisp = disp +  firstPATCH -8 ; // found to be 8 too far!
                         instruction = movwHelper(ConditionFlag.Always,ARMV7.r1, tmpDisp & 0xffff);
                         codeBuffer.emitInt(/*0xbeefbeef*/instruction, branch - firstPATCH);
                         instruction = movtHelper(ConditionFlag.Always,ARMV7.r1, (tmpDisp >> 16) & 0xffff);
@@ -379,8 +381,8 @@ public class ARMV7Assembler extends AbstractAssembler {
 			
 
                 }else {
-			//System.out.println("WE HAVE  ATAKEN + NOTTAKEN TO PATCH");
-                        tmpDisp = disp +  secondPATCH;
+			System.out.println("WE HAVE  ATAKEN + NOTTAKEN TO PATCH");
+                        tmpDisp = disp +  secondPATCH -8 ;
                         tmp = ConditionFlag.which(0xf & (secondPATCHOperation >>28));
                         instruction = movwHelper(tmp ,ARMV7.r1, tmpDisp & 0xffff);
                         codeBuffer.emitInt(instruction, branch - secondPATCH);
@@ -417,9 +419,9 @@ public class ARMV7Assembler extends AbstractAssembler {
             codeBuffer.emitInt(0x0a000000 | (disp & 0xffffff) | ((ConditionFlag.Always.value() & 0xf) << 28), branch);
 	    if(instrumented) {
 		disp = disp *4;
-		//System.out.println("JUMP CASE THREE");
+		System.out.println("JUMP CASE THREE");
 		if((0xf & (firstPATCHOperation >>28)) == ConditionFlag.Always.value()) {
-                        //System.out.println("We have an ALWAYS TAKEN BRANCH");
+                        System.out.println("We have an ALWAYS TAKEN BRANCH " + branch);
                         disp = disp +  firstPATCH;
                         instruction = movwHelper(ConditionFlag.Always,ARMV7.r1, disp & 0xffff);
                         codeBuffer.emitInt(instruction, branch - firstPATCH);
@@ -467,10 +469,10 @@ public class ARMV7Assembler extends AbstractAssembler {
 		ELSE we have the NOTTAKEN condition at -44 and the TAKEN condition at the -56
 	    */	
 	    if(instrumented) {
-		//System.out.println("JUMP CASE DEFAULT");
+		System.out.println("JUMP CASE DEFAULT");
 		disp = disp * 4;
 		if((0xf & (firstPATCHOperation >>28)) == ConditionFlag.Always.value()) {
-                        //System.out.println("We have an ALWAYS TAKEN BRANCH");
+                        System.out.println("We have an ALWAYS TAKEN BRANCH " + branch);
                         disp = disp +  firstPATCH;
                         instruction = movwHelper(ConditionFlag.Always,ARMV7.r1, disp & 0xffff);
                         codeBuffer.emitInt(instruction, branch - firstPATCH);
@@ -2471,29 +2473,12 @@ public class ARMV7Assembler extends AbstractAssembler {
             // System.out.println("JMP PATCHAT "+ codeBuffer.position());
 	    // 
 	    if(maxineflush != null) {
-		/* OK this is for a patched jmp it needs to be patched or it will fail */
-		//instrumentPush(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
-		//vpush( ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // need to be changed to instrumentVPUSH
-
-		
-		//mov32BitConstant(ConditionFlag.Always, ARMV7.r0,-1);
-		//mov32BitConstant(ConditionFlag.Always,ARMV7.r12,maxineFlushAddress);
-		//emitInt(ConditionFlag.NeverUse.value() << 28 | 0xb0b<<16 | 0xbeef); // JMP CODE for the PATCH
-		//emitInt(ConditionFlag.NeverUse.value() << 28 | 0xb0b<<16 | 0xbeef); // JMP CODE for the PATCH
-		// we need to put the address into ARMV7.r1 when we have patched
-		//addRegisters(ConditionFlag.Always, false, ARMV7.r1, ARMV7.r15, ARMV7.r1, 0, 0);
-		//int instruction = blxHelper(ConditionFlag.Always, ARMV7.r12);
-                //emitInt(instruction);
-		//vpop( ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // need to be changed to instrumentVPUSH
-
-                //instrumentPop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
 		ConditionFlag tmp = ConditionFlag.Always;
                 tmp = tmp.inverse();
                 instrumentPCChange(ConditionFlag.Always, tmp, -3);
 	    }
             l.addPatchAt(codeBuffer.position(),instrumentMe);
             emitInt(ConditionFlag.NeverUse.value() << 28 | 0xbeef); // JMP CODE for the PATCH
-            // TODO fix this it will not work ....
             nop(1);
             // emitByte(0xE9);
             // emitInt(0);

@@ -66,6 +66,7 @@ extern void pushDSTR(unsigned int address);
 extern int initialiseTimingModel();
 extern void pushJumpAddress(int address);
 extern int reportTimingCounters();
+extern void clearTimingCache(char *buffer, int size);
 // end of simulation platform functions
 void divideByZeroExceptions();
 #   include <pthread.h>
@@ -117,6 +118,7 @@ void real_maxine_instrumentation(int address, unsigned int newpc, int totalPages
 			*/
 			printf("NEWPC METHODENTRY 0x%x\n",newpc);
 			pushJumpAddress(newpc);
+			pushJumpAddress(newpc+72);
 		break; // break  only while debugging the various cases ...
 			/* 
 			We DELIBERATELY FALL THROUGH TO CASE 3 THAT IS ALSO AN absolute ADDRESS 
@@ -764,7 +766,8 @@ void divideByZeroExceptions() {
 }
 void maxine_cacheflush(char *start, int length) {
 	char * end = start + length;
-	//printf("FLUSHED CACHE \n");
+	printf("FLUSHED CACHE %p  length: %d \n",start,length);
+	clearTimingCache(start, length);
 	asm volatile("isb ");
 	asm volatile("dsb ");
 	asm volatile("dmb ");
