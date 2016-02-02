@@ -118,7 +118,7 @@ void real_maxine_instrumentation(int address, unsigned int newpc, int totalPages
 			*/
 			printf("NEWPC METHODENTRY 0x%x\n",newpc);
 			pushJumpAddress(newpc);
-			pushJumpAddress(newpc+72);
+			//pushJumpAddress(newpc+72);
 		break; // break  only while debugging the various cases ...
 			/* 
 			We DELIBERATELY FALL THROUGH TO CASE 3 THAT IS ALSO AN absolute ADDRESS 
@@ -593,7 +593,7 @@ divideByZeroExceptions();
 //#define SIMULATION_PLATFORM 1
 //#ifdef SIMULATIONPLATFORM
 //initialiseMemoryCluster();
-printf("INITIALISE TIMING\n");
+//printf("INITIALISE TIMING\n");
 initialiseTimingModel();
 //#endif
 #endif

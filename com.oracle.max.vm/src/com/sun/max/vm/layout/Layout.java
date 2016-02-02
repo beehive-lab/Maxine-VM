@@ -79,6 +79,8 @@ public final class Layout {
          */
         public static final HeaderField MISC = new HeaderField("MISC", "Encoded monitor and hash code details for the object");
 
+        public static final HeaderField HASH = new HeaderField("HASH", "Encoded hash code only for 32 bit archs");
+
         /**
          * The header word in which the length of an array object is encoded.
          */
@@ -365,6 +367,30 @@ public final class Layout {
     @INLINE
     public static Word readMisc(Reference reference) {
         return generalLayout().readMisc(reference);
+    }
+
+    @ACCESSOR(Reference.class)
+    @INLINE
+    public static Word readHash(Reference reference) {
+        return generalLayout().readHash(reference);
+    }
+
+    @ACCESSOR(Reference.class)
+    @INLINE
+    public static void writeHash(Reference reference, Word value) {
+        generalLayout().writeHash(reference, value);
+    }
+
+    @ACCESSOR(Pointer.class)
+    @INLINE
+    public static void writeHash(Pointer origin, Word value) {
+        generalLayout().writeHash(origin, value);
+    }
+
+    @ACCESSOR(Reference.class)
+    @INLINE
+    public static Word compareAndSwapHash(Reference reference, Word expectedValue, Word newValue) {
+        return generalLayout().compareAndSwapHash(reference, expectedValue, newValue);
     }
 
     /**

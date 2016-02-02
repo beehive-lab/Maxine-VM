@@ -24,6 +24,7 @@ package com.sun.max.vm.heap;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.heap.debug.*;
@@ -120,6 +121,9 @@ public class Cell {
         Memory.copyBytes(Layout.originToCell(Reference.fromJava(object).toOrigin()), cell, size);
         final Pointer origin = Layout.cellToOrigin(cell);
         Layout.writeMisc(origin, Word.zero());
+        if (Platform.target().arch.is32bit()) {
+            Layout.writeHash(origin, Word.zero());
+        }
         return Reference.fromOrigin(origin).toJava();
     }
 

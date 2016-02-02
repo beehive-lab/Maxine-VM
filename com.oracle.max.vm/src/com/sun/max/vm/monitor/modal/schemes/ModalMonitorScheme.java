@@ -111,6 +111,11 @@ public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
     }
 
     @INLINE
+    public final int createHash(Object object) {
+        return entryHandler.createHash(object);
+    }
+
+    @INLINE
     public final int makeHashCode(Object object) {
         return entryHandler.makeHashCode(object);
     }

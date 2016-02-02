@@ -37,15 +37,16 @@ import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.observer.*;
-import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiCompiler.*;
+import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.Phase;
+import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -307,6 +308,7 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     //public static final Object lock = new Object();
     //public static final List<String> compiledMethods = new ArrayList<>();
 
+    //String cklass = "com.oracle.max.vm.ext.maxri.MaxRuntimeCalls.runtimeRegisterFinalizer(Object)";
     public TargetMethod compile(final ClassMethodActor method, boolean isDeopt, boolean install, CiStatistics stats) {
         CiTargetMethod compiledMethod;
 	//Log.print("C1XCOMPILE ");Log.println(method.toString());
@@ -317,10 +319,7 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
             //TTY.println(" Thread " + Thread.currentThread().getId() +" Compiling klass: " + method.compilee().toString());
             //synchronized (lock) {
             //    for (String cklass : faultyClasses) {
-            //        if (method.compilee().toString().equals(cklass)) {
-            //            C1XOptions.TraceLinearScanLevel = 4;
-            //            compiledMethods.add(method.compilee().toString());
-            //        }
+
             //    }
             //}
             compiledMethod = compiler().compileMethod(method, -1, stats, debugInfoLevel).targetMethod();
@@ -347,6 +346,15 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
                 try {
 
                     printMachineCode(compiledMethod, maxTargetMethod, false);
+                    //if (method.compilee().toString().equals(cklass)) {
+                    //    TTY.println(" Thread " + Thread.currentThread().getId() +" Compiling klass: " + method.compilee().toString());
+                    //    for (Safepoint s : compiledMethod.safepoints) {
+                    //        System.out.println(s.toString());
+                    //    }
+
+                    //}
+
+
                 } finally {
                     filter.remove();
                 }

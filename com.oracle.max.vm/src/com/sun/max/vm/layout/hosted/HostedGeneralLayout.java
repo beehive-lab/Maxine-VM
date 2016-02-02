@@ -157,4 +157,16 @@ public class HostedGeneralLayout extends AbstractLayout  implements GeneralLayou
     public boolean equals(Pointer origin1, Pointer origin2) {
         throw ProgramError.unexpected();
     }
+
+    public final Word compareAndSwapHash(Accessor accessor, Word expectedValue, Word newValue) {
+        throw ProgramError.unexpected();
+    }
+
+    public Word readHash(Accessor accessor) {
+        throw ProgramError.unexpected();
+    }
+
+    public void writeHash(Accessor accessor, Word value) {
+        throw ProgramError.unexpected();
+    }
 }

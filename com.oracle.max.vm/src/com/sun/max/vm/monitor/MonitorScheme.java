@@ -84,6 +84,8 @@ public interface MonitorScheme extends VMScheme {
      */
     Word createMisc(Object object);
 
+    int createHash(Object object);
+
     /**
      * GC support for MonitorSchemes which hold native pointers to Java objects.
      */

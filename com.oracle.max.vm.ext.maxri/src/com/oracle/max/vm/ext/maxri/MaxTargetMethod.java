@@ -463,6 +463,10 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
         int safepointIndex = findSafepointIndex(current.vmIP());
         if (safepointIndex < 0) {
             // this is very bad.
+            Log.print(posFor(current.vmIP()));
+            Log.print(" ");
+            Log.printLocation(current.targetMethod(), current.vmIP(), false);
+            Log.println();
             throw FatalError.unexpected("could not find safepoint index");
         }
 

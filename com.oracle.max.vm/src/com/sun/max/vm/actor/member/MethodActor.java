@@ -22,38 +22,30 @@
  */
 package com.sun.max.vm.actor.member;
 
-import com.sun.cri.bytecode.Bytecodes;
-import com.sun.cri.ci.CiBitMap;
-import com.sun.cri.ci.CiExceptionHandler;
+import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
+import static com.sun.max.vm.type.ClassRegistry.Property.*;
+
+import java.lang.annotation.*;
+import java.lang.reflect.*;
+import java.util.*;
+import java.util.concurrent.*;
+
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
-import com.sun.max.Utils;
+import com.sun.max.*;
 import com.sun.max.annotate.*;
-import com.sun.max.program.ProgramError;
-import com.sun.max.unsafe.UnsafeCast;
-import com.sun.max.unsafe.Word;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.actor.holder.ClassActor;
-import com.sun.max.vm.classfile.constant.SymbolTable;
-import com.sun.max.vm.classfile.constant.Utf8Constant;
-import com.sun.max.vm.hosted.JavaPrototype;
+import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.Value;
+import com.sun.max.vm.value.*;
 
-import sun.reflect.Reflection;
-import sun.reflect.ReflectionFactory;
-
-import java.lang.annotation.Annotation;
-import java.lang.reflect.*;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-import com.sun.max.platform.Platform;
-
-import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.Constructor_methodActor;
-import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.Method_methodActor;
-import static com.sun.max.vm.type.ClassRegistry.Property.*;
+import sun.reflect.*;
 
 /**
  * Internal representations of Java methods.
@@ -80,19 +72,6 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
                        String intrinsic) {
         super(name, descriptor, flags);
         this.intrinsic = intrinsic;
-    }
-
-    /*
-    Override --- necessary to get a 20bit hasshcode to work with the Java_sun_reflect_ReflectionFactory, newConstructorStub and the HashMamp used to
-    store the prePopulatedConstructorStubs
-    */
-    @Override
-    public int hashCode() {
-        if (Platform.target().arch.is32bit()) {
-            return (0xfffff & System.identityHashCode(this));
-        } else {
-            return System.identityHashCode(this);
-        }
     }
 
 
@@ -383,13 +362,7 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
      */
     public final InvocationStub makeInvocationStub() {
         ClassRegistry classRegistry = holder().classRegistry();
-        InvocationStub invocationStub = null;
-        if (Platform.target().arch.is32bit()) {
-            ARM32Box boxOne = classRegistry.get(INVOCATION_STUB, new ARM32Box(this));
-            invocationStub = (InvocationStub) boxOne.get();
-        } else {
-            invocationStub = classRegistry.get(INVOCATION_STUB, this);
-        }
+        InvocationStub invocationStub = classRegistry.get(INVOCATION_STUB, this);
 
         if (invocationStub == null) {
             if (isInstanceInitializer()) {
@@ -397,7 +370,7 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
             } else {
                 invocationStub = InvocationStub.newMethodStub(toJava(), Boxing.VALUE);
             }
-            classRegistry.set(INVOCATION_STUB, (Platform.target().arch.is32bit() ? new ARM32Box(this) : this), (Platform.target().arch.is32bit() ? new ARM32Box(invocationStub) : invocationStub));
+            classRegistry.set(INVOCATION_STUB, this, invocationStub);
         }
         return invocationStub;
     }

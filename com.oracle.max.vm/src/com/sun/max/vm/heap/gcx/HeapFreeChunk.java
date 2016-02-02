@@ -26,6 +26,7 @@ import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -163,6 +164,9 @@ public class HeapFreeChunk {
         }
         Cell.plantTuple(cell, hub);
         Layout.writeMisc(Layout.cellToOrigin(cell), Word.zero());
+        if (Platform.target().arch.is32bit()) {
+            Layout.writeHash(Layout.cellToOrigin(cell), Word.zero());
+        }
         setFreeChunkSize(cell, numBytes);
         setFreeChunkNext(cell, nextChunk);
         return toHeapFreeChunk(cell);

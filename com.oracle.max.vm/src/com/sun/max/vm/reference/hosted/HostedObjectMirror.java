@@ -173,4 +173,12 @@ public class HostedObjectMirror implements ObjectMirror {
         }
         return Integer.MAX_VALUE;
     }
+
+    public Value readHash() {
+        return IntValue.from(vmConfig().monitorScheme().createHash(object));
+    }
+
+    public void writeHash(Value value) {
+        assert value.asWord().equals(vmConfig().monitorScheme().createHash(object));
+    }
 }

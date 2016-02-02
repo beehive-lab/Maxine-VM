@@ -82,6 +82,10 @@ public interface SpecificLayout extends GeneralLayout {
         int firstWordIndex();
 
         int firstIntIndex();
+
+        Value readHash();
+
+        void writeHash(Value value);
     }
 
     /**

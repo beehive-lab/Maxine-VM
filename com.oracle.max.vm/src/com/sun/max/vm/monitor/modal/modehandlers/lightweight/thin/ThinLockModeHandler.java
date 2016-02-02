@@ -18,11 +18,12 @@
 package com.sun.max.vm.monitor.modal.modehandlers.lightweight.thin;
 
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
-import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.ModeDelegate.DelegatedThreadHoldsMonitorResult;
+import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.ModeDelegate.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.thread.*;
@@ -70,13 +71,13 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             if (answer.equals(thinLockword)) {
                 break;
             } else if (answer.isInflated()) {
-                delegate().cancelPreparedModalLockword(inflatedLockword);
+                delegate().cancelPreparedModalLockword(Platform.target().arch.is64bit() ? inflatedLockword : ModalLockword64.from(ObjectAccess.readMisc(object)));
                 inflatedLockword = answer;
                 break;
             }
             // We will spin if the thin lock word has been changed in any way (new owner, rcount change, new hashcode)
             thinLockword = ThinLockword64.from(answer);
-            inflatedLockword = delegate().reprepareModalLockword(inflatedLockword, thinLockword);
+            inflatedLockword = delegate().reprepareModalLockword(inflatedLockword, thinLockword,  Platform.target().arch.is64bit() ? ModalLockword64.from(Word.zero()) : ModalLockword64.from(ObjectAccess.readMisc(object)));
         }
         return inflatedLockword;
     }
@@ -161,22 +162,31 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
         delegate().delegateMonitorExit(object, lockword);
     }
 
-    protected int makeHashCode(Object object, ModalLockword64 lockword) {
+    protected int makeHashCode(Object object, ModalLockword64 lockword, ModalLockword64 hashword) {
+        assert hashword.isZero() || Platform.target().arch.is32bit() : "Non null hashword in 64bit!";
         ModalLockword64 newLockword = lockword;
         int newHashcode = 0;
+        ThinLockword64 hashLockword = ThinLockword64.from(hashword);
         while (true) {
             if (ThinLockword64.isThinLockword(newLockword)) {
                 final ThinLockword64 thinLockword = ThinLockword64.from(newLockword);
-                final int hashcode = thinLockword.getHashcode();
+                final int hashcode = Platform.target().arch.is64bit() ? thinLockword.getHashcode() : hashLockword.getHashcode();
                 if (hashcode != 0) {
                     return hashcode;
                 }
                 if (newHashcode == 0) {
                     newHashcode = monitorScheme().createHashCode(object);
                 }
-                newLockword = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, thinLockword, thinLockword.setHashcode(newHashcode)));
-                if (newLockword.equals(thinLockword)) {
-                    return newHashcode;
+                newLockword = Platform.target().arch.is64bit() ? ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, thinLockword, thinLockword.setHashcode(newHashcode)))
+                                : ModalLockword64.from(ObjectAccess.compareAndSwapHash(object, hashLockword, hashLockword.setHashcode(newHashcode)));
+                if (Platform.target().arch.is64bit()) {
+                    if (newLockword.equals(thinLockword)) {
+                        return newHashcode;
+                    }
+                } else {
+                    if (newLockword.equals(hashLockword)) {
+                        return newHashcode;
+                    }
                 }
                 // Could be another thread beat us to the hashcode, or an inflation. Try again.
                 continue;
@@ -263,6 +273,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
 
         protected BiasedLockDelegate(ModeDelegate delegate) {
             super(delegate);
+            assert Platform.target().arch.is64bit() : "Biased locking is not implemented for 32 bit";
         }
 
         public boolean delegateMonitorEnter(Object object, ModalLockword64 lockword, int lockwordThreadID) {
@@ -300,7 +311,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
         }
 
         public int delegateMakeHashcode(Object object, ModalLockword64 lockword) {
-            return makeHashCode(object, ThinLockword64.from(lockword));
+            return makeHashCode(object, ThinLockword64.from(lockword), ThinLockword64.from(Word.zero()));
         }
 
         public void delegateAfterGarbageCollection() {
@@ -321,12 +332,13 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             return thinLockword;
         }
 
-        public ModalLockword64 reprepareModalLockword(ModalLockword64 preparedLockword, ModalLockword64 currentLockword) {
-            return prepareModalLockword(null, currentLockword);
-        }
-
         public void cancelPreparedModalLockword(ModalLockword64 preparedLockword) {
             // Nothing to do
+        }
+
+        public ModalLockword64 reprepareModalLockword(ModalLockword64 preparedLockword, ModalLockword64 currentLockword, ModalLockword64 hash) {
+            // TODO Auto-generated method stub
+            return ModalLockword64.from(Word.zero());
         }
     }
 
@@ -386,7 +398,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
                 return monitorScheme().createHashCode(object);
             }
             final ThinLockword64 lockword = ThinLockword64.from(ObjectAccess.readMisc(object));
-            return super.makeHashCode(object, lockword);
+            return super.makeHashCode(object, lockword, Platform.target().arch.is64bit() ? ModalLockword64.from(Word.zero()) : ModalLockword64.from(ObjectAccess.readHash(object)));
         }
 
         public boolean threadHoldsMonitor(Object object, VmThread thread) {
@@ -422,6 +434,12 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
         @Override
         public void beforeGarbageCollection() {
             super.beforeGarbageCollection();
+        }
+
+        public int createHash(Object object) {
+            int hashCode = ThinLockword64.fromHashcode(monitorScheme().createHashCode(object)).getHashcode();
+            assert hashCode == monitorScheme().createHashCode(object) : "Failed installation of hashcode!";
+            return hashCode;
         }
     }
 }

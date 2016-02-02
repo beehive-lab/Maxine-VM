@@ -113,4 +113,10 @@ public interface JavaMonitor {
      * Prints the details of this monitor to the {@linkplain Log VM log stream}.
      */
     void log();
+
+    Word displacedHash();
+
+    void setDisplacedHash(Word hash);
+
+    Word compareAndSwapDisplacedHash(Word expectedValue, Word newValue);
 }

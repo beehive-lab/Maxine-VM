@@ -97,7 +97,7 @@ public final class VMConfigurator {
      * Gets the package providing the default {@link HeapScheme}.
      */
     public static BootImagePackage defaultHeapScheme() {
-        return new com.sun.max.vm.heap.sequential.gen.semiSpace.Package();
+        return new com.sun.max.vm.heap.sequential.semiSpace.Package();
     }
 
     /**
@@ -134,7 +134,7 @@ public final class VMConfigurator {
      * Gets the package providing the default {@link MonitorScheme}.
      */
     public static BootImagePackage defaultMonitorScheme() {
-        return new com.sun.max.vm.monitor.modal.schemes.thin_inflated.Package();
+        return new com.sun.max.vm.monitor.modal.schemes.inflated_only.Package();
     }
 
     /**

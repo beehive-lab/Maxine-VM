@@ -361,9 +361,7 @@ public final class Safepoints {
      * @param callSize size of the call instruction
      */
     public static int safepointPosForCall(int callPos, int callSize) {
-        if (platform().isa == ISA.AMD64) {
-            return callPos + callSize;
-        } else if (platform().isa == ISA.ARM) {
+        if (platform().isa == ISA.AMD64 || platform().isa == ISA.ARM) {
             return callPos + callSize;
         } else {
             throw FatalError.unimplemented();
@@ -415,9 +413,6 @@ public final class Safepoints {
         assert (attrs & ATTRS_MASK) == attrs;
         int causeOffset = safepointPos - causePos;
         if (CompilationBroker.OFFLINE) {
-            if(causeOffset <0 || causeOffset > MAX_CAUSE_OFFSET) {
-                System.out.println("GOING TO FAIL OFFSET " + causeOffset + " pos " + safepointPos + " cause pos" + causePos + "MAXALL " + MAX_CAUSE_OFFSET);
-            }
             assert causeOffset >= 0 && causeOffset <= MAX_CAUSE_OFFSET : "cause position out of range";
         }
         return safepointPos | (causeOffset << CAUSE_OFFSET_SHIFT) | attrs;

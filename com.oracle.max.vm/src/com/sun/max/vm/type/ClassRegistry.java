@@ -380,7 +380,7 @@ public final class ClassRegistry {
         CONSTANT_VALUE(FieldActor.class, Value.class, null),
         ANNOTATION_DEFAULT_BYTES(MethodActor.class, byte[].class, MethodActor.NO_ANNOTATION_DEFAULT_BYTES),
         ACCESSOR(MethodActor.class, Class.class, null),
-        INVOCATION_STUB(false, (Platform.target().arch.is32bit() ? ARM32Box.class : MethodActor.class), (Platform.target().arch.is32bit() ? ARM32Box.class : InvocationStub.class),  (Platform.target().arch.is32bit() ? new ARM32Box(null) : null)),
+        INVOCATION_STUB(false, MethodActor.class, InvocationStub.class, null),
         RUNTIME_VISIBLE_PARAMETER_ANNOTATION_BYTES(MethodActor.class, byte[].class, MethodActor.NO_RUNTIME_VISIBLE_PARAMETER_ANNOTATION_BYTES);
 
         public static final List<Property> VALUES = java.util.Arrays.asList(values());

@@ -80,4 +80,10 @@ public interface GeneralLayout {
     void writeForwardRef(Accessor accessor, Reference forwardRef);
 
     Reference compareAndSwapForwardRef(Accessor accessor, Reference suspectedRef, Reference forwardRef);
+
+    Word readHash(Accessor accessor);
+
+    void writeHash(Accessor accessor, Word value);
+
+    Word compareAndSwapHash(Accessor accessor, Word expectedValue, Word newValue);
 }

@@ -318,7 +318,7 @@ public final class Dependencies {
             for (Assumption a : assumptions) {
                 ClassActor contextClassActor = (ClassActor) ((ContextAssumption) a).context;
                 ClassDeps classDeps = get(packedDeps, contextClassActor);
-                DependencyProcessor dependencyProcessor = DependenciesManager.dependencyProcessors.get((Platform.target().arch.is32bit() ? new ARM32Box(a.getClass()) : a.getClass()));
+                DependencyProcessor dependencyProcessor = DependenciesManager.dependencyProcessors.get(a.getClass());
 
                 if (dependencyProcessor != null) {
                     classDeps.flags |= dependencyProcessor.bitMask;

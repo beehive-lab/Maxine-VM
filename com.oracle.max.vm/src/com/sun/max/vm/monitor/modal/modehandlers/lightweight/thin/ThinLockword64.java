@@ -50,11 +50,12 @@ public class ThinLockword64 extends LightweightLockword64 {
      *     [                 Undefined               ][m][1]     Inflated
      *
      * For 32 bit:
-     * bit [32........................................ 1  0]     Shape         Lock-state
+     * bit [32............................................. 1  0]     Shape         Lock-state
      *
-     *     [     0    ][ util  ][     0           ][ hash ][m][0]     Lightweight   Unlocked
-     *     [ r. count 5][ util 1 ][  thread ID 4][ hash 20][m][0]     Lightweight   Locked (rcount >= 1)
+     *     [     0    ][ util  ][     0                   ][m][0]     Lightweight   Unlocked
+     *     [ r. count 5][ util 1 ][  thread ID 4]          [m][0]     Lightweight   Locked (rcount >= 1)
      *     [                 Undefined                    ][m][1]     Inflated
+     *     [                  hash                              ]
      *
      * Note:
      * A valid thread ID must be >= 1. This is enforced by VmThreadMap.
@@ -63,17 +64,9 @@ public class ThinLockword64 extends LightweightLockword64 {
      */
 
 
-    private static  final  Address UTIL_MASK; // was final
-    private static  final Address UNLOCKED_MASK;
-    static {
-        if (Platform.target().arch.is32bit()) {
-            UTIL_MASK = UTIL_SHIFTED_MASK.shiftedLeft(UTIL_SHIFT);
-            UNLOCKED_MASK = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT).bitSet(MISC_BIT_INDEX).or(UTIL_MASK);
-        } else {
-            UTIL_MASK = UTIL_SHIFTED_MASK.shiftedLeft(UTIL_SHIFT);
-            UNLOCKED_MASK = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT).bitSet(MISC_BIT_INDEX).or(UTIL_MASK);
-        }
-    }
+    private static final Address UTIL_MASK = UTIL_SHIFTED_MASK.shiftedLeft(UTIL_SHIFT);
+    private static final Address UNLOCKED_MASK = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT).bitSet(MISC_BIT_INDEX).or(UTIL_MASK);
+
     @HOSTED_ONLY
     public ThinLockword64(long value) {
         super(value);
@@ -163,6 +156,17 @@ public class ThinLockword64 extends LightweightLockword64 {
      */
     @INLINE
     public static final ThinLockword64 unlockedFromHashcode(int hashcode) {
+        if (Platform.target().arch.is64bit()) {
+            return ThinLockword64.from(HashableLockword64.from(Address.zero()).setHashcode(hashcode));
+        } else {
+            return ThinLockword64.from(HashableLockword64.from(Address.zero()));
+        }
+    }
+
+    @INLINE
+    public static final ThinLockword64 fromHashcode(int hashcode) {
+        assert Platform.target().arch.is32bit() : "This function must be called only on 32 bit machines!";
         return ThinLockword64.from(HashableLockword64.from(Address.zero()).setHashcode(hashcode));
     }
+
 }

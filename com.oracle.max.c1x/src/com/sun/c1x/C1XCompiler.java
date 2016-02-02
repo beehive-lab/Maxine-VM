@@ -1,28 +1,21 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
+ * OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package com.sun.c1x;
-
-import com.sun.max.vm.type.ARM32Box; // hashCode issues on ARMV7
 
 import com.oracle.max.cri.intrinsics.IntrinsicImpl;
 import com.oracle.max.criutils.TTY;
@@ -86,7 +79,6 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
         init();
     }
 
-
     public CiResult compileMethod(RiResolvedMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
         if (C1XOptions.PrintCFGToFile() && cfgPrinterObserver == null) {
             synchronized (this) {
@@ -101,11 +93,7 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
         int index = C1XMetrics.CompiledMethods++;
         final boolean printCompilation = C1XOptions.PrintCompilation && !TTY.isSuppressed();
         if (printCompilation) {
-            TTY.println(String.format("C1X %4d %-70s %-45s %-50s ...",
-                            index,
-                            method.holder().name(),
-                            method.name(),
-                            method.signature()));
+            TTY.println(String.format("C1X %4d %-70s %-45s %-50s ...", index, method.holder().name(), method.name(), method.signature()));
             startTime = System.nanoTime();
         }
 
@@ -119,14 +107,7 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
             compilation.close();
             if (printCompilation) {
                 long time = (System.nanoTime() - startTime) / 100000;
-                TTY.println(String.format("C1X %4d %-70s %-45s %-50s | %3d.%dms %5dB",
-                                index,
-                                "",
-                                "",
-                                "",
-                                time / 10,
-                                time % 10,
-                                result.targetMethod().targetCodeSize()));
+                TTY.println(String.format("C1X %4d %-70s %-45s %-50s | %3d.%dms %5dB", index, "", "", "", time / 10, time % 10, result.targetMethod().targetCodeSize()));
             }
         }
 
@@ -142,7 +123,7 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
             for (XirTemplate template : xirTemplateStubs) {
                 TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, template.name);
                 try {
-                    stubs.put((Platform.target().arch.is32bit() ? new ARM32Box(template) : template), backend.emit(template));
+                    stubs.put(template, backend.emit(template));
                 } finally {
                     filter.remove();
                 }
@@ -155,7 +136,7 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
             }
             TTY.Filter suppressor = new TTY.Filter(C1XOptions.PrintFilter, id);
             try {
-                stubs.put((Platform.target().arch.is32bit() ? new ARM32Box(id) : id), backend.emit(id));
+                stubs.put(id, backend.emit(id));
             } finally {
                 suppressor.remove();
             }
@@ -167,40 +148,36 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
     }
 
     /**
-     * The compiler stubs at the moment are generic to target platform.
-     * For ARMv7, some stubs have been replaced by runtime calls and hence,
-     * they are omitted from adding them to the stubs list.
+     * The compiler stubs at the moment are generic to target platform. For ARMv7, some stubs have been replaced by
+     * runtime calls and hence, they are omitted from adding them to the stubs list.
+     *
      * @param id of the stub.
-     * @return true if the stub is omited.
+     * @return true if the stub is omitted.
      */
     private boolean omitStub(CompilerStub.Id id) {
-        if (Platform.target().arch.is32bit() &&
-               (id == CompilerStub.Id.fneg ||
-                id == CompilerStub.Id.dneg ||
-                id == CompilerStub.Id.d2l  ||
-                id == CompilerStub.Id.f2l)) {
+        if (Platform.target().arch.is32bit() && (id == CompilerStub.Id.fneg || id == CompilerStub.Id.dneg || id == CompilerStub.Id.d2l || id == CompilerStub.Id.f2l)) {
             return true;
         }
         return false;
     }
 
     public CompilerStub lookupStub(CompilerStub.Id id) {
-        CompilerStub stub = stubs.get((Platform.target().arch.is32bit() ? new ARM32Box(id) : id));
-        assert stub != null || (stub==null && omitStub(id)) : "no stub for compiler stub id: " + id;
+        CompilerStub stub = stubs.get(id);
+        assert stub != null || (stub == null && omitStub(id)) : "no stub for compiler stub id: " + id;
         return stub;
     }
 
     public CompilerStub lookupStub(XirTemplate template) {
-        CompilerStub stub = stubs.get((Platform.target().arch.is32bit() ? new ARM32Box(template) : template));
+        CompilerStub stub = stubs.get(template);
         assert stub != null : "no stub for XirTemplate: " + template;
         return stub;
     }
 
     public CompilerStub lookupStub(CiRuntimeCall runtimeCall) {
-        CompilerStub stub = stubs.get((Platform.target().arch.is32bit() ? new ARM32Box(runtimeCall) : runtimeCall));
+        CompilerStub stub = stubs.get(runtimeCall);
         if (stub == null) {
             stub = backend.emit(runtimeCall);
-            stubs.put((Platform.target().arch.is32bit() ? new ARM32Box(runtimeCall) : runtimeCall), stub);
+            stubs.put(runtimeCall, stub);
         }
 
         assert stub != null : "could not find compiler stub for runtime call: " + runtimeCall;

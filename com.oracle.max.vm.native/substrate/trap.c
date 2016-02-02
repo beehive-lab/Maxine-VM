@@ -125,9 +125,10 @@ void* setSignalHandler(int signal, SignalHandlerFunction handler) {
     memset((char *) &newSigaction, 0, sizeof(newSigaction));
     sigemptyset(&newSigaction.sa_mask);
     newSigaction.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
+
 #if os_SOLARIS || os_LINUX || os_DARWIN
     if (signal == SIGUSR1) {
-        newSigaction.sa_flags = SA_SIGINFO | SA_ONSTACK;
+    	newSigaction.sa_flags = SA_SIGINFO |  SA_ONSTACK;
     }
 #endif
     newSigaction.sa_sigaction = handler;
@@ -162,7 +163,7 @@ static Address getInstructionPointer(UContext *ucontext) {
 #   elif isa_IA32
     return ucontext->uc_mcontext.gregs[REG_EIP];
 #elif isa_ARM
-	return ucontext->uc_mcontext.arm_pc;
+	return ucontext->uc_mcontext.arm_pc ; 
 #   endif
 #elif os_DARWIN
     return ucontext->uc_mcontext->__ss.__rip;
@@ -353,10 +354,34 @@ static void logTrap(int signal, Address ip, Address fault, TLA dtla) {
  * The handler for signals dealt with by Stubs.trapStub.
  */
 static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
+
     int trapNumber = getTrapNumber(signal);
     Address ip = getInstructionPointer(ucontext);
     Address faultAddress = getFaultAddress(signalInfo, ucontext);
 
+#if isa_ARM
+	if (ucontext->uc_mcontext.arm_cpsr & 0x20 ) {
+		ip = ip | 0x1; // make sure we get thumb mode!!!
+			       // in the fault address IP that we return to .
+		ucontext->uc_mcontext.arm_cpsr = ucontext->uc_mcontext.arm_cpsr & 0xffffffdf;
+		if(ucontext->uc_mcontext.arm_cpsr & 0x0600fc00) {
+			printf("IT block bits are set and trap taken in Thumb mode, potentially we might have a problem\n");
+		}
+		// make sure we get ARM mode in the JAVA trapStub
+	/* TODO BUG ISSUE
+	Note that there is still a bug in this implementation, however it will
+	be extremely rare and is unlikely to be hit in any tests: if a thread
+	is interrupted in the middle of a Thumb IT (if-then) block then the
+	CPU will save the IT state machine in 8 bits of the CPSR. These bits
+	should be restored when control is returned to the interrupted code,
+	but the *only* way to set these bits on Linux is by using the
+	sigreturn system call (the CPSR bits can only be modified in
+	supervisor mode). Fixing this would require significant refactoring of
+	the way Maxine invokes trap handlers, so I don't think you should
+	worry about this just yet, but it is something to keep in mind.
+	*/
+	}
+#endif
     //printf("vmSignalHandler\n");
     /* Only VM signals should get here. */
     if (trapNumber < 0) {
@@ -424,7 +449,8 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
 
     /* save the trap information in the thread locals */
     tla_store3(dtla, TRAP_NUMBER, trapNumber);
-    tla_store3(dtla, TRAP_INSTRUCTION_POINTER, getInstructionPointer(ucontext));
+    //tla_store3(dtla, TRAP_INSTRUCTION_POINTER, getInstructionPointer(ucontext));
+    tla_store3(dtla, TRAP_INSTRUCTION_POINTER, ip);
     tla_store3(dtla, TRAP_FAULT_ADDRESS, faultAddress);
 
 #if os_SOLARIS && isa_SPARC
@@ -448,7 +474,7 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
 #else
     c_UNIMPLEMENTED();
 #endif
-
+	
     setInstructionPointer(ucontext, theJavaTrapStub);
 }
 
@@ -502,8 +528,9 @@ void nativeTrapInitialize(Address javaTrapStub) {
     thread_setSignalMask(SIG_UNBLOCK, &vmSignals, NULL);
 #endif
 #ifdef arm
-	extern void divideByZeroExceptions();
-	divideByZeroExceptions(); 
+	// NO LONGER REQURIED
+	//extern void divideByZeroExceptions();
+	//divideByZeroExceptions(); 
 #endif 
 }
 

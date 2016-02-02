@@ -450,20 +450,10 @@ public abstract class TargetMethod extends MemoryRegion {
      */
     @INLINE
     public final CodePointer codeAt(int pos) {
-	if (pos < 0 || pos >= codeLength()) {
-		Log.print("REQUESTING codeAt ");Log.println( pos);
-        }
         FatalError.asert(pos >= 0 && pos < codeLength());
         return CodePointer.from(codeStart.plus(pos));
     }
 
-
-    public final CodePointer dummy(int pos) {
-	Log.println(codeStart.plus(pos));
-	Log.println(CodePointer.from(codeStart.plus(pos)));
-	return CodePointer.from(codeStart.plus(pos));
-
-   }
 
     @INLINE
     public final Address oldStart() {

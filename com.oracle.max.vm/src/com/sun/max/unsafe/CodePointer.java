@@ -1,26 +1,31 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
+ * OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package com.sun.max.unsafe;
+
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.annotate.INLINE;
+import com.sun.max.platform.Platform;
+import com.sun.max.program.ProgramError;
+import com.sun.max.vm.MaxineVM;
+import com.sun.max.vm.code.Code;
+import com.sun.max.vm.code.CodeRegion;
+import com.sun.max.vm.compiler.target.TargetMethod;
+import com.sun.max.vm.reference.Reference;
 
 import static com.sun.max.vm.MaxineVM.*;
 
@@ -31,29 +36,30 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.FatalError;
 
 /**
  * A {@code CodePointer} is a tagged pointer that is known to reference native code.
  *
- * The least significant bit is 1. The remaining 63 bits are interpreted as an offset from the lowest existing {@link CodeRegion}
- * start address. This is typically the start address of the {@linkplain Code#bootCodeRegion() boot code region}.
+ * The least significant bit is 1. The remaining 63 bits are interpreted as an offset from the lowest existing
+ * {@link CodeRegion} start address. This is typically the start address of the {@linkplain Code#bootCodeRegion() boot
+ * code region}.
  *
- * Note that the interpretation as a 63-bit offset from the boot code region start is solely internal. All values passed into
- * creation methods are supposed to be full 64-bit pointers. All values returned from conversion methods are full 64-bit pointers.
+ * Note that the interpretation as a 63-bit offset from the boot code region start is solely internal. All values passed
+ * into creation methods are supposed to be full 64-bit pointers. All values returned from conversion methods are full
+ * 64-bit pointers.
  *
- * {@code CodePointer}s, in spite of their pointer characteristics, inherit from {@link Object} instead of {@link Word} to remain
- * visible to the memory manager. They are recognised as references but treated specially.
+ * {@code CodePointer}s, in spite of their pointer characteristics, inherit from {@link Object} instead of {@link Word}
+ * to remain visible to the memory manager. They are recognised as references but treated specially.
  */
 public final class CodePointer {
 
-    //private static long baseOffset = (!Platform.target().arch.is32bit() ? 0x1000000000000000L : 0x40000000);
     private static long baseOffset = (Platform.target().arch.is32bit() ? 0x1000000000000000L : 0x40000000);
     private static long BASE_ADDRESS = MaxineVM.isHosted() ? baseOffset : Code.bootCodeRegion().start().toLong();
 
     /**
-     * Set the base address. This is needed since the static field will otherwise not be properly initialised
-     * if the VM is running properly. Initialisation is done along with code manager initialisation in
-     * {@link Code#initialize()}.
+     * Set the base address. This is needed since the static field will otherwise not be properly initialised if the VM
+     * is running properly. Initialisation is done along with code manager initialisation in {@link Code#initialize()}.
      */
     public static void initialize(Address baseAddress) {
         BASE_ADDRESS = baseAddress.toLong();
@@ -62,7 +68,8 @@ public final class CodePointer {
     @HOSTED_ONLY
     private long tagged;
 
-    private CodePointer() { }
+    private CodePointer() {
+    }
 
     @HOSTED_ONLY
     private CodePointer(long value) {
@@ -112,8 +119,8 @@ public final class CodePointer {
         return BASE_ADDRESS + (value >> 1);
     }
 
-    /**t
-     * Relocates a {@code CodePointer} by a given {@link Offset}.
+    /**
+     * t Relocates a {@code CodePointer} by a given {@link Offset}.
      *
      * @param offset the offset by which the value is to be relocated
      * @return the relocated raw tagged value
@@ -128,7 +135,7 @@ public final class CodePointer {
         if (isHosted()) {
             return new CodePointer(tag(value));
         }
-        	return UnsafeCast.asCodePointer(tag(value));
+        return UnsafeCast.asCodePointer(tag(value));
     }
 
     @INLINE
@@ -151,11 +158,12 @@ public final class CodePointer {
         }
         return UnsafeCast.asCodePointerTagged(value);
     }
- 
 
-    @INLINE int toTaggedInt() {
-	return UnsafeCast.asTaggedInt(this);
+    @INLINE
+    int toTaggedInt() {
+        return UnsafeCast.asTaggedInt(this);
     }
+
     /**
      * Get the tagged raw value of a {@code CodePointer}.
      */
@@ -165,12 +173,12 @@ public final class CodePointer {
             return tagged;
         }
 
-	if(Platform.target().arch.is32bit()) {
-		long x;
-		x = (long) UnsafeCast.asTaggedInt(this);
-		return x;
-	}
-        	return UnsafeCast.asTaggedLong(this);
+        if (Platform.target().arch.is32bit()) {
+            long x;
+            x = (long) UnsafeCast.asTaggedInt(this);
+            return x;
+        }
+        return UnsafeCast.asTaggedLong(this);
     }
 
     @INLINE
@@ -178,10 +186,10 @@ public final class CodePointer {
         if (isHosted()) {
             return untag(tagged);
         }
-	if(Platform.target().arch.is32bit()) {
-		return 0x7fffffffL & untag((long)UnsafeCast.asInt(this));
-		
-	}
+        if (Platform.target().arch.is32bit()) {
+            return 0x7fffffffL & untag((long) UnsafeCast.asInt(this));
+
+        }
         return untag(UnsafeCast.asLong(this));
     }
 

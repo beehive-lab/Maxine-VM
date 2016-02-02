@@ -49,12 +49,15 @@ public class OhmArrayLayout extends OhmGeneralLayout implements ArrayLayout {
     }
 
     public HeaderField[] headerFields() {
-        return new HeaderField[] { HeaderField.HUB, HeaderField.MISC, HeaderField.LENGTH};
+        if (Platform.target().arch.is64bit()) {
+            return new HeaderField[] { HeaderField.HUB, HeaderField.MISC, HeaderField.LENGTH};
+        } else {
+            return new HeaderField[] { HeaderField.HUB, HeaderField.MISC, HeaderField.HASH, HeaderField.LENGTH};
+        }
     }
 
     OhmArrayLayout(Kind elementKind) {
-        lengthOffset = miscOffset + Word.size();
-        // headerSize = lengthOffset + 2*Word.size();
+        lengthOffset = (Platform.target().arch.is64bit() ? miscOffset : hashOffset) + Word.size();
         headerSize = lengthOffset + Word.size();
         this.elementKind = elementKind;
     }

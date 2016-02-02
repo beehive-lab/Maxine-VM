@@ -370,12 +370,7 @@ public final class JDK_java_lang_System {
         if (object == null) {
             return 0;
         }
-        if (Platform.target().arch.is32bit()) {
-            return (0xfffff & ObjectAccess.makeHashCode(object));
-
-        } else {
-            return ObjectAccess.makeHashCode(object);
-        }
+        return ObjectAccess.makeHashCode(object);
     }
 
     /**
