@@ -97,9 +97,7 @@ int main(int argc, char *argv[] MAIN_EXTRA_ARGS) {
      * in com.oracle.max.vm.native/tele/darwin/darwinTeleProcess.c.
      */
 
-#ifdef arm
-divideByZeroExceptions();
-#endif
+
 
     if (getenv("DYLD_LIBRARY_PATH") == NULL) {
         char *dyldLibraryPathDef;

@@ -198,7 +198,6 @@ public class Stubs {
 
         }
         final int index = tmpindex;
-        //final int index = stub.codeStart().toPointer().readInt(indexMovInstrPos);
         assert stub.is(VirtualTrampoline) ? (virtualTrampolines.size() > index && virtualTrampolines.get(index) == stub) : (interfaceTrampolines.size() > index && interfaceTrampolines.get(index) == stub);
         return index;
     }
@@ -386,8 +385,6 @@ public class Stubs {
 
         final Hub hub = ObjectAccess.readHub(receiver);
         if (VMOptions.verboseOption.verboseCompilation) {
-            //Log.print("RECEIVER ");Log.println(receiver.getClass());
-            //Log.print("HUB ");Log.println(hub);
             Log.print("index ");
             Log.println(vTableIndex);
         }
@@ -396,9 +393,7 @@ public class Stubs {
         if (selectedCallee.isAbstract()) {
             throw new AbstractMethodError();
         }
-        if (VMOptions.verboseOption.verboseCompilation) {
-            //Log.println(selectedCallee);
-        }
+
         final TargetMethod selectedCalleeTargetMethod = selectedCallee.makeTargetMethod(caller);
         FatalError.check(selectedCalleeTargetMethod.invalidated() == null, "resolved virtual method must not be invalidated");
         CodePointer vtableEntryPoint = selectedCalleeTargetMethod.getEntryPoint(VTABLE_ENTRY_POINT);
@@ -554,22 +549,16 @@ public class Stubs {
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
 
 
-            //Label forever = new Label();
-            //asm.bind(forever);
-            //asm.mov32BitConstant(ARMV7.r12, 0x11111111);
-            //asm.branch(forever);
-
             // now allocate the frame for this method
             asm.subq(ARMV7.r13, frameSize);
 
             // save the index in the scratch register. This register is then callee-saved
             // so that the stack walker can find it.
-            //asm.mov32BitConstant(registerConfig.getScratchRegister(), index);
 
             asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, index); // hard coded!!!
-        /* R8 is an "alternate scratch we put the index in here and we added R8 to the end of the trampoline
-        csl as r12 is used during calculations of stores and gets trashed on ARM
-	    */
+            /* R8 is an "alternate scratch we put the index in here and we added R8 to the end of the trampoline
+            csl as r12 is used during calculations of stores and gets trashed on ARM
+	        */
 
             if (isHosted() && index == 0) {
                 indexMovInstrPos = asm.codeBuffer.position() - 8;// 2*WordWidth.BITS_32.numberOfBytes;
@@ -586,15 +575,13 @@ public class Stubs {
             // load the index into the second arg register
             asm.mov32BitConstant(ConditionFlag.Always, args[1].asRegister(), index);
 
-            if (!isInterface) asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xbeefbeef);// debugging resolveVirtualCall
+            if (!isInterface)
+                asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xbeefbeef);// debugging resolveVirtualCall
             // load the return address into the third arg register
 
             // we will need to test this carefully
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize));
-            //asm.movq(args[2].asRegister(), new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, args[2].asRegister(), asm.scratchRegister, 0);
-            // We already have the return address in R14 so jus tmove it rather than doing the load from stack
-            //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, args[2].asRegister(), ARMV7.r14);
 
 
             asm.alignForPatchableDirectCall(); // insert nops so that the call is in an allowed position
@@ -610,59 +597,25 @@ public class Stubs {
             // continues in the resolved method as if it was called by the trampoline's
             // caller which is exactly what we want.
 
-            // APN I need to change this the CALL/RETURN is different for ARM
-            // this may well be broken !!!!!!
 
             CiRegister returnReg = registerConfig.getReturnRegister(WordUtil.archKind());
-	    // TEST COMMENT OUT OCTOBER ...
-            //asm.addq(returnReg, 4); // BECAUSE IT IS NOT A CALL/BLX AND THE RETURN REGI IS ALREADY PUSHED TO THE STACK
-            // this is done so when we load this to the PC we do not push the return address!
-            //NOTE this is the slot used by r12 which we do not really need to restore?
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize - 4));
-            //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize - 8), returnReg);
             asm.str(ARMV7Assembler.ConditionFlag.Always, returnReg, asm.scratchRegister, 0);
 
             // Restore all parameter registers before returning
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
             asm.restore(csl, frameToCSA);
-            // NEW
-            //asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize    ));
-            //asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r14,ARMV7.r12, 0);
 
 
-            // Adjust RSP as mentioned above and do the 'ret' that lands us in the
-            // trampolined-to method.
-            //----asm.addq(ARMV7.r13, frameSize-4  ); // points at entry point of trampolined method`
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize - 4));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
-            //asm.addq(ARMV7.r13, frameSize); OCTOBER
-	    asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize));
-	    asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r14, ARMV7.r12,0);
-	    asm.addq(ARMV7.r13, frameSize+4);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize));
+            asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r14, ARMV7.r12, 0);
+            asm.addq(ARMV7.r13, frameSize + 4);
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r8);
-            //Label forever2 = new Label();
-            //asm.bind(forever2);
-            //asm.mov32BitConstant(ARMV7.r12, 0x22222222);
-            //asm.branch(forever2);
-
-            //AUGasm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), 4));
-            //AUGasm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r14, asm.scratchRegister,0); // set up R14 as if it were a blx.
-            // the stack slot +4  holds the return address of the caller originially pushed onto the stack
 
 
-            //asm.addq(ARMV7.r13,8); // basicall we need to get the stack back to the state where it was
-            //AUGasm.addq(ARMV7.r13,8); // basicall we need to get the stack back to the state where it was
-            // on entry to this method, so that when we LDR R15 then we will
-            // be able to push the LR back onto the stack etc.
-            //asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), -8));
-            //asm.ldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r15,ARMV7.r12,0);
-            //AUGasm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), -8));
-            //AUGasm.ldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r15,ARMV7.r12,0);
-
-
-            // essentially the LDR does a jump to the trampolined to method.
-            asm.insertForeverLoop();
-            //asm.ret(0);
+            asm.insertForeverLoop(); // should never reach here ...
 
 
             byte[] code = asm.codeBuffer.close(true);
@@ -826,7 +779,6 @@ public class Stubs {
             int frameToCSA = csl.frameOffsetToCSA;
 
 
-
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
@@ -835,7 +787,6 @@ public class Stubs {
             // compute the static trampoline call site
             CiRegister callSite = ARMV7.r8; /// was scratch but we use scratch so use r8
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP));
-            //asm.movq(callSite, new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue()));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, callSite, ARMV7.r12, 0); // we need callSite and r12 to be different registers
             asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE + 12); // this adjusts callSite to contain the correxct
             //   callSite address
@@ -869,27 +820,22 @@ public class Stubs {
             // undo the frame
             asm.addq(ARMV7.r13, frameSize);
 
-            // SAVe r8?
-            //asm.push(ARMV7Assembler.ConditionFlag.Always, 1<< 8);
 
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, callSite, asm.scratchRegister, 0);
             asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE + 12);
             asm.setUpRegister(ARMV7.r12, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
-            //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue()), callSite);
 
-            // ok so this should patch the call site address?
-        /*
-	    THIS CODE PATCHES AN ADDRESS ON THE STACK THAT IS THE TARGET OF THE MOVW MOT ADD BLX CALL SEQUENCE, SO WE ARE OK TO POP
-	    IT OFF THE STACK AND THEN THE BLX IS OK
+            /*
+            THIS CODE PATCHES AN ADDRESS ON THE STACK THAT IS THE TARGET OF THE MOVW MOT ADD BLX CALL SEQUENCE, SO WE ARE OK TO POP
+	        IT OFF THE STACK AND THEN THE BLX IS OK
 
-	    NOTE FOR genDyanmicTrampoline,  WE MUST FAKE THE CORRECT $LR AND THEN DO THE RET, AS WE DO ***not**** ACTUALLY DO A BLX TO GET TO THE
-	   ENTRY POINT
-	    */
+	        NOTE FOR genDyanmicTrampoline,  WE MUST FAKE THE CORRECT $LR AND THEN DO THE RET, AS WE DO ***not**** ACTUALLY DO A BLX TO GET TO THE
+	        ENTRY POINT
+	        */
+
             asm.strImmediate(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, callSite, ARMV7.r12, 0);
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, callSite);
-            //asm.flushicache(ARMV7.r12, 24);
-            //asm.pop(ARMV7Assembler.ConditionFlag.Always, 1<< 8);
             asm.ret(0); // ret(0) is a C3 in X86
 
             String stubName = "strampoline";
@@ -981,18 +927,20 @@ public class Stubs {
         } else if (platform().isa == ISA.ARM) {
 
             /*
-	    This needs to be aligned with what is expected to happen in Trap.java TrapFrameAccess.java and ARMTrapFrameAccess.java
-            TODO Currently there seems to be an issue with the offsets etc and where we save things. We will need to get this right.
+            This needs to be aligned with what is expected to happen in Trap.java TrapFrameAccess.java and ARMTrapFrameAccess.java
 
             check the information on ARM linux regarding what is returned and do
             something appropriate to attempt to recover from the error/issue causing
             the trap.
+
+            TODO make the substrate set/report all registers correctly in the event of a FATAL ERROR
+
              */
             CiRegisterConfig registerConfig = registerConfigs.trapStub;
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
             CiRegister latch = ARMSafepointPoll.LATCH_REGISTER;
-            //CiRegister scratch = registerConfig.getScratchRegister();
+
             int frameSize = platform().target.alignFrameSize(csl.size);
             int frameToCSA = csl.frameOffsetToCSA;
             CiKind[] handleTrapParameters = CiUtil.signatureToKinds(Trap.handleTrap.classMethodActor);
@@ -1006,15 +954,13 @@ public class Stubs {
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12);
 
             // NOW allocate the frame for this method (note TWO wordas of which WERE allocated by the second push above)
-            asm.subq(ARMV7.r13, frameSize -8/*was 8*/);
+            asm.subq(ARMV7.r13, frameSize - 8/*was 8*/);
 
             // save all the callee save registers
             asm.save(csl, frameToCSA); // NOTE our save/restore trashes r12 ... that is why we push r12
 
             // Now that we have saved all general purpose registers (including the scratch register),
             // store the value of the latch register from the thread locals into the trap frame
-            //asm.movq(scratch, new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_LATCH_REGISTER.offset));
-            //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameToCSA + csl.offsetOf(latch)), scratch);
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_LATCH_REGISTER.offset));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameToCSA + csl.offsetOf(latch)));
@@ -1022,7 +968,6 @@ public class Stubs {
 
             // r8 has the value we want
             // write the return address pointer to the end of the frame
-            //asm.movq(scratch, new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize /*+ 4*/));// we have sdaved r12 so it is one slot past the end of the frame
@@ -1030,21 +975,17 @@ public class Stubs {
 
 
             // load the trap number from the thread locals into the first parameter register
-            //asm.movq(args[0].asRegister(), new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_NUMBER.offset));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_NUMBER.offset));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, args[0].asRegister(), ARMV7.r12, 0);
 
             // also save the trap number into the trap frame
-            //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameToCSA + ARMTrapFrameAccess.TRAP_NUMBER_OFFSET), args[0].asRegister());
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameToCSA + ARMTrapFrameAccess.TRAP_NUMBER_OFFSET));
             asm.str(ARMV7Assembler.ConditionFlag.Always, args[0].asRegister(), asm.scratchRegister, 0);
 
             // load the trap frame pointer into the second parameter register
-            //asm.leaq(args[1].asRegister(), new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameToCSA));
             asm.leaq(args[1].asRegister(), new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameToCSA));
 
             // load the fault address from the thread locals into the third parameter register
-            //asm.movq(args[2].asRegister(), new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_FAULT_ADDRESS.offset));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_FAULT_ADDRESS.offset));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, args[2].asRegister(), asm.scratchRegister, 0);
 
@@ -1186,8 +1127,8 @@ public class Stubs {
             CiRegister sp = args[1].asRegister();
             CiRegister fp = args[2].asRegister();
 
-	    asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, pc); // stick pc in r12
-	    asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r8, sp); // stick sp in r8
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, pc); // stick pc in r12
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r8, sp); // stick sp in r8
             String name = "unwindStub";
             if (args.length == 4) {
                 CiValue retValue = args[3];
@@ -1201,16 +1142,16 @@ public class Stubs {
 
                     case Long:
                         stackAddr = new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) retValue).index() * Word.size());
-                        asm.setUpRegister(ARMV7.r0,stackAddr);
+                        asm.setUpRegister(ARMV7.r0, stackAddr);
                         asm.ldrd(ARMV7Assembler.ConditionFlag.Always, registerConfig.getReturnRegister(CiKind.Long), ARMV7.r0, 0);
-			// r0 and r1 now contain a long
+                        // r0 and r1 now contain a long
                         break;
 
                     case Int:
                     case Object:
                         reg = retValue.asRegister();
                         asm.mov(ARMV7Assembler.ConditionFlag.Always, false, registerConfig.getReturnRegister(CiKind.Int), reg);
-			// r0 not contains an int/object
+                        // r0 not contains an int/object
                         break;
 
                     case Float:
@@ -1227,27 +1168,27 @@ public class Stubs {
                         FatalError.unexpected("unexpected kind: " + kind);
                 }
             }
-            // APN not sure about it, but it seems to be ok.
+            // TOD there is a problem with the unwind code as the return value will overwritwe the input PC argument whenever an INT/OBJECT/LONG is returned.
 
 
-	    asm.push(ConditionFlag.Always, 1<< 12); // pc is in ARMV7.r12 push it to this stack
+            asm.push(ConditionFlag.Always, 1 << 12); // pc is in ARMV7.r12 push it to this stack
             // Push 'pc' to the handler's stack frame and update RSP to point to the pushed value.
             // When the RET instruction is executed, the pushed 'pc' will be popped from the stack
             // and the stack will be in the correct state for the handler.
-	
+
             /*asm.subq(sp, Word.size()); // uses r12
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), sp.asValue()));
             asm.str(ARMV7Assembler.ConditionFlag.Always, pc, asm.scratchRegister, 0);
-	    */
+	        */
             asm.subq(ARMV7.r8, Word.size()); // uses r12 sp is in r8
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r8.asValue()));
-	    asm.pop(ConditionFlag.Always, 1<<14); // using the return register to get the pc 
+            asm.pop(ConditionFlag.Always, 1 << 14); // using the return register to get the pc
             asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r14, asm.scratchRegister, 0);
-            //asm.movq(new CiAddress(WordUtil.archKind(), sp.asValue()), pc);
-            //asm.movq(ARMV7.rbp, fp);
+
+
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r11, fp);
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r13, ARMV7.r8);
-            //asm.movq(ARMV7.rsp, sp);
+
             asm.ret(0);
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnwindStub, name, frameSize, code, -1, -1, null, -1);
@@ -1365,19 +1306,25 @@ public class Stubs {
         @Override
         void apply() {
             Pointer patchAddr = stub.codeAt(pos).toPointer();
-	    com.sun.max.vm.Log.println("UNTESTED:Deoptimization ARMV7DeoptStubPatch:apply has been altered to do movw movt");
             //patchAddr.writeLong(0, runtimeRoutine.address().toLong());
-	    int disp = runtimeRoutine.address().toInt();
-	    int instruction = ARMV7Assembler.movwHelper(ConditionFlag.Always, ARMV7.r12, disp & 0xffff);
-	    patchAddr.writeInt(0, instruction);
-	    instruction = ARMV7Assembler.movtHelper(ConditionFlag.Always, ARMV7.r12, (disp >> 16) & 0xffff);
-	    patchAddr.writeInt(4, instruction);
+            int disp = runtimeRoutine.address().toInt();
+            int instruction = ARMV7Assembler.movwHelper(ConditionFlag.Always, ARMV7.r12, disp & 0xffff);
+            patchAddr.writeInt(0, instruction);
+            instruction = ARMV7Assembler.movtHelper(ConditionFlag.Always, ARMV7.r12, (disp >> 16) & 0xffff);
+            patchAddr.writeInt(4, instruction);
+            /*
+            We're patching an instruction address to se ween to do an icacheflush.
+
+             */
+            ARMTargetMethodUtil.maxine_cacheflush(patchAddr,8);
 
 
             // WAS patchAddr.writeInt(0, runtimeRoutine.address().toInt());
             if (VMOptions.verboseOption.verboseCompilation) {
                 Log.print("ARMV7 DEOPT PATCH ADDR ");
                 Log.println(patchAddr);
+                Log.print(" ROUTINE ");
+                Log.println(disp);
             }
         }
     }
@@ -1535,9 +1482,11 @@ public class Stubs {
             CiCalleeSaveLayout csl = registerConfig.csl;
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(csl == null ? 0 : csl.size);
+            int stackOffset = 0;
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
 
-		asm.mov32BitConstant(ConditionFlag.Always,ARMV7.r12,0xdef2def2);
-                asm.insertForeverLoop();
+            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xdef2def2);
+            //asm.insertForeverLoop();
 
             String runtimeRoutineName = "deoptimize" + kind.name();
             final CriticalMethod runtimeRoutine;
@@ -1548,20 +1497,15 @@ public class Stubs {
                 return null;
             }
 
-            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
             CiKind[] params = CiUtil.signatureToKinds(runtimeRoutine.classMethodActor);
             CiValue[] args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
             if (!kind.isVoid()) {
                 // Copy return value into arg 4
                 // this must be on the stack for ARM?
 
-                // APN
-                 /*
-                 If we have 5th register, then it has to go on the stack? What if we have some integer and some
-                  floating point? do we need to do the copy.
-                 */
-                // CiRegister arg4 = args[4].asRegister();
+
                 CiAddress arg4;
+                CiStackSlot outgoing = null;
                 CiRegister returnRegister = registerConfig.getReturnRegister(kind);
 
 
@@ -1577,7 +1521,13 @@ public class Stubs {
                         arg4 = new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
                         asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, asm.scratchRegister, 0);
-                        // TODO NEEDS TO BE STOREd ON THE STACK
+                        assert args[4].isStackSlot() : "compiler stub arg4 is not STACK SLOT changed registerConfig changed!!!";
+                        // we need to put it on the stack
+                        outgoing = (CiStackSlot) args[4];
+                        arg4 = new CiAddress(kind, ARMV7.RSP, outgoing.index() * 4);
+                        asm.setUpScratch(arg4);
+                        asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
+
                         break;
 
                     case Long:
@@ -1586,7 +1536,14 @@ public class Stubs {
                         arg4 = new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
                         asm.ldrd(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
-                        // TODO NEEDS TO BE STORED ON THE STACK
+                        assert args[4].isStackSlot() : "compiler stub arg4 is not STACK SLOT changed registerConfig changed!!!";
+                        // we need to put it on the stack
+                        outgoing = (CiStackSlot) args[4];
+                        arg4 = new CiAddress(kind, ARMV7.RSP, outgoing.index() * 4);
+                        asm.setUpScratch(arg4);
+                        asm.strd(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
+
+
                         break;
 
                     case Float:
@@ -1606,18 +1563,13 @@ public class Stubs {
 
 
             }
-            // APN honestly believe this is wrong ....
-            // we need arg0 to be returnvalue ...
 
             // Copy original return address into arg 0 (i.e. 'ip')
             CiRegister arg0 = args[0].asRegister();
-            //asm.movq(arg0, new CiAddress(WordUtil.archKind(), ARMV7.RSP, DEOPT_RETURN_ADDRESS_OFFSET));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, DEOPT_RETURN_ADDRESS_OFFSET));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, arg0, asm.scratchRegister, 0);
-            //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg0, ARMV7.r12);
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
-            //asm.movq(arg1, ARMV7.rsp);
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg1, ARMV7.r13);
 
             // Copy original frame pointer into arg 2 (i.e. 'sp')
@@ -1632,11 +1584,14 @@ public class Stubs {
             asm.subq(ARMV7.r13, 8);
 
             // Put original return address into high slot
-            //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.r13, 4), arg0);
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, 4));
             asm.str(ARMV7Assembler.ConditionFlag.Always, arg0, ARMV7.r12, 0); // might be the wrong way round
 
 
+            // TODO I dont understand how this is patched sorted out in the deoptimization!
+            // suggest we put an insertForeverLoop in here the set a watchpoint on the ....
+            // address of this ... we probably need to do a icacheflush!!!
+            // when it is patched
             // Put deopt method entry point into low slot
             //CiRegister scratch = registerConfig.getScratchRegister();
             //asm.movq(scratch, 0xFFFFFFFFFFFFFFFFL);
@@ -1649,10 +1604,10 @@ public class Stubs {
 
 
             asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, ARMV7.r8, 0);
-            Label forever = new Label();
-            asm.bind(forever);
-            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xfeeff00f);
-            asm.branch(forever);
+            //Label forever = new Label();
+            //asm.bind(forever);
+            //asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xfeeff00f);
+            //asm.branch(forever);
             asm.ret(0);
 
             String stubName = runtimeRoutineName + "Stub";
@@ -1799,11 +1754,13 @@ public class Stubs {
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(csl.size);
             int cfo = frameSize + 4; // APN 4 bytes for ARM? Caller frame offset
-	    int stackVars = 0;
 		
-	    //asm.push(ConditionFlag.Always,1<< 14);
-	    asm.mov32BitConstant(ConditionFlag.Always,ARMV7.r12,0xdef1def1);
-	    //asm.insertForeverLoop();
+
+            /*
+            Beleived to be "jumped to" so we do not need to push a return address
+            this stub is believed to be ok
+             */
+
             String runtimeRoutineName;
             if (kind == null) {
                 runtimeRoutineName = "deoptimizeAtSafepoint";
@@ -1819,7 +1776,7 @@ public class Stubs {
             }
 
             // now allocate the frame for this method (including return address slot)
-            asm.subq(ARMV7.r13, frameSize + 4 ); // NOT SURE If + 4 is required
+            asm.subq(ARMV7.r13, frameSize + 4); // NOT SURE If + 4 is required
             // save all the callee save registers
             asm.save(csl, csl.frameOffsetToCSA);
 
@@ -1828,69 +1785,74 @@ public class Stubs {
             if (kind != null && !kind.isVoid()) {
                 // Copy return value into arg 4
 
-		CiAddress src = null;
-		CiStackSlot ss = null;
+                CiAddress src = null;
+                CiStackSlot outgoing = null;
+                CiStackSlot ss = null;
                 CiAddress arg4 = null;
 
                 switch (kind) {
-                    case Int:	// STACK
-		    //case Word: // Stack
-                    case Object:	// STACK
-		    case Float: // register s0
+                    case Int:    // STACK
+                    case Object:    // STACK
+                    case Float: // register s0
 
                         if (kind != CiKind.Float) {
 
-				assert args[4].isRegister() == false;
-			}
-				ss = (CiStackSlot) registerConfigs.compilerStub.getCallingConvention(JavaCall, new CiKind[]{kind}, target(), true).locations[0]; 
- 				assert ss.index() == 1 : "compiler stub return value slot index has changed?";     
-                        	src = new CiAddress(kind, ARMV7.RSP, cfo + ss.index() * 4);
-                        	asm.setUpScratch(src);
-                        	asm.ldr(ARMV7Assembler.ConditionFlag.Always,  ARMV7.r8,  ARMV7.r12,  0);
-				// we do not put it in r0 -- that is the return register for us
-			if(kind == CiKind.Float) {
+                            assert args[4].isRegister() == false;
+                        }
+                        ss = (CiStackSlot) registerConfigs.compilerStub.getCallingConvention(JavaCall, new CiKind[]{kind}, target(), true).locations[0];
+                        assert ss.index() == 1 : "compiler stub return value slot index has changed?";
+                        src = new CiAddress(kind, ARMV7.RSP, cfo + ss.index() * 4);
+                        asm.setUpScratch(src);
+                        asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
+                        // we do not put it in r0 -- that is the return register for us
+                        if (kind == CiKind.Float) {
 
-				asm.vmov(ConditionFlag.Always, args[4].asRegister(), ARMV7.r8, null, CiKind.Float, CiKind.Int);
+                            asm.vmov(ConditionFlag.Always, args[4].asRegister(), ARMV7.r8, null, CiKind.Float, CiKind.Int);
 
-			} else {
+                        } else {
 
-				// we need to put it on the stack
-				asm.push(ConditionFlag.Always,1<< 8);
-				// what about alignment etc etc
-				stackVars += 4; // we need to adjust this as the stack just go 4 bytes bigger!
+                            assert args[4].isStackSlot() : "compiler stub arg4 is not STACK SLOT changed registerConfig changed!!!";
+                            // we need to put it on the stack
+                            outgoing = (CiStackSlot) args[4];
+                            src = new CiAddress(kind, ARMV7.RSP, outgoing.index() * 4);
+                            asm.setUpScratch(src);
+                            asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
 
-			} 
+
+                        }
 
 
                         break;
-                    case Long:	// STACK
-		    case Double:
-		
-			if (kind != CiKind.Double) {
-                        	assert args[4].isRegister() == false;
-			}
+                    case Long:    // STACK
+                    case Double:
 
-			ss = (CiStackSlot) registerConfigs.compilerStub.getCallingConvention(JavaCall, new CiKind[]{kind}, target(), true).locations[0]; 
+                        if (kind != CiKind.Double) {
+                            assert args[4].isRegister() == false;
+                        }
+
+                        ss = (CiStackSlot) registerConfigs.compilerStub.getCallingConvention(JavaCall, new CiKind[]{kind}, target(), true).locations[0];
                         assert ss.index() == 1 : "compiler stub return value slot index has changed?";
 
-			src = new CiAddress(kind, ARMV7.RSP, cfo + ss.index() * 4);
+                        src = new CiAddress(kind, ARMV7.RSP, cfo + ss.index() * 4);
 
                         asm.setUpScratch(src);
 
-                        asm.ldrd(ARMV7Assembler.ConditionFlag.Always,ARMV7.r8,  ARMV7.r12,  0);
+                        asm.ldrd(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
 
-			if(kind == CiKind.Double) {
+                        if (kind == CiKind.Double) {
 
-				asm.vmov(ConditionFlag.Always,ARMV7.s0, ARMV7.r8, ARMV7.r9, CiKind.Double, CiKind.Long);
-	
-			} else {
+                            asm.vmov(ConditionFlag.Always, ARMV7.s0, ARMV7.r8, ARMV7.r9, CiKind.Double, CiKind.Long);
 
-				asm.push(ConditionFlag.Always, 1 << 8 | 1 << 9);
+                        } else {
+                            assert args[4].isStackSlot() : "compiler stub arg4 is not STACK SLOT changed registerConfig changed!!!";
+                            // we need to put it on the stack
+                            outgoing = (CiStackSlot) args[4];
+                            src = new CiAddress(kind, ARMV7.RSP, outgoing.index() * 4);
+                            asm.setUpScratch(src);
+                            asm.strd(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
 
-				stackVars += 8; // we need to adjust this as the stack just got 8 bytes bigger.
 
-
-			}
+                        }
                         break;
 
 
@@ -1903,31 +1865,27 @@ public class Stubs {
 
             // Copy original return address into arg 0 (i.e. 'ip')
             CiRegister arg0 = args[0].asRegister();
-            //asm.movq(arg0, new CiAddress(WordUtil.archKind(), ARMV7.RSP, cfo + DEOPT_RETURN_ADDRESS_OFFSET));
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, stackVars+ cfo + DEOPT_RETURN_ADDRESS_OFFSET));
-            asm.ldr(ARMV7Assembler.ConditionFlag.Always,  arg0, ARMV7.r12,0);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, cfo + DEOPT_RETURN_ADDRESS_OFFSET));
+            asm.ldr(ARMV7Assembler.ConditionFlag.Always, arg0, ARMV7.r12, 0);
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
-            asm.leaq(arg1, new CiAddress(WordUtil.archKind(), ARMV7.RSP, stackVars+ cfo));
+            asm.leaq(arg1, new CiAddress(WordUtil.archKind(), ARMV7.RSP, cfo));
 
             // Copy original frame pointer into arg 2 (i.e. 'sp')
             CiRegister arg2 = args[2].asRegister();
-            //asm.movq(arg2, ARMV7.rbp);
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false,  arg2, ARMV7.r11);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg2, ARMV7.r11);
 
             // Copy callee save area into arg3 (i.e. 'csa')
-	    asm.mov32BitConstant(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, stackVars); 
-	    asm.addRegisters(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r13, 0, 0);
+            asm.mov32BitConstant(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, 0);
+            asm.addRegisters(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r13, 0, 0);
             CiRegister arg3 = args[3].asRegister();
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg3, ARMV7.r12);
-            //asm.movq(arg3, ARMV7.rsp);
 
             // Patch return address of deopt stub frame to look
             // like it was called by frame being deopt'ed.
 
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize + stackVars)); // might need cfo  OR +4?
-            asm.str(ARMV7Assembler.ConditionFlag.Always,  arg0, ARMV7.r12, 0);
-            //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize), arg0);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize)); // might need cfo  OR +4?
+            asm.str(ARMV7Assembler.ConditionFlag.Always, arg0, ARMV7.r12, 0);
 
 
             // Call runtime routine
@@ -2023,8 +1981,8 @@ public class Stubs {
 
             // now allocate the frame for this method
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
-	    asm.mov32BitConstant(ConditionFlag.Always,ARMV7.r12,0xb00db00d);
-	    asm.insertForeverLoop();
+            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xb00db00d);
+            asm.insertForeverLoop();
             asm.subq(ARMV7.rsp, frameSize);
 
             // save all the registers
@@ -2033,7 +1991,7 @@ public class Stubs {
             String name = "uncommonTrap";
             final CriticalMethod uncommonTrap = new CriticalMethod(Deoptimization.class, name, null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
 
-            CiValue[] args = registerConfig.getCallingConvention(JavaCall, new CiKind[] {WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind()}, target(), false).locations;
+            CiValue[] args = registerConfig.getCallingConvention(JavaCall, new CiKind[]{WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind()}, target(), false).locations;
 
             // Copy callee save area address into arg 0 (i.e. 'csa')
             CiRegister arg0 = args[0].asRegister();
@@ -2041,8 +1999,8 @@ public class Stubs {
 
             // Copy return address into arg 1 (i.e. 'ip')
             CiRegister arg1 = args[1].asRegister();
-	    asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize));
-	    asm.ldr(ConditionFlag.Always, arg1, ARMV7.r12, 0);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize));
+            asm.ldr(ConditionFlag.Always, arg1, ARMV7.r12, 0);
             //asm.movq(arg1, new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize));
 
             // Copy stack pointer into arg 2 (i.e. 'sp')
@@ -2051,7 +2009,7 @@ public class Stubs {
 
             // Copy original frame pointer into arg 3 (i.e. 'fp')
             CiRegister arg3 = args[3].asRegister();
-	    asm.mov(ConditionFlag.Always, false, arg3, ARMV7.r11);
+            asm.mov(ConditionFlag.Always, false, arg3, ARMV7.r11);
             //asm.movq(arg3, ARMV7.rbp);
 
 

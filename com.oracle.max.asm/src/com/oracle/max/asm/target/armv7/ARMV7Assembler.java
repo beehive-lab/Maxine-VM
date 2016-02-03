@@ -1,5 +1,5 @@
 package com.oracle.max.asm.target.armv7;
- 
+
 import com.oracle.max.asm.AbstractAssembler;
 import com.oracle.max.asm.Label;
 import com.sun.cri.ci.CiAddress;
@@ -49,6 +49,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public static int simBuffOffset = 0; // testing only not used in real simulation
     public static int maxineFlushAddress = 0;
     public static com.oracle.max.criutils.NativeCMethodinVM maxineflush = null;
+    public static boolean debugGeneral = false;
 
     public ARMV7Assembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target);
@@ -70,8 +71,8 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public enum ConditionFlag {
         Equal(0x0, "="), NotEqual(0x1, "!="), CarrySetUnsignedHigherEqual(0x2, "|carry|"), CarryClearUnsignedLower(0x3, "|ncarry|"), Minus(0x4, "|neg|"), Positive(0x5, "|pos|"), SignedOverflow(0x6,
-                        ".of."), NoSignedOverflow(0x7, "|nof|"), UnsignedHigher(0x8, "|>|"), UnsignedLowerOrEqual(0x9, "|<=|"), SignedGreaterOrEqual(0xA, ".>=."), SignedLesser(0xB, ".<."), SignedGreater(
-                        0xC, ".>."), SignedLowerOrEqual(0xD, ".<=."), Always(0xE, "al"), NeverUse(0xF, "NEVER");
+                ".of."), NoSignedOverflow(0x7, "|nof|"), UnsignedHigher(0x8, "|>|"), UnsignedLowerOrEqual(0x9, "|<=|"), SignedGreaterOrEqual(0xA, ".>=."), SignedLesser(0xB, ".<."), SignedGreater(
+                0xC, ".>."), SignedLowerOrEqual(0xD, ".<=."), Always(0xE, "al"), NeverUse(0xF, "NEVER");
 
         public static final ConditionFlag[] values = values();
 
@@ -82,136 +83,138 @@ public class ARMV7Assembler extends AbstractAssembler {
             this.value = value;
             this.operator = operator;
         }
-	public static ConditionFlag which(int test) {
-		ConditionFlag tmp = ConditionFlag.NeverUse;
-		switch(test) {
-			case 0x0: //Equal
-				tmp =  ConditionFlag.Equal;
-			break;
-			
-			case 0x1: // NotEqual
-				tmp = ConditionFlag.NotEqual;
-			break;
 
-			case 0x2: // CarrySetUnsignedHigerEqual
-				tmp = ConditionFlag.CarrySetUnsignedHigherEqual;
-			break;
+        public static ConditionFlag which(int test) {
+            ConditionFlag tmp = ConditionFlag.NeverUse;
+            switch (test) {
+                case 0x0: //Equal
+                    tmp = ConditionFlag.Equal;
+                    break;
 
-			case 0x3: //CarryClearUnsignedLower
-				tmp = ConditionFlag.CarryClearUnsignedLower;
-			break;
-			case 0x4: // Minus
-				tmp = ConditionFlag.Minus;
-			break;
-			case 0x5: //ConditionFlag.Positive
-				tmp = ConditionFlag.Positive;
-			break;
-			case 0x6: //SignedOverflow
-				tmp = ConditionFlag.SignedOverflow;
-			break;
-			case 0x7: // ConditionFlag.NoSignedOverflow
-				tmp = ConditionFlag.NoSignedOverflow;
-			break;
-			case 0x8: // ConditionFlag.UnsignedHigher
-				tmp =  ConditionFlag.UnsignedHigher;
-			break;
-			case 0x9: //ConditionFlag.UnsignedLowerOrEqual;
+                case 0x1: // NotEqual
+                    tmp = ConditionFlag.NotEqual;
+                    break;
 
-				tmp = ConditionFlag.UnsignedLowerOrEqual;
-			break;
-			case 0xA: // SignedGreaterOrEqual
-				tmp =  ConditionFlag.SignedGreaterOrEqual;
-			break;
-			
-			case 0xB: // SignedLesser
-				tmp = ConditionFlag.SignedLesser;
-			break;
-			case 0xC: // SignedGreater
-				tmp = ConditionFlag.SignedGreater;
-			break;
-			case 0xD: // SignedLowerOrEqual
-				tmp = ConditionFlag.SignedLowerOrEqual;
-			break;
+                case 0x2: // CarrySetUnsignedHigerEqual
+                    tmp = ConditionFlag.CarrySetUnsignedHigherEqual;
+                    break;
 
-			/*
-				Cases Always and NeverUse should really result in an error. 
-			*/
-			case 0xE: // Always!!!!
-				
-				tmp =  ConditionFlag.Always;
-			break;
-			case 0xF:
-				tmp = ConditionFlag.NeverUse;
-			break;
-			
-		}	
-		return tmp;
-	}
-	public ConditionFlag inverse() {
-		ConditionFlag tmp =  ConditionFlag.Equal;
-		switch(this.value) {
-			case 0x0: //Equal
-				tmp = ConditionFlag.NotEqual;
-			break;
-			
-			case 0x1: // NotEqual
-				tmp= ConditionFlag.Equal;
-			break;
+                case 0x3: //CarryClearUnsignedLower
+                    tmp = ConditionFlag.CarryClearUnsignedLower;
+                    break;
+                case 0x4: // Minus
+                    tmp = ConditionFlag.Minus;
+                    break;
+                case 0x5: //ConditionFlag.Positive
+                    tmp = ConditionFlag.Positive;
+                    break;
+                case 0x6: //SignedOverflow
+                    tmp = ConditionFlag.SignedOverflow;
+                    break;
+                case 0x7: // ConditionFlag.NoSignedOverflow
+                    tmp = ConditionFlag.NoSignedOverflow;
+                    break;
+                case 0x8: // ConditionFlag.UnsignedHigher
+                    tmp = ConditionFlag.UnsignedHigher;
+                    break;
+                case 0x9: //ConditionFlag.UnsignedLowerOrEqual;
 
-			case 0x2: // CarrySetUnsignedHigerEqual
-				tmp = ConditionFlag.CarryClearUnsignedLower;
-			break;
+                    tmp = ConditionFlag.UnsignedLowerOrEqual;
+                    break;
+                case 0xA: // SignedGreaterOrEqual
+                    tmp = ConditionFlag.SignedGreaterOrEqual;
+                    break;
 
-			case 0x3: //CarryClearUnsignedLower
-				tmp = ConditionFlag.CarrySetUnsignedHigherEqual;
-			break;
-			case 0x4: // Minus
-				tmp = ConditionFlag.Positive;
-			break;
-			case 0x5: //ConditionFlag.Positive
-				tmp = ConditionFlag.Minus;
-			break;
-			case 0x6: //SignedOverflow
-				tmp = ConditionFlag.NoSignedOverflow;
-			break;
-			case 0x7: // ConditionFlag.NoSignedOverflow
-				tmp = ConditionFlag.SignedOverflow;
-			break;
-			case 0x8: // ConditionFlag.UnsignedHigher
-				tmp =  ConditionFlag.UnsignedLowerOrEqual;
-			break;
-			case 0x9: //ConditionFlag.UnsignedLowerOrEqual;
-
-				tmp = ConditionFlag.UnsignedHigher;
-			break;
-			case 0xA: // SignedGreaterOrEqual
-				tmp = ConditionFlag.SignedLesser;
-			break;
-			
-			case 0xB: // SignedLesser
-				tmp = ConditionFlag.SignedGreaterOrEqual;
-			break;
-			case 0xC: // SignedGreater
-				tmp = ConditionFlag.SignedLowerOrEqual;
-			break;
-			case 0xD: // SignedLowerOrEqual
-				tmp = ConditionFlag.SignedGreater;
-			break;
+                case 0xB: // SignedLesser
+                    tmp = ConditionFlag.SignedLesser;
+                    break;
+                case 0xC: // SignedGreater
+                    tmp = ConditionFlag.SignedGreater;
+                    break;
+                case 0xD: // SignedLowerOrEqual
+                    tmp = ConditionFlag.SignedLowerOrEqual;
+                    break;
 
 			/*
-				Cases Always and NeverUse should really result in an error. 
+                Cases Always and NeverUse should really result in an error.
 			*/
-			case 0xE: // Always!!!!
-				
-				tmp =  ConditionFlag.NeverUse;
-			break;
-			case 0xF:
-				tmp = ConditionFlag.Always;
-			break;
-			
-		}	
-		return tmp;
-	}
+                case 0xE: // Always!!!!
+
+                    tmp = ConditionFlag.Always;
+                    break;
+                case 0xF:
+                    tmp = ConditionFlag.NeverUse;
+                    break;
+
+            }
+            return tmp;
+        }
+
+        public ConditionFlag inverse() {
+            ConditionFlag tmp = ConditionFlag.Equal;
+            switch (this.value) {
+                case 0x0: //Equal
+                    tmp = ConditionFlag.NotEqual;
+                    break;
+
+                case 0x1: // NotEqual
+                    tmp = ConditionFlag.Equal;
+                    break;
+
+                case 0x2: // CarrySetUnsignedHigerEqual
+                    tmp = ConditionFlag.CarryClearUnsignedLower;
+                    break;
+
+                case 0x3: //CarryClearUnsignedLower
+                    tmp = ConditionFlag.CarrySetUnsignedHigherEqual;
+                    break;
+                case 0x4: // Minus
+                    tmp = ConditionFlag.Positive;
+                    break;
+                case 0x5: //ConditionFlag.Positive
+                    tmp = ConditionFlag.Minus;
+                    break;
+                case 0x6: //SignedOverflow
+                    tmp = ConditionFlag.NoSignedOverflow;
+                    break;
+                case 0x7: // ConditionFlag.NoSignedOverflow
+                    tmp = ConditionFlag.SignedOverflow;
+                    break;
+                case 0x8: // ConditionFlag.UnsignedHigher
+                    tmp = ConditionFlag.UnsignedLowerOrEqual;
+                    break;
+                case 0x9: //ConditionFlag.UnsignedLowerOrEqual;
+
+                    tmp = ConditionFlag.UnsignedHigher;
+                    break;
+                case 0xA: // SignedGreaterOrEqual
+                    tmp = ConditionFlag.SignedLesser;
+                    break;
+
+                case 0xB: // SignedLesser
+                    tmp = ConditionFlag.SignedGreaterOrEqual;
+                    break;
+                case 0xC: // SignedGreater
+                    tmp = ConditionFlag.SignedLowerOrEqual;
+                    break;
+                case 0xD: // SignedLowerOrEqual
+                    tmp = ConditionFlag.SignedGreater;
+                    break;
+
+			/*
+                Cases Always and NeverUse should really result in an error.
+			*/
+                case 0xE: // Always!!!!
+
+                    tmp = ConditionFlag.NeverUse;
+                    break;
+                case 0xF:
+                    tmp = ConditionFlag.Always;
+                    break;
+
+            }
+            return tmp;
+        }
 
         public int value() {
             return value;
@@ -241,58 +244,63 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void instrumentBranch(Label l) {
-	if (l.isBound()) { 
-		checkConstraint(-0x800000 <= (l.position() - codeBuffer.position()) && (l.position() - codeBuffer.position()) <= 0x7fffff, "branch must be within  a 24bit offset");
-            // emitInt(0x06000000 | (l.position() - codeBuffer.position()) | ConditionFlag.Always.value() & 0xf);
-                emitInt(0x0a000000 | (0xffffff & ((l.position() - codeBuffer.position() - 8) / 4)) | ((ConditionFlag.Always.value() & 0xf) << 28));
-	}else {
-		            l.addPatchAt(codeBuffer.position());
-			    nop();
-	}
+        if (l.isBound()) {
+            checkConstraint(-0x800000 <= (l.position() - codeBuffer.position()) && (l.position() - codeBuffer.position()) <= 0x7fffff, "branch must be within  a 24bit offset");
+            emitInt(0x0a000000 | (0xffffff & ((l.position() - codeBuffer.position() - 8) / 4)) | ((ConditionFlag.Always.value() & 0xf) << 28));
+        } else {
+            l.addPatchAt(codeBuffer.position());
+            nop();
+        }
 
-	}
+    }
+
     public void branch(Label l) {
-	boolean instrumentMe = (maxineflush != null);
+        boolean instrumentMe = (maxineflush != null);
         if (l.isBound()) {
             /*
              * REMEMBER -- the current stored value of the PC is 8 bytes larger than that of the currently executing
              * instruction, BUT WHEN we jump we must set PC to the actual address of the instruction we want to execute
-             * NEXT.!!!!
+             *
              */
+
             // Compute a relative address if it is less than 24bits;
             // then branch
             // or TODO compute an absolute address and do a MOV PC,absolute.
             // branch(l.position(), false);
-	    if(maxineflush != null) {
-		int disp = l.position() - codeBuffer.position() - 8;
-		disp = instrumentPCChange(ConditionFlag.Always,ConditionFlag.NeverUse,disp);
-	        checkConstraint(-0x800000 <= (disp) && disp <= 0x7fffff, "branch must be within  a 24bit offset");
-		// Have already done -8
-		emitInt(0x0a000000 | (0xffffff & ((disp ) / 4)) | ((ConditionFlag.Always.value() & 0xf) << 28));
-	    } else {
-            	checkConstraint(-0x800000 <= (l.position() - codeBuffer.position()) && (l.position() - codeBuffer.position()) <= 0x7fffff, "branch must be within  a 24bit offset");
-            // emitInt(0x06000000 | (l.position() - codeBuffer.position()) | ConditionFlag.Always.value() & 0xf);
-            	emitInt(0x0a000000 | (0xffffff & ((l.position() - codeBuffer.position() - 8) / 4)) | ((ConditionFlag.Always.value() & 0xf) << 28));
-	   }
+
+            if (maxineflush != null) {
+
+                int disp = l.position() - codeBuffer.position() - 8; // -8 because of ARMPC
+                disp = instrumentPCChange(ConditionFlag.Always, ConditionFlag.NeverUse, disp);
+                checkConstraint(-0x800000 <= (disp) && disp <= 0x7fffff, "branch must be within  a 24bit offset");
+                emitInt(0x0a000000 | (0xffffff & ((disp) / 4)) | ((ConditionFlag.Always.value() & 0xf) << 28));
+
+            } else {
+                checkConstraint(-0x800000 <= (l.position() - codeBuffer.position()) && (l.position() - codeBuffer.position()) <= 0x7fffff, "branch must be within  a 24bit offset");
+                emitInt(0x0a000000 | (0xffffff & ((l.position() - codeBuffer.position() - 8) / 4)) | ((ConditionFlag.Always.value() & 0xf) << 28));
+            }
 
         } else {
+
             // By default, forward jumps are always 24-bit displacements, since
             // we can't yet know where the label will be bound. If you're sure that
-            // the forward jump will not run beyond 24-bits bytes, then its ok
-	    if(maxineflush != null) {
-		// will need to be patched inside patchJumpTarget
-	    	instrumentPCChange(ConditionFlag.Always,ConditionFlag.NeverUse,-2);
-		/*
-		We determine the offsets for patching --- by gdb of an exectuion of ... mx vm -Xopt App
-		We break on real_maxine_instrumentation --- case of PCCHANGE  then do a disas of $lr -0x50,$lr +0x40 
-		and  do a print /x STARTARRDRESSNEXTINSTR - ADDRESSOFmovwmovtINSTRS
-		NOTE: there may be a true/nottrue ie lt or ge destination, or there may be 
-		a ConditionFlag.Always only one movw movt to patch
-		*/
-	    }
-            l.addPatchAt(codeBuffer.position(),instrumentMe);
-            // emitByte(0xE9);
-            // emitInt(0);
+            // the forward jump will not run beyond 24-bits bytes, then its ok, 4 is encoded as 1 etc
+
+            if (maxineflush != null) {
+                // will need to be patched inside patchJumpTarget
+                instrumentPCChange(ConditionFlag.Always, ConditionFlag.NeverUse, -2);
+
+                /*
+		        * We determine the offsets for patching --- by gdb of an exectuion of ... mx vm -Xopt App
+		        * We break on real_maxine_instrumentation --- case of PCCHANGE  then do a disas of $lr -0x50,$lr +0x40
+		        * and  do a print /x STARTARRDRESSNEXTINSTR - ADDRESSOFmovwmovtINSTRS
+		        * NOTE: there may be a true/nottrue ie lt or ge destination, or there may be
+		        * a ConditionFlag.Always only one movw movt to patch
+		        */
+
+            }
+            l.addPatchAt(codeBuffer.position(), instrumentMe);
+            // bit sure if the nopis required ... Safepoints, or are there any cases of inaccurate patching?
             nop();
         }
     }
@@ -300,205 +308,209 @@ public class ARMV7Assembler extends AbstractAssembler {
     @Override
     protected void patchJumpTarget(int branch, int target, boolean instrumented) {
         // b, bl & bx goes here .. could do an ADD PC,reg if too big
-        // if(branch == 76) return; // hack for dcmp01 to see what happens
         checkConstraint(-0x800000 <= (target - branch) && (target - branch) <= 0x7fffff, "branch must be within  a 24bit offset");
-        // emitInt(0x06000000 | (target - branch) | ConditionFlag.Always.value() & 0xf);
         int disp = target - branch - 16;
         int instruction = 0;
         int operation = codeBuffer.getInt(branch);
-	/* 
-	APOLOGIES firstPATCH and secondPATCH are determined by counting instructions/and or doing the calculation in
-	gdb by examining addresses they specify the offset of the movw movts to be patched inside the instrument code
-	block
-	*/
-	int firstPATCH = 44;
-	int secondPATCH = 56;
+
+        /*
+	    * APOLOGIES firstPATCH and secondPATCH are determined by counting instructions/and or doing the calculation in
+	    * gdb by examining addresses they specify the offset of the movw movts to be patched inside the instrument code
+        * block
+        * TODO a code cleanup should work out all this hacking of patching and offsets better
+	    */
+
+        int firstPATCH = 44;
+        int secondPATCH = 56;
         int firstPATCHOperation = 0;
         int secondPATCHOperation = 0;
-	int tmpDisp = 0;
-	ConditionFlag tmp = ConditionFlag.NeverUse;
-	if(instrumented) {
- 		firstPATCHOperation = codeBuffer.getInt(branch-firstPATCH); 
-		secondPATCHOperation = codeBuffer.getInt(branch-secondPATCH);
-	}
+        int tmpDisp = 0;
+
+        ConditionFlag tmp = ConditionFlag.NeverUse;
+
+        if (instrumented) {
+
+            firstPATCHOperation = codeBuffer.getInt(branch - firstPATCH);
+            secondPATCHOperation = codeBuffer.getInt(branch - secondPATCH);
+
+        }
+
         if (operation == (ConditionFlag.NeverUse.value() << 28 | 0xdead)) { // JCC
-            //
-            // System.out.println("MATCHED JCC " + branch + " target " + target);
+
             disp -= 4;
             instruction = movwHelper(ConditionFlag.Always, ARMV7.r12, disp & 0xffff);
             codeBuffer.emitInt(instruction, branch);
             instruction = movtHelper(ConditionFlag.Always, ARMV7.r12, (disp >> 16) & 0xffff);
             codeBuffer.emitInt(instruction, branch + 4);
 
-	    //System.out.println("JUMP CASE ONE");
-	    if(instrumented) {
-                System.out.println("JUMP CASE ONE");
-		disp = disp + 4;
-                if((0xf & (firstPATCHOperation >>28)) == ConditionFlag.Always.value()) {
+            if (instrumented) {
+                if (debugGeneral) {
+                    System.out.println("JUMP CASE ONE");
+                }
+                disp = disp + 4;
+                if ((0xf & (firstPATCHOperation >> 28)) == ConditionFlag.Always.value()) {
+                    if (debugGeneral) {
                         System.out.println("We have an ALWAYS TAKEN BRANCH");
-			disp = disp +  firstPATCH;
-			instruction = movwHelper(ConditionFlag.Always,ARMV7.r1, disp & 0xffff);
-			codeBuffer.emitInt(instruction, branch - firstPATCH);
-			instruction = movtHelper(ConditionFlag.Always,ARMV7.r1, (disp >> 16) & 0xffff);
-			codeBuffer.emitInt(instruction, branch - firstPATCH+4);
+                    }
+                    disp = disp + firstPATCH;
+                    instruction = movwHelper(ConditionFlag.Always, ARMV7.r1, disp & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - firstPATCH);
+                    instruction = movtHelper(ConditionFlag.Always, ARMV7.r1, (disp >> 16) & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - firstPATCH + 4);
 
-                }else {
-                        //System.out.println("We have an TAKEN NOTTAKEN BRANCH");
-			disp = disp +  secondPATCH;
-			// patch operations are therefore reversed
-			tmp = ConditionFlag.which(0xf & (secondPATCHOperation >>28));
-			instruction = movwHelper(tmp ,ARMV7.r1, disp & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - secondPATCH);
-                        instruction = movtHelper(tmp ,ARMV7.r1, (disp >> 16) & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - secondPATCH+4);
+                } else {
+                    if (debugGeneral) {
+                        System.out.println("We have an TAKEN NOTTAKEN BRANCH");
+                    }
+                    disp = disp + secondPATCH;
+                    // patch operations are therefore reversed
+                    tmp = ConditionFlag.which(0xf & (secondPATCHOperation >> 28));
+                    instruction = movwHelper(tmp, ARMV7.r1, disp & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - secondPATCH);
+                    instruction = movtHelper(tmp, ARMV7.r1, (disp >> 16) & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - secondPATCH + 4);
 
-			tmp = ConditionFlag.which(0xf & (firstPATCHOperation >> 28));	
-			disp = 44;
-			instruction = movwHelper(tmp ,ARMV7.r1, disp & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - firstPATCH);
-                        instruction = movtHelper(tmp ,ARMV7.r1, (disp >> 16) & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - firstPATCH+4);
+                    tmp = ConditionFlag.which(0xf & (firstPATCHOperation >> 28));
+                    disp = 44;
+                    instruction = movwHelper(tmp, ARMV7.r1, disp & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - firstPATCH);
+                    instruction = movtHelper(tmp, ARMV7.r1, (disp >> 16) & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - firstPATCH + 4);
                 }
             }
 
 
-	    
         } else if (operation == (ConditionFlag.NeverUse.value() << 28 | 0xbeef)) { // JMP
-	    /*
-		Matches a jmp to an unbound label -- this should in theory be a forward jump.
-	    */
-	    checkConstraint(-0x800000 <= (disp) && disp <= 0x7fffff, "patchJumpTarget TWO must be within  a 24bit offset");
+	        /*
+		    * Matches a jmp to an unbound label -- this should in theory be a forward jump.
+	        */
+            checkConstraint(-0x800000 <= (disp) && disp <= 0x7fffff, "patchJumpTarget TWO must be within  a 24bit offset");
             disp += 8;
-	    if(instrumented) {
-                System.out.println("JUMP CASE TWO");
-		if((0xf & (firstPATCHOperation >>28)) == ConditionFlag.Always.value()) {
-                        System.out.println("We have an ALWAYS TAKEN BRANCH  "+ branch);
-                        tmpDisp = disp +  firstPATCH -8 ; // found to be 8 too far!
-                        instruction = movwHelper(ConditionFlag.Always,ARMV7.r1, tmpDisp & 0xffff);
-                        codeBuffer.emitInt(/*0xbeefbeef*/instruction, branch - firstPATCH);
-                        instruction = movtHelper(ConditionFlag.Always,ARMV7.r1, (tmpDisp >> 16) & 0xffff);
-                        codeBuffer.emitInt(/*0xdeadbeef*/instruction, branch - firstPATCH+4);
-			
+            if (instrumented) {
+                if (debugGeneral) {
+                    System.out.println("JUMP CASE TWO");
+                }
+                if ((0xf & (firstPATCHOperation >> 28)) == ConditionFlag.Always.value()) {
+                    if (debugGeneral) {
+                        System.out.println("We have an ALWAYS TAKEN BRANCH  " + branch);
+                    }
+                    tmpDisp = disp + firstPATCH - 8; // found to be 8 too far!
+                    instruction = movwHelper(ConditionFlag.Always, ARMV7.r1, tmpDisp & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - firstPATCH);
+                    instruction = movtHelper(ConditionFlag.Always, ARMV7.r1, (tmpDisp >> 16) & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - firstPATCH + 4);
 
-                }else {
-			System.out.println("WE HAVE  ATAKEN + NOTTAKEN TO PATCH");
-                        tmpDisp = disp +  secondPATCH -8 ;
-                        tmp = ConditionFlag.which(0xf & (secondPATCHOperation >>28));
-                        instruction = movwHelper(tmp ,ARMV7.r1, tmpDisp & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - secondPATCH);
-                        instruction = movtHelper(tmp ,ARMV7.r1, (tmpDisp >> 16) & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - secondPATCH+4);
 
-                        tmp = ConditionFlag.which(0xf & (firstPATCHOperation >> 28));
-                        tmpDisp = 44;
-                        instruction = movwHelper(tmp ,ARMV7.r1, tmpDisp & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - firstPATCH);
-                        instruction = movtHelper(tmp ,ARMV7.r1, (tmpDisp >> 16) & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - firstPATCH+4);
+                } else {
+                    if (debugGeneral) {
+                        System.out.println("WE HAVE  ATAKEN + NOTTAKEN TO PATCH");
+                    }
+                    tmpDisp = disp + secondPATCH - 8;
+                    tmp = ConditionFlag.which(0xf & (secondPATCHOperation >> 28));
+                    instruction = movwHelper(tmp, ARMV7.r1, tmpDisp & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - secondPATCH);
+                    instruction = movtHelper(tmp, ARMV7.r1, (tmpDisp >> 16) & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - secondPATCH + 4);
+
+                    tmp = ConditionFlag.which(0xf & (firstPATCHOperation >> 28));
+                    tmpDisp = 44;
+                    instruction = movwHelper(tmp, ARMV7.r1, tmpDisp & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - firstPATCH);
+                    instruction = movtHelper(tmp, ARMV7.r1, (tmpDisp >> 16) & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - firstPATCH + 4);
                 }
 
-		
+
             }
 
 
             disp = disp / 4;
-            // System.out.println("MATCHED OTHER DISP " + (target-branch) + " bran "+ branch + " target " + target);
-            if (disp < 0) {
-                // System.out.println("NEGATIVE DISP " + disp);
-            }
 
             codeBuffer.emitInt(0x0a000000 | (disp & 0xffffff) | ((ConditionFlag.Always.value() & 0xf) << 28), branch);
-	    //System.out.println("JUMP CASE TWO");
-            // System.out.println("MATCHED JMP branch " + branch + " DISP " + disp + " target "+ target );
+            if (debugGeneral) {
+                System.out.println("JUMP CASE TWO");
+            }
 
         } else if ((operation & 0xf0000fff) == (ConditionFlag.NeverUse.value() << 28 | 0x0d0)) {
-	    checkConstraint(-0x800000 <= (disp) && disp <= 0x7fffff, "patchJumpTarget THREE must be within  a 24bit offset");
+            checkConstraint(-0x800000 <= (disp) && disp <= 0x7fffff, "patchJumpTarget THREE must be within  a 24bit offset");
             disp = disp + 8;
             disp = disp / 4;
 
             codeBuffer.emitInt(0x0a000000 | (disp & 0xffffff) | ((ConditionFlag.Always.value() & 0xf) << 28), branch);
-	    if(instrumented) {
-		disp = disp *4;
-		System.out.println("JUMP CASE THREE");
-		if((0xf & (firstPATCHOperation >>28)) == ConditionFlag.Always.value()) {
+            if (instrumented) {
+                disp = disp * 4;
+                if (debugGeneral) {
+                    System.out.println("JUMP CASE THREE");
+                }
+                if ((0xf & (firstPATCHOperation >> 28)) == ConditionFlag.Always.value()) {
+                    if (debugGeneral) {
                         System.out.println("We have an ALWAYS TAKEN BRANCH " + branch);
-                        disp = disp +  firstPATCH;
-                        instruction = movwHelper(ConditionFlag.Always,ARMV7.r1, disp & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - firstPATCH);
-                        instruction = movtHelper(ConditionFlag.Always,ARMV7.r1, (disp >> 16) & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - firstPATCH+4);
+                    }
+                    disp = disp + firstPATCH;
+                    instruction = movwHelper(ConditionFlag.Always, ARMV7.r1, disp & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - firstPATCH);
+                    instruction = movtHelper(ConditionFlag.Always, ARMV7.r1, (disp >> 16) & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - firstPATCH + 4);
 
-                }else {
-                        disp = disp +  secondPATCH;
-                        tmp = ConditionFlag.which(0xf & (secondPATCHOperation >>28));
-                        instruction = movwHelper(tmp ,ARMV7.r1, disp & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - secondPATCH);
-                        instruction = movtHelper(tmp ,ARMV7.r1, (disp >> 16) & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - secondPATCH+4);
+                } else {
+                    disp = disp + secondPATCH;
+                    tmp = ConditionFlag.which(0xf & (secondPATCHOperation >> 28));
+                    instruction = movwHelper(tmp, ARMV7.r1, disp & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - secondPATCH);
+                    instruction = movtHelper(tmp, ARMV7.r1, (disp >> 16) & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - secondPATCH + 4);
 
-                        tmp = ConditionFlag.which(0xf & (firstPATCHOperation >> 28));
-                        disp = 44;
-                        instruction = movwHelper(tmp ,ARMV7.r1, disp & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - firstPATCH);
-                        instruction = movtHelper(tmp ,ARMV7.r1, (disp >> 16) & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - firstPATCH+4);
+                    tmp = ConditionFlag.which(0xf & (firstPATCHOperation >> 28));
+                    disp = 44;
+                    instruction = movwHelper(tmp, ARMV7.r1, disp & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - firstPATCH);
+                    instruction = movtHelper(tmp, ARMV7.r1, (disp >> 16) & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - firstPATCH + 4);
                 }
 
             }
 
-	    //System.out.println("JUMP CASE THREE");
-            // System.out.println("DISP was "+ (target - branch)+ " " + target+ " "+ branch);
-            /*
-             * code[callOffset + 7] = (byte) (instruction & 0xff); code[callOffset + 6] = (byte) ((instruction >> 8) &
-             * 0xff); code[callOffset + 5] = (byte) ((instruction >> 16) & 0xff); code[callOffset + 4] = (byte)
-             * ((instruction >> 24) & 0xff);
-             */
 
         } else {
-	    checkConstraint(-0x800000 <= (disp) && disp <= 0x7fffff, "patchJumpTarget FOUR must be within  a 24bit offset");
+            checkConstraint(-0x800000 <= (disp) && disp <= 0x7fffff, "patchJumpTarget FOUR must be within  a 24bit offset");
             disp += 8;
             disp = disp / 4;
 
             codeBuffer.emitInt(0x0a000000 | (disp & 0xffffff) | ((ConditionFlag.Always.value() & 0xf) << 28), branch);
-	    /*
-		OFFSETS determined by gdb ...
-		-44 and -56 - we might be out by 4 if there is a no inserted.
-		Check that -44 we have a movw movt
-		Identify if we have ConditionFlag.Always --- if so we only have on condition to patch
-		 and that is the TAKEN condition ie related to the disp ....
-		ELSE we have the NOTTAKEN condition at -44 and the TAKEN condition at the -56
-	    */	
-	    if(instrumented) {
-		System.out.println("JUMP CASE DEFAULT");
-		disp = disp * 4;
-		if((0xf & (firstPATCHOperation >>28)) == ConditionFlag.Always.value()) {
+
+            if (instrumented) {
+                if (debugGeneral) {
+                    System.out.println("JUMP CASE DEFAULT");
+                }
+                disp = disp * 4;
+                if ((0xf & (firstPATCHOperation >> 28)) == ConditionFlag.Always.value()) {
+                    if (debugGeneral) {
                         System.out.println("We have an ALWAYS TAKEN BRANCH " + branch);
-                        disp = disp +  firstPATCH;
-                        instruction = movwHelper(ConditionFlag.Always,ARMV7.r1, disp & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - firstPATCH);
-                        instruction = movtHelper(ConditionFlag.Always,ARMV7.r1, (disp >> 16) & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - firstPATCH+4);
+                    }
+                    disp = disp + firstPATCH;
+                    instruction = movwHelper(ConditionFlag.Always, ARMV7.r1, disp & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - firstPATCH);
+                    instruction = movtHelper(ConditionFlag.Always, ARMV7.r1, (disp >> 16) & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - firstPATCH + 4);
 
-                }else {
-                        disp = disp +  secondPATCH;
-                        tmp = ConditionFlag.which(0xf & (secondPATCHOperation >>28));
-                        instruction = movwHelper(tmp ,ARMV7.r1, disp & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - secondPATCH);
-                        instruction = movtHelper(tmp ,ARMV7.r1, (disp >> 16) & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - secondPATCH+4);
+                } else {
+                    disp = disp + secondPATCH;
+                    tmp = ConditionFlag.which(0xf & (secondPATCHOperation >> 28));
+                    instruction = movwHelper(tmp, ARMV7.r1, disp & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - secondPATCH);
+                    instruction = movtHelper(tmp, ARMV7.r1, (disp >> 16) & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - secondPATCH + 4);
 
-                        tmp = ConditionFlag.which(0xf & (firstPATCHOperation >> 28));
-                        disp = 44;
-                        instruction = movwHelper(tmp ,ARMV7.r1, disp & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - firstPATCH);
-                        instruction = movtHelper(tmp ,ARMV7.r1, (disp >> 16) & 0xffff);
-                        codeBuffer.emitInt(instruction, branch - firstPATCH+4);
+                    tmp = ConditionFlag.which(0xf & (firstPATCHOperation >> 28));
+                    disp = 44;
+                    instruction = movwHelper(tmp, ARMV7.r1, disp & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - firstPATCH);
+                    instruction = movtHelper(tmp, ARMV7.r1, (disp >> 16) & 0xffff);
+                    codeBuffer.emitInt(instruction, branch - firstPATCH + 4);
                 }
 
-	    }
+            }
         }
-
-        // codeBuffer.emitInt(0x0a000000 | (target - branch) | ((ConditionFlag.Always.value() & 0xf) << 28),branch);
 
     }
 
@@ -765,6 +777,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (shift_imm & 0x1f) << 7;
         emitInt(instruction);
     }
+
     public void instrumentMov(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rm) {
         int instruction = 0x01a00000;
         assert (Rd.encoding < 16 && Rm.encoding < 16); // CORE Register move only!
@@ -778,13 +791,13 @@ public class ARMV7Assembler extends AbstractAssembler {
     public void mov(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rm) {
         int instruction = 0x01a00000;
         assert (Rd.encoding < 16 && Rm.encoding < 16); // CORE Register move only!
-	if(maxineflush != null && Rd == ARMV7.r15) {
-		instrumentPush(ConditionFlag.Always, 1<<12| 1<<8);
-		mov(cond, false,ARMV7.r12, Rm);
-		ConditionFlag tmp = cond.inverse();
-		instrumentNEWAbsolutePC(cond,tmp, true, ARMV7.r12, 0, false);
-		instrumentPop(ConditionFlag.Always, 1<<12| 1<<8);
-	}
+        if (maxineflush != null && Rd == ARMV7.r15) {
+            instrumentPush(ConditionFlag.Always, 1 << 12 | 1 << 8);
+            mov(cond, false, ARMV7.r12, Rm);
+            ConditionFlag tmp = cond.inverse();
+            instrumentNEWAbsolutePC(cond, tmp, true, ARMV7.r12, 0, false);
+            instrumentPop(ConditionFlag.Always, 1 << 12 | 1 << 8);
+        }
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (s ? 1 : 0) << 20;
         instruction |= (Rd.encoding & 0xf) << 12;
@@ -795,7 +808,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public void mov(final ConditionFlag cond, final CiRegister Rd, final int immed12) {
         int instruction = 0x3A00000;
         assert (Rd.encoding < 16);
-	assert Rd != ARMV7.r15 : "ERROR: simulation platform unexpected mov to PC -- not handled yet!!!";
+        assert Rd != ARMV7.r15 : "ERROR: simulation platform unexpected mov to PC -- not handled yet!!!";
 
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (Rd.encoding & 0xf) << 12;
@@ -947,7 +960,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void strd(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, final CiRegister Rm) {
         if (maxineflush != null) {
-            System.out.println("NEVER CALLED strd?");
+            assert 0 == 1 : "strd not instrumented";
             instrument(false, true, true, Rn, 0);
         }
 
@@ -964,7 +977,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void str(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, final CiRegister Rm, int imm5, int imm2Type) {
         if (maxineflush != null) {
-            System.out.println("NEVER CALLED str?");
+            assert 0 == 1 : "str not instrumented";
             instrument(false, true, true, Rn, 0);
         }
 
@@ -1181,7 +1194,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void strbImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm12) {
         if (maxineflush != null) {
-            // imm12 needs to be modified according to ARM rules ...
+            // TODO imm12 needs to be modified according to ARM rules ...
             instrument(false, true, true, Rn, imm12);
         }
 
@@ -1222,22 +1235,22 @@ public class ARMV7Assembler extends AbstractAssembler {
         if (maxineFlushAddress == 0) {
             maxineFlushAddress = maxineflush.maxine_flush_instrumentationBuffer();
         }
-	/* TEMPORARILY COMMENTED OUT FOR DEBUGGING OF PC CHANGES
+	/*  DO NOT DELETE TEMPORARILY COMMENTED OUT FOR DEBUGGING OF PC CHANGES
         // save some registers to the stack using a
 
         //
-         // Format bottom 2 bits used/ 2 instruction read 1 data write 0 data read i.e. bit 0 = Write bit 1 = Instruction
-         // Instruction Operation Bit 1 Bit 0 ----------------------------- DATAREAD 0 0 DATAWRITE 0 1 CODEREAD 1 0
-         // CODEWRITE 1 1 public static boolean INSTRUMENT = false; public static int simBuf = 0; public static int
-         // simBuffOffset = 0;
-	//
+        // Format bottom 2 bits used/ 2 instruction read 1 data write 0 data read i.e. bit 0 = Write bit 1 = Instruction
+        // Instruction Operation Bit 1 Bit 0 ----------------------------- DATAREAD 0 0 DATAWRITE 0 1 CODEREAD 1 0
+        // CODEWRITE 1 1 public static boolean INSTRUMENT = false; public static int simBuf = 0; public static int
+        // simBuffOffset = 0;
+	    //
         CiRegister immReg = null;
         CiRegister spareAddress = null;
         CiRegister spareImm = null;
         CiRegister destAddress = null;
         CiRegister valAddress = null;
         switch (base.encoding) {
-	//
+	    //
         // r0 r1 r2 r8 r9 r12 are pushed
         //
             case 0:
@@ -1350,11 +1363,11 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void ldr(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, final CiRegister Rm, int imm2Type, int imm5) {
         if (maxineflush != null) {
-            instrument(true,true,true,Rn,imm5);
+            instrument(true, true, true, Rn, imm5);
             System.out.println("ldr SHOULD not be CALLED\n");
             /*
              * Currently this instruction is not used apart from movss and DEOPT stub which we have not yet implemented
-             * fully
+             * fully DEOPT stubs are being implemented not to use it.
              */
         }
         int instruction = 0x06100000;
@@ -1394,8 +1407,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             /*
              * NOT used
              */
-            System.out.println("ldrd should not be called\n");
-            //instrument(true,true,true,Rn,imm12);
+            assert 0 == 1 : "ldrd not instrumented";           //instrument(true,true,true,Rn,imm12);
         }
 
         int instruction = 0x000000d0;
@@ -1474,7 +1486,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    // Wee need that method due to limited number of registers when we process long values in 32 bit space.
+    // We need that method due to limited number of registers when we process long values in 32 bit space.
     public void saveRegister(int reg, int reg2) {
         push(ConditionFlag.Always, (1 << reg) | (1 << reg2));
     }
@@ -1638,7 +1650,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         int instruction = 0x01500000;
 
         assert (!(Rn.encoding == 12 && Rn.encoding == Rm.encoding)); // defensive assert against scratch problem in
-// ARMV7LIemitCompare ...
+        // ARMV7LRIAssembler.emitCompare ...
 
         checkConstraint(0 <= imm5 && imm5 <= 31, "0 <= imm5 && imm5 <= 31");
         checkConstraint(0 <= imm2Type && imm2Type <= 3, "0 <= imm2Type && imm2Type <= 3");
@@ -1735,10 +1747,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                 return 3;
             }
         } else {
-            // APN modification for CompilerStubEmitter ...
-            // movw movt is two instructions ....
-            // TODO sometimes this might be required for a long?
-            // see ARMV7CompilerStubEmitter:: emit FNEG ...
+
             return 2;
         }
     }
@@ -1812,16 +1821,15 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void call() {
-        // ok we do not have the same semantics as intel
-        // this is used for a call where we don't know the actual target when we insert it
-        // ie for a trampoline.
-        // APN proposes we use the scratch register to calculate an address then we do the mov pc
-        // looking at Stubs.java we can see that all registers have been saved
-        // so we can use whatever registers we want!
-        // emitInt(0); // space for setupscratch
-        // emitInt(0);
+        // this is used for a call where we don't know the actual target yet
+        /*
+            movw reg
+            movt reg
+            add  reg, reg, pc
+            blx reg
+         */
         nop(4);
-        // Target needs to be patched later ...
+        // Target needs to be patched later as a PC-relative address?
     }
 
     public final void blx(CiRegister target) {
@@ -1848,7 +1856,6 @@ public class ARMV7Assembler extends AbstractAssembler {
             nop(4);
         } else {
             setUpScratch(addr);
-            // ldrImmediate(ConditionFlag.Always, 1, 0, 0, dest, ARMV7.r12,0 );
             mov(ConditionFlag.Always, false, dest, ARMV7.r12);
         }
     }
@@ -1880,7 +1887,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void cmpl(CiRegister src1, CiAddress src2) {
         assert src1.isValid();
-        setUpScratch(src2); // APN not sure if this requires a load!
+        setUpScratch(src2);
         ldr(ConditionFlag.Always, ARMV7.r12, ARMV7.r12, 0);
         cmp(ConditionFlag.Always, src1, scratchRegister, 0, 0);
     }
@@ -2059,32 +2066,32 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void int3() {
-        push(ConditionFlag.Always, 1 | 2 | 4 | 8 |  16 | 32 |64 |128 | 256 | 512 | 1024 |2048 | 4096 | 16384); // push r0-r3 and r7
-	vpush(ConditionFlag.Always, ARMV7.s0,ARMV7.s15, CiKind.Double, CiKind.Double );
-	//mov32BitConstant(ConditionFlag.Always, ARMV7.r0,-4);
+        push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // push r0-r3 and r7
+        vpush(ConditionFlag.Always, ARMV7.s0, ARMV7.s15, CiKind.Double, CiKind.Double);
+        //mov32BitConstant(ConditionFlag.Always, ARMV7.r0,-4);
         eor(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r0, ARMV7.r0, 0, 0);
         eor(ConditionFlag.Always, false, ARMV7.r1, ARMV7.r1, ARMV7.r1, 0, 0);
         eor(ConditionFlag.Always, false, ARMV7.r2, ARMV7.r2, ARMV7.r2, 0, 0);
         eor(ConditionFlag.Always, false, ARMV7.r3, ARMV7.r3, ARMV7.r3, 0, 0);
-	mov32BitConstant(ConditionFlag.Always, ARMV7.r7,224); //gettid
+        mov32BitConstant(ConditionFlag.Always, ARMV7.r7, 224); //gettid
         emitInt(0xef000000); // replaced with svc 0
-	// r0 has the tid
-	push(ConditionFlag.Always,1 | 1<<7); //r0 has the tid
-	mov32BitConstant(ConditionFlag.Always, ARMV7.r7,47); //getgid
+        // r0 has the tid
+        push(ConditionFlag.Always, 1 | 1 << 7); //r0 has the tid
+        mov32BitConstant(ConditionFlag.Always, ARMV7.r7, 47); //getgid
         emitInt(0xef000000); // replaced with svc 0
-	// r0 has the gid
-	pop(ConditionFlag.Always,2| 1<<7); // r1 has the tid
+        // r0 has the gid
+        pop(ConditionFlag.Always, 2 | 1 << 7); // r1 has the tid
 
-	mov32BitConstant(ConditionFlag.Always, ARMV7.r2,5); // SIGUSR1
-	//mov32BitConstant(ConditionFlag.Always, ARMV7.r7,238); // tkill
-	mov32BitConstant(ConditionFlag.Always, ARMV7.r7,268); // tgkill
+        mov32BitConstant(ConditionFlag.Always, ARMV7.r2, 5); // SIGUSR1
+        //mov32BitConstant(ConditionFlag.Always, ARMV7.r7,238); // tkill
+        mov32BitConstant(ConditionFlag.Always, ARMV7.r7, 268); // tgkill
         //eor(ConditionFlag.Always, false, ARMV7.r7, ARMV7.r7, ARMV7.r7, 0, 0);
         emitInt(0xef000000); // replaced with svc 0
         //pop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 128);
-	vpop(ConditionFlag.Always, ARMV7.s0,ARMV7.s15, CiKind.Double, CiKind.Double );
-        push(ConditionFlag.Always, 1 | 2 | 4 | 8 |  16 | 32 |64 |128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // push r0-r3 and r7
-	//mov32BitConstant(ConditionFlag.Always, ARMV7.r0,-4);
-	//emitInt(0xe1200070); // emit a BKPT instruction?
+        vpop(ConditionFlag.Always, ARMV7.s0, ARMV7.s15, CiKind.Double, CiKind.Double);
+        push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // push r0-r3 and r7
+        //mov32BitConstant(ConditionFlag.Always, ARMV7.r0,-4);
+        //emitInt(0xe1200070); // emit a BKPT instruction?
     }
 
     public final void flushicache(CiRegister startAddress, int bytes) {
@@ -2127,13 +2134,13 @@ public class ARMV7Assembler extends AbstractAssembler {
         // TODO ret() implements an X86 return from subroutine this needs to pop the return value of the stack TODO we
         // might need to push the value of r14 onto the stack in order to make this work for a call from the C harness
         // TODO for testing of the methods
-	if(maxineflush != null) {
+        if (maxineflush != null) {
 		/* changed to do the load and then to state it is a PC altering operation */
-		instrument(true, true, true, ARMV7.r13, 0);
-		ldr(ConditionFlag.Always,  ARMV7.r12, ARMV7.r13, 0);    	
-		instrumentNEWAbsolutePC(ConditionFlag.Always,ConditionFlag.NeverUse, true, ARMV7.r12, 0, false);
-		// TODO  instrument the POP which is a READ!!!
-	}
+            instrument(true, true, true, ARMV7.r13, 0);
+            ldr(ConditionFlag.Always, ARMV7.r12, ARMV7.r13, 0);
+            instrumentNEWAbsolutePC(ConditionFlag.Always, ConditionFlag.NeverUse, true, ARMV7.r12, 0, false);
+            // TODO  instrument the POP which is a READ!!!
+        }
         instrumentPop(ConditionFlag.Always, 1 << 15);
     }
 
@@ -2180,7 +2187,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public void enter(short imm16) {
     }
 
-    public final int instrumentNEWAbsolutePC(ConditionFlag taken,ConditionFlag notTaken, boolean isAbsoluteAddress, CiRegister target, int pcAdjustment, boolean isMethodEntry) {
+    public final int instrumentNEWAbsolutePC(ConditionFlag taken, ConditionFlag notTaken, boolean isAbsoluteAddress, CiRegister target, int pcAdjustment, boolean isMethodEntry) {
 	/*
 	* This is intended to be used by the ARMV7LIRAssembler in PushFrame isMethodEntry== true
 	* and by an absolute PC change such as by an BLX  /BX / mov to PC .... isMethodEntry == false
@@ -2188,35 +2195,32 @@ public class ARMV7Assembler extends AbstractAssembler {
 	*
 	*
 	*/
-	if(maxineflush == null) {
-		return 0;
-	}
-	if(maxineFlushAddress == 0) {
-		maxineFlushAddress = maxineflush.maxine_flush_instrumentationBuffer();
-	}
-	assert isAbsoluteAddress == true: "instrumentNEWAbsolutePC only works for absolute addresses";
-	assert !isMethodEntry || (isMethodEntry && (pcAdjustment == -4 || pcAdjustment == -16)) : "instrumentNEWAbsolutePC point is after the push $LR and decrement SP";
-	if(isMethodEntry) {
-		pcAdjustment = pcAdjustment -16; // this will take us to the movw movt but we are not instrumenting the
-		//push of the LR at a C1X optimised method entry point
-	}
+        if (maxineflush == null) {
+            return 0;
+        }
+        if (maxineFlushAddress == 0) {
+            maxineFlushAddress = maxineflush.maxine_flush_instrumentationBuffer();
+        }
+        assert isAbsoluteAddress == true : "instrumentNEWAbsolutePC only works for absolute addresses";
+        assert !isMethodEntry || (isMethodEntry && (pcAdjustment == -4 || pcAdjustment == -16)) : "instrumentNEWAbsolutePC point is after the push $LR and decrement SP";
+        if (isMethodEntry) {
+            pcAdjustment = pcAdjustment - 16; // this will take us to the movw movt but we are not instrumenting the
+            //push of the LR at a C1X optimised method entry point
+        }
 
-	/*
-	Remember needs changing to ensure that it in VERSION 2 of instrumentation it passes the next PC addrsss
-	NEEDS CAREFUL THOUGHT ... USED BY METHOD ENTRY
-	*/
-	emitInt(0xeaffffff); // this is the branch to next instruction ... ie the instrumentPush
+
+        emitInt(0xeaffffff); // this is the branch to next instruction ... ie the instrumentPush
         instrumentPush(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
-	mrsReadAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4);
-        instrumentPush(ConditionFlag.Always, 1<<4);
+        mrsReadAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4);
+        instrumentPush(ConditionFlag.Always, 1 << 4);
 
-	//vpush(ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // needs to be changed to instrumentVPUSH
-	if(isMethodEntry) {
-		mov32BitConstant(ConditionFlag.Always, ARMV7.r0, -2); // -2 signfies it is an absolute PC value + 12 ab
-		mov32BitConstant(ConditionFlag.Always, ARMV7.r1,pcAdjustment + -20); // +20
-	} else {
-		mov32BitConstant(ConditionFlag.Always, ARMV7.r0, -3); // -3 signifies it is an absolute PC value BUT NOT a METHOD ENTRY
-		mov32BitConstant(taken, ARMV7.r1,pcAdjustment);
+        //vpush(ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // needs to be changed to instrumentVPUSH
+        if (isMethodEntry) {
+            mov32BitConstant(ConditionFlag.Always, ARMV7.r0, -2); // -2 signfies it is an absolute PC value + 12 ab
+            mov32BitConstant(ConditionFlag.Always, ARMV7.r1, pcAdjustment + -20); // +20
+        } else {
+            mov32BitConstant(ConditionFlag.Always, ARMV7.r0, -3); // -3 signifies it is an absolute PC value BUT NOT a METHOD ENTRY
+            mov32BitConstant(taken, ARMV7.r1, pcAdjustment);
 		/*
   0x1c3affd0:	ldr	r10, [r12, #-0]
    0x1c3affd4:	cmp	r3, r1
@@ -2245,26 +2249,26 @@ public class ARMV7Assembler extends AbstractAssembler {
    0x1c3b002c:	movlt	pc, r12
    0x1c3b0030:	movw	r3, #0   // 32 + 8 gets us to here if the movCOND(pc,r12) is not taken
 	*/
-		if(taken != ConditionFlag.Always) {
-			mov32BitConstant(notTaken, ARMV7.r1,  +32);
-			addRegisters(notTaken, false, ARMV7.r1, ARMV7.r15, ARMV7.r1, 0, 0);
+            if (taken != ConditionFlag.Always) {
+                mov32BitConstant(notTaken, ARMV7.r1, +32);
+                addRegisters(notTaken, false, ARMV7.r1, ARMV7.r15, ARMV7.r1, 0, 0);
 
-		}
-	}
-	addRegisters(taken, false, ARMV7.r1, target, ARMV7.r1, 0, 0);
-	
-	mov32BitConstant(ConditionFlag.Always, ARMV7.r8, maxineFlushAddress);
+            }
+        }
+        addRegisters(taken, false, ARMV7.r1, target, ARMV7.r1, 0, 0);
+        mov32BitConstant(ConditionFlag.Always, ARMV7.r8, maxineFlushAddress);
         int instruction = blxHelper(ConditionFlag.Always, ARMV7.r8);
-	// We will need to search for the correct instruction pattern in the C code .... to check the offsets ...
+        // We will need to search for the correct instruction pattern in the C code .... to check the offsets ...
         emitInt(instruction);
-	//vpop( ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // need to be changed to instrumentVPOP
-	instrumentPop(ConditionFlag.Always, 1<<4);
-	msrWriteAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4);
-        instrumentPop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); 
-	// 3*8 +4*4 = 24+16 = 40 CALCULATION  is now WRONG!!!
-	return 40;// not necessary to be correct	
+        //vpop( ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // need to be changed to instrumentVPOP
+        instrumentPop(ConditionFlag.Always, 1 << 4);
+        msrWriteAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4);
+        instrumentPop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384);
+        // 3*8 +4*4 = 24+16 = 40 CALCULATION  is now WRONG!!!
+        return 40;// not necessary to be correct
     }
-    public final int instrumentPCChange(ConditionFlag taken,ConditionFlag notTaken,int disp) {
+
+    public final int instrumentPCChange(ConditionFlag taken, ConditionFlag notTaken, int disp) {
 	/*
 	*	Generally used to instrument a PC relative branch 
 	*	Taken and not taken are instrumented with a single call
@@ -2294,70 +2298,70 @@ public class ARMV7Assembler extends AbstractAssembler {
    0x1c3af26c:	addne	pc, r12, pc <---- a conditional branch
 
 	*/
-	if(maxineFlushAddress == 0) {
-		maxineFlushAddress = maxineflush.maxine_flush_instrumentationBuffer();
-	}
-	int instructions = 0;
-	int notTakenDisp = 0;
-	/*Label l = new Label();
-	instrumentBranch(l);	
-	bind(l); // not a real instruction binds label to the push, makes the branch a NOP
-	Same effect as         emitInt(0xeaffffff);
-	It avoids it needing to be patched!
+        if (maxineFlushAddress == 0) {
+            maxineFlushAddress = maxineflush.maxine_flush_instrumentationBuffer();
+        }
+        int instructions = 0;
+        int notTakenDisp = 0;
 
-	*/
-	emitInt(0xeaffffff); // this is the branch to next instruction ... ie the instrumentPush
-	/* 
-	in the initial implementation John will stop at the branch, then he will go to where we tell him from 
-	this call out to C real_maxine_instrumentation
+        emitInt(0xeaffffff); // this is the branch to next instruction ... ie the instrumentPush
+
+        /*
+	    *in the initial implementation John will stop at the branch, then he will go to where we tell him from
+	    *this call out to C real_maxine_instrumentation
 	
-	In the second implementation -- to validation cycle accuracy we will  tell him the address of the instruction 
-	causing the PC change and also the result of that PC change
-	*/
+	    *In the second implementation -- to validation cycle accuracy we will  tell him the address of the instruction
+	    *causing the PC change and also the result of that PC change
+	    */
+
         instrumentPush(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
         mrsReadAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4);
-	instrumentPush(ConditionFlag.Always, 1<<4);
-	//vpush(ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // needs to be changed to instrumentVPUSH
+        instrumentPush(ConditionFlag.Always, 1 << 4);
+        //vpush(ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // needs to be changed to instrumentVPUSH
 
-	disp = disp -16; //-4 one instruction aboive // -8 two instructions above , -12 THREE INSTR
-	/* this instruction will be either -36 or -48 bytes from a patch */
-	mov32BitConstant(taken, ARMV7.r1, disp);
-	/* this instruction will be either -28 OR -40 bytes from a patch */
+        disp = disp - 16; //-4 one instruction aboive // -8 two instructions above , -12 THREE INSTR
+	    /* this instruction will be either -36 or -48 bytes from a patch */
+        mov32BitConstant(taken, ARMV7.r1, disp);
+	    /* this instruction will be either -28 OR -40 bytes from a patch */
         addRegisters(taken, false, ARMV7.r1, ARMV7.r15, ARMV7.r1, 0, 0);
-	if (notTaken != ConditionFlag.NeverUse) {
-		notTakenDisp = 8*2+4*2+ 3*4;
-		/* if present this instruction will be -36 bytes offset from a patch */
-		mov32BitConstant(notTaken, ARMV7.r1,notTakenDisp);
-		/* if present this instruction will  br -28 bytes offset from a patch */
-		addRegisters(notTaken, false, ARMV7.r1, ARMV7.r15, ARMV7.r1, 0, 0);
-		notTakenDisp = 12; // 3 instructions
-	}
-	// at this point the ARMV7.r1 register has the target PC address.
-	/* 
-	This instruction will be -24 bytes offset from a patch
-	*/
-	mov32BitConstant(ConditionFlag.Always, ARMV7.r0,-1); // r0 has -1 to signify it  is a PC change
-	
+        if (notTaken != ConditionFlag.NeverUse) {
+            notTakenDisp = 8 * 2 + 4 * 2 + 3 * 4;
+		    /* if present this instruction will be -36 bytes offset from a patch */
+            mov32BitConstant(notTaken, ARMV7.r1, notTakenDisp);
+		    /* if present this instruction will  br -28 bytes offset from a patch */
+            addRegisters(notTaken, false, ARMV7.r1, ARMV7.r15, ARMV7.r1, 0, 0);
+            notTakenDisp = 12; // 3 instructions
+        }
+        // at this point the ARMV7.r1 register has the target PC address.
+	    /*
+	    *This instruction will be -24 bytes offset from a patch
+	    */
+        mov32BitConstant(ConditionFlag.Always, ARMV7.r0, -1); // r0 has -1 to signify it  is a PC change
+
         mov32BitConstant(ConditionFlag.Always, ARMV7.r12, maxineFlushAddress);
-  	int instruction = blxHelper(ConditionFlag.Always, ARMV7.r12);
+        int instruction = blxHelper(ConditionFlag.Always, ARMV7.r12);
+
         emitInt(instruction);
-	//vpop( ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // need to be changed to instrumentVPOP
-	
-	instrumentPop(ConditionFlag.Always, 1<<4);
-	msrWriteAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4);
+
+        //vpop( ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // need to be changed to instrumentVPOP
+
+        instrumentPop(ConditionFlag.Always, 1 << 4);
+        msrWriteAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4);
         instrumentPop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
 
-	
-	// disp = disp - 3*(8 bytes due to mov32BitConstant)  - 3*(4bytes) - 2*(4Bytes pop and restore APSR)
-	disp = disp - 3*8 - 3*4 - notTakenDisp -2*4;
-	/*
-	For ConditionFlag.Always when we are using this as part of a branch that is patched. We 
-	need to patch the mov32BitConstant(taken, ARMV7.r1, disp);
-	This instruction will be 9 instructions further back from the patchposition in patchJumpTarget
-	of the branch instruction
-	
-	*/
-	return disp;
+
+        // disp = disp - 3*(8 bytes due to mov32BitConstant)  - 3*(4bytes) - 2*(4Bytes pop and restore APSR)
+
+        disp = disp - 3 * 8 - 3 * 4 - notTakenDisp - 2 * 4;
+	    /*
+	    *For ConditionFlag.Always when we are using this as part of a branch that is patched. We
+	    *need to patch the mov32BitConstant(taken, ARMV7.r1, disp);
+	    *This instruction will be 9 instructions further back from the patchposition in patchJumpTarget
+	    *of the branch instruction
+	    *
+	    */
+
+        return disp;
     }
 
     public final void jcc(ConditionFlag cc, int target, boolean forceDisp32) {
@@ -2384,45 +2388,29 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void jcc(ConditionFlag cc, Label l) {
-	boolean instrumentMe = (maxineflush != null);
+        boolean instrumentMe = (maxineflush != null);
         assert (0 <= cc.value) && (cc.value < 16) : "illegal cc";
         if (l.isBound()) {
-            // System.out.println("LABEL bound jcc no need to patch");
-            // jcc(cc, l.position(), false);
+            // No patch required as we know the target,
+            // it must be  a backwards branch
             jcc(cc, l.position(), false);
 
         } else {
             // Note: could eliminate cond. jumps to this jump if condition
             // is the same however, seems to be rather unlikely case.
-            // Note: use jccb() if label to be bound is very close to get
-            // an 8-bit displacement
-            if(maxineflush != null) {
-		ConditionFlag tmp = ConditionFlag.Always;
-		tmp = cc.inverse();
-		instrumentPCChange(cc, tmp, -1);
-		
-		// will need patching
-		// FOR the NOT taken CONDITION we end up past the addRegisters(cc, false, ARMV7.r15, ARMV7.r12, ARMV7.r15, 0, 0);
-		//+16bytes past the end of the instrumentation
-	    } 
-            l.addPatchAt(codeBuffer.position(),instrumentMe);
-            // System.out.println("ADDED JCC PATCH AT" + codeBuffer.position());
+            if (maxineflush != null) {
+                ConditionFlag tmp = ConditionFlag.Always;
+                tmp = cc.inverse();
+                instrumentPCChange(cc, tmp, -1);
+
+                // the insturmentation will need patching
+                // see patchJumpTarget
+                // not all instrumentation cases have been exhaustively tested
+            }
+            l.addPatchAt(codeBuffer.position(), instrumentMe);
             emitInt(ConditionFlag.NeverUse.value() << 28 | 0xdead); // JCC CODE for the PATCH
             nop(2);
-            // TODO issues exist here ... what happens if R12 is loaded twice?
-            // TODO or used as scratch inbetween the setup of its value and
-            // this point?
-            // TODO decide how to distinguish this from other patches
-            // TODO update wiki on this
-            // ldr(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
             addRegisters(cc, false, ARMV7.r15, ARMV7.r12, ARMV7.r15, 0, 0);
-	    /* We do not instrument the addregisters, we leave this upto the 
-		instrumentPCChange ... but this will need patching
-		NOTE NOTE There are cases where addRegisters and addRegistersHelper might be used to
-		perform a PC alteration WE DO NOT TRACK THESE AT PRESENT!!!
-	    */
-
- 
         }
     }
 
@@ -2431,28 +2419,28 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void bx(ConditionFlag cond, CiRegister target) {
-        if(maxineflush != null) {
-		int notTakenDisp = 0;
-		ConditionFlag notTaken = cond.inverse();
-        	instrumentPush(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4 r0..r12 & r14
-		//vpush( ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // need to be changed to instrumentVPUSH
+        if (maxineflush != null) {
+            int notTakenDisp = 0;
+            ConditionFlag notTaken = cond.inverse();
+            instrumentPush(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4 r0..r12 & r14
+            //vpush( ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // need to be changed to instrumentVPUSH
 
-        	mov(cond, false,  ARMV7.r1, target);
-		// wrong for an absolute address
-        	if (notTaken != ConditionFlag.NeverUse) {
-                	notTakenDisp = 20;
-                	mov32BitConstant(notTaken, ARMV7.r1,notTakenDisp);
-                	addRegisters(notTaken, false, ARMV7.r1, ARMV7.r15, ARMV7.r1, 0, 0);
-                	notTakenDisp = 12; // 3 instructions
-        	}
-        	// at this point the ARMV7.r1 register has the target PC address.
-        	mov32BitConstant(ConditionFlag.Always, ARMV7.r0,-1); // r0 has -1 to signify it  is a PC change
-        	mov32BitConstant(ConditionFlag.Always, ARMV7.r12, maxineFlushAddress);
-        	int instruction = blxHelper(ConditionFlag.Always, ARMV7.r12);
-        	emitInt(instruction);
-		//vpop( ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // need to be changed to instrumentVPOP
+            mov(cond, false, ARMV7.r1, target);
+            // wrong for an absolute address
+            if (notTaken != ConditionFlag.NeverUse) {
+                notTakenDisp = 20;
+                mov32BitConstant(notTaken, ARMV7.r1, notTakenDisp);
+                addRegisters(notTaken, false, ARMV7.r1, ARMV7.r15, ARMV7.r1, 0, 0);
+                notTakenDisp = 12; // 3 instructions
+            }
+            // at this point the ARMV7.r1 register has the target PC address.
+            mov32BitConstant(ConditionFlag.Always, ARMV7.r0, -1); // r0 has -1 to signify it  is a PC change
+            mov32BitConstant(ConditionFlag.Always, ARMV7.r12, maxineFlushAddress);
+            int instruction = blxHelper(ConditionFlag.Always, ARMV7.r12);
+            emitInt(instruction);
+            //vpop( ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // need to be changed to instrumentVPOP
 
-        	instrumentPop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
+            instrumentPop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
         }
 
         int instruction = 0x012fff10;
@@ -2462,26 +2450,26 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void jmp(Label l) {
-	boolean instrumentMe = (maxineflush != null);
+        boolean instrumentMe = (maxineflush != null);
         if (l.isBound()) {
             jmp(l.position(), false);
         } else {
             // By default, forward jumps are always 32-bit displacements, since
             // we can't yet know where the label will be bound. If you're sure that
-            // the forward jump will not run beyond 256 bytes, use jmpb to
-            // force an 8-bit displacement.
-            // System.out.println("JMP PATCHAT "+ codeBuffer.position());
-	    // 
-	    if(maxineflush != null) {
-		ConditionFlag tmp = ConditionFlag.Always;
+            // the forward jump will be within 24bit displacements then use the branch rather than
+            if (maxineflush != null) {
+                ConditionFlag tmp = ConditionFlag.Always;
                 tmp = tmp.inverse();
                 instrumentPCChange(ConditionFlag.Always, tmp, -3);
-	    }
-            l.addPatchAt(codeBuffer.position(),instrumentMe);
+            }
+            l.addPatchAt(codeBuffer.position(), instrumentMe);
             emitInt(ConditionFlag.NeverUse.value() << 28 | 0xbeef); // JMP CODE for the PATCH
             nop(1);
-            // emitByte(0xE9);
-            // emitInt(0);
+            /*
+            The implications are that we are not using movw movt bx here, but instead we are using  a branch with a 24 bit offset.
+            TODO Please see ARMV7LIRAssembler.emitBranch(LIRBranch), is the offset correct for the recordImplicitException
+
+             */
         }
     }
 
@@ -2761,7 +2749,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final void vpop(ConditionFlag cond, CiRegister first, CiRegister last, CiKind firstKind, CiKind lastKind) {
         if (maxineflush != null) {
             for (int i = first.encoding; i <= last.encoding; i++) {
-                instrument(true,true,true,ARMV7.r13,-4*(i-first.encoding) );
+                instrument(true, true, true, ARMV7.r13, -4 * (i - first.encoding));
             }
         }
 
@@ -2789,7 +2777,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final void vpush(ConditionFlag cond, CiRegister first, CiRegister last, CiKind firstKind, CiKind lastKind) {
         if (maxineflush != null) {
             for (int i = first.encoding; i <= last.encoding; i++) {
-                instrument(false,true,true,ARMV7.r13,4*(i-first.encoding) );
+                instrument(false, true, true, ARMV7.r13, 4 * (i - first.encoding));
             }
         }
 
@@ -2840,7 +2828,6 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void sdiv(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
         // A8.8.165
-	    //System.out.println("FLOATIDIV COMMENTED OUT");
         if (FLOAT_IDIV) {
             floatDIV(true, cond, dest, rn, rm);
             return;
@@ -2874,10 +2861,9 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void udiv(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
         // A8.8.248
-        // TODO we need a subroutine for this as most of the ARM hardware we have will not
+        // we used floating point unit for this as most of the ARM hardware we have will not
         // have a hardware integer unit, so the instruction will be undefined/not implemented.
 
-	//System.out.println("FLOATUDIV commented out");
         if (FLOAT_IDIV) {
             floatDIV(false, cond, dest, rn, rm);
             return;

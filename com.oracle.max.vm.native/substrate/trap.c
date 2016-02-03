@@ -527,11 +527,7 @@ void nativeTrapInitialize(Address javaTrapStub) {
     thread_setSignalMask(SIG_BLOCK, &allSignals, NULL);
     thread_setSignalMask(SIG_UNBLOCK, &vmSignals, NULL);
 #endif
-#ifdef arm
-	// NO LONGER REQURIED
-	//extern void divideByZeroExceptions();
-	//divideByZeroExceptions(); 
-#endif 
+
 }
 
 /**
