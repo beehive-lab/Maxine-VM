@@ -54,7 +54,7 @@
 /*
 //beginning of simulation platform functions
 // defined in libCCluster.a
-extern void reportCounters();
+extern void reportTimingCounters();
 extern int initialiseMemoryCluster();
 extern int getCoreCount();
 extern void reportSpec();
@@ -66,6 +66,7 @@ extern void pushDSTR(unsigned int address);
 extern int initialiseTimingModel();
 extern void pushJumpAddress(int address);
 extern int reportTimingCounters();
+extern void clearTimingCache(char *buffer, int size);
 // end of simulation platform functions
 void divideByZeroExceptions();
 #   include <pthread.h>
@@ -115,18 +116,19 @@ void real_maxine_instrumentation(int address, unsigned int newpc, int totalPages
 			Absolute address  this refers to a mov to the PC, a blx/bx with a register.
 			or even a branch to an absolute address
 			*/
-			//printf("NEWPC METHODENTRY 0x%x\n",newpc);
+			printf("NEWPC METHODENTRY 0x%x\n",newpc);
 			pushJumpAddress(newpc);
+			//pushJumpAddress(newpc+72);
 		break; // break  only while debugging the various cases ...
 			/* 
 			We DELIBERATELY FALL THROUGH TO CASE 3 THAT IS ALSO AN absolute ADDRESS 
 			*/
 		case -3:
-			//printf("NEWPC --- ABSOLUTE 0x%x\n\n",newpc);
+			printf("NEWPC --- ABSOLUTE 0x%x\n\n",newpc);
 			pushJumpAddress(newpc);
 		break;
 		case -1:
-			//printf("RELATIVE NEWPCBRANCH --- 0x%x\n\n",newpc);
+			printf("RELATIVE NEWPCBRANCH --- 0x%x\n\n",newpc);
 			/*
 			this is a relative branch/jmp of some kind .....
 			*/
@@ -592,7 +594,7 @@ divideByZeroExceptions();
 //#ifdef SIMULATIONPLATFORM
 //initialiseMemoryCluster();
 //printf("INITIALISE TIMING\n");
-//initialiseTimingModel();
+initialiseTimingModel();
 //#endif
 #endif
 
@@ -615,11 +617,12 @@ divideByZeroExceptions();
         printf("NON ZERO NATIVE EXIT %d\n",exitCode);
 	//real_maxine_flush_instrumentationBuffer(simPtr);
 #ifdef arm
-#ifdef SIMULATIONPLATFORM
+
+//#ifdef SIMULATIONPLATFORM
 	printf("ABOUT to report counters\n");
-	reportTimingResults();
-	//reportCounters();
-#endif
+	reportTimingCounters();
+	//reportTimingCounters();
+//#endif
 	maxine_close();
 #endif
         native_exit(exitCode);
@@ -657,10 +660,10 @@ void native_exit(jint code) {
     // but it is a bad idea if we crashed because it calls back into the VM,
     // which can cause a recursive crash.
 #ifdef arm
-#ifdef SIMUATIONPLATFORM
+//#ifdef SIMUATIONPLATFORM
 	printf("NATIVE EXIT ABOUT to report counters\n");
-	reportCounters();
-#endif
+	reportTimingCounters();
+//#endif
 	maxine_close();
 #endif
     if (code != 11) {
@@ -763,7 +766,8 @@ void divideByZeroExceptions() {
 }
 void maxine_cacheflush(char *start, int length) {
 	char * end = start + length;
-	//printf("FLUSHED CACHE \n");
+	printf("FLUSHED CACHE %p  length: %d \n",start,length);
+	clearTimingCache(start, length);
 	asm volatile("isb ");
 	asm volatile("dsb ");
 	asm volatile("dmb ");
