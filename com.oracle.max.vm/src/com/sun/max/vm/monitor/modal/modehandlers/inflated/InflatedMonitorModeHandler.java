@@ -335,14 +335,14 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             if (!inflatedLockword.isBound()) {
                 return false;
             }
-            final JavaMonitor monitor = inflatedLockword.getBoundMonitor();
+            final JavaMonitor monitor = Platform.target().arch.is64bit() ? inflatedLockword.getBoundMonitor() : InflatedMonitorLockword64.from(ObjectAccess.readHash(object)).getBoundMonitor();
             monitor.monitorEnter();
             return true;
         }
 
         public void delegateMonitorExit(Object object, ModalLockword64 lockword) {
-            assert Platform.target().arch.is64bit() : "Delegates are not implemented in 32Bit mode";
-            monitorExit(object, InflatedMonitorLockword64.from(lockword), InflatedMonitorLockword64.from(Word.zero()));
+            monitorExit(object, InflatedMonitorLockword64.from(lockword),
+                            Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(Word.zero()) : InflatedMonitorLockword64.from(ObjectAccess.readHash(object)));
         }
 
         public void delegateMonitorNotify(Object object, boolean all, ModalLockword64 lockword) {

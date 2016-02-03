@@ -24,8 +24,10 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.ModeDelegate.*;
+import com.sun.max.vm.monitor.modal.modehandlers.inflated.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.*;
 import com.sun.max.vm.object.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -65,19 +67,27 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
 
     private ModalLockword64 inflate(Object object, ThinLockword64 lockword) {
         ModalLockword64 inflatedLockword = delegate().prepareModalLockword(object, lockword);
+        ModalLockword64 inflatedBits = InflatedMonitorLockword64.boundFromZero();
         ThinLockword64 thinLockword = lockword;
         while (true) {
-            final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, thinLockword, inflatedLockword));
+            final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, thinLockword, Platform.target().arch.is64bit() ? inflatedLockword : inflatedBits));
             if (answer.equals(thinLockword)) {
+                if (Platform.target().arch.is32bit()) {
+                    ModalLockword64 oldHash = ModalLockword64.from(ObjectAccess.readHash(object));
+                    final ModalLockword64 newHash = ModalLockword64.from(ObjectAccess.compareAndSwapHash(object, oldHash, inflatedLockword));
+                    if (!newHash.equals(oldHash)) {
+                        FatalError.unexpected("Race condition while inflating");
+                    }
+                }
                 break;
             } else if (answer.isInflated()) {
-                delegate().cancelPreparedModalLockword(Platform.target().arch.is64bit() ? inflatedLockword : ModalLockword64.from(ObjectAccess.readMisc(object)));
+                delegate().cancelPreparedModalLockword(Platform.target().arch.is64bit() ? inflatedLockword : ModalLockword64.from(ObjectAccess.readHash(object)));
                 inflatedLockword = answer;
                 break;
             }
             // We will spin if the thin lock word has been changed in any way (new owner, rcount change, new hashcode)
             thinLockword = ThinLockword64.from(answer);
-            inflatedLockword = delegate().reprepareModalLockword(inflatedLockword, thinLockword,  Platform.target().arch.is64bit() ? ModalLockword64.from(Word.zero()) : ModalLockword64.from(ObjectAccess.readMisc(object)));
+            inflatedLockword = delegate().reprepareModalLockword(inflatedLockword, thinLockword,  Platform.target().arch.is64bit() ? ModalLockword64.from(Word.zero()) : ModalLockword64.from(ObjectAccess.readHash(object)));
         }
         return inflatedLockword;
     }
@@ -207,6 +217,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
                 throw new IllegalMonitorStateException();
             }
             // By lightweight lock semantics we have no threads waiting, so just return.
+            Log.print(11111);
             return;
         }
         // We don't have to check for deflation, as either we own the lock or an exception will be thrown
