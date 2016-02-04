@@ -981,7 +981,7 @@ public class Stubs {
         } else if (platform().isa == ISA.ARM) {
 
             /*
-	    This needs to be aligned with what is expected to happen in Trap.java TrapFrameAccess.java and ARMTrapFrameAccess.java
+        This needs to be aligned with what is expected to happen in Trap.java TrapFrameAccess.java and ARMTrapFrameAccess.java
             TODO Currently there seems to be an issue with the offsets etc and where we save things. We will need to get this right.
 
             check the information on ARM linux regarding what is returned and do
@@ -1234,7 +1234,7 @@ public class Stubs {
             // Push 'pc' to the handler's stack frame and update RSP to point to the pushed value.
             // When the RET instruction is executed, the pushed 'pc' will be popped from the stack
             // and the stack will be in the correct state for the handler.
-	
+
             /*asm.subq(sp, Word.size()); // uses r12
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), sp.asValue()));
             asm.str(ARMV7Assembler.ConditionFlag.Always, pc, asm.scratchRegister, 0);
@@ -1301,6 +1301,7 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
+            // We are called from Java so we do need to push the LR.
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
 
 
@@ -1799,7 +1800,6 @@ public class Stubs {
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(csl.size);
             int cfo = frameSize + 4; // APN 4 bytes for ARM? Caller frame offset
-            int stackVars = 0;
 
             //asm.push(ConditionFlag.Always,1<< 14);
             asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xdef1def1);
@@ -1830,7 +1830,7 @@ public class Stubs {
 
                 CiAddress src = null;
                 CiStackSlot ss = null;
-                CiAddress arg4 = null;
+                CiStackSlot arg4STACK = null;
 
                 switch (kind) {
                     case Int:    // STACK
@@ -1854,10 +1854,14 @@ public class Stubs {
 
                         } else {
 
+
+                            assert args[4].isStackSlot() : "compiler stub arg4 is not STACK SLOT changed registerConfig changed!!!";
                             // we need to put it on the stack
-                            asm.push(ConditionFlag.Always, 1 << 8);
-                            // what about alignment etc etc
-                            stackVars += 4; // we need to adjust this as the stack just go 4 bytes bigger!
+                            arg4STACK = (CiStackSlot) args[4];
+                            src = new CiAddress(kind, ARMV7.RSP, arg4STACK.index() * 4);
+                            asm.setUpScratch(src);
+                            asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
+
 
                         }
 
@@ -1885,9 +1889,12 @@ public class Stubs {
 
                         } else {
 
-                            asm.push(ConditionFlag.Always, 1 << 8 | 1 << 9);
-
-                            stackVars += 8; // we need to adjust this as the stack just got 8 bytes bigger.
+                            assert args[4].isStackSlot() : "compiler stub arg4 is not STACK SLOT changed registerConfig changed!!!";
+                            // we need to put it on the stack
+                            arg4STACK = (CiStackSlot) args[4];
+                            src = new CiAddress(kind, ARMV7.RSP, arg4STACK.index() * 4);
+                            asm.setUpScratch(src);
+                            asm.strd(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
 
 
                         }
@@ -1903,12 +1910,11 @@ public class Stubs {
 
             // Copy original return address into arg 0 (i.e. 'ip')
             CiRegister arg0 = args[0].asRegister();
-            //asm.movq(arg0, new CiAddress(WordUtil.archKind(), ARMV7.RSP, cfo + DEOPT_RETURN_ADDRESS_OFFSET));
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, stackVars + cfo + DEOPT_RETURN_ADDRESS_OFFSET));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, cfo + DEOPT_RETURN_ADDRESS_OFFSET));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, arg0, ARMV7.r12, 0);
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
-            asm.leaq(arg1, new CiAddress(WordUtil.archKind(), ARMV7.RSP, stackVars + cfo));
+            asm.leaq(arg1, new CiAddress(WordUtil.archKind(), ARMV7.RSP, cfo));
 
             // Copy original frame pointer into arg 2 (i.e. 'sp')
             CiRegister arg2 = args[2].asRegister();
@@ -1916,7 +1922,7 @@ public class Stubs {
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg2, ARMV7.r11);
 
             // Copy callee save area into arg3 (i.e. 'csa')
-            asm.mov32BitConstant(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, stackVars);
+            asm.mov32BitConstant(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, 0);
             asm.addRegisters(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r13, 0, 0);
             CiRegister arg3 = args[3].asRegister();
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg3, ARMV7.r12);
@@ -1925,7 +1931,7 @@ public class Stubs {
             // Patch return address of deopt stub frame to look
             // like it was called by frame being deopt'ed.
 
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize + stackVars)); // might need cfo  OR +4?
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize)); // might need cfo  OR +4?
             asm.str(ARMV7Assembler.ConditionFlag.Always, arg0, ARMV7.r12, 0);
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize), arg0);
 
