@@ -1173,18 +1173,21 @@ public class Stubs {
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(0);
 
+
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
 
+            // called from Java so we should push the return address register
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
 
             CiValue[] args = unwindArgs;
             assert args.length == 3 || args.length == 4;
 
-            CiRegister pc = args[0].asRegister();
-            CiRegister sp = args[1].asRegister();
-            CiRegister fp = args[2].asRegister();
+            CiRegister pc = args[0].asRegister(); // r0
+            CiRegister sp = args[1].asRegister(); // r1
+            CiRegister fp = args[2].asRegister(); // r2
+
 
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, pc); // stick pc in r12
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r8, sp); // stick sp in r8
@@ -1201,16 +1204,14 @@ public class Stubs {
 
                     case Long:
                         stackAddr = new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) retValue).index() * Word.size());
-                        asm.setUpRegister(ARMV7.r0, stackAddr);
-                        asm.ldrd(ARMV7Assembler.ConditionFlag.Always, registerConfig.getReturnRegister(CiKind.Long), ARMV7.r0, 0);
-                        // r0 and r1 now contain a long
+                        asm.setUpRegister(ARMV7.r12, stackAddr);
+                        asm.ldrd(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
+                        // r8 contains the long
                         break;
 
                     case Int:
                     case Object:
-                        reg = retValue.asRegister();
-                        asm.mov(ARMV7Assembler.ConditionFlag.Always, false, registerConfig.getReturnRegister(CiKind.Int), reg);
-                        // r0 not contains an int/object
+                        // do nothing it is in r3
                         break;
 
                     case Float:
@@ -1227,27 +1228,43 @@ public class Stubs {
                         FatalError.unexpected("unexpected kind: " + kind);
                 }
             }
-            // APN not sure about it, but it seems to be ok.
+            // we have a problem with where to put the return value.
+            // we need to clear space first, and finish using the registers
 
-
-            asm.push(ConditionFlag.Always, 1 << 12); // pc is in ARMV7.r12 push it to this stack
             // Push 'pc' to the handler's stack frame and update RSP to point to the pushed value.
             // When the RET instruction is executed, the pushed 'pc' will be popped from the stack
             // and the stack will be in the correct state for the handler.
-
-            /*asm.subq(sp, Word.size()); // uses r12
+            asm.subq(sp, Word.size());
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), sp.asValue()));
             asm.str(ARMV7Assembler.ConditionFlag.Always, pc, asm.scratchRegister, 0);
-	    */
-            asm.subq(ARMV7.r8, Word.size()); // uses r12 sp is in r8
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r8.asValue()));
-            asm.pop(ConditionFlag.Always, 1 << 14); // using the return register to get the pc
-            asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r14, asm.scratchRegister, 0);
-            //asm.movq(new CiAddress(WordUtil.archKind(), sp.asValue()), pc);
-            //asm.movq(ARMV7.rbp, fp);
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r11, fp);
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r13, ARMV7.r8);
-            //asm.movq(ARMV7.rsp, sp);
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r13, sp);
+
+            if (args.length == 4) {
+                CiValue retValue = args[3];
+                CiKind kind = retValue.kind.stackKind();
+                switch (kind) {
+
+                    case Long:
+                        asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, ARMV7.r8);
+                        asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r1, ARMV7.r9);
+                        break;
+
+                    case Int:
+                    case Object:
+                        asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, args[3].asRegister());
+                        break;
+
+                    case Float:
+                    case Double:
+                        // nothing to do as already in the correct register
+                        break;
+
+                    default:
+                        FatalError.unexpected("unexpected kind: " + kind);
+                }
+            }
+
             asm.ret(0);
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnwindStub, name, frameSize, code, -1, -1, null, -1);
