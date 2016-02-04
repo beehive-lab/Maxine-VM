@@ -212,6 +212,7 @@ public abstract class Trap {
         TRAP_INSTRUCTION_POINTER.store3(Pointer.zero());
 
         if (trapNumber == ASYNC_INTERRUPT) {
+            com.sun.max.vm.Log.println(VmThread.current());
             VmThread.current().setInterrupted();
             return;
         }

@@ -69,20 +69,20 @@ import com.sun.max.vm.thread.*;
  * </li>
  * <li>Scan each thread looking for frames executing a method in <i>M</i>:
  * <ul>
- *    <li>For each non-top frame executing a method in <i>M</i>, patch the callee's return address to the relevant {@linkplain Stubs#deoptStub(CiKind, boolean) stub}.</li>
- *    <li>For each top-frame executing a method in <i>M</i>, patch the return address in the trap stub to {@link Stubs#deoptStubForSafepointPoll()}.</li>
+ * <li>For each non-top frame executing a method in <i>M</i>, patch the callee's return address to the relevant {@linkplain Stubs#deoptStub(CiKind, boolean) stub}.</li>
+ * <li>For each top-frame executing a method in <i>M</i>, patch the return address in the trap stub to {@link Stubs#deoptStubForSafepointPoll()}.</li>
  * </ul>
  * </li>
  * </ol>
  * All but step 1 above are performed in a {@linkplain #doIt() VM operation} (i.e. all threads have been stopped at a safepoint).
- * <p>
+ * <p/>
  * One optimization applied is for each thread to perform step 5 on itself just
  * {@linkplain VmOperation#doAtSafepointBeforeBlocking before} suspending. This is
  * analogous to each thread preparing its own reference map when being stopped
  * for a garbage collection.
- *
+ * <p/>
  * <li><b>Convert the frame of an optimized method into one or more deoptimized frames.</b>
- * <p>
+ * <p/>
  * This occurs when one of the deoptimization stubs is executed. A deoptimization stub is executed either as the result of the
  * return address patching described above or by a (compiled) call to the {@linkplain Stubs#genUncommonTrapStub() uncommon trap} stub.
  * All the deoptimization stubs eventually route through to {@link #deoptimize(CodePointer, Pointer, Pointer, Pointer, CiCalleeSaveLayout, CiConstant) deoptimize()}
@@ -106,12 +106,13 @@ public class Deoptimization extends VmOperation {
      * A VM option for triggering deoptimization at fixed intervals.
      */
     public static int DeoptimizeALot;
+
     static {
-        VMOptions.addFieldOption("-XX:", "DeoptDebugLog", Deoptimization.class, "Enable debug logs");
+        VMOptions.addFieldOption("-XX:", "DeoptDebugLog", Deoptimization.class, "Enable Debug Deoppt Log.");
         VMOptions.addFieldOption("-XX:", "UseDeopt", Deoptimization.class, "Enable deoptimization.");
         VMOptions.addFieldOption("-XX:", "DeoptimizeALot", Deoptimization.class,
-            "Invalidate and deoptimize a selection of executing optimized methods every <n> milliseconds. " +
-            "A value of 0 disables this mechanism.");
+                "Invalidate and deoptimize a selection of executing optimized methods every <n> milliseconds. " +
+                        "A value of 0 disables this mechanism.");
     }
 
     /**
@@ -227,9 +228,9 @@ public class Deoptimization extends VmOperation {
          * Sets the continuation frame pointer.
          *
          * @param info a stack modeled as an array of frame slots
-         * @param fp the continuation frame pointer. This is either a word value encoding an absolute
-         *            address or a {@link CiKind#Jsr} value encoding an index in {@code info.slots} that subsequently
-         *            needs fixing up once absolute address have been determined for the slots.
+         * @param fp   the continuation frame pointer. This is either a word value encoding an absolute
+         *             address or a {@link CiKind#Jsr} value encoding an index in {@code info.slots} that subsequently
+         *             needs fixing up once absolute address have been determined for the slots.
          */
         public abstract void setFP(Info info, CiConstant fp);
 
@@ -237,9 +238,9 @@ public class Deoptimization extends VmOperation {
          * Sets the continuation stack pointer.
          *
          * @param info a stack modeled as an array of frame slots
-         * @param sp the continuation stack pointer. This is either a word value encoding an absolute
-         *            address or a {@link CiKind#Jsr} value encoding an index in {@code info.slots} that subsequently
-         *            needs fixing up once absolute address have been determined for the slots.
+         * @param sp   the continuation stack pointer. This is either a word value encoding an absolute
+         *             address or a {@link CiKind#Jsr} value encoding an index in {@code info.slots} that subsequently
+         *             needs fixing up once absolute address have been determined for the slots.
          */
         public abstract void setSP(Info info, CiConstant sp);
 
@@ -247,7 +248,7 @@ public class Deoptimization extends VmOperation {
          * Sets the continuation instruction pointer.
          *
          * @param info a stack modeled as an array of frame slots
-         * @param ip the continuation instruction pointer
+         * @param ip   the continuation instruction pointer
          */
         public abstract void setIP(Info info, Pointer ip);
     }
@@ -324,21 +325,19 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void unroll(Info info) {
-        if(DeoptDebugLog) {
+        if (DeoptDebugLog) {
             com.sun.max.vm.Log.println("inside unroll in deoptimization");
             com.sun.max.vm.Log.println(info.ip.asPointer());
             com.sun.max.vm.Log.println(info.sp);
             com.sun.max.vm.Log.println(info.fp);
-            if(info.returnValue != null) {
-                if(info.returnValue.kind.stackKind() == CiKind.Object) {
+            if (info.returnValue != null) {
+                if (info.returnValue.kind.stackKind() == CiKind.Object) {
                     com.sun.max.vm.Log.println(info.returnValue.asObject());
                 }
             } else {
                 com.sun.max.vm.Log.println("NO return value info as null");
             }
         }
-
-
 
         ArrayList<CiConstant> slots = info.slots;
         Pointer sp = info.slotsAddr.plus(info.slotsSize() - STACK_SLOT_SIZE);
@@ -359,18 +358,17 @@ public class Deoptimization extends VmOperation {
             }
             sp = sp.minus(STACK_SLOT_SIZE);
         }
-        if(DeoptDebugLog) {
+        if (DeoptDebugLog) {
             com.sun.max.vm.Log.println("written words to slots in deoptimization");
         }
+
         // Checkstyle: stop
         if (info.returnValue == null) {
             // Re-enable safepoints
             SafepointPoll.enable();
-
-            if(DeoptDebugLog) {
+            if (DeoptDebugLog) {
                 com.sun.max.vm.Log.println("about to unwind in deoptimization");
             }
-
             Stubs.unwind(info.ip.asPointer(), info.sp, info.fp);
         } else {
             if (StackReferenceMapPreparer.VerifyRefMaps || deoptLogger.enabled() || DeoptimizeALot != 0) {
@@ -379,10 +377,8 @@ public class Deoptimization extends VmOperation {
 
             // Re-enable safepoints
             SafepointPoll.enable();
-
-            if(DeoptDebugLog) {
+            if (DeoptDebugLog) {
                 com.sun.max.vm.Log.println("about to do unwindKind in deoptimisation");
-
                 switch (info.returnValue.kind.stackKind()) {
                     case Int:
                         com.sun.max.vm.Log.println("INT");
@@ -409,22 +405,23 @@ public class Deoptimization extends VmOperation {
                         break;
                 }
             }
-
             switch (info.returnValue.kind.stackKind()) {
-                case Int:     Stubs.unwindInt(info.ip.asPointer(), info.sp, info.fp, info.returnValue.asInt());
-                case Float:   Stubs.unwindFloat(info.ip.asPointer(), info.sp, info.fp, info.returnValue.asFloat());
-                case Long:    Stubs.unwindLong(info.ip.asPointer(), info.sp, info.fp, info.returnValue.asLong());
-                case Double:  Stubs.unwindDouble(info.ip.asPointer(), info.sp, info.fp, info.returnValue.asDouble());
-                case Object:  Stubs.unwindObject(info.ip.asPointer(), info.sp, info.fp, info.returnValue.asObject());
-                default:      FatalError.unexpected("unexpected return kind: " + info.returnValue.kind.stackKind());
+                case Int:
+                    Stubs.unwindInt(info.ip.asPointer(), info.sp, info.fp, info.returnValue.asInt());
+                case Float:
+                    Stubs.unwindFloat(info.ip.asPointer(), info.sp, info.fp, info.returnValue.asFloat());
+                case Long:
+                    Stubs.unwindLong(info.ip.asPointer(), info.sp, info.fp, info.returnValue.asLong());
+                case Double:
+                    Stubs.unwindDouble(info.ip.asPointer(), info.sp, info.fp, info.returnValue.asDouble());
+                case Object:
+                    Stubs.unwindObject(info.ip.asPointer(), info.sp, info.fp, info.returnValue.asObject());
+                default:
+                    FatalError.unexpected("unexpected return kind: " + info.returnValue.kind.stackKind());
             }
         }
         // Checkstyle: resume
-        if(DeoptDebugLog) {
-
-            com.sun.max.vm.Log.println("done unwind in deopt");
-        }
-
+        com.sun.max.vm.Log.println("done unwind in deopt");
     }
 
     /**
@@ -432,11 +429,10 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeInt(Pointer ip, Pointer sp, Pointer fp, Pointer csa, int returnValue) {
-            if(DeoptDebugLog) {
-                com.sun.max.vm.Log.println("DEOPTINT");
-            }
-
-            deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forInt(returnValue));
+        if (DeoptDebugLog) {
+            com.sun.max.vm.Log.println("DEOPTINT");
+        }
+        deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forInt(returnValue));
     }
 
     /**
@@ -444,10 +440,10 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeFloat(Pointer ip, Pointer sp, Pointer fp, Pointer csa, float returnValue) {
-            if(DeoptDebugLog) {
-                com.sun.max.vm.Log.println("DEOPTFLOAT");
-            }
-            deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forFloat(returnValue));
+        if (DeoptDebugLog) {
+            com.sun.max.vm.Log.println("DEOPTFLOAT");
+        }
+        deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forFloat(returnValue));
     }
 
     /**
@@ -455,10 +451,10 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeLong(Pointer ip, Pointer sp, Pointer fp, Pointer csa, long returnValue) {
-            if(DeoptDebugLog) {
-                com.sun.max.vm.Log.println("DEOPTLONG");
-            }
-            deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forLong(returnValue));
+        if (DeoptDebugLog) {
+            com.sun.max.vm.Log.println("DEOPTLONG");
+        }
+        deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forLong(returnValue));
     }
 
     /**
@@ -466,10 +462,10 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeDouble(Pointer ip, Pointer sp, Pointer fp, Pointer csa, double returnValue) {
-            if(DeoptDebugLog) {
-                com.sun.max.vm.Log.println("DEOPTDOUBLE");
-            }
-            deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forDouble(returnValue));
+        if (DeoptDebugLog) {
+            com.sun.max.vm.Log.println("DEOPTDOUBLE");
+        }
+        deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forDouble(returnValue));
     }
 
 
@@ -478,10 +474,10 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeWord(Pointer ip, Pointer sp, Pointer fp, Pointer csa, Word returnValue) {
-            if(DeoptDebugLog) {
-                com.sun.max.vm.Log.println("DEOPTWORD");
-            }
-            deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, WordUtil.archConstant(returnValue));
+        if (DeoptDebugLog) {
+            com.sun.max.vm.Log.println("DEOPTWORD");
+        }
+        deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, WordUtil.archConstant(returnValue));
     }
 
     /**
@@ -489,10 +485,10 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeObject(Pointer ip, Pointer sp, Pointer fp, Pointer csa, Object returnValue) {
-            if(DeoptDebugLog) {
-                com.sun.max.vm.Log.println("DEOPTOBJ");
-            }
-            deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forObject(returnValue));
+        if (DeoptDebugLog) {
+            com.sun.max.vm.Log.println("DEOPTOBJ");
+        }
+        deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forObject(returnValue));
     }
 
     /**
@@ -500,10 +496,10 @@ public class Deoptimization extends VmOperation {
      */
     @NEVER_INLINE
     public static void deoptimizeVoid(Pointer ip, Pointer sp, Pointer fp, Pointer csa) {
-            if(DeoptDebugLog) {
-                com.sun.max.vm.Log.println("DEOPTVOID");
-            }
-            deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, null);
+        if (DeoptDebugLog) {
+            com.sun.max.vm.Log.println("DEOPTVOID");
+        }
+        deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, null);
     }
 
     static boolean stackIsWalkable(StackFrameWalker sfw, Pointer ip, Pointer sp, Pointer fp) {
@@ -635,9 +631,9 @@ public class Deoptimization extends VmOperation {
          * Creates a context for deoptimizing a frame executing a given method.
          *
          * @param thread the frame's thread
-         * @param ip the execution point in the frame
-         * @param sp the stack pointer of the frame
-         * @param fp the frame pointer of the frame
+         * @param ip     the execution point in the frame
+         * @param sp     the stack pointer of the frame
+         * @param fp     the frame pointer of the frame
          */
         public Info(VmThread thread, Pointer ip, Pointer sp, Pointer fp) {
             this.ip.derive(ip);
@@ -704,10 +700,10 @@ public class Deoptimization extends VmOperation {
     /**
      * Patches the return address in a callee frame to trigger deoptimization of an invalidated caller.
      *
-     * @param caller the frame of the method to be deoptimized
-     * @param callee the callee frame whose return address is to be patched
+     * @param caller       the frame of the method to be deoptimized
+     * @param callee       the callee frame whose return address is to be patched
      * @param calleeMethod the class method actor that is being called. This is required in addition to {@code callee}
-     *            in the case where {@code callee} is an adapter frame
+     *                     in the case where {@code callee} is an adapter frame
      */
     static void patchReturnAddress(StackFrameCursor caller, StackFrameCursor callee, ClassMethodActor calleeMethod) {
         assert calleeMethod != null;
@@ -735,10 +731,10 @@ public class Deoptimization extends VmOperation {
     /**
      * Deoptimizes a method that is being returned to via a {@linkplain Stubs#deoptStub(CiKind, boolean) deoptimization stub}.
      *
-     * @param ip the address in the method returned to
-     * @param sp the stack pointer of the frame executing the method
-     * @param fp the frame pointer of the frame executing the method
-     * @param csa the callee save area. This is non-null iff deoptimizing upon return from a compiler stub.
+     * @param ip          the address in the method returned to
+     * @param sp          the stack pointer of the frame executing the method
+     * @param fp          the frame pointer of the frame executing the method
+     * @param csa         the callee save area. This is non-null iff deoptimizing upon return from a compiler stub.
      * @param returnValue the value being returned (will be {@code null} if returning from a void method)
      */
     private static void deoptimizeOnReturn(CodePointer ip, Pointer sp, Pointer fp, Pointer csa, CiConstant returnValue) {
@@ -750,15 +746,15 @@ public class Deoptimization extends VmOperation {
      * Constructs the deoptimized frames, unrolls them onto the stack and continues execution
      * in the top most deoptimized frame.
      *
-     * @param ip the continuation address in the method
-     * @param sp the stack pointer of the frame executing the method
-     * @param fp the frame pointer of the frame executing the method
-     * @param csa the callee save area. This is non-null iff deoptimizing upon return from a compiler stub.
-     * @param csl the layout of the callee save area pointed to by {@code csa}
+     * @param ip          the continuation address in the method
+     * @param sp          the stack pointer of the frame executing the method
+     * @param fp          the frame pointer of the frame executing the method
+     * @param csa         the callee save area. This is non-null iff deoptimizing upon return from a compiler stub.
+     * @param csl         the layout of the callee save area pointed to by {@code csa}
      * @param returnValue the value being returned (will be {@code null} if returning from a void method or not deoptimizing upon return)
      */
     public static void deoptimize(CodePointer ip, Pointer sp, Pointer fp, Pointer csa, CiCalleeSaveLayout csl, CiConstant returnValue) {
-        if(DeoptDebugLog) {
+        if (DeoptDebugLog) {
             com.sun.max.vm.Log.println("into deoptimize");
         }
         SafepointPoll.disable();
@@ -775,7 +771,7 @@ public class Deoptimization extends VmOperation {
         TargetMethod tm = info.tm;
         Throwable pendingException = VmThread.current().pendingException();
 
-        if(DeoptDebugLog) {
+        if (DeoptDebugLog) {
             com.sun.max.vm.Log.println("deoptimize tm is ");
             com.sun.max.vm.Log.println(tm);
         }
@@ -792,12 +788,12 @@ public class Deoptimization extends VmOperation {
         FatalError.check(topFrame != null, "No frame info found at deopt site: " + tm.posFor(ip));
 
         if (pendingException != null) {
-            if(DeoptDebugLog) {
+            if (DeoptDebugLog) {
                 com.sun.max.vm.Log.println("about to unwind in deopt");
             }
             topFrame = unwindToHandlerFrame(topFrame, pendingException);
             assert topFrame != null : "could not (re)find handler for " + pendingException +
-                                       " thrown at " + tm + "+" + ip.to0xHexString();
+                    " thrown at " + tm + "+" + ip.to0xHexString();
         }
 
         if (deoptLogger.enabled()) {
@@ -812,30 +808,31 @@ public class Deoptimization extends VmOperation {
         final TopFrameContinuation topCont = new TopFrameContinuation();
         Continuation cont = topCont;
         for (CiFrame frame = topFrame; frame != null; frame = frame.caller()) {
-            if(DeoptDebugLog) {
+            if (DeoptDebugLog) {
                 com.sun.max.vm.Log.println("about to do compile in deopt");
             }
             ClassMethodActor method = (ClassMethodActor) frame.method;
-            if(DeoptDebugLog) {
+            if (DeoptDebugLog) {
                 com.sun.max.vm.Log.println(method);
             }
             TargetMethod compiledMethod = vm().compilationBroker.compileForDeopt(method);
             FatalError.check(compiledMethod.isBaseline(), compiledMethod + " should be a deopt target");
             cont.tm = compiledMethod;
-            if(DeoptDebugLog) {
+            if (DeoptDebugLog) {
                 com.sun.max.vm.Log.println(compiledMethod);
             }
             boolean reexecute = false;
             if (frame == topFrame && !Safepoints.isCall(tm.safepoints().safepointAt(safepointIndex))) {
                 reexecute = true;
             }
-            if(DeoptDebugLog) {
+            if (DeoptDebugLog) {
                 com.sun.max.vm.Log.println("about to createDeoptimized frame in deoptimize");
             }
             cont = compiledMethod.createDeoptimizedFrame(info, frame, cont, pendingException, reexecute);
-            if(DeoptDebugLog) {
+            if (DeoptDebugLog) {
                 com.sun.max.vm.Log.println("done createDeoptimized in deoptimize");
             }
+
             // The exception (if any) must be handled in the top frame
             pendingException = null;
         }
@@ -846,12 +843,11 @@ public class Deoptimization extends VmOperation {
         // other platforms so use an assertion for now.
         //assert platform().isa == ISA.AMD64;
 
-       // assert platform().isa == ISA.ARM;
+        // assert platform().isa == ISA.ARM;
 
         // Fix up the caller details for the bottom most deoptimized frame
         cont.tm = info.callerTM();
-        if(DeoptDebugLog) {
-
+        if (DeoptDebugLog) {
             com.sun.max.vm.Log.print("CALLER METHOD ");
             com.sun.max.vm.Log.println(cont.tm);
         }
@@ -889,20 +885,18 @@ public class Deoptimization extends VmOperation {
         // executes with enough stack space below it to unroll the deoptimized frames
         int used = info.sp.minus(VMRegister.getCpuStackPointer()).toInt() + tm.frameSize();
         int frameSize = Platform.target().alignFrameSize(Math.max(slotsSize - used, 0));
-        if(DeoptDebugLog) {
+        if (DeoptDebugLog) {
             com.sun.max.vm.Log.println("about to unroll in deoptimize");
         }
         Stubs.unroll(info, frameSize);
-        if(DeoptDebugLog) {
-            com.sun.max.vm.Log.println("unrolled in deoptimize error");
-        }
+        com.sun.max.vm.Log.println("unrolled in deoptimize error");
         FatalError.unexpected("should not reach here");
     }
 
     /**
      * Finds the frame containing a handler for an exception thrown at the current BCI of the frame.
      *
-     * @param topFrame the frame to start searching in
+     * @param topFrame  the frame to start searching in
      * @param exception the exception being thrown
      * @return the frame that catches {@code exception}
      */
@@ -932,9 +926,9 @@ public class Deoptimization extends VmOperation {
     /**
      * Deoptimizes a method that was trapped at a safepoint poll.
      *
-     * @param ip the trap address
-     * @param sp the trap stack pointer
-     * @param fp the trap frame pointer
+     * @param ip  the trap address
+     * @param sp  the trap stack pointer
+     * @param fp  the trap frame pointer
      * @param csa the callee save area
      */
     public static void deoptimizeAtSafepoint(Pointer ip, Pointer sp, Pointer fp, Pointer csa) {
@@ -972,55 +966,55 @@ public class Deoptimization extends VmOperation {
     @VMLoggerInterface
     private interface DeoptLoggerInterface {
         void start(
-            @VMLogParam(name = "targetMethod") TargetMethod targetMethod);
+                @VMLogParam(name = "targetMethod") TargetMethod targetMethod);
 
         void doIt(
-            @VMLogParam(name = "msg") String msg,
-            @VMLogParam(name = "targetMethod") TargetMethod targetMethod,
-            @VMLogParam(name = "ts") boolean ts);
+                @VMLogParam(name = "msg") String msg,
+                @VMLogParam(name = "targetMethod") TargetMethod targetMethod,
+                @VMLogParam(name = "ts") boolean ts);
 
         void tmPos(
-            @VMLogParam(name = "targetMethod") TargetMethod targetMethod,
-            @VMLogParam(name = "safepointIndex") int safepointIndex);
+                @VMLogParam(name = "targetMethod") TargetMethod targetMethod,
+                @VMLogParam(name = "safepointIndex") int safepointIndex);
 
         void frames(
-            @VMLogParam(name = "topFrame") CiFrame topFrame,
-            @VMLogParam(name = "label") String label);
+                @VMLogParam(name = "topFrame") CiFrame topFrame,
+                @VMLogParam(name = "label") String label);
 
         void patchVTable(
-            @VMLogParam(name = "vtableIndex") int vtableIndex,
-            @VMLogParam(name = "classActor") ClassActor classActor);
+                @VMLogParam(name = "vtableIndex") int vtableIndex,
+                @VMLogParam(name = "classActor") ClassActor classActor);
 
         void patchITable(
-            @VMLogParam(name = "classActor") ClassActor classActor,
-            @VMLogParam(name = "iIndex") int iIndex);
+                @VMLogParam(name = "classActor") ClassActor classActor,
+                @VMLogParam(name = "iIndex") int iIndex);
 
         void patchReturnAddress(
-            @VMLogParam(name = "targetMethod") TargetMethod targetMethod,
-            @VMLogParam(name = "callee") Object callee,
-            @VMLogParam(name = "stub") Stub stub,
-            @VMLogParam(name = "to") CodePointer to,
-            @VMLogParam(name = "save") Pointer save,
-            @VMLogParam(name = "patch") Pointer patch,
-            @VMLogParam(name = "from") CodePointer from);
+                @VMLogParam(name = "targetMethod") TargetMethod targetMethod,
+                @VMLogParam(name = "callee") Object callee,
+                @VMLogParam(name = "stub") Stub stub,
+                @VMLogParam(name = "to") CodePointer to,
+                @VMLogParam(name = "save") Pointer save,
+                @VMLogParam(name = "patch") Pointer patch,
+                @VMLogParam(name = "from") CodePointer from);
 
         void unroll(
-            @VMLogParam(name = "info") Info info,
-            @VMLogParam(name = "slots") ArrayList<CiConstant> slots,
-            @VMLogParam(name = "sp") Pointer sp);
+                @VMLogParam(name = "info") Info info,
+                @VMLogParam(name = "slots") ArrayList<CiConstant> slots,
+                @VMLogParam(name = "sp") Pointer sp);
 
         void continuation(
-            @VMLogParam(name = "ip") Pointer ip);
+                @VMLogParam(name = "ip") Pointer ip);
 
         void aLot(
-            @VMLogParam(name = "methods") ArrayList<TargetMethod> methods);
+                @VMLogParam(name = "methods") ArrayList<TargetMethod> methods);
 
         void catchException(
-             @VMLogParam(name = "thisTargetMethod") TargetMethod thisTargetMethod,
-             @VMLogParam(name = "fromTargetMethod") TargetMethod fromTargetMethod,
-             @VMLogParam(name = "stub") Stub deoptStub,
-             @VMLogParam(name = "sp") Pointer sp,
-             @VMLogParam(name = "fp") Pointer fp);
+                @VMLogParam(name = "thisTargetMethod") TargetMethod thisTargetMethod,
+                @VMLogParam(name = "fromTargetMethod") TargetMethod fromTargetMethod,
+                @VMLogParam(name = "stub") Stub deoptStub,
+                @VMLogParam(name = "sp") Pointer sp,
+                @VMLogParam(name = "fp") Pointer fp);
     }
 
     public static final DeoptLogger deoptLogger = new DeoptLogger();
@@ -1036,7 +1030,8 @@ public class Deoptimization extends VmOperation {
 
         @Override
         protected void traceStart(TargetMethod targetMethod) {
-            deoptPrefix(); Log.println("Deoptimizing " + targetMethod);
+            deoptPrefix();
+            Log.println("Deoptimizing " + targetMethod);
             Throw.stackDump("DEOPT: Raw stack frames:");
             new Throwable("DEOPT: Bytecode stack frames:").printStackTrace(Log.out);
         }
@@ -1060,31 +1055,37 @@ public class Deoptimization extends VmOperation {
 
         @Override
         protected void traceFrames(CiFrame topFrame, String label) {
-            deoptPrefix(); Log.println("--- " + label + " start ---");
+            deoptPrefix();
+            Log.println("--- " + label + " start ---");
             Log.println(topFrame);
-            deoptPrefix(); Log.println("--- " + label + " end ---");
+            deoptPrefix();
+            Log.println("--- " + label + " end ---");
         }
 
         @Override
         protected void tracePatchITable(ClassActor classActor, int iIndex) {
-            deoptPrefix(); Log.println("  patched itable[" + iIndex + "] of " + classActor + " with trampoline");
+            deoptPrefix();
+            Log.println("  patched itable[" + iIndex + "] of " + classActor + " with trampoline");
         }
 
         @Override
         protected void tracePatchVTable(int vtableIndex, ClassActor classActor) {
-            deoptPrefix(); Log.println("  patched vtable[" + vtableIndex + "] of " + classActor + " with trampoline");
+            deoptPrefix();
+            Log.println("  patched vtable[" + vtableIndex + "] of " + classActor + " with trampoline");
         }
 
         @Override
         protected void tracePatchReturnAddress(TargetMethod tm, Object callee, Stub stub, CodePointer to, Pointer save, Pointer patch, CodePointer from) {
-            deoptPrefix(); Log.println("patched return address @ " + patch.to0xHexString() + " of call to " + callee +
-                            ": " + from.to0xHexString() + '[' + tm + '+' + from.minus(tm.codeStart()).toInt() + ']' +
-                            " -> " + to.to0xHexString() + '[' + stub + "], saved old value @ " + save.to0xHexString());
+            deoptPrefix();
+            Log.println("patched return address @ " + patch.to0xHexString() + " of call to " + callee +
+                    ": " + from.to0xHexString() + '[' + tm + '+' + from.minus(tm.codeStart()).toInt() + ']' +
+                    " -> " + to.to0xHexString() + '[' + stub + "], saved old value @ " + save.to0xHexString());
         }
 
         @Override
         protected void traceUnroll(Info info, ArrayList<CiConstant> slots, Pointer sp) {
-            deoptPrefix(); Log.println("Unrolling frames");
+            deoptPrefix();
+            Log.println("Unrolling frames");
             for (int i = slots.size() - 1; i >= 0; --i) {
                 CiConstant c = slots.get(i);
                 String name = info.slotNames.get(i);
@@ -1099,7 +1100,8 @@ public class Deoptimization extends VmOperation {
                 sp = sp.minus(STACK_SLOT_SIZE);
             }
 
-            deoptPrefix(); Log.print("unrolling: ip=");
+            deoptPrefix();
+            Log.print("unrolling: ip=");
             Log.print(info.ip);
             Log.print(", sp=");
             Log.print(info.sp);
@@ -1116,15 +1118,18 @@ public class Deoptimization extends VmOperation {
         protected void traceContinuation(Pointer ip) {
             TargetMethod tm = Code.codePointerToTargetMethod(ip);
             assert tm != null : "cannot deoptimize frame of a VM entry method";
-            deoptPrefix(); Log.print("continuation: ");
+            deoptPrefix();
+            Log.print("continuation: ");
             Log.printLocation(tm, CodePointer.from(ip), true);
         }
 
         @Override
         protected void traceALot(ArrayList<TargetMethod> methods) {
-            deoptPrefix(); Log.println("DeoptimizeALot selected methods:");
+            deoptPrefix();
+            Log.println("DeoptimizeALot selected methods:");
             for (TargetMethod tm : methods) {
-                deoptPrefix(); Log.print("  ");
+                deoptPrefix();
+                Log.print("  ");
                 Log.printMethod(tm, true);
             }
         }
@@ -1133,11 +1138,11 @@ public class Deoptimization extends VmOperation {
         protected void traceCatchException(TargetMethod thisTargetMethod, TargetMethod fromTargetMethod, Stub stub, Pointer sp, Pointer fp) {
             deoptPrefix();
             Log.println("changed exception handler address in " + this + " from " + fromTargetMethod +
-                            " to " + stub + " [sp=" + sp.to0xHexString() + ", fp=" + fp.to0xHexString() + "]");
+                    " to " + stub + " [sp=" + sp.to0xHexString() + ", fp=" + fp.to0xHexString() + "]");
         }
     }
 
-// START GENERATED CODE
+    // START GENERATED CODE
     private static abstract class DeoptLoggerAuto extends com.sun.max.vm.log.VMLogger {
         public enum Operation {
             ALot, CatchException, Continuation,
@@ -1148,7 +1153,7 @@ public class Deoptimization extends VmOperation {
             public static final Operation[] VALUES = values();
         }
 
-        private static final int[] REFMAPS = new int[] {0x1, 0x7, 0x0, 0x3, 0x3, 0x0, 0x4f, 0x0, 0x1, 0x1, 0x3};
+        private static final int[] REFMAPS = new int[]{0x1, 0x7, 0x0, 0x3, 0x3, 0x0, 0x4f, 0x0, 0x1, 0x1, 0x3};
 
         protected DeoptLoggerAuto(String name, String optionDescription) {
             super(name, Operation.VALUES.length, optionDescription, REFMAPS);
@@ -1163,69 +1168,80 @@ public class Deoptimization extends VmOperation {
         public final void logALot(ArrayList methods) {
             log(Operation.ALot.ordinal(), objectArg(methods));
         }
+
         protected abstract void traceALot(ArrayList<TargetMethod> methods);
 
         @INLINE
         public final void logCatchException(TargetMethod thisTargetMethod, TargetMethod fromTargetMethod, Stub stub, Pointer sp, Pointer fp) {
             log(Operation.CatchException.ordinal(), objectArg(thisTargetMethod), objectArg(fromTargetMethod), objectArg(stub), sp, fp);
         }
+
         protected abstract void traceCatchException(TargetMethod thisTargetMethod, TargetMethod fromTargetMethod, Stub stub, Pointer sp, Pointer fp);
 
         @INLINE
         public final void logContinuation(Pointer ip) {
             log(Operation.Continuation.ordinal(), ip);
         }
+
         protected abstract void traceContinuation(Pointer ip);
 
         @INLINE
         public final void logDoIt(String msg, TargetMethod targetMethod, boolean ts) {
             log(Operation.DoIt.ordinal(), objectArg(msg), objectArg(targetMethod), booleanArg(ts));
         }
+
         protected abstract void traceDoIt(String msg, TargetMethod targetMethod, boolean ts);
 
         @INLINE
         public final void logFrames(CiFrame topFrame, String label) {
             log(Operation.Frames.ordinal(), objectArg(topFrame), objectArg(label));
         }
+
         protected abstract void traceFrames(CiFrame topFrame, String label);
 
         @INLINE
         public final void logPatchITable(ClassActor classActor, int iIndex) {
             log(Operation.PatchITable.ordinal(), classActorArg(classActor), intArg(iIndex));
         }
+
         protected abstract void tracePatchITable(ClassActor classActor, int iIndex);
 
         @INLINE
         public final void logPatchReturnAddress(TargetMethod targetMethod, Object callee, Stub stub, CodePointer to, Pointer save,
-                Pointer patch, CodePointer from) {
+                                                Pointer patch, CodePointer from) {
             log(Operation.PatchReturnAddress.ordinal(), objectArg(targetMethod), objectArg(callee), objectArg(stub), codePointerArg(to), save,
-                patch, codePointerArg(from));
+                    patch, codePointerArg(from));
         }
+
         protected abstract void tracePatchReturnAddress(TargetMethod targetMethod, Object callee, Stub stub, CodePointer to, Pointer save,
-                Pointer patch, CodePointer from);
+                                                        Pointer patch, CodePointer from);
 
         @INLINE
         public final void logPatchVTable(int vtableIndex, ClassActor classActor) {
             log(Operation.PatchVTable.ordinal(), intArg(vtableIndex), classActorArg(classActor));
         }
+
         protected abstract void tracePatchVTable(int vtableIndex, ClassActor classActor);
 
         @INLINE
         public final void logStart(TargetMethod targetMethod) {
             log(Operation.Start.ordinal(), objectArg(targetMethod));
         }
+
         protected abstract void traceStart(TargetMethod targetMethod);
 
         @INLINE
         public final void logTmPos(TargetMethod targetMethod, int safepointIndex) {
             log(Operation.TmPos.ordinal(), objectArg(targetMethod), intArg(safepointIndex));
         }
+
         protected abstract void traceTmPos(TargetMethod targetMethod, int safepointIndex);
 
         @INLINE
         public final void logUnroll(Info info, ArrayList slots, Pointer sp) {
             log(Operation.Unroll.ordinal(), objectArg(info), objectArg(slots), sp);
         }
+
         protected abstract void traceUnroll(Info info, ArrayList<CiConstant> slots, Pointer sp);
 
         @Override
@@ -1277,6 +1293,7 @@ public class Deoptimization extends VmOperation {
                 }
             }
         }
+
         static ArrayList<CiConstant> toArrayListCiConstant(Record r, int argNum) {
             if (MaxineVM.isHosted()) {
                 Class<ArrayList<CiConstant>> type = null;
@@ -1285,6 +1302,7 @@ public class Deoptimization extends VmOperation {
                 return asArrayListCiConstant(toObject(r, argNum));
             }
         }
+
         @INTRINSIC(UNSAFE_CAST)
         private static native ArrayList<CiConstant> asArrayListCiConstant(Object arg);
 
@@ -1296,6 +1314,7 @@ public class Deoptimization extends VmOperation {
                 return asArrayListTargetMethod(toObject(r, argNum));
             }
         }
+
         @INTRINSIC(UNSAFE_CAST)
         private static native ArrayList<TargetMethod> asArrayListTargetMethod(Object arg);
 
@@ -1306,6 +1325,7 @@ public class Deoptimization extends VmOperation {
                 return asCiFrame(toObject(r, argNum));
             }
         }
+
         @INTRINSIC(UNSAFE_CAST)
         private static native CiFrame asCiFrame(Object arg);
 
@@ -1316,6 +1336,7 @@ public class Deoptimization extends VmOperation {
                 return asInfo(toObject(r, argNum));
             }
         }
+
         @INTRINSIC(UNSAFE_CAST)
         private static native Info asInfo(Object arg);
 

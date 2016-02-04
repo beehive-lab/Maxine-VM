@@ -51,13 +51,9 @@
 #include "maxve.h"
 #endif
 #ifdef arm
-
-
 /*
-
 //beginning of simulation platform functions
 // defined in libCCluster.a
-These are currently commented out whilst we debug the pure timing model
 extern void reportTimingCounters();
 extern int initialiseMemoryCluster();
 extern int getCoreCount();
@@ -67,16 +63,13 @@ extern void pushILD(unsigned int address);
 extern void pushDSTR(unsigned int address);
 */
 // defined in libFPGAsim.a
+static int simulationPlatform = 0;
+static int simulationDEBUG = 1;
 extern int initialiseTimingModel();
 extern void pushJumpAddress(int address);
 extern int reportTimingCounters();
 extern void clearTimingCache(char *buffer, int size);
-
-static int simulationPlatform = 0; // used to indicate the presence of /dev/xdevcfg
-static int simulationDebugging = 0; // used to  indicate we are doing debug prints for simulaiton stuff
 // end of simulation platform functions
-
-
 #   include <pthread.h>
 
 static unsigned int *simPtr = (0);
@@ -108,13 +101,10 @@ void  maxine_close() {
 void real_maxine_instrumentation(int address, unsigned int newpc, int totalPages) { // R0 R1 R2
 	// the address has been altered to have a r/1 and a code/data bit set
 #ifdef arm
-	/*
-	
-	extern unsigned int getTID(unsigned int);
+	/*extern unsigned int getTID(unsigned int);
 	unsigned int tid  = pthread_self();
 	tid = getTID(tid);
-	HOW TO GET THREAD BASED LOGGING OF pc/ADDRESS CHANGE/ADDRESS CHANGES
-	
+	printf("THREAD ID is %u ADDRESS %x\n",tid,address);
 	*/
 	switch (address) {
 		case -2:
@@ -129,10 +119,11 @@ void real_maxine_instrumentation(int address, unsigned int newpc, int totalPages
 			*/
 			printf("NEWPC METHODENTRY 0x%x\n",newpc);
 			pushJumpAddress(newpc);
-
+			//pushJumpAddress(newpc+72);
 		break; // break  only while debugging the various cases ...
-
-
+			/* 
+			We DELIBERATELY FALL THROUGH TO CASE 3 THAT IS ALSO AN absolute ADDRESS 
+			*/
 		case -3:
 			printf("NEWPC --- ABSOLUTE 0x%x\n\n",newpc);
 			pushJumpAddress(newpc);
@@ -191,6 +182,7 @@ void  real_maxine_flush_instrumentationBuffer(unsigned int *bufPtr) {
         if((*(simPtr +1023)) != (unsigned int)(simPtr +1022)) {
                 printf("ERROR VALSTORED %u VALEXPECTED %u SIMPTR %u\n", *(simPtr +1023) ,((unsigned int) (simPtr))+4*1022,(unsigned int)simPtr);
         }
+        //printf("FLUSHING at %u\n",(unsigned int)simPtr);
 
 // defined in libCCluster.a
         if(simFile == (0)) {
@@ -212,6 +204,7 @@ void  real_maxine_flush_instrumentationBuffer(unsigned int *bufPtr) {
 jint  maxine_flush_instrumentationBuffer() {
 #ifdef arm
 
+        //return (jint) real_maxine_flush_instrumentationBuffer; // dirty yes ... but it should work      
 	return (jint) real_maxine_instrumentation;
 #else
 	printf("INSTRUMENTATION for simulation not implemented for non armv7 platforms yet\n");
@@ -586,25 +579,13 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     Address tlBlock = threadLocalsBlock_create(PRIMORDIAL_THREAD_ID, 0, 0);
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
-#ifdef arm
-    //printf("THREAD LOCALS method entry %p NTL %x\n",method,(Address ) ntl);
-    //printf("THREAD LOCALS block size %u \n",ntl->tlBlockSize);
-    //printf("Main method entry %p\n", method);
-#else
-    //printf("THREAD LOCALS method entry %p NTL %llx\n",method,(Address ) ntl);
-    //printf("THREAD LOCALS block size %llu \n",ntl->tlBlockSize);
-    //printf("Main method entry %p\n", method);
-#endif
 
 #ifdef arm
-    FILE * fptr = fopen("/dev/xdevcfg","r");
-    if (fptr != (0)) {
-	    simulationPlatform = 1;
-    	//initialiseMemoryCluster();
-    	simulationDebugging = 1;
-    	initialiseTimingModel();
-    }
-
+	if(fopen("/dev/xdevcfg","r") != (0)) {
+	//initialiseMemoryCluster();
+		initialiseTimingModel();
+		simulationPlatform = 1;
+	}
 #endif
 
 #if log_LOADER
@@ -620,25 +601,23 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     if (exitCode == 0) {
         // Initialization succeeded: now run the main Java thread
-
+	//printf("ENTERING MAIN JAVA THREAD TO RUN\n");
         thread_run((void *) tlBlock);
     } else {
-
         printf("NON ZERO NATIVE EXIT %d\n",exitCode);
-
+	//real_maxine_flush_instrumentationBuffer(simPtr);
 #ifdef arm
-	if(simulationPlatform) {
+
+	if (simulationPlatform) {
 
 		reportTimingCounters();
-		//reportTimingCounters();
-
-		maxine_close();
 		simulationPlatform = 0;
-		// set to zero to avoid double report of counters
-        }
+	}
+	maxine_close();
 #endif
         native_exit(exitCode);
     }
+    //printf("NEVER REACHED\n");
     // All exits should be routed through native_exit().
     log_exit(-1, "Should not reach here\n");
 }
@@ -671,8 +650,9 @@ void native_exit(jint code) {
 	if(simulationPlatform) {
 		printf("NATIVE EXIT ABOUT to report counters\n");
 		reportTimingCounters();
-		maxine_close();
 	}
+//#endif
+	maxine_close();
 #endif
     if (code != 11) {
         cleanupCurrentThreadBlockBeforeExit();
@@ -754,7 +734,9 @@ void *native_properties(void) {
 #ifdef arm
 void maxine_cacheflush(char *start, int length) {
 	char * end = start + length;
-	//printf("FLUSHED CACHE %p  length: %d \n",start,length);
+	if(simulationPlatform && simulationDEBUG) {
+		printf("FLUSHED CACHE %p  length: %d \n",start,length);
+	}
 	clearTimingCache(start, length);
 	asm volatile("isb ");
 	asm volatile("dsb ");
@@ -772,7 +754,6 @@ void maxine_cacheflush(char *start, int length) {
 }
 
 #endif
-
 float native_parseFloat(const char* cstring, float nan) {
 #if os_MAXVE
     // TODO

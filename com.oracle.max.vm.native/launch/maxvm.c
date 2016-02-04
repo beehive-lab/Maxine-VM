@@ -98,7 +98,6 @@ int main(int argc, char *argv[] MAIN_EXTRA_ARGS) {
      */
 
 
-
     if (getenv("DYLD_LIBRARY_PATH") == NULL) {
         char *dyldLibraryPathDef;
         char *programDir = dirname(programPath);
