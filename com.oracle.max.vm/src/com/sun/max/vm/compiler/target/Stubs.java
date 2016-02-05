@@ -1566,7 +1566,8 @@ public class Stubs {
                 return null;
             }
 
-            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
+            //asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
+            //asm.subq(ARMV7.r13, frameSize); // new
             CiKind[] params = CiUtil.signatureToKinds(runtimeRoutine.classMethodActor);
             CiValue[] args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
             if (!kind.isVoid()) {
@@ -1594,7 +1595,7 @@ public class Stubs {
                     case Long:
                         assert args[4].isRegister() == false;
 
-                        arg4 = new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
+                        arg4 = new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4); // new
                         asm.setUpScratch(arg4);
                         //asm.ldrd(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
                         asm.strd(ConditionFlag.Always, returnRegister, asm.scratchRegister, 0);
@@ -1618,19 +1619,19 @@ public class Stubs {
 
 
             }
-            // APN honestly believe this is wrong ....
-            // we need arg0 to be returnvalue ...
 
             // Copy original return address into arg 0 (i.e. 'ip')
             CiRegister arg0 = args[0].asRegister();
             //asm.movq(arg0, new CiAddress(WordUtil.archKind(), ARMV7.RSP, DEOPT_RETURN_ADDRESS_OFFSET));
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, DEOPT_RETURN_ADDRESS_OFFSET));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, /*frameSize+*/DEOPT_RETURN_ADDRESS_OFFSET)); // new frameSize
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, arg0, asm.scratchRegister, 0);
-            //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg0, ARMV7.r12);
+
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
             //asm.movq(arg1, ARMV7.rsp);
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg1, ARMV7.r13);
+
+            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg1, ARMV7.rsp);
+            asm.addq(arg1, frameSize);// +4?
 
             // Copy original frame pointer into arg 2 (i.e. 'sp')
             CiRegister arg2 = args[2].asRegister();
@@ -1646,7 +1647,7 @@ public class Stubs {
             // Put original return address into high slot
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.r13, 4), arg0);
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, 4));
-            asm.str(ARMV7Assembler.ConditionFlag.Always, arg0, ARMV7.r12, 0); // might be the wrong way round
+            asm.str(ARMV7Assembler.ConditionFlag.Always, arg0, asm.scratchRegister, 0); // might be the wrong way round
 
 
             // Put deopt method entry point into low slot
@@ -1661,10 +1662,9 @@ public class Stubs {
 
 
             asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, ARMV7.r8, 0);
-            Label forever = new Label();
-            asm.bind(forever);
+
             asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xfeeff00f);
-            asm.branch(forever);
+            asm.insertForeverLoop();
             asm.ret(0);
 
             String stubName = runtimeRoutineName + "Stub";

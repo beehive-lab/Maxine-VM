@@ -430,6 +430,7 @@ public class Deoptimization extends VmOperation {
     @NEVER_INLINE
     public static void deoptimizeInt(Pointer ip, Pointer sp, Pointer fp, Pointer csa, int returnValue) {
         if (DeoptDebugLog) {
+            com.sun.max.vm.Log.print(VmThread.current());
             com.sun.max.vm.Log.println("DEOPTINT");
         }
         deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forInt(returnValue));
@@ -486,6 +487,7 @@ public class Deoptimization extends VmOperation {
     @NEVER_INLINE
     public static void deoptimizeObject(Pointer ip, Pointer sp, Pointer fp, Pointer csa, Object returnValue) {
         if (DeoptDebugLog) {
+            com.sun.max.vm.Log.print(VmThread.current());
             com.sun.max.vm.Log.println("DEOPTOBJ");
         }
         deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forObject(returnValue));
@@ -809,10 +811,11 @@ public class Deoptimization extends VmOperation {
         Continuation cont = topCont;
         for (CiFrame frame = topFrame; frame != null; frame = frame.caller()) {
             if (DeoptDebugLog) {
-                com.sun.max.vm.Log.println("about to do compile in deopt");
+                com.sun.max.vm.Log.println("about to compile in deopt");
             }
             ClassMethodActor method = (ClassMethodActor) frame.method;
             if (DeoptDebugLog) {
+                com.sun.max.vm.Log.print();
                 com.sun.max.vm.Log.println(method);
             }
             TargetMethod compiledMethod = vm().compilationBroker.compileForDeopt(method);
@@ -841,9 +844,7 @@ public class Deoptimization extends VmOperation {
         // As such there is no current need to reconstruct an adapter frame between the lowest
         // deoptimized frame and the frame of its caller. This may need to be revisited for
         // other platforms so use an assertion for now.
-        //assert platform().isa == ISA.AMD64;
-
-        // assert platform().isa == ISA.ARM;
+        assert platform().isa == ISA.AMD64 || platform().isa == ISA.ARM;
 
         // Fix up the caller details for the bottom most deoptimized frame
         cont.tm = info.callerTM();
@@ -879,7 +880,11 @@ public class Deoptimization extends VmOperation {
         info.sp = sp;
         info.fp = fp;
         info.returnValue = returnValue;
-
+        if (DeoptDebugLog) {
+            com.sun.max.vm.Log.print("NEWDEOP IP ");
+            com.sun.max.vm.Log.println(info.ip);
+            com.sun.max.vm.Log.println(info.ip.targetMethod());
+        }
         // Compute the stack space between the current frame (executing this method) and the
         // the top most deoptimized frame and use it to ensure that the unroll method
         // executes with enough stack space below it to unroll the deoptimized frames

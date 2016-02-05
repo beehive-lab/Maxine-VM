@@ -536,16 +536,7 @@ public final class ARMTargetMethodUtil {
                 //Log.println(oldDisp32);
             }
         }
-        //int oldDisp32 = callSitePointer.readInt(1);
-        /*if (VMOptions.verboseOption.verboseCompilation) {
-            Log.print("OLD ");
-            Log.println(Integer.toHexString(oldDisp32));
-            Log.print("DISP32 ");
-            Log.println(Integer.toHexString(disp32));
-            Log.print("DISP64 ");
-            Log.println(Long.toHexString(disp64));
-        }
-	*/
+
         if (oldDisp32 != disp64) {
             synchronized (PatchingLock) {
                 // Just to prevent concurrent writing and invalidation to the same instruction cache line
@@ -589,12 +580,67 @@ public final class ARMTargetMethodUtil {
         FatalError.check(VmOperation.atSafepoint(), "should only be patching entry points when at a safepoint");
 
         final Pointer patchSite = tm.codeAt(pos).toPointer();
-    /* ok lets assume we can do the normal movw movt addpc blx  we alter the LR register but it should be cool
-	POTENTIALLY there may be problems in Stubs or other bits of code for ARMV7 that expect an address to be directly
-	written into the CODE, on ARMV7 we made the decision to use movw movt add PC, or at least movw movt to
-	generate 32bit addresses instead of reading them from the code.
-	*/
-        mtSafePatchCallDisplacement(tm, tm.codeAt(pos), target);
+        /* ok lets assume we can do the normal movw movt addpc blx  HOWEVER altered below to a mov PC,r12 for the last instructions
+        so we DONT alter the LR register but it should be cool
+	    POTENTIALLY there may be problems in Stubs or other bits of code for ARMV7 that expect an address to be directly
+	    written into the CODE, on ARMV7 we made the decision to use movw movt add PC, or at least movw movt to
+	    generate 32bit addresses instead of reading them from the code.
+	    */
+        CodePointer callSite =  tm.codeAt(pos);
+
+        if (VMOptions.verboseOption.verboseCompilation) {
+            //Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!patchWithJmp !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+        }
+        if (!isPatchableCallSite(callSite)) {
+            throw FatalError.unexpected(" invalid patchable call site:  " + callSite.toHexString());
+        }
+        final Pointer callSitePointer = callSite.toPointer();
+
+        long disp64 = target.toLong() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toLong();
+        int disp32 = (int) disp64;
+        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
+        int oldDisp32 = 0;
+        if (((callSitePointer.readByte(3) & 0xff) == 0xe3) && ((callSitePointer.readByte(4 + 3) & 0xff) == 0xe3)) {
+            // just enough checking to make sure it has been patched before ...
+            // and does not contain nops
+            oldDisp32 = (callSitePointer.readByte(4 + 0) & 0xff) | ((callSitePointer.readByte(4 + 1) & 0xf) << 8) | ((callSitePointer.readByte(4 + 2) & 0xf) << 12);
+            oldDisp32 = oldDisp32 << 16;
+            oldDisp32 += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
+            if (VMOptions.verboseOption.verboseCompilation) {
+
+                //Log.println(oldDisp32);
+            }
+        }
+
+        if (oldDisp32 != disp64) {
+            synchronized (PatchingLock) {
+                // Just to prevent concurrent writing and invalidation to the same instruction cache line
+                //callSitePointer.writeInt(1,  disp32);
+                int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
+                callSitePointer.writeByte(0, (byte) (instruction & 0xff));
+                callSitePointer.writeByte(1, (byte) ((instruction >> 8) & 0xff));
+                callSitePointer.writeByte(2, (byte) ((instruction >> 16) & 0xff));
+                callSitePointer.writeByte(3, (byte) ((instruction >> 24) & 0xff));
+                int tmp32 = disp32 >> 16;
+                instruction = ARMV7Assembler.movtHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, tmp32 & 0xffff);
+                callSitePointer.writeByte(4, (byte) (instruction & 0xff));
+                callSitePointer.writeByte(5, (byte) ((instruction >> 8) & 0xff));
+                callSitePointer.writeByte(6, (byte) ((instruction >> 16) & 0xff));
+                callSitePointer.writeByte(7, (byte) ((instruction >> 24) & 0xff));
+                instruction = ARMV7Assembler.addRegistersHelper(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r15, ARMV7.r12, 0, 0);
+                callSitePointer.writeByte(8, (byte) (instruction & 0xff));
+                callSitePointer.writeByte(9, (byte) ((instruction >> 8) & 0xff));
+                callSitePointer.writeByte(10, (byte) ((instruction >> 16) & 0xff));
+                callSitePointer.writeByte(11, (byte) ((instruction >> 24) & 0xff));
+                instruction = ARMV7Assembler.movHelper(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12); // now does a mov PC
+                callSitePointer.writeByte(12, (byte) (instruction & 0xff));
+                callSitePointer.writeByte(13, (byte) ((instruction >> 8) & 0xff));
+                callSitePointer.writeByte(14, (byte) ((instruction >> 16) & 0xff));
+                callSitePointer.writeByte(15, (byte) ((instruction >> 24) & 0xff));
+                maxine_cacheflush(callSitePointer, 24);
+            }
+        }
+        //mtSafePatchCallDisplacement(tm, tm.codeAt(pos), target);
 
 
     }

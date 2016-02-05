@@ -796,7 +796,22 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= Rm.encoding & 0xf;
         emitInt(instruction);
     }
-
+    public  static int movHelper(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rm) {
+        int instruction = 0x01a00000;
+        assert (Rd.encoding < 16 && Rm.encoding < 16); // CORE Register move only!
+        /*if (maxineflush != null && Rd == ARMV7.r15) {
+            instrumentPush(ConditionFlag.Always, 1 << 12 | 1 << 8);
+            mov(cond, false, ARMV7.r12, Rm);
+            ConditionFlag tmp = cond.inverse();
+            instrumentNEWAbsolutePC(cond, tmp, true, ARMV7.r12, 0, false);
+            instrumentPop(ConditionFlag.Always, 1 << 12 | 1 << 8);
+        }*/
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (s ? 1 : 0) << 20;
+        instruction |= (Rd.encoding & 0xf) << 12;
+        instruction |= Rm.encoding & 0xf;
+        return instruction;
+    }
     public void mov(final ConditionFlag cond, final CiRegister Rd, final int immed12) {
         int instruction = 0x3A00000;
         assert (Rd.encoding < 16);
