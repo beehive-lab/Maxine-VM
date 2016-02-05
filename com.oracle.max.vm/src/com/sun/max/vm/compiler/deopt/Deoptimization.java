@@ -326,7 +326,7 @@ public class Deoptimization extends VmOperation {
     @NEVER_INLINE
     public static void unroll(Info info) {
         if (DeoptDebugLog) {
-            com.sun.max.vm.Log.println("inside unroll in deoptimization");
+            com.sun.max.vm.Log.println(VmThread.current() + "inside unroll in deoptimization");
             com.sun.max.vm.Log.println(info.ip.asPointer());
             com.sun.max.vm.Log.println(info.sp);
             com.sun.max.vm.Log.println(info.fp);
@@ -381,23 +381,29 @@ public class Deoptimization extends VmOperation {
                 com.sun.max.vm.Log.println("about to do unwindKind in deoptimisation");
                 switch (info.returnValue.kind.stackKind()) {
                     case Int:
-                        com.sun.max.vm.Log.println("INT");
+                        com.sun.max.vm.Log.println(VmThread.current());
+                        com.sun.max.vm.Log.println( "INT");
                         break;
                     case Float:
-                        com.sun.max.vm.Log.println("FLOAT");
+                        com.sun.max.vm.Log.println(VmThread.current() + "FLOAT");
 
                         break;
                     case Long:
-                        com.sun.max.vm.Log.println("LONG");
+                        com.sun.max.vm.Log.println(VmThread.current() + "LONG");
                         break;
                     case Double:
-                        com.sun.max.vm.Log.println("DOUBLE");
+                        com.sun.max.vm.Log.println(VmThread.current() + "DOUBLE");
                         break;
                     case Object:
-                        com.sun.max.vm.Log.println("OBJECT");
-                        com.sun.max.vm.Log.println(info.ip.asPointer());
-                        com.sun.max.vm.Log.println(info.sp);
+                        com.sun.max.vm.Log.print(VmThread.current());
+                        com.sun.max.vm.Log.println( "OBJECT");
+                        com.sun.max.vm.Log.print(VmThread.current());
+                        com.sun.max.vm.Log.println( info.ip.asPointer());
+                        com.sun.max.vm.Log.print(VmThread.current());
+                        com.sun.max.vm.Log.println( info.sp);
+                        com.sun.max.vm.Log.print(VmThread.current());
                         com.sun.max.vm.Log.println(info.fp);
+                        com.sun.max.vm.Log.print(VmThread.current());
                         com.sun.max.vm.Log.println(info.returnValue.asObject());
                         break;
                     default:
@@ -442,6 +448,7 @@ public class Deoptimization extends VmOperation {
     @NEVER_INLINE
     public static void deoptimizeFloat(Pointer ip, Pointer sp, Pointer fp, Pointer csa, float returnValue) {
         if (DeoptDebugLog) {
+            com.sun.max.vm.Log.print(VmThread.current());
             com.sun.max.vm.Log.println("DEOPTFLOAT");
         }
         deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forFloat(returnValue));
@@ -453,6 +460,7 @@ public class Deoptimization extends VmOperation {
     @NEVER_INLINE
     public static void deoptimizeLong(Pointer ip, Pointer sp, Pointer fp, Pointer csa, long returnValue) {
         if (DeoptDebugLog) {
+            com.sun.max.vm.Log.print(VmThread.current());
             com.sun.max.vm.Log.println("DEOPTLONG");
         }
         deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forLong(returnValue));
@@ -464,6 +472,7 @@ public class Deoptimization extends VmOperation {
     @NEVER_INLINE
     public static void deoptimizeDouble(Pointer ip, Pointer sp, Pointer fp, Pointer csa, double returnValue) {
         if (DeoptDebugLog) {
+            com.sun.max.vm.Log.print(VmThread.current());
             com.sun.max.vm.Log.println("DEOPTDOUBLE");
         }
         deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, CiConstant.forDouble(returnValue));
@@ -476,6 +485,7 @@ public class Deoptimization extends VmOperation {
     @NEVER_INLINE
     public static void deoptimizeWord(Pointer ip, Pointer sp, Pointer fp, Pointer csa, Word returnValue) {
         if (DeoptDebugLog) {
+            com.sun.max.vm.Log.print(VmThread.current());
             com.sun.max.vm.Log.println("DEOPTWORD");
         }
         deoptimizeOnReturn(CodePointer.from(ip), sp, fp, csa, WordUtil.archConstant(returnValue));

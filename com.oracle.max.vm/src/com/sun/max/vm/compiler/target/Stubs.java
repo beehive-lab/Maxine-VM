@@ -641,29 +641,8 @@ public class Stubs {
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r14, ARMV7.r12, 0);
             asm.addq(ARMV7.r13, frameSize + 4);
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r8);
-            //Label forever2 = new Label();
-            //asm.bind(forever2);
-            //asm.mov32BitConstant(ARMV7.r12, 0x22222222);
-            //asm.branch(forever2);
 
-            //AUGasm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), 4));
-            //AUGasm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r14, asm.scratchRegister,0); // set up R14 as if it were a blx.
-            // the stack slot +4  holds the return address of the caller originially pushed onto the stack
-
-
-            //asm.addq(ARMV7.r13,8); // basicall we need to get the stack back to the state where it was
-            //AUGasm.addq(ARMV7.r13,8); // basicall we need to get the stack back to the state where it was
-            // on entry to this method, so that when we LDR R15 then we will
-            // be able to push the LR back onto the stack etc.
-            //asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), -8));
-            //asm.ldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r15,ARMV7.r12,0);
-            //AUGasm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), -8));
-            //AUGasm.ldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r15,ARMV7.r12,0);
-
-
-            // essentially the LDR does a jump to the trampolined to method.
-            asm.insertForeverLoop();
-            //asm.ret(0);
+            //asm.insertForeverLoop();
 
 
             byte[] code = asm.codeBuffer.close(true);
@@ -1664,7 +1643,7 @@ public class Stubs {
             asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, ARMV7.r8, 0);
 
             asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xfeeff00f);
-            asm.insertForeverLoop();
+            //asm.insertForeverLoop();
             asm.ret(0);
 
             String stubName = runtimeRoutineName + "Stub";
