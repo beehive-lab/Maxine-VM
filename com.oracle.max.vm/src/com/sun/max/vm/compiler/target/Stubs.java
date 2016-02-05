@@ -1555,7 +1555,7 @@ public class Stubs {
             int frameSize = platform().target.alignFrameSize(csl == null ? 0 : csl.size);
 
             asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xdef2def2);
-            asm.insertForeverLoop();
+            //asm.insertForeverLoop();
 
             String runtimeRoutineName = "deoptimize" + kind.name();
             final CriticalMethod runtimeRoutine;
@@ -1570,15 +1570,7 @@ public class Stubs {
             CiKind[] params = CiUtil.signatureToKinds(runtimeRoutine.classMethodActor);
             CiValue[] args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
             if (!kind.isVoid()) {
-                // Copy return value into arg 4
-                // this must be on the stack for ARM?
 
-                // APN
-                 /*
-                 If we have 5th register, then it has to go on the stack? What if we have some integer and some
-                  floating point? do we need to do the copy.
-                 */
-                // CiRegister arg4 = args[4].asRegister();
                 CiAddress arg4;
                 CiRegister returnRegister = registerConfig.getReturnRegister(kind);
 
@@ -1594,8 +1586,9 @@ public class Stubs {
 
                         arg4 = new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
-                        asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, asm.scratchRegister, 0);
+                        //asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, asm.scratchRegister, 0);
                         // TODO NEEDS TO BE STOREd ON THE STACK
+                        asm.str(ConditionFlag.Always, returnRegister, asm.scratchRegister, 0);
                         break;
 
                     case Long:
@@ -1603,7 +1596,8 @@ public class Stubs {
 
                         arg4 = new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
-                        asm.ldrd(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
+                        //asm.ldrd(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
+                        asm.strd(ConditionFlag.Always, returnRegister, asm.scratchRegister, 0);
                         // TODO NEEDS TO BE STORED ON THE STACK
                         break;
 
@@ -1611,7 +1605,7 @@ public class Stubs {
                     case Double:
                         CiRegister tmp = args[4].asRegister();
                         if (tmp != returnRegister) {
-                            asm.movflt(returnRegister, tmp, kind, kind);
+                            asm.movflt(tmp, returnRegister, kind, kind);
                         }
 
 
@@ -2047,7 +2041,7 @@ public class Stubs {
             // now allocate the frame for this method
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
             asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xb00db00d);
-            asm.insertForeverLoop();
+            //asm.insertForeverLoop();
             asm.subq(ARMV7.rsp, frameSize);
 
             // save all the registers
@@ -2070,7 +2064,7 @@ public class Stubs {
 
             // Copy stack pointer into arg 2 (i.e. 'sp')
             CiRegister arg2 = args[2].asRegister();
-            asm.leaq(arg2, new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize + 8)); // MIGHT BE 4?
+            asm.leaq(arg2, new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize + 4)); // MIGHT BE 4?
 
             // Copy original frame pointer into arg 3 (i.e. 'fp')
             CiRegister arg3 = args[3].asRegister();
