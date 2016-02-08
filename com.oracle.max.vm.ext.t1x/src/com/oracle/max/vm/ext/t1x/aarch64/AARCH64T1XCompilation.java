@@ -120,7 +120,7 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void adjustReg(CiRegister reg, int delta) {
-
+    	asm.incrementl(reg, delta);
     }
 
     @Override
