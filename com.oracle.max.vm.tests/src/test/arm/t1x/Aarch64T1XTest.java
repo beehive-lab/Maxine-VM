@@ -306,6 +306,39 @@ public class Aarch64T1XTest extends MaxTestCase {
 
     }
 
+    public void test_PeekLong() throws Exception {
+        initialiseExpectedValues();
+        resetIgnoreValues();
+        Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.codeBuffer.reset();
+
+        expectedValues[0] = Long.MAX_VALUE;
+        expectedValues[1] = Long.MIN_VALUE;
+        expectedValues[2] = -12345678987654321L;
+        expectedValues[3] = 12345678987654321L;
+        expectedValues[4] = 1;
+
+        for (int i = 0; i < 5; i++) {
+            testValues[i] = true;
+            masm.mov64BitConstant(Aarch64.r16, expectedValues[i]);
+            masm.push(64, Aarch64.r16);
+        }
+
+
+        theCompiler.peekWord(Aarch64.r4, 0);
+        theCompiler.peekWord(Aarch64.r3, 1);
+        theCompiler.peekWord(Aarch64.r2, 2);
+        theCompiler.peekWord(Aarch64.r1, 3);
+        theCompiler.peekWord(Aarch64.r0, 4);
+
+        long [] simulatedValues = generateAndTest(expectedValues, testValues, bitmasks);
+
+        for (int i = 0; i < 5; i++) {
+            assert expectedValues[i] == simulatedValues[i]
+                    : "Register " + i + " " + simulatedValues[i] + " expected " + expectedValues[i];
+        }
+    }
+
     public void work_PeekLong() throws Exception {
         initialiseExpectedValues();
         resetIgnoreValues();
