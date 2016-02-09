@@ -141,12 +141,14 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     public void pokeWord(CiRegister src, int index) {
-
+    	CiAddress address = spWord(index);
+    	asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
     }
 
     @Override
     public void peekInt(CiRegister dst, int index) {
-
+    	CiAddress a = spInt(index);
+    	asm.ldr(32, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
