@@ -294,7 +294,6 @@ public class Aarch64T1XTest extends MaxTestCase {
             masm.push(64, Aarch64.zr);
         }
 
-
         theCompiler.peekLong(Aarch64.r8, 0);
         theCompiler.peekLong(Aarch64.r6, 2);
         theCompiler.peekLong(Aarch64.r4, 4);
@@ -341,41 +340,41 @@ public class Aarch64T1XTest extends MaxTestCase {
 //		}
 //    }
 
-//    public void test_PeekInt() throws Exception {
-//    	initialiseExpectedValues();
-//    	resetIgnoreValues();
-//		Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
-//		masm.codeBuffer.reset();
-//
-//		expectedValues[0] = Integer.MAX_VALUE;
-//		expectedValues[1] = Integer.MIN_VALUE;
-//		expectedValues[2] = -123456789;
-//		expectedValues[3] = 123456789;
-//		expectedValues[4] = 1;
-//
-//		for (int i = 0; i < 5; i++) {
-//			testValues[i] = true;
-//			masm.mov32BitConstant(Aarch64.r16, (int)expectedValues[i]);
-//			masm.push(32, Aarch64.r16);
-//		}
-//
-//		theCompiler.peekInt(Aarch64.r4, 0);
-//		theCompiler.peekInt(Aarch64.r3, 1);
-//		theCompiler.peekInt(Aarch64.r2, 2);
-//		theCompiler.peekInt(Aarch64.r1, 3);
-//		theCompiler.peekInt(Aarch64.r0, 4);
-//
-//
-//		long [] simulatedValues = generateAndTest(expectedValues, testValues, bitmasks);
-//
-//		for (int i = 0; i < 5; i++) {
-//			System.out.println("i " + (int)simulatedValues[i]);
-//		}
-//		for (int i = 0; i < 5; i++) {
-//			assert (int)expectedValues[i] == (int)simulatedValues[i]
-//				: "Register " + i + " " + simulatedValues[i] + " expected " + expectedValues[i];
-//		}
-//    }
+    public void test_PeekInt() throws Exception {
+    	initialiseExpectedValues();
+    	resetIgnoreValues();
+		Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
+		masm.codeBuffer.reset();
+
+		expectedValues[0] = Integer.MAX_VALUE;
+		expectedValues[1] = Integer.MIN_VALUE;
+		expectedValues[2] = -123456789;
+		expectedValues[3] = 123456789;
+		expectedValues[4] = 1;
+
+		for (int i = 0; i < 5; i++) {
+			testValues[i] = true;
+			masm.mov32BitConstant(Aarch64.r16, (int)expectedValues[i]);
+			masm.push(32, Aarch64.r16);
+		}
+
+		theCompiler.peekInt(Aarch64.r4, 0);
+		theCompiler.peekInt(Aarch64.r3, 1);
+		theCompiler.peekInt(Aarch64.r2, 2);
+		theCompiler.peekInt(Aarch64.r1, 3);
+		theCompiler.peekInt(Aarch64.r0, 4);
+
+
+		long [] simulatedValues = generateAndTest(expectedValues, testValues, bitmasks);
+
+		for (int i = 0; i < 5; i++) {
+			System.out.println("i " + (int)simulatedValues[i]);
+		}
+		for (int i = 0; i < 5; i++) {
+			assert (int)expectedValues[i] == (int)simulatedValues[i]
+				: "Register " + i + " " + simulatedValues[i] + " expected " + expectedValues[i];
+		}
+    }
 
 
     public void test_PeekFloat() throws Exception {
