@@ -89,7 +89,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             thinLockword = ThinLockword64.from(answer);
             inflatedLockword = delegate().reprepareModalLockword(inflatedLockword, thinLockword,  Platform.target().arch.is64bit() ? ModalLockword64.from(Word.zero()) : ModalLockword64.from(ObjectAccess.readHash(object)));
         }
-        return inflatedLockword;
+        return Platform.target().arch.is64bit() ? inflatedLockword : inflatedBits;
     }
 
     @SNIPPET_SLOWPATH
