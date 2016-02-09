@@ -217,7 +217,6 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
                 throw new IllegalMonitorStateException();
             }
             // By lightweight lock semantics we have no threads waiting, so just return.
-            Log.print(11111);
             return;
         }
         // We don't have to check for deflation, as either we own the lock or an exception will be thrown
