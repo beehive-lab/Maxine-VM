@@ -1129,6 +1129,9 @@ public class T1XTargetMethod extends TargetMethod {
             cont.setSP(info, CiConstant.forJsr(info.slotsCount()));
             // add operand stack slots
             for (int i = frame.numStack - 1; i >= 0; i--) {
+                if(isARM()) {
+
+                }
                 CiConstant value = (CiConstant) frame.getStackValue(i);
                 info.addSlot(value, "ostack");
                 addSlotPadding(info, "ostack (pad)");
@@ -1269,6 +1272,17 @@ public class T1XTargetMethod extends TargetMethod {
                         if (isAMD64() || isARM()) {
                             // On x86 the safepoint position of a call *is* the return position
                             templateCallReturnPos = safepointPos;
+                            /*
+                            ON ARMv7 we do a call like this,
+                            movw r12, constLOW
+                            movt r12, constHIGH
+                            add  r12, r12, PC
+                            blx r12
+                            RETURN POINT<------ return address
+                             */
+                            if(isARM()) {
+                                templateCallReturnPos += 16; // 4 instructions further on
+                            }
                         } else {
                             throw unimplISA();
                         }

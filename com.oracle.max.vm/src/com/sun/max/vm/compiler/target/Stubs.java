@@ -1191,6 +1191,7 @@ public class Stubs {
                     case Int:
                     case Object:
                         // do nothing it is in r3
+                        assert args[3].isRegister() : " genUnwind args[3] is not a register?";
                         break;
 
                     case Float:
@@ -1309,10 +1310,10 @@ public class Stubs {
             ClassMethodActor callee = unroll.classMethodActor;
             asm.call();
             int callSize = asm.codeBuffer.position() - callPos;
-            Label forever = new Label();
-            asm.bind(forever);
-            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0x50115011);
-            asm.branch(forever);
+
+            // should never reach here ...
+            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xffffffff);
+            asm.mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12); // expect us to crash
 
             // Should never reach here
             asm.hlt();
@@ -1567,7 +1568,9 @@ public class Stubs {
                         arg4 = new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
                         //asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, asm.scratchRegister, 0);
-                        // TODO NEEDS TO BE STOREd ON THE STACK
+                        // TODO We STORE on the stack lets check to see if this corrupts the
+                        // TODO values we then need to/have deoptimized?
+                        //
                         asm.str(ConditionFlag.Always, returnRegister, asm.scratchRegister, 0);
                         break;
 
@@ -1585,7 +1588,7 @@ public class Stubs {
                     case Double:
                         CiRegister tmp = args[4].asRegister();
                         if (tmp != returnRegister) {
-                            asm.movflt(tmp, returnRegister, kind, kind);
+                            asm.movflt(returnRegister, tmp, kind, kind);
                         }
 
 
@@ -1610,7 +1613,6 @@ public class Stubs {
             //asm.movq(arg1, ARMV7.rsp);
 
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg1, ARMV7.rsp);
-            asm.addq(arg1, frameSize);// +4?
 
             // Copy original frame pointer into arg 2 (i.e. 'sp')
             CiRegister arg2 = args[2].asRegister();
@@ -1972,7 +1974,26 @@ public class Stubs {
             // save all the registers
             asm.save(csl, frameToCSA);
 
-            String name = "uncommonTrap";
+            String name = "uncommonTrap";            /*
+             * The deopt stub initially executes in the frame of the method that was returned to (i.e. the method about to be
+             * deoptimized). It then allocates a new frame, saves all registers, sets up args to deopt routine
+             * and calls it.
+             *
+             *   subq rsp <frame size>                         // allocate frame
+             *   mov  [rsp], rax                               // save ...
+             *   mov  [rsp + 8], rcx                           //   all ...
+             *   ...                                           //     the ...
+             *   movq [rsp + 248], xmm15                       //       registers
+             * { mov  rdx/xmm0, [rsp + <cfo> + 8] }            // if non-void return value, copy it from stack into arg4 (or xmm0)
+             *   mov  rdi  [rsp + <cfo> + DEOPT_RETURN_ADDRESS_OFFSET]  // copy deopt IP into arg0
+             *   lea  rsi, [rsp + <cfo>]                       // copy deopt SP into arg1
+             *   mov  rdx, rbp                                 // copy deopt FP into arg2
+             *   mov  rcx, rbp                                 // copy callee save area into arg3
+             *   mov  [rsp + <frame size>], rdi                // restore deopt IP (i.e. original return address) into return address slot
+             *   call <deopt routine>                          // call deoptimization routine
+             *   int3                                          // should not reach here
+             */
+
             final CriticalMethod uncommonTrap = new CriticalMethod(Deoptimization.class, name, null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
 
             CiValue[] args = registerConfig.getCallingConvention(JavaCall, new CiKind[]{WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind()}, target(), false).locations;

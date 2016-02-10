@@ -332,7 +332,7 @@ public class Deoptimization extends VmOperation {
             com.sun.max.vm.Log.println(info.fp);
             if (info.returnValue != null) {
                 if (info.returnValue.kind.stackKind() == CiKind.Object) {
-                    com.sun.max.vm.Log.println(info.returnValue.asObject());
+                    //com.sun.max.vm.Log.println(info.returnValue.asObject());
                 }
             } else {
                 com.sun.max.vm.Log.println("NO return value info as null");
@@ -340,23 +340,49 @@ public class Deoptimization extends VmOperation {
         }
 
         ArrayList<CiConstant> slots = info.slots;
+
         Pointer sp = info.slotsAddr.plus(info.slotsSize() - STACK_SLOT_SIZE);
         if (deoptLogger.enabled()) {
             deoptLogger.logUnroll(info, slots, sp);
         }
+        if (DeoptDebugLog) {
+            com.sun.max.vm.Log.print("TOTAL SLOT SIZE ");
+            com.sun.max.vm.Log.println(info.slotsSize());
+        }
+
+        Pointer spCopy = sp;
         for (int i = slots.size() - 1; i >= 0; --i) {
             CiConstant c = slots.get(i);
             if (c.kind.isObject()) {
                 Object obj = c.asObject();
                 sp.writeWord(0, Reference.fromJava(obj).toOrigin());
             } else if (c.kind.isLong()) {
+                /*if( platform().isa == ISA.ARM) {
+                    assert STACK_SLOT_SIZE == 4 : "Stack slot size is NOT 4 bytes for ARM?";
+                    //--i;
+                    sp = sp.minus(STACK_SLOT_SIZE);
+                }*/
                 sp.writeLong(0, c.asLong());
+
             } else if (c.kind.isDouble()) {
+                /*if( platform().isa == ISA.ARM) {
+                    assert STACK_SLOT_SIZE == 4 : "Stack slot size is NOT 4 bytes for ARM?";
+                    //--i;
+                    sp = sp.minus(STACK_SLOT_SIZE);
+                }*/
                 sp.writeDouble(0, c.asDouble());
             } else {
-                sp.writeWord(0, Address.fromLong(c.asLong()));
+                sp.writeWord(0, Address.fromLong(c.asLong())); /// TODO is this ok for 32bit ints/addresses?
             }
             sp = sp.minus(STACK_SLOT_SIZE);
+
+        }
+        spCopy = spCopy.minus(info.slotsSize());
+        if (!spCopy.equals(sp)) {
+            com.sun.max.vm.Log.println(sp);
+            com.sun.max.vm.Log.println(spCopy);
+        } else {
+            com.sun.max.vm.Log.println("STACK MANIPULATIONSOK");
         }
         if (DeoptDebugLog) {
             com.sun.max.vm.Log.println("written words to slots in deoptimization");
@@ -382,7 +408,7 @@ public class Deoptimization extends VmOperation {
                 switch (info.returnValue.kind.stackKind()) {
                     case Int:
                         com.sun.max.vm.Log.println(VmThread.current());
-                        com.sun.max.vm.Log.println( "INT");
+                        com.sun.max.vm.Log.println("INT");
                         break;
                     case Float:
                         com.sun.max.vm.Log.println(VmThread.current() + "FLOAT");
@@ -396,15 +422,17 @@ public class Deoptimization extends VmOperation {
                         break;
                     case Object:
                         com.sun.max.vm.Log.print(VmThread.current());
-                        com.sun.max.vm.Log.println( "OBJECT");
+                        com.sun.max.vm.Log.println("OBJECT");
                         com.sun.max.vm.Log.print(VmThread.current());
-                        com.sun.max.vm.Log.println( info.ip.asPointer());
+                        com.sun.max.vm.Log.println(info.ip.asPointer());
+                        com.sun.max.vm.Log.println(info.ip.targetMethod());
                         com.sun.max.vm.Log.print(VmThread.current());
-                        com.sun.max.vm.Log.println( info.sp);
+                        com.sun.max.vm.Log.println(info.sp);
                         com.sun.max.vm.Log.print(VmThread.current());
                         com.sun.max.vm.Log.println(info.fp);
                         com.sun.max.vm.Log.print(VmThread.current());
-                        com.sun.max.vm.Log.println(info.returnValue.asObject());
+                        com.sun.max.vm.Log.println("NO OBJECT AS STUBS commented  out");
+                        // com.sun.max.vm.Log.println(info.returnValue.asObject());
                         break;
                     default:
                         com.sun.max.vm.Log.println("DEFAULT ERROR");
@@ -552,10 +580,15 @@ public class Deoptimization extends VmOperation {
             TargetMethod tm = current.targetMethod();
             TargetMethod calleeTM = callee.targetMethod();
             boolean deopt = methods.contains(tm);
+            if (DeoptDebugLog) {
+                com.sun.max.vm.Log.print(VmThread.current());
+                com.sun.max.vm.Log.println(" VISITFRAME ");
+                com.sun.max.vm.Log.println(calleeTM);
+            }
             if (deopt && calleeTM.is(TrapStub)) {
                 // Patches the return address in the trap frame to trigger deoptimization
                 // of the top frame when the trap stub returns.
-                Stub stub = vm().stubs.deoptStubForSafepointPoll();
+                Stub stub = vm().stubs.deoptStubForSafepointPoll(); // this is the stub generated by genDeoptStubWithCSA
                 CodePointer to = stub.codeStart();
                 Pointer save = current.sp().plus(DEOPT_RETURN_ADDRESS_OFFSET);
                 Pointer patch = tm.returnAddressPointer(callee);
@@ -633,6 +666,7 @@ public class Deoptimization extends VmOperation {
          * The slots of the deoptimized frame(s).
          */
         final ArrayList<CiConstant> slots = new ArrayList<CiConstant>();
+        public int debugSlotSize;
 
         /**
          * Names of the deoptimized stack slots. Only used if {@link Deoptimization#deoptLogger} is enabled.
@@ -652,7 +686,7 @@ public class Deoptimization extends VmOperation {
             this.tm = this.ip.targetMethod();
             this.sp = sp;
             this.fp = fp;
-
+            debugSlotSize = 0;
             VmStackFrameWalker sfw = new VmStackFrameWalker(thread.tla());
             sfw.inspect(ip, sp, fp, this);
 
@@ -695,13 +729,32 @@ public class Deoptimization extends VmOperation {
 
         public void addSlot(CiConstant slot, String name) {
             slots.add(slot);
+            switch (slot.kind) {
+                case Long:
+                case Double:
+                    debugSlotSize += 8;
+                    break;
+                default:
+                    debugSlotSize += 4;
+                    break;
+
+            }
             if (slotNames != null) {
                 slotNames.add(name);
             }
         }
 
-        public int slotsSize() {
+        /*public int slotsSize() {
             return slotsCount() * STACK_SLOT_SIZE;
+        }*/
+        public int slotsSize() {
+            if (debugSlotSize != (slotsCount() * STACK_SLOT_SIZE)) {
+                com.sun.max.vm.Log.println("slot size discrcepancy");
+                com.sun.max.vm.Log.println(debugSlotSize);
+                com.sun.max.vm.Log.println(slotsCount() * STACK_SLOT_SIZE);
+            }
+            assert debugSlotSize == (slotsCount() * STACK_SLOT_SIZE) : "ERROR slot size issues";
+            return debugSlotSize;
         }
 
         public int slotsCount() {
@@ -785,6 +838,7 @@ public class Deoptimization extends VmOperation {
 
         if (DeoptDebugLog) {
             com.sun.max.vm.Log.println("deoptimize tm is ");
+            com.sun.max.vm.Log.print(VmThread.current());
             com.sun.max.vm.Log.println(tm);
         }
         int safepointIndex = tm.findSafepointIndex(ip);
@@ -859,8 +913,11 @@ public class Deoptimization extends VmOperation {
         // Fix up the caller details for the bottom most deoptimized frame
         cont.tm = info.callerTM();
         if (DeoptDebugLog) {
+            com.sun.max.vm.Log.print(VmThread.current());
             com.sun.max.vm.Log.print("CALLER METHOD ");
             com.sun.max.vm.Log.println(cont.tm);
+            com.sun.max.vm.Log.print("RETADRR METHOD");
+            com.sun.max.vm.Log.println(info.returnIP.targetMethod());
         }
         cont.setIP(info, info.returnIP.asPointer());
         cont.setSP(info, WordUtil.archConstant(info.callerSP));
@@ -891,6 +948,10 @@ public class Deoptimization extends VmOperation {
         info.fp = fp;
         info.returnValue = returnValue;
         if (DeoptDebugLog) {
+            com.sun.max.vm.Log.print(VmThread.current());
+            com.sun.max.vm.Log.print("TOPCONT IP ");
+            com.sun.max.vm.Log.println(topCont.ip.targetMethod());
+            com.sun.max.vm.Log.print(VmThread.current());
             com.sun.max.vm.Log.print("NEWDEOP IP ");
             com.sun.max.vm.Log.println(info.ip);
             com.sun.max.vm.Log.println(info.ip.targetMethod());

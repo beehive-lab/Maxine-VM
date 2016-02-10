@@ -105,7 +105,15 @@ public class JVMTI_T1XTargetMethod extends T1XTargetMethod {
                             // On x86 the safepoint position of a call *is* the return position
                             return codeAt(safepointPos);
                         } if(isARM()) {
-                            return codeAt(safepointPos);
+                            /*
+                            ON ARMv7 we do a call like this,
+                            movw r12, constLOW
+                            movt r12, constHIGH
+                            add  r12, r12, PC
+                            blx r12
+                            RETURN POINT<------ return address
+                             */
+                            return codeAt(safepointPos+16);
 			} else {
                             throw unimplISA();
                         }

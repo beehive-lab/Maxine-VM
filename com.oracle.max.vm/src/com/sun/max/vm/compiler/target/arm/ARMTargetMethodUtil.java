@@ -173,24 +173,20 @@ public final class ARMTargetMethodUtil {
                 disp32 = (callSitePointer.readByte(4 + 0) & 0xff) | ((callSitePointer.readByte(4 + 1) & 0xf) << 8) | ((callSitePointer.readByte(4 + 2) & 0xf) << 12);
                 disp32 = disp32 << 16;
                 disp32 += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
-                /*if (VMOptions.verboseOption.verboseCompilation) {
-                    Log.println(disp32);
-                }
-		*/
-            }
-            if (VMOptions.verboseOption.verboseCompilation) {
 
-                /*Log.print("READCALL32TARGET ");
-                Log.print(disp32);
-                Log.print(" ");
-                Log.print(tm.toString());
-                Log.print(" CALLPOS ");
-                Log.println(callPos);
-                Log.println(callSitePointer);
-		*/
+            } else {
+                //com.sun.max.vm.Log.println("NOTE: ARMTargetMethodUtil.readCall32Target has been called and it DOESNOT match a call site");
+                //com.sun.max.vm.Log.println("This should be considered an error");
+                //com.sun.max.vm.Log.println(tm);
             }
 
-            assert (disp32 != 0);
+
+            //assert (disp32 != 0);
+            /*
+            TODO under certain circumstances, we are fialing on this assertion, it means we DO NOT HAVE A CALL SITE, OR
+            it means we havea a movw movt where the constant is zero which is VERY VERY UNLIKELY
+
+             */
             if (VMOptions.verboseOption.verboseCompilation) {
                 //Log.println("POTENTIALLy neeed additional checks for DEOPT readCall32Target");
             }
@@ -199,7 +195,8 @@ public final class ARMTargetMethodUtil {
                 || (callSitePointer.readByte(0) == (byte) RIP_JMP && callPos == 0)
                 : callSitePointer.readByte(0);
             disp32 = callSitePointer.readInt(1);
-	*/
+            TODO DO NOT DELETE ME, THIS LOGIC NEEDS TO BE ADDED FOR DEOPTIMIZATION AND ARM!
+	        */
 
         }
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(disp32);
@@ -228,44 +225,16 @@ public final class ARMTargetMethodUtil {
             // Every call site that is fixed up here might also be patched later. To avoid failed patching,
             // check for alignment of call site also here.
             // TODO(cwi): This is a check that I would like to have, however, T1X does not ensure proper alignment yet
-// when it stitches together templates that contain calls.
+            // when it stitches together templates that contain calls.
             FatalError.unexpected(" invalid patchable call site:  " + tm + "+" + callOffset + " " +
                     callSite.toHexString());
             Log.println("unpatchable call site? " + tm + " " + callSite.to0xHexString());
         }
 
 
-        //int disp32 = target.toInt() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toInt() ; // APN 16bytes 4 instructions out?
         long disp64 = target.toLong() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toLong(); // APN 16bytes 4 instructions out?
         int disp32 = (int) disp64;
-    /*
-        if (VMOptions.verboseOption.verboseCompilation) {
-            if (!MaxineVM.isHosted()) {
-                Log.print("CALLER ");
-                Log.print(tm.toString());
-                Log.print(" ");
-                Log.println(callSite);
-                if (target.toTargetMethod() != null) {
-                    Log.print("CALLEETARGET ");
-                    Log.print(target.toTargetMethod().toString());
-                    Log.print(" ");
-                    Log.println(target);
-                } else {
-                    Log.print("CALLEETARGET ");
-                    Log.print(" NULL ");
-                    Log.print(" ");
-                    Log.println(target);
-                }
 
-                Log.print(Integer.toString(disp32, 16));
-                Log.print(" DISP32 ");
-                Log.println(disp32);
-                Log.print(Long.toString(disp64, 16));
-                Log.print(" DISP64 ");
-                Log.println(disp64);
-            }
-        }
-	*/
         if (disp64 != disp32) {
 
             Log.println("Code displacement out of 32-bit range");
@@ -334,18 +303,7 @@ public final class ARMTargetMethodUtil {
         } else {
             final Pointer callSitePointer = callSite.toPointer();
 
-            /*if (VMOptions.verboseOption.verboseCompilation) {
 
-                Log.print("FIXUP CALL SITE ");
-                Log.print(tm.toString());
-                Log.print(" DISP ");
-                Log.print(disp32);
-                Log.print(" CALLOFFSET ");
-                Log.println(callOffset);
-
-                Log.println(callSitePointer);
-            }
-	    */
             oldDisp32 = 0;
             if (((callSitePointer.readByte(3) & 0xff) == 0xe3) && ((callSitePointer.readByte(4 + 3) & 0xff) == 0xe3)) {
                 // just enough checking to make sure it has been patched before ...
@@ -353,11 +311,7 @@ public final class ARMTargetMethodUtil {
                 oldDisp32 = (callSitePointer.readByte(4 + 0) & 0xff) | ((callSitePointer.readByte(4 + 1) & 0xf) << 8) | ((callSitePointer.readByte(4 + 2) & 0xf) << 12);
                 oldDisp32 = oldDisp32 << 16;
                 oldDisp32 += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
-                /*if (VMOptions.verboseOption.verboseCompilation) {
-                    Log.print("oldDisp32 ");
-                    Log.println(oldDisp32);
-                }
-		*/
+
             }
             int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
             callSitePointer.writeByte(0, (byte) (instruction & 0xff));
@@ -586,7 +540,7 @@ public final class ARMTargetMethodUtil {
 	    written into the CODE, on ARMV7 we made the decision to use movw movt add PC, or at least movw movt to
 	    generate 32bit addresses instead of reading them from the code.
 	    */
-        CodePointer callSite =  tm.codeAt(pos);
+        CodePointer callSite = tm.codeAt(pos);
 
         if (VMOptions.verboseOption.verboseCompilation) {
             //Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!patchWithJmp !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
@@ -656,9 +610,10 @@ public final class ARMTargetMethodUtil {
      */
     public static boolean isJumpTo(TargetMethod tm, int pos, CodePointer jumpTarget) {
         return readCall32Target(tm, pos).equals(jumpTarget);
-	/* Here we need to remmember that we use movw movt add,blx to implement a PC-relative JUMP on
-	ARMV7 THe only problem might be if it really needs to be a jump rather than a PC-relative JMP
-	*/
+
+        /* Here we need to remmember that we use movw movt add,blx to implement a PC-relative JUMP on
+        ARMV7 THe only problem might be if it really needs to be a jump rather than a PC-relative JMP
+	    */
     }
 
     // Disable instance creation.
