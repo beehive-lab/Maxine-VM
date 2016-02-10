@@ -125,12 +125,14 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     public void peekObject(CiRegister dst, int index) {
-
+    	CiAddress a = spWord(index);
+    	asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
     public void pokeObject(CiRegister src, int index) {
-
+    	CiAddress a = spWord(index);
+    	asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
@@ -172,12 +174,15 @@ public class AARCH64T1XCompilation extends T1XCompilation {
     @Override
     public void peekDouble(CiRegister dst, int index) {
         assert dst.isFpu();
-
+        CiAddress a = spLong(index);
+        asm.fldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
     public void pokeDouble(CiRegister src, int index) {
     	assert src.isFpu();
+    	CiAddress a = spLong(index);
+    	asm.fstr(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
