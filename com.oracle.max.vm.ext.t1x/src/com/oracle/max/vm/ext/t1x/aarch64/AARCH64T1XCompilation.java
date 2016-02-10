@@ -187,12 +187,16 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     public void peekFloat(CiRegister dst, int index) {
-
+        assert dst.isFpu();
+        CiAddress a = spInt(index);
+        asm.fldr(32, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
     public void pokeFloat(CiRegister src, int index) {
-
+    	assert src.isFpu();
+    	CiAddress a = spInt(index);
+    	asm.fstr(32, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
