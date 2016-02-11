@@ -552,24 +552,17 @@ public class Stubs {
                 asm.nop();
             }
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
-
-
-            //Label forever = new Label();
-            //asm.bind(forever);
-            //asm.mov32BitConstant(ARMV7.r12, 0x11111111);
-            //asm.branch(forever);
-
             // now allocate the frame for this method
             asm.subq(ARMV7.r13, frameSize);
 
             // save the index in the scratch register. This register is then callee-saved
-            // so that the stack walker can find it.
-            //asm.mov32BitConstant(registerConfig.getScratchRegister(), index);
-
+            // TODO IMPORTANT LOOK FOR WHERE WE ATTEMPT TO GET THE DISPATCH INDEX
+            // TODO it needs to be changed to r8
+            // IT IS R8 and not R12?
             asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, index); // hard coded!!!
-        /* R8 is an "alternate scratch we put the index in here and we added R8 to the end of the trampoline
-        csl as r12 is used during calculations of stores and gets trashed on ARM
-	    */
+            /* R8 is an "alternate scratch we put the index in here and we added R8 to the end of the trampoline
+            csl as r12 is used during calculations of stores and gets trashed on ARM
+	        */
 
             if (isHosted() && index == 0) {
                 indexMovInstrPos = asm.codeBuffer.position() - 8;// 2*WordWidth.BITS_32.numberOfBytes;
@@ -594,7 +587,7 @@ public class Stubs {
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize));
             //asm.movq(args[2].asRegister(), new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, args[2].asRegister(), asm.scratchRegister, 0);
-            // We already have the return address in R14 so jus tmove it rather than doing the load from stack
+            // We already have the return address in R14 so could just move it rather than doing the load from stack
             //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, args[2].asRegister(), ARMV7.r14);
 
 
@@ -611,14 +604,8 @@ public class Stubs {
             // continues in the resolved method as if it was called by the trampoline's
             // caller which is exactly what we want.
 
-            // APN I need to change this the CALL/RETURN is different for ARM
-            // this may well be broken !!!!!!
 
             CiRegister returnReg = registerConfig.getReturnRegister(WordUtil.archKind());
-            // TEST COMMENT OUT OCTOBER ...
-            //asm.addq(returnReg, 4); // BECAUSE IT IS NOT A CALL/BLX AND THE RETURN REGI IS ALREADY PUSHED TO THE STACK
-            // this is done so when we load this to the PC we do not push the return address!
-            //NOTE this is the slot used by r12 which we do not really need to restore?
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize - 4));
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize - 8), returnReg);
             asm.str(ARMV7Assembler.ConditionFlag.Always, returnReg, asm.scratchRegister, 0);
@@ -626,23 +613,16 @@ public class Stubs {
             // Restore all parameter registers before returning
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
             asm.restore(csl, frameToCSA);
-            // NEW
-            //asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize    ));
-            //asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r14,ARMV7.r12, 0);
-
 
             // Adjust RSP as mentioned above and do the 'ret' that lands us in the
             // trampolined-to method.
-            //----asm.addq(ARMV7.r13, frameSize-4  ); // points at entry point of trampolined method`
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize - 4));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
-            //asm.addq(ARMV7.r13, frameSize); OCTOBER
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r14, ARMV7.r12, 0);
             asm.addq(ARMV7.r13, frameSize + 4);
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r8);
 
-            //asm.insertForeverLoop();
 
 
             byte[] code = asm.codeBuffer.close(true);
@@ -858,17 +838,15 @@ public class Stubs {
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue()), callSite);
 
             // ok so this should patch the call site address?
-        /*
-        THIS CODE PATCHES AN ADDRESS ON THE STACK THAT IS THE TARGET OF THE MOVW MOT ADD BLX CALL SEQUENCE, SO WE ARE OK TO POP
-	    IT OFF THE STACK AND THEN THE BLX IS OK
+            /*
+                THIS CODE PATCHES AN ADDRESS ON THE STACK THAT IS THE TARGET OF THE MOVW MOT ADD BLX CALL SEQUENCE, SO WE ARE OK TO POP
+	            IT OFF THE STACK AND THEN THE BLX IS OK
 
-	    NOTE FOR genDyanmicTrampoline,  WE MUST FAKE THE CORRECT $LR AND THEN DO THE RET, AS WE DO ***not**** ACTUALLY DO A BLX TO GET TO THE
-	   ENTRY POINT
-	    */
+	            NOTE FOR genDyanmicTrampoline,  WE MUST FAKE THE CORRECT $LR AND THEN DO THE RET, AS WE DO ***not**** ACTUALLY DO A BLX TO GET TO THE
+	            ENTRY POINT
+	        */
             asm.strImmediate(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, callSite, ARMV7.r12, 0);
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, callSite);
-            //asm.flushicache(ARMV7.r12, 24);
-            //asm.pop(ARMV7Assembler.ConditionFlag.Always, 1<< 8);
             asm.ret(0); // ret(0) is a C3 in X86
 
             String stubName = "strampoline";
@@ -2104,6 +2082,13 @@ public class Stubs {
     public int readVirtualDispatchIndexFromTrampolineFrame(Pointer calleeSaveStart) {
         CiRegisterConfig registerConfig = registerConfigs.trampoline;
         CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
+        if (platform().isa == ISA.ARM) {
+            // we use ARMV7.r8, as this is where we place the dispatch index.
+            // r12 gets corrupted, as it is used during our calleee save
+            // callee save/restore could probably be rewritten to use push/pop
+            // and/or to use constant/immediate values rather than r12
+            return calleeSaveStart.plus(csl.offsetOf(ARMV7.r8)).getInt();
+        }
         return calleeSaveStart.plus(csl.offsetOf(registerConfig.getScratchRegister())).getInt();
     }
 }
