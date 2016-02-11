@@ -211,6 +211,7 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignLong(CiRegister dst, long value) {
+    	asm.mov64BitConstant(dst, value);
     }
 
     @Override
@@ -268,12 +269,13 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     public void assignInt(CiRegister dst, int value) {
-
+    	asm.mov32BitConstant(dst, value);
     }
 
     @Override
     protected void assignFloat(CiRegister dst, float value) {
-
+    	asm.mov32BitConstant(scratch, Float.floatToRawIntBits(value));
+    	asm.fmovCpu2Fpu(32, dst, scratch);
     }
 
     @Override
@@ -318,6 +320,8 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignDouble(CiRegister dst, double value) {
+    	asm.mov64BitConstant(scratch, Double.doubleToRawLongBits(value));
+    	asm.fmovCpu2Fpu(64, dst, scratch);
     }
 
     @Override
