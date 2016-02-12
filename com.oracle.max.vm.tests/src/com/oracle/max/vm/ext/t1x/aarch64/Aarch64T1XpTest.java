@@ -974,7 +974,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         masm.mov32BitConstant(Aarch64.r0, 1);
         masm.mov32BitConstant(Aarch64.r1, 1);
         masm.cmp(32, Aarch64.r0, Aarch64.r1);
-        masm.b(ConditionFlag.EQ, 4);
+        masm.b(Aarch64Assembler.ConditionFlag.EQ, 4);
         masm.mov32BitConstant(Aarch64.r3, 20);
         masm.mov32BitConstant(Aarch64.r4, 10);
         masm.nop();

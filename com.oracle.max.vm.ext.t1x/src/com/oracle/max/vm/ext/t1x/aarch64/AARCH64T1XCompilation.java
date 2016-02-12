@@ -206,7 +206,7 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignWordReg(CiRegister dst, CiRegister src) {
-
+        asm.mov(64, dst, src);
     }
 
     @Override
