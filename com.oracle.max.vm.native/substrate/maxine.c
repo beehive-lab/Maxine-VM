@@ -599,13 +599,14 @@ void *native_executablePath() {
     return result;
 }
 
-static void cleanupCurrentThreadBlockBeforeExit() {
-    Address tlBlock = threadLocalsBlock_current();
-    if (tlBlock != 0) {
-        threadLocalsBlock_setCurrent(0);
-        threadLocalsBlock_destroy(tlBlock);
-    }
-}
+//static void cleanupCurrentThreadBlockBeforeExit() {
+//    Address tlBlock = threadLocalsBlock_current();
+//    log_println("cleanupCurrentThreadBlockBeforeExit\n");
+//    if (tlBlock != 0) {
+//        threadLocalsBlock_setCurrent(0);
+//        threadLocalsBlock_destroy(tlBlock);
+//    }
+//}
 
 void native_exit(jint code) {
     // TODO: unmap the image
@@ -620,9 +621,16 @@ void native_exit(jint code) {
     }
     maxine_close();
 #endif
-    if (code != 11) {
-        cleanupCurrentThreadBlockBeforeExit();
-    }
+    // (ck) Following mjj's comment above the following scenario was observed:
+    // A swing frame is closed with a VM.exit attached to it.
+    // The MaxineVM.exit method calls the native_exit (@C_FUNCTION) without doing an IN_JAVA to IN_NATIVE transition.
+    // The threadLocalsBlock_destroy method is consequently called that does a call back into Java to the VmThread.detach method.
+    // The detach method, does jni prologue which tries to transit a thread from IN_NATIVE to IN_JAVA.
+    // However, the current thread was IN_JAVA state.
+    // The cleanup seems unnecessary and not implemented correctly, so I comment it out.
+    //if (code != 11) {
+    //    cleanupCurrentThreadBlockBeforeExit();
+    //}
     exit(code);
 }
 
