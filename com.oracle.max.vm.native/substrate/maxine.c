@@ -52,16 +52,16 @@
 #endif
 #ifdef arm
 /*
-//beginning of simulation platform functions
-// defined in libCCluster.a
-extern void reportTimingCounters();
-extern int initialiseMemoryCluster();
-extern int getCoreCount();
-extern void reportSpec();
-extern void pushDLD(unsigned int address);
-extern void pushILD(unsigned int address);
-extern void pushDSTR(unsigned int address);
-*/
+ //beginning of simulation platform functions
+ // defined in libCCluster.a
+ extern void reportTimingCounters();
+ extern int initialiseMemoryCluster();
+ extern int getCoreCount();
+ extern void reportSpec();
+ extern void pushDLD(unsigned int address);
+ extern void pushILD(unsigned int address);
+ extern void pushDSTR(unsigned int address);
+ */
 // defined in libFPGAsim.a
 static int simulationPlatform = 0;
 static int simulationDEBUG = 1;
@@ -76,202 +76,180 @@ static unsigned int *simPtr = (0);
 static FILE *simFile = (0);
 
 #endif
-jint  maxine_instrumentationBuffer()  {
+jint maxine_instrumentationBuffer() {
 #ifdef arm
-        if(simPtr != (0)) {
-                printf("Really bad ERROR!!!!!!!! multiple initialisations of simptr in substrate");
-                printf("NEEDS EXTENSION to work correctly with multiple thrreads\n");
-        }
-        simPtr = (unsigned int *) malloc(sizeof(unsigned int)*4096);
-        *(simPtr +1023) = (unsigned int)simPtr;
-        //printf("ALLOCATED at %u last element %u\n",(unsigned int)simPtr,*(simPtr +1023));
-        return (jint)simPtr;
+    if(simPtr != (0)) {
+        printf("ERROR: Multiple initializations of simptr in substrate");
+    }
+    simPtr = (unsigned int *) malloc(sizeof(unsigned int) * 4096);
+    *(simPtr + 1023) = (unsigned int)simPtr;
+    return (jint)simPtr;
 #else
-	printf("INSTRUMENTATION for simulation not implemented for non armv7 platforms yet\n");
-	return (jint)0;
+    printf("Instrumentation for simulation not implemented for non armv7 platforms yet\n");
+    return (jint) 0;
 #endif
 }
+
 #ifdef arm
-void  maxine_close() {
-        if(simFile != (0)) {
-                fclose(simFile);
+void maxine_close() {
+    if(simFile != (0)) {
+        fclose(simFile);
+    }
+}
+#endif
+
+void real_maxine_instrumentation(int address, unsigned int newpc, int totalPages) {
+#ifdef arm
+    switch (address) {
+        case -2:
+            pushJumpAddress(newpc);
+            break;
+        case -3:
+            pushJumpAddress(newpc);
+            break;
+        case -1:
+            pushJumpAddress(newpc);
+            break;
+        default:
+        printf("Currently we are configured to do PC changing addrsses\n");
+        printf("It looks like we have missed a LD/ST/PUSH/POP/VPUSH/VPOP instrumentation that we have not commented out\n");
+        printf("EXPECT this to crash the FPGA");
+        /* this is a non-negative value therefor it means we are doing LD/ST tracing ....
+         */
+        if(address &0x1) {
+            address = ((unsigned)address) -1;
+            //log_println("ST 0x%x\n\n",address);
+
+        } else if((address & 0x1) == 0) {
+            //log_println("LD 0x%x\n\n",address);
+        } else {
+            log_println("ERROR address 0x%x\n\n",address);
         }
-}
-#endif
-void real_maxine_instrumentation(int address, unsigned int newpc, int totalPages) { // R0 R1 R2
-	// the address has been altered to have a r/1 and a code/data bit set
-#ifdef arm
-	/*extern unsigned int getTID(unsigned int);
-	unsigned int tid  = pthread_self();
-	tid = getTID(tid);
-	printf("THREAD ID is %u ADDRESS %x\n",tid,address);
-	*/
-	switch (address) {
-		case -2:
-			/*
-			METHOD ENTRY AT PUSH FRAME ---  THIS IS DIFFERENT TO AN 
-			ADAPTER -- CURRENTLY WE DO *****NOT******* INSTRUMENT ADAPTERS
-
-			we need to handle the virtual address pages issues ...
-
-			Absolute address  this refers to a mov to the PC, a blx/bx with a register.
-			or even a branch to an absolute address
-			*/
-			printf("NEWPC METHODENTRY 0x%x\n",newpc);
-			pushJumpAddress(newpc);
-			//pushJumpAddress(newpc+72);
-		break; // break  only while debugging the various cases ...
-			/* 
-			We DELIBERATELY FALL THROUGH TO CASE 3 THAT IS ALSO AN absolute ADDRESS 
-			*/
-		case -3:
-			printf("NEWPC --- ABSOLUTE 0x%x\n\n",newpc);
-			pushJumpAddress(newpc);
-		break;
-		case -1:
-			printf("RELATIVE NEWPCBRANCH --- 0x%x\n\n",newpc);
-			/*
-			this is a relative branch/jmp of some kind .....
-			*/
-			pushJumpAddress(newpc);
-		break;
-		default:
-			printf("Currently we are configured to do PC changing addrsses\n");
-			printf("It looks like we have missed a LD/ST/PUSH/POP/VPUSH/VPOP instrumentation that we have not commented out\n");
-			printf("EXPECT this to crash the FPGA");
-			/* this is a non-negative value therefor it means we are doing LD/ST tracing ....
-			*/
-			if(address &0x1) {
-				address = ((unsigned)address) -1;
-				//log_println("ST 0x%x\n\n",address);
-
-			}else if((address & 0x1) == 0) {
-				//log_println("LD 0x%x\n\n",address);
-			}else {
-				log_println("ERROR address 0x%x\n\n",address);
-			}
-			if(address & 0x2) 	{
-				////log_println("INSTRUCTION 0x%x\n\n",address);
-			}
-			//printf("real_maxine_instrumentation maxine.c LD/STC commmented out\n");
-			return;
-		{	int isInstruction = 0;
-			int isStore = 0;
-			isInstruction = address & 0x2; // this is irrelevant we now do this by PC changes ...
-			isStore = address & 0x1;
-			address = address & 0xfffffffd;
-			if(isInstruction) {
-				//pushILD(address);
-			} else {
-				if(isStore) {
-					//pushDSTR(address);
-				} else {
-					//pushDLD(address);
-				}
-			}
-		}
-		break;
-	}	
-#endif
-}
-void  real_maxine_flush_instrumentationBuffer(unsigned int *bufPtr) {
-#ifdef arm
-        unsigned int i;
-	printf("INSTRUMENTATION NEEDS to be rewritten to identify thread %lu\n", (unsigned long int)thread_self());
-	printf("and to push a single address at a time");
-        if((*(simPtr +1023)) != (unsigned int)(simPtr +1022)) {
-                printf("ERROR VALSTORED %u VALEXPECTED %u SIMPTR %u\n", *(simPtr +1023) ,((unsigned int) (simPtr))+4*1022,(unsigned int)simPtr);
+        if(address & 0x2) {
+            ////log_println("INSTRUCTION 0x%x\n\n",address);
         }
-        //printf("FLUSHING at %u\n",(unsigned int)simPtr);
+        //printf("real_maxine_instrumentation maxine.c LD/STC commmented out\n");
+        return;
+        {   int isInstruction = 0;
+            int isStore = 0;
+            isInstruction = address & 0x2; // this is irrelevant we now do this by PC changes ...
+            isStore = address & 0x1;
+            address = address & 0xfffffffd;
+            if(isInstruction) {
+                //pushILD(address);
+            } else {
+                if(isStore) {
+                    //pushDSTR(address);
+                } else {
+                    //pushDLD(address);
+                }
+            }
+        }
+        break;
+    }
+#endif
+}
+void real_maxine_flush_instrumentationBuffer(unsigned int *bufPtr) {
+#ifdef arm
+    unsigned int i;
+    printf("INSTRUMENTATION NEEDS to be rewritten to identify thread %lu\n", (unsigned long int)thread_self());
+    printf("and to push a single address at a time");
+    if((*(simPtr +1023)) != (unsigned int)(simPtr +1022)) {
+        printf("ERROR VALSTORED %u VALEXPECTED %u SIMPTR %u\n", *(simPtr +1023) ,((unsigned int) (simPtr))+4*1022,(unsigned int)simPtr);
+    }
+    //printf("FLUSHING at %u\n",(unsigned int)simPtr);
 
 // defined in libCCluster.a
-        if(simFile == (0)) {
-                simFile = fopen("address.trace","w");
-        }    
-        for(i = 0;i < *(simPtr + 1023);i++) {
-                //printf("%x\n",*(simPtr+i));
-                //printf("%x\n",*(bufPtr+i));
-                fprintf(simFile,"%x\n",*(bufPtr+i));
-                *(bufPtr+i) = 0;
-    
-        }
-        *(simPtr +1023) = (unsigned int)simPtr;
+    if(simFile == (0)) {
+        simFile = fopen("address.trace","w");
+    }
+    for(i = 0;i < *(simPtr + 1023);i++) {
+        //printf("%x\n",*(simPtr+i));
+        //printf("%x\n",*(bufPtr+i));
+        fprintf(simFile,"%x\n",*(bufPtr+i));
+        *(bufPtr+i) = 0;
+
+    }
+    *(simPtr +1023) = (unsigned int)simPtr;
 #else
-	printf("INSTRUMENTATION for simulation not implemented for non armv7 platforms yet\n");
+    printf("INSTRUMENTATION for simulation not implemented for non armv7 platforms yet\n");
 
 #endif
 }
-jint  maxine_flush_instrumentationBuffer() {
+jint maxine_flush_instrumentationBuffer() {
 #ifdef arm
 
-        //return (jint) real_maxine_flush_instrumentationBuffer; // dirty yes ... but it should work      
-	return (jint) real_maxine_instrumentation;
+    //return (jint) real_maxine_flush_instrumentationBuffer; // dirty yes ... but it should work
+    return (jint) real_maxine_instrumentation;
 #else
-	printf("INSTRUMENTATION for simulation not implemented for non armv7 platforms yet\n");
-	return (jint)0;
+    printf("INSTRUMENTATION for simulation not implemented for non armv7 platforms yet\n");
+    return (jint) 0;
 #endif
 }
 
-
 long long d2long(double x) {
-	//printf("As a long long %lld %lf\n",(long long) x,x);
-	if(isnan(x)) {
-		return (long long)0;
-	}
-	if (x <= (double)((long long)-9223372036854775808ULL))  return -9223372036854775808ULL;
-	if (x >= (double)((long long)9223372036854775807ULL)) return 9223372036854775807ULL;
-	return (long long)x;
+    //printf("As a long long %lld %lf\n",(long long) x,x);
+    if (isnan(x)) {
+        return (long long) 0;
+    }
+    if (x <= (double) ((long long) -9223372036854775808ULL))
+        return -9223372036854775808ULL;
+    if (x >= (double) ((long long) 9223372036854775807ULL))
+        return 9223372036854775807ULL;
+    return (long long) x;
 }
 
-long long  f2long(float x) {
-	if(isnan(x)) {
-		return (jlong)0;
-	}
-	if (x <= (float)((long long)-9223372036854775808ULL))  return -9223372036854775808ULL;
-        if (x >= (float)((long long)9223372036854775807ULL)) return 9223372036854775807ULL;
+long long f2long(float x) {
+    if (isnan(x)) {
+        return (jlong) 0;
+    }
+    if (x <= (float) ((long long) -9223372036854775808ULL))
+        return -9223372036854775808ULL;
+    if (x >= (float) ((long long) 9223372036854775807ULL))
+        return 9223372036854775807ULL;
 
-	return (long long)x;
+    return (long long) x;
 }
 
-long long  arithmeticldiv(long long x, long long y) {
-	if (y == 0) {
-		//raise(SIGFPE);
-		return 0;
-	}
-	return x/y;
+long long arithmeticldiv(long long x, long long y) {
+    if (y == 0) {
+        //raise(SIGFPE);
+        return 0;
+    }
+    return x / y;
 }
 
 jlong arithmeticlrem(jlong x, jlong y) {
-	if(y == 0) {
-		//raise(SIGFPE);
-		return 0;
-	}
-	
-	return x % y; 
+    if (y == 0) {
+        //raise(SIGFPE);
+        return 0;
+    }
+
+    return x % y;
 }
 
-unsigned long long  arithmeticludiv(unsigned long long x , unsigned long long y) {
-	if(y == 0 ) {
-		//raise(SIGFPE);
-		return 0;
-	}
-	return x/y; 
+unsigned long long arithmeticludiv(unsigned long long x, unsigned long long y) {
+    if (y == 0) {
+        //raise(SIGFPE);
+        return 0;
+    }
+    return x / y;
 }
 
-unsigned long long  arithmeticlurem(unsigned long long x , unsigned long long y) {
-	if(y == 0 ) {
-		//raise(SIGFPE);
-		return 0;
-	}
-	return x%y; 
+unsigned long long arithmeticlurem(unsigned long long x, unsigned long long y) {
+    if (y == 0) {
+        //raise(SIGFPE);
+        return 0;
+    }
+    return x % y;
 }
 
 double l2double(jlong x) {
-	return (jdouble) x;
+    return (jdouble) x;
 }
 
 float l2float(jlong x) {
-	return (jfloat) x;
+    return (jfloat) x;
 }
 
 static void max_fd_limit() {
@@ -284,7 +262,7 @@ static void max_fd_limit() {
         log_println("getrlimit failed");
     } else {
 #if os_DARWIN
-	nbr_files.rlim_cur = MIN(OPEN_MAX, nbr_files.rlim_max);
+        nbr_files.rlim_cur = MIN(OPEN_MAX, nbr_files.rlim_max);
 #else
         nbr_files.rlim_cur = nbr_files.rlim_max;
 #endif
@@ -295,7 +273,6 @@ static void max_fd_limit() {
     }
 #endif
 }
-
 
 #define IMAGE_FILE_NAME  "maxine.vm"
 #define DARWIN_STACK_ALIGNMENT ((Address) 16)
@@ -354,7 +331,7 @@ static void getImageFilePath(char *result) {
 static void loadImage(void) {
     char imageFilePath[MAX_PATH_LENGTH];
     getImageFilePath(imageFilePath);
-	//printf("FILEPATH %s\n",imageFilePath);
+    //printf("FILEPATH %s\n",imageFilePath);
     image_load(imageFilePath);
 }
 
@@ -510,19 +487,8 @@ void debugger_initialize() {
 /**
  *  ATTENTION: this signature must match the signatures of 'com.sun.max.vm.MaxineVM.run()':
  */
-typedef jint (*VMRunMethod)(
-                Address tlBlock,
-                int tlBlockSize,
-                Address bootHeapRegionStart,
-                void *openLibrary(char *),
-                void *dlsym(void *, const char *),
-                char *dlerror(void),
-                void* vmInterface,
-                JNIEnv jniEnv,
-                void *jmmInterface,
-                void *jvmtiInterface,
-                int argc,
-                char *argv[]);
+typedef jint (*VMRunMethod)(Address tlBlock, int tlBlockSize, Address bootHeapRegionStart, void *openLibrary(char *), void *dlsym(void *, const char *), char *dlerror(void),
+                void* vmInterface, JNIEnv jniEnv, void *jmmInterface, void *jvmtiInterface, int argc, char *argv[]);
 
 int maxine(int argc, char *argv[], char *executablePath) {
     VMRunMethod method;
@@ -581,11 +547,11 @@ int maxine(int argc, char *argv[], char *executablePath) {
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 
 #ifdef arm
-	if(fopen("/dev/xdevcfg","r") != (0)) {
-	//initialiseMemoryCluster();
-		initialiseTimingModel();
-		simulationPlatform = 1;
-	}
+    if(fopen("/dev/xdevcfg","r") != (0)) {
+        //initialiseMemoryCluster();
+        initialiseTimingModel();
+        simulationPlatform = 1;
+    }
 #endif
 
 #if log_LOADER
@@ -593,7 +559,8 @@ int maxine(int argc, char *argv[], char *executablePath) {
                     tlBlock, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
 #endif
     //printf("dlopen %p dlsym %p dlsym %p\n",openLibrary,loadSymbol,dlerror);
-    exitCode = (*method)(tlBlock, ntl->tlBlockSize, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
+    exitCode = (*method)(tlBlock, ntl->tlBlockSize, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc,
+                    argv);
 
 #if log_LOADER
     log_println("start method exited with code: %d", exitCode);
@@ -601,19 +568,19 @@ int maxine(int argc, char *argv[], char *executablePath) {
 
     if (exitCode == 0) {
         // Initialization succeeded: now run the main Java thread
-	//printf("ENTERING MAIN JAVA THREAD TO RUN\n");
+        //printf("ENTERING MAIN JAVA THREAD TO RUN\n");
         thread_run((void *) tlBlock);
     } else {
-        printf("NON ZERO NATIVE EXIT %d\n",exitCode);
-	//real_maxine_flush_instrumentationBuffer(simPtr);
+        printf("NON ZERO NATIVE EXIT %d\n", exitCode);
+        //real_maxine_flush_instrumentationBuffer(simPtr);
 #ifdef arm
 
-	if (simulationPlatform) {
+        if (simulationPlatform) {
 
-		reportTimingCounters();
-		simulationPlatform = 0;
-	}
-	maxine_close();
+            reportTimingCounters();
+            simulationPlatform = 0;
+        }
+        maxine_close();
 #endif
         native_exit(exitCode);
     }
@@ -647,12 +614,11 @@ void native_exit(jint code) {
     // but it is a bad idea if we crashed because it calls back into the VM,
     // which can cause a recursive crash.
 #ifdef arm
-	if(simulationPlatform) {
-		printf("NATIVE EXIT ABOUT to report counters\n");
-		reportTimingCounters();
-	}
-//#endif
-	maxine_close();
+    if(simulationPlatform) {
+        printf("NATIVE EXIT ABOUT to report counters\n");
+        reportTimingCounters();
+    }
+    maxine_close();
 #endif
     if (code != 11) {
         cleanupCurrentThreadBlockBeforeExit();
@@ -687,18 +653,18 @@ char **environ;
 
 void *native_environment() {
 #if os_DARWIN
-    environ = (char **)*_NSGetEnviron();
+    environ = (char **) *_NSGetEnviron();
 #endif
 #if log_LOADER
     int i = 0;
     for (i = 0; environ[i] != NULL; i++)
     log_println("native_environment[%d]: %s", i, environ[i]);
 #endif
-    return (void *)environ;
+    return (void *) environ;
 }
 
 void *native_properties(void) {
-    static native_props_t nativeProperties = {0, 0, 0};
+    static native_props_t nativeProperties = { 0, 0, 0 };
     if (nativeProperties.user_dir != NULL) {
         return &nativeProperties;
     }
@@ -733,20 +699,18 @@ void *native_properties(void) {
 }
 #ifdef arm
 void maxine_cacheflush(char *start, int length) {
-	char * end = start + length;
-	if(simulationPlatform && simulationDEBUG) {
-		printf("FLUSHED CACHE %p  length: %d \n",start,length);
-	}
-	clearTimingCache(start, length);
-	asm volatile("isb ");
-	asm volatile("dsb ");
-	asm volatile("dmb ");
-	__clear_cache(start, end);
-	asm volatile("isb ");
-	asm volatile("dsb ");
-	asm volatile("dmb ");
-
-
+    char * end = start + length;
+    if(simulationPlatform && simulationDEBUG) {
+        printf("FLUSHED CACHE %p  length: %d \n",start,length);
+    }
+    clearTimingCache(start, length);
+    asm volatile("isb ");
+    asm volatile("dsb ");
+    asm volatile("dmb ");
+    __clear_cache(start, end);
+    asm volatile("isb ");
+    asm volatile("dsb ");
+    asm volatile("dmb ");
 
 }
 #else
