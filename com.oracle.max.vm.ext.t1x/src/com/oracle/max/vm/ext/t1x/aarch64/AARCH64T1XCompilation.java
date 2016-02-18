@@ -120,7 +120,7 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void adjustReg(CiRegister reg, int delta) {
-    	asm.incrementl(reg, delta);
+    	asm.increment32(reg, delta);
     }
 
     @Override
@@ -149,6 +149,7 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     public void peekInt(CiRegister dst, int index) {
+        System.out.println("peekInt: " + dst + " " + index);
     	CiAddress a = spInt(index);
     	asm.ldr(32, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
@@ -295,12 +296,14 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void do_iconst(int value) {
-
+        super.do_iconst(value);
     }
 
     @Override
     protected void do_iinc(int index, int increment) {
-
+        loadInt(Aarch64.r15, index);
+        adjustReg(Aarch64.r15, increment);
+        storeInt(Aarch64.r15, index);
     }
 
     @Override
