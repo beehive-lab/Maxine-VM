@@ -22,6 +22,7 @@
  */
 package com.sun.max.vm.compiler;
 
+import com.oracle.max.criutils.NativeCMethodinVM;
 import com.sun.cri.ci.CiStatistics;
 import com.sun.max.annotate.HOSTED_ONLY;
 import com.sun.max.annotate.RESET;
@@ -69,8 +70,6 @@ import static com.sun.max.vm.compiler.RuntimeCompiler.*;
 import static com.sun.max.vm.compiler.target.Safepoints.DIRECT_CALL;
 import static com.sun.max.vm.intrinsics.Infopoints.here;
 
-import com.oracle.max.criutils.NativeCMethodinVM;
-
 
 /**
  * This class implements an adaptive compilation system with multiple compilers with different compilation time / code
@@ -90,6 +89,7 @@ public class CompilationBroker implements NativeCMethodinVM {
         // should really do it the proper way by CriticalMethods etc etc
         return com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.maxine_flush_instrumentationBuffer();
     }
+
     /**
      * The threshold at which a recompilation is triggered from the baseline compiler to the next level
      * of optimization. This is typically the number of invocations of the method.
@@ -368,16 +368,16 @@ public class CompilationBroker implements NativeCMethodinVM {
                 compilationThread.start();
             }
         } else if (phase == Phase.RUNNING) {
-		// HOSTED is false here	 ADDED BY APN
-		if(com.oracle.max.asm.AbstractAssembler.SIMULATE_PLATFORM) {
-			// simulation platform is turned on this means we instrument load/stores and
-			// C1X compiled code, but not adapters
-			if (platform().isa == ISA.ARM && opt) {
-				com.oracle.max.asm.target.armv7.ARMV7MacroAssembler.maxineflush = this;
-			} else {	
-				com.oracle.max.asm.target.armv7.ARMV7MacroAssembler.maxineflush = null;
-			}
-		}
+            // HOSTED is false here	 ADDED BY APN
+            if (com.oracle.max.asm.AbstractAssembler.SIMULATE_PLATFORM) {
+                // simulation platform is turned on this means we instrument load/stores and
+                // C1X compiled code, but not adapters
+                if (platform().isa == ISA.ARM && opt) {
+                    com.oracle.max.asm.target.armv7.ARMV7MacroAssembler.maxineflush = this;
+                } else {
+                    com.oracle.max.asm.target.armv7.ARMV7MacroAssembler.maxineflush = null;
+                }
+            }
             if (PrintCodeCacheMetrics != 0) {
                 Runtime.getRuntime().addShutdownHook(new Thread("CodeCacheMetricsPrinter") {
                     @Override
@@ -650,9 +650,7 @@ public class CompilationBroker implements NativeCMethodinVM {
                 logCounterOverflow(mpo, "");
                 try {
                     newMethod = vm().compilationBroker.compile(cma, Nature.OPT);
-		    Log.print("DONE COMPILE ");Log.println(newMethod);
                 } catch (InternalError e) {
-			Log.println("INTERNAL ERROR");
                     if (VMOptions.verboseOption.verboseCompilation) {
                         e.printStackTrace(Log.out);
                     }
@@ -672,8 +670,6 @@ public class CompilationBroker implements NativeCMethodinVM {
             assert newMethod != null : oldMethod;
             logPatching(cma, oldMethod, newMethod);
             mpo.entryCount = 0;
-	Log.print("OLD TM is ");Log.println(oldMethod);
-	Log.print("TM is ");Log.println(newMethod);
             if (receiver != null) {
                 Address from = oldMethod.getEntryPoint(VTABLE_ENTRY_POINT).toAddress();
                 Address to = newMethod.getEntryPoint(VTABLE_ENTRY_POINT).toAddress();
@@ -688,7 +684,6 @@ public class CompilationBroker implements NativeCMethodinVM {
                         hub.setWord(index, to);
                     }
                 }
-		Log.println("DONE VTABLE");
                 for (int i = 0; i < hub.iTableLength; i++) {
                     int index = hub.iTableStartIndex + i;
                     if (hub.getWord(index).equals(from)) {
@@ -697,7 +692,6 @@ public class CompilationBroker implements NativeCMethodinVM {
                     }
                 }
             }
-	    Log.println("RECEIVER WAs NULL");
             // Look for a static call to 'oldMethod' and patch it.
             // This occurs even if 'cma' is non-static
             // as it may have been called directly.
@@ -707,7 +701,6 @@ public class CompilationBroker implements NativeCMethodinVM {
                     VMRegister.getCpuFramePointer(),
                     patcher);
         }
-	Log.println("DONE PATCHER");
     }
 
     public static void logCounterOverflow(MethodProfile mpo, String msg) {
@@ -882,29 +875,29 @@ public class CompilationBroker implements NativeCMethodinVM {
                 if (current.isTopFrame()) {
                     return true;
                 }
-		VMOptions.verboseOption.verboseCompilation = true;
+                VMOptions.verboseOption.verboseCompilation = true;
                 Pointer ip = current.ipAsPointer();
                 CodePointer callSite = CodePointer.from(ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE + 12));
                 Pointer callSitePointer = callSite.toPointer();
-		Log.println("!!!!!!!!!!!!!!!!CompilationBroker.visitFrame NEEDS TESTING");
-		/*for(ii = -16; ii <= 16;ii+=4) {
+                Log.println("!!!!!!!!!!!!!!!!CompilationBroker.visitFrame NEEDS TESTING");
+        /*for(ii = -16; ii <= 16;ii+=4) {
 			if(ARMTargetMethodUtil.isARMV7RIPCall(current.targetMethod(),CodePointer.from(ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE + ii)))) {
 				Log.print("MATCHED with offset ");
 				 Log.println(ii);
 			}else Log.println("NO MATCH");
 		}*/
 
-                if(ARMTargetMethodUtil.isARMV7RIPCall(current.targetMethod(),callSite)) {
+                if (ARMTargetMethodUtil.isARMV7RIPCall(current.targetMethod(), callSite)) {
                     //CodePointer target = CodePointer.from(ip.plus(callSitePointer.readInt(1)));
-                    CodePointer target = ARMTargetMethodUtil.ripCallOFFSET(current.targetMethod(),callSite);
-		    target = target.minus(8); // 8 too big or 8 too small ...
-		    Log.println("MATCHED RIPCALL");
+                    CodePointer target = ARMTargetMethodUtil.ripCallOFFSET(current.targetMethod(), callSite);
+                    target = target.minus(8); // 8 too big or 8 too small ...
+                    Log.println("MATCHED RIPCALL");
                     //callSitePointer.readInt(1)));
-		    Log.println("target is " + target);
-		    Log.println("BASELINE TARGET" +oldMethod.getEntryPoint(BASELINE_ENTRY_POINT));
-		    Log.println("OPTIMISED  TARGET" +oldMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT));
+                    Log.println("target is " + target);
+                    Log.println("BASELINE TARGET" + oldMethod.getEntryPoint(BASELINE_ENTRY_POINT));
+                    Log.println("OPTIMISED  TARGET" + oldMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT));
                     if (target.equals(oldMethod.getEntryPoint(BASELINE_ENTRY_POINT))) {
-			Log.println("matched OLD method BASELINE entry point");
+                        Log.println("matched OLD method BASELINE entry point");
                         final CodePointer to = newMethod.getEntryPoint(BASELINE_ENTRY_POINT);
                         final TargetMethod tm = current.targetMethod();
                         final int dcIndex = directCalleePosition(tm, callSite);
@@ -913,9 +906,9 @@ public class CompilationBroker implements NativeCMethodinVM {
                         ARMTargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
                         // Stop traversing the stack after a direct call site has been patched
                         return false;
-                    } 
+                    }
                     if (target.equals(oldMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT))) {
-			Log.println("matched OLD method OPTIMIZED entry point");
+                        Log.println("matched OLD method OPTIMIZED entry point");
                         final CodePointer to = newMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT);
                         final TargetMethod tm = current.targetMethod();
                         final int dcIndex = directCalleePosition(tm, callSite);
@@ -924,12 +917,12 @@ public class CompilationBroker implements NativeCMethodinVM {
                         ARMTargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
                         // Stop traversing the stack after a direct call site has been patched
                         return false;
-                    } 
-		
-			
+                    }
+
+
                 } else {
-			Log.println("FAILED to match RIPCALL in visitFrame");
-		}
+                    Log.println("FAILED to match RIPCALL in visitFrame");
+                }
                 if (++frameCount > FRAME_SEARCH_LIMIT) {
                     logNoFurtherStaticCallPatching();
                     return false;

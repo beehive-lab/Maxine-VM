@@ -22,14 +22,18 @@
  */
 package com.sun.max.vm.monitor.modal.modehandlers.inflated;
 
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.annotate.INLINE;
+import com.sun.max.annotate.INTRINSIC;
+import com.sun.max.platform.Platform;
+import com.sun.max.unsafe.Address;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.monitor.modal.modehandlers.HashableLockword64;
+import com.sun.max.vm.monitor.modal.modehandlers.ModalLockword64;
+import com.sun.max.vm.monitor.modal.sync.JavaMonitor;
+import com.sun.max.vm.reference.Reference;
 
-import com.sun.max.annotate.*;
-import com.sun.max.platform.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.monitor.modal.modehandlers.*;
-import com.sun.max.vm.monitor.modal.sync.*;
-import com.sun.max.vm.reference.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
 /**
  * Abstracts access to an inflated lock word's bit fields.
  */
@@ -113,7 +117,7 @@ public class InflatedMonitorLockword64 extends HashableLockword64 {
 
     @INLINE
     public static final InflatedMonitorLockword64 boundFromZero() {
-        assert Platform.target().arch.is32bit() : "This function must be called only in 32 bit archs!";
+        //assert Platform.target().arch.is32bit() : "This function must be called only in 32 bit archs!";
         return InflatedMonitorLockword64.from(HashableLockword64.from(Address.zero()).asAddress().bitSet(SHAPE_BIT_INDEX).bitSet(MISC_BIT_INDEX));
     }
 
@@ -155,7 +159,7 @@ public class InflatedMonitorLockword64 extends HashableLockword64 {
 
     @INLINE
     public static final InflatedMonitorLockword64 fromHashcode(int hashcode) {
-        assert Platform.target().arch.is32bit() : "This function must be called only on 32 bit machines!";
+        //assert Platform.target().arch.is32bit() : "This function must be called only on 32 bit machines!";
         return InflatedMonitorLockword64.from(HashableLockword64.from(Address.zero()).setHashcode(hashcode).asAddress());
     }
 }
