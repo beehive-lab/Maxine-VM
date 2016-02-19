@@ -898,14 +898,14 @@ public class Deoptimization extends VmOperation {
             }
             ClassMethodActor method = (ClassMethodActor) frame.method;
             if (DeoptDebugLog) {
-                com.sun.max.vm.Log.print();
+                com.sun.max.vm.Log.print(VmThread.current());
                 com.sun.max.vm.Log.println(method);
             }
             TargetMethod compiledMethod = vm().compilationBroker.compileForDeopt(method);
             FatalError.check(compiledMethod.isBaseline(), compiledMethod + " should be a deopt target");
             cont.tm = compiledMethod;
             if (DeoptDebugLog) {
-                com.sun.max.vm.Log.println(compiledMethod);
+                com.sun.max.vm.Log.print(VmThread.current()); com.sun.max.vm.Log.println(compiledMethod);
             }
             boolean reexecute = false;
             if (frame == topFrame && !Safepoints.isCall(tm.safepoints().safepointAt(safepointIndex))) {

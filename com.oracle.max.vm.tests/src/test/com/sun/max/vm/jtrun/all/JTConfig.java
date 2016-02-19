@@ -33,6 +33,7 @@ public class JTConfig {
 // GENERATED TEST CLASS LIST
     private static final Class<?>[] classList = {
         jtt.bootimagetest.TestHeapAllocation.class,
+        jtt.bootimagetest.XQueryExtension.class,
         jtt.bytecode.BC_aaload.class,
         jtt.bytecode.BC_aaload_1.class,
         jtt.bytecode.BC_aastore.class,

@@ -40,7 +40,7 @@ import com.sun.max.vm.thread.*;
  * A collection of static methods for reporting errors indicating some fatal condition
  * that should cause a hard exit of the VM. All errors reported by use of {@link ProgramError}
  * are rerouted to use this class.
- *
+ * <p/>
  * None of the methods in this class perform any synchronization or heap allocation
  * and they should never cause recursive error reporting.
  */
@@ -48,6 +48,7 @@ public final class FatalError extends Error {
 
     private static boolean CoreOnError;
     private static boolean TrapOnError;
+
     static {
         VMOptions.addFieldOption("-XX:", "CoreOnError", FatalError.class, "Generate core dump on fatal error.", MaxineVM.Phase.PRISTINE);
         VMOptions.addFieldOption("-XX:", "TrapOnError", FatalError.class, "Issue breakpoint trap on fatal error.", MaxineVM.Phase.PRISTINE);
@@ -63,6 +64,7 @@ public final class FatalError extends Error {
 
     private static boolean DUMPING_STACKS_IN_FATAL_ERROR;
     private static FatalError FATAL_ERROR_WHILE_DUMPING_STACKS = new FatalError(null, null);
+
     static {
         FATAL_ERROR_WHILE_DUMPING_STACKS.setStackTrace(new StackTraceElement[0]);
     }
@@ -93,14 +95,14 @@ public final class FatalError extends Error {
 
     /**
      * Reports the occurrence of some error condition.
-     *
+     * <p/>
      * This method never returns normally.
-     *
+     * <p/>
      * This method does not perform any synchronization or heap allocation.
      *
      * @param message a message describing the error condition. This value may be {@code null}.
-     * @see #unexpected(String, boolean, Throwable, Pointer)
      * @return never
+     * @see #unexpected(String, boolean, Throwable, Pointer)
      */
     @NEVER_INLINE
     public static FatalError unexpected(String message) {
@@ -109,15 +111,15 @@ public final class FatalError extends Error {
 
     /**
      * Reports the occurrence of some error condition.
-     *
+     * <p/>
      * This method never returns normally.
-     *
+     * <p/>
      * If {@code throwable == null}, this method does not perform any synchronization or heap allocation.
      *
-     * @param message a message describing the error condition. This value may be {@code null}.
+     * @param message   a message describing the error condition. This value may be {@code null}.
      * @param throwable an exception given more detail on the cause of the error condition. This value may be {@code null}.
-     * @see #unexpected(String, boolean, Throwable, Pointer)
      * @return never
+     * @see #unexpected(String, boolean, Throwable, Pointer)
      */
     @INSPECTED
     @NEVER_INLINE
@@ -135,17 +137,17 @@ public final class FatalError extends Error {
     /**
      * Reports the occurrence of some error condition. Before exiting the VM, this method attempts to print a stack
      * trace.
-     *
+     * <p/>
      * This method never returns normally.
-     *
+     * <p/>
      * If {@code throwable == null}, this method does not perform any synchronization or heap allocation.
      *
-     * @param message a message describing the trap. This value may be {@code null}.
+     * @param message         a message describing the trap. This value may be {@code null}.
      * @param trappedInNative specifies if this is a fatal error due to a trap in native code. If so, then the native
-     *            code instruction pointer at which the trap occurred can be extracted from {@code trapState}
-     * @param throwable an exception given more detail on the cause of the error condition. This value may be {@code null}.
-     * @param trapFrame if non-zero, then this is a pointer to the {@linkplain TrapFrameAccess trap frame} for the trap
-     *            resulting in this fatal error
+     *                        code instruction pointer at which the trap occurred can be extracted from {@code trapState}
+     * @param throwable       an exception given more detail on the cause of the error condition. This value may be {@code null}.
+     * @param trapFrame       if non-zero, then this is a pointer to the {@linkplain TrapFrameAccess trap frame} for the trap
+     *                        resulting in this fatal error
      * @return never
      */
     @NEVER_INLINE
@@ -167,7 +169,7 @@ public final class FatalError extends Error {
         // Try to recover from a fatal error while dumping stacks of the other threads
         if (DUMPING_STACKS_IN_FATAL_ERROR && FATAL_ERROR_WHILE_DUMPING_STACKS != null) {
             FatalError error = FATAL_ERROR_WHILE_DUMPING_STACKS;
-	    Log.println("FatalError: stack reset position one");
+            Log.println("FatalError: stack reset position one");
             vmThread.stackDumpStackFrameWalker().reset();
             // Nulling FATAL_ERROR_WHILE_DUMPING_STACKS makes this is a one shot attempt at recovery
             FATAL_ERROR_WHILE_DUMPING_STACKS = null;
@@ -182,10 +184,10 @@ public final class FatalError extends Error {
 
         final boolean lockDisabledSafepoints = Log.lock();
         if (vmThread != null) {
-	    Log.println("FatalError: stack reset position two");
-	    if(message != null) {
-		Log.println(message);
-	    }
+            Log.println("FatalError: stack reset position two");
+            if (message != null) {
+                Log.println(message);
+            }
             vmThread.stackDumpStackFrameWalker().reset();
         }
 
@@ -227,7 +229,7 @@ public final class FatalError extends Error {
         }
         Log.unlock(lockDisabledSafepoints);
         Pointer ip = Pointer.zero();
-        if (trappedInNative && !trapFrame.isZero())  {
+        if (trappedInNative && !trapFrame.isZero()) {
             ip = vm().trapFrameAccess.getPC(trapFrame);
         }
         exit(trappedInNative, ip);
@@ -266,7 +268,7 @@ public final class FatalError extends Error {
      * Checks a given condition and if it is {@code false}, a fatal error is raised.
      *
      * @param condition a condition to test
-     * @param message a message describing the error condition being tested
+     * @param message   a message describing the error condition being tested
      */
     @INLINE
     public static void check(boolean condition, String message) {
@@ -277,6 +279,7 @@ public final class FatalError extends Error {
 
     /**
      * Out of line assertion.
+     *
      * @param condition
      */
     @NEVER_INLINE
@@ -286,13 +289,13 @@ public final class FatalError extends Error {
 
     /**
      * Reports that an unimplemented piece of VM functionality was encountered.
-     *
+     * <p/>
      * This method never returns normally.
-     *
+     * <p/>
      * This method does not perform any synchronization or heap allocation.
      *
-     * @see #unexpected(String, boolean, Throwable, Pointer)
      * @return never
+     * @see #unexpected(String, boolean, Throwable, Pointer)
      */
     @NEVER_INLINE
     public static FatalError unimplemented() {
@@ -302,7 +305,7 @@ public final class FatalError extends Error {
     /**
      * Dumps the stack and thread locals of a given thread to the log stream.
      *
-     * @param tla VM thread locals of a thread
+     * @param tla             VM thread locals of a thread
      * @param trappedInNative specifies if this is for a thread that trapped in native code
      */
     static void dumpStackAndThreadLocals(Pointer tla, boolean trappedInNative) {
