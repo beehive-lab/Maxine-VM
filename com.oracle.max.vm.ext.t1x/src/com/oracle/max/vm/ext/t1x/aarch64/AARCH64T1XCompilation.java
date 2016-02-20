@@ -499,7 +499,7 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void do_dup() {
-
+        super.do_dup();
     }
 
     @Override
