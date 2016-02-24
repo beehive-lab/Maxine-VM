@@ -27,6 +27,7 @@ import com.oracle.max.asm.target.aarch64.Aarch64Assembler.ConditionFlag;
 import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.oracle.max.vm.ext.t1x.*;
+import com.sun.cri.bytecode.Bytecodes;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
@@ -397,6 +398,134 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void branch(int opcode, int targetBCI, int bci) {
+    	ConditionFlag cc;
+    	
+        if (stream.nextBCI() == targetBCI && methodProfileBuilder == null) {
+            // Skip completely if target is next instruction and profiling is turned off
+            decStack(1);
+            return;
+        }
+        
+        switch (opcode) {
+        case Bytecodes.IFEQ:
+        	peekInt(scratch, 0);
+        	assignInt(scratch2, 0);
+        	decStack(1);
+        	asm.cmp(32, scratch, scratch2);
+        	cc = ConditionFlag.EQ;
+        	break;
+        case Bytecodes.IFNE:
+        	peekInt(scratch, 0);
+        	assignInt(scratch2, 0);
+        	decStack(1);
+        	asm.cmp(32, scratch, scratch2);
+        	cc = ConditionFlag.NE;
+        	break;
+        case Bytecodes.IFLE:
+        	peekInt(scratch, 0);
+        	assignInt(scratch2, 0);
+        	decStack(1);
+        	asm.cmp(32, scratch, scratch2);
+        	cc = ConditionFlag.LE;
+        	break;
+        case Bytecodes.IFLT:
+        	peekInt(scratch, 0);
+        	assignInt(scratch2, 0);
+        	decStack(1);
+        	asm.cmp(32, scratch, scratch2);
+        	cc = ConditionFlag.LT;
+        	break;
+        case Bytecodes.IFGE:
+        	peekInt(scratch, 0);
+        	assignInt(scratch2, 0);
+        	decStack(1);
+        	asm.cmp(32, scratch, scratch2);
+        	cc = ConditionFlag.GE;
+        	break;
+        case Bytecodes.IFGT:
+        	peekInt(scratch, 0);
+        	assignInt(scratch2, 0);
+        	decStack(1);
+        	asm.cmp(32, scratch, scratch2);
+        	cc = ConditionFlag.GT;
+        	break;
+        case Bytecodes.IF_ICMPEQ:
+        	peekInt(scratch, 1);
+        	peekInt(scratch2, 0);
+        	decStack(2);
+        	asm.cmp(32, scratch, scratch2);
+        	cc = ConditionFlag.EQ;
+        	break;
+        case Bytecodes.IF_ICMPNE:
+        	peekInt(scratch, 1);
+        	peekInt(scratch2, 0);
+        	decStack(2);
+        	asm.cmp(32, scratch, scratch2);
+        	cc = ConditionFlag.NE;
+        	break;
+        case Bytecodes.IF_ICMPGE:
+        	peekInt(scratch, 1);
+        	peekInt(scratch2, 0);
+        	decStack(2);
+        	asm.cmp(32, scratch, scratch2);
+        	cc = ConditionFlag.GE;
+        	break;
+        case Bytecodes.IF_ICMPGT:
+        	peekInt(scratch, 1);
+        	peekInt(scratch2, 0);
+        	decStack(2);
+        	asm.cmp(32, scratch, scratch2);
+        	cc = ConditionFlag.GT;
+        	break;
+        case Bytecodes.IF_ICMPLE:
+        	peekInt(scratch, 1);
+        	peekInt(scratch2, 0);
+        	decStack(2);
+        	asm.cmp(32, scratch, scratch2);
+        	cc = ConditionFlag.LE;
+        	break;
+        case Bytecodes.IF_ICMPLT:
+        	peekInt(scratch, 1);
+        	peekInt(scratch2, 0);
+        	decStack(2);
+        	asm.cmp(32, scratch, scratch2);
+        	cc = ConditionFlag.LT;
+        	break;
+        case Bytecodes.IF_ACMPEQ:
+        	peekObject(scratch, 1);
+        	peekObject(scratch2, 0);
+        	decStack(2);
+        	asm.cmp(64, scratch, scratch2);
+        	cc = ConditionFlag.EQ;
+        	break;
+        case Bytecodes.IF_ACMPNE:
+        	peekObject(scratch, 1);
+        	peekObject(scratch2, 0);
+        	decStack(2);
+        	asm.cmp(64, scratch, scratch2);
+        	cc = ConditionFlag.NE;
+        	break;
+        case Bytecodes.IFNULL:
+        	peekObject(scratch, 0);
+        	assignObject(scratch2, null);
+        	decStack(1);
+        	asm.cmp(64, scratch, scratch2);
+        	cc = ConditionFlag.EQ;
+        	break;
+        case Bytecodes.IFNONNULL:
+        	peekObject(scratch, 0);
+        	assignObject(scratch2, null);
+        	decStack(1);
+        	asm.cmp(64, scratch, scratch2);
+        	cc = ConditionFlag.NE;
+        	break;
+        case Bytecodes.GOTO:
+        case Bytecodes.GOTO_W:
+        	cc = null;
+        	break;
+        default:
+        	throw new InternalError("Unknown branch opcode: " + Bytecodes.nameOf(opcode));
+        }
     }
 
     @Override
