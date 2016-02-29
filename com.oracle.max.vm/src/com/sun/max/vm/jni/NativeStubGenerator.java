@@ -71,7 +71,6 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         super(constantPoolEditor);
         this.classMethodActor = classMethodActor;
         allocateParameters(classMethodActor.isStatic(), classMethodActor.descriptor());
-        com.sun.max.vm.Log.println(classMethodActor);
         generateCode(classMethodActor.isCFunction(), classMethodActor.isStatic(), classMethodActor.holder(), classMethodActor.descriptor());
     }
 
@@ -140,7 +139,6 @@ public final class NativeStubGenerator extends BytecodeAssembler {
      */
     private int initializeHandles(SignatureDescriptor sig, boolean isStatic) {
 
-        com.sun.max.vm.Log.println(sig);
         int handles = allocateLocal(Kind.WORD);
         int handleOffset = 0;
 
