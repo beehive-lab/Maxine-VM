@@ -202,7 +202,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                     break;
 
 			/*
-				Cases Always and NeverUse should really result in an error. 
+                Cases Always and NeverUse should really result in an error.
 			*/
                 case 0xE: // Always!!!!
 
@@ -284,13 +284,13 @@ public class ARMV7Assembler extends AbstractAssembler {
             if (maxineflush != null) {
                 // will need to be patched inside patchJumpTarget
                 instrumentPCChange(ConditionFlag.Always, ConditionFlag.NeverUse, -2);
-		/*
-		We determine the offsets for patching --- by gdb of an exectuion of ... mx vm -Xopt App
-		We break on real_maxine_instrumentation --- case of PCCHANGE  then do a disas of $lr -0x50,$lr +0x40 
-		and  do a print /x STARTARRDRESSNEXTINSTR - ADDRESSOFmovwmovtINSTRS
-		NOTE: there may be a true/nottrue ie lt or ge destination, or there may be 
-		a ConditionFlag.Always only one movw movt to patch
-		*/
+		    /*
+		    We determine the offsets for patching --- by gdb of an exectuion of ... mx vm -Xopt App
+		    We break on real_maxine_instrumentation --- case of PCCHANGE  then do a disas of $lr -0x50,$lr +0x40
+		    and  do a print /x STARTARRDRESSNEXTINSTR - ADDRESSOFmovwmovtINSTRS
+		    NOTE: there may be a true/nottrue ie lt or ge destination, or there may be
+		    a ConditionFlag.Always only one movw movt to patch
+		    */
             }
             l.addPatchAt(codeBuffer.position(), instrumentMe);
             // emitByte(0xE9);
@@ -308,11 +308,11 @@ public class ARMV7Assembler extends AbstractAssembler {
         int disp = target - branch - 16;
         int instruction = 0;
         int operation = codeBuffer.getInt(branch);
-	/* 
-	APOLOGIES firstPATCH and secondPATCH are determined by counting instructions/and or doing the calculation in
-	gdb by examining addresses they specify the offset of the movw movts to be patched inside the instrument code
-	block
-	*/
+	    /*
+	    APOLOGIES firstPATCH and secondPATCH are determined by counting instructions/and or doing the calculation in
+	    gdb by examining addresses they specify the offset of the movw movts to be patched inside the instrument code
+	    block
+	    */
         int firstPATCH = 44;
         int secondPATCH = 56;
         int firstPATCHOperation = 0;
@@ -461,14 +461,14 @@ public class ARMV7Assembler extends AbstractAssembler {
             disp = disp / 4;
 
             codeBuffer.emitInt(0x0a000000 | (disp & 0xffffff) | ((ConditionFlag.Always.value() & 0xf) << 28), branch);
-	    /*
-		OFFSETS determined by gdb ...
-		-44 and -56 - we might be out by 4 if there is a no inserted.
-		Check that -44 we have a movw movt
-		Identify if we have ConditionFlag.Always --- if so we only have on condition to patch
-		 and that is the TAKEN condition ie related to the disp ....
-		ELSE we have the NOTTAKEN condition at -44 and the TAKEN condition at the -56
-	    */
+            /*
+		    OFFSETS determined by gdb ...
+		    -44 and -56 - we might be out by 4 if there is a no inserted.
+		    Check that -44 we have a movw movt
+		    Identify if we have ConditionFlag.Always --- if so we only have on condition to patch
+		    and that is the TAKEN condition ie related to the disp ....
+		    ELSE we have the NOTTAKEN condition at -44 and the TAKEN condition at the -56
+	        */
             if (instrumented) {
                 if (ARMASMDEBUG) {
                     System.out.println("JUMP CASE DEFAULT");
@@ -796,7 +796,8 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= Rm.encoding & 0xf;
         emitInt(instruction);
     }
-    public  static int movHelper(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rm) {
+
+    public static int movHelper(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rm) {
         int instruction = 0x01a00000;
         assert (Rd.encoding < 16 && Rm.encoding < 16); // CORE Register move only!
         /*if (maxineflush != null && Rd == ARMV7.r15) {
@@ -812,6 +813,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= Rm.encoding & 0xf;
         return instruction;
     }
+
     public void mov(final ConditionFlag cond, final CiRegister Rd, final int immed12) {
         int instruction = 0x3A00000;
         assert (Rd.encoding < 16);

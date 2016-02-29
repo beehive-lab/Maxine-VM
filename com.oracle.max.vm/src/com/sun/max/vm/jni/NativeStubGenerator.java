@@ -26,6 +26,7 @@ import static com.sun.max.vm.classfile.constant.PoolConstantFactory.*;
 import static com.sun.max.vm.classfile.constant.SymbolTable.*;
 
 import com.sun.max.io.*;
+import com.sun.max.lang.ISA;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -70,6 +71,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         super(constantPoolEditor);
         this.classMethodActor = classMethodActor;
         allocateParameters(classMethodActor.isStatic(), classMethodActor.descriptor());
+        com.sun.max.vm.Log.println(classMethodActor);
         generateCode(classMethodActor.isCFunction(), classMethodActor.isStatic(), classMethodActor.holder(), classMethodActor.descriptor());
     }
 
@@ -138,6 +140,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
      */
     private int initializeHandles(SignatureDescriptor sig, boolean isStatic) {
 
+        com.sun.max.vm.Log.println(sig);
         int handles = allocateLocal(Kind.WORD);
         int handleOffset = 0;
 
@@ -200,6 +203,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         int handleOffset = 0;
 
         if (!isCFunction) {
+
             handles = initializeHandles(sig, isStatic);
 
             // Cache current thread in a local variable
@@ -233,6 +237,7 @@ public final class NativeStubGenerator extends BytecodeAssembler {
 
         } else {
             assert isStatic;
+
         }
 
         // Push the remaining parameters, wrapping reference parameters in JNI handles
@@ -297,15 +302,19 @@ public final class NativeStubGenerator extends BytecodeAssembler {
         if (NativeInterfaces.needsPrologueAndEpilogue(classMethodActor)) {
             ldc(nf);
             invokestatic(!isCFunction ? nativeCallPrologue : nativeCallPrologueForC, 1, 0);
+
         }
 
         // Invoke the native function
-        callnative(SignatureDescriptor.create(nativeFunctionDescriptor.append(')').append(nativeResultDescriptor).toString()), nativeFunctionArgSlots, nativeResultDescriptor.toKind().stackSlots);
-
+        if(ISA.ARM == com.sun.max.platform.Platform.platform().isa) {
+            callnative(SignatureDescriptor.create(nativeFunctionDescriptor.append(')').append(nativeResultDescriptor).toString()), nativeFunctionArgSlots, nativeResultDescriptor.toKind().stackSlots);
+        } else {
+            callnative(SignatureDescriptor.create(nativeFunctionDescriptor.append(')').append(nativeResultDescriptor).toString()), nativeFunctionArgSlots, nativeResultDescriptor.toKind().stackSlots);
+        }
         if (NativeInterfaces.needsPrologueAndEpilogue(classMethodActor)) {
             invokestatic(!isCFunction ? nativeCallEpilogue : nativeCallEpilogueForC, 0, 0);
         }
-
+        
         if (!isCFunction) {
             // Unwrap a reference result from its enclosing JNI handle. This must be done
             // *before* the JNI frame is restored.

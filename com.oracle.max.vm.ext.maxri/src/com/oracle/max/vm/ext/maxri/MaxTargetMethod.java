@@ -152,7 +152,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
         if (!isHosted()) {
             if (install) {
                 linkDirectCalls();
-		ARMTargetMethodUtil.maxine_cacheflush(codeStart().toPointer(), code().length);
+		        ARMTargetMethodUtil.maxine_cacheflush(codeStart().toPointer(), code().length);
             } else {
                 // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
             }
@@ -319,11 +319,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
             int codePos = getExceptionPosAt(i);
             int catchPos = getCatchPosAt(i);
             ClassActor catchType = getCatchTypeAt(i);
-		       //com.sun.max.vm.Log.print("CODEPOS "); com.sun.max.vm.Log.println(codePos);
-		       //com.sun.max.vm.Log.print("CATCH "); com.sun.max.vm.Log.println(catchPos);
-		       //com.sun.max.vm.Log.print("EXCEPTPOS  "); com.sun.max.vm.Log.println(exceptionPos);
-			//com.sun.max.vm.Log.print("CHECKTYPE ");com.sun.max.vm.Log.print(checkType(exception, catchType));
-		//com.sun.max.vm.Log.println("\n");
+
 
             if ( (codePos == exceptionPos) && checkType(exception, catchType)) {
                 if (info != null) {
@@ -332,7 +328,6 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
                 return codeAt(catchPos);
             }
         }
-	//com.sun.max.vm.Log.println("MAXTARGET returning ZERO");
         return CodePointer.zero();
     }
 

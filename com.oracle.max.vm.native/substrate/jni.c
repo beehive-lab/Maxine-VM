@@ -59,7 +59,6 @@ extern struct JavaVM_ main_vm;
  * Gets a pointer to the global JNI function table.
  */
 JNIEnv jniEnv() {
-     //printf("jniEnv %p\n",&jni_NativeInterface);
     return &jni_NativeInterface;
 }
 
@@ -150,6 +149,7 @@ static void copyVarargsToArray(jvalue *argumentArray, va_list argumentList, int 
 /*
  * Call<type>Method Routines
  */
+
 
 #define CALL_METHOD(functionName, returnType) do { \
     va_list argumentList; \

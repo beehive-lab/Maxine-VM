@@ -624,7 +624,6 @@ public class Stubs {
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r8);
 
 
-
             byte[] code = asm.codeBuffer.close(true);
             final Type type = isInterface ? InterfaceTrampoline : VirtualTrampoline;
             return new Stub(type, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
@@ -1845,7 +1844,11 @@ public class Stubs {
                         }
 
                         ss = (CiStackSlot) registerConfigs.compilerStub.getCallingConvention(JavaCall, new CiKind[]{kind}, target(), true).locations[0];
-                        assert ss.index() == 1 : "compiler stub return value slot index has changed?";
+                        if (ss.index() != 1) {
+                            //com.sun.max.vm.Log.println("STACK SLOT CHANGE in Deopt Stub" + ss.index());
+                            // commented out as changing register configs
+                        }
+                        //assert ss.index() == 1 : "compiler stub return value slot index has changed?"; Commented out to allow long/double correct stack alignment (see CiRegisterConfig.java)
 
                         src = new CiAddress(kind, ARMV7.RSP, cfo + ss.index() * 4);
 
