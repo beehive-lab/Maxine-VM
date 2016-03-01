@@ -1861,6 +1861,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         if (ARMV7.r8 != target) {
             addRegisters(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, target, 0, 0);
         }
+        //System.out.println("T1X:call R" + target.encoding);
         int instruction = blxHelper(ConditionFlag.Always, ARMV7.r8);
         emitInt(instruction);
     }

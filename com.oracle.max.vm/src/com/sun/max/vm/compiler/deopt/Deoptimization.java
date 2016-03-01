@@ -373,19 +373,12 @@ public class Deoptimization extends VmOperation {
                 Object obj = c.asObject();
                 sp.writeWord(0, Reference.fromJava(obj).toOrigin());
             } else if (c.kind.isLong()) {
-                /*if( platform().isa == ISA.ARM) {
-                    assert STACK_SLOT_SIZE == 4 : "Stack slot size is NOT 4 bytes for ARM?";
-                    //--i;
-                    sp = sp.minus(STACK_SLOT_SIZE);
-                }*/
+               // TODO is this ok for alignment on 32bit ARM
                 sp.writeLong(0, c.asLong());
 
             } else if (c.kind.isDouble()) {
-                /*if( platform().isa == ISA.ARM) {
-                    assert STACK_SLOT_SIZE == 4 : "Stack slot size is NOT 4 bytes for ARM?";
-                    //--i;
-                    sp = sp.minus(STACK_SLOT_SIZE);
-                }*/
+                // TODO is this ok for alignment on 32bit ARM
+
                 sp.writeDouble(0, c.asDouble());
             } else {
                 sp.writeWord(0, Address.fromLong(c.asLong())); /// TODO is this ok for 32bit ints/addresses?
@@ -394,12 +387,11 @@ public class Deoptimization extends VmOperation {
 
         }
         spCopy = spCopy.minus(info.slotsSize());
-        if (!spCopy.equals(sp)) {
+        if (DeoptDebugLog && !spCopy.equals(sp)) {
             com.sun.max.vm.Log.println(sp);
             com.sun.max.vm.Log.println(spCopy);
-        } else {
-            com.sun.max.vm.Log.println("STACK MANIPULATIONSOK");
         }
+
         if (DeoptDebugLog) {
             com.sun.max.vm.Log.println("written words to slots in deoptimization");
         }
