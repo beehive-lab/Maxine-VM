@@ -875,17 +875,11 @@ public class CompilationBroker implements NativeCMethodinVM {
                 if (current.isTopFrame()) {
                     return true;
                 }
-                VMOptions.verboseOption.verboseCompilation = true;
+                VMOptions.verboseOption.verboseCompilation = true;  // temporary whilst debugging Mandelbrot
                 Pointer ip = current.ipAsPointer();
                 CodePointer callSite = CodePointer.from(ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE + 12));
                 Pointer callSitePointer = callSite.toPointer();
-                Log.println("!!!!!!!!!!!!!!!!CompilationBroker.visitFrame NEEDS TESTING");
-        /*for(ii = -16; ii <= 16;ii+=4) {
-			if(ARMTargetMethodUtil.isARMV7RIPCall(current.targetMethod(),CodePointer.from(ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE + ii)))) {
-				Log.print("MATCHED with offset ");
-				 Log.println(ii);
-			}else Log.println("NO MATCH");
-		}*/
+
 
                 if (ARMTargetMethodUtil.isARMV7RIPCall(current.targetMethod(), callSite)) {
                     //CodePointer target = CodePointer.from(ip.plus(callSitePointer.readInt(1)));

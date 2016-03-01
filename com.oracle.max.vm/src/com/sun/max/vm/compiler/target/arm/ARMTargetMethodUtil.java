@@ -245,22 +245,32 @@ public final class ARMTargetMethodUtil {
     public static CodePointer ripCallOFFSET(TargetMethod tm, CodePointer callSite) {
         final Pointer callSitePointer = callSite.toPointer();
         int oldDisp32 = 0;
+        boolean found = false;
         if (((callSitePointer.readByte(3) & 0xff) == 0xe3) && ((callSitePointer.readByte(4 + 3) & 0xff) == 0xe3)) {
             oldDisp32 = (callSitePointer.readByte(4 + 0) & 0xff) | ((callSitePointer.readByte(4 + 1) & 0xf) << 8) | ((callSitePointer.readByte(4 + 2) & 0xf) << 12);
             oldDisp32 = oldDisp32 << 16;
             oldDisp32 += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
+            found = true;
         }
-        assert (oldDisp32 != 0);
+        assert (found);
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32).plus(8);
     }
 
     public static boolean isARMV7RIPCall(TargetMethod tm, CodePointer callSite) {
         final Pointer callSitePointer = callSite.toPointer();
         int addInstrn = ARMV7Assembler.addRegistersHelper(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r15, ARMV7.r12, 0, 0);
-        if (((callSitePointer.readByte(3 + 8) & 0xff) == ((addInstrn >> 24) & 0xff)) && ((callSitePointer.readByte(2 + 8) & 0xff) == ((addInstrn >> 16) & 0xff)) &&
-                        ((callSitePointer.readByte(1 + 8) & 0xff) == ((addInstrn >> 8) & 0xff)) && ((callSitePointer.readByte(0 + 8) & 0xff) == (addInstrn & 0xff))) {
+        int otherAdd = ARMV7Assembler.addRegistersHelper(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r15, 0, 0);
+        int blxInstrn = ARMV7Assembler.blxHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12);
+        if((callSitePointer.readInt(8) == addInstrn || callSitePointer.readInt(8) == otherAdd) && callSitePointer.readInt(12) == blxInstrn) {
             return true;
         }
+        /*if((callSitePointer.readInt(12) &0xffffff00) == (blxInstrn & 0xffffff00)&& ((callSitePointer.readInt(8) & 0xfff00ff0) == (addInstrn & 0xfff00ff0))) {
+            return true;
+        }*/
+        /*if (((callSitePointer.readByte(3 + 8) & 0xff) == ((addInstrn >> 24) & 0xff)) && ((callSitePointer.readByte(2 + 8) & 0xff) == ((addInstrn >> 16) & 0xff)) &&
+                        ((callSitePointer.readByte(1 + 8) & 0xff) == ((addInstrn >> 8) & 0xff)) && ((callSitePointer.readByte(0 + 8) & 0xff) == (addInstrn & 0xff))) {
+            return true;
+        }*/
         return false;
     }
 
