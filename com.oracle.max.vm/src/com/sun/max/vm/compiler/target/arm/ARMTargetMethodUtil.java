@@ -93,7 +93,7 @@ public final class ARMTargetMethodUtil {
     /**
      * Gets the target of a 32-bit relative CALL instruction.
      *
-     * @param tm the method containing the CALL instruction
+     * @param tm      the method containing the CALL instruction
      * @param callPos the offset within the code of {@code targetMethod} of the CALL
      * @return the absolute target address of the CALL
      */
@@ -129,9 +129,9 @@ public final class ARMTargetMethodUtil {
     /**
      * Patches the offset operand of a 32-bit relative CALL instruction.
      *
-     * @param tm the method containing the CALL instruction
+     * @param tm         the method containing the CALL instruction
      * @param callOffset the offset within the code of {@code targetMethod} of the CALL to be patched
-     * @param target the absolute target address of the CALL
+     * @param target     the absolute target address of the CALL
      * @return the target of the call prior to patching
      */
     public static CodePointer fixupCall32Site(TargetMethod tm, int callOffset, CodePointer target) {
@@ -238,39 +238,40 @@ public final class ARMTargetMethodUtil {
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);
     }
 
-    private static final int RIP_CALL_INSTRUCTION_LENGTH = 16; // ARM it's two instructions, STMFD and the B branch
+    private static final int RIP_CALL_INSTRUCTION_LENGTH = 16; // ARM it's movw movt add blx
 
     private static final int RIP_JMP_INSTRUCTION_LENGTH = 4; // ARM it's one instruction the B branch
 
     public static CodePointer ripCallOFFSET(TargetMethod tm, CodePointer callSite) {
         final Pointer callSitePointer = callSite.toPointer();
-        int oldDisp32 = 0;
         boolean found = false;
-        if (((callSitePointer.readByte(3) & 0xff) == 0xe3) && ((callSitePointer.readByte(4 + 3) & 0xff) == 0xe3)) {
-            oldDisp32 = (callSitePointer.readByte(4 + 0) & 0xff) | ((callSitePointer.readByte(4 + 1) & 0xf) << 8) | ((callSitePointer.readByte(4 + 2) & 0xf) << 12);
-            oldDisp32 = oldDisp32 << 16;
-            oldDisp32 += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
+        int movw = callSitePointer.readInt(0);
+        int movt = callSitePointer.readInt(4);
+        int low = (movw & 0xfff) | ((movw & 0xf0000) >> 4);
+        int high = (movt & 0xfff) | ((movt & 0xf0000) >> 4);
+        high = (high << 16) | low;
+        if ((0xe3000000 == (movw & 0xfff00000)) && (0xe3400000 == (movt & 0xfff00000))) { // check  it is REALLY a movw movt ConditionFlag.Always ...
             found = true;
         }
         assert (found);
-        return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32).plus(8);
+        // ERROR CHECKING assert(high % 4 == 0);
+        return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(high).plus(8);
+
     }
 
     public static boolean isARMV7RIPCall(TargetMethod tm, CodePointer callSite) {
         final Pointer callSitePointer = callSite.toPointer();
         int addInstrn = ARMV7Assembler.addRegistersHelper(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r15, ARMV7.r12, 0, 0);
-        int otherAdd = ARMV7Assembler.addRegistersHelper(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r15, 0, 0);
+        // not required int otherAdd = ARMV7Assembler.addRegistersHelper(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r15, 0, 0);
         int blxInstrn = ARMV7Assembler.blxHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12);
-        if((callSitePointer.readInt(8) == addInstrn || callSitePointer.readInt(8) == otherAdd) && callSitePointer.readInt(12) == blxInstrn) {
-            return true;
+        try {
+            if ((callSitePointer.readInt(8) == addInstrn) && callSitePointer.readInt(12) == blxInstrn) {
+                return true;
+            }
+        } catch (NullPointerException e) {
+            // TODO important why are we reading past the end of the memory here!!!!!!
+            return false;
         }
-        /*if((callSitePointer.readInt(12) &0xffffff00) == (blxInstrn & 0xffffff00)&& ((callSitePointer.readInt(8) & 0xfff00ff0) == (addInstrn & 0xfff00ff0))) {
-            return true;
-        }*/
-        /*if (((callSitePointer.readByte(3 + 8) & 0xff) == ((addInstrn >> 24) & 0xff)) && ((callSitePointer.readByte(2 + 8) & 0xff) == ((addInstrn >> 16) & 0xff)) &&
-                        ((callSitePointer.readByte(1 + 8) & 0xff) == ((addInstrn >> 8) & 0xff)) && ((callSitePointer.readByte(0 + 8) & 0xff) == (addInstrn & 0xff))) {
-            return true;
-        }*/
         return false;
     }
 
@@ -340,8 +341,8 @@ public final class ARMTargetMethodUtil {
     /**
      * Patches a position in a target method with a direct jump to a given target address.
      *
-     * @param tm the target method to be patched
-     * @param pos the position in {@code tm} at which to apply the patch
+     * @param tm     the target method to be patched
+     * @param pos    the position in {@code tm} at which to apply the patch
      * @param target the target of the jump instruction being patched in
      */
     public static void patchWithJump(TargetMethod tm, int pos, CodePointer target) {
@@ -399,8 +400,8 @@ public final class ARMTargetMethodUtil {
      * Indicate with the instruction in a target method at a given position is a jump to a specified destination. Used
      * in particular for testing if the entry points of a target method were patched to jump to a trampoline.
      *
-     * @param tm a target method
-     * @param pos byte index relative to the start of the method to a call site
+     * @param tm         a target method
+     * @param pos        byte index relative to the start of the method to a call site
      * @param jumpTarget target to compare with the target of the assumed jump instruction
      * @return {@code true} if the instruction is a jump to the target, false otherwise
      */
@@ -443,8 +444,8 @@ public final class ARMTargetMethodUtil {
      * Advances the stack walker such that {@code current} becomes the callee.
      *
      * @param current the frame just visited by the current stack walk
-     * @param csl the layout of the callee save area in {@code current}
-     * @param csa the address of the callee save area in {@code current}
+     * @param csl     the layout of the callee save area in {@code current}
+     * @param csa     the address of the callee save area in {@code current}
      */
     public static void advance(StackFrameCursor current, CiCalleeSaveLayout csl, Pointer csa) {
         assert csa.isZero() == (csl == null);
