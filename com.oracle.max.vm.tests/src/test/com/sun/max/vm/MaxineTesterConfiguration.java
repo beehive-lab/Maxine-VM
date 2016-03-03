@@ -273,15 +273,16 @@ public class MaxineTesterConfiguration {
         String testCallerT1X = "--XX:CompileCommand=" + JTRuns.class.getName() + ":T1X";
         String testCalleeT1X = "--XX:CompileCommand=jtt.:T1X";
         String testCalleeGraal = "--XX:CompileCommand=jtt.:Graal";
-        String monitorScheme = "-monitor=com.sun.max.vm.monitor.modal.schemes.inflated_only";
+        String monitorScheme = "-monitor=com.sun.max.vm.monitor.modal.schemes.thin_inflated";
         String gcScheme = "-heap=com.sun.max.vm.heap.sequential.semiSpace";
-        String debugOpts = "-debug-methods -build=DEBUG";
+        String debugMethods = "-debug-methods";
+        String build = "-build=DEBUG";
         String tmpVMArgs = "--J @\" -Xms512M -Xmx1G -esa -ea\"";
 
         imageConfig("java", "-run=java");
         imageConfig("c1xgraal", opt_c1xgraal);
         imageConfig("c1xgraal-boot", opt_c1xgraal, "--XX:+GraalForBoot");
-        imageConfig("jtt-t1xc1x", opt_c1x, "--J @ \" -Xms512M -Xmx1G -esa -ea\"", gcScheme, monitorScheme, "-threads=4", debugOpts, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests",
+        imageConfig("jtt-t1xc1x", opt_c1x, "--J @ \" -Xms512M -Xmx1G -esa -ea\"", gcScheme, monitorScheme, "-threads=4", debugMethods, build,  "-run=test.com.sun.max.vm.jtrun.all", "-native-tests",
                         testCallerT1X);
         imageConfig("jtt-c1xt1x", opt_c1x, "--J @ \" -Xms512M -Xmx1G -esa -ea\"", gcScheme, monitorScheme, "-threads=4", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", testCalleeT1X,
                         "--XX:+FailOverCompilation");
