@@ -875,23 +875,25 @@ public class CompilationBroker implements NativeCMethodinVM {
                 if (current.isTopFrame()) {
                     return true;
                 }
-                VMOptions.verboseOption.verboseCompilation = true;  // temporary whilst debugging Mandelbrot
+                // VMOptions.verboseOption.verboseCompilation = true;  // temporary whilst debugging Mandelbrot
                 Pointer ip = current.ipAsPointer();
-                CodePointer callSite = CodePointer.from(ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE + 12));
-                Pointer callSitePointer = callSite.toPointer();
+                //com.sun.max.vm.Log.println(ip);
+                Pointer newIp = ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE + 12); // this is to make it the same size as RIP_CALL_INSTRUCTION_LENGTH
+                /* movw movt add blx */
 
 
-                if (ARMTargetMethodUtil.isARMV7RIPCall(current.targetMethod(), callSite)) {
-                    //CodePointer target = CodePointer.from(ip.plus(callSitePointer.readInt(1)));
-                    CodePointer target = ARMTargetMethodUtil.ripCallOFFSET(current.targetMethod(), callSite);
-                    target = target.minus(8); // 8 too big or 8 too small ...
-                    Log.println("MATCHED RIPCALL");
-                    //callSitePointer.readInt(1)));
-                    Log.println("target is " + target);
-                    Log.println("BASELINE TARGET" + oldMethod.getEntryPoint(BASELINE_ENTRY_POINT));
-                    Log.println("OPTIMISED  TARGET" + oldMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT));
+                if (ARMTargetMethodUtil.isARMV7RIPCall(current.targetMethod(), newIp)) {
+                    CodePointer callSite = CodePointer.from(newIp);
+
+                    int ripOffset = ARMTargetMethodUtil.ripCallOFFSET(current.targetMethod(), newIp);
+                    CodePointer target = CodePointer.from(newIp).plus(ripOffset).minus(8); // ARM internal PC is +8, and the call takes account of this
+
+                    // TODO CodePointer issues, masking off of -ve MSB in toInt might cause problems?
+                    // TODO when trying to locate directCalleePosition's below ....
+                    //TODO REMOVE LOGGING WHEN CONFIDENT THIS IS OK Log.println("MATCHED RIPCALL");
+
                     if (target.equals(oldMethod.getEntryPoint(BASELINE_ENTRY_POINT))) {
-                        Log.println("matched OLD method BASELINE entry point");
+                        //Log.println("matched OLD method BASELINE entry point");
                         final CodePointer to = newMethod.getEntryPoint(BASELINE_ENTRY_POINT);
                         final TargetMethod tm = current.targetMethod();
                         final int dcIndex = directCalleePosition(tm, callSite);
@@ -900,9 +902,8 @@ public class CompilationBroker implements NativeCMethodinVM {
                         ARMTargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
                         // Stop traversing the stack after a direct call site has been patched
                         return false;
-                    }
-                    if (target.equals(oldMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT))) {
-                        Log.println("matched OLD method OPTIMIZED entry point");
+                    } else if (target.equals(oldMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT))) {
+                        //Log.println("matched OLD method OPTIMIZED entry point");
                         final CodePointer to = newMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT);
                         final TargetMethod tm = current.targetMethod();
                         final int dcIndex = directCalleePosition(tm, callSite);
@@ -911,11 +912,11 @@ public class CompilationBroker implements NativeCMethodinVM {
                         ARMTargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
                         // Stop traversing the stack after a direct call site has been patched
                         return false;
+                    } else {
+                        //Log.print(current.targetMethod()); Log.println("FAILED to match RIPCALL in visitFrame after matchin RIP");
                     }
-
-
                 } else {
-                    Log.println("FAILED to match RIPCALL in visitFrame");
+                    // TODO REMOVE LOGGING Log.println("FAILED to match RIPCALL in visitFrame");
                 }
                 if (++frameCount > FRAME_SEARCH_LIMIT) {
                     logNoFurtherStaticCallPatching();
