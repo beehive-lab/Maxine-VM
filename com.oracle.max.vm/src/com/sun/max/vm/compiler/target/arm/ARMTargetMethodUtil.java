@@ -242,9 +242,12 @@ public final class ARMTargetMethodUtil {
 
     private static final int RIP_JMP_INSTRUCTION_LENGTH = 4; // ARM it's one instruction the B branch
 
-    public static CodePointer ripCallOFFSET(TargetMethod tm, CodePointer callSite) {
-        final Pointer callSitePointer = callSite.toPointer();
+    public static int ripCallOFFSET(TargetMethod tm, Pointer callSitePointer/*CodePointer callSite*/) {
+        // changed to use Pointers rather than CodePointers as we got an exception due to the
+        // masking off of the MSB giving -ve values which then lead to a read of an illegal memory location
+
         boolean found = false;
+
         int movw = callSitePointer.readInt(0);
         int movt = callSitePointer.readInt(4);
         int low = (movw & 0xfff) | ((movw & 0xf0000) >> 4);
@@ -254,23 +257,17 @@ public final class ARMTargetMethodUtil {
             found = true;
         }
         assert (found);
-        // ERROR CHECKING assert(high % 4 == 0);
-        return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(high).plus(8);
-
+        return high + 8 + RIP_CALL_INSTRUCTION_LENGTH;
     }
 
-    public static boolean isARMV7RIPCall(TargetMethod tm, CodePointer callSite) {
-        final Pointer callSitePointer = callSite.toPointer();
+    public static boolean isARMV7RIPCall(TargetMethod tm, Pointer callSitePointer) {
+        // changed to use Pointers rather than CodePointers as we got an exception due to the
+        // masking off of the MSB giving -ve values which then lead to a read of an illegal memory location
+
         int addInstrn = ARMV7Assembler.addRegistersHelper(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r15, ARMV7.r12, 0, 0);
-        // not required int otherAdd = ARMV7Assembler.addRegistersHelper(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r15, 0, 0);
         int blxInstrn = ARMV7Assembler.blxHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12);
-        try {
-            if ((callSitePointer.readInt(8) == addInstrn) && callSitePointer.readInt(12) == blxInstrn) {
-                return true;
-            }
-        } catch (NullPointerException e) {
-            // TODO important why are we reading past the end of the memory here!!!!!!
-            return false;
+        if ((callSitePointer.readInt(8) == addInstrn) && callSitePointer.readInt(12) == blxInstrn) {
+            return true;
         }
         return false;
     }
