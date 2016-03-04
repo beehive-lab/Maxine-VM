@@ -75,7 +75,7 @@ public final class BootImageGenerator {
             "Create a file showing the connectivity of objects in the image.");
 
     public static final Option<Boolean> treeStringOption = options.newBooleanOption("tree-string", true,
-                    "Include toString value in connectivity tree.");
+            "Include toString value in connectivity tree.");
 
     private static final Option<Boolean> statsOption = options.newBooleanOption("stats", false,
             "Create a file detailing the number and size of each type of object in the image.");
@@ -94,12 +94,12 @@ public final class BootImageGenerator {
             "Generate inline TLAB allocation code in boot image.");
     // TODO: clean this up. Just for getting perf numbers.
     private static final Option<Boolean> useOutOfLineStubs = options.newBooleanOption("out-stubs", true,
-                    "Uses out of line runtime stubs when generating inlined TLAB allocations with XIR");
+            "Uses out of line runtime stubs when generating inlined TLAB allocations with XIR");
 
     // Options shared with the Inspector
 
-    private static final Option<Boolean> debugMethods  = options.newBooleanOption("debug-methods", false, "");
-    private static final Option<Boolean> simulationPlatform = options.newBooleanOption("simulation", false, "");
+    private static final Option<Boolean> debugMethods = options.newBooleanOption("debug-methods", false, "");
+    private static final Option<Boolean> simulationPlatform = options.newBooleanOption("simulation", false, "Enables simulation tracing of both PC/LD/ST (pc only at moment as debugging) implies -float-div=true");
 
     private static final Option<Boolean> floatIdiv = options.newBooleanOption("floatidiv", false, "");
 
@@ -241,12 +241,17 @@ public final class BootImageGenerator {
 
             nativeTests = testNative.getValue();
             AbstractAssembler.DEBUG_METHODS = debugMethods.getValue();
-	    AbstractAssembler.SIMULATE_PLATFORM = simulationPlatform.getValue();
-	    if(AbstractAssembler.SIMULATE_PLATFORM) {
-	    	AbstractAssembler.FLOAT_IDIV = true;
-	    } else {
-	       AbstractAssembler.FLOAT_IDIV = floatIdiv.getValue();
-	    }
+            AbstractAssembler.SIMULATE_PLATFORM = simulationPlatform.getValue(); // -simulation=true
+            if (AbstractAssembler.SIMULATE_PLATFORM) {
+                AbstractAssembler.FLOAT_IDIV = true;
+                /*
+                 * We use this flag to replace integer/long division with floating-point/double-precision operations, it is a little crude but it enables us to
+                 * run on platforms such as the Zynq where the ARM core does not have an sdiv/udiv instruction -- currently we must turn this on for our Zynq
+                 * platform
+                 */
+            } else {
+                AbstractAssembler.FLOAT_IDIV = floatIdiv.getValue();
+            }
 
             final File vmDirectory = getDefaultVMDirectory(true);
             vmDirectory.mkdirs();
@@ -255,7 +260,7 @@ public final class BootImageGenerator {
             configurator.create();
 
             // Initialize the Java prototype
-            JavaPrototype.initialize(prototypeGenerator.threadsOption.getValue(),  checkGeneratedCodeOption.getValue());
+            JavaPrototype.initialize(prototypeGenerator.threadsOption.getValue(), checkGeneratedCodeOption.getValue());
 
             Heap.genInlinedTLAB = inlinedTLABOption.getValue(); // TODO: cleanup. Just for evaluating impact on performance of inlined tlab alloc.
             Heap.useOutOfLineStubs = useOutOfLineStubs.getValue(); // TODO: cleanup.
@@ -302,11 +307,11 @@ public final class BootImageGenerator {
      * to which proxies will be dumped. These directories are created before boot image construction, and deleted
      * afterwards, if they had not existed beforehand. Note that all directories of a path have to be given.
      */
-    private static String[] proxyDirs = new String[] {
-        "java",
-        "java/lang",
-        "java/lang/invoke",
-        "com/sun/proxy"
+    private static String[] proxyDirs = new String[]{
+            "java",
+            "java/lang",
+            "java/lang/invoke",
+            "com/sun/proxy"
     };
 
     /**
@@ -371,7 +376,7 @@ public final class BootImageGenerator {
      * Writes the image data to the specified file.
      *
      * @param dataPrototype the data prototype containing a data-level representation of the image
-     * @param file the file to which to write the data prototype
+     * @param file          the file to which to write the data prototype
      */
     private void writeImage(DataPrototype dataPrototype, File file) {
         try {
@@ -428,7 +433,7 @@ public final class BootImageGenerator {
      * Writes miscellaneous statistics about the boot image creation process to a file.
      *
      * @param graphPrototype the graph (i.e. nodes/edges) representation of the prototype
-     * @param file the file to which to write the statistics
+     * @param file           the file to which to write the statistics
      * @throws IOException if there is a problem writing to the file
      */
     private void writeStats(GraphPrototype graphPrototype, File file) throws IOException {
@@ -445,9 +450,9 @@ public final class BootImageGenerator {
      * Writes the object tree to a file. The object tree helps to diagnose space usage problems,
      * typically caused by including too much into the image.
      *
-     * @param dataPrototype the data representation of the prototype
+     * @param dataPrototype  the data representation of the prototype
      * @param graphPrototype the graph representation of the prototype
-     * @param file the file to which to write the object
+     * @param file           the file to which to write the object
      * @throws IOException
      */
     private void writeObjectTree(DataPrototype dataPrototype, GraphPrototype graphPrototype, File file) throws IOException {
@@ -465,7 +470,7 @@ public final class BootImageGenerator {
      * of methods into the image that should not be included.
      *
      * @param compiledPrototype the compiled-code representation of the prototype
-     * @param file the file to which to write the tree
+     * @param file              the file to which to write the tree
      * @throws IOException if there is a problem writing to the file
      */
     private void writeMethodTree(CompiledPrototype compiledPrototype, File file) throws IOException {
@@ -489,6 +494,7 @@ public final class BootImageGenerator {
 
     /**
      * Writes various statistics about the image creation process to the standard output.
+     *
      * @param out the output stream to which to write the statistics
      */
     private static void writeMiscStatistics(PrintStream out) {

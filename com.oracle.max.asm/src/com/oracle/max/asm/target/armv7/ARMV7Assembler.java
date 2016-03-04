@@ -64,8 +64,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public static void initDebugMethods() {
         /*
-         * String value = System.getenv("FLOAT_IDIV"); if (value == null || value.isEmpty()) { FLOAT_IDIV = false; }
-         * else { FLOAT_IDIV = Integer.parseInt(value) == 1 ? true : false; } //FLOAT_IDIV= true;
+         * No longer required FLOAT_IDIV  set/handled in BootImageGenerator.java in the correct Maxine way
          */
     }
 
@@ -256,7 +255,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void branch(Label l) {
-        boolean instrumentMe = (maxineflush != null);
+        boolean instrumentMe = (maxineflush != null && SIMULATE_DYNAMIC);
         if (l.isBound()) {
             /*
              * REMEMBER -- the current stored value of the PC is 8 bytes larger than that of the currently executing
@@ -266,7 +265,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             // Compute a relative address if it is less than 24bits;
             // then branch
             // or TODO compute an absolute address and do a MOV PC,absolute.
-            if (maxineflush != null) {
+            if (maxineflush != null && SIMULATE_DYNAMIC) {
                 int disp = l.position() - codeBuffer.position() - 8;
                 disp = instrumentPCChange(ConditionFlag.Always, ConditionFlag.NeverUse, disp);
                 checkConstraint(-0x800000 <= (disp) && disp <= 0x7fffff, "branch must be within  a 24bit offset");
@@ -281,10 +280,10 @@ public class ARMV7Assembler extends AbstractAssembler {
             // By default, forward jumps are always 24-bit displacements, since
             // we can't yet know where the label will be bound. If you're sure that
             // the forward jump will not run beyond 24-bits bytes, then its ok
-            if (maxineflush != null) {
+            if (maxineflush != null && SIMULATE_DYNAMIC) {
                 // will need to be patched inside patchJumpTarget
                 instrumentPCChange(ConditionFlag.Always, ConditionFlag.NeverUse, -2);
-		    /*
+            /*
 		    We determine the offsets for patching --- by gdb of an exectuion of ... mx vm -Xopt App
 		    We break on real_maxine_instrumentation --- case of PCCHANGE  then do a disas of $lr -0x50,$lr +0x40
 		    and  do a print /x STARTARRDRESSNEXTINSTR - ADDRESSOFmovwmovtINSTRS
@@ -783,7 +782,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public void mov(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rm) {
         int instruction = 0x01a00000;
         assert (Rd.encoding < 16 && Rm.encoding < 16); // CORE Register move only!
-        if (maxineflush != null && Rd == ARMV7.r15) {
+        if (maxineflush != null && Rd == ARMV7.r15 && SIMULATE_DYNAMIC) {
             instrumentPush(ConditionFlag.Always, 1 << 12 | 1 << 8);
             mov(cond, false, ARMV7.r12, Rm);
             ConditionFlag tmp = cond.inverse();
@@ -968,7 +967,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void strd(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, final CiRegister Rm) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             assert 0 == 1 : "strd not instrumented";
             instrument(false, true, true, Rn, 0);
         }
@@ -985,7 +984,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void str(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, final CiRegister Rm, int imm5, int imm2Type) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             assert 0 == 1 : "str not instrumented";
             instrument(false, true, true, Rn, 0);
         }
@@ -1018,7 +1017,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void strImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rvalue, final CiRegister Rmemory, int imm12) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             instrument(false, true, true, Rmemory, imm12);
         }
 
@@ -1036,7 +1035,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void strDualImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             instrument(false, true, true, Rn, imm8);
         }
 
@@ -1070,7 +1069,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldrex(final ConditionFlag cond, final CiRegister Rdest, final CiRegister Raddr) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             instrument(true, true, true, Raddr, 0);
         }
 
@@ -1082,7 +1081,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldrexd(final ConditionFlag cond, final CiRegister Rdest, final CiRegister Raddr) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             instrument(true, true, true, Raddr, 0);
         }
 
@@ -1100,7 +1099,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= ((Raddr.encoding & 0xf) << 16);
         instruction |= Rnewval.encoding & 0xf;
         emitInt(instruction);
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             instrument(false, true, true, Raddr, 0);
         }
 
@@ -1113,14 +1112,14 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= ((Rd.encoding & 0xf) << 12);
         instruction |= Rt.encoding & 0xf;
         emitInt(instruction);
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             instrument(false, true, true, Rn, 0);
         }
 
     }
 
     public void ldruhw(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             instrument(true, true, true, Rn, imm8);
         }
 
@@ -1141,7 +1140,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldrshw(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             instrument(true, true, true, Rn, imm8);
         }
 
@@ -1162,7 +1161,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldrsb(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             instrument(true, true, true, Rn, imm8);
         }
 
@@ -1180,7 +1179,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldrb(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm12) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             instrument(true, true, true, Rn, imm12);
         }
 
@@ -1202,7 +1201,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void strbImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm12) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             // imm12 needs to be modified according to ARM rules ...
             instrument(false, true, true, Rn, imm12);
         }
@@ -1220,7 +1219,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void strHImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             instrument(false, true, true, Rn, imm8);
         }
 
@@ -1355,7 +1354,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldrImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm12) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             instrument(true, true, true, Rn, imm12);
         }
         int instruction = 0x04100000;
@@ -1371,7 +1370,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldr(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, final CiRegister Rm, int imm2Type, int imm5) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             instrument(true, true, true, Rn, imm5);
             assert 0 == 1 : "ldr instrumented should never be called";
             /*
@@ -1412,7 +1411,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldrd(final ConditionFlag cond, int P, int U, int W, final CiRegister Rn, final CiRegister Rt, final CiRegister Rm) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             /*
              * NOT used
              */
@@ -1474,7 +1473,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void push(final ConditionFlag flag, final int registerList) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             int count = 0;
             if ((registerList & (1 << 14)) == 0) {
                 for (int i = 0; i < 16; i++) {
@@ -1516,7 +1515,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void pop(final ConditionFlag flag, final int registerList) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             int count = 0;
             for (int i = 0; i < 16; i++) {
                 if ((registerList & (1 << i)) != 0) {
@@ -1543,7 +1542,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldrd(final ConditionFlag flag, final CiRegister valueReg, final CiRegister baseReg, int offset8) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             instrument(true, true, true, baseReg, offset8);
         }
 
@@ -1574,7 +1573,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void strd(final ConditionFlag flag, final CiRegister valueReg, final CiRegister baseReg, int offset8) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             instrument(false, true, true, baseReg, offset8);
         }
 
@@ -1629,7 +1628,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void str(final ConditionFlag flag, final CiRegister valueReg, final CiRegister baseRegister, final int offset12) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             instrument(false, true, true, baseRegister, offset12);
         }
 
@@ -1643,7 +1642,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldr(final ConditionFlag flag, final CiRegister destReg, final CiRegister baseRegister, final int offset12) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             instrument(true, true, true, baseRegister, offset12);
         }
 
@@ -2150,7 +2149,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         // TODO ret() implements an X86 return from subroutine this needs to pop the return value of the stack TODO we
         // might need to push the value of r14 onto the stack in order to make this work for a call from the C harness
         // TODO for testing of the methods
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
 		/* changed to do the load and then to state it is a PC altering operation */
             instrument(true, true, true, ARMV7.r13, 0);
             ldr(ConditionFlag.Always, ARMV7.r12, ARMV7.r13, 0);
@@ -2210,7 +2209,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 	*
 	*
 	*/
-        if (maxineflush == null) {
+        if (maxineflush == null && !SIMULATE_DYNAMIC) {
             return 0;
         }
         if (maxineFlushAddress == 0) {
@@ -2390,7 +2389,7 @@ public class ARMV7Assembler extends AbstractAssembler {
          * NEXT.!!!!
          */
         int disp = (target - codeBuffer.position());
-        if (Math.abs(disp) <= 16777214 && !forceDisp32 && maxineflush == null) { // TODO check ok to make this false
+        if (Math.abs(disp) <= 16777214 && !forceDisp32 && maxineflush == null && !SIMULATE_DYNAMIC) { // TODO check ok to make this false
             disp = (disp - 8) / 4;
             emitInt((cc.value & 0xf) << 28 | (0xa << 24) | (disp & 0xffffff));
         } else {
@@ -2407,7 +2406,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void jcc(ConditionFlag cc, Label l) {
-        boolean instrumentMe = (maxineflush != null);
+        boolean instrumentMe = (maxineflush != null && SIMULATE_DYNAMIC);
         assert (0 <= cc.value) && (cc.value < 16) : "illegal cc";
         if (l.isBound()) {
             // jcc(cc, l.position(), false);
@@ -2418,7 +2417,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             // is the same however, seems to be rather unlikely case.
             // Note: use jccb() if label to be bound is very close to get
             // an 8-bit displacement
-            if (maxineflush != null) {
+            if (maxineflush != null && SIMULATE_DYNAMIC) {
                 ConditionFlag tmp = ConditionFlag.Always;
                 tmp = cc.inverse();
                 instrumentPCChange(cc, tmp, -1);
@@ -2453,7 +2452,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void bx(ConditionFlag cond, CiRegister target) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             int notTakenDisp = 0;
             ConditionFlag notTaken = cond.inverse();
             instrumentPush(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4 r0..r12 & r14
@@ -2484,7 +2483,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void jmp(Label l) {
-        boolean instrumentMe = (maxineflush != null);
+        boolean instrumentMe = (maxineflush != null && SIMULATE_DYNAMIC);
         if (l.isBound()) {
             jmp(l.position(), false);
         } else {
@@ -2494,7 +2493,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             // force an 8-bit displacement.
             // System.out.println("JMP PATCHAT "+ codeBuffer.position());
             //
-            if (maxineflush != null) {
+            if (maxineflush != null && SIMULATE_DYNAMIC) {
                 ConditionFlag tmp = ConditionFlag.Always;
                 tmp = tmp.inverse();
                 instrumentPCChange(ConditionFlag.Always, tmp, -3);
@@ -2510,7 +2509,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final void jmp(int target, boolean forceDisp32) {
 
         int disp = target - codeBuffer.position();
-        if (disp <= 16777215 && forceDisp32 && maxineflush == null) {
+        if (disp <= 16777215 && forceDisp32 && maxineflush == null && !SIMULATE_DYNAMIC) {
             disp = (disp / 4) - 2;
             emitInt((0xe << 28) | (0xa << 24) | (disp & 0xffffff));
         } else {
@@ -2683,7 +2682,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void vstr(ConditionFlag cond, CiRegister dest, CiRegister src, int imm8, CiKind destKind, CiKind srcKind) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             instrument(false, true, true, src, imm8);
         }
 
@@ -2726,7 +2725,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void vldr(ConditionFlag cond, CiRegister dest, CiRegister src, int imm8, CiKind destKind, CiKind srcKind) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             instrument(true, true, true, src, imm8);
         }
 
@@ -2781,7 +2780,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void vpop(ConditionFlag cond, CiRegister first, CiRegister last, CiKind firstKind, CiKind lastKind) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             for (int i = first.encoding; i <= last.encoding; i++) {
                 instrument(true, true, true, ARMV7.r13, -4 * (i - first.encoding));
             }
@@ -2809,7 +2808,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void vpush(ConditionFlag cond, CiRegister first, CiRegister last, CiKind firstKind, CiKind lastKind) {
-        if (maxineflush != null) {
+        if (maxineflush != null && SIMULATE_DYNAMIC) {
             for (int i = first.encoding; i <= last.encoding; i++) {
                 instrument(false, true, true, ARMV7.r13, 4 * (i - first.encoding));
             }
