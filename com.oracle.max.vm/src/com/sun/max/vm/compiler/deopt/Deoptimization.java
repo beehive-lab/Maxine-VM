@@ -743,10 +743,10 @@ public class Deoptimization extends VmOperation {
             switch (slot.kind) {
                 case Long:
                 case Double:
-                    debugSlotSize += 8;
+                    debugSlotSize += 8; // TODO remove once finished with ARMV7 debugging of Deopt
                     break;
                 default:
-                    debugSlotSize += 4;
+                    debugSlotSize += 4; // TODO remove once finished  with ARMV7 debugging of Deopot
                     break;
 
             }
@@ -755,10 +755,10 @@ public class Deoptimization extends VmOperation {
             }
         }
 
-        /*public int slotsSize() {
-            return slotsCount() * STACK_SLOT_SIZE;
-        }*/
         public int slotsSize() {
+            return slotsCount() * STACK_SLOT_SIZE;
+        }
+        /*public int slotsSize() { commented out at present .... 
             if (debugSlotSize != (slotsCount() * STACK_SLOT_SIZE)) {
                 com.sun.max.vm.Log.println("slot size discrcepancy");
                 com.sun.max.vm.Log.println(debugSlotSize);
@@ -766,7 +766,7 @@ public class Deoptimization extends VmOperation {
             }
             assert debugSlotSize == (slotsCount() * STACK_SLOT_SIZE) : "ERROR slot size issues";
             return debugSlotSize;
-        }
+        }*/
 
         public int slotsCount() {
             return slots.size();
