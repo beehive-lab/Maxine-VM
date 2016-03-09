@@ -5,15 +5,10 @@ import java.lang.reflect.*;
 import java.math.*;
 import java.util.*;
 
-import jtt.bytecode.*;
-
-import jtt.loop.Loop01;
 import org.objectweb.asm.util.*;
 
-import test.arm.asm.*;
-
 import com.oracle.max.asm.target.armv7.*;
-import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
+import com.oracle.max.asm.target.armv7.ARMV7Assembler.*;
 import com.oracle.max.vm.ext.c1x.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.oracle.max.vm.ext.t1x.*;
@@ -23,7 +18,7 @@ import com.sun.max.ide.*;
 import com.sun.max.io.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.Phase;
+import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -33,6 +28,9 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
+
+import jtt.bytecode.*;
+import test.arm.asm.*;
 
 public class ARMV7JTTTest extends MaxTestCase {
 
@@ -281,7 +279,6 @@ public class ARMV7JTTTest extends MaxTestCase {
             c1x = (C1X) CompilationBroker.addCompiler("c1x", optimizingCompilerName);
             c1x.initializeOffline(Phase.HOSTED_COMPILING);
             theCompiler = (ARMV7T1XCompilation) t1x.getT1XCompilation();
-            theCompiler.setDebug(false);
         } catch (Exception e) {
             System.out.println(e);
             e.printStackTrace();
