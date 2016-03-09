@@ -63,6 +63,7 @@ extern void pushILD(unsigned int address);
 extern void pushDSTR(unsigned int address);
 */
 // defined in libFPGAsim.a
+extern int initialiseMemoryCluster();
 extern int initialiseTimingModel();
 extern void pushJumpAddress(int address);
 extern int reportTimingCounters();
@@ -116,7 +117,9 @@ void real_maxine_instrumentation(int address, unsigned int newpc, int totalPages
 			Absolute address  this refers to a mov to the PC, a blx/bx with a register.
 			or even a branch to an absolute address
 			*/
-			printf("NEWPC METHODENTRY 0x%x\n",newpc);
+			#ifdef DEBUG_ITRACE
+				printf("NEWPC METHODENTRY 0x%x\n",newpc);
+			#endif
 			pushJumpAddress(newpc);
 			//pushJumpAddress(newpc+72);
 		break; // break  only while debugging the various cases ...
@@ -124,11 +127,15 @@ void real_maxine_instrumentation(int address, unsigned int newpc, int totalPages
 			We DELIBERATELY FALL THROUGH TO CASE 3 THAT IS ALSO AN absolute ADDRESS 
 			*/
 		case -3:
-			printf("NEWPC --- ABSOLUTE 0x%x\n\n",newpc);
+			#ifdef DEBUG_ITRACE
+				printf("NEWPC --- ABSOLUTE 0x%x\n",newpc);
+			#endif
 			pushJumpAddress(newpc);
 		break;
 		case -1:
-			printf("RELATIVE NEWPCBRANCH --- 0x%x\n\n",newpc);
+			#ifdef DEBUG_ITRACE
+				printf("RELATIVE NEWPCBRANCH --- 0x%x\n",newpc);
+			#endif
 			/*
 			this is a relative branch/jmp of some kind .....
 			*/
@@ -592,9 +599,10 @@ int maxine(int argc, char *argv[], char *executablePath) {
 divideByZeroExceptions();        
 //#define SIMULATION_PLATFORM 1
 //#ifdef SIMULATIONPLATFORM
-//initialiseMemoryCluster();
+initialiseMemoryCluster();
 //printf("INITIALISE TIMING\n");
 initialiseTimingModel();
+
 //#endif
 #endif
 
@@ -766,7 +774,9 @@ void divideByZeroExceptions() {
 }
 void maxine_cacheflush(char *start, int length) {
 	char * end = start + length;
-	printf("FLUSHED CACHE %p  length: %d \n",start,length);
+	#ifdef DEBUG_ITRACE
+		printf("FLUSHED CACHE %p  length: %d \n",start,length);
+	#endif
 	clearTimingCache(start, length);
 	asm volatile("isb ");
 	asm volatile("dsb ");
