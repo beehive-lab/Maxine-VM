@@ -78,9 +78,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
             }
         buf = asm.codeBuffer;
         patchInfo = new PatchInfoARMV7();
-    }
-
-    static {
         initDebugMethods();
     }
 
