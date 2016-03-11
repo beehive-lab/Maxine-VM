@@ -99,10 +99,10 @@ public abstract class LIRAssembler {
         }
         if (AbstractAssembler.DEBUG_METHODS) {
             debugEnabled = true;
-            if ((file = new File(getDebugMethodsPath() + "debug_methods")).exists()) {
+            if ((file = new File(getDebugMethodsPath() + "debugC1Xmethods")).exists()) {
                 file.delete();
             }
-            file = new File(getDebugMethodsPath() + "debug_methods");
+            file = new File(getDebugMethodsPath() + "debugC1Xmethods");
         }
     }
 
