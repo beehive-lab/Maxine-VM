@@ -85,7 +85,7 @@ public class MaxineTesterConfiguration {
                         javaClass.getDeclaredMethod("main", String[].class);
                         result.add(javaClass);
                     } catch (UnsupportedClassVersionError e) {
-                        if (className.substring(0, className.length() -2).endsWith("MethodHandles") && JDK.JDK_VERSION != JDK.JDK_7) {
+                        if (className.substring(0, className.length() - 2).endsWith("MethodHandles") && JDK.JDK_VERSION != JDK.JDK_7) {
                             // silently ignore JDK7 specific test if building with an earlier JDK
                             return true;
                         }
@@ -110,15 +110,15 @@ public class MaxineTesterConfiguration {
         output(findOutputTests("test.output."));
 
         // Refine expectation for certain output tests
-        output(Classes.forName("test.output.AWTFont"),                  FAIL_DARWIN);
-        output(Classes.forName("test.output.GCTest7"),                  RAND_DARWIN);
-        output(Classes.forName("test.output.WeakReferenceTest01"),                  RAND_ALL);
-        output(Classes.forName("test.output.WeakReferenceTest02"),                  RAND_ALL);
-        output(Classes.forName("test.output.WeakReferenceTest03"),                  RAND_ALL);
-        output(Classes.forName("test.output.WeakReferenceTest03_01"),            RAND_ALL);
-        output(Classes.forName("test.output.WeakReferenceTest04"),                  RAND_ALL);
-        output(Classes.forName("test.output.GCTest8"),                                       RAND_ALL);
-        output(Classes.forName("test.output.CatchOutOfMemory"),                     RAND_ALL);
+        output(Classes.forName("test.output.AWTFont"), FAIL_DARWIN);
+        output(Classes.forName("test.output.GCTest7"), RAND_DARWIN);
+        output(Classes.forName("test.output.WeakReferenceTest01"), RAND_ALL);
+        output(Classes.forName("test.output.WeakReferenceTest02"), RAND_ALL);
+        output(Classes.forName("test.output.WeakReferenceTest03"), RAND_ALL);
+        output(Classes.forName("test.output.WeakReferenceTest03_01"), RAND_ALL);
+        output(Classes.forName("test.output.WeakReferenceTest04"), RAND_ALL);
+        output(Classes.forName("test.output.GCTest8"), RAND_ALL);
+        output(Classes.forName("test.output.CatchOutOfMemory"), RAND_ALL);
 
         vmoutput(findOutputTests("test.vm.output."));
 
@@ -219,53 +219,53 @@ public class MaxineTesterConfiguration {
         specjvm2008("xml.transform");
         specjvm2008("xml.validation");
 
-        shootout("ackermann",       "10");
-        shootout("ary",             "10000", "300000");
-        shootout("binarytrees",     "12", "16", "18");
-        shootout("chameneos",       "1000", "250000");
-        shootout("chameneosredux",  "1000", "250000");
-        shootout("except",          "10000", "100000", "1000000");
-        shootout("fannkuch",        "8", "10", "11");
-        shootout("fasta",           "1000", "250000");
-        shootout("fibo",            "22", "32", "42");
-        shootout("harmonic",        "1000000", "200000000");
-        shootout("hash",            "100000", "1000000");
-        shootout("hash2",           "100", "1000", "2000");
-        shootout("heapsort",        "10000", "1000000", "3000000");
-        shootout("knucleotide",     new File("knucleotide.stdin"));
-        shootout("lists",           "10", "100", "1000");
-        shootout("magicsquares",    "3", "4");
-        shootout("mandelbrot",      "100", "1000", "5000");
-        shootout("matrix",          "1000", "10000", "20000");
-        shootout("message",         "1000", "5000", "15000");
-        shootout("meteor",          "2098");
-        shootout("methcall",        "100000000", "1000000000");
-        shootout("moments",         new File("moments.stdin"));
-        shootout("nbody",           "500000", "5000000");
-        shootout("nestedloop",      "10", "20", "35");
-        shootout("nsieve",          "8", "10", "11");
-        shootout("nsievebits",      "8", "10", "11");
-        shootout("objinst",         "100000", "1000000", "5000000");
-        shootout("partialsums",     "10000", "2000000");
-        shootout("pidigits",        "30", "1000");
-        shootout("process",         "10", "250");
-        shootout("prodcons",        "100", "100000");
-        shootout("random",          "1000000", "500000000");
-        shootout("raytracer",       "10", "200");
-        shootout("recursive",       "10");
-        shootout("regexdna",        new File("regexdna.stdin"));
-        shootout("regexmatch",      new File("regexmatch.stdin"));
-        shootout("revcomp",         new File("revcomp.stdin"));
-        shootout("reversefile",     new File("reversefile.stdin"));
-        shootout("sieve",           "100", "20000");
-        shootout("spectralnorm",    "100", "3000");
-        shootout("spellcheck",      new File("spellcheck.stdin"));
-        shootout("strcat",          "100000", "5000000");
-        shootout("sumcol",          new File("sumcol.stdin"));
-        shootout("takfp",           "5", "11");
-        shootout("threadring",      "100", "50000");
-        shootout("wc",              new File("wc.stdin"));
-        shootout("wordfreq",        new File("wordfreq.stdin"));
+        shootout("ackermann", "10");
+        shootout("ary", "10000", "300000");
+        shootout("binarytrees", "12", "16", "18");
+        shootout("chameneos", "1000", "250000");
+        shootout("chameneosredux", "1000", "250000");
+        shootout("except", "10000", "100000", "1000000");
+        shootout("fannkuch", "8", "10", "11");
+        shootout("fasta", "1000", "250000");
+        shootout("fibo", "22", "32", "42");
+        shootout("harmonic", "1000000", "200000000");
+        shootout("hash", "100000", "1000000");
+        shootout("hash2", "100", "1000", "2000");
+        shootout("heapsort", "10000", "1000000", "3000000");
+        shootout("knucleotide", new File("knucleotide.stdin"));
+        shootout("lists", "10", "100", "1000");
+        shootout("magicsquares", "3", "4");
+        shootout("mandelbrot", "100", "1000", "5000");
+        shootout("matrix", "1000", "10000", "20000");
+        shootout("message", "1000", "5000", "15000");
+        shootout("meteor", "2098");
+        shootout("methcall", "100000000", "1000000000");
+        shootout("moments", new File("moments.stdin"));
+        shootout("nbody", "500000", "5000000");
+        shootout("nestedloop", "10", "20", "35");
+        shootout("nsieve", "8", "10", "11");
+        shootout("nsievebits", "8", "10", "11");
+        shootout("objinst", "100000", "1000000", "5000000");
+        shootout("partialsums", "10000", "2000000");
+        shootout("pidigits", "30", "1000");
+        shootout("process", "10", "250");
+        shootout("prodcons", "100", "100000");
+        shootout("random", "1000000", "500000000");
+        shootout("raytracer", "10", "200");
+        shootout("recursive", "10");
+        shootout("regexdna", new File("regexdna.stdin"));
+        shootout("regexmatch", new File("regexmatch.stdin"));
+        shootout("revcomp", new File("revcomp.stdin"));
+        shootout("reversefile", new File("reversefile.stdin"));
+        shootout("sieve", "100", "20000");
+        shootout("spectralnorm", "100", "3000");
+        shootout("spellcheck", new File("spellcheck.stdin"));
+        shootout("strcat", "100000", "5000000");
+        shootout("sumcol", new File("sumcol.stdin"));
+        shootout("takfp", "5", "11");
+        shootout("threadring", "100", "50000");
+        shootout("wc", new File("wc.stdin"));
+        shootout("wordfreq", new File("wordfreq.stdin"));
 
         String opt_c1x = "-opt=C1X";
         String opt_c1xgraal = "-opt=C1XGraal";
@@ -273,20 +273,23 @@ public class MaxineTesterConfiguration {
         String testCallerT1X = "--XX:CompileCommand=" + JTRuns.class.getName() + ":T1X";
         String testCalleeT1X = "--XX:CompileCommand=jtt.:T1X";
         String testCalleeGraal = "--XX:CompileCommand=jtt.:Graal";
+        String monitorScheme = "-monitor=com.sun.max.vm.monitor.modal.schemes.thin_inflated";
+        String gcScheme = "-heap=com.sun.max.vm.heap.sequential.semiSpace";
+        String debugMethods = "-debug-methods";
+        String build = "-build=DEBUG";
+        String tmpVMArgs = "--J @\" -Xms512M -Xmx1G -esa -ea\"";
 
         imageConfig("java", "-run=java");
         imageConfig("c1xgraal", opt_c1xgraal);
         imageConfig("c1xgraal-boot", opt_c1xgraal, "--XX:+GraalForBoot");
-        imageConfig("jtt-t1xc1x", opt_c1x,"--J @ \" -Xms512M -Xmx1G -esa -ea\"","-heap=com.sun.max.vm.heap.sequential.semiSpace",
-		"-monitor=com.sun.max.vm.monitor.modal.schemes.inflated_only","-threads=4","-debug-methods",  "-run=test.com.sun.max.vm.jtrun.all",/*"-build=DEBUG",*/ "-native-tests", testCallerT1X);
-        imageConfig("jtt-c1xt1x", opt_c1x, "--J @ \" -Xms512M -Xmx1G -esa -ea\"", "-heap=com.sun.max.vm.heap.sequential.semiSpace",
-		 "-monitor=com.sun.max.vm.monitor.modal.schemes.inflated_only", "-threads=4", "-run=test.com.sun.max.vm.jtrun.all",
-                        "-native-tests", testCalleeT1X, "--XX:+FailOverCompilation");
-        imageConfig("jtt-t1xt1x", opt_c1x, "--J @ \" -Xms512M -Xmx1G -esa -ea\"", "-heap=com.sun.max.vm.heap.sequential.semiSpace",
-		"-monitor=com.sun.max.vm.monitor.modal.schemes.inflated_only","-debug-methods", "-threads=4", "-run=test.com.sun.max.vm.jtrun.all",
-                        "-native-tests", joinCompileCommands(testCallerT1X, testCalleeT1X), "--XX:+FailOverCompilation");
-        String tmpVMArgs = "--J @\" -Xms512M -Xmx1G -esa -ea\"";
-        imageConfig("jtt-c1xc1x", opt_c1x, tmpVMArgs, "-heap=com.sun.max.vm.heap.sequential.semiSpace", "-monitor=com.sun.max.vm.monitor.modal.schemes.inflated_only", "-threads=4", "-debug-methods","-run=test.com.sun.max.vm.jtrun.all", "-native-tests");
+        imageConfig("jtt-t1xc1x", opt_c1x, "--J @ \" -Xms512M -Xmx1G -esa -ea\"", gcScheme, monitorScheme, "-threads=4", debugMethods, build,  "-run=test.com.sun.max.vm.jtrun.all", "-native-tests",
+                        testCallerT1X);
+        imageConfig("jtt-c1xt1x", opt_c1x, "--J @ \" -Xms512M -Xmx1G -esa -ea\"", gcScheme, monitorScheme, "-threads=4", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", testCalleeT1X,
+                        "--XX:+FailOverCompilation");
+        imageConfig("jtt-t1xt1x", opt_c1x, "--J @ \" -Xms512M -Xmx1G -esa -ea\"", gcScheme, monitorScheme, "-threads=4", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests",
+                        joinCompileCommands(testCallerT1X, testCalleeT1X), "--XX:+FailOverCompilation");
+
+        imageConfig("jtt-c1xc1x", opt_c1x, tmpVMArgs, gcScheme, monitorScheme, "-threads=4", "-debug-methods", "-run=test.com.sun.max.vm.jtrun.all", "-build=DEBUG", "-native-tests");
         imageConfig("jtt-c1xgraal", opt_c1xgraal, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", joinCompileCommands(testCallerT1X, testCalleeGraal));
 
         imageConfig("jtt-msc1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", testCalleeT1X);
@@ -317,33 +320,33 @@ public class MaxineTesterConfiguration {
         maxvmConfig("noGC", "-XX:+DisableGC", "-Xmx3g");
         maxvmConfig("GC", "-Xmx2g");
 
-        imageConfig("baseline-c1x0",  "--C1X:OptLevel=0");
-        imageConfig("baseline-c1x1",  "--C1X:OptLevel=1");
-        imageConfig("baseline-c1x2",  "--C1X:OptLevel=2");
-        imageConfig("baseline-c1x3",  "--C1X:OptLevel=3");
+        imageConfig("baseline-c1x0", "--C1X:OptLevel=0");
+        imageConfig("baseline-c1x1", "--C1X:OptLevel=1");
+        imageConfig("baseline-c1x2", "--C1X:OptLevel=2");
+        imageConfig("baseline-c1x3", "--C1X:OptLevel=3");
 
-        imageConfig("opt-c1x0",  opt_c1x, "--C1X:OptLevel=0");
-        imageConfig("opt-c1x1",  opt_c1x, "--C1X:OptLevel=1");
-        imageConfig("opt-c1x2",  opt_c1x, "--C1X:OptLevel=2");
-        imageConfig("opt-c1x3",  opt_c1x, "--C1X:OptLevel=3");
+        imageConfig("opt-c1x0", opt_c1x, "--C1X:OptLevel=0");
+        imageConfig("opt-c1x1", opt_c1x, "--C1X:OptLevel=1");
+        imageConfig("opt-c1x2", opt_c1x, "--C1X:OptLevel=2");
+        imageConfig("opt-c1x3", opt_c1x, "--C1X:OptLevel=3");
 
-        imageConfig("c1x0",  opt_c1x, "--C1X:OptLevel=0");
-        imageConfig("c1x1",  opt_c1x, "--C1X:OptLevel=1");
-        imageConfig("c1x2",  opt_c1x, "--C1X:OptLevel=2");
-        imageConfig("c1x3",  opt_c1x, "--C1X:OptLevel=3");
+        imageConfig("c1x0", opt_c1x, "--C1X:OptLevel=0");
+        imageConfig("c1x1", opt_c1x, "--C1X:OptLevel=1");
+        imageConfig("c1x2", opt_c1x, "--C1X:OptLevel=2");
+        imageConfig("c1x3", opt_c1x, "--C1X:OptLevel=3");
 
         // Alias to default configuration
-        imageConfig("gss",  opt_c1x,   "-run=java", "-heap=sequential.gen.semiSpace");
+        imageConfig("gss", opt_c1x, "-run=java", "-heap=sequential.gen.semiSpace");
         // Alternate GC configurations
-        imageConfig("gssd",  opt_c1x,   "-run=java", "-heap=sequential.gen.semiSpace", "-build=DEBUG");
-        imageConfig("ss",  opt_c1x,   "-run=java", "-heap=sequential.semiSpace");
-        imageConfig("ssd",  opt_c1x,   "-run=java", "-heap=sequential.semiSpace", "-build=DEBUG");
-        imageConfig("ms",   opt_c1x,      "-run=java", "-heap=gcx.ms");
-        imageConfig("msd",  opt_c1x,     "-run=java", "-heap=gcx.ms", "-build=DEBUG");
-        imageConfig("msed",  opt_c1x,     "-run=java", "-heap=gcx.mse", "-build=DEBUG");
-        imageConfig("mse",  opt_c1x,   "-run=java", "-heap=gcx.mse");
-        imageConfig("gmse",  opt_c1x,   "-run=java", "-heap=gcx.gen.mse");
-        imageConfig("gmsed",  opt_c1x,   "-run=java", "-heap=gcx.gen.mse", "-build=DEBUG");
+        imageConfig("gssd", opt_c1x, "-run=java", "-heap=sequential.gen.semiSpace", "-build=DEBUG");
+        imageConfig("ss", opt_c1x, "-run=java", "-heap=sequential.semiSpace");
+        imageConfig("ssd", opt_c1x, "-run=java", "-heap=sequential.semiSpace", "-build=DEBUG");
+        imageConfig("ms", opt_c1x, "-run=java", "-heap=gcx.ms");
+        imageConfig("msd", opt_c1x, "-run=java", "-heap=gcx.ms", "-build=DEBUG");
+        imageConfig("msed", opt_c1x, "-run=java", "-heap=gcx.mse", "-build=DEBUG");
+        imageConfig("mse", opt_c1x, "-run=java", "-heap=gcx.mse");
+        imageConfig("gmse", opt_c1x, "-run=java", "-heap=gcx.gen.mse");
+        imageConfig("gmsed", opt_c1x, "-run=java", "-heap=gcx.gen.mse", "-build=DEBUG");
 
         // VMA configurations
         final String vmaT1X = "com.oracle.max.vm.ext.t1x.vma.VMAT1X";
@@ -533,8 +536,8 @@ public class MaxineTesterConfiguration {
      * Determines if a given test is known to fail.
      *
      * @param testName a unique identifier for the test
-     * @param config the {@linkplain #zeeMaxvmConfigs maxvm} configuration used during the test execution.
-     * This value may be null.
+     * @param config   the {@linkplain #zeeMaxvmConfigs maxvm} configuration used during the test execution.
+     *                 This value may be null.
      */
     public static ExpectedResult expectedResult(String testName, String config) {
         final Expectation[] expect = resultMap.get(testName);
@@ -605,13 +608,13 @@ public class MaxineTesterConfiguration {
     /**
      * Print the image configuration aliases in the format expected by the max script.
      */
-    public static void main(String [] args) {
+    public static void main(String[] args) {
         // Running this will cause all the static initializers to run, which is overkill for just printing
         // out the image configurations, but trying to split this code out out of this class is not worth the effort
 
         final PrintStream out = System.out;
         for (String name : imageParams.keySet()) {
-            String [] params = imageParams.get(name);
+            String[] params = imageParams.get(name);
             out.print(name + "#" + params[0]);
             for (int i = 1; i < params.length; i++) {
                 out.print("@" + params[i]);

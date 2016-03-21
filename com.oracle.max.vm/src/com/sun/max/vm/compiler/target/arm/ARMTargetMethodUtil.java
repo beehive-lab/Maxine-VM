@@ -1,124 +1,73 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
+ * OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package com.sun.max.vm.compiler.target.arm;
 
-import com.oracle.max.asm.target.armv7.ARMV7;
-import com.oracle.max.asm.target.armv7.ARMV7Assembler;
-import com.oracle.max.cri.intrinsics.UnsignedMath;
-import com.sun.cri.ci.CiCalleeSaveLayout;
-import com.sun.max.annotate.C_FUNCTION;
-import com.sun.max.annotate.HOSTED_ONLY;
-import com.sun.max.lang.Bytes;
-import com.sun.max.unsafe.Address;
-import com.sun.max.unsafe.CodePointer;
-import com.sun.max.unsafe.Pointer;
-import com.sun.max.unsafe.Word;
-import com.sun.max.vm.Log;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.VMOptions;
-import com.sun.max.vm.compiler.CallEntryPoint;
-import com.sun.max.vm.compiler.target.AdapterGenerator;
-import com.sun.max.vm.compiler.target.TargetMethod;
-import com.sun.max.vm.runtime.FatalError;
-import com.sun.max.vm.runtime.SafepointPoll;
-import com.sun.max.vm.runtime.VmOperation;
+import com.oracle.max.asm.target.armv7.*;
+import com.oracle.max.cri.intrinsics.*;
+import com.sun.cri.ci.*;
+import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
-import com.sun.max.vm.stack.armv7.ARMV7JavaStackFrame;
+import com.sun.max.vm.stack.armv7.*;
 
-/**
- * A utility class factoring out code common to all ARMV7 target method.
- * IT DOES NOT !!!!!!!!!!!!!!!!!!!!!!!
- * HANDLE THUMB MODE
- * <p/>
- * APN for ARM we plan to initially do a simple fixup
- * calculate either a relative or an absolute address
- * put it in scratch (r12) via
- * movw movt
- * for relative call/jmp ADD PC,r12
- * for absolute call/jmp MOV PC,r12
- * <p/>
- * inefficient: for 24bit RELATIVE offsets can be done in a branch single instruction
- * and we are taking 3.
- * <p/>
- * for absolute it takes 3, but could be done in 2 -- calculate address using constants that can be shifted
- * then do the MOV PC <--
- */
 public final class ARMTargetMethodUtil {
 
     /**
      * X86 Opcode of a RIP-relative call instruction.
      * <p/>
-     * ARM this is a STMFD (save my registers) and a
-     * PC relative branch instruction
+     * ARM this is a STMFD (save my registers) and a PC relative branch instruction
      */
-    // RIP_CALL using an ADD to PC, hope it;s the right way round for the regs.
-    public static final int RIP_CALL = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28)
-            | (0x8 << 20) | (ARMV7.r15.encoding << 12) | (ARMV7.r12.encoding << 16);
-
+    public static final int RIP_CALL = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28) | (0x8 << 20) | (ARMV7.r15.encoding << 12) | (ARMV7.r12.encoding << 16);
 
     /**
      * X86 Opcode of a register-based call instruction.
      * <p/>
-     * ARM this is a  STMFD (save my registers) and a
-     * move of a register into the PC
+     * ARM this is a STMFD (save my registers) and a move of a register into the PC
      */
-    // REG_CALL using a MOV to the PC
-    public static final int REG_CALL = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28)
-            | (0xd << 21) | (ARMV7.r15.encoding << 12) | ARMV7.r12.encoding;
+    public static final int REG_CALL = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28) | (0xd << 21) | (ARMV7.r15.encoding << 12) | ARMV7.r12.encoding;
 
     /**
-     * X86 Opcode of a RIP-relative jump instruction.
-     * ARM again this is a PC relative branch instruction!
-     * as its a JMP we do not save the stack
-     * We do this as an add to the PC ...
+     * X86 Opcode of a RIP-relative jump instruction. ARM again this is a PC relative branch instruction! as its a JMP
+     * we do not save the stack We do this as an add to the PC ...
      */
-    public static final int RIP_JMP = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28)
-            | (0x8 << 20) | (ARMV7.r15.encoding << 12) | (ARMV7.r12.encoding << 16);
+    public static final int RIP_JMP = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28) | (0x8 << 20) | (ARMV7.r15.encoding << 12) | (ARMV7.r12.encoding << 16);
 
     /**
-     * X86 Opcode of a (near) return instruction.
-     * ARM here we must do a LDMFD and we move the return address to the PC
+     * X86 Opcode of a (near) return instruction. ARM here we must do a LDMFD and we move the return address to the PC
      */
-    //public static final int RET = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28)
-    //| (0xd << 21) | (ARMV7.r15.encoding << 12) |  ARMV7.r14.encoding;
-
-    public static final int RET = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28)
-            | (0x8 << 24) | (0xb << 20) | (0xd << 16) | (1 << 15);
-
+    public static final int RET = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28) | (0x8 << 24) | (0xb << 20) | (0xd << 16) | (1 << 15);
 
     /**
-     * X86 Size (in bytes) of a RIP-relative call instruction.
-     * ARM this is 4 bytes, or we might need to calculate it
-     * according to the way we calculate the relative address?
-     * do we need to include the register save STMFD
+     * X86 Size (in bytes) of a RIP-relative call instruction. ARM this is 4 bytes, or we might need to calculate it
+     * according to the way we calculate the relative address? do we need to include the register save STMFD
      */
     public static final int RIP_CALL_INSTRUCTION_SIZE = 4;
 
     /**
-     * Lock to avoid race on concurrent icache invalidation when patching target methods.
-     * ARM I think we need to insert an isb instruction.
+     * Lock to avoid race on concurrent icache invalidation when patching target methods. ARM I think we need to insert
+     * an isb instruction.
      */
-    private static final Object PatchingLock = new Object(); // JavaMonitorManager.newVmLock("PATCHING_LOCK");
+    private static final Object PatchingLock = new Object();
     private static final boolean JUMP_WITH_LINK = true;
 
     public static int registerReferenceMapSize() {
@@ -130,19 +79,15 @@ public final class ARMTargetMethodUtil {
         // The compiler(s) ensure that disp of the call be aligned to a word boundary.
         // This may cause up to 7 nops to be inserted before a call.
 
-        // For ARM we Cmimic X86 but dont have all the alignment restrictions
-        //All instructions are 32bits so we do not
-        // need to do insertion of nops etc
-        // presumably we need to update the 24bit immediate displacement of the branch
+        // For ARM we mimic X86 but don't have all the alignment restrictions.
+        // All instructions are 32bits so we do not
+        // need to do insertion of nops etc.
+        // Presumably we need to update the 24bit immediate displacement of the branch
         // and/or patch a movw movt sequence with an absolute address.
         // currently this will be a patch of the movw movt
         // an push of the PC and an add to the PC with the disp.
         final Address callSiteAddress = callSite.toAddress();
-        final Address endOfCallSite = callSiteAddress.plus(RIP_CALL_INSTRUCTION_LENGTH - 1);
         return callSiteAddress.isWordAligned();
-        //return callSiteAddress.plus(1).isWordAligned() ? true :
-        // last byte of call site:
-        //callSiteAddress.roundedDownBy(8).equals(endOfCallSite.roundedDownBy(8));
     }
 
     /**
@@ -158,12 +103,7 @@ public final class ARMTargetMethodUtil {
         if (MaxineVM.isHosted()) {
             final byte[] code = tm.code();
             assert code[0] == (byte) RIP_CALL;
-            Log.println("ERRORERROR in readCall32Target if this is EVERCALLED");
-            disp32 =
-                    (code[callPos + 4] & 0xff) << 24 |
-                            (code[callPos + 3] & 0xff) << 16 |
-                            (code[callPos + 2] & 0xff) << 8 |
-                            (code[callPos + 1] & 0xff) << 0;
+            disp32 = (code[callPos + 4] & 0xff) << 24 | (code[callPos + 3] & 0xff) << 16 | (code[callPos + 2] & 0xff) << 8 | (code[callPos + 1] & 0xff) << 0;
         } else {
             final Pointer callSitePointer = callSite.toPointer();
             disp32 = 0;
@@ -173,40 +113,12 @@ public final class ARMTargetMethodUtil {
                 disp32 = (callSitePointer.readByte(4 + 0) & 0xff) | ((callSitePointer.readByte(4 + 1) & 0xf) << 8) | ((callSitePointer.readByte(4 + 2) & 0xf) << 12);
                 disp32 = disp32 << 16;
                 disp32 += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
-                /*if (VMOptions.verboseOption.verboseCompilation) {
-                    Log.println(disp32);
-                }
-		*/
             }
-            if (VMOptions.verboseOption.verboseCompilation) {
-
-                /*Log.print("READCALL32TARGET ");
-                Log.print(disp32);
-                Log.print(" ");
-                Log.print(tm.toString());
-                Log.print(" CALLPOS ");
-                Log.println(callPos);
-                Log.println(callSitePointer);
-		*/
-            }
-
-            assert (disp32 != 0);
-            if (VMOptions.verboseOption.verboseCompilation) {
-                //Log.println("POTENTIALLy neeed additional checks for DEOPT readCall32Target");
-            }
-            /*assert callSitePointer.readByte(0) == (byte) RIP_CALL
-                // deopt might replace the first call in a method with a jump (redirection)
-                || (callSitePointer.readByte(0) == (byte) RIP_JMP && callPos == 0)
-                : callSitePointer.readByte(0);
-            disp32 = callSitePointer.readInt(1);
-	*/
-
         }
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(disp32);
     }
 
     private static void manipulateBuffer(byte[] code, int callOffset, int instruction) {
-
         code[callOffset + 3] = (byte) (instruction & 0xff);
         code[callOffset + 2] = (byte) ((instruction >> 8) & 0xff);
         code[callOffset + 1] = (byte) ((instruction >> 16) & 0xff);
@@ -228,60 +140,19 @@ public final class ARMTargetMethodUtil {
             // Every call site that is fixed up here might also be patched later. To avoid failed patching,
             // check for alignment of call site also here.
             // TODO(cwi): This is a check that I would like to have, however, T1X does not ensure proper alignment yet
-// when it stitches together templates that contain calls.
-            FatalError.unexpected(" invalid patchable call site:  " + tm + "+" + callOffset + " " +
-                    callSite.toHexString());
-            Log.println("unpatchable call site? " + tm + " " + callSite.to0xHexString());
+            // when it stitches together templates that contain calls.
+            FatalError.unexpected(" invalid patchable call site:  " + tm + "+" + callOffset + " " + callSite.toHexString());
         }
 
-
-        //int disp32 = target.toInt() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toInt() ; // APN 16bytes 4 instructions out?
-        long disp64 = target.toLong() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toLong(); // APN 16bytes 4 instructions out?
+        long disp64 = target.toLong() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toLong();
         int disp32 = (int) disp64;
-	/*
-        if (VMOptions.verboseOption.verboseCompilation) {
-            if (!MaxineVM.isHosted()) {
-                Log.print("CALLER ");
-                Log.print(tm.toString());
-                Log.print(" ");
-                Log.println(callSite);
-                if (target.toTargetMethod() != null) {
-                    Log.print("CALLEETARGET ");
-                    Log.print(target.toTargetMethod().toString());
-                    Log.print(" ");
-                    Log.println(target);
-                } else {
-                    Log.print("CALLEETARGET ");
-                    Log.print(" NULL ");
-                    Log.print(" ");
-                    Log.println(target);
-                }
-
-                Log.print(Integer.toString(disp32, 16));
-                Log.print(" DISP32 ");
-                Log.println(disp32);
-                Log.print(Long.toString(disp64, 16));
-                Log.print(" DISP64 ");
-                Log.println(disp64);
-            }
-        }
-	*/
-        if (disp64 != disp32) {
-
-            Log.println("Code displacement out of 32-bit range");
-            disp64 = disp32;
-
-        }
         FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
-
         int oldDisp32 = 0;
 
         if (MaxineVM.isHosted()) {
             final byte[] code = tm.code();
-
             if (true) {
                 if (JUMP_WITH_LINK) {
-
                     int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
                     code[callOffset + 0] = (byte) (instruction & 0xff);
                     code[callOffset + 1] = (byte) ((instruction >> 8) & 0xff);
@@ -304,14 +175,6 @@ public final class ARMTargetMethodUtil {
                     code[callOffset + 14] = (byte) ((instruction >> 16) & 0xff);
                     code[callOffset + 15] = (byte) ((instruction >> 24) & 0xff);
                 } else {
-                    // OK this is where we need to patch
-                    // BASIC IDEA WE SETUP R12 WITH THE RELATIVE OFFSET
-                    // THEN WE ADD IT TO THE PC ...
-                    // THIS IS AN INTERWORKING BRANCH, SO IF WE WERE USING THUMB ETC WE WOULD NEED TO ALTER THE ADDRESS OFFSET
-                    // IF WE WANTED TO STAY IN THUMB MODE AND/OR TO TRANSITION FORM ARM<->THUMB
-                    // disp32 = 25;
-                    // callOffset -= 20; // DIRTY HACK
-                    Log.println("ERRORERRORERROR ARMTargetMEthodUtil");
                     int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
                     code[callOffset + 0] = (byte) (instruction & 0xff);
                     code[callOffset + 1] = (byte) ((instruction >> 8) & 0xff);
@@ -333,19 +196,6 @@ public final class ARMTargetMethodUtil {
             }
         } else {
             final Pointer callSitePointer = callSite.toPointer();
-
-            /*if (VMOptions.verboseOption.verboseCompilation) {
-
-                Log.print("FIXUP CALL SITE ");
-                Log.print(tm.toString());
-                Log.print(" DISP ");
-                Log.print(disp32);
-                Log.print(" CALLOFFSET ");
-                Log.println(callOffset);
-
-                Log.println(callSitePointer);
-            }
-	    */
             oldDisp32 = 0;
             if (((callSitePointer.readByte(3) & 0xff) == 0xe3) && ((callSitePointer.readByte(4 + 3) & 0xff) == 0xe3)) {
                 // just enough checking to make sure it has been patched before ...
@@ -353,11 +203,7 @@ public final class ARMTargetMethodUtil {
                 oldDisp32 = (callSitePointer.readByte(4 + 0) & 0xff) | ((callSitePointer.readByte(4 + 1) & 0xf) << 8) | ((callSitePointer.readByte(4 + 2) & 0xf) << 12);
                 oldDisp32 = oldDisp32 << 16;
                 oldDisp32 += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
-                /*if (VMOptions.verboseOption.verboseCompilation) {
-                    Log.print("oldDisp32 ");
-                    Log.println(oldDisp32);
-                }
-		*/
+
             }
             int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
             callSitePointer.writeByte(0, (byte) (instruction & 0xff));
@@ -389,123 +235,51 @@ public final class ARMTargetMethodUtil {
                 checkDISP += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
             }
         }
-
-
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);
     }
 
+    private static final int RIP_CALL_INSTRUCTION_LENGTH = 16; // ARM it's movw movt add blx
 
-    private static final int RIP_CALL_INSTRUCTION_LENGTH = 16; // ARM it's two instructions
-    // STMFD and the B branch
+    private static final int RIP_JMP_INSTRUCTION_LENGTH = 4; // ARM it's one instruction the B branch
 
-    private static final int RIP_JMP_INSTRUCTION_LENGTH = 4;  // ARM it's one instruction the B branch
+    public static int ripCallOFFSET(TargetMethod tm, Pointer callSitePointer/*CodePointer callSite*/) {
+        // changed to use Pointers rather than CodePointers as we got an exception due to the
+        // masking off of the MSB giving -ve values which then lead to a read of an illegal memory location
 
-    public static CodePointer ripCallOFFSET(TargetMethod tm, CodePointer callSite) {
-        final Pointer callSitePointer = callSite.toPointer();
-        int oldDisp32 = 0;
-	// based on readCall32Target .... so should be ok.
+        boolean found = false;
 
-
-        if (((callSitePointer.readByte(3) & 0xff) == 0xe3) && ((callSitePointer.readByte(4 + 3) & 0xff) == 0xe3)) {
-                // just enough checking to make sure it has been patched before ...
-                // and does not contain nops
-                oldDisp32 = (callSitePointer.readByte(4 + 0) & 0xff) | ((callSitePointer.readByte(4 + 1) & 0xf) << 8) | ((callSitePointer.readByte(4 + 2) & 0xf) << 12);
-                oldDisp32 = oldDisp32 << 16;
-                oldDisp32 += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
-                // +8 as ARM PC is +8 ahead
-                // another +8 as the ADD instruction is 8 bytes ahead of the first movw
-
-
-                /*
-                * HERE WE ARE CALCULATING THE NUMBER TO ADD TO THE pc BASED ON THE VALUE OF THE PC
-                * AT THE MOVW IN THE MOVW MOVT ADD, BLX SEQUENCE
-                * BECAUSE IT HAS TO WORK WITH   CompilationBroker.visitFrame
-                * THEREFORE, the offset in the movw movt, is the offset needed at the ADD, and it ACTUALLY OMITS
-                * THE +8 that the ARM internal CPU PC is ahead of the actual PC-value of the ADD instruction.
-                *
-                *
-
-                 */
-                if (VMOptions.verboseOption.verboseCompilation) {
-
-                    //Log.println("ripCALLOFFSET " +oldDisp32);
-
-                }
-
+        int movw = callSitePointer.readInt(0);
+        int movt = callSitePointer.readInt(4);
+        int low = (movw & 0xfff) | ((movw & 0xf0000) >> 4);
+        int high = (movt & 0xfff) | ((movt & 0xf0000) >> 4);
+        high = (high << 16) | low;
+        if ((0xe3000000 == (movw & 0xfff00000)) && (0xe3400000 == (movt & 0xfff00000))) { // check  it is REALLY a movw movt ConditionFlag.Always ...
+            found = true;
         }
-	assert(oldDisp32 != 0);
-	return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32).plus(8);
-
-
+        assert (found);
+        return high + 8 + RIP_CALL_INSTRUCTION_LENGTH;
     }
-    public static boolean isARMV7RIPCall(TargetMethod tm, CodePointer callSite) {
-        final Pointer callSitePointer = callSite.toPointer();
+
+    public static boolean isARMV7RIPCall(TargetMethod tm, Pointer callSitePointer) {
+        // changed to use Pointers rather than CodePointers as we got an exception due to the
+        // masking off of the MSB giving -ve values which then lead to a read of an illegal memory location
+
         int addInstrn = ARMV7Assembler.addRegistersHelper(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r15, ARMV7.r12, 0, 0);
-	int temp = 0;
-        if (((callSitePointer.readByte(3) & 0xff) == 0xe3)  && ((callSitePointer.readByte(4 + 3) & 0xff) == 0xe3) &&
-		((callSitePointer.readByte(2)>>4) == 0x0) && ((callSitePointer.readByte(4 + 2) >> 4) == 4)) {
-            // basic match of movw movt
-
-		temp = (callSitePointer.readByte(3) << 24) | (callSitePointer.readByte(2) << 16) | (callSitePointer.readByte(1) << 8) | callSitePointer.readByte(0);
-		//Log.print("MOVW ");Log.println(temp);
-		temp = 0;
-		temp = (callSitePointer.readByte(3+4) << 24) | (callSitePointer.readByte(2+4) << 16) | (callSitePointer.readByte(1+4) << 8) | callSitePointer.readByte(0+4);
-		//Log.print("MOVT ");Log.println(temp);
-		temp = 0;
-		temp = ((callSitePointer.readByte(3+8) << 24)&0xff000000) | ((callSitePointer.readByte(2+8) << 16)&0xff0000) | ((callSitePointer.readByte(1+8) << 8)&0xff00) | (callSitePointer.readByte(0+8)&0xff);
-		//Log.print("ADD ");Log.println(temp);
-		temp = 0;
-		temp = ((callSitePointer.readByte(3+12) << 24)&0xff000000) | ((callSitePointer.readByte(2+12) << 16)&0xff0000) | ((callSitePointer.readByte(1+12) << 8)&0xff00) | (callSitePointer.readByte(0+12)&0xff);
-		//Log.print("BLX ");Log.println(temp);
-		//Log.print(callSitePointer.readByte(3+12));Log.print(" ");Log.print(callSitePointer.readByte(2+12));Log.print(" "); Log.print(callSitePointer.readByte(1+12));Log.print(" ");Log.println(callSitePointer.readByte(0+12));
-
-		//Log.print("EXPECTED ADD ");Log.println(addInstrn);
-		
-
-
-            if(((callSitePointer.readByte(3+8) & 0xff) == ((addInstrn >> 24)&0xff)) &&
-                    ((callSitePointer.readByte(2+8) & 0xff) == ((addInstrn >> 16) &0xff)) &&
-                            ((callSitePointer.readByte(1+8) & 0xff) == ((addInstrn >> 8)&0xff)) &&
-                                    ((callSitePointer.readByte(0+8) & 0xff) == (addInstrn&0xff))) {
-                // full match of add r12,r12,pc
-                if (VMOptions.verboseOption.verboseCompilation) {
-
-                   Log.println("MATCHED RIP CALL");
-                }
-                    return true;
-            } else if (VMOptions.verboseOption.verboseCompilation) {
-                Log.println("DIDNOT match ADD");
-        }
-
-
-        }else if(VMOptions.verboseOption.verboseCompilation) {
-		Log.println("DIDNOT match movwmovt");
-	}
-        if (VMOptions.verboseOption.verboseCompilation) {
-
-            Log.println("NOT RIP CALL");
+        int blxInstrn = ARMV7Assembler.blxHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12);
+        if ((callSitePointer.readInt(8) == addInstrn) && callSitePointer.readInt(12) == blxInstrn) {
+            return true;
         }
         return false;
     }
 
-
-    /*
-    Returns the address of a page sized buffer that we will use to insturmentation traces to
-    Initially we assume this is 4096 bytes long 
-    
-    Initialises *(buffer+4092) to point to the the start of the buffer
-    */
     @C_FUNCTION
-    public static native int  maxine_instrumentationBuffer();
-	
+    public static native int maxine_instrumentationBuffer();
+
     @C_FUNCTION
     public static native int maxine_flush_instrumentationBuffer();
 
-
-    /* does icache flushin of an address range*/
     @C_FUNCTION
-    public static native void maxine_cacheflush(Pointer start, int  length);
-
+    public static native void maxine_cacheflush(Pointer start, int length);
 
     /**
      * Thread safe patching of the displacement field in a direct call.
@@ -513,9 +287,6 @@ public final class ARMTargetMethodUtil {
      * @return the target of the call prior to patching
      */
     public static CodePointer mtSafePatchCallDisplacement(TargetMethod tm, CodePointer callSite, CodePointer target) {
-        if (VMOptions.verboseOption.verboseCompilation) {
-            //Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!mtSafePatchCallDisplacement !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-        }
         if (!isPatchableCallSite(callSite)) {
             throw FatalError.unexpected(" invalid patchable call site:  " + callSite.toHexString());
         }
@@ -531,25 +302,12 @@ public final class ARMTargetMethodUtil {
             oldDisp32 = (callSitePointer.readByte(4 + 0) & 0xff) | ((callSitePointer.readByte(4 + 1) & 0xf) << 8) | ((callSitePointer.readByte(4 + 2) & 0xf) << 12);
             oldDisp32 = oldDisp32 << 16;
             oldDisp32 += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
-            if (VMOptions.verboseOption.verboseCompilation) {
+        }
 
-                //Log.println(oldDisp32);
-            }
-        }
-        //int oldDisp32 = callSitePointer.readInt(1);
-        /*if (VMOptions.verboseOption.verboseCompilation) {
-            Log.print("OLD ");
-            Log.println(Integer.toHexString(oldDisp32));
-            Log.print("DISP32 ");
-            Log.println(Integer.toHexString(disp32));
-            Log.print("DISP64 ");
-            Log.println(Long.toHexString(disp64));
-        }
-	*/
         if (oldDisp32 != disp64) {
             synchronized (PatchingLock) {
                 // Just to prevent concurrent writing and invalidation to the same instruction cache line
-                //callSitePointer.writeInt(1,  disp32);
+                // callSitePointer.writeInt(1, disp32);
                 int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
                 callSitePointer.writeByte(0, (byte) (instruction & 0xff));
                 callSitePointer.writeByte(1, (byte) ((instruction >> 8) & 0xff));
@@ -571,7 +329,7 @@ public final class ARMTargetMethodUtil {
                 callSitePointer.writeByte(13, (byte) ((instruction >> 8) & 0xff));
                 callSitePointer.writeByte(14, (byte) ((instruction >> 16) & 0xff));
                 callSitePointer.writeByte(15, (byte) ((instruction >> 24) & 0xff));
-		maxine_cacheflush(callSitePointer,24);
+                maxine_cacheflush(callSitePointer, 24);
             }
         }
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);
@@ -586,25 +344,58 @@ public final class ARMTargetMethodUtil {
      */
     public static void patchWithJump(TargetMethod tm, int pos, CodePointer target) {
         // We must be at a global safepoint to safely patch TargetMethods
-        Log.println("ARMV7TargetMethodUtil patchWithJump under DEBUG for Deoptimisation (uses movw motv add blx) and its interaction with isJumpTo called from isJumpToStaticTrampoline");
-	FatalError.check(true,"patchWithJump under debug ");
         FatalError.check(VmOperation.atSafepoint(), "should only be patching entry points when at a safepoint");
+        CodePointer callSite = tm.codeAt(pos);
+        if (!isPatchableCallSite(callSite)) {
+            throw FatalError.unexpected(" invalid patchable call site:  " + callSite.toHexString());
+        }
+        final Pointer callSitePointer = callSite.toPointer();
 
-        final Pointer patchSite = tm.codeAt(pos).toPointer();
-	//Log.println("PATCH site is " + tm.codeAt(pos));
-	/* ok lets assume we can do the normal movw movt addpc blx 
-	POTENTIALLY there may be problems in Stubs or other bits of code for ARMV7 that expect an address to be directly
-	written into the CODE, on ARMV7 we made the decision to use movw movt add PC, or at least movw movt to
-	generate 32bit addresses instead of reading them from the code.
-	*/
-	mtSafePatchCallDisplacement(tm, tm.codeAt(pos),  target);
+        long disp64 = target.toLong() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toLong();
+        int disp32 = (int) disp64;
+        FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
+        int oldDisp32 = 0;
+        if (((callSitePointer.readByte(3) & 0xff) == 0xe3) && ((callSitePointer.readByte(4 + 3) & 0xff) == 0xe3)) {
+            // just enough checking to make sure it has been patched before ...
+            // and does not contain nops
+            oldDisp32 = (callSitePointer.readByte(4 + 0) & 0xff) | ((callSitePointer.readByte(4 + 1) & 0xf) << 8) | ((callSitePointer.readByte(4 + 2) & 0xf) << 12);
+            oldDisp32 = oldDisp32 << 16;
+            oldDisp32 += (callSitePointer.readByte(0) & 0xff) | ((callSitePointer.readByte(1) & 0xf) << 8) | ((callSitePointer.readByte(2) & 0xf) << 12);
+        }
 
-
+        if (oldDisp32 != disp64) {
+            synchronized (PatchingLock) {
+                // Just to prevent concurrent writing and invalidation to the same instruction cache line
+                // callSitePointer.writeInt(1, disp32);
+                int instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, disp32 & 0xffff);
+                callSitePointer.writeByte(0, (byte) (instruction & 0xff));
+                callSitePointer.writeByte(1, (byte) ((instruction >> 8) & 0xff));
+                callSitePointer.writeByte(2, (byte) ((instruction >> 16) & 0xff));
+                callSitePointer.writeByte(3, (byte) ((instruction >> 24) & 0xff));
+                int tmp32 = disp32 >> 16;
+                instruction = ARMV7Assembler.movtHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, tmp32 & 0xffff);
+                callSitePointer.writeByte(4, (byte) (instruction & 0xff));
+                callSitePointer.writeByte(5, (byte) ((instruction >> 8) & 0xff));
+                callSitePointer.writeByte(6, (byte) ((instruction >> 16) & 0xff));
+                callSitePointer.writeByte(7, (byte) ((instruction >> 24) & 0xff));
+                instruction = ARMV7Assembler.addRegistersHelper(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r15, ARMV7.r12, 0, 0);
+                callSitePointer.writeByte(8, (byte) (instruction & 0xff));
+                callSitePointer.writeByte(9, (byte) ((instruction >> 8) & 0xff));
+                callSitePointer.writeByte(10, (byte) ((instruction >> 16) & 0xff));
+                callSitePointer.writeByte(11, (byte) ((instruction >> 24) & 0xff));
+                instruction = ARMV7Assembler.movHelper(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12);
+                callSitePointer.writeByte(12, (byte) (instruction & 0xff));
+                callSitePointer.writeByte(13, (byte) ((instruction >> 8) & 0xff));
+                callSitePointer.writeByte(14, (byte) ((instruction >> 16) & 0xff));
+                callSitePointer.writeByte(15, (byte) ((instruction >> 24) & 0xff));
+                maxine_cacheflush(callSitePointer, 24);
+            }
+        }
     }
 
     /**
-     * Indicate with the instruction in a target method at a given position is a jump to a specified destination.
-     * Used in particular for testing if the entry points of a target method were patched to jump to a trampoline.
+     * Indicate with the instruction in a target method at a given position is a jump to a specified destination. Used
+     * in particular for testing if the entry points of a target method were patched to jump to a trampoline.
      *
      * @param tm         a target method
      * @param pos        byte index relative to the start of the method to a call site
@@ -612,13 +403,9 @@ public final class ARMTargetMethodUtil {
      * @return {@code true} if the instruction is a jump to the target, false otherwise
      */
     public static boolean isJumpTo(TargetMethod tm, int pos, CodePointer jumpTarget) {
-	return readCall32Target(tm, pos).equals(jumpTarget);
-	/* Here we need to remmember that we use movw movt add,blx to implement a PC-relative JUMP on
-	ARMV7 THe only problem might be if it really needs to be a jump rather than a PC-relative JMP
-	*/
+        return readCall32Target(tm, pos).equals(jumpTarget);
     }
 
-    // Disable instance creation.
     private ARMTargetMethodUtil() {
     }
 
@@ -627,11 +414,7 @@ public final class ARMTargetMethodUtil {
         // check whether the current ip is at the first instruction or a return
         // which means the stack pointer has not been adjusted yet (or has already been adjusted back)
         TargetMethod tm = current.targetMethod();
-        CodePointer entryPoint = tm.callEntryPoint.equals(CallEntryPoint.C_ENTRY_POINT) ?
-                CallEntryPoint.C_ENTRY_POINT.in(tm) :
-                CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(tm);
-
-        //return entryPoint.equals(current.vmIP()) || current.stackFrameWalker().readByte(current.vmIP().toAddress(), 0) == RET;
+        CodePointer entryPoint = tm.callEntryPoint.equals(CallEntryPoint.C_ENTRY_POINT) ? CallEntryPoint.C_ENTRY_POINT.in(tm) : CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(tm);
         return entryPoint.equals(current.vmIP()) || current.stackFrameWalker().readInt(current.vmIP().toAddress(), 0) == RET;
 
     }
@@ -651,9 +434,6 @@ public final class ARMTargetMethodUtil {
     }
 
     public static VMFrameLayout frameLayout(TargetMethod tm) {
-        // APN confusion here is, we plan to use a frame pointer fp, which is to store the top of
-        // the stack (activation record) for a procedure
-        // whereas the stack pointer sp is the tail of the stack itself where we add onto
         return new OptoStackFrameLayout(tm.frameSize(), true, ARMV7.r13);
     }
 
@@ -694,7 +474,6 @@ public final class ARMTargetMethodUtil {
         }
 
         current.setCalleeSaveArea(csl, csa);
-
         boolean wasDisabled = SafepointPoll.disable();
         sfw.advance(callerIP, callerSP, callerFP);
         if (!wasDisabled) {
@@ -709,7 +488,6 @@ public final class ARMTargetMethodUtil {
     }
 
     public static int callInstructionSize(byte[] code, int pos) {
-        Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ARMTargetMethodUtil.REG RIP_CALL ISSUE");
         if ((code[pos] & 0xFF) == RIP_CALL) {
             return RIP_CALL_INSTRUCTION_SIZE;
         }

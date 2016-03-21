@@ -101,22 +101,9 @@ public class Snippets {
      * Assert: {@code lengths} have already been checked for non-negative.
      */
     public static Object createMultiReferenceArrayAtIndex(int index, ClassActor arrayClassActor, int[] lengths) {
-	//for(int i = 0; i < lengths.length; i++) {
-	//com.sun.max.vm.Log.print("createMulti  ");com.sun.max.vm.Log.print(i);com.sun.max.vm.Log.print(" len ");
-	//com.sun.max.vm.Log.print(lengths[i]);
-	//com.sun.max.vm.Log.print(" index "); com.sun.max.vm.Log.println(index);
-	//}
-
         final int length = lengths[index];
-	//com.sun.max.vm.Log.println("createMulti glot length ");
-
         final Object result = createNonNegativeSizeArray(arrayClassActor, length);
-	//com.sun.max.vm.Log.println("createMulti created array ");
-
         if (length > 0) {
-            //com.sun.max.vm.Log.print("createMulti ");  com.sun.max.vm.Log.println(length);
-
-
             final int nextIndex = index + 1;
             if (nextIndex < lengths.length) {
                 final ClassActor subArrayClassActor = arrayClassActor.componentClassActor();

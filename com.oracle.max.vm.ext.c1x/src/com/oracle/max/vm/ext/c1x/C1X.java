@@ -61,6 +61,7 @@ import com.sun.max.vm.thread.*;
  */
 public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCompiler {
 
+    
     /**
      * The Maxine specific implementation of the {@linkplain RiRuntime runtime interface} needed by C1X.
      */
@@ -91,17 +92,17 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     private static final int DEFAULT_OPT_LEVEL = Integer.getInteger("max.c1x.optlevel", 3);
 
     public static final VMIntOption optLevelOption = VMOptions.register(new VMIntOption("-C1X:OptLevel=", DEFAULT_OPT_LEVEL,
-        "Set the optimization level of C1X.") {
-            @Override
-            public boolean parseValue(com.sun.max.unsafe.Pointer optionValue) {
-                boolean result = super.parseValue(optionValue);
-                if (result) {
-                    C1XOptions.setOptimizationLevel(getValue());
-                    return true;
-                }
-                return false;
+            "Set the optimization level of C1X.") {
+        @Override
+        public boolean parseValue(com.sun.max.unsafe.Pointer optionValue) {
+            boolean result = super.parseValue(optionValue);
+            if (result) {
+                C1XOptions.setOptimizationLevel(getValue());
+                return true;
             }
-        }, MaxineVM.Phase.STARTING);
+            return false;
+        }
+    }, MaxineVM.Phase.STARTING);
 
     /**
      * A map from option field names to some text describing the meaning and
@@ -114,21 +115,21 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
             HashMap<String, String> map = new HashMap<String, String>();
             map.put("PrintFilter",
                     "Filter compiler tracing to methods whose fully qualified name " +
-                    "matches <arg>. If <arg> starts with \"~\", then <arg> (without " +
-                    "the \"~\") is interpreted as a regular expression. Otherwise, " +
-                    "<arg> is interpreted as a simple substring.");
+                            "matches <arg>. If <arg> starts with \"~\", then <arg> (without " +
+                            "the \"~\") is interpreted as a regular expression. Otherwise, " +
+                            "<arg> is interpreted as a simple substring.");
 
             map.put("TraceBytecodeParserLevel",
                     "Trace frontend bytecode parser at level <n> where 0 means no " +
-                    "tracing, 1 means instruction tracing and 2 means instruction " +
-                    "plus frame state tracing.");
+                            "tracing, 1 means instruction tracing and 2 means instruction " +
+                            "plus frame state tracing.");
 
             map.put("DetailedAsserts",
                     "Turn on detailed error checking that has a noticeable performance impact.");
 
             map.put("GenSpecialDivChecks",
                     "Generate code to check for (Integer.MIN_VALUE / -1) or (Long.MIN_VALUE / -1) " +
-                    "instead of detecting these cases via instruction decoding in a trap handler.");
+                            "instead of detecting these cases via instruction decoding in a trap handler.");
 
             map.put("UseStackMapTableLiveness",
                     "Use liveness information derived from StackMapTable class file attribute.");
@@ -244,9 +245,12 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         }
 
         @Override
-        public void compilationStarted(CompilationEvent event) { }
+        public void compilationStarted(CompilationEvent event) {
+        }
+
         @Override
-        public void compilationFinished(CompilationEvent event) { }
+        public void compilationFinished(CompilationEvent event) {
+        }
     }
 
     /**
@@ -256,7 +260,7 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
      * Condition 1) can be ensured by careful coding of the templates, i.e., having no return statement in the middle of the
      * template. If one of the fatal errors below triggers, this condition is violated.
      * Condition 2) is guaranteed by this code: we move the return block to the end of the block list.
-     *
+     * <p/>
      * Note that we currently do not check that templates do not have stubs (which would be at the end of the method).
      */
     private static void processTemplate(C1XCompilation compilation) {
@@ -289,29 +293,29 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         return compiler;
     }
 
-   //static String[] faultyClasses = { "com.sun.max.vm.jni.JniFunctions.GetDoubleField(Pointer, JniHandle, FieldID)",
-   //                 "sun.misc.FloatingDecimal.developLongDigits(int, long, long)",
-   //                 "com.sun.max.vm.jni.VMFunctions.GetStackTraceElement(Pointer, JniHandle, int)",
-   //                 "java.util.ResourceBundle.findBundleInCache(ResourceBundle$CacheKey, ResourceBundle$Control)",
-   //                 "com.sun.max.vm.jni.VMFunctions.SetThreadPriority(Pointer, JniHandle, int)",
-   //                 "java.util.zip.Inflater.end(long)", "java.net.URLClassLoader.defineClass(String, Resource)",
-   //                 "com.sun.max.vm.jni.JmmFunctions.GetLastGCStat(Pointer, JniHandle, Pointer)",
-   //                 "com.sun.max.vm.jni.JniFunctions.GetObjectField(Pointer, JniHandle, FieldID)",
-   //                 "sun.misc.NativeSignalHandler.handle0(int, long)",
-   //                 "java.util.zip.ZipFile.getInputStream(ZipEntry)",
-   //                 "com.sun.max.vm.jni.JniFunctions.SetLongArrayRegion(Pointer, JniHandle, int, int, Pointer)",
-   //                 "com.sun.max.vm.jni.JniFunctions.GetDoubleArrayRegion(Pointer, JniHandle, int, int, Pointer)",
-   //                 "sun.misc.NativeSignalHandler.handle0(int, long)",
-   //                 "com.sun.max.vm.jni.JniFunctions.GetShortArrayRegion(Pointer, JniHandle, int, int, Pointer)",
-   //                 "com.sun.max.vm.ext.jvmti.JVMTICallbacks.invokeHeapIterationCallback(Pointer, long, long, Pointer, int, Word)",
-   //                 "com.sun.max.vm.jni.JniFunctions.SetCharArrayRegion(Pointer, JniHandle, int, int, Pointer)"};
+    //static String[] faultyClasses = { "com.sun.max.vm.jni.JniFunctions.GetDoubleField(Pointer, JniHandle, FieldID)",
+    //                 "sun.misc.FloatingDecimal.developLongDigits(int, long, long)",
+    //                 "com.sun.max.vm.jni.VMFunctions.GetStackTraceElement(Pointer, JniHandle, int)",
+    //                 "java.util.ResourceBundle.findBundleInCache(ResourceBundle$CacheKey, ResourceBundle$Control)",
+    //                 "com.sun.max.vm.jni.VMFunctions.SetThreadPriority(Pointer, JniHandle, int)",
+    //                 "java.util.zip.Inflater.end(long)", "java.net.URLClassLoader.defineClass(String, Resource)",
+    //                 "com.sun.max.vm.jni.JmmFunctions.GetLastGCStat(Pointer, JniHandle, Pointer)",
+    //                 "com.sun.max.vm.jni.JniFunctions.GetObjectField(Pointer, JniHandle, FieldID)",
+    //                 "sun.misc.NativeSignalHandler.handle0(int, long)",
+    //                 "java.util.zip.ZipFile.getInputStream(ZipEntry)",
+    //                 "com.sun.max.vm.jni.JniFunctions.SetLongArrayRegion(Pointer, JniHandle, int, int, Pointer)",
+    //                 "com.sun.max.vm.jni.JniFunctions.GetDoubleArrayRegion(Pointer, JniHandle, int, int, Pointer)",
+    //                 "sun.misc.NativeSignalHandler.handle0(int, long)",
+    //                 "com.sun.max.vm.jni.JniFunctions.GetShortArrayRegion(Pointer, JniHandle, int, int, Pointer)",
+    //                 "com.sun.max.vm.ext.jvmti.JVMTICallbacks.invokeHeapIterationCallback(Pointer, long, long, Pointer, int, Word)",
+    //                 "com.sun.max.vm.jni.JniFunctions.SetCharArrayRegion(Pointer, JniHandle, int, int, Pointer)"};
     //public static final Object lock = new Object();
     //public static final List<String> compiledMethods = new ArrayList<>();
 
     //String cklass = "com.oracle.max.vm.ext.maxri.MaxRuntimeCalls.runtimeRegisterFinalizer(Object)";
     public TargetMethod compile(final ClassMethodActor method, boolean isDeopt, boolean install, CiStatistics stats) {
         CiTargetMethod compiledMethod;
-	//Log.print("C1XCOMPILE ");Log.println(method.toString());
+        //Log.print("C1XCOMPILE ");Log.println(method.toString());
         do {
             DebugInfoLevel debugInfoLevel = method.isTemplate() ? DebugInfoLevel.REF_MAPS : DebugInfoLevel.FULL;
 
@@ -363,7 +367,7 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
 
             }
             // Loop back and recompile.
-        } while(true);
+        } while (true);
     }
 
     void printMachineCode(CiTargetMethod ciTM, MaxTargetMethod maxTM, boolean reentrant) {

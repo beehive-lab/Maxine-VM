@@ -63,14 +63,14 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
  * <li>A native handler is notified of the signal (see 'vmSignalHandler' in trap.c)</li>
  * <li>The native handler analyzes the context of the signal to detect stack-overflow.</li>
  * <li>The native handler writes trap {@linkplain VmThreadLocal#TRAP_NUMBER number},
- *     {@linkplain VmThreadLocal#TRAP_FAULT_ADDRESS address} and
- *     {@link VmThreadLocal#TRAP_INSTRUCTION_POINTER pc} into thread locals.</li>
+ * {@linkplain VmThreadLocal#TRAP_FAULT_ADDRESS address} and
+ * {@link VmThreadLocal#TRAP_INSTRUCTION_POINTER pc} into thread locals.</li>
  * <li>The native handler disables safepoints by modifying the register context of the
- *     trap in (almost) the same way as {@link SafepointPoll#disable()}.</li>
+ * trap in (almost) the same way as {@link SafepointPoll#disable()}.</li>
  * <li>The native handler modifies the instruction pointer in the trap context to point to the
- *     entry point of the trap stub.</li>
+ * entry point of the trap stub.</li>
  * <li>The native handler returns which effects a jump to the trap stub in the frame of
- *     the trapped method/function.</li>
+ * the trapped method/function.</li>
  * </ol>
  */
 public abstract class Trap {
@@ -78,10 +78,10 @@ public abstract class Trap {
     /**
      * The numeric identifiers for the traps that can be handled by the VM. Note that these do not correspond with the
      * native signals.
-     *
+     * <p/>
      * The values defined here (except for {@link #NULL_POINTER_EXCEPTION} and {@link #SAFEPOINT}) must correspond to
      * those of the same name defined in Native/substrate/trap.c.
-     *
+     * <p/>
      * The {@link #NULL_POINTER_EXCEPTION} and {@link #SAFEPOINT} values are used in
      * {@link Trap#handleMemoryFault(CodePointer, TargetMethod, Pointer, Pointer, Pointer, Address)} to disambiguate a memory fault.
      */
@@ -114,7 +114,7 @@ public abstract class Trap {
         }
 
         public static boolean isImplicitException(int trapNumber) {
-            return trapNumber == ARITHMETIC_EXCEPTION || trapNumber == NULL_POINTER_EXCEPTION || trapNumber == STACK_FAULT  || trapNumber == STACK_FATAL;
+            return trapNumber == ARITHMETIC_EXCEPTION || trapNumber == NULL_POINTER_EXCEPTION || trapNumber == STACK_FAULT || trapNumber == STACK_FATAL;
         }
 
         public static Class<? extends Throwable> toImplicitExceptionClass(int trapNumber) {
@@ -137,6 +137,7 @@ public abstract class Trap {
     }
 
     private static boolean DumpStackOnTrap;
+
     static {
         VMOptions.addFieldOption("-XX:", "DumpStackOnTrap", Trap.class, "Reports a stack trace for every trap, regardless of the cause.", MaxineVM.Phase.PRISTINE);
     }
@@ -200,8 +201,8 @@ public abstract class Trap {
     /**
      * This method is called from the {@linkplain Stubs#trapStub trap stub} and does the actual trap handling.
      *
-     * @param trapNumber the trap that occurred
-     * @param trapFrame the trap frame
+     * @param trapNumber   the trap that occurred
+     * @param trapFrame    the trap frame
      * @param faultAddress the faulting address that caused this trap (memory faults only)
      */
     private static void handleTrap(int trapNumber, Pointer trapFrame, Address faultAddress) {
@@ -211,7 +212,6 @@ public abstract class Trap {
         TRAP_INSTRUCTION_POINTER.store3(Pointer.zero());
 
         if (trapNumber == ASYNC_INTERRUPT) {
-	    com.sun.max.vm.Log.println(VmThread.current());
             VmThread.current().setInterrupted();
             return;
         }
@@ -219,16 +219,16 @@ public abstract class Trap {
         final TrapFrameAccess tfa = vm().trapFrameAccess;
         final Pointer pc = tfa.getPC(trapFrame);
         final Object origin = checkTrapOrigin(trapNumber, trapFrame, faultAddress, pc);
-        if(Platform.target().arch.isARM()) {
-		if(pc.readInt(0) == 0xd9cfa00 )	{	// We are a vldr of the form used to indicate integer div by zero
-			if((pc.readInt(-4) == 0xe02cc00c) && (pc.readInt(-8) == 0xf1d0beef)) {
-				// see ARMV7Assembler.insertDIVIDEMark()
-				// could check -12 to be same as -8
-				trapNumber = ARITHMETIC_EXCEPTION;
-			}
-		}
-	}
-	
+        if (Platform.target().arch.isARM()) {
+            if (pc.readInt(0) == 0xd9cfa00) {    // We are a vldr of the form used to indicate integer div by zero
+                if ((pc.readInt(-4) == 0xe02cc00c) && (pc.readInt(-8) == 0xf1d0beef)) {
+                    // see ARMV7Assembler.insertDIVIDEMark()
+                    // could check -12 to be same as -8
+                    trapNumber = ARITHMETIC_EXCEPTION;
+                }
+            }
+        }
+
         if (origin instanceof TargetMethod) {
             // the trap occurred in Java
             final TargetMethod targetMethod = (TargetMethod) origin;
@@ -238,7 +238,7 @@ public abstract class Trap {
 
             switch (trapNumber) {
                 case MEMORY_FAULT:
-		    //com.sun.max.vm.Log.println("MEMORYFAUILT");
+                    //com.sun.max.vm.Log.println("MEMORYFAUILT");
                     handleMemoryFault(vmIP, targetMethod, sp, fp, trapFrame, faultAddress);
                     break;
                 case STACK_FAULT:
@@ -246,16 +246,16 @@ public abstract class Trap {
 
                     // the native trap handler unprotected the yellow zone -
                     // propagate this to the thread object
-		    //com.sun.max.vm.Log.println("STACKFAULT");
+                    //com.sun.max.vm.Log.println("STACKFAULT");
                     VmThread.current().nativeTrapHandlerUnprotectedYellowZone();
 
                     raiseImplicitException(trapFrame, targetMethod, StackOverflowError.class, sp, fp, vmIP);
                     break; // unreachable, except when returning to a local exception handler
                 case ARITHMETIC_EXCEPTION:
                     // integer divide by zero
-		    //com.sun.max.vm.Log.println("DIVZEROFAULT");
-	             //com.sun.max.vm.Log.print("STACKPTR ");com.sun.max.vm.Log.println(sp);
-	             //com.sun.max.vm.Log.print("PCPTR ");com.sun.max.vm.Log.println(vmIP);
+                    //com.sun.max.vm.Log.println("DIVZEROFAULT");
+                    //com.sun.max.vm.Log.print("STACKPTR ");com.sun.max.vm.Log.println(sp);
+                    //com.sun.max.vm.Log.print("PCPTR ");com.sun.max.vm.Log.println(vmIP);
                     raiseImplicitException(trapFrame, targetMethod, ArithmeticException.class, sp, fp, vmIP);
                     break; // unreachable
                 case STACK_FATAL:
@@ -288,12 +288,12 @@ public abstract class Trap {
      * the trap, this method will return a reference to that runtime stub. Otherwise, this method returns {@code null},
      * indicating the trap occurred in native code.
      *
-     * @param trapNumber the trap number
-     * @param trapFrame the trap frame
+     * @param trapNumber   the trap number
+     * @param trapFrame    the trap frame
      * @param faultAddress the faulting address that caused the trap (memory faults only)
-     * @param pc the address of instruction causing the trap
+     * @param pc           the address of instruction causing the trap
      * @return a reference to the {@code TargetMethod} containing the instruction pointer that
-     *         caused the trap or {@code null} if trap occurred in native code
+     * caused the trap or {@code null} if trap occurred in native code
      */
     private static Object checkTrapOrigin(int trapNumber, Pointer trapFrame, Address faultAddress, Pointer pc) {
         final TrapFrameAccess tfa = vm().trapFrameAccess;
@@ -336,11 +336,11 @@ public abstract class Trap {
      * a safepoint being triggered, or a segmentation fault in native code.
      *
      * @param instructionPointer the instruction pointer that caused the fault
-     * @param targetMethod the TargetMethod containing {@code instructionPointer}
-     * @param stackPointer the stack pointer at the time of the fault
-     * @param framePointer the frame pointer at the time of the fault
-     * @param trapFrame a pointer to the trap frame
-     * @param faultAddress the address that caused the fault
+     * @param targetMethod       the TargetMethod containing {@code instructionPointer}
+     * @param stackPointer       the stack pointer at the time of the fault
+     * @param framePointer       the frame pointer at the time of the fault
+     * @param trapFrame          a pointer to the trap frame
+     * @param faultAddress       the address that caused the fault
      */
     private static void handleMemoryFault(CodePointer instructionPointer, TargetMethod targetMethod, Pointer stackPointer, Pointer framePointer, Pointer trapFrame, Address faultAddress) {
         final Pointer dtla = currentTLA();
@@ -402,13 +402,13 @@ public abstract class Trap {
             tfa.setSafepointLatch(trapFrame, etla);
 
         } else if (inJava(dtla)) {
-	    //com.sun.max.vm.Log.println("is in JAVA");
+            //com.sun.max.vm.Log.println("is in JAVA");
             tfa.setTrapNumber(trapFrame, Number.NULL_POINTER_EXCEPTION);
             // null pointer exception
-	    //com.sun.max.vm.Log.print("STACK PTR " );com.sun.max.vm.Log.println(stackPointer);
-	    //com.sun.max.vm.Log.print("PC PTR ");com.sun.max.vm.Log.println(instructionPointer);
+            //com.sun.max.vm.Log.print("STACK PTR " );com.sun.max.vm.Log.println(stackPointer);
+            //com.sun.max.vm.Log.print("PC PTR ");com.sun.max.vm.Log.println(instructionPointer);
             raiseImplicitException(trapFrame, targetMethod, NullPointerException.class, stackPointer, framePointer, instructionPointer);
-	    //com.sun.max.vm.Log.println("RETURNED from raiseImplicitException");
+            //com.sun.max.vm.Log.println("RETURNED from raiseImplicitException");
         } else {
             // segmentation fault happened in native code somewhere, die.
             FatalError.unexpected("Trap in native code", true, null, trapFrame);
@@ -416,32 +416,33 @@ public abstract class Trap {
     }
 
     public static boolean DeoptOnImplicitException = true;
+
     static {
         VMOptions.addFieldOption("-XX:", "DeoptOnImplicitException", Trap.class, "Deoptimize on implicit exception occuring in optimized code.");
     }
 
     /**
      * Raises an implicit exception.
-     *
+     * <p/>
      * If there is a local handler for the exception (i.e. a handler in the same frame in which the exception occurred)
      * and the method in which the exception occurred was compiled by the opto compiler, then the trap state is altered
      * so that the return address for the trap frame is set to be the exception handler entry address.
      * This means that the register allocator can assume that registers are not modified in the control flow
      * from an implicit exception to the exception handler.
-     *
+     * <p/>
      * Otherwise, the {@linkplain Throw#raise(Throwable, Pointer, Pointer, CodePointer) standard mechanism} for throwing an
      * exception is used.
      *
-     * @param trapFrame a pointer to the trap frame
-     * @param tm the target method containing the trap address
+     * @param trapFrame      a pointer to the trap frame
+     * @param tm             the target method containing the trap address
      * @param throwableClass the throwable class to instantiate and raise
-     * @param sp the stack pointer at the time of the trap
-     * @param fp the frame pointer at the time of the trap
-     * @param ip the instruction pointer which caused the trap
+     * @param sp             the stack pointer at the time of the trap
+     * @param fp             the frame pointer at the time of the trap
+     * @param ip             the instruction pointer which caused the trap
      */
     private static void raiseImplicitException(Pointer trapFrame, TargetMethod tm, Class<? extends Throwable> throwableClass, Pointer sp, Pointer fp, CodePointer ip) {
         if (DeoptOnImplicitException && !tm.isBaseline() && tm.deoptOnImplicitException() && throwableClass != StackOverflowError.class) {
-	    com.sun.max.vm.Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DEOPT inside raiseImplicitException NOT YET IMPLEMENTED");
+            com.sun.max.vm.Log.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!DEOPT inside raiseImplicitException NOT YET IMPLEMENTED");
             Stub stub = vm().stubs.deoptStubForSafepointPoll();
             CodePointer to = stub.codeStart();
             final TrapFrameAccess tfa = vm().trapFrameAccess;
@@ -473,28 +474,28 @@ public abstract class Trap {
 
 
         if (tm.preserveRegistersForLocalExceptionHandler()) {
-	//com.sun.max.vm.Log.print("TM is ");com.sun.max.vm.Log.println(tm);
-	//com.sun.max.vm.Log.println("DO getcatchddress raiseImplicitException");
+            //com.sun.max.vm.Log.print("TM is ");com.sun.max.vm.Log.println(tm);
+            //com.sun.max.vm.Log.println("DO getcatchddress raiseImplicitException");
             final CodePointer catchAddress = tm.throwAddressToCatchAddress(ip, throwable);
-	//com.sun.max.vm.Log.println("DONE getcatchddress raiseImplicitException");
-	 //com.sun.max.vm.Log.println(catchAddress.toPointer());
+            //com.sun.max.vm.Log.println("DONE getcatchddress raiseImplicitException");
+            //com.sun.max.vm.Log.println(catchAddress.toPointer());
             if (!catchAddress.isZero()) {
                 // Store the exception so that the handler can find it.
                 VmThread.current().storeExceptionForHandler(throwable, tm, tm.posFor(catchAddress));
 
                 final TrapFrameAccess tfa = vm().trapFrameAccess;
-		//com.sun.max.vm.Log.println("DO set PC raiseImplicitException");
+                //com.sun.max.vm.Log.println("DO set PC raiseImplicitException");
                 tfa.setPC(trapFrame, catchAddress.toPointer());
-		 //com.sun.max.vm.Log.println("DONE set PC raiseImplicitException");
+                //com.sun.max.vm.Log.println("DONE set PC raiseImplicitException");
 
                 return;
             }
         }
-	 //com.sun.max.vm.Log.println("CATCH ADDRESS in raiseImplicitException is ZERO, probably means recordImplicitException is not using the correct codeOffset");
-	//com.sun.max.vm.Log.println("in ARMV7LIRAssembler ... exampine call sites and the generated assembler enable prints in ");
-	 //com.sun.max.vm.Log.println("throwAddresstoCatch address MAxTargetMEthod T1XTargetMEthod as necessary");
-	 //com.sun.max.vm.Log.println("DO Trap.java Throw.raise raiseImplicitException");
+        //com.sun.max.vm.Log.println("CATCH ADDRESS in raiseImplicitException is ZERO, probably means recordImplicitException is not using the correct codeOffset");
+        //com.sun.max.vm.Log.println("in ARMV7LIRAssembler ... exampine call sites and the generated assembler enable prints in ");
+        //com.sun.max.vm.Log.println("throwAddresstoCatch address MAxTargetMEthod T1XTargetMEthod as necessary");
+        //com.sun.max.vm.Log.println("DO Trap.java Throw.raise raiseImplicitException");
         Throw.raise(throwable, sp, fp, ip);
-	 //com.sun.max.vm.Log.println("DONE Throw.raise raiseImplicitException");
+        //com.sun.max.vm.Log.println("DONE Throw.raise raiseImplicitException");
     }
 }

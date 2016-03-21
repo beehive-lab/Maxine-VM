@@ -65,7 +65,8 @@ public class ThinLockword64 extends LightweightLockword64 {
 
 
     private static final Address UTIL_MASK = UTIL_SHIFTED_MASK.shiftedLeft(UTIL_SHIFT);
-    private static final Address UNLOCKED_MASK = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT).bitSet(MISC_BIT_INDEX).or(UTIL_MASK);
+    private static final Address UNLOCKED_MASK = Platform.target().arch.is32bit() ? Word.zero().asAddress().bitSet(MISC_BIT_INDEX).or(UTIL_MASK)
+                    : HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT).bitSet(MISC_BIT_INDEX).or(UTIL_MASK);
 
     @HOSTED_ONLY
     public ThinLockword64(long value) {

@@ -17,9 +17,9 @@ public static void main(String args[]) {
 	a = Integer.parseInt(args[0]);
 	b = Integer.parseInt(args[1]);
 	for(int i = 0; i < 1000; i++)	{
-		acc[i] = 0.0;
-		one[i] = 0.00000000000001;
-		two[i] = one[i];
+		acc[i] = 0.0 ;
+		one[i] = (double) a;
+		two[i] = (double) b;
 	}
 	for(int i = 0 ; i < 6000;i++)	{
 		oner.accumulate(a,b);

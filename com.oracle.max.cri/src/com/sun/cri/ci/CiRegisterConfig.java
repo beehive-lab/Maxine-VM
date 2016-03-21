@@ -50,9 +50,10 @@ public class CiRegisterConfig implements RiRegisterConfig {
      * The set of registers that can be used by the register allocator.
      */
     public final CiRegister[] allocatable;
+
     public void printAllocatable() {
-        for(int i = 0; i < allocatable.length;i++)
-            System.out.println("ARMV7 allocatable regs "+  allocatable[i].number);
+        for (int i = 0; i < allocatable.length; i++)
+            System.out.println("ARMV7 allocatable regs " + allocatable[i].number);
     }
 
     /**
@@ -108,7 +109,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
     public final int[] stackArg0Offsets = new int[CiCallingConvention.Type.VALUES.length];
 
     public CiRegisterConfig(CiRegister frame, CiRegister integralReturn, CiRegister floatingPointReturn, CiRegister scratch, CiRegister[] allocatable, CiRegister[] callerSave,
-                    CiRegister[] parameters, CiCalleeSaveLayout csl, CiRegister[] allRegisters, Map<Integer, CiRegister> roles) {
+                            CiRegister[] parameters, CiCalleeSaveLayout csl, CiRegister[] allRegisters, Map<Integer, CiRegister> roles) {
         this.frame = frame;
         this.csl = csl;
         this.allocatable = allocatable;
@@ -176,7 +177,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
 
     /**
      * {@inheritDoc}
-     *
+     * <p/>
      * This implementation assigns all available registers to parameters before assigning any stack slots to parameters.
      */
     public CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, CiTarget target, boolean stackOnly) {
@@ -202,9 +203,9 @@ public class CiRegisterConfig implements RiRegisterConfig {
                     if (!stackOnly && currentGeneral < cpuParameters.length) {
                         if (kind.isLong() && target.arch.is32bit()) {
                             if ((cpuParameters.length - currentGeneral) < 2) {
-				currentGeneral = cpuParameters.length; // APN added to make adapters work
-				// as if we have exhausted space then we expect to use stack
-				// might break a few things though ...
+                                currentGeneral = cpuParameters.length; // APN added to make adapters work
+                                // as if we have exhausted space then we expect to use stack
+                                // might break a few things though ...
                                 break;
                             }
                             if ((currentGeneral) % 2 != 0) {
@@ -232,7 +233,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
                     }
                     break;
                 case Double:
-                    if (!stackOnly && currentFP < fpuParameters.length ) {
+                    if (!stackOnly && currentFP < fpuParameters.length) {
                         if (target.arch.is32bit()) {
                             if ((fpuParameters.length - currentFP) < 2) {
                                 break;
@@ -255,12 +256,13 @@ public class CiRegisterConfig implements RiRegisterConfig {
             }
 
             if (locations[i] == null) {
-		//if (target.arch.is32bit() && (kind.stackKind() == CiKind.Long || kind.stackKind() == CiKind.Double) && ((currentStackIndex *  target.spillSlotSize) % 8 != 0)) {
-                    //currentStackIndex++;
-                //}
+                if (target.arch.is32bit() && (kind.stackKind() == CiKind.Long || kind.stackKind() == CiKind.Double) && ((currentStackIndex * target.spillSlotSize) % 8 != 0)) {
+                    currentStackIndex++; // FIX to ensure stack has correctly alignment for long/double it means "holes" are present
+                }
+
                 locations[i] = CiStackSlot.get(kind.stackKind(), currentStackIndex, !type.out);
                 currentStackIndex += target.spillSlots(kind);
-	    }
+            }
         }
         return new CiCallingConvention(locations, (currentStackIndex - firstStackIndex) * target.spillSlotSize);
     }
@@ -317,8 +319,8 @@ public class CiRegisterConfig implements RiRegisterConfig {
             stackArg0OffsetsMap.append(t).append(" -> ").append(stackArg0Offsets[t.ordinal()]);
         }
         String res = String.format("Allocatable: " + Arrays.toString(getAllocatableRegisters()) + "%n" + "CallerSave:  " + Arrays.toString(getCallerSaveRegisters()) + "%n" + "CalleeSave:  " +
-                        getCalleeSaveLayout() + "%n" + "CPU Params:  " + Arrays.toString(cpuParameters) + "%n" + "FPU Params:  " + Arrays.toString(fpuParameters) + "%n" + "VMRoles:     " + roleMap +
-                        "%n" + "stackArg0:   " + stackArg0OffsetsMap + "%n" + "Scratch:     " + getScratchRegister() + "%n");
+                getCalleeSaveLayout() + "%n" + "CPU Params:  " + Arrays.toString(cpuParameters) + "%n" + "FPU Params:  " + Arrays.toString(fpuParameters) + "%n" + "VMRoles:     " + roleMap +
+                "%n" + "stackArg0:   " + stackArg0OffsetsMap + "%n" + "Scratch:     " + getScratchRegister() + "%n");
         return res;
     }
 }

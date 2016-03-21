@@ -75,7 +75,7 @@ public class JavaMonitorManager {
     /**
      * The number of unbound monitors created in the boot image.
      */
-    private static final int UNBOUNDLIST_IMAGE_QTY = 50;
+    private static final int UNBOUNDLIST_IMAGE_QTY = 100;
 
     /**
      * The amount by which the list of unbound monitors grows each time it is {@linkplain #expandUnboundList() expanded}.

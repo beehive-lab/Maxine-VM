@@ -52,21 +52,9 @@ public class HashableLockword64 extends ModalLockword64 {
      *     [                hashcode              ]
      */
 
-    protected static final int HASH_FIELD_WIDTH;
-    protected static final int HASHCODE_SHIFT;
-    protected static final Address HASHCODE_SHIFTED_MASK;
-
-    static {
-        if (Platform.target().arch.is32bit()) {
-            HASH_FIELD_WIDTH = 32;
-            HASHCODE_SHIFT = 0;
-            HASHCODE_SHIFTED_MASK = Word.allOnes().asAddress();
-        } else {
-            HASH_FIELD_WIDTH = 32;
-            HASHCODE_SHIFT = NUMBER_OF_MODE_BITS;
-            HASHCODE_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(64 - HASH_FIELD_WIDTH);
-        }
-    }
+    protected static final int HASH_FIELD_WIDTH = 32;
+    protected static final int HASHCODE_SHIFT = Platform.target().arch.is32bit() ? 0 : NUMBER_OF_MODE_BITS;
+    protected static final Address HASHCODE_SHIFTED_MASK = Platform.target().arch.is32bit() ? Word.allOnes().asAddress() : Word.allOnes().asAddress().unsignedShiftedRight(64 - HASH_FIELD_WIDTH);
 
     @HOSTED_ONLY
     public HashableLockword64(long value) {

@@ -39,6 +39,7 @@ import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ri.*;
+import com.sun.max.vm.MaxineVM;
 
 /**
  * This class encapsulates global information about the compilation of a particular method,
@@ -80,9 +81,9 @@ public final class C1XCompilation {
      * Creates a new compilation for the specified method and runtime.
      *
      * @param compiler the compiler
-     * @param method the method to be compiled or {@code null} if generating code for a stub
-     * @param osrBCI the bytecode index for on-stack replacement, if requested
-     * @param stats externally supplied statistics object to be used if not {@code null}
+     * @param method   the method to be compiled or {@code null} if generating code for a stub
+     * @param osrBCI   the bytecode index for on-stack replacement, if requested
+     * @param stats    externally supplied statistics object to be used if not {@code null}
      */
     public C1XCompilation(C1XCompiler compiler, RiResolvedMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
         this.parent = currentCompilation.get();
@@ -186,6 +187,7 @@ public final class C1XCompilation {
 
     /**
      * Returns the frame map of this compilation.
+     *
      * @return the frame map
      */
     public FrameMap frameMap() {
@@ -271,6 +273,12 @@ public final class C1XCompilation {
     private CiTargetMethod emitCode() {
         if (C1XOptions.GenLIR && C1XOptions.GenCode) {
             final LIRAssembler lirAssembler = compiler.backend.newLIRAssembler(this, assembler());
+            /**
+             * This flag is used to turn on simulation instrumentation when the MaxineVM is running and the flag has been enabled in the bootimage build
+             */
+            if (AbstractAssembler.SIMULATE_PLATFORM && MaxineVM.isRunning()) {
+                assembler.asm.SIMULATE_DYNAMIC = true;
+            }
             lirAssembler.emitCode(hir.linearScanOrder());
 
             // generate code for slow cases

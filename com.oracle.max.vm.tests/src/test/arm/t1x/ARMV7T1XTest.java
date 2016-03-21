@@ -138,7 +138,6 @@ public class ARMV7T1XTest extends MaxTestCase {
 
             c1x.initializeOffline(Phase.HOSTED_COMPILING);
             theCompiler = (ARMV7T1XCompilation) t1x.getT1XCompilation();
-            theCompiler.setDebug(false);
         } catch (Exception e) {
             System.out.println(e);
             e.printStackTrace();

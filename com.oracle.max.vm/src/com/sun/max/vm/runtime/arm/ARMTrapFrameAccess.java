@@ -204,7 +204,7 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
                 }
             }
         }
-        Log.print("  rip=");
+        Log.print("  PC (r15) =");
         Log.println(getPC(trapFrame));
         Log.print("  rflags=");
         final Word flags = csa.readWord(FLAGS_OFFSET);

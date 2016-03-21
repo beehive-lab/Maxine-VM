@@ -34,13 +34,14 @@ import com.sun.cri.ci.CiArchitecture.*;
 public abstract class AbstractAssembler {
     public final CiTarget target;
     public final Buffer codeBuffer;
-    public static boolean SIMULATE_PLATFORM; // on if we use the FPGA simulation platform
+    public static boolean SIMULATE_PLATFORM = false; // on if we use the FPGA simulation platform see BootImageGenerator.java
+    public boolean SIMULATE_DYNAMIC = false; // dynamically set to determine if we need to instrument ...
     public static boolean FLOAT_IDIV; // on arm platforms we set this to true when do not have  an integer divide unit
     public static boolean DEBUG_METHODS;
 
     public AbstractAssembler(CiTarget target) {
         this.target = target;
-
+        SIMULATE_DYNAMIC = false; // set by C1XCompilation after Maxine has reached isRunning status ....
         if (target.arch.byteOrder == ByteOrder.BigEndian) {
             this.codeBuffer = new Buffer.BigEndian();
         } else {
