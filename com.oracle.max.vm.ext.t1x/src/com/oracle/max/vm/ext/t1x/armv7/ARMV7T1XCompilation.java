@@ -59,6 +59,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     public static int invokeDebugCounter = 0;
     private static final Object fileLock = new Object();
     private static File file;
+    private static boolean debugEnabled = false;
 
     protected final ARMV7MacroAssembler asm;
     final PatchInfoARMV7 patchInfo;
@@ -77,9 +78,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
             }
         buf = asm.codeBuffer;
         patchInfo = new PatchInfoARMV7();
-    }
-
-    static {
         initDebugMethods();
     }
 
@@ -96,13 +94,16 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     }
 
     public static void initDebugMethods() {
-        if (!AbstractAssembler.DEBUG_METHODS) {
+        if (debugEnabled) {
             return;
         }
-        if ((file = new File(getDebugMethodsPath() + "debugT1Xmethods")).exists()) {
-            file.delete();
+        if (AbstractAssembler.DEBUG_METHODS) {
+            debugEnabled = true;
+            if ((file = new File(getDebugMethodsPath() + "debugT1Xmethods")).exists()) {
+                file.delete();
+            }
+            file = new File(getDebugMethodsPath() + "debugT1Xmethods");
         }
-        file = new File(getDebugMethodsPath() + "debugT1Xmethods");
     }
 
     public static void writeDebugMethod(String name, int index) throws Exception {
