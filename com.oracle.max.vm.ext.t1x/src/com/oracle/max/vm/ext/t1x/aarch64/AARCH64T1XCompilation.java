@@ -17,6 +17,7 @@
  */
 package com.oracle.max.vm.ext.t1x.aarch64;
 
+import static com.oracle.max.vm.ext.t1x.T1X.*;
 import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 
@@ -30,10 +31,13 @@ import com.oracle.max.vm.ext.t1x.*;
 import com.sun.cri.bytecode.Bytecodes;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.aarch64.*;
+import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
 // import java.io.PrintWriter;
@@ -202,7 +206,7 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignObjectReg(CiRegister dst, CiRegister src) {
-
+        // XXX Implement me
     }
 
     @Override
@@ -217,7 +221,7 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignObject(CiRegister dst, Object value) {
-
+        // XXX Implement me
     }
 
     @Override
@@ -281,17 +285,17 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void do_store(int index, Kind kind) {
-
+        super.do_store(index, kind);
     }
 
     @Override
     protected void do_load(int index, Kind kind) {
-
+        super.do_load(index, kind);
     }
 
     @Override
     protected void do_oconst(Object value) {
-
+        super.do_oconst(value);
     }
 
     @Override
@@ -330,6 +334,7 @@ public class AARCH64T1XCompilation extends T1XCompilation {
     @Override
     protected int callDirect() {
         return 0;
+        // XXX Implement me
     }
 
     @Override
@@ -340,54 +345,96 @@ public class AARCH64T1XCompilation extends T1XCompilation {
     @Override
     protected int callIndirect(CiRegister target, int receiverStackIndex) {
         return 0;
+        // XXX Implement me
     }
 
     @Override
     protected void nullCheck(CiRegister src) {
-
+        // XXX Implement me
     }
 
     private void alignDirectCall(int callPos) {
-
+        // XXX Implement me
     }
 
     private int framePointerAdjustment() {
-        return 0;
+        final int enterSize = frame.frameSize() - Word.size();
+        return enterSize - frame.sizeOfNonParameterLocals();
     }
 
     @Override
     protected Adapter emitPrologue() {
-        return null;
+        Adapter adapter = null;
+        if (adapterGenerator != null) {
+            adapter = adapterGenerator.adapt(method, asm);
+        }
+
+        int frameSize = frame.frameSize();
+        // TODO implement asm.stp/ldp and change these pushes
+        asm.push(64, Aarch64.linkRegister);
+        asm.push(64, Aarch64.fp);
+        asm.sub(64, Aarch64.fp, Aarch64.sp, framePointerAdjustment()); // fp set relative to sp
+        // TODO check alignment constraints here
+        asm.sub(64, Aarch64.sp, Aarch64.sp, frame.frameSize() - Word.size());
+
+
+        if (Trap.STACK_BANGING) {
+            int pageSize = platform().pageSize;
+            int framePages = frameSize / pageSize;
+            // emit multiple stack bangs for methods with frames larger than a page
+            for (int i = 0; i <= framePages; i++) {
+                int offset = (i + VmThread.STACK_SHADOW_PAGES) * pageSize;
+                // Deduct 'frameSize' to handle frames larger than (VmThread.STACK_SHADOW_PAGES * pageSize)
+                offset = offset - frameSize;
+                // RSP is r13!
+                //asm.setUpScratch(new CiAddress(WordUtil.archKind(), RSP, -offset));
+                //asm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r0, asm.scratchRegister, 0); // was LR
+                // APN guessing rax is return address.
+                // asm.movq(new CiAddress(WordUtil.archKind(), RSP, -offset), rax);
+            }
+        }
+        return adapter;
     }
 
     @Override
     protected void emitUnprotectMethod() {
-
+        protectionLiteralIndex = objectLiterals.size();
+        objectLiterals.add(T1XTargetMethod.PROTECTED);
+        int dispPos = buf.position();
+        asm.adr(scratch, 0); // this gets patched
+        asm.str(64, Aarch64.zr, Aarch64Address.createBaseRegisterOnlyAddress(scratch));
+        patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
     }
 
     @Override
     protected void emitEpilogue() {
-
+        // rewind stack pointer
+        asm.add(64, Aarch64.sp, Aarch64.fp, framePointerAdjustment());
+        asm.pop(64, Aarch64.fp);
+        asm.pop(64, Aarch64.linkRegister);
+        // XXX ret messes up the unit test framework - not sure if we need
+        // to call ret here anyways.
+        //asm.ret(Aarch64.linkRegister);
     }
 
     @Override
     protected void do_preVolatileFieldAccess(T1XTemplateTag tag, FieldActor fieldActor) {
-
+        // XXX Implement me
     }
 
     @Override
     protected void do_postVolatileFieldAccess(T1XTemplateTag tag, FieldActor fieldActor) {
-
+        // XXX Implement me
     }
 
     @Override
     protected void do_tableswitch() {
-
+        // XXX Implement me
     }
 
     @Override
     protected void do_lookupswitch() {
-
+        // XXX Implement me.
     }
 
     @Override
@@ -398,134 +445,186 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void branch(int opcode, int targetBCI, int bci) {
-    	ConditionFlag cc;
-    	
+        ConditionFlag cc;
+
         if (stream.nextBCI() == targetBCI && methodProfileBuilder == null) {
             // Skip completely if target is next instruction and profiling is turned off
             decStack(1);
             return;
         }
-        
+
         switch (opcode) {
-        case Bytecodes.IFEQ:
-        	peekInt(scratch, 0);
-        	assignInt(scratch2, 0);
-        	decStack(1);
-        	asm.cmp(32, scratch, scratch2);
-        	cc = ConditionFlag.EQ;
-        	break;
-        case Bytecodes.IFNE:
-        	peekInt(scratch, 0);
-        	assignInt(scratch2, 0);
-        	decStack(1);
-        	asm.cmp(32, scratch, scratch2);
-        	cc = ConditionFlag.NE;
-        	break;
-        case Bytecodes.IFLE:
-        	peekInt(scratch, 0);
-        	assignInt(scratch2, 0);
-        	decStack(1);
-        	asm.cmp(32, scratch, scratch2);
-        	cc = ConditionFlag.LE;
-        	break;
-        case Bytecodes.IFLT:
-        	peekInt(scratch, 0);
-        	assignInt(scratch2, 0);
-        	decStack(1);
-        	asm.cmp(32, scratch, scratch2);
-        	cc = ConditionFlag.LT;
-        	break;
-        case Bytecodes.IFGE:
-        	peekInt(scratch, 0);
-        	assignInt(scratch2, 0);
-        	decStack(1);
-        	asm.cmp(32, scratch, scratch2);
-        	cc = ConditionFlag.GE;
-        	break;
-        case Bytecodes.IFGT:
-        	peekInt(scratch, 0);
-        	assignInt(scratch2, 0);
-        	decStack(1);
-        	asm.cmp(32, scratch, scratch2);
-        	cc = ConditionFlag.GT;
-        	break;
-        case Bytecodes.IF_ICMPEQ:
-        	peekInt(scratch, 1);
-        	peekInt(scratch2, 0);
-        	decStack(2);
-        	asm.cmp(32, scratch, scratch2);
-        	cc = ConditionFlag.EQ;
-        	break;
-        case Bytecodes.IF_ICMPNE:
-        	peekInt(scratch, 1);
-        	peekInt(scratch2, 0);
-        	decStack(2);
-        	asm.cmp(32, scratch, scratch2);
-        	cc = ConditionFlag.NE;
-        	break;
-        case Bytecodes.IF_ICMPGE:
-        	peekInt(scratch, 1);
-        	peekInt(scratch2, 0);
-        	decStack(2);
-        	asm.cmp(32, scratch, scratch2);
-        	cc = ConditionFlag.GE;
-        	break;
-        case Bytecodes.IF_ICMPGT:
-        	peekInt(scratch, 1);
-        	peekInt(scratch2, 0);
-        	decStack(2);
-        	asm.cmp(32, scratch, scratch2);
-        	cc = ConditionFlag.GT;
-        	break;
-        case Bytecodes.IF_ICMPLE:
-        	peekInt(scratch, 1);
-        	peekInt(scratch2, 0);
-        	decStack(2);
-        	asm.cmp(32, scratch, scratch2);
-        	cc = ConditionFlag.LE;
-        	break;
-        case Bytecodes.IF_ICMPLT:
-        	peekInt(scratch, 1);
-        	peekInt(scratch2, 0);
-        	decStack(2);
-        	asm.cmp(32, scratch, scratch2);
-        	cc = ConditionFlag.LT;
-        	break;
-        case Bytecodes.IF_ACMPEQ:
-        	peekObject(scratch, 1);
-        	peekObject(scratch2, 0);
-        	decStack(2);
-        	asm.cmp(64, scratch, scratch2);
-        	cc = ConditionFlag.EQ;
-        	break;
-        case Bytecodes.IF_ACMPNE:
-        	peekObject(scratch, 1);
-        	peekObject(scratch2, 0);
-        	decStack(2);
-        	asm.cmp(64, scratch, scratch2);
-        	cc = ConditionFlag.NE;
-        	break;
-        case Bytecodes.IFNULL:
-        	peekObject(scratch, 0);
-        	assignObject(scratch2, null);
-        	decStack(1);
-        	asm.cmp(64, scratch, scratch2);
-        	cc = ConditionFlag.EQ;
-        	break;
-        case Bytecodes.IFNONNULL:
-        	peekObject(scratch, 0);
-        	assignObject(scratch2, null);
-        	decStack(1);
-        	asm.cmp(64, scratch, scratch2);
-        	cc = ConditionFlag.NE;
-        	break;
-        case Bytecodes.GOTO:
-        case Bytecodes.GOTO_W:
-        	cc = null;
-        	break;
-        default:
-        	throw new InternalError("Unknown branch opcode: " + Bytecodes.nameOf(opcode));
+            case Bytecodes.IFEQ:
+                peekInt(scratch, 0);
+                decStack(1);
+                asm.cmp(32, scratch, Aarch64.zr);
+                cc = ConditionFlag.EQ;
+                break;
+            case Bytecodes.IFNE:
+                peekInt(scratch, 0);
+                decStack(1);
+                asm.cmp(32, scratch, Aarch64.zr);
+                cc = ConditionFlag.NE;
+                break;
+            case Bytecodes.IFLE:
+                peekInt(scratch, 0);
+                decStack(1);
+                asm.cmp(32, scratch, Aarch64.zr);
+                cc = ConditionFlag.LE;
+                break;
+            case Bytecodes.IFLT:
+                peekInt(scratch, 0);
+                decStack(1);
+                asm.cmp(32, scratch, Aarch64.zr);
+                cc = ConditionFlag.LT;
+                break;
+            case Bytecodes.IFGE:
+                peekInt(scratch, 0);
+                decStack(1);
+                asm.cmp(32, scratch, Aarch64.zr);
+                cc = ConditionFlag.GE;
+                break;
+            case Bytecodes.IFGT:
+                peekInt(scratch, 0);
+                decStack(1);
+                asm.cmp(32, scratch, Aarch64.zr);
+                cc = ConditionFlag.GT;
+                break;
+            case Bytecodes.IF_ICMPEQ:
+                peekInt(scratch, 1);
+                peekInt(scratch2, 0);
+                decStack(2);
+                asm.cmp(32, scratch, scratch2);
+                cc = ConditionFlag.EQ;
+                break;
+            case Bytecodes.IF_ICMPNE:
+                peekInt(scratch, 1);
+                peekInt(scratch2, 0);
+                decStack(2);
+                asm.cmp(32, scratch, scratch2);
+                cc = ConditionFlag.NE;
+                break;
+            case Bytecodes.IF_ICMPGE:
+                peekInt(scratch, 1);
+                peekInt(scratch2, 0);
+                decStack(2);
+                asm.cmp(32, scratch, scratch2);
+                cc = ConditionFlag.GE;
+                break;
+            case Bytecodes.IF_ICMPGT:
+                peekInt(scratch, 1);
+                peekInt(scratch2, 0);
+                decStack(2);
+                asm.cmp(32, scratch, scratch2);
+                cc = ConditionFlag.GT;
+                break;
+            case Bytecodes.IF_ICMPLE:
+                peekInt(scratch, 1);
+                peekInt(scratch2, 0);
+                decStack(2);
+                asm.cmp(32, scratch, scratch2);
+                cc = ConditionFlag.LE;
+                break;
+            case Bytecodes.IF_ICMPLT:
+                peekInt(scratch, 1);
+                peekInt(scratch2, 0);
+                decStack(2);
+                asm.cmp(32, scratch, scratch2);
+                cc = ConditionFlag.LT;
+                break;
+            case Bytecodes.IF_ACMPEQ:
+                peekObject(scratch, 1);
+                peekObject(scratch2, 0);
+                decStack(2);
+                asm.cmp(64, scratch, scratch2);
+                cc = ConditionFlag.EQ;
+                break;
+            case Bytecodes.IF_ACMPNE:
+                peekObject(scratch, 1);
+                peekObject(scratch2, 0);
+                decStack(2);
+                asm.cmp(64, scratch, scratch2);
+                cc = ConditionFlag.NE;
+                break;
+            case Bytecodes.IFNULL:
+                peekObject(scratch, 0);
+                assignObject(scratch2, null);
+                decStack(1);
+                asm.cmp(64, scratch, scratch2);
+                cc = ConditionFlag.EQ;
+                break;
+            case Bytecodes.IFNONNULL:
+                peekObject(scratch, 0);
+                assignObject(scratch2, null);
+                decStack(1);
+                asm.cmp(64, scratch, scratch2);
+                cc = ConditionFlag.NE;
+                break;
+            case Bytecodes.GOTO:
+            case Bytecodes.GOTO_W:
+                cc = null;
+                break;
+            default:
+                throw new InternalError("Unknown branch opcode: " + Bytecodes.nameOf(opcode));
         }
+
+        int pos = buf.position();
+
+        if (bci < targetBCI) {
+            // forward branch
+            if (cc == null) {
+                patchInfo.addJMP(pos, targetBCI);
+                // For now we assume that the target is within a range which
+                // can be represented with a signed 21bit offset.
+                jmp(buf.position());
+            } else {
+                patchInfo.addJCC(cc, pos, targetBCI);
+                jcc(cc, 0);
+            }
+        } else {
+            // backward branch
+            final int target = bciToPos[targetBCI];
+            if (cc == null) {
+                jmp(target);
+            } else {
+                System.out.println("BACK JCC->0x" + Integer.toHexString(target));
+                jcc(cc, target);
+            }
+        }
+    }
+
+    /**
+     * Jump (unconditionally branch) to a target address. This method will emit code to branch
+     * within a 4GB offset from the PC.
+     * @param target
+     */
+    protected void longjmp(int target) {
+        System.out.println("JMP->0x" + Integer.toHexString(target));
+        int offset = target - buf.position();
+//        asm.b(target - buf.position());
+    	asm.adrp(scratch, (target >> 12) - (buf.position() >> 12)); // address of target's page
+    	asm.add(64, scratch, scratch, (int)(target & 0xFFFL)); // low 12 bits of
+    	asm.br(scratch);
+    }
+
+    /**
+     * Jump (unconditionally branch) to a target address. The target address must be within a
+     * 28bit range of the program counter.
+     * @param target
+     */
+    protected void jmp(int target) {
+        asm.b(target - buf.position());
+    }
+    /**
+     * Conditional branch to target. Branch immediate takes a signed 21bit address so we can
+     * only branch to +-1MB of the program counter with the branch instruction alone.
+     * TODO: enable conditional branching to a 32bit PC offset. We don't need this apparently.
+     * @param cc
+     * @param target
+     */
+    protected void jcc(ConditionFlag cc, int target) {
+        System.out.println("JCC->0x" + Integer.toHexString(target) +" from " + Integer.toHexString(buf.position()));
+    	asm.b(cc, target - buf.position());
     }
 
     @Override
@@ -536,12 +635,79 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void fixup() {
-
+        int i = 0;
+        int[] data = patchInfo.data;
+        while (i < patchInfo.size) {
+            int tag = data[i++];
+            if (tag == PatchInfoAARCH64.JCC) {
+            	ConditionFlag cc = ConditionFlag.values()[data[i++]];
+            	int pos = data[i++];
+            	int targetBCI = data[i++];
+            	int target = bciToPos[targetBCI];
+            	assert target != 0;
+            	buf.setPosition(pos);
+            	System.out.println("Patching jcc pos=" + pos + " target="+target);
+            	jcc(cc, target);
+            }
+            else if (tag == PatchInfoAARCH64.JMP) {
+            	int pos = data[i++];
+            	int targetBCI = data[i++];
+            	int target = bciToPos[targetBCI];
+            	assert target != 0;
+            	buf.setPosition(pos);
+            	System.out.println("Patching jmp pos=" + pos + " target="+target);
+            	jmp(target);
+            }
+            else if (tag == PatchInfoAARCH64.JUMP_TABLE_ENTRY) {
+                int pos = data[i++];
+                int jumpTablePos = data[i++];
+                int targetBCI = data[i++];
+                int target = bciToPos[targetBCI];
+                assert target != 0;
+                int disp = target - jumpTablePos;
+                buf.setPosition(pos);
+                buf.emitInt(disp);
+            }
+            else if (tag == PatchInfoAARCH64.LOOKUP_TABLE_ENTRY) {
+                int pos = data[i++];
+                int key = data[i++];
+                int lookupTablePos = data[i++];
+                int targetBCI = data[i++];
+                int target = bciToPos[targetBCI];
+                assert target != 0;
+                int disp = target - lookupTablePos;
+                buf.setPosition(pos);
+                buf.emitInt(key);
+                buf.emitInt(disp);
+            }
+            else if (tag == PatchInfoAARCH64.OBJECT_LITERAL) {
+                int dispPos = data[i++];
+                int index = data[i++];
+                assert objectLiterals.get(index) != null;
+                buf.setPosition(dispPos);
+                int dispFromCodeStart = dispFromCodeStart(objectLiterals.size(), 0, index, true);
+                //int disp = ldrDisp(dispPos, dispFromCodeStart); see below
+                // create a PC relative address in scratch
+                asm.adr(scratch, dispFromCodeStart - buf.position());
+            }
+            else {
+            	throw new InternalError("Unknown PatchInfoAARCH64." + tag);
+            }
+        }
     }
 
-    public static int movqDisp(int dispPos, int dispFromCodeStart) {
-        return 0;
+    // we don't need this for Aarch64. This relic from AMD is for computing the displacement
+    // field in a 64 bit movq instruction
+    private int ldrDisp(int dispPos, int dispFromCodeStart) {
+        assert dispFromCodeStart < 0;
+        final int dispSize = 4;
+        return dispFromCodeStart - dispPos - dispSize;
     }
+//
+// see ldrDisp
+//    public static int movqDisp(int dispPos, int dispFromCodeStart) {
+//        return 0;
+//    }
 
     @HOSTED_ONLY
     public static int[] findDataPatchPosns(MaxTargetMethod source, int dispFromCodeStart) {
@@ -675,11 +841,11 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
         emitUnprotectMethod();
 
-        // do_profileMethodEntry();
+        //do_profileMethodEntry();
 
         do_methodTraceEntry();
 
-        // do_synchronizedMethodAcquire();
+         //do_synchronizedMethodAcquire();
 
         // int bci = 0;
         // int endBCI = stream.endBCI();
