@@ -274,6 +274,27 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
                 throw new Error("should not reach here");
         }
     }
+    
+    
+    /**
+     * Calculate the address and emit an appropriate branch instruction.
+     * @param cc - the condition code
+     * @param target - the target address
+     */
+//    public void jcc(ConditionFlag cc, int target) {
+//    	adrp(scratch, codeBuffer.position(), target);
+//    }
+    
+    /**
+     * Calculate the required offset for a given address relative to a position and construct
+     * the appropriate adrp instruction
+     * @param pos - the position (synthetic program counter)
+     * @param address - the address of the 'label'
+     */
+//    public void adrp(CiRegister reg, int pos, int addr) {
+//    	super.adrp(reg, (addr >> 12) - (pos >> 12));
+//    }
+
 
 
     /**

@@ -19,16 +19,19 @@ package com.oracle.max.vm.ext.t1x.aarch64;
 
 import static com.oracle.max.vm.ext.t1x.T1X.*;
 import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 
 import java.io.*;
+import java.util.*;
 import java.util.concurrent.atomic.*;
 
+import com.oracle.max.asm.target.aarch64.Aarch64Address.AddressingMode;
 import com.oracle.max.asm.target.aarch64.Aarch64Assembler.ConditionFlag;
 import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.oracle.max.vm.ext.t1x.*;
-import com.sun.cri.bytecode.Bytecodes;
+import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
@@ -39,7 +42,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.aarch64.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
-
+import com.sun.cri.ci.CiTargetMethod.JumpTable;
 // import java.io.PrintWriter;
 
 public class AARCH64T1XCompilation extends T1XCompilation {
@@ -429,7 +432,55 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void do_tableswitch() {
-        // XXX Implement me
+        int bci = stream.currentBCI();
+        BytecodeTableSwitch ts = new BytecodeTableSwitch(stream, bci);
+        int lowMatch = ts.lowKey();
+        int highMatch = ts.highKey();
+        if (lowMatch > highMatch) {
+            throw verifyError("Low must be less than or equal to high in TABLESWITCH");
+        }
+
+        asm.pop(32, scratch);
+
+        if (lowMatch == 0) {
+            asm.cmp(32, scratch, highMatch);
+        }
+        else {
+            asm.sub(32, scratch, scratch, lowMatch);
+            asm.cmp(32, scratch, highMatch - lowMatch);
+        }
+        startBlock(ts.defaultTarget());
+        int pos = buf.position();
+        // Jump to default target if index is not within the jump table
+        patchInfo.addJCC(ConditionFlag.GT, pos, ts.defaultTarget());
+        jcc(ConditionFlag.GT, 0);
+        pos = buf.position();
+
+
+        /*
+         * Get the base address of the jump table in scratch2. Use the key (in scratch)
+         * to generate the address of the jump table offset we want and write that back
+         * into the scratch register. Add the jump table base address to the offset and
+         * jump to it.
+         */
+        asm.adr(scratch2, 16);
+        asm.ldr(32, scratch, Aarch64Address.createRegisterOffsetAddress(scratch2, scratch, true));
+        asm.add(64, scratch2, scratch2, scratch);
+        asm.jmp(scratch2);
+
+        int jumpTablePos = buf.position();
+
+        for (int i = 0; i < ts.numberOfCases(); i++) {
+            int targetBCI = ts.targetAt(i);
+            startBlock(targetBCI);
+            pos = buf.position();
+            patchInfo.addJumpTableEntry(pos, jumpTablePos, targetBCI);
+            buf.emitInt(0);
+        }
+        if (codeAnnotations == null) {
+            codeAnnotations = new ArrayList<CiTargetMethod.CodeAnnotation>();
+        }
+        codeAnnotations.add(new JumpTable(pos, ts.lowKey(), ts.highKey(), 4));
     }
 
     @Override
@@ -587,7 +638,6 @@ public class AARCH64T1XCompilation extends T1XCompilation {
             if (cc == null) {
                 jmp(target);
             } else {
-                System.out.println("BACK JCC->0x" + Integer.toHexString(target));
                 jcc(cc, target);
             }
         }
@@ -599,9 +649,6 @@ public class AARCH64T1XCompilation extends T1XCompilation {
      * @param target
      */
     protected void longjmp(int target) {
-        System.out.println("JMP->0x" + Integer.toHexString(target));
-        int offset = target - buf.position();
-//        asm.b(target - buf.position());
     	asm.adrp(scratch, (target >> 12) - (buf.position() >> 12)); // address of target's page
     	asm.add(64, scratch, scratch, (int)(target & 0xFFFL)); // low 12 bits of
     	asm.br(scratch);
@@ -623,7 +670,6 @@ public class AARCH64T1XCompilation extends T1XCompilation {
      * @param target
      */
     protected void jcc(ConditionFlag cc, int target) {
-        System.out.println("JCC->0x" + Integer.toHexString(target) +" from " + Integer.toHexString(buf.position()));
     	asm.b(cc, target - buf.position());
     }
 
@@ -646,7 +692,6 @@ public class AARCH64T1XCompilation extends T1XCompilation {
             	int target = bciToPos[targetBCI];
             	assert target != 0;
             	buf.setPosition(pos);
-            	System.out.println("Patching jcc pos=" + pos + " target="+target);
             	jcc(cc, target);
             }
             else if (tag == PatchInfoAARCH64.JMP) {
@@ -655,7 +700,6 @@ public class AARCH64T1XCompilation extends T1XCompilation {
             	int target = bciToPos[targetBCI];
             	assert target != 0;
             	buf.setPosition(pos);
-            	System.out.println("Patching jmp pos=" + pos + " target="+target);
             	jmp(target);
             }
             else if (tag == PatchInfoAARCH64.JUMP_TABLE_ENTRY) {
