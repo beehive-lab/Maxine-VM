@@ -24,6 +24,7 @@ package com.sun.max.vm.stack.aarch64;
 
 import static com.sun.max.platform.Platform.*;
 
+import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.ci.*;
@@ -109,7 +110,7 @@ public class AARCH64JVMSFrameLayout extends JVMSFrameLayout {
 
     @Override
     public CiRegister framePointerReg() {
-        return AMD64.rbp;
+        return Aarch64.fp;
     }
 
     @Override
