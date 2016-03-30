@@ -1130,7 +1130,7 @@ public class MaxineTester {
 
             final JavaCommand javaCommand = new JavaCommand(JUnitTestRunner.class);
             javaCommand.addVMOptions(defaultJVMOptions());
-            javaCommand.addClasspath(System.getProperty("java.class.path"));
+            javaCommand.addClasspath(System.getProperty("java.class.path") + ":" + graalJarOption.getValue());
             javaCommand.addArgument(junitTest);
             javaCommand.addArgument(passedFile.getName());
             javaCommand.addArgument(failedFile.getName());
