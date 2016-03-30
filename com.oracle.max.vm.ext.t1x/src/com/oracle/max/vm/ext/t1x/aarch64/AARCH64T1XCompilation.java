@@ -485,7 +485,61 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void do_lookupswitch() {
-        // XXX Implement me.
+        int bci = stream.currentBCI();
+        BytecodeLookupSwitch ls = new BytecodeLookupSwitch(stream, bci);
+        if (ls.numberOfCases() == 0) {
+            // Pop the key
+            decStack(1);
+            int targetBCI = ls.defaultTarget();
+            startBlock(targetBCI);
+            if (stream.nextBCI() == targetBCI) {
+                // Skip completely if default target is next instruction
+            }
+            else if (targetBCI <= bci) {
+                int target = bciToPos[targetBCI];
+                assert target != 0;
+                jmp(target);
+            }
+            else {
+                patchInfo.addJMP(buf.position(), targetBCI);
+                asm.jmp(Aarch64.zr);
+
+            }
+        }
+        else {
+            asm.pop(32, scratch);       // key
+            asm.adr(scratch2, 12 * 4);       // lookup table base (+12 instructions from here)
+            asm.mov(Aarch64.r1, (ls.numberOfCases() - 1) * 2); // loop counter
+            int loopPos = buf.position();
+            asm.ldr(32, Aarch64.r2, Aarch64Address.createRegisterOffsetAddress(scratch2, Aarch64.r1, true));
+            asm.cmp(32, scratch, Aarch64.r2);
+            asm.b(ConditionFlag.EQ, 4 * 4);             // break out of loop (+4 instructions)
+            asm.subs(32, Aarch64.r1, Aarch64.r1, 2);    // decrement loop counter
+            jcc(ConditionFlag.PL, loopPos);             // iterate again if >= 0
+            startBlock(ls.defaultTarget());
+            patchInfo.addJMP(buf.position(), ls.defaultTarget());
+            jmp(0);
+            // load offset, add to lookup table base and jump.
+            asm.add(32, Aarch64.r1, Aarch64.r1, 1);     // increment r1 to get the offset
+            asm.ldr(32, scratch, Aarch64Address.createRegisterOffsetAddress(scratch2, Aarch64.r1, true));
+            asm.add(64, scratch, scratch, scratch2);
+            asm.jmp(scratch);
+            int lookupTablePos = buf.position();
+            // Emit lookup table entries
+            for (int i = 0; i < ls.numberOfCases(); i++) {
+                int key = ls.keyAt(i);
+                int targetBCI = ls.targetAt(i);
+                startBlock(targetBCI);
+                patchInfo.addLookupTableEntry(buf.position(), key, lookupTablePos, targetBCI);
+                buf.emitInt(key);
+                buf.emitInt(0);
+            }
+//            if (codeAnnotations == null) {
+//                codeAnnotations = new ArrayList<CiTargetMethod.CodeAnnotation>();
+//            }
+//            codeAnnotations.add(new LookupTable(lookupTablePos, ls.numberOfCases(), 4, 4));
+
+        }
     }
 
     @Override
@@ -740,18 +794,6 @@ public class AARCH64T1XCompilation extends T1XCompilation {
         }
     }
 
-    // we don't need this for Aarch64. This relic from AMD is for computing the displacement
-    // field in a 64 bit movq instruction
-    private int ldrDisp(int dispPos, int dispFromCodeStart) {
-        assert dispFromCodeStart < 0;
-        final int dispSize = 4;
-        return dispFromCodeStart - dispPos - dispSize;
-    }
-//
-// see ldrDisp
-//    public static int movqDisp(int dispPos, int dispFromCodeStart) {
-//        return 0;
-//    }
 
     @HOSTED_ONLY
     public static int[] findDataPatchPosns(MaxTargetMethod source, int dispFromCodeStart) {
