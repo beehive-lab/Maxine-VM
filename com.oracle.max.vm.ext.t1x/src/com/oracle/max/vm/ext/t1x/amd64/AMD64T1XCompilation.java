@@ -71,6 +71,9 @@ public class AMD64T1XCompilation extends T1XCompilation {
         }
     }
 
+    public AMD64MacroAssembler getMacroAssembler() {
+        return asm;
+    }
     @Override
     protected void initFrame(ClassMethodActor method, CodeAttribute codeAttribute) {
         int maxLocals = codeAttribute.maxLocals;
