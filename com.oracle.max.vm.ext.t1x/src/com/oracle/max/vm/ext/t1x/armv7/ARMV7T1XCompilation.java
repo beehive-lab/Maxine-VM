@@ -454,6 +454,8 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                     target = ARMV7.r8;
                     asm.mov(ConditionFlag.Always, false, target, ARMV7.r0);
                     asm.mov(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r1);
+                    asm.vmov(ConditionFlag.Always, ARMV7.r1, ARMV7.s29, null, CiKind.Int, CiKind.Float); // NEW try TODO
+
                     int safepoint = callIndirect(target, receiverStackIndex);
                     asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, 0xdead0005);
                     finishCall(tag, kind, safepoint, null);
@@ -1464,24 +1466,22 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     @Override
     protected void do_dup_x2() {
         incStack(1);
-        asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
 
-        // value1
-        peekLong(ARMV7.r8, 1);
-        pokeLong(ARMV7.r8, 0);
+        peekWord(ARMV7.r8, 1);
+        pokeWord(ARMV7.r8, 0);
 
         // value2
-        peekLong(ARMV7.r8, 2);
-        pokeLong(ARMV7.r8, 1);
+        peekWord(ARMV7.r8, 2);
+        pokeWord(ARMV7.r8, 1);
 
         // value3
-        peekLong(ARMV7.r8, 3);
-        pokeLong(ARMV7.r8, 2);
+        peekWord(ARMV7.r8, 3);
+        pokeWord(ARMV7.r8, 2);
 
         // value1
-        peekLong(ARMV7.r8, 0);
-        pokeLong(ARMV7.r8, 3);
-        asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
+        peekWord(ARMV7.r8, 0);
+        pokeWord(ARMV7.r8, 3);
+
 
     }
 
