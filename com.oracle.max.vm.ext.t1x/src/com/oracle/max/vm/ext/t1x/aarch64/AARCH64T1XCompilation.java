@@ -27,6 +27,7 @@ import java.util.*;
 import java.util.concurrent.atomic.*;
 
 import com.oracle.max.asm.target.aarch64.Aarch64Address.AddressingMode;
+import com.oracle.max.asm.target.aarch64.Aarch64Assembler.BarrierKind;
 import com.oracle.max.asm.target.aarch64.Aarch64Assembler.ConditionFlag;
 import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.vm.ext.maxri.*;
@@ -43,6 +44,7 @@ import com.sun.max.vm.stack.aarch64.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.cri.ci.CiTargetMethod.JumpTable;
+import com.sun.cri.ci.CiTargetMethod.LookupTable;
 // import java.io.PrintWriter;
 
 public class AARCH64T1XCompilation extends T1XCompilation {
@@ -209,7 +211,8 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignObjectReg(CiRegister dst, CiRegister src) {
-        // XXX Implement me
+        // XXX test me
+        asm.mov(64, dst, src);
     }
 
     @Override
@@ -224,7 +227,15 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignObject(CiRegister dst, Object value) {
-        // XXX Implement me
+        // XXX Test me
+        if (value == null) {
+            asm.eor(64, dst, dst, dst);
+            return;
+        }
+        int index = objectLiterals.size();
+        objectLiterals.add(value);
+        patchInfo.addObjectLiteral(buf.position(), index);
+        asm.ldr(64, dst, Aarch64Address.PLACEHOLDER);
     }
 
     @Override
@@ -420,14 +431,29 @@ public class AARCH64T1XCompilation extends T1XCompilation {
         //asm.ret(Aarch64.linkRegister);
     }
 
+    /*
+     * According to JSR133:
+     *  for a volatile store we need to issue StoreStore then StoreLoad
+     *  for a volatile read we need to issue LoadLoad then LoadStore.
+     * (non-Javadoc)
+     * @see com.oracle.max.vm.ext.t1x.T1XCompilation#do_preVolatileFieldAccess(com.oracle.max.vm.ext.t1x.T1XTemplateTag, com.sun.max.vm.actor.member.FieldActor)
+     */
     @Override
     protected void do_preVolatileFieldAccess(T1XTemplateTag tag, FieldActor fieldActor) {
-        // XXX Implement me
+        // XXX Test me
+        if (fieldActor.isVolatile()) {
+            boolean isWrite = tag.opcode == Bytecodes.PUTFIELD || tag.opcode == Bytecodes.PUTSTATIC;
+            asm.dmb(isWrite ? BarrierKind.STORE_STORE : BarrierKind.LOAD_LOAD);
+        }
     }
 
     @Override
     protected void do_postVolatileFieldAccess(T1XTemplateTag tag, FieldActor fieldActor) {
-        // XXX Implement me
+        // XXX Test me
+        if (fieldActor.isVolatile()) {
+            boolean isWrite = tag.opcode == Bytecodes.PUTFIELD || tag.opcode == Bytecodes.PUTSTATIC;
+            asm.dmb(isWrite ? BarrierKind.STORE_LOAD : BarrierKind.LOAD_STORE);
+        }
     }
 
     @Override
@@ -503,26 +529,33 @@ public class AARCH64T1XCompilation extends T1XCompilation {
             else {
                 patchInfo.addJMP(buf.position(), targetBCI);
                 asm.jmp(Aarch64.zr);
-
             }
         }
         else {
-            asm.pop(32, scratch);       // key
-            asm.adr(scratch2, 12 * 4);       // lookup table base (+12 instructions from here)
-            asm.mov(Aarch64.r1, (ls.numberOfCases() - 1) * 2); // loop counter
+            // r1 = loop counter
+            // r2 = key from the lookup table under test.
+            asm.pop(32, scratch);                               // key
+            asm.push(64, Aarch64.r1);
+            asm.push(64, Aarch64.r2);
+            asm.adr(scratch2, 16 * 4);                          // lookup table base (+16 instructions from here)
+            asm.mov(Aarch64.r1, (ls.numberOfCases() - 1) * 2);  // loop counter
             int loopPos = buf.position();
             asm.ldr(32, Aarch64.r2, Aarch64Address.createRegisterOffsetAddress(scratch2, Aarch64.r1, true));
             asm.cmp(32, scratch, Aarch64.r2);
-            asm.b(ConditionFlag.EQ, 4 * 4);             // break out of loop (+4 instructions)
-            asm.subs(32, Aarch64.r1, Aarch64.r1, 2);    // decrement loop counter
-            jcc(ConditionFlag.PL, loopPos);             // iterate again if >= 0
-            startBlock(ls.defaultTarget());
+            asm.b(ConditionFlag.EQ, 6 * 4);                     // break out of loop (+6 instructions)
+            asm.subs(32, Aarch64.r1, Aarch64.r1, 2);            // decrement loop counter
+            jcc(ConditionFlag.PL, loopPos);                     // iterate again if >= 0
+            startBlock(ls.defaultTarget());                     // No match, jump to default target
+            asm.pop(64, Aarch64.r2);                            // after restoring registers r2
+            asm.pop(64, Aarch64.r1);                            // and r1.
             patchInfo.addJMP(buf.position(), ls.defaultTarget());
             jmp(0);
             // load offset, add to lookup table base and jump.
-            asm.add(32, Aarch64.r1, Aarch64.r1, 1);     // increment r1 to get the offset
+            asm.add(32, Aarch64.r1, Aarch64.r1, 1);             // increment r1 to get the offset
             asm.ldr(32, scratch, Aarch64Address.createRegisterOffsetAddress(scratch2, Aarch64.r1, true));
             asm.add(64, scratch, scratch, scratch2);
+            asm.pop(64, Aarch64.r2);
+            asm.pop(64, Aarch64.r1);
             asm.jmp(scratch);
             int lookupTablePos = buf.position();
             // Emit lookup table entries
@@ -534,11 +567,10 @@ public class AARCH64T1XCompilation extends T1XCompilation {
                 buf.emitInt(key);
                 buf.emitInt(0);
             }
-//            if (codeAnnotations == null) {
-//                codeAnnotations = new ArrayList<CiTargetMethod.CodeAnnotation>();
-//            }
-//            codeAnnotations.add(new LookupTable(lookupTablePos, ls.numberOfCases(), 4, 4));
-
+            if (codeAnnotations == null) {
+                codeAnnotations = new ArrayList<CiTargetMethod.CodeAnnotation>();
+            }
+            codeAnnotations.add(new LookupTable(lookupTablePos, ls.numberOfCases(), 4, 4));
         }
     }
 
@@ -729,8 +761,7 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void addObjectLiteralPatch(int index, int patchPos) {
-        final int dispPos = patchPos;
-        patchInfo.addObjectLiteral(dispPos, index);
+        patchInfo.addObjectLiteral(patchPos, index);
     }
 
     @Override
