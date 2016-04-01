@@ -59,6 +59,10 @@ public abstract class AbstractAssembler {
         codeBuffer.emitInt(x);
     }
 
+    protected final void emitInt(int x, int pos) {
+        codeBuffer.emitInt(x, pos);
+    }
+
     protected final void emitLong(long x) {
         codeBuffer.emitLong(x);
     }
