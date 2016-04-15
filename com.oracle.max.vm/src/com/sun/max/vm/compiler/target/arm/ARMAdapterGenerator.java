@@ -110,7 +110,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             @Override
             public int callSizeInPrologue() {
-                return RIP_CALL_INSTRUCTION_SIZE+12;
+                return RIP_CALL_INSTRUCTION_SIZE + 12;
             }
 
             /**
@@ -163,7 +163,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                     //int state = computeFrameState(frame);
                     //ripAdjustment = state & ~1;
 
-		   // commented out as we have not ported this code to ARM
+                    // commented out as we have not ported this code to ARM
                 }
 
                 return frame.sp().plus(ripAdjustment);
@@ -181,8 +181,8 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                     rbpSaved = (state & 1) == 1;
 		    */
 
-			// we have not ported the inspector so we have commented out the computation
-			// above as it has not been ported to ARM!!!
+                    // we have not ported the inspector so we have commented out the computation
+                    // above as it has not been ported to ARM!!!
                 }
 
                 Pointer ripPointer = current.sp().plus(ripAdjustment);
@@ -201,7 +201,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             @HOSTED_ONLY
             public boolean acceptStackFrameVisitor(StackFrameCursor current, StackFrameVisitor visitor) {
                 //int ripAdjustment = computeFrameState(current) & ~1;
-		int ripAdjustment = frameSize();
+                int ripAdjustment = frameSize();
                 Pointer ripPointer = current.sp().plus(ripAdjustment);
                 Pointer fp = ripPointer.minus(frameSize());
                 return visitor.visitFrame(new AdapterStackFrame(current.stackFrameWalker().calleeStackFrame(), current.targetMethod(), current.vmIP().toPointer(), fp, current.sp()));
@@ -375,7 +375,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             if (adapter == null) {
                 asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.encoding);
-		asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12,0xba5e20af); // signifies BASSE20OPT
+                asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xba5e20af); // signifies BASSE20OPT
                 //asm.nop(); // movw
                 //asm.nop(); // movt
                 asm.nop(); // add
@@ -384,9 +384,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.encoding); // does not instrument
 
                 asm.call(); // does not instrument
-                //System.out.println("SIZE " + asm.codeBuffer.position());
                 asm.align(PROLOGUE_SIZE);
-                //System.out.println("SIZEAFTER " + asm.codeBuffer.position());
             }
             int size = asm.codeBuffer.position();
             if (size != PROLOGUE_SIZE) {
@@ -418,9 +416,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // APN TODO this is broken for now we need just to get it to compile then fix all stack stuff!
             //asm.movq(rax, new CiAddress(WordUtil.archKind(), rsp.asValue()));
             //asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.encoding);
-	    //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, ARMV7.r14);
-
-
+            //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, ARMV7.r14);
 
 
             // Compute the number of stack args needed for the call (i.e. the args that won't
@@ -431,7 +427,8 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                     CiStackSlot slot = (CiStackSlot) optArgs[i];
                     int offset = slot.index() * OPT_SLOT_SIZE;
                     int end = offset + OPT_SLOT_SIZE;
-		    if(!sig.kinds[i].isCategory1) end += OPT_SLOT_SIZE; // our slots ar enot big enough for doubles/longs 32 bit word size!!!
+                    if (!sig.kinds[i].isCategory1)
+                        end += OPT_SLOT_SIZE; // our slots ar enot big enough for doubles/longs 32 bit word size!!!
                     if (end > stackArgumentsSize) {
                         stackArgumentsSize = end;
                     }
@@ -455,29 +452,14 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // Allocate the frame and save RBP to the stack with an ENTER instruction
             assert explicitlyAllocatedFrameSize >= 0 && explicitlyAllocatedFrameSize <= Short.MAX_VALUE;
 
-            //asm.enter(explicitlyAllocatedFrameSize, 0);
-            // APN more to be done here ...
-            //ENTER 10,0          PUSH ebp
-            //MOV  ebp, esp
-            //SUB  esp, 10
 
-            // I think enter does push rbp (return address?
-            // mv SP -> R11 (rbp)
-            // sub SP by an ammount
             asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
             asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r11, ARMV7.r13);
-            asm.subq(ARMV7.r13, (explicitlyAllocatedFrameSize ));
-	    asm.vmov(ConditionFlag.Always,ARMV7.s30, ARMV7.r14, null, CiKind.Float, CiKind.Int);
+            asm.subq(ARMV7.r13, (explicitlyAllocatedFrameSize));
+            asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r14, null, CiKind.Float, CiKind.Int);
 
 
-            //Label forever = new Label();
-
-            //asm.bind(forever);
-            //asm.mov32BitConstant(ARMV7.r12, 0xb00bb00b);
-	    //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12);
-
-            //asm.branch(forever);
 
             // At this point, the top of the baseline caller's stack (i.e the last arg to the call) is immediately
             // above the adapter's RIP slot. That is, it's at RSP + adapterFrameSize + OPT_SLOT_SIZE.
@@ -488,7 +470,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 Kind kind = sig.kinds[i];
 
                 if (!kind.isCategory1) {
-		    // again --- moved this ifblock position from before the adaptArgumentCall
+                    // again --- moved this ifblock position from before the adaptArgumentCall
                     // Skip over the second slot of a long or double
                     baselineStackOffset += BASELINE_SLOT_SIZE;
                     baselineArgsSize += BASELINE_SLOT_SIZE;
@@ -505,16 +487,16 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 baselineStackOffset += BASELINE_SLOT_SIZE;
             }
 
-	    asm.nop();
+            asm.nop();
 
             // Args are now copied to the OPT locations; call the OPT main body
             int callPos = asm.codeBuffer.position();
-	    //asm.nop(3); // think this might be necessary pretend it is  movw movt add PC
-	    asm.nop(2); // think this might be necessary pretend it is  movw movt add PC
+            //asm.nop(3); // think this might be necessary pretend it is  movw movt add PC
+            asm.nop(2); // think this might be necessary pretend it is  movw movt add PC
 
 
-	    asm.vmov(ConditionFlag.Always,ARMV7.r14,  ARMV7.s30, null,  CiKind.Int, CiKind.Float);
-	    asm.blx(ARMV7.r14);
+            asm.vmov(ConditionFlag.Always, ARMV7.r14, ARMV7.s30, null, CiKind.Int, CiKind.Float);
+            asm.blx(ARMV7.r14);
 
             int callSize = asm.codeBuffer.position() - callPos;
 
@@ -527,13 +509,13 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // RSP has been restored to the location holding the address of the OPT main body.
             // The adapter must return to the baseline caller whose RIP is one slot higher up.
             //asm.addq(ARMV7.r13, 4);// WAS 8 might need to adjust? the LRon the stack prior to the pop
-	    asm.addq(ARMV7.r13, OPT_SLOT_SIZE);
-	    asm.instrumentPop(ARMV7Assembler.ConditionFlag.Always, 1 << 8); // POP return address
+            asm.addq(ARMV7.r13, OPT_SLOT_SIZE);
+            asm.instrumentPop(ARMV7Assembler.ConditionFlag.Always, 1 << 8); // POP return address
 
             assert WordWidth.signedEffective(baselineArgsSize).lessEqual(WordWidth.BITS_16);
             // Retract the stack pointer back to its position before the first argument on the caller's stack.
-	    asm.addq(ARMV7.r13,baselineArgsSize );
-	    asm.instrumentMov(ARMV7Assembler.ConditionFlag.Always,false, ARMV7.r15,ARMV7.r8);
+            asm.addq(ARMV7.r13, baselineArgsSize);
+            asm.instrumentMov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r8);
 
 
             final byte[] code = asm.codeBuffer.close(true);
@@ -550,7 +532,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
         // Checkstyle: stop
         @Override
         protected void adapt(ARMV7Assembler asm, Kind kind, CiRegister reg, int offset32) {
-		//System.out.println("BASE2OPTADAPT " + kind.asEnum + " " + reg.encoding + " offset " + offset32);
+            //System.out.println("BASE2OPTADAPT " + kind.asEnum + " " + reg.encoding + " offset " + offset32);
             switch (kind.asEnum) {
                 case BYTE:
                     asm.setUpScratch(new CiAddress(CiKind.Byte, ARMV7.r13.asValue(), offset32));
@@ -572,21 +554,21 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 case WORD:
                 case REFERENCE:
                     asm.setUpScratch(new CiAddress(CiKind.Int, ARMV7.r13.asValue(), offset32));
-                    asm.ldr(ARMV7Assembler.ConditionFlag.Always,  reg,  ARMV7.r12,  0);
+                    asm.ldr(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0);
                     break;
                 case LONG:
                     asm.setUpScratch(new CiAddress(CiKind.Long, ARMV7.r13.asValue(), offset32));
                     asm.ldrd(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0);
                     break;
                 case FLOAT:
-		    assert(reg.number > 15);
+                    assert (reg.number > 15);
                     asm.setUpScratch(new CiAddress(CiKind.Float, ARMV7.r13.asValue(), offset32));
-                    asm.vldr(ARMV7Assembler.ConditionFlag.Always,  reg, ARMV7.r12,  0,  CiKind.Float, CiKind.Int);
+                    asm.vldr(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0, CiKind.Float, CiKind.Int);
                     break;
                 case DOUBLE:
-		    assert(reg.number > 15);
+                    assert (reg.number > 15);
                     asm.setUpScratch(new CiAddress(CiKind.Double, ARMV7.r13.asValue(), offset32));
-                    asm.vldr(ARMV7Assembler.ConditionFlag.Always,  reg, ARMV7.r12, 0, CiKind.Double, CiKind.Int);
+                    asm.vldr(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0, CiKind.Double, CiKind.Int);
                     break;
                 default:
                     throw ProgramError.unexpected();
@@ -621,15 +603,15 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             public int callOffsetInPrologue() {
                 //return 12; // push LR and branch first ... followed by other push lr
                 //return 28;
-		//return 36;
-		//return 40;
-		return 24;
+                //return 36;
+                //return 40;
+                return 24;
             }
 
             @Override
             public int callSizeInPrologue() {
-                return RIP_CALL_INSTRUCTION_SIZE+12;
-            }
+                return RIP_CALL_INSTRUCTION_SIZE + 12;
+            } // movw movt add blx
 
             /**
              * Computes the amount by which the stack pointer in a given {@linkplain StackFrameCursor cursor}
@@ -645,7 +627,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             @HOSTED_ONLY
             private int computeRipAdjustment(StackFrameCursor cursor) {
                 int ripAdjustment = frameSize();
-		// commented out as we have not ported it ....
+                // commented out as we have not ported it ....
                 /*StackFrameWalker sfw = cursor.stackFrameWalker();
                 int position = cursor.vmIP().minus(codeStart()).toInt();
                 if (!cursor.isTopFrame()) {
@@ -668,7 +650,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                             ripAdjustment = 0;
                     }
                 }
-		*/
+		        */
                 return ripAdjustment;
             }
 
@@ -681,7 +663,6 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             @Override
             public void advance(StackFrameCursor cursor) {
                 int ripAdjustment = MaxineVM.isHosted() ? computeRipAdjustment(cursor) : Word.size();
-                //Log.println("ADAPTER advance");
                 StackFrameWalker sfw = cursor.stackFrameWalker();
 
                 Pointer ripPointer = cursor.sp().plus(ripAdjustment);
@@ -700,7 +681,6 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             @HOSTED_ONLY
             public boolean acceptStackFrameVisitor(StackFrameCursor cursor, StackFrameVisitor visitor) {
                 int ripAdjustment = MaxineVM.isHosted() ? computeRipAdjustment(cursor) : Word.size();
-                //Log.println("ADAPTER: sfv");
                 Pointer ripPointer = cursor.sp().plus(ripAdjustment);
                 Pointer fp = ripPointer.minus(frameSize());
                 return visitor.visitFrame(new AdapterStackFrame(cursor.stackFrameWalker().calleeStackFrame(), cursor.targetMethod(), cursor.vmIP().toPointer(), fp, cursor.sp()));
@@ -757,8 +737,8 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             }
         }
 
-	static final int PROLOGUE_SIZE = 40;// was 56;
-	static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = 28;// was 52
+        static final int PROLOGUE_SIZE = 40;// was 56;
+        static final int PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE = 28;// was 52
 
         Opt2Baseline() {
             super(Adapter.Type.OPT2BASELINE);
@@ -795,9 +775,9 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
          * +12
          * +16:
          * +20: push $LR OPT ENTRY POINT CALL
-	 * +24: movw r12,
-	 * +28: movt r12
-	 * +32: add r12, r12, pc
+         * +24: movw r12,
+         * +28: movt r12
+         * +32: add r12, r12, pc
          * +36: blx r12
          * +40: BASELINE METHOD ENTRY push $LR
          */
@@ -806,10 +786,10 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             ARMV7Assembler asm = out instanceof OutputStream ? new ARMV7Assembler(target(), null) : (ARMV7Assembler) out;
             if (adapter == null) {
 
-		// Pad with nops up to the OPT entry point
-            	asm.nop((OPTIMIZED_ENTRY_POINT.offset()-asm.codeBuffer.position())/4);
+                // Pad with nops up to the OPT entry point
+                asm.nop((OPTIMIZED_ENTRY_POINT.offset() - asm.codeBuffer.position()) / 4);
 
-	     	asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12,0xba5eba5e); // signifies OPT2BASE
+                asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xba5eba5e); // signifies OPT2BASE
                 if (asm.codeBuffer.position() != PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE) {
                     Log.println("GOING TO CRASH mismatch  PROLOGUE SIZE NOARGS ARMAdapterGenerator " + asm.codeBuffer.position() + " " + PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE);
                 }
@@ -817,23 +797,23 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 copyIfOutputStream(asm.codeBuffer, out);
                 return PROLOGUE_SIZE_FOR_NO_ARGS_CALLEE;
             }
-	    /*
-	      In the accompanying slides, this corresponds to the JMP to L1
-	    */
+            /*
+	        In the accompanying slides, this corresponds to the JMP to L1
+	        */
             //asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
-	    //asm.nop();
+            //asm.nop();
 
             // A baseline caller jumps over the call to the OPT2BASELINE adapter
             Label end = new Label();
             // shall we branch to this?
             asm.instrumentBranch(end);
-	    asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12,0x0af2ba5e); // signifies OPT2BASE
+            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0x0af2ba5e); // signifies OPT2BASE
 
             // Pad with nops up to the OPT entry point
-            asm.nop((OPTIMIZED_ENTRY_POINT.offset()-asm.codeBuffer.position())/4);
+            asm.nop((OPTIMIZED_ENTRY_POINT.offset() - asm.codeBuffer.position()) / 4);
             // REMEMBER AT EVERY ENTRY POINT WE MUST PUSH THE $LR
             asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
-	    //Log.println("OFFSET of CALL " + asm.codeBuffer.position());
+            //Log.println("OFFSET of CALL " + asm.codeBuffer.position());
             asm.call();
             asm.bind(end);
             int size = asm.codeBuffer.position();
@@ -861,13 +841,10 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // also the entry to the main body of the baseline callee) and one at [RSP + 8 ] is the return
             // address in the OPT caller.
             asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << 14); // PUSH  HE RETURN ADDRESS OF THE CALL IN THE PROLOGUE ONTO THE STACK
-	    asm.vmov(ConditionFlag.Always,ARMV7.s30, ARMV7.r14, null, CiKind.Float, CiKind.Int);
+            asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r14, null, CiKind.Float, CiKind.Int);
 
-            // Save the address of the baseline callee's main body in RAX
-            //asm.movq(rax, new CiAddress(WordUtil.archKind(), rsp.asValue()));
-            //asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
-            //asm.ldr(ARMV7Assembler.ConditionFlag.Always,ARMV7.r14,ARMV7.r12,0);  // probably superfluous as the push  puts r14 on stack
-            //asm.addq(ARMV7.r14, 4);// we need to skip past the return by 4 due to the push of the $lr in the main body.
+            // Save the address of the baseline callee's main body in s30
+
 
             // Initial args are in registers, remaining args are on the stack.
             int baselineArgsSize = frameSizeFor(sig.kinds, BASELINE_SLOT_SIZE);
@@ -885,7 +862,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             for (int i = optArgs.length - 1; i >= 0; i--) {
                 Kind argKind = sig.kinds[i];
                 if (!argKind.isCategory1) {
-		    // APN previously this ifblock came before the adaptArgument call ...
+                    // APN previously this ifblock came before the adaptArgument call ...
                     // Skip over the first slot of a long or double
                     baselineStackOffset += BASELINE_SLOT_SIZE;
 
@@ -893,9 +870,9 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 adaptArgument(asm, argKind, optArgs[i], baselineStackOffset, adapterFrameSize);
                 baselineStackOffset += BASELINE_SLOT_SIZE;
             }
-	    // Why do we call  the return address ourselves?????
-	    //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r8, ARMV7.r14);
-	    asm.nop();
+            // Why do we call  the return address ourselves?????
+            //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r8, ARMV7.r14);
+            asm.nop();
 
             // Args are now copied to the baseline locations; call the baseline main body
             int callPos = asm.codeBuffer.position();
@@ -903,7 +880,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             asm.nop(2);
             //asm.mov32BitConstant(ARMV7.r12,0xbeefbeef); REMOVE NOPS and uncooment
             //asm.branch(forever);
-	    asm.vmov(ConditionFlag.Always,ARMV7.r14,  ARMV7.s30, null,  CiKind.Int, CiKind.Float);
+            asm.vmov(ConditionFlag.Always, ARMV7.r14, ARMV7.s30, null, CiKind.Int, CiKind.Float);
             asm.blx(ARMV7.r14);
             int callSize = asm.codeBuffer.position() - callPos;
 
@@ -913,9 +890,9 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             asm.addq(ARMV7.r13, OPT_SLOT_SIZE);
 
             // Return to the OPT caller
-	    asm.instrumentPop(ARMV7Assembler.ConditionFlag.Always,1<<8); // r8
+            asm.instrumentPop(ARMV7Assembler.ConditionFlag.Always, 1 << 8); // r8
 
-	    asm.instrumentMov(ARMV7Assembler.ConditionFlag.Always,false,ARMV7.r15,ARMV7.r8);
+            asm.instrumentMov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r8);
             //asm.ret(0);
 
             final byte[] code = asm.codeBuffer.close(true);
@@ -927,9 +904,6 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
         // Checkstyle: stop
         @Override
         protected void adapt(ARMV7Assembler asm, Kind kind, CiRegister reg, int offset32) {
-		                //System.out.println("OPT2BASEADAPT " + kind.asEnum + " " + reg.encoding + " offset " + offset32);
-				//System.out.println("OPTSLOTSIZE " +OPT_SLOT_SIZE);
-				//System.out.println("BASELINESLOTSIZE " +BASELINE_SLOT_SIZE);
 
 
             switch (kind.asEnum) {
@@ -947,36 +921,27 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                     asm.setUpScratch(new CiAddress(CiKind.Int, ARMV7.r13.asValue(), offset32));
                     asm.str(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0);
                     break;
-                //asm.movl(new CiAddress(CiKind.Int, ARMV7.r13.asValue(), offset32), reg);  break;
                 case LONG:
                     asm.setUpScratch(new CiAddress(CiKind.Long, ARMV7.r13.asValue(), offset32));     // longs occupy two regists in ARM
                     asm.strd(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0);
-                    //asm.movl(new CiAddress(CiKind.Long, ARMV7.r13.asValue(), offset32), reg);  break;
                     break;
                 case FLOAT:
-		    //assert(reg.number > 15);
                     asm.setUpScratch(new CiAddress(CiKind.Float, ARMV7.r13.asValue(), offset32));
-		    if(reg.number < 15) {
-			asm.str(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0);
-
-		    } else {
-                    	asm.vstr(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0,CiKind.Float,CiKind.Int);// 32 bit store ...
-		    }
-                    // APN what if the values are in float/coprocessor regs, you need a different instruction
-                    //asm.movss(new CiAddress(CiKind.Float, ARMV7.r13.asValue(), offset32), reg);
-                    break;
-                case DOUBLE:
-		    //assert(reg.number > 15);
-                    asm.setUpScratch(new CiAddress(CiKind.Double, ARMV7.r13.asValue(), offset32));
-		    if(reg.number < 15) {
+                    if (reg.number < 15) {
                         asm.str(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0);
 
                     } else {
-                    	asm.vstr(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0,CiKind.Double, CiKind.Int);
-		    }
-                    // APN again what if using FP regs!!!
-                    // double is 64 bits so 2 regs?
-                    //asm.movsd(new CiAddress(CiKind.Double, ARMV7.r13.asValue(), offset32), reg);
+                        asm.vstr(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0, CiKind.Float, CiKind.Int);// 32 bit store ...
+                    }
+                    break;
+                case DOUBLE:
+                    asm.setUpScratch(new CiAddress(CiKind.Double, ARMV7.r13.asValue(), offset32));
+                    if (reg.number < 15) {
+                        asm.str(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0);
+
+                    } else {
+                        asm.vstr(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0, CiKind.Double, CiKind.Int);
+                    }
                     break;
                 default:
                     throw ProgramError.unexpected();
@@ -1020,28 +985,28 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
     }
 
     protected void stackCopy(ARMV7Assembler asm, Kind kind, int sourceStackOffset, int destStackOffset) {
-	//asm.push(ConditionFlag.Always,1<<8|1<<9);
+        //asm.push(ConditionFlag.Always,1<<8|1<<9);
         if (kind.width == WordWidth.BITS_64) {
-	   //asm.movq(scratch, new CiAddress(WordUtil.archKind(), rsp.asValue(), sourceStackOffset));
+            //asm.movq(scratch, new CiAddress(WordUtil.archKind(), rsp.asValue(), sourceStackOffset));
             //asm.movq(new CiAddress(WordUtil.archKind(), rsp.asValue(), destStackOffset), scratch);
             assert kind == Kind.LONG || kind == Kind.DOUBLE;
-	    asm.vmov(ConditionFlag.Always,ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
-	    asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), sourceStackOffset));
+            asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), sourceStackOffset));
             asm.ldrd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
-	    asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), destStackOffset));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), destStackOffset));
             asm.strd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
-	    asm.vmov(ConditionFlag.Always,ARMV7.r9,  ARMV7.s31, null,  CiKind.Int, CiKind.Float);
+            asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
 
         } else {
-            assert(kind != Kind.LONG);
-            assert(kind != Kind.DOUBLE);
-	    asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), sourceStackOffset));
+            assert (kind != Kind.LONG);
+            assert (kind != Kind.DOUBLE);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), sourceStackOffset));
             asm.ldr(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
-	    asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), destStackOffset));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), destStackOffset));
             asm.str(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
         }
 
-	//asm.pop	(ConditionFlag.Always,1<<8|1<<9);
+        //asm.pop	(ConditionFlag.Always,1<<8|1<<9);
     }
 
     protected abstract void adapt(ARMV7Assembler asm, Kind kind, int optStackOffset32, int baselineStackOffset32, int adapterFrameSize);

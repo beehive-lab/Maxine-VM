@@ -111,7 +111,8 @@ public class Deoptimization extends VmOperation {
     /**
      * Option for enabling use of deoptimization.
      */
-    public static boolean UseDeopt = true;
+    public static boolean UseDeopt = false; // APN CHANGED TO false by default....
+    // TODO REENABLE DEOPT and fix issues with its operation ...
 
     /**
      * Option for enabling logging during debugging of deopt

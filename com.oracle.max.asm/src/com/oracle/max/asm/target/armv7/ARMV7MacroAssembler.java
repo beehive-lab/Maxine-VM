@@ -587,7 +587,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         sub(ConditionFlag.Always, false, ARMV7.r8, right, 32, 0);
         lsr(ConditionFlag.Always, false, dest, right, left);
         orsr(ConditionFlag.Always, false, dest, dest, ARMV7.cpuRegisters[left.number + 1], ARMV7.r12, 0);
-        orsr(ConditionFlag.Positive, false, dest, dest, ARMV7.cpuRegisters[left.number + 1], ARMV7.r8, 1);
+        orsr(ConditionFlag.Always, false, dest, dest, ARMV7.cpuRegisters[left.number + 1], ARMV7.r8, 1);
         lsr(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.number + 1], right, ARMV7.cpuRegisters[left.number + 1]);
     }
 }

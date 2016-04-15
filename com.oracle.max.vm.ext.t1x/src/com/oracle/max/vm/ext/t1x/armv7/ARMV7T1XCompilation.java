@@ -1436,7 +1436,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     }
 
     @Override
-    protected void do_dup() {
+    protected void do_dup() { // category 1 <32bit>
 
         incStack(1);
         peekWord(ARMV7.r8, 1);
@@ -1445,7 +1445,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     }
 
     @Override
-    protected void do_dup_x1() {
+    protected void do_dup_x1() { // category 1 <32bit>
         incStack(1);
 
         // value1
@@ -1467,6 +1467,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     protected void do_dup_x2() {
         incStack(1);
 
+        // value 1
         peekWord(ARMV7.r8, 1);
         pokeWord(ARMV7.r8, 0);
 
@@ -1488,81 +1489,74 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     @Override
     protected void do_dup2() {
         incStack(2);
-        asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
 
         peekWord(ARMV7.r8, 3);
         pokeWord(ARMV7.r8, 1);
         peekWord(ARMV7.r8, 2);
         pokeWord(ARMV7.r8, 0);
-        asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
 
     }
 
     @Override
     protected void do_dup2_x1() {
         incStack(2);
-        asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
 
         // value1
-        peekLong(ARMV7.r8, 2);
-        pokeLong(ARMV7.r8, 0);
+        peekWord(ARMV7.r8, 2);
+        pokeWord(ARMV7.r8, 0);
 
         // value2
-        peekLong(ARMV7.r8, 3);
-        pokeLong(ARMV7.r8, 1);
+        peekWord(ARMV7.r8, 3);
+        pokeWord(ARMV7.r8, 1);
 
         // value3
-        peekLong(ARMV7.r8, 4);
-        pokeLong(ARMV7.r8, 2);
+        peekWord(ARMV7.r8, 4);
+        pokeWord(ARMV7.r8, 2);
 
         // value1
-        peekLong(ARMV7.r8, 0);
-        pokeLong(ARMV7.r8, 3);
+        peekWord(ARMV7.r8, 0);
+        pokeWord(ARMV7.r8, 3);
 
         // value2
-        peekLong(ARMV7.r8, 1);
-        pokeLong(ARMV7.r8, 4);
+        peekWord(ARMV7.r8, 1);
+        pokeWord(ARMV7.r8, 4);
 
-        asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
 
     }
 
     @Override
     protected void do_dup2_x2() {
         incStack(2);
-        asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
 
         // value1
-        peekLong(ARMV7.r8, 2);
-        pokeLong(ARMV7.r8, 0);
+        peekWord(ARMV7.r8, 2);
+        pokeWord(ARMV7.r8, 0);
 
         // value2
-        peekLong(ARMV7.r8, 3);
-        pokeLong(ARMV7.r8, 1);
+        peekWord(ARMV7.r8, 3);
+        pokeWord(ARMV7.r8, 1);
 
         // value3
-        peekLong(ARMV7.r8, 4);
-        pokeLong(ARMV7.r8, 2);
+        peekWord(ARMV7.r8, 4);
+        pokeWord(ARMV7.r8, 2);
 
         // value4
-        peekLong(ARMV7.r8, 5);
-        pokeLong(ARMV7.r8, 3);
+        peekWord(ARMV7.r8, 5);
+        pokeWord(ARMV7.r8, 3);
 
         // value1
-        peekLong(ARMV7.r8, 0);
-        pokeLong(ARMV7.r8, 4);
+        peekWord(ARMV7.r8, 0);
+        pokeWord(ARMV7.r8, 4);
 
         // value2
-        peekLong(ARMV7.r8, 1);
-        pokeLong(ARMV7.r8, 5);
+        peekWord(ARMV7.r8, 1);
+        pokeWord(ARMV7.r8, 5);
 
-        asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
 
     }
 
     @Override
     protected void do_swap() {
-        asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
 
         peekWord(ARMV7.r8, 0);
         peekWord(ARMV7.r9, 1);
@@ -1570,7 +1564,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         pokeWord(ARMV7.r9, 0);
 
 
-        asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
     }
 
     @Override
