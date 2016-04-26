@@ -102,13 +102,14 @@ public class CiRegisterConfig implements RiRegisterConfig {
      * The scratch register.
      */
     public final CiRegister scratch;
+    public final CiRegister scratch1;
 
     /**
      * The frame offset of the first stack argument for each calling convention {@link CiCallingConvention.Type}.
      */
     public final int[] stackArg0Offsets = new int[CiCallingConvention.Type.VALUES.length];
 
-    public CiRegisterConfig(CiRegister frame, CiRegister integralReturn, CiRegister floatingPointReturn, CiRegister scratch, CiRegister[] allocatable, CiRegister[] callerSave,
+    public CiRegisterConfig(CiRegister frame, CiRegister integralReturn, CiRegister floatingPointReturn, CiRegister scratch, CiRegister scratch1, CiRegister[] allocatable, CiRegister[] callerSave,
                             CiRegister[] parameters, CiCalleeSaveLayout csl, CiRegister[] allRegisters, Map<Integer, CiRegister> roles) {
         this.frame = frame;
         this.csl = csl;
@@ -116,6 +117,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
         this.callerSave = callerSave;
         assert !Arrays.asList(allocatable).contains(scratch);
         this.scratch = scratch;
+        this.scratch1 = scratch1;
         EnumMap<RegisterFlag, CiRegister[]> categorizedParameters = CiRegister.categorize(parameters);
         this.cpuParameters = categorizedParameters.get(RegisterFlag.CPU);
         this.fpuParameters = categorizedParameters.get(RegisterFlag.FPU);
@@ -149,6 +151,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
         this.allocatable = src.allocatable;
         this.callerSave = src.callerSave;
         this.scratch = src.scratch;
+        this.scratch1 = src.scratch1;
         this.cpuParameters = src.cpuParameters;
         this.fpuParameters = src.fpuParameters;
         this.categorized = src.categorized;
@@ -173,6 +176,10 @@ public class CiRegisterConfig implements RiRegisterConfig {
 
     public CiRegister getScratchRegister() {
         return scratch;
+    }
+
+    public CiRegister getScratchRegister1() {
+        return scratch1;
     }
 
     /**

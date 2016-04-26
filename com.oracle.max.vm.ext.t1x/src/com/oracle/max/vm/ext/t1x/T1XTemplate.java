@@ -23,6 +23,7 @@ import com.oracle.max.vm.ext.t1x.armv7.ARMV7T1XCompilation;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.platform.*;
 import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.classfile.CodeAttribute;
 import com.sun.max.vm.classfile.LocalVariableTable;
@@ -473,6 +474,11 @@ public class T1XTemplate {
         public final Arg out;
 
         /**
+         * A scratch register that is being used by templates for target address calculation.
+         */
+        public final Arg scratch;
+
+        /**
          * The net adjustment in terms of slots to the operand stack based on the stack-based parameters and stack-based
          * result of the template.
          */
@@ -484,9 +490,10 @@ public class T1XTemplate {
         public final int stackArgs;
 
         @HOSTED_ONLY
-        public Sig(Arg[] in, Arg out) {
+        public Sig(Arg[] in, Arg out, Arg scratch) {
             this.in = in;
             this.out = out;
+            this.scratch = scratch;
 
             int stackDelta = out.stackSlots();
             int stackArgs = 0;
@@ -620,7 +627,8 @@ public class T1XTemplate {
             outSlot = slot.value();
         }
         Arg out = new Arg(outKind, regConfig.getReturnRegister(WordUtil.ciKind(outKind, true)), null, outSlot);
-        Sig s = new Sig(in, out);
+        Arg scratch = new Arg(outKind, Platform.target().arch.is64bit() ? regConfig.getReturnRegister(WordUtil.ciKind(outKind, true)) : regConfig.getScratchRegister1(), null, outSlot);
+        Sig s = new Sig(in, out, scratch);
         return s;
     }
 

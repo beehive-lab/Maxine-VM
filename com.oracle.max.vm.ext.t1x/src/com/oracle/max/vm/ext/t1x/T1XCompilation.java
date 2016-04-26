@@ -22,46 +22,33 @@
  */
 package com.oracle.max.vm.ext.t1x;
 
-import com.oracle.max.asm.Buffer;
-import com.oracle.max.vm.ext.t1x.T1XTemplate.Arg;
-import com.oracle.max.vm.ext.t1x.T1XTemplate.ObjectLiteral;
-import com.oracle.max.vm.ext.t1x.T1XTemplate.SafepointsBuilder;
-import com.oracle.max.vm.ext.t1x.T1XTemplate.Sig;
-import com.sun.cri.bytecode.BytecodeStream;
-import com.sun.cri.bytecode.Bytecodes;
-import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
-import com.sun.max.annotate.INLINE;
-import com.sun.max.unsafe.Word;
-import com.sun.max.vm.Log;
-import com.sun.max.vm.actor.Actor;
-import com.sun.max.vm.actor.holder.ArrayClassActor;
-import com.sun.max.vm.actor.holder.ClassActor;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.CodeAttribute;
-import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.compiler.CallEntryPoint;
-import com.sun.max.vm.compiler.WordUtil;
-import com.sun.max.vm.compiler.target.Adapter;
-import com.sun.max.vm.compiler.target.AdapterGenerator;
-import com.sun.max.vm.compiler.target.Safepoints;
-import com.sun.max.vm.intrinsics.MaxineIntrinsicIDs;
-import com.sun.max.vm.profile.MethodInstrumentation;
-import com.sun.max.vm.profile.MethodProfile;
-import com.sun.max.vm.runtime.VMRegister;
-import com.sun.max.vm.stack.JVMSFrameLayout;
-import com.sun.max.vm.type.ClassRegistry;
-import com.sun.max.vm.type.Kind;
-import com.sun.max.vm.type.KindEnum;
-import com.sun.max.vm.type.SignatureDescriptor;
-import com.sun.max.vm.verifier.TypeInferencingVerifier;
-
-import java.util.ArrayList;
-import java.util.EnumMap;
-
 import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
-import static com.sun.max.vm.MaxineVM.vm;
-import static com.sun.max.vm.stack.JVMSFrameLayout.JVMS_SLOT_SIZE;
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.stack.JVMSFrameLayout.*;
+
+import java.util.*;
+
+import com.oracle.max.asm.*;
+import com.oracle.max.vm.ext.t1x.T1XTemplate.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.*;
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.intrinsics.*;
+import com.sun.max.vm.profile.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.*;
+import com.sun.max.vm.type.*;
+import com.sun.max.vm.verifier.*;
 
 /**
  * T1X per-compilation information.
@@ -2138,8 +2125,6 @@ public abstract class T1XCompilation {
     protected void do_invokespecial_resolved(T1XTemplateTag tag, VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
         peekObject(scratch, receiverStackIndex);
         nullCheck(scratch);
-        //int safepoint = nullCheck(scratch);
-        //safepointsBuilder.addSafepoint(stream.currentBCI(), safepoint, null);
     }
 
     protected void do_invokestatic_resolved(T1XTemplateTag tag, StaticMethodActor staticMethodActor) {
@@ -2175,7 +2160,7 @@ public abstract class T1XCompilation {
                     }
                     // emit an unprofiled virtual dispatch
                     start(tag.resolved);
-                    CiRegister target = template.sig.out.reg;
+                    CiRegister target = template.sig.scratch.reg;
                     assignInvokeVirtualTemplateParameters(virtualMethodActor, receiverStackIndex);
                     finish();
                     int safepoint = callIndirect(target, receiverStackIndex);
@@ -2189,7 +2174,7 @@ public abstract class T1XCompilation {
             // Fall back on unresolved template that will cause the error to be rethrown at runtime.
         }
         start(tag);
-        CiRegister target = template.sig.out.reg;
+        CiRegister target = template.sig.scratch.reg;
         assignObject(0, "guard", cp.makeResolutionGuard(index));
         peekObject(1, "receiver", receiverStackIndex);
         finish();
@@ -2219,7 +2204,7 @@ public abstract class T1XCompilation {
                         return;
                     }
                     start(tag.resolved);
-                    CiRegister target = template.sig.out.reg;
+                    CiRegister target = template.sig.scratch.reg;
                     assignObject(0, "methodActor", interfaceMethod);
                     peekObject(1, "receiver", receiverStackIndex);
                     finish();
@@ -2235,7 +2220,7 @@ public abstract class T1XCompilation {
             // Fall back on unresolved template that will cause the error to be rethrown at runtime.
         }
         start(tag);
-        CiRegister target = template.sig.out.reg;
+        CiRegister target = template.sig.scratch.reg;
         assignObject(0, "guard", cp.makeResolutionGuard(index));
         peekObject(1, "receiver", receiverStackIndex);
         finish();
@@ -2266,7 +2251,7 @@ public abstract class T1XCompilation {
             // Fall back on unresolved template that will cause the error to be rethrown at runtime.
         }
         start(tag);
-        CiRegister target = template.sig.out.reg;
+        CiRegister target = template.sig.scratch.reg;
         assignObject(0, "guard", cp.makeResolutionGuard(index));
         peekObject(1, "receiver", receiverStackIndex);
         finish();
@@ -2297,7 +2282,7 @@ public abstract class T1XCompilation {
             // Fall back on unresolved template that will cause the error to be rethrown at runtime.
         }
         start(tag);
-        CiRegister target = template.sig.out.reg;
+        CiRegister target = template.sig.scratch.reg;
         assignObject(0, "guard", cp.makeResolutionGuard(index));
         finish();
 
@@ -2377,7 +2362,7 @@ public abstract class T1XCompilation {
             start(CREATE_MULTIANEWARRAY_DIMENSIONS);
             assignWordReg(0, "sp", sp);
             assignInt(1, "n", numberOfDimensions);
-            lengths = template.sig.out.reg;
+            lengths = template.sig.scratch.reg;
             finish();
             decStack(numberOfDimensions);
         }
