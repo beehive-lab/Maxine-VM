@@ -490,7 +490,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     protected int callIndirect(CiRegister target, int receiverStackIndex) {
         assert target == ARMV7.r8;
         if (receiverStackIndex >= 0) {
-            peekObject(ARMV7.r1, receiverStackIndex);
+            peekObject(ARMV7.r0, receiverStackIndex);
         }
 
         int causePos = buf.position();
