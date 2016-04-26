@@ -953,7 +953,7 @@ public class ARMV7T1XTest extends MaxTestCase {
                 long returnValue = (0xffffffffL & registerValues[i]) | ((0xffffffffL & registerValues[i + 1]) << 32);
                 assert returnValue == Double.doubleToLongBits(g) : "TEST " + Integer.toString(i) + " Failed incorrect value " + Double.longBitsToDouble(returnValue) + " " + g;
                 i++;
-            } 
+            }
         }
     }
 
