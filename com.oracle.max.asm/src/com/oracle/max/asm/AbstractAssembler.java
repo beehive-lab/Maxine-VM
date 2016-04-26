@@ -22,9 +22,6 @@
  */
 package com.oracle.max.asm;
 
-import java.io.*;
-import java.util.concurrent.atomic.*;
-
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiArchitecture.*;
 

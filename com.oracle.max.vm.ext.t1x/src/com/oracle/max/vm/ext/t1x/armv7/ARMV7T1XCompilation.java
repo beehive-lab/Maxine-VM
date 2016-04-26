@@ -200,7 +200,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     public void peekLong(CiRegister dst, int index) {
         assert dst.encoding < 10;
         asm.setUpScratch(spLong(index));
-        asm.ldrd(ConditionFlag.Always, dst, scratch, 0); // dst needs to be big enough to hold a long!
+        asm.ldrd(ConditionFlag.Always, dst, scratch, 0);
     }
 
     @Override
@@ -423,22 +423,17 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         Kind kind = invokeKind(signature);
         T1XTemplateTag tag = T1XTemplateTag.INVOKEVIRTUALS.get(kind.asEnum);
         int receiverStackIndex = receiverStackIndex(signature);
-        System.out.println(" IN Thread " + " " + VmThread.current().id() +" class method ref " + classMethodRef.toString() + " Signature " + signature.asString() + " receiverStackIndex " + receiverStackIndex + " bci " + index + " template " + template.toString());
         try {
             if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
                 try {
                     VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
                     if (processIntrinsic(virtualMethodActor)) {
-                        System.out.println(" RET1 Thread " + " " + VmThread.current().id() +" class method ref " + classMethodRef.toString() + " Signature " + signature.asString() + " receiverStackIndex " + receiverStackIndex);
-
                         return;
                     }
                     if (virtualMethodActor.isPrivate() || virtualMethodActor.isFinal() || virtualMethodActor.holder().isFinal()) {
                         do_invokespecial_resolved(tag, virtualMethodActor, receiverStackIndex);
                         int safepoint = callDirect();
                         finishCall(tag, kind, safepoint, virtualMethodActor);
-                        System.out.println(" RET2 Thread " + " " + VmThread.current().id() +" class method ref " + classMethodRef.toString() + " Signature " + signature.asString() + " receiverStackIndex " + receiverStackIndex);
-
                         return;
                     }
                     start(tag.resolved);
@@ -459,8 +454,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                     int safepoint = callIndirect(target, receiverStackIndex);
                     asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, 0xdead0005);
                     finishCall(tag, kind, safepoint, null);
-                    System.out.println(" RET3 Thread " + " " + VmThread.current().id() +" class method ref " + classMethodRef.toString() + " Signature " + signature.asString() + " receiverStackIndex " + receiverStackIndex);
-
                     return;
                 } catch (LinkageError e) {
                     // fall through
