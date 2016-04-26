@@ -920,40 +920,40 @@ public class ARMV7T1XTest extends MaxTestCase {
 
         for (int i = 0; i <= 10; i++) {
             if (i == 0) {
-                assert registerValues[0] == a : "Failed incorrect value " + Long.toString(registerValues[i], 16) + " " + Long.toString(a, 16);
+                assert registerValues[0] == a : "TEST " + Integer.toString(i) + "Failed incorrect value " + Long.toString(registerValues[i], 16) + " " + Long.toString(a, 16);
                 i++;
             } else if (i == 1) {
                 assert false : "Should not reach here!";
             } else if (i == 2) {
                 long returnValue = (0xffffffffL & registerValues[i]) | ((0xffffffffL & registerValues[i + 1]) << 32);
-                assert returnValue == b : "Failed incorrect value " + Long.toString(returnValue, 16) + " " + Long.toString(b, 16);
+                assert returnValue == b : "TEST " + Integer.toString(i) + " Failed incorrect value " + Long.toString(returnValue, 16) + " " + Long.toString(b, 16);
                 i++;
             } else if (i == 3) {
-                assert registerValues[0] == c : "Failed incorrect value " + Long.toString(registerValues[i], 16) + " " + Long.toString(c, 16);
+                assert registerValues[0] == c : "TEST " + Integer.toString(i) + " Failed incorrect value " + Long.toString(registerValues[i], 16) + " " + Long.toString(c, 16);
             } else if (i == 4) {
-                long returnValue = (0xffffffffL & registerValues[i]) | ((0xffffffffL & registerValues[i + 1]) << 32);
-                assert returnValue == d : "Failed incorrect value " + Long.toString(returnValue, 16) + " " + Long.toString(d, 16);
+                long returnValue = (0xffffffffL & registerValues[i]);
+                assert returnValue == c : "TEST " + Integer.toString(i) + "Failed incorrect value " + Long.toString(returnValue,16) + Long.toString(c, 16);
                 i++;
             } else if (i == 5) {
                 assert false : "Should not reach here!";
             } else if (i == 6) {
                 long returnValue = (0xffffffffL & registerValues[i]) | ((0xffffffffL & registerValues[i + 1]) << 32);
-                assert returnValue == b : "Failed incorrect value " + Long.toString(returnValue, 16) + " " + Long.toString(b, 16);
+                assert returnValue == d : "TEST " + Integer.toString(i) + " Failed incorrect value " + Long.toString(returnValue, 16) + " " + Long.toString(b, 16);
                 i++;
             } else if (i == 7) {
-                assert registerValues[0] == e : "Failed incorrect value " + Float.intBitsToFloat(registerValues[i]) + " " + e;
+                i++;
+                // TODO test this case need to extract the correct word from the value of d
+                //assert registerValues[0] == e : "TEST " + Integer.toString(i) + " Failed incorrect value " + Float.intBitsToFloat(registerValues[i]) + " " + e;
             } else if (i == 8) {
-                assert registerValues[0] == f : "Failed incorrect value " + Float.intBitsToFloat(registerValues[i]) + " " + f;
+                assert registerValues[i] == Float.floatToIntBits(e) : "TEST " + Integer.toString(i) + " Failed incorrect value " + Float.intBitsToFloat(registerValues[i]) + " " + e;
                 i++;
             } else if (i == 9) {
                 assert false : "Should not reach here!";
             } else if (i == 10) {
                 long returnValue = (0xffffffffL & registerValues[i]) | ((0xffffffffL & registerValues[i + 1]) << 32);
-                assert returnValue == g : "Failed incorrect value " + Double.longBitsToDouble(returnValue) + " " + g;
+                assert returnValue == Double.doubleToLongBits(g) : "TEST " + Integer.toString(i) + " Failed incorrect value " + Double.longBitsToDouble(returnValue) + " " + g;
                 i++;
-            } else if (i == 12) {
-                assert registerValues[0] == h : "Failed incorrect value " + Long.toString(registerValues[i], 16) + " " + Long.toString(a, 16);
-            }
+            } 
         }
     }
 
