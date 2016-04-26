@@ -200,7 +200,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     public void peekLong(CiRegister dst, int index) {
         assert dst.encoding < 10;
         asm.setUpScratch(spLong(index));
-        // asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
         asm.ldrd(ConditionFlag.Always, dst, scratch, 0); // dst needs to be big enough to hold a long!
     }
 
@@ -208,24 +207,20 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     public void pokeLong(CiRegister src, int index) {
         assert src.encoding < 10;
         asm.setUpScratch(spLong(index));
-        // asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
-        asm.strd(ARMV7Assembler.ConditionFlag.Always, src, scratch, 0); // put them on the stack on the stack!
+        asm.strd(ARMV7Assembler.ConditionFlag.Always, src, scratch, 0);
     }
 
     @Override
     public void peekDouble(CiRegister dst, int index) {
         assert dst.isFpu();
         asm.setUpScratch(spLong(index));
-        // asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
         asm.vldr(ARMV7Assembler.ConditionFlag.Always, dst, scratch, 0, CiKind.Double, CiKind.Int);
-
     }
 
     @Override
     public void pokeDouble(CiRegister src, int index) {
         assert src.isFpu();
         asm.setUpScratch(spLong(index));
-        // asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
         asm.vstr(ARMV7Assembler.ConditionFlag.Always, src, scratch, 0, CiKind.Double, CiKind.Int);
     }
 
@@ -428,17 +423,22 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         Kind kind = invokeKind(signature);
         T1XTemplateTag tag = T1XTemplateTag.INVOKEVIRTUALS.get(kind.asEnum);
         int receiverStackIndex = receiverStackIndex(signature);
+        System.out.println(" IN Thread " + " " + VmThread.current().id() +" class method ref " + classMethodRef.toString() + " Signature " + signature.asString() + " receiverStackIndex " + receiverStackIndex + " bci " + index + " template " + template.toString());
         try {
             if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
                 try {
                     VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
                     if (processIntrinsic(virtualMethodActor)) {
+                        System.out.println(" RET1 Thread " + " " + VmThread.current().id() +" class method ref " + classMethodRef.toString() + " Signature " + signature.asString() + " receiverStackIndex " + receiverStackIndex);
+
                         return;
                     }
                     if (virtualMethodActor.isPrivate() || virtualMethodActor.isFinal() || virtualMethodActor.holder().isFinal()) {
                         do_invokespecial_resolved(tag, virtualMethodActor, receiverStackIndex);
                         int safepoint = callDirect();
                         finishCall(tag, kind, safepoint, virtualMethodActor);
+                        System.out.println(" RET2 Thread " + " " + VmThread.current().id() +" class method ref " + classMethodRef.toString() + " Signature " + signature.asString() + " receiverStackIndex " + receiverStackIndex);
+
                         return;
                     }
                     start(tag.resolved);
@@ -459,6 +459,8 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                     int safepoint = callIndirect(target, receiverStackIndex);
                     asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, 0xdead0005);
                     finishCall(tag, kind, safepoint, null);
+                    System.out.println(" RET3 Thread " + " " + VmThread.current().id() +" class method ref " + classMethodRef.toString() + " Signature " + signature.asString() + " receiverStackIndex " + receiverStackIndex);
+
                     return;
                 } catch (LinkageError e) {
                     // fall through
@@ -1433,126 +1435,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
             return Kind.WORD;
         }
         return returnKind;
-    }
-
-    @Override
-    protected void do_dup() { // category 1 <32bit>
-
-        incStack(1);
-        peekWord(ARMV7.r8, 1);
-        pokeWord(ARMV7.r8, 0);
-
-    }
-
-    @Override
-    protected void do_dup_x1() { // category 1 <32bit>
-        incStack(1);
-
-        // value1
-        peekWord(ARMV7.r8, 1);
-        pokeWord(ARMV7.r8, 0);
-
-        // value2
-        peekWord(ARMV7.r8, 2);
-        pokeWord(ARMV7.r8, 1);
-
-        // value1
-        peekWord(ARMV7.r8, 0);
-        pokeWord(ARMV7.r8, 2);
-
-
-    }
-
-    @Override
-    protected void do_dup_x2() {
-        incStack(1);
-        asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
-        peekLong(ARMV7.r8, 1);
-        pokeLong(ARMV7.r8, 0);
-
-        // value2
-        peekLong(ARMV7.r8, 2);
-        pokeLong(ARMV7.r8, 1);
-
-        // value3
-        peekLong(ARMV7.r8, 3);
-        pokeLong(ARMV7.r8, 2);
-
-        // value1
-        peekLong(ARMV7.r8, 0);
-        pokeLong(ARMV7.r8, 3);
-        asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
-    }
-
-    @Override
-    protected void do_dup2() {
-        incStack(2);
-        asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
-        peekWord(ARMV7.r8, 3);
-        pokeWord(ARMV7.r8, 1);
-        peekWord(ARMV7.r8, 2);
-        pokeWord(ARMV7.r8, 0);
-        asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
-    }
-
-    @Override
-    protected void do_dup2_x1() {
-        incStack(2);
-        asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
-
-        // value1
-        peekLong(ARMV7.r8, 2);
-        pokeLong(ARMV7.r8, 0);
-
-        // value2
-        peekLong(ARMV7.r8, 3);
-        pokeLong(ARMV7.r8, 1);
-
-        // value3
-        peekLong(ARMV7.r8, 4);
-        pokeLong(ARMV7.r8, 2);
-
-        // value1
-        peekLong(ARMV7.r8, 0);
-        pokeLong(ARMV7.r8, 3);
-
-        // value2
-        peekLong(ARMV7.r8, 1);
-        pokeLong(ARMV7.r8, 4);
-
-        asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
-    }
-
-    @Override
-    protected void do_dup2_x2() {
-        incStack(2);
-        asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
-
-        // value1
-        peekLong(ARMV7.r8, 2);
-        pokeLong(ARMV7.r8, 0);
-
-        // value2
-        peekLong(ARMV7.r8, 3);
-        pokeLong(ARMV7.r8, 1);
-
-        // value3
-        peekLong(ARMV7.r8, 4);
-        pokeLong(ARMV7.r8, 2);
-
-        // value4
-        peekLong(ARMV7.r8, 5);
-        pokeLong(ARMV7.r8, 3);
-
-        // value1
-        peekLong(ARMV7.r8, 0);
-        pokeLong(ARMV7.r8, 4);
-
-        // value2
-        peekLong(ARMV7.r8, 1);
-        pokeLong(ARMV7.r8, 5);
-
-        asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
     }
 
     @Override
