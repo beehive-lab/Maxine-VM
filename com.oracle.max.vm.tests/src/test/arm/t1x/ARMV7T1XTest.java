@@ -206,7 +206,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void ignore_PokeInt() throws Exception {
+    public void work_PokeInt() throws Exception {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         expectedValues[0] = Integer.MIN_VALUE;
         expectedValues[1] = Integer.MAX_VALUE;
@@ -281,12 +281,13 @@ public class ARMV7T1XTest extends MaxTestCase {
         for (int i = 0; i < 10; i += 2) {
             theCompiler.assignmentTests(ARMV7.cpuRegisters[i], expectedLongValues[i]);
         }
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 4 | 8); // this is to check/debug issues about wrong address //
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2); // index 4
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 4 | 8);
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 16 | 32); // index 2
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 64 | 128); // index 1
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 256 | 512); // index 0
+
+        theCompiler.pokeLong(ARMV7.cpuRegisters[0], 8);
+        theCompiler.pokeLong(ARMV7.cpuRegisters[2], 6);
+        theCompiler.pokeLong(ARMV7.cpuRegisters[4], 4);
+        theCompiler.pokeLong(ARMV7.cpuRegisters[6], 2);
+        theCompiler.pokeLong(ARMV7.cpuRegisters[8], 0);
+
         for (int i = 0; i <= 10; i++) {
             masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], -25);
         }
@@ -306,7 +307,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void ignore_PokeLong() throws Exception {
+    public void work_PokeLong() throws Exception {
         long returnValue = 0;
         long[] expectedLongValues = new long[10];
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
@@ -350,7 +351,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void ignore_PeekInt() throws Exception {
+    public void work_PeekInt() throws Exception {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         expectedValues[0] = Integer.MIN_VALUE;
         expectedValues[1] = Integer.MAX_VALUE;
@@ -596,15 +597,16 @@ public class ARMV7T1XTest extends MaxTestCase {
         for (int i = 0; i < 5; i++) {
             theCompiler.assignDoubleTest(dRegs[i], Double.longBitsToDouble(expectedLongValues[i]));
         }
-        masm.vpush(ARMV7Assembler.ConditionFlag.Always, dRegs[0], dRegs[0], CiKind.Double, CiKind.Double);
-        masm.vpush(ARMV7Assembler.ConditionFlag.Always, dRegs[0], dRegs[0], CiKind.Double, CiKind.Double); // index 8
-        masm.vpush(ARMV7Assembler.ConditionFlag.Always, dRegs[1], dRegs[1], CiKind.Double, CiKind.Double); // index 6
-        masm.vpush(ARMV7Assembler.ConditionFlag.Always, dRegs[2], dRegs[2], CiKind.Double, CiKind.Double); // index 4
-        masm.vpush(ARMV7Assembler.ConditionFlag.Always, dRegs[3], dRegs[3], CiKind.Double, CiKind.Double); // index 2
-        masm.vpush(ARMV7Assembler.ConditionFlag.Always, dRegs[4], dRegs[4], CiKind.Double, CiKind.Double); // index 0
+        theCompiler.pokeDouble(dRegs[0], 8);
+        theCompiler.pokeDouble(dRegs[1], 6);
+        theCompiler.pokeDouble(dRegs[2], 4);
+        theCompiler.pokeDouble(dRegs[3], 2);
+        theCompiler.pokeDouble(dRegs[4], 0);
+
         for (int i = 0; i <= 9; i++) {
             masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], -25);
         }
+
         theCompiler.peekDouble(dRegs[0], 8);
         theCompiler.peekDouble(dRegs[1], 6);
         theCompiler.peekDouble(dRegs[2], 4);
@@ -786,7 +788,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         assert expectedValues[0] == registerValues[0];
     }
 
-    public void ignore_PeekWord() throws Exception {
+    public void work_PeekWord() throws Exception {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         expectedValues[0] = 134480128;
         expectedValues[1] = 671351040;
@@ -794,9 +796,10 @@ public class ARMV7T1XTest extends MaxTestCase {
         for (int i = 0; i < 3; i++) {
             masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
         }
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 1); // index 5
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 2); // index 4
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 4); // index 3
+        theCompiler.pokeWord(ARMV7.cpuRegisters[0], 2);
+        theCompiler.pokeWord(ARMV7.cpuRegisters[1], 1);
+        theCompiler.pokeWord(ARMV7.cpuRegisters[2], 0);
+
         for (int i = 0; i <= 3; i++) {
             masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], -25);
         }
@@ -810,18 +813,12 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void ignore_PokeWord() throws Exception {
+    public void work_PokeWord() throws Exception {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         expectedValues[0] = 134480128;
         expectedValues[1] = 671351040;
         expectedValues[2] = 407111936;
-        for (int i = 0; i < 3; i++) {
-            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], i);
-        }
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 4 | 8);
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 1);
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 2);
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 16);
+
         for (int i = 0; i <= 5; i++) {
             masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
         }
@@ -841,7 +838,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void ignore_PeekObject() throws Exception {
+    public void work_PeekObject() throws Exception {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         expectedValues[0] = 134480128;
         expectedValues[1] = 671351040;
@@ -849,9 +846,10 @@ public class ARMV7T1XTest extends MaxTestCase {
         for (int i = 0; i < 3; i++) {
             masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
         }
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 1); // index 5
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 2); // index 4
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 4); // index 3
+        theCompiler.pokeObject(ARMV7.cpuRegisters[0], 2);
+        theCompiler.pokeObject(ARMV7.cpuRegisters[1], 1);
+        theCompiler.pokeObject(ARMV7.cpuRegisters[2], 0);
+
         for (int i = 0; i <= 3; i++) {
             masm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[i], -25);
         }
@@ -959,7 +957,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void ignore_PokeObject() throws Exception {
+    public void work_PokeObject() throws Exception {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         expectedValues[0] = 134480128;
         expectedValues[1] = 671351040;
