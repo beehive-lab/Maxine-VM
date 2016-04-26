@@ -11,7 +11,7 @@ void print_uart0(const char *s) {
 
 #ifdef STATIC
 void (*pf)(int) = (void (*))(code);
-print_uart0("changed test.c!\n");
+print_uart0("OK\n");
 (*pf)(1);
 asm volatile("forever: b forever");
 #endif
