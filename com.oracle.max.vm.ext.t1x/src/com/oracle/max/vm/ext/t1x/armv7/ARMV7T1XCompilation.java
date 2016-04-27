@@ -181,7 +181,21 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     public void pokeWord(CiRegister src, int index) {
         asm.setUpScratch(spWord(index));
         asm.str(ConditionFlag.Always, src, asm.scratchRegister, 0);
+
     }
+
+
+    public void pokeDoubleWord(CiRegister src, int index) {
+        asm.setUpScratch(spWord(index));
+        asm.strd(ConditionFlag.Always, src, asm.scratchRegister, 0);
+    }
+
+    public void peekDoubleWord(CiRegister dst, int index) {
+        asm.setUpScratch(spWord(index));
+        asm.ldrd(ConditionFlag.Always, dst, asm.scratchRegister, 0);
+
+    }
+
 
     @Override
     public void peekInt(CiRegister dst, int index) {
@@ -1169,14 +1183,14 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     }
 
     @Override
-    protected void do_dup() {
+    protected void do_dup() { // category 1 therefore this is 4byte operation
         incStack(1);
         peekWord(ARMV7.r8, 1);
         pokeWord(ARMV7.r8, 0);
     }
 
     @Override
-    protected void do_dup_x1() {
+    protected void do_dup_x1() { // category 1 therefore this is a 4byte operation
         incStack(1);
         // value1
         peekWord(ARMV7.r8, 1);
@@ -1192,94 +1206,115 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     }
 
     @Override
-    protected void do_dup_x2() {
+    protected void do_dup_x2() { // category 1 and 2 therefore we use peek/poke DoubleWord
         incStack(1);
+        asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
+
         // value1
-        peekWord(ARMV7.r8, 1);
-        pokeWord(ARMV7.r8, 0);
+        peekDoubleWord(ARMV7.r8, 1);
+        pokeDoubleWord(ARMV7.r8, 0);
 
         // value2
-        peekWord(ARMV7.r8, 2);
-        pokeWord(ARMV7.r8, 1);
+        peekDoubleWord(ARMV7.r8, 2);
+        pokeDoubleWord(ARMV7.r8, 1);
 
         // value3
-        peekWord(ARMV7.r8, 3);
-        pokeWord(ARMV7.r8, 2);
+        peekDoubleWord(ARMV7.r8, 3);
+        pokeDoubleWord(ARMV7.r8, 2);
 
         // value1
-        peekWord(ARMV7.r8, 0);
-        pokeWord(ARMV7.r8, 3);
+        peekDoubleWord(ARMV7.r8, 0);
+        pokeDoubleWord(ARMV7.r8, 3);
+
+        asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
+
     }
 
     @Override
-    protected void do_dup2() {
+    protected void do_dup2() { // category 1 and 2 therefor peek/pokedoubleWord
         incStack(2);
-        peekWord(ARMV7.r8, 3);
-        pokeWord(ARMV7.r8, 1);
-        peekWord(ARMV7.r8, 2);
-        pokeWord(ARMV7.r8, 0);
+        asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
+
+        peekDoubleWord(ARMV7.r8, 3);
+        pokeDoubleWord(ARMV7.r8, 1);
+        peekDoubleWord(ARMV7.r8, 2);
+        pokeDoubleWord(ARMV7.r8, 0);
+
+        asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
+
+
     }
 
     @Override
-    protected void do_dup2_x1() {
+    protected void do_dup2_x1() { // category 1 and 2 therefore we use peek/poke DoubleWord
         incStack(2);
+        asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
+
         // value1
-        peekWord(ARMV7.r8, 2);
-        pokeWord(ARMV7.r8, 0);
+        peekDoubleWord(ARMV7.r8, 2);
+        pokeDoubleWord(ARMV7.r8, 0);
 
         // value2
-        peekWord(ARMV7.r8, 3);
-        pokeWord(ARMV7.r8, 1);
+        peekDoubleWord(ARMV7.r8, 3);
+        pokeDoubleWord(ARMV7.r8, 1);
 
         // value3
-        peekWord(ARMV7.r8, 4);
-        pokeWord(ARMV7.r8, 2);
+        peekDoubleWord(ARMV7.r8, 4);
+        pokeDoubleWord(ARMV7.r8, 2);
 
         // value1
-        peekWord(ARMV7.r8, 0);
-        pokeWord(ARMV7.r8, 3);
+        peekDoubleWord(ARMV7.r8, 0);
+        pokeDoubleWord(ARMV7.r8, 3);
 
         // value2
-        peekWord(ARMV7.r8, 1);
-        pokeWord(ARMV7.r8, 4);
+        peekDoubleWord(ARMV7.r8, 1);
+        pokeDoubleWord(ARMV7.r8, 4);
+
+        asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
+
     }
 
     @Override
-    protected void do_dup2_x2() {
+    protected void do_dup2_x2() { // category 1 and 2 therefore we use peek/poke DoubleWord
         incStack(2);
+        asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
+
         // value1
-        peekWord(ARMV7.r8, 2);
-        pokeWord(ARMV7.r8, 0);
+        peekDoubleWord(ARMV7.r8, 2);
+        pokeDoubleWord(ARMV7.r8, 0);
 
         // value2
-        peekWord(ARMV7.r8, 3);
-        pokeWord(ARMV7.r8, 1);
+        peekDoubleWord(ARMV7.r8, 3);
+        pokeDoubleWord(ARMV7.r8, 1);
 
         // value3
-        peekWord(ARMV7.r8, 4);
-        pokeWord(ARMV7.r8, 2);
+        peekDoubleWord(ARMV7.r8, 4);
+        pokeDoubleWord(ARMV7.r8, 2);
 
         // value4
-        peekWord(ARMV7.r8, 5);
-        pokeWord(ARMV7.r8, 3);
+        peekDoubleWord(ARMV7.r8, 5);
+        pokeDoubleWord(ARMV7.r8, 3);
 
         // value1
-        peekWord(ARMV7.r8, 0);
-        pokeWord(ARMV7.r8, 4);
+        peekDoubleWord(ARMV7.r8, 0);
+        pokeDoubleWord(ARMV7.r8, 4);
 
         // value2
-        peekWord(ARMV7.r8, 1);
-        pokeWord(ARMV7.r8, 5);
+        peekDoubleWord(ARMV7.r8, 1);
+        pokeDoubleWord(ARMV7.r8, 5);
+
+        asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
+
     }
 
     @Override
-    protected void do_swap() {
-        asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
+    protected void do_swap() { // category 1
+
         peekWord(ARMV7.r8, 0);
         peekWord(ARMV7.r9, 1);
         pokeWord(ARMV7.r8, 1);
         pokeWord(ARMV7.r9, 0);
-        asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
+
     }
 
     @Override
