@@ -1763,7 +1763,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         } else {
             moveOp(callAddress, reg.asValue(callAddress.kind), callAddress.kind, null, false);
         }
-        masm.xorq(ARMV7.r8, ARMV7.r8);
         indirectCall(reg, target, info);
     }
 
@@ -1780,7 +1779,6 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         } else {
             moveOp(callAddress, reg.asValue(callAddress.kind), callAddress.kind, null, false);
         }
-        masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, 0);
         indirectCall(reg, symbol, info);
     }
 

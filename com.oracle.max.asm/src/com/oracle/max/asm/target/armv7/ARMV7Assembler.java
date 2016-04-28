@@ -1857,9 +1857,8 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void call(CiRegister target) {
         if (ARMV7.r8 != target) {
-            addRegisters(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, target, 0, 0);
+            mov(ConditionFlag.Always, false, ARMV7.r8, target);
         }
-        //System.out.println("T1X:call R" + target.encoding);
         int instruction = blxHelper(ConditionFlag.Always, ARMV7.r8);
         emitInt(instruction);
     }
@@ -2288,7 +2287,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final int instrumentPCChange(ConditionFlag taken, ConditionFlag notTaken, int disp) {
 	/*
-	*	Generally used to instrument a PC relative branch 
+	*	Generally used to instrument a PC relative branch
 	*	Taken and not taken are instrumented with a single call
 	*
  0x1c3af214:	eor	r8, r8, r8
@@ -2322,18 +2321,18 @@ public class ARMV7Assembler extends AbstractAssembler {
         int instructions = 0;
         int notTakenDisp = 0;
 	/*Label l = new Label();
-	instrumentBranch(l);	
+	instrumentBranch(l);
 	bind(l); // not a real instruction binds label to the push, makes the branch a NOP
 	Same effect as         emitInt(0xeaffffff);
 	It avoids it needing to be patched!
 
 	*/
         emitInt(0xeaffffff); // this is the branch to next instruction ... ie the instrumentPush
-	/* 
-	in the initial implementation John will stop at the branch, then he will go to where we tell him from 
+	/*
+	in the initial implementation John will stop at the branch, then he will go to where we tell him from
 	this call out to C real_maxine_instrumentation
-	
-	In the second implementation -- to validation cycle accuracy we will  tell him the address of the instruction 
+
+	In the second implementation -- to validation cycle accuracy we will  tell him the address of the instruction
 	causing the PC change and also the result of that PC change
 	*/
         instrumentPush(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
@@ -2355,7 +2354,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             notTakenDisp = 12; // 3 instructions
         }
         // at this point the ARMV7.r1 register has the target PC address.
-	/* 
+	/*
 	This instruction will be -24 bytes offset from a patch
 	*/
         mov32BitConstant(ConditionFlag.Always, ARMV7.r0, -1); // r0 has -1 to signify it  is a PC change
@@ -2373,11 +2372,11 @@ public class ARMV7Assembler extends AbstractAssembler {
         // disp = disp - 3*(8 bytes due to mov32BitConstant)  - 3*(4bytes) - 2*(4Bytes pop and restore APSR)
         disp = disp - 3 * 8 - 3 * 4 - notTakenDisp - 2 * 4;
 	/*
-	For ConditionFlag.Always when we are using this as part of a branch that is patched. We 
+	For ConditionFlag.Always when we are using this as part of a branch that is patched. We
 	need to patch the mov32BitConstant(taken, ARMV7.r1, disp);
 	This instruction will be 9 instructions further back from the patchposition in patchJumpTarget
 	of the branch instruction
-	
+
 	*/
         return disp;
     }
@@ -2436,7 +2435,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             // TODO update wiki on this
             // ldr(ConditionFlag.Always,0,0,0,ARMV7.r12,ARMV7.r12,ARMV7.r12,0,0);
             addRegisters(cc, false, ARMV7.r15, ARMV7.r12, ARMV7.r15, 0, 0);
-	    /* We do not instrument the addregisters, we leave this upto the 
+	    /* We do not instrument the addregisters, we leave this upto the
 		instrumentPCChange ... but this will need patching
 		NOTE NOTE There are cases where addRegisters and addRegistersHelper might be used to
 		perform a PC alteration WE DO NOT TRACK THESE AT PRESENT!!!

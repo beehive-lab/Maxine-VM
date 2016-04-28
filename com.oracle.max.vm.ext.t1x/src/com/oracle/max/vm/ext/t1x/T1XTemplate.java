@@ -627,7 +627,7 @@ public class T1XTemplate {
             outSlot = slot.value();
         }
         Arg out = new Arg(outKind, regConfig.getReturnRegister(WordUtil.ciKind(outKind, true)), null, outSlot);
-        Arg scratch = new Arg(outKind, Platform.target().arch.is64bit() ? regConfig.getReturnRegister(WordUtil.ciKind(outKind, true)) : regConfig.getScratchRegister1(), null, outSlot);
+        Arg scratch = new Arg(outKind, regConfig.getReturnRegister(WordUtil.ciKind(outKind, true)), null, outSlot);
         Sig s = new Sig(in, out, scratch);
         return s;
     }

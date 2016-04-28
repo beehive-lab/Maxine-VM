@@ -488,13 +488,12 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
     @Override
     protected int callIndirect(CiRegister target, int receiverStackIndex) {
-        assert target == ARMV7.r8;
+        asm.mov(ConditionFlag.Always, false, ARMV7.r8, target);
         if (receiverStackIndex >= 0) {
             peekObject(ARMV7.r0, receiverStackIndex);
         }
-
         int causePos = buf.position();
-        asm.call(target);
+        asm.call(ARMV7.r8);
         int safepointPos = buf.position();
         asm.nop(); // nop separates any potential safepoint emitted as a successor to the call
         return Safepoints.make(safepointPos, causePos, INDIRECT_CALL, TEMPLATE_CALL);
