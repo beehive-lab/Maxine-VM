@@ -278,6 +278,41 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     }
 
     @Override
+    protected void do_multianewarray(int index, int numberOfDimensions) {
+        CiRegister lengths;
+        /*
+         * X86-64 has a different return register to argument register set, but ARM as we have tried to follow AARPCS
+         * DOESNT so we need to save the r0 and restore it to r1 Hoepfully with will work ... as long as the SP is not
+         * used for any arguments inbetween
+         */
+        {
+            start(T1XTemplateTag.CREATE_MULTIANEWARRAY_DIMENSIONS);
+            assignWordReg(0, "sp", sp);
+            assignInt(1, "n", numberOfDimensions);
+            lengths = template.sig.out.reg;
+            finish();
+            asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r0, null, CiKind.Float, CiKind.Int);
+            decStack(numberOfDimensions);
+        }
+        ClassConstant classRef = cp.classAt(index);
+        if (classRef.isResolvableWithoutClassLoading(cp)) {
+            start(T1XTemplateTag.MULTIANEWARRAY$resolved);
+            ClassActor arrayClassActor = classRef.resolve(cp, index);
+            assert arrayClassActor.isArrayClass();
+            assert arrayClassActor.numberOfDimensions() >= numberOfDimensions : "dimensionality of array class constant smaller that dimension operand";
+            assignObject(0, "arrayClassActor", arrayClassActor);
+            asm.vmov(ConditionFlag.Always, reg(1, "lengths", Kind.REFERENCE), ARMV7.s31, null, CiKind.Int, CiKind.Float);
+            finish();
+        } else {
+            // Unresolved case
+            start(T1XTemplateTag.MULTIANEWARRAY);
+            assignObject(0, "guard", cp.makeResolutionGuard(index));
+            asm.vmov(ConditionFlag.Always, reg(1, "lengths", Kind.REFERENCE), ARMV7.s31, null, CiKind.Int, CiKind.Float);
+            finish();
+        }
+    }
+
+    @Override
     protected void assignObject(CiRegister dst, Object value) {
         if (value == null) {
             asm.xorq(dst, dst);

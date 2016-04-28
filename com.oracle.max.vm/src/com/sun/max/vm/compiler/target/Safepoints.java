@@ -269,6 +269,7 @@ public final class Safepoints {
     public int indexOf(int pos) {
         // Use binary search since safepoints are sorted by position
         int left = 0;
+        assert safepoints != null : "Safepoints:indexOf null";
         int right = safepoints.length;
         while (right > left) {
             final int middle = left + ((right - left) >> 1);

@@ -273,7 +273,7 @@ public class MaxineTesterConfiguration {
         String testCallerT1X = "--XX:CompileCommand=" + JTRuns.class.getName() + ":T1X";
         String testCalleeT1X = "--XX:CompileCommand=jtt.:T1X";
         String testCalleeGraal = "--XX:CompileCommand=jtt.:Graal";
-        String monitorScheme = "-monitor=com.sun.max.vm.monitor.modal.schemes.thin_inflated";
+        String monitorScheme = "-monitor=com.sun.max.vm.monitor.modal.schemes.inflated_only"; //thin_inflated is anothe rpossiblity for ARM
         String gcScheme = "-heap=com.sun.max.vm.heap.sequential.semiSpace";
         String debugMethods = "-debug-methods";
         String build = "-build=DEBUG";
@@ -284,9 +284,9 @@ public class MaxineTesterConfiguration {
         imageConfig("c1xgraal-boot", opt_c1xgraal, "--XX:+GraalForBoot");
         imageConfig("jtt-t1xc1x", opt_c1x, "--J @ \" -Xms512M -Xmx1G -esa -ea\"", gcScheme, monitorScheme, "-threads=4", debugMethods, build,  "-run=test.com.sun.max.vm.jtrun.all", "-native-tests",
                         testCallerT1X);
-        imageConfig("jtt-c1xt1x", opt_c1x, "--J @ \" -Xms512M -Xmx1G -esa -ea\"", gcScheme, monitorScheme, "-threads=4", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", testCalleeT1X,
+        imageConfig("jtt-c1xt1x", opt_c1x, "--J @ \" -Xms512M -Xmx1G -esa -ea\"", gcScheme, monitorScheme, "-threads=4", debugMethods, build,  "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", testCalleeT1X,
                         "--XX:+FailOverCompilation");
-        imageConfig("jtt-t1xt1x", opt_c1x, "--J @ \" -Xms512M -Xmx1G -esa -ea\"", gcScheme, monitorScheme, "-threads=4", "-run=test.com.sun.max.vm.jtrun.all", "-native-tests",
+        imageConfig("jtt-t1xt1x", opt_c1x, "--J @ \" -Xms512M -Xmx1G -esa -ea\"", gcScheme, monitorScheme, "-threads=4", debugMethods, build, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests",
                         joinCompileCommands(testCallerT1X, testCalleeT1X), "--XX:+FailOverCompilation");
 
         imageConfig("jtt-c1xc1x", opt_c1x, tmpVMArgs, gcScheme, monitorScheme, "-threads=4", "-debug-methods", "-run=test.com.sun.max.vm.jtrun.all", "-build=DEBUG", "-native-tests");
