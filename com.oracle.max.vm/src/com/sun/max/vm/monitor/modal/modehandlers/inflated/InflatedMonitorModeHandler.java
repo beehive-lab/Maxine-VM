@@ -237,18 +237,20 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
                 }
                 // 64Bit: monitor+bits, 32Bit: monitor address
                 final InflatedMonitorLockword64 newLockword = InflatedMonitorLockword64.boundFromMonitor(monitor);
-                long currentHashAndMiscWord = 0;
-                long newHashAndMiscWord = 0;
+                long currentMiscAndHashWord = 0;
+                long newMiscAndHashWord = 0;
                 long answer32 = 0;
                 Word answer64 = Word.zero();
 
                 // 64Bit: CAS monitor+bits @ miscWord, 32Bit: CAS monitor @ hashWord
                 if (Platform.target().arch.is32bit()) {
-                    currentHashAndMiscWord = ((0xffffffffL & hashword.value) << 32) | (0xffffffffL & lockword.value);
-                    newHashAndMiscWord = ((0xffffffffL & newLockword.value) << 32) | (0xffffffffL & InflatedMonitorLockword64.boundFromZero().value);
-                    answer32 =  ObjectAccess.compareAndSwapHashAndMisc(object, currentHashAndMiscWord, newHashAndMiscWord);
-                    if (answer32 == currentHashAndMiscWord) {
+                    currentMiscAndHashWord = (0xffffffffL & (int) hashword.value) | (0xffffffffL & ((int) lockword.value << 32));
+                    newMiscAndHashWord = (0xffffffffL & (int) newLockword.value) | (0xffffffffL & ((int) InflatedMonitorLockword64.boundFromZero().value << 32));
+                    answer32 =  ObjectAccess.compareAndSwapHashAndMisc(object, currentMiscAndHashWord, newMiscAndHashWord);
+                    if (answer32 == currentMiscAndHashWord) {
                         return;
+                    } else {
+                        FatalError.unexpected("Problem");
                     }
                 } else {
                     answer64 = ObjectAccess.compareAndSwapMisc(object, lockword, newLockword);
