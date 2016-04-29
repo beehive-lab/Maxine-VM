@@ -254,12 +254,12 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
     @Override
     protected void assignObjectReg(CiRegister dst, CiRegister src) {
-        asm.mov(ARMV7Assembler.ConditionFlag.Always, true, dst, src);
+        asm.mov(ARMV7Assembler.ConditionFlag.Always, false, dst, src); // changed to false for flag update
     }
 
     @Override
     protected void assignWordReg(CiRegister dst, CiRegister src) {
-        asm.mov(ARMV7Assembler.ConditionFlag.Always, true, dst, src);
+        asm.mov(ARMV7Assembler.ConditionFlag.Always, false, dst, src); // changed to false for flag update
     }
 
     @Override
@@ -369,7 +369,9 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     @Override
     protected void storeInt(CiRegister src, int index) {
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.INT)));
-        asm.strImmediate(ConditionFlag.Always, 0, 0, 0, src, ARMV7.r12, 0);
+        //asm.strImmediate(ConditionFlag.Always, 0, 0, 0, src, ARMV7.r12, 0);
+        asm.str(ConditionFlag.Always, src, scratch, 0);
+
     }
 
     @Override
@@ -383,7 +385,8 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     @Override
     protected void storeWord(CiRegister src, int index) {
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.WORD)));
-        asm.strImmediate(ConditionFlag.Always, 0, 0, 0, src, asm.scratchRegister, 0);
+        //asm.strImmediate(ConditionFlag.Always, 0, 0, 0, src, asm.scratchRegister, 0);
+        asm.str(ConditionFlag.Always, src, scratch, 0);
     }
 
     @Override
@@ -406,7 +409,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
     @Override
     protected void do_store(int index, Kind kind) {
-        // TODO ensure that r8 and r9 are not allocatable
+        // TODO improve peekInt/pokeInt set
         switch (kind.asEnum) {
             case INT:
             case FLOAT:
@@ -421,8 +424,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 break;
             case LONG:
             case DOUBLE:
-                // TODO potential corruption of r9 need to use floatreg as stackoperation in progress
-                // cnanot push r9 to stack
                 asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
                 peekLong(ARMV7.r8, 0);
                 decStack(2);
@@ -495,7 +496,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
     @Override
     protected void do_dconst(double value) {
-        // potential corruption of r9
         asm.vmov(ConditionFlag.Always, ARMV7.s31, ARMV7.r9, null, CiKind.Float, CiKind.Int);
         assignLong(ARMV7.r8, Double.doubleToRawLongBits(value));
         incStack(2);
@@ -518,7 +518,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     @Override
     protected void assignDouble(CiRegister dst, double value) {
         assert dst.isFpu();
-        // potential corruption of r9
+        // avoid potential corruption of r9
         asm.push(ConditionFlag.Always, 1 << 9);
         assignLong(ARMV7.r8, Double.doubleToRawLongBits(value));
         asm.vmov(ConditionFlag.Always, dst, ARMV7.r8, ARMV7.r9, CiKind.Double, CiKind.Int);
@@ -572,7 +572,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     }
 
     private int framePointerAdjustment() {
-        // TODO APN this is required for ARMv7 but it is incorrect at the moment with fakedFrame
+        // TODO APN this is required for ARMv7 -- is it correct with fakedFrame used in offline testing
         final int enterSize = frame.frameSize() - Word.size();// Whe we push we adjust the stack ptr - Word.size();
         return enterSize - frame.sizeOfNonParameterLocals();
     }
@@ -606,8 +606,10 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 offset = offset - frameSize;
                 // RSP is r13!
                 asm.setUpScratch(new CiAddress(WordUtil.archKind(), RSP, -offset));
-                asm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r0, asm.scratchRegister, 0); // was LR
-                // APN guessing rax is return address.
+                //asm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r0, asm.scratchRegister, 0); // was LR
+                asm.str(ConditionFlag.Always, ARMV7.r0, scratch, 0);
+
+                // APN rax is return register SO WE USE r0.
                 // asm.movq(new CiAddress(WordUtil.archKind(), RSP, -offset), rax);
             }
         }
@@ -636,19 +638,21 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         int dispPos = buf.position() - 8;
         patchInfo.addObjectLiteral(dispPos, protectionLiteralIndex);
         asm.addRegisters(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r15, 0, 0);
-        asm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, 0);
+        //asm.strImmediate(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, 0);
+        asm.str(ConditionFlag.Always,ARMV7.r8, ARMV7.r12, 0);
+
 
     }
 
     @Override
     protected void emitEpilogue() {
         asm.addq(ARMV7.r11, framePointerAdjustment()); // we might be missing some kind of pop here?
-        asm.mov(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r11);
+        asm.mov(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r11); // changed to false for flag update
         final short stackAmountInBytes = (short) frame.sizeOfParameters();
         asm.pop(ConditionFlag.Always, 1 << 11); // POP the frame pointer
         asm.pop(ConditionFlag.Always, 1 << 8); // POP return address into r8
         asm.mov32BitConstant(ConditionFlag.Always, scratch, stackAmountInBytes);
-        asm.addRegisters(ConditionFlag.Always, true, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
+        asm.addRegisters(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0); // changed to false for flag update
         asm.mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r8); // RETURN
     }
 
@@ -664,6 +668,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     protected void do_postVolatileFieldAccess(T1XTemplateTag tag, FieldActor fieldActor) {
         if (fieldActor.isVolatile()) {
             boolean isWrite = tag.opcode == Bytecodes.PUTFIELD || tag.opcode == Bytecodes.PUTSTATIC;
+            // TODO we need to check the ARM semantics here  ... and then determine what to put inplace ...
             asm.membar(isWrite ? MemoryBarriers.JMM_POST_VOLATILE_WRITE : MemoryBarriers.JMM_POST_VOLATILE_READ);
         }
     }
@@ -814,7 +819,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
             asm.addRegisters(ConditionFlag.Always, false, r12, r15, r12, 0, 0);
             asm.add(ConditionFlag.Always, false, r12, r12, 8, 0);
             asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10 | 1 << 7);
-            asm.mov(ConditionFlag.Always, true, r15, r12);
+            asm.mov(ConditionFlag.Always, false, r15, r12); // changed to false for flag update
 
             // Inserting padding so that lookup table address is 4-byte aligned
             while ((buf.position() & 0x3) != 0) {
@@ -1448,7 +1453,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         decStack(1); // get slot 1
         peekInt(ARMV7.r1, 0);
         decStack(1); // get slot 0
-        asm.addRegisters(ConditionFlag.Always, true, ARMV7.r0, ARMV7.r0, ARMV7.r1, 0, 0);
+        asm.addRegisters(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r0, ARMV7.r1, 0, 0); // changed to false for flag update
         incStack(1);
         pokeInt(ARMV7.r0, 0); // push the result onto the operand stack.
         // do_iadd();
@@ -1464,7 +1469,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         decStack(1); // get slot 1
         peekInt(ARMV7.r1, 0);
         decStack(1); // get slot 0
-        asm.mul(ConditionFlag.Always, true, ARMV7.r0, ARMV7.r0, ARMV7.r1);
+        asm.mul(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r0, ARMV7.r1); // changed to false for flag update
         incStack(1);
         pokeInt(ARMV7.r0, 0); // push the result onto the operand stack.
         // do_iadd();
