@@ -368,4 +368,8 @@ public class XOhmGeneralLayout extends AbstractLayout implements GeneralLayout {
     public void writeHash(Accessor accessor, Word value) {
         throw ProgramError.unexpected();
     }
+
+    public long compareAndSwapHashAndMisc(Accessor accessor, long expectedValue, long newValue) {
+        throw ProgramError.unexpected();
+    }
 }

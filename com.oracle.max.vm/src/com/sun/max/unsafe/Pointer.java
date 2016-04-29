@@ -849,6 +849,21 @@ public final class Pointer extends Address implements Accessor {
     }
 
     /**
+     * This is used just for the dual word head in 32bit archs.
+     *
+     * @see Accessor#compareAndSwapCompositeLong(Offset, long, long)
+     */
+    @INLINE
+    public long compareAndSwapDualWord(Offset offset, long expectedValue, long newValue) {
+        return compareAndSwapLong(offset, expectedValue, newValue);
+    }
+
+    @INLINE
+    public long compareAndSwapDualWord(int offset, long expectedValue, long newValue) {
+        return compareAndSwapLong(offset, expectedValue, newValue);
+    }
+
+    /**
      * @see Accessor#compareAndSwapInt(Offset, int, int)
      */
     @INTRINSIC(PCMPSWP)

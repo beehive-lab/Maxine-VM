@@ -425,6 +425,12 @@ public final class Layout {
         return generalLayout().compareAndSwapMisc(reference, expectedValue, newValue);
     }
 
+    @ACCESSOR(Reference.class)
+    @INLINE
+    public static long compareAndSwapHashAndMisc(Reference reference, long expectedValue, long newValue) {
+        return generalLayout().compareAndSwapHashAndMisc(reference, expectedValue, newValue);
+    }
+
     /**
      * Reads the length word from an array, using layout information from the
      * context of the current {@linkplain VMConfiguration VM configuration}.

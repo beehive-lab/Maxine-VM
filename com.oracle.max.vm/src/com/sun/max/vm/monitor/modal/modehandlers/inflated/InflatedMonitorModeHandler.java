@@ -237,26 +237,47 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
                 }
                 // 64Bit: monitor+bits, 32Bit: monitor address
                 final InflatedMonitorLockword64 newLockword = InflatedMonitorLockword64.boundFromMonitor(monitor);
-                // 64Bit: CAS monitor+bits @ miscWord, 32Bit: CAS monitor @ hashWord
-                final Word answer = Platform.target().arch.is64bit() ? ObjectAccess.compareAndSwapMisc(object, lockword, newLockword) : ObjectAccess.compareAndSwapHash(object, hashword, newLockword);
+                long currentHashAndMiscWord = 0;
+                long newHashAndMiscWord = 0;
+                long answer32 = 0;
+                Word answer64 = Word.zero();
 
-                if (Platform.target().arch.is64bit()) {
-                    if (answer.equals(lockword)) {
+                // 64Bit: CAS monitor+bits @ miscWord, 32Bit: CAS monitor @ hashWord
+                if (Platform.target().arch.is32bit()) {
+                    currentHashAndMiscWord = ((0xffffffffL & hashword.value) << 32) | (0xffffffffL & lockword.value);
+                    newHashAndMiscWord = ((0xffffffffL & newLockword.value) << 32) | (0xffffffffL & InflatedMonitorLockword64.boundFromZero().value);
+                    answer32 =  ObjectAccess.compareAndSwapHashAndMisc(object, currentHashAndMiscWord, newHashAndMiscWord);
+                    if (answer32 == currentHashAndMiscWord) {
                         return;
                     }
                 } else {
-                    if (answer.equals(hashword)) {
-                        final InflatedMonitorLockword64 newMiscword = InflatedMonitorLockword64.boundFromZero();
-                        final Word oldMisc = ObjectAccess.compareAndSwapMisc(object, lockword, newMiscword);
-                        if (!oldMisc.equals(lockword)) {
-                            FatalError.unexpected("Race condition!");
-                        }
+                    answer64 = ObjectAccess.compareAndSwapMisc(object, lockword, newLockword);
+                    if (answer64.equals(lockword)) {
                         return;
                     }
                 }
+
+                //final Word answer = Platform.target().arch.is64bit() ? ObjectAccess.compareAndSwapMisc(object, lockword, newLockword) :
+                //    ObjectAccess.compareAndSwapHashAndMisc(object, hashword, newLockword);
+
+                //if (Platform.target().arch.is64bit()) {
+                //    if (answer.equals(lockword)) {
+                //        return;
+                //    }
+                //} else {
+                //    if (answer.equals(hashword)) {
+                //        final InflatedMonitorLockword64 newMiscword = InflatedMonitorLockword64.boundFromZero();
+                //        final Word oldMisc = ObjectAccess.compareAndSwapMisc(object, lockword, newMiscword);
+                //        if (!oldMisc.equals(lockword)) {
+                //            FatalError.unexpected("Race condition!");
+                //        }
+                //        return;
+                //    }
+                //}
+
                 // Another thread installed a hashcode or got the monitor.
                 // Try again.
-                lockword = Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(answer) : InflatedMonitorLockword64.from(ObjectAccess.readMisc(object));
+                lockword = Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(answer64) : InflatedMonitorLockword64.from(ObjectAccess.readMisc(object));
             }
         }
 

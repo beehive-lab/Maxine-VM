@@ -144,6 +144,11 @@ public final class ObjectAccess {
         return Layout.compareAndSwapMisc(Reference.fromJava(object), expectedValue, newValue);
     }
 
+    @INLINE
+    public static long compareAndSwapHashAndMisc(Object object, long expectedValue, long newValue) {
+        return Layout.compareAndSwapHashAndMisc(Reference.fromJava(object), expectedValue, newValue);
+    }
+
     /**
      * Computes a new default hashcode for the specified object.
      *

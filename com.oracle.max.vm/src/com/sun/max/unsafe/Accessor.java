@@ -511,6 +511,17 @@ public interface Accessor {
     Word compareAndSwapWord(int offset, Word expectedValue, Word newValue);
 
     /**
+     * @see #compareAndSwapCompositeLong(Offset, long, long)
+     */
+    long compareAndSwapDualWord(int offset, long expectedValue, long newValue);
+
+    /**
+     * @see #compareAndSwapCompositeLong(Offset, long, long)
+     */
+    long compareAndSwapDualWord(Offset offset, long expectedValue, long newValue);
+
+
+    /**
      * @see #compareAndSwapInt(Offset, int, int)
      */
     Reference compareAndSwapReference(Offset offset, Reference expectedValue, Reference newValue);

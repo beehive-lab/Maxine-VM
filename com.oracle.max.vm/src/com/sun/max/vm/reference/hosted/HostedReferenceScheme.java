@@ -432,6 +432,14 @@ public final class HostedReferenceScheme extends AbstractVMScheme implements Ref
         throw FatalError.unimplemented();
     }
 
+    public long compareAndSwapDualWord(Reference ref, int offset, long expectedValue, long newValue) {
+        throw FatalError.unimplemented();
+    }
+
+    public long compareAndSwapDualWord(Reference ref, Offset offset, long expectedValue, long newValue) {
+        throw FatalError.unimplemented();
+    }
+
     public Reference compareAndSwapReference(Reference ref, Offset offset, Reference expectedValue, Reference newValue) {
         throw FatalError.unimplemented();
     }

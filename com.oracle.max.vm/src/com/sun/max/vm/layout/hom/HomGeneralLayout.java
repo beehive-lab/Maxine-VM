@@ -268,11 +268,18 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
         throw FatalError.unimplemented();
     }
 
+    @INLINE
     public Word readHash(Accessor accessor) {
         throw FatalError.unimplemented();
     }
 
+    @INLINE
     public void writeHash(Accessor accessor, Word value) {
+        throw FatalError.unimplemented();
+    }
+
+    @INLINE
+    public long compareAndSwapHashAndMisc(Accessor accessor, long expectedValue, long newValue) {
         throw FatalError.unimplemented();
     }
 }

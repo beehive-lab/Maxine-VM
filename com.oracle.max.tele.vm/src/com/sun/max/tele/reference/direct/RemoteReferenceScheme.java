@@ -880,6 +880,16 @@ public final class RemoteReferenceScheme extends AbstractVMScheme implements Ref
         return Word.zero();
     }
 
+    public long compareAndSwapDualWord(Reference ref, int offset, long expectedValue, long newValue) {
+        TeleError.unimplemented();
+        return 0;
+    }
+
+    public long compareAndSwapDualWord(Reference ref, Offset offset, long expectedValue, long newValue) {
+        TeleError.unimplemented();
+        return 0;
+    }
+
     public Reference compareAndSwapReference(Reference ref, Offset offset, Reference expectedValue, Reference newValue) {
         TeleError.unimplemented();
         return null;
