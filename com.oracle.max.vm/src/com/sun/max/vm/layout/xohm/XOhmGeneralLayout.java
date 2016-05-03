@@ -369,7 +369,7 @@ public class XOhmGeneralLayout extends AbstractLayout implements GeneralLayout {
         throw ProgramError.unexpected();
     }
 
-    public long compareAndSwapHashAndMisc(Accessor accessor, long expectedValue, long newValue) {
+    public long compareAndSwapMiscAndHash(Accessor accessor, long expectedValue, long newValue) {
         throw ProgramError.unexpected();
     }
 }

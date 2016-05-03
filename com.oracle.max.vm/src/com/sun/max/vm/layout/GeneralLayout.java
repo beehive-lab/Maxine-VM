@@ -66,7 +66,7 @@ public interface GeneralLayout {
 
     Word compareAndSwapMisc(Accessor accessor, Word expectedValue, Word newValue);
 
-    long compareAndSwapHashAndMisc(Accessor accessor, long expectedValue, long newValue);
+    long compareAndSwapMiscAndHash(Accessor accessor, long expectedValue, long newValue);
 
     Offset getOffsetFromOrigin(HeaderField headerField);
 

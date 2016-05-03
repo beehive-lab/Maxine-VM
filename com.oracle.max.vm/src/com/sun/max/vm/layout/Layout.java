@@ -427,8 +427,8 @@ public final class Layout {
 
     @ACCESSOR(Reference.class)
     @INLINE
-    public static long compareAndSwapHashAndMisc(Reference reference, long expectedValue, long newValue) {
-        return generalLayout().compareAndSwapHashAndMisc(reference, expectedValue, newValue);
+    public static long compareAndSwapMiscAndHash(Reference reference, long expectedValue, long newValue) {
+        return generalLayout().compareAndSwapMiscAndHash(reference, expectedValue, newValue);
     }
 
     /**

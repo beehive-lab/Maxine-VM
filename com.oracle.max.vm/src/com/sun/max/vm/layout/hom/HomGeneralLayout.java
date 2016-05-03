@@ -279,7 +279,7 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
     }
 
     @INLINE
-    public long compareAndSwapHashAndMisc(Accessor accessor, long expectedValue, long newValue) {
+    public long compareAndSwapMiscAndHash(Accessor accessor, long expectedValue, long newValue) {
         throw FatalError.unimplemented();
     }
 }

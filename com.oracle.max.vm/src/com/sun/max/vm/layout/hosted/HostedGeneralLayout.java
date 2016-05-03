@@ -122,7 +122,7 @@ public class HostedGeneralLayout extends AbstractLayout  implements GeneralLayou
         throw ProgramError.unexpected();
     }
 
-    public final long compareAndSwapHashAndMisc(Accessor accessor, long expectedValue, long newValue) {
+    public final long compareAndSwapMiscAndHash(Accessor accessor, long expectedValue, long newValue) {
         throw ProgramError.unexpected();
     }
 
