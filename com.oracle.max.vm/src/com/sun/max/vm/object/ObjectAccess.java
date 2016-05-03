@@ -145,8 +145,8 @@ public final class ObjectAccess {
     }
 
     @INLINE
-    public static long compareAndSwapHashAndMisc(Object object, long expectedValue, long newValue) {
-        return Layout.compareAndSwapHashAndMisc(Reference.fromJava(object), expectedValue, newValue);
+    public static long compareAndSwapMiscAndHash(Object object, long expectedValue, long newValue) {
+        return Layout.compareAndSwapMiscAndHash(Reference.fromJava(object), expectedValue, newValue);
     }
 
     /**
