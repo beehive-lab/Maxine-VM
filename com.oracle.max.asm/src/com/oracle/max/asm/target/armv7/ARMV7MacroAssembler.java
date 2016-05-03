@@ -53,24 +53,24 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         ldrex(ConditionFlag.Always, ARMV7.r8, scratchRegister); // r8 has the current Value
         cmp(ConditionFlag.Always, cmpValue, ARMV7.r8, 0, 0); // compare r8 with cmpValue
         strex(ConditionFlag.Equal, ARMV7.r8, newValue, scratchRegister); // if equal, store newValue to address and result to r8
-        /*
-        If the Condition is NotEqual then the strex did not take place and we need to put the loaded value of r8
-        into the cmpValue
-        */
+
+        // If the Condition is NotEqual then the strex did not take place and we need to put the loaded value of r8 into
+        // the cmpValue
+
         mov(ConditionFlag.NotEqual, false, cmpValue, ARMV7.r8);// Updated cmpValue to have the value loaded
         jcc(ConditionFlag.NotEqual, notEqualTocmpValue); // we were not equal to the cmpValue
-        /*
-        If the Condition isa Equal then the strex took place but it MIGHT have failed so we need to test for this.
-        */
+
+        // If the Condition is Equal then the strex took place but it might have failed so we need to test for this.
+
         mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 1); // r12 has value 1
         cmp(ConditionFlag.Equal, ARMV7.r8, ARMV7.r12, 0, 0);
-        /* If r8 is eqaul to r12 then there was an issue with atomicity so do the operation again
-        */
+
+        // If r8 is equal to r12 then there was an issue with atomicity so do the operation again
+
         jcc(ConditionFlag.Equal, atomicFail);
-        //mov(ConditionFlag.NotEqual,false,cmpValue,newValue); WE DO NOT UPDATE the "return value" if the CAS succeeds
+        // mov(ConditionFlag.NotEqual,false,cmpValue,newValue); WE DO NOT UPDATE the "return value" if the CAS succeeds
         bind(notEqualTocmpValue);
         cmp(ConditionFlag.Always, newValue, cmpValue, 0, 0);
-
     }
 
     // The same as casInt except the last conditional move since it is added implicitly by the LIR generator.
@@ -80,34 +80,28 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert (newValue != cmpValue);
         assert (ARMV7.r0 == cmpValue);
 
-
         Label atomicFail = new Label();
         Label notEqualTocmpValue = new Label();
-
 
         bind(atomicFail);
         membar(-1);
         setUpScratch(address); // r12 has the address to CAS
         ldrex(ConditionFlag.Always, ARMV7.r8, scratchRegister); // r8 has the current Value
         cmp(ConditionFlag.Always, cmpValue, ARMV7.r8, 0, 0); // compare r8 with cmpValue
-        strex(ConditionFlag.Equal, ARMV7.r8, newValue, scratchRegister); // if equal, store newValue to address and result to r8
-        //mov(ConditionFlag.NotEqual, false, cmpValue, ARMV7.r8);// Updated cmpValue to have the value loaded
+        strex(ConditionFlag.Equal, ARMV7.r8, newValue, scratchRegister); // if equal, store newValue to address and
+                                                                         // result to r8
         jcc(ConditionFlag.NotEqual, notEqualTocmpValue); // we were not equal to the cmpValue
-        /*
-        If the Condition isa Equal then the strex took place but it MIGHT have failed so we need to test for this.
-        */
+
+        // If the Condition isa Equal then the strex took place but it MIGHT have failed so we need to test for this.
+
         mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 1); // r12 has value 1
         cmp(ConditionFlag.Equal, ARMV7.r8, ARMV7.r12, 0, 0);
-        /* If r8 is eqaul to r12 then there was an issue with atomicity so do the operation again
-        */
+        // If r8 is equal to r12 then there was an issue with atomicity so do the operation again
         jcc(ConditionFlag.Equal, atomicFail);
-        mov(ConditionFlag.NotEqual, false, cmpValue, newValue);// differing from the real CAS we return the value we stored
+        mov(ConditionFlag.NotEqual, false, cmpValue, newValue);// differing from the real CAS we return the value we
+                                                               // stored
         bind(notEqualTocmpValue);
         cmp(ConditionFlag.Always, newValue, cmpValue, 0, 0);
-
-
-
-
     }
 
     public final void casLong(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
@@ -117,26 +111,27 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert (ARMV7.r0 == cmpValue);
         Label atomicFail = new Label();
         Label notEqualTocmpValue = new Label();
-	saveRegister(8,9);
+        saveRegister(8, 9);
         bind(atomicFail);
         membar(-1);
         setUpScratch(address); // r12 has the address to CAS
         ldrexd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12); // r8, r9 have the current Value
         lcmpl(ConditionFlag.Equal, cmpValue, ARMV7.r8); // compare r8,r9 with cmpValue
+
         // if equal, store newValue to address and store result to r8
         strexd(ConditionFlag.Equal, ARMV7.r8, newValue, ARMV7.r12);
-        //mov(ConditionFlag.NotEqual, false, cmpValue, ARMV7.r8);// Updated cmpValue to have the value loaded
-        //mov(ConditionFlag.NotEqual, false, ARMV7.cpuRegisters[cmpValue.number + 1], ARMV7.r9);
         jcc(ConditionFlag.NotEqual, notEqualTocmpValue); // we were not equal to the cmpValue
+
         // If the Condition isa Equal then the strex took place but it might have failed so we need to test for this.
         mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 1); // r12 has value 1
         cmp(ConditionFlag.Equal, ARMV7.r8, ARMV7.r12, 0, 0);
+
         // If r8 is equal to r12 then there was an issue with atomicity so do the operation again
         jcc(ConditionFlag.Equal, atomicFail);
         bind(notEqualTocmpValue);
         cmp(ConditionFlag.Always, newValue, cmpValue, 0, 0);
         cmp(ConditionFlag.Equal, ARMV7.cpuRegisters[newValue.number + 1], ARMV7.cpuRegisters[cmpValue.number + 1], 0, 0);
-        restoreRegister(8,9);
+        restoreRegister(8, 9);
     }
 
     public final void casLongAsmTest(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
@@ -153,24 +148,24 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         setUpScratch(address); // r12 has the address to CAS
         ldrexd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12); // r8, r9 have the current Value
         lcmpl(ConditionFlag.Equal, cmpValue, ARMV7.r8); // compare r8,r9 with cmpValue
-        strexd(ConditionFlag.Equal, ARMV7.r8, newValue, ARMV7.r12); // if equal, store newValue to address and store result to r8
-        mov(ConditionFlag.NotEqual,false,cmpValue,ARMV7.r8);// Updated cmpValue to have the value loaded
-        mov(ConditionFlag.NotEqual,false,ARMV7.cpuRegisters[cmpValue.number+1],ARMV7.r9);
-        jcc(ConditionFlag.NotEqual,notEqualTocmpValue); // we were not equal to the cmpValue
-        /*
-        If the Condition isa Equal then the strex took place but it MIGHT have failed so we need to test for this.
-        */
-        mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 1); // r12 has value 1
-        cmp(ConditionFlag.Equal,ARMV7.r8,ARMV7.r12,0,0);
-        /* If r8 is eqaul to r12 then there was an issue with atomicity so do the operation again
-        */
-        jcc(ConditionFlag.Equal, atomicFail);
-        mov(ConditionFlag.NotEqual,false,cmpValue,newValue);// differing from the real CAS we return the value we stored
-        mov(ConditionFlag.NotEqual,false,ARMV7.cpuRegisters[cmpValue.number+1],ARMV7.cpuRegisters[newValue.number +1]);
-        bind(notEqualTocmpValue);
-        cmp(ConditionFlag.Always,newValue,cmpValue,0,0);
-        cmp(ConditionFlag.Equal,ARMV7.cpuRegisters[cmpValue.number+1],ARMV7.cpuRegisters[newValue.number+1],0,0);
+        strexd(ConditionFlag.Equal, ARMV7.r8, newValue, ARMV7.r12); // if equal, store newValue to address and store
+                                                                    // result to r8
+        mov(ConditionFlag.NotEqual, false, cmpValue, ARMV7.r8);// Updated cmpValue to have the value loaded
+        mov(ConditionFlag.NotEqual, false, ARMV7.cpuRegisters[cmpValue.number + 1], ARMV7.r9);
+        jcc(ConditionFlag.NotEqual, notEqualTocmpValue); // we were not equal to the cmpValue
 
+        // If the Condition isa Equal then the strex took place but it might have failed so we need to test for this
+        mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 1); // r12 has value 1
+        cmp(ConditionFlag.Equal, ARMV7.r8, ARMV7.r12, 0, 0);
+
+        // If r8 is eqaul to r12 then there was an issue with atomicity so do the operation again
+        jcc(ConditionFlag.Equal, atomicFail);
+        mov(ConditionFlag.NotEqual, false, cmpValue, newValue);// differing from the real CAS we return the value we
+                                                               // stored
+        mov(ConditionFlag.NotEqual, false, ARMV7.cpuRegisters[cmpValue.number + 1], ARMV7.cpuRegisters[newValue.number + 1]);
+        bind(notEqualTocmpValue);
+        cmp(ConditionFlag.Always, newValue, cmpValue, 0, 0);
+        cmp(ConditionFlag.Equal, ARMV7.cpuRegisters[cmpValue.number + 1], ARMV7.cpuRegisters[newValue.number + 1], 0, 0);
     }
 
     public void xorptr(CiRegister dst, CiRegister src) {
