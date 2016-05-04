@@ -244,8 +244,8 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
 
                 // 64Bit: CAS monitor+bits @ miscWord, 32Bit: CAS monitor @ hashWord
                 if (Platform.target().arch.is32bit()) {
-                    currentMiscAndHashWord = (0xffffffffL & hashword.value) | ((0xffffffffL & lockword.value) << 32);
-                    newMiscAndHashWord = (0xffffffffL & newLockword.value) | ((0xffffffffL & InflatedMonitorLockword64.boundFromZero().value) << 32);
+                    currentMiscAndHashWord = (0xffffffffL & hashword.asPointer().toInt()) | ((0xffffffffL & lockword.asPointer().toInt()) << 32);
+                    newMiscAndHashWord = (0xffffffffL & newLockword.asPointer().toInt()) | ((0xffffffffL & InflatedMonitorLockword64.boundFromZero().asPointer().toInt()) << 32);
                     answer32 = ObjectAccess.compareAndSwapMiscAndHash(object, currentMiscAndHashWord, newMiscAndHashWord);
                     if (answer32 == currentMiscAndHashWord) {
                         return;
