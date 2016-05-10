@@ -218,7 +218,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             InflatedMonitorLockword64 hashword = Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(Word.zero()) : InflatedMonitorLockword64.from(ObjectAccess.readHash(object));
             JavaMonitor monitor = null;
             while (true) {
-                if (!(Platform.target().arch.is32bit() && lockword.isLocked())) {
+                if (Platform.target().arch.is64bit() || !lockword.isLocked()) {
                     if (lockword.isBound()) {
                         if (monitor != null) {
                             monitor.monitorExit();
@@ -253,7 +253,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
                             if (!oldHash.equals(hashword)) {
                                 FatalError.unexpected("Race condition!");
                             } else {
-                                InflatedMonitorLockword64.from(ObjectAccess.readMisc(object)).unLock();
+                                ObjectAccess.writeMisc(object,  InflatedMonitorLockword64.from(ObjectAccess.readMisc(object)).unLock());
                             }
                             return;
                         }
