@@ -53,6 +53,10 @@ public class ModalLockword64 extends Word {
     protected static final int SHAPE_BIT_INDEX = 0;
     protected static final int MISC_BIT_INDEX = 1;
 
+    //This lock bit is only for ARM32 since we cannot dual cas misc/hash due to alignment issues
+    protected static final int LOCK_BIT_INDEX = 31;
+
+
     @HOSTED_ONLY
     public ModalLockword64(long value) {
         super(value);

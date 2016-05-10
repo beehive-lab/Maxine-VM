@@ -218,69 +218,51 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
             InflatedMonitorLockword64 hashword = Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(Word.zero()) : InflatedMonitorLockword64.from(ObjectAccess.readHash(object));
             JavaMonitor monitor = null;
             while (true) {
-                if (lockword.isBound()) {
-                    if (monitor != null) {
-                        monitor.monitorExit();
-                        JavaMonitorManager.unbindMonitor(monitor);
-                    }
-                    final JavaMonitor boundMonitor = Platform.target().arch.is64bit() ? lockword.getBoundMonitor() : hashword.getBoundMonitor();
-		    assert boundMonitor != null  : "Null boundMonitor monitorEnter";
-                    boundMonitor.monitorEnter();
-                    return;
-                } else if (monitor == null) {
-                    monitor = JavaMonitorManager.bindMonitor(object);
-                    monitor.monitorEnter();
-                }
-                monitor.setDisplacedMisc(lockword);
-                if (Platform.target().arch.is32bit()) {
-                    monitor.setDisplacedHash(hashword);
-                }
-                // 64Bit: monitor+bits, 32Bit: monitor address
-                final InflatedMonitorLockword64 newLockword = InflatedMonitorLockword64.boundFromMonitor(monitor);
-                long currentMiscAndHashWord = 0;
-                long newMiscAndHashWord = 0;
-                long answer32 = 0;
-                Word answer64 = Word.zero();
-
-                // 64Bit: CAS monitor+bits @ miscWord, 32Bit: CAS monitor @ hashWord
-                if (Platform.target().arch.is32bit()) {
-                    currentMiscAndHashWord = (0xffffffffL & hashword.asPointer().toInt()) | ((0xffffffffL & lockword.asPointer().toInt()) << 32);
-                    newMiscAndHashWord = (0xffffffffL & newLockword.asPointer().toInt()) | ((0xffffffffL & InflatedMonitorLockword64.boundFromZero().asPointer().toInt()) << 32);
-                    answer32 = ObjectAccess.compareAndSwapMiscAndHash(object, currentMiscAndHashWord, newMiscAndHashWord);
-                    if (answer32 == currentMiscAndHashWord) {
+                if (!(Platform.target().arch.is32bit() && lockword.isLocked())) {
+                    if (lockword.isBound()) {
+                        if (monitor != null) {
+                            monitor.monitorExit();
+                            JavaMonitorManager.unbindMonitor(monitor);
+                        }
+                        final JavaMonitor boundMonitor = Platform.target().arch.is64bit() ? lockword.getBoundMonitor() : hashword.getBoundMonitor();
+                        assert boundMonitor != null : "Null boundMonitor monitorEnter";
+                        boundMonitor.monitorEnter();
                         return;
+                    } else if (monitor == null) {
+                        monitor = JavaMonitorManager.bindMonitor(object);
+                        monitor.monitorEnter();
+                    }
+                    monitor.setDisplacedMisc(lockword);
+                    if (Platform.target().arch.is32bit()) {
+                        monitor.setDisplacedHash(hashword);
+                    }
+                    // 64Bit: monitor+bits, 32Bit: monitor address
+                    final InflatedMonitorLockword64 newLockword = Platform.target().arch.is64bit() ? InflatedMonitorLockword64.boundFromMonitor(monitor)
+                                    : InflatedMonitorLockword64.boundFromZero().lock();
+
+                    final Word answer = ObjectAccess.compareAndSwapMisc(object, lockword, newLockword);
+
+                    if (Platform.target().arch.is64bit()) {
+                        if (answer.equals(lockword)) {
+                            return;
+                        }
                     } else {
-                        FatalError.unexpected("Problem");
-                    }
-                } else {
-                    answer64 = ObjectAccess.compareAndSwapMisc(object, lockword, newLockword);
-                    if (answer64.equals(lockword)) {
-                        return;
+                        if (answer.equals(lockword)) {
+                            final InflatedMonitorLockword64 newHashword = InflatedMonitorLockword64.boundFromMonitor(monitor);
+                            final Word oldHash = ObjectAccess.compareAndSwapHash(object, hashword, newHashword);
+                            if (!oldHash.equals(hashword)) {
+                                FatalError.unexpected("Race condition!");
+                            } else {
+                                InflatedMonitorLockword64.from(ObjectAccess.readMisc(object)).unLock();
+                            }
+                            return;
+                        }
                     }
                 }
-
-                // final Word answer = Platform.target().arch.is64bit() ? ObjectAccess.compareAndSwapMisc(object,
-                // lockword, newLockword) :
-                // ObjectAccess.compareAndSwapHash(object, hashword, newLockword);
-
-                // if (Platform.target().arch.is64bit()) {
-                // if (answer.equals(lockword)) {
-                // return;
-                // }
-                // } else {
-                // if (answer.equals(hashword)) {
-                // final InflatedMonitorLockword64 newMiscword = InflatedMonitorLockword64.boundFromZero();
-                // final Word oldMisc = ObjectAccess.compareAndSwapMisc(object, lockword, newMiscword);
-                // if (!oldMisc.equals(lockword)) {
-                // FatalError.unexpected("Race condition!");
-                // }
-                // return;
-                // }
-                // }
 
                 // Another thread installed a hashcode or got the monitor.
                 // Try again.
-                lockword = Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(answer64) : InflatedMonitorLockword64.from(ObjectAccess.readMisc(object));
+                lockword = InflatedMonitorLockword64.from(ObjectAccess.readMisc(object));
             }
         }
 

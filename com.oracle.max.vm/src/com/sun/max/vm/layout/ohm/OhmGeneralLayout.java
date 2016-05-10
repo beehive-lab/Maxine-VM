@@ -75,7 +75,7 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
     final int hashOffset;
 
     public OhmGeneralLayout() {
-        this.miscOffset = hubOffset + Word.size();
+        this.miscOffset = hubOffset + 2*Word.size();
         this.hashOffset = miscOffset + Word.size();
     }
 

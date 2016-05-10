@@ -52,9 +52,9 @@ public class InflatedMonitorLockword64 extends HashableLockword64 {
      *
      * bit [31.................................0]     Shape         Binding   Lock-state
      *
-     *                  0                    [0][1]     Inflated      Unbound   Unlocked
-     *                                       [1][1]     Inflated      Bound     Unlocked or locked
-     *                                       [m][0]     Lightweight
+     *     [1/0]             0                    [0][1] Locking in-flight op    Inflated      Unbound   Unlocked
+     *     [1/0]                                  [1][1] Locking in-flight op    Inflated      Bound     Unlocked or locked
+     *     [1/0]                                  [m][0] Locking in-flight op    Lightweight
      */
 
     private static final Address MONITOR_MASK = Platform.target().arch.is64bit() ? Word.allOnes().asAddress().shiftedLeft(NUMBER_OF_MODE_BITS) : Word.allOnes().asAddress();
@@ -96,6 +96,11 @@ public class InflatedMonitorLockword64 extends HashableLockword64 {
         return asAddress().isBitSet(MISC_BIT_INDEX);
     }
 
+    @INLINE
+    public final boolean isLocked() {
+        return asAddress().isBitSet(LOCK_BIT_INDEX);
+    }
+
     /**
      * Returns a new {@code InflatedMonitorLockword64} which is bound to the given
      * {@code JavaMonitor} object.
@@ -116,8 +121,19 @@ public class InflatedMonitorLockword64 extends HashableLockword64 {
     }
 
     @INLINE
+    public final InflatedMonitorLockword64 lock() {
+        assert Platform.target().arch.is32bit() : "This function must be called only on 32 bit machines!";
+        return from(asAddress().bitSet(LOCK_BIT_INDEX));
+    }
+
+    @INLINE
+    public final InflatedMonitorLockword64 unLock() {
+        assert Platform.target().arch.is32bit() : "This function must be called only on 32 bit machines!";
+        return from(asAddress().bitClear(LOCK_BIT_INDEX));
+    }
+
+    @INLINE
     public static final InflatedMonitorLockword64 boundFromZero() {
-        //assert Platform.target().arch.is32bit() : "This function must be called only in 32 bit archs!";
         return InflatedMonitorLockword64.from(HashableLockword64.from(Address.zero()).asAddress().bitSet(SHAPE_BIT_INDEX).bitSet(MISC_BIT_INDEX));
     }
 
