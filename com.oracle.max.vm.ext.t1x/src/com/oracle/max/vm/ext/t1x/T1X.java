@@ -167,7 +167,6 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
 
     public TargetMethod compile(ClassMethodActor method, boolean isDeopt, boolean install, CiStatistics stats) {
         T1X t1x = this;
-	//Log.print("T1XCOMPILE ");Log.println(method.toString());
         if (!MaxineVM.isHosted() && useVMTITemplates(method)) {
             // Use JVMTI templates to create code-related events.
             t1x = vmtiT1X;
@@ -198,7 +197,6 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
             T1XTargetMethod t1xMethod = c.compile(method, isDeopt, install);
             T1XMetrics.BytecodesCompiled += t1xMethod.codeAttribute.code().length;
             T1XMetrics.CodeBytesEmitted += t1xMethod.code().length;
-            //Log.println("STATS bytecode len " + t1xMethod.codeAttribute.code().length + " machine code len " + t1xMethod.code().length);
             if (stats != null) {
                 stats.bytecodeCount = t1xMethod.codeAttribute.code().length;
             }
@@ -743,9 +741,9 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
 	    if((objectLiteralsLength * Word.size() + Layout.byteArrayLayout().headerSize()) % 8 != 0) {
 		objectsNeedAlignment = 4;
 	    }
-	    distance = distance + scalarsNeedAlignment + objectsNeedAlignment; 
-	   
-	 
+	    distance = distance + scalarsNeedAlignment + objectsNeedAlignment;
+
+
             final int size = objectLiteralsLength * Word.size() + Layout.byteArrayLayout().headerSize();
             if (size % 8 != 0) {
                 //distance += 4;

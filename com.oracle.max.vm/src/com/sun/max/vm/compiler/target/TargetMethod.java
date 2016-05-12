@@ -971,72 +971,37 @@ public abstract class TargetMethod extends MemoryRegion {
                 if (currentDirectCallee == null) {
                     // template call
                     assert classMethodActor.isTemplate();
-                    //Log.println("Patch template call");
                 } else if (MaxineVM.isHosted()) {
                     final TargetMethod callee = getTargetMethod(currentDirectCallee);
-                    if (callee == null) {    // APN this means the code is not yet available
-                                            // ie it has not been compiled or it has been evicted from the code cache.
+                    if (callee == null) {
                         if (classMethodActor.isTemplate()) {
                             assert currentDirectCallee == classMethodActor : "unlinkable call in a template must be a template call";
-                            // leave call site unpatched
-                            //Log.println("Callee==null Patch template call");
                         } else {
                             linkedAll = false;
                             patchStaticTrampoline(safepointIndex, offset);
-                            //Log.print("Callee==null Patch static trampoline safepoint: ");
-                            //Log.print(safepointIndex);
-                            //Log.print(" offset ");
-                            //Log.println(offset);
-
                         }
                     } else {
                         int callPos = safepoints.causePosAt(safepointIndex);
                         fixupCallSite(callPos, callee.codeAt(offset));
-                        //Log.println("Callee!=null Fixup call site");
                     }
                 } else {
                     FatalError.breakpoint();
                     final TargetMethod callee = getTargetMethod(currentDirectCallee);
                     if (callee == null || (!Code.bootCodeRegion().contains(callee.codeStart) && !(callee instanceof Adapter))) {
                         linkedAll = false;
-                        /*if (VMOptions.verboseOption.verboseCompilation) {
-                            if (callee == null) Log.println("CALEENULL");
-                            else {
-                                Log.print("CALLEENONULL ");
-                                Log.print(callee.toString());
-                                Log.print(" START ");
-                                Log.println(callee.start());
-                            }
-                            Log.println("PATCHSTATIC");
-                        }*/
                         patchStaticTrampoline(safepointIndex, offset);
                     } else {
                         int callPos = safepoints.causePosAt(safepointIndex);
-                        /*if (VMOptions.verboseOption.verboseCompilation) {
-                            if (callee == null) Log.println("CALEENULL");
-                            else {
-                                Log.print("CALLEENONULL ");
-                                Log.print(callee.toString());
-                                Log.print(" START ");
-                                Log.print(callee.start());
-                                Log.print(" OFF ");
-                                Log.println(offset);
-                            }
-                            Log.print("CODESTART ");
-                            Log.println(callee.codeStart());
-                            Log.print("START ");
-                            Log.println(callee.start());
-                        }*/
                         fixupCallSite(callPos, callee.codeAt(offset));
                     }
                 }
                 dcIndex++;
             }
         }
-
         return linkedAll;
     }
-    public final int  offlineMinDirectCalls() {
+
+    public final int offlineMinDirectCalls() {
         boolean linkedAll = true;
         int minimumValue = Integer.MAX_VALUE;
 
@@ -1048,21 +1013,20 @@ public abstract class TargetMethod extends MemoryRegion {
                 if (currentDirectCallee == null) {
                     // template call
                     assert classMethodActor.isTemplate();
-                    //Log.println("Patch template call");
+                    // Log.println("Patch template call");
                 } else if (MaxineVM.isHosted()) {
                     final TargetMethod callee = getTargetMethod(currentDirectCallee);
-                    if (callee == null) {    // APN this means the code is not yet available
+                    if (callee == null) { // APN this means the code is not yet available
                         // ie it has not been compiled or it has been evicted from the code cache.
                         continue;
                     } else {
-                        if(callee.codeAt(offset).toInt()< minimumValue) {
+                        if (callee.codeAt(offset).toInt() < minimumValue) {
                             minimumValue = callee.codeAt(offset).toInt();
                         }
                         int tmp = callee.offlineMinDirectCalls();
-                        if(tmp < minimumValue) {
+                        if (tmp < minimumValue) {
                             minimumValue = tmp;
                         }
-                        //Log.println("Callee!=null Fixup call site");
                     }
                 } else {
                     FatalError.breakpoint();
@@ -1079,10 +1043,10 @@ public abstract class TargetMethod extends MemoryRegion {
 
         return minimumValue;
     }
-    public final int  offlineMaxDirectCalls() {
+
+    public final int offlineMaxDirectCalls() {
         boolean linkedAll = true;
         int maxValue = Integer.MIN_VALUE;
-
         if (directCallees.length != 0) {
             int dcIndex = 0;
             for (int safepointIndex = safepoints.nextDirectCall(0); safepointIndex >= 0; safepointIndex = safepoints.nextDirectCall(safepointIndex + 1)) {
@@ -1091,20 +1055,18 @@ public abstract class TargetMethod extends MemoryRegion {
                 if (currentDirectCallee == null) {
                     // template call
                     assert classMethodActor.isTemplate();
-                    Log.println("Patch template call");
                 } else if (MaxineVM.isHosted()) {
                     final TargetMethod callee = getTargetMethod(currentDirectCallee);
-                    if (callee == null) {    // APN this means the code is not yet available
+                    if (callee == null) { // APN this means the code is not yet available
                         continue;
                     } else {
-                        if(callee.codeAt(callee.codeLength()-1).toInt()  > maxValue) {
-                            maxValue = callee.codeAt(callee.codeLength()-1).toInt();
+                        if (callee.codeAt(callee.codeLength() - 1).toInt() > maxValue) {
+                            maxValue = callee.codeAt(callee.codeLength() - 1).toInt();
                         }
                         int tmp = callee.offlineMaxDirectCalls();
-                        if(tmp > maxValue) {
+                        if (tmp > maxValue) {
                             maxValue = tmp;
                         }
-                        //Log.println("Callee!=null Fixup call site");
                     }
                 } else {
                     FatalError.breakpoint();
@@ -1121,9 +1083,9 @@ public abstract class TargetMethod extends MemoryRegion {
 
         return maxValue;
     }
-    public final void  offlineCopyCode(int minimumValue,byte []codeBytes ) {
-        boolean linkedAll = true;
 
+    public final void offlineCopyCode(int minimumValue, byte[] codeBytes) {
+        boolean linkedAll = true;
         if (directCallees.length != 0) {
             int dcIndex = 0;
             for (int safepointIndex = safepoints.nextDirectCall(0); safepointIndex >= 0; safepointIndex = safepoints.nextDirectCall(safepointIndex + 1)) {
@@ -1132,31 +1094,17 @@ public abstract class TargetMethod extends MemoryRegion {
                 if (currentDirectCallee == null) {
                     // template call
                     assert classMethodActor.isTemplate();
-                    Log.println("Patch template call");
                 } else if (MaxineVM.isHosted()) {
                     final TargetMethod callee = getTargetMethod(currentDirectCallee);
-                    if (callee == null) {    // APN this means the code is not yet available
+                    if (callee == null) { // APN this means the code is not yet available
                         // ie it has not been compiled or it has been evicted from the code cache.
-                        /*if (classMethodActor.isTemplate()) {
-                            assert currentDirectCallee == classMethodActor : "unlinkable call in a template must be a template call";
-                            // leave call site unpatched
-                            //Log.println("Callee==null Patch template call");
-                        } else {
-                            linkedAll = false;
-                            //Log.print("Callee==null Patch static trampoline safepoint: ");
-                            //Log.print(safepointIndex);
-                            //Log.print(" offset ");
-                            //Log.println(offset);
-
-                        }*/
                     } else {
                         byte[] b = callee.code();
                         int myoffset = callee.codeAt(0).toInt() - minimumValue;
                         for (int i = 0; i < b.length; i++) {
                             codeBytes[myoffset + i] = b[i];
                         }
-                        callee.offlineCopyCode(minimumValue,codeBytes);
-
+                        callee.offlineCopyCode(minimumValue, codeBytes);
                     }
                 } else {
                     FatalError.breakpoint();
@@ -1172,9 +1120,6 @@ public abstract class TargetMethod extends MemoryRegion {
         }
 
     }
-
-
-
 
     private void patchStaticTrampoline(final int safepointIndex, final int offset) {
         final int callPos = safepoints.causePosAt(safepointIndex);
