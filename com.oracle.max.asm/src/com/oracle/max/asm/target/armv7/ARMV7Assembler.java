@@ -2713,16 +2713,30 @@ public class ARMV7Assembler extends AbstractAssembler {
         int instruction = (cond.value() & 0xf) << 28;
         assert destKind.isFloat() || destKind.isDouble() : " Dest register must be FP/DP reg";
         int sz = 0;
+        int src4bits = 0;
+        int dest4bits = 0;
+        int src1bit = 0;
+        int dest1bit = 0;
         if (destKind.isDouble()) {
             sz = 1;
+            src4bits = src.encoding & 0xf;
+            src1bit = (src.encoding >> 4) & 0x1;
+            dest4bits = dest.encoding & 0xf;
+            dest1bit = (dest.encoding >> 4) & 0x1;
+        } else {
+            src4bits = (src.encoding >> 1) & 0xf;
+            src1bit = (src.encoding) & 0x1;
+            dest4bits = (dest.encoding >> 1) & 0xf;
+            dest1bit = (dest.encoding) & 0x1;
         }
         instruction |= 0x0eb10a40;
-        instruction |= (src.encoding & 0xf);
-        instruction |= (src.encoding >> 4) << 5;
-        instruction |= (dest.encoding & 0xf) << 12;
-        instruction |= (dest.encoding >> 4) << 22;
+        instruction |= (src4bits);
+        instruction |= (src1bit) << 5;
+        instruction |= (dest4bits) << 12;
+        instruction |= (dest1bit) << 22;
         instruction |= sz << 8;
         emitInt(instruction);
+
     }
 
     public final void vldr(ConditionFlag cond, CiRegister dest, CiRegister src, int imm8, CiKind destKind, CiKind srcKind) {
