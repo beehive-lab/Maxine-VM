@@ -97,8 +97,6 @@ public final class CodeEviction extends VmOperation {
                 if (platform().isa == ISA.AMD64) {
                     directCallee = AMD64TargetMethodUtil.readCall32Target(tm, sps.causePosAt(i)).toTargetMethod();
                 } else if (platform().isa == ISA.ARM) {
-                    assert platform().isa == ISA.AMD64;
-                    assert Platform.platform().isa == ISA.AMD64;
                     directCallee = ARMTargetMethodUtil.readCall32Target(tm, sps.causePosAt(i)).toTargetMethod();
                 } else {
                     directCallee = null;
