@@ -96,8 +96,16 @@ public class DebugHeap {
             if (!isValidCellTag(cell.getWord(0))) {
                 Log.print("Invalid object tag @ ");
                 Log.print(cell);
-                Log.print(" *=");
+                Log.print(" *(0)=");
                 Log.print(cell.getWord(0));
+                Log.print(" *(4)=");
+                Log.print(cell.getWord(4));
+                Log.print(" *(8)=");
+                Log.print(cell.getWord(8));
+                Log.print(" *(-4)=");
+                Log.print(cell.getWord(-4));
+                Log.print(" *(-8)=");
+                Log.print(cell.getWord(-8));
                 Log.print(" tag=");
                 Log.print(tagWord());
                 if (!regionStart.isZero()) {
