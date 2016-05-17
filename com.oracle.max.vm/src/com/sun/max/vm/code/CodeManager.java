@@ -246,8 +246,6 @@ public abstract class CodeManager {
                 start = Pointer.zero();
             } else {
                 start = currentCodeRegion.allocate(allocationSize, false);
-	        //Log.print("START set to ");Log.println(start);
-
             }
 
             // Allocation in the baseline code region may take another attempt upon contention, after compaction.
@@ -278,10 +276,6 @@ public abstract class CodeManager {
 
         targetMethod.setStart(start);
         targetMethod.setSize(allocationSize);
-        //Log.print("START set again to ");Log.println(start);
-
-
-
 
         // Initialize the objects in the allocated space so that they appear as a set of contiguous
         // well-formed objects that can be traversed.
@@ -313,7 +307,6 @@ public abstract class CodeManager {
         if (currentCodeRegion == runtimeBaselineCodeRegion) {
             targetMethod.protect();
         }
-	//Log.print("Pointer codeStart set to ");Log.println(codeStart);
 
         if (!MaxineVM.isHosted()) {
             // It is now safe again to perform operations that may block and/or trigger a garbage collection
@@ -321,18 +314,12 @@ public abstract class CodeManager {
                 SafepointPoll.enable();
             }
             if (!inHeap) {
-	                //Log.println("NOTINHEAP");
-
                 Heap.enableAllocationForCurrentThread();
             }
         }
 
         if (currentCodeRegion != null) {
-	        //Log.println("ADDEDTOCURRCODEREGI");
-
-            	currentCodeRegion.add(targetMethod);
-		//Log.println(targetMethod.toString());
-		//Log.println(targetMethod.start());
+            currentCodeRegion.add(targetMethod);
         }
     }
 
@@ -444,6 +431,9 @@ public abstract class CodeManager {
     void visitAllIn(CellVisitor v, CodeRegion cr) {
         Pointer firstCell = cr.gcstart().asPointer();
         Pointer cell = firstCell;
+        Log.print("Visit Region: ");
+        Log.print(cr.regionName());
+        Log.println();
         while (cell.lessThan(cr.getAllocationMark())) {
             cell = DebugHeap.checkDebugCellTag(firstCell, cell);
             cell = v.visitCell(cell);

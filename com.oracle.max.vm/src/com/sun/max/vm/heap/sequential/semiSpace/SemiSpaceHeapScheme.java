@@ -639,6 +639,8 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     private void visitCells(CellVisitor visitor) {
         Pointer start = toSpace.start().asPointer();
         Pointer cell = start;
+        Log.print("Visit Region: To Space");
+        Log.println();
         while (cell.isNotZero() && cell.lessThan(allocationMark()) && cell.getWord().isNotZero()) {
             cell = DebugHeap.checkDebugCellTag(start, cell);
             cell = visitor.visitCell(cell);

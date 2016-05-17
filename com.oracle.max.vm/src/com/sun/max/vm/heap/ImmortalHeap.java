@@ -167,6 +167,8 @@ public final class ImmortalHeap {
         final Pointer firstCell = immortalHeap.start().asPointer();
         final Pointer lastCell = immortalHeap.mark();
         Pointer cell = firstCell;
+        Log.print("Visit Region: Immortal");
+        Log.println();
         while (cell.isNotZero() && cell.lessThan(lastCell)) {
             cell = DebugHeap.checkDebugCellTag(firstCell, cell);
             cell = cellVisitor.visitCell(cell);
