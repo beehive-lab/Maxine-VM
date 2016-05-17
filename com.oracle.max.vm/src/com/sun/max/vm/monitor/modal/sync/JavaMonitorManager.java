@@ -32,6 +32,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.monitor.*;
+import com.sun.max.vm.monitor.modal.modehandlers.inflated.*;
 import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.ManagedMonitor.*;
 import com.sun.max.vm.monitor.modal.sync.nat.*;
 import com.sun.max.vm.object.*;
@@ -341,17 +342,43 @@ public class JavaMonitorManager {
     public static ManagedMonitor bindMonitor(Object object) {
         ManagedMonitor monitor;
         if (inGlobalSafepoint) {
+            if (InflatedMonitorModeHandler.DEBUG) {
+                Log.print(" Start 11 ");
+            }
             monitor = takeFromUnboundList();
+            if (InflatedMonitorModeHandler.DEBUG) {
+                Log.print(" End 11 ");
+            }
         } else {
             synchronized (LOCK) {
+
                 if (numberOfUnboundMonitors < UNBOUNDLIST_MIN_QTY) {
+                    if (InflatedMonitorModeHandler.DEBUG) {
+                        Log.print(" Start 12 ");
+                    }
                     System.gc();
+                    if (InflatedMonitorModeHandler.DEBUG) {
+                        Log.print(" End 12 ");
+                    }
                 }
+
                 // If we didn't free up enough such that we are at least midway between min and hwm, expand
                 if (numberOfUnboundMonitors < (unboundMonitorsHwm + UNBOUNDLIST_MIN_QTY) >> 1) {
+                    if (InflatedMonitorModeHandler.DEBUG) {
+                        Log.print(" Start 13 ");
+                    }
                     expandUnboundList();
+                    if (InflatedMonitorModeHandler.DEBUG) {
+                        Log.print(" End 13 ");
+                    }
+                }
+                if (InflatedMonitorModeHandler.DEBUG) {
+                    Log.print(" Start 14 ");
                 }
                 monitor = takeFromUnboundList();
+                if (InflatedMonitorModeHandler.DEBUG) {
+                    Log.print(" End 14 ");
+                }
             }
         }
         monitor.setBoundObject(object);
