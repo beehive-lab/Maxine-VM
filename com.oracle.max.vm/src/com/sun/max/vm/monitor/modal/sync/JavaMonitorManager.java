@@ -308,11 +308,25 @@ public class JavaMonitorManager {
 
     private static ManagedMonitor takeFromUnboundList() {
         // No safe points in here, so safe to touch the free list.
+        if (InflatedMonitorModeHandler.DEBUG) {
+            Log.print(" Take unb 1 ");
+        }
         final ManagedMonitor monitor = unboundList;
-        assert monitor != null;
+        if (InflatedMonitorModeHandler.DEBUG) {
+            Log.print(" Take unb 2 ");
+        }
         unboundList = unboundList.next();
+        if (InflatedMonitorModeHandler.DEBUG) {
+            Log.print(" Take unb 3 ");
+        }
         monitor.setNext(null);
+        if (InflatedMonitorModeHandler.DEBUG) {
+            Log.print(" Take unb 4 ");
+        }
         numberOfUnboundMonitors--;
+        if (InflatedMonitorModeHandler.DEBUG) {
+            Log.print(" Take unb 5 ");
+        }
         return monitor;
     }
 
