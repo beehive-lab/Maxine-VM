@@ -244,7 +244,9 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
                             Log.print(2);
                         }
                     }
-                    assert !lockword.isLocked();
+                    if (Platform.target().arch.is32bit()) {
+                        assert !lockword.isLocked();
+                    }
                     monitor.setDisplacedMisc(lockword);
                     if (Platform.target().arch.is32bit()) {
                         monitor.setDisplacedHash(hashword);
