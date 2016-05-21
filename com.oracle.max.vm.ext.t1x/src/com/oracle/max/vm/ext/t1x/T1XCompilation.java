@@ -544,9 +544,9 @@ public abstract class T1XCompilation {
         // "real" java compiled class method.
         emitPrologue();
         emitUnprotectMethod();
-        do_profileMethodEntry();
+       // do_profileMethodEntry();
         do_methodTraceEntry();
-        do_synchronizedMethodAcquire();
+        //do_synchronizedMethodAcquire();
         int bci = 0;
         int endBCI = stream.endBCI();
         hardStop = endBCI;
