@@ -431,9 +431,11 @@ public abstract class CodeManager {
     void visitAllIn(CellVisitor v, CodeRegion cr) {
         Pointer firstCell = cr.gcstart().asPointer();
         Pointer cell = firstCell;
-        Log.print("Visit Region: ");
-        Log.print(cr.regionName());
-        Log.println();
+        if (Heap.verbose()) {
+            Log.print("Visit Region: ");
+            Log.print(cr.regionName());
+            Log.println();
+        }
         while (cell.lessThan(cr.getAllocationMark())) {
             cell = DebugHeap.checkDebugCellTag(firstCell, cell);
             cell = v.visitCell(cell);

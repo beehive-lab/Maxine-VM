@@ -122,8 +122,10 @@ public final class BootHeapRegion extends LinearAllocatorRegion {
         final Pointer firstCell = start().asPointer();
         final Pointer lastCell = mark();
         Pointer cell = firstCell;
-        Log.print("Visit Region: BootHeap");
-        Log.println();
+        if (Heap.verbose()) {
+            Log.print("Visit Region: BootHeap");
+            Log.println();
+        }
         while (cell.isNotZero() && cell.lessThan(lastCell)) {
             cell = DebugHeap.checkDebugCellTag(firstCell, cell);
             cell = cellVisitor.visitCell(cell);
