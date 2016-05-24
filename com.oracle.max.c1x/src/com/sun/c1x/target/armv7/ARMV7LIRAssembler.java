@@ -886,7 +886,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, null, CiKind.Float, CiKind.Int);
                 break;
             case MOV_L2D:
-                masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, ARMV7.cpuRegisters[srcRegister.encoding + 1], CiKind.Double, CiKind.Long);
+                masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, ARMV7.cpuRegisters[srcRegister.getEncoding() + 1], CiKind.Double, CiKind.Long);
                 break;
             case MOV_F2I:
                 masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, null, CiKind.Int, CiKind.Float);
@@ -1288,7 +1288,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.pop(ConditionFlag.Always, 1 << 9);
                 break;
             case Sqrt:
-                masm.vsqrt(ConditionFlag.Always, dest.asRegister(), value.asRegister());
+                masm.vsqrt(ConditionFlag.Always, dest.asRegister(), value.asRegister(), dest.kind);
                 break;
             default:
                 throw Util.shouldNotReachHere();
@@ -1445,7 +1445,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         CiRegister denominator = divisor.asRegister();
         masm.eor(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
         masm.cmp(ConditionFlag.Always, ARMV7.r12, denominator, 0, 0);
-        masm.cmp(ConditionFlag.Equal, ARMV7.r12, ARMV7.cpuRegisters[denominator.encoding + 1], 0, 0);
+        masm.cmp(ConditionFlag.Equal, ARMV7.r12, ARMV7.cpuRegisters[denominator.getEncoding() + 1], 0, 0);
         masm.insertDIVIDEMarker();
         int offset = masm.codeBuffer.position();
         masm.vldr(ConditionFlag.Equal, ARMV7.s30, ARMV7.r12, 0, CiKind.Float, CiKind.Int); // fault if EQUAL
@@ -1491,7 +1491,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             masm.jcc(ConditionFlag.NotEqual, normalCase);
             if (code == LIROpcode.Lrem) {
                 masm.eor(ConditionFlag.Always, false, rreg, rreg, rreg, 0, 0);
-                masm.eor(ConditionFlag.Always, false, ARMV7.cpuRegisters[rreg.encoding + 1], ARMV7.cpuRegisters[rreg.encoding + 1], ARMV7.cpuRegisters[rreg.encoding + 1], 0, 0);
+                masm.eor(ConditionFlag.Always, false, ARMV7.cpuRegisters[rreg.getEncoding() + 1], ARMV7.cpuRegisters[rreg.getEncoding() + 1], ARMV7.cpuRegisters[rreg.getEncoding() + 1], 0, 0);
             }
             masm.cmpl(rreg, -1);
             masm.jcc(ConditionFlag.Equal, continuation);
@@ -1900,9 +1900,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     protected void emitSignificantBitOp(boolean most, CiValue src, CiValue dst) {
         assert dst.isRegister();
         CiRegister result = dst.asRegister();
+        assert src.asRegister().isCpu();
         if (src.isRegister()) {
             CiRegister value = src.asRegister();
-            CiRegister value1 = ARMV7.cpuRegisters[value.encoding + 1];
+            CiRegister value1 = ARMV7.cpuRegisters[value.getEncoding() + 1];
 
             assert value != result;
             if (most) {
@@ -2528,8 +2529,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 case Pop: {
                     CiValue result = operands[inst.result.index];
                     if (result.isRegister()) {
-                        if (result.asRegister().encoding < 16) {
-                            masm.pop(ConditionFlag.Always, 1 << result.asRegister().encoding);
+                        if (result.asRegister().getEncoding() < 16) {
+                            masm.pop(ConditionFlag.Always, 1 << result.asRegister().getEncoding());
                         } else {
                             masm.vpop(ConditionFlag.Always, result.asRegister(), result.asRegister(), result.kind, result.kind);
                         }

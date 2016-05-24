@@ -58,7 +58,8 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
      * The actual encoding in a target machine instruction for this register, which may or
      * may not be the same as {@link #number}.
      */
-    public final int encoding;
+    private int encoding;
+    private boolean doubleEncoding = false;
 
     /**
      * The size of the stack slot used to spill the value of this register.
@@ -97,7 +98,6 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
          * Denotes a floating point register.
          */
         FPU;
-
         public final int mask = 1 << (ordinal() + 1);
     }
 
@@ -229,8 +229,8 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
     public static int maxRegisterEncoding(CiRegister[] registers) {
         int max = Integer.MIN_VALUE;
         for (CiRegister r : registers) {
-            if (r.encoding > max) {
-                max = r.encoding;
+            if (r.getEncoding() > max) {
+                max = r.getEncoding();
             }
         }
         return max;
@@ -254,5 +254,9 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
 
     public boolean isGeneral() {
         return isSet(RegisterFlag.CPU);
+    }
+
+    public int getEncoding() {
+        return encoding;
     }
 }

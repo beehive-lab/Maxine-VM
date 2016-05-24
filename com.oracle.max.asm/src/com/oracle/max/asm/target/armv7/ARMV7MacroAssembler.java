@@ -388,7 +388,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void movlong(CiRegister dst, long src, CiKind dstKind) {
         if (dstKind.isGeneral()) {
-            mov64BitConstant(ConditionFlag.Always,  dst, ARMV7.cpuRegisters[dst.encoding + 1], src);
+            mov64BitConstant(ConditionFlag.Always,  dst, ARMV7.cpuRegisters[dst.getEncoding() + 1], src);
         } else {
             assert dstKind.isDouble() : "Dst reg must be double";
 	    saveRegister(8,9);
@@ -526,7 +526,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void lshl(CiRegister dest, CiRegister left, CiRegister right) {
-        assert dest.encoding % 2 == 0;
+        assert dest.getEncoding() % 2 == 0;
         assert left == dest;
         assert right == ARMV7.r1;
         assert left != ARMV7.r8;
@@ -552,7 +552,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert (left == dest);
         assert right == ARMV7.r1;
         assert left != ARMV7.r1;
-        assert dest.encoding % 2 == 0;
+        assert dest.getEncoding() % 2 == 0;
         mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0x3f);
         and(ConditionFlag.Always, false, right, right, ARMV7.r12, 0, 0);
         rsb(ConditionFlag.Always, false, ARMV7.r12, right, 32, 0);
@@ -573,7 +573,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void lushr(CiRegister dest, CiRegister left, CiRegister right) {
         assert left == dest;
-        assert dest.encoding % 2 == 0;
+        assert dest.getEncoding() % 2 == 0;
         assert right == ARMV7.r1;
         assert left != ARMV7.r1;
         mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0x3f);

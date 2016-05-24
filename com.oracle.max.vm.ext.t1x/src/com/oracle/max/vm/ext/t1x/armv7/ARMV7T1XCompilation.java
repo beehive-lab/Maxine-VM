@@ -212,14 +212,14 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
     @Override
     public void peekLong(CiRegister dst, int index) {
-        assert dst.encoding < 10;
+        assert dst.getEncoding() < 10;
         asm.setUpScratch(spLong(index));
         asm.ldrd(ConditionFlag.Always, dst, scratch, 0);
     }
 
     @Override
     public void pokeLong(CiRegister src, int index) {
-        assert src.encoding < 10;
+        assert src.getEncoding() < 10;
         asm.setUpScratch(spLong(index));
         asm.strd(ARMV7Assembler.ConditionFlag.Always, src, scratch, 0);
     }
@@ -267,8 +267,8 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         assert dst.number < 10;
         asm.movw(ConditionFlag.Always, dst, (int) (value & 0xffff));
         asm.movt(ConditionFlag.Always, dst, (int) ((value >> 16) & 0xffff));
-        asm.movw(ConditionFlag.Always, ARMV7.cpuRegisters[dst.encoding + 1], (int) (((value >> 32) & 0xffff)));
-        asm.movt(ConditionFlag.Always, ARMV7.cpuRegisters[dst.encoding + 1], (int) (((value >> 48) & 0xffff)));
+        asm.movw(ConditionFlag.Always, ARMV7.cpuRegisters[dst.getEncoding() + 1], (int) (((value >> 32) & 0xffff)));
+        asm.movt(ConditionFlag.Always, ARMV7.cpuRegisters[dst.getEncoding() + 1], (int) (((value >> 48) & 0xffff)));
     }
 
     @Override

@@ -37,20 +37,20 @@ public final class ARMTargetMethodUtil {
      * <p/>
      * ARM this is a STMFD (save my registers) and a PC relative branch instruction
      */
-    public static final int RIP_CALL = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28) | (0x8 << 20) | (ARMV7.r15.encoding << 12) | (ARMV7.r12.encoding << 16);
+    public static final int RIP_CALL = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28) | (0x8 << 20) | (ARMV7.r15.getEncoding() << 12) | (ARMV7.r12.getEncoding() << 16);
 
     /**
      * X86 Opcode of a register-based call instruction.
      * <p/>
      * ARM this is a STMFD (save my registers) and a move of a register into the PC
      */
-    public static final int REG_CALL = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28) | (0xd << 21) | (ARMV7.r15.encoding << 12) | ARMV7.r12.encoding;
+    public static final int REG_CALL = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28) | (0xd << 21) | (ARMV7.r15.getEncoding() << 12) | ARMV7.r12.getEncoding();
 
     /**
      * X86 Opcode of a RIP-relative jump instruction. ARM again this is a PC relative branch instruction! as its a JMP
      * we do not save the stack We do this as an add to the PC ...
      */
-    public static final int RIP_JMP = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28) | (0x8 << 20) | (ARMV7.r15.encoding << 12) | (ARMV7.r12.encoding << 16);
+    public static final int RIP_JMP = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28) | (0x8 << 20) | (ARMV7.r15.getEncoding() << 12) | (ARMV7.r12.getEncoding() << 16);
 
     /**
      * X86 Opcode of a (near) return instruction. ARM here we must do a LDMFD and we move the return address to the PC
@@ -465,9 +465,9 @@ public final class ARMTargetMethodUtil {
         Pointer callerIP = sfw.readWord(ripPointer, 0).asPointer();
         Pointer callerSP = ripPointer.plus(Word.size()); // Skip return instruction pointer on stack
         Pointer callerFP;
-        if (!csa.isZero() && csl.contains(ARMV7.r11.encoding)) {
+        if (!csa.isZero() && csl.contains(ARMV7.r11.getEncoding())) {
             // Read RBP from the callee save area
-            callerFP = sfw.readWord(csa, csl.offsetOf(ARMV7.r11.encoding)).asPointer();
+            callerFP = sfw.readWord(csa, csl.offsetOf(ARMV7.r11.getEncoding())).asPointer();
         } else {
             // Propagate RBP unchanged
             callerFP = current.fp();

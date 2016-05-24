@@ -83,7 +83,7 @@ public class SPARC extends CiArchitecture {
               registers,
               LOAD_LOAD | LOAD_STORE | STORE_STORE,
               0,
-              i7.encoding + 1,
+              i7.getEncoding() + 1,
               0);
     }
 

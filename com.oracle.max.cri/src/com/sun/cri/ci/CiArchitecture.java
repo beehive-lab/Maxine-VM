@@ -87,8 +87,7 @@ public abstract class CiArchitecture {
      * @return the value of {@code barriers} minus the barriers unnecessary on this architecture
      */
     public final int requiredBarriers(int barriers) {
-	//return Integer.MAX_VALUE;
-        return barriers & ~implicitMemoryBarriers;
+	return barriers & ~implicitMemoryBarriers;
     }
 
     /**
@@ -148,7 +147,7 @@ public abstract class CiArchitecture {
             int max = CiRegister.maxRegisterEncoding(regs);
             CiRegister[] regsByEnc = new CiRegister[max + 1];
             for (CiRegister reg : regs) {
-                regsByEnc[reg.encoding] = reg;
+                regsByEnc[reg.getEncoding()] = reg;
             }
             registersByTypeAndEncoding.put(type, regsByEnc);
         }

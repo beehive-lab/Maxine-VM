@@ -374,14 +374,14 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             ARMV7Assembler asm = out instanceof OutputStream ? new ARMV7Assembler(target(), null) : (ARMV7Assembler) out;
 
             if (adapter == null) {
-                asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.encoding);
+                asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.getEncoding());
                 asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xba5e20af); // signifies BASSE20OPT
                 //asm.nop(); // movw
                 //asm.nop(); // movt
                 asm.nop(); // add
                 asm.nop(); // blx
             } else {
-                asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.encoding); // does not instrument
+                asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.getEncoding()); // does not instrument
 
                 asm.call(); // does not instrument
                 asm.align(PROLOGUE_SIZE);
@@ -454,7 +454,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
 
             asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
-            asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.encoding);
+            asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.getEncoding());
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r11, ARMV7.r13);
             asm.subq(ARMV7.r13, (explicitlyAllocatedFrameSize));
             asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r14, null, CiKind.Float, CiKind.Int);

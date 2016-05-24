@@ -37,7 +37,7 @@ import static com.sun.max.vm.runtime.arm.ARMSafepointPoll.LATCH_REGISTER;
 
 /* APN this will need to be rewritten
  ARM architecture traps are going to be different to X86 ...
-The description below is for X86 and ARMV7 appears because of the use of a global find and replace when instantiating the ARM architecture. 
+The description below is for X86 and ARMV7 appears because of the use of a global find and replace when instantiating the ARM architecture.
 
 
 */
@@ -96,56 +96,19 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
     public static final CiCalleeSaveLayout CSL;
     static {
         CiRegister[] csaRegs = {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, /*r13,*/ r14,
-		s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15};
-        //int size = 4 * 14;
-	int size = 4*14 + 8 * 16;
+		s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31};
+        int size = 4 * 14 + 8 * 32;
         TRAP_NUMBER_OFFSET = size;
         size += 4;
         FLAGS_OFFSET = size;
         size += 4;
-	/*struct sigcontext {
-        unsigned long trap_no;
-        unsigned long error_code;
-        unsigned long oldmask;
-        unsigned long arm_r0;
-        unsigned long arm_r1;
-        unsigned long arm_r2;
-        unsigned long arm_r3;
-        unsigned long arm_r4;
-        unsigned long arm_r5;
-        unsigned long arm_r6;
-        unsigned long arm_r7;
-        unsigned long arm_r8;
-        unsigned long arm_r9;
-        unsigned long arm_r10;
-        unsigned long arm_fp;
-        unsigned long arm_ip;
-        unsigned long arm_sp;
-        unsigned long arm_lr;
-        unsigned long arm_pc;
-        unsigned long arm_cpsr;
-        unsigned long fault_address;
-};
-	*/
-	
         CSL = new CiCalleeSaveLayout(0, size, 4, csaRegs);
     }
 
-    /* APN
-        I guess we need to provide registers here rather than pointers.
-     */
+
     @Override
     public Pointer getPCPointer(Pointer trapFrame) {
-	
-	//Used to experimentally determine where the PC was saved.
-	/*for(int i = -12; i < 32;i+=4) {
-        com.sun.max.vm.Log.print(i);
-	com.sun.max.vm.Log.print(" PC  ");
-	com.sun.max.vm.Log.println(trapFrame.plus(vm().stubs.trapStub().frameSize()+i).readWord(0));
-	}
-	*/
 	return trapFrame.plus(vm().stubs.trapStub().frameSize());
-
     }
 
     @Override

@@ -111,7 +111,7 @@ public class AMD64 extends CiArchitecture {
               allRegisters,
               LOAD_STORE | STORE_STORE,
               1,
-              r15.encoding + 1,
+              r15.getEncoding() + 1,
               8);
     }
 

@@ -21,17 +21,14 @@ import static com.sun.cri.ci.CiUtil.*;
 
 import java.util.*;
 
-import com.sun.c1x.*;
-import com.sun.c1x.alloc.Interval.RegisterBinding;
-import com.sun.c1x.alloc.Interval.RegisterPriority;
-import com.sun.c1x.alloc.Interval.SpillState;
-import com.sun.c1x.alloc.Interval.State;
 import com.oracle.max.criutils.*;
+import com.sun.c1x.*;
+import com.sun.c1x.alloc.Interval.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiRegister.RegisterFlag;
+import com.sun.cri.ci.CiRegister.*;
 
 /**
  */
@@ -41,6 +38,7 @@ final class LinearScanWalker extends IntervalWalker {
 
     private final int[] usePos;
     private final int[] blockPos;
+
 
     private List<Interval>[] spillIntervals;
 
@@ -669,6 +667,7 @@ final class LinearScanWalker extends IntervalWalker {
         CiRegister minFullReg = null;
         CiRegister maxPartialReg = null;
 
+        // AdjacentRegs currently only used for ARM 32
         if (adjacentRegs) {
             for (int i = 0; i < availableRegs.length; i+=2) {
                 CiRegister availableReg = availableRegs[i];
@@ -677,6 +676,7 @@ final class LinearScanWalker extends IntervalWalker {
                     // this register is free for the full interval
                     if (minFullReg == null || availableReg == hint || (usePos[number] < usePos[minFullReg.number] && minFullReg != hint)) {
                         minFullReg = availableReg;
+                        assert availableReg.number % 2 == 0;
                     }
                 } else if (usePos[number] > regNeededUntil && usePos[number+1] > regNeededUntil) {
                     // this register is at least free until regNeededUntil
@@ -713,15 +713,18 @@ final class LinearScanWalker extends IntervalWalker {
             return false;
         }
         if (adjacentRegs) {
-            regHigh = availableRegs[reg.number + 1];
+            regHigh = getRegister(reg.number + 1);
+            assert regHigh != null;
             splitPos = Math.min(usePos[reg.number], usePos[regHigh.number]);
-         } else {
+        } else {
             splitPos = usePos[reg.number];
         }
+
         interval.assignLocation(reg.asValue(interval.kind()));
         if (adjacentRegs) {
             interval.assignLocationHigh(regHigh.asValue(interval.kind()));
         }
+
         if (C1XOptions.TraceLinearScanLevel >= 2) {
             TTY.println("selected register %d", reg.number);
         }
@@ -827,7 +830,8 @@ final class LinearScanWalker extends IntervalWalker {
                 } else if (usePos[number] > regNeededUntil && usePos[number+1] > regNeededUntil) {
                     if (reg == null || (usePos[number] > usePos[reg.number])) {
                         reg = availableReg;
-                        regHigh = availableRegs[availableReg.number + 1];
+                        regHigh = getRegister(reg.number + 1);
+                        assert availableReg.number % 2 == 0;
                     }
                 }
             }
@@ -884,6 +888,7 @@ final class LinearScanWalker extends IntervalWalker {
         assert needSplit || splitPos > interval.from() : "splitting interval at from";
 
         interval.assignLocation(reg.asValue(interval.kind()));
+
         if (adjacentRegs) {
             interval.assignLocationHigh(regHigh.asValue(interval.kind()));
         }
@@ -936,8 +941,17 @@ final class LinearScanWalker extends IntervalWalker {
         adjacentRegs = requiresAdjacentRegs(interval);
     }
 
+    private CiRegister getRegister(int number) {
+        for(CiRegister reg : availableRegs) {
+            if (reg.number == number) {
+                return reg;
+            }
+        }
+        return null;
+    }
+
     boolean requiresAdjacentRegs(Interval interval) {
-        if (C1XCompilation.compilation().compiler.target.arch.is32bit() && (interval.kind() == CiKind.Long)) {
+        if (C1XCompilation.compilation().compiler.target.arch.is32bit() && (interval.kind() == CiKind.Long || interval.kind() == CiKind.Double)) {
             return true;
         }
         return false;

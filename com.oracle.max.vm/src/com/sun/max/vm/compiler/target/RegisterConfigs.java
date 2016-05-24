@@ -136,18 +136,18 @@ public class RegisterConfigs {
         if (platform().isa == ISA.ARM) {
             if (os == OS.LINUX || os == OS.DARWIN) {
                 modifiedCallerSave = new CiRegister[] { r0, r1, r2, r3, r4, r5, r6, r7, ARMV7.r9, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15};
-                allocatable = new CiRegister[] { r0, r1, r2, r3, r4, r5, r6, r7, ARMV7.r9, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13};
+                allocatable = new CiRegister[] { r0, r1, r2, r3, r4, r5, r6, r7, ARMV7.r9, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27};
 
                 parameters = new CiRegister[] { r0, r1, r2, r3, s0, s1, s2, s3, s4, s5, s6, s7};
                 allRegistersExceptLatch = new CiRegister[] { r0, r1, r2, r3, r4, r5, r6, r7, ARMV7.r8, ARMV7.r9, ARMV7.r11, ARMV7.r12, ARMV7.r13, ARMV7.r14, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9,
-                                s10, s11, s12, s13, s14, s15};
+                                s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31};
                 roleMap.put(CPU_SP, ARMV7.r13);
                 roleMap.put(CPU_FP, ARMV7.r11);
                 roleMap.put(ABI_SP, ARMV7.r13);
                 roleMap.put(ABI_FP, ARMV7.r13);
                 roleMap.put(LATCH, ARMV7.r10);
 
-                standard = new CiRegisterConfig(ARMV7.r13, r0, s0, ARMV7.r12, ARMV7.r8, allocatable, modifiedCallerSave, parameters, null, ARMV7.allRegisters, roleMap);
+                standard = new CiRegisterConfig(ARMV7.r13, r0, s0, ARMV7.r12, ARMV7.r8, allocatable, allocatable, parameters, null, ARMV7.allRegisters, roleMap);
 
                 // Account for the word at the bottom of the frame used
                 // for saving an overwritten return address during deoptimization
@@ -162,8 +162,8 @@ public class RegisterConfigs {
                 CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 4, ARMV7.cpuxmmRegisters));
                 CiRegisterConfig trapStub = new CiRegisterConfig(standard, ARMTrapFrameAccess.CSL);
 
-                CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 4, r0, r1, r2, r3, ARMV7.r8, ARMV7.r11, ARMV7.r14, ARMV7.s0, ARMV7.s1, ARMV7.s2, ARMV7.s3,
-                                ARMV7.s4, ARMV7.s5, ARMV7.s6, ARMV7.s7, ARMV7.s8, ARMV7.s9, ARMV7.s10, ARMV7.s11, ARMV7.s12, ARMV7.s13, ARMV7.s14, ARMV7.s15, ARMV7.r12));
+                CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 4, r0, r1, r2, r3, ARMV7.r8, ARMV7.s0, ARMV7.s1, ARMV7.s2, ARMV7.s3,
+                                ARMV7.s4, ARMV7.s5, ARMV7.s6, ARMV7.s7));
                 // r12 is unecessary, but the idea is that we canuse this to save the return address from the
                 // resolveVirtual/InterfaceCall in the slot for r12
                 // that we then call
@@ -172,7 +172,7 @@ public class RegisterConfigs {
 
                 n2j.stackArg0Offsets[JavaCallee.ordinal()] = nativeStackArg0Offset;
                 roleMap.put(ABI_FP, ARMV7.r11);
-                CiRegisterConfig template = new CiRegisterConfig(ARMV7.r11, r0, s0, ARMV7.r12, ARMV7.r8, allocatable, modifiedCallerSave, parameters, null, ARMV7.allRegisters, roleMap);
+                CiRegisterConfig template = new CiRegisterConfig(ARMV7.r11, r0, s0, ARMV7.r12, ARMV7.r8, allocatable, allocatable, parameters, null, ARMV7.allRegisters, roleMap);
 
                 setNonZero(template.getAttributesMap(), ARMV7.r10, ARMV7.r13, ARMV7.r11);
                 return new RegisterConfigs(standard, n2j, trampoline, template, compilerStub, uncommonTrapStub, trapStub);

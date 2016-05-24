@@ -98,7 +98,7 @@ abstract class TeleRegisters extends AbstractVmHolder implements TeleVMCache {
      * @return the value of {@code register}
      */
     final Address getValue(CiRegister register) {
-        return registerValues[register.encoding];
+        return registerValues[register.getEncoding()];
     }
 
     /**
@@ -142,7 +142,7 @@ abstract class TeleRegisters extends AbstractVmHolder implements TeleVMCache {
      * @param value the new value of {@code register}
      */
     protected final void setValue(CiRegister register, Address value) {
-        registerValues[register.encoding] = value;
+        registerValues[register.getEncoding()] = value;
     }
 
     Registers getRegisters(String name) {

@@ -1857,23 +1857,16 @@ public class Stubs {
                         asm.ldrd(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
 
                         if (kind == CiKind.Double) {
-
                             asm.vmov(ConditionFlag.Always, ARMV7.s0, ARMV7.r8, ARMV7.r9, CiKind.Double, CiKind.Long);
-
                         } else {
-
                             assert args[4].isStackSlot() : "compiler stub arg4 is not STACK SLOT changed registerConfig changed!!!";
                             // we need to put it on the stack
                             arg4STACK = (CiStackSlot) args[4];
                             src = new CiAddress(kind, ARMV7.RSP, arg4STACK.index() * 4);
                             asm.setUpScratch(src);
                             asm.strd(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
-
-
                         }
                         break;
-
-
                     default:
                         throw new InternalError("Unexpected parameter kind: " + kind);
                 }

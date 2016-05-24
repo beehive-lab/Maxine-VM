@@ -281,7 +281,6 @@ public abstract class LIRInstruction {
                     }
                 }
 
-
                 if (isInput && isTemp) {
                     allocatorTempInputCount++;
                     if (valueHigh != null && C1XCompilation.compilation().compiler.target.arch.is32bit()) {
