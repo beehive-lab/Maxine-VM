@@ -437,7 +437,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
             if (r.number < 16) {
                 strImmediate(ConditionFlag.Always, 1, 0, 0, r, r12, 0);
             } else {
-                vstr(ConditionFlag.Always, r, r12, 0, CiKind.Double, CiKind.Int);
+                vstr(ConditionFlag.Always, r, r12, 0, CiKind.Float, CiKind.Int);
                 //vstr(ConditionFlag.Always, r, r12, 0, CiKind.Float, CiKind.Int);
             }
         }
@@ -452,7 +452,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
                 ldrImmediate(ConditionFlag.Always, 1, 0, 0, r, r12, 0);
             } else {
                 //vldr(ConditionFlag.Always, r, r12, 0, CiKind.Float, CiKind.Int);
-                vldr(ConditionFlag.Always, r, r12, 0, CiKind.Double, CiKind.Int);
+                vldr(ConditionFlag.Always, r, r12, 0, CiKind.Float, CiKind.Int);
             }
         }
     }
