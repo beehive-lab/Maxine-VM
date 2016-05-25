@@ -259,4 +259,9 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
     public int getEncoding() {
         return encoding;
     }
+
+    public int getDoubleEncoding() {
+        assert encoding % 2 == 0 : encoding;
+        return encoding / 2;
+    }
 }

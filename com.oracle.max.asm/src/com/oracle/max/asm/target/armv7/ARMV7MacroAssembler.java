@@ -371,7 +371,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void movdbl(CiRegister dst, CiRegister src, CiKind dstKind, CiKind srcKind) {
         assert dst.isFpu() && src.isFpu();
-        vmov(ConditionFlag.Always, dst, src, null,dstKind, srcKind);
+        vmov(ConditionFlag.Always, dst, src, null, dstKind, srcKind);
     }
 
     public void movdbl(CiRegister dst, CiAddress src) {
@@ -438,7 +438,6 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
                 strImmediate(ConditionFlag.Always, 1, 0, 0, r, r12, 0);
             } else {
                 vstr(ConditionFlag.Always, r, r12, 0, CiKind.Float, CiKind.Int);
-                //vstr(ConditionFlag.Always, r, r12, 0, CiKind.Float, CiKind.Int);
             }
         }
     }

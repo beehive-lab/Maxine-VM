@@ -210,24 +210,24 @@ public class CiRegisterConfig implements RiRegisterConfig {
                     if (!stackOnly && currentGeneral < cpuParameters.length) {
                         if (kind.isLong() && target.arch.is32bit()) {
                             if ((cpuParameters.length - currentGeneral) < 2) {
-                                currentGeneral = cpuParameters.length; // APN added to make adapters work
-                                // as if we have exhausted space then we expect to use stack
-                                // might break a few things though ...
+                                currentGeneral = cpuParameters.length;
                                 break;
                             }
                             if ((currentGeneral) % 2 != 0) {
                                 currentGeneral++;
                             }
                         }
-                        CiRegister register = cpuParameters[currentGeneral++];
+                        CiRegister register = cpuParameters[currentGeneral];
                         locations[i] = register.asValue(kind);
                         if (kind.isLong() && target.arch.is32bit()) {
+                            currentGeneral += 2;
+                        } else {
                             currentGeneral++;
                         }
                     }
                     break;
                 case Float:
-                    if (!stackOnly && currentFP < fpuParameters.length) {
+                    /*if (!stackOnly && currentFP < fpuParameters.length) {
                         CiRegister register = null;
                         if (target.arch.is32bit()) {
                             register = fpuParameters[currentFloat++];
@@ -238,9 +238,9 @@ public class CiRegisterConfig implements RiRegisterConfig {
                         }
                         locations[i] = register.asValue(kind);
                     }
-                    break;
+                    break;*/
                 case Double:
-                    if (!stackOnly && currentFP < fpuParameters.length) {
+                    /*if (!stackOnly && currentFP < fpuParameters.length) {
                         if (target.arch.is32bit()) {
                             if ((fpuParameters.length - currentFP) < 2) {
                                 break;
@@ -254,9 +254,26 @@ public class CiRegisterConfig implements RiRegisterConfig {
                         } else {
                             currentFP = currentDouble;
                         }
-
                     }
-
+                    break;*/
+                    if (!stackOnly && currentFloat < fpuParameters.length) {
+                        if (kind.isDouble() && target.arch.is32bit()) {
+                            if ((fpuParameters.length - currentFloat) < 2) {
+                                currentFloat = fpuParameters.length;
+                                break;
+                            }
+                            if ((currentFloat) % 2 != 0) {
+                                currentFloat++;
+                            }
+                        }
+                        CiRegister register = fpuParameters[currentFloat];
+                        locations[i] = register.asValue(kind);
+                        if (kind.isDouble() && target.arch.is32bit()) {
+                            currentFloat += 2;
+                        } else {
+                            currentFloat++;
+                        }
+                    }
                     break;
                 default:
                     throw new InternalError("Unexpected parameter kind: " + kind);

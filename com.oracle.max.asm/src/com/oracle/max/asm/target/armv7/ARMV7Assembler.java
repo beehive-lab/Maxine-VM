@@ -1794,8 +1794,8 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= dp << 8; // sets the sz bit
         if (dp == 1) {
             // in this case we can use the numbers without problem.
-            instruction |= src.getEncoding();
-            instruction |= dst.getEncoding() << 12;
+            instruction |= src.getDoubleEncoding();
+            instruction |= dst.getDoubleEncoding() << 12;
         } else {
             instruction |= src.getEncoding() >> 1;
             instruction |= (src.getEncoding() & 1) << 5;
@@ -2006,22 +2006,16 @@ public class ARMV7Assembler extends AbstractAssembler {
         int instruction = 0x0eb40a40;
         int dpOperation = 0;
         int quietNAN = nanExceptions ? 0 : 1;
-        // assert src1Kind == src2Kind;
-        if (src1Kind.isDouble() && src2Kind.isFloat()) {
-            assert 0 == 1 : "VCMP incompatible types ";
-        }
-        if (src2Kind.isDouble() && src1Kind.isFloat()) {
-            assert 0 == 1 : "VCMP incompatible types ";
-        }
-        // assert src1.encoding != src2.encoding;
+        assert src1Kind == src2Kind;
+        assert (src1Kind.isFloat() && src2Kind.isFloat()) || (src1Kind.isDouble() && src2Kind.isDouble());
 
         if (src1Kind.isDouble()) {
             assert src2Kind.isDouble();
             dpOperation = 1;
-            instruction |= ((src1.getEncoding() & 0xf) << 12);
-            instruction |= (src1.getEncoding() >> 4) << 22;
-            instruction |= (src2.getEncoding() & 0xf);
-            instruction |= (src2.getEncoding() >> 4) << 5;
+            instruction |= ((src1.getDoubleEncoding() & 0xf) << 12);
+            instruction |= (src1.getDoubleEncoding() >> 4) << 22;
+            instruction |= (src2.getDoubleEncoding() & 0xf);
+            instruction |= (src2.getDoubleEncoding() >> 4) << 5;
 
         } else {
             assert src2Kind.isFloat();
@@ -2556,12 +2550,12 @@ public class ARMV7Assembler extends AbstractAssembler {
             sz = 1;
         }
         if (sz == 1) { // bit rest of bits
-            instruction |= (dest.getEncoding() & 0xf) << 12;
-            instruction |= (rn.getEncoding() & 0xf) << 16;
-            instruction |= rm.getEncoding() & 0xf;
-            instruction |= (dest.getEncoding() >> 4) << 22;
-            instruction |= (rn.getEncoding() >> 4) << 7;
-            instruction |= (rm.getEncoding() >> 4) << 5;
+            instruction |= (dest.getDoubleEncoding() & 0xf) << 12;
+            instruction |= (rn.getDoubleEncoding() & 0xf) << 16;
+            instruction |= rm.getDoubleEncoding() & 0xf;
+            instruction |= (dest.getDoubleEncoding() >> 4) << 22;
+            instruction |= (rn.getDoubleEncoding() >> 4) << 7;
+            instruction |= (rm.getDoubleEncoding() >> 4) << 5;
 
         } else {
             instruction |= (dest.getEncoding() >> 1) << 12;
@@ -2625,8 +2619,8 @@ public class ARMV7Assembler extends AbstractAssembler {
                 instruction |= (dest.getEncoding() >> 1) << 12; // LSB in bit 22
                 instruction |= (dest.getEncoding() & 0x1) << 22;
                 if (sz == 1) {
-                    instruction |= (src.getEncoding() & 0xf);
-                    instruction |= (src.getEncoding() >> 4) << 5;
+                    instruction |= (src.getDoubleEncoding() & 0xf);
+                    instruction |= (src.getDoubleEncoding() >> 4) << 5;
                 } else {
                     instruction |= (src.getEncoding() >> 1);
                     instruction |= (src.getEncoding() & 0x1) << 5;
@@ -2637,8 +2631,8 @@ public class ARMV7Assembler extends AbstractAssembler {
             } else if (int2Double) { // I2D
                 instruction |= 0xEB80A40;
                 instruction |= sz << 8;
-                instruction |= (dest.getEncoding() >> 4) << 22;
-                instruction |= (dest.getEncoding() & 0xf) << 12;
+                instruction |= (dest.getDoubleEncoding() >> 4) << 22;
+                instruction |= (dest.getDoubleEncoding() & 0xf) << 12;
                 instruction |= (src.getEncoding() & 1) << 5;
                 instruction |= (src.getEncoding() >> 1);
                 instruction |= opc2 << 16;
@@ -2647,8 +2641,8 @@ public class ARMV7Assembler extends AbstractAssembler {
                 instruction |= 0xEB70AC0;
                 instruction |= (src.getEncoding() & 0x1) << 5;
                 instruction |= src.getEncoding() >> 1;
-                instruction |= (dest.getEncoding() >> 4) << 22;
-                instruction |= (dest.getEncoding() & 0xf) << 12;
+                instruction |= (dest.getDoubleEncoding() >> 4) << 22;
+                instruction |= (dest.getDoubleEncoding() & 0xf) << 12;
             }
         } else {
             instruction |= sz << 8;
@@ -2656,8 +2650,8 @@ public class ARMV7Assembler extends AbstractAssembler {
                 instruction |= 0xEB70AC0;
                 instruction |= (dest.getEncoding() >> 1) << 12;
                 instruction |= (dest.getEncoding() & 1) << 22;
-                instruction |= (src.getEncoding() & 0xf);
-                instruction |= (src.getEncoding() >> 4) << 5;
+                instruction |= (src.getDoubleEncoding() & 0xf);
+                instruction |= (src.getDoubleEncoding() >> 4) << 5;
             } else if (int2Float) { // I2F
                 instruction |= 0xEB80A40;
                 instruction |= (dest.getEncoding() >> 1) << 12;
@@ -2689,7 +2683,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (src.getEncoding() & 0xf) << 16;
         if (destKind.isDouble()) {
             instruction |= 0x0d000b00;
-            instruction |= (dest.getEncoding() & 0xf) << 12;
+            instruction |= (dest.getDoubleEncoding() & 0xf) << 12;
         } else {
             instruction |= 0xd000a00;
             instruction |= (dest.getEncoding() >> 1) << 12;
@@ -2708,10 +2702,10 @@ public class ARMV7Assembler extends AbstractAssembler {
         int dest1bit = 0;
         if (destKind.isDouble()) {
             sz = 1;
-            src4bits = src.getEncoding() & 0xf;
-            src1bit = (src.getEncoding() >> 4) & 0x1;
-            dest4bits = dest.getEncoding() & 0xf;
-            dest1bit = (dest.getEncoding() >> 4) & 0x1;
+            src4bits = src.getDoubleEncoding() & 0xf;
+            src1bit = (src.getDoubleEncoding() >> 4) & 0x1;
+            dest4bits = dest.getDoubleEncoding() & 0xf;
+            dest1bit = (dest.getDoubleEncoding() >> 4) & 0x1;
         } else {
             src4bits = (src.getEncoding() >> 1) & 0xf;
             src1bit = (src.getEncoding()) & 0x1;
@@ -2745,8 +2739,8 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= src.getEncoding() << 16;
         if (destKind.isDouble()) {
             instruction |= 0x0d100b00;
-            instruction |= (dest.getEncoding() >> 4) << 22;
-            instruction |= (dest.getEncoding() & 0xf) << 12;
+            instruction |= (dest.getDoubleEncoding() >> 4) << 22;
+            instruction |= (dest.getDoubleEncoding() & 0xf) << 12;
         } else {
             instruction |= 0xd100a00;
             instruction |= (dest.getEncoding() >> 1) << 12;
@@ -2766,12 +2760,12 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
         instruction |= sz << 8;
         if (sz == 1) {
-            instruction |= (rn.getEncoding() & 0xf) << 16;
-            instruction |= (dest.getEncoding() & 0xf) << 12;
-            instruction |= rm.getEncoding() & 0xf;
-            instruction |= (rn.getEncoding() >> 4) << 7;
-            instruction |= (dest.getEncoding() >> 4) << 22;
-            instruction |= (rm.getEncoding() >> 4) << 5;
+            instruction |= (rn.getDoubleEncoding() & 0xf) << 16;
+            instruction |= (dest.getDoubleEncoding() & 0xf) << 12;
+            instruction |= rm.getDoubleEncoding() & 0xf;
+            instruction |= (rn.getDoubleEncoding() >> 4) << 7;
+            instruction |= (dest.getDoubleEncoding() >> 4) << 22;
+            instruction |= (rm.getDoubleEncoding() >> 4) << 5;
         } else {
             instruction |= (rn.getEncoding() & 1) << 7;
             instruction |= (rn.getEncoding() >> 1) << 16;
@@ -2800,8 +2794,8 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
         if (sz == 1) {
             instruction |= 0x0cbd0b00;
-            instruction |= (first.getEncoding() & 0xf) << 12;
-            instruction |= (last.getEncoding() - first.getEncoding() + 1) << 1;
+            instruction |= (first.getDoubleEncoding() & 0xf) << 12;
+            instruction |= (last.getDoubleEncoding() - first.getDoubleEncoding() + 1) << 1;
         } else {
             instruction |= 0x0cbd0a00;
             instruction |= (first.getEncoding() & 0x1) << 22;
@@ -2828,8 +2822,8 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
         if (sz == 1) {
             instruction |= 0x0d2d0b00;
-            instruction |= (first.getEncoding() & 0xf) << 12;
-            instruction |= (last.getEncoding() - first.getEncoding() + 1) << 1;
+            instruction |= (first.getDoubleEncoding() & 0xf) << 12;
+            instruction |= (last.getDoubleEncoding() - first.getDoubleEncoding() + 1) << 1;
         } else {
             instruction |= 0x0d2d0a00;
             instruction |= (first.getEncoding() & 0x1) << 22;
@@ -2885,15 +2879,15 @@ public class ARMV7Assembler extends AbstractAssembler {
         orr(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, ARMV7.r9, 0, 0);
         vmsr(ConditionFlag.Always, ARMV7.r8);
         pop(ConditionFlag.Always, 1 << 8 | 1 << 9);
-        vpush(ConditionFlag.Always, ARMV7.s28, ARMV7.s30, CiKind.Double, CiKind.Double);
+        vpush(ConditionFlag.Always, ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double);
         vmov(ConditionFlag.Always, ARMV7.s28, rn, null, CiKind.Float, CiKind.Int);
         vmov(ConditionFlag.Always, ARMV7.s30, rm, null, CiKind.Float, CiKind.Int);
-        vcvt(ConditionFlag.Always, ARMV7.s28, false, signed, ARMV7.s28, CiKind.Double, CiKind.Int);
-        vcvt(ConditionFlag.Always, ARMV7.s30, false, signed, ARMV7.s30, CiKind.Double, CiKind.Int);
-        vdiv(ConditionFlag.Always, ARMV7.s28, ARMV7.s28, ARMV7.s30, CiKind.Double);
-        vcvt(ConditionFlag.Always, ARMV7.s28, true, signed, ARMV7.s28, CiKind.Int, CiKind.Double);// rounding?
+        vcvt(ConditionFlag.Always, ARMV7.s14, false, signed, ARMV7.s28, CiKind.Double, CiKind.Int);
+        vcvt(ConditionFlag.Always, ARMV7.s15, false, signed, ARMV7.s30, CiKind.Double, CiKind.Int);
+        vdiv(ConditionFlag.Always, ARMV7.s14, ARMV7.s14, ARMV7.s15, CiKind.Double);
+        vcvt(ConditionFlag.Always, ARMV7.s28, true, signed, ARMV7.s14, CiKind.Int, CiKind.Double);// rounding?
         vmov(cond, dest, ARMV7.s28, null, CiKind.Int, CiKind.Float);
-        vpop(ConditionFlag.Always, ARMV7.s28, ARMV7.s30, CiKind.Double, CiKind.Double);
+        vpop(ConditionFlag.Always, ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double);
     }
 
     public final void udiv(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
@@ -2927,12 +2921,12 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
         instruction |= sz << 8;
         if (sz == 1) {
-            instruction |= (rn.getEncoding() & 0xf) << 16;
-            instruction |= (dest.getEncoding() & 0xf) << 12;
-            instruction |= rm.getEncoding() & 0xf;
-            instruction |= (dest.getEncoding() >> 4) << 22;
-            instruction |= (rn.getEncoding() >> 4) << 7;
-            instruction |= (rm.getEncoding() >> 4) << 5;
+            instruction |= (rn.getDoubleEncoding() & 0xf) << 16;
+            instruction |= (dest.getDoubleEncoding() & 0xf) << 12;
+            instruction |= rm.getDoubleEncoding() & 0xf;
+            instruction |= (dest.getDoubleEncoding() >> 4) << 22;
+            instruction |= (rn.getDoubleEncoding() >> 4) << 7;
+            instruction |= (rm.getDoubleEncoding() >> 4) << 5;
         } else {
             instruction |= (dest.getEncoding() >> 1) << 12;
             instruction |= (dest.getEncoding() & 1) << 22;
@@ -2955,9 +2949,9 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
         instruction |= sz << 8;
         if (sz == 1) {
-            instruction |= (rn.getEncoding() & 0xf) << 16;
-            instruction |= (dest.getEncoding() & 0xf) << 12;
-            instruction |= rm.getEncoding() & 0xf;
+            instruction |= (rn.getDoubleEncoding() & 0xf) << 16;
+            instruction |= (dest.getDoubleEncoding() & 0xf) << 12;
+            instruction |= rm.getDoubleEncoding() & 0xf;
         } else {
             instruction |= (rm.getEncoding() & 0x1) << 5;
             instruction |= rm.getEncoding() >> 1;
@@ -2979,10 +2973,10 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
         if (srcKind.isDouble() && destKind.isDouble()) {
             instruction |= (1 << 8) | vmovSameType;
-            instruction |= (dest.getEncoding() >> 4) << 22;
-            instruction |= (dest.getEncoding() & 0xf) << 12;
-            instruction |= (src.getEncoding() >> 4) << 5;
-            instruction |= (src.getEncoding() & 0xf);
+            instruction |= (dest.getDoubleEncoding() >> 4) << 22;
+            instruction |= (dest.getDoubleEncoding() & 0xf) << 12;
+            instruction |= (src.getDoubleEncoding() >> 4) << 5;
+            instruction |= (src.getDoubleEncoding() & 0xf);
         } else if (srcKind.isFloat() && destKind.isFloat()) {
             // dest LSB bit 22, and 12-15
             // src LSB 5 and 0-3
@@ -3003,15 +2997,15 @@ public class ARMV7Assembler extends AbstractAssembler {
                 instruction |= 1 << 20;
                 instruction |= dest.getEncoding() << 12;
                 instruction |= (dest.getEncoding() + 1) << 16;
-                instruction |= src.getEncoding();
-                instruction |= ((src.getEncoding() >> 4) & 0x1) << 5;
+                instruction |= src.getDoubleEncoding();
+                instruction |= ((src.getDoubleEncoding() >> 4) & 0x1) << 5;
             } else {
                 assert src2 != null;
                 checkConstraint((src.getEncoding()) <= 14, "vmov core to doubleword core register > 14");
                 instruction |= src2.getEncoding() << 16;
                 instruction |= src.getEncoding() << 12;
-                instruction |= (dest.getEncoding() >> 4) << 5;
-                instruction |= dest.getEncoding() & 0xf;
+                instruction |= (dest.getDoubleEncoding() >> 4) << 5;
+                instruction |= dest.getDoubleEncoding() & 0xf;
             }
         }
         emitInt(instruction);
@@ -3029,8 +3023,8 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (imm >> 4) << 16;
         instruction |= (imm & 0xf);
         if (size == 1) {
-            instruction |= (dst.getEncoding() >> 4) << 22;
-            instruction |= (dst.getEncoding() & 0xf) << 12;
+            instruction |= (dst.getDoubleEncoding() >> 4) << 22;
+            instruction |= (dst.getDoubleEncoding() & 0xf) << 12;
         } else {
             instruction |= (dst.getEncoding() >> 1) << 12;
             instruction |= (dst.getEncoding() << 4) << 22;

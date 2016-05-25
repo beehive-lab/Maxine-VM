@@ -1634,8 +1634,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         break;
                     case Double:
                         masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
-                        masm.vldr(ConditionFlag.Always, ARMV7.s30, ARMV7.r12, 0, CiKind.Double, CiKind.Int);
-                        masm.ucomisd(reg1, ARMV7.s30, opr1.kind, CiKind.Double);
+                        masm.vldr(ConditionFlag.Always, ARMV7.s15, ARMV7.r12, 0, CiKind.Double, CiKind.Int);
+                        masm.ucomisd(reg1, ARMV7.s15, opr1.kind, CiKind.Double);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
@@ -1660,8 +1660,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     case Double:
                         masm.setUpScratch(tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) opr2).asDouble())));
                         masm.addRegisters(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r15, 0, 0);
-                        masm.vldr(ConditionFlag.Always, ARMV7.s30, ARMV7.r12, 0, CiKind.Double, CiKind.Int);
-                        masm.ucomisd(reg1, ARMV7.s30, opr1.kind, CiKind.Double);
+                        masm.vldr(ConditionFlag.Always, ARMV7.s15, ARMV7.r12, 0, CiKind.Double, CiKind.Int);
+                        masm.ucomisd(reg1, ARMV7.s15, opr1.kind, CiKind.Double);
                         break;
                     case Long: {
                         masm.saveRegister(8, 9);
