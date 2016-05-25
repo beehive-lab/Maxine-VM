@@ -1020,22 +1020,30 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 phaseLogger.logVerifyingHeapObjects(Interval.BEGIN);
                 phaseLogger.logVerifyingRegion(toSpace, toSpace.start().asPointer(), allocationMark());
             }
-            //Log.println("--To Space Verification: Start");
+            if (Heap.verbose()) {
+                Log.println("--To Space Verification: Start");
+            }
             DebugHeap.verifyRegion(toSpace, toSpace.start().asPointer(), allocationMark(), refVerifier, detailLogger);
-            //Log.println("--To Space Verification: End");
-
+            if (Heap.verbose()) {
+                Log.println("--To Space Verification: End");
+            }
             if (Heap.logGCPhases()) {
                 phaseLogger.logVerifyingHeapObjects(Interval.END);
                 phaseLogger.logVerifyingCodeObjects(Interval.BEGIN);
             }
 
-            //Log.println("--Code Baseline Verification: Start");
+            if (Heap.verbose()) {
+                Log.println("--Code Baseline Verification: Start");
+            }
             verifyCodeRegion(Code.getCodeManager().getRuntimeBaselineCodeRegion());
-            //Log.println("--Code Baseline Verification: End");
-            //Log.println("--Code Opt Verification: Start");
+            if (Heap.verbose()) {
+                Log.println("--Code Baseline Verification: End");
+                Log.println("--Code Opt Verification: Start");
+            }
             verifyCodeRegion(Code.getCodeManager().getRuntimeOptCodeRegion());
-            //Log.println("--Code Opt Verification: End");
-
+            if (Heap.verbose()) {
+                Log.println("--Code Opt Verification: End");
+            }
             if (Heap.logGCPhases()) {
                 phaseLogger.logVerifyingCodeObjects(Interval.END);
             }
