@@ -66,7 +66,7 @@ public abstract class CodeManager {
      * code eviction logic is properly in place.
      */
     public static final VMSizeOption runtimeBaselineCodeRegionSize =
-        register(new VMSizeOption("-XX:ReservedBaselineCodeCacheSize=", Size.M.times(128),
+        register(new VMSizeOption("-XX:ReservedBaselineCodeCacheSize=", Size.M.times(256),
             "Memory allocated for runtime code region cache."), MaxineVM.Phase.PRISTINE);
 
     /**
