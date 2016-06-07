@@ -809,7 +809,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // A baseline caller jumps over the call to the OPT2BASELINE adapter
             Label end = new Label();
             // shall we branch to this?
-            asm.instrumentBranch(end);
+            asm.branch(end);
             asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0x0af2ba5e); // signifies OPT2BASE
 
             // Pad with nops up to the OPT entry point

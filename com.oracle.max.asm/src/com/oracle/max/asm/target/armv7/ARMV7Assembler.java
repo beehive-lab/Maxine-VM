@@ -242,19 +242,11 @@ public class ARMV7Assembler extends AbstractAssembler {
         jcc(ConditionFlag.Always, forever);
     }
 
-    public void instrumentBranch(Label l) {
-        if (l.isBound()) {
-            checkConstraint(-0x800000 <= (l.position() - codeBuffer.position()) && (l.position() - codeBuffer.position()) <= 0x7fffff, "branch must be within  a 24bit offset");
-            // emitInt(0x06000000 | (l.position() - codeBuffer.position()) | ConditionFlag.Always.value() & 0xf);
-            emitInt(0x0a000000 | (0xffffff & ((l.position() - codeBuffer.position() - 8) / 4)) | ((ConditionFlag.Always.value() & 0xf) << 28));
-        } else {
-            l.addPatchAt(codeBuffer.position());
-            nop();
-        }
-
+    public void branch(Label l) {
+        branch(l, false);
     }
 
-    public void branch(Label l) {
+    public void branch(Label l, boolean instrument) {
         if (l.isBound()) {
             /*
              * REMEMBER -- the current stored value of the PC is 8 bytes larger than that of the currently executing
@@ -264,7 +256,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             // Compute a relative address if it is less than 24bits;
             // then branch
             // or TODO compute an absolute address and do a MOV PC,absolute.
-            if (SIMULATE_DYNAMIC) {
+            if (instrument && SIMULATE_DYNAMIC) {
                 int disp = l.position() - codeBuffer.position() - 8;
                 disp = instrumentPCChange(ConditionFlag.Always, ConditionFlag.NeverUse, disp);
                 checkConstraint(-0x800000 <= (disp) && disp <= 0x7fffff, "branch must be within  a 24bit offset");
@@ -279,16 +271,15 @@ public class ARMV7Assembler extends AbstractAssembler {
             // By default, forward jumps are always 24-bit displacements, since
             // we can't yet know where the label will be bound. If you're sure that
             // the forward jump will not run beyond 24-bits bytes, then its ok
-            if (SIMULATE_DYNAMIC) {
+            if (instrument && SIMULATE_DYNAMIC) {
                 // will need to be patched inside patchJumpTarget
                 instrumentPCChange(ConditionFlag.Always, ConditionFlag.NeverUse, -2);
-            /*
-            We determine the offsets for patching --- by gdb of an exectuion of ... mx vm -Xopt App
-		    We break on real_maxine_instrumentation --- case of PCCHANGE  then do a disas of $lr -0x50,$lr +0x40
-		    and  do a print /x STARTARRDRESSNEXTINSTR - ADDRESSOFmovwmovtINSTRS
-		    NOTE: there may be a true/nottrue ie lt or ge destination, or there may be
-		    a ConditionFlag.Always only one movw movt to patch
-		    */
+                /*
+                 * We determine the offsets for patching --- by gdb of an exectuion of ... mx vm -Xopt App We break on
+                 * real_maxine_instrumentation --- case of PCCHANGE then do a disas of $lr -0x50,$lr +0x40 and do a
+                 * print /x STARTARRDRESSNEXTINSTR - ADDRESSOFmovwmovtINSTRS NOTE: there may be a true/nottrue ie lt or
+                 * ge destination, or there may be a ConditionFlag.Always only one movw movt to patch
+                 */
             }
             l.addPatchAt(codeBuffer.position(), SIMULATE_DYNAMIC);
             // emitByte(0xE9);
@@ -1586,29 +1577,6 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public void instrumentStr(final ConditionFlag flag, final CiRegister valueReg, final CiRegister baseRegister, final int offset12) {
-
-        int instruction;
-        instruction = 0x05800000;
-        instruction |= (flag.value() & 0xf) << 28;
-        instruction |= (valueReg.getEncoding() & 0xf) << 12;
-        instruction |= (baseRegister.getEncoding() & 0xf) << 16;
-        instruction |= offset12 & 0xfff;
-        emitInt(instruction);
-
-    }
-
-    public void instrumentLdr(final ConditionFlag flag, final CiRegister destReg, final CiRegister baseRegister, final int offset12) {
-
-        int instruction;
-        instruction = 0x05900000;
-        instruction |= (flag.value() & 0xf) << 28;
-        instruction |= (destReg.getEncoding() & 0xf) << 12;
-        instruction |= (baseRegister.getEncoding() & 0xf) << 16;
-        instruction |= offset12 & 0xfff;
-        emitInt(instruction);
-
-    }
 
     public void str(final ConditionFlag flag, final CiRegister valueReg, final CiRegister baseRegister, final int offset12) {
         if (SIMULATE_DYNAMIC) {

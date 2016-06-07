@@ -1913,7 +1913,7 @@ public class Stubs {
             Label forever = new Label();
             asm.bind(forever);
             asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xc5a0c5a0);
-            asm.branch(forever);
+            asm.branch(forever, true);
 
 
             String stubName = runtimeRoutineName + "StubWithCSA";
@@ -2058,7 +2058,7 @@ public class Stubs {
             asm.bind(forever);
             asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xffffffff);
             asm.blx(ARMV7.r12); //expect it to crash
-            asm.branch(forever);
+            asm.branch(forever, true);
 
             asm.hlt();
 
