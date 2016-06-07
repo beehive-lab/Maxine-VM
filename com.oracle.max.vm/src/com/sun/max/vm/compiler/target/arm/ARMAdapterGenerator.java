@@ -374,15 +374,14 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             ARMV7Assembler asm = out instanceof OutputStream ? new ARMV7Assembler(target(), null) : (ARMV7Assembler) out;
 
             if (adapter == null) {
-                asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.getEncoding());
+                asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.getEncoding());
                 asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xba5e20af); // signifies BASSE20OPT
                 //asm.nop(); // movw
                 //asm.nop(); // movt
                 asm.nop(); // add
                 asm.nop(); // blx
             } else {
-                asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.getEncoding()); // does not instrument
-
+                asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r14.getEncoding()); // does not instrument
                 asm.call(); // does not instrument
                 asm.align(PROLOGUE_SIZE);
             }
@@ -453,8 +452,12 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             assert explicitlyAllocatedFrameSize >= 0 && explicitlyAllocatedFrameSize <= Short.MAX_VALUE;
 
 
-            asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
-            asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.getEncoding());
+            //r14: return address of the caller
+            //r11: fp (rbp in x86)
+            //r13: sp
+
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << ARMV7.r11.getEncoding());
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r11, ARMV7.r13);
             asm.subq(ARMV7.r13, (explicitlyAllocatedFrameSize));
             asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r14, null, CiKind.Float, CiKind.Int);
@@ -503,14 +506,14 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // Restore RSP r13 and RBP r11. Given that RBP r11 is never modified by OPT methods and baseline methods always
             // restore it, RBP is guaranteed to be pointing to the slot holding the caller's RBP
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r13, ARMV7.r11);
-            asm.instrumentPop(ARMV7Assembler.ConditionFlag.Always, 1 << 11);// pop r11 -- rbp DOES NOt INSTRUMENT
+            asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 11);// pop r11 -- rbp DOES NOt INSTRUMENT
 
             String description = Type.BASELINE2OPT + "-Adapter" + sig;
             // RSP has been restored to the location holding the address of the OPT main body.
             // The adapter must return to the baseline caller whose RIP is one slot higher up.
             //asm.addq(ARMV7.r13, 4);// WAS 8 might need to adjust? the LRon the stack prior to the pop
             asm.addq(ARMV7.r13, OPT_SLOT_SIZE);
-            asm.instrumentPop(ARMV7Assembler.ConditionFlag.Always, 1 << 8); // POP return address
+            asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 8); // POP return address
 
             assert WordWidth.signedEffective(baselineArgsSize).lessEqual(WordWidth.BITS_16);
             // Retract the stack pointer back to its position before the first argument on the caller's stack.
@@ -812,7 +815,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // Pad with nops up to the OPT entry point
             asm.nop((OPTIMIZED_ENTRY_POINT.offset() - asm.codeBuffer.position()) / 4);
             // REMEMBER AT EVERY ENTRY POINT WE MUST PUSH THE $LR
-            asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
             //Log.println("OFFSET of CALL " + asm.codeBuffer.position());
             asm.call();
             asm.bind(end);
@@ -840,7 +843,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // The one at [RSP] is the return address of the call in the baseline callee's prologue (which is
             // also the entry to the main body of the baseline callee) and one at [RSP + 8 ] is the return
             // address in the OPT caller.
-            asm.instrumentPush(ARMV7Assembler.ConditionFlag.Always, 1 << 14); // PUSH  HE RETURN ADDRESS OF THE CALL IN THE PROLOGUE ONTO THE STACK
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14); // PUSH  HE RETURN ADDRESS OF THE CALL IN THE PROLOGUE ONTO THE STACK
             asm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r14, null, CiKind.Float, CiKind.Int);
 
             // Save the address of the baseline callee's main body in s30
@@ -890,7 +893,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             asm.addq(ARMV7.r13, OPT_SLOT_SIZE);
 
             // Return to the OPT caller
-            asm.instrumentPop(ARMV7Assembler.ConditionFlag.Always, 1 << 8); // r8
+            asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 8); // r8
 
             asm.instrumentMov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r8);
             //asm.ret(0);

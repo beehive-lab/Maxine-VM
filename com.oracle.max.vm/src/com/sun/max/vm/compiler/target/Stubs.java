@@ -551,7 +551,7 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
-            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14, true);
             // now allocate the frame for this method
             asm.subq(ARMV7.r13, frameSize);
 
@@ -788,7 +788,7 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
-            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);      // SAVE ret address
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14, true);      // SAVE ret address
 
             // compute the static trampoline call site
             CiRegister callSite = ARMV7.r8; /// was scratch but we use scratch so use r8
@@ -955,11 +955,11 @@ public class Stubs {
             CiValue[] args = registerConfig.getCallingConvention(JavaCallee, handleTrapParameters, target(), false).locations;
 
 
-            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12);      // SAVE r12 ... our save/restore uses r12 so we must push it here
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12, true);      // SAVE r12 ... our save/restore uses r12 so we must push it here
             // this will be overwritten with the RETURN  ADDRESS of the trapping instruction
-            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12);
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12, true);
             asm.mrsReadAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12);
-            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12);
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12, true);
 
             // NOW allocate the frame for this method (note TWO wordas of which WERE allocated by the second push above)
             asm.subq(ARMV7.r13, frameSize - 8/*was 8*/);
@@ -1019,9 +1019,9 @@ public class Stubs {
             // Will r14 be correctly set to the appropriate return address?
             //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
             asm.addq(ARMV7.r13, frameSize - 8/*was 8*/); // added
-            asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 12);// pops flags so we need to do ...
+            asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 12, true);// pops flags so we need to do ...
             asm.msrWriteAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12);
-            asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 12); // POP scratch
+            asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 12, true); // POP scratch
             asm.ret(0);
 
             byte[] code = asm.codeBuffer.close(true);
@@ -1135,7 +1135,7 @@ public class Stubs {
             }
 
             // called from Java so we should push the return address register
-            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14, true);
 
             CiValue[] args = unwindArgs;
             assert args.length == 3 || args.length == 4;
@@ -1276,7 +1276,7 @@ public class Stubs {
                 asm.nop();
             }
             // We are called from Java so we do need to push the LR.
-            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14, true);
 
 
             asm.sub(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r13, ARMV7.r13, ARMV7.r1, 0, 0); // rsi is argument (second)?
@@ -2013,7 +2013,7 @@ public class Stubs {
             }
 
             // now allocate the frame for this method
-            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14);
+            asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14, true);
             asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xb00db00d);
             //asm.insertForeverLoop();
             asm.subq(ARMV7.rsp, frameSize);

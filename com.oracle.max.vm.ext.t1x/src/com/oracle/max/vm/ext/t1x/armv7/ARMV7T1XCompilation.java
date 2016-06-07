@@ -519,10 +519,10 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     protected void assignDouble(CiRegister dst, double value) {
         assert dst.isFpu();
         // avoid potential corruption of r9
-        asm.push(ConditionFlag.Always, 1 << 9);
+        asm.push(ConditionFlag.Always, 1 << 9, true);
         assignLong(ARMV7.r8, Double.doubleToRawLongBits(value));
         asm.vmov(ConditionFlag.Always, dst, ARMV7.r8, ARMV7.r9, CiKind.Double, CiKind.Int);
-        asm.pop(ConditionFlag.Always, 1 << 9);
+        asm.pop(ConditionFlag.Always, 1 << 9, true);
     }
 
     @Override
@@ -589,8 +589,8 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         // stackptr = framepointer -stacksize
 
         int frameSize = frame.frameSize();
-        asm.push(ConditionFlag.Always, 1 << 14); // push return address on stack
-        asm.push(ConditionFlag.Always, 1 << 11); // push frame pointer onto STACK
+        asm.push(ConditionFlag.Always, 1 << 14, true); // push return address on stack
+        asm.push(ConditionFlag.Always, 1 << 11, true); // push frame pointer onto STACK
         asm.mov(ConditionFlag.Always, false, ARMV7.r11, ARMV7.r13); // create a new framepointer = stack ptr
         asm.subq(ARMV7.r13, frameSize - Word.size()); // APN is this necessary for ARM ie push does it anyway?
         asm.subq(ARMV7.r11, framePointerAdjustment()); // TODO FP/SP not being set up correctly ...
@@ -649,8 +649,8 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.addq(ARMV7.r11, framePointerAdjustment()); // we might be missing some kind of pop here?
         asm.mov(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r11); // changed to false for flag update
         final short stackAmountInBytes = (short) frame.sizeOfParameters();
-        asm.pop(ConditionFlag.Always, 1 << 11); // POP the frame pointer
-        asm.pop(ConditionFlag.Always, 1 << 8); // POP return address into r8
+        asm.pop(ConditionFlag.Always, 1 << 11, true); // POP the frame pointer
+        asm.pop(ConditionFlag.Always, 1 << 8, true); // POP return address into r8
         asm.mov32BitConstant(ConditionFlag.Always, scratch, stackAmountInBytes);
         asm.addRegisters(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0); // changed to false for flag update
         asm.mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r8); // RETURN
@@ -689,14 +689,14 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.setUpScratch(new CiAddress(CiKind.Int, RSP));
         asm.ldr(ConditionFlag.Always, ARMV7.r8, asm.scratchRegister, 0);
         asm.addq(r13, JVMSFrameLayout.JVMS_SLOT_SIZE);
-        asm.push(ConditionFlag.Always, 1 << 10 | 1 << 9 | 1 << 7);
+        asm.push(ConditionFlag.Always, 1 << 10 | 1 << 9 | 1 << 7, true);
         asm.mov(ConditionFlag.Always, false, ARMV7.r9, ARMV7.r8); // r9 stores index
 
         // Jump to default target if index is not within the jump table
         startBlock(ts.defaultTarget());
         asm.cmpl(r9, lowMatch);
 
-        asm.pop(ConditionFlag.SignedLesser, 1 << 10 | 1 << 9 | 1 << 7);
+        asm.pop(ConditionFlag.SignedLesser, 1 << 10 | 1 << 9 | 1 << 7, true);
         int pos = buf.position();
         patchInfo.addJCC(ConditionFlag.SignedLesser, pos, ts.defaultTarget());
         asm.jcc(ConditionFlag.SignedLesser, 0, true);
@@ -706,7 +706,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         } else {
             asm.cmpl(r9, highMatch);
         }
-        asm.pop(ConditionFlag.SignedGreater, 1 << 10 | 1 << 9 | 1 << 7);
+        asm.pop(ConditionFlag.SignedGreater, 1 << 10 | 1 << 9 | 1 << 7, true);
         pos = buf.position();
         patchInfo.addJCC(ConditionFlag.SignedGreater, pos, ts.defaultTarget());
         asm.jcc(ConditionFlag.SignedGreater, 0, true);
@@ -722,7 +722,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.addRegisters(ConditionFlag.Always, false, r12, ARMV7.r15, r12, 0, 0); // need to be careful are we using the
 // right add!
         asm.add(ConditionFlag.Always, false, r12, r12, 8, 0);
-        asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10 | 1 << 7); // restore r9/r10
+        asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10 | 1 << 7, true); // restore r9/r10
         asm.mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12);
 
         // NOT NECESARY FOR ARMV7 Inserting padding so that jump table address is 4-byte aligned
@@ -773,7 +773,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
             asm.setUpScratch(new CiAddress(CiKind.Int, RSP));
             asm.ldr(ConditionFlag.Always, ARMV7.r8, asm.scratchRegister, 0);
             asm.addq(ARMV7.r13, JVMSFrameLayout.JVMS_SLOT_SIZE);
-            asm.push(ConditionFlag.Always, 1 << 7 | 1 << 9 | 1 << 10);
+            asm.push(ConditionFlag.Always, 1 << 7 | 1 << 9 | 1 << 10, true);
             asm.mov(ConditionFlag.Always, false, r9, r8); // r9 stores index
 
             // Set r10 to address of lookup table
@@ -804,7 +804,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
             // Jump to default target
             startBlock(ls.defaultTarget());
             patchInfo.addJMP(buf.position(), ls.defaultTarget());
-            asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10 | 1 << 7);
+            asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10 | 1 << 7, true);
             asm.jmp(0, true);
 
             // Patch the first conditional branch instruction above now that we know where's it's going
@@ -818,7 +818,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
             asm.ldr(ConditionFlag.Always, r12, r12, 0);
             asm.addRegisters(ConditionFlag.Always, false, r12, r15, r12, 0, 0);
             asm.add(ConditionFlag.Always, false, r12, r12, 8, 0);
-            asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10 | 1 << 7);
+            asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10 | 1 << 7, true);
             asm.mov(ConditionFlag.Always, false, r15, r12); // changed to false for flag update
 
             // Inserting padding so that lookup table address is 4-byte aligned

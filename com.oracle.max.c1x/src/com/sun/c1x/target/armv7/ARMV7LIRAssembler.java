@@ -1280,12 +1280,12 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 if (dest.asRegister() != value.asRegister()) {
                     masm.vmov(ConditionFlag.Always, dest.asRegister(), value.asRegister(), null, CiKind.Double, CiKind.Double);
                 }
-                masm.push(ConditionFlag.Always, 1 << 9);
+                masm.push(ConditionFlag.Always, 1 << 9, true);
                 masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0x7fffffff);
                 masm.vmov(ConditionFlag.Always, ARMV7.r8, dest.asRegister(), null, CiKind.Long, CiKind.Double);
                 masm.and(ConditionFlag.Always, false, ARMV7.r9, ARMV7.r9, ARMV7.r12, 0, 0);
                 masm.vmov(ConditionFlag.Always, dest.asRegister(), ARMV7.r8, ARMV7.r9, CiKind.Double, CiKind.Long);
-                masm.pop(ConditionFlag.Always, 1 << 9);
+                masm.pop(ConditionFlag.Always, 1 << 9, true);
                 break;
             case Sqrt:
                 masm.vsqrt(ConditionFlag.Always, dest.asRegister(), value.asRegister(), dest.kind);
@@ -2463,7 +2463,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     // We only Push LR as that is what X86 does
                     // this means we can reuse all their
                     // stack unwinding code
-                    masm.instrumentPush(ConditionFlag.Always, 1 << 14);
+                    masm.push(ConditionFlag.Always, 1 << 14);
                     // REMOVED as need reproducability masm.decrementq(ARMV7.r13, frameSize); // 3 instructions
 		    masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, frameSize);
 		    masm.sub(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
@@ -2520,7 +2520,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 case Push: {
                     CiRegisterValue value = assureInRegister(operands[inst.x().index]);
                     if (value.asRegister().number < 16) {
-                        masm.push(ConditionFlag.Always, 1 << value.asRegister().number);
+                        masm.push(ConditionFlag.Always, 1 << value.asRegister().number, true);
                     } else {
                         masm.vpush(ConditionFlag.Always, value.asRegister(), value.asRegister(), value.kind, value.kind);
                     }
@@ -2530,12 +2530,12 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     CiValue result = operands[inst.result.index];
                     if (result.isRegister()) {
                         if (result.asRegister().getEncoding() < 16) {
-                            masm.pop(ConditionFlag.Always, 1 << result.asRegister().getEncoding());
+                            masm.pop(ConditionFlag.Always, 1 << result.asRegister().getEncoding(), true);
                         } else {
                             masm.vpop(ConditionFlag.Always, result.asRegister(), result.asRegister(), result.kind, result.kind);
                         }
                     } else {
-                        masm.pop(ConditionFlag.Always, 1 << 12);
+                        masm.pop(ConditionFlag.Always, 1 << 12, true);
                         moveOp(rscratch1.asValue(), result, result.kind, null, true);
                     }
                     break;

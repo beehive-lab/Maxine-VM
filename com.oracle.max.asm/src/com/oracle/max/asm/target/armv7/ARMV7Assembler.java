@@ -782,11 +782,11 @@ public class ARMV7Assembler extends AbstractAssembler {
         int instruction = 0x01a00000;
         assert (Rd.getEncoding() < 16 && Rm.getEncoding() < 16); // CORE Register move only!
         if (Rd == ARMV7.r15 && SIMULATE_DYNAMIC) {
-            instrumentPush(ConditionFlag.Always, 1 << 12 | 1 << 8);
+            push(ConditionFlag.Always, 1 << 12 | 1 << 8);
             mov(cond, false, ARMV7.r12, Rm);
             ConditionFlag tmp = cond.inverse();
             instrumentNEWAbsolutePC(cond, tmp, true, ARMV7.r12, 0, false);
-            instrumentPop(ConditionFlag.Always, 1 << 12 | 1 << 8);
+            pop(ConditionFlag.Always, 1 << 12 | 1 << 8);
         }
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (s ? 1 : 0) << 20;
@@ -1331,9 +1331,9 @@ public class ARMV7Assembler extends AbstractAssembler {
             orint |= 2;
         }
         emitInt(0xeaffffff); // this is the branch to next instruction ... ie the instrumentPush
-        instrumentPush(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384);
+        push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384);
         mrsReadAPSR(ARMV7Assembler.ConditionFlag.Always, valAddress);
-        instrumentPush(ConditionFlag.Always, 1 << valAddress.getEncoding());
+        push(ConditionFlag.Always, 1 << valAddress.getEncoding());
 
         //vpush(ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double);
         mov32BitConstant(ConditionFlag.Always, valAddress, immediate);
@@ -1344,12 +1344,10 @@ public class ARMV7Assembler extends AbstractAssembler {
         mov32BitConstant(ConditionFlag.Always, ARMV7.r12, maxineFlushAddress);
         blx(ARMV7.r12);
         //vpop(ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double);
-        instrumentPop(ConditionFlag.Always, 1 << valAddress.getEncoding());
+        pop(ConditionFlag.Always, 1 << valAddress.getEncoding());
         msrWriteAPSR(ARMV7Assembler.ConditionFlag.Always, valAddress);
 
-        instrumentPop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384);
-
-        return;
+        pop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384);
     }
 
     public void ldrImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm12) {
@@ -1438,18 +1436,6 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public void instrumentPush(final ConditionFlag flag, final int registerList) {
-        int instruction;
-        assert (registerList > 0);
-        assert (registerList < 0x10000);
-        instruction = (flag.value() & 0xf) << 28;
-        instruction |= 0x9 << 24;
-        instruction |= 0x2 << 20;
-        instruction |= 0xd << 16;
-        instruction |= 0xffff & registerList;
-        emitInt(instruction);
-    }
-
     private void instrumentTest() {
         if (simBuf == 0) {
             simBuf = maxineflush.maxine_instrumentationBuffer();
@@ -1457,7 +1443,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
         boolean read = false;
         boolean data = false;
-        push(ConditionFlag.Always, 1 << 8 | 1 << 9); // Added 1<<9 so that stack is 8 byte aligned
+        push(ConditionFlag.Always, 1 << 8 | 1 << 9, true); // Added 1<<9 so that stack is 8 byte aligned
         for (int i = 0; i < 1028; i++) {
             if (i % 4 == 0) {
                 read = !read;
@@ -1468,11 +1454,15 @@ public class ARMV7Assembler extends AbstractAssembler {
             mov32BitConstant(ConditionFlag.Always, ARMV7.r8, i);
             instrument(read, data, true, ARMV7.r8, 0);
         }
-        pop(ConditionFlag.Always, 1 << 8 | 1 << 9); // Added 1<<9 so that stack is 8 byte aligned
+        pop(ConditionFlag.Always, 1 << 8 | 1 << 9, true); // Added 1<<9 so that stack is 8 byte aligned
     }
 
     public void push(final ConditionFlag flag, final int registerList) {
-        if (SIMULATE_DYNAMIC) {
+        push(flag, registerList, false);
+    }
+
+    public void push(final ConditionFlag flag, final int registerList, boolean instrument) {
+        if (instrument && SIMULATE_DYNAMIC) {
             int count = 0;
             if ((registerList & (1 << 14)) == 0) {
                 for (int i = 0; i < 16; i++) {
@@ -1496,25 +1486,19 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     // Wee need that method due to limited number of registers when we process long values in 32 bit space.
     public void saveRegister(int reg, int reg2) {
-        push(ConditionFlag.Always, (1 << reg) | (1 << reg2));
+        push(ConditionFlag.Always, (1 << reg) | (1 << reg2), true);
     }
 
     public void restoreRegister(int reg, int reg2) {
-        pop(ConditionFlag.Always, (1 << reg) | (1 << reg2));
-    }
-
-    public void instrumentPop(final ConditionFlag flag, final int registerList) {
-        int instruction;
-        instruction = (flag.value() & 0xf) << 28;
-        instruction |= 0x8 << 24;
-        instruction |= 0xb << 20;
-        instruction |= 0xd << 16;
-        instruction |= 0xffff & registerList;
-        emitInt(instruction);
+        pop(ConditionFlag.Always, (1 << reg) | (1 << reg2), true);
     }
 
     public void pop(final ConditionFlag flag, final int registerList) {
-        if (SIMULATE_DYNAMIC) {
+        pop(flag, registerList, false);
+    }
+
+    public void pop(final ConditionFlag flag, final int registerList, boolean instrument) {
+        if (instrument && SIMULATE_DYNAMIC) {
             int count = 0;
             for (int i = 0; i < 16; i++) {
                 if ((registerList & (1 << i)) != 0) {
@@ -1978,7 +1962,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void mulLong(CiRegister dst, CiRegister src1, CiRegister src2) {
         assert (src1 == dst);
-        push(ConditionFlag.Always, 1 << src2.number | 1 << (src2.number + 1));
+        push(ConditionFlag.Always, 1 << src2.number | 1 << (src2.number + 1), true);
         mov(ConditionFlag.Always, false, ARMV7.r12, src2); // save src2
         mul(ConditionFlag.Always, false, src2, src2, ARMV7.cpuRegisters[src1.number + 1]);
         mul(ConditionFlag.Always, false, ARMV7.cpuRegisters[src2.number + 1], src1, ARMV7.cpuRegisters[src2.number + 1]);
@@ -1986,7 +1970,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         umull(ConditionFlag.Always, false, ARMV7.cpuRegisters[src2.number], dst, ARMV7.cpuRegisters[scratchRegister.number], src1);
         addRegisters(ConditionFlag.Always, false, scratchRegister, ARMV7.cpuRegisters[src2.number + 1], src2, 0, 0);
         mov(ConditionFlag.Always, false, ARMV7.cpuRegisters[dst.number + 1], scratchRegister);
-        pop(ConditionFlag.Always, 1 << src2.number | 1 << (src2.number + 1));
+        pop(ConditionFlag.Always, 1 << src2.number | 1 << (src2.number + 1), true);
     }
 
     public void xorq(CiRegister dest, CiAddress src) {
@@ -2049,10 +2033,10 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void pause() {
-        push(ConditionFlag.Always, 1 | 2 | 4 | 128);
+        push(ConditionFlag.Always, 1 | 2 | 4 | 128, true);
         mov32BitConstant(ConditionFlag.Always, ARMV7.r7, 158); // sched_yield
         emitInt(0xef000000); // replaced with svc 0
-        pop(ConditionFlag.Always, 1 | 2 | 4 | 128);
+        pop(ConditionFlag.Always, 1 | 2 | 4 | 128, true);
     }
 
     public final void crashme() {
@@ -2062,7 +2046,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void int3() {
-        push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // push r0-r3 and r7
+        push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384, true); // push r0-r3 and r7
         vpush(ConditionFlag.Always, ARMV7.s0, ARMV7.s30, CiKind.Double, CiKind.Double);
         //mov32BitConstant(ConditionFlag.Always, ARMV7.r0,-4);
         eor(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r0, ARMV7.r0, 0, 0);
@@ -2072,11 +2056,11 @@ public class ARMV7Assembler extends AbstractAssembler {
         mov32BitConstant(ConditionFlag.Always, ARMV7.r7, 224); //gettid
         emitInt(0xef000000); // replaced with svc 0
         // r0 has the tid
-        push(ConditionFlag.Always, 1 | 1 << 7); //r0 has the tid
+        push(ConditionFlag.Always, 1 | 1 << 7, true); //r0 has the tid
         mov32BitConstant(ConditionFlag.Always, ARMV7.r7, 47); //getgid
         emitInt(0xef000000); // replaced with svc 0
         // r0 has the gid
-        pop(ConditionFlag.Always, 2 | 1 << 7); // r1 has the tid
+        pop(ConditionFlag.Always, 2 | 1 << 7, true); // r1 has the tid
 
         mov32BitConstant(ConditionFlag.Always, ARMV7.r2, 5); // SIGUSR1
         //mov32BitConstant(ConditionFlag.Always, ARMV7.r7,238); // tkill
@@ -2085,7 +2069,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(0xef000000); // replaced with svc 0
         //pop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 128);
         vpop(ConditionFlag.Always, ARMV7.s0, ARMV7.s30, CiKind.Double, CiKind.Double);
-        push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // push r0-r3 and r7
+        push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384, true); // push r0-r3 and r7
         //mov32BitConstant(ConditionFlag.Always, ARMV7.r0,-4);
         //emitInt(0xe1200070); // emit a BKPT instruction?
     }
@@ -2104,14 +2088,14 @@ public class ARMV7Assembler extends AbstractAssembler {
  * end_label:
  */
         assert (startAddress.getEncoding() == ARMV7.r12.getEncoding());
-        push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 128); // added 16 to ensure that stack is 8byte aligned!
+        push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 128, true); // added 16 to ensure that stack is 8byte aligned!
         mov(ConditionFlag.Always, false, ARMV7.r0, scratchRegister);
         mov32BitConstant(ConditionFlag.Always, ARMV7.r1, bytes);
         eor(ConditionFlag.Always, false, ARMV7.r2, ARMV7.r2, ARMV7.r2, 0, 0);
         mov32BitConstant(ConditionFlag.Always, ARMV7.r7, 0x000f0002);
         addlsl(ConditionFlag.Always, false, ARMV7.r1, ARMV7.r1, ARMV7.r0, 0);
         emitInt(0xef000000); // replaced with svc 0
-        pop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 128); // added 16 (r4) to ensure stack is 8 byte aligned EVEN NO
+        pop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 128, true); // added 16 (r4) to ensure stack is 8 byte aligned EVEN NO
     }
 
     public final void hlt() {
@@ -2137,7 +2121,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             instrumentNEWAbsolutePC(ConditionFlag.Always, ConditionFlag.NeverUse, true, ARMV7.r12, 0, false);
             // TODO  instrument the POP which is a READ!!!
         }
-        instrumentPop(ConditionFlag.Always, 1 << 15);
+        pop(ConditionFlag.Always, 1 << 15);
     }
 
     public final void ret(int imm16) {
@@ -2151,7 +2135,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void enter(short imm16, byte imm8) {
         assert false : "Enter not implemented";
-        push(ConditionFlag.Always, 1 << 14);
+        push(ConditionFlag.Always, 1 << 14, true);
         mov32BitConstant(ConditionFlag.Always, ARMV7.r12, imm16);
         sub(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
     }
@@ -2209,9 +2193,9 @@ public class ARMV7Assembler extends AbstractAssembler {
 	NEEDS CAREFUL THOUGHT ... USED BY METHOD ENTRY
 	*/
         emitInt(0xeaffffff); // this is the branch to next instruction ... ie the instrumentPush
-        instrumentPush(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
+        push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
         mrsReadAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4);
-        instrumentPush(ConditionFlag.Always, 1 << 4);
+        push(ConditionFlag.Always, 1 << 4);
 
         //vpush(ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // needs to be changed to instrumentVPUSH
         if (isMethodEntry) {
@@ -2261,9 +2245,9 @@ public class ARMV7Assembler extends AbstractAssembler {
         // We will need to search for the correct instruction pattern in the C code .... to check the offsets ...
         emitInt(instruction);
         //vpop( ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // need to be changed to instrumentVPOP
-        instrumentPop(ConditionFlag.Always, 1 << 4);
+        pop(ConditionFlag.Always, 1 << 4);
         msrWriteAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4);
-        instrumentPop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384);
+        pop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384);
         // 3*8 +4*4 = 24+16 = 40 CALCULATION  is now WRONG!!!
         return 40;// not necessary to be correct
     }
@@ -2318,9 +2302,9 @@ public class ARMV7Assembler extends AbstractAssembler {
 	In the second implementation -- to validation cycle accuracy we will  tell him the address of the instruction
 	causing the PC change and also the result of that PC change
 	*/
-        instrumentPush(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
+        push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
         mrsReadAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4);
-        instrumentPush(ConditionFlag.Always, 1 << 4);
+        push(ConditionFlag.Always, 1 << 4);
         //vpush(ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // needs to be changed to instrumentVPUSH
 
         disp = disp - 16; //-4 one instruction aboive // -8 two instructions above , -12 THREE INSTR
@@ -2347,9 +2331,9 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
         //vpop( ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // need to be changed to instrumentVPOP
 
-        instrumentPop(ConditionFlag.Always, 1 << 4);
+        pop(ConditionFlag.Always, 1 << 4);
         msrWriteAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4);
-        instrumentPop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
+        pop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
 
 
         // disp = disp - 3*(8 bytes due to mov32BitConstant)  - 3*(4bytes) - 2*(4Bytes pop and restore APSR)
@@ -2440,7 +2424,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
             int notTakenDisp = 0;
             ConditionFlag notTaken = cond.inverse();
-            instrumentPush(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4 r0..r12 & r14
+            push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4 r0..r12 & r14
             //vpush( ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // need to be changed to instrumentVPUSH
 
             mov(cond, false, ARMV7.r1, target);
@@ -2458,7 +2442,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             emitInt(instruction);
             //vpop( ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // need to be changed to instrumentVPOP
 
-            instrumentPop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
+            pop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
         }
 
         int instruction = 0x012fff10;
@@ -2873,12 +2857,12 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void floatDIV(boolean signed, ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
-        push(ConditionFlag.Always, 1 << 8 | 1 << 9);
+        push(ConditionFlag.Always, 1 << 8 | 1 << 9, true);
         vmrs(ConditionFlag.Always, ARMV7.r8);
         mov32BitConstant(ConditionFlag.Always, ARMV7.r9, 0xc00000);
         orr(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, ARMV7.r9, 0, 0);
         vmsr(ConditionFlag.Always, ARMV7.r8);
-        pop(ConditionFlag.Always, 1 << 8 | 1 << 9);
+        pop(ConditionFlag.Always, 1 << 8 | 1 << 9, true);
         vpush(ConditionFlag.Always, ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double);
         vmov(ConditionFlag.Always, ARMV7.s28, rn, null, CiKind.Float, CiKind.Int);
         vmov(ConditionFlag.Always, ARMV7.s30, rm, null, CiKind.Float, CiKind.Int);
