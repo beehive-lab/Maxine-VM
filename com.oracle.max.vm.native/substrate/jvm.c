@@ -560,9 +560,8 @@ JVM_GetArrayElement(JNIEnv *env, jobject arr, jint index) {
 
 jvalue
 JVM_GetPrimitiveArrayElement(JNIEnv *env, jobject arr, jint index, jint wCode) {
-    jvalue v;
     UNIMPLEMENTED_WITH_ENV();
-    return v;
+    return (jvalue)0;
 }
 
 void
