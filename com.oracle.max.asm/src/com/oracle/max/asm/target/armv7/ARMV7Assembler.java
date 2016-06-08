@@ -44,8 +44,10 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final CiRegister frameRegister;
     public final CiRegister scratchRegister;
     public final RiRegisterConfig registerConfig;
+
     public static boolean INSTRUMENT = false;
     public static boolean ARMASMDEBUG = false;
+    public static boolean ASM_DEBUG_MARKERS = false;
     public static int simBuf = 0;
     public static int simBuffOffset = 0; // testing only not used in real simulation
     public static int maxineFlushAddress = 0;
