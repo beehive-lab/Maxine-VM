@@ -242,48 +242,31 @@ public class ARMV7Assembler extends AbstractAssembler {
         jcc(ConditionFlag.Always, forever);
     }
 
+    public final void b(ConditionFlag cond, int offset) {
+        checkConstraint(-0x800000 <= (offset) && offset <= 0x7fffff, "branch must be within  a 24bit offset");
+        int instruction = (cond.value() & 0xf) << 28;
+        instruction |= 0xA000000;
+        instruction |= 0xffffff & (offset / 4);
+        emitInt(instruction);
+    }
+
     public void branch(Label l) {
         branch(l, false);
     }
 
     public void branch(Label l, boolean instrument) {
         if (l.isBound()) {
-            /*
-             * REMEMBER -- the current stored value of the PC is 8 bytes larger than that of the currently executing
-             * instruction, BUT WHEN we jump we must set PC to the actual address of the instruction we want to execute
-             * NEXT.!!!!
-             */
-            // Compute a relative address if it is less than 24bits;
-            // then branch
-            // or TODO compute an absolute address and do a MOV PC,absolute.
+            int disp = l.position() - codeBuffer.position() - 8;
             if (instrument && SIMULATE_DYNAMIC) {
-                int disp = l.position() - codeBuffer.position() - 8;
                 disp = instrumentPCChange(ConditionFlag.Always, ConditionFlag.NeverUse, disp);
-                checkConstraint(-0x800000 <= (disp) && disp <= 0x7fffff, "branch must be within  a 24bit offset");
-                // Have already done -8
-                emitInt(0x0a000000 | (0xffffff & ((disp) / 4)) | ((ConditionFlag.Always.value() & 0xf) << 28));
-            } else {
-                checkConstraint(-0x800000 <= (l.position() - codeBuffer.position()) && (l.position() - codeBuffer.position()) <= 0x7fffff, "branch must be within  a 24bit offset");
-                emitInt(0x0a000000 | (0xffffff & ((l.position() - codeBuffer.position() - 8) / 4)) | ((ConditionFlag.Always.value() & 0xf) << 28));
             }
+            b(ConditionFlag.Always, disp);
 
         } else {
-            // By default, forward jumps are always 24-bit displacements, since
-            // we can't yet know where the label will be bound. If you're sure that
-            // the forward jump will not run beyond 24-bits bytes, then its ok
             if (instrument && SIMULATE_DYNAMIC) {
-                // will need to be patched inside patchJumpTarget
                 instrumentPCChange(ConditionFlag.Always, ConditionFlag.NeverUse, -2);
-                /*
-                 * We determine the offsets for patching --- by gdb of an exectuion of ... mx vm -Xopt App We break on
-                 * real_maxine_instrumentation --- case of PCCHANGE then do a disas of $lr -0x50,$lr +0x40 and do a
-                 * print /x STARTARRDRESSNEXTINSTR - ADDRESSOFmovwmovtINSTRS NOTE: there may be a true/nottrue ie lt or
-                 * ge destination, or there may be a ConditionFlag.Always only one movw movt to patch
-                 */
             }
             l.addPatchAt(codeBuffer.position(), SIMULATE_DYNAMIC);
-            // emitByte(0xE9);
-            // emitInt(0);
             nop();
         }
     }
