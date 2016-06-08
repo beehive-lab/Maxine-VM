@@ -85,8 +85,6 @@ public class CompilationBroker implements NativeCMethodinVM {
 
     @Override
     public int maxine_flush_instrumentationBuffer() {
-        // returns the int address of the method in C ... ugly but fast dynamic linking ....
-        // should really do it the proper way by CriticalMethods etc etc
         return com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.maxine_flush_instrumentationBuffer();
     }
 
@@ -121,11 +119,9 @@ public class CompilationBroker implements NativeCMethodinVM {
     private static boolean FailOverCompilation = true;
     private static boolean VMExtOpt;
     static int PrintCodeCacheMetrics;
+
     public static boolean OFFLINE = false;
-    /* SIMULATEADAPTER needs to be set to true in any test harness where inlining might occur and we are compiled by C1X
-    the number of nops is 4, movw(r12) movt(r12), add(r12,pc,r12), blx(r12) to account for the call to the adapter
-     Is this also true for T1X compiled methods? */
-    public static boolean SIMULATEADAPTER = false; // needed to be set for test harness when method calls occur
+    public static boolean SIMULATE_ADAPTER = false;
 
     static {
         addFieldOption("-X", "opt", CompilationBroker.class, "Select optimizing compiler whenever possible.");
@@ -326,7 +322,6 @@ public class CompilationBroker implements NativeCMethodinVM {
      * @param phase the phase of VM starting up.
      */
     public void initialize(MaxineVM.Phase phase) {
-        //Log.println("COMPILATION BROKER INITIALIZE");
         optimizingCompiler.initialize(phase);
         if (baselineCompiler != null) {
             baselineCompiler.initialize(phase);
@@ -472,7 +467,6 @@ public class CompilationBroker implements NativeCMethodinVM {
                 if (doCompile) {
                     TargetMethod tm = compilation.compile();
                     VMTI.handler().methodCompiled(cma);
-                    //Log.println("DONE VMTI.handler().methodCompiled(cma)");
                     return tm;
                 } else {
                     // return result from other thread (which will have send the VMTI event)
@@ -533,9 +527,6 @@ public class CompilationBroker implements NativeCMethodinVM {
                 String compilerName = compilerFor(cma);
                 reason = null;
                 compiler = null;
-                if (VMOptions.verboseOption.verboseCompilation) {
-                    //Log.println("attempting to set compiler as " + compilerName);
-                }
                 if (compilerName != null) {
                     if (optimizingCompiler != null && optimizingCompiler.matches(compilerName)) {
                         compiler = optimizingCompiler;
@@ -875,25 +866,13 @@ public class CompilationBroker implements NativeCMethodinVM {
                 if (current.isTopFrame()) {
                     return true;
                 }
-                // VMOptions.verboseOption.verboseCompilation = true;  // temporary whilst debugging Mandelbrot
                 Pointer ip = current.ipAsPointer();
-                //com.sun.max.vm.Log.println(ip);
-                Pointer newIp = ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE + 12); // this is to make it the same size as RIP_CALL_INSTRUCTION_LENGTH
-                /* movw movt add blx */
-
-
+                Pointer newIp = ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE + 12);
                 if (ARMTargetMethodUtil.isARMV7RIPCall(current.targetMethod(), newIp)) {
                     CodePointer callSite = CodePointer.from(newIp);
-
                     int ripOffset = ARMTargetMethodUtil.ripCallOFFSET(current.targetMethod(), newIp);
-                    CodePointer target = CodePointer.from(newIp).plus(ripOffset).minus(8); // ARM internal PC is +8, and the call takes account of this
-
-                    // TODO CodePointer issues, masking off of -ve MSB in toInt might cause problems?
-                    // TODO when trying to locate directCalleePosition's below ....
-                    //TODO REMOVE LOGGING WHEN CONFIDENT THIS IS OK Log.println("MATCHED RIPCALL");
-
+                    CodePointer target = CodePointer.from(newIp).plus(ripOffset).minus(8);
                     if (target.equals(oldMethod.getEntryPoint(BASELINE_ENTRY_POINT))) {
-                        //Log.println("matched OLD method BASELINE entry point");
                         final CodePointer to = newMethod.getEntryPoint(BASELINE_ENTRY_POINT);
                         final TargetMethod tm = current.targetMethod();
                         final int dcIndex = directCalleePosition(tm, callSite);
@@ -902,8 +881,8 @@ public class CompilationBroker implements NativeCMethodinVM {
                         ARMTargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
                         // Stop traversing the stack after a direct call site has been patched
                         return false;
-                    } else if (target.equals(oldMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT))) {
-                        //Log.println("matched OLD method OPTIMIZED entry point");
+                    }
+                    if (target.equals(oldMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT))) {
                         final CodePointer to = newMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT);
                         final TargetMethod tm = current.targetMethod();
                         final int dcIndex = directCalleePosition(tm, callSite);
@@ -912,18 +891,13 @@ public class CompilationBroker implements NativeCMethodinVM {
                         ARMTargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
                         // Stop traversing the stack after a direct call site has been patched
                         return false;
-                    } else {
-                        //Log.print(current.targetMethod()); Log.println("FAILED to match RIPCALL in visitFrame after matchin RIP");
                     }
-                } else {
-                    // TODO REMOVE LOGGING Log.println("FAILED to match RIPCALL in visitFrame");
                 }
                 if (++frameCount > FRAME_SEARCH_LIMIT) {
                     logNoFurtherStaticCallPatching();
                     return false;
                 }
                 return true;
-
             }
             if (platform().isa == ISA.AMD64) {
                 if (current.isTopFrame()) {
