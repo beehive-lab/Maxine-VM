@@ -134,7 +134,6 @@ public final class SemiSpaceCodeRegion extends CodeRegion {
         }
 
         Pointer oldAllocationMark = mark();
-	//Log.print(oldAllocationMark);
         Pointer cell = adjustForDebugTag ? DebugHeap.adjustForDebugTag(oldAllocationMark) : oldAllocationMark;
         Address end = cell.plus(size);
         if (end.greaterThan(topOfSpace)) {
@@ -145,10 +144,6 @@ public final class SemiSpaceCodeRegion extends CodeRegion {
             return Pointer.zero();
         }
         setMark(end);
-	//Log.print(" OLDST ALLOCATED ");Log.print(size);Log.print(   "ADDRESS ");Log.println(cell);
-       // Log.print(start); Log.print(" SIZE "); Log.println(this.size);
-
-
         return cell;
     }
 
