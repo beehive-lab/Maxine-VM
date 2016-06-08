@@ -614,7 +614,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             @Override
             public int callSizeInPrologue() {
                 return RIP_CALL_INSTRUCTION_SIZE;
-            } // movw movt add blx
+            }
 
             /**
              * Computes the amount by which the stack pointer in a given {@linkplain StackFrameCursor cursor}
