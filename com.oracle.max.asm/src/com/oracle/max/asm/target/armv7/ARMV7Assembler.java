@@ -1448,6 +1448,14 @@ public class ARMV7Assembler extends AbstractAssembler {
         pop(ConditionFlag.Always, 1 << 8 | 1 << 9, true); // Added 1<<9 so that stack is 8 byte aligned
     }
 
+    public int getRegisterList(CiRegister... regs) {
+        int regList = 0;
+        for (CiRegister reg : regs) {
+            regList |= 1 << reg.getEncoding();
+        }
+        return regList;
+    }
+
     public void push(final ConditionFlag flag, final int registerList) {
         push(flag, registerList, false);
     }
