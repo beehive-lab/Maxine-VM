@@ -2439,7 +2439,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 }
                 case PushFrame: {
                     int frameSize = initialFrameSizeInBytes();
-                    if (CompilationBroker.SIMULATEADAPTER) {
+                    if (CompilationBroker.SIMULATE_ADAPTER) {
                         /*
                          * Needed as we now have adjusted the start address to include the adapter offset? If this is
                          * not included then the stack adjustment and the LR register are lost!
