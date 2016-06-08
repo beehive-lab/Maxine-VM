@@ -795,7 +795,7 @@ public class Stubs {
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP));
             //asm.movq(callSite, new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue()));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, callSite, ARMV7.r12, 0); // we need callSite and r12 to be different registers
-            asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE + 12); // this adjusts callSite to contain the correxct
+            asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE); // this adjusts callSite to contain the correxct
             //   callSite address
 
 
@@ -832,7 +832,7 @@ public class Stubs {
 
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, callSite, asm.scratchRegister, 0);
-            asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE + 12);
+            asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
             asm.setUpRegister(ARMV7.r12, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
             //asm.movq(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue()), callSite);
 

@@ -58,10 +58,9 @@ public final class ARMTargetMethodUtil {
     public static final int RET = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28) | (0x8 << 24) | (0xb << 20) | (0xd << 16) | (1 << 15);
 
     /**
-     * X86 Size (in bytes) of a RIP-relative call instruction. ARM this is 4 bytes, or we might need to calculate it
-     * according to the way we calculate the relative address? do we need to include the register save STMFD
+     * In X86 we do a RIP_CALL instruction, but in ARM we do a blx of 16 bytes.
      */
-    public static final int RIP_CALL_INSTRUCTION_SIZE = 4;
+    public static final int RIP_CALL_INSTRUCTION_SIZE = 16;
 
     /**
      * Lock to avoid race on concurrent icache invalidation when patching target methods. ARM I think we need to insert

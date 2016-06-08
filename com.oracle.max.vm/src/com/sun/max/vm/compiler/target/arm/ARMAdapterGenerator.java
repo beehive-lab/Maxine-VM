@@ -110,7 +110,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             @Override
             public int callSizeInPrologue() {
-                return RIP_CALL_INSTRUCTION_SIZE + 12;
+                return RIP_CALL_INSTRUCTION_SIZE;
             }
 
             /**
@@ -613,7 +613,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             @Override
             public int callSizeInPrologue() {
-                return RIP_CALL_INSTRUCTION_SIZE + 12;
+                return RIP_CALL_INSTRUCTION_SIZE;
             } // movw movt add blx
 
             /**
