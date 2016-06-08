@@ -133,26 +133,15 @@ public enum CallEntryPoint {
             e.init(0, 0);
         }
     }
+
     static {
         if (vm().compilationBroker.needsAdapters()) {
             if (Platform.target().arch.is32bit()) {
-
-        /*
-        RIP_CALL_INSTRUCTION_LENGTH = 16 bytes, ENTRYPOINT IS the push, Start of the CALL is the movw.
-	Adapter call sequence is 20bytes total.
-        The PC at the add is +8
-        push lr CALL TO AN ADAPTER
-        movw    CALLPOS start is the beginning of this instruction
-        movt
-        add r12, r12,PC
-        blx r12 END OF CALL TO AN ADAPTER
-        OPTENTRYPOINT push lr ...
-         */
                 OPTIMIZED_ENTRY_POINT.init(20, 20);
                 BASELINE_ENTRY_POINT.init(0, 0);
-                VTABLE_ENTRY_POINT.init(20, 20);
+                VTABLE_ENTRY_POINT.init(OPTIMIZED_ENTRY_POINT);
                 C_ENTRY_POINT.init(0, OPTIMIZED_ENTRY_POINT.offset());
-            }else {
+            } else {
                 OPTIMIZED_ENTRY_POINT.init(8, 8);
                 BASELINE_ENTRY_POINT.init(0, 0);
                 VTABLE_ENTRY_POINT.init(OPTIMIZED_ENTRY_POINT);
