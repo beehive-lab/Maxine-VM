@@ -583,17 +583,13 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         if (adapterGenerator != null) {
             adapter = adapterGenerator.adapt(method, asm);
         }
-        // stacksize = imm16
-        // push frame pointer
-        // framepointer = stackpointer
-        // stackptr = framepointer -stacksize
 
         int frameSize = frame.frameSize();
-        asm.push(ConditionFlag.Always, 1 << 14, true); // push return address on stack
-        asm.push(ConditionFlag.Always, 1 << 11, true); // push frame pointer onto STACK
-        asm.mov(ConditionFlag.Always, false, ARMV7.r11, ARMV7.r13); // create a new framepointer = stack ptr
-        asm.subq(ARMV7.r13, frameSize - Word.size()); // APN is this necessary for ARM ie push does it anyway?
-        asm.subq(ARMV7.r11, framePointerAdjustment()); // TODO FP/SP not being set up correctly ...
+        asm.push(ConditionFlag.Always, asm.getRegisterList(ARMV7.LR), true);
+        asm.push(ConditionFlag.Always, asm.getRegisterList(ARMV7.FP), true);
+        asm.mov(ConditionFlag.Always, false, ARMV7.FP, ARMV7.rsp);
+        asm.subq(ARMV7.rsp, frameSize - Word.size());
+        asm.subq(ARMV7.FP, framePointerAdjustment());
 
         // TODO: Fix below
         if (Trap.STACK_BANGING) {
@@ -646,14 +642,14 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
     @Override
     protected void emitEpilogue() {
-        asm.addq(ARMV7.r11, framePointerAdjustment()); // we might be missing some kind of pop here?
-        asm.mov(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r11); // changed to false for flag update
+        asm.addq(ARMV7.FP, framePointerAdjustment());
+        asm.mov(ConditionFlag.Always, false, ARMV7.rsp, ARMV7.FP);
         final short stackAmountInBytes = (short) frame.sizeOfParameters();
-        asm.pop(ConditionFlag.Always, 1 << 11, true); // POP the frame pointer
-        asm.pop(ConditionFlag.Always, 1 << 8, true); // POP return address into r8
+        asm.pop(ConditionFlag.Always, asm.getRegisterList(ARMV7.FP), true);
+        asm.pop(ConditionFlag.Always, asm.getRegisterList(r8), true);
         asm.mov32BitConstant(ConditionFlag.Always, scratch, stackAmountInBytes);
-        asm.addRegisters(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0); // changed to false for flag update
-        asm.mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r8); // RETURN
+        asm.addRegisters(ConditionFlag.Always, false, ARMV7.rsp, ARMV7.rsp, scratch, 0, 0);
+        asm.mov(ConditionFlag.Always, false, ARMV7.PC, ARMV7.r8);
     }
 
     @Override
