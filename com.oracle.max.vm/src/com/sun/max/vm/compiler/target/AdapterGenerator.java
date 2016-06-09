@@ -267,7 +267,6 @@ public abstract class AdapterGenerator {
         Adapter adapter = make(callee);
         int prologueSize = emitPrologue(out, adapter);
         assert adapter == null || prologueSize == prologueSizeForCallee(callee);
-        //System.out.println(prologueSize + " mismatch AdapterGenerator " + prologueSizeForCallee(callee));
         return adapter;
     }
 
