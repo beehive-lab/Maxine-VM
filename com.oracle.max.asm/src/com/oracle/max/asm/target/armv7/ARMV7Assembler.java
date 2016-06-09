@@ -1775,16 +1775,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void call() {
-        // ok we do not have the same semantics as intel
-        // this is used for a call where we don't know the actual target when we insert it
-        // ie for a trampoline.
-        // APN proposes we use the scratch register to calculate an address then we do the mov pc
-        // looking at Stubs.java we can see that all registers have been saved
-        // so we can use whatever registers we want!
-        // emitInt(0); // space for setupscratch
-        // emitInt(0);
         nop(4);
-        // Target needs to be patched later ...
     }
 
     public final void blx(CiRegister target) {
