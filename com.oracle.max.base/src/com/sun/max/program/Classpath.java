@@ -263,12 +263,23 @@ public class Classpath {
      * @param paths an array of classpath entries
      */
     public Classpath(String[] paths) {
-        final Entry[] entryArray = new Entry[paths.length];
-        for (int i = 0; i < paths.length; ++i) {
-            final String path = paths[i];
-            entryArray[i] = createEntry(path);
+        entries = new ArrayList<>();
+        for (String path : paths) {
+            File pathFile = new File(path);
+            // We are looking for jars
+            if (path.endsWith("*")) {
+                pathFile = new File(path.substring(0, path.length() - 1));
+                if (pathFile.isDirectory()) {
+                    for (File file : pathFile.listFiles()) {
+                        if (file.getName().endsWith(".jar")) {
+                            entries.add(createEntry(file.getAbsolutePath()));
+                        }
+                    }
+                }
+            } else {
+                entries.add(createEntry(path));
+            }
         }
-        this.entries = Arrays.asList(entryArray);
     }
 
     /**
@@ -344,9 +355,11 @@ public class Classpath {
      */
     public static Classpath bootClassPath(String extraPath) {
         String value = System.getProperty("sun.boot.class.path");
+        String applicationClassPath = System.getProperty("java.class.path");
         if (value == null) {
             return EMPTY;
         }
+        value = value + File.pathSeparator + applicationClassPath;
         if (extraPath != null) {
             value = value + File.pathSeparator + extraPath;
         }
