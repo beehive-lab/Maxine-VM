@@ -233,142 +233,17 @@ public class VmOperationThread extends Thread implements UncaughtExceptionHandle
             // Any given operation instance can be put on the queue at most once
             // so synchronize all threads trying to use the same VM operation
             // instance here.
+            // CK: We synchronize in all cases except when we have a GC operation.
+            // This is because we end up in a race condition when expanding the binding monitor list,
+            // triggers a GC. This ends up in stack overflow since the lock below again triggers a GC.
+            // In fact we do not need that lock for GC operations since they are already synchronized
+            // on the HEAP_LOCK sticky monitor.
             if (!operation.disablesHeapAllocation()) {
                 synchronized (operation) {
-
-                    operation.setCallingThread(vmThread);
-
-                    if (operation.mode.isBlocking()) {
-                        // Increment before putting the operations on the queue, otherwise,
-                        // a race may occurs with the VmOperationThread.
-                        vmThread.incrementPendingOperations();
-                    }
-
-                    // Add operation to queue
-                    synchronized (QUEUE_LOCK) {
-                        vmOperationThread.queue.add(operation);
-                        if (TraceVmOperations) {
-                            boolean lockDisabledSafepoints = Log.lock();
-                            Log.print("VM operation ");
-                            Log.print(operation.name);
-                            Log.print(" submitted by ");
-                            Log.printThread(vmThread, false);
-                            Log.println(" - notifying VM operation thread");
-                            Log.unlock(lockDisabledSafepoints);
-                        }
-                        QUEUE_LOCK.notify();
-                    }
-
-                    if (operation.mode.isBlocking()) {
-                        // Wait until operation completes
-                        synchronized (REQUEST_LOCK) {
-                            int count = 0;
-                            while (vmThread.pendingOperations() > 0) {
-                                if (TraceRequestLock) {
-                                    boolean lockDisabledSafepoints = Log.lock();
-                                    count++;
-                                    Log.printThread(vmThread, false);
-                                    Log.print(" waiting #");
-                                    Log.print(count);
-                                    Log.print(" on REQUEST_LOCK for completion of VM operation ");
-                                    Log.println(operation.name);
-                                    Log.unlock(lockDisabledSafepoints);
-                                }
-                                try {
-                                    REQUEST_LOCK.wait();
-                                } catch (InterruptedException e) {
-                                    Log.println("Caught InterruptedException while waiting for VM operation to complete");
-                                }
-                            }
-                            if (TraceRequestLock) {
-                                Log.printThread(vmThread, false);
-                                Log.print(" resuming after #");
-                                Log.print(count);
-                                Log.print(" wait on REQUEST_LOCK,  completed VM operation  ");
-                                Log.println(operation.name);
-                            }
-                        }
-                    }
-
-                    operation.doItEpilogue(false);
-
-                    if (TraceVmOperations) {
-                        boolean lockDisabledSafepoints = Log.lock();
-                        Log.print("VM operation ");
-                        Log.print(operation.name);
-                        Log.print(" submitted by ");
-                        Log.printThread(vmThread, false);
-                        Log.println(" - done");
-                        Log.unlock(lockDisabledSafepoints);
-                    }
+                    addOperation(operation, vmThread, vmOperationThread);
                 }
             } else {
-
-                operation.setCallingThread(vmThread);
-
-                if (operation.mode.isBlocking()) {
-                    // Increment before putting the operations on the queue, otherwise,
-                    // a race may occurs with the VmOperationThread.
-                    vmThread.incrementPendingOperations();
-                }
-
-                // Add operation to queue
-                synchronized (QUEUE_LOCK) {
-                    vmOperationThread.queue.add(operation);
-                    if (TraceVmOperations) {
-                        boolean lockDisabledSafepoints = Log.lock();
-                        Log.print("VM operation ");
-                        Log.print(operation.name);
-                        Log.print(" submitted by ");
-                        Log.printThread(vmThread, false);
-                        Log.println(" - notifying VM operation thread");
-                        Log.unlock(lockDisabledSafepoints);
-                    }
-                    QUEUE_LOCK.notify();
-                }
-
-                if (operation.mode.isBlocking()) {
-                    // Wait until operation completes
-                    synchronized (REQUEST_LOCK) {
-                        int count = 0;
-                        while (vmThread.pendingOperations() > 0) {
-                            if (TraceRequestLock) {
-                                boolean lockDisabledSafepoints = Log.lock();
-                                count++;
-                                Log.printThread(vmThread, false);
-                                Log.print(" waiting #");
-                                Log.print(count);
-                                Log.print(" on REQUEST_LOCK for completion of VM operation ");
-                                Log.println(operation.name);
-                                Log.unlock(lockDisabledSafepoints);
-                            }
-                            try {
-                                REQUEST_LOCK.wait();
-                            } catch (InterruptedException e) {
-                                Log.println("Caught InterruptedException while waiting for VM operation to complete");
-                            }
-                        }
-                        if (TraceRequestLock) {
-                            Log.printThread(vmThread, false);
-                            Log.print(" resuming after #");
-                            Log.print(count);
-                            Log.print(" wait on REQUEST_LOCK,  completed VM operation  ");
-                            Log.println(operation.name);
-                        }
-                    }
-                }
-
-                operation.doItEpilogue(false);
-
-                if (TraceVmOperations) {
-                    boolean lockDisabledSafepoints = Log.lock();
-                    Log.print("VM operation ");
-                    Log.print(operation.name);
-                    Log.print(" submitted by ");
-                    Log.printThread(vmThread, false);
-                    Log.println(" - done");
-                    Log.unlock(lockDisabledSafepoints);
-                }
+                addOperation(operation, vmThread, vmOperationThread);
             }
         } else {
             // Invoked by VM operation thread
@@ -405,6 +280,75 @@ public class VmOperationThread extends Thread implements UncaughtExceptionHandle
                 vmOperationThread.currentOperation = enclosingOperation;
                 operation.enclosing = null;
             }
+        }
+    }
+
+    private static void addOperation(VmOperation operation, VmThread vmThread, VmOperationThread vmOperationThread) {
+
+        operation.setCallingThread(vmThread);
+
+        if (operation.mode.isBlocking()) {
+            // Increment before putting the operations on the queue, otherwise,
+            // a race may occurs with the VmOperationThread.
+            vmThread.incrementPendingOperations();
+        }
+
+        // Add operation to queue
+        synchronized (QUEUE_LOCK) {
+            vmOperationThread.queue.add(operation);
+            if (TraceVmOperations) {
+                boolean lockDisabledSafepoints = Log.lock();
+                Log.print("VM operation ");
+                Log.print(operation.name);
+                Log.print(" submitted by ");
+                Log.printThread(vmThread, false);
+                Log.println(" - notifying VM operation thread");
+                Log.unlock(lockDisabledSafepoints);
+            }
+            QUEUE_LOCK.notify();
+        }
+
+        if (operation.mode.isBlocking()) {
+            // Wait until operation completes
+            synchronized (REQUEST_LOCK) {
+                int count = 0;
+                while (vmThread.pendingOperations() > 0) {
+                    if (TraceRequestLock) {
+                        boolean lockDisabledSafepoints = Log.lock();
+                        count++;
+                        Log.printThread(vmThread, false);
+                        Log.print(" waiting #");
+                        Log.print(count);
+                        Log.print(" on REQUEST_LOCK for completion of VM operation ");
+                        Log.println(operation.name);
+                        Log.unlock(lockDisabledSafepoints);
+                    }
+                    try {
+                        REQUEST_LOCK.wait();
+                    } catch (InterruptedException e) {
+                        Log.println("Caught InterruptedException while waiting for VM operation to complete");
+                    }
+                }
+                if (TraceRequestLock) {
+                    Log.printThread(vmThread, false);
+                    Log.print(" resuming after #");
+                    Log.print(count);
+                    Log.print(" wait on REQUEST_LOCK,  completed VM operation  ");
+                    Log.println(operation.name);
+                }
+            }
+        }
+
+        operation.doItEpilogue(false);
+
+        if (TraceVmOperations) {
+            boolean lockDisabledSafepoints = Log.lock();
+            Log.print("VM operation ");
+            Log.print(operation.name);
+            Log.print(" submitted by ");
+            Log.printThread(vmThread, false);
+            Log.println(" - done");
+            Log.unlock(lockDisabledSafepoints);
         }
     }
 
