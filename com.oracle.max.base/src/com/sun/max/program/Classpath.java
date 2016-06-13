@@ -355,11 +355,9 @@ public class Classpath {
      */
     public static Classpath bootClassPath(String extraPath) {
         String value = System.getProperty("sun.boot.class.path");
-        String applicationClassPath = System.getProperty("java.class.path");
         if (value == null) {
             return EMPTY;
         }
-        value = value + File.pathSeparator + applicationClassPath;
         if (extraPath != null) {
             value = value + File.pathSeparator + extraPath;
         }
