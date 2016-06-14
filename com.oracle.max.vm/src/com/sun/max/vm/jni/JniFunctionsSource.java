@@ -121,8 +121,12 @@ public final class JniFunctionsSource {
             throw new ClassNotFoundException();
         }
         // Skip our frame
-        Class caller = JDK_sun_reflect_Reflection.getCallerClassForFindClass(1);
+        // (ck): I think we have to skip more than one frame.
+        // Experimentally determined to be three.
+        Class caller = JDK_sun_reflect_Reflection.getCallerClassForFindClass(3);
+
         ClassLoader classLoader = caller == null ? ClassLoader.getSystemClassLoader() : ClassActor.fromJava(caller).classLoader;
+
         final Class javaClass = findClass(classLoader, className);
         Snippets.makeClassInitialized(ClassActor.fromJava(javaClass));
         return JniHandles.createLocalHandle(javaClass);
