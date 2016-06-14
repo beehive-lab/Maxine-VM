@@ -1622,8 +1622,7 @@ public final class ClassfileReader {
          */
 
         saveClassfile(name, bytes);
-	//Log.println("SAVECLASS");
-        final ClassfileStream classfileStream = new ClassfileStream(bytes, offset, length);
+	final ClassfileStream classfileStream = new ClassfileStream(bytes, offset, length);
         final ClassfileReader classfileReader = new ClassfileReader(classfileStream, classLoader);
         ClassActor classActor = classfileReader.loadClass(name, source, isRemote);
         classActor.setProtectionDomain(protectionDomain);
