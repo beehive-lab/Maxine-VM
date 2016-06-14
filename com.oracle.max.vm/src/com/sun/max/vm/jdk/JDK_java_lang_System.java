@@ -795,6 +795,8 @@ public final class JDK_java_lang_System {
         properties.setProperty(JAVA_CLASS_PATH.property, javaClassPath);
         JAVA_CLASS_PATH.setValue(javaClassPath);
 
+
+
         // 9. load the native code for zip and java libraries
         BootClassLoader.BOOT_CLASS_LOADER.loadJavaAndZipNativeLibraries(javaAndZipLibraryPaths[0], javaAndZipLibraryPaths[1]);
 
@@ -823,10 +825,61 @@ public final class JDK_java_lang_System {
             }
         }
 
+        String expandedClassPath = expandClassLibPath(System.getProperty("java.class.path"), "jar", false);
+        properties.setProperty(JAVA_CLASS_PATH.property, expandedClassPath);
+        JAVA_CLASS_PATH.setValue(expandedClassPath);
+
         // 13. reinitialize the Java launcher so that it reflects the actual application classpath
         Launcher_clinit();
 
         return properties;
+    }
+
+    /**
+     * This method expands directories of jar files when passed as <dir>/* to classpath.
+     * @param path The jar directory
+     * @param suffix The suffix for the files to expand upon
+     * @param debug flag
+     * @return the expanded class path
+     */
+    private static  String expandClassLibPath(String path, String suffix, boolean debug) {
+        if (path == "" || path == null) {
+            return "";
+        }
+        String newClassPath = "";
+        String[] paths = path.split(":");
+        for (String p : paths) {
+            if (debug) {
+                System.out.println("Process Path: " + p);
+            }
+            if (p.endsWith("*")) {
+                String potentialDir = p.substring(0, p.length() - 1);
+                if (debug) {
+                    System.out.println("Protential Dir: " + potentialDir);
+                }
+                File file = new File(potentialDir);
+                if (file.isDirectory()) {
+                    for (File f : file.listFiles()) {
+                        if (debug) {
+                            System.out.println("Process File in dir: " + f.getName());
+                        }
+                        if (f.getName().endsWith(suffix)) {
+                            if (debug) {
+                                System.out.println("Match");
+                            }
+                            newClassPath = newClassPath + ":" + f.getAbsolutePath();
+                        }
+                    }
+                }
+            } else {
+                newClassPath = newClassPath + ":" + p;
+            }
+        }
+        newClassPath = newClassPath.substring(1, newClassPath.length());
+        if (debug) {
+            System.out.println("New ClassPath: " + newClassPath);
+        }
+        return newClassPath;
     }
 
     /**
