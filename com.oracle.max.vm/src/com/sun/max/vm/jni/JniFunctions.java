@@ -4752,10 +4752,11 @@ public final class JniFunctions {
     }
 
     private static final ClassActor DirectByteBuffer = ClassActor.fromJava(Classes.forName("java.nio.DirectByteBuffer"));
+    private static final ClassActor IntBuffer = ClassActor.fromJava(Classes.forName("java.nio.IntBuffer"));
 
     @VM_ENTRY_POINT
     private static JniHandle NewDirectByteBuffer(Pointer env, Pointer address, long capacity) throws Exception {
-        // Source: JniFunctionsSource.java:1751
+        // Source: JniFunctionsSource.java:1752
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.NewDirectByteBuffer.ordinal(), UPCALL_ENTRY, anchor, env, address, Address.fromLong(capacity));
@@ -4778,7 +4779,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static Pointer GetDirectBufferAddress(Pointer env, JniHandle buffer) throws Exception {
-        // Source: JniFunctionsSource.java:1757
+        // Source: JniFunctionsSource.java:1758
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetDirectBufferAddress.ordinal(), UPCALL_ENTRY, anchor, env, buffer);
@@ -4786,7 +4787,7 @@ public final class JniFunctions {
 
         try {
             Object buf = buffer.unhand();
-            if (DirectByteBuffer.isInstance(buf)) {
+            if (DirectByteBuffer.isInstance(buf) || IntBuffer.isInstance(buf)) {
                 long address = ClassRegistry.Buffer_address.getLong(buf);
                 return Pointer.fromLong(address);
             }
@@ -4805,7 +4806,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static long GetDirectBufferCapacity(Pointer env, JniHandle buffer) {
-        // Source: JniFunctionsSource.java:1767
+        // Source: JniFunctionsSource.java:1768
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetDirectBufferCapacity.ordinal(), UPCALL_ENTRY, anchor, env, buffer);
@@ -4831,7 +4832,7 @@ public final class JniFunctions {
 
     @VM_ENTRY_POINT
     private static int GetObjectRefType(Pointer env, JniHandle obj) {
-        // Source: JniFunctionsSource.java:1776
+        // Source: JniFunctionsSource.java:1777
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetObjectRefType.ordinal(), UPCALL_ENTRY, anchor, env, obj);

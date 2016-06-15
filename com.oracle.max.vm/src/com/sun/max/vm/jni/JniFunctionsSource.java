@@ -1746,6 +1746,7 @@ public final class JniFunctionsSource {
     }
 
     private static final ClassActor DirectByteBuffer = ClassActor.fromJava(Classes.forName("java.nio.DirectByteBuffer"));
+    private static final ClassActor IntBuffer = ClassActor.fromJava(Classes.forName("java.nio.IntBuffer"));
 
     @VM_ENTRY_POINT
     private static JniHandle NewDirectByteBuffer(Pointer env, Pointer address, long capacity) throws Exception {
@@ -1756,7 +1757,7 @@ public final class JniFunctionsSource {
     @VM_ENTRY_POINT
     private static Pointer GetDirectBufferAddress(Pointer env, JniHandle buffer) throws Exception {
         Object buf = buffer.unhand();
-        if (DirectByteBuffer.isInstance(buf)) {
+        if (DirectByteBuffer.isInstance(buf) || IntBuffer.isInstance(buf)) {
             long address = ClassRegistry.Buffer_address.getLong(buf);
             return Pointer.fromLong(address);
         }
