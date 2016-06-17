@@ -649,11 +649,6 @@ public final class MaxineVM {
         VMLog.vmLog().initialize(MaxineVM.Phase.TERMINATING);
         vmConfig().initializeSchemes(MaxineVM.Phase.TERMINATING);
         VmOperationThread.terminate();
-
-        // Drop back to PRIMORDIAL
-        MaxineVM vm = vm();
-        vm.phase = MaxineVM.Phase.PRIMORDIAL;
-
         native_exit(code);
     }
 }
