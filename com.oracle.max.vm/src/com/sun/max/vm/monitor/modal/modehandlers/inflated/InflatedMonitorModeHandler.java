@@ -246,7 +246,6 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
                                     : InflatedMonitorLockword64.boundFromThreadId(encodeCurrentThreadIDForLockword());
 
                     if (Platform.target().arch.is32bit()) {
-                        FatalError.asert(!lockword.isLocked());
                         FatalError.asert(newLockword.isBound());
                         FatalError.asert(newLockword.getThreadId() == encodeCurrentThreadIDForLockword());
                         FatalError.asert(newLockword.isInflated());
