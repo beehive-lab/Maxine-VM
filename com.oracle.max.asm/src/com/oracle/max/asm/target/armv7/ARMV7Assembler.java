@@ -2301,26 +2301,16 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void jcc(ConditionFlag cc, int target, boolean forceDisp32) {
-        /*
-         * REMEMBER -- the current stored value of the PC is 8 bytes larger than that of the currently executing
-         * instruction, BUT WHEN we jump we must set PC to the actual address of the instruction we want to execute
-         * NEXT.!!!!
-         */
         int disp = (target - codeBuffer.position());
-        if (Math.abs(disp) <= 16777214 && !forceDisp32 && !SIMULATE_DYNAMIC) { // TODO check ok to make this false
+        if (Math.abs(disp) <= 16777214 && !forceDisp32 && !SIMULATE_DYNAMIC) {
             disp = (disp - 8) / 4;
             emitInt((cc.value & 0xf) << 28 | (0xa << 24) | (disp & 0xffffff));
         } else {
-            if (disp > 0) {
-                disp -= 16;
-            } else {
-                disp = disp - 16;
-            }
+            disp -= 16;
             mov32BitConstant(ConditionFlag.Always, scratchRegister, disp);
             addRegisters(ConditionFlag.Always, false, scratchRegister, ARMV7.r15, scratchRegister, 0, 0);
             mov(cc, false, ARMV7.r15, scratchRegister);
         }
-
     }
 
     public final void jcc(ConditionFlag cc, Label l) {
@@ -2427,23 +2417,16 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void jmp(int target, boolean forceDisp32) {
-
         int disp = target - codeBuffer.position();
-        if (disp <= 16777215 && forceDisp32 && !SIMULATE_DYNAMIC) {
+        if (disp <= 16777215 && !forceDisp32 && !SIMULATE_DYNAMIC) {
             disp = (disp / 4) - 2;
             emitInt((0xe << 28) | (0xa << 24) | (disp & 0xffffff));
         } else {
-            if (disp > 0) {
-                disp -= 16;
-            } else if (disp < 0) {
-                disp = disp - 16;
-            }
-
+            disp -= 16;
             mov32BitConstant(ConditionFlag.Always, scratchRegister, disp);
             addRegisters(ConditionFlag.Always, false, scratchRegister, ARMV7.r15, scratchRegister, 0, 0);
             mov(ConditionFlag.Always, false, ARMV7.r15, scratchRegister); // UPDATE the PC to the target
         }
-
     }
 
     public final void mrsReadAPSR(ConditionFlag cond, CiRegister reg) {
