@@ -22,18 +22,15 @@
  */
 package com.sun.max.vm.monitor.modal.modehandlers.inflated;
 
-import com.sun.max.annotate.HOSTED_ONLY;
-import com.sun.max.annotate.INLINE;
-import com.sun.max.annotate.INTRINSIC;
-import com.sun.max.platform.Platform;
-import com.sun.max.unsafe.Address;
-import com.sun.max.unsafe.Word;
-import com.sun.max.vm.monitor.modal.modehandlers.HashableLockword64;
-import com.sun.max.vm.monitor.modal.modehandlers.ModalLockword64;
-import com.sun.max.vm.monitor.modal.sync.JavaMonitor;
-import com.sun.max.vm.reference.Reference;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
+import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.monitor.modal.modehandlers.*;
+import com.sun.max.vm.monitor.modal.modehandlers.lightweight.thin.*;
+import com.sun.max.vm.monitor.modal.sync.*;
+import com.sun.max.vm.reference.*;
 /**
  * Abstracts access to an inflated lock word's bit fields.
  */
@@ -52,12 +49,18 @@ public class InflatedMonitorLockword64 extends HashableLockword64 {
      *
      * bit [31.................................0]     Shape         Binding   Lock-state
      *
-     *     [1/0]             0                    [0][1] Locking in-flight op    Inflated      Unbound   Unlocked
-     *     [1/0]                                  [1][1] Locking in-flight op    Inflated      Bound     Unlocked or locked
-     *     [1/0]                                  [m][0] Locking in-flight op    Lightweight
+     *     [1/0][ThreadId]             0                    [0][1] Locking in-flight op  ThreadId    Inflated      Unbound   Unlocked
+     *     [1/0][ThreadId]                                  [1][1] Locking in-flight op  ThreadId    Inflated      Bound     Unlocked or locked
+     *     [1/0][ThreadId]                                  [m][0] Locking in-flight op  ThreadId  Lightweight
      */
 
     private static final Address MONITOR_MASK = Platform.target().arch.is64bit() ? Word.allOnes().asAddress().shiftedLeft(NUMBER_OF_MODE_BITS) : Word.allOnes().asAddress();
+
+    //The field below is used only in 32 bit mode
+    private static final int THREADID_FIELD_WIDTH = 10;
+    private static final int THREADID_SHIFT =  22;
+    private static final int THREADID_MASK = 0x3FF;
+
 
     @HOSTED_ONLY
     public InflatedMonitorLockword64(long value) {
@@ -96,11 +99,6 @@ public class InflatedMonitorLockword64 extends HashableLockword64 {
         return asAddress().isBitSet(MISC_BIT_INDEX);
     }
 
-    @INLINE
-    public final boolean isLocked() {
-        return asAddress().isBitSet(LOCK_BIT_INDEX);
-    }
-
     /**
      * Returns a new {@code InflatedMonitorLockword64} which is bound to the given
      * {@code JavaMonitor} object.
@@ -121,22 +119,19 @@ public class InflatedMonitorLockword64 extends HashableLockword64 {
     }
 
     @INLINE
-    public final InflatedMonitorLockword64 lock() {
-        assert Platform.target().arch.is32bit() : "This function must be called only on 32 bit machines!";
-        return from(asAddress().bitSet(LOCK_BIT_INDEX));
-    }
-
-    @INLINE
-    public final InflatedMonitorLockword64 unLock() {
-        assert Platform.target().arch.is32bit() : "This function must be called only on 32 bit machines!";
-        return from(asAddress().bitClear(LOCK_BIT_INDEX));
-    }
-
-    @INLINE
     public static final InflatedMonitorLockword64 boundFromZero() {
         return InflatedMonitorLockword64.from(HashableLockword64.from(Address.zero()).asAddress().bitSet(SHAPE_BIT_INDEX).bitSet(MISC_BIT_INDEX));
     }
 
+    @INLINE
+    public static final InflatedMonitorLockword64 boundFromThreadId(int threadId) {
+        return InflatedMonitorLockword64.from(boundFromZero().asAddress().or(Address.fromInt(threadId).shiftedLeft(THREADID_SHIFT)));
+    }
+
+    @INLINE
+    public final int getThreadId() {
+        return asAddress().unsignedShiftedRight(THREADID_SHIFT).and(THREADID_MASK).toInt();
+    }
     /**
      * Gets the bound {@link JavaMonitor JavaMonitor} encoded into this lock word.
      *
