@@ -269,7 +269,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
                     }
                 // Another thread installed a hashcode or got the monitor.
                 // Try again.
-                lockword = InflatedMonitorLockword64.from(newLockword);
+                lockword = InflatedMonitorLockword64.from(answer);
 
             }
         }

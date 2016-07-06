@@ -1,43 +1,8 @@
 package com.oracle.max.asm.target.armv7;
 
-import com.oracle.max.asm.AbstractAssembler;
-import com.oracle.max.asm.Label;
-import com.sun.cri.ci.CiAddress;
-import com.sun.cri.ci.CiKind;
-import com.sun.cri.ci.CiRegister;
-import com.sun.cri.ci.CiTarget;
-import com.sun.cri.ri.RiRegisterConfig;
-
-/*
- * ANDY NISBET comments/ramblings instrumentation support for the Xilinx Zynq platform is currently being added.
- *
- * We obtain a buffer using a C call. We had to add an interface to do this in order to avoid a circular dependence.
- *
- * ARMV7T1XCompilation static instance variable simBuf stores the address of the page length (4096 byte buffer)
- * simOffset is actually stored at offset int [1023], which means it is
- *
- * @byte offset 4092 The instance variable simOffset was there only for initial debugging CORRECTION WE STORE THE
- * CURRENT ADDRESS TO BE WRITTEN TO AT INT[1023] IT MAKES THE ASSEMBLER EASIER
- *
- * When we want to update the buffer with a new address tha thas been loaded or stored then we must use ldrex strex to
- * update the buffer and the int[1023] offset.
- *
- * If we take this approach then it will be thread safe. THE INITIAL VERSION WILL NOT DO THE LDREX STREX.
- *
- * iF THE ADDRESS WE WANT TO WRITE TO IS THE LAST INT[1022] STORING DATA ADDRESSES READ/WRITTEN THEN we need to flush
- * the buffer.
- *
- * WE WILL IMPLEMENT THIS BY incrementing after the write and then checking to see if it matches the address of the
- * simOffset in the int[1023]
- *
- * The above refers to the method OLDinstrument() ...
- *
- *
- * The new way, calls out to C to enable the address loaded/stored with modifications to the LSBS to be written to an
- * appropriate buffer based on the currently executing thread. In this way we can allow the simulator to control over
- * the buffer that the address is written to, where a buffer is tied to a thread.
- */
-import static com.oracle.max.cri.intrinsics.MemoryBarriers.STORE_LOAD;
+import com.oracle.max.asm.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 public class ARMV7Assembler extends AbstractAssembler {
 
