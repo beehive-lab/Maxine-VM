@@ -715,16 +715,10 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         // Load jump table entry into r15 and jump to it
         asm.setUpScratch(new CiAddress(CiKind.Int, r7.asValue(), r9.asValue(), Scale.Times4, 0));
         asm.ldr(ConditionFlag.Always, r12, ARMV7.r12, 0);
-        asm.addRegisters(ConditionFlag.Always, false, r12, ARMV7.r15, r12, 0, 0); // need to be careful are we using the
-// right add!
+        asm.addRegisters(ConditionFlag.Always, false, r12, ARMV7.r15, r12, 0, 0);
         asm.add(ConditionFlag.Always, false, r12, r12, 8, 0);
         asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10 | 1 << 7, true); // restore r9/r10
         asm.mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12);
-
-        // NOT NECESARY FOR ARMV7 Inserting padding so that jump table address is 4-byte aligned
-        // if ((buf.position() & 0x3) != 0) {
-        // asm.nop(4 - (buf.position() & 0x3));
-        // }
 
         // Patch LEA instruction above now that we know the position of the jump table
         int jumpTablePos = buf.position();
@@ -863,7 +857,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 assignInt(r9, 0);
                 decStack(1);
                 asm.cmpl(r8, r9);
-                // cc = ConditionFlag.equal;
                 cc = ConditionFlag.Equal;
                 break;
             case Bytecodes.IFNE:
@@ -871,7 +864,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 assignInt(r9, 0);
                 decStack(1);
                 asm.cmpl(r8, r9);
-                // cc = ConditionFlag.notEqual;
                 cc = ConditionFlag.NotEqual;
                 break;
             case Bytecodes.IFLE:
@@ -879,7 +871,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 assignInt(r9, 0);
                 decStack(1);
                 asm.cmpl(r8, r9);
-                // cc = ConditionFlag.lessEqual;
                 cc = ConditionFlag.SignedLowerOrEqual;
                 break;
             case Bytecodes.IFLT:
@@ -887,7 +878,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 assignInt(r9, 0);
                 decStack(1);
                 asm.cmpl(r8, r9);
-                // cc = ConditionFlag.less;
                 cc = ConditionFlag.SignedLesser;
                 break;
             case Bytecodes.IFGE:
@@ -895,7 +885,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 assignInt(r9, 0);
                 decStack(1);
                 asm.cmpl(r8, r9);
-                // cc = ConditionFlag.greaterEqual;
                 cc = ConditionFlag.SignedGreaterOrEqual;
                 break;
             case Bytecodes.IFGT:
@@ -903,7 +892,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 assignInt(r9, 0);
                 decStack(1);
                 asm.cmpl(r8, r9);
-                // cc = ConditionFlag.greater;
                 cc = ConditionFlag.SignedGreater;
                 break;
             case Bytecodes.IF_ICMPEQ:
@@ -911,7 +899,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 peekInt(r9, 0);
                 decStack(2);
                 asm.cmpl(r8, r9);
-                // cc = ConditionFlag.equal;
                 cc = ConditionFlag.Equal;
                 break;
             case Bytecodes.IF_ICMPNE:
@@ -920,7 +907,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 decStack(2);
                 asm.cmpl(r8, r9);
                 cc = ConditionFlag.NotEqual;
-                // cc = ConditionFlag.notEqual;
                 break;
             case Bytecodes.IF_ICMPGE:
                 peekInt(r8, 1);
@@ -928,14 +914,12 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 decStack(2);
                 asm.cmpl(r8, r9);
                 cc = ConditionFlag.SignedGreaterOrEqual;
-                // cc = ConditionFlag.greaterEqual;
                 break;
             case Bytecodes.IF_ICMPGT:
                 peekInt(r8, 1);
                 peekInt(r9, 0);
                 decStack(2);
                 asm.cmpl(r8, r9);
-                // cc = ConditionFlag.greater;
                 cc = ConditionFlag.SignedGreater;
                 break;
             case Bytecodes.IF_ICMPLE:
@@ -944,14 +928,12 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 decStack(2);
                 asm.cmpl(r8, r9);
                 cc = ConditionFlag.SignedLowerOrEqual;
-                // cc = ConditionFlag.lessEqual;
                 break;
             case Bytecodes.IF_ICMPLT:
                 peekInt(r8, 1);
                 peekInt(r9, 0);
                 decStack(2);
                 asm.cmpl(r8, r9);
-                // cc = ConditionFlag.less;
                 cc = ConditionFlag.SignedLesser;
                 break;
             case Bytecodes.IF_ACMPEQ:
@@ -960,7 +942,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 decStack(2);
                 asm.cmpl(r8, r9);
                 cc = ConditionFlag.Equal;
-                // cc = ConditionFlag.equal;
                 break;
             case Bytecodes.IF_ACMPNE:
                 peekObject(r8, 1);
@@ -968,7 +949,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 decStack(2);
                 asm.cmpl(r8, r9);
                 cc = ConditionFlag.NotEqual;
-                // cc= ConditionFlag.notEqual;
                 break;
             case Bytecodes.IFNULL:
                 peekObject(r8, 0);
@@ -976,7 +956,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 decStack(1);
                 asm.cmpl(r8, r9);
                 cc = ConditionFlag.Equal;
-                // cc = ConditionFlag.equal;
                 break;
             case Bytecodes.IFNONNULL:
                 peekObject(r8, 0);
@@ -984,7 +963,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 decStack(1);
                 asm.cmpl(r8, r9);
                 cc = ConditionFlag.NotEqual;
-                // cc = ConditionFlag.notEqual;
                 break;
             case Bytecodes.GOTO:
             case Bytecodes.GOTO_W:
@@ -992,8 +970,8 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 break;
             default:
                 throw new InternalError("Unknown branch opcode: " + Bytecodes.nameOf(opcode));
-
         }
+
         asm.vmov(ConditionFlag.Always, ARMV7.r9, ARMV7.s31, null, CiKind.Int, CiKind.Float);
 
         int pos = buf.position();
