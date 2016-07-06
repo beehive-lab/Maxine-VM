@@ -111,8 +111,7 @@ public class Deoptimization extends VmOperation {
     /**
      * Option for enabling use of deoptimization.
      */
-    public static boolean UseDeopt = false; // APN CHANGED TO false by default....
-    // TODO REENABLE DEOPT and fix issues with its operation ...
+    public static boolean UseDeopt = false;
 
     /**
      * Option for enabling logging during debugging of deopt
@@ -759,7 +758,7 @@ public class Deoptimization extends VmOperation {
         public int slotsSize() {
             return slotsCount() * STACK_SLOT_SIZE;
         }
-        /*public int slotsSize() { commented out at present .... 
+        /*public int slotsSize() { commented out at present ....
             if (debugSlotSize != (slotsCount() * STACK_SLOT_SIZE)) {
                 com.sun.max.vm.Log.println("slot size discrcepancy");
                 com.sun.max.vm.Log.println(debugSlotSize);
