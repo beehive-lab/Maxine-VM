@@ -57,6 +57,7 @@ public class ObservableCompiler {
     public void fireCompilationStarted(CompilationEvent event) {
         if (isObserved()) {
             for (CompilationObserver observer : observers) {
+                assert observer != null;
                 observer.compilationStarted(event);
             }
         }
