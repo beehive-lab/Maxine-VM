@@ -223,18 +223,11 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     }
 
-    public void insertDIVIDEMarker() {
-        /*
-         * See Trap.java could not get tla to work without going out to C repeatedly so using this to identify an I/U
-         * divide by zero trap.
-         */
+    public void insertDivZeroCheck() {
         Label continuation = new Label();
         jcc(ConditionFlag.Always, continuation);
-        emitInt(0xf1d0beef);
-        emitInt(0xf1d0beef);
         bind(continuation);
         eor(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
-
     }
 
     public void insertForeverLoop() {

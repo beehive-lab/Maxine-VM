@@ -1425,7 +1425,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             masm.mov(ConditionFlag.Always, false, ARMV7.r8, lreg);
             masm.eor(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
             masm.cmp(ConditionFlag.Always, ARMV7.r12, rreg, 0, 0);
-            masm.insertDIVIDEMarker();
+            masm.insertDivZeroCheck();
             int offset = masm.codeBuffer.position();
             masm.vldr(ConditionFlag.Equal, ARMV7.s30, ARMV7.r12, 0, CiKind.Float, CiKind.Int);
             masm.sdiv(ConditionFlag.Always, dreg, lreg, rreg);
@@ -1446,7 +1446,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         masm.eor(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
         masm.cmp(ConditionFlag.Always, ARMV7.r12, denominator, 0, 0);
         masm.cmp(ConditionFlag.Equal, ARMV7.r12, ARMV7.cpuRegisters[denominator.getEncoding() + 1], 0, 0);
-        masm.insertDIVIDEMarker();
+        masm.insertDivZeroCheck();
         int offset = masm.codeBuffer.position();
         masm.vldr(ConditionFlag.Equal, ARMV7.s30, ARMV7.r12, 0, CiKind.Float, CiKind.Int); // fault if EQUAL
         tasm.recordImplicitException(offset, info);
@@ -1463,7 +1463,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         masm.mov(ConditionFlag.Always, false, ARMV7.r8, lreg);
         masm.eor(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r12, 0, 0);
         masm.cmp(ConditionFlag.Always, ARMV7.r12, rreg, 0, 0);
-        masm.insertDIVIDEMarker();
+        masm.insertDivZeroCheck();
         int offset = masm.codeBuffer.position();
         masm.vldr(ConditionFlag.Equal, ARMV7.s30, ARMV7.r12, 0, CiKind.Float, CiKind.Int); // fault if EQUAL
         masm.udiv(ConditionFlag.Always, dreg, lreg, rreg);
