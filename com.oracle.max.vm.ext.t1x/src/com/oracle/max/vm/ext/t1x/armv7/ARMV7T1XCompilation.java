@@ -793,7 +793,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
             // Jump to default target
             startBlock(ls.defaultTarget());
-            patchInfo.addJMP(buf.position(), ls.defaultTarget());
+            patchInfo.addJMP(buf.position() + 4, ls.defaultTarget()); //The +4 is to jump over the pop
             asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10 | 1 << 7, true);
             asm.jmp(0, true);
 

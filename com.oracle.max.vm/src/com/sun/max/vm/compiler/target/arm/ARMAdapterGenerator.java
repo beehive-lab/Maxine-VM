@@ -778,7 +778,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             }
 
             // A baseline caller jumps over the call to the OPT2BASELINE adapter
-            Label end = new Label();
+            ARMV7Label end = new ARMV7Label();
             asm.branch(end);
             if (ARMV7Assembler.ASM_DEBUG_MARKERS) {
                 asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0x0af2ba5e);

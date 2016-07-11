@@ -22,65 +22,41 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import com.oracle.max.asm.Label;
-import com.oracle.max.asm.target.amd64.AMD64;
-import com.oracle.max.asm.target.amd64.AMD64MacroAssembler;
-import com.oracle.max.asm.target.armv7.ARMV7;
-import com.oracle.max.asm.target.armv7.ARMV7Assembler;
-import com.oracle.max.asm.target.armv7.ARMV7MacroAssembler;
-import com.oracle.max.asm.target.armv7.ARMV7Assembler.*;
-import com.sun.cri.ci.*;
-import com.sun.max.annotate.HOSTED_ONLY;
-import com.sun.max.annotate.NEVER_INLINE;
-import com.sun.max.annotate.PLATFORM;
-import com.sun.max.lang.ISA;
-import com.sun.max.lang.WordWidth;
-import com.sun.max.unsafe.Address;
-import com.sun.max.unsafe.CodePointer;
-import com.sun.max.unsafe.Pointer;
-import com.sun.max.unsafe.Word;
-import com.sun.max.vm.Log;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.VMOptions;
-import com.sun.max.vm.actor.holder.DynamicHub;
-import com.sun.max.vm.actor.holder.Hub;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.actor.member.VirtualMethodActor;
-import com.sun.max.vm.code.Code;
-import com.sun.max.vm.code.CodeManager;
-import com.sun.max.vm.compiler.CallEntryPoint;
-import com.sun.max.vm.compiler.WordUtil;
-import com.sun.max.vm.compiler.deopt.Deoptimization;
-import com.sun.max.vm.compiler.deopt.Deoptimization.Info;
-import com.sun.max.vm.compiler.target.Stub.Type;
-import com.sun.max.vm.compiler.target.amd64.AMD64TargetMethodUtil;
-import com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil;
-import com.sun.max.vm.intrinsics.Infopoints;
-import com.sun.max.vm.object.ObjectAccess;
-import com.sun.max.vm.runtime.CriticalMethod;
-import com.sun.max.vm.runtime.FatalError;
-import com.sun.max.vm.runtime.Trap;
-import com.sun.max.vm.runtime.amd64.AMD64SafepointPoll;
-import com.sun.max.vm.runtime.amd64.AMD64TrapFrameAccess;
-import com.sun.max.vm.runtime.arm.ARMSafepointPoll;
-import com.sun.max.vm.runtime.arm.ARMTrapFrameAccess;
-import com.sun.max.vm.thread.VmThread;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-
-import static com.sun.cri.ci.CiCallingConvention.Type.JavaCall;
-import static com.sun.cri.ci.CiCallingConvention.Type.JavaCallee;
-import static com.sun.max.platform.Platform.platform;
-import static com.sun.max.platform.Platform.target;
-import static com.sun.max.vm.MaxineVM.isHosted;
-import static com.sun.max.vm.MaxineVM.vm;
-import static com.sun.max.vm.VMOptions.verboseOption;
-import static com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT;
-import static com.sun.max.vm.compiler.CallEntryPoint.VTABLE_ENTRY_POINT;
-import static com.sun.max.vm.compiler.deopt.Deoptimization.DEOPT_RETURN_ADDRESS_OFFSET;
+import static com.sun.cri.ci.CiCallingConvention.Type.*;
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.compiler.CallEntryPoint.*;
+import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
+
+import java.util.*;
+
+import com.oracle.max.asm.*;
+import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.asm.target.armv7.*;
+import com.oracle.max.asm.target.armv7.ARMV7Assembler.*;
+import com.sun.cri.ci.*;
+import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.code.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.deopt.*;
+import com.sun.max.vm.compiler.deopt.Deoptimization.*;
+import com.sun.max.vm.compiler.target.Stub.*;
+import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.compiler.target.arm.*;
+import com.sun.max.vm.intrinsics.*;
+import com.sun.max.vm.object.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.amd64.*;
+import com.sun.max.vm.runtime.arm.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * Stubs are pieces of hand crafted assembly code for expressing semantics that cannot otherwise be expressed as Java.
@@ -1791,10 +1767,10 @@ public class Stubs {
 
             // should never reach here
             asm.int3();
-            Label forever = new Label();
+            ARMV7Label forever = new ARMV7Label();
             asm.bind(forever);
             asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xc5a0c5a0);
-            asm.branch(forever, true);
+            asm.branch(forever);
 
 
             String stubName = runtimeRoutineName + "StubWithCSA";
@@ -1935,11 +1911,11 @@ public class Stubs {
 
             // Should never reach here
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
-            Label forever = new Label();
+            ARMV7Label forever = new ARMV7Label();
             asm.bind(forever);
             asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xffffffff);
             asm.blx(ARMV7.r12); //expect it to crash
-            asm.branch(forever, true);
+            asm.branch(forever);
 
             asm.hlt();
 

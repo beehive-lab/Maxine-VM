@@ -1,44 +1,39 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
+ * OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package com.oracle.max.asm;
 
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * This class represents a label within assembly code.
  */
-public final class Label {
-    private int position = -1;
+public class Label {
+
+    protected int position = -1;
+    /**
+     * References to instructions that jump to this unresolved label. These instructions need to be patched when the
+     * label is bound using the {@link #patchInstructions(AbstractAssembler)} method.
+     */
+    protected ArrayList<Integer> patchPositions = new ArrayList<Integer>(4); // was 4
 
     /**
-     * References to instructions that jump to this unresolved label.
-     * These instructions need to be patched when the label is bound
-     * using the {@link #patchInstructions(AbstractAssembler)} method.
-     */
-    private ArrayList<Integer> patchPositions = new ArrayList<Integer>(4); // was 4
-    private ArrayList<Boolean> patchInstrumentation = new ArrayList<Boolean>(4);
-    /**
      * Returns the position of this label in the code buffer.
+     *
      * @return the position
      */
     public int position() {
@@ -46,11 +41,21 @@ public final class Label {
         return position;
     }
 
+    public int positionCopy() {
+        return position;
+    }
+
     public Label() {
+    }
+
+    public Label(ArrayList<Integer> patchPositions, int position) {
+        this.patchPositions = patchPositions;
+        this.position = position;
     }
 
     /**
      * Binds the label to the specified position.
+     *
      * @param pos the position
      */
     protected void bind(int pos) {
@@ -65,12 +70,6 @@ public final class Label {
     public void addPatchAt(int branchLocation) {
         assert !isBound() : "Label is already bound";
         patchPositions.add(branchLocation);
-	patchInstrumentation.add(false);
-    }
-    public void addPatchAt (int branchLocation, boolean instrumentationPatch) {
-	assert !isBound() : "Label is already bound";
-	patchPositions.add(branchLocation);
-	patchInstrumentation.add(instrumentationPatch);
     }
 
     protected void patchInstructions(AbstractAssembler masm) {
@@ -78,17 +77,22 @@ public final class Label {
         int target = position;
         for (int i = 0; i < patchPositions.size(); ++i) {
             int pos = patchPositions.get(i);
-            masm.patchJumpTarget(pos, target, patchInstrumentation.get(i));
+            masm.patchJumpTarget(pos, target);
         }
     }
 
     public void offlineVerify() {
         System.out.println(isBound() + " " + position);
-        for(int i = 0; i < patchPositions.size(); ++i) {
-            System.out.println("patchable positions " + patchPositions.get(i));
+        for (int i = 0; i < patchPositions.size(); ++i) {
+            System.out.println("Patchable Position: " + patchPositions.get(i));
 
         }
     }
+
+    public ArrayList<Integer> getPatchPositions() {
+        return patchPositions;
+    }
+
     @Override
     public String toString() {
         return isBound() ? String.valueOf(position()) : "?";

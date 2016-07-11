@@ -25,6 +25,8 @@ import java.util.*;
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.*;
+import com.oracle.max.asm.target.armv7.ARMV7Label.*;
+import com.oracle.max.asm.target.armv7.ARMV7Label.BranchInfo.*;
 import com.oracle.max.criutils.*;
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
@@ -697,7 +699,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         }
 
         // Jump to default target if index is not within the jump table
-        masm.jcc(ConditionFlag.UnsignedHigher, op.defaultTarget.label());
+        masm.jcc(ConditionFlag.UnsignedHigher, new ARMV7Label(op.defaultTarget.label()));
         // Set scratch to address of jump table
         int leaPos = buf.position();
         masm.leaq(rscratch1, CiAddress.Placeholder);
@@ -722,14 +724,15 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
         // Emit jump table entries
         for (BlockBegin target : op.targets) {
-            Label label = target.label();
+            ARMV7Label label = new ARMV7Label(target.label());
             int offsetToJumpTableBase = buf.position() - jumpTablePos;
             if (label.isBound()) {
                 int imm32 = label.position() - jumpTablePos;
                 buf.emitInt(imm32);
             } else {
-                label.addPatchAt(buf.position());
-                buf.emitInt((ConditionFlag.NeverUse.value() << 28) | (offsetToJumpTableBase << 12) | 0x0d0);
+                BranchInfo info = new BranchInfo(BranchType.TABLESWITCH, ConditionFlag.Always, false);
+                label.addPatchAt(buf.position(), info);
+                buf.emitInt((ConditionFlag.Always.value() << 28) | (offsetToJumpTableBase << 12) | 0x0d0);
             }
         }
         JumpTable jt = new JumpTable(jumpTablePos, op.lowKey, highKey, 4);
@@ -741,16 +744,15 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert assertEmitBranch(op);
 
         if (op.cond() == Condition.TRUE) {
-            masm.jmp(op.label());
+            masm.jmp(new ARMV7Label(op.label()));
             if (op.info != null) {
                 tasm.recordImplicitException(codePos() - 4, op.info); // ADDED EXCEPTION
             }
-
         } else {
             ConditionFlag acond = ConditionFlag.Always;
             if (op.code == LIROpcode.CondFloatBranch) {
                 assert op.unorderedBlock() != null : "must have unordered successor";
-                masm.jcc(ConditionFlag.SignedOverflow, op.unorderedBlock().label());
+                masm.jcc(ConditionFlag.SignedOverflow, new ARMV7Label(op.unorderedBlock().label()));
 
                 // Checkstyle: off
                 switch (op.cond()) {
@@ -812,7 +814,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 }
                 // Checkstyle: on
             }
-            masm.jcc(acond, op.label());
+            masm.jcc(acond, new ARMV7Label(op.label()));
         }
     }
 
@@ -1014,7 +1016,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             }
         } else {
             // conditional move not available, use emit a branch and move
-            Label skip = new Label();
+            ARMV7Label skip = new ARMV7Label();
             masm.jcc(acond, skip);
             if (other.isRegister()) {
                 reg2reg(other, result);
@@ -1408,9 +1410,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             Util.shouldNotReachHere("cwi: I assume this is dead code, notify me if I'm wrong...");
         } else {
             CiRegister rreg = right.asRegister();
-            Label continuation = new Label();
+            ARMV7Label continuation = new ARMV7Label();
             if (C1XOptions.GenSpecialDivChecks) {
-                Label normalCase = new Label();
+                ARMV7Label normalCase = new ARMV7Label();
                 masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, Integer.MIN_VALUE);
                 masm.cmp(ConditionFlag.Always, lreg, ARMV7.r12, 0, 0);
                 masm.jcc(ConditionFlag.NotEqual, normalCase);
@@ -1483,10 +1485,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert result.isRegister() : "result must be register";
         assert result.kind.isLong();
         CiRegister rreg = right.asRegister();
-        Label continuation = new Label();
+        ARMV7Label continuation = new ARMV7Label();
         if (C1XOptions.GenSpecialDivChecks) {
             // check for special case of Long.MIN_VALUE / -1
-            Label normalCase = new Label();
+            ARMV7Label normalCase = new ARMV7Label();
             masm.movlong(rreg, java.lang.Long.MIN_VALUE, CiKind.Long);
             masm.jcc(ConditionFlag.NotEqual, normalCase);
             if (code == LIROpcode.Lrem) {
@@ -1730,9 +1732,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         } else {
             assert code == LIROpcode.Cmpl2i;
             CiRegister dest = dst.asRegister();
-            Label high = new Label();
-            Label done = new Label();
-            Label isEqual = new Label();
+            ARMV7Label high = new ARMV7Label();
+            ARMV7Label done = new ARMV7Label();
+            ARMV7Label isEqual = new ARMV7Label();
             masm.lcmpl(ConditionFlag.Equal, left.asRegister(), right.asRegister());
             masm.jcc(ConditionFlag.Equal, isEqual);
             masm.lcmpl(ConditionFlag.SignedGreater, left.asRegister(), right.asRegister());
@@ -1909,9 +1911,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             if (most) {
                 if (src.kind.isLong()) {
                     assert !Platform.target().arch.is32bit();
-                    Label normal = new Label();
-                    Label normal2 = new Label();
-                    Label exit = new Label();
+                    ARMV7Label normal = new ARMV7Label();
+                    ARMV7Label normal2 = new ARMV7Label();
+                    ARMV7Label exit = new ARMV7Label();
                     masm.cmpImmediate(ConditionFlag.Always, value1, 0);
                     masm.jcc(ConditionFlag.NotEqual, normal);
                     masm.cmpImmediate(ConditionFlag.Equal, value, 0);
@@ -1929,7 +1931,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     masm.sub(ConditionFlag.Always, false, result, value, value1, 0, 0);
                     masm.bind(exit);
                 } else {
-                    Label exit = new Label();
+                    ARMV7Label exit = new ARMV7Label();
                     masm.cmpImmediate(ConditionFlag.Always, value, 0);
                     masm.mov32BitConstant(ConditionFlag.Equal, result, -1);
                     masm.jcc(ConditionFlag.Equal, exit);
@@ -1941,8 +1943,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             } else {
                 if (src.kind.isLong()) {
                     assert !Platform.target().arch.is32bit();
-                    Label normal = new Label();
-                    Label exit = new Label();
+                    ARMV7Label normal = new ARMV7Label();
+                    ARMV7Label exit = new ARMV7Label();
                     masm.cmpImmediate(ConditionFlag.Always, value1, 0);
                     masm.jcc(ConditionFlag.NotEqual, normal);
                     masm.cmpImmediate(ConditionFlag.Always, value, 0);
@@ -1961,7 +1963,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     masm.addRegisters(ConditionFlag.Always, false, result, ARMV7.r12, value1, 0, 0);
                     masm.bind(exit);
                 } else {
-                    Label exit = new Label();
+                    ARMV7Label exit = new ARMV7Label();
                     masm.cmpImmediate(ConditionFlag.Always, value, 0);
                     masm.mov32BitConstant(ConditionFlag.Equal, result, -1);
                     masm.jcc(ConditionFlag.Equal, exit);
@@ -1977,9 +1979,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 if (src.kind.isLong()) {
                     assert !Platform.target().arch.is32bit();
                     masm.ldrd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
-                    Label normal = new Label();
-                    Label normal2 = new Label();
-                    Label exit = new Label();
+                    ARMV7Label normal = new ARMV7Label();
+                    ARMV7Label normal2 = new ARMV7Label();
+                    ARMV7Label exit = new ARMV7Label();
                     masm.cmpImmediate(ConditionFlag.Always, ARMV7.r9, 0);
                     masm.jcc(ConditionFlag.NotEqual, normal);
                     masm.cmpImmediate(ConditionFlag.Equal, ARMV7.r9, 0);
@@ -1998,7 +2000,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     masm.bind(exit);
                 } else {
                     masm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, ARMV7.r12, ARMV7.r12, 0);
-                    Label exit = new Label();
+                    ARMV7Label exit = new ARMV7Label();
                     masm.cmpImmediate(ConditionFlag.Always, ARMV7.r12, 0);
                     masm.mov32BitConstant(ConditionFlag.Equal, result, -1);
                     masm.jcc(ConditionFlag.Equal, exit);
@@ -2011,8 +2013,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 if (src.kind.isLong()) {
                     assert !Platform.target().arch.is32bit();
                     masm.ldrd(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
-                    Label normal = new Label();
-                    Label exit = new Label();
+                    ARMV7Label normal = new ARMV7Label();
+                    ARMV7Label exit = new ARMV7Label();
                     masm.cmpImmediate(ConditionFlag.Always, ARMV7.r9, 0);
                     masm.jcc(ConditionFlag.NotEqual, normal);
                     masm.cmpImmediate(ConditionFlag.Always, ARMV7.r8, 0);
@@ -2032,7 +2034,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     masm.bind(exit);
                 } else {
                     masm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, ARMV7.r12, ARMV7.r12, 0);
-                    Label exit = new Label();
+                    ARMV7Label exit = new ARMV7Label();
                     masm.cmpImmediate(ConditionFlag.Always, ARMV7.r12, 0);
                     masm.mov32BitConstant(ConditionFlag.Equal, result, -1);
                     masm.jcc(ConditionFlag.Equal, exit);
@@ -2339,7 +2341,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 }
                 case Jmp: {
                     if (inst.extra instanceof XirLabel) {
-                        Label label = labels[((XirLabel) inst.extra).index];
+                        ARMV7Label label = new ARMV7Label(labels[((XirLabel) inst.extra).index]);
                         masm.jmp(label);
                     } else {
                         directJmp(inst.extra);
@@ -2393,7 +2395,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     break;
                 }
                 case Jbset: {
-                    Label label = labels[((XirLabel) inst.extra).index];
+                    ARMV7Label label = new ARMV7Label(labels[((XirLabel) inst.extra).index]);
                     CiValue offset = operands[inst.y().index];
                     CiValue bit = operands[inst.z().index];
                     assert offset.isConstant() && bit.isConstant();
@@ -2602,7 +2604,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         CiValue x = ops[inst.x().index];
         CiValue y = ops[inst.y().index];
         emitCompare(condition, x, y, null);
-        masm.jcc(cflag, label);
+        masm.jcc(cflag, new ARMV7Label(label));
         masm.nop(3);
     }
 

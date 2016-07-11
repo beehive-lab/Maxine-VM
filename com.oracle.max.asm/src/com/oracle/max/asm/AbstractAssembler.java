@@ -22,6 +22,7 @@
  */
 package com.oracle.max.asm;
 
+import com.oracle.max.asm.Label.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiArchitecture.*;
 
@@ -53,7 +54,7 @@ public abstract class AbstractAssembler {
         l.patchInstructions(this);
     }
 
-    protected abstract void patchJumpTarget(int branch, int target, boolean instrumented);
+    protected abstract void patchJumpTarget(int branch, int target);
 
     protected final void emitByte(int x) {
         codeBuffer.emitByte(x);

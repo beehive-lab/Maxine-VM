@@ -44,8 +44,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert (newValue != cmpValue);
         assert (ARMV7.r0 == cmpValue);
 
-        Label atomicFail = new Label();
-        Label notEqualTocmpValue = new Label();
+        ARMV7Label atomicFail = new ARMV7Label();
+        ARMV7Label notEqualTocmpValue = new ARMV7Label();
 
         bind(atomicFail);
         membar(-1);
@@ -80,8 +80,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert (newValue != cmpValue);
         assert (ARMV7.r0 == cmpValue);
 
-        Label atomicFail = new Label();
-        Label notEqualTocmpValue = new Label();
+        ARMV7Label atomicFail = new ARMV7Label();
+        ARMV7Label notEqualTocmpValue = new ARMV7Label();
 
         bind(atomicFail);
         membar(-1);
@@ -109,8 +109,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert (cmpValue != ARMV7.r8);
         assert (newValue != cmpValue);
         assert (ARMV7.r0 == cmpValue);
-        Label atomicFail = new Label();
-        Label notEqualTocmpValue = new Label();
+        ARMV7Label atomicFail = new ARMV7Label();
+        ARMV7Label notEqualTocmpValue = new ARMV7Label();
         saveRegister(8, 9);
         bind(atomicFail);
         membar(-1);
@@ -139,8 +139,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert (cmpValue != ARMV7.r8);
         assert (newValue != cmpValue);
         assert (ARMV7.r0 == cmpValue);
-        Label atomicFail = new Label();
-        Label notEqualTocmpValue = new Label();
+        ARMV7Label atomicFail = new ARMV7Label();
+        ARMV7Label notEqualTocmpValue = new ARMV7Label();
 
         bind(atomicFail);
 
@@ -229,7 +229,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public void cmpsd2int(CiRegister opr1, CiRegister opr2, CiRegister dst, boolean unorderedIsLess, CiKind opr1Kind, CiKind opr2Kind) {
         assert opr1.isFpu() && opr2.isFpu();
         ucomisd(opr1, opr2, opr1Kind, opr2Kind);
-        Label l = new Label();
+        ARMV7Label l = new ARMV7Label();
         if (unorderedIsLess) {
             mov32BitConstant(ConditionFlag.Always, dst, -1);
             jcc(ConditionFlag.SignedOverflow, l);
@@ -252,7 +252,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert opr1.isFpu();
         assert opr2.isFpu();
         ucomisd(opr1, opr2, opr1Kind, opr2Kind);
-        Label l = new Label();
+        ARMV7Label l = new ARMV7Label();
         if (unorderedIsLess) {
             mov32BitConstant(ConditionFlag.Always, dst, -1);
             jcc(ConditionFlag.SignedOverflow, l);

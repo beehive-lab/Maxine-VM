@@ -726,7 +726,6 @@ public class AMD64Assembler extends AbstractAssembler {
             emitByte(0x80 | cc.value);
             emitInt(0);
         }
-
     }
 
     public final void jccb(ConditionFlag cc, Label l) {
@@ -2849,7 +2848,7 @@ public class AMD64Assembler extends AbstractAssembler {
     }
 
     @Override
-    protected final void patchJumpTarget(int branch, int branchTarget,boolean instrument) {
+    protected final void patchJumpTarget(int branch, int branchTarget) {
 	/*
 	instrument is unused in X86
 	*/
