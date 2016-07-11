@@ -619,7 +619,7 @@ public abstract class T1XCompilation {
     }
 
     protected void start(T1XTemplateTag tag) {
-	assignInt(scratch,0x5555d00d);
+	assignInt(scratch, tag.ordinal() | (0xbeef << 16));
         T1XTemplate template = getTemplate(tag);
         assert template != null : "template for tag " + tag + " is null";
         start(template);
@@ -815,7 +815,6 @@ public abstract class T1XCompilation {
         if (template.objectLiterals != null) {
             for (ObjectLiteral literal : template.objectLiterals) {
                 int index = objectLiterals.size();
-                //Log.print("LITERALS "); Log.println(literal.value.toString());
                 objectLiterals.add(literal.value);
                 for (int pos : literal.patchPosns) {
                     int patchPos = pos + buf.position();
@@ -2143,6 +2142,12 @@ public abstract class T1XCompilation {
         Kind kind = invokeKind(signature);
         T1XTemplateTag tag = INVOKEVIRTUALS.get(kind.asEnum);
         int receiverStackIndex = receiverStackIndex(signature);
+// System.out.println("Signature " + signature.toString());
+//System.out.println("index " + index);
+  //     System.out.println("Num parameters " + signature.numberOfParameters());
+   //  System.out.println("Receiver stack index " + receiverStackIndex);
+  assignInt(scratch, index | (0xbeaf << 16));
+       
         try {
             if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
                 try {
