@@ -68,7 +68,7 @@ extern void pushDSTR(unsigned int address);
 extern void pushDLD(unsigned int address);
 extern int initialiseMemoryCluster();
 static int simulationPlatform = 0;
-static int simulationDEBUG = 1;
+static int simulationDEBUG = 0;
 extern int initialiseTimingModel();
 extern void pushJumpAddress(int address);
 extern int reportTimingCounters();

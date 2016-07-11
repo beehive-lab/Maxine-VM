@@ -2576,15 +2576,15 @@ public class ARMV7Assembler extends AbstractAssembler {
         orr(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, ARMV7.r9, 0, 0);
         vmsr(ConditionFlag.Always, ARMV7.r8);
         pop(ConditionFlag.Always, 1 << 8 | 1 << 9, true);
-        vpush(ConditionFlag.Always, ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double);
+        vpush(ConditionFlag.Always, ARMV7.s28, ARMV7.s30, CiKind.Double, CiKind.Double);
         vmov(ConditionFlag.Always, ARMV7.s28, rn, null, CiKind.Float, CiKind.Int);
         vmov(ConditionFlag.Always, ARMV7.s30, rm, null, CiKind.Float, CiKind.Int);
-        vcvt(ConditionFlag.Always, ARMV7.s14, false, signed, ARMV7.s28, CiKind.Double, CiKind.Int);
-        vcvt(ConditionFlag.Always, ARMV7.s15, false, signed, ARMV7.s30, CiKind.Double, CiKind.Int);
-        vdiv(ConditionFlag.Always, ARMV7.s14, ARMV7.s14, ARMV7.s15, CiKind.Double);
-        vcvt(ConditionFlag.Always, ARMV7.s28, true, signed, ARMV7.s14, CiKind.Int, CiKind.Double);// rounding?
+        vcvt(ConditionFlag.Always, ARMV7.s28, false, signed, ARMV7.s28, CiKind.Double, CiKind.Int);
+        vcvt(ConditionFlag.Always, ARMV7.s30, false, signed, ARMV7.s30, CiKind.Double, CiKind.Int);
+        vdiv(ConditionFlag.Always, ARMV7.s28, ARMV7.s28, ARMV7.s30, CiKind.Double);
+        vcvt(ConditionFlag.Always, ARMV7.s28, true, signed, ARMV7.s28, CiKind.Int, CiKind.Double);// rounding?
         vmov(cond, dest, ARMV7.s28, null, CiKind.Int, CiKind.Float);
-        vpop(ConditionFlag.Always, ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double);
+        vpop(ConditionFlag.Always, ARMV7.s28, ARMV7.s30, CiKind.Double, CiKind.Double);
     }
 
     public final void udiv(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
