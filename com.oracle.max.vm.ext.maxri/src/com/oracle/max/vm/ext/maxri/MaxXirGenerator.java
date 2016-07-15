@@ -747,7 +747,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     private XirTemplate buildSafepoint() {
         asm.restart(CiKind.Void);
         XirOperand latch = asm.createRegisterTemp("latch", WordUtil.archKind(), LATCH_REGISTER);
-        asm.safepoint(Platform.target().arch.is32bit() ? 4 : 0);
+        asm.safepoint(0);
         asm.pload(WordUtil.archKind(), latch, latch, false);
         return finishTemplate(asm, "safepoint");
     }

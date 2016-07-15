@@ -352,7 +352,6 @@ public abstract class Trap {
         if (VmThread.current().isVmOperationThread()) {
             FatalError.unexpected("Memory fault on the VM operation thread", false, null, trapFrame);
         }
-
         // check to see if a safepoint has been triggered for this thread
         if (safepointLatch.equals(ttla) && safepoint.isAt(instructionPointer)) {
             // a safepoint has been triggered for this thread

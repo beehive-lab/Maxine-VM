@@ -1509,11 +1509,12 @@ public class ARMV7Assembler extends AbstractAssembler {
         CiRegister index = addr.index();
         CiAddress.Scale scale = addr.scale;
         int disp = addr.displacement;
+
         if (addr == CiAddress.Placeholder) {
             nop(numInstructions(addr));
             return;
         }
-
+        assert !(base.isValid() && disp == 0 && base.compareTo(ARMV7.LATCH_REGISTER) == 0);
         assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
 
         if (base.isValid() || base.compareTo(CiRegister.Frame) == 0) {

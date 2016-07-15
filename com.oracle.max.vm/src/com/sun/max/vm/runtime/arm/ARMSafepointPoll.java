@@ -25,9 +25,9 @@ package com.sun.max.vm.runtime.arm;
 import static com.sun.max.platform.Platform.*;
 
 import com.oracle.max.asm.target.armv7.*;
+import com.oracle.max.asm.target.armv7.ARMV7Assembler.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -37,10 +37,7 @@ import com.sun.max.vm.runtime.*;
  */
 public final class ARMSafepointPoll extends SafepointPoll {
 
-    /**
-     * ATTENTION: must be callee-saved by all C ABIs in use.
-     */
-    public static final CiRegister LATCH_REGISTER = ARMV7.r10; // please also see  com.sun.max.vm.compiler.target.RegisterConfigs.java ... LATCH_REGISTER is also defined there and needs to be consistent
+    public static final CiRegister LATCH_REGISTER = ARMV7.LATCH_REGISTER;
 
     @HOSTED_ONLY
     public ARMSafepointPoll() {
@@ -50,10 +47,7 @@ public final class ARMSafepointPoll extends SafepointPoll {
     @Override
     protected byte[] createCode() {
         final ARMV7Assembler asm = new ARMV7Assembler(target(), null);
-        asm.setUpScratch(new CiAddress(WordUtil.archKind(), LATCH_REGISTER.asValue()));
-        asm.ldr(ARMV7Assembler.ConditionFlag.Always, LATCH_REGISTER, asm.scratchRegister, 0);
-        //APN really ought to use a normal load
-        //asm.movq(LATCH_REGISTER, new CiAddress(WordUtil.archKind(), LATCH_REGISTER.asValue()));
+        asm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, ARMV7.LATCH_REGISTER, ARMV7.LATCH_REGISTER, 0);
         return asm.codeBuffer.close(true);
     }
 }

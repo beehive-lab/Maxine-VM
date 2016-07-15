@@ -106,6 +106,7 @@ public class ARMV7 extends CiArchitecture {
     public static final CiRegister PC = r15;
     public static final CiRegister FP = r11;
     public static final CiRegister rsp = r13;
+    public static final CiRegister LATCH_REGISTER = r10;
     public static final CiRegister rip = new CiRegister(48, -1, 0, "rip");
 
     @Override

@@ -110,7 +110,7 @@ public final class VMRegister {
     @INLINE
     public static Pointer getSafepointLatchRegister() {
         return getRegister(LATCH);
-    } // r10 in ARMV7?
+    }
 
     @INLINE
     public static void setSafepointLatchRegister(Word value) {

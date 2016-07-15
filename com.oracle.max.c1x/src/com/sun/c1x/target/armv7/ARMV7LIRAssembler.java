@@ -579,7 +579,12 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert src.isAddress();
         assert dest.isRegister() : "dest=" + dest;
         CiAddress addr = (CiAddress) src;
-        masm.setUpScratch(addr);
+        boolean safepoint = (addr.base().isValid() && addr.base().compareTo(ARMV7.LATCH_REGISTER) == 0) ? true : false;
+        if (!safepoint) {
+            masm.setUpScratch(addr);
+        }
+        assert !(!safepoint && dest.asRegister().equals(ARMV7.LATCH_REGISTER));
+
         if (info != null) {
             tasm.recordImplicitException(codePos(), info);
         }
@@ -593,7 +598,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 break;
             case Object:
             case Int:
-                masm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, dest.asRegister(), ARMV7.r12, 0);
+                masm.ldrImmediate(ConditionFlag.Always, 1, 0, 0, dest.asRegister(), safepoint ? ARMV7.LATCH_REGISTER : ARMV7.r12, 0);
                 break;
             case Long:
                 masm.ldrd(ConditionFlag.Always, dest.asRegister(), ARMV7.r12, 0);
