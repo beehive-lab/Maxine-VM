@@ -1769,7 +1769,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         XirOperand result = asm.restart(CiKind.Object);
         // Emit a safepoint
         XirOperand latch = asm.createRegisterTemp("latch", WordUtil.archKind(), this.LATCH_REGISTER);
-        asm.safepoint(Platform.target().arch.is32bit() ? 4 : 0);
+        asm.safepoint(0);
         asm.pload(WordUtil.archKind(), latch, latch, false);
 
         callRuntimeThroughStub(asm, "loadException", result);
