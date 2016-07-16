@@ -579,12 +579,14 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert src.isAddress();
         assert dest.isRegister() : "dest=" + dest;
         CiAddress addr = (CiAddress) src;
-        boolean safepoint = (addr.base().isValid() && addr.base().compareTo(ARMV7.LATCH_REGISTER) == 0) ? true : false;
+        boolean safepoint = (addr.base().isValid() && addr.displacement == 0 && addr.base().compareTo(ARMV7.LATCH_REGISTER) == 0) ? true : false;
         if (!safepoint) {
             masm.setUpScratch(addr);
         }
         assert !(!safepoint && dest.asRegister().equals(ARMV7.LATCH_REGISTER));
-
+        if(addr.base().compareTo(ARMV7.LATCH_REGISTER) == 0 && addr.displacement == 0) {
+            assert dest.asRegister().equals(ARMV7.LATCH_REGISTER) : dest.asRegister().number;
+        }
         if (info != null) {
             tasm.recordImplicitException(codePos(), info);
         }
