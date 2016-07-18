@@ -146,7 +146,7 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
             ObjectAccess.writeMisc(boundObject, InflatedMonitorLockword64.boundFromMonitor(this));
         } else {
             ObjectAccess.writeMisc(boundObject, InflatedMonitorLockword64.boundFromZero());
-            ObjectAccess.writeHash(boundObject, Reference.fromJava(this).toOrigin());
+            ObjectAccess.writeHash(boundObject, InflatedMonitorLockword64.boundFromMonitor(this));
         }
     }
 
