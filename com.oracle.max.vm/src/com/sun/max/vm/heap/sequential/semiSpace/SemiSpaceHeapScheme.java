@@ -624,10 +624,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
     void moveReachableObjects(Pointer start) {
         Pointer cell = start;
-        if (Heap.verbose()) {
-            Log.print("Move reachable objects");
-            Log.println();
-        }
         while (cell.lessThan(allocationMark())) {
             cell = DebugHeap.checkDebugCellTag(start, cell);
             cell = visitCell(cell);
