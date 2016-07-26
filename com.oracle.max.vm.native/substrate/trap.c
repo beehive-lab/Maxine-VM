@@ -69,6 +69,11 @@ static sigset_t vmSignals;
  */
 static sigset_t vmAndDefaultSignals;
 
+/**
+ * The signals blocked on thread exit.
+ */
+static sigset_t blockedOnThreadExitSignals;
+
 #endif
 
 int getTrapNumber(int signal) {
@@ -98,6 +103,15 @@ int getTrapNumber(int signal) {
 #define thread_setSignalMask pthread_sigmask
 #endif
 
+void setCurrentThreadSignalMaskOnThreadExit(boolean isVmOperationThread) {
+#if !os_MAXVE
+    if (!isVmOperationThread) {
+        /* disable signals sent by Thread.interrupt() as thread is transitioning to not alive state. */
+        thread_setSignalMask(SIG_BLOCK, &blockedOnThreadExitSignals, NULL);
+    }
+#endif
+}
+
 void setCurrentThreadSignalMask(boolean isVmOperationThread) {
 	//printf("remove the return in setCurrentThreadSignalMask\n");
 	//return;
@@ -116,9 +130,6 @@ void* setSignalHandler(int signal, SignalHandlerFunction handler) {
 	maxve_register_fault_handler(signal, handler);
 	return NULL;
 #else
-    //printf("setSignalHandler returning NULL");
-   //return NULL;
-
     struct sigaction newSigaction;
     struct sigaction oldSigaction;
 
@@ -494,14 +505,12 @@ SignalHandlerFunction userSignalHandler = (SignalHandlerFunction) userSignalHand
  */
 void nativeTrapInitialize(Address javaTrapStub) {
     /* This function must be called on the primordial thread. */
-    //printf("Commenting out some signals in nativeTrapIniitialize\n");
     c_ASSERT(tla_load(int, tla_current(), ID) == PRIMORDIAL_THREAD_ID);
 
     theJavaTrapStub = javaTrapStub;
     setSignalHandler(SIGSEGV, (SignalHandlerFunction) vmSignalHandler);
     setSignalHandler(SIGILL, (SignalHandlerFunction) vmSignalHandler);
     setSignalHandler(SIGFPE, (SignalHandlerFunction) vmSignalHandler);
-    //return; // RMEOVE me and uncomment
 
 #if !os_MAXVE
     setSignalHandler(SIGBUS, (SignalHandlerFunction) vmSignalHandler);
@@ -522,6 +531,10 @@ void nativeTrapInitialize(Address javaTrapStub) {
 
     /* Let all threads be stopped by a debugger. */
     sigaddset(&vmSignals, SIGTRAP);
+
+    /* Define the signals to be blocked on thread exit. */
+    sigemptyset(&blockedOnThreadExitSignals);
+    sigaddset(&blockedOnThreadExitSignals, SIGUSR1);
 
     /* Apply the normal thread mask to the primordial thread. */
     thread_setSignalMask(SIG_BLOCK, &allSignals, NULL);

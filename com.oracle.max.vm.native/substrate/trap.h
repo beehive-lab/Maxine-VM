@@ -65,4 +65,9 @@ extern boolean traceSignals;
  */
 extern void setCurrentThreadSignalMask(boolean isVmOperationThread);
 
+/**
+ * Sets the signal mask for the current thread on thread exit.
+ */
+extern void setCurrentThreadSignalMaskOnThreadExit(boolean isVmOperationThread);
+
 #endif

@@ -288,6 +288,7 @@ void *thread_run(void *arg) {
 #if log_THREADS
     log_println("thread_run: END t=%p", nativeThread);
 #endif
+    setCurrentThreadSignalMaskOnThreadExit(result == 1);
     /* Successful thread exit */
     return NULL;
 }
@@ -420,6 +421,9 @@ int thread_detachCurrent() {
 #endif
         return JNI_OK;
     }
+
+    setCurrentThreadSignalMaskOnThreadExit(false);
+
     threadLocalsBlock_setCurrent(0);
     threadLocalsBlock_destroy(tlBlock);
     return JNI_OK;
@@ -475,13 +479,25 @@ Java_com_sun_max_vm_thread_VmThread_nativeInterrupt(JNIEnv *env, jclass c, Addre
     // Signals the thread
     int result = thr_kill(nativeThread, SIGUSR1);
     if (result != 0) {
-        log_exit(11, "Error sending signal SIGUSR1 to native thread %p", nativeThread);
+        if (result == ESRCH) {
+#if log_MONITORS
+            log_println("Interrupting thread %p failed, as it is already detached", nativeThread);
+#endif
+        } else {
+            log_exit(11, "Error sending signal SIGUSR1 to native thread %p", nativeThread);
+        }
     }
 #elif os_LINUX || os_DARWIN
     // Signals the thread
     int result = pthread_kill((pthread_t) nativeThread, SIGUSR1);
     if (result != 0) {
-        log_exit(11, "Error sending signal SIGUSR1 to native thread %p", nativeThread);
+        if (result == ESRCH) {
+#if log_MONITORS
+            log_println("Interrupting thread %p failed, as it is already detached", nativeThread);
+#endif
+        } else {
+            log_exit(11, "Error sending signal SIGUSR1 to native thread %p", nativeThread);
+        }
     }
 #elif os_MAXVE
 	maxve_interrupt((void*) nativeThread);

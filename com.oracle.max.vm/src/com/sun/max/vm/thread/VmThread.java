@@ -22,49 +22,42 @@
  */
 package com.sun.max.vm.thread;
 
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.VMConfiguration.*;
+import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+import static com.sun.max.vm.thread.VmThreadLocal.*;
+import static com.sun.max.vm.type.ClassRegistry.*;
+
+import java.lang.Thread.*;
+import java.security.*;
+
 import com.sun.max.annotate.*;
-import com.sun.max.atomic.AtomicReference;
-import com.sun.max.lang.ISA;
-import com.sun.max.memory.VirtualMemory;
+import com.sun.max.atomic.*;
+import com.sun.max.lang.*;
+import com.sun.max.memory.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.holder.ClassActor;
-import com.sun.max.vm.bytecode.refmaps.CompactReferenceMapInterpreter;
-import com.sun.max.vm.code.Code;
-import com.sun.max.vm.compiler.target.TargetMethod;
-import com.sun.max.vm.heap.HeapScheme;
-import com.sun.max.vm.heap.SpecialReferenceManager;
-import com.sun.max.vm.hosted.WithoutAccessCheck;
-import com.sun.max.vm.jdk.JDK;
-import com.sun.max.vm.jdk.JDK_java_lang_Thread;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.bytecode.refmaps.*;
+import com.sun.max.vm.code.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.jni.*;
-import com.sun.max.vm.log.VMLog;
-import com.sun.max.vm.monitor.modal.sync.ConditionVariable;
-import com.sun.max.vm.monitor.modal.sync.ConditionVariableFactory;
-import com.sun.max.vm.monitor.modal.sync.JavaMonitor;
-import com.sun.max.vm.monitor.modal.sync.StandardJavaMonitor;
-import com.sun.max.vm.object.ObjectAccess;
-import com.sun.max.vm.reference.Reference;
+import com.sun.max.vm.log.*;
+import com.sun.max.vm.monitor.modal.sync.*;
+import com.sun.max.vm.object.*;
+import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.stack.StackReferenceMapPreparer;
-import com.sun.max.vm.stack.VmStackFrameWalker;
-import com.sun.max.vm.ti.VMTI;
-import com.sun.max.vm.value.ReferenceValue;
-import sun.misc.Unsafe;
+import com.sun.max.vm.stack.*;
+import com.sun.max.vm.ti.*;
+import com.sun.max.vm.value.*;
 
-import java.lang.Thread.State;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-
-import static com.sun.max.platform.Platform.platform;
-import static com.sun.max.vm.VMConfiguration.vmConfig;
-import static com.sun.max.vm.VMOptions.register;
-import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.Thread_vmThread;
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
-import static com.sun.max.vm.thread.VmThreadLocal.*;
-import static com.sun.max.vm.type.ClassRegistry.FinalizerThread_init;
-import static com.sun.max.vm.type.ClassRegistry.ReferenceHandler_init;
+import sun.misc.*;
 
 /**
  * The MaxineVM VM specific implementation of threads.
@@ -1423,11 +1416,18 @@ public class VmThread {
     }
 
     public final void interrupt0() {
+        // Set to true as default. Will be cleared on this VmThread's
+        // native thread if an InterruptedException is thrown after the
+        // interruption.
         interrupted = true;
+        if (Platform.platform().os == OS.DARWIN || Platform.platform().os == OS.LINUX) {
+            boolean isInterrupted = interrupt0ByUnparking();
+            if (isInterrupted) {
+                return;
+            }
+        }
+
         if (!nativeThread.isZero()) {
-            // Set to true as default. Will be cleared on this VmThread's
-            // native thread if an InterruptedException is thrown after the
-            // interruption.
             nativeInterrupt(nativeThread);
         }
     }
@@ -1524,8 +1524,28 @@ public class VmThread {
      */
     public final void unpark() {
         synchronized (this) {
-            parkState = 1;
-            notifyAll();
+            if (parkState == 2) {
+                parkState = 1;
+                notifyAll();
+            } else {
+                parkState = 1;
+            }
+        }
+    }
+
+    /**
+     * This method interrupts thread by unparking if it is parked.
+     *
+     * @returns true if successfull, false otherwise.
+     */
+    public final boolean interrupt0ByUnparking() {
+        synchronized (this) {
+            if (parkState == 2) {
+                parkState = 1;
+                notifyAll();
+                return true;
+            }
+            return false;
         }
     }
 
