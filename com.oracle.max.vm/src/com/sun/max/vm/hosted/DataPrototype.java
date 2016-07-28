@@ -221,12 +221,8 @@ public final class DataPrototype extends Prototype {
         if (size < minSize) {
             size += pageSize;
         }
- //      System.out.println("Size " + size + " MinSize " + minSize);
-
         for (int i = 0; i <= 2 * pageSize; i++) {
-
             final int allocationSize = region.allocationSize(byteArrayLayout.getArraySize(i)).toInt();
-//System.out.println("Allocation size " + allocationSize);
             if (allocationSize == size) {
                 return new byte[i];
             }
