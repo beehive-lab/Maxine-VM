@@ -58,24 +58,21 @@ public class LightweightLockword64 extends HashableLockword64 {
 
     protected static final int RCOUNT_FIELD_WIDTH = 5;
     protected static final int UTIL_FIELD_WIDTH = 9;
+    protected static final int NUM_BITS = Platform.target().arch.is64bit() ? 64 : 32;
 
-    protected static final int THREADID_FIELD_WIDTH = Platform.target().arch.is32bit() ? (32 - (RCOUNT_FIELD_WIDTH + UTIL_FIELD_WIDTH + NUMBER_OF_MODE_BITS))
-                    : (64 - (RCOUNT_FIELD_WIDTH + UTIL_FIELD_WIDTH + HASH_FIELD_WIDTH + NUMBER_OF_MODE_BITS));
+    protected static final int THREADID_FIELD_WIDTH = (NUM_BITS - (RCOUNT_FIELD_WIDTH + UTIL_FIELD_WIDTH + HASH_FIELD_WIDTH + NUMBER_OF_MODE_BITS));
 
-    protected static final int THREADID_SHIFT = Platform.target().arch.is32bit() ? NUMBER_OF_MODE_BITS : HASHCODE_SHIFT + HASH_FIELD_WIDTH;
+    protected static final int THREADID_SHIFT = Platform.target().arch.is64bit() ? (HASHCODE_SHIFT + HASH_FIELD_WIDTH) : NUMBER_OF_MODE_BITS;
     protected static final int UTIL_SHIFT = THREADID_SHIFT + THREADID_FIELD_WIDTH;
     protected static final int RCOUNT_SHIFT = UTIL_SHIFT + UTIL_FIELD_WIDTH;
 
-    protected static final Address THREADID_SHIFTED_MASK = Platform.target().arch.is32bit() ? Word.allOnes().asAddress().unsignedShiftedRight(32 - THREADID_FIELD_WIDTH)
-                    : Word.allOnes().asAddress().unsignedShiftedRight(64 - THREADID_FIELD_WIDTH);
+    protected static final Address THREADID_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(NUM_BITS - THREADID_FIELD_WIDTH);
 
-    protected static final Address UTIL_SHIFTED_MASK = Platform.target().arch.is32bit() ? Word.allOnes().asAddress().unsignedShiftedRight(32 - UTIL_FIELD_WIDTH)
-                    : Word.allOnes().asAddress().unsignedShiftedRight(64 - UTIL_FIELD_WIDTH);
+    protected static final Address UTIL_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(NUM_BITS - UTIL_FIELD_WIDTH);
 
-    protected static final Address RCOUNT_SHIFTED_MASK = Platform.target().arch.is32bit() ? Word.allOnes().asAddress().unsignedShiftedRight(32 - RCOUNT_FIELD_WIDTH)
-                    : Word.allOnes().asAddress().unsignedShiftedRight(64 - RCOUNT_FIELD_WIDTH);
+    protected static final Address RCOUNT_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(NUM_BITS - RCOUNT_FIELD_WIDTH);
 
-    protected static final Address RCOUNT_INC_WORD = Platform.target().arch.is32bit() ? Address.zero().bitSet(32 - RCOUNT_FIELD_WIDTH) : Address.zero().bitSet(64 - RCOUNT_FIELD_WIDTH);
+    protected static final Address RCOUNT_INC_WORD = Address.zero().bitSet(NUM_BITS - RCOUNT_FIELD_WIDTH);
 
     @HOSTED_ONLY
     public LightweightLockword64(long value) {

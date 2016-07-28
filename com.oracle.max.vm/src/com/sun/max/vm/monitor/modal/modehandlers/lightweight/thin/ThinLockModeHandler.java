@@ -176,9 +176,9 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
         assert hashword.isZero() || Platform.target().arch.is32bit() : "Non null hashword in 64bit!";
         ModalLockword64 newLockword = lockword;
         int newHashcode = 0;
-        ThinLockword64 hashLockword = ThinLockword64.from(hashword);
         while (true) {
             if (ThinLockword64.isThinLockword(newLockword)) {
+                final ThinLockword64 hashLockword = ThinLockword64.from(hashword);
                 final ThinLockword64 thinLockword = ThinLockword64.from(newLockword);
                 final int hashcode = Platform.target().arch.is64bit() ? thinLockword.getHashcode() : hashLockword.getHashcode();
                 if (hashcode != 0) {
