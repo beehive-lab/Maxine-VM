@@ -28,7 +28,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
-import com.sun.max.vm.monitor.modal.modehandlers.lightweight.thin.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.reference.*;
 /**
@@ -55,12 +54,6 @@ public class InflatedMonitorLockword64 extends HashableLockword64 {
      */
 
     private static final Address MONITOR_MASK = Platform.target().arch.is64bit() ? Word.allOnes().asAddress().shiftedLeft(NUMBER_OF_MODE_BITS) : Word.allOnes().asAddress();
-
-    //The field below is used only in 32 bit mode
-    private static final int THREADID_FIELD_WIDTH = 10;
-    private static final int THREADID_SHIFT =  22;
-    private static final int THREADID_MASK = 0x3FF;
-
 
     @HOSTED_ONLY
     public InflatedMonitorLockword64(long value) {
@@ -123,15 +116,6 @@ public class InflatedMonitorLockword64 extends HashableLockword64 {
         return InflatedMonitorLockword64.from(HashableLockword64.from(Address.zero()).asAddress().bitSet(SHAPE_BIT_INDEX).bitSet(MISC_BIT_INDEX));
     }
 
-    @INLINE
-    public static final InflatedMonitorLockword64 boundFromThreadId(int threadId) {
-        return InflatedMonitorLockword64.from(boundFromZero().asAddress().or(Address.fromInt(threadId).shiftedLeft(THREADID_SHIFT)));
-    }
-
-    @INLINE
-    public final int getThreadId() {
-        return asAddress().unsignedShiftedRight(THREADID_SHIFT).and(THREADID_MASK).toInt();
-    }
     /**
      * Gets the bound {@link JavaMonitor JavaMonitor} encoded into this lock word.
      *

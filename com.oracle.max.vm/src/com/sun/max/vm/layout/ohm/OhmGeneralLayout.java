@@ -176,13 +176,6 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
         return accessor.compareAndSwapWord(miscOffset, expectedValue, newValue);
     }
 
-    /**
-     * This method assumes that misc is always preceding the hash word.
-     */
-    @INLINE
-    public final long compareAndSwapMiscAndHash(Accessor accessor, long expectedValue, long newValue) {
-        return accessor.compareAndSwapDualWord(miscOffset, expectedValue, newValue);
-    }
 
     @INLINE
     public final Reference forwarded(Reference ref) {
