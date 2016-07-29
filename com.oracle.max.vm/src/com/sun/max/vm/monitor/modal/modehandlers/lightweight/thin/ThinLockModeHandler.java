@@ -65,24 +65,37 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
         super(delegate);
     }
 
+    //64bit: The whole inflated word
+    //32bit: Just the inflated bits
     private ModalLockword64 inflate(Object object, ThinLockword64 lockword) {
+        //64bit: inflated lock word, 32bit: monitor
         ModalLockword64 inflatedLockword = delegate().prepareModalLockword(object, lockword);
+        //64bit: zero, 32bit: the inflatedBits
         ModalLockword64 inflatedBits = Platform.target().arch.is32bit() ? InflatedMonitorLockword64.boundFromZero() : ModalLockword64.from(Word.zero());
+
+        //32bit: We save the original hash in order to ensure that the two stage CAS is consistent;
+        ModalLockword64 originalHash = ModalLockword64.from(ObjectAccess.readHash(object));
+
         ThinLockword64 thinLockword = lockword;
         while (true) {
             final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, thinLockword, Platform.target().arch.is64bit() ? inflatedLockword : inflatedBits));
             if (answer.equals(thinLockword)) {
                 if (Platform.target().arch.is32bit()) {
-                    ModalLockword64 oldHash = ModalLockword64.from(ObjectAccess.readHash(object));
-                    final ModalLockword64 newHash = ModalLockword64.from(ObjectAccess.compareAndSwapHash(object, oldHash, inflatedLockword));
-                    if (!newHash.equals(oldHash)) {
-                        FatalError.unexpected("Race condition while inflating");
-                    }
+                    ObjectAccess.writeHash(object, inflatedLockword);
                 }
                 break;
             } else if (answer.isInflated()) {
-                delegate().cancelPreparedModalLockword(Platform.target().arch.is64bit() ? inflatedLockword : ModalLockword64.from(ObjectAccess.readHash(object)));
-                inflatedLockword = answer;
+                ModalLockword64 currentHash = ModalLockword64.from(Word.zero());
+                if (Platform.target().arch.is32bit()) {
+                    currentHash = ModalLockword64.from(ObjectAccess.readHash(object));
+                    while (currentHash.equals(originalHash)) {
+                        currentHash = ModalLockword64.from(ObjectAccess.readHash(object));
+                    }
+                }
+                //Unbind the speculative monitor
+                delegate().cancelPreparedModalLockword(inflatedLockword);
+
+                inflatedLockword =  answer;
                 break;
             }
             // We will spin if the thin lock word has been changed in any way (new owner, rcount change, new hashcode)

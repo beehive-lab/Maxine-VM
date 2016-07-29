@@ -426,10 +426,8 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
         }
 
         public ModalLockword64 reprepareModalLockword(ModalLockword64 preparedLockword, ModalLockword64 currentLockword, ModalLockword64 hash) {
-            assert hash.isZero() || Platform.target().arch.is64bit();
             final ThinLockword64 thinLockword = ThinLockword64.from(currentLockword);
-            final JavaMonitor monitor = Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(preparedLockword).getBoundMonitor() :
-                InflatedMonitorLockword64.from(hash).getBoundMonitor();
+            final JavaMonitor monitor =  InflatedMonitorLockword64.from(preparedLockword).getBoundMonitor();
             monitor.setDisplacedMisc(thinLockword);
             if (Platform.target().arch.is32bit()) {
                 monitor.setDisplacedHash(hash);
