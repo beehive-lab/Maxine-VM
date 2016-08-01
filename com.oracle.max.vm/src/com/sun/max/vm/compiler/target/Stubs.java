@@ -819,7 +819,6 @@ public class Stubs {
             CiKind[] handleTrapParameters = CiUtil.signatureToKinds(Trap.handleTrap.classMethodActor);
             CiValue[] args = registerConfig.getCallingConvention(JavaCallee, handleTrapParameters, target(), false).locations;
 
-
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12, true);      // SAVE r12 ... our save/restore uses r12 so we must push it here
             // this will be overwritten with the RETURN  ADDRESS of the trapping instruction
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12, true);
@@ -889,6 +888,7 @@ public class Stubs {
             asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 12, true); // POP scratch
             asm.ret(0);
 
+            //asm.returnFromExceptionHandler(); // LDM (system) copies the SPSR to the CPSR -- wont work for nested exceptions?
             byte[] code = asm.codeBuffer.close(true);
 
             return new Stub(TrapStub, "trapStub", frameSize, code, callPos, callSize, callee, -1);

@@ -372,26 +372,24 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
 
 #if isa_ARM
 	if (ucontext->uc_mcontext.arm_cpsr & 0x20 ) {
+	    // the exception occured in Thumb mode
+	    //printf("IP %x\n",ip);
+	    //printf("CPSR %lx\n",ucontext->uc_mcontext.arm_cpsr);
 		ip = ip | 0x1; // make sure we get thumb mode!!!
 			       // in the fault address IP that we return to .
-		ucontext->uc_mcontext.arm_cpsr = ucontext->uc_mcontext.arm_cpsr & 0xffffffdf;
+	    ucontext->uc_mcontext.arm_cpsr = ucontext->uc_mcontext.arm_cpsr & 0xffffffdf; // when the stub written in ARM is called then we will no
+	                                                                // end up in Thumb mode
 		if(ucontext->uc_mcontext.arm_cpsr & 0x0600fc00) {
-			printf("IT block bits are set and trap taken in Thumb mode, potentially we might have a problem\n");
+			//printf("IT block bits are set and trap taken in Thumb mode, potentially we might have a problem\n");
 		}
+    }
+    /*
 		// make sure we get ARM mode in the JAVA trapStub
-	/* TODO BUG ISSUE
-	Note that there is still a bug in this implementation, however it will
-	be extremely rare and is unlikely to be hit in any tests: if a thread
-	is interrupted in the middle of a Thumb IT (if-then) block then the
-	CPU will save the IT state machine in 8 bits of the CPSR. These bits
-	should be restored when control is returned to the interrupted code,
-	but the *only* way to set these bits on Linux is by using the
-	sigreturn system call (the CPSR bits can only be modified in
-	supervisor mode). Fixing this would require significant refactoring of
-	the way Maxine invokes trap handlers, so I don't think you should
-	worry about this just yet, but it is something to keep in mind.
-	*/
-	}
+	We tried to use the LDM (return from exception) that copies the current SPSR into the CPSR
+	so we do not need to meddle with the ip to force it into Thumb mode
+	NOTE: the problem above is that the CPSR copied intot the CPSR
+
+	}*/
 #endif
     //printf("vmSignalHandler\n");
     /* Only VM signals should get here. */

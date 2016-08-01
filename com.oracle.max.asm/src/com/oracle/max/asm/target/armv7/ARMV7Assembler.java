@@ -1913,6 +1913,20 @@ public class ARMV7Assembler extends AbstractAssembler {
             nop(ConditionFlag.Always);
         }
     }
+    public final void enterExceptionHandler() {
+        int instruction = 0xf8ed0500; //srs
+        instruction |= 1 << 4;
+        emitInt(instruction);
+        // SRS P=0 U=1 W=1
+    }
+    public final void returnFromExceptionHandler() {
+        int instruction = 0x8f08000; // ldm
+        instruction |= (13 << 16);
+        instruction |= (0xe) << 28;
+        emitInt(instruction);
+        // LDM P=0 U=1 W=1
+
+    }
 
     public final void ret() {
         if (SIMULATE_DYNAMIC) {
