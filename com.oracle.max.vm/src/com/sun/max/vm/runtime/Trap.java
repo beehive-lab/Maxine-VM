@@ -221,9 +221,8 @@ public abstract class Trap {
         final Object origin = checkTrapOrigin(trapNumber, trapFrame, faultAddress, pc);
         if (Platform.target().arch.isARM()) {
             if (pc.readInt(0) == 0xd9cfa00) {    // We are a vldr of the form used to indicate integer div by zero
-                if ((pc.readInt(-4) == 0xe02cc00c) && (pc.readInt(-8) == 0xf1d0beef)) {
-                    // see ARMV7Assembler.insertDIVIDEMark()
-                    // could check -12 to be same as -8
+                if (pc.readInt(-4) == -533938164) { // the marker is a jcc to the next instruction that is a vldr
+                    // see ARMV7Assembler.insertDivZeroCheck()
                     trapNumber = ARITHMETIC_EXCEPTION;
                 }
             }
