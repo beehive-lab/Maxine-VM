@@ -160,18 +160,51 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
     @Override
     public void peekObject(CiRegister dst, int index) {
+	CiAddress tmp = spWord(index);
+	if(tmp.isARMV7Immediate(CiKind.Int)) {
+                CiRegister tmpRegister = tmp.base();
+                int add = tmp.displacement >= 0 ? 1 : 0;
+                if(tmpRegister == CiRegister.Frame) {
+                        tmpRegister = asm.frameRegister;
+                }
+
+                asm.ldrImmediate(ConditionFlag.Always, 1, add, 0, dst, tmpRegister, tmp.displacement);
+		return;
+	}
         asm.setUpScratch(spWord(index));
         asm.ldr(ConditionFlag.Always, dst, asm.scratchRegister, 0);
     }
 
     @Override
     public void pokeObject(CiRegister src, int index) {
+	CiAddress tmp = spWord(index);
+	if(tmp.isARMV7Immediate(CiKind.Int)) {
+                CiRegister tmpRegister = tmp.base();
+                int add = tmp.displacement >= 0 ? 1 : 0;
+                if(tmpRegister == CiRegister.Frame) {
+                        tmpRegister = asm.frameRegister;
+                }
+
+                asm.strImmediate(ConditionFlag.Always, 1, add, 0, src, tmpRegister, tmp.displacement);
+		return;
+	}
         asm.setUpScratch(spWord(index));
         asm.str(ConditionFlag.Always, src, asm.scratchRegister, 0);
     }
 
     @Override
     public void peekWord(CiRegister dst, int index) {
+	CiAddress tmp = spWord(index);
+	if(tmp.isARMV7Immediate(CiKind.Int)) {
+                CiRegister tmpRegister = tmp.base();
+                int add = tmp.displacement >= 0 ? 1 : 0;
+                if(tmpRegister == CiRegister.Frame) {
+                        tmpRegister = asm.frameRegister;
+                }
+
+                asm.ldrImmediate(ConditionFlag.Always, 1, add, 0, dst, tmpRegister, tmp.displacement);
+		return;
+	}
         asm.setUpScratch(spWord(index));
         asm.ldr(ConditionFlag.Always, dst, asm.scratchRegister, 0);
 
@@ -179,6 +212,17 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
     @Override
     public void pokeWord(CiRegister src, int index) {
+	CiAddress tmp = spWord(index);
+	if(tmp.isARMV7Immediate(CiKind.Int)) {
+                CiRegister tmpRegister = tmp.base();
+                int add = tmp.displacement >= 0 ? 1 : 0;
+                if(tmpRegister == CiRegister.Frame) {
+                        tmpRegister = asm.frameRegister;
+                }
+
+                asm.strImmediate(ConditionFlag.Always, 1, add, 0, src, tmpRegister, tmp.displacement);
+		return;
+	}
         asm.setUpScratch(spWord(index));
         asm.str(ConditionFlag.Always, src, asm.scratchRegister, 0);
 
@@ -186,11 +230,33 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
 
     public void pokeDoubleWord(CiRegister src, int index) {
+	CiAddress tmp = spWord(index);
+	if(tmp.isARMV7Immediate(CiKind.Long)) {
+                CiRegister tmpRegister = tmp.base();
+                int add = tmp.displacement >= 0 ? 1 : 0;
+                if(tmpRegister == CiRegister.Frame) {
+                        tmpRegister = asm.frameRegister;
+                }
+
+                asm.strd(ConditionFlag.Always,  src, tmpRegister, tmp.displacement);
+		return;
+	}
         asm.setUpScratch(spWord(index));
         asm.strd(ConditionFlag.Always, src, asm.scratchRegister, 0);
     }
 
     public void peekDoubleWord(CiRegister dst, int index) {
+	CiAddress tmp = spWord(index);
+	if(tmp.isARMV7Immediate(CiKind.Long)) {
+                CiRegister tmpRegister = tmp.base();
+                int add = tmp.displacement >= 0 ? 1 : 0;
+                if(tmpRegister == CiRegister.Frame) {
+                        tmpRegister = asm.frameRegister;
+                }
+
+                asm.ldrd(ConditionFlag.Always,  dst, tmpRegister, tmp.displacement);
+		return;
+	}
         asm.setUpScratch(spWord(index));
         asm.ldrd(ConditionFlag.Always, dst, asm.scratchRegister, 0);
 
@@ -199,6 +265,19 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
     @Override
     public void peekInt(CiRegister dst, int index) {
+	CiAddress tmp = spInt(index);
+	if(tmp.isARMV7Immediate(CiKind.Int)) {
+                CiRegister tmpRegister = tmp.base();
+                int add = tmp.displacement >= 0 ? 1 : 0;
+                if(tmpRegister == CiRegister.Frame) {
+                        tmpRegister = asm.frameRegister;
+                }
+
+                asm.ldrImmediate(ConditionFlag.Always, 1, add, 0, dst, tmpRegister, tmp.displacement);
+		return;
+	}
+	
+	
         asm.setUpScratch(spInt(index));
         asm.ldr(ConditionFlag.Always, dst, asm.scratchRegister, 0);
 
@@ -206,6 +285,17 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
     @Override
     public void pokeInt(CiRegister src, int index) {
+	CiAddress tmp = spInt(index);
+	if(tmp.isARMV7Immediate(CiKind.Int)) {
+                CiRegister tmpRegister = tmp.base();
+                int add = tmp.displacement >= 0 ? 1 : 0;
+                if(tmpRegister == CiRegister.Frame) {
+                        tmpRegister = asm.frameRegister;
+                }
+
+                asm.strImmediate(ConditionFlag.Always, 1, add, 0, src, tmpRegister, tmp.displacement);
+		return;
+	}
         asm.setUpScratch(spInt(index));
         asm.str(ConditionFlag.Always, src, asm.scratchRegister, 0);
     }
@@ -213,6 +303,17 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     @Override
     public void peekLong(CiRegister dst, int index) {
         assert dst.getEncoding() < 10;
+	CiAddress tmp = spLong(index);
+	if(tmp.isARMV7Immediate(CiKind.Long)) {
+                CiRegister tmpRegister = tmp.base();
+                int add = tmp.displacement >= 0 ? 1 : 0;
+                if(tmpRegister == CiRegister.Frame) {
+                        tmpRegister = asm.frameRegister;
+                }
+
+                asm.ldrd(ConditionFlag.Always,  dst, tmpRegister, tmp.displacement);
+		return;
+	}
         asm.setUpScratch(spLong(index));
         asm.ldrd(ConditionFlag.Always, dst, scratch, 0);
     }
@@ -220,6 +321,17 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     @Override
     public void pokeLong(CiRegister src, int index) {
         assert src.getEncoding() < 10;
+	CiAddress tmp = spLong(index);
+	if(tmp.isARMV7Immediate(CiKind.Long)) {
+                CiRegister tmpRegister = tmp.base();
+                int add = tmp.displacement >= 0 ? 1 : 0;
+                if(tmpRegister == CiRegister.Frame) {
+                        tmpRegister = asm.frameRegister;
+                }
+
+                asm.strd(ConditionFlag.Always,  src, tmpRegister, tmp.displacement);
+		return;
+	}
         asm.setUpScratch(spLong(index));
         asm.strd(ARMV7Assembler.ConditionFlag.Always, src, scratch, 0);
     }
@@ -227,6 +339,17 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     @Override
     public void peekDouble(CiRegister dst, int index) {
         assert dst.isFpu();
+	CiAddress tmp = spLong(index);
+	if(tmp.isARMV7Immediate(CiKind.Double)) {
+                CiRegister tmpRegister = tmp.base();
+                int add = tmp.displacement >= 0 ? 1 : 0;
+                if(tmpRegister == CiRegister.Frame) {
+                        tmpRegister = asm.frameRegister;
+                }
+
+                asm.vldr(ConditionFlag.Always,  dst, tmpRegister, tmp.displacement, CiKind.Double, CiKind.Int);
+		        return;
+	}
         asm.setUpScratch(spLong(index));
         asm.vldr(ARMV7Assembler.ConditionFlag.Always, dst, scratch, 0, CiKind.Double, CiKind.Int);
     }
@@ -234,6 +357,17 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     @Override
     public void pokeDouble(CiRegister src, int index) {
         assert src.isFpu();
+	CiAddress tmp = spLong(index);
+	if(tmp.isARMV7Immediate(CiKind.Double)) {
+                CiRegister tmpRegister = tmp.base();
+                int add = tmp.displacement >= 0 ? 1 : 0;
+                if(tmpRegister == CiRegister.Frame) {
+                        tmpRegister = asm.frameRegister;
+                }
+
+                asm.vstr(ConditionFlag.Always,  src, tmpRegister, tmp.displacement, CiKind.Double, CiKind.Int);
+		return;
+	}
         asm.setUpScratch(spLong(index));
         asm.vstr(ARMV7Assembler.ConditionFlag.Always, src, scratch, 0, CiKind.Double, CiKind.Int);
     }
@@ -241,6 +375,17 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     @Override
     public void peekFloat(CiRegister dst, int index) {
         assert dst.isFpu();
+	CiAddress tmp = spInt(index);
+	if(tmp.isARMV7Immediate(CiKind.Float)) {
+                CiRegister tmpRegister = tmp.base();
+                int add = tmp.displacement >= 0 ? 1 : 0;
+                if(tmpRegister == CiRegister.Frame) {
+                        tmpRegister = asm.frameRegister;
+                }
+
+                asm.vldr(ConditionFlag.Always,  dst, tmpRegister, tmp.displacement, CiKind.Float, CiKind.Int);
+		return;
+	}
         asm.setUpScratch(spInt(index));
         asm.vldr(ConditionFlag.Always, dst, asm.scratchRegister, 0, CiKind.Float, CiKind.Int);
     }
@@ -248,6 +393,17 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     @Override
     public void pokeFloat(CiRegister src, int index) {
         assert src.isFpu();
+	CiAddress tmp = spInt(index);
+	if(tmp.isARMV7Immediate(CiKind.Float)) {
+                CiRegister tmpRegister = tmp.base();
+                int add = tmp.displacement >= 0 ? 1 : 0;
+                if(tmpRegister == CiRegister.Frame) {
+                        tmpRegister = asm.frameRegister;
+                }
+
+                asm.vstr(ConditionFlag.Always,  src, tmpRegister, tmp.displacement, CiKind.Float, CiKind.Int);
+		return;
+	}
         asm.setUpScratch(spInt(index));
         asm.vstr(ConditionFlag.Always, src, asm.scratchRegister, 0, CiKind.Float, CiKind.Int);
     }
@@ -265,10 +421,12 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     @Override
     protected void assignLong(CiRegister dst, long value) {
         assert dst.number < 10;
-        asm.movw(ConditionFlag.Always, dst, (int) (value & 0xffff));
+        /*asm.movw(ConditionFlag.Always, dst, (int) (value & 0xffff));
         asm.movt(ConditionFlag.Always, dst, (int) ((value >> 16) & 0xffff));
         asm.movw(ConditionFlag.Always, ARMV7.cpuRegisters[dst.getEncoding() + 1], (int) (((value >> 32) & 0xffff)));
         asm.movt(ConditionFlag.Always, ARMV7.cpuRegisters[dst.getEncoding() + 1], (int) (((value >> 48) & 0xffff)));
+        */
+        asm.mov64BitConstant(ConditionFlag.Always, dst, ARMV7.cpuRegisters[dst.getEncoding() + 1], value);
     }
 
     @Override
@@ -343,31 +501,84 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
     @Override
     protected void loadInt(CiRegister dst, int index) {
-        asm.setUpScratch(localSlot(localSlotOffset(index, Kind.INT)));
+	CiAddress tmp = localSlot(localSlotOffset(index, Kind.INT));
+	if(tmp.isARMV7Immediate(CiKind.Int)) {
+		CiRegister tmpRegister = tmp.base();
+                int add = tmp.displacement >= 0 ? 1 : 0;
+		if(tmpRegister == CiRegister.Frame) {
+			tmpRegister = asm.frameRegister;
+		}
+		asm.ldrImmediate(ConditionFlag.Always, 1, add, 0, dst, tmpRegister, tmp.displacement);
+		return;
+	} 
+        asm.setUpScratch(tmp);
         asm.ldr(ConditionFlag.Always, dst, ARMV7.r12, 0);
     }
 
     @Override
     protected void loadLong(CiRegister dst, int index) {
         assert dst.number < 10; // to prevent screwing up scratch 2 registers required for double!
+	CiAddress tmp = localSlot(localSlotOffset(index, Kind.LONG));
+	if(tmp.isARMV7Immediate(CiKind.Long)) {
+		CiRegister tmpRegister = tmp.base();
+		if(tmpRegister == CiRegister.Frame) {
+			tmpRegister = asm.frameRegister;
+		}
+		asm.ldrd(ConditionFlag.Always,  dst, tmpRegister, tmp.displacement);
+		return;
+	} 
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
         asm.ldrd(ConditionFlag.Always, dst, scratch, 0);
     }
 
     @Override
     protected void loadWord(CiRegister dst, int index) {
+	CiAddress tmp = localSlot(localSlotOffset(index, Kind.WORD));
+        if(tmp.isARMV7Immediate(CiKind.Int)) {
+                CiRegister tmpRegister = tmp.base();
+                int add = tmp.displacement >= 0 ? 1 : 0;
+                if(tmpRegister == CiRegister.Frame) {
+                        tmpRegister = asm.frameRegister;
+                }
+                asm.ldrImmediate(ConditionFlag.Always, 1, add, 0, dst, tmpRegister, tmp.displacement);
+                return;
+        }
+
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.WORD)));
         asm.ldr(ConditionFlag.Always, dst, ARMV7.r12, 0);
     }
 
     @Override
     protected void loadObject(CiRegister dst, int index) {
+	CiAddress tmp = localSlot(localSlotOffset(index, Kind.REFERENCE));
+        if(tmp.isARMV7Immediate(CiKind.Int)) {
+                CiRegister tmpRegister = tmp.base();
+                int add = tmp.displacement >= 0 ? 1 : 0;
+                if(tmpRegister == CiRegister.Frame) {
+                        tmpRegister = asm.frameRegister;
+                }
+                asm.ldrImmediate(ConditionFlag.Always, 1, add, 0, dst, tmpRegister, tmp.displacement);
+                return;
+        }
+
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.REFERENCE)));
         asm.ldr(ConditionFlag.Always, dst, ARMV7.r12, 0);
     }
 
     @Override
     protected void storeInt(CiRegister src, int index) {
+        CiAddress tmp = localSlot(localSlotOffset(index, Kind.INT));
+
+        if(tmp.isARMV7Immediate(CiKind.Int)) {
+                CiRegister tmpRegister = tmp.base();
+                int add = tmp.displacement >= 0 ? 1 : 0;
+                if(tmpRegister == CiRegister.Frame) {
+                        tmpRegister = asm.frameRegister;
+                }
+                asm.strImmediate(ConditionFlag.Always, 1, add, 0, src, tmpRegister, tmp.displacement);
+                return;
+        }
+
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.INT)));
         //asm.strImmediate(ConditionFlag.Always, 0, 0, 0, src, ARMV7.r12, 0);
         asm.str(ConditionFlag.Always, src, scratch, 0);
@@ -377,6 +588,15 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     @Override
     protected void storeLong(CiRegister src, int index) {
         assert src.number < 10; // sanity checking longs must not screw up scratch
+	CiAddress tmp = localSlot(localSlotOffset(index, Kind.LONG));
+	if(tmp.isARMV7Immediate(CiKind.Long)) {
+		CiRegister tmpRegister = tmp.base();
+		if(tmpRegister == CiRegister.Frame) {
+			tmpRegister = asm.frameRegister;
+		}
+		asm.strd(ConditionFlag.Always,  src, tmpRegister, tmp.displacement);
+		return;
+	} 
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
         // asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
         asm.strd(ARMV7Assembler.ConditionFlag.Always, src, scratch, 0);
@@ -384,6 +604,18 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
     @Override
     protected void storeWord(CiRegister src, int index) {
+        CiAddress tmp = localSlot(localSlotOffset(index, Kind.WORD));
+
+        if(tmp.isARMV7Immediate(CiKind.Int)) {
+                CiRegister tmpRegister = tmp.base();
+                int add = tmp.displacement >= 0 ? 1 : 0;
+                if(tmpRegister == CiRegister.Frame) {
+                        tmpRegister = asm.frameRegister;
+                }
+                asm.strImmediate(ConditionFlag.Always, 1, add, 0, src, tmpRegister, tmp.displacement);
+                return;
+        }
+
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.WORD)));
         //asm.strImmediate(ConditionFlag.Always, 0, 0, 0, src, asm.scratchRegister, 0);
         asm.str(ConditionFlag.Always, src, scratch, 0);
@@ -391,19 +623,30 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 
     @Override
     protected void storeObject(CiRegister src, int index) {
+	CiAddress tmp = localSlot(localSlotOffset(index, Kind.REFERENCE));
+        if(tmp.isARMV7Immediate(CiKind.Int)) {
+                CiRegister tmpRegister = tmp.base();
+                int add = tmp.displacement >= 0 ? 1 : 0;
+                if(tmpRegister == CiRegister.Frame) {
+                        tmpRegister = asm.frameRegister;
+                }
+                asm.strImmediate(ConditionFlag.Always, 1, add, 0, src, tmpRegister, tmp.displacement);
+                return;
+        }
+
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.REFERENCE)));
         asm.str(ARMV7Assembler.ConditionFlag.Always, src, scratch, 0);
     }
 
     @Override
     public void assignInt(CiRegister dst, int value) {
-        asm.mov32BitConstant(ConditionFlag.Always, dst, value);
+        asm.mov32BitConstantOptimised(ConditionFlag.Always, dst, value);
     }
 
     @Override
     protected void assignFloat(CiRegister dst, float value) {
         assert dst.number >= ARMV7.s0.number && dst.number <= ARMV7.s31.number;
-        asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, Float.floatToRawIntBits(value));
+        asm.mov32BitConstantOptimised(ConditionFlag.Always, ARMV7.r12, Float.floatToRawIntBits(value));
         asm.vmov(ConditionFlag.Always, dst, ARMV7.r12, null, CiKind.Float, CiKind.Int);
     }
 
@@ -519,10 +762,12 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     protected void assignDouble(CiRegister dst, double value) {
         assert dst.isFpu();
         // avoid potential corruption of r9
-        asm.push(ConditionFlag.Always, 1 << 9, true);
+        //asm.push(ConditionFlag.Always, 1 << 9, true);
+        asm.saveInFP(9);
         assignLong(ARMV7.r8, Double.doubleToRawLongBits(value));
         asm.vmov(ConditionFlag.Always, dst, ARMV7.r8, ARMV7.r9, CiKind.Double, CiKind.Int);
-        asm.pop(ConditionFlag.Always, 1 << 9, true);
+        //asm.pop(ConditionFlag.Always, 1 << 9, true);
+        asm.restoreFromFP(9);
     }
 
     @Override
@@ -647,7 +892,8 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         final short stackAmountInBytes = (short) frame.sizeOfParameters();
         asm.pop(ConditionFlag.Always, asm.getRegisterList(ARMV7.FP), true);
         asm.pop(ConditionFlag.Always, asm.getRegisterList(r8), true);
-        asm.mov32BitConstant(ConditionFlag.Always, scratch, stackAmountInBytes);
+        // Optimisation OPPORTUNITY ...
+        asm.mov32BitConstantOptimised(ConditionFlag.Always, scratch, stackAmountInBytes);
         asm.addRegisters(ConditionFlag.Always, false, ARMV7.rsp, ARMV7.rsp, scratch, 0, 0);
         asm.mov(ConditionFlag.Always, false, ARMV7.PC, ARMV7.r8);
     }
@@ -685,14 +931,14 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.setUpScratch(new CiAddress(CiKind.Int, RSP));
         asm.ldr(ConditionFlag.Always, ARMV7.r8, asm.scratchRegister, 0);
         asm.addq(r13, JVMSFrameLayout.JVMS_SLOT_SIZE);
-        asm.push(ConditionFlag.Always, 1 << 10 | 1 << 9 | 1 << 7, true);
+        asm.push(ConditionFlag.Always,  1 << 9 | 1 << 7, true);
         asm.mov(ConditionFlag.Always, false, ARMV7.r9, ARMV7.r8); // r9 stores index
 
         // Jump to default target if index is not within the jump table
         startBlock(ts.defaultTarget());
         asm.cmpl(r9, lowMatch);
 
-        asm.pop(ConditionFlag.SignedLesser, 1 << 10 | 1 << 9 | 1 << 7, true);
+        asm.pop(ConditionFlag.SignedLesser, 1 << 9 | 1 << 7, true);
         int pos = buf.position();
         patchInfo.addJCC(ConditionFlag.SignedLesser, pos, ts.defaultTarget());
         asm.jcc(ConditionFlag.SignedLesser, 0, true);
@@ -702,7 +948,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         } else {
             asm.cmpl(r9, highMatch);
         }
-        asm.pop(ConditionFlag.SignedGreater, 1 << 10 | 1 << 9 | 1 << 7, true);
+        asm.pop(ConditionFlag.SignedGreater,  1 << 9 | 1 << 7, true);
         pos = buf.position();
         patchInfo.addJCC(ConditionFlag.SignedGreater, pos, ts.defaultTarget());
         asm.jcc(ConditionFlag.SignedGreater, 0, true);
@@ -717,7 +963,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.ldr(ConditionFlag.Always, r12, ARMV7.r12, 0);
         asm.addRegisters(ConditionFlag.Always, false, r12, ARMV7.r15, r12, 0, 0);
         asm.add(ConditionFlag.Always, false, r12, r12, 8, 0);
-        asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10 | 1 << 7, true); // restore r9/r10
+        asm.pop(ConditionFlag.Always, 1 << 9  | 1 << 7, true); // restore r9/r10
         asm.mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12);
 
         // Patch LEA instruction above now that we know the position of the jump table
@@ -763,7 +1009,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
             asm.setUpScratch(new CiAddress(CiKind.Int, RSP));
             asm.ldr(ConditionFlag.Always, ARMV7.r8, asm.scratchRegister, 0);
             asm.addq(ARMV7.r13, JVMSFrameLayout.JVMS_SLOT_SIZE);
-            asm.push(ConditionFlag.Always, 1 << 7 | 1 << 9 | 1 << 10, true);
+            asm.push(ConditionFlag.Always, 1 << 7 | 1 << 9 | 1 << 6 , true);
             asm.mov(ConditionFlag.Always, false, r9, r8); // r9 stores index
 
             // Set r10 to address of lookup table
@@ -772,7 +1018,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
             int afterLea = buf.position();
 
             // Initialize r7 to index of last entry
-            asm.mov32BitConstant(ConditionFlag.Always, r7, (ls.numberOfCases() - 1) * 2);
+            asm.mov32BitConstantOptimised(ConditionFlag.Always, r7, (ls.numberOfCases() - 1) * 2);
 
             int loopPos = buf.position();
 
@@ -794,7 +1040,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
             // Jump to default target
             startBlock(ls.defaultTarget());
             patchInfo.addJMP(buf.position() + 4, ls.defaultTarget()); //The +4 is to jump over the pop
-            asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10 | 1 << 7, true);
+            asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 6 | 1 << 7, true);
             asm.jmp(0, true);
 
             // Patch the first conditional branch instruction above now that we know where's it's going
@@ -808,7 +1054,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
             asm.ldr(ConditionFlag.Always, r12, r12, 0);
             asm.addRegisters(ConditionFlag.Always, false, r12, r15, r12, 0, 0);
             asm.add(ConditionFlag.Always, false, r12, r12, 8, 0);
-            asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 10 | 1 << 7, true);
+            asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 6 | 1 << 7, true);
             asm.mov(ConditionFlag.Always, false, r15, r12); // changed to false for flag update
 
             // Inserting padding so that lookup table address is 4-byte aligned
@@ -1116,6 +1362,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 writer.close();
             }
         }
+        assert (result.length != 0);
         return result;
     }
 

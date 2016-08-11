@@ -373,8 +373,8 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
 #if isa_ARM
 	if (ucontext->uc_mcontext.arm_cpsr & 0x20 ) {
 	    // the exception occured in Thumb mode
-	    //printf("IP %x\n",ip);
-	    //printf("CPSR %lx\n",ucontext->uc_mcontext.arm_cpsr);
+	    printf("IP %x\n",ip);
+	    printf("CPSR %lx\n",ucontext->uc_mcontext.arm_cpsr);
 		ip = ip | 0x1; // make sure we get thumb mode!!!
 			       // in the fault address IP that we return to .
 	    ucontext->uc_mcontext.arm_cpsr = ucontext->uc_mcontext.arm_cpsr & 0xffffffdf; // when the stub written in ARM is called then we will no

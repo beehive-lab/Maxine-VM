@@ -709,7 +709,7 @@ public class Stubs {
 	            NOTE FOR genDyanmicTrampoline,  WE MUST FAKE THE CORRECT $LR AND THEN DO THE RET, AS WE DO ***not**** ACTUALLY DO A BLX TO GET TO THE
 	            ENTRY POINT
 	        */
-            asm.strImmediate(ARMV7Assembler.ConditionFlag.Always, 0, 0, 0, callSite, ARMV7.r12, 0);
+            asm.strImmediate(ARMV7Assembler.ConditionFlag.Always, 1, 1, 0, callSite, ARMV7.r12, 0);
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, callSite);
             asm.ret(0); // ret(0) is a C3 in X86
 

@@ -250,7 +250,8 @@ ifeq ($(OS),linux)
     # Libraries must be specified after the actual source files, so the POSTFIX variable is used for that
     # (Introduced to solve a linking problem on Ubuntu 11.10)
     ifeq ($(ISA),arm) 
-        LINK_MAIN_POSTFIX = $(MAXINE_HOME)/com.oracle.max.vm.native/substrate/libFPGAsim.a -lstdc++ -lc -lm -lpthread -ldl
+        LINK_MAIN_POSTFIX = -lstdc++ -lc -lm -lpthread -ldl
+#        LINK_MAIN_POSTFIX = $(MAXINE_HOME)/com.oracle.max.vm.native/substrate/libFPGAsim.so -lstdc++ -lc -lm -lpthread -ldl
 #        LINK_MAIN_POSTFIX = $(MAXINE_HOME)/com.oracle.max.vm.native/substrate/libCCluster.a -lstdc++ -lc -lm -lpthread -ldl
     endif
     ifneq ($(ISA),arm)
@@ -258,7 +259,7 @@ ifeq ($(OS),linux)
     endif
     LINK_LIB = $(CC) -g -shared
     ifeq ($(ISA),arm)
-	LINK_LIB_POSTFIX = $(MAXINE_HOME)/com.oracle.max.vm.native/substrate/libFPGAsim.a -lstdc++ -lc -lm -lpthread
+	LINK_LIB_POSTFIX = -lstdc++ -lc -lm -lpthread
 #	LINK_LIB_POSTFIX = $(MAXINE_HOME)/com.oracle.max.vm.native/substrate/libCCluster.a -lstdc++ -lc -lm -lpthread
     endif
     ifneq ($(ISA),arm)

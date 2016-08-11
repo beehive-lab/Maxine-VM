@@ -537,9 +537,9 @@ int maxine(int argc, char *argv[], char *executablePath) {
     struct stat statBuf;
     if(stat("/dev/xdevcfg",&statBuf) == 0) {
         //initialiseMemoryCluster();
-	enableFPGA(1);
-        initialiseTimingModel();
-        simulationPlatform = 1;
+	    //enableFPGA(1);
+        //initialiseTimingModel();
+        //simulationPlatform = 1;
     }
 #endif
 
