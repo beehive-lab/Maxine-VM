@@ -428,7 +428,11 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
                 lastGCTime = System.currentTimeMillis();
                 accumulatedGCTime += lastGCTime - startGCTime;
-
+                if (Heap.verbose()) {
+                    Log.print("--During GC   time: ");
+                    Log.print(lastGCTime - startGCTime);
+                    Log.println(" ms --");
+                }
                 HeapScheme.Inspect.notifyHeapPhaseChange(HeapPhase.MUTATING);
                 Heap.invokeGCCallbacks(GCCallbackPhase.AFTER);
 
