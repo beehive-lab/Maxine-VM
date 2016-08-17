@@ -94,11 +94,9 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
 
     /**
-     * A VM option for enabling extra checking of references. This should be disabled when running GC benchmarks.
-     * It's enabled by default as the primary goal of this collector are simplicity and robustness,
-     * not high performance.
+     * A VM option for enabling extra checking of references. This is enabled by default in Debug build.
      */
-    private static boolean VerifyReferences = true;
+    private static boolean VerifyReferences = false;
     static {
         VMOptions.addFieldOption("-XX:", "VerifyReferences", SemiSpaceHeapScheme.class, "Do extra verification for each reference scanned by the GC", MaxineVM.Phase.PRISTINE);
     }
@@ -977,7 +975,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
      * @param when a description of the current GC phase
      */
     private void verifyObjectSpaces(GCCallbackPhase when) {
-        if (!MaxineVM.isDebug() && !VerifyReferences) {
+        if (!VerifyReferences) {
             return;
         }
 
