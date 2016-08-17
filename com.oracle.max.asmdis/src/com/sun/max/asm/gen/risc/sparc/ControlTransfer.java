@@ -127,22 +127,22 @@ class ControlTransfer extends SPARCInstructionDescriptionCreator {
 
     private void create_cbcond(String cond, int c) {
         final Object[] cbCondHead = {
-                        op(0b00),
-                        bits_29_29((c & 0b1000) >> 3), // chi
-                        bits_28_28(1),
-                        bits_27_25(c & 0b00111), // clo
-                        op2(0b011),
-                        rs1,
+            op(0b00),
+            bits_29_29((c & 0b1000) >> 3), // chi
+            bits_28_28(1),
+            bits_27_25(c & 0b00111), // clo
+            op2(0b011),
+            rs1,
         };
-        define("cxb" + cond, cbCondHead, rs2    , d10, bits_21_21(1), i(0));
+        define("cxb" + cond, cbCondHead, rs2,     d10, bits_21_21(1), i(0));
         define("cxb" + cond, cbCondHead, shcnt32, d10, bits_21_21(1), i(1));
-        define("cwb" + cond, cbCondHead, rs2    , d10, bits_21_21(0), i(0));
+        define("cwb" + cond, cbCondHead, rs2,     d10, bits_21_21(0), i(0));
         define("cwb" + cond, cbCondHead, shcnt32, d10, bits_21_21(0), i(1));
     }
 
     private void create_OSA2011() {
-        for(Bicc condition : Bicc.SYMBOLIZER) {
-            if(condition.equals(Bicc.A) || condition.equals(Bicc.N)) {
+        for (Bicc condition : Bicc.SYMBOLIZER) {
+            if (condition.equals(Bicc.A) || condition.equals(Bicc.N)) {
                 continue; // A and N does not exist for cbcond
             }
             create_cbcond(condition.name().toLowerCase(), condition.value());
