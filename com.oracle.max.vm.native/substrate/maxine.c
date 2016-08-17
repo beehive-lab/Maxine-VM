@@ -400,7 +400,15 @@ void native_exit(jint code) {
     // but it is a bad idea if we crashed because it calls back into the VM,
     // which can cause a recursive crash.
     if (code != 11) {
-        cleanupCurrentThreadBlockBeforeExit();
+        // Clean up of the current block fails for threads other than primordial.
+        // As it is not clear why it is important to clean up, 
+        // it is decided to call it conditionally when it does not crash.
+        Address tlBlock = threadLocalsBlock_current();
+        Address tla = ETLA_FROM_TLBLOCK(tlBlock);
+        int id = tla_load(int, tla, ID);
+        if (id == PRIMORDIAL_THREAD_ID) {
+            cleanupCurrentThreadBlockBeforeExit();
+        }
     }
     exit(code);
 }
