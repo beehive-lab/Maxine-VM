@@ -62,7 +62,6 @@ public class CiCodePos implements Serializable {
         this.caller = caller;
         this.method = method;
         this.bci = bci;
-        assert bci <= method.codeSize();
     }
 
     /**
