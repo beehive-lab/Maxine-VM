@@ -60,6 +60,11 @@ extern SignalHandlerFunction userSignalHandler;
 extern boolean traceSignals;
 
 /**
+ * Sets the signal mask for the current thread on thread exit.
+ */
+extern void setCurrentThreadSignalMaskOnThreadExit(boolean isVmOperationThread);
+
+/**
  * Sets the signal mask for the current thread. The signals in the mask are those
  * that are blocked for the thread.
  */

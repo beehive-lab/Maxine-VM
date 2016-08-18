@@ -1177,7 +1177,7 @@ final class JDK_sun_misc_Unsafe {
                 thread.park();
             }
         } catch (InterruptedException e) {
-            // do nothing.
+            thread.setInterrupted();
         }
     }
 }

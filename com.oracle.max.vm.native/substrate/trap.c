@@ -68,6 +68,11 @@ static sigset_t vmSignals;
  */
 static sigset_t vmAndDefaultSignals;
 
+/**
+ * The signals blocked on thread exit.
+ */
+static sigset_t blockedOnThreadExitSignals;
+
 #endif
 
 int getTrapNumber(int signal) {
@@ -93,6 +98,15 @@ int getTrapNumber(int signal) {
 #elif os_DARWIN || os_LINUX
 #define thread_setSignalMask pthread_sigmask
 #endif
+
+void setCurrentThreadSignalMaskOnThreadExit(boolean isVmOperationThread) {
+#if !os_MAXVE
+    if (!isVmOperationThread) {
+        /* disable signals sent by Thread.interrupt() as thread is transitioning to not alive state. */
+        thread_setSignalMask(SIG_BLOCK, &blockedOnThreadExitSignals, NULL);
+    }
+#endif
+}
 
 void setCurrentThreadSignalMask(boolean isVmOperationThread) {
 #if !os_MAXVE
@@ -469,6 +483,10 @@ void nativeTrapInitialize(Address javaTrapStub) {
 
     /* Let all threads be stopped by a debugger. */
     sigaddset(&vmSignals, SIGTRAP);
+
+    /* Define the signals to be blocked on thread exit. */
+    sigemptyset(&blockedOnThreadExitSignals);
+    sigaddset(&blockedOnThreadExitSignals, SIGUSR1);
 
     /* Apply the normal thread mask to the primordial thread. */
     thread_setSignalMask(SIG_BLOCK, &allSignals, NULL);

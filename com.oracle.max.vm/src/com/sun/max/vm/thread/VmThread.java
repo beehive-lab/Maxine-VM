@@ -39,6 +39,8 @@ import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
+import com.sun.max.platform.OS;
+import com.sun.max.platform.Platform;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -57,6 +59,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.ti.*;
 import com.sun.max.vm.value.*;
+
 
 /**
  * The MaxineVM VM specific implementation of threads.
@@ -1424,11 +1427,18 @@ public class VmThread {
     }
 
     public final void interrupt0() {
+        // Set to true as default. Will be cleared on this VmThread's
+        // native thread if an InterruptedException is thrown after the
+        // interruption.
         interrupted = true;
+        if (Platform.platform().os == OS.DARWIN ||
+            Platform.platform().os == OS.LINUX) {
+            boolean isInterrupted = interrupt0ByUnparking();
+            if (isInterrupted) {
+                return;
+            }
+        }
         if (!nativeThread.isZero()) {
-            // Set to true as default. Will be cleared on this VmThread's
-            // native thread if an InterruptedException is thrown after the
-            // interruption.
             nativeInterrupt(nativeThread);
         }
     }
@@ -1525,10 +1535,31 @@ public class VmThread {
      */
     public final void unpark() {
         synchronized (this) {
-            parkState = 1;
-            notifyAll();
+            if (parkState == 2) {
+                parkState = 1;
+                notifyAll();
+            } else {
+                parkState = 1;
+            }
         }
     }
+
+    /**
+     * This method interrupts thread by unparking if it is parked.
+     *
+     * @returns true if successfull, false otherwise.
+     */
+    public final boolean interrupt0ByUnparking() {
+        synchronized (this) {
+            if (parkState == 2) {
+                parkState = 1;
+                notifyAll();
+                return true;
+            }
+            return false;
+        }
+    }
+
 
     public final void pushPrivilegedElement(ClassActor classActor, long frameId, AccessControlContext context) {
         privilegedStackTop = new PrivilegedElement(classActor, frameId, context, privilegedStackTop);
