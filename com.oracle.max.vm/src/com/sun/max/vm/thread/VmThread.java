@@ -689,8 +689,10 @@ public class VmThread {
             }
             thread.terminationCause = throwable;
         }
-        // call Thread.exit()
-        JDK_java_lang_Thread.exitThread(thread.javaThread());
+        if (thread != mainThread) {
+            // call Thread.exit()
+            JDK_java_lang_Thread.exitThread(thread.javaThread());
+        }
         // inform any VMTI handlers
         VMTI.handler().threadEnd(thread);
         // possibly flush the log
