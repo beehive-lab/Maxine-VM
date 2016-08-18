@@ -109,7 +109,7 @@ static void getExecutablePath(char *result) {
 #if !os_MAXVE
     char *p;
     // chop off the name of the executable
-    for (p = result + numberOfChars; p >= result; p--) {
+    for (p = result + (numberOfChars - 1); p >= result; p--) {
         if (*p == '/') {
             p[1] = 0;
             break;
