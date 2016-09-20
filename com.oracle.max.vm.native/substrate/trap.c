@@ -91,6 +91,8 @@ int getTrapNumber(int signal) {
     case SIGUSR1:
 	//printf("ASYNCINT\n");
         return ASYNC_INTERRUPT;
+     default:
+        printf("UNKNOWN SIGNAL %d\n", signal);
 #endif
     }
     return -signal;
@@ -373,8 +375,8 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
 #if isa_ARM
 	if (ucontext->uc_mcontext.arm_cpsr & 0x20 ) {
 	    // the exception occured in Thumb mode
-	    printf("IP %x\n",ip);
-	    printf("CPSR %lx\n",ucontext->uc_mcontext.arm_cpsr);
+	    //printf("IP %x\n",ip);
+	    //printf("CPSR %lx\n",ucontext->uc_mcontext.arm_cpsr);
 		ip = ip | 0x1; // make sure we get thumb mode!!!
 			       // in the fault address IP that we return to .
 	    ucontext->uc_mcontext.arm_cpsr = ucontext->uc_mcontext.arm_cpsr & 0xffffffdf; // when the stub written in ARM is called then we will no
@@ -387,6 +389,7 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
 		// make sure we get ARM mode in the JAVA trapStub
 	We tried to use the LDM (return from exception) that copies the current SPSR into the CPSR
 	so we do not need to meddle with the ip to force it into Thumb mode
+	BUT WE CANNOT Do LDM/STM/RFE AS THe trap STUB EXECUTES IN USER MODE and not at PL1
 	NOTE: the problem above is that the CPSR copied intot the CPSR
 
 	}*/
@@ -394,7 +397,11 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
     //printf("vmSignalHandler\n");
     /* Only VM signals should get here. */
     if (trapNumber < 0) {
+        if(trapNumber ==  -4) {
+            printf("%x\n", *((int *)ip));
+        }
         logTrap(signal, ip, faultAddress, 0);
+        while(1); // infinite loop to gdb SIGILL
         log_exit(-22, "Non VM signal %d should be handled by the Java signal handler", signal);
     }
 
@@ -483,8 +490,10 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
 #else
     c_UNIMPLEMENTED();
 #endif
-	
+
+
     setInstructionPointer(ucontext, theJavaTrapStub);
+
 }
 
 /**

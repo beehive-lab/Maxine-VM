@@ -194,6 +194,8 @@ public abstract class Trap {
      * Installs the trap handlers using the operating system's API.
      */
     public static void initialize() {
+        //in ARM we have a problem with Thumb mode .. do we need to provide a Thumb mode
+        // version of the Stub produced by genTrapStub
         nativeTrapInitialize(vm().stubs.trapStub().codeStart().toAddress());
         nativeSetTrapTracing(TraceTraps);
     }
@@ -220,7 +222,7 @@ public abstract class Trap {
         final Pointer pc = tfa.getPC(trapFrame);
         final Object origin = checkTrapOrigin(trapNumber, trapFrame, faultAddress, pc);
         if (Platform.target().arch.isARM()) {
-            if (pc.readInt(0) == 0xd9cfa00) {    // We are a vldr of the form used to indicate integer div by zero
+            if (pc.readInt(0) == 0xd9cfa00 && (pc.toLong() % 4 == 0)) {    //we are in ARM mode AND  We are a vldr of the form used to indicate integer div by zero
                 //com.sun.max.vm.Log.println("IDIV marker JCC " + pc.readInt(-8));
                 if ((pc.readInt(-4) == -533938164) && (pc.readInt(-8) == -527437812)) { // the marker is a jcc to the next instruction an eor followed by an vldr
                     // see ARMV7Assembler.insertDivZeroCheck()
@@ -231,6 +233,15 @@ public abstract class Trap {
 
         if (origin instanceof TargetMethod) {
             // the trap occurred in Java
+            if (Platform.target().arch.isARM()) {
+                if(pc.toInt() % 4 != 0) {
+                    com.sun.max.vm.Log.println("Thumb trap and expect to handle correctly -- FAIL ASSERT");
+                }
+                assert (pc.toInt() % 4 == 0);
+                /* if we get a trap in Thumb mode it is not possible?? That the origin is a TargetMethod?
+                   It should only be possible if this is a native trap AFAICT
+                 */
+            }
             final TargetMethod targetMethod = (TargetMethod) origin;
             final Pointer sp = tfa.getSP(trapFrame);
             final Pointer fp = tfa.getFP(trapFrame);

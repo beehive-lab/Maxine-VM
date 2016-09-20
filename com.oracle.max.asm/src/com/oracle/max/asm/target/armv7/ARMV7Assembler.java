@@ -827,7 +827,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public void sub12BitImmediate(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int imm12) {
         // not tested
         int instruction = 0x2400000;
-        //checkConstraint(0 <= (imm12&0xff) && imm12 < 4096, "0 <= imm12 && imm12 < 4096");
+        checkConstraint(0 <= imm12 && imm12 < 4096, "0 <= imm12 && imm12 < 4096");
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (s ? 1 : 0) << 20;
         instruction |= imm12;
@@ -1473,14 +1473,14 @@ public class ARMV7Assembler extends AbstractAssembler {
     public void restoreFromFP(int reg) {
         vmov(ConditionFlag.Always, ARMV7.cpuRegisters[reg], ARMV7.s28, null, CiKind.Int, CiKind.Float);
     }
-    public void saveTWOInFP(int reg, int reg2) {
-        vmov(ConditionFlag.Always, ARMV7.s28, ARMV7.cpuRegisters[reg], null, CiKind.Float, CiKind.Int);
-        vmov(ConditionFlag.Always, ARMV7.s29, ARMV7.cpuRegisters[reg2], null, CiKind.Float, CiKind.Int);
+    public void saveTWOInFP(final ConditionFlag flag,int reg, int reg2) {
+        vmov(flag, ARMV7.s28, ARMV7.cpuRegisters[reg], null, CiKind.Float, CiKind.Int);
+        vmov(flag, ARMV7.s29, ARMV7.cpuRegisters[reg2], null, CiKind.Float, CiKind.Int);
 
     }
-    public void restoreTWOFromFP(int reg, int reg2) {
-        vmov(ConditionFlag.Always, ARMV7.cpuRegisters[reg], ARMV7.s28, null, CiKind.Int, CiKind.Float);
-        vmov(ConditionFlag.Always, ARMV7.cpuRegisters[reg2], ARMV7.s29, null, CiKind.Int, CiKind.Float);
+    public void restoreTWOFromFP(final ConditionFlag flag,int reg, int reg2) {
+        vmov(flag, ARMV7.cpuRegisters[reg], ARMV7.s28, null, CiKind.Int, CiKind.Float);
+        vmov(flag, ARMV7.cpuRegisters[reg2], ARMV7.s29, null, CiKind.Int, CiKind.Float);
     }
 
 
@@ -2454,7 +2454,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final void mulLong(CiRegister dst, CiRegister src1, CiRegister src2) {
         assert (src1 == dst);
         //push(ConditionFlag.Always, 1 << src2.number | 1 << (src2.number + 1), true);
-        saveTWOInFP(src2.number,src2.number+1);
+        saveTWOInFP(ConditionFlag.Always,src2.number,src2.number+1);
         mov(ConditionFlag.Always, false, ARMV7.r12, src2); // save src2
         mul(ConditionFlag.Always, false, src2, src2, ARMV7.cpuRegisters[src1.number + 1]);
         mul(ConditionFlag.Always, false, ARMV7.cpuRegisters[src2.number + 1], src1, ARMV7.cpuRegisters[src2.number + 1]);
@@ -2463,7 +2463,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         addRegisters(ConditionFlag.Always, false, scratchRegister, ARMV7.cpuRegisters[src2.number + 1], src2, 0, 0);
         mov(ConditionFlag.Always, false, ARMV7.cpuRegisters[dst.number + 1], scratchRegister);
         //pop(ConditionFlag.Always, 1 << src2.number | 1 << (src2.number + 1), true);
-        restoreTWOFromFP(src2.number,src2.number+1);
+        restoreTWOFromFP(ConditionFlag.Always, src2.number,src2.number+1);
     }
 
     public void xorq(CiRegister dest, CiAddress src) {
@@ -2539,7 +2539,8 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     // TODO: Cleanup
     public final void int3() {
-        push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384, true); // push
+       // emitInt(0xe1200070);
+        /*push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384, true); // push
                                                                                                                        // r0-r3
                                                                                                                        // and
                                                                                                                        // r7
@@ -2560,9 +2561,9 @@ public class ARMV7Assembler extends AbstractAssembler {
         mov32BitConstantOptimised(ConditionFlag.Always, ARMV7.r7, 268); // tgkill
         emitInt(0xef000000); // replaced with svc 0
         vpop(ConditionFlag.Always, ARMV7.s0, ARMV7.s30, CiKind.Double, CiKind.Double);
-        push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384, true); // push
-                                                                                                                       // r0-r3
-                                                                                                                       // and
+        pop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384, true); // push
+        */                                                                                                            // r0-r3
+        emitInt(0xFEDEFFE7); // we use a SIGILL                                                                     // and
                                                                                                                        // r7
     }
 
@@ -2645,11 +2646,25 @@ public class ARMV7Assembler extends AbstractAssembler {
 
         }
     }
+    public void clearex() {
+        // advised to use this in exception handling code ...
+        int instruction = 0xf57ff01f;
+        emitInt(instruction);
+    }
+    public void barrierDMB() {
+        int instruction = 0xF57FF050; // DMB
+        emitInt(instruction);
+    }
 
     public void membar(int barriers) {
-        int instruction = 0xF57FF050;
+        //int instruction = 0xF57FF050; // DMB
+        int instruction = 0xF57FF040; // DSB
+
         instruction |= 0xf;
         emitInt(instruction);
+        instruction = 0xf57ff06f; // ISB FULL SY system
+        emitInt(instruction);
+
     }
 
     public void enter(short imm16) {

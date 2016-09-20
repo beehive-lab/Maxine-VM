@@ -179,7 +179,7 @@ public class CompilationBroker implements NativeCMethodinVM {
         String methodString = cma.toString();
         for (Map.Entry<String, String> e : compileCommandMap.entrySet()) {
             if (methodString.contains(e.getKey()) || "*".equals(e.getKey())) {
-                Log.println("CompileCommand: matched " + e.getKey());
+                //Log.println("CompileCommand: matched " + e.getKey());
                 return e.getValue();
             }
         }

@@ -819,11 +819,16 @@ public class Stubs {
             CiKind[] handleTrapParameters = CiUtil.signatureToKinds(Trap.handleTrap.classMethodActor);
             CiValue[] args = registerConfig.getCallingConvention(JavaCallee, handleTrapParameters, target(), false).locations;
 
+
+
+            // NORMAL ENTRY POINT
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12, true);      // SAVE r12 ... our save/restore uses r12 so we must push it here
             // this will be overwritten with the RETURN  ADDRESS of the trapping instruction
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12, true);
             asm.mrsReadAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12);
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 12, true);
+
+
 
             // NOW allocate the frame for this method (note TWO wordas of which WERE allocated by the second push above)
             asm.subq(ARMV7.r13, frameSize - 8/*was 8*/);
@@ -845,7 +850,7 @@ public class Stubs {
             //asm.movq(scratch, new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize /*+ 4*/));// we have sdaved r12 so it is one slot past the end of the frame
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize /* + 4 as we have done extra push to save if we do Thumb or ARM return */));// we have sdaved r12 so it is one slot past the end of the frame
             asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
 
 
@@ -882,13 +887,21 @@ public class Stubs {
             // my understanding is that normal handler code will do this?
             // Will r14 be correctly set to the appropriate return address?
             //asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r15, ARMV7.r14);
-            asm.addq(ARMV7.r13, frameSize - 8/*was 8*/); // added
+            asm.addq(ARMV7.r13, frameSize - 8 /*was 8 */); // added
+
+            // get the check
+            //--asm.ldrImmediate(ARMV7Assembler.ConditionFlag.Always,1,1,0, ARMV7.r12, ARMV7.r13,0);
+            //--asm.cmp32(ARMV7.r12,0);
+            //--asm.add(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r15, 16 , 0); // might need to make it 17 to get Thumb
+            //--asm.bx(ConditionFlag.NotEqual,ARMV7.r12);
+            // if r12 was ORIGINALLY zero --- we entered as ARM, so we follow the code below
+
             asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 12, true);// pops flags so we need to do ...
             asm.msrWriteAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12);
             asm.pop(ARMV7Assembler.ConditionFlag.Always, 1 << 12, true); // POP scratch
+            asm.clearex();
             asm.ret(0);
-
-            //asm.returnFromExceptionHandler(); // LDM (system) copies the SPSR to the CPSR -- wont work for nested exceptions?
+            asm.insertForeverLoop();
             byte[] code = asm.codeBuffer.close(true);
 
             return new Stub(TrapStub, "trapStub", frameSize, code, callPos, callSize, callee, -1);

@@ -102,6 +102,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
                                                                // stored
         bind(notEqualTocmpValue);
         cmp(ConditionFlag.Always, newValue, cmpValue, 0, 0);
+        barrierDMB();
     }
 
     public final void casLong(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
@@ -134,6 +135,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         cmp(ConditionFlag.Equal, ARMV7.cpuRegisters[newValue.number + 1], ARMV7.cpuRegisters[cmpValue.number + 1], 0, 0);
         //restoreRegister(8, 9);
         restoreFromFP(9);
+        barrierDMB();
+
     }
 
     public final void casLongAsmTest(CiRegister newValue, CiRegister cmpValue, CiAddress address) {

@@ -99,7 +99,7 @@ public class ARMV7 extends CiArchitecture {
     // TODO: checkout load/store ordering on A15
     // TODO: checkout nativeDisplacementOffset on A15
     public ARMV7() {
-        super("ARMV7", 4, ByteOrder.LittleEndian, allRegisters, 0/*LOAD_STORE | STORE_STORE | LOAD_LOAD | STORE_LOAD*/, 1, s31.number + 1, 4);
+        super("ARMV7", 4, ByteOrder.LittleEndian, allRegisters, LOAD_STORE | STORE_STORE | LOAD_LOAD | STORE_LOAD, 1, s31.number + 1, 4);
     }
     public static final CiRegisterValue RSP = r13.asValue(CiKind.Int);
     public static final CiRegister LR = r14;

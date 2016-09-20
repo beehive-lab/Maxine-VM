@@ -931,6 +931,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.setUpScratch(new CiAddress(CiKind.Int, RSP));
         asm.ldr(ConditionFlag.Always, ARMV7.r8, asm.scratchRegister, 0);
         asm.addq(r13, JVMSFrameLayout.JVMS_SLOT_SIZE);
+        //asm.saveTWOInFP(ConditionFlag.Always, 7, 9);
         asm.push(ConditionFlag.Always,  1 << 9 | 1 << 7, true);
         asm.mov(ConditionFlag.Always, false, ARMV7.r9, ARMV7.r8); // r9 stores index
 
@@ -939,6 +940,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.cmpl(r9, lowMatch);
 
         asm.pop(ConditionFlag.SignedLesser, 1 << 9 | 1 << 7, true);
+        //asm.restoreTWOFromFP(ConditionFlag.SignedLesser, 7, 9);
         int pos = buf.position();
         patchInfo.addJCC(ConditionFlag.SignedLesser, pos, ts.defaultTarget());
         asm.jcc(ConditionFlag.SignedLesser, 0, true);
@@ -948,6 +950,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         } else {
             asm.cmpl(r9, highMatch);
         }
+        //asm.restoreTWOFromFP(ConditionFlag.SignedGreater, 7, 9);
         asm.pop(ConditionFlag.SignedGreater,  1 << 9 | 1 << 7, true);
         pos = buf.position();
         patchInfo.addJCC(ConditionFlag.SignedGreater, pos, ts.defaultTarget());
@@ -963,6 +966,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.ldr(ConditionFlag.Always, r12, ARMV7.r12, 0);
         asm.addRegisters(ConditionFlag.Always, false, r12, ARMV7.r15, r12, 0, 0);
         asm.add(ConditionFlag.Always, false, r12, r12, 8, 0);
+        //asm.restoreTWOFromFP(ConditionFlag.Always, 7, 9);
         asm.pop(ConditionFlag.Always, 1 << 9  | 1 << 7, true); // restore r9/r10
         asm.mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12);
 
@@ -1012,7 +1016,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
             asm.push(ConditionFlag.Always, 1 << 7 | 1 << 9 | 1 << 6 , true);
             asm.mov(ConditionFlag.Always, false, r9, r8); // r9 stores index
 
-            // Set r10 to address of lookup table
+            // Set **NOT**r10 we use r6 to address of lookup table
             int leaPos = buf.position();
             asm.leaq(r6, CiAddress.Placeholder);
             int afterLea = buf.position();

@@ -81,7 +81,7 @@ public class MaxineTester {
                     "The VM options to be used when running the reference Java VM.");
     private static final Option<List<String>> maxVMArgsOption = options.newStringListOption("maxvm-args", "",
                     "Additional VM options to be used when running the Maxine VM.");
-    private static final Option<Integer> javaTesterTimeOutOption = options.newIntegerOption("java-tester-timeout", 50,
+    private static final Option<Integer> javaTesterTimeOutOption = options.newIntegerOption("java-tester-timeout", 100,
                     "The number of seconds to wait for the Java tester tests to complete before " +
                     "timing out and killing it.");
     private static final Option<Integer> javaRunTimeOutOption = options.newIntegerOption("timeout-max", 700,

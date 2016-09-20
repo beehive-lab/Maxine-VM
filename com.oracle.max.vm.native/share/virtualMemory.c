@@ -65,6 +65,7 @@
 
 /* mmap returns MAP_FAILED on error, we convert to ALLOC_FAILED */
 static Address check_mmap_result(void *result) {
+#if log_mmap
 	if(result == MAP_FAILED) {
 		switch(errno) {
 			case EACCES:
@@ -100,6 +101,7 @@ static Address check_mmap_result(void *result) {
 
 		}
 	}
+#endif
     return ((Address) (result == (void *) MAP_FAILED ? ALLOC_FAILED : result));
 }
 
