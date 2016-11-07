@@ -205,7 +205,7 @@ ifeq ($(OS),darwin)
     endif
     ifneq "$(findstring def, $(origin CFLAGS))" ""
         # origin of CFLAGS is either undefined or default, so set it here
-        CFLAGS = -g $(DARWIN_GCC_MFLAG) -Wall -Wextra -Werror -Wno-main -Wno-deprecated-declarations -Wno-unused-parameter -fPIC -D$(FPGA) -DDARWIN -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE) $(JDK7)
+        CFLAGS = -g $(DARWIN_GCC_MFLAG) -Wall -Wextra -Werror -Wno-main -Wno-deprecated-declarations -Wno-unused-parameter -fPIC -DDARWIN -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE) $(JDK7)
     endif
     C_DEPENDENCIES_FLAGS = -M -DDARWIN -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
     LINK_MAIN = $(CC) -g $(DARWIN_GCC_MFLAG) -lc -lm -ldl -framework CoreFoundation -o $(MAIN)
@@ -262,9 +262,9 @@ ifeq ($(OS),linux)
     LINK_LIB = $(CC) -g -shared
     ifeq ($(ISA),arm)
     	ifeq ($(ENABLE_FPGA),1)
-    		#	LINK_LIB_POSTFIX = $(MAXINE_HOME)/com.oracle.max.vm.native/substrate/libCCluster.a -lstdc++ -lc -lm -lpthread
+    		#LINK_LIB_POSTFIX = $(MAXINE_HOME)/com.oracle.max.vm.native/substrate/libCCluster.a -lstdc++ -lc -lm -lpthread
     	else
-    		LINK_MAIN_POSTFIX = -lstdc++ -lc -lm -lpthread -ldl
+    		LINK_LIB_POSTFIX = -lstdc++ -lc -lm -lpthread -ldl
     	endif
     endif
     ifneq ($(ISA),arm)
