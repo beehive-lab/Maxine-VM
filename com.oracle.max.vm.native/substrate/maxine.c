@@ -53,16 +53,6 @@
 #include "maxve.h"
 #endif
 #ifdef arm
-/*
- //beginning of simulation platform functions
- // defined in libCCluster.a
- extern void reportTimingCounters();
- extern int initialiseMemoryCluster();
- extern int getCoreCount();
- extern void reportSpec();
- extern void pushILD(unsigned int address);
- */
-// defined in libFPGAsim.a
 extern void enableFPGA(int val);
 extern void pushDSTR(unsigned int address);
 extern void pushDLD(unsigned int address);
@@ -74,7 +64,7 @@ extern void pushJumpAddress(int address);
 extern int reportTimingCounters();
 extern void clearTimingCache(char *buffer, int size);
 // end of simulation platform functions
-#   include <pthread.h>
+#include <pthread.h>
 
 static unsigned int *simPtr = (0);
 static FILE *simFile = (0);
@@ -533,14 +523,11 @@ int maxine(int argc, char *argv[], char *executablePath) {
     Address tlBlock = threadLocalsBlock_create(PRIMORDIAL_THREAD_ID, 0, 0);
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 
-#ifdef arm
-    struct stat statBuf;
-    if(stat("/dev/xdevcfg",&statBuf) == 0) {
-        //initialiseMemoryCluster();
-	    //enableFPGA(1);
-        //initialiseTimingModel();
-        //simulationPlatform = 1;
-    }
+#ifdef ENABLE_FPGA
+    initialiseMemoryCluster();
+	enableFPGA(1);
+    initialiseTimingModel();
+    simulationPlatform = 1;
 #endif
 
 #if log_LOADER

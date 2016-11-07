@@ -50,6 +50,10 @@ ifneq ($(MAIN),)
     TARGET := LAUNCH
 endif
 
+ifdef ENABLE_FPGA_SIM
+	ENABLE_FPGA=$(ENABLE_FPGA_SIM)
+endif
+
 # HOSTOS is the platform we are compiling on
 HOSTOS = $(shell uname -s)
 # TARGETOS is the platform we are compiling for (usually the same as HOSTOS)
@@ -80,7 +84,6 @@ ifeq ($(TARGETOS),Darwin)
             	endif
             endif
         endif
-        
     else
        ifeq ($a,powerpc)
            ISA := power
@@ -92,12 +95,9 @@ endif
 
 ifeq ($(TARGETOS),Linux)
     OS := linux
-    
     a := $(shell uname -m)
     ifeq ($a,x86_64)
         ISA := amd64
-	#$(shell "echo 'platform.mk hardcoded for ARM'")
-	#ISA := arm
     else 
         ifeq ($a, x86)
             ISA := ia32
@@ -205,7 +205,7 @@ ifeq ($(OS),darwin)
     endif
     ifneq "$(findstring def, $(origin CFLAGS))" ""
         # origin of CFLAGS is either undefined or default, so set it here
-        CFLAGS = -g $(DARWIN_GCC_MFLAG) -Wall -Wextra -Werror -Wno-main -Wno-deprecated-declarations -Wno-unused-parameter -fPIC -DDARWIN -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE) $(JDK7)
+        CFLAGS = -g $(DARWIN_GCC_MFLAG) -Wall -Wextra -Werror -Wno-main -Wno-deprecated-declarations -Wno-unused-parameter -fPIC -D$(FPGA) -DDARWIN -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE) $(JDK7)
     endif
     C_DEPENDENCIES_FLAGS = -M -DDARWIN -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
     LINK_MAIN = $(CC) -g $(DARWIN_GCC_MFLAG) -lc -lm -ldl -framework CoreFoundation -o $(MAIN)
@@ -250,17 +250,22 @@ ifeq ($(OS),linux)
     # Libraries must be specified after the actual source files, so the POSTFIX variable is used for that
     # (Introduced to solve a linking problem on Ubuntu 11.10)
     ifeq ($(ISA),arm) 
-        LINK_MAIN_POSTFIX = -lstdc++ -lc -lm -lpthread -ldl
-#        LINK_MAIN_POSTFIX = $(MAXINE_HOME)/com.oracle.max.vm.native/substrate/libFPGAsim.so -lstdc++ -lc -lm -lpthread -ldl
-#        LINK_MAIN_POSTFIX = $(MAXINE_HOME)/com.oracle.max.vm.native/substrate/libCCluster.a -lstdc++ -lc -lm -lpthread -ldl
+    	ifeq ($(ENABLE_FPGA),1)
+    		#LINK_MAIN_POSTFIX = $(MAXINE_HOME)/com.oracle.max.vm.native/substrate/libCCluster.a -lstdc++ -lc -lm -lpthread -ldl
+    	else
+    		LINK_MAIN_POSTFIX = -lstdc++ -lc -lm -lpthread -ldl
+    	endif
     endif
     ifneq ($(ISA),arm)
     	LINK_MAIN_POSTFIX = -lc -lm -lpthread -ldl
     endif
     LINK_LIB = $(CC) -g -shared
     ifeq ($(ISA),arm)
-	LINK_LIB_POSTFIX = -lstdc++ -lc -lm -lpthread
-#	LINK_LIB_POSTFIX = $(MAXINE_HOME)/com.oracle.max.vm.native/substrate/libCCluster.a -lstdc++ -lc -lm -lpthread
+    	ifeq ($(ENABLE_FPGA),1)
+    		#	LINK_LIB_POSTFIX = $(MAXINE_HOME)/com.oracle.max.vm.native/substrate/libCCluster.a -lstdc++ -lc -lm -lpthread
+    	else
+    		LINK_MAIN_POSTFIX = -lstdc++ -lc -lm -lpthread -ldl
+    	endif
     endif
     ifneq ($(ISA),arm)
     	LINK_LIB_POSTFIX = -lc -lm -lpthread 
