@@ -29,7 +29,6 @@ import com.sun.max.vm.monitor.modal.modehandlers.lightweight.thin.*;
 import com.sun.max.vm.monitor.modal.sync.*;
 import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
@@ -355,11 +354,12 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
 
         public void delegateMonitorWait(Object object, long timeout, ModalLockword64 lockword) throws InterruptedException {
             final InflatedMonitorLockword64 inflatedLockword = InflatedMonitorLockword64.from(lockword);
+            final  InflatedMonitorLockword64 hashword = InflatedMonitorLockword64.from(ObjectAccess.readHash(object));
             if (inflatedLockword.isBound()) {
-                JavaMonitorManager.protectBinding(Platform.target().arch.is64bit() ? inflatedLockword.getBoundMonitor() : InflatedMonitorLockword64.from(ObjectAccess.readHash(object)).getBoundMonitor());
+                JavaMonitorManager.protectBinding(Platform.target().arch.is64bit() ? inflatedLockword.getBoundMonitor() : hashword.getBoundMonitor());
             }
             monitorWait(object, timeout, inflatedLockword,
-                            Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(Word.zero()) : InflatedMonitorLockword64.from(ObjectAccess.readHash(object)));
+                            Platform.target().arch.is64bit() ? InflatedMonitorLockword64.from(Word.zero()) : hashword);
         }
 
         public DelegatedThreadHoldsMonitorResult delegateThreadHoldsMonitor(Object object, ModalLockword64 lockword, VmThread thread, int lockwordThreadID) {

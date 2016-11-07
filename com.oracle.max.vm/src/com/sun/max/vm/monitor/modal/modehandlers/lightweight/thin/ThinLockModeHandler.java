@@ -66,17 +66,19 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
     }
 
     //64bit: The whole inflated word
-    //32bit: Just the inflated bits
+    // 32bit: Just the inflated bits
     private ModalLockword64 inflate(Object object, ThinLockword64 lockword) {
-        //64bit: inflated lock word, 32bit: monitor
+        // 64bit: inflated lock word, 32bit: monitor
         ModalLockword64 inflatedLockword = delegate().prepareModalLockword(object, lockword);
-        //64bit: zero, 32bit: the inflatedBits
+        // 64bit: zero, 32bit: the inflatedBits
         ModalLockword64 inflatedBits = Platform.target().arch.is32bit() ? InflatedMonitorLockword64.boundFromZero() : ModalLockword64.from(Word.zero());
 
-        //32bit: We save the original hash in order to ensure that the two stage CAS is consistent;
+        // 32bit: We save the original hash in order to ensure that the two stage CAS is consistent;
         ModalLockword64 originalHash = ModalLockword64.from(ObjectAccess.readHash(object));
+        boolean isOriginalInflated = lockword.isInflated();
 
         ThinLockword64 thinLockword = lockword;
+
         while (true) {
             final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, thinLockword, Platform.target().arch.is64bit() ? inflatedLockword : inflatedBits));
             if (answer.equals(thinLockword)) {
@@ -86,21 +88,22 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
                 break;
             } else if (answer.isInflated()) {
                 ModalLockword64 currentHash = ModalLockword64.from(Word.zero());
-                if (Platform.target().arch.is32bit()) {
+                if (Platform.target().arch.is32bit() && !isOriginalInflated) {
                     currentHash = ModalLockword64.from(ObjectAccess.readHash(object));
+                    assert !currentHash.equals(originalHash);
                     while (currentHash.equals(originalHash)) {
                         currentHash = ModalLockword64.from(ObjectAccess.readHash(object));
                     }
                 }
-                //Unbind the speculative monitor
+                // Unbind the speculative monitor
                 delegate().cancelPreparedModalLockword(inflatedLockword);
-
-                inflatedLockword =  answer;
+                inflatedLockword = answer;
                 break;
             }
             // We will spin if the thin lock word has been changed in any way (new owner, rcount change, new hashcode)
             thinLockword = ThinLockword64.from(answer);
-            inflatedLockword = delegate().reprepareModalLockword(inflatedLockword, thinLockword,  Platform.target().arch.is64bit() ? ModalLockword64.from(Word.zero()) : ModalLockword64.from(ObjectAccess.readHash(object)));
+            inflatedLockword = delegate().reprepareModalLockword(inflatedLockword, thinLockword,
+                            Platform.target().arch.is64bit() ? ModalLockword64.from(Word.zero()) : ModalLockword64.from(ObjectAccess.readHash(object)));
         }
         return Platform.target().arch.is64bit() ? inflatedLockword : inflatedBits;
     }
@@ -117,7 +120,6 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
                     // Attempt to inc the recursion count
                     if (!thinLockword.countOverflow()) {
                         final ModalLockword64 answer = ModalLockword64.from(ObjectAccess.compareAndSwapMisc(object, thinLockword, thinLockword.incrementCount()));
-
                         if (answer.equals(thinLockword)) {
                             return;
                         }
@@ -148,7 +150,6 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
             if (delegate().delegateMonitorEnter(object, newLockword, lockwordThreadID)) {
                 return;
             }
-
             // Try again. Monitor was deflated.
             newLockword = ModalLockword64.from(ObjectAccess.readMisc(object));
             retries = THIN_LOCK_RETRIES;

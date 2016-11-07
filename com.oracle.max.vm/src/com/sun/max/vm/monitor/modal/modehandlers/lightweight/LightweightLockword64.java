@@ -74,6 +74,21 @@ public class LightweightLockword64 extends HashableLockword64 {
 
     protected static final Address RCOUNT_INC_WORD = Address.zero().bitSet(NUM_BITS - RCOUNT_FIELD_WIDTH);
 
+    static {
+
+        System.out.println("RCOUNT_FIELD_WIDTH " + RCOUNT_FIELD_WIDTH);
+        System.out.println("UTIL_FIELD_WIDTH " + UTIL_FIELD_WIDTH);
+        System.out.println("THREADID_FIELD_WIDTH " + THREADID_FIELD_WIDTH);
+        System.out.println("THREADID_SHIFT " + THREADID_SHIFT);
+        System.out.println("UTIL_SHIFT " + UTIL_SHIFT);
+        System.out.println("THREADID_SHIFTED_MASK " + THREADID_SHIFTED_MASK);
+        System.out.println("UTIL_SHIFTED_MASK " + UTIL_SHIFTED_MASK);
+        System.out.println("RCOUNT_SHIFTED_MASK " + RCOUNT_SHIFTED_MASK);
+        System.out.println("RCOUNT_INC_WORD " + RCOUNT_INC_WORD);
+
+
+    }
+
     @HOSTED_ONLY
     public LightweightLockword64(long value) {
         super(value);
