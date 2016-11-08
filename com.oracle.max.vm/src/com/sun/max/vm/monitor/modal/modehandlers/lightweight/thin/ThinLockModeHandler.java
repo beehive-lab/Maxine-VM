@@ -75,7 +75,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
 
         // 32bit: We save the original hash in order to ensure that the two stage CAS is consistent;
         ModalLockword64 originalHash = ModalLockword64.from(ObjectAccess.readHash(object));
-        boolean isOriginalInflated = lockword.isInflated();
+        boolean isOriginalInflated = ThinLockword64.from(ObjectAccess.readMisc(object)).isInflated();
 
         ThinLockword64 thinLockword = lockword;
 
