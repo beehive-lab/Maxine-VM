@@ -27,7 +27,6 @@ import com.sun.max.vm.monitor.modal.modehandlers.AbstractModeHandler.ModeDelegat
 import com.sun.max.vm.monitor.modal.modehandlers.inflated.*;
 import com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased.*;
 import com.sun.max.vm.object.*;
-import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 
 /**
