@@ -210,6 +210,9 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
                 } else {
                     if (newLockword.equals(hashLockword)) {
                         return newHashcode;
+                    } else {
+                        newLockword = ModalLockword64.from(ObjectAccess.readMisc(object));
+                        hashword = ModalLockword64.from(ObjectAccess.readHash(object));
                     }
                 }
                 // Could be another thread beat us to the hashcode, or an inflation. Try again.
@@ -335,7 +338,7 @@ public abstract class ThinLockModeHandler extends AbstractModeHandler {
         }
 
         public int delegateMakeHashcode(Object object, ModalLockword64 lockword) {
-            return makeHashCode(object, ThinLockword64.from(lockword), ThinLockword64.from(Word.zero()));
+            return makeHashCode(object, ThinLockword64.from(lockword), Platform.target().arch.is64bit() ? ModalLockword64.from(Word.zero()) : ModalLockword64.from(ObjectAccess.readHash(object)));
         }
 
         public void delegateAfterGarbageCollection() {
