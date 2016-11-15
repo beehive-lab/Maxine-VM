@@ -105,14 +105,7 @@ public class AMD64 extends CiArchitecture {
     public static final CiRegisterValue RSP = rsp.asValue(Long);
 
     public AMD64() {
-        super("AMD64",
-              8,
-              ByteOrder.LittleEndian,
-              allRegisters,
-              LOAD_STORE | STORE_STORE,
-              1,
-              r15.getEncoding() + 1,
-              8);
+        super("AMD64", 8, ByteOrder.LittleEndian, allRegisters, LOAD_STORE | STORE_STORE, 1, r15.getEncoding() + 1, 8);
     }
 
     @Override
@@ -124,5 +117,4 @@ public class AMD64 extends CiArchitecture {
     public boolean twoOperandMode() {
         return true;
     }
-
 }
