@@ -29,7 +29,7 @@ public class Label {
      * References to instructions that jump to this unresolved label. These instructions need to be patched when the
      * label is bound using the {@link #patchInstructions(AbstractAssembler)} method.
      */
-    protected ArrayList<Integer> patchPositions = new ArrayList<Integer>(4); // was 4
+    protected ArrayList<Integer> patchPositions = new ArrayList<Integer>(4);
 
     /**
      * Returns the position of this label in the code buffer.
@@ -78,14 +78,6 @@ public class Label {
         for (int i = 0; i < patchPositions.size(); ++i) {
             int pos = patchPositions.get(i);
             masm.patchJumpTarget(pos, target);
-        }
-    }
-
-    public void offlineVerify() {
-        System.out.println(isBound() + " " + position);
-        for (int i = 0; i < patchPositions.size(); ++i) {
-            System.out.println("Patchable Position: " + patchPositions.get(i));
-
         }
     }
 
