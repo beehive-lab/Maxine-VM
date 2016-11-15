@@ -139,28 +139,32 @@ public final class TeleDisassembler {
             return Address.fromLong(disassembledInstruction.addressForRelativeAddressing().plus(immediateArgument).asLong());
         }
     }
+
+    // TODO: (CK) Port to ARMV7
     private static class ARMV7LoadLiteralParser extends LoadLiteralParser {
+
         ARMV7LoadLiteralParser(Disassembler disassembler, Address codeStart) {
             super(disassembler, codeStart);
         }
+
         @Override
         boolean loadsLiteralData(DisassembledInstruction disassembledInstruction) {
-            if (disassembledInstruction.arguments().size() == 2 &&
-                    Utils.first(disassembledInstruction.arguments()) instanceof AMD64GeneralRegister64 &&
-                    Utils.last(disassembledInstruction.template().operands()) instanceof X86OffsetParameter &&
-                    ((X86Template) disassembledInstruction.template()).addressSizeAttribute() == WordWidth.BITS_64 &&
-                    ((X86Template) disassembledInstruction.template()).rmCase() == X86TemplateContext.RMCase.SDWORD) {
+            if (disassembledInstruction.arguments().size() == 2 && Utils.first(disassembledInstruction.arguments()) instanceof AMD64GeneralRegister64 &&
+                            Utils.last(disassembledInstruction.template().operands()) instanceof X86OffsetParameter &&
+                            ((X86Template) disassembledInstruction.template()).addressSizeAttribute() == WordWidth.BITS_64 &&
+                            ((X86Template) disassembledInstruction.template()).rmCase() == X86TemplateContext.RMCase.SDWORD) {
                 return true;
             }
             return false;
         }
+
+        // TODO: (CK) Port to ARMV7
         @Override
         Address literalAddress(DisassembledInstruction disassembledInstruction) {
             final ImmediateArgument immediateArgument = (ImmediateArgument) disassembledInstruction.arguments().get(1);
             return Address.fromLong(disassembledInstruction.addressForRelativeAddressing().plus(immediateArgument).asLong());
         }
     }
-
 
     private static LoadLiteralParser createLiteralParser(final Platform platform, Disassembler disassembler, Address codeStart, byte [] code) {
         switch (platform.isa) {
