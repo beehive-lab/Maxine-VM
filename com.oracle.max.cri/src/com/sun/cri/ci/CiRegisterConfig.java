@@ -51,11 +51,6 @@ public class CiRegisterConfig implements RiRegisterConfig {
      */
     public final CiRegister[] allocatable;
 
-    public void printAllocatable() {
-        for (int i = 0; i < allocatable.length; i++)
-            System.out.println("ARMV7 allocatable regs " + allocatable[i].number);
-    }
-
     /**
      * The set of registers that can be used by the register allocator, {@linkplain CiRegister#categorize(CiRegister[])
      * categorized} by register {@linkplain RegisterFlag flags}.
@@ -99,7 +94,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
     public final RiRegisterAttributes[] attributesMap;
 
     /**
-     * The scratch register.
+     * The scratch register(s).
      */
     public final CiRegister scratch;
     public final CiRegister scratch1;
@@ -191,8 +186,6 @@ public class CiRegisterConfig implements RiRegisterConfig {
         CiValue[] locations = new CiValue[parameters.length];
         int currentGeneral = 0;
         int currentFloat = 0;
-        int currentDouble = 0;
-        int currentFP = 0;
         int firstStackIndex = (stackArg0Offsets[type.ordinal()]) / target.spillSlotSize;
         int currentStackIndex = firstStackIndex;
 
@@ -227,35 +220,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
                     }
                     break;
                 case Float:
-                    /*if (!stackOnly && currentFP < fpuParameters.length) {
-                        CiRegister register = null;
-                        if (target.arch.is32bit()) {
-                            register = fpuParameters[currentFloat++];
-                            currentFP = currentFloat;
-                        } else {
-                            register = fpuParameters[currentDouble++];
-                            currentFP = currentDouble;
-                        }
-                        locations[i] = register.asValue(kind);
-                    }
-                    break;*/
                 case Double:
-                    /*if (!stackOnly && currentFP < fpuParameters.length) {
-                        if (target.arch.is32bit()) {
-                            if ((fpuParameters.length - currentFP) < 2) {
-                                break;
-                            }
-                        }
-                        CiRegister register = fpuParameters[currentDouble++];
-                        locations[i] = register.asValue(kind);
-                        if (target.arch.is32bit()) {
-                            currentFloat += 2;
-                            currentFP = currentFloat;
-                        } else {
-                            currentFP = currentDouble;
-                        }
-                    }
-                    break;*/
                     if (!stackOnly && currentFloat < fpuParameters.length) {
                         if (kind.isDouble() && target.arch.is32bit()) {
                             if ((fpuParameters.length - currentFloat) < 2) {
@@ -281,7 +246,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
 
             if (locations[i] == null) {
                 if (target.arch.is32bit() && (kind.stackKind() == CiKind.Long || kind.stackKind() == CiKind.Double) && ((currentStackIndex * target.spillSlotSize) % 8 != 0)) {
-                    currentStackIndex++; // FIX to ensure stack has correctly alignment for long/double it means "holes" are present
+                    currentStackIndex++;
                 }
 
                 locations[i] = CiStackSlot.get(kind.stackKind(), currentStackIndex, !type.out);
