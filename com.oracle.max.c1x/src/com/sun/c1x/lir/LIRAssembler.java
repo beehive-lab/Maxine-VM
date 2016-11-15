@@ -127,7 +127,6 @@ public abstract class LIRAssembler {
 
     public static String getDebugMethodsPath() {
         return System.getenv("MAXINE_HOME") + "/maxine-tester/junit-tests/";
-
     }
 
     protected RiMethod method() {
@@ -399,15 +398,12 @@ public abstract class LIRAssembler {
 
             case Add:
             case Mul:
-
                 assert(op.operand1().equals(op.result()));
             case Sub:
             case Div:
             case Rem:
-
                 emitArithOp(op.code, op.operand1(), op.operand2(), op.result(), op.info);
                 break;
-
             case Abs:
             case Sqrt:
             case Sin:
@@ -606,5 +602,4 @@ public abstract class LIRAssembler {
     protected abstract void stack2reg(CiValue src, CiValue dest, CiKind kind);
 
     protected abstract void reg2reg(CiValue src, CiValue dest);
-
 }
