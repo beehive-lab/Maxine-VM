@@ -31,8 +31,8 @@ package jtt.bytecode;
  * @Runs: (0, -100)=true; (-1,0)=false; (-12,-12)=true
  */
 public class BC_ifge_2 {
-    public static boolean test(int a, int b) {
-        return a>= b;
 
+    public static boolean test(int a, int b) {
+        return a >= b;
     }
 }
