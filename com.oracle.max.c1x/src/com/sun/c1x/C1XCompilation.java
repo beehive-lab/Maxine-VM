@@ -81,9 +81,9 @@ public final class C1XCompilation {
      * Creates a new compilation for the specified method and runtime.
      *
      * @param compiler the compiler
-     * @param method   the method to be compiled or {@code null} if generating code for a stub
-     * @param osrBCI   the bytecode index for on-stack replacement, if requested
-     * @param stats    externally supplied statistics object to be used if not {@code null}
+     * @param method the method to be compiled or {@code null} if generating code for a stub
+     * @param osrBCI the bytecode index for on-stack replacement, if requested
+     * @param stats externally supplied statistics object to be used if not {@code null}
      */
     public C1XCompilation(C1XCompiler compiler, RiResolvedMethod method, int osrBCI, CiStatistics stats, DebugInfoLevel debugInfoLevel) {
         this.parent = currentCompilation.get();

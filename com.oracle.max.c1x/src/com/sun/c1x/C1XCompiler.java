@@ -70,7 +70,6 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
 
     public final RiRegisterConfig compilerStubRegisterConfig;
 
-
     public C1XCompiler(RiRuntime runtime, CiTarget target, RiXirGenerator xirGen, RiRegisterConfig compilerStubRegisterConfig) {
         this.runtime = runtime;
         this.target = target;
