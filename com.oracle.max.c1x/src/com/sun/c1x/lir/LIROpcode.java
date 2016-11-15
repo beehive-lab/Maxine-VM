@@ -94,7 +94,7 @@ public enum LIROpcode {
         Lrem,
         Ludiv,
         Lurem,
-	LDivExceptionCheck, // cover ldiv, lurem, ludiv lrem ...
+        LDivExceptionCheck,
     EndOp3,
     NativeCall,
     DirectCall,
