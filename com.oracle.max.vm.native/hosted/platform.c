@@ -24,6 +24,8 @@
 #include "word.h"
 #include "isa.h"
 #include "jni.h"
+#include <string.h>
+#include <stdlib.h>
 
 JNIEXPORT void JNICALL
 JVM_OnLoad(JavaVM *vm, char *options, void *arg)
@@ -55,6 +57,26 @@ Java_com_sun_max_platform_Platform_nativeGetOS(JNIEnv *env, jclass c)
 JNIEXPORT jint JNICALL
 Java_com_sun_max_platform_Platform_nativeGetPageSize(JNIEnv *env, jclass c) {
     return (jint) sysconf(_SC_PAGESIZE);
+}
+
+
+JNIEXPORT jint JNICALL
+Java_com_sun_max_platform_Platform_nativeHasIDiv(JNIEnv *env, jclass c) {
+#ifdef arm
+    FILE *cpuinfo = fopen("/proc/cpuinfo", "rb");
+    char *arg = 0;
+    size_t size = 0;
+    while(getdelim(&arg, &size, 0, cpuinfo) != -1) {
+        if (strstr(arg, "idiva") != 0) {
+           return (jint) 1;
+        }
+    }
+    free(arg);
+    fclose(cpuinfo);
+#else
+    return (jint) 1;
+#endif
+    return (jint) 0;
 }
 
 /*

@@ -242,16 +242,6 @@ public final class BootImageGenerator {
             nativeTests = testNative.getValue();
             AbstractAssembler.DEBUG_METHODS = debugMethods.getValue();
             AbstractAssembler.SIMULATE_PLATFORM = simulationPlatform.getValue(); // -simulation=true
-            if (AbstractAssembler.SIMULATE_PLATFORM) {
-                AbstractAssembler.FLOAT_IDIV = true;
-                /*
-                 * We use this flag to replace integer/long division with floating-point/double-precision operations, it is a little crude but it enables us to
-                 * run on platforms such as the Zynq where the ARM core does not have an sdiv/udiv instruction -- currently we must turn this on for our Zynq
-                 * platform
-                 */
-            } else {
-                AbstractAssembler.FLOAT_IDIV = floatIdiv.getValue();
-            }
 
             final File vmDirectory = getDefaultVMDirectory(true);
             vmDirectory.mkdirs();

@@ -469,7 +469,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (shift_imm & 0x1f) << 7;
         emitInt(instruction);
     }
-    
+
     public void add(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int immed_8, final int rotate_amount) {
         int instruction = 0x02800000;
         checkConstraint(0 <= immed_8 && immed_8 <= 255, "0 <= immed_8 && immed_8 <= 255");
@@ -2031,7 +2031,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                                     ldr(ConditionFlag.Always, operand, base, usedDisp);
                                     // assuming int but will need to adjust as necessary
                                     break;
-				default: 
+				default:
 					assert(0==1);
 				break;
                             }
@@ -2279,7 +2279,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         } else {
             mov32BitConstant(flag, dest, imm32);
         }
-        
+
 }
 
     public final void mov64BitConstant(ConditionFlag flag, CiRegister dstLow, CiRegister dstUpper, long imm64) {
@@ -3284,11 +3284,10 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void sdiv(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
-        if (FLOAT_IDIV) {
+        if (!target.hasIDivider) {
             floatDIV(true, cond, dest, rn, rm);
             return;
         }
-
         int instruction = (cond.value() & 0xf) << 28;
         instruction |= 0x0710f010;
         instruction |= (rm.getEncoding() & 0xf) << 8;
@@ -3323,7 +3322,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void udiv(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
-        if (FLOAT_IDIV) {
+        if (!target.hasIDivider) {
             floatDIV(false, cond, dest, rn, rm);
             return;
         }

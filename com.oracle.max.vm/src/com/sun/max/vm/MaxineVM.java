@@ -29,6 +29,7 @@ import com.sun.max.platform.Platform;
 import com.sun.max.program.ProgramWarning;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.Utf8Exception;
+import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.member.ClassMethodActor;
 import com.sun.max.vm.actor.member.MethodActor;
 import com.sun.max.vm.classfile.ClassfileReader;
@@ -632,7 +633,6 @@ public final class MaxineVM {
      * @param code exit code for the VM process
      */
     public static void exit(int code) {
-
         VMOptions.beforeExit();
 
         // This prevents further thread creation
@@ -651,4 +651,5 @@ public final class MaxineVM {
         VmOperationThread.terminate();
         native_exit(code);
     }
+
 }

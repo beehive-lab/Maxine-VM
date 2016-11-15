@@ -26,7 +26,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     }
 
     public ARMV7AssemblerTest() {
-        armv7 = new CiTarget(new ARMV7(), true, 8, 0, 4096, 0, false, false, false);
+        armv7 = new CiTarget(new ARMV7(), true, 8, 0, 4096, 0, false, false, false, true);
         asm = new ARMV7Assembler(armv7, null);
         masm = new ARMV7MacroAssembler(armv7, null);
         code = null;

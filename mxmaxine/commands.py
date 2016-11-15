@@ -182,6 +182,7 @@ def image(args):
     max.bits        | machine word size             | 64 32
     max.page        | page size                     | 4096 8192
     max.nsig        | number of signals             | 32
+    mas.idiv        | has hw integer divider        | 1/0
 
     These system properties can be specified as options to the image
     command (e.g. '-os Darwin -bits 32').
@@ -211,7 +212,7 @@ def image(args):
             del args[i]
             args[i:i] = values
             continue
-        elif arg in ['-platform', '-cpu', '-isa', '-os', '-endianness', '-bits', '-page', '-nsig']:
+        elif arg in ['-platform', '-cpu', '-isa', '-os', '-endianness', '-bits', '-page', '-nsig', '-idiv']:
             name = arg.lstrip('-')
             i += 1
             if i == len(args):
@@ -220,8 +221,6 @@ def image(args):
             systemProps += ['-Dmax.' + name + '=' + value]
         elif arg.startswith('--XX:LogFile='):
             os.environ['MAXINE_LOG_FILE'] = arg.split('=', 1)[1]
-        elif arg.startswith('--XX:+FloatIDIV'):
-            os.environ['FLOAT_IDIV']='1'
         elif arg.startswith('--XX:+PrintCFGToFile'):
         	os.environ['PRINT_CFG']='1'
         elif arg.startswith('--XX:+PrintHIR'):

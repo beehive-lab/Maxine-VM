@@ -672,6 +672,7 @@ void *native_properties(void) {
             nativeProperties.user_dir = strdup(buf);
         }
     }
+
 #endif
 #if log_LOADER
     log_println("native_properties: user_name=%s", nativeProperties.user_name);

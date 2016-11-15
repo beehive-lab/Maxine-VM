@@ -16,6 +16,7 @@ import com.oracle.max.vm.ext.t1x.armv7.*;
 import com.sun.cri.ci.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
@@ -3173,7 +3174,6 @@ public class ARMV7JTTTest extends MaxTestCase {
         CompilationBroker.OFFLINE = initialised;
         boolean failed = false;
         initTests();
-        ARMV7Assembler.FLOAT_IDIV = false;
         CompilationBroker.SIMULATE_ADAPTER = true;
         String klassName = getKlassName("jtt.bytecode.BC_ldiv");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
@@ -3210,15 +3210,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         CompilationBroker.OFFLINE = initialised;
         CompilationBroker.SIMULATE_ADAPTER = true;
         initTests();
-        ARMV7Assembler.FLOAT_IDIV = true;
-        /*
- * @Harness: java
- * @Runs: (1,2)=0; (2,-1)=-2; (256,4)=64; (135,7)=19;
- *
- * @Harness: java
- * @Runs: (-2147483648,-1)=-2147483648;
- * @Runs: (-2147483648, 1)=-2147483648;
- */
+
         int argsOne[] = { 1, 2, 256, 135, -2147483648,-2147483648 };
         int argsTwo[] = { 2, -1, 4,     7, -1, 1};
         String klassName = getKlassName("jtt.bytecode.BC_idiv");

@@ -32,6 +32,9 @@ import com.sun.max.annotate.PLATFORM;
 import com.sun.max.lang.*;
 import com.sun.max.program.ProgramError;
 import com.sun.max.program.ProgramWarning;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.hosted.Prototype;
 import com.sun.max.vm.runtime.FatalError;
 
@@ -111,6 +114,8 @@ public final class Platform {
      */
     public static final String NUMBER_OF_SIGNALS_PROPERTY = "max.nsig";
 
+    public static final String IDIV_PROPERTY = "max.idiv";
+
     public final CPU cpu;
 
     public final ISA isa;
@@ -181,6 +186,7 @@ public final class Platform {
         int spillSlotSize = arch.wordSize;
         int cacheAlignment = dataModel.cacheAlignment;
         boolean inlineObjects = false;
+
         return new CiTarget(arch,
                         isMP,
                         spillSlotSize,
@@ -189,7 +195,8 @@ public final class Platform {
                         cacheAlignment,
                         inlineObjects,
                         false,
-                        false);
+                        false,
+                        hasIDiv());
     }
 
     private static final Pattern NON_REGEX_TEST_PATTERN = Pattern.compile("\\w+");
@@ -435,6 +442,15 @@ public final class Platform {
 
     private static native int nativeGetPageSize();
 
+    @HOSTED_ONLY
+    private static boolean hasIDiv() {
+        Prototype.loadHostedLibrary();
+        final int hasIDiv = getInteger(IDIV_PROPERTY) == null ? nativeHasIDiv() : getInteger(IDIV_PROPERTY);
+        return hasIDiv > 0 ? true : false;
+    }
+
+    private static native int nativeHasIDiv();
+
     /**
      * Gets the number of signals supported by the target that may be delivered to the VM.
      * The range of signal numbers that the VM expects to see is between 0 (inclusive) and
@@ -593,4 +609,5 @@ public final class Platform {
             out.println("    " + entry.getKey());
         }
     }
+
 }

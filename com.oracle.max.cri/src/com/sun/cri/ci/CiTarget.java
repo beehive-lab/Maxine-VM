@@ -87,6 +87,8 @@ public class CiTarget {
      */
     public final int cacheAlignment;
 
+    public boolean hasIDivider;
+
     /**
      * Specifies how {@code long} and {@code double} constants are to be stored
      * in {@linkplain CiFrame frames}. This is useful for VMs such as HotSpot
@@ -113,7 +115,8 @@ public class CiTarget {
              int cacheAlignment,
              boolean inlineObjects,
              boolean debugInfoDoubleWordsInSecondSlot,
-             boolean invokeSnippetAfterArguments) {
+             boolean invokeSnippetAfterArguments,
+             boolean hasIDivider) {
         this.arch = arch;
         this.pageSize = pageSize;
         this.isMP = isMP;
@@ -131,6 +134,7 @@ public class CiTarget {
         this.spillSlotsPerKindMap = new int[CiKind.values().length];
         this.debugInfoDoubleWordsInSecondSlot = debugInfoDoubleWordsInSecondSlot;
         this.invokeSnippetAfterArguments = invokeSnippetAfterArguments;
+        this.hasIDivider = hasIDivider;
 
         for (CiKind k : CiKind.values()) {
             // initialize the number of spill slots required for each kind
