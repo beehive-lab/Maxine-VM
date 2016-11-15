@@ -22,16 +22,15 @@
  */
 package com.sun.c1x.lir;
 
-import com.sun.c1x.C1XCompilation;
-import com.sun.c1x.stub.CompilerStub;
-import com.sun.c1x.util.Util;
-import com.sun.cri.bytecode.Bytecodes;
-import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiCallingConvention.Type;
-import com.sun.cri.ri.RiResolvedMethod;
+import static com.sun.cri.ci.CiCallingConvention.Type.*;
 
-import static com.sun.cri.ci.CiCallingConvention.Type.JavaCallee;
-import static com.sun.cri.ci.CiCallingConvention.Type.RuntimeCall;
+import com.sun.c1x.*;
+import com.sun.c1x.stub.*;
+import com.sun.c1x.util.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiCallingConvention.*;
+import com.sun.cri.ri.*;
 
 /**
  * This class is used to build the stack frame layout for a compiled method.
@@ -204,7 +203,6 @@ public final class FrameMap {
 
         this.spillSlotCount = spillSlotCount;
         int frameSize = offsetToStackBlocksEnd();
-        //System.out.println("ofset ToStackBloks End " + frameSize);
         CiCalleeSaveLayout csl = compilation.registerConfig.getCalleeSaveLayout();
         if (csl != null) {
             frameSize += csl.size;
@@ -219,8 +217,6 @@ public final class FrameMap {
      * @param stub the compiler stub
      */
     public void usesStub(CompilerStub stub) {
-        // TODO APN  could this underestimate the size on 32bit targets!!! as we need two spill slots for a long/double
-        // APN hack multiply spillslotsize by 2x
         int argsSize = stub.inArgs.length * compilation.target.spillSlotSize;
         int resultSize = stub.resultKind.isVoid() ? 0 : compilation.target.spillSlotSize;
         reserveOutgoing(Math.max(argsSize, resultSize));
