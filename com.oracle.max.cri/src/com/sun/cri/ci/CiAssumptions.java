@@ -27,9 +27,6 @@ import java.util.*;
 
 import com.sun.cri.ri.*;
 
-// package not found WTF?import com.sun.max.platform.Platform;
-
-
 /**
  * Records optimistic assumptions made during compilation.
  *
@@ -42,7 +39,6 @@ import com.sun.cri.ri.*;
 public final class CiAssumptions implements Serializable, Iterable<CiAssumptions.Assumption> {
 
     public abstract static class Assumption implements Serializable {
-
     }
 
     public abstract static class ContextAssumption extends Assumption {
@@ -59,7 +55,7 @@ public final class CiAssumptions implements Serializable, Iterable<CiAssumptions
 
         @Override
         public int hashCode() {
-            	return prime + context.hashCode();
+            return prime + context.hashCode();
         }
 
     }
@@ -80,7 +76,7 @@ public final class CiAssumptions implements Serializable, Iterable<CiAssumptions
 
         @Override
         public int hashCode() {
-            	return super.hashCode() * prime + subtype.hashCode();
+            return super.hashCode() * prime + subtype.hashCode();
         }
 
         @Override
@@ -112,11 +108,10 @@ public final class CiAssumptions implements Serializable, Iterable<CiAssumptions
 
         @Override
         public int hashCode() {
-	    int result;
-
-               	result = super.hashCode();
-            	result = prime * result + method.hashCode();
-            	return prime * result + dependee.hashCode();
+            int result;
+            result = super.hashCode();
+            result = prime * result + method.hashCode();
+            return prime * result + dependee.hashCode();
         }
 
         @Override
