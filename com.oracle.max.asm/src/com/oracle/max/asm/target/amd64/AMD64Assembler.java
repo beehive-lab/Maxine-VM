@@ -1,24 +1,19 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
+ * OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package com.oracle.max.asm.target.amd64;
 
@@ -34,8 +29,9 @@ import com.sun.cri.ri.*;
  * This class implements an assembler that can encode most X86 instructions.
  */
 public class AMD64Assembler extends AbstractAssembler {
+
     /**
-     * The kind for pointers and raw registers.  Since we know we are 64 bit here, we can hardcode it.
+     * The kind for pointers and raw registers. Since we know we are 64 bit here, we can hardcode it.
      */
     private static final CiKind Word = CiKind.Long;
 
@@ -45,26 +41,8 @@ public class AMD64Assembler extends AbstractAssembler {
      * The x86 condition codes used for conditional jumps/moves.
      */
     public enum ConditionFlag {
-        zero(0x4),
-        notZero(0x5),
-        equal(0x4),
-        notEqual(0x5),
-        less(0xc),
-        lessEqual(0xe),
-        greater(0xf),
-        greaterEqual(0xd),
-        below(0x2),
-        belowEqual(0x6),
-        above(0x7),
-        aboveEqual(0x3),
-        overflow(0x0),
-        noOverflow(0x1),
-        carrySet(0x2),
-        carryClear(0x3),
-        negative(0x8),
-        positive(0x9),
-        parity(0xa),
-        noParity(0xb);
+        zero(0x4), notZero(0x5), equal(0x4), notEqual(0x5), less(0xc), lessEqual(0xe), greater(0xf), greaterEqual(0xd), below(0x2), belowEqual(0x6), above(0x7), aboveEqual(0x3), overflow(
+                        0x0), noOverflow(0x1), carrySet(0x2), carryClear(0x3), negative(0x8), positive(0x9), parity(0xa), noParity(0xb);
 
         public final int value;
 
@@ -77,15 +55,9 @@ public class AMD64Assembler extends AbstractAssembler {
 
     /**
      * Constants for X86 prefix bytes.
-     * APN the prefix byte is used to control the decoding of instructions ..
-     * MSByte is set to 0x40.
-     * WRXB bits in the LSByte HEX numbers are used.
-     * W bit set 0x48 a 64bit operand size is used.
-     * R bit set 0x44 an extension to the MODRM.reg field?
-     * X bit set 0x42 an extension to SIB.index field?
-     * B bit set 0x41 an extension to MODRM.rm field or SIB.base field
      */
     private class Prefix {
+
         private static final int REX = 0x40;
         private static final int REXB = 0x41;
         private static final int REXX = 0x42;
@@ -182,10 +154,11 @@ public class AMD64Assembler extends AbstractAssembler {
         if (base == CiRegister.Frame) {
             assert frameRegister != null : "cannot use register " + CiRegister.Frame + " in assembler with null register configuration";
             base = frameRegister;
-//        } else if (base == CiRegister.CallerFrame) {
-//            assert frameRegister != null : "cannot use register " + CiRegister.Frame + " in assembler with null register configuration";
-//            base = frameRegister;
-//            disp += targetMethod.frameSize() + 8;
+// } else if (base == CiRegister.CallerFrame) {
+// assert frameRegister != null : "cannot use register " + CiRegister.Frame + " in assembler with null register
+// configuration";
+// base = frameRegister;
+// disp += targetMethod.frameSize() + 8;
         }
 
         // Encode the registers as needed in the fields they are used in
@@ -418,7 +391,6 @@ public class AMD64Assembler extends AbstractAssembler {
         emitByte(0xBD);
         emitByte(0xC0 | encode);
     }
-
 
     public final void bsrq(CiRegister dst, CiAddress src) {
         prefixq(src, dst);
@@ -1014,10 +986,10 @@ public class AMD64Assembler extends AbstractAssembler {
     }
 
     /**
-     * New CPUs require use of movsd and movss to avoid partial register stall
-     * when loading from memory. But for old Opteron use movlpd instead of movsd.
-     * The selection is done in {@link AMD64MacroAssembler#movdbl(CiRegister, CiAddress)}
-     * and {@link AMD64MacroAssembler#movflt(CiRegister, CiRegister)}.
+     * New CPUs require use of movsd and movss to avoid partial register stall when loading from memory. But for old
+     * Opteron use movlpd instead of movsd. The selection is done in
+     * {@link AMD64MacroAssembler#movdbl(CiRegister, CiAddress)} and
+     * {@link AMD64MacroAssembler#movflt(CiRegister, CiRegister)}.
      */
     public final void movlpd(CiRegister dst, CiAddress src) {
         assert dst.isFpu();
@@ -2849,16 +2821,13 @@ public class AMD64Assembler extends AbstractAssembler {
 
     @Override
     protected final void patchJumpTarget(int branch, int branchTarget) {
-	/*
-	instrument is unused in X86
-	*/
         int op = codeBuffer.getByte(branch);
         assert op == 0xE8 // call
-            || op == 0x00 // jump table entry
-            || op == 0xE9 // jmp
-            || op == 0xEB // short jmp
-            || (op & 0xF0) == 0x70 // short jcc
-            || op == 0x0F && (codeBuffer.getByte(branch + 1) & 0xF0) == 0x80 // jcc
+                        || op == 0x00 // jump table entry
+                        || op == 0xE9 // jmp
+                        || op == 0xEB // short jmp
+                        || (op & 0xF0) == 0x70 // short jcc
+                        || op == 0x0F && (codeBuffer.getByte(branch + 1) & 0xF0) == 0x80 // jcc
         : "Invalid opcode at patch point branch=" + branch + ", branchTarget=" + branchTarget + ", op=" + op;
 
         if (op == 0x00) {
@@ -2867,18 +2836,14 @@ public class AMD64Assembler extends AbstractAssembler {
             int imm32 = branchTarget - jumpTableBase;
             codeBuffer.emitInt(imm32, branch);
         } else if (op == 0xEB || (op & 0xF0) == 0x70) {
-
             // short offset operators (jmp and jcc)
             int imm8 = branchTarget - (branch + 2);
             codeBuffer.emitByte(imm8, branch + 1);
-
         } else {
-
             int off = 1;
             if (op == 0x0F) {
                 off = 2;
             }
-
             int imm32 = branchTarget - (branch + 4 + off);
             codeBuffer.emitInt(imm32, branch + off);
         }
@@ -2915,9 +2880,9 @@ public class AMD64Assembler extends AbstractAssembler {
     }
 
     /**
-     * Emits a direct call instruction. Note that the actual call target is not specified, because all calls
-     * need patching anyway. Therefore, 0 is emitted as the call target, and the user is responsible
-     * to add the call address to the appropriate patching tables.
+     * Emits a direct call instruction. Note that the actual call target is not specified, because all calls need
+     * patching anyway. Therefore, 0 is emitted as the call target, and the user is responsible to add the call address
+     * to the appropriate patching tables.
      */
     public final void call() {
         emitByte(0xE8);
