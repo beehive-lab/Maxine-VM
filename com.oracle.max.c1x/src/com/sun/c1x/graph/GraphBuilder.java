@@ -28,6 +28,7 @@ import static java.lang.reflect.Modifier.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.oracle.max.asm.*;
 import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.criutils.*;
 import com.sun.c1x.*;
@@ -1855,7 +1856,9 @@ public final class GraphBuilder {
     private void inline(RiResolvedMethod target, Value[] args, boolean forcedInline) {
         if (!forcedInline && C1XOptions.UseAssumptions) {
             compilation.assumptions.recordInlinedMethod(compilation.method, target);
-            append(new DebugMethodID(bci(), compilation.method.name(), target.toString()));
+            if (AbstractAssembler.DEBUG_METHODS) {
+                append(new DebugMethodID(bci(), compilation.method.name(), target.toString()));
+            }
         }
         BlockBegin orig = curBlock;
         if (!forcedInline && !isStatic(target.accessFlags())) {
