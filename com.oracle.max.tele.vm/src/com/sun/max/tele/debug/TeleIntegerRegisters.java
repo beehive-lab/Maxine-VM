@@ -22,16 +22,15 @@
  */
 package com.sun.max.tele.debug;
 
-import com.oracle.max.asm.target.amd64.AMD64;
-import com.oracle.max.asm.target.armv7.ARMV7;
-import com.sun.cri.ci.CiRegister;
-import com.sun.max.lang.ISA;
-import com.sun.max.tele.TeleVM;
-import com.sun.max.unsafe.Address;
-import com.sun.max.unsafe.Pointer;
-import com.sun.max.vm.runtime.FatalError;
+import static com.sun.max.platform.Platform.*;
 
-import static com.sun.max.platform.Platform.platform;
+import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.asm.target.armv7.*;
+import com.sun.cri.ci.*;
+import com.sun.max.lang.*;
+import com.sun.max.tele.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Encapsulates the values of the integer (or general purpose) registers for a tele native thread.
@@ -58,13 +57,11 @@ public final class TeleIntegerRegisters extends TeleRegisters {
             sp = AMD64.rsp;
             fp = AMD64.rbp;
         } else if (platform().isa == ISA.ARM) {
-            indirectCallRegister = ARMV7.r14; // we mean LR?
+            indirectCallRegister = ARMV7.r14;
             sp = ARMV7.r13;
             fp = ARMV7.r11;
-
         } else {
-                throw FatalError.unimplemented();
-
+            throw FatalError.unimplemented();
         }
     }
 
