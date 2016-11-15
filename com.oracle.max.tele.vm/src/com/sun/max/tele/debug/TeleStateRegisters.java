@@ -22,15 +22,13 @@
  */
 package com.sun.max.tele.debug;
 
-import com.sun.cri.ci.CiRegister;
-import com.sun.max.lang.ISA;
-import com.sun.max.tele.MaxVM;
-import com.sun.max.tele.TeleVM;
-import com.sun.max.tele.util.TeleError;
-import com.sun.max.unsafe.Address;
-import com.sun.max.unsafe.Pointer;
+import static com.sun.max.platform.Platform.*;
 
-import static com.sun.max.platform.Platform.platform;
+import com.sun.cri.ci.*;
+import com.sun.max.lang.*;
+import com.sun.max.tele.*;
+import com.sun.max.tele.util.*;
+import com.sun.max.unsafe.*;
 
 /**
  * Encapsulates the values of the state registers for a tele native thread.
@@ -96,11 +94,12 @@ public final class TeleStateRegisters extends TeleRegisters {
     }
     static CiRegister[] createStateRegisters() {
         if (platform().isa == ISA.AMD64) {
-            return new CiRegister[] {AMD64.RIP, AMD64.FLAGS};
-        } else if(platform().isa == ISA.ARM) {
-            return new CiRegister[] {ARMV7.RIP, ARMV7.FLAGS};
-        } else
-        throw TeleError.unimplemented();
+            return new CiRegister[] { AMD64.RIP, AMD64.FLAGS};
+        } else if (platform().isa == ISA.ARM) {
+            return new CiRegister[] { ARMV7.RIP, ARMV7.FLAGS};
+        } else {
+            throw TeleError.unimplemented();
+        }
     }
 
     public TeleStateRegisters(TeleVM vm, TeleRegisterSet teleRegisterSet) {
@@ -108,12 +107,10 @@ public final class TeleStateRegisters extends TeleRegisters {
         if (platform().isa == ISA.AMD64) {
             instructionPointerRegister = AMD64.RIP;
             flagsRegister = AMD64.FLAGS;
-        } else if(platform().isa == ISA.ARM) {
+        } else if (platform().isa == ISA.ARM) {
             instructionPointerRegister = ARMV7.RIP;
-            flagsRegister = ARMV7.FLAGS; //
-            System.out.println("NEED to identify ARMV7 flags rgister");
-        } else
-         {
+            flagsRegister = ARMV7.FLAGS;
+        } else {
             throw TeleError.unimplemented();
         }
     }
@@ -150,8 +147,10 @@ public final class TeleStateRegisters extends TeleRegisters {
     public static String flagsToString(MaxVM vm, long flags) {
         if (platform().isa == ISA.AMD64) {
             return AMD64.flagsToString(flags);
-        } else if (platform().isa == ISA.ARM)
+        } else if (platform().isa == ISA.ARM) {
             return ARMV7.flagsToString(flags);
-        throw TeleError.unimplemented();
+        } else {
+            throw TeleError.unimplemented();
+        }
     }
 }
