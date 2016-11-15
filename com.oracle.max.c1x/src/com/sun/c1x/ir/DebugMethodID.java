@@ -1,7 +1,6 @@
 package com.sun.c1x.ir;
 
 import com.oracle.max.criutils.*;
-import com.sun.c1x.ir.Value.*;
 import com.sun.cri.ci.*;
 
 public final class DebugMethodID extends Instruction {
@@ -20,13 +19,12 @@ public final class DebugMethodID extends Instruction {
 
     @Override
     public void accept(ValueVisitor v) {
-       v.visitDebugMethodID(this);
-   }
+        v.visitDebugMethodID(this);
+    }
 
     @Override
     public void print(LogStream out) {
         // TODO Auto-generated method stub
-
     }
 
     public int getBci() {
@@ -40,5 +38,4 @@ public final class DebugMethodID extends Instruction {
     public String getInlinedMethod() {
         return inlinedMethod;
     }
-
 }
