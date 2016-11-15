@@ -27,9 +27,8 @@ package jtt.bytecode;
  * @Runs: 0.0f = 0L; 1.0f = 1L; -1.06f = -1L; -156.82743f = -156L
  */
 public class BC_f2l01 {
+
     public static long test(float d) {
-	//long x = (long) d;
-	//System.out.println("INSIDE " + x);
         return (long) d;
     }
 }
