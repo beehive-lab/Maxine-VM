@@ -22,25 +22,20 @@
  */
 package com.sun.max.tele.method;
 
-import com.sun.max.Utils;
-import com.sun.max.asm.InlineDataDecoder;
-import com.sun.max.asm.amd64.AMD64GeneralRegister64;
-import com.sun.max.asm.dis.*;
-import com.sun.max.asm.gen.ImmediateArgument;
-import com.sun.max.asm.gen.cisc.x86.X86OffsetParameter;
-import com.sun.max.asm.gen.cisc.x86.X86Template;
-import com.sun.max.asm.gen.cisc.x86.X86TemplateContext;
-import com.sun.max.lang.WordWidth;
-import com.sun.max.platform.Platform;
-import com.sun.max.program.Trace;
-import com.sun.max.tele.util.TeleError;
-import com.sun.max.tele.util.TeleWarning;
-import com.sun.max.unsafe.Address;
+import java.io.*;
+import java.util.*;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
-import java.util.List;
+import com.sun.max.*;
+import com.sun.max.asm.*;
+import com.sun.max.asm.amd64.*;
+import com.sun.max.asm.dis.*;
+import com.sun.max.asm.gen.*;
+import com.sun.max.asm.gen.cisc.x86.*;
+import com.sun.max.lang.*;
+import com.sun.max.platform.*;
+import com.sun.max.program.*;
+import com.sun.max.tele.util.*;
+import com.sun.max.unsafe.*;
 
 /**
  * Disassembler for machine code in the VM.
