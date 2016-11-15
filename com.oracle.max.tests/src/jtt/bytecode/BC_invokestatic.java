@@ -27,13 +27,11 @@ package jtt.bytecode;
  * @Runs: 0 = 0; 1 = 1; 2 = 2; 3 = 3; -4 = -4
  */
 public class BC_invokestatic {
+
     public static int test(int a) {
-        //int x = id(a);
-        //return id(a);
-        //if (x != a)
-        //System.out.println(a + " INVOKESTATIC" + x);
         return id(a);
     }
+
     public static int id(int i) {
         return i;
     }
