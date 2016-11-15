@@ -31,7 +31,6 @@ public class System_identityHashCode01 {
     private static final Object object1 = new Object();
     private static final Object object2 = new Object();
 
-    //private static final int hash0 = System.identityHashCode(object0);
     private static final int hash0 = System.identityHashCode(object0);
     private static final int hash1 = System.identityHashCode(object1);
     private static final int hash2 = System.identityHashCode(object2);
