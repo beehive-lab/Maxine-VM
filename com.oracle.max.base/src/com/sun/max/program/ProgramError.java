@@ -163,7 +163,7 @@ public final class ProgramError extends Error {
      * @see #unexpected(String, Throwable)
      */
     public static ProgramError unknownCase() {
-        throw unexpected("unknown switch case ProgramError");
+        throw unexpected("unknown switch case");
     }
 
     /**
@@ -175,7 +175,7 @@ public final class ProgramError extends Error {
      * @see #unexpected(String, Throwable)
      */
     public static ProgramError unknownCase(String caseValue) {
-        throw unexpected("unknown switch case: ProgramError " + caseValue);
+        throw unexpected("unknown switch case: " + caseValue);
     }
 
     // Checkstyle: stop
