@@ -22,13 +22,9 @@
  */
 package com.sun.c1x.stub;
 
-import com.sun.cri.ci.CiKind;
-import com.sun.cri.ci.CiStackSlot;
-
-import static com.sun.cri.ci.CiKind.Double;
-import static com.sun.cri.ci.CiKind.Float;
 import static com.sun.cri.ci.CiKind.*;
-import static com.sun.cri.ci.CiKind.Long;
+
+import com.sun.cri.ci.*;
 
 /**
  * A compiler stub is a shared routine that performs an operation on behalf of compiled code.
