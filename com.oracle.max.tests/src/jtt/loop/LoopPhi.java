@@ -33,9 +33,7 @@ public class LoopPhi {
         for (int i = 0; i < arg; i++) {
             test(1, 1, 1, 1, 1, 1);
         }
-        //return test(1, 1, 1, 1, 1, 1);
         return test(1, 1, 1, 1, 1, 1);
-
     }
 
     public static int test(int i1, int i2, int i3, int i4, int i5, int i6) {
