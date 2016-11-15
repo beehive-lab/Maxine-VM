@@ -89,7 +89,6 @@ public final class CiVirtualObject extends CiValue {
 
     @Override
     public int hashCode() {
-	//System.out.println("HASHCODE");
         return kind.ordinal() + type.hashCode();
     }
 
