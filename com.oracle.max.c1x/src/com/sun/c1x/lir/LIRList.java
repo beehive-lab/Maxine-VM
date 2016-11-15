@@ -332,13 +332,8 @@ public final class LIRList {
         append(new LIROp3(LIROpcode.Iurem, left, right, tmp, res, info));
     }
 
-
-/*
-	this is an extra operation for ARMV7, we call out to C to do the longs, so we need to insert code to
-	cause an exception to occur in java prior to calling out to C if we have a zero divisor
-*/
-    public void insertLongDivExceptionCheck(CiValue dividend,CiValue divisor, CiValue result, CiValue tmp,LIRDebugInfo info) {
-        append(new LIROp3(LIROpcode.LDivExceptionCheck,dividend,divisor,tmp,result,info));
+    public void insertLongDivExceptionCheck(CiValue dividend, CiValue divisor, CiValue result, CiValue tmp, LIRDebugInfo info) {
+        append(new LIROp3(LIROpcode.LDivExceptionCheck, dividend, divisor, tmp, result, info));
     }
 
     public void ldiv(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
