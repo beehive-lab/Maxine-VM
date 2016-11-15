@@ -22,7 +22,7 @@
  */
 package com.sun.c1x;
 
-import java.io.*;
+import com.oracle.max.criutils.TTY.*;
 
 /**
  * This class encapsulates options that control the behavior of the C1X compiler.
@@ -140,7 +140,7 @@ public final class C1XOptions {
 
     public static boolean EmitNopAfterCall              = true;
 
-    public static boolean GenSpecialDivChecks           = ____; 
+    public static boolean GenSpecialDivChecks           = ____;
     public static boolean GenAssertionCode              = ____;
     public static boolean AlignDirectCallsForPatching   = true;
     public static boolean NullCheckUniquePc             = ____;
