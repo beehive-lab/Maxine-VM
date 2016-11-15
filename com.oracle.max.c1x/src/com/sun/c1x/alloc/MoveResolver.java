@@ -1,24 +1,19 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
+ * OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package com.sun.c1x.alloc;
 
@@ -113,7 +108,7 @@ final class MoveResolver {
                 if (interval != null) {
                     boolean unique = usedRegs.add(interval.location());
                     assert unique : "cannot read from same register twice";
-                    if (interval.locationHigh() != null){
+                    if (interval.locationHigh() != null) {
                         unique = usedRegs.add(interval.locationHigh());
                         assert unique : "cannot read from same register twice";
                     }
@@ -126,7 +121,7 @@ final class MoveResolver {
             Interval interval = mappingTo.get(i);
             boolean unique = usedRegs.add(interval.location());
             assert unique : "cannot write to same register twice";
-            if (interval.locationHigh() != null){
+            if (interval.locationHigh() != null) {
                 unique = usedRegs.add(interval.locationHigh());
                 assert unique : "cannot read from same register twice";
             }
@@ -180,8 +175,8 @@ final class MoveResolver {
     }
 
     /**
-     * Checks if the {@linkplain Interval#location() location} of {@code to} is not blocked
-     * or is only blocked by {@code from}.
+     * Checks if the {@linkplain Interval#location() location} of {@code to} is not blocked or is only blocked by
+     * {@code from}.
      */
     private boolean safeToProcessMove(Interval from, Interval to) {
         CiValue fromReg = from != null ? from.location() : null;
@@ -228,7 +223,8 @@ final class MoveResolver {
         insertionBuffer.move(insertIdx, fromOpr, toOpr, null);
 
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            TTY.println("MoveResolver: inserted move from %d (%s %s) to %d (%s %s)", fromInterval.operandNumber, fromInterval.location(), fromInterval.locationHigh(), toInterval.operandNumber, toInterval.location(), toInterval.locationHigh());
+            TTY.println("MoveResolver: inserted move from %d (%s %s) to %d (%s %s)", fromInterval.operandNumber, fromInterval.location(), fromInterval.locationHigh(), toInterval.operandNumber,
+                            toInterval.location(), toInterval.locationHigh());
         }
     }
 
@@ -246,7 +242,8 @@ final class MoveResolver {
     }
 
     private void resolveMappings() {
-        //if (C1XOptions.TraceLinearScanLevel >= 4) TTY.println("MoveResolver: resolving mappings for Block B%d, index %d", insertList.block() != null ? insertList.block().blockID : -1, insertIdx);
+        // if (C1XOptions.TraceLinearScanLevel >= 4) TTY.println("MoveResolver: resolving mappings for Block B%d, index
+        // %d", insertList.block() != null ? insertList.block().blockID : -1, insertIdx);
         assert verifyBeforeResolve();
 
         // Block all registers that are used as input operands of a move.
@@ -331,7 +328,8 @@ final class MoveResolver {
     }
 
     void setInsertPosition(LIRList insertList, int insertIdx) {
-        //if (C1XOptions.TraceLinearScanLevel >= 4) TTY.println("MoveResolver: setting insert position to Block B%d, index %d", insertList.block() != null ? insertList.block().blockID : -1, insertIdx);
+        // if (C1XOptions.TraceLinearScanLevel >= 4) TTY.println("MoveResolver: setting insert position to Block B%d,
+        // index %d", insertList.block() != null ? insertList.block().blockID : -1, insertIdx);
         assert this.insertList == null && this.insertIdx == -1 : "use moveInsertPosition instead of setInsertPosition when data already set";
 
         createInsertionBuffer(insertList);
@@ -340,7 +338,8 @@ final class MoveResolver {
     }
 
     void moveInsertPosition(LIRList insertList, int insertIdx) {
-        //if (C1XOptions.TraceLinearScanLevel >= 4) TTY.println("MoveResolver: moving insert position to Block B%d, index %d", (insertList != null && insertList.block() != null) ? insertList.block().blockID : -1, insertIdx);
+        // if (C1XOptions.TraceLinearScanLevel >= 4) TTY.println("MoveResolver: moving insert position to Block B%d,
+        // index %d", (insertList != null && insertList.block() != null) ? insertList.block().blockID : -1, insertIdx);
 
         if (this.insertList != null && (this.insertList != insertList || this.insertIdx != insertIdx)) {
             // insert position changed . resolve current mappings
@@ -360,13 +359,11 @@ final class MoveResolver {
 
     void addMapping(Interval fromInterval, Interval toInterval) {
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            TTY.println("MoveResolver: adding mapping from interval %d (%s %s) to interval %d (%s %s)", fromInterval.operandNumber, fromInterval.location(), fromInterval.locationHigh(), toInterval.operandNumber, toInterval.location(), toInterval.locationHigh());
+            TTY.println("MoveResolver: adding mapping from interval %d (%s %s) to interval %d (%s %s)", fromInterval.operandNumber, fromInterval.location(), fromInterval.locationHigh(),
+                            toInterval.operandNumber, toInterval.location(), toInterval.locationHigh());
         }
 
         assert fromInterval.operand != toInterval.operand : "from and to interval equal: " + fromInterval;
-        if (!Util.archKindsEqual(fromInterval.kind(), toInterval.kind())) {
-            System.out.println("From kind " + fromInterval.kind() + " To kind " + toInterval.kind());
-        }
         assert Util.archKindsEqual(fromInterval.kind(), toInterval.kind());
         mappingFrom.add(fromInterval);
         mappingFromOpr.add(CiValue.IllegalValue);
