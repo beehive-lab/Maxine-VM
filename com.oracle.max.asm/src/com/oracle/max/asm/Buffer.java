@@ -1,33 +1,30 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
+ * OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package com.oracle.max.asm;
 
 import java.util.*;
 
 /**
- * Code buffer management for the assembler. Support for little endian and big endian architectures is implemented using subclasses.
+ * Code buffer management for the assembler. Support for little endian and big endian architectures is implemented using
+ * subclasses.
  */
 public abstract class Buffer {
+
     protected byte[] data;
     protected int position;
 
@@ -49,14 +46,11 @@ public abstract class Buffer {
     }
 
     /**
-     * Closes this buffer. No extra data can be written to this buffer after
-     * this call.
+     * Closes this buffer. No extra data can be written to this buffer after this call.
      *
-     * @param trimmedCopy
-     *            if {@code true}, then a copy of the underlying byte array up
-     *            to (but not including) {@code position()} is returned
-     * @return the data in this buffer or a trimmed copy if {@code trimmedCopy}
-     *         is {@code true}
+     * @param trimmedCopy if {@code true}, then a copy of the underlying byte array up to (but not including)
+     *            {@code position()} is returned
+     * @return the data in this buffer or a trimmed copy if {@code trimmedCopy} is {@code true}
      */
     public byte[] close(boolean trimmedCopy) {
         byte[] result = trimmedCopy ? Arrays.copyOf(data, position()) : data;
@@ -71,12 +65,9 @@ public abstract class Buffer {
     /**
      * Copies the data from this buffer into a given array.
      *
-     * @param dst
-     *            the destination array
-     * @param off
-     *            starting position in {@code dst}
-     * @param len
-     *            number of bytes to copy
+     * @param dst the destination array
+     * @param off starting position in {@code dst}
+     * @param len number of bytes to copy
      */
     public void copyInto(byte[] dst, int off, int len) {
         System.arraycopy(data, 0, dst, off, len);
@@ -131,12 +122,14 @@ public abstract class Buffer {
 
     public abstract int getInt(int pos);
 
-    public void offlineCopyBuffer(byte []b) {
+    public void offlineCopyBuffer(byte[] b) {
         ensureSize(position + b.length);
-        for(int i = 0; i < b.length;i++)
+        for (int i = 0; i < b.length; i++)
             data[position++] = b[i];
     }
+
     public static final class BigEndian extends Buffer {
+
         @Override
         public int emitShort(int b, int pos) {
             assert NumUtil.isUShort(b);
@@ -172,22 +165,17 @@ public abstract class Buffer {
 
         @Override
         public int getShort(int pos) {
-            return
-                (data[pos + 0] & 0xff) << 8 |
-                (data[pos + 1] & 0xff) << 0;
+            return (data[pos + 0] & 0xff) << 8 | (data[pos + 1] & 0xff) << 0;
         }
 
         @Override
         public int getInt(int pos) {
-            return
-                (data[pos + 0] & 0xff) << 24 |
-                (data[pos + 1] & 0xff) << 16 |
-                (data[pos + 2] & 0xff) << 8 |
-                (data[pos + 3] & 0xff) << 0;
+            return (data[pos + 0] & 0xff) << 24 | (data[pos + 1] & 0xff) << 16 | (data[pos + 2] & 0xff) << 8 | (data[pos + 3] & 0xff) << 0;
         }
     }
 
     public static final class LittleEndian extends Buffer {
+
         @Override
         public int emitShort(int b, int pos) {
             assert NumUtil.isUShort(b);
@@ -223,20 +211,12 @@ public abstract class Buffer {
 
         @Override
         public int getShort(int pos) {
-            return
-                (data[pos + 1] & 0xff) << 8 |
-                (data[pos + 0] & 0xff) << 0;
+            return (data[pos + 1] & 0xff) << 8 | (data[pos + 0] & 0xff) << 0;
         }
 
         @Override
         public int getInt(int pos) {
-            return
-                (data[pos + 3] & 0xff) << 24 |
-                (data[pos + 2] & 0xff) << 16 |
-                (data[pos + 1] & 0xff) << 8 |
-                (data[pos + 0] & 0xff) << 0;
+            return (data[pos + 3] & 0xff) << 24 | (data[pos + 2] & 0xff) << 16 | (data[pos + 1] & 0xff) << 8 | (data[pos + 0] & 0xff) << 0;
         }
     }
-
-
 }
