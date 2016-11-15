@@ -40,12 +40,9 @@ public class HP_life {
         for (int row = 0; row < rows; ++row) {
             for (int col = 0; col < cols; ++col) {
                 boolean value = cell(row, col);
-                // System.out.print(value ? "1" : "0");
                 sum += (row * 15223242 + col * 21623234) ^ ((value ? 1 : 0) * 15323142);
             }
         }
-	//`System.out.print("RETURNING ");
-	//`System.out.println ( Integer.toString(sum));
         return sum;
     }
 
