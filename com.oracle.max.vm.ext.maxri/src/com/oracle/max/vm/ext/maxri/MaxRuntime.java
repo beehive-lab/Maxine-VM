@@ -42,12 +42,10 @@ import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
 */
-import com.oracle.max.vm.ext.maxri.MaxXirGenerator.RuntimeCalls;
+import com.oracle.max.vm.ext.maxri.MaxXirGenerator.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiTargetMethod.Call;
-import com.sun.cri.ci.CiTargetMethod.DataPatch;
-import com.sun.cri.ci.CiTargetMethod.Safepoint;
-import com.sun.cri.ci.CiUtil.RefMapFormatter;
+import com.sun.cri.ci.CiTargetMethod.*;
+import com.sun.cri.ci.CiUtil.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
