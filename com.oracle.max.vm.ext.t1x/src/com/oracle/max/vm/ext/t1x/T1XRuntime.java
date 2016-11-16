@@ -121,10 +121,7 @@ public class T1XRuntime {
         int[] dims = new int[n];
         for (int i = 0; i < n; i++) {
             int len;
-            if (T1X.isAMD64()) {
-                int offset = (n - i - 1) * JVMS_SLOT_SIZE;
-                len = sp.readInt(offset);
-            } else if (T1X.isARM()) {
+            if (T1X.isAMD64() || T1X.isARM()) {
                 int offset = (n - i - 1) * JVMS_SLOT_SIZE;
                 len = sp.readInt(offset);
             } else {
@@ -156,5 +153,4 @@ public class T1XRuntime {
     public static long d2l(double value) {
         return (long) value;
     }
-
 }
