@@ -41,8 +41,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.TargetMethod.CodePosClosure;
-import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
+import com.sun.max.vm.compiler.target.TargetMethod.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
@@ -268,7 +267,7 @@ public final class DebugInfo {
     }
 
     private static void initRefMap(byte[] data, int index, int refmapIndex, CiDebugInfo debugInfo, int frameRefMapSize, int regRefMapSize) {
-       if (debugInfo != null) {
+        if (debugInfo != null) {
             // copy the stack map
             if (debugInfo.hasStackRefMap()) {
                 debugInfo.frameRefMap.copyTo(data, refmapIndex, -1);
@@ -279,7 +278,7 @@ public final class DebugInfo {
                 debugInfo.registerRefMap.copyTo(data, refmapIndex + frameRefMapSize, regRefMapSize);
                 assert new CiBitMap(data, refmapIndex + frameRefMapSize, regRefMapSize).equals(debugInfo.registerRefMap);
             }
-       }
+        }
     }
 
     /**
@@ -451,7 +450,7 @@ public final class DebugInfo {
                         fp = AMD64.rsp;
                     } else if (platform().isa == ISA.ARM) {
                         fp = ARMV7.r13;
-                    } else  {
+                    } else {
                         throw FatalError.unimplemented();
                     }
                     final int offsetInFrame = ss.index() * target().spillSlotSize;
