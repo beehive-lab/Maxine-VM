@@ -22,75 +22,45 @@
  */
 package com.oracle.max.vm.ext.maxri;
 
-import com.oracle.max.asm.target.armv7.ARMV7;
-import com.sun.cri.ci.CiAddress.Scale;
-import com.sun.cri.ci.CiKind;
-import com.sun.cri.ci.CiRegister;
-import com.sun.cri.ci.CiRuntimeCall;
-import com.sun.cri.ri.*;
-import com.sun.cri.ri.RiType.Representation;
-import com.sun.cri.xir.*;
-import com.sun.cri.xir.CiXirAssembler.XirConstant;
-import com.sun.cri.xir.CiXirAssembler.XirLabel;
-import com.sun.cri.xir.CiXirAssembler.XirOperand;
-import com.sun.cri.xir.CiXirAssembler.XirParameter;
-import com.sun.max.Utils;
-import com.sun.max.annotate.FOLD;
-import com.sun.max.annotate.HOSTED_ONLY;
-import com.sun.max.annotate.INLINE;
-import com.sun.max.platform.*;
-import com.sun.max.program.ProgramError;
-import com.sun.max.unsafe.Pointer;
-import com.sun.max.unsafe.Size;
-import com.sun.max.unsafe.UnsafeCast;
-import com.sun.max.unsafe.Word;
-import com.sun.max.util.IntBitSet;
-import com.sun.max.vm.Log;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.VMConfiguration;
-import com.sun.max.vm.actor.holder.ClassActor;
-import com.sun.max.vm.actor.holder.DynamicHub;
-import com.sun.max.vm.actor.holder.Hub;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.ConstantPool;
-import com.sun.max.vm.classfile.constant.UnresolvedField;
-import com.sun.max.vm.classfile.constant.UnresolvedMethod;
-import com.sun.max.vm.classfile.constant.UnresolvedType.ByAccessingClass;
-import com.sun.max.vm.classfile.constant.UnresolvedType.InPool;
-import com.sun.max.vm.compiler.CallEntryPoint;
-import com.sun.max.vm.compiler.WordUtil;
-import com.sun.max.vm.compiler.target.AdapterGenerator;
-import com.sun.max.vm.heap.*;
-import com.sun.max.vm.heap.debug.DebugHeap;
-import com.sun.max.vm.layout.Layout;
-import com.sun.max.vm.object.ArrayAccess;
-import com.sun.max.vm.object.ObjectAccess;
-import com.sun.max.vm.runtime.FatalError;
-import com.sun.max.vm.runtime.ResolutionGuard;
-import com.sun.max.vm.runtime.Snippets;
-import com.sun.max.vm.runtime.Throw;
-import com.sun.max.vm.runtime.amd64.AMD64SafepointPoll;
-import com.sun.max.vm.runtime.arm.ARMSafepointPoll;
-import com.sun.max.vm.thread.VmThread;
-import com.sun.max.vm.thread.VmThreadLocal;
-import com.sun.max.vm.type.ClassRegistry;
-import com.sun.max.vm.type.Kind;
-import com.sun.max.vm.type.SignatureDescriptor;
-
-import java.io.ByteArrayOutputStream;
-import java.lang.reflect.Array;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
-import static com.sun.max.platform.Platform.platform;
-import static com.sun.max.platform.Platform.target;
-import static com.sun.max.vm.VMConfiguration.vmConfig;
-import static com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT;
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.VMConfiguration.*;
+import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.layout.Layout.*;
-import static java.lang.reflect.Modifier.isFinal;
+import static java.lang.reflect.Modifier.*;
+
+import java.io.*;
+import java.lang.reflect.*;
+import java.util.*;
+
+import com.oracle.max.asm.target.armv7.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiAddress.*;
+import com.sun.cri.ri.*;
+import com.sun.cri.ri.RiType.*;
+import com.sun.cri.xir.*;
+import com.sun.cri.xir.CiXirAssembler.*;
+import com.sun.max.*;
+import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
+import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.util.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.classfile.constant.UnresolvedType.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.debug.*;
+import com.sun.max.vm.layout.*;
+import com.sun.max.vm.object.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.amd64.*;
+import com.sun.max.vm.runtime.arm.*;
+import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
 /**
  * This class is the Maxine's implementation of VM interface for generating XIR snippets that express
@@ -1001,8 +971,7 @@ public class MaxXirGenerator implements RiXirGenerator {
                 asm.lea(arraySize, arraySize, length, 0, scale);
                 asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
             }
-        } else {
-            assert Platform.target().arch.isARM();
+        } else if (Platform.target().arch.isARM()) {
             XirOperand scratch = asm.createRegisterTemp("scratch", WordUtil.archKind(), ARMV7.r8);
             XirLabel aligned = asm.createInlineLabel("aligned");
             asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
@@ -1013,6 +982,8 @@ public class MaxXirGenerator implements RiXirGenerator {
             asm.lea(arraySize, arraySize, length, 0, scale);
             asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
             asm.bindInline(aligned);
+        } else {
+            assert false : "Arch unimplemented!";
         }
 
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
@@ -1075,8 +1046,7 @@ public class MaxXirGenerator implements RiXirGenerator {
                 asm.lea(arraySize, arraySize, length, 0, scale);
                 asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
             }
-        } else {
-            assert Platform.target().arch.isARM();
+        } else if (Platform.target().arch.isARM()) {
             XirOperand scratch = asm.createRegisterTemp("scratch", WordUtil.archKind(), ARMV7.r8);
             XirLabel aligned = asm.createInlineLabel("aligned");
             asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
@@ -1087,6 +1057,8 @@ public class MaxXirGenerator implements RiXirGenerator {
             asm.lea(arraySize, arraySize, length, 0, scale);
             asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
             asm.bindInline(aligned);
+        } else {
+            assert false : "Arch unimplemented!";
         }
 
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
