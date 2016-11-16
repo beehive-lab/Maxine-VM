@@ -39,14 +39,12 @@ import com.sun.c1x.lir.*;
 import com.sun.c1x.observer.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiCompiler.*;
-import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -60,7 +58,6 @@ import com.sun.max.vm.thread.*;
  * Integration of the C1X compiler into Maxine's compilation framework.
  */
 public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCompiler {
-
 
     /**
      * The Maxine specific implementation of the {@linkplain RiRuntime runtime interface} needed by C1X.
@@ -92,7 +89,8 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     private static final int DEFAULT_OPT_LEVEL = Integer.getInteger("max.c1x.optlevel", 3);
 
     public static final VMIntOption optLevelOption = VMOptions.register(new VMIntOption("-C1X:OptLevel=", DEFAULT_OPT_LEVEL,
-            "Set the optimization level of C1X.") {
+                    "Set the optimization level of C1X.") {
+
         @Override
         public boolean parseValue(com.sun.max.unsafe.Pointer optionValue) {
             boolean result = super.parseValue(optionValue);
@@ -113,26 +111,18 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     public static Map<String, String> getHelpMap() {
         if (helpMap == null) {
             HashMap<String, String> map = new HashMap<String, String>();
-            map.put("PrintFilter",
-                    "Filter compiler tracing to methods whose fully qualified name " +
-                            "matches <arg>. If <arg> starts with \"~\", then <arg> (without " +
-                            "the \"~\") is interpreted as a regular expression. Otherwise, " +
-                            "<arg> is interpreted as a simple substring.");
+            map.put("PrintFilter", "Filter compiler tracing to methods whose fully qualified name " + "matches <arg>. If <arg> starts with \"~\", then <arg> (without " +
+                            "the \"~\") is interpreted as a regular expression. Otherwise, " + "<arg> is interpreted as a simple substring.");
 
             map.put("TraceBytecodeParserLevel",
-                    "Trace frontend bytecode parser at level <n> where 0 means no " +
-                            "tracing, 1 means instruction tracing and 2 means instruction " +
-                            "plus frame state tracing.");
+                            "Trace frontend bytecode parser at level <n> where 0 means no " + "tracing, 1 means instruction tracing and 2 means instruction " + "plus frame state tracing.");
 
-            map.put("DetailedAsserts",
-                    "Turn on detailed error checking that has a noticeable performance impact.");
+            map.put("DetailedAsserts", "Turn on detailed error checking that has a noticeable performance impact.");
 
             map.put("GenSpecialDivChecks",
-                    "Generate code to check for (Integer.MIN_VALUE / -1) or (Long.MIN_VALUE / -1) " +
-                            "instead of detecting these cases via instruction decoding in a trap handler.");
+                            "Generate code to check for (Integer.MIN_VALUE / -1) or (Long.MIN_VALUE / -1) " + "instead of detecting these cases via instruction decoding in a trap handler.");
 
-            map.put("UseStackMapTableLiveness",
-                    "Use liveness information derived from StackMapTable class file attribute.");
+            map.put("UseStackMapTableLiveness", "Use liveness information derived from StackMapTable class file attribute.");
 
             for (String name : map.keySet()) {
                 try {
@@ -159,8 +149,10 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
 
     @Override
     public void initialize(Phase phase) {
-        if (isHosted() && !optionsRegistered) {
-            runtime.initialize();
+        if ((isHosted() && !optionsRegistered) || phase == Phase.HOSTED_TESTING) {
+            if (phase != Phase.HOSTED_TESTING) {
+                runtime.initialize();
+            }
 
             C1XOptions.setOptimizationLevel(optLevelOption.getValue());
             C1XOptions.OptIntrinsify = true;
@@ -173,46 +165,7 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
             optionsRegistered = true;
         }
 
-
-        if (isHosted() && phase == Phase.HOSTED_COMPILING) {
-            // Temporary work-around to support the @ACCESSOR annotation.
-            GraphBuilder.setAccessor(ClassActor.fromJava(Accessor.class));
-            compiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.compilerStub);
-            compiler.addCompilationObserver(new WordTypeRewriterObserver());
-            MaxineIntrinsicImplementations.initialize(compiler.intrinsicRegistry);
-        }
-
-        if (phase == Phase.STARTING) {
-            // Speculative opts are ok provided the compilation broker can handle deopt
-            C1XOptions.UseAssumptions = vm().compilationBroker.isDeoptSupported() && Deoptimization.UseDeopt;
-        } else if (phase == Phase.TERMINATING) {
-            if (C1XOptions.PrintMetrics) {
-                C1XMetrics.print();
-                DebugInfo.dumpStats(Log.out);
-            }
-            if (C1XOptions.PrintTimers) {
-                C1XTimers.print();
-            }
-        }
-    }
-
-    public void initializeOffline(Phase phase) {
-        if (isHosted() && !optionsRegistered) {
-            //runtime.initialize();
-
-            C1XOptions.setOptimizationLevel(optLevelOption.getValue());
-            C1XOptions.OptIntrinsify = true;
-            C1XOptions.StackShadowPages = VmThread.STACK_SHADOW_PAGES;
-            VMOptions.addFieldOptions("-C1X:", C1XOptions.class, getHelpMap());
-            VMOptions.addFieldOptions("-ASM:", AsmOptions.class, null);
-
-            // Speculative opts (UseAssumptions) are the default in the boot image as they are limited
-            // to VM classes, which form a closed world.
-            optionsRegistered = true;
-        }
-
-
-        if (isHosted() && phase == Phase.HOSTED_COMPILING) {
+        if (isHosted() && (phase == Phase.HOSTED_COMPILING || phase == Phase.HOSTED_TESTING)) {
             // Temporary work-around to support the @ACCESSOR annotation.
             GraphBuilder.setAccessor(ClassActor.fromJava(Accessor.class));
             compiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.compilerStub);
@@ -293,46 +246,11 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         return compiler;
     }
 
-    //static String[] faultyClasses = { "com.sun.max.vm.jni.JniFunctions.GetDoubleField(Pointer, JniHandle, FieldID)",
-    //                 "sun.misc.FloatingDecimal.developLongDigits(int, long, long)",
-    //                 "com.sun.max.vm.jni.VMFunctions.GetStackTraceElement(Pointer, JniHandle, int)",
-    //                 "java.util.ResourceBundle.findBundleInCache(ResourceBundle$CacheKey, ResourceBundle$Control)",
-    //                 "com.sun.max.vm.jni.VMFunctions.SetThreadPriority(Pointer, JniHandle, int)",
-    //                 "java.util.zip.Inflater.end(long)", "java.net.URLClassLoader.defineClass(String, Resource)",
-    //                 "com.sun.max.vm.jni.JmmFunctions.GetLastGCStat(Pointer, JniHandle, Pointer)",
-    //                 "com.sun.max.vm.jni.JniFunctions.GetObjectField(Pointer, JniHandle, FieldID)",
-    //                 "sun.misc.NativeSignalHandler.handle0(int, long)",
-    //                 "java.util.zip.ZipFile.getInputStream(ZipEntry)",
-    //                 "com.sun.max.vm.jni.JniFunctions.SetLongArrayRegion(Pointer, JniHandle, int, int, Pointer)",
-    //                 "com.sun.max.vm.jni.JniFunctions.GetDoubleArrayRegion(Pointer, JniHandle, int, int, Pointer)",
-    //                 "sun.misc.NativeSignalHandler.handle0(int, long)",
-    //                 "com.sun.max.vm.jni.JniFunctions.GetShortArrayRegion(Pointer, JniHandle, int, int, Pointer)",
-    //                 "com.sun.max.vm.ext.jvmti.JVMTICallbacks.invokeHeapIterationCallback(Pointer, long, long, Pointer, int, Word)",
-    //                 "com.sun.max.vm.jni.JniFunctions.SetCharArrayRegion(Pointer, JniHandle, int, int, Pointer)"};
-    //public static final Object lock = new Object();
-    //public static final List<String> compiledMethods = new ArrayList<>();
-
-    //String cklass = "com.oracle.max.vm.ext.maxri.MaxRuntimeCalls.runtimeRegisterFinalizer(Object)";
     public TargetMethod compile(final ClassMethodActor method, boolean isDeopt, boolean install, CiStatistics stats) {
         CiTargetMethod compiledMethod;
-        //Log.print("C1XCOMPILE ");Log.println(method.toString());
         do {
             DebugInfoLevel debugInfoLevel = method.isTemplate() ? DebugInfoLevel.REF_MAPS : DebugInfoLevel.FULL;
-
-
-            //TTY.println(" Thread " + Thread.currentThread().getId() +" Compiling klass: " + method.compilee().toString());
-            //synchronized (lock) {
-            //    for (String cklass : faultyClasses) {
-
-            //    }
-            //}
             compiledMethod = compiler().compileMethod(method, -1, stats, debugInfoLevel).targetMethod();
-            //synchronized (lock) {
-            //    if (C1XOptions.TraceLinearScanLevel !=0 && compiledMethods.size() == 1) {
-            //        C1XOptions.TraceLinearScanLevel = 0;
-            //    }
-            //    compiledMethods.remove(method.compilee().toString());
-            //}
 
             Dependencies deps = Dependencies.validateDependencies(compiledMethod.assumptions());
             if (deps != Dependencies.INVALID) {
@@ -348,17 +266,7 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
                 }
                 TTY.Filter filter = new TTY.Filter(C1XOptions.PrintFilter, method);
                 try {
-
                     printMachineCode(compiledMethod, maxTargetMethod, false);
-                    //if (method.compilee().toString().equals(cklass)) {
-                    //    TTY.println(" Thread " + Thread.currentThread().getId() +" Compiling klass: " + method.compilee().toString());
-                    //    for (Safepoint s : compiledMethod.safepoints) {
-                    //        System.out.println(s.toString());
-                    //    }
-
-                    //}
-
-
                 } finally {
                     filter.remove();
                 }

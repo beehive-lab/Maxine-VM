@@ -148,6 +148,11 @@ public final class MaxineVM {
         HOSTED_COMPILING,
 
         /**
+         * Starting jtt tests and require partial initializations.
+         */
+        HOSTED_TESTING,
+
+        /**
          * Starting the serialization of a graph of host VM objects into the boot image.
          */
         SERIALIZING_IMAGE,
