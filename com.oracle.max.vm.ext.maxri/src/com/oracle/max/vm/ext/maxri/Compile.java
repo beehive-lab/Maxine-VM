@@ -26,13 +26,11 @@ import com.sun.max.*;
 import com.sun.max.config.*;
 import com.sun.max.io.*;
 import com.sun.max.lang.*;
-import com.sun.max.platform.CPU;
-import com.sun.max.platform.Platform;
 import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.test.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.Phase;
+import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -55,8 +53,8 @@ public class Compile {
     private static final Map<String, String> compilerAliases = RuntimeCompiler.aliases;
     private static final String compilerAliasNames = compilerAliases.keySet().toString().replaceAll("[\\[\\]]", "");
 
-    private static final Option<String> compilerOption = options.newStringOption("c", null, "The compiler to use " + compilerAliases.keySet() + " chosen from the following list: " +
-                    compilerAliasNames + ", or fully qualified class name");
+    private static final Option<String> compilerOption = options.newStringOption("c", null,
+                    "The compiler to use " + compilerAliases.keySet() + " chosen from the following list: " + compilerAliasNames + ", or fully qualified class name");
     private static final Option<Integer> traceOption = options.newIntegerOption("trace", 0, "Set the tracing level of the Maxine VM and runtime.");
     private static final Option<Integer> verboseOption = options.newIntegerOption("verbose", 1, "Set the verbosity level of the testing framework.");
     private static final Option<Boolean> reflectionStubsOption = options.newBooleanOption("reflect", false, "Generate and compile reflection stubs for the methods.");
@@ -133,8 +131,6 @@ public class Compile {
 
         String compilerName = getCompilerClassname(compilerAlias);
         if (compilerName == null) {
-            System.out.println("Must specify compiler to use with the -" + compilerOption + " option");
-            System.out.println("Valid values are: " + compilerAliasNames + " or fully qualified class name");
             return null;
         }
         if (compilerName.contains("T1X")) {
@@ -181,11 +177,9 @@ public class Compile {
 
     public static List<TargetMethod> compileMethod(String[] args, String compilerAlias, String method) throws IOException {
         args = VMOption.extractVMArgs(args);
-
         VMConfigurator vmConfigurator = null;
         if (!CompilationBroker.OFFLINE) {
             vmConfigurator = new VMConfigurator(options);
-
         } else {
             vmConfigurator = new VMConfigurator(null);
         }
@@ -196,8 +190,6 @@ public class Compile {
 
         String compilerName = getCompilerClassname(compilerAlias);
         if (compilerName == null) {
-            System.out.println("Must specify compiler to use with the -" + compilerOption + " option");
-            System.out.println("Valid values are: " + compilerAliasNames + " or fully qualified class name");
             return null;
         }
         if (compilerName.contains("T1X")) {
@@ -250,14 +242,10 @@ public class Compile {
         return targetMethods;
     }
 
-
     public static void main(String[] args) throws IOException {
 
         args = VMOption.extractVMArgs(args);
 
-        for (String arg : args) {
-            System.out.println(arg);
-        }
         VMConfigurator vmConfigurator = new VMConfigurator(options);
         options.parseArguments(args);
 
@@ -275,10 +263,7 @@ public class Compile {
             return;
         }
 
-        System.out.println(compilerName);
-
         if (compilerName.contains("T1X")) {
-
             RuntimeCompiler.baselineCompilerOption.setValue(compilerName);
         } else {
             RuntimeCompiler.optimizingCompilerOption.setValue(compilerName);
@@ -308,20 +293,14 @@ public class Compile {
             cb.baselineCompiler.initialize(Phase.HOSTED_COMPILING);
 
         }
-        out.println("!!!!!!! Compile standalone version COMPILERS ALL INITIALISED!");
+
         final Classpath classpath = Classpath.fromSystem();
         final List<MethodActor> methods = new MyMethodFinder().find(arguments, classpath, Compile.class.getClassLoader(), null);
         if (methods.size() == 0) {
             out.println("no methods matched");
             return;
         }
-        out.println("METHODS tO BE COMPILED " + methods.size());
-        for (MethodActor actor : methods) {
-            out.println(actor + " CODE SIZE " + actor.codeSize());
-            for (int i = 0; i < actor.codeSize(); i++) {
-                out.println("BYTECODE " + i + " " + actor.code()[i]);
-            }
-        }
+
         final ProgressPrinter progress = new ProgressPrinter(out, methods.size(), verboseOption.getValue(), false);
 
         if (reflectionStubsOption.getValue()) {
@@ -403,7 +382,6 @@ public class Compile {
             e.printStackTrace();
             writer.close();
         }
-        System.out.println("METHOD FOUND " + methodsFound);
     }
 
     private static Throwable compile(RuntimeCompiler compiler, MethodActor method, boolean printBailout) {
@@ -413,8 +391,7 @@ public class Compile {
         CiStatistics stats = new CiStatistics();
         try {
             TargetMethod tm = compiler.compile(classMethodActor, false, true, stats);
-            offlineDebug(tm.code()); // APN
-
+            offlineDebug(tm.code());
             if (validateInline.getValue()) {
                 validateInlining(tm);
             }
@@ -426,21 +403,19 @@ public class Compile {
             out.println(method);
             thrown.printStackTrace();
         }
-
         return thrown;
     }
 
     private static List<TargetMethod> doCompile(RuntimeCompiler compiler, List<MethodActor> methods) {
         List<TargetMethod> targetMethods = new LinkedList<>();
-        	for (MethodActor methodActor : methods) {
-            	TargetMethod newTarget = null;
-            		newTarget = compile(compiler, methodActor);
-            		targetMethods.add(newTarget);
-            			//targetMethods.add(compile(compiler, methodActor));
-            		if(CompilationBroker.OFFLINE) {
-                	ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
-                	classMethodActor.compiledState = new Compilations(null,newTarget);
-                	offlineAddCalls(newTarget);
+        for (MethodActor methodActor : methods) {
+            TargetMethod newTarget = null;
+            newTarget = compile(compiler, methodActor);
+            targetMethods.add(newTarget);
+            if (CompilationBroker.OFFLINE) {
+                ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
+                classMethodActor.compiledState = new Compilations(null, newTarget);
+                offlineAddCalls(newTarget);
             }
         }
         return targetMethods;
@@ -480,6 +455,7 @@ public class Compile {
         CompiledPrototype.checkInliningCorrect(interfaceCalls, null, false, true);
         CompiledPrototype.checkInliningCorrect(inlinedMethods, tm.classMethodActor(), true, false);
     }
+
     private static void offlineAddCalls(TargetMethod tm) {
         final Set<MethodActor> directCalls = new HashSet<MethodActor>();
         final Set<MethodActor> virtualCalls = new HashSet<MethodActor>();
@@ -487,8 +463,6 @@ public class Compile {
         final Set<MethodActor> inlinedMethods = new HashSet<MethodActor>();
         // gather all direct, virtual, and interface calls and add them
         tm.gatherCalls(directCalls, virtualCalls, interfaceCalls, inlinedMethods);
-
-
     }
 
     static class MyMethodFinder extends MethodFinder {
