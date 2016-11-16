@@ -396,21 +396,15 @@ public class JVMTI {
      * agents listed in VM startup command.
      */
     public static void initialize() {
-	//Log.println("JVMTI initialize called !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-
         NativeInterfaces.initFunctionTable(getJVMTIInterface(-1), JVMTIFunctions.jvmtiFunctions, JVMTIFunctions.jvmtiFunctionActors);
-        //Log.println("JVMTI:iniited native interfaces");
         JVMTISystem.initSystemProperties();
-        //Log.println("JVMTI:initSysPRops");
         for (int i = 0; i < AgentVMOption.count(); i++) {
             AgentVMOption.Info info = AgentVMOption.getInfo(i);
             Word handle = Word.zero();
             Pointer path = info.libStart;
             if (info.isAbsolute) {
-                //Log.println("JVMTI:Dynamic linker load");
                 handle = DynamicLinker.load(path);
             } else {
-                //Log.println("JVMTI: Sytem load");
                 handle = JVMTISystem.load(path);
                 if (CString.equals(info.libStart, "jdwp")) {
                     if (JVMTIVMOptions.jdwpLogOption.getValue()) {
@@ -420,13 +414,10 @@ public class JVMTI {
             }
 
             if (handle.isZero()) {
-                Log.println("JVMTI: handle was zero");
                 initializeFail("failed to load agentlib: ", info.libStart, "");
             }
-            //Log.println("JVMTI: Dynamic Linker lookupSymbol");
             Word onLoad = DynamicLinker.lookupSymbol(handle, AGENT_ONLOAD);
             if (onLoad.isZero()) {
-                Log.println("JVMTI: oLoad zero");
                 initializeFail("agentlib: ", info.libStart, " does not contain an Agent_OnLoad function");
             }
             int rc = invokeAgentOnLoad(onLoad.asAddress(), info.optionStart);
