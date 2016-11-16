@@ -1,24 +1,19 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR
+ * THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package com.oracle.max.vm.ext.t1x;
 
@@ -53,13 +48,11 @@ import com.sun.max.vm.verifier.*;
 /**
  * T1X per-compilation information.
  * <p/>
- * This class is designed such that a single instance can be re-used for
- * separate compilations.
+ * This class is designed such that a single instance can be re-used for separate compilations.
  */
 public abstract class T1XCompilation {
 
-    // Static info
-
+    private static final boolean DEBUG_MARKERS = false;
     protected static final AdapterGenerator adapterGenerator = AdapterGenerator.forCallee(null, CallEntryPoint.BASELINE_ENTRY_POINT);
 
     protected static final CiRegister scratch = vm().registerConfigs.standard.getScratchRegister();
@@ -104,7 +97,7 @@ public abstract class T1XCompilation {
      *
      * @param index an operand stack index where 0 is the top slot, 1 is the slot below it etc
      * @return the effective address of the operand stack slot at index {@code index} from the top stack slot. This
-     * value can be used for a word-sized access to the operand stack.
+     *         value can be used for a word-sized access to the operand stack.
      */
     protected static CiAddress spWord(int index) {
         assert index >= 0;
@@ -119,7 +112,7 @@ public abstract class T1XCompilation {
      *
      * @param index an operand stack index where 0 is the top slot, 1 is the slot below it etc
      * @return the effective address of the operand stack slot at index {@code index} from the top stack slot. This
-     * value can be used for a int-sized access to the operand stack.
+     *         value can be used for a int-sized access to the operand stack.
      */
     protected static CiAddress spInt(int index) {
         assert index >= 0;
@@ -134,7 +127,7 @@ public abstract class T1XCompilation {
      *
      * @param index an operand stack index where 0 is the top slot, 1 is the slot below it etc
      * @return the effective address of the operand stack slot at index {@code index} from the top stack slot. This
-     * value can be used for accessing a long or double value on the operand stack.
+     *         value can be used for accessing a long or double value on the operand stack.
      */
     protected static CiAddress spLong(int index) {
         assert index >= 0;
@@ -155,8 +148,8 @@ public abstract class T1XCompilation {
     }
 
     /**
-     * The minimum value to which {@link T1XOptions#TraceBytecodeParserLevel} must be set to trace
-     * the bytecode instructions as they are parsed.
+     * The minimum value to which {@link T1XOptions#TraceBytecodeParserLevel} must be set to trace the bytecode
+     * instructions as they are parsed.
      */
     public static final int TRACELEVEL_INSTRUCTIONS = 1;
 
@@ -285,11 +278,10 @@ public abstract class T1XCompilation {
 
     /**
      * Map of BCIs to target code positions. Entries in the table corresponding to the start of a bytecode instruction
-     * hold the position in the code buffer where the first byte of the template was emitted. This map
-     * includes an entry for the BCI one byte past the end of the bytecode array. This is useful
-     * for determining the end of the code emitted for the last bytecode instruction. That is, the value at
-     * {@code bciToPos[bciToPos.length - 1]} is the target code position at which the epilogue starts
-     * (0 denotes absence of an epilogue).
+     * hold the position in the code buffer where the first byte of the template was emitted. This map includes an entry
+     * for the BCI one byte past the end of the bytecode array. This is useful for determining the end of the code
+     * emitted for the last bytecode instruction. That is, the value at {@code bciToPos[bciToPos.length - 1]} is the
+     * target code position at which the epilogue starts (0 denotes absence of an epilogue).
      */
     protected int[] bciToPos;
 
@@ -399,11 +391,11 @@ public abstract class T1XCompilation {
     }
 
     /**
-     * Thrown to indicate that {@link Bytecodes#JSR} or {@link Bytecodes#RET}
-     * was encountered when compiling a method.
+     * Thrown to indicate that {@link Bytecodes#JSR} or {@link Bytecodes#RET} was encountered when compiling a method.
      */
     @SuppressWarnings("serial")
     class UnsupportedSubroutineException extends RuntimeException {
+
         final int bci;
         final int opcode;
 
@@ -432,26 +424,6 @@ public abstract class T1XCompilation {
             return compile1(method, codeAttribute, install);
         }
     }
-
-    public T1XTargetMethod debugT1XCompile(ClassMethodActor method, boolean isDeopt, boolean install) {
-        initCompile(method, method.codeAttribute());
-        try {
-            compile2(method);
-        } finally {
-            // TODO
-        }
-
-        try {
-            int endPos = buf.position();
-            fixup();
-            buf.setPosition(endPos);
-        } finally {
-            // TODO
-        }
-
-        return newT1XTargetMethod(this, false);
-    }
-
 
     private T1XTargetMethod compile1(ClassMethodActor method, CodeAttribute codeAttribute, boolean install) {
         startTimer(T1XTimer.PRE_COMPILE);
@@ -515,21 +487,18 @@ public abstract class T1XCompilation {
     }
 
     /**
-     * The following method is used by T1X unit testing framework (ARM port). It receives as input the bytecode stream
+     * The following method is used by T1X unit testing framework (ISA port). It receives as input the bytecode stream
      * which will be compiled by T1X and consequently run by qemu. Code commented out is not yet required or implemented
-     * properly. Unresolved issues: Stack Frames, initCompile() method.
+     * properly.
      */
     public void offlineT1XCompile(ClassMethodActor method, CodeAttribute codeAttribute, byte[] fakeBytes, int hardStop) {
-        // Begin of elided initCompile
         assert this.method == null;
-        // REMOVED APN as needed to initialise registers for arguments to a function/method call
-        // assert buf.position() == 0;
         assert objectLiterals.isEmpty();
         this.method = method;
         this.codeAttribute = codeAttribute;
         cp = codeAttribute.cp;
-        byte[] code = fakeBytes; // codeAttribute.code(); Do we need to make codeAttribute.code BE fakeBytes?
-        stream = new BytecodeStream(code); //Do we need to fix up the codeAttribute?
+        byte[] code = fakeBytes;
+        stream = new BytecodeStream(code);
         protectionLiteralIndex = -1;
         bciToPos = new int[code.length + 1];
         blockBCIs = new boolean[code.length];
@@ -537,16 +506,9 @@ public abstract class T1XCompilation {
         startBlock(0);
         initFrame(method, codeAttribute);
         initHandlers(method, code);
-        // End of initCompile
-
-        // TODO Fill in the appropriate calls to correctly and appropriately fake the stack frame and to correctly
-        // initialize the adapter / prologues.This might not be possible until we take in a
-        // "real" java compiled class method.
         emitPrologue();
         emitUnprotectMethod();
-       // do_profileMethodEntry();
         do_methodTraceEntry();
-        //do_synchronizedMethodAcquire();
         int bci = 0;
         int endBCI = stream.endBCI();
         hardStop = endBCI;
@@ -560,12 +522,10 @@ public abstract class T1XCompilation {
             bci = stream.currentBCI();
         }
 
-        // TODO Fill in the appropriate calls to patch any branches, jumps and/or conditionals
         int endPos = buf.position();
         fixup();
         buf.setPosition(endPos);
         emitEpilogue();
-
     }
 
     /**
@@ -607,10 +567,8 @@ public abstract class T1XCompilation {
     }
 
     /**
-     * Returns the template to use for {@code tag}.
-     * By default, returns the template in the associated {@link #compiler compiler}
-     * templates array, but may be overridden by a subclass to make the behavior
-     * more context sensitive.
+     * Returns the template to use for {@code tag}. By default, returns the template in the associated {@link #compiler
+     * compiler} templates array, but may be overridden by a subclass to make the behavior more context sensitive.
      *
      * @param tag
      */
@@ -619,19 +577,21 @@ public abstract class T1XCompilation {
     }
 
     protected void start(T1XTemplateTag tag) {
-	assignInt(scratch, tag.ordinal() | (0xbeef << 16));
+        if (DEBUG_MARKERS) {
+            assignInt(scratch, tag.ordinal() | (0xbeef << 16));
+        }
         T1XTemplate template = getTemplate(tag);
         assert template != null : "template for tag " + tag + " is null";
         start(template);
     }
 
     /**
-     * Starts the process of emitting a template.
-     * This includes emitting code to copy any arguments from the stack to the
-     * relevant parameter locations.
+     * Starts the process of emitting a template. This includes emitting code to copy any arguments from the stack to
+     * the relevant parameter locations.
      * <p/>
-     * A call to this method must be matched with a call to {@link #finish()} or {@link #finish(ClassMethodActor, boolean)}
-     * once the code for initializing the non-stack-based template parameters has been emitted.
+     * A call to this method must be matched with a call to {@link #finish()} or
+     * {@link #finish(ClassMethodActor, boolean)} once the code for initializing the non-stack-based template parameters
+     * has been emitted.
      *
      * @param tag denotes the template to emit
      */
@@ -667,11 +627,7 @@ public abstract class T1XCompilation {
                         default:
                             assert false;
                     }
-                } else {
-                    //assignInt(scratch,0xdeaddead);
-
                 }
-
             }
         }
     }
@@ -682,9 +638,17 @@ public abstract class T1XCompilation {
     protected void finish() {
         assert template != null;
         assert assertArgsAreInitialized();
-        assignInt(scratch, 0xd00dd00d);
+
+        if (DEBUG_MARKERS) {
+            assignInt(scratch, 0xd00dd00d);
+        }
+
         emitAndRecordSafepoints(template);
-        assignInt(scratch, 0xbeefd00d);
+
+        if (DEBUG_MARKERS) {
+            assignInt(scratch, 0xbeefd00d);
+        }
+
         // Adjust the stack to model the net effect of the template including
         // the slot for the value pushed (if any) by the template.
         Sig sig = template.sig;
@@ -726,13 +690,14 @@ public abstract class T1XCompilation {
         }
         template = null;
         initializedArgs = 0;
-	    assignInt(scratch, 0xdeadd00d);
-
+        if (DEBUG_MARKERS) {
+            assignInt(scratch, 0xdeadd00d);
+        }
     }
 
     /**
-     * Asserts that a given argument of the current template has not yet been initialized
-     * and then records the fact that it is now initialized.
+     * Asserts that a given argument of the current template has not yet been initialized and then records the fact that
+     * it is now initialized.
      */
     private boolean assertInitializeArg(Arg a, int n) {
         int argBit = 1 << n;
@@ -741,16 +706,6 @@ public abstract class T1XCompilation {
         }
         initializedArgs |= argBit;
         return true;
-    }
-
-    protected final boolean assertInitializeArgARMV7(Arg a, int n) {
-        int argBit = 1 << n;
-        if ((initializedArgs & argBit) != 0) {
-            throw new AssertionError(template + ": parameter " + n + " (\"" + a.name + "\") is already initialized");
-        }
-        initializedArgs |= argBit;
-        return true;
-
     }
 
     /**
@@ -828,7 +783,7 @@ public abstract class T1XCompilation {
     /**
      * Records a patch site for a load of an object literal.
      *
-     * @param index    the index in {@link #objectLiterals} of the object
+     * @param index the index in {@link #objectLiterals} of the object
      * @param patchPos the position in the generated code that must be {@linkplain T1XCompilation#fixup() patched}
      */
     protected abstract void addObjectLiteralPatch(int index, int patchPos);
@@ -879,8 +834,7 @@ public abstract class T1XCompilation {
     protected abstract Kind invokeKind(SignatureDescriptor signature);
 
     /**
-     * Gets the index of the {@link Slot slot} containing the receiver for
-     * a non-static call.
+     * Gets the index of the {@link Slot slot} containing the receiver for a non-static call.
      *
      * @param signature the signature of the call
      */
@@ -1016,7 +970,8 @@ public abstract class T1XCompilation {
     protected abstract void nullCheck(CiRegister src);
 
     /**
-     * Emits a direct call instruction whose immediate operand (denoting the absolute or relative offset to the target) will be patched later.
+     * Emits a direct call instruction whose immediate operand (denoting the absolute or relative offset to the target)
+     * will be patched later.
      *
      * @return the {@linkplain Safepoints safepoint} for the call
      */
@@ -1025,21 +980,20 @@ public abstract class T1XCompilation {
     /**
      * Emits an indirect call instruction.
      *
-     * @param target             the register holding the address of the call target
+     * @param target the register holding the address of the call target
      * @param receiverStackIndex the index of the receiver which must be copied from the stack to the receiver register
-     *                           used by the optimizing compiler. This is required so that dynamic trampolines can find the receiver in
-     *                           the expected register. If {@code receiverStackIndex == -1}, then the copy is not emitted as
-     *                           {@code target} is guaranteed to not be the address of a trampoline.
+     *            used by the optimizing compiler. This is required so that dynamic trampolines can find the receiver in
+     *            the expected register. If {@code receiverStackIndex == -1}, then the copy is not emitted as
+     *            {@code target} is guaranteed to not be the address of a trampoline.
      * @return the {@linkplain Safepoints safepoint} for the call
      */
     protected abstract int callIndirect(CiRegister target, int receiverStackIndex);
 
     /**
-     * Gets the register for a given parameter of the current template.
-     * When assertions are enabled, this method also checks the index, name and kind
-     * of the parameter and ensures it is not being initialized more than once.
+     * Gets the register for a given parameter of the current template. When assertions are enabled, this method also
+     * checks the index, name and kind of the parameter and ensures it is not being initialized more than once.
      *
-     * @param n    the index of the parameter
+     * @param n the index of the parameter
      * @param name the expected name of the parameter
      * @param kind the expected kind of the parameter
      * @return the register for parameter {@code n} of the current template.
@@ -1118,8 +1072,8 @@ public abstract class T1XCompilation {
     }
 
     /**
-     * Emits code to copy the value from index {@code i} of the local variables array
-     * to parameter {@code n} of the current template.
+     * Emits code to copy the value from index {@code i} of the local variables array to parameter {@code n} of the
+     * current template.
      *
      * @param name the expected name of the parameter
      */
@@ -1128,8 +1082,8 @@ public abstract class T1XCompilation {
     }
 
     /**
-     * Emits code to copy the value from index {@code i} of the local variables array
-     * to parameter {@code n} of the current template.
+     * Emits code to copy the value from index {@code i} of the local variables array to parameter {@code n} of the
+     * current template.
      *
      * @param name the expected name of the parameter
      */
@@ -1138,8 +1092,8 @@ public abstract class T1XCompilation {
     }
 
     /**
-     * Emits code to copy the value in the {@code i}'th {@linkplain Slot slot} of the operand stack
-     * to parameter {@code n} of the current template.
+     * Emits code to copy the value in the {@code i}'th {@linkplain Slot slot} of the operand stack to parameter
+     * {@code n} of the current template.
      *
      * @param name the expected name of the parameter
      */
@@ -1148,8 +1102,8 @@ public abstract class T1XCompilation {
     }
 
     /**
-     * Emits code to copy the value in the {@code i}'th {@linkplain Slot slot} of the operand stack
-     * to parameter {@code n} of the current template.
+     * Emits code to copy the value in the {@code i}'th {@linkplain Slot slot} of the operand stack to parameter
+     * {@code n} of the current template.
      *
      * @param name the expected name of the parameter
      */
@@ -1158,8 +1112,8 @@ public abstract class T1XCompilation {
     }
 
     /**
-     * Emits code to copy the value in the {@code i}'th {@linkplain Slot slot} of the operand stack
-     * to parameter {@code n} of the current template.
+     * Emits code to copy the value in the {@code i}'th {@linkplain Slot slot} of the operand stack to parameter
+     * {@code n} of the current template.
      *
      * @param name the expected name of the parameter
      */
@@ -1168,8 +1122,8 @@ public abstract class T1XCompilation {
     }
 
     /**
-     * Emits code to copy the value in the {@code i}'th {@linkplain Slot slot} of the operand stack
-     * to parameter {@code n} of the current template.
+     * Emits code to copy the value in the {@code i}'th {@linkplain Slot slot} of the operand stack to parameter
+     * {@code n} of the current template.
      *
      * @param name the expected name of the parameter
      */
@@ -1178,8 +1132,8 @@ public abstract class T1XCompilation {
     }
 
     /**
-     * Emits code to copy the value in the {@code i}'th {@linkplain Slot slot} of the operand stack
-     * to parameter {@code n} of the current template.
+     * Emits code to copy the value in the {@code i}'th {@linkplain Slot slot} of the operand stack to parameter
+     * {@code n} of the current template.
      *
      * @param name the expected name of the parameter
      */
@@ -1944,21 +1898,19 @@ public abstract class T1XCompilation {
     }
 
     /**
-     * Similar to {@link #assignInvokeVirtualTemplateParameters}, allows
-     * VMA override to consistently pass the {@link FieldActor} to the (VMA) template.
+     * Similar to {@link #assignInvokeVirtualTemplateParameters}, allows VMA override to consistently pass the
+     * {@link FieldActor} to the (VMA) template.
      *
      * @param fieldActor
      */
     protected void assignFieldAccessParameter(T1XTemplateTag tag, FieldActor fieldActor) {
-        //assignInt(scratch,0x10101010);
         assignInt(1, "offset", fieldActor.offset());
-        //assignInt(scratch,0x20202020);
     }
 
     /**
      * Emit template for a bytecode operating on a (static or dynamic) field.
      *
-     * @param index    Index to the field ref constant.
+     * @param index Index to the field ref constant.
      * @param template one of getfield, putfield, getstatic, putstatic
      */
     protected void do_fieldAccess(EnumMap<KindEnum, T1XTemplateTag> tags, int index) {
@@ -2026,7 +1978,6 @@ public abstract class T1XCompilation {
     }
 
     protected void do_return(T1XTemplateTag tag, T1XTemplateTag tagUnlock) {
-
         if (T1XOptions.TraceMethods) {
             start(TRACE_METHOD_EXIT);
             assignObject(0, "method", method.toString() + "}");
@@ -2109,13 +2060,11 @@ public abstract class T1XCompilation {
 
     }
 
-    /*
-     * The following three methods exist to be overridden by the VMA extension.
-     * They permit flexibility in the form of the templates for the INVOKE bytecodes
-     * without hard-wiring in additional forms. In particular, they allow access to the
-     * associated {@link MethodActor} in all situations.
+    /**
+     * The following three methods exist to be overridden by the VMA extension. They permit flexibility in the form of
+     * the templates for the INVOKE bytecodes without hard-wiring in additional forms. In particular, they allow access
+     * to the associated {@link MethodActor} in all situations.
      */
-
     protected void assignInvokeVirtualTemplateParameters(VirtualMethodActor virtualMethodActor, int receiverStackIndex) {
         assignInt(0, "vTableIndex", virtualMethodActor.vTableIndex());
         peekObject(1, "receiver", receiverStackIndex);
@@ -2142,12 +2091,9 @@ public abstract class T1XCompilation {
         Kind kind = invokeKind(signature);
         T1XTemplateTag tag = INVOKEVIRTUALS.get(kind.asEnum);
         int receiverStackIndex = receiverStackIndex(signature);
-// System.out.println("Signature " + signature.toString());
-//System.out.println("index " + index);
-  //     System.out.println("Num parameters " + signature.numberOfParameters());
-   //  System.out.println("Receiver stack index " + receiverStackIndex);
-  assignInt(scratch, index | (0xbeaf << 16));
-       
+        if (DEBUG_MARKERS) {
+            assignInt(scratch, index | (0xbeaf << 16));
+        }
         try {
             if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
                 try {
@@ -2183,7 +2129,6 @@ public abstract class T1XCompilation {
         assignObject(0, "guard", cp.makeResolutionGuard(index));
         peekObject(1, "receiver", receiverStackIndex);
         finish();
-
         int safepoint = callIndirect(target, receiverStackIndex);
         finishCall(tag, kind, safepoint, null);
     }
@@ -2229,7 +2174,6 @@ public abstract class T1XCompilation {
         assignObject(0, "guard", cp.makeResolutionGuard(index));
         peekObject(1, "receiver", receiverStackIndex);
         finish();
-
         int safepoint = callIndirect(target, receiverStackIndex);
         finishCall(tag, kind, safepoint, null);
     }
@@ -2290,7 +2234,6 @@ public abstract class T1XCompilation {
         CiRegister target = template.sig.scratch.reg;
         assignObject(0, "guard", cp.makeResolutionGuard(index));
         finish();
-
         int safepoint = callIndirect(target, -1);
         finishCall(tag, kind, safepoint, null);
     }
@@ -2327,10 +2270,10 @@ public abstract class T1XCompilation {
         if (template == null) {
             return false;
         }
+
         assert template != null;
         start(template);
         finish();
-
         return true;
     }
 
