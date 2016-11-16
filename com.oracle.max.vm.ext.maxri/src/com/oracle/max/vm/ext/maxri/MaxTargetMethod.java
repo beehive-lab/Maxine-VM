@@ -118,7 +118,6 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
         init(ciTargetMethod, install);
     }
 
-
     private void init(CiTargetMethod ciTargetMethod, boolean install) {
 
         if (isHosted()) {
@@ -146,22 +145,16 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
 
         debugInfo = new DebugInfo(debugInfos, this);
 
-
-
-
         if (!isHosted()) {
             if (install) {
                 linkDirectCalls();
-		        ARMTargetMethodUtil.maxine_cacheflush(codeStart().toPointer(), code().length);
+                if (Platform.target().arch.isARM()) {
+                    ARMTargetMethodUtil.maxine_cacheflush(codeStart().toPointer(), code().length);
+                }
             } else {
-                // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
+                // the displacement between a call site in the heap and a code cache location may not fit in the offset
+                // operand of a call
             }
-        }else {
-            /*if(install) {
-                System.out.println("this is where I must put my offlineLinkDirectCalls");
-
-                linkDirectCalls();
-            }*/
         }
     }
 
@@ -244,11 +237,10 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     public boolean isPatchableCallSite(CodePointer callSite) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.isPatchableCallSite(callSite);
-        } else if (platform().isa == ISA.ARM){
+        } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.isPatchableCallSite(callSite);
         } else {
-                throw FatalError.unimplemented();
-
+            throw FatalError.unimplemented();
         }
     }
 
@@ -269,7 +261,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
             return AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
         } else if (platform().isa == ISA.ARM) {
             return ARMTargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
-        }  else {
+        } else {
             throw FatalError.unimplemented();
         }
     }
@@ -291,7 +283,6 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
         } else {
             throw FatalError.unimplemented();
         }
-
     }
 
     @Override
@@ -311,8 +302,6 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     }
 
     private CodePointer throwAddressToCatchAddress(CodePointer throwAddress, Throwable exception, CatchExceptionInfo info) {
-	        //com.sun.max.vm.Log.println("MaxTargetMETHOD");
-
         final int exceptionPos = throwAddress.minus(codeStart()).toInt();
         int count = getExceptionHandlerCount();
         for (int i = 0; i < count; i++) {
@@ -320,8 +309,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
             int catchPos = getCatchPosAt(i);
             ClassActor catchType = getCatchTypeAt(i);
 
-
-            if ( (codePos == exceptionPos) && checkType(exception, catchType)) {
+            if ((codePos == exceptionPos) && checkType(exception, catchType)) {
                 if (info != null) {
                     info.bci = getHandlerBCIAt(i);
                 }
@@ -692,8 +680,6 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
 
             TargetMethod calleeMethod = callee.targetMethod();
             // Reset the stack walker
-            //Log.println("MaxTargetMethod:: catchException stackframewalker reset");
-
             current.stackFrameWalker().reset();
 
             // Store the exception for the handler
