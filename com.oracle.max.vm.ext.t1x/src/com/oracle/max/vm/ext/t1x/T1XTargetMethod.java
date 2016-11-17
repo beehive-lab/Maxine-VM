@@ -31,17 +31,16 @@ import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
-
 import java.util.*;
-
-import com.oracle.max.vm.ext.t1x.T1XTemplate.SafepointsBuilder;
+import com.oracle.max.vm.ext.t1x.T1XTemplate.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
+import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
 import com.sun.max.lang.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -50,12 +49,10 @@ import com.sun.max.vm.bytecode.refmaps.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.code.CodeManager.Lifespan;
+import com.sun.max.vm.code.CodeManager.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.deopt.Deoptimization.CallerContinuation;
-import com.sun.max.vm.compiler.deopt.Deoptimization.Continuation;
-import com.sun.max.vm.compiler.deopt.Deoptimization.Info;
+import com.sun.max.vm.compiler.deopt.Deoptimization.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.compiler.target.arm.*;
@@ -249,7 +246,9 @@ public class T1XTargetMethod extends TargetMethod {
         if (!MaxineVM.isHosted()) {
             if (install) {
                 linkDirectCalls();
-                ARMTargetMethodUtil.maxine_cacheflush(codeStart().toPointer(), code().length);
+                if (Platform.target().arch.isARM()) {
+                    ARMTargetMethodUtil.maxine_cacheflush(codeStart().toPointer(), code().length);
+                }
             } else {
                 // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
             }
@@ -392,7 +391,7 @@ public class T1XTargetMethod extends TargetMethod {
         } else if (isARM()) {
             return ARMTargetMethodUtil.isPatchableCallSite(callSite);
         } else {
-            return false; // SHOULD Really throw an exception.
+            throw FatalError.unimplemented();
         }
     }
 
@@ -403,7 +402,7 @@ public class T1XTargetMethod extends TargetMethod {
         } else if (isARM()) {
             return ARMTargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else {
-            return null;
+            throw FatalError.unimplemented();
         }
     }
 
@@ -444,7 +443,7 @@ public class T1XTargetMethod extends TargetMethod {
         } else if (isARM()) {
             return ARMTargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
         } else {
-            return null;
+            throw FatalError.unimplemented();
         }
     }
 
@@ -461,7 +460,7 @@ public class T1XTargetMethod extends TargetMethod {
                 ARMTargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(tm));
             }
         } else {
-            throw FatalError.unimplemented();
+            unimplISA();
         }
     }
 
@@ -657,31 +656,21 @@ public class T1XTargetMethod extends TargetMethod {
     }
 
     private CodePointer throwAddressToCatchAddress(CodePointer ip, Throwable exception, CatchExceptionInfo info) {
-        //com.sun.max.vm.Log.println("T1XTargetMETHOD");
-
         if (handlers.length != 0) {
             final int exceptionPos = posFor(ip);
             int exceptionBCI = bciForPos(exceptionPos);
             if (exceptionBCI != -1) {
                 for (CiExceptionHandler e : handlers) {
                     if (e.catchTypeCPI != SYNC_METHOD_CATCH_TYPE_CPI) {
-                        //com.sun.max.vm.Log.print("T1XEXCEPTPOS: ");com.sun.max.vm.Log.println(exceptionPos);
-                        //com.sun.max.vm.Log.print("T1XEXCEPTBCI: ");com.sun.max.vm.Log.println(exceptionBCI);
-                        //com.sun.max.vm.Log.print("T1XEXCEPT start ");com.sun.max.vm.Log.print(e.startBCI);com.sun.max.vm.Log.print(" end "); com.sun.max.vm.Log.println(e.endBCI);
                         if (e.startBCI <= exceptionBCI && exceptionBCI < e.endBCI) {
                             ClassActor catchType = (ClassActor) e.catchType;
-                            //com.sun.max.vm.Log.print("T1XEXCEPT CATCHTYPE ");com.sun.max.vm.Log.println(catchType);
-                            //com.sun.max.vm.Log.print("T1XEXCEPT RCLASSA ");com.sun.max.vm.Log.println(ObjectAccess.readClassActor(exception));
                             if (catchType == null || catchType.isAssignableFrom(ObjectAccess.readClassActor(exception))) {
-                                //com.sun.max.vm.Log.println("T1XEXCEPT will be retting");
                                 int handlerPos = posForBci(e.handlerBCI());
                                 checkHandler(exceptionPos, exceptionBCI, e.handlerBCI, handlerPos);
                                 if (info != null) {
                                     info.bci = e.handlerBCI();
                                 }
-                                //com.sun.max.vm.Log.print("T1XEXCEPT the code is "); com.sun.max.vm.Log.println(codeAt(handlerPos));
                                 return codeAt(handlerPos);
-
                             }
                         }
                     }
@@ -689,8 +678,6 @@ public class T1XTargetMethod extends TargetMethod {
             }
             if (handlers[handlers.length - 1].catchTypeCPI == SYNC_METHOD_CATCH_TYPE_CPI) {
                 CiExceptionHandler syncMethodHandler = handlers[handlers.length - 1];
-                //com.sun.max.vm.Log.print("T1XEXCEPTPOS2 ");com.sun.max.vm.Log.println(exceptionPos);
-                //com.sun.max.vm.Log.print("T1XEXCEPT start ");com.sun.max.vm.Log.print(syncMethodHandler.startBCI);com.sun.max.vm.Log.print(" end ");com.sun.max.vm.Log.println(syncMethodHandler.endBCI);
                 if (syncMethodHandler.startBCI <= exceptionPos && exceptionPos < syncMethodHandler.endBCI) {
                     int handlerPos = syncMethodHandler.handlerBCI;
                     checkHandler(exceptionPos, exceptionBCI, -1, handlerPos);
@@ -698,7 +685,6 @@ public class T1XTargetMethod extends TargetMethod {
                 }
             }
         }
-        //com.sun.max.vm.Log.println("T1XEXCEPT ZERO CodePointer for catch address");
         return CodePointer.zero();
     }
 
@@ -1270,20 +1256,10 @@ public class T1XTargetMethod extends TargetMethod {
                 int safepointPos = safepoints.posAt(safepointIndex);
                 if (curPos <= safepointPos && safepointPos < succPos) {
                     if (safepoints.isSetAt(TEMPLATE_CALL, safepointIndex)) {
-                        if (isAMD64() || isARM()) {
-                            // On x86 the safepoint position of a call *is* the return position
+                        if (isAMD64()) {
                             templateCallReturnPos = safepointPos;
-                            /*
-                            ON ARMv7 we do a call like this,
-                            movw r12, constLOW
-                            movt r12, constHIGH
-                            add  r12, r12, PC
-                            blx r12
-                            RETURN POINT<------ return address
-                             */
-                            if(isARM()) {
-                                templateCallReturnPos += 16; // 4 instructions further on
-                            }
+                        } else if (isARM()) {
+                            templateCallReturnPos += 16;
                         } else {
                             throw unimplISA();
                         }
@@ -1520,5 +1496,4 @@ enum FramePointerStateAMD64 {
      * the first one of which is enter (fixed size, 4 bytes long).
      */
     public static final int OFFSET_TO_LAST_PROLOGUE_INSTRUCTION = 4;
-
 }
