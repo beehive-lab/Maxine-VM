@@ -286,9 +286,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void nullCheck(CiRegister src) {
-        //int safepointPos = buf.position();
         asm.nullCheck(src);
-        //return Safepoints.make(safepointPos);
     }
 
     private void alignDirectCall(int callPos) {
@@ -380,7 +378,6 @@ public class AMD64T1XCompilation extends T1XCompilation {
         }
 
         // Pop index from stack into rax
-        //asm.movl(rax, new CiAddress(CiKind.Int, RSP));
         asm.movl(rax, new CiAddress(CiKind.Int, rsp.asValue()));
         asm.addq(rsp, JVMSFrameLayout.JVMS_SLOT_SIZE);
 
@@ -425,7 +422,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
             int targetBCI = ts.targetAt(i);
             startBlock(targetBCI);
             pos = buf.position();
-            patchInfo.addJumpTableEntry(pos, jumpTablePos /*+ 4*/, targetBCI);
+            patchInfo.addJumpTableEntry(pos, jumpTablePos, targetBCI);
             buf.emitInt(0);
         }
 
@@ -456,8 +453,8 @@ public class AMD64T1XCompilation extends T1XCompilation {
                 asm.jmp(0, true);
             }
         } else {
-            // Pop key from stack into rax WAS rax MAKE rcx
-            asm.movl(rax, new CiAddress(CiKind.Int, rsp.asValue())); // changed to rcx
+            // Pop key from stack into rax
+            asm.movl(rax, new CiAddress(CiKind.Int, rsp.asValue()));
             asm.addq(rsp, JVMSFrameLayout.JVMS_SLOT_SIZE);
 
             // Set rbx to address of lookup table
