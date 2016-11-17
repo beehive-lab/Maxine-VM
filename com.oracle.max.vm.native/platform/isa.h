@@ -117,7 +117,6 @@
     typedef arm_OsTeleStateRegisters isa_OsTeleStateRegisters;
     typedef struct arm_CanonicalStateRegisters isa_CanonicalStateRegistersStruct;
     typedef arm_CanonicalStateRegisters isa_CanonicalStateRegisters;
-
 #else
 #   error
 #endif
