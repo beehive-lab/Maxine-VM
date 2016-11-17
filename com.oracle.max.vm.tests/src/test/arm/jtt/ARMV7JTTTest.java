@@ -16,7 +16,6 @@ import com.oracle.max.vm.ext.t1x.armv7.*;
 import com.sun.cri.ci.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
-import com.sun.max.platform.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.*;
@@ -278,7 +277,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             }
             t1x = (T1X) CompilationBroker.addCompiler("t1x", baselineCompilerName);
             c1x = (C1X) CompilationBroker.addCompiler("c1x", optimizingCompilerName);
-            c1x.initializeOffline(Phase.HOSTED_TESTING);
+            c1x.initialize(Phase.HOSTED_TESTING);
             theCompiler = (ARMV7T1XCompilation) t1x.getT1XCompilation();
         } catch (Exception e) {
             System.out.println(e);
