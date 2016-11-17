@@ -1,24 +1,19 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR
+ * THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package com.oracle.max.vm.ext.t1x;
 
@@ -31,57 +26,54 @@ import java.util.*;
 import com.sun.max.annotate.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
-import com.sun.max.lang.ISA;
-import com.sun.max.platform.Platform;
+import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.type.*;
 
 /**
- * {@HOSTED_ONLY} support for automatically generating template method sources.
- * The focus of the generating code is readability and not conciseness or performance.
- * Templates can be generated in several ways:
+ * {@HOSTED_ONLY} support for automatically generating template method sources. The focus of the generating code is
+ * readability and not conciseness or performance. Templates can be generated in several ways:
  * <ul>
  * <li>As a complete set via the {@link #generateAll(AdviceHook)} method.
  * <li>In families, e.g., all {@code PUTFIELD} templates via the {@link #generatePutFieldTemplates()} method.
- * <li>Singly, e.g. the {@code SIPUSH} template via the {@link #generateIPushTemplate(String)} method with
- * argument "short".
+ * <li>Singly, e.g. the {@code SIPUSH} template via the {@link #generateIPushTemplate(String)} method with argument
+ * "short".
  * </ul>
- * The generated code is written to {@link #out}, which defaults to {@link System#out).
- * However, this stream can be changed before invoking any of the generating methods.
- * The default behavior is to generate all methods using the {@link #main} method.
+ * The generated code is written to {@link #out}, which defaults to {@link System#out). However, this stream can be
+ * changed before invoking any of the generating methods. The default behavior is to generate all methods using the
+ * {@link #main} method.
  *
- * A mechanism, {@link AdviceHook}, is provided to allow "advice" to be inserted into the
- * generated templates. The templates are written in such a way to make this possible
- * without violating the constraints, e.g., no calls after modifying the stack.
- * This sometimes make the unadvised code a little more verbose than might appear necessary.
+ * A mechanism, {@link AdviceHook}, is provided to allow "advice" to be inserted into the generated templates. The
+ * templates are written in such a way to make this possible without violating the constraints, e.g., no calls after
+ * modifying the stack. This sometimes make the unadvised code a little more verbose than might appear necessary.
  * However, it has no impact on runtime performance.
  */
 @HOSTED_ONLY
 public class T1XTemplateGenerator {
+
     /**
-     * Allows customization of the generated methods to support bytecode advising.
-     * There are two opportunities for adding advice, {@link AdviceType#BEFORE before}
-     * the operation is executed (but after all the arguments are prepared) and
-     * {@link AdviceType#AFTER after} the operation has executed.
-     * N.B. Currently, {@link AdviceType#AFTER after} advice is only implemented for invoke, as
-     * there are technical problems making calls after the stack is modified.
+     * Allows customization of the generated methods to support bytecode advising. There are two opportunities for
+     * adding advice, {@link AdviceType#BEFORE before} the operation is executed (but after all the arguments are
+     * prepared) and {@link AdviceType#AFTER after} the operation has executed. N.B. Currently, {@link AdviceType#AFTER
+     * after} advice is only implemented for invoke, as there are technical problems making calls after the stack is
+     * modified.
      */
     @HOSTED_ONLY
     public interface AdviceHook {
+
         /**
-         * Called by the generator to allow advice content to be inserted in the template.
-         * The advice code may access any state that is accessible in the standard template.
+         * Called by the generator to allow advice content to be inserted in the template. The advice code may access
+         * any state that is accessible in the standard template.
          *
          * @param tag the tag identifying the template under generation
          * @param adviceType the advice type
-         * @param args template-specific arguments that might be useful to the advice writer.
-         * Typically it is the type associated with the template tag.
+         * @param args template-specific arguments that might be useful to the advice writer. Typically it is the type
+         *            associated with the template tag.
          */
-        void generate(T1XTemplateTag tag, AdviceType adviceType, Object ... args);
+        void generate(T1XTemplateTag tag, AdviceType adviceType, Object... args);
 
         /**
-         * Called just before the first output is generated for a method, which is the
-         * comment noting that it is automatically generated. N.B. Most, but not all
-         * generated methods are template tag implementations.
+         * Called just before the first output is generated for a method, which is the comment noting that it is
+         * automatically generated. N.B. Most, but not all generated methods are template tag implementations.
          */
         void startMethodGeneration();
 
@@ -92,6 +84,7 @@ public class T1XTemplateGenerator {
 
         /**
          * Ability to add additional arguments to a template signature.
+         *
          * @param comma {@code true} iff a comma should precede additional params
          * @return string defining the additional parameters
          */
@@ -99,6 +92,7 @@ public class T1XTemplateGenerator {
 
         /**
          * Companion method to {@link #suffixParams(boolean) for forwarding extra params to nested calls.
+         *
          * @param comma {@code true} iff a comma should precede additional params
          * @return string defining the additional arguments
          */
@@ -107,8 +101,7 @@ public class T1XTemplateGenerator {
 
     @HOSTED_ONLY
     public enum AdviceType {
-        BEFORE("Before"),
-        AFTER("After");
+        BEFORE("Before"), AFTER("After");
 
         public final String methodNameComponent;
 
@@ -120,12 +113,12 @@ public class T1XTemplateGenerator {
     private static final Object[] NULL_ARGS = new Object[] {};
 
     /**
-     * {@link String} equivalent of {@link KindEnum} with standard case rules.
-     * Arguably this class could use {@link KindEnum} more, but it is mostly doing string processing.
+     * {@link String} equivalent of {@link KindEnum} with standard case rules. Arguably this class could use
+     * {@link KindEnum} more, but it is mostly doing string processing.
      */
-    public static final Kind[] kinds = {BOOLEAN, BYTE, CHAR, SHORT, INT, FLOAT, LONG, DOUBLE, REFERENCE, WORD, VOID};
+    public static final Kind[] kinds = { BOOLEAN, BYTE, CHAR, SHORT, INT, FLOAT, LONG, DOUBLE, REFERENCE, WORD, VOID};
 
-    public static final String[] conditions = new String[] {"eq", "ne", "lt", "ge", "gt", "le"};
+    public static final String[] conditions = new String[] { "eq", "ne", "lt", "ge", "gt", "le"};
 
     /**
      * Returns {@code k.javaName}.
@@ -212,6 +205,7 @@ public class T1XTemplateGenerator {
 
     /**
      * Returns the argument with first character upper-cased.
+     *
      * @param s
      */
     public static String toFirstUpper(String s) {
@@ -224,6 +218,7 @@ public class T1XTemplateGenerator {
 
     /**
      * If the argument is the empty string, returns it, otherwise returns it prefixed with a {@code $}.
+     *
      * @param s
      */
     public static String prefixDollar(String s) {
@@ -239,8 +234,8 @@ public class T1XTemplateGenerator {
     }
 
     /**
-     * The string that precedes the generic template tag name to indicate type.
-     * E.g. The {@code A} in {@code ALOAD}.
+     * The string that precedes the generic template tag name to indicate type. E.g. The {@code A} in {@code ALOAD}.
+     *
      * @param k
      */
     public static String tagPrefix(Kind k) {
@@ -258,6 +253,7 @@ public class T1XTemplateGenerator {
 
     /**
      * The string that precedes the generic template method name to indicate type.
+     *
      * @param k
      */
     public static String opPrefix(Kind k) {
@@ -274,6 +270,7 @@ public class T1XTemplateGenerator {
     public static boolean hasGetPutTemplates(Kind k) {
         return k != VOID;
     }
+
     public static boolean hasArrayTemplates(Kind k) {
         return !(k == VOID || k == BOOLEAN || k == WORD);
     }
@@ -356,8 +353,8 @@ public class T1XTemplateGenerator {
     }
 
     /**
-     * Set the advice hook explicitly, which may be necessary when generating individual templates
-     * with advice.
+     * Set the advice hook explicitly, which may be necessary when generating individual templates with advice.
+     *
      * @param adviceHook
      */
     public void setAdviceHook(AdviceHook hook) {
@@ -373,22 +370,23 @@ public class T1XTemplateGenerator {
     private T1XTemplateTag currentTemplateTag;
 
     /**
-     * Generates and outputs a {@link T1XTemplate} annotation from a format string and associated arguments.
-     * Sets {@link #currentTemplateTag} as a side effect to support passing to any {@link #adviceHook}.
+     * Generates and outputs a {@link T1XTemplate} annotation from a format string and associated arguments. Sets
+     * {@link #currentTemplateTag} as a side effect to support passing to any {@link #adviceHook}.
+     *
      * @param f
      * @param args
      */
-    public void generateTemplateTag(String f, Object ... args) {
+    public void generateTemplateTag(String f, Object... args) {
         tagSB.setLength(0);
         formatter.format(f, args);
-        String tagString =  tagSB.toString();
+        String tagString = tagSB.toString();
         currentTemplateTag = T1XTemplateTag.valueOf(tagString);
         out.printf("    @T1X_TEMPLATE(%s)%n", tagString);
     }
 
     /**
-     * Notify advice hook that a new method is being generated.
-     * N.B. This may be a support method for a {@link T1X_TEMPLATE} method.
+     * Notify advice hook that a new method is being generated. N.B. This may be a support method for a
+     * {@link T1X_TEMPLATE} method.
      */
     public void startMethodGeneration() {
         if (adviceHook != null) {
@@ -419,19 +417,19 @@ public class T1XTemplateGenerator {
         return "";
     }
 
-    private void generateBeforeAdvice(T1XTemplateTag tag, Object ... args) {
+    private void generateBeforeAdvice(T1XTemplateTag tag, Object... args) {
         if (adviceHook != null) {
             adviceHook.generate(tag, AdviceType.BEFORE, args);
         }
     }
 
-    public void generateBeforeAdvice(Object ... args) {
+    public void generateBeforeAdvice(Object... args) {
         if (adviceHook != null) {
             adviceHook.generate(currentTemplateTag, AdviceType.BEFORE, args);
         }
     }
 
-    public void generateAfterAdvice(Object ... args) {
+    public void generateAfterAdvice(Object... args) {
         if (adviceHook != null) {
             adviceHook.generate(currentTemplateTag, AdviceType.AFTER, args);
         }
@@ -522,9 +520,10 @@ public class T1XTemplateGenerator {
     }
 
     public static final EnumSet<T1XTemplateTag> PUTSTATIC_TEMPLATE_TAGS = tags("PUTSTATIC$");
+
     /**
-    * Generate all the {@link #PUTSTATIC_TEMPLATE_TAGS}.
-    */
+     * Generate all the {@link #PUTSTATIC_TEMPLATE_TAGS}.
+     */
     public void generatePutStaticTemplates() {
         for (Kind k : kinds) {
             if (hasGetPutTemplates(k)) {
@@ -544,6 +543,7 @@ public class T1XTemplateGenerator {
 
     /**
      * Generate the resolved and unresolved {@code PUTSTATIC} template tag for given type.
+     *
      * @param k type
      */
     public void generatePutStaticTemplate(Kind k) {
@@ -583,8 +583,8 @@ public class T1XTemplateGenerator {
     public static final EnumSet<T1XTemplateTag> GETFIELD_TEMPLATE_TAGS = tags("GETFIELD$");
 
     /**
-    * Generate all the {@link #GETFIELD_TEMPLATE_TAGS}.
-    */
+     * Generate all the {@link #GETFIELD_TEMPLATE_TAGS}.
+     */
     public void generateGetFieldTemplates() {
         for (Kind k : kinds) {
             if (hasGetPutTemplates(k)) {
@@ -604,6 +604,7 @@ public class T1XTemplateGenerator {
 
     /**
      * Generate the resolved and unresolved {@code GETFIELD} template tag for given type.
+     *
      * @param k type
      */
     public void generateGetFieldTemplate(Kind k) {
@@ -644,8 +645,8 @@ public class T1XTemplateGenerator {
     public static final EnumSet<T1XTemplateTag> GETSTATIC_TEMPLATE_TAGS = tags("GETSTATIC$");
 
     /**
-    * Generate all the {@link #GETSTATIC_TEMPLATE_TAGS}.
-    */
+     * Generate all the {@link #GETSTATIC_TEMPLATE_TAGS}.
+     */
     public void generateGetStaticTemplates() {
         for (Kind k : kinds) {
             if (hasGetPutTemplates(k)) {
@@ -665,6 +666,7 @@ public class T1XTemplateGenerator {
 
     /**
      * Generate the resolved and unresolved {@code GETFIELD} template tag for given type.
+     *
      * @param k type
      */
     public void generateGetStaticTemplate(Kind k) {
@@ -748,6 +750,7 @@ public class T1XTemplateGenerator {
 
     /**
      * Generate the {@code ALOAD} template(s) for given type.
+     *
      * @param k type
      */
     public void generateArrayStoreTemplate(Kind k) {
@@ -829,6 +832,7 @@ public class T1XTemplateGenerator {
 
     /**
      * Generate the requested {@code ANEWARRAY} template.
+     *
      * @param resolved if "" generate {@code ANEWARRAY} template, else {@code ANEWARRAY$resolved}.
      */
     public void generateANewArrayTemplate(String resolved) {
@@ -869,6 +873,7 @@ public class T1XTemplateGenerator {
 
     /**
      * Generate the requested {@code MULTIANEWARRAY} template.
+     *
      * @param resolved if "" generate {@code MULTIANEWARRAY} template, else {@code MULTIANEWARRAY$resolved}.
      */
     public void generateMultiANewArrayTemplate(String resolved) {
@@ -884,7 +889,6 @@ public class T1XTemplateGenerator {
         startMethodGeneration();
         generateTemplateTag("MULTIANEWARRAY%s", prefixDollar(resolved));
         out.printf("    public static Reference multianewarray(%s %s, int[] lengths%s) {%n", t, v, suffixParams(true));
-        //out.printf("com.sun.max.vm.Log.println(\"multi from T1XTemplate\");");
 
         if (resolved.equals("")) {
             out.printf("        ClassActor arrayClassActor = Snippets.resolveClass(guard);%n");
@@ -910,6 +914,7 @@ public class T1XTemplateGenerator {
 
     /**
      * Generate the requested {@code CHECKCAST} template.
+     *
      * @param resolved if "" generate {@code CHECKCAST} template, else {@code CHECKCAST$resolved}.
      */
     public void generateCheckcastTemplate(String resolved) {
@@ -964,6 +969,7 @@ public class T1XTemplateGenerator {
 
     /**
      * Generate the requested {@code INSTANCEOF} template.
+     *
      * @param resolved if "" generate {@code INSTANCEOF} template, else {@code INSTANCEOF$resolved}.
      */
     public void generateInstanceofTemplate(String resolved) {
@@ -1029,13 +1035,14 @@ public class T1XTemplateGenerator {
     /**
      * Generate all the {@link #MONITOR_TEMPLATE_TAGS}.
      */
-    public  void generateMonitorTemplates() {
+    public void generateMonitorTemplates() {
         generateMonitorTemplate("enter");
         generateMonitorTemplate("exit");
     }
 
     /**
      * Generate the requested {@code MONITOR} template.
+     *
      * @param tag one of "enter" or "exit":
      */
     public void generateMonitorTemplate(String tag) {
@@ -1110,6 +1117,7 @@ public class T1XTemplateGenerator {
 
     /**
      * Generate a specific {@code INVOKE} template.
+     *
      * @param k type
      * @param variant one of "virtual" or "interface"
      */
@@ -1138,6 +1146,7 @@ public class T1XTemplateGenerator {
 
     /**
      * Generate a specific {@code INVOKE} template.
+     *
      * @param k type
      * @param variant one of "virtual" or "interface"
      */
@@ -1185,11 +1194,9 @@ public class T1XTemplateGenerator {
         endTemplateMethodGeneration();
     }
 
-
     public static final EnumSet<T1XTemplateTag> INVOKE_STATIC_TEMPLATE_TAGS = tags("INVOKESPECIAL$");
 
     public static final EnumSet<T1XTemplateTag> INVOKE_SPECIAL_TEMPLATE_TAGS = tags("INVOKESTATIC$");
-
 
     /**
      * Generate all the {@link #INVOKE_STATIC_TEMPLATE_TAGS}.
@@ -1215,6 +1222,7 @@ public class T1XTemplateGenerator {
 
     /**
      * Generate a specific {@code INVOKE} template.
+     *
      * @param k type
      * @param variant one of "special" or "static"
      * @param xtag one of "" or "init" or "resolved"
@@ -1245,7 +1253,6 @@ public class T1XTemplateGenerator {
         endTemplateMethodGeneration();
     }
 
-
     public static final EnumSet<T1XTemplateTag> I2_TEMPLATE_TAGS = EnumSet.of(I2L, I2F, I2D);
 
     /**
@@ -1261,6 +1268,7 @@ public class T1XTemplateGenerator {
 
     /**
      * Generate a given {@code I2} template.
+     *
      * @param k target type
      */
     public void generateI2Template(Kind k) {
@@ -1274,7 +1282,6 @@ public class T1XTemplateGenerator {
         newLine();
         endTemplateMethodGeneration();
     }
-
 
     public static final EnumSet<T1XTemplateTag> L2_TEMPLATE_TAGS = EnumSet.of(L2I, L2F, L2D);
 
@@ -1291,6 +1298,7 @@ public class T1XTemplateGenerator {
 
     /**
      * Generate a given {@code L2} template.
+     *
      * @param k target type
      */
     public void generateL2Template(Kind k) {
@@ -1304,7 +1312,6 @@ public class T1XTemplateGenerator {
         newLine();
         endTemplateMethodGeneration();
     }
-
 
     public static final EnumSet<T1XTemplateTag> D2_TEMPLATE_TAGS = EnumSet.of(D2I, D2L, D2F);
 
@@ -1321,6 +1328,7 @@ public class T1XTemplateGenerator {
 
     /**
      * Generate a given {@code D2} template.
+     *
      * @param k target type
      */
     public void generateD2Template(Kind k) {
@@ -1334,7 +1342,6 @@ public class T1XTemplateGenerator {
         newLine();
         endTemplateMethodGeneration();
     }
-
 
     public static final EnumSet<T1XTemplateTag> F2_TEMPLATE_TAGS = EnumSet.of(F2I, F2L, F2D);
 
@@ -1351,6 +1358,7 @@ public class T1XTemplateGenerator {
 
     /**
      * Generate a given {@code F2} template.
+     *
      * @param k target type
      */
     public void generateF2Template(Kind k) {
@@ -1380,6 +1388,7 @@ public class T1XTemplateGenerator {
 
     /**
      * Generate specific {@code NEG} template.
+     *
      * @param k type
      */
     public void generateNegTemplate(Kind k) {
@@ -1421,15 +1430,15 @@ public class T1XTemplateGenerator {
     public void generateDyadicTemplates() {
         for (Kind k : kinds) {
             if (hasArithTemplates(k)) {
-                for (String op : new String[] {"add", "sub", "mul", "div", "rem"}) {
+                for (String op : new String[] { "add", "sub", "mul", "div", "rem"}) {
                     generateDyadicTemplate(k, op);
                 }
             }
             if (hasLogTemplates(k)) {
-                for (String op : new String[] {"or", "and", "xor"}) {
+                for (String op : new String[] { "or", "and", "xor"}) {
                     generateDyadicTemplate(k, op);
                 }
-                for (String op : new String[] {"shl", "shr", "ushr"}) {
+                for (String op : new String[] { "shl", "shr", "ushr"}) {
                     generateDyadicTemplate(k, op);
                 }
             }
@@ -1438,6 +1447,7 @@ public class T1XTemplateGenerator {
 
     /**
      * Generate a specific dyadic operation template.
+     *
      * @param k type
      * @param op one of "add", "sub", "mul", "div", "rem", "or", "and", "xor", "shl", "shr", "ushr"
      */
@@ -1448,9 +1458,6 @@ public class T1XTemplateGenerator {
         generateTemplateTag("%s%s", tagPrefix(k), op.toUpperCase());
         out.printf("    public static %s %s%s(@Slot(%d) %s value1, @Slot(0) %s value2%s) {%n", s(k), opPrefix(k), op, arg1Slot, s(k), arg2IsInt ? "int" : s(k), suffixParams(true));
         generateBeforeAdvice(k);
-	/*if (op.equals("div") && k == Kind.LONG && com.sun.max.platform.Platform.platform().isa == com.sun.max.lang.ISA.ARM) {
-		out.printf("       return T1XRuntime.arithmeticldiv(value1,value2);%n"); 
-        } else*/
         out.printf("        return value1 %s value2;%n", algOp(op));
         out.printf("    }%n");
         newLine();
@@ -1468,6 +1475,7 @@ public class T1XTemplateGenerator {
 
     /**
      * Generate a specific {@code RETURN} template.
+     *
      * @param k type
      * @param unlock one of "", {@link #lockVariants} or "registerFinalizer"
      */
@@ -1518,6 +1526,7 @@ public class T1XTemplateGenerator {
 
     /**
      * Generate a specific {@link #CMP_TEMPLATE_TAGS} template.
+     *
      * @param k type one of "long", "float" or "double"
      * @param variant "g" or "l"
      */
@@ -1534,8 +1543,9 @@ public class T1XTemplateGenerator {
     }
 
     /**
-     * Generate the complete template source code using the provided {@link AdviceHook} to the standard output.
-     * The order of the output is first the typed operations, per type, followed by the untyped operations.
+     * Generate the complete template source code using the provided {@link AdviceHook} to the standard output. The
+     * order of the output is first the typed operations, per type, followed by the untyped operations.
+     *
      * @param hook the advice hook or {@code null} if no advice
      */
     public void generateAll(AdviceHook hook) {
@@ -1560,16 +1570,16 @@ public class T1XTemplateGenerator {
                 generateD2Template(k);
             }
             if (hasArithTemplates(k)) {
-                for (String op : new String[] {"add", "sub", "mul", "div", "rem"}) {
+                for (String op : new String[] { "add", "sub", "mul", "div", "rem"}) {
                     generateDyadicTemplate(k, op);
                 }
                 generateNegTemplate(k);
             }
             if (hasLogTemplates(k)) {
-                for (String op : new String[] {"or", "and", "xor"}) {
+                for (String op : new String[] { "or", "and", "xor"}) {
                     generateDyadicTemplate(k, op);
                 }
-                for (String op : new String[] {"shl", "shr", "ushr"}) {
+                for (String op : new String[] { "shl", "shr", "ushr"}) {
                     generateDyadicTemplate(k, op);
                 }
             }
@@ -1581,13 +1591,13 @@ public class T1XTemplateGenerator {
                 generateArrayLoadTemplate(k);
                 generateArrayStoreTemplate(k);
             }
-            if (hasInvokeTemplates(k))  {
-                for (String s : new String[] {"virtual", "interface"}) {
+            if (hasInvokeTemplates(k)) {
+                for (String s : new String[] { "virtual", "interface"}) {
                     generateUnresolvedInvokeVITemplate(k, s);
                     generateInvokeVITemplate(k, s, false);
                     generateInvokeVITemplate(k, s, true);
                 }
-                for (String s : new String[] {"special", "static"}) {
+                for (String s : new String[] { "special", "static"}) {
                     generateInvokeSSTemplate(k, s);
                 }
             }
@@ -1618,8 +1628,9 @@ public class T1XTemplateGenerator {
     }
 
     /**
-     * Inserts or updates generated source into {@code target}. The generated source is derived from
-     * {@code source} and is delineated in {@code target} by the following lines:
+     * Inserts or updates generated source into {@code target}. The generated source is derived from {@code source} and
+     * is delineated in {@code target} by the following lines:
+     *
      * <pre>
      * // START GENERATED CODE
      *
@@ -1627,11 +1638,12 @@ public class T1XTemplateGenerator {
      *
      * // END GENERATED CODE
      * </pre>
-
+     *
      *
      * @param checkOnly if {@code true}, then {@code target} is not updated; the value returned by this method indicates
      *            whether it would have been updated were this argument {@code true}
-     * @return {@code true} if {@code target} was modified (or would have been if {@code checkOnly} was {@code false}); {@code false} otherwise
+     * @return {@code true} if {@code target} was modified (or would have been if {@code checkOnly} was {@code false});
+     *         {@code false} otherwise
      */
     static boolean generate(boolean checkOnly, Class target) throws Exception {
         File base = new File(JavaProject.findWorkspace(), "com.oracle.max.vm.ext.t1x/src");
@@ -1642,6 +1654,5 @@ public class T1XTemplateGenerator {
         ReadableSource content = ReadableSource.Static.fromString(baos.toString());
         return Files.updateGeneratedContent(outputFile, content, "// START GENERATED CODE", "// END GENERATED CODE", checkOnly);
     }
-
 
 }
