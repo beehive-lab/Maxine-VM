@@ -31,7 +31,6 @@
 
 typedef int (*MaxineFunction)(int argc, char *argv[], char *executablePath);
 
-
 #if os_DARWIN
 #include <unistd.h>
 #include <libgen.h>
@@ -96,8 +95,6 @@ int main(int argc, char *argv[] MAIN_EXTRA_ARGS) {
      * Note that a similiar work-around is necessary for Java_com_sun_max_tele_channel_natives_TeleChannelNatives_createChild()
      * in com.oracle.max.vm.native/tele/darwin/darwinTeleProcess.c.
      */
-
-
     if (getenv("DYLD_LIBRARY_PATH") == NULL) {
         char *dyldLibraryPathDef;
         char *programDir = dirname(programPath);
