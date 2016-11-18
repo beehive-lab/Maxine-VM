@@ -1353,7 +1353,6 @@ public final class ClassfileReader {
                             classOuterClass,
                             enclosingMethodInfo);
         }
-	//Log.println("DONE CREATE");
         if (superClassActor != null) {
             superClassActor.checkAccessBy(classActor);
         }
@@ -1384,8 +1383,7 @@ public final class ClassfileReader {
                     Log.println("[Loading " + name + " from " + optSource + "]");
                 }
             }
-	    //Log.println("ENTERCONTEXT");
-            enterContext(new Object() {
+	    enterContext(new Object() {
                 @Override
                 public String toString() {
                     return "loading " + name;
@@ -1622,7 +1620,7 @@ public final class ClassfileReader {
          */
 
         saveClassfile(name, bytes);
-	final ClassfileStream classfileStream = new ClassfileStream(bytes, offset, length);
+        final ClassfileStream classfileStream = new ClassfileStream(bytes, offset, length);
         final ClassfileReader classfileReader = new ClassfileReader(classfileStream, classLoader);
         ClassActor classActor = classfileReader.loadClass(name, source, isRemote);
         classActor.setProtectionDomain(protectionDomain);
