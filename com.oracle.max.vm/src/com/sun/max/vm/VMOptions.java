@@ -28,8 +28,6 @@ import static com.sun.max.vm.VMConfiguration.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import sun.misc.*;
-
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -38,12 +36,14 @@ import com.sun.max.program.*;
 import com.sun.max.program.option.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
-import com.sun.max.vm.MaxineVM.Phase;
-import com.sun.max.vm.VMOption.Category;
+import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.VMOption.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
+
+import sun.misc.*;
 
 /**
  * VM options handling.
