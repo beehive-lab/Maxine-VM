@@ -23,7 +23,7 @@
 package com.sun.max.memory;
 
 import java.lang.management.*;
-import com.sun.max.vm.*;
+
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 
