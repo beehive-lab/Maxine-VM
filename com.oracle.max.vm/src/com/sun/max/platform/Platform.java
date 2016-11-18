@@ -22,32 +22,21 @@
  */
 package com.sun.max.platform;
 
-import com.oracle.max.asm.target.amd64.AMD64;
-import com.oracle.max.asm.target.armv7.ARMV7;
-import com.sun.cri.ci.CiArchitecture;
-import com.sun.cri.ci.CiTarget;
-import com.sun.max.annotate.FOLD;
-import com.sun.max.annotate.HOSTED_ONLY;
-import com.sun.max.annotate.PLATFORM;
+import static java.lang.Integer.*;
+import static java.lang.System.*;
+
+import java.io.*;
+import java.util.*;
+import java.util.regex.*;
+
+import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.asm.target.armv7.*;
+import com.sun.cri.ci.*;
+import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.program.ProgramError;
-import com.sun.max.program.ProgramWarning;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.*;
-import com.sun.max.vm.hosted.Prototype;
-import com.sun.max.vm.runtime.FatalError;
-
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.PrintStream;
-import java.util.Collections;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.regex.Pattern;
-
-import static java.lang.Integer.getInteger;
-import static java.lang.System.getProperty;
+import com.sun.max.program.*;
+import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * Platform configuration information. This class maintains a current {@link #platform() platform} context
@@ -166,16 +155,15 @@ public final class Platform {
             } else {
                 throw FatalError.unexpected("Unimplemented stack alignment: " + os);
             }
-
         } else if (isa == ISA.ARM) {
             arch = new ARMV7();
             if (os == OS.DARWIN) {
-        	stackAlignment = 8; // was 8
+                stackAlignment = 8;
             } else if (os == OS.SOLARIS || os == OS.LINUX) {
-                stackAlignment = 8; // was 8
+                stackAlignment = 8;
             } else if (os == OS.MAXVE) {
-                stackAlignment = 8; // was 8
-             } else {
+                stackAlignment = 8;
+            } else {
                 throw FatalError.unexpected("Unimplemented stack alignment: " + os);
             }
         } else {
@@ -487,7 +475,6 @@ public final class Platform {
         String platformSpec = System.getProperty(PLATFORM_PROPERTY);
         if (platformSpec != null) {
             Platform platform = parse(platformSpec);
-
             if (platform == null) {
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 PrintStream out = new PrintStream(baos);
@@ -524,8 +511,7 @@ public final class Platform {
         final OS os = OS.fromName(osName);
         final int pageSize = getInteger(PAGE_SIZE_PROPERTY) == null ? getPageSize() : getInteger(PAGE_SIZE_PROPERTY);
         final int nsig = getProperty(NUMBER_OF_SIGNALS_PROPERTY) == null ? getNumberOfSignals() : getInteger(NUMBER_OF_SIGNALS_PROPERTY);
-        Platform platform = new Platform(cpu, isa, dataModel, os, pageSize, nsig);
-        return platform;
+        return new Platform(cpu, isa, dataModel, os, pageSize, nsig);
     }
 
     /**
