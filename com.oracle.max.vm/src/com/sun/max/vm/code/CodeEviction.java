@@ -390,7 +390,7 @@ public final class CodeEviction extends VmOperation {
                 } else if (platform().isa == ISA.ARM) {
                     target = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
                 } else {
-                    target = null;
+                    throw FatalError.unimplemented();
                 }
 
                 final CodePointer itarget = target.minus(delta);
@@ -445,7 +445,7 @@ public final class CodeEviction extends VmOperation {
                 } else if (platform().isa == ISA.ARM) {
                     target  = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
                 } else {
-                    target = null;
+                    throw FatalError.unimplemented();
                 }
                 if (CodeManager.runtimeBaselineCodeRegion.isInFromSpace(target.toAddress())) {
                     if (!haveLoggedMethod) {
@@ -853,7 +853,7 @@ public final class CodeEviction extends VmOperation {
             } else if (platform().isa == ISA.ARM) {
                 target = ARMTargetMethodUtil.readCall32Target(tm, callPos);
             } else {
-                target = null;
+                throw FatalError.unimplemented();
             }
             final TargetMethod callee = target.toTargetMethod();
             assert callee != null : "callee should not be null in " + tm + "@" + callPos + " " + target.to0xHexString();
@@ -1048,7 +1048,7 @@ public final class CodeEviction extends VmOperation {
                 } else if (platform().isa == ISA.ARM) {
                     target  = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
                 } else {
-                    target = null;
+                    throw FatalError.unimplemented();
                 }
                 final TargetMethod callee = target.toTargetMethod();
                 assert callee != null : "callee should not be null in " + targetMethod + "@" + callPos + "->" + target.to0xHexString();
