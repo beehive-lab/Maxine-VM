@@ -101,9 +101,6 @@ public final class BootImageGenerator {
     private static final Option<Boolean> debugMethods = options.newBooleanOption("debug-methods", false, "");
     private static final Option<Boolean> simulationPlatform = options.newBooleanOption("simulation", false, "Enables simulation tracing of both PC/LD/ST (pc only at moment as debugging) implies -float-div=true");
 
-    private static final Option<Boolean> floatIdiv = options.newBooleanOption("floatidiv", false, "");
-
-
     public static final OptionSet inspectorSharedOptions = new OptionSet();
 
     /**
