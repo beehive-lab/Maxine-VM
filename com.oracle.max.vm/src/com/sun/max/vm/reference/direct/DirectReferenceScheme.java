@@ -430,16 +430,6 @@ public final class DirectReferenceScheme extends AbstractVMScheme implements Ref
     }
 
     @INLINE
-    public long compareAndSwapDualWord(Reference ref, int offset, long expectedValue, long newValue) {
-        return toOrigin(ref).compareAndSwapLong(offset, expectedValue, newValue);
-    }
-
-    @INLINE
-    public long compareAndSwapDualWord(Reference ref, Offset offset, long expectedValue, long newValue) {
-        return toOrigin(ref).compareAndSwapLong(offset, expectedValue, newValue);
-    }
-
-    @INLINE
     public Reference compareAndSwapReference(Reference ref, Offset offset, Reference expectedValue, Reference newValue) {
         heapScheme().preWriteBarrier(ref, offset, newValue);
         final Reference result = toOrigin(ref).compareAndSwapReference(offset, expectedValue, newValue);

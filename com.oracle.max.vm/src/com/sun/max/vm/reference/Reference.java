@@ -485,14 +485,4 @@ public class Reference implements Accessor {
     public final void copyElements(int displacement, int srcIndex, Object dst, int dstIndex, int length) {
         referenceScheme().copyElements(displacement, this, srcIndex, dst, dstIndex, length);
     }
-
-    @INLINE
-    public long compareAndSwapDualWord(int offset, long expectedValue, long newValue) {
-        return referenceScheme().compareAndSwapDualWord(this, offset, expectedValue, newValue);
-    }
-
-    @INLINE
-    public long compareAndSwapDualWord(Offset offset, long expectedValue, long newValue) {
-        return referenceScheme().compareAndSwapDualWord(this, offset, expectedValue, newValue);
-    }
 }

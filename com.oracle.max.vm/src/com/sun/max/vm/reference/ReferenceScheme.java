@@ -153,10 +153,6 @@ public interface ReferenceScheme extends VMScheme {
 
     long compareAndSwapLong(Reference reference, int offset, long expectedValue, long newValue);
 
-    long compareAndSwapDualWord(Reference reference, int offset, long expectedValue, long newValue);
-
-    long compareAndSwapDualWord(Reference reference, Offset offset, long expectedValue, long newValue);
-
     int compareAndSwapInt(Reference reference, Offset offset, int expectedValue, int newValue);
 
     /**
