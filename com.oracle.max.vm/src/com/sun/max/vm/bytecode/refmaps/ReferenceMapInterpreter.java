@@ -816,7 +816,7 @@ public abstract class ReferenceMapInterpreter {
                             break;
                         }
                         default: {
-                            throw ProgramError.unknownCase("REFMAP INTERPRETER LDC");
+                            throw ProgramError.unknownCase();
                         }
                     }
                     break;
