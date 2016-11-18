@@ -43,8 +43,7 @@ import test.com.sun.max.vm.jtrun.*;
 public class JTRuns {
     public static boolean runTests(int start, int end) {
         JTUtil.reset(start, end);
-	//start = -2;
-        while (start < end) {
+	while (start < end) {
             //begin(JTConfig.testClasses.getTestName(start));
             if (!runTest(start)) {
                 return false;
