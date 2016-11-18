@@ -22,67 +22,45 @@
  */
 package com.sun.max.vm.actor.holder;
 
-import com.sun.cri.ci.CiConstant;
-import com.sun.cri.ci.CiKind;
-import com.sun.cri.ri.RiMethod;
-import com.sun.cri.ri.RiResolvedField;
-import com.sun.cri.ri.RiResolvedMethod;
-import com.sun.cri.ri.RiResolvedType;
-import com.sun.max.annotate.*;
-import com.sun.max.collect.ChainedHashMapping;
-import com.sun.max.collect.Mapping;
-import com.sun.max.lang.Classes;
-import com.sun.max.lang.Ints;
-import com.sun.max.program.ProgramError;
-import com.sun.max.unsafe.Size;
-import com.sun.max.unsafe.UnsafeCast;
-import com.sun.max.util.Deferrable;
-import com.sun.max.vm.Log;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.VMOptions;
-import com.sun.max.vm.actor.Actor;
-import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.ConstantPool;
-import com.sun.max.vm.classfile.constant.SymbolTable;
-import com.sun.max.vm.classfile.constant.Utf8Constant;
-import com.sun.max.vm.compiler.CompilationBroker;
-import com.sun.max.vm.compiler.WordUtil;
-import com.sun.max.vm.compiler.deps.ConcreteMethodDependencyProcessor;
-import com.sun.max.vm.compiler.deps.ConcreteTypeDependencyProcessor;
-import com.sun.max.vm.compiler.deps.DependenciesManager;
-import com.sun.max.vm.heap.Heap;
-import com.sun.max.vm.heap.TupleReferenceMap;
-import com.sun.max.vm.heap.gcx.DarkMatter;
-import com.sun.max.vm.hosted.HostedVMClassLoader;
-import com.sun.max.vm.hosted.JavaPrototype;
-import com.sun.max.vm.layout.Layout;
-import com.sun.max.vm.layout.SpecificLayout;
-import com.sun.max.vm.object.ObjectAccess;
-import com.sun.max.vm.reference.Reference;
-import com.sun.max.vm.runtime.FatalError;
-import com.sun.max.vm.runtime.VmOperation;
-import com.sun.max.vm.type.*;
-import com.sun.max.vm.value.Value;
-import com.sun.max.vm.verifier.ClassVerifier;
-import com.sun.max.vm.verifier.Verifier;
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.actor.holder.ClassIDManager.*;
+import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
+import static com.sun.max.vm.classfile.ErrorContext.*;
+import static com.sun.max.vm.compiler.deps.DependenciesManager.*;
+import static com.sun.max.vm.type.ClassRegistry.*;
+import static com.sun.max.vm.type.ClassRegistry.Property.*;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.InvocationTargetException;
-import java.security.ProtectionDomain;
+import java.io.*;
+import java.lang.annotation.*;
+import java.lang.reflect.*;
+import java.security.*;
 import java.util.*;
 
-import static com.sun.max.vm.MaxineVM.isHosted;
-import static com.sun.max.vm.actor.holder.ClassIDManager.NULL_CLASS_ID;
-import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.Class_classActor;
-import static com.sun.max.vm.classfile.ErrorContext.verifyError;
-import static com.sun.max.vm.compiler.deps.DependenciesManager.classHierarchyLock;
-import static com.sun.max.vm.type.ClassRegistry.ClassActor_javaClass;
-import static com.sun.max.vm.type.ClassRegistry.OBJECT;
-import static com.sun.max.vm.type.ClassRegistry.Property.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
+import com.sun.max.annotate.*;
+import com.sun.max.collect.*;
+import com.sun.max.collect.Mapping;
+import com.sun.max.lang.*;
+import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.util.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.deps.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.gcx.*;
+import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.layout.*;
+import com.sun.max.vm.object.*;
+import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.type.*;
+import com.sun.max.vm.value.*;
+import com.sun.max.vm.verifier.*;
 
 /**
  * Internal representation of anything that has an associated instance of 'java.lang.Class'.
@@ -696,23 +674,6 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
 
     public static Object create(ClassActor classActor) {
         if (isHosted()) {
-            if(CompilationBroker.OFFLINE == true) {
-                //System.out.println(classActor.simpleName() + " HAS CLINIT " + classActor.hasClassInitializer());
-                //MethodActor []methods = classActor.getLocalMethodActorsArray();
-                //for(int i = 0; i < methods.length;i++) {
-                    //System.out.println("NAME " + methods[i].qualifiedName());
-                //}
-                //for (FieldActor fieldActor : classActor.localStaticFieldActors()) {
-                    //System.out.println("Field ACTOR HAS CLINIT " + fieldActor.holder().hasClassInitializer());
-                    // causes crash System.out.println("Klass " + classActor +" fieldActor " + fieldActor + " val " + fieldActor.getInt(null));
-                    //final Value constantValue = fieldActor.constantValue();
-                    //if (constantValue != null) {
-                       // if(constantValue.kind() == Kind.INT) {
-                           // System.out.println("STATIC FIELD INT VALUE of " + constantValue.asInt());
-                        //}
-                    //}
-                //}
-            }
             return new StaticTuple(classActor);
         }
         final Object staticTuple = Heap.createTuple(classActor.staticHub());
