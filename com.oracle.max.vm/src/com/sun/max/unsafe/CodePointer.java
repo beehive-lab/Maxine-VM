@@ -17,16 +17,6 @@
  */
 package com.sun.max.unsafe;
 
-import com.sun.max.annotate.HOSTED_ONLY;
-import com.sun.max.annotate.INLINE;
-import com.sun.max.platform.Platform;
-import com.sun.max.program.ProgramError;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.code.Code;
-import com.sun.max.vm.code.CodeRegion;
-import com.sun.max.vm.compiler.target.TargetMethod;
-import com.sun.max.vm.reference.Reference;
-
 import static com.sun.max.vm.MaxineVM.*;
 
 import com.sun.max.annotate.*;
@@ -36,7 +26,6 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.reference.*;
-import com.sun.max.vm.runtime.FatalError;
 
 /**
  * A {@code CodePointer} is a tagged pointer that is known to reference native code.
@@ -167,20 +156,19 @@ public final class CodePointer {
     /**
      * Get the tagged raw value of a {@code CodePointer}.
      */
+    @SuppressWarnings("cast")
     @INLINE
     public long toTaggedLong() {
         if (isHosted()) {
             return tagged;
         }
-
         if (Platform.target().arch.is32bit()) {
-            long x;
-            x = (long) UnsafeCast.asTaggedInt(this);
-            return x;
+            return (long) UnsafeCast.asTaggedInt(this);
         }
         return UnsafeCast.asTaggedLong(this);
     }
 
+    @SuppressWarnings("cast")
     @INLINE
     public long toLong() {
         if (isHosted()) {
