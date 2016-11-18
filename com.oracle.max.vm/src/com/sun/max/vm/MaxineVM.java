@@ -1,80 +1,67 @@
 /*
- * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
+ * OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package com.sun.max.vm;
 
+import static com.sun.max.lang.Classes.*;
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.VMConfiguration.*;
+import static com.sun.max.vm.VMOptions.*;
+
+import java.lang.reflect.*;
+import java.util.*;
+import java.util.concurrent.*;
+
 import com.sun.max.annotate.*;
-import com.sun.max.config.BootImagePackage;
-import com.sun.max.lang.Classes;
-import com.sun.max.platform.Platform;
-import com.sun.max.program.ProgramWarning;
+import com.sun.max.config.*;
+import com.sun.max.lang.*;
+import com.sun.max.platform.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.util.Utf8Exception;
-import com.sun.max.vm.MaxineVM.*;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.actor.member.MethodActor;
-import com.sun.max.vm.classfile.ClassfileReader;
-import com.sun.max.vm.compiler.CompilationBroker;
-import com.sun.max.vm.compiler.target.RegisterConfigs;
-import com.sun.max.vm.compiler.target.Stubs;
-import com.sun.max.vm.heap.Heap;
-import com.sun.max.vm.heap.ImmortalHeap;
-import com.sun.max.vm.hosted.CompiledPrototype;
-import com.sun.max.vm.jdk.JDK;
-import com.sun.max.vm.jni.DynamicLinker;
-import com.sun.max.vm.jni.NativeInterfaces;
-import com.sun.max.vm.log.VMLog;
+import com.sun.max.util.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.jdk.*;
+import com.sun.max.vm.jni.*;
+import com.sun.max.vm.log.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.thread.VmThreadLocal;
-import com.sun.max.vm.thread.VmThreadMap;
-import com.sun.max.vm.ti.VMTI;
-import com.sun.max.vm.type.TypeDescriptor;
-
-import java.lang.reflect.AccessibleObject;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
-import static com.sun.max.lang.Classes.getPackageName;
-import static com.sun.max.platform.Platform.platform;
-import static com.sun.max.vm.VMConfiguration.vmConfig;
-import static com.sun.max.vm.VMOptions.register;
+import com.sun.max.vm.thread.*;
+import com.sun.max.vm.ti.*;
+import com.sun.max.vm.type.*;
 
 /**
- * The global VM context. There is a {@linkplain #vm() single VM context} in existence at any time.
- * The {@linkplain VMConfiguration configuration} for a VM context can be accessed via the
- * {@link #config} field although the preferred mechanism for accessing the configuration for the
- * global VM context is {@linkplain VMConfiguration#vmConfig()}.
+ * The global VM context. There is a {@linkplain #vm() single VM context} in existence at any time. The
+ * {@linkplain VMConfiguration configuration} for a VM context can be accessed via the {@link #config} field although
+ * the preferred mechanism for accessing the configuration for the global VM context is
+ * {@linkplain VMConfiguration#vmConfig()}.
  * <p>
  * Other functionality encapsulated in this class includes:
- * <li>The {@link #isHosted()} method that can be used to guard blocks of code that will be omitted from a boot image.</li>
- * <li>The current execution {@linkplain #phase phase} of the VM, denoting what language and VM capabilities
- * have been initialized and are available.</li>
- * <li>Some global native methods used at runtime that don't particularly
- * belong to other classes (e.g. {@link #native_currentTimeMillis()}, {@link #native_exit(int)}, etc).</li>
- * <li>Methods for {@linkplain #registerCriticalMethod(CriticalMethod) registering} methods to be
- * loaded & compiled into the boot image.</li>
+ * <li>The {@link #isHosted()} method that can be used to guard blocks of code that will be omitted from a boot image.
+ * </li>
+ * <li>The current execution {@linkplain #phase phase} of the VM, denoting what language and VM capabilities have been
+ * initialized and are available.</li>
+ * <li>Some global native methods used at runtime that don't particularly belong to other classes (e.g.
+ * {@link #native_currentTimeMillis()}, {@link #native_exit(int)}, etc).</li>
+ * <li>Methods for {@linkplain #registerCriticalMethod(CriticalMethod) registering} methods to be loaded & compiled into
+ * the boot image.</li>
  */
 public final class MaxineVM {
 
@@ -98,13 +85,15 @@ public final class MaxineVM {
     private static final Set<String> KEEP_CLINIT_CLASSES = new HashSet<String>();
 
     @HOSTED_ONLY
-    private static final String[] TEST_PACKAGES = {"test.", "jtt."};
+    private static final String[] TEST_PACKAGES = { "test.", "jtt."};
 
     private static final VMOption HELP_OPTION = register(new VMOption("-help", "Prints this help message.") {
+
         @Override
         protected boolean haltsVM() {
             return true;
         }
+
         @Override
         public boolean parseValue(Pointer optionValue) {
             VMOptions.printUsage(Category.STANDARD);
@@ -134,7 +123,6 @@ public final class MaxineVM {
     private static Address primordialTLBlock;
     @INSPECTED
     private static int primordialTLBlockSize;
-
 
     public enum Phase {
         /**
@@ -183,8 +171,9 @@ public final class MaxineVM {
         RUNNING,
 
         /**
-         * VM about to terminate, all non-daemon threads terminated, shutdown hooks run, but {@link VmOperation} thread still live.
-         * Last chance to interpose, but be careful what you do. In particular, thread creation is not permitted.
+         * VM about to terminate, all non-daemon threads terminated, shutdown hooks run, but {@link VmOperation} thread
+         * still live. Last chance to interpose, but be careful what you do. In particular, thread creation is not
+         * permitted.
          */
         TERMINATING
     }
@@ -196,15 +185,14 @@ public final class MaxineVM {
      *
      */
     public enum NativeProperty {
-        USER_NAME,
-        USER_HOME,
-        USER_DIR;
+        USER_NAME, USER_HOME, USER_DIR;
 
         /**
          * Gets the value of this property from a given C struct.
          *
          * @param cStruct the value returned by a call to {@link MaxineVM#native_properties()}
-         * @return the value of this property in {@code cStruct} converted to a {@link String} value (which may be {@code null})
+         * @return the value of this property in {@code cStruct} converted to a {@link String} value (which may be
+         *         {@code null})
          */
         public String value(Pointer cStruct) {
             final Pointer cString = cStruct.readWord(ordinal() * Word.size()).asPointer();
@@ -235,8 +223,8 @@ public final class MaxineVM {
     }
 
     /**
-     * Global variable determining whether class initializers are to be discarded
-     * or preserved by the {@link ClassfileReader}.
+     * Global variable determining whether class initializers are to be discarded or preserved by the
+     * {@link ClassfileReader}.
      */
     @HOSTED_ONLY
     public static boolean preserveClinitMethods = System.getProperty("max.loader.preserveClinitMethods") != null;
@@ -265,10 +253,9 @@ public final class MaxineVM {
     }
 
     /**
-     * Initializes or changes the current VM context.
-     * This also {@linkplain Platform#set(Platform) sets} the current platform context
-     * to {@code vm.configuration.platform}. That is,
-     * changing the VM context also changes the platform context.
+     * Initializes or changes the current VM context. This also {@linkplain Platform#set(Platform) sets} the current
+     * platform context to {@code vm.configuration.platform}. That is, changing the VM context also changes the platform
+     * context.
      *
      * @param vm the new VM context (must not be {@code null})
      * @return the previous VM context
@@ -298,6 +285,7 @@ public final class MaxineVM {
 
     /**
      * Determines if this is a {@link BuildLevel#DEBUG debug} build of the VM.
+     *
      * @return {@code true} if this is a debug build
      */
     @FOLD
@@ -313,10 +301,8 @@ public final class MaxineVM {
      */
     @HOSTED_ONLY
     public static boolean isHostedOnly(AccessibleObject member) {
-        return member.getAnnotation(HOSTED_ONLY.class) != null ||
-               !Platform.platform().isAcceptedBy(member.getAnnotation(PLATFORM.class)) ||
-               !JDK.thisVersionOrNewer(member.getAnnotation(JDK_VERSION.class)) ||
-               isHostedOnly(Classes.getDeclaringClass(member));
+        return member.getAnnotation(HOSTED_ONLY.class) != null || !Platform.platform().isAcceptedBy(member.getAnnotation(PLATFORM.class)) ||
+                        !JDK.thisVersionOrNewer(member.getAnnotation(JDK_VERSION.class)) || isHostedOnly(Classes.getDeclaringClass(member));
     }
 
     /**
@@ -392,11 +378,11 @@ public final class MaxineVM {
             }
         }
         HOSTED_CLASSES.put(javaClass, result);
-        //Trace.line(1, "setHostedOnly: " + javaClass.getName() + " " + result);
+        // Trace.line(1, "setHostedOnly: " + javaClass.getName() + " " + result);
         return result;
     }
 
-    private static Class<?> getEnclosingClass(Class<?> javaClass) {
+    private static Class< ? > getEnclosingClass(Class< ? > javaClass) {
         try {
             final Class< ? > enclosingClass = javaClass.getEnclosingClass();
             return enclosingClass;
@@ -436,9 +422,8 @@ public final class MaxineVM {
     }
 
     /**
-     * Determines if a given class name denotes a class that is specified as part of the boot image.
-     * This cannot be based solely on the package name as the package may enumerate
-     * a specific set of classes.
+     * Determines if a given class name denotes a class that is specified as part of the boot image. This cannot be
+     * based solely on the package name as the package may enumerate a specific set of classes.
      */
     public static boolean isBootImageClass(String className) {
         BootImagePackage pkg = BOOT_IMAGE_CODE_BASE_PACKAGES.get(getPackageName(className));
@@ -468,7 +453,8 @@ public final class MaxineVM {
      * @return 0 indicating initialization succeeded, non-0 if not
      */
     @VM_ENTRY_POINT
-    public static int run(Pointer tlBlock, int tlBlockSize, Pointer bootHeapRegionStart, Word dlopen, Word dlsym, Word dlerror, Pointer vmInterface, Pointer jniEnv, Pointer jmmInterface, Pointer jvmtiInterface, int argc, Pointer argv) {
+    public static int run(Pointer tlBlock, int tlBlockSize, Pointer bootHeapRegionStart, Word dlopen, Word dlsym, Word dlerror, Pointer vmInterface, Pointer jniEnv, Pointer jmmInterface,
+                    Pointer jvmtiInterface, int argc, Pointer argv) {
         primordialTLBlock = tlBlock;
         primordialTLBlockSize = tlBlockSize;
         Pointer etla = tlBlock.plus(platform().pageSize - Address.size() + VmThreadLocal.tlaSize().toInt());
@@ -485,27 +471,26 @@ public final class MaxineVM {
 
         // Link the critical native methods:
         CriticalNativeMethod.linkAll();
-	DynamicLinker.markCriticalLinked();
+        DynamicLinker.markCriticalLinked();
 
-	// Initialize the trap system:
+        // Initialize the trap system:
         Trap.initialize();
-	ImmortalHeap.initialize();
+        ImmortalHeap.initialize();
 
-	NativeInterfaces.initialize(vmInterface, jniEnv, jmmInterface);
+        NativeInterfaces.initialize(vmInterface, jniEnv, jmmInterface);
 
-	// Perhaps this should be later, after VM has initialized
+        // Perhaps this should be later, after VM has initialized
         startupTime = System.currentTimeMillis();
         startupTimeNano = System.nanoTime();
 
-	MaxineVM vm = vm();
-	vmConfig().initializeSchemes(MaxineVM.Phase.PRIMORDIAL);
+        MaxineVM vm = vm();
+        vmConfig().initializeSchemes(MaxineVM.Phase.PRIMORDIAL);
 
         vm().stubs.intialize();
         vm.phase = Phase.PRISTINE;
 
         VMOptions.parsePristine(argc, argv);
         return exitCode;
-
     }
 
     public static String getExecutablePath() {
@@ -551,12 +536,10 @@ public final class MaxineVM {
     @C_FUNCTION
     public static native long arithmeticludiv(long x, long y);
 
-
     /*
-     * Global native functions: these functions implement a thin layer over basic native
-     * services that are needed to implement higher-level Java VM services. Note that
-     * these native functions *ONLY* work on the target VM, not in bootstrapping or
-     * inspecting modes.
+     * Global native functions: these functions implement a thin layer over basic native services that are needed to
+     * implement higher-level Java VM services. Note that these native functions *ONLY* work on the target VM, not in
+     * bootstrapping or inspecting modes.
      *
      * These service methods cannot block, and cannot use object references.
      */
@@ -594,8 +577,8 @@ public final class MaxineVM {
     public static native void native_trap_exit(int code, Address address);
 
     /**
-     * Generate a core file of the vm process.
-     * Note that this doesn't exit the vm which can progress normally after the core generation.
+     * Generate a core file of the vm process. Note that this doesn't exit the vm which can progress normally after the
+     * core generation.
      */
     @C_FUNCTION
     public static native void core_dump();
@@ -632,8 +615,8 @@ public final class MaxineVM {
     }
 
     /**
-     * Low level VM exit. This method does not run any shutdown hooks or finalizers.
-     * This is where {@link Runtime#exit(int)} and {@link Runtime#halt(int)} bottom out.
+     * Low level VM exit. This method does not run any shutdown hooks or finalizers. This is where
+     * {@link Runtime#exit(int)} and {@link Runtime#halt(int)} bottom out.
      *
      * @param code exit code for the VM process
      */
@@ -656,5 +639,4 @@ public final class MaxineVM {
         VmOperationThread.terminate();
         native_exit(code);
     }
-
 }
