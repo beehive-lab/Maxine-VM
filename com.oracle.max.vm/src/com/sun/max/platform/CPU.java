@@ -59,5 +59,4 @@ public enum CPU {
         }
         return valueOf(isa.name());
     }
-
 }
