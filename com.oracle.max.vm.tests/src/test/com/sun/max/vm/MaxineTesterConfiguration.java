@@ -1,40 +1,35 @@
 /*
- * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
+ * OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package test.com.sun.max.vm;
 
 import java.io.*;
 import java.util.*;
 
-import test.com.sun.max.vm.jtrun.all.*;
-
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.jdk.*;
 
+import test.com.sun.max.vm.jtrun.all.*;
+
 /**
- * This class encapsulates the configuration of the Maxine tester, which includes
- * which tests to run, their expected results, example inputs, etc.
+ * This class encapsulates the configuration of the Maxine tester, which includes which tests to run, their expected
+ * results, example inputs, etc.
  */
 public class MaxineTesterConfiguration {
 
@@ -77,11 +72,12 @@ public class MaxineTesterConfiguration {
     public static Class[] findOutputTests(final String packagePrefix) {
         final ArrayList<Class> result = new ArrayList<Class>();
         new ClassSearch() {
+
             @Override
             protected boolean visitClass(String className) {
                 if (className.startsWith(packagePrefix)) {
                     try {
-                        Class<?> javaClass = Classes.forName(className, false, ClassSearch.class.getClassLoader());
+                        Class< ? > javaClass = Classes.forName(className, false, ClassSearch.class.getClassLoader());
                         javaClass.getDeclaredMethod("main", String[].class);
                         result.add(javaClass);
                     } catch (UnsupportedClassVersionError e) {
@@ -98,6 +94,7 @@ public class MaxineTesterConfiguration {
         }.run(Classpath.fromSystem());
         Class[] classes = result.toArray(new Class[result.size()]);
         Arrays.sort(classes, new Comparator<Class>() {
+
             public int compare(Class o1, Class o2) {
                 return o1.getSimpleName().compareTo(o2.getSimpleName());
             }
@@ -273,7 +270,6 @@ public class MaxineTesterConfiguration {
         String testCallerT1X = "--XX:CompileCommand=" + JTRuns.class.getName() + ":T1X";
         String testCalleeT1X = "--XX:CompileCommand=jtt.:T1X";
         String testCalleeGraal = "--XX:CompileCommand=jtt.:Graal";
-        String monitorScheme = "-monitor=com.sun.max.vm.monitor.modal.schemes.inflated_only"; //thin_inflated is anothe rpossiblity for ARM
         String gcScheme = "-heap=com.sun.max.vm.heap.sequential.semiSpace";
         String debugMethods = "-debug-methods";
         String build = "-build=DEBUG";
@@ -282,14 +278,12 @@ public class MaxineTesterConfiguration {
         imageConfig("java", "-run=java");
         imageConfig("c1xgraal", opt_c1xgraal);
         imageConfig("c1xgraal-boot", opt_c1xgraal, "--XX:+GraalForBoot");
-        imageConfig("jtt-t1xc1x", opt_c1x, "--J @ \" -Xms512M -Xmx1G -esa -ea\"", gcScheme, monitorScheme, "-threads=4", debugMethods, build,  "-run=test.com.sun.max.vm.jtrun.all", "-native-tests",
-                        testCallerT1X);
-        imageConfig("jtt-c1xt1x", opt_c1x, "--J @ \" -Xms512M -Xmx1G -esa -ea\"", gcScheme, monitorScheme, "-threads=4", debugMethods, build,  "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", testCalleeT1X,
-                        "--XX:+FailOverCompilation");
-        imageConfig("jtt-t1xt1x", opt_c1x, "--J @ \" -Xms512M -Xmx1G -esa -ea\"", gcScheme, monitorScheme, "-threads=4", debugMethods, build, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests",
+        imageConfig("jtt-t1xc1x", opt_c1x, tmpVMArgs, gcScheme, "-threads=4", debugMethods, build, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", testCallerT1X);
+        imageConfig("jtt-c1xt1x", opt_c1x, tmpVMArgs, gcScheme, "-threads=4", debugMethods, build, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", testCalleeT1X, "--XX:+FailOverCompilation");
+        imageConfig("jtt-t1xt1x", opt_c1x, tmpVMArgs, gcScheme, "-threads=4", debugMethods, build, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests",
                         joinCompileCommands(testCallerT1X, testCalleeT1X), "--XX:+FailOverCompilation");
 
-        imageConfig("jtt-c1xc1x", opt_c1x, tmpVMArgs, gcScheme, monitorScheme, "-threads=4", "-debug-methods", "-run=test.com.sun.max.vm.jtrun.all", "-build=DEBUG", "-native-tests");
+        imageConfig("jtt-c1xc1x", opt_c1x, tmpVMArgs, gcScheme, "-threads=4", "-debug-methods", "-run=test.com.sun.max.vm.jtrun.all", build, "-native-tests");
         imageConfig("jtt-c1xgraal", opt_c1xgraal, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", joinCompileCommands(testCallerT1X, testCalleeGraal));
 
         imageConfig("jtt-msc1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", testCalleeT1X);
@@ -511,18 +505,21 @@ public class MaxineTesterConfiguration {
 
     public enum ExpectedResult {
         PASS {
+
             @Override
             public boolean matchesActualResult(boolean passed) {
                 return passed;
             }
         },
         FAIL {
+
             @Override
             public boolean matchesActualResult(boolean passed) {
                 return !passed;
             }
         },
         NONDETERMINISTIC {
+
             @Override
             public boolean matchesActualResult(boolean passed) {
                 return true;
@@ -536,8 +533,8 @@ public class MaxineTesterConfiguration {
      * Determines if a given test is known to fail.
      *
      * @param testName a unique identifier for the test
-     * @param config   the {@linkplain #zeeMaxvmConfigs maxvm} configuration used during the test execution.
-     *                 This value may be null.
+     * @param config the {@linkplain #zeeMaxvmConfigs maxvm} configuration used during the test execution. This value
+     *            may be null.
      */
     public static ExpectedResult expectedResult(String testName, String config) {
         final Expectation[] expect = resultMap.get(testName);
@@ -560,6 +557,7 @@ public class MaxineTesterConfiguration {
     }
 
     private static class Expectation {
+
         private final OS os; // null indicates all OSs
         private final CPU processor; // null indicates all processors
         private final String config; // null indicates all configs
