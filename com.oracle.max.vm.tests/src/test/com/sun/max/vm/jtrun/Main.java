@@ -33,7 +33,6 @@ public class Main {
      * Call with start and end test number as parameters.
      */
     public static void main(String[] args) {
-        //int start = -1;
         int start = 0;
         int end = 10000;
 
@@ -47,8 +46,7 @@ public class Main {
 
         JTUtil.reset(start, end);
         JTUtil.verbose = 3;
-	start = -2;
-        JTRuns.runTests(start, end);
+	JTRuns.runTests(start, end);
         JTUtil.printReport();
     }
 }
