@@ -65,40 +65,39 @@
 
 /* mmap returns MAP_FAILED on error, we convert to ALLOC_FAILED */
 static Address check_mmap_result(void *result) {
-#if log_mmap
+#if log_MMAP
 	if(result == MAP_FAILED) {
 		switch(errno) {
 			case EACCES:
-				printf(" EACCES\n");
+			    log_println("EACCES\n");
 			break;
 			case EAGAIN:
-				printf("EAGAIN\n");
+			    log_println("EAGAIN\n");
 			break;
 			case EBADF:
-				printf("EBADF\n");
+			    log_println("EBADF\n");
 			break;
 			case EINVAL:
-				printf("EINVAL\n");
+			    log_println("EINVAL\n");
 			break;
 			case ENFILE:
-				printf("ENFILE\n");
+			    log_println("ENFILE\n");
 			break;
 			case ENODEV:
-				printf("ENODEV\n");
+			    log_println("ENODEV\n");
 			break;
 			case ENOMEM:
-				printf("ENOMEM\n");
+			    log_println("ENOMEM\n");
 			break;
 			case EPERM:
-				printf("EPERM\n");
+			    log_println("EPERM\n");
 			break;
 			case ETXTBSY:
-				printf(" ETXTBSY\n");
+			    log_println(" ETXTBSY\n");
 			break;
 			default:
-				printf("UNKNOWN\n");
+			    log_println("UNKNOWN\n");
 			break;
-
 		}
 	}
 #endif
