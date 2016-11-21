@@ -33,10 +33,8 @@
 #define THREAD_CONDVAR_FORMAT "thread=%p, condvar=%p"
 
 void condition_initialize(Condition condition) {
-//void condition_initialize(pthread_cond_t * condition) {
 #if log_MONITORS
     log_println("condition_initialize(" THREAD_CONDVAR_FORMAT ")", thread_self(), condition);
-    //printf("CONDITION ADDRESS IS %p\n",condition);
 #endif
 #if os_SOLARIS
     if (cond_init(condition, NULL, NULL) != 0) {
@@ -133,7 +131,7 @@ static struct timespec* compute_abstime(struct timespec* abstime, jlong millis) 
         seconds = 50000000L;
     }
     abstime->tv_sec = now.tv_sec  + seconds;
-    jlong       usec = now.tv_usec + (jlong) millis * 1000UL;
+    jlong usec = now.tv_usec + (jlong) millis * 1000UL;
     if (usec >= 1000000) {
         abstime->tv_sec += 1;
         usec -= 1000000;
