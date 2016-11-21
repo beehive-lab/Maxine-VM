@@ -49,7 +49,7 @@ ifneq ($(MAIN),)
 endif
 
 ifdef ENABLE_FPGA_SIM
-	ENABLE_FPGA=$(ENABLE_FPGA_SIM)
+	ENABLE_APT_SIM=$(ENABLE_FPGA_SIM)
 endif
 
 # HOSTOS is the platform we are compiling on
@@ -246,8 +246,8 @@ ifeq ($(OS),linux)
     # Libraries must be specified after the actual source files, so the POSTFIX variable is used for that
     # (Introduced to solve a linking problem on Ubuntu 11.10)
     ifeq ($(ISA),arm) 
-    	ifeq ($(ENABLE_FPGA),1)
-    		#LINK_MAIN_POSTFIX = $(MAXINE_HOME)/com.oracle.max.vm.native/substrate/libCCluster.a -lstdc++ -lc -lm -lpthread -ldl
+    	ifeq ($(ENABLE_APT_SIM),1)
+    		LINK_MAIN_POSTFIX = $(MAXINE_HOME)/com.oracle.max.vm.native/substrate/libFPGAsim.so -lstdc++ -lc -lm -lpthread -ldl
     	else
     		LINK_MAIN_POSTFIX = -lstdc++ -lc -lm -lpthread -ldl
     	endif
@@ -257,8 +257,8 @@ ifeq ($(OS),linux)
     endif
     LINK_LIB = $(CC) -g -shared
     ifeq ($(ISA),arm)
-    	ifeq ($(ENABLE_FPGA),1)
-    		#LINK_LIB_POSTFIX = $(MAXINE_HOME)/com.oracle.max.vm.native/substrate/libCCluster.a -lstdc++ -lc -lm -lpthread
+    	ifeq ($(ENABLE_APT_SIM),1)
+    		LINK_LIB_POSTFIX = $(MAXINE_HOME)/com.oracle.max.vm.native/substrate/libFPGAsim.so -lstdc++ -lc -lm -lpthread
     	else
     		LINK_LIB_POSTFIX = -lstdc++ -lc -lm -lpthread -ldl
     	endif

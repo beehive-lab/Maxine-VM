@@ -44,7 +44,7 @@ LIBRARY = $(LIB_PREFIX)$(LIB)$(LIB_SUFFIX)
 ifneq ($(OS),maxve)
 
 $(LIBRARY) : $(OBJECTS)
-ifeq ($(ENABLE_FPGA),1)
+ifeq ($(ENABLE_APT_SIM),1)
 	$(LINK_LIB) $(OBJECTS) -o $(LIBRARY) $(MAXINE_HOME)/com.oracle.max.vm.native/substrate/libFPGAsim.so $(LINK_LIB_POSTFIX)
 else
 	$(LINK_LIB) $(OBJECTS) -o $(LIBRARY)  $(LINK_LIB_POSTFIX)
