@@ -38,7 +38,7 @@ void c_initialize(void) {
     c_ASSERT((Unsigned8) -1 > 0);
     c_ASSERT(sizeof(Unsigned8) == 8);
      
-    c_ASSERT(((Signed1) -1 )< 0);
+    c_ASSERT((Signed1) -1 < 0);
     c_ASSERT(sizeof(Signed1) == 1);
 
     c_ASSERT((Signed2) -1 < 0);
