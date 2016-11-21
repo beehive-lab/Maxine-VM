@@ -60,15 +60,11 @@ int theTLASize = -1;
 static ThreadLocalsKey theThreadLocalsKey;
 
 static Address allocateThreadLocalBlock(size_t tlBlockSize) {
-
-      Address tmp;
 #if os_MAXVE
 	return (Address) maxve_virtualMemory_allocate(tlBlockSize, DATA_VM);
 #else
 	c_ASSERT(tlBlockSize < 100000000);
-	tmp =  (Address) valloc(tlBlockSize);
-	c_ASSERT(tmp != (0));
-	return tmp;
+	return (Address) valloc(tlBlockSize);
 #endif
 }
 
@@ -123,12 +119,10 @@ Address threadLocalsBlock_create(jint id, Address tlBlock, Size stackSize) {
     haveRedZone = true;
 #endif
 
-
     Address stackBase = 0;
     if (stackSize == 0) {
         thread_getStackInfo(&stackBase, &stackSize);
     }
-
 
     /* See diagram at top of threadLocals.h */
     const int triggerPageSize = pageSize;
