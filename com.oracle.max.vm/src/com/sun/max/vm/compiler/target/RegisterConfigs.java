@@ -39,6 +39,7 @@ import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.runtime.arm.*;
+
 /**
  * The set of register configurations applicable to compiled code in the VM.
  */
@@ -92,7 +93,7 @@ public class RegisterConfigs {
 
     @HOSTED_ONLY
     public RegisterConfigs(CiRegisterConfig standard, CiRegisterConfig n2j, CiRegisterConfig trampoline, CiRegisterConfig template, CiRegisterConfig compilerStub, CiRegisterConfig uncommonTrapStub,
-                           CiRegisterConfig trapStub) {
+                    CiRegisterConfig trapStub) {
         this.standard = standard;
         this.n2j = n2j;
         this.trampoline = trampoline;
@@ -101,9 +102,11 @@ public class RegisterConfigs {
         this.uncommonTrapStub = uncommonTrapStub;
         this.trapStub = trapStub;
 
-        //assert Arrays.equals(standard.getAllocatableRegisters(), standard.getCallerSaveRegisters()) : "VM requires caller-save for VM to VM calls";
-        // in ARM the callee save are different to the allocatable as it includes R14 and R10 R8,R9 which we use for
-        // return address (must be for R14), safepoint R10, and scratch for longs R8,R9
+        // In ARM the callee save are different to the allocatable since it includes R14 which we use for
+        // return address, R10 for safepoint , and R8,R9 scratch registers.
+        if (platform().isa == ISA.AMD64) {
+            assert Arrays.equals(standard.getAllocatableRegisters(), standard.getCallerSaveRegisters()) : "VM requires caller-save for VM to VM calls";
+        }
     }
 
     @HOSTED_ONLY
@@ -116,9 +119,7 @@ public class RegisterConfigs {
     @HOSTED_ONLY
     public static RegisterConfigs create() {
         OS os = platform().os;
-
         CiRegister[] allocatable = null;
-        CiRegister[] modifiedCallerSave = null;
         CiRegister[] parameters = null;
         CiRegister[] allRegistersExceptLatch = null;
 
@@ -126,17 +127,13 @@ public class RegisterConfigs {
         CiRegisterConfig standard = null;
 
         /**
-         * Input parameters: (General) r0-r3 (Floating Point) d0-d7
-         * Frame pointer: r11 Stack pointer: r13
-         * Return register: r14
-         * Latch register: r10
-         * Scratch registers: r8, r12, d15
+         * Input parameters: (General) r0-r3 (Floating Point) d0-d7 Frame pointer: r11 Stack pointer: r13 Return
+         * register: r14 Latch register: r10 Scratch registers: r8, r12, d15
          */
         if (platform().isa == ISA.ARM) {
             if (os == OS.LINUX || os == OS.DARWIN) {
-                modifiedCallerSave = new CiRegister[] { r0, r1, r2, r3, r4, r5, r6, r7, ARMV7.r9, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15};
-                allocatable = new CiRegister[] { r0, r1, r2, r3, r4, r5, r6, r7, ARMV7.r9, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27};
-
+                allocatable = new CiRegister[] { r0, r1, r2, r3, r4, r5, r6, r7, ARMV7.r9, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23,
+                                s24, s25, s26, s27};
                 parameters = new CiRegister[] { r0, r1, r2, r3, s0, s1, s2, s3, s4, s5, s6, s7};
                 allRegistersExceptLatch = new CiRegister[] { r0, r1, r2, r3, r4, r5, r6, r7, ARMV7.r8, ARMV7.r9, ARMV7.r11, ARMV7.r12, ARMV7.r13, ARMV7.r14, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9,
                                 s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31};
@@ -161,8 +158,8 @@ public class RegisterConfigs {
                 CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 4, ARMV7.cpuxmmRegisters));
                 CiRegisterConfig trapStub = new CiRegisterConfig(standard, ARMTrapFrameAccess.CSL);
 
-                CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 4, r0, r1, r2, r3, ARMV7.r8, ARMV7.s0, ARMV7.s1, ARMV7.s2, ARMV7.s3,
-                                ARMV7.s4, ARMV7.s5, ARMV7.s6, ARMV7.s7));
+                CiRegisterConfig trampoline = new CiRegisterConfig(standard,
+                                new CiCalleeSaveLayout(0, -1, 4, r0, r1, r2, r3, ARMV7.r8, ARMV7.s0, ARMV7.s1, ARMV7.s2, ARMV7.s3, ARMV7.s4, ARMV7.s5, ARMV7.s6, ARMV7.s7));
                 // r12 is unecessary, but the idea is that we canuse this to save the return address from the
                 // resolveVirtual/InterfaceCall in the slot for r12
                 // that we then call
@@ -178,21 +175,18 @@ public class RegisterConfigs {
             }
         } else if (platform().isa == ISA.AMD64) {
             if (os == OS.LINUX || os == OS.SOLARIS || os == OS.DARWIN || os == OS.MAXVE) {
-                /**
-                 * The set of allocatable registers shared by most register configurations.
-                 */
-                allocatable = new CiRegister[]{rax, rcx, rdx, rbx, rsi, rdi, com.oracle.max.asm.target.amd64.AMD64.r8, com.oracle.max.asm.target.amd64.AMD64.r9,
-                        com.oracle.max.asm.target.amd64.AMD64.r10, com.oracle.max.asm.target.amd64.AMD64.r12, com.oracle.max.asm.target.amd64.AMD64.r13,
-                        com.oracle.max.asm.target.amd64.AMD64.r15, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15};
+                allocatable = new CiRegister[] { rax, rcx, rdx, rbx, rsi, rdi, com.oracle.max.asm.target.amd64.AMD64.r8, com.oracle.max.asm.target.amd64.AMD64.r9,
+                                com.oracle.max.asm.target.amd64.AMD64.r10, com.oracle.max.asm.target.amd64.AMD64.r12, com.oracle.max.asm.target.amd64.AMD64.r13,
+                                com.oracle.max.asm.target.amd64.AMD64.r15, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15};
 
-                parameters = new CiRegister[]{rdi, rsi, rdx, rcx, com.oracle.max.asm.target.amd64.AMD64.r8, com.oracle.max.asm.target.amd64.AMD64.r9, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7};
+                parameters = new CiRegister[] { rdi, rsi, rdx, rcx, com.oracle.max.asm.target.amd64.AMD64.r8, com.oracle.max.asm.target.amd64.AMD64.r9, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7};
 
                 // A call to the runtime may change the state of the safepoint latch
                 // and so a compiler stub must leave the latch register alone
-                allRegistersExceptLatch = new CiRegister[]{rax, rcx, rdx, rbx, AMD64.rsp, rbp, rsi, rdi, com.oracle.max.asm.target.amd64.AMD64.r8, com.oracle.max.asm.target.amd64.AMD64.r9,
-                        com.oracle.max.asm.target.amd64.AMD64.r10, com.oracle.max.asm.target.amd64.AMD64.r11, com.oracle.max.asm.target.amd64.AMD64.r12,
-                        com.oracle.max.asm.target.amd64.AMD64.r13, /* r14, */
-                        com.oracle.max.asm.target.amd64.AMD64.r15, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15};
+                allRegistersExceptLatch = new CiRegister[] { rax, rcx, rdx, rbx, AMD64.rsp, rbp, rsi, rdi, com.oracle.max.asm.target.amd64.AMD64.r8, com.oracle.max.asm.target.amd64.AMD64.r9,
+                                com.oracle.max.asm.target.amd64.AMD64.r10, com.oracle.max.asm.target.amd64.AMD64.r11, com.oracle.max.asm.target.amd64.AMD64.r12,
+                                com.oracle.max.asm.target.amd64.AMD64.r13, /* r14, */
+                                com.oracle.max.asm.target.amd64.AMD64.r15, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15};
 
                 roleMap.put(CPU_SP, AMD64.rsp);
                 roleMap.put(CPU_FP, rbp);
@@ -220,17 +214,17 @@ public class RegisterConfigs {
                 setNonZero(standard.getAttributesMap(), com.oracle.max.asm.target.amd64.AMD64.r14, AMD64.rsp);
 
                 CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, allRegistersExceptLatch));
-                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8,
-                        com.oracle.max.asm.target.amd64.AMD64.cpuxmmRegisters));
+                CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, com.oracle.max.asm.target.amd64.AMD64.cpuxmmRegisters));
                 CiRegisterConfig trapStub = new CiRegisterConfig(standard, AMD64TrapFrameAccess.CSL);
-                CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, rdi, rsi, rdx, rcx, com.oracle.max.asm.target.amd64.AMD64.r8,
-                        com.oracle.max.asm.target.amd64.AMD64.r9, // parameters
-                        rbp, // must be preserved for baseline compiler
-                        standard.getScratchRegister(), // dynamic dispatch index is saved here for stack frame walker
-                        xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7)); // parameters
+                CiRegisterConfig trampoline = new CiRegisterConfig(standard,
+                                new CiCalleeSaveLayout(0, -1, 8, rdi, rsi, rdx, rcx, com.oracle.max.asm.target.amd64.AMD64.r8, com.oracle.max.asm.target.amd64.AMD64.r9, // parameters
+                                                rbp, // must be preserved for baseline compiler
+                                                standard.getScratchRegister(), // dynamic dispatch index is saved here
+                                                                               // for stack frame walker
+                                                xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7)); // parameters
 
                 CiRegisterConfig n2j = new CiRegisterConfig(standard, new CiCalleeSaveLayout(Integer.MAX_VALUE, -1, 8, rbx, rbp, com.oracle.max.asm.target.amd64.AMD64.r12,
-                        com.oracle.max.asm.target.amd64.AMD64.r13, com.oracle.max.asm.target.amd64.AMD64.r14, com.oracle.max.asm.target.amd64.AMD64.r15));
+                                com.oracle.max.asm.target.amd64.AMD64.r13, com.oracle.max.asm.target.amd64.AMD64.r14, com.oracle.max.asm.target.amd64.AMD64.r15));
                 n2j.stackArg0Offsets[JavaCallee.ordinal()] = nativeStackArg0Offset;
 
                 roleMap.put(ABI_FP, rbp);
