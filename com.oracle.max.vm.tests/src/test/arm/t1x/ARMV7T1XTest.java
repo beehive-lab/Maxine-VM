@@ -1,5 +1,7 @@
 package test.arm.t1x;
 
+import static com.sun.max.vm.MaxineVM.*;
+
 import java.io.*;
 import java.util.*;
 
@@ -129,7 +131,7 @@ public class ARMV7T1XTest extends MaxTestCase {
             RuntimeCompiler.optimizingCompilerOption.setValue(optimizingCompilerName);
             if (initialised == false) {
                 vmConfigurator.create();
-                CompilationBroker.OFFLINE = true;
+                vm().compilationBroker.setOffline(true);
                 JavaPrototype.initialize(false);
                 initialised = true;
             }

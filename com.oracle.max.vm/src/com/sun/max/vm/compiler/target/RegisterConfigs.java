@@ -21,6 +21,7 @@ import static com.oracle.max.asm.target.amd64.AMD64.*;
 import static com.oracle.max.asm.target.armv7.ARMV7.*;
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.runtime.VMRegister.*;
 
 import java.util.*;
@@ -34,12 +35,10 @@ import com.sun.max.lang.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.runtime.arm.*;
-
 /**
  * The set of register configurations applicable to compiled code in the VM.
  */
@@ -82,7 +81,7 @@ public class RegisterConfigs {
     public final CiRegisterConfig uncommonTrapStub;
 
     public CiRegisterConfig getRegisterConfig(ClassMethodActor method) {
-        if (method.isVmEntryPoint() || CompilationBroker.OFFLINE) {
+        if (method.isVmEntryPoint() || vm().compilationBroker.isOffline()) {
             return n2j;
         }
         if (method.isTemplate()) {

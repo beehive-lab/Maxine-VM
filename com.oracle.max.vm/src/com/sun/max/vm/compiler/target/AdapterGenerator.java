@@ -22,34 +22,25 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import com.oracle.max.asm.AbstractAssembler;
-import com.oracle.max.asm.Buffer;
-import com.sun.cri.ci.CiRegisterConfig;
-import com.sun.max.annotate.HOSTED_ONLY;
-import com.sun.max.lang.Classes;
-import com.sun.max.lang.ISA;
-import com.sun.max.platform.Platform;
-import com.sun.max.unsafe.CodePointer;
-import com.sun.max.vm.Log;
-import com.sun.max.vm.actor.Actor;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.actor.member.MethodActor;
-import com.sun.max.vm.compiler.CallEntryPoint;
-import com.sun.max.vm.compiler.CompilationBroker;
-import com.sun.max.vm.runtime.FatalError;
-import com.sun.max.vm.stack.JVMSFrameLayout;
-import com.sun.max.vm.stack.StackFrameCursor;
-import com.sun.max.vm.stack.VMFrameLayout;
-import com.sun.max.vm.type.Kind;
-import com.sun.max.vm.type.SignatureDescriptor;
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.VMOptions.*;
 
-import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.EnumMap;
-import java.util.HashMap;
+import java.io.*;
+import java.util.*;
 
-import static com.sun.max.vm.MaxineVM.vm;
-import static com.sun.max.vm.VMOptions.verboseOption;
+import com.oracle.max.asm.*;
+import com.sun.cri.ci.*;
+import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
+import com.sun.max.platform.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.*;
+import com.sun.max.vm.type.*;
 
 /**
  * Generator for {@linkplain Adapter adapters}, code stubs interposing a call from a caller that has a different
@@ -197,7 +188,7 @@ public abstract class AdapterGenerator {
      *         compiler configured for the VM.
      */
     public static AdapterGenerator forCallee(ClassMethodActor callee, CallEntryPoint callingConvention) {
-        if (!vm().compilationBroker.needsAdapters() || CompilationBroker.OFFLINE) {
+        if (!vm().compilationBroker.needsAdapters() || vm().compilationBroker.isOffline()) {
             // Only one calling convention; no adapters in use
             return null;
         }

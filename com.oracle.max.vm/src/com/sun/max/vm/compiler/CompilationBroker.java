@@ -120,7 +120,7 @@ public class CompilationBroker implements NativeCMethodinVM {
     private static boolean VMExtOpt;
     static int PrintCodeCacheMetrics;
 
-    public static boolean OFFLINE = false;
+    private static boolean offline = false;
     public static boolean SIMULATE_ADAPTER = false;
 
     static {
@@ -199,6 +199,14 @@ public class CompilationBroker implements NativeCMethodinVM {
 
     public boolean isDeoptSupported() {
         return baselineCompiler != null;
+    }
+
+    public boolean isOffline() {
+        return offline;
+    }
+
+    public void setOffline(boolean val) {
+        offline = val;
     }
 
     private static String AddCompiler;

@@ -22,16 +22,15 @@
  */
 package com.sun.max.vm.compiler.target;
 
-import com.sun.max.annotate.HOSTED_ONLY;
-import com.sun.max.lang.ISA;
-import com.sun.max.vm.compiler.CompilationBroker;
-import com.sun.max.vm.runtime.FatalError;
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.MaxineVM.*;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
+import java.lang.reflect.*;
+import java.util.*;
 
-import static com.sun.max.platform.Platform.platform;
+import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * A set of safepoints sorted by their {@linkplain #posAt(int) positions}. The information for each safepoint
@@ -146,7 +145,7 @@ public final class Safepoints {
     private static final int CAUSE_OFFSET_MASK = ((1 << 28) - 1) & ~POS_MASK;
     private static final int CAUSE_OFFSET_SHIFT = 23;
 
-    private static final int MAX_CAUSE_OFFSET = 16;; // ARM seems to come in at 16, dont know why.
+    private static final int MAX_CAUSE_OFFSET = 16;
     /**
      * Mask for extracting attributes.
      */
@@ -413,7 +412,7 @@ public final class Safepoints {
         assert pos(safepointPos) == safepointPos : "safepoint position out of range";
         assert (attrs & ATTRS_MASK) == attrs;
         int causeOffset = safepointPos - causePos;
-        if (CompilationBroker.OFFLINE) {
+        if (vm().compilationBroker.isOffline()) {
             assert causeOffset >= 0 && causeOffset <= MAX_CAUSE_OFFSET : "cause position out of range";
         }
         return safepointPos | (causeOffset << CAUSE_OFFSET_SHIFT) | attrs;

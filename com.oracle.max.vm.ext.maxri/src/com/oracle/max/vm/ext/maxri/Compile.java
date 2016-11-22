@@ -17,6 +17,8 @@
  */
 package com.oracle.max.vm.ext.maxri;
 
+import static com.sun.max.vm.MaxineVM.*;
+
 import java.io.*;
 import java.util.*;
 
@@ -118,9 +120,8 @@ public class Compile {
         args = VMOption.extractVMArgs(args);
 
         VMConfigurator vmConfigurator = null;
-        if (!CompilationBroker.OFFLINE) {
+        if (!vm().compilationBroker.isOffline()) {
             vmConfigurator = new VMConfigurator(options);
-
         } else {
             vmConfigurator = new VMConfigurator(null);
         }
@@ -145,7 +146,7 @@ public class Compile {
             MethodInstrumentation.enable(500);
         }
 
-        if (!CompilationBroker.OFFLINE) {
+        if (!vm().compilationBroker.isOffline()) {
             vmConfigurator.create();
 
             // create the prototype
@@ -178,7 +179,7 @@ public class Compile {
     public static List<TargetMethod> compileMethod(String[] args, String compilerAlias, String method) throws IOException {
         args = VMOption.extractVMArgs(args);
         VMConfigurator vmConfigurator = null;
-        if (!CompilationBroker.OFFLINE) {
+        if (!vm().compilationBroker.isOffline()) {
             vmConfigurator = new VMConfigurator(options);
         } else {
             vmConfigurator = new VMConfigurator(null);
@@ -204,7 +205,7 @@ public class Compile {
             MethodInstrumentation.enable(500);
         }
 
-        if (!CompilationBroker.OFFLINE) {
+        if (!vm().compilationBroker.isOffline()) {
             vmConfigurator.create();
 
             // create the prototype
@@ -412,7 +413,7 @@ public class Compile {
             TargetMethod newTarget = null;
             newTarget = compile(compiler, methodActor);
             targetMethods.add(newTarget);
-            if (CompilationBroker.OFFLINE) {
+            if (vm().compilationBroker.isOffline()) {
                 ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
                 classMethodActor.compiledState = new Compilations(null, newTarget);
                 offlineAddCalls(newTarget);
