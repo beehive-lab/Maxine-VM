@@ -138,14 +138,6 @@ public final class TargetBundleLayout {
         initialize(code, numberOfCodeBytes, region);
 
         bundleSize = region.getAllocationMark().asSize();
-
-	if (com.sun.max.platform.Platform.target().arch.isARM()) {
-		int literalsObjectSize = 0;
-		literalsObjectSize = numberOfScalarLiteralBytes + (4*numberOfReferenceLiterals);
-		if (literalsObjectSize % 8 != 0)	{
-			// INSERT ALIGNMENT
-		}
-	}
         assert bundleSize.isWordAligned();
     }
 
