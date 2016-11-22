@@ -308,8 +308,7 @@ static void mapHeapAndCode(int fd) {
     theHeap = (Address) &maxvm_image_start + heapOffsetInImage;
 #elif os_SOLARIS || os_DARWIN || os_LINUX
     Address reservedVirtualSpace = (Address) 0;
-    size_t virtualSpaceSize =  1024L * theHeader->reservedVirtualSpaceSize;
-
+    size_t virtualSpaceSize = 1024L * theHeader->reservedVirtualSpaceSize;
     c_ASSERT(virtualMemory_pageAlign((Size) virtualSpaceSize) == (Size) virtualSpaceSize);
     if (virtualSpaceSize != 0) {
         // VM configuration asks for reserving an address space of size reservedVirtualSpaceSize.
@@ -318,12 +317,10 @@ static void mapHeapAndCode(int fd) {
         // boot heap region, automatically splitting this mapping.
         // In any case,  the VM (mostly the heap scheme) is responsible for releasing unused reserved space.
         reservedVirtualSpace = virtualMemory_allocatePrivateAnon((Address) 0, virtualSpaceSize, JNI_FALSE, JNI_FALSE, HEAP_VM);
-
         if (reservedVirtualSpace == ALLOC_FAILED) {
             log_exit(4, "could not reserve requested virtual space");
         }
     }
-
     if (theHeader->bootRegionMappingConstraint == 1) {
         // Map the boot heap region at the start of the reserved space
         theHeap = reservedVirtualSpace;
@@ -337,7 +334,6 @@ static void mapHeapAndCode(int fd) {
             log_exit(4, "could not reserve virtual space for boot image");
         }
     }
-
     if (virtualMemory_mapFileAtFixedAddress(theHeap, heapAndCodeSize, fd, heapOffsetInImage) == ALLOC_FAILED) {
         log_exit(4, "could not map boot image");
     }
@@ -397,11 +393,7 @@ static void relocate(int fd) {
     log_println("image.relocate [relocation map: %d bytes]", theHeader->relocationDataSize);
 #endif
 
-#ifdef arm
     relocation_apply((void *) theHeap, theHeap, relocationData, theHeader->relocationDataSize, word_BIG_ENDIAN, theHeader->wordSize);
-#else
-    relocation_apply((void *) theHeap, theHeap, relocationData, theHeader->relocationDataSize, word_BIG_ENDIAN, theHeader->wordSize);
-#endif
 
 #if !MEMORY_IMAGE
     free(relocationData);
