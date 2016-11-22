@@ -149,8 +149,6 @@ static void copyVarargsToArray(jvalue *argumentArray, va_list argumentList, int 
 /*
  * Call<type>Method Routines
  */
-
-
 #define CALL_METHOD(functionName, returnType) do { \
     va_list argumentList; \
     returnType result; \
