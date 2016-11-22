@@ -49,7 +49,7 @@ boolean task_read_registers(pid_t tid,
 #ifndef __arm__
         struct user_regs_struct osIntegerRegisters;
 #else
-	struct user_regs osIntegerRegisters;
+	    struct user_regs osIntegerRegisters;
 #endif
         if (ptrace(PT_GETREGS, tid, 0, &osIntegerRegisters) != 0) {
             return false;
@@ -66,7 +66,7 @@ boolean task_read_registers(pid_t tid,
 #ifndef __arm__
         struct user_fpregs_struct osFloatRegisters;
 #else
-	struct user_fpregs osFloatRegisters;
+	    struct user_fpregs osFloatRegisters;
 #endif
         if (ptrace(PT_GETFPREGS, tid, 0, &osFloatRegisters) != 0) {
             return false;
