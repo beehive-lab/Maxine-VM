@@ -43,8 +43,7 @@ import com.sun.max.vm.reference.*;
  */
 public final class CodePointer {
 
-    private static long baseOffset = (Platform.target().arch.is32bit() ? 0x1000000000000000L : 0x40000000);
-    private static long BASE_ADDRESS = MaxineVM.isHosted() ? baseOffset : Code.bootCodeRegion().start().toLong();
+    private static long BASE_ADDRESS = MaxineVM.isHosted() ? 0x1000000000000000L : Code.bootCodeRegion().start().toLong();
 
     /**
      * Set the base address. This is needed since the static field will otherwise not be properly initialised if the VM
@@ -156,27 +155,24 @@ public final class CodePointer {
     /**
      * Get the tagged raw value of a {@code CodePointer}.
      */
-    @SuppressWarnings("cast")
     @INLINE
     public long toTaggedLong() {
         if (isHosted()) {
             return tagged;
         }
         if (Platform.target().arch.is32bit()) {
-            return (long) UnsafeCast.asTaggedInt(this);
+            return UnsafeCast.asTaggedInt(this);
         }
         return UnsafeCast.asTaggedLong(this);
     }
 
-    @SuppressWarnings("cast")
     @INLINE
     public long toLong() {
         if (isHosted()) {
             return untag(tagged);
         }
         if (Platform.target().arch.is32bit()) {
-            return 0x7fffffffL & untag((long) UnsafeCast.asInt(this));
-
+            return (0x7fffffffL & untag(UnsafeCast.asLong(this)));
         }
         return untag(UnsafeCast.asLong(this));
     }
@@ -266,5 +262,4 @@ public final class CodePointer {
     public String toString() {
         return to0xHexString();
     }
-
 }
