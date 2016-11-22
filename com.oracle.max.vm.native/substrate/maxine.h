@@ -26,8 +26,6 @@
 #include "os.h"
 #include "jni.h"
 
-//extern jlong native_nanoTime(void);
-//extern jlong native_currentTimeMillis(void);
 extern jlong native_nanoTime(void);
 extern jlong native_currentTimeMillis(void);
 extern void *native_executablePath(void);
