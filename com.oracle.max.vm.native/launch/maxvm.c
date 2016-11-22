@@ -49,7 +49,7 @@ typedef int (*MaxineFunction)(int argc, char *argv[], char *executablePath);
  * http://www.opensource.apple.com/darwinsource/10.5.4/dyld-96.2/src/dyldInitialization.cpp
  */
 #define MAIN_EXTRA_ARGS , char *envp[], char *apple[]
-#define PROG_PATH apple[0]
+#define PROG_PATH argv[0]
 
 /*
  * CoreFoundation will be (indirectly) loaded when libjava.jnilib is dynamically linked
