@@ -778,9 +778,9 @@ int task_memory_read_fd(int tgid, const void *address) {
         return fd;
     }
     free(memoryFileName);
-   /* might need to use an off32_t? */
 
     off64_t fdOffset = (off64_t) (intptr_t)address;
+
     if (lseek64(fd, fdOffset, SEEK_SET) != fdOffset) {
         log_println("Error seeking memory file for process %d to %p [%ul]: %s", tgid, address, fdOffset, strerror(errno));
         close(fd);
