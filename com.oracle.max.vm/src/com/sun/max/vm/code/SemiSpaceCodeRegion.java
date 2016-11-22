@@ -22,18 +22,16 @@
  */
 package com.sun.max.vm.code;
 
-import com.sun.max.annotate.INSPECTED;
-import com.sun.max.program.ProgramError;
-import com.sun.max.unsafe.Address;
-import com.sun.max.unsafe.Pointer;
-import com.sun.max.unsafe.Size;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.compiler.target.TargetMethod;
-import com.sun.max.vm.heap.LinearAllocatorRegion;
-import com.sun.max.vm.heap.debug.DebugHeap;
-import com.sun.max.vm.runtime.FatalError;
+import java.util.*;
 
-import java.util.Arrays;
+import com.sun.max.annotate.*;
+import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.heap.debug.*;
+import com.sun.max.vm.runtime.*;
 
 /**
  * A code region with semi-space characteristics.
@@ -140,7 +138,6 @@ public final class SemiSpaceCodeRegion extends CodeRegion {
             if (MaxineVM.isHosted()) {
                 ProgramError.unexpected("out of space in linear allocator region");
             }
-
             return Pointer.zero();
         }
         setMark(end);
