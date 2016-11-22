@@ -1,60 +1,47 @@
 /*
- * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
+ * OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package com.sun.max.vm.compiler.target;
 
-import com.sun.cri.bytecode.Bytecodes;
-import com.sun.cri.ci.CiCalleeSaveLayout;
-import com.sun.cri.ci.CiDebugInfo;
-import com.sun.cri.ci.CiTargetMethod;
-import com.sun.max.annotate.HOSTED_ONLY;
-import com.sun.max.lang.ISA;
-import com.sun.max.unsafe.CodePointer;
-import com.sun.max.unsafe.Pointer;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.actor.member.MethodActor;
-import com.sun.max.vm.code.Code;
-import com.sun.max.vm.code.CodeManager.Lifespan;
-import com.sun.max.vm.compiler.CallEntryPoint;
-import com.sun.max.vm.compiler.target.amd64.AMD64TargetMethodUtil;
-import com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil;
-import com.sun.max.vm.runtime.FatalError;
-import com.sun.max.vm.stack.FrameReferenceMapVisitor;
-import com.sun.max.vm.stack.StackFrameCursor;
-import com.sun.max.vm.stack.StackFrameVisitor;
-import com.sun.max.vm.stack.VMFrameLayout;
-
-import java.util.Set;
-
-import static com.sun.max.platform.Platform.platform;
-import static com.sun.max.vm.MaxineVM.isHosted;
-import static com.sun.max.vm.MaxineVM.vm;
-import static com.sun.max.vm.compiler.target.Safepoints.DIRECT_CALL;
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
 
+import java.util.*;
+
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
+import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.code.*;
+import com.sun.max.vm.code.CodeManager.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.compiler.target.arm.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.*;
+
 /**
- * Stubs are for manually-assembled target code. Currently, a stub has the maximum of one
- * direct call to another method, so the callee is passed into the constructor directly.
- * Stack walking of stub frames is done with the same code as for optimized compiler frames.
+ * Stubs are for manually-assembled target code. Currently, a stub has the maximum of one direct call to another method,
+ * so the callee is passed into the constructor directly. Stack walking of stub frames is done with the same code as for
+ * optimized compiler frames.
  */
 public final class Stub extends TargetMethod {
 
@@ -70,16 +57,16 @@ public final class Stub extends TargetMethod {
         InterfaceTrampoline,
 
         /**
-         * Trampoline for static method call (i.e. translation of {@link Bytecodes#INVOKESPECIAL} or {@link Bytecodes#INVOKESTATIC}).
+         * Trampoline for static method call (i.e. translation of {@link Bytecodes#INVOKESPECIAL} or
+         * {@link Bytecodes#INVOKESTATIC}).
          */
         StaticTrampoline,
 
         /**
-         * A stub that performs an operation on behalf of compiled code.
-         * These stubs are called with a callee-save convention; the stub must save any
-         * registers it may destroy and then restore them upon return. This allows the register
-         * allocator to ignore calls to such stubs. Parameters to compiler stubs are
-         * passed on the stack in order to preserve registers for the rest of the code.
+         * A stub that performs an operation on behalf of compiled code. These stubs are called with a callee-save
+         * convention; the stub must save any registers it may destroy and then restore them upon return. This allows
+         * the register allocator to ignore calls to such stubs. Parameters to compiler stubs are passed on the stack in
+         * order to preserve registers for the rest of the code.
          */
         CompilerStub,
 
@@ -95,16 +82,16 @@ public final class Stub extends TargetMethod {
         DeoptStub,
 
         /**
-         * Transition when returning from a compiler stub to a method being deoptimized. This
-         * stub creates an intermediate frame to (re)save all the registers saved by a compiler stub.
+         * Transition when returning from a compiler stub to a method being deoptimized. This stub creates an
+         * intermediate frame to (re)save all the registers saved by a compiler stub.
          *
          * @see #CompilerStub
          */
         DeoptStubFromCompilerStub,
 
         /**
-         * Transition when returning from a trap stub to a method being deoptimized. This
-         * stub creates an intermediate frame to (re)save all the registers saved by the trap stub.
+         * Transition when returning from a trap stub to a method being deoptimized. This stub creates an intermediate
+         * frame to (re)save all the registers saved by the trap stub.
          *
          * @see Stubs#genTrapStub()
          */
@@ -133,7 +120,8 @@ public final class Stub extends TargetMethod {
      * Determines if a given address in a given target method denotes the entry point of a deoptimization stub.
      *
      * @param ip a code address
-     * @param tm the target method {@linkplain Code#codePointerToTargetMethod(Pointer) found} in the code cache based on {@code ip}
+     * @param tm the target method {@linkplain Code#codePointerToTargetMethod(Pointer) found} in the code cache based on
+     *            {@code ip}
      */
     public static boolean isDeoptStubEntry(Pointer ip, TargetMethod tm) {
         if (tm != null && (tm.is(DeoptStub) || tm.is(DeoptStubFromCompilerStub) || tm.is(DeoptStubFromSafepoint))) {
@@ -152,7 +140,7 @@ public final class Stub extends TargetMethod {
 
     @HOSTED_ONLY
     private Stub() {
-        super("Invalid Index stub",  CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        super("Invalid Index stub", CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         type = InvalidIndexTrampoline;
     }
 
@@ -168,14 +156,11 @@ public final class Stub extends TargetMethod {
         if (callPos != -1) {
             int safepointPos = Safepoints.safepointPosForCall(callPos, callSize);
             assert callee != null;
-            //System.err.println("safepos " + safepointPos + " callPos " + callPos + " callSize "+callSize);
-            setSafepoints(new Safepoints(Safepoints.make(safepointPos, callPos, DIRECT_CALL)), new Object[] {callee});
+            setSafepoints(new Safepoints(Safepoints.make(safepointPos, callPos, DIRECT_CALL)), new Object[] { callee});
         }
         if (!isHosted()) {
             linkDirectCalls();
-	    ARMTargetMethodUtil.maxine_cacheflush(codeStart().toPointer(), code().length);
-        } else {
-
+            ARMTargetMethodUtil.maxine_cacheflush(codeStart().toPointer(), code().length);
         }
     }
 
@@ -245,7 +230,7 @@ public final class Stub extends TargetMethod {
                 csa = current.sp().plus(csl.frameOffsetToCSA);
             }
             ARMTargetMethodUtil.advance(current, csl, csa);
-        } else  {
+        } else {
             throw FatalError.unimplemented();
         }
     }
@@ -306,8 +291,6 @@ public final class Stub extends TargetMethod {
 
     @Override
     public CodePointer throwAddressToCatchAddress(CodePointer throwAddress, Throwable exception) {
-	        com.sun.max.vm.Log.println("STUB");
-
         return CodePointer.zero();
     }
 
