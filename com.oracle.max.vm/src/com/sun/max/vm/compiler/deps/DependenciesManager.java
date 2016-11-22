@@ -26,9 +26,8 @@ import java.util.*;
 import java.util.concurrent.locks.*;
 
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiAssumptions.Assumption;
+import com.sun.cri.ci.CiAssumptions.*;
 import com.sun.max.annotate.*;
-import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -61,12 +60,12 @@ import com.sun.max.vm.log.hosted.*;
  * See <a href="https://wikis.oracle.com/display/MaxineVM/Code+Dependencies">the Wiki page</a> for more details.
  */
 public final class DependenciesManager {
+
     /**
-     * The collection of {@link DependencyProcessor} objects that handle specific types of {@link Assumption}.
-     * This is immutable after image build and we keep an array of the values for fast, allocation free, iteration.
+     * The collection of {@link DependencyProcessor} objects that handle specific types of {@link Assumption}. This is
+     * immutable after image build and we keep an array of the values for fast, allocation free, iteration.
      */
-    //public static final Map<Class<? extends CiAssumptions.Assumption>, DependencyProcessor> dependencyProcessors = new HashMap<Class<? extends CiAssumptions.Assumption>, DependencyProcessor>();
-    public static final Map<Object, DependencyProcessor> dependencyProcessors = new HashMap<Object, DependencyProcessor>();
+    public static final Map<Class< ? extends CiAssumptions.Assumption>, DependencyProcessor> dependencyProcessors = new HashMap<Class< ? extends CiAssumptions.Assumption>, DependencyProcessor>();
 
     /**
      * The current packed encoding limits the number of {@linkplain DependencyProcessor} instances.
