@@ -250,7 +250,6 @@ void *thread_run(void *arg) {
 
 #if log_THREADS
     log_print("thread_run: id=%d, t=%p, calling VmThread.add(): ", id, nativeThread);  
-   log_print("  vmThreadAddMEthodOffset vmThreadAddMethod %p  ",addMethod);
     void image_printAddress(Address address);
     image_printAddress((Address) addMethod);
     log_println("");
@@ -514,17 +513,14 @@ jboolean thread_sleep(jlong numberOfMilliSeconds) {
 
     time.tv_sec = numberOfMilliSeconds / 1000;
     time.tv_nsec = (numberOfMilliSeconds % 1000) * 1000000;
-    remainder.tv_sec = 0; // added by APN
-    remainder.tv_nsec = 0; // added by APN
     int value = nanosleep(&time, &remainder);
 
     if (value == -1) {
         int error = errno;
         if (error != EINTR && error != 0) {
-            /*log_println("Call to nanosleep failed (other than by being interrupted): %s [remaining sec: %d, remaining nano sec: %d]", strerror(error), remainder.tv_sec, remainder.tv_nsec); */
+            log_println("Call to nanosleep failed (other than by being interrupted): %s [remaining sec: %d, remaining nano sec: %d]", strerror(error), remainder.tv_sec,
+                            remainder.tv_nsec);
         }
-		time.tv_sec = remainder.tv_sec; // added by APN
-		time.tv_nsec =  remainder.tv_nsec; // added by APN
     }
     return value;
 #endif
