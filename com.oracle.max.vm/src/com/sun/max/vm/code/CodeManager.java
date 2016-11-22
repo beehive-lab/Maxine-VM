@@ -384,7 +384,6 @@ public abstract class CodeManager {
         if (runtimeOptCodeRegion.contains(codePointer)) {
             return runtimeOptCodeRegion;
         }
-
         return null;
     }
 
