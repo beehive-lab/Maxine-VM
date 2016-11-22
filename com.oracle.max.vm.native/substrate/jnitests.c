@@ -53,8 +53,6 @@ Java_test_bench_threads_JNI_1invocations_nativework(JNIEnv *env, jclass cls, jlo
     return sum;
 }
 
-
-
 JNIEXPORT void JNICALL
 Java_jtt_jni_JNI_1Nop_nop(JNIEnv *env, jclass c) {
 }
