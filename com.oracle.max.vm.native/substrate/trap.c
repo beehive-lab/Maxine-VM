@@ -48,7 +48,6 @@
 #define ASYNC_INTERRUPT 4
 
 static Address theJavaTrapStub;
-//static boolean traceTraps = true;
 static boolean traceTraps = false;
 
 #if !os_MAXVE
@@ -82,17 +81,14 @@ int getTrapNumber(int signal) {
 #if !os_MAXVE
     case SIGBUS:
 #endif
-	//printf("MEMFAULT\n");
         return MEMORY_FAULT;
     case SIGFPE:
-	//printf("WE GOT AN SIGFPE\n");
         return ARITHMETIC_EXCEPTION;
 #if !os_MAXVE
     case SIGUSR1:
-	//printf("ASYNCINT\n");
         return ASYNC_INTERRUPT;
      default:
-        printf("UNKNOWN SIGNAL %d\n", signal);
+        log_print("Unknown Signal: %d\n", signal);
 #endif
     }
     return -signal;
@@ -115,8 +111,6 @@ void setCurrentThreadSignalMaskOnThreadExit(boolean isVmOperationThread) {
 }
 
 void setCurrentThreadSignalMask(boolean isVmOperationThread) {
-	//printf("remove the return in setCurrentThreadSignalMask\n");
-	//return;
 #if !os_MAXVE
     if (isVmOperationThread) {
         thread_setSignalMask(SIG_SETMASK, &vmAndDefaultSignals, NULL);
@@ -141,7 +135,7 @@ void* setSignalHandler(int signal, SignalHandlerFunction handler) {
 
 #if os_SOLARIS || os_LINUX || os_DARWIN
     if (signal == SIGUSR1) {
-    	newSigaction.sa_flags = SA_SIGINFO |  SA_ONSTACK;
+        newSigaction.sa_flags = SA_SIGINFO |  SA_ONSTACK;
     }
 #endif
     newSigaction.sa_sigaction = handler;
@@ -188,11 +182,6 @@ static Address getInstructionPointer(UContext *ucontext) {
 }
 
 static void setInstructionPointer(UContext *ucontext, Address stub) {
-//printf("SET PC CALLED\n");
-    if (traceTraps || log_TRAP) {
-
-	log_println("  Instruction Pointer = %p", stub);
-    }
 #if os_SOLARIS
 #   if isa_SPARC
     ucontext->uc_mcontext.gregs[REG_nPC] = (greg_t) (stub + 4);
@@ -202,11 +191,11 @@ static void setInstructionPointer(UContext *ucontext, Address stub) {
     ucontext->uc_mcontext->__ss.__rip = stub;
 #elif os_LINUX
 #   if isa_AMD64
-     ucontext->uc_mcontext.gregs[REG_RIP] = (greg_t) stub;
+        ucontext->uc_mcontext.gregs[REG_RIP] = (greg_t) stub;
 #   elif isa_IA32
-     ucontext->uc_mcontext.gregs[REG_EIP] = (greg_t) stub;
+        ucontext->uc_mcontext.gregs[REG_EIP] = (greg_t) stub;
 #	elif isa_ARM
-	ucontext->uc_mcontext.arm_pc = (greg_t) (stub);
+	    ucontext->uc_mcontext.arm_pc = (greg_t) (stub);
 #   endif
 #elif os_MAXVE
     ucontext->rip = (unsigned long) stub;
@@ -262,12 +251,7 @@ static void blueZoneTrap(NativeThreadLocals ntl) {
  */
 static boolean handleDivideOverflow(UContext *ucontext) {
     unsigned char *rip = (unsigned char *) getInstructionPointer(ucontext);
-
     boolean is64Bit = false;
-#ifdef arm
-    printf("handleDivideOverflow NOT IMPLEMENTED FOR ARM\n");
-#endif
-
     if ((rip[0] & 0xf0) == 0x40) {
         /* Decode REX byte */
         unsigned char rex = rip[0] & 0x0f;
@@ -373,35 +357,14 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
     Address faultAddress = getFaultAddress(signalInfo, ucontext);
 
 #if isa_ARM
-	if (ucontext->uc_mcontext.arm_cpsr & 0x20 ) {
-	    // the exception occured in Thumb mode
-	    //printf("IP %x\n",ip);
-	    //printf("CPSR %lx\n",ucontext->uc_mcontext.arm_cpsr);
-		ip = ip | 0x1; // make sure we get thumb mode!!!
-			       // in the fault address IP that we return to .
-	    ucontext->uc_mcontext.arm_cpsr = ucontext->uc_mcontext.arm_cpsr & 0xffffffdf; // when the stub written in ARM is called then we will no
-	                                                                // end up in Thumb mode
-		if(ucontext->uc_mcontext.arm_cpsr & 0x0600fc00) {
-			//printf("IT block bits are set and trap taken in Thumb mode, potentially we might have a problem\n");
-		}
+    if (ucontext->uc_mcontext.arm_cpsr & 0x20) {
+        ip = ip | 0x1;
+        ucontext->uc_mcontext.arm_cpsr = ucontext->uc_mcontext.arm_cpsr & 0xffffffdf;
     }
-    /*
-		// make sure we get ARM mode in the JAVA trapStub
-	We tried to use the LDM (return from exception) that copies the current SPSR into the CPSR
-	so we do not need to meddle with the ip to force it into Thumb mode
-	BUT WE CANNOT Do LDM/STM/RFE AS THe trap STUB EXECUTES IN USER MODE and not at PL1
-	NOTE: the problem above is that the CPSR copied intot the CPSR
-
-	}*/
 #endif
-    //printf("vmSignalHandler\n");
     /* Only VM signals should get here. */
     if (trapNumber < 0) {
-        if(trapNumber ==  -4) {
-            printf("%x\n", *((int *)ip));
-        }
         logTrap(signal, ip, faultAddress, 0);
-        while(1); // infinite loop to gdb SIGILL
         log_exit(-22, "Non VM signal %d should be handled by the Java signal handler", signal);
     }
 
@@ -465,7 +428,6 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
 
     /* save the trap information in the thread locals */
     tla_store3(dtla, TRAP_NUMBER, trapNumber);
-    //tla_store3(dtla, TRAP_INSTRUCTION_POINTER, getInstructionPointer(ucontext));
     tla_store3(dtla, TRAP_INSTRUCTION_POINTER, ip);
     tla_store3(dtla, TRAP_FAULT_ADDRESS, faultAddress);
 
@@ -486,14 +448,11 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
 #elif isa_ARM
     tla_store3(dtla,TRAP_LATCH_REGISTER, ucontext->uc_mcontext.arm_r10);
     ucontext->uc_mcontext.arm_r10 = (Address) dtla;
-
 #else
     c_UNIMPLEMENTED();
 #endif
 
-
     setInstructionPointer(ucontext, theJavaTrapStub);
-
 }
 
 /**

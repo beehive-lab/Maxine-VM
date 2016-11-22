@@ -915,8 +915,7 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeSetInstructionPointer(JNIEnv *
 #ifndef __arm__
     registers.rip = instructionPointer;
 #else 
-       registers.uregs[13] = instructionPointer;
-
+    registers.uregs[13] = instructionPointer;
 #endif
     return ptrace(PT_SETREGS, tid, 0, &registers) == 0;
 }
