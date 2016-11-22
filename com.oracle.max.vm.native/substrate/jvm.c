@@ -98,7 +98,6 @@ VMInterface *getVMInterface() {
 }
 
 jint JVM_GetInterfaceVersion(void) {
-    
     return JVM_INTERFACE_VERSION;
 }
 
@@ -561,7 +560,7 @@ JVM_GetArrayElement(JNIEnv *env, jobject arr, jint index) {
 jvalue
 JVM_GetPrimitiveArrayElement(JNIEnv *env, jobject arr, jint index, jint wCode) {
     UNIMPLEMENTED_WITH_ENV();
-    return (jvalue)0;
+    return (jvalue) 0;
 }
 
 void
@@ -2187,7 +2186,6 @@ jio_vfprintf(FILE *file, const char *fmt, va_list args) {
 
 void *JVM_RawMonitorCreate(void) {
     Mutex mutex = (Mutex) calloc(sizeof(*mutex), 1);
-    //printf("INITME!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
     mutex_initialize(mutex);
     return mutex;
 }
