@@ -33,33 +33,25 @@
 #include "virtualMemory.h"
 #include "log.h"
 
-Address memory_allocate(Size size)
-{
-    //static int attempts = 0;
-    //printf("Attempt %d Allocating %u\n",attempts++,(unsigned int)size);
+Address memory_allocate(Size size) {
     Address mem = (Address) calloc(1, (size_t) size);
     if (mem % sizeof(void *)) {
         log_println("MEMORY ALLOCATED NOT WORD-ALIGNED (size:%d at address:%x, void* size: %d)", size, mem, sizeof(void *));
     }
-    //printf("Address %u\n",(unsigned int)mem);
     return mem;
 }
 
-Address memory_reallocate(Address pointer, Size size)
-{
+Address memory_reallocate(Address pointer, Size size) {
     Address mem;
-	if (pointer == 0) {
-		mem = (Address) calloc(1, (size_t) size);
-	} else {
-	    mem = (Address) realloc((void *) pointer, (size_t) size);
-	}
-	//log_println("MEMORY ALLOCATED of size:%d at address:%x", size, mem);
+    if (pointer == 0) {
+        mem = (Address) calloc(1, (size_t) size);
+    } else {
+        mem = (Address) realloc((void *) pointer, (size_t) size);
+    }
     return mem;
 }
 
-jint memory_deallocate(Address pointer)
-{
+jint memory_deallocate(Address pointer) {
     free((void *) pointer);
-    //log_println("MEMORY FREED at address: %x", pointer);
     return 0;
 }
