@@ -29,15 +29,14 @@ import java.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAssumptions.*;
 import com.sun.max.annotate.*;
-import com.sun.max.platform.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.actor.Actor;
+import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.deps.DependencyProcessor.*;
 import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.jni.*;
 import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.jni.MemberID;
 import com.sun.max.vm.type.*;
 
 /**
