@@ -77,20 +77,6 @@ public class HostedVMClassLoader extends HostedClassLoader {
         // Regular class, which we load by delegation from the system class loader
         return systemClassLoader.loadClass(name);
     }
-    public Class<?> offlineT1XfindClass(final String name) throws ClassNotFoundException {
-        Class<?> result = null;
-        try {
-            // Arrays/stubs are handled specially in common code in superclass
-            result = super.findClass(name);
-        } catch (ClassNotFoundException ex) {
-            // regular class
-        }
-        if (result != null) {
-            return result;
-        }
-        // Regular class, which we load by delegation from the system class loader
-        return systemClassLoader.loadClass(name);
-    }
 
     @Override
     protected boolean extraLoadClassChecks(Class< ? > javaType) throws ClassNotFoundException {
