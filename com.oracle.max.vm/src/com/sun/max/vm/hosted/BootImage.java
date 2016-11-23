@@ -22,45 +22,32 @@
  */
 package com.sun.max.vm.hosted;
 
-import com.sun.max.config.BootImagePackage;
-import com.sun.max.lang.*;
-import com.sun.max.platform.CPU;
-import com.sun.max.platform.OS;
-import com.sun.max.platform.Platform;
-import com.sun.max.program.ProgramError;
-import com.sun.max.unsafe.Address;
-import com.sun.max.unsafe.Pointer;
-import com.sun.max.util.Utf8;
-import com.sun.max.util.Utf8Exception;
-import com.sun.max.vm.BuildLevel;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.VMConfiguration;
-import com.sun.max.vm.VMScheme;
-import com.sun.max.vm.actor.Actor;
-import com.sun.max.vm.actor.holder.ClassActor;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.actor.member.FieldActor;
-import com.sun.max.vm.classfile.constant.SymbolTable;
-import com.sun.max.vm.classfile.constant.Utf8Constant;
-import com.sun.max.vm.compiler.CallEntryPoint;
-import com.sun.max.vm.heap.Heap;
-import com.sun.max.vm.hosted.BootImage.StringInfo.Key;
-import com.sun.max.vm.tele.InspectableHeapInfo;
-import com.sun.max.vm.thread.VmThread;
-import com.sun.max.vm.thread.VmThreadLocal;
-import com.sun.max.vm.thread.VmThreadMap;
-import com.sun.max.vm.type.ClassRegistry;
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.VMConfiguration.*;
 
 import java.io.*;
-import java.lang.reflect.Field;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel.MapMode;
+import java.lang.reflect.*;
+import java.nio.*;
+import java.nio.channels.FileChannel.*;
 import java.util.*;
 
-import static com.sun.max.platform.Platform.platform;
-import static com.sun.max.vm.VMConfiguration.vmConfig;
+import com.sun.max.config.*;
+import com.sun.max.lang.*;
+import com.sun.max.platform.*;
+import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.util.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.hosted.BootImage.StringInfo.*;
+import com.sun.max.vm.tele.*;
+import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
 /**
  * The <i>boot image</i> contains the heap objects that represent a Maxine VM, including compiled code.
@@ -179,8 +166,7 @@ public class BootImage {
         public void write(OutputStream outputStream, Endianness endian) throws IOException {
             for (Field field : fields()) {
                 try {
-                        endianness.writeInt(outputStream, field.getInt(this));
-
+                    endianness.writeInt(outputStream, field.getInt(this));
                 } catch (IllegalAccessException illegalAccessException) {
                     throw ProgramError.unexpected();
                 }
@@ -314,8 +300,6 @@ public class BootImage {
 
             stringInfoSize = endian.readInt(dataInputStream);
             relocationDataSize = endian.readInt(dataInputStream);
-	    System.out.println("Relocation data size " + relocationDataSize);
-
             heapSize = endian.readInt(dataInputStream);
             codeSize = endian.readInt(dataInputStream);
 
@@ -723,9 +707,6 @@ public class BootImage {
         this.header = new Header(dataPrototype, stringInfo.size());
         this.header.check();
         this.relocationData = dataPrototype.relocationData();
-	//for(int i = 0; i < this.relocationData.length; i++) {
-		//System.out.println("RELOCATION  " + i + " " + this.relocationData[i]);
-        //}
         this.padding = new byte[deltaToPageAlign(header.size() + stringInfo.size() + relocationData.length)];
         this.heap = ByteBuffer.wrap(dataPrototype.heapData());
         this.code = ByteBuffer.wrap(dataPrototype.codeData());
@@ -764,11 +745,9 @@ public class BootImage {
     }
 
     public synchronized ByteBuffer code() {
-
         if (code == null) {
             code = mapSection(codeOffset(), header.codeSize);
         }
-
         ByteBuffer duplicate = code.duplicate();
         duplicate.order(code.order());
         return duplicate;
@@ -796,8 +775,6 @@ public class BootImage {
         outputStream.write(padding);
         write(heap(), outputStream);
         write(code(), outputStream);
-
-
         trailer.write(outputStream, header.endianness());
     }
 
@@ -810,7 +787,6 @@ public class BootImage {
             outputStream.write(array);
         }
     }
-
 
     /**
      * Computes the amount to add to a given size to bump it up to the next page-aligned size.
