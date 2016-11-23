@@ -1,61 +1,47 @@
 /*
- * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
+ * OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package com.sun.max.vm.stack;
 
-import com.sun.max.annotate.HOSTED_ONLY;
-import com.sun.max.annotate.VM_ENTRY_POINT;
-import com.sun.max.unsafe.Address;
-import com.sun.max.unsafe.CodePointer;
-import com.sun.max.unsafe.Pointer;
-import com.sun.max.unsafe.Word;
-import com.sun.max.vm.Log;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.VMOptions;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.actor.member.NativeFunction;
-import com.sun.max.vm.compiler.target.TargetMethod;
-import com.sun.max.vm.jni.NativeStubGenerator;
-import com.sun.max.vm.runtime.FatalError;
-import com.sun.max.vm.runtime.SafepointPoll;
-import com.sun.max.vm.runtime.Snippets;
-import com.sun.max.vm.thread.VmThreadLocal;
-
-import static com.sun.max.platform.Platform.platform;
-import static com.sun.max.vm.compiler.deopt.Deoptimization.DEOPT_RETURN_ADDRESS_OFFSET;
-import static com.sun.max.vm.compiler.target.Stub.Type.TrapStub;
-import static com.sun.max.vm.compiler.target.Stub.isDeoptStubEntry;
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
+import static com.sun.max.vm.compiler.target.Stub.*;
+import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.stack.StackFrameWalker.Purpose.*;
-import static com.sun.max.vm.thread.VmThreadLocal.LAST_JAVA_FRAME_ANCHOR;
+import static com.sun.max.vm.thread.VmThreadLocal.*;
+
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.jni.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * A walker that iterates over the frames in a thread's stack.
  * <p>
- * The walker manages two {@linkplain StackFrameCursor cursors} internally, each of which encapsulates
- * the state needed about a stack frame: one for the <em>current</em>
- * frame (caller frame) and one for the <em>previous</em> frame (callee frame).
+ * The walker manages two {@linkplain StackFrameCursor cursors} internally, each of which encapsulates the state needed
+ * about a stack frame: one for the <em>current</em> frame (caller frame) and one for the <em>previous</em> frame
+ * (callee frame).
  * <p>
- * The walker destructively updates the cursors' contents, rather than allocating new ones,
- * since allocation is disallowed when walking the stack for reference map preparation.
+ * The walker destructively updates the cursors' contents, rather than allocating new ones, since allocation is
+ * disallowed when walking the stack for reference map preparation.
  *
  * @see StackFrameCursor
  */
@@ -74,26 +60,23 @@ public abstract class StackFrameWalker {
      */
     public enum Purpose {
         /**
-         * Raising an exception.
-         * This type of stack walk is allocation free.
+         * Raising an exception. This type of stack walk is allocation free.
          */
         EXCEPTION_HANDLING(StackUnwindingContext.class),
 
         /**
-         * Preparing {@linkplain StackReferenceMapPreparer stack reference map} for a thread's stack.
-         * This type of stack walk is allocation free.
+         * Preparing {@linkplain StackReferenceMapPreparer stack reference map} for a thread's stack. This type of stack
+         * walk is allocation free.
          */
         REFERENCE_MAP_PREPARING(StackReferenceMapPreparer.class),
 
         /**
-         * Reflecting on the frames of a thread's stack.
-         * This type of stack walk is allocation free.
+         * Reflecting on the frames of a thread's stack. This type of stack walk is allocation free.
          */
         RAW_INSPECTING(RawStackFrameVisitor.class),
 
         /**
-         * Reflecting on the frames of a thread's stack.
-         * This type of stack walk is not allocation free.
+         * Reflecting on the frames of a thread's stack. This type of stack walk is not allocation free.
          */
         INSPECTING(null);
 
@@ -156,12 +139,10 @@ public abstract class StackFrameWalker {
         current.fp = fp;
         current.isTopFrame = true;
 
-
         this.purpose = purpose;
         this.currentAnchor = readPointer(LAST_JAVA_FRAME_ANCHOR);
         boolean isTopFrame = true;
         boolean initialIsInNative = !currentAnchor.isZero() && !readWord(currentAnchor, JavaFrameAnchor.PC.offset).isZero();
-
 
         while (!current.sp.isZero()) {
             TargetMethod tm = current.targetMethod();
@@ -177,7 +158,6 @@ public abstract class StackFrameWalker {
 
                 // walk the frame
                 if (!walkFrame(current, callee, tm, purpose, context)) {
-
                     break;
                 }
             } else {
@@ -248,7 +228,7 @@ public abstract class StackFrameWalker {
 
     private boolean walkFrame(StackFrameCursor current, StackFrameCursor callee, TargetMethod targetMethod, Purpose purpose, Object context) {
         boolean proceed = true;
-	 if (purpose == Purpose.REFERENCE_MAP_PREPARING) {
+        if (purpose == Purpose.REFERENCE_MAP_PREPARING) {
             // walk the frame for reference map preparation
             StackReferenceMapPreparer preparer = (StackReferenceMapPreparer) context;
             if (preparer.checkIgnoreCurrentFrame()) {
@@ -342,9 +322,7 @@ public abstract class StackFrameWalker {
             final Word lastJavaCallerFramePointer = readWord(anchor, JavaFrameAnchor.FP.offset);
 
             boolean wasDisabled = SafepointPoll.disable();
-            advance(checkNativeFunctionCall(CodePointer.from(lastJavaCallerInstructionPointer), true).toPointer(),
-                    lastJavaCallerStackPointer,
-                    lastJavaCallerFramePointer);
+            advance(checkNativeFunctionCall(CodePointer.from(lastJavaCallerInstructionPointer), true).toPointer(), lastJavaCallerStackPointer, lastJavaCallerFramePointer);
             if (!wasDisabled) {
                 SafepointPoll.enable();
             }
@@ -355,8 +333,8 @@ public abstract class StackFrameWalker {
     }
 
     /**
-     * Advances this walker past the first frame encountered when walking the stack of a thread that is executing
-     * in native code.
+     * Advances this walker past the first frame encountered when walking the stack of a thread that is executing in
+     * native code.
      */
     private void advanceFrameInNative(Pointer anchor, Purpose purpose) {
         FatalError.check(!anchor.isZero(), "No native stub frame anchor found when executing 'in native'");
@@ -377,8 +355,8 @@ public abstract class StackFrameWalker {
     }
 
     /**
-     * Gets the next anchor in a VM exit frame. That is, get the frame in the next {@linkplain NativeStubGenerator native stub} on the stack
-     * above the current stack pointer.
+     * Gets the next anchor in a VM exit frame. That is, get the frame in the next {@linkplain NativeStubGenerator
+     * native stub} on the stack above the current stack pointer.
      *
      * @return {@link Pointer#zero()} if there are no more native stub frame anchors
      */
@@ -467,9 +445,9 @@ public abstract class StackFrameWalker {
     }
 
     /**
-     * Looks up a method based on a return address read from a frame. Depending on the architecture,
-     * the return address must be adjusted before searching the code cache to ensure the
-     * address within the method containing the call instruction.
+     * Looks up a method based on a return address read from a frame. Depending on the architecture, the return address
+     * must be adjusted before searching the code cache to ensure the address within the method containing the call
+     * instruction.
      */
     private TargetMethod targetMethodForReturnAddress(Word retAddr) {
         if (platform().isa.offsetToReturnPC == 0) {
@@ -492,6 +470,7 @@ public abstract class StackFrameWalker {
     public final void inspect(Pointer ip, Pointer sp, Pointer fp, final StackFrameVisitor visitor) {
         // Wraps the visit operation to record the visited frame as the parent of the next frame to be visited.
         final StackFrameVisitor wrapper = new StackFrameVisitor() {
+
             @Override
             public boolean visitFrame(StackFrame stackFrame) {
                 if (calleeStackFrame == null || !stackFrame.isSameFrame(calleeStackFrame)) {
@@ -513,12 +492,6 @@ public abstract class StackFrameWalker {
      * {@linkplain #reset() resetting} this walker before returning.
      */
     public final void inspect(Pointer ip, Pointer sp, Pointer fp, final RawStackFrameVisitor visitor) {
-//Log.println("RAW INSPECT IP");
-        //Log.println(ip);
-        //Log.println("RAW INSPECT SP");
-        //Log.println(sp);
-        //Log.println("RAW INSPECT FP");
-        //Log.println(fp);
         walk(ip, sp, fp, RAW_INSPECTING, visitor);
         visitor.done();
         reset();
@@ -536,8 +509,8 @@ public abstract class StackFrameWalker {
     }
 
     /**
-     * Walks a thread's stack for the purpose of preparing the reference map of a thread's stack. This method takes care of
-     * {@linkplain #reset() resetting} this walker before returning.
+     * Walks a thread's stack for the purpose of preparing the reference map of a thread's stack. This method takes care
+     * of {@linkplain #reset() resetting} this walker before returning.
      */
     public final void prepareReferenceMap(Pointer ip, Pointer sp, Pointer fp, StackReferenceMapPreparer preparer) {
         walk(ip, sp, fp, REFERENCE_MAP_PREPARING, preparer);
@@ -545,8 +518,8 @@ public abstract class StackFrameWalker {
     }
 
     /**
-     * Walks a thread's stack for the purpose of preparing the reference map of a thread's stack. This method takes care of
-     * {@linkplain #reset() resetting} this walker before returning.
+     * Walks a thread's stack for the purpose of preparing the reference map of a thread's stack. This method takes care
+     * of {@linkplain #reset() resetting} this walker before returning.
      */
     public final void verifyReferenceMap(Pointer ip, Pointer sp, Pointer fp, StackReferenceMapPreparer preparer) {
         walk(ip, sp, fp, REFERENCE_MAP_PREPARING, preparer);
@@ -571,8 +544,8 @@ public abstract class StackFrameWalker {
 
     /**
      * Gets the last stack frame {@linkplain StackFrameVisitor#visitFrame(StackFrame) visited} by this stack walker
-     * while {@linkplain #inspect(Pointer, Pointer, Pointer, StackFrameVisitor) inspecting}. The returned frame is
-     * the callee frame of the next frame to be visited.
+     * while {@linkplain #inspect(Pointer, Pointer, Pointer, StackFrameVisitor) inspecting}. The returned frame is the
+     * callee frame of the next frame to be visited.
      */
     @HOSTED_ONLY
     public final StackFrame calleeStackFrame() {
@@ -580,7 +553,8 @@ public abstract class StackFrameWalker {
     }
 
     /**
-     * Determines if this stack walker is currently in use. This is useful for detecting if an exception is being thrown as part of exception handling.
+     * Determines if this stack walker is currently in use. This is useful for detecting if an exception is being thrown
+     * as part of exception handling.
      */
     public final boolean isInUse() {
         return !current.sp.isZero();
@@ -625,7 +599,9 @@ public abstract class StackFrameWalker {
     public abstract TargetMethod targetMethodFor(Pointer instructionPointer);
 
     public abstract Word readWord(Address address, int offset);
+
     public abstract byte readByte(Address address, int offset);
+
     public abstract int readInt(Address address, int offset);
 
     /**
