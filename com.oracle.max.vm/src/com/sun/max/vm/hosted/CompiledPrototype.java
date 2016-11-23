@@ -187,7 +187,6 @@ public class CompiledPrototype extends Prototype {
         Trace.begin(1, "gatherNewClasses");
         final LinkedList<ClassActor> newClasses = new LinkedList<ClassActor>();
         for (ClassActor classActor : ClassRegistry.allBootImageClasses()) {
-
             if (lookupInfo(classActor) == null) {
                 final Method enclosingMethod = classActor.toJava().getEnclosingMethod();
                 if (enclosingMethod != null) {
@@ -442,9 +441,7 @@ public class CompiledPrototype extends Prototype {
     private void addMethodsReferencedByExistingTargetCode() {
         for (TargetMethod targetMethod : Code.bootCodeRegion().copyOfTargetMethods()) {
             ClassMethodActor classMethodActor = targetMethod.classMethodActor;
-
             if (classMethodActor != null) {
-
                 Link existing = methodActors.put(classMethodActor, new Link(classMethodActor, null, null));
                 assert existing == null : existing;
             } else {
@@ -850,6 +847,7 @@ public class CompiledPrototype extends Prototype {
             compiledSome = compileWorklist();
             compiledAny |= compiledSome;
         } while (compiledSome);
+
         return compiledAny;
     }
 
