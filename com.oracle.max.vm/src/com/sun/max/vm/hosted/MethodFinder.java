@@ -22,21 +22,15 @@
  */
 package com.sun.max.vm.hosted;
 
-import com.sun.max.annotate.HOSTED_ONLY;
-import com.sun.max.program.ClassSearch;
-import com.sun.max.program.Classpath;
-import com.sun.max.program.ProgramWarning;
-import com.sun.max.vm.actor.holder.ClassActor;
-import com.sun.max.vm.actor.member.MethodActor;
-import com.sun.max.vm.compiler.CompilationBroker;
-import com.sun.max.vm.type.SignatureDescriptor;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import static com.sun.max.vm.hosted.MethodFinder.PatternType.*;
+
+import java.util.*;
+
+import com.sun.max.annotate.*;
+import com.sun.max.program.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.type.*;
 
 /**
  * A utility for {@linkplain #find(String[], Classpath, ClassLoader, List) finding} a set of methods
