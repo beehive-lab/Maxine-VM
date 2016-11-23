@@ -87,9 +87,6 @@ public final class ObjectReferenceValue extends ReferenceValue {
 
     @Override
     public int hashCode() {
-	 //if (com.sun.max.platform.Platform.target().arch.is32bit()) {
-            //return 0xfffff & System.identityHashCode(value);
-         //}
         return System.identityHashCode(value);
     }
 
