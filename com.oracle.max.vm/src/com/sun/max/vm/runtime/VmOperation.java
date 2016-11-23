@@ -22,29 +22,21 @@
  */
 package com.sun.max.vm.runtime;
 
-import com.oracle.max.cri.intrinsics.MemoryBarriers;
-import com.sun.max.unsafe.Address;
-import com.sun.max.unsafe.Pointer;
-import com.sun.max.unsafe.Pointer.Predicate;
-import com.sun.max.unsafe.Pointer.Procedure;
-import com.sun.max.unsafe.Word;
-import com.sun.max.vm.Intrinsics;
-import com.sun.max.vm.Log;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.VMOptions;
-import com.sun.max.vm.actor.holder.ClassActor;
-import com.sun.max.vm.heap.Heap;
-import com.sun.max.vm.object.ObjectAccess;
-import com.sun.max.vm.reference.Reference;
-import com.sun.max.vm.stack.JavaFrameAnchor;
-import com.sun.max.vm.thread.VmThread;
-import com.sun.max.vm.thread.VmThreadLocal;
-import com.sun.max.vm.thread.VmThreadMap;
-
-import java.util.Set;
-
-import static com.sun.max.vm.runtime.VmOperationThread.TraceVmOperations;
+import static com.sun.max.vm.runtime.VmOperationThread.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
+
+import java.util.*;
+
+import com.oracle.max.cri.intrinsics.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.unsafe.Pointer.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.object.*;
+import com.sun.max.vm.reference.*;
+import com.sun.max.vm.stack.*;
+import com.sun.max.vm.thread.*;
 
 /**
  * A VM operation that can be {@linkplain VmOperationThread#submit(VmOperation) executed}
