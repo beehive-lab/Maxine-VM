@@ -28,12 +28,10 @@ import java.lang.management.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
-import com.sun.max.platform.Platform;
-
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.debug.*;
-import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.VMLog.*;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.management.*;
 import com.sun.max.vm.runtime.*;
@@ -132,26 +130,11 @@ public final class ImmortalHeap {
         return cell;
     }
 
-    /*public static void printSIZE() {
-	com.sun.max.vm.Log.print("IMMMMMMMORRRRRRRRRRRRTAL HEAP SIZE!!!!!!!" );
-	com.sun.max.vm.Log.println(immortalHeap.size());
-    }
-    */
     /**
      * Initialize the immortal heap memory.
      */
     public static void initialize() {
-
-        if(Platform.target().arch.is32bit()) {
-
-            immortalHeap.initialize(Size.fromLong(Math.max(MaxPermSize.toLong() , PermSize.toLong())));
-
-        } else {
-
-            immortalHeap.initialize(Size.fromLong(Math.max(MaxPermSize.toLong(), PermSize.toLong())));
-
-        }
-
+        immortalHeap.initialize(Size.fromLong(Math.max(MaxPermSize.toLong(), PermSize.toLong())));
     }
 
     public static void initialize(MemoryRegion memoryRegion) {
