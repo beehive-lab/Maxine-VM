@@ -89,7 +89,7 @@ public class StandardJavaMonitor extends AbstractJavaMonitor {
     public void monitorEnter() {
         final VmThread currentThread = VmThread.current();
         traceStartMonitorEnter(currentThread);
-        if(currentThread == null) { // ADDED
+        if(currentThread == null) {
             raiseIllegalMonitorStateException(currentThread);
         }
         if (ownerThread == currentThread) {
