@@ -506,15 +506,10 @@ public class VmThread {
         try {
             if (vmThread == mainThread) {
                 // JVMTIEvent.THREAD_START is dispatched in JavaRunScheme
-		//Log.println("Try execution of mainThread");
                 vmConfig().runScheme().run();
-		//Log.println("mainThread Finished/returned");
             } else {
-	        //Log.println("normal thread");
                 VMTI.handler().threadStart(vmThread);
-		//Log.println("vmti thread (normal) started");
                 vmThread.javaThread.run();
-		//Log.println("normal thread returns");
             }
         } finally {
             // 'stop0()' support.
