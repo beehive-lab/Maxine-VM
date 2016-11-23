@@ -826,15 +826,11 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public boolean compareAndSwapLong(Object object, long offset, long expected, long value) {
-
-        /* THIS IS AN EXMAPLE OF AN IMPLICIT ASSUMPTION THAT 64BITS IS THE WORD SIZE FOR LONG return Reference.fromJava(object).compareAndSwapWord(Offset.fromLong(offset), Address.fromLong(expected), Address.fromLong(value)).equals(Address.fromLong(expected));
-    */
         if (Word.width() == 64) {
             return Reference.fromJava(object).compareAndSwapWord(Offset.fromLong(offset), Address.fromLong(expected), Address.fromLong(value)).equals(Address.fromLong(expected));
         } else {
             return Reference.fromJava(object).compareAndSwapLong(Offset.fromLong(offset), expected, value) == expected;
         }
-
     }
 
     /**
