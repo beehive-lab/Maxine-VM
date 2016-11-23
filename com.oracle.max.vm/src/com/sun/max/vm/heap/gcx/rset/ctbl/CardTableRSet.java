@@ -182,10 +182,10 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
             final Size bootCardTableSize = memoryRequirement(Heap.bootHeapRegion.size()).roundedUpBy(Platform.platform().pageSize);
             final Address bootCardTableStart = Heap.bootHeapRegion.start().plus(reservedSpace).minus(bootCardTableSize);
 
-            FatalError.check(reservedSpace.greaterThan(bootCardTableSize.plus(Heap.bootHeapRegion.size())) &&
-                            VMConfiguration.vmConfig().heapScheme().bootRegionMappingConstraint().equals(BootRegionMappingConstraint.AT_START),
-                "card table remembered set initialization invariant violated");
-		Log.println("before initialize");
+            FatalError.check(
+                            reservedSpace.greaterThan(bootCardTableSize.plus(Heap.bootHeapRegion.size())) &&
+                                            VMConfiguration.vmConfig().heapScheme().bootRegionMappingConstraint().equals(BootRegionMappingConstraint.AT_START),
+                            "card table remembered set initialization invariant violated");
             initialize(Heap.bootHeapRegion.start(), Heap.bootHeapRegion.size(), bootCardTableStart, bootCardTableSize);
         }
     }
