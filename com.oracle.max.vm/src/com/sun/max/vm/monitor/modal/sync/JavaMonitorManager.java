@@ -32,7 +32,6 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.monitor.*;
-import com.sun.max.vm.monitor.modal.modehandlers.inflated.*;
 import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.ManagedMonitor.*;
 import com.sun.max.vm.monitor.modal.sync.nat.*;
 import com.sun.max.vm.object.*;
@@ -308,25 +307,10 @@ public class JavaMonitorManager {
 
     private static ManagedMonitor takeFromUnboundList() {
         // No safe points in here, so safe to touch the free list.
-        if (InflatedMonitorModeHandler.DEBUG) {
-            Log.print(" Take unb 1 ");
-        }
         final ManagedMonitor monitor = unboundList;
-        if (InflatedMonitorModeHandler.DEBUG) {
-            Log.print(" Take unb 2 ");
-        }
         unboundList = unboundList.next();
-        if (InflatedMonitorModeHandler.DEBUG) {
-            Log.print(" Take unb 3 ");
-        }
         monitor.setNext(null);
-        if (InflatedMonitorModeHandler.DEBUG) {
-            Log.print(" Take unb 4 ");
-        }
         numberOfUnboundMonitors--;
-        if (InflatedMonitorModeHandler.DEBUG) {
-            Log.print(" Take unb 5 ");
-        }
         return monitor;
     }
 
