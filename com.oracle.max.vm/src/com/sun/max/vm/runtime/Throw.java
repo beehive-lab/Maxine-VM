@@ -22,36 +22,25 @@
  */
 package com.sun.max.vm.runtime;
 
-import com.sun.max.annotate.INLINE;
-import com.sun.max.annotate.NEVER_INLINE;
-import com.sun.max.annotate.SNIPPET_SLOWPATH;
-import com.sun.max.unsafe.CodePointer;
-import com.sun.max.unsafe.Pointer;
-import com.sun.max.unsafe.UnsafeCast;
-import com.sun.max.unsafe.Word;
-import com.sun.max.vm.Log;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.MaxineVM.Phase;
-import com.sun.max.vm.VMOptions;
-import com.sun.max.vm.actor.holder.ClassActor;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.compiler.target.TargetMethod;
-import com.sun.max.vm.jdk.JDK_java_lang_Throwable;
-import com.sun.max.vm.jdk.JDK_java_lang_Throwable.Backtrace;
-import com.sun.max.vm.object.ObjectAccess;
-import com.sun.max.vm.stack.JavaFrameAnchor;
-import com.sun.max.vm.stack.RawStackFrameVisitor;
-import com.sun.max.vm.stack.StackFrameCursor;
-import com.sun.max.vm.stack.VmStackFrameWalker;
-import com.sun.max.vm.thread.VmThread;
-import com.sun.max.vm.ti.VMTI;
-import com.sun.max.vm.type.BootClassLoader;
+import static com.sun.max.vm.intrinsics.Infopoints.*;
+import static com.sun.max.vm.jdk.JDK_java_lang_Throwable.*;
+import static com.sun.max.vm.object.ArrayAccess.*;
+import static com.sun.max.vm.runtime.VMRegister.*;
 
-import static com.sun.max.vm.intrinsics.Infopoints.here;
-import static com.sun.max.vm.jdk.JDK_java_lang_Throwable.StackTraceInThrowable;
-import static com.sun.max.vm.object.ArrayAccess.readArrayLength;
-import static com.sun.max.vm.runtime.VMRegister.getCpuFramePointer;
-import static com.sun.max.vm.runtime.VMRegister.getCpuStackPointer;
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.jdk.*;
+import com.sun.max.vm.jdk.JDK_java_lang_Throwable.*;
+import com.sun.max.vm.object.*;
+import com.sun.max.vm.stack.*;
+import com.sun.max.vm.thread.*;
+import com.sun.max.vm.ti.*;
+import com.sun.max.vm.type.*;
 
 /**
  */
@@ -129,7 +118,6 @@ public final class Throw {
      */
     public static void raise(Throwable throwable, Pointer sp, Pointer fp, CodePointer ip) {
         VMTI.handler().raise(throwable, sp, fp, ip);
-        //Log.println("Throwing a stack walk unwind");
         convertAssertionToFatalError(throwable);
 
         FatalError.check(throwable != null, "Trying to raise an exception with a null Throwable object");
