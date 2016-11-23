@@ -986,11 +986,6 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         if (!MaxineVM.isDebug() && !VerifyReferences) {
             return;
         }
-        //if (when == GCCallbackPhase.BEFORE) {
-        //    Log.println("--PreGC Verification");
-        //} else if (when == GCCallbackPhase.AFTER) {
-        //    Log.println("--PostGC Verification");
-        //}
 
         if (MaxineVM.isDebug()) {
             zapRegion(fromSpace, when);
@@ -1003,10 +998,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         if (Heap.logGCPhases()) {
             phaseLogger.logVerifyingStackReferences(Interval.BEGIN);
         }
-        //Log.println("--GC Roots Verification: Start");
         gcRootsVerifier.run();
-        //Log.println("--GC Roots Verification: End");
-
         if (Heap.logGCPhases()) {
             phaseLogger.logVerifyingStackReferences(Interval.END);
         }
