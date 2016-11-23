@@ -29,7 +29,6 @@ import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.platform.*;
 
 
 /**
@@ -80,12 +79,7 @@ public abstract class TrapFrameAccess {
      * @param trapFrame the block of memory holding the trap state
      */
     public final void setPC(Pointer trapFrame, Pointer value) {
-	if(Platform.platform().cpu == CPU.ARMV7) {
-		//com.sun.max.vm.Log.print("SETTING PC ");com.sun.max.vm.Log.println(value);
-        	getPCPointer(trapFrame).writeWord(0, value);
-	} else {
-        	getPCPointer(trapFrame).writeWord(0, value);
-	}
+        getPCPointer(trapFrame).writeWord(0, value);
     }
 
     /**
