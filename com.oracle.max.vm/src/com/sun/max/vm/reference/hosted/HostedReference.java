@@ -48,10 +48,6 @@ public class HostedReference extends Reference {
 
     @Override
     public int hashCode() {
-        
-	//if (com.sun.max.platform.Platform.target().arch.is32bit()) {
-            //return 0xfffff & object.hashCode(object);
-        //} 
         return object.hashCode();
     }
 
