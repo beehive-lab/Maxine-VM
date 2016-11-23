@@ -36,7 +36,6 @@ import java.util.concurrent.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
-import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -47,8 +46,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.jdk.JDK.ClassRef;
-import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.VMLog.*;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reflection.*;
@@ -140,10 +138,6 @@ public final class ClassRegistry {
     private static int loadCount;        // total loaded
     private static int unloadCount;    // total unloaded
 
-    //(ck) Temp debuggin flag
-    //TODO: Remove
-    private static boolean DEBUG = false;
-
     static {
         new CriticalNativeMethod(Log.class, "log_lock");
         new CriticalNativeMethod(Log.class, "log_unlock");
@@ -224,9 +218,6 @@ public final class ClassRegistry {
         FieldActor crField = Utils.cast(ClassLoader_classRegistry);
         final ClassRegistry result = (ClassRegistry) crField.getObject(classLoader);
         if (result != null) {
-            if (DEBUG) {
-                System.out.println("Class Registry result " + result);
-            }
             return result;
         }
 
@@ -235,9 +226,6 @@ public final class ClassRegistry {
         final ClassRegistry newRegistry = new ClassRegistry(classLoader);
         final Reference oldRegistry = Reference.fromJava(classLoader).compareAndSwapReference(crField.offset(), null,  Reference.fromJava(newRegistry));
         if (oldRegistry == null) {
-            if (DEBUG) {
-                System.out.println("Create new registry " + newRegistry);
-            }
             return newRegistry;
         }
         return UnsafeCast.asClassRegistry(oldRegistry.toJava());
@@ -277,9 +265,7 @@ public final class ClassRegistry {
         final TypeDescriptor typeDescriptor = classActor.typeDescriptor;
 
         final ClassActor existingClassActor = typeDescriptorToClassActor.putIfAbsent(typeDescriptor, classActor);
-        if (DEBUG) {
-            System.out.println("Class Registry: " + this + " associate classActor " + classActor + " with descriptor " + typeDescriptor);
-        }
+
         if (existingClassActor != null) {
             if (classActor.isArrayClass()) {
                 // The IDs of array classes are maintained by ClassActor.arrayClassIDs, they don't need to be released.
@@ -353,9 +339,6 @@ public final class ClassRegistry {
      * @return the resolved actor corresponding to {@code typeDescriptor} or {@code null} if not found
      */
     public static ClassActor get(ClassLoader classLoader, TypeDescriptor typeDescriptor, boolean searchParents) {
-        if (DEBUG) {
-            System.out.println("In class registry get " + typeDescriptor.string + " " + (classLoader == null ? "null" : classLoader.toString()));
-        }
         ClassRegistry registry = makeRegistry(classLoader);
         ClassActor classActor = registry.get(typeDescriptor);
         if (classActor != null) {
@@ -363,9 +346,6 @@ public final class ClassRegistry {
         }
 
         if (!searchParents || classLoader == null) {
-            if (DEBUG) {
-                System.out.println("Return null");
-            }
             return null;
         }
 
