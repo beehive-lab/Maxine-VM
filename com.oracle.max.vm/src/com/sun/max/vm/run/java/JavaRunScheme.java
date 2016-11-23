@@ -170,9 +170,6 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
     @ALIAS(declaringClass = System.class)
     public static native void initializeSystemClass();
 
-
-
-
     /**
      * The initialization method of the Java run scheme runs at both bootstrapping and startup.
      * While bootstrapping, it gathers the methods needed for native initialization, and at startup
@@ -207,7 +204,6 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                         FatalError.unexpected("Error re-initializing" + className, e);
                     }
                 }
-
                 break;
             }
 
@@ -219,8 +215,6 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                     profiling = true;
                     SamplingProfiler.create(profValue);
                 }
-
-
                 break;
             }
 
@@ -304,10 +298,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             VMTI.handler().threadStart(VmThread.current());
             // load -javaagent agents
             loadJavaAgents();
-
-
             classKindName = "main";
-
             Class<?> mainClass = loadMainClass();
             if (mainClass != null) {
                 lookupAndInvokeMain(mainClass);
@@ -330,10 +321,10 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
             throw invocationTargetException.getCause();
         } catch (IllegalAccessException illegalAccessException) {
             error = true;
-            Log.println("Illegal access trying to invoke " + classKindName + "method: " + illegalAccessException);
+            System.err.println("Illegal access trying to invoke " + classKindName + "method: " + illegalAccessException);
         } catch (IOException ioException) {
             error = true;
-            Log.println("error reading jar file: " + ioException);
+            System.err.println("error reading jar file: " + ioException);
         } catch (ProgramError programError) {
             error = true;
             Log.print("ProgramError: ");
