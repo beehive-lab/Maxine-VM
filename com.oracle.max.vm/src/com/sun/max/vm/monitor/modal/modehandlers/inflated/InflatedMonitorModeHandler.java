@@ -36,8 +36,6 @@ import com.sun.max.vm.thread.*;
  */
 public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
 
-    public static boolean DEBUG = false;
-
     protected InflatedMonitorModeHandler(UnboundMiscWordWriter unboundMiscWordWriter) {
         super(null);
         JavaMonitorManager.registerMonitorUnbinder(unboundMiscWordWriter);
