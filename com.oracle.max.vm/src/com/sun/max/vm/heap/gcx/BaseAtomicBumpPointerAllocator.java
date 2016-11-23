@@ -22,20 +22,16 @@
  */
 package com.sun.max.vm.heap.gcx;
 
-import com.sun.max.annotate.*;
-import com.sun.max.memory.Memory;
-import com.sun.max.unsafe.Address;
-import com.sun.max.unsafe.Pointer;
-import com.sun.max.unsafe.Size;
-import com.sun.max.unsafe.Word;
-import com.sun.max.vm.Log;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.actor.holder.ClassActor;
-import com.sun.max.vm.heap.HeapSchemeWithTLAB;
-import com.sun.max.vm.reference.Reference;
-import com.sun.max.vm.runtime.FatalError;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
+import com.sun.max.annotate.*;
+import com.sun.max.memory.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 
 public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
     /**
@@ -296,7 +292,6 @@ public abstract class BaseAtomicBumpPointerAllocator<T extends Refiller> {
     protected Pointer allocateLarge(Size size) {
         FatalError.check(isLarge(size), "Size must be large");
         synchronized (refillLock()) {
-            Log.println("line 299 allocateLargeRaw BaseAtomicBunmpPointerAllocator");
             return refillManager.allocateLargeRaw(size).asPointer();
         }
     }
