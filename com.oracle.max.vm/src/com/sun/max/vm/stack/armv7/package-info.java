@@ -20,8 +20,5 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-/**
- * AMD64 stack frame manipulation.
- */
 package com.sun.max.vm.stack.armv7;
 

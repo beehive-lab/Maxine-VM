@@ -28,8 +28,6 @@ import com.sun.max.config.*;
 import com.sun.max.lang.*;
 import com.sun.max.vm.*;
 
-/**
- */
 public class Package extends BootImagePackage {
     public Package() {
         super();
@@ -39,5 +37,4 @@ public class Package extends BootImagePackage {
     public boolean isPartOfMaxineVM(VMConfiguration vmConfiguration) {
         return platform().isa == ISA.ARM;
     }
-
 }

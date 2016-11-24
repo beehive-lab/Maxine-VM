@@ -20,7 +20,4 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-/**
- * Representations of AMD64 target machine code and associated objects.
- */
 package com.sun.max.vm.compiler.target.arm;

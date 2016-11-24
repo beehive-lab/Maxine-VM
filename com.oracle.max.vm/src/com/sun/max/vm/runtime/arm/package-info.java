@@ -20,7 +20,4 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-/**
- * AMD64-specific safepoint manipulations.
- */
 package com.sun.max.vm.runtime.arm;
