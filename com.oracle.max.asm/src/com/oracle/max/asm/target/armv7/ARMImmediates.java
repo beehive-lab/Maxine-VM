@@ -87,5 +87,4 @@ public final class ARMImmediates {
     public static boolean isValidShiftImm(int value) {
         return value >= 0 && value <= 32;
     }
-
 }

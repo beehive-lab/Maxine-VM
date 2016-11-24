@@ -1,28 +1,21 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
+ * OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package com.oracle.max.asm.target.armv7;
-
-
 
 public final class ARMISAInstructionDecoder {
 
@@ -33,7 +26,6 @@ public final class ARMISAInstructionDecoder {
 
     private class Prefix {
 
-        // APN not relevant for ARM so deleted
     }
 
     private ARMISAInstructionDecoder(byte[] code, boolean targetIs64Bit) {
@@ -50,18 +42,9 @@ public final class ARMISAInstructionDecoder {
     }
 
     public void decodePosition(int inst) {
-
         assert inst >= 0 && inst < code.length;
-        // APN mostly not relevant so ARM so largely deleted
         int ip = inst;
-        //boolean is64bit = false;
-
-        //boolean hasDisp32 = false;
-        //int tailSize = 0; // other random bytes (#32, #16, etc.) at end of insn
-
-
         currentEndOfInstruction = ip + 4; // 32 bit instructions at the moment
-        // APN this will break above if we go to ARMV8 which is 64bit
         currentDisplacementPosition = ip;
     }
 
@@ -76,21 +59,21 @@ public final class ARMISAInstructionDecoder {
 
     private static void patchDisp32(byte[] code, int pos, int offset) {
         int instruction;
-        instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always,ARMV7.r12,offset & 0xffff);
+        instruction = ARMV7Assembler.movwHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, offset & 0xffff);
         code[pos] = (byte) (instruction & 0xFF);
-        code[pos+1] = (byte) ((instruction >> 8) & 0xFF);
-        code[pos+2] = (byte) ((instruction >> 16) & 0xFF);
-        code[pos+3] = (byte) ((instruction >> 24) & 0xFF);
-        offset = offset >>16;
+        code[pos + 1] = (byte) ((instruction >> 8) & 0xFF);
+        code[pos + 2] = (byte) ((instruction >> 16) & 0xFF);
+        code[pos + 3] = (byte) ((instruction >> 24) & 0xFF);
+        offset = offset >> 16;
         offset = offset & 0xffff;
-        instruction = ARMV7Assembler.movtHelper(ARMV7Assembler.ConditionFlag.Always,ARMV7.r12,offset);
-        code[pos+4] = (byte) (instruction & 0xFF);
-        code[pos+5] = (byte) ((instruction >> 8) & 0xFF);
-        code[pos+6] = (byte) ((instruction >> 16) & 0xFF);
-        code[pos+7] = (byte) ((instruction >> 24) & 0xFF);
-
+        instruction = ARMV7Assembler.movtHelper(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, offset);
+        code[pos + 4] = (byte) (instruction & 0xFF);
+        code[pos + 5] = (byte) ((instruction >> 8) & 0xFF);
+        code[pos + 6] = (byte) ((instruction >> 16) & 0xFF);
+        code[pos + 7] = (byte) ((instruction >> 24) & 0xFF);
     }
-    private static int movt( final int imm16) {
+
+    private static int movt(final int imm16) {
         int instruction = 0xe3400000;
         instruction |= (imm16 >> 12) << 16;
         instruction |= (12 & 0xf) << 12;
@@ -98,9 +81,9 @@ public final class ARMISAInstructionDecoder {
         return instruction;
     }
 
-    private static int movw( final int imm16) {
+    private static int movw(final int imm16) {
         int instruction = 0xe3000000;
-           instruction |= (imm16 >> 12) << 16;
+        instruction |= (imm16 >> 12) << 16;
         instruction |= (12 & 0xf) << 12;
         instruction |= imm16 & 0xfff;
         return instruction;
