@@ -7,6 +7,7 @@ import com.sun.max.ide.*;
 
 @org.junit.runner.RunWith(org.junit.runners.AllTests.class)
 public final class AutoTest {
+
     private AutoTest() {
     }
 
