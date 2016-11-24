@@ -57,7 +57,7 @@ void isa_canonicalizeTeleIntegerRegisters(isa_OsTeleIntegerRegisters os, isa_Can
     CANONICALIZE(r14, R14);
     CANONICALIZE(r15, R15);
 #else
-   CANONICALIZE(r0,0);
+    CANONICALIZE(r0,0);
     CANONICALIZE(r1, 1);
     CANONICALIZE(r2, 2);
     CANONICALIZE(r3, 3);
@@ -109,9 +109,7 @@ void isa_canonicalizeTeleFloatingPointRegisters(isa_OsTeleFloatingPointRegisters
     CANONICALIZE(15);
 
 #else
-log_println("arm substrate isa_canonicalizeTeleFloatingPointRegisters is broken\nd not implementedn");
-/*     c->xmm0 = *((Word *) &(os->fpregs[0..7]));
- something like this but need to get rid of xmm0*/
+    log_println("ARM: isa_canonicalizeTeleFloatingPointRegisters is not implemented!");
 #endif
 #undef CANONICALIZE
 }
@@ -122,8 +120,7 @@ void isa_canonicalizeTeleStateRegisters(isa_OsTeleStateRegisters os, isa_Canonic
     c->flags = (Word) os->__rflags;
 #elif os_LINUX
 #ifdef __arm__
-   log_println("isa_canonicalizeTeleStateRegisters arm substrate broken and not implemented");
-
+    log_println("ARM: isa_canonicalizeTeleStateRegisters is not implemented!");
 #else
     c->rip = (Word) os->rip;
     c->flags = (Word) os->eflags;
@@ -199,6 +196,6 @@ void isa_printCanonicalFloatingPointRegisters(isa_CanonicalFloatingPointRegister
 }
 
 void isa_printCanonicalStateRegisters(isa_CanonicalStateRegisters canonicalStateRegisters) {
-    log_println("rip   = %p [%ld]", canonicalStateRegisters->rip,canonicalStateRegisters->rip);
+    log_println("rip   = %p [%ld]", canonicalStateRegisters->rip, canonicalStateRegisters->rip);
     log_println("flags = %p [%ld]", canonicalStateRegisters->flags, canonicalStateRegisters->flags);
 }
