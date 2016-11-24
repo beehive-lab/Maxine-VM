@@ -3867,7 +3867,7 @@ public class ARMV7JTTTest extends MaxTestCase {
 
         for (int j = 0; j < argTwo.length; j++)
             for (int i = -2; i < 4; i++) {
-                boolean answer = jtt.bytecode.BC_charComp.test(i, argOne, argTwo[j]);
+                boolean answer = jtt.bytecode.BC_charcomp.test(i, argOne, argTwo[j]);
                 int expectedValue = answer ? 1 : 0;
                 String functionPrototype = ARMCodeWriter.preAmble("int ", " int, char, char",
                                 Integer.toString(i) + ", " + "'" + Character.toString(argOne) + "'" + ", " + "'" + Character.toString(argTwo[j]) + "'");
