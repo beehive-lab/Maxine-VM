@@ -17,14 +17,11 @@
  */
 package com.sun.cri.ci;
 
-import com.sun.cri.ci.CiCallingConvention.Type;
-import com.sun.cri.ci.CiRegister.RegisterFlag;
-import com.sun.cri.ri.RiRegisterAttributes;
-import com.sun.cri.ri.RiRegisterConfig;
+import java.util.*;
 
-import java.util.Arrays;
-import java.util.EnumMap;
-import java.util.Map;
+import com.sun.cri.ci.CiCallingConvention.*;
+import com.sun.cri.ci.CiRegister.*;
+import com.sun.cri.ri.*;
 
 /**
  * A default implementation of {@link RiRegisterConfig}.

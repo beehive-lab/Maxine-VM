@@ -22,19 +22,14 @@
  */
 package com.sun.c1x.target.armv7;
 
-import com.oracle.max.asm.target.armv7.ARMV7;
-import com.sun.c1x.util.Util;
-import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiRegister.*;
-import com.sun.cri.xir.CiXirAssembler;
-import com.sun.cri.xir.XirTemplate;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-
-import static com.sun.cri.ci.CiRegister.RegisterFlag.*;
 import static com.sun.cri.xir.XirTemplate.GlobalFlags.*;
+
+import java.util.*;
+
+import com.oracle.max.asm.target.armv7.*;
+import com.sun.c1x.util.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.xir.*;
 
 /**
  * ARMV7 version of {@link CiXirAssembler}.
