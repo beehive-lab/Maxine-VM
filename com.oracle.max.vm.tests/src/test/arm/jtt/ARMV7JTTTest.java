@@ -387,25 +387,6 @@ public class ARMV7JTTTest extends MaxTestCase {
         entryPoint = entryPoint - minimumValue;
     }
 
-    public void test_T1X_jtt_UsageOfStaticMethods() throws Exception {
-        initTests();
-        MaxineByteCode xx = new MaxineByteCode();
-        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
-        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
-        int answer = jtt.bytecode.ARM_BC_test_return1.test(12);
-        expectedValues[0] = answer;
-        byte[] code = xx.getByteArray("test", "jtt.bytecode.ARM_BC_test_return1");
-        initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
-        ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r0, 12);
-        masm.push(ConditionFlag.Always, 1); // local slot 0 is return (int is one slot) last push to stack is 0
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        masm.pop(ConditionFlag.Always, 1);
-        int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
-        assert registerValues[0] == answer : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
-        theCompiler.cleanup();
-    }
-
     public void test_C1X_jtt_BC_imul() throws Exception {
         initTests();
         int argsOne[] = { 1, 0, 33, 1, -2147483648, 2147483647, -2147483648};
@@ -3829,30 +3810,6 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_loopStack() throws Exception {
-        vm().compilationBroker.setOffline(initialised);
-        boolean failed = false;
-        CompilationBroker.SIMULATE_ADAPTER = true;
-        String klassName = getKlassName("jtt.loop.LoopStack");
-        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
-        CompilationBroker.SIMULATE_ADAPTER = false;
-        List<Args> pairs = new LinkedList<Args>();
-        pairs.add(new Args(0, 0));
-        pairs.add(new Args(1, -1));
-        pairs.add(new Args(3, 2));
-        initialiseCodeBuffers(methods, "LoopStack.java", "int test(int)");
-
-        for (Args pair : pairs) {
-            int expectedValue = jtt.loop.LoopStack.test(pair.first);
-            String functionPrototype = ARMCodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
-            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            int returnValue = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
-            theCompiler.cleanup();
-        }
-    }
-
     public void test_jtt_charComp() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         CompilationBroker.SIMULATE_ADAPTER = true;
@@ -4272,33 +4229,6 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_movlong() throws Exception {
-        vm().compilationBroker.setOffline(initialised);
-        String klassName = getKlassName("jtt.bytecode.BC_movlong");
-        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
-        long[] values = new long[10];
-        values[0] = 0L;
-        values[1] = -1L;
-        values[2] = (long) Integer.MIN_VALUE;
-        values[3] = (long) Integer.MAX_VALUE;
-        values[4] = Long.MAX_VALUE;
-        values[5] = Long.MIN_VALUE;
-        values[6] = Long.MIN_VALUE + 5;
-        values[7] = Long.MAX_VALUE - 5;
-        values[8] = ((long) Integer.MIN_VALUE) + 5L;
-        values[9] = ((long) Integer.MAX_VALUE) - 5L;
-        initialiseCodeBuffers(methods, "BC_movlong.java", "long test(int)");
-        for (int i = 0; i < values.length; i++) {
-            long expectedValue = BC_movlong.test(i);
-            String functionPrototype = ARMCodeWriter.preAmble("long long", "int", Integer.toString(i));
-            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            long returnValue = connectRegs(registerValues[0], registerValues[1]);
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
-            theCompiler.cleanup();
-        }
-    }
-
     public void test_jtt_BC_lushr() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lushr");
@@ -4338,29 +4268,6 @@ public class ARMV7JTTTest extends MaxTestCase {
 
         for (Args pair : pairs) {
             boolean expectedValue = jtt.bytecode.BC_lcmp.test(pair.lfirst, pair.lsecond);
-            String functionPrototype = ARMCodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "," + Long.toString(pair.lsecond));
-            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            boolean returnValue = registerValues[0] > 0 ? true : false;
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
-            theCompiler.cleanup();
-        }
-    }
-
-    public void test_jtt_BC_lcmp2() throws Exception {
-        vm().compilationBroker.setOffline(initialised);
-        String klassName = getKlassName("jtt.bytecode.BC_lcmp2");
-        List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
-        List<Args> pairs = new LinkedList<Args>();
-        pairs.add(new Args(0L, -1L));
-        pairs.add(new Args(77L, 78L));
-        pairs.add(new Args(-1L, 0L));
-        pairs.add(new Args(0L, 0L));
-        pairs.add(new Args(Long.MAX_VALUE, Long.MIN_VALUE));
-        initialiseCodeBuffers(methods, "BC_lcmp2.java", "boolean test(long, long)");
-
-        for (Args pair : pairs) {
-            boolean expectedValue = jtt.bytecode.BC_lcmp2.test(pair.lfirst, pair.lsecond);
             String functionPrototype = ARMCodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "," + Long.toString(pair.lsecond));
             int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             boolean returnValue = registerValues[0] > 0 ? true : false;
