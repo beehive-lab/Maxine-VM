@@ -22,8 +22,8 @@
  */
 package com.sun.max.vm.stack.armv7;
 
-import com.sun.max.annotate.*;
 import com.oracle.max.cri.intrinsics.*;
+import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.stack.*;
