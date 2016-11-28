@@ -1,27 +1,21 @@
 /*
- * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
+ * OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package com.sun.max.vm.compiler.target.arm;
-
 
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 import static com.sun.max.platform.Platform.*;
@@ -32,9 +26,8 @@ import static com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.*;
 
 import java.io.*;
 
-import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.armv7.*;
-import com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag;
+import com.oracle.max.asm.target.armv7.ARMV7Assembler.*;
 import com.oracle.max.cri.intrinsics.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
@@ -46,14 +39,11 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.target.Adapter.Type;
+import com.sun.max.vm.compiler.target.Adapter.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.type.*;
 
-/**
- * Adapter generators for ARMV7.
- */
 public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
     final CiRegister scratch;
@@ -116,19 +106,19 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             /**
              * Computes the state of an adapter frame based on an execution point in this adapter.
              * <p/>
-             * This complex computation is only necessary for the Inspector as that is the only context
-             * in which the current execution point in an adapter can be anywhere except for in
-             * the call back to the callee being adapted. Hence the {@link HOSTED_ONLY} annotation.
+             * This complex computation is only necessary for the Inspector as that is the only context in which the
+             * current execution point in an adapter can be anywhere except for in the call back to the callee being
+             * adapted. Hence the {@link HOSTED_ONLY} annotation.
              *
              * @param cursor a stack frame walker cursor denoting an execution point in this adapter
              * @return the amount by which {@code current.sp()} should be adjusted to obtain the slot holding the
-             * address to which the adapter will return. If the low bit of this value is set, then it means that
-             * the caller's RBP is obtained by reading the word at {@code current.fp()} otherwise it is equal to
-             * {@code current.fp()}.
+             *         address to which the adapter will return. If the low bit of this value is set, then it means that
+             *         the caller's RBP is obtained by reading the word at {@code current.fp()} otherwise it is equal to
+             *         {@code current.fp()}.
              */
             @HOSTED_ONLY
             private int computeFrameState(StackFrameCursor cursor) {
-                assert false : "Not implemented yet in ARMv7";
+                assert false : "Not implemented in ARMv7!";
                 int ripAdjustment = frameSize();
                 boolean rbpSaved = false;
                 StackFrameWalker sfw = cursor.stackFrameWalker();
@@ -151,7 +141,6 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 } else {
                     rbpSaved = true;
                 }
-
                 assert (ripAdjustment & 1) == 0;
                 return ripAdjustment | (rbpSaved ? 1 : 0);
             }
@@ -164,7 +153,6 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                     int state = computeFrameState(frame);
                     ripAdjustment = state & ~1;
                 }
-
                 return frame.sp().plus(ripAdjustment);
             }
 
@@ -184,7 +172,6 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 Pointer callerIP = sfw.readWord(ripPointer, 0).asPointer();
                 Pointer callerSP = ripPointer.plus(Word.size()); // Skip RIP word
                 Pointer callerFP = rbpSaved ? sfw.readWord(ripPointer, -Word.size() * 2).asPointer() : current.fp();
-
                 boolean wasDisabled = SafepointPoll.disable();
                 sfw.advance(callerIP, callerSP, callerFP);
                 if (!wasDisabled) {
@@ -195,7 +182,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             @Override
             @HOSTED_ONLY
             public boolean acceptStackFrameVisitor(StackFrameCursor current, StackFrameVisitor visitor) {
-                assert false : "Not implemented yet in ARMv7";
+                assert false : "Not implemented in ARMv7!";
                 int ripAdjustment = computeFrameState(current) & ~1;
                 Pointer ripPointer = current.sp().plus(ripAdjustment);
                 Pointer fp = ripPointer.minus(frameSize());
@@ -209,7 +196,8 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
         }
 
         /**
-         * A specialization of an ARMV7 specific {@link Type#BASELINE2OPT} adapter that contains a reference map occupying 64 or less bits.
+         * A specialization of an ARMV7 specific {@link Type#BASELINE2OPT} adapter that contains a reference map
+         * occupying 64 or less bits.
          */
         public static class Baseline2OptAdapterWithRefMap extends Baseline2OptAdapter {
 
@@ -239,7 +227,8 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
         }
 
         /**
-         * A specialization of an ARMV7 specific {@link Type#BASELINE2OPT} adapter that contains a reference map occupying more than 64 bits.
+         * A specialization of an ARMV7 specific {@link Type#BASELINE2OPT} adapter that contains a reference map
+         * occupying more than 64 bits.
          */
         public static class Baseline2OptAdapterWithBigRefMap extends Baseline2OptAdapter {
 
@@ -268,6 +257,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
         /**
          * Frame layout for an ARMV7 specific {@link Type#BASELINE2OPT} adapter frame.
+         *
          * <pre>
          *
          *          +------------------------+
@@ -314,6 +304,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             @Override
             public Slots slots() {
                 return new Slots() {
+
                     @Override
                     protected String nameOfSlot(int offset) {
                         final int offsetOfReturnAddress = frameSize();
@@ -431,24 +422,21 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // Allocate the frame and save RBP to the stack with an ENTER instruction
             assert explicitlyAllocatedFrameSize >= 0 && explicitlyAllocatedFrameSize <= Short.MAX_VALUE;
 
-
-            //r14: return address of the caller
-            //r11: fp (rbp in x86)
-            //r13: sp
+            // r14: return address of the caller
+            // r11: fp (rbp in x86)
+            // r13: sp
 
             // We save the return address of the caller (i.e. the next address of the blx of the opt method
             // It returns after the adapter in the first instruction of the opt method.
             asm.push(ARMV7Assembler.ConditionFlag.Always, asm.getRegisterList(ARMV7.LR));
 
-           //We save the old framepointer to the stack
+            // We save the old framepointer to the stack
             asm.push(ARMV7Assembler.ConditionFlag.Always, asm.getRegisterList(ARMV7.FP));
 
             // The new FP is the SP
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.FP, ARMV7.rsp);
 
             asm.subq(ARMV7.rsp, (explicitlyAllocatedFrameSize));
-
-
 
             // At this point, the top of the baseline caller's stack (i.e the last arg to the call) is immediately
             // above the adapter's RIP slot. That is, it's at RSP + adapterFrameSize + OPT_SLOT_SIZE.
@@ -482,7 +470,8 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             asm.blx(ARMV7.LR);
             int callSize = asm.codeBuffer.position() - callPos;
 
-            // Restore RSP r13 and RBP r11. Given that RBP r11 is never modified by OPT methods and baseline methods always
+            // Restore RSP r13 and RBP r11. Given that RBP r11 is never modified by OPT methods and baseline methods
+            // always
             // restore it, RBP is guaranteed to be pointing to the slot holding the caller's RBP
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.rsp, ARMV7.FP);
             asm.pop(ARMV7Assembler.ConditionFlag.Always, asm.getRegisterList(ARMV7.FP));
@@ -497,7 +486,6 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // Retract the stack pointer back to its position before the first argument on the caller's stack.
             asm.addq(ARMV7.rsp, baselineArgsSize);
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.PC, ARMV7.r8);
-
 
             final byte[] code = asm.codeBuffer.close(true);
             if (refMap != null) {
@@ -590,21 +578,19 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             }
 
             /**
-             * Computes the amount by which the stack pointer in a given {@linkplain StackFrameCursor cursor}
-             * should be adjusted to obtain the location on the stack holding the RIP to which
-             * the adapter will return.
+             * Computes the amount by which the stack pointer in a given {@linkplain StackFrameCursor cursor} should be
+             * adjusted to obtain the location on the stack holding the RIP to which the adapter will return.
              * <p/>
-             * This complex computation is only necessary for the Inspector as that is the only context
-             * in which the current execution point in an adapter can be anywhere except for in
-             * the call to the body of the callee being adapted. Hence the {@link HOSTED_ONLY} annotation.
+             * This complex computation is only necessary for the Inspector as that is the only context in which the
+             * current execution point in an adapter can be anywhere except for in the call to the body of the callee
+             * being adapted. Hence the {@link HOSTED_ONLY} annotation.
              *
              * @param cursor a stack frame walker cursor denoting an execution point in this adapter
              */
             @HOSTED_ONLY
             private int computeRipAdjustment(StackFrameCursor cursor) {
-                assert false : "Not implemented yet in ARMv7";
+                assert false : "Not implemented in ARMv7!";
                 int ripAdjustment = frameSize();
-                // commented out as we have not ported it ....
                 StackFrameWalker sfw = cursor.stackFrameWalker();
                 int position = cursor.vmIP().minus(codeStart()).toInt();
                 if (!cursor.isTopFrame()) {
@@ -671,6 +657,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
         /**
          * Frame layout for an ARMV7 specific {@link Type#OPT2BASELINE} adapter frame.
+         *
          * <pre>
          *
          *          +------------------------+
@@ -702,6 +689,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             @Override
             public Slots slots() {
                 return new Slots() {
+
                     @Override
                     protected String nameOfSlot(int offset) {
                         final int baselinePrologueCallReturnAddress = frameSize() - Word.size();
@@ -732,12 +720,12 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
         }
 
         /**
-         * The prologue for a method with an OPT2BASELINE adapter has a call to the adapter
-         * at the {@link CallEntryPoint#OPTIMIZED_ENTRY_POINT}. The code at the
-         * {@link CallEntryPoint#BASELINE_ENTRY_POINT} has a jump over this call to the
-         * body of the method. The assembler code is as follows:
+         * The prologue for a method with an OPT2BASELINE adapter has a call to the adapter at the
+         * {@link CallEntryPoint#OPTIMIZED_ENTRY_POINT}. The code at the {@link CallEntryPoint#BASELINE_ENTRY_POINT} has
+         * a jump over this call to the body of the method. The assembler code is as follows:
          *
          * No Adaptation
+         *
          * <pre>
 
          *     +0:  nop
@@ -860,13 +848,13 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                 case SHORT:
                 case CHAR:
                 case INT:
-                case WORD:     // APN changed cases matching this as in ARM most things fit in 32bits.
+                case WORD:
                 case REFERENCE:
                     asm.setUpScratch(new CiAddress(CiKind.Int, ARMV7.RSP, offset32));
                     asm.str(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0);
                     break;
                 case LONG:
-                    asm.setUpScratch(new CiAddress(CiKind.Long, ARMV7.RSP, offset32));     // longs occupy two regists in ARM
+                    asm.setUpScratch(new CiAddress(CiKind.Long, ARMV7.RSP, offset32));
                     asm.strd(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0);
                     break;
                 case FLOAT:
@@ -874,14 +862,13 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
                     if (reg.number < 15) {
                         asm.str(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0);
                     } else {
-                        asm.vstr(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0, CiKind.Float, CiKind.Int);// 32 bit store ...
+                        asm.vstr(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0, CiKind.Float, CiKind.Int);
                     }
                     break;
                 case DOUBLE:
                     asm.setUpScratch(new CiAddress(CiKind.Double, ARMV7.RSP, offset32));
                     if (reg.number < 15) {
                         asm.str(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0);
-
                     } else {
                         asm.vstr(ARMV7Assembler.ConditionFlag.Always, reg, ARMV7.r12, 0, CiKind.Double, CiKind.Int);
                     }
@@ -902,14 +889,14 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
     }
 
     /**
-     * Emits code to copy an incoming argument from ABI-specified location of the caller
-     * to the ABI-specified location of the callee.
+     * Emits code to copy an incoming argument from ABI-specified location of the caller to the ABI-specified location
+     * of the callee.
      *
-     * @param asm                   assembler used to emit code
-     * @param kind                  the kind of the argument
-     * @param optArg                the location of the argument according to the OPT convention
+     * @param asm assembler used to emit code
+     * @param kind the kind of the argument
+     * @param optArg the location of the argument according to the OPT convention
      * @param baselineStackOffset32 the 32-bit offset of the argument on the stack according to the baseline convention
-     * @param adapterFrameSize      the size of the adapter frame
+     * @param adapterFrameSize the size of the adapter frame
      * @return the reference map index of the reference slot on the adapter frame corresponding to the argument or -1
      */
     protected int adaptArgument(ARMV7Assembler asm, Kind kind, CiValue optArg, int baselineStackOffset32, int adapterFrameSize) {
