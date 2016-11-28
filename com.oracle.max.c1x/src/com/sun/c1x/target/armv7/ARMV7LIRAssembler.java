@@ -824,7 +824,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     //tasm.recordImplicitException(codePos() , info);
                 //} // again  do we have non 4 byte aligned addresses
                 //masm.ldrsb(ConditionFlag.Always, 1, 0, 0, dest.asRegister(), ARMV7.r12, 0);
-		masm.setUpScratchOptimised(dest.asRegister(), false, CiKind.Byte, addr); 
+		masm.setUpScratchOptimised(dest.asRegister(), false, CiKind.Byte, addr);
                 if(info != null) {
                     tasm.recordImplicitException(codePos()  -4, info);
                 }
@@ -2741,15 +2741,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 }
                 case PushFrame: {
                     int frameSize = initialFrameSizeInBytes();
-                    if (CompilationBroker.SIMULATE_ADAPTER) {
-                        /*
-                         * Needed as we now have adjusted the start address to include the adapter offset? If this is
-                         * not included then the stack adjustment and the LR register are lost!
-                         */
-                        masm.nop();
-                        masm.nop();
-                        masm.nop();
-                        masm.nop();
+                    if (CompilationBroker.singleton.simulateAdapter()) {
+                        masm.nop(4);
                     }
                     /*
                      * FOR a valid stack backtrace?

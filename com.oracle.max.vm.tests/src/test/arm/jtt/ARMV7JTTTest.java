@@ -1,7 +1,8 @@
 package test.arm.jtt;
 
+import static com.sun.max.vm.MaxineVM.*;
+
 import java.io.*;
-import static com.sun.max.vm.MaxineVM.vm;
 import java.lang.reflect.*;
 import java.math.*;
 import java.util.*;
@@ -19,7 +20,6 @@ import com.sun.max.ide.*;
 import com.sun.max.io.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -506,12 +506,12 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_T1X_jtt_loop_loop01() throws Exception {
         vm().compilationBroker.setOffline(initialised);
-        CompilationBroker.SIMULATE_ADAPTER = true;
+        CompilationBroker.singleton.setSimulateAdapter(true);
         createTemplates();
         String klassName = getKlassName("jtt.loop.Loop01");
         vm().compilationBroker.setOffline(true);
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "T1X");
-        CompilationBroker.SIMULATE_ADAPTER = false;
+        CompilationBroker.singleton.setSimulateAdapter(false);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1, 2));
         pairs.add(new Args(0, 0));
@@ -848,7 +848,7 @@ public class ARMV7JTTTest extends MaxTestCase {
     public void test_T1X_jtt_BC_i2b() throws Exception {
         initTests();
         vm().compilationBroker.setOffline(initialised);
-        CompilationBroker.SIMULATE_ADAPTER = true;
+        CompilationBroker.singleton.setSimulateAdapter(true);
         MaxineByteCode xx = new MaxineByteCode();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -857,7 +857,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         byte[] code = xx.getByteArray("test", "jtt.bytecode.BC_i2b");
         initialiseFrameForCompilation(code, "(I)B", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        CompilationBroker.SIMULATE_ADAPTER = false;
+        CompilationBroker.singleton.setSimulateAdapter(false);
         masm.nop(4);
         masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r0, 255);
         masm.push(ConditionFlag.Always, 1);
@@ -871,12 +871,12 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_C1X_jtt_BC_i2b() throws Exception {
         vm().compilationBroker.setOffline(initialised);
-        CompilationBroker.SIMULATE_ADAPTER = true;
+        CompilationBroker.singleton.setSimulateAdapter(true);
         initTests();
         int argsOne[] = { 0, /*-1, 2, 255, 128*/};
         String klassName = getKlassName("jtt.bytecode.BC_i2b");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
-        CompilationBroker.SIMULATE_ADAPTER = true;
+        CompilationBroker.singleton.setSimulateAdapter(true);
         vm().compilationBroker.setOffline(true);
         initialiseCodeBuffers(methods, "BC_i2b.java", "byte test(int)");
         byte expectedValue = 0;
@@ -1559,7 +1559,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         pairs.add(new Args(2, 3));
         pairs.add(new Args(4, 5));
         pairs.add(new Args(1, 0));
-        CompilationBroker.SIMULATE_ADAPTER = true;
+        CompilationBroker.singleton.setSimulateAdapter(true);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (Args pair : pairs) {
@@ -2352,11 +2352,11 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_f2b() throws Exception {
         vm().compilationBroker.setOffline(initialised);
-        CompilationBroker.SIMULATE_ADAPTER = true;
+        CompilationBroker.singleton.setSimulateAdapter(true);
         initTests();
         String klassName = getKlassName("jtt.bytecode.BC_f2b");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
-        CompilationBroker.SIMULATE_ADAPTER = true;
+        CompilationBroker.singleton.setSimulateAdapter(true);
         vm().compilationBroker.setOffline(true);
         initialiseCodeBuffers(methods, "BC_f2b.java", "byte test(float)");
         float[] arguments = { -2.2f, 0.0f, 1.0f, 100.06f};
@@ -2372,11 +2372,11 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_b2f() throws Exception {
         vm().compilationBroker.setOffline(initialised);
-        CompilationBroker.SIMULATE_ADAPTER = true;
+        CompilationBroker.singleton.setSimulateAdapter(true);
         initTests();
         String klassName = getKlassName("jtt.bytecode.BC_b2f");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
-        CompilationBroker.SIMULATE_ADAPTER = true;
+        CompilationBroker.singleton.setSimulateAdapter(true);
         vm().compilationBroker.setOffline(true);
         initialiseCodeBuffers(methods, "BC_b2f.java", "float test(byte)");
         byte[] arguments = { -100, 0, 100};
@@ -3128,7 +3128,7 @@ public class ARMV7JTTTest extends MaxTestCase {
     public void test_C1X_FLOATDIV_jtt_BC_ldiv() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         initTests();
-        CompilationBroker.SIMULATE_ADAPTER = true;
+        CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.bytecode.BC_ldiv");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
@@ -3162,14 +3162,14 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_C1X_FLOATIDIV_jtt_BC_div() throws Exception {
         vm().compilationBroker.setOffline(initialised);
-        CompilationBroker.SIMULATE_ADAPTER = true;
+        CompilationBroker.singleton.setSimulateAdapter(true);
         initTests();
         int argsOne[] = { 1, 2, 256, 135, -2147483648, -2147483648};
         int argsTwo[] = { 2, -1, 4, 7, -1, 1};
         String klassName = getKlassName("jtt.bytecode.BC_idiv");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
-        CompilationBroker.SIMULATE_ADAPTER = false;
+        CompilationBroker.singleton.setSimulateAdapter(false);
         initialiseCodeBuffers(methods, "BC_idiv.java", "int test(int, int)");
         int expectedValue = 0;
         for (int i = 0; i < argsOne.length; i++) {
@@ -3753,11 +3753,11 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_loop01() throws Exception {
         vm().compilationBroker.setOffline(initialised);
-        CompilationBroker.SIMULATE_ADAPTER = true;
+        CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.loop.Loop01");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
-        CompilationBroker.SIMULATE_ADAPTER = false;
+        CompilationBroker.singleton.setSimulateAdapter(false);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1, 2));
         pairs.add(new Args(0, 0));
@@ -3778,11 +3778,11 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_charComp() throws Exception {
         vm().compilationBroker.setOffline(initialised);
-        CompilationBroker.SIMULATE_ADAPTER = true;
+        CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.bytecode.BC_charComp");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
-        CompilationBroker.SIMULATE_ADAPTER = false;
+        CompilationBroker.singleton.setSimulateAdapter(false);
         char argOne = 'c';
         char argTwo[] = { 'a', 'c', 'd'};
         initialiseCodeBuffers(methods, "BC_charComp.java", "boolean test(int, char, char)");
@@ -3802,11 +3802,11 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_loop02() throws Exception {
         vm().compilationBroker.setOffline(initialised);
-        CompilationBroker.SIMULATE_ADAPTER = true;
+        CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.loop.Loop02");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
-        CompilationBroker.SIMULATE_ADAPTER = false;
+        CompilationBroker.singleton.setSimulateAdapter(false);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1, 2));
         pairs.add(new Args(0, 0));
@@ -3895,10 +3895,10 @@ public class ARMV7JTTTest extends MaxTestCase {
     public void test_jtt_loopPHI() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.loop.LoopPhi");
-        CompilationBroker.SIMULATE_ADAPTER = true;
+        CompilationBroker.singleton.setSimulateAdapter(true);
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
-        CompilationBroker.SIMULATE_ADAPTER = false;
+        CompilationBroker.singleton.setSimulateAdapter(false);
         List<Args> pairs = new LinkedList<Args>();
         // pairs.add(new Args(5000, 2));
         // pairs.add(new Args(0, 0));
@@ -3926,11 +3926,11 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_irem2() throws Exception {
         vm().compilationBroker.setOffline(initialised);
-        CompilationBroker.SIMULATE_ADAPTER = true;
+        CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.bytecode.BC_irem");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
-        CompilationBroker.SIMULATE_ADAPTER = false;
+        CompilationBroker.singleton.setSimulateAdapter(false);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(1, 2));
         pairs.add(new Args(2, -1));
@@ -3956,11 +3956,11 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_loopInline() throws Exception {
         vm().compilationBroker.setOffline(initialised);
-        CompilationBroker.SIMULATE_ADAPTER = true;
+        CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.loop.LoopInline");
         List<TargetMethod> methods = Compile.compile(new String[] { klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
-        CompilationBroker.SIMULATE_ADAPTER = false;
+        CompilationBroker.singleton.setSimulateAdapter(false);
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(-1, 2));
         pairs.add(new Args(0, 0));

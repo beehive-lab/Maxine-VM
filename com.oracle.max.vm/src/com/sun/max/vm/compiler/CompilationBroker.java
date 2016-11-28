@@ -121,7 +121,7 @@ public class CompilationBroker implements NativeCMethodinVM {
     static int PrintCodeCacheMetrics;
 
     private static boolean offline = false;
-    public static boolean SIMULATE_ADAPTER = false;
+    private static boolean simulateAdapter = false;
 
     static {
         addFieldOption("-X", "opt", CompilationBroker.class, "Select optimizing compiler whenever possible.");
@@ -207,6 +207,14 @@ public class CompilationBroker implements NativeCMethodinVM {
 
     public void setOffline(boolean val) {
         offline = val;
+    }
+
+    public void setSimulateAdapter(boolean val) {
+        simulateAdapter = val;
+    }
+
+    public boolean simulateAdapter() {
+        return simulateAdapter;
     }
 
     private static String AddCompiler;
