@@ -291,6 +291,4 @@ public class JVMTI_ARMV7T1XCompilation extends ARMV7T1XCompilation {
         templates = defaultT1X.templates;
         return tx1Template;
     }
-
-
 }
