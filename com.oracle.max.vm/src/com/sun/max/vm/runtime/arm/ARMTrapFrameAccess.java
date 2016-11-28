@@ -1,24 +1,19 @@
 /*
- * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
+ * OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package com.sun.max.vm.runtime.arm;
 
@@ -35,15 +30,9 @@ import static com.oracle.max.asm.target.armv7.ARMV7.*;
 import static com.sun.max.vm.MaxineVM.vm;
 import static com.sun.max.vm.runtime.arm.ARMSafepointPoll.LATCH_REGISTER;
 
-/* APN this will need to be rewritten
- ARM architecture traps are going to be different to X86 ...
-The description below is for X86 and ARMV7 appears because of the use of a global find and replace when instantiating the ARM architecture.
-
-
-*/
 /**
- * The trap frame on ARMV7 contains the {@linkplain com.sun.max.vm.runtime.Trap.Number trap number} and the values of the
- * processor's registers when a trap occurs. The trap frame is as follows:
+ * The trap frame on ARMV7 contains the {@linkplain com.sun.max.vm.runtime.Trap.Number trap number} and the values of
+ * the processor's registers when a trap occurs. The trap frame is as follows:
  *
  * <pre>
  *   Base       Contents
@@ -58,11 +47,11 @@ The description below is for X86 and ARMV7 appears because of the use of a globa
  *          | trap number                    |      |
  *          +--------------------------------+      |
  *          |                                |    frame
- *          : XMM0 - XMM15  save area        :    size
+ *          : FPR  save area                 :    size
  *          |                                |      |
  *          +--------------------------------+      |
  *          |                                |      |
- *          : GPR (rax - r15)  save area     :      |
+ *          : GPR  save area                 :      |
  *    %sp   |                                |      v
  *   -------+--------------------------------+----------
  * </pre>
@@ -78,14 +67,8 @@ The description below is for X86 and ARMV7 appears because of the use of a globa
  * }
  * </pre>
  *
- * The fault address (i.e. trapped PC) is stored in the return address slot, making the
- * trap frame appear as if the trapped method called the trap stub directly
- *
- * ARMV7
- * r14_xxx contains the return address.
- * r15_xxx contians the exception vector address
- * SPSR_xxx contains copy of the CPSR at exception.
- * NOTHING PUSHED ONTO STACK BY HARDWARE?
+ * The fault address (i.e. trapped PC) is stored in the return address slot, making the trap frame appear as if the
+ * trapped method called the trap stub directly
  *
  */
 public final class ARMTrapFrameAccess extends TrapFrameAccess {
@@ -95,9 +78,9 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
 
     public static final CiCalleeSaveLayout CSL;
     static {
-        CiRegister[] csaRegs = {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, /*r13,*/ r14,
-		s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31};
-        int size = 4 * 14 + 8 * 32;
+        CiRegister[] csaRegs = { r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, /* r13, */ r14, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20,
+                        s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31};
+        int size = 4 * 14 + 8 * 32; // Size is wrong for FPU
         TRAP_NUMBER_OFFSET = size;
         size += 4;
         FLAGS_OFFSET = size;
@@ -105,15 +88,14 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
         CSL = new CiCalleeSaveLayout(0, size, 4, csaRegs);
     }
 
-
     @Override
     public Pointer getPCPointer(Pointer trapFrame) {
-	return trapFrame.plus(vm().stubs.trapStub().frameSize());
+        return trapFrame.plus(vm().stubs.trapStub().frameSize());
     }
 
     @Override
     public Pointer getSP(Pointer trapFrame) {
-        return trapFrame.plus(vm().stubs.trapStub().frameSize() +  0x4);
+        return trapFrame.plus(vm().stubs.trapStub().frameSize() + 0x4);
     }
 
     @Override
@@ -204,29 +186,28 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
         Log.println(Trap.Number.toExceptionName(trapNumber));
     }
 
-    private static final String[] rflags = {
-        "CF", // 0
-        null, // 1
-        "PF", // 2
-        null, // 3
-        "AF", // 4
-        null, // 5
-        "ZF", // 6
-        "SF", // 7
-        "TF", // 8
-        "IF", // 9
-        "DF", // 10
-        "OF", // 11
-        "IO", // 12
-        "PL", // 13
-        "NT", // 14
-        null, // 15
-        "RF", // 16
-        "VM", // 17
-        "AC", // 18
-        "VIF", // 19
-        "VIP", // 20
-        "ID" // 21
+    private static final String[] rflags = { "CF", // 0
+                    null, // 1
+                    "PF", // 2
+                    null, // 3
+                    "AF", // 4
+                    null, // 5
+                    "ZF", // 6
+                    "SF", // 7
+                    "TF", // 8
+                    "IF", // 9
+                    "DF", // 10
+                    "OF", // 11
+                    "IO", // 12
+                    "PL", // 13
+                    "NT", // 14
+                    null, // 15
+                    "RF", // 16
+                    "VM", // 17
+                    "AC", // 18
+                    "VIF", // 19
+                    "VIP", // 20
+                    "ID" // 21
     };
 
     private static void logFlags(int flags) {
