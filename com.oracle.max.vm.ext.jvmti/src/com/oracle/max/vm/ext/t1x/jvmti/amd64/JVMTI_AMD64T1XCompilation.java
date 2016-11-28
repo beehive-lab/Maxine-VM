@@ -291,6 +291,4 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
         templates = defaultT1X.templates;
         return tx1Template;
     }
-
-
 }

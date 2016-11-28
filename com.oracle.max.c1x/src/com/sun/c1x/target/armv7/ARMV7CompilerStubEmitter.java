@@ -47,7 +47,6 @@ import static com.sun.cri.ci.CiCallingConvention.Type.RuntimeCall;
  */
 public class ARMV7CompilerStubEmitter {
 
-    //APN BROKEN!!!!
     private static final long FloatSignFlip = 0x8000000080000000L;
     private static final long DoubleSignFlip = 0x8000000000000000L;
     private static final CiRegister convertArgument = ARMV7.s0;
@@ -134,7 +133,6 @@ public class ARMV7CompilerStubEmitter {
                 emitD2L();
                 break;
         }
-
         String name = "c1x-stub-" + stub;
         CiTargetMethod targetMethod = tasm.finishTargetMethod(name, comp.runtime, registerRestoreEpilogueOffset, true);
         Object stubObject = comp.runtime.registerCompilerStub(targetMethod, name);
@@ -146,7 +144,6 @@ public class ARMV7CompilerStubEmitter {
             XirRegister fixed = (XirRegister) temp;
             return fixed.register;
         }
-
         return newRegister(temp.kind, allocatableRegisters);
     }
 
@@ -289,32 +286,22 @@ public class ARMV7CompilerStubEmitter {
 
     private void emitCOMISSD(boolean isDouble, boolean isInt) {
         convertPrologue();
-        if (isDouble) {
-            //asm.ucomisd(convertArgument, tasm.recordDataReferenceInCode(CiConstant.DOUBLE_0));
-        } else {
-            //asm.ucomiss(convertArgument, tasm.recordDataReferenceInCode(CiConstant.FLOAT_0));
-        }
         Label nan = new Label();
         Label ret = new Label();
-        //asm.jccb(ConditionFlag.parity, nan);
-        //asm.jccb(ConditionFlag.below, ret);
 
         if (isInt) {
             // input is > 0 -> return maxInt
             // result register already contains 0x80000000, so subtracting 1 gives 0x7fffffff
             asm.decrementl(convertResult, 1);
-           // asm.jmpb(ret);
         } else {
             // input is > 0 -> return maxLong
             // result register already contains 0x8000000000000000, so subtracting 1 gives 0x7fffffffffffffff
             asm.decrementq(convertResult, 1);
-          //  asm.jmpb(ret);
         }
 
         // input is NaN -> return 0
         asm.bind(nan);
         asm.xorptr(convertResult, convertResult);
-
         asm.bind(ret);
         convertEpilogue();
     }
