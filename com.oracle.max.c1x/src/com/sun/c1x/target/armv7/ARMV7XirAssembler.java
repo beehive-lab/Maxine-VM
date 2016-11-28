@@ -1,24 +1,19 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
+ * OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package com.sun.c1x.target.armv7;
 
@@ -31,11 +26,8 @@ import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.xir.*;
 
-/**
- * ARMV7 version of {@link CiXirAssembler}.
- *
- */
 public class ARMV7XirAssembler extends CiXirAssembler {
+
     public ARMV7XirAssembler(CiTarget target) {
         super(target);
     }
@@ -77,7 +69,6 @@ public class ARMV7XirAssembler extends CiXirAssembler {
                 case Or:
                 case Xor:
                     // Convert to two operand form
-
                     XirOperand xOp = i.x();
                     if (i.op == XirOp.Div || i.op == XirOp.Mod) {
                         if (fixedRDX == null) {
@@ -89,7 +80,7 @@ public class ARMV7XirAssembler extends CiXirAssembler {
                         }
                         currentList.add(new XirInstruction(i.x().kind, XirOp.Mov, fixedRAX, i.x()));
                         xOp = fixedRAX;
-	             } else {
+                    } else {
                         if (i.result != i.x()) {
                             currentList.add(new XirInstruction(i.result.kind, XirOp.Mov, i.result, i.x()));
                             xOp = i.result;
@@ -119,13 +110,13 @@ public class ARMV7XirAssembler extends CiXirAssembler {
                 case RepeatMoveWords:
                 case RepeatMoveBytes:
                     if (fixedRSI == null) {
-                       fixedRSI = createRegisterTemp("fixedRSI", target.wordKind, ARMV7.r6);
+                        fixedRSI = createRegisterTemp("fixedRSI", target.wordKind, ARMV7.r6);
                     }
                     if (fixedRDI == null) {
                         fixedRDI = createRegisterTemp("fixedRDI", target.wordKind, ARMV7.r7);
                     }
                     if (fixedRCX == null) {
-                       fixedRCX = createRegisterTemp("fixedRCX", target.wordKind, ARMV7.r1);
+                        fixedRCX = createRegisterTemp("fixedRCX", target.wordKind, ARMV7.r1);
                     }
                     currentList.add(new XirInstruction(target.wordKind, XirOp.Mov, fixedRSI, i.x()));
                     currentList.add(new XirInstruction(target.wordKind, XirOp.Mov, fixedRDI, i.y()));
@@ -211,7 +202,8 @@ public class ARMV7XirAssembler extends CiXirAssembler {
         XirConstant[] constantOperands = constants.toArray(new XirConstant[constants.size()]);
         XirTemplate[] calleeTemplateArray = calleeTemplates.toArray(new XirTemplate[calleeTemplates.size()]);
         XirMark[] marksArray = marks.toArray(new XirMark[marks.size()]);
-        return new XirTemplate(name, this.variableCount, this.allocateResultOperand, resultOperand, fp, sp, xirLabels, xirParameters, temporaryOperands, constantOperands, flags, calleeTemplateArray, marksArray, outgoingStackSize);
+        return new XirTemplate(name, this.variableCount, this.allocateResultOperand, resultOperand, fp, sp, xirLabels, xirParameters, temporaryOperands, constantOperands, flags, calleeTemplateArray,
+                        marksArray, outgoingStackSize);
     }
 
     @Override
