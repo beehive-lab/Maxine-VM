@@ -886,7 +886,7 @@ public class CompilationBroker implements NativeCMethodinVM {
                 Pointer newIp = ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
                 if (ARMTargetMethodUtil.isARMV7RIPCall(current.targetMethod(), newIp)) {
                     CodePointer callSite = CodePointer.from(newIp);
-                    int ripOffset = ARMTargetMethodUtil.ripCallOFFSET(current.targetMethod(), newIp);
+                    int ripOffset = ARMTargetMethodUtil.ripCallOffset(current.targetMethod(), newIp);
                     CodePointer target = CodePointer.from(newIp).plus(ripOffset).minus(8);
                     if (target.equals(oldMethod.getEntryPoint(BASELINE_ENTRY_POINT))) {
                         final CodePointer to = newMethod.getEntryPoint(BASELINE_ENTRY_POINT);
