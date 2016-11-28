@@ -32,39 +32,14 @@ import com.sun.max.vm.stack.armv7.*;
 
 public final class ARMTargetMethodUtil {
 
-    /**
-     * X86 Opcode of a RIP-relative call instruction.
-     * <p/>
-     * ARM this is a STMFD (save my registers) and a PC relative branch instruction
-     */
     public static final int RIP_CALL = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28) | (0x8 << 20) | (ARMV7.r15.getEncoding() << 12) | (ARMV7.r12.getEncoding() << 16);
-
-    /**
-     * X86 Opcode of a register-based call instruction.
-     * <p/>
-     * ARM this is a STMFD (save my registers) and a move of a register into the PC
-     */
     public static final int REG_CALL = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28) | (0xd << 21) | (ARMV7.r15.getEncoding() << 12) | ARMV7.r12.getEncoding();
-
-    /**
-     * X86 Opcode of a RIP-relative jump instruction. ARM again this is a PC relative branch instruction! as its a JMP
-     * we do not save the stack We do this as an add to the PC ...
-     */
     public static final int RIP_JMP = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28) | (0x8 << 20) | (ARMV7.r15.getEncoding() << 12) | (ARMV7.r12.getEncoding() << 16);
-
-    /**
-     * X86 Opcode of a (near) return instruction. ARM here we must do a LDMFD and we move the return address to the PC
-     */
     public static final int RET = ((ARMV7Assembler.ConditionFlag.Always.value() & 0xf) << 28) | (0x8 << 24) | (0xb << 20) | (0xd << 16) | (1 << 15);
-
-    /**
-     * In X86 we do a RIP_CALL instruction, but in ARM we do a blx of 16 bytes.
-     */
     public static final int RIP_CALL_INSTRUCTION_SIZE = 16;
 
     /**
-     * Lock to avoid race on concurrent icache invalidation when patching target methods. ARM I think we need to insert
-     * an isb instruction.
+     * Lock to avoid race on concurrent icache invalidation when patching target methods.
      */
     private static final Object PatchingLock = new Object();
     private static final boolean JUMP_WITH_LINK = true;
@@ -74,17 +49,6 @@ public final class ARMTargetMethodUtil {
     }
 
     public static boolean isPatchableCallSite(CodePointer callSite) {
-        // X86 We only update the disp of the call instruction.
-        // The compiler(s) ensure that disp of the call be aligned to a word boundary.
-        // This may cause up to 7 nops to be inserted before a call.
-
-        // For ARM we mimic X86 but don't have all the alignment restrictions.
-        // All instructions are 32bits so we do not
-        // need to do insertion of nops etc.
-        // Presumably we need to update the 24bit immediate displacement of the branch
-        // and/or patch a movw movt sequence with an absolute address.
-        // currently this will be a patch of the movw movt
-        // an push of the PC and an add to the PC with the disp.
         final Address callSiteAddress = callSite.toAddress();
         return callSiteAddress.isWordAligned();
     }
@@ -92,7 +56,7 @@ public final class ARMTargetMethodUtil {
     /**
      * Gets the target of a 32-bit relative CALL instruction.
      *
-     * @param tm      the method containing the CALL instruction
+     * @param tm the method containing the CALL instruction
      * @param callPos the offset within the code of {@code targetMethod} of the CALL
      * @return the absolute target address of the CALL
      */
@@ -122,15 +86,14 @@ public final class ARMTargetMethodUtil {
         code[callOffset + 2] = (byte) ((instruction >> 8) & 0xff);
         code[callOffset + 1] = (byte) ((instruction >> 16) & 0xff);
         code[callOffset] = (byte) ((instruction >> 24) & 0xff);
-
     }
 
     /**
      * Patches the offset operand of a 32-bit relative CALL instruction.
      *
-     * @param tm         the method containing the CALL instruction
+     * @param tm the method containing the CALL instruction
      * @param callOffset the offset within the code of {@code targetMethod} of the CALL to be patched
-     * @param target     the absolute target address of the CALL
+     * @param target the absolute target address of the CALL
      * @return the target of the call prior to patching
      */
     public static CodePointer fixupCall32Site(TargetMethod tm, int callOffset, CodePointer target) {
@@ -237,25 +200,18 @@ public final class ARMTargetMethodUtil {
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);
     }
 
-    private static final int RIP_CALL_INSTRUCTION_LENGTH = 16; // ARM it's movw movt add blx
+    private static final int RIP_CALL_INSTRUCTION_LENGTH = 16;
+    private static final int RIP_JMP_INSTRUCTION_LENGTH = 4;
 
-    private static final int RIP_JMP_INSTRUCTION_LENGTH = 4; // ARM it's one instruction the B branch
-
-    public static int ripCallOFFSET(TargetMethod tm, Pointer callSitePointer/*CodePointer callSite*/) {
+    public static int ripCallOffset(TargetMethod tm, Pointer callSitePointer) {
         // changed to use Pointers rather than CodePointers as we got an exception due to the
         // masking off of the MSB giving -ve values which then lead to a read of an illegal memory location
-
-        boolean found = false;
-
         int movw = callSitePointer.readInt(0);
         int movt = callSitePointer.readInt(4);
         int low = (movw & 0xfff) | ((movw & 0xf0000) >> 4);
         int high = (movt & 0xfff) | ((movt & 0xf0000) >> 4);
         high = (high << 16) | low;
-        if ((0xe3000000 == (movw & 0xfff00000)) && (0xe3400000 == (movt & 0xfff00000))) { // check  it is REALLY a movw movt ConditionFlag.Always ...
-            found = true;
-        }
-        assert (found);
+        assert ((0xe3000000 == (movw & 0xfff00000)) && (0xe3400000 == (movt & 0xfff00000))) : "Instruction sequence is wrong!";
         return high + 8 + RIP_CALL_INSTRUCTION_LENGTH;
     }
 
@@ -337,8 +293,8 @@ public final class ARMTargetMethodUtil {
     /**
      * Patches a position in a target method with a direct jump to a given target address.
      *
-     * @param tm     the target method to be patched
-     * @param pos    the position in {@code tm} at which to apply the patch
+     * @param tm the target method to be patched
+     * @param pos the position in {@code tm} at which to apply the patch
      * @param target the target of the jump instruction being patched in
      */
     public static void patchWithJump(TargetMethod tm, int pos, CodePointer target) {
@@ -396,8 +352,8 @@ public final class ARMTargetMethodUtil {
      * Indicate with the instruction in a target method at a given position is a jump to a specified destination. Used
      * in particular for testing if the entry points of a target method were patched to jump to a trampoline.
      *
-     * @param tm         a target method
-     * @param pos        byte index relative to the start of the method to a call site
+     * @param tm a target method
+     * @param pos byte index relative to the start of the method to a call site
      * @param jumpTarget target to compare with the target of the assumed jump instruction
      * @return {@code true} if the instruction is a jump to the target, false otherwise
      */
@@ -440,8 +396,8 @@ public final class ARMTargetMethodUtil {
      * Advances the stack walker such that {@code current} becomes the callee.
      *
      * @param current the frame just visited by the current stack walk
-     * @param csl     the layout of the callee save area in {@code current}
-     * @param csa     the address of the callee save area in {@code current}
+     * @param csl the layout of the callee save area in {@code current}
+     * @param csa the address of the callee save area in {@code current}
      */
     public static void advance(StackFrameCursor current, CiCalleeSaveLayout csl, Pointer csa) {
         assert csa.isZero() == (csl == null);
@@ -465,13 +421,10 @@ public final class ARMTargetMethodUtil {
         Pointer callerSP = ripPointer.plus(Word.size()); // Skip return instruction pointer on stack
         Pointer callerFP;
         if (!csa.isZero() && csl.contains(ARMV7.r11.getEncoding())) {
-            // Read RBP from the callee save area
             callerFP = sfw.readWord(csa, csl.offsetOf(ARMV7.r11.getEncoding())).asPointer();
         } else {
-            // Propagate RBP unchanged
             callerFP = current.fp();
         }
-
         current.setCalleeSaveArea(csl, csa);
         boolean wasDisabled = SafepointPoll.disable();
         sfw.advance(callerIP, callerSP, callerFP);
