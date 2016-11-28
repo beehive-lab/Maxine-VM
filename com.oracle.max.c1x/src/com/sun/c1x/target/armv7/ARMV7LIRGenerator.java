@@ -1,24 +1,19 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
+ * OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 
 package com.sun.c1x.target.armv7;
@@ -37,9 +32,9 @@ import com.sun.c1x.util.Util;
 import com.sun.cri.bytecode.Bytecodes;
 import com.sun.cri.ci.*;
 
-
 public class ARMV7LIRGenerator extends LIRGenerator {
 
+    // TODO: (ck) We have to change those to ARM register terminology
     private static final CiRegisterValue RAX_I = ARMV7.r0.asValue(CiKind.Int);
     private static final CiRegisterValue RAX_L = ARMV7.r0.asValue(CiKind.Long);
     private static final CiRegisterValue RDX_I = ARMV7.r2.asValue(CiKind.Int);
@@ -48,7 +43,6 @@ public class ARMV7LIRGenerator extends LIRGenerator {
     private static final CiRegisterValue RETURNREG_I = ARMV7.r0.asValue(CiKind.Int);
 
     private static final CiRegisterValue LDIV_TMP = RDX_L;
-
 
     private static final CiRegisterValue LMUL_OUT = RAX_L;
 
@@ -200,44 +194,33 @@ public class ARMV7LIRGenerator extends LIRGenerator {
     public void visitArithmeticOpLong(ArithmeticOp x) {
         int opcode = x.opcode;
         if (opcode == Bytecodes.LDIV || opcode == Bytecodes.LREM || opcode == Op2.UDIV || opcode == Op2.UREM) {
-            // emit inline 64-bit code
             LIRDebugInfo info = x.needsZeroCheck() ? stateFor(x) : null;
-            //CiValue dividend = force(x.x(), RAX_L); // dividend must be in RAX
             CiValue dividend = force(x.x(), RAX_L);
-            CiValue divisor = load(x.y());            // divisor can be in any (other) register
+            CiValue divisor = load(x.y());
 
             CiValue result = createResultVariable(x);
             CiValue resultReg;
             if (opcode == Bytecodes.LREM) {
-                resultReg = RETURNREG_L;//RDX_L; // remainder result is produced in rdx
-                //lir.lremt(dividend, divisor, resultReg, LDIV_TMP, info);
-		lir.insertLongDivExceptionCheck(dividend,divisor,resultReg, LDIV_TMP,info);
-                resultReg = callRuntime(CiRuntimeCall.arithmeticlrem, null, dividend,divisor);
+                resultReg = RETURNREG_L;
+                lir.insertLongDivExceptionCheck(dividend, divisor, resultReg, LDIV_TMP, info);
+                resultReg = callRuntime(CiRuntimeCall.arithmeticlrem, null, dividend, divisor);
             } else if (opcode == Bytecodes.LDIV) {
-                //resultReg = RAX_L; // division result is produced in rax
-                //lir.ldiv(dividend, divisor, resultReg, LDIV_TMP, info);
-			resultReg = RETURNREG_L;
-			lir.insertLongDivExceptionCheck(dividend,divisor,resultReg, LDIV_TMP,info);
-	            resultReg = callRuntime(CiRuntimeCall.arithmeticldiv, null, dividend,divisor); // HERE call the native method
-
+                resultReg = RETURNREG_L;
+                lir.insertLongDivExceptionCheck(dividend, divisor, resultReg, LDIV_TMP, info);
+                resultReg = callRuntime(CiRuntimeCall.arithmeticldiv, null, dividend, divisor);
             } else if (opcode == Op2.UREM) {
-                resultReg = RETURNREG_L; // remainder result is produced in rdx
-                //lir.lurem(dividend, divisor, resultReg, LDIV_TMP, info);
-		lir.insertLongDivExceptionCheck(dividend,divisor,resultReg, LDIV_TMP,info);
-                resultReg = callRuntime(CiRuntimeCall.arithmeticlurem, null, dividend,divisor); // HERE call the native method
-
+                resultReg = RETURNREG_L;
+                lir.insertLongDivExceptionCheck(dividend, divisor, resultReg, LDIV_TMP, info);
+                resultReg = callRuntime(CiRuntimeCall.arithmeticlurem, null, dividend, divisor);
             } else if (opcode == Op2.UDIV) {
-                resultReg = RETURNREG_L; // division result is produced in rax
-                //lir.ludiv(dividend, divisor, resultReg, LDIV_TMP, info);
-			lir.insertLongDivExceptionCheck(dividend,divisor,resultReg, LDIV_TMP,info);
-		        resultReg = callRuntime(CiRuntimeCall.arithmeticludiv, null, dividend,divisor); // HERE call the native method
-
+                resultReg = RETURNREG_L;
+                lir.insertLongDivExceptionCheck(dividend, divisor, resultReg, LDIV_TMP, info);
+                resultReg = callRuntime(CiRuntimeCall.arithmeticludiv, null, dividend, divisor);
             } else {
                 throw Util.shouldNotReachHere();
             }
-            assert(resultReg.asRegister() == ARMV7.r0);
-            lir.move(RETURNREG_L,result);
-            //lir.move(resultReg, result);
+            assert (resultReg.asRegister() == ARMV7.r0);
+            lir.move(RETURNREG_L, result);
         } else if (opcode == Bytecodes.LMUL) {
             LIRItem right = new LIRItem(x.y(), this);
 
@@ -269,12 +252,12 @@ public class ARMV7LIRGenerator extends LIRGenerator {
 
             // Call 'stateFor' before 'force()' because 'stateFor()' may
             // force the evaluation of other instructions that are needed for
-            // correct debug info.  Otherwise the live range of the fixed
+            // correct debug info. Otherwise the live range of the fixed
             // register might be too long.
             LIRDebugInfo info = x.needsZeroCheck() ? stateFor(x) : null;
 
             CiValue dividend = force(x.x(), RAX_I); // dividend must be in RAX
-            CiValue divisor = load(x.y());          // divisor can be in any (other) register
+            CiValue divisor = load(x.y()); // divisor can be in any (other) register
 
             // idiv and irem use rdx in their implementation so the
             // register allocator must not assign it to an interval that overlaps
@@ -331,7 +314,6 @@ public class ARMV7LIRGenerator extends LIRGenerator {
                     }
                 }
 
-
                 if (!useConstant) {
                     rightArg.loadItem();
                 }
@@ -340,7 +322,6 @@ public class ARMV7LIRGenerator extends LIRGenerator {
                     tmp = newVariable(CiKind.Int);
                 }
                 createResultVariable(x);
-
                 arithmeticOpInt(opcode, x.operand(), leftArg.result(), rightArg.result(), tmp);
             } else {
                 createResultVariable(x);
@@ -353,7 +334,6 @@ public class ARMV7LIRGenerator extends LIRGenerator {
     @Override
     public void visitArithmeticOp(ArithmeticOp x) {
         trySwap(x);
-
         assert Util.archKindsEqual(x.x().kind, x.kind) && Util.archKindsEqual(x.y().kind, x.kind) : "wrong parameter types: " + Bytecodes.nameOf(x.opcode);
         switch (x.kind) {
             case Float:
@@ -382,7 +362,6 @@ public class ARMV7LIRGenerator extends LIRGenerator {
 
         CiValue value = load(x.x());
         CiValue reg = createResultVariable(x);
-
         shiftOp(x.opcode, reg, value, count, ILLEGAL);
     }
 
@@ -395,7 +374,6 @@ public class ARMV7LIRGenerator extends LIRGenerator {
         CiValue left = load(x.x());
         right.loadNonconstant();
         CiValue reg = createResultVariable(x);
-
         logicOp(x.opcode, reg, left, right.result());
     }
 
@@ -447,7 +425,6 @@ public class ARMV7LIRGenerator extends LIRGenerator {
         CiValue tempPointer = load(x.pointer());
         CiAddress addr = getAddressForPointerOp(x, dataKind, tempPointer);
 
-        //CiValue expectedValue = force(x.expectedValue(), WAS rax.asValue(dataKind));
         CiValue expectedValue = force(x.expectedValue(), ARMV7.r0.asValue(dataKind));
         CiValue newValue = load(x.newValue());
         assert Util.archKindsEqual(newValue.kind, dataKind) : "invalid type";
@@ -460,7 +437,6 @@ public class ARMV7LIRGenerator extends LIRGenerator {
         CiValue pointer = newVariable(compilation.target.wordKind);
         lir.lea(addr, pointer);
         CiValue result = createResultVariable(x);
-        //CiValue resultReg = WAS rax.asValue(dataKind);
         CiValue resultReg = ARMV7.r0.asValue(dataKind);
         if (dataKind.isObject()) {
             lir.casObj(pointer, expectedValue, newValue);
@@ -483,12 +459,11 @@ public class ARMV7LIRGenerator extends LIRGenerator {
     protected void genCompareAndSwap(Intrinsic x, CiKind kind) {
         assert x.numberOfArguments() == 5 : "wrong number of arguments: " + x.numberOfArguments();
         // Argument 0 is the receiver.
-        LIRItem obj = new LIRItem(x.argumentAt(1), this); // object
-        LIRItem offset = new LIRItem(x.argumentAt(2), this); // offset of field
-        LIRItem val = new LIRItem(x.argumentAt(4), this); // replace field with val if matches cmp
+        LIRItem obj = new LIRItem(x.argumentAt(1), this);
+        LIRItem offset = new LIRItem(x.argumentAt(2), this);
+        LIRItem val = new LIRItem(x.argumentAt(4), this);
 
         assert obj.instruction.kind.isObject() : "invalid type";
-
         assert val.instruction.kind == kind : "invalid type";
 
         // get address of field
@@ -573,10 +548,18 @@ public class ARMV7LIRGenerator extends LIRGenerator {
 
         // Checkstyle: off
         switch (x.opcode) {
-            case F2I: stub = stubFor(CompilerStub.Id.f2i); break;
-            case F2L: stub = stubFor(CompilerStub.Id.f2l); break;
-            case D2I: stub = stubFor(CompilerStub.Id.d2i); break;
-            case D2L: stub = stubFor(CompilerStub.Id.d2l); break;
+            case F2I:
+                stub = stubFor(CompilerStub.Id.f2i);
+                break;
+            case F2L:
+                stub = stubFor(CompilerStub.Id.f2l);
+                break;
+            case D2I:
+                stub = stubFor(CompilerStub.Id.d2i);
+                break;
+            case D2L:
+                stub = stubFor(CompilerStub.Id.d2l);
+                break;
         }
         // Checkstyle: on
 
@@ -593,7 +576,7 @@ public class ARMV7LIRGenerator extends LIRGenerator {
             result = callRuntimeWithResult(CiRuntimeCall.l2double, null, input);
         } else if (x.opcode == Convert.Op.L2F) {
             result = callRuntimeWithResult(CiRuntimeCall.l2float, null, input);
-        }else {
+        } else {
             lir.convert(x.opcode, input, result, stub);
         }
         setResult(x, result);
