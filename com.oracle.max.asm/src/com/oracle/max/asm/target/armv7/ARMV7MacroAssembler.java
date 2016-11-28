@@ -17,12 +17,11 @@
  */
 package com.oracle.max.asm.target.armv7;
 
-import com.oracle.max.asm.AsmOptions;
-import com.oracle.max.asm.Label;
-import com.sun.cri.ci.*;
-import com.sun.cri.ri.RiRegisterConfig;
+import static com.oracle.max.asm.target.armv7.ARMV7.*;
 
-import static com.oracle.max.asm.target.armv7.ARMV7.r12;
+import com.oracle.max.asm.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ri.*;
 
 public class ARMV7MacroAssembler extends ARMV7Assembler {
 
