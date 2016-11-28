@@ -1,24 +1,19 @@
 /*
- * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
+ * OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package com.sun.max.vm.stack.armv7;
 
@@ -34,12 +29,12 @@ import com.sun.max.vm.stack.JVMSFrameLayout;
 import static com.sun.max.platform.Platform.target;
 
 /**
- * Describes a stack frame for a ARMV7 method whose frame conforms with the JVMS.
- * This convention uses both a stack and a frame pointer (respectively, X86 %rsp r13 ARM  and X86  %rbp r11 ARM).
- * The frame pointer serves as a base for accessing local variables (as defined in class files of Java methods).
- * The stack pointer is used as an operand stack (as defined in the JVMS).
- * The layout of the stack is as follows:
+ * Describes a stack frame for a ARMV7 method whose frame conforms with the JVMS. This convention uses both a stack and
+ * a frame pointer (respectively, X86 %rsp r13 ARM and X86 %rbp r11 ARM). The frame pointer serves as a base for
+ * accessing local variables (as defined in class files of Java methods). The stack pointer is used as an operand stack
+ * (as defined in the JVMS). The layout of the stack is as follows:
  * <p>
+ *
  * <pre>
  *   Base  Index       Contents
  *   ----------------+--------------------------------+----------------              maximumSlotOffset() if P > 0
@@ -75,15 +70,15 @@ import static com.sun.max.platform.Platform.target;
  *
  * </pre>
  *
- * The parameters portion of the stack frame is set up by the caller.
- * The frame size counts only those slots that are allocated on the stack by the callee, upon method entry, namely,
- * the size for the saved frame pointer, the locals that aren't argument, the Java stack, and the template spill slots.
+ * The parameters portion of the stack frame is set up by the caller. The frame size counts only those slots that are
+ * allocated on the stack by the callee, upon method entry, namely, the size for the saved frame pointer, the locals
+ * that aren't argument, the Java stack, and the template spill slots.
  */
 public class ARMV7JVMSFrameLayout extends JVMSFrameLayout {
 
     /**
-     * Size of the call save area, in number of stack slots. All method invocations push a return address
-     * (1 stack slot) and the prologue saves the caller's frame pointer (1 stack slot).
+     * Size of the call save area, in number of stack slots. All method invocations push a return address (1 stack slot)
+     * and the prologue saves the caller's frame pointer (1 stack slot).
      */
     public static final int CALL_SAVE_AREA_SLOTS = 2;
 
@@ -109,7 +104,7 @@ public class ARMV7JVMSFrameLayout extends JVMSFrameLayout {
 
     @Override
     public CiRegister framePointerReg() {
-        return ARMV7.r11; // APN rbp on X86 isto be  r11 on ARMV7!!!!!
+        return ARMV7.r11;
     }
 
     @Override
@@ -125,13 +120,13 @@ public class ARMV7JVMSFrameLayout extends JVMSFrameLayout {
             // The slot index is at a positive offset from RBP.
             // | non-parameter locals | template slots | caller FP | return address | parameters |
             // | <-------------------- frameSize() --------------> |
-            //                        ^ RBP                                         ^ parameterStart
+            // ^ RBP ^ parameterStart
             final int parameterStart = returnAddressOffset() + Word.size();
             return parameterStart + JVMS_SLOT_SIZE * (numberOfParameterSlots - 1 - localVariableIndex);
         }
         // The slot index is at a negative offset from RBP.
         // | non-parameter locals | template slots | call save area | return address | parameters |
-        //       ^ slot index     ^ RBP
+        // ^ slot index ^ RBP
         final int slotIndex = numberOfParameterSlots - 1 - localVariableIndex;
         return slotIndex * JVMS_SLOT_SIZE;
     }
@@ -197,9 +192,6 @@ public class ARMV7JVMSFrameLayout extends JVMSFrameLayout {
     }
 
     private int framePointerOffsetToRefMapIndex(int offset) {
-        // | operand slots | non-parameter locals | template slots | call save area | return address | parameters |
-        //       ^ operand offset (wrt. RBP)      ^ RBP                                                ^ local offset (wrt. RBP)
-        // <-------- frame pointer bias ---------->
         final int framePointerBias = sizeOfOperandStack() + sizeOfNonParameterLocals();
         return UnsignedMath.divide(offset + framePointerBias, STACK_SLOT_SIZE);
     }
@@ -207,6 +199,7 @@ public class ARMV7JVMSFrameLayout extends JVMSFrameLayout {
     @Override
     public JVMSSlots slots() {
         return new JVMSSlots() {
+
             @Override
             protected String nameOfSlot(int offset) {
                 final int templateSlotIndex = UnsignedMath.divide(offset, STACK_SLOT_SIZE);
@@ -224,5 +217,4 @@ public class ARMV7JVMSFrameLayout extends JVMSFrameLayout {
             }
         };
     }
-
 }
