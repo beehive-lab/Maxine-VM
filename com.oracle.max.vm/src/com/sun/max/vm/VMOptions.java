@@ -490,6 +490,7 @@ public class VMOptions {
                     help = settings.help();
                     name = settings.name().isEmpty() ? field.getName().replace('_', '-') : settings.name();
                 } else {
+                    System.out.println(field.getName());
                     assert !field.getName().contains("_");
                     name = field.getName().replace('_', '-');
                     help = helpMap != null ? helpMap.get(name) : null;

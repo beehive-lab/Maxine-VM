@@ -55,14 +55,12 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     final CiTarget target;
     final ARMV7MacroAssembler masm;
     final CiRegister rscratch1;
-    private int methodID;
 
     public ARMV7LIRAssembler(C1XCompilation compilation, TargetMethodAssembler tasm) {
         super(compilation, tasm);
         masm = (ARMV7MacroAssembler) tasm.asm;
         target = compilation.target;
         rscratch1 = compilation.registerConfig.getScratchRegister();
-        methodID = LIRAssembler.methodCounter.incrementAndGet();
     }
 
     private CiAddress asAddress(CiValue value) {
@@ -2415,7 +2413,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitDebugID(String methodName, String inlinedMethodName) {
-        appendDebugMethodBuffer(methodID + " " + inlinedMethodName + " " + Integer.toHexString(masm.codeBuffer.position()) + " " + masm.codeBuffer.position());
+        assert C1XOptions.DebugMethods;
+        debugMethodWriter.appendDebugMethod(inlinedMethodName + " " + Integer.toHexString(masm.codeBuffer.position()) + " " + masm.codeBuffer.position(), methodID);
     }
 
     @Override
@@ -2795,13 +2794,9 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         masm.save(csl, frameToCSA);
                     }
 
-                    if (AbstractAssembler.DEBUG_METHODS) {
+                    if (C1XOptions.DebugMethods) {
                         masm.mov32BitConstantOptimised(ConditionFlag.Always, ARMV7.r12, methodID);
-                        try {
-                            appendDebugMethodBuffer(methodID + " " + compilation.method.holder() + "." + compilation.method.name() + ";" + compilation.method.signature());
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                        debugMethodWriter.appendDebugMethod(compilation.method.holder() + "." + compilation.method.name() + ";" + compilation.method.signature(), methodID);
                     }
                     break;
                 }

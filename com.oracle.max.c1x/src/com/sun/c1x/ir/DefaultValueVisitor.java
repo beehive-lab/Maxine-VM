@@ -22,6 +22,8 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
+
 /**
  * A default implementation of {@link ValueVisitor} that simply
  * does nothing for each value visited. This convenience class

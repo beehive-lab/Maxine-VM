@@ -40,6 +40,8 @@ public final class T1XOptions {
 
     public static boolean TraceMethods                       = ____;
 
+    public static boolean DebugMethods                       = ____;
+
     /**
      * See {@link Filter#Filter(String, Object)}.
      */
@@ -51,7 +53,6 @@ public final class T1XOptions {
     public static boolean PrintCompilation                   = ____;
     public static boolean PrintJsrRetRewrites                = ____;
     public static boolean PrintBailouts                      = ____;
-
     public static boolean PrintCFGToFile                     = ____;
 
     static {
@@ -79,6 +80,8 @@ public final class T1XOptions {
 
         map.put("TraceMethods",
                 "Trace calls to T1X compiled methods.");
+        map.put("DebugMethods",
+                        "Create file with T1X compiled method IDs for debugging.");
         map.put("PrintJsrRetRewrites",
                 "Print a message when T1X rewrites a method to inline jsr/ret subroutines.");
 

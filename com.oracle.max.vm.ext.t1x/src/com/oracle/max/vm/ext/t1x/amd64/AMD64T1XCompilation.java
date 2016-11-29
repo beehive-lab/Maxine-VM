@@ -22,61 +22,53 @@
  */
 package com.oracle.max.vm.ext.t1x.amd64;
 
-import com.oracle.max.asm.target.amd64.AMD64;
-import com.oracle.max.asm.target.amd64.AMD64Assembler;
-import com.oracle.max.asm.target.amd64.AMD64Assembler.ConditionFlag;
-import com.oracle.max.asm.target.amd64.AMD64MacroAssembler;
-import com.oracle.max.cri.intrinsics.MemoryBarriers;
-import com.oracle.max.vm.ext.maxri.MaxTargetMethod;
-import com.oracle.max.vm.ext.t1x.*;
-import com.sun.cri.bytecode.BytecodeLookupSwitch;
-import com.sun.cri.bytecode.BytecodeTableSwitch;
-import com.sun.cri.bytecode.Bytecodes;
-import com.sun.cri.ci.CiAddress;
-import com.sun.cri.ci.CiAddress.Scale;
-import com.sun.cri.ci.CiKind;
-import com.sun.cri.ci.CiRegister;
-import com.sun.cri.ci.CiTargetMethod;
-import com.sun.cri.ci.CiTargetMethod.JumpTable;
-import com.sun.cri.ci.CiTargetMethod.LookupTable;
-import com.sun.max.annotate.HOSTED_ONLY;
-import com.sun.max.unsafe.Word;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.actor.member.FieldActor;
-import com.sun.max.vm.classfile.CodeAttribute;
-import com.sun.max.vm.compiler.WordUtil;
-import com.sun.max.vm.compiler.target.Adapter;
-import com.sun.max.vm.compiler.target.Safepoints;
-import com.sun.max.vm.runtime.FatalError;
-import com.sun.max.vm.runtime.Trap;
-import com.sun.max.vm.stack.JVMSFrameLayout;
-import com.sun.max.vm.stack.amd64.AMD64JVMSFrameLayout;
-import com.sun.max.vm.thread.VmThread;
-import com.sun.max.vm.type.Kind;
-import com.sun.max.vm.type.SignatureDescriptor;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-
 import static com.oracle.max.asm.target.amd64.AMD64.*;
-import static com.oracle.max.vm.ext.t1x.T1X.dispFromCodeStart;
-import static com.sun.max.platform.Platform.platform;
-import static com.sun.max.platform.Platform.target;
-import static com.sun.max.vm.classfile.ErrorContext.verifyError;
+import static com.oracle.max.vm.ext.t1x.T1X.*;
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
-import static com.sun.max.vm.stack.JVMSFrameLayout.JVMS_SLOT_SIZE;
+import static com.sun.max.vm.stack.JVMSFrameLayout.*;
+
+import java.util.*;
+
+import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.asm.target.amd64.AMD64Assembler.*;
+import com.oracle.max.cri.intrinsics.*;
+import com.oracle.max.vm.ext.maxri.*;
+import com.oracle.max.vm.ext.t1x.*;
+import com.sun.cri.bytecode.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiAddress.*;
+import com.sun.cri.ci.CiTargetMethod.*;
+import com.sun.max.annotate.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.*;
+import com.sun.max.vm.stack.amd64.*;
+import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
 
 public class AMD64T1XCompilation extends T1XCompilation {
 
     protected final AMD64MacroAssembler asm;
     final PatchInfoAMD64 patchInfo;
+    private DebugMethodWriter debugMethodWriter;
+    private static boolean debugMethodsEnabled = false;
 
     public AMD64T1XCompilation(T1X compiler) {
         super(compiler);
         asm = new AMD64MacroAssembler(target(), null);
         buf = asm.codeBuffer;
         patchInfo = new PatchInfoAMD64();
+        if (T1XOptions.DebugMethods && !debugMethodsEnabled) {
+            debugMethodWriter = new DebugMethodWriter("t1x");
+            debugMethodsEnabled =true;
+        }
     }
 
     @Override
@@ -327,6 +319,15 @@ public class AMD64T1XCompilation extends T1XCompilation {
                 asm.movq(new CiAddress(WordUtil.archKind(), RSP, -offset), rax);
             }
         }
+        if (T1XOptions.DebugMethods) {
+            int a = debugMethodWriter.getNextID();
+            asm.movl(scratch, a);
+            try {
+                debugMethodWriter.appendDebugMethod(method.holder() + "." + method.name(), a);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         return adapter;
     }
 
@@ -349,6 +350,13 @@ public class AMD64T1XCompilation extends T1XCompilation {
         // when returning, retract from the caller stack by the space used for the arguments.
         final short stackAmountInBytes = (short) frame.sizeOfParameters();
         asm.ret(stackAmountInBytes);
+        if (T1XOptions.DebugMethods) {
+            try {
+                debugMethodWriter.flushDebugMethod();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override

@@ -311,9 +311,9 @@ public final class C1XCompilation {
                 C1XTimers.CODE_CREATE.stop();
             }
 
-            if (AbstractAssembler.DEBUG_METHODS) {
+            if (C1XOptions.DebugMethods) {
                 try {
-                    lirAssembler.flushDebugMethodBuffer();
+                    lirAssembler.getDebugMethodWriter().flushDebugMethod();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

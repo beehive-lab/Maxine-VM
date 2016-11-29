@@ -33,7 +33,6 @@ public abstract class AbstractAssembler {
     public final Buffer codeBuffer;
     public static boolean SIMULATE_PLATFORM = false; // on if we use the FPGA simulation platform see BootImageGenerator.java
     public boolean SIMULATE_DYNAMIC = false; // dynamically set to determine if we need to instrument ...
-    public static boolean DEBUG_METHODS;
 
     public AbstractAssembler(CiTarget target) {
         this.target = target;

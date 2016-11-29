@@ -64,6 +64,8 @@ public final class C1XOptions {
      * See {@link Filter#Filter(String, Object)}.
      */
     public static String  PrintFilter                        = null;
+    public static boolean DebugMethods                       = ____;
+
 
     // printing settings
     public static boolean PrintHIR                           = ____;

@@ -22,6 +22,8 @@
  */
 package com.sun.c1x.ir;
 
+import com.sun.c1x.debug.*;
+
 /**
  * The {@link ValueVisitor} implements one half of the visitor
  * pattern for {@linkplain Value IR values}, allowing clients to implement functionality

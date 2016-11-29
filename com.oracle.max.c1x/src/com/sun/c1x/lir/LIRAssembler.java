@@ -22,30 +22,23 @@
  */
 package com.sun.c1x.lir;
 
-import com.oracle.max.asm.AbstractAssembler;
-import com.oracle.max.asm.Label;
-import com.oracle.max.criutils.TTY;
-import com.sun.c1x.C1XCompilation;
-import com.sun.c1x.C1XOptions;
-import com.sun.c1x.asm.ExceptionInfo;
-import com.sun.c1x.asm.TargetMethodAssembler;
-import com.sun.c1x.gen.LIRGenerator;
-import com.sun.c1x.ir.*;
-import com.sun.c1x.lir.FrameMap.StackBlock;
-import com.sun.c1x.util.Util;
-import com.sun.c1x.value.FrameState;
-import com.sun.cri.ci.CiConstant;
-import com.sun.cri.ci.CiKind;
-import com.sun.cri.ci.CiTargetMethod.Mark;
-import com.sun.cri.ci.CiValue;
-import com.sun.cri.ri.RiMethod;
-import com.sun.cri.xir.CiXirAssembler.XirMark;
+import java.util.*;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.*;
+import com.oracle.max.asm.*;
+import com.oracle.max.criutils.*;
+import com.sun.c1x.*;
+import com.sun.c1x.asm.*;
+import com.sun.c1x.gen.*;
+import com.sun.c1x.ir.*;
+import com.sun.c1x.ir.ExceptionHandler;
+import com.sun.c1x.lir.FrameMap.*;
+import com.sun.c1x.util.*;
+import com.sun.c1x.value.*;
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.*;
+import com.sun.cri.ri.*;
+import com.sun.cri.xir.CiXirAssembler.*;
+import com.sun.max.vm.compiler.*;
 
 /**
  * The {@code LIRAssembler} class definition.
@@ -63,7 +56,9 @@ public abstract class LIRAssembler {
 
     private int lastDecodeStart;
 
-    public static AtomicInteger methodCounter = new AtomicInteger(536870912);
+    protected static DebugMethodWriter debugMethodWriter;
+    protected int methodID;
+    private static boolean debugMethodsEnabled = false;
 
 
     protected static class SlowPath {
@@ -85,48 +80,13 @@ public abstract class LIRAssembler {
         this.frameMap = compilation.frameMap();
         this.branchTargetBlocks = new ArrayList<BlockBegin>();
         this.xirSlowPath = new ArrayList<SlowPath>();
-        initDebugMethods();
-    }
-
-    private static File file;
-    private static final Object fileLock = new Object();
-    private static boolean debugEnabled = false;
-    private StringBuffer debugMethodBuffer = new StringBuffer();
-
-    public static synchronized void initDebugMethods() {
-        if (debugEnabled) {
-            return;
-        }
-        if (AbstractAssembler.DEBUG_METHODS) {
-            debugEnabled = true;
-            if ((file = new File(getDebugMethodsPath() + "debugC1Xmethods")).exists()) {
-                file.delete();
+        if (C1XOptions.DebugMethods) {
+            if (!debugMethodsEnabled) {
+                debugMethodWriter = new DebugMethodWriter("c1x");
+                debugMethodsEnabled = true;
             }
-            file = new File(getDebugMethodsPath() + "debugC1Xmethods");
+            methodID = debugMethodWriter.getNextID();
         }
-    }
-
-    public void appendDebugMethodBuffer(String name) {
-        debugMethodBuffer.append(name + "\n");
-    }
-
-    public void flushDebugMethodBuffer() throws Exception {
-        synchronized (fileLock) {
-            try {
-                assert AbstractAssembler.DEBUG_METHODS;
-                FileWriter fw = new FileWriter(file.getAbsoluteFile(), true);
-                BufferedWriter bw = new BufferedWriter(fw);
-                bw.write(debugMethodBuffer.toString());
-                bw.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        }
-    }
-
-    public static String getDebugMethodsPath() {
-        return System.getenv("MAXINE_HOME") + "/maxine-tester/junit-tests/";
     }
 
     protected RiMethod method() {
@@ -141,8 +101,6 @@ public abstract class LIRAssembler {
         for (SlowPath sp : xirSlowPath) {
             emitSlowPath(sp);
         }
-
-        // No more code may be emitted after this point
     }
 
     protected int codePos() {
@@ -495,6 +453,10 @@ public abstract class LIRAssembler {
 
     protected final Object asCallTarget(Object o) {
         return compilation.runtime.asCallTarget(o);
+    }
+
+    public DebugMethodWriter getDebugMethodWriter() {
+        return debugMethodWriter;
     }
 
     protected abstract int initialFrameSizeInBytes();

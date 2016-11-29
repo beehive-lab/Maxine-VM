@@ -28,7 +28,6 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 
-import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.*;
 import com.oracle.max.cri.intrinsics.*;
@@ -55,14 +54,10 @@ import com.sun.max.vm.type.*;
 
 public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethodinVM {
 
-    public static AtomicInteger methodCounter = new AtomicInteger(536870912);
-    public static int invokeDebugCounter = 0;
-    private static final Object fileLock = new Object();
-    private static File file;
-    private static boolean debugEnabled = false;
-
     protected final ARMV7MacroAssembler asm;
-    final PatchInfoARMV7 patchInfo;
+    private final PatchInfoARMV7 patchInfo;
+    private DebugMethodWriter debugMethodWriter;
+    private static boolean debugMethodsEnabled = false;
 
     public ARMV7T1XCompilation(T1X compiler) {
         super(compiler);
@@ -78,7 +73,10 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
             }
         buf = asm.codeBuffer;
         patchInfo = new PatchInfoARMV7();
-        initDebugMethods();
+        if (T1XOptions.DebugMethods && !debugMethodsEnabled) {
+            debugMethodWriter = new DebugMethodWriter("t1x");
+            debugMethodsEnabled =true;
+        }
     }
 
     @Override
@@ -91,39 +89,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         // returns the int address of the method in C ... ugly but fast dynamic linking ....
         // should really do it the proper way by CriticalMethods etc etc
         return com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.maxine_flush_instrumentationBuffer();
-    }
-
-    public static void initDebugMethods() {
-        if (debugEnabled) {
-            return;
-        }
-        if (AbstractAssembler.DEBUG_METHODS) {
-            debugEnabled = true;
-            if ((file = new File(getDebugMethodsPath() + "debugT1Xmethods")).exists()) {
-                file.delete();
-            }
-            file = new File(getDebugMethodsPath() + "debugT1Xmethods");
-        }
-    }
-
-    public static void writeDebugMethod(String name, int index) throws Exception {
-        synchronized (fileLock) {
-            try {
-                assert AbstractAssembler.DEBUG_METHODS;
-                FileWriter fw = new FileWriter(file.getAbsoluteFile(), true);
-                BufferedWriter bw = new BufferedWriter(fw);
-                bw.write(index + " " + name + "\n");
-                bw.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        }
-    }
-
-    public static String getDebugMethodsPath() {
-        return System.getenv("MAXINE_HOME") + "/maxine-tester/junit-tests/";
-
     }
 
     @Override
@@ -276,8 +241,8 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 asm.ldrImmediate(ConditionFlag.Always, 1, add, 0, dst, tmpRegister, tmp.displacement);
 		return;
 	}
-	
-	
+
+
         asm.setUpScratch(spInt(index));
         asm.ldr(ConditionFlag.Always, dst, asm.scratchRegister, 0);
 
@@ -510,7 +475,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 		}
 		asm.ldrImmediate(ConditionFlag.Always, 1, add, 0, dst, tmpRegister, tmp.displacement);
 		return;
-	} 
+	}
         asm.setUpScratch(tmp);
         asm.ldr(ConditionFlag.Always, dst, ARMV7.r12, 0);
     }
@@ -526,7 +491,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 		}
 		asm.ldrd(ConditionFlag.Always,  dst, tmpRegister, tmp.displacement);
 		return;
-	} 
+	}
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
         asm.ldrd(ConditionFlag.Always, dst, scratch, 0);
     }
@@ -596,7 +561,7 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
 		}
 		asm.strd(ConditionFlag.Always,  src, tmpRegister, tmp.displacement);
 		return;
-	} 
+	}
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
         // asm.sub(ConditionFlag.Always, false, scratch, scratch, 4, 0);
         asm.strd(ARMV7Assembler.ConditionFlag.Always, src, scratch, 0);
@@ -854,11 +819,11 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
                 // asm.movq(new CiAddress(WordUtil.archKind(), RSP, -offset), rax);
             }
         }
-        if (AbstractAssembler.DEBUG_METHODS) {
-            int a = methodCounter.incrementAndGet();
+        if (T1XOptions.DebugMethods) {
+            int a = debugMethodWriter.getNextID();
             asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, a);
             try {
-                writeDebugMethod(method.holder() + "." + method.name(), a);
+                debugMethodWriter.appendDebugMethod(method.holder() + "." + method.name(), a);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -896,6 +861,13 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
         asm.mov32BitConstantOptimised(ConditionFlag.Always, scratch, stackAmountInBytes);
         asm.addRegisters(ConditionFlag.Always, false, ARMV7.rsp, ARMV7.rsp, scratch, 0, 0);
         asm.mov(ConditionFlag.Always, false, ARMV7.PC, ARMV7.r8);
+        if (T1XOptions.DebugMethods) {
+            try {
+                debugMethodWriter.flushDebugMethod();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override
@@ -1735,4 +1707,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     public void assignDoubleTest(CiRegister reg, double value) {
         assignDouble(reg, value);
     }
+
+
 }

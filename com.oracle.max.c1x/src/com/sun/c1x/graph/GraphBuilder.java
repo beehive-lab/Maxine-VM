@@ -32,6 +32,7 @@ import com.oracle.max.asm.*;
 import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.criutils.*;
 import com.sun.c1x.*;
+import com.sun.c1x.debug.*;
 import com.sun.c1x.graph.ScopeData.ReturnBlock;
 import com.sun.c1x.intrinsics.*;
 import com.sun.c1x.ir.*;
@@ -1856,7 +1857,7 @@ public final class GraphBuilder {
     private void inline(RiResolvedMethod target, Value[] args, boolean forcedInline) {
         if (!forcedInline && C1XOptions.UseAssumptions) {
             compilation.assumptions.recordInlinedMethod(compilation.method, target);
-            if (AbstractAssembler.DEBUG_METHODS) {
+            if (C1XOptions.DebugMethods) {
                 append(new DebugMethodID(bci(), compilation.method.name(), target.toString()));
             }
         }

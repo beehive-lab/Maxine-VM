@@ -237,7 +237,6 @@ public final class BootImageGenerator {
             enableProxyClassFileDumping();
 
             nativeTests = testNative.getValue();
-            AbstractAssembler.DEBUG_METHODS = debugMethods.getValue();
             AbstractAssembler.SIMULATE_PLATFORM = simulationPlatform.getValue(); // -simulation=true
 
             final File vmDirectory = getDefaultVMDirectory(true);

@@ -56,7 +56,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     private static final CiRegister SHIFTCount = AMD64.rcx;
 
     private static final long DoubleSignMask = 0x7FFFFFFFFFFFFFFFL;
-    private int methodID;
 
     final CiTarget target;
     final AMD64MacroAssembler masm;
@@ -67,7 +66,6 @@ public final class AMD64LIRAssembler extends LIRAssembler {
         masm = (AMD64MacroAssembler) tasm.asm;
         target = compilation.target;
         rscratch1 = compilation.registerConfig.getScratchRegister();
-        methodID = LIRAssembler.methodCounter.incrementAndGet();
     }
 
     private CiAddress asAddress(CiValue value) {
@@ -96,7 +94,8 @@ public final class AMD64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitDebugID(String methodName, String inlinedMethodName) {
-        appendDebugMethodBuffer(methodID + " " + inlinedMethodName + " " + Integer.toHexString(masm.codeBuffer.position()) + " " + masm.codeBuffer.position());
+        assert C1XOptions.DebugMethods;
+        debugMethodWriter.appendDebugMethod(inlinedMethodName + " " + Integer.toHexString(masm.codeBuffer.position()) + " " + masm.codeBuffer.position(), methodID);
     }
 
     @Override
@@ -2029,13 +2028,9 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                         masm.save(csl, frameToCSA);
                     }
 
-                    if (AbstractAssembler.DEBUG_METHODS) {
+                    if (C1XOptions.DebugMethods) {
                         masm.movl(compilation.registerConfig.getScratchRegister(), methodID);
-                        try {
-                           appendDebugMethodBuffer(methodID + " " +compilation.method.holder() + "." + compilation.method.name() + ";" + compilation.method.signature());
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
+                        debugMethodWriter.appendDebugMethod(compilation.method.holder() + "." + compilation.method.name() + ";" + compilation.method.signature(), methodID);
                     }
                     break;
                 }
