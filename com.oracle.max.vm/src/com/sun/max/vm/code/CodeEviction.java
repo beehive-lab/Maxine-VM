@@ -295,8 +295,6 @@ public final class CodeEviction extends VmOperation {
         if (Platform.platform().isa == ISA.AMD64) {
             byte int3 = (byte) 0xcc;
             Arrays.fill(code, int3);
-        } else if (Platform.platform().isa == ISA.ARM) {
-            //byte int3 = (byte) 0xcc;
         } else {
             throw FatalError.unimplemented();
         }
