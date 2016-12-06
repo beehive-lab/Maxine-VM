@@ -227,8 +227,6 @@ def image(args):
         	os.environ['PRINT_HIR']='1'		
         elif arg.startswith('--XX:PrintFilter='):
             os.environ['PRINT_FILTER'] = arg.split('=', 1)[1]
-        elif arg.startswith('--XX:+DebugMovs'):
-        	os.environ['DEBUG_MOVS']='1'
         elif arg == '-vma':
             systemProps += ['-Dmax.permsize=2']
         else:
@@ -729,7 +727,6 @@ def mx_init(suite):
         'view': [view, '[options]'],
         'vm': [vm, '[options] [class | -jar jarfile]  [args...]'],
         'wikidoc': [wikidoc, '[options]'],
-	'armasmtest': [armasmtests, '']
     }
     mx.update_commands(suite, commands)
 
@@ -740,5 +737,3 @@ def mx_post_parse_cmd_line(opts):
     else:
         _vmdir = opts.vmdir
 
-def armasmtests(opts):
-	print "Done!"

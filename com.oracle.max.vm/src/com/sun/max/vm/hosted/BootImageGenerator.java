@@ -97,10 +97,6 @@ public final class BootImageGenerator {
             "Uses out of line runtime stubs when generating inlined TLAB allocations with XIR");
 
     // Options shared with the Inspector
-
-    private static final Option<Boolean> debugMethods = options.newBooleanOption("debug-methods", false, "");
-    private static final Option<Boolean> simulationPlatform = options.newBooleanOption("simulation", false, "Enables simulation tracing of both PC/LD/ST (pc only at moment as debugging) implies -float-div=true");
-
     public static final OptionSet inspectorSharedOptions = new OptionSet();
 
     /**
