@@ -22,53 +22,36 @@
  */
 package com.sun.max.vm.compiler;
 
-import com.oracle.max.criutils.NativeCMethodinVM;
-import com.sun.cri.ci.CiStatistics;
-import com.sun.max.annotate.HOSTED_ONLY;
-import com.sun.max.annotate.RESET;
-import com.sun.max.lang.ISA;
-import com.sun.max.unsafe.Address;
-import com.sun.max.unsafe.CodePointer;
-import com.sun.max.unsafe.Pointer;
-import com.sun.max.vm.Log;
-import com.sun.max.vm.MaxineVM;
-import com.sun.max.vm.MaxineVM.Phase;
-import com.sun.max.vm.VMOptions;
-import com.sun.max.vm.actor.Actor;
-import com.sun.max.vm.actor.holder.Hub;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.code.CodeCacheMetricsPrinter;
-import com.sun.max.vm.compiler.RuntimeCompiler.*;
-import com.sun.max.vm.compiler.target.Compilation;
-import com.sun.max.vm.compiler.target.Compilations;
-import com.sun.max.vm.compiler.target.Safepoints;
-import com.sun.max.vm.compiler.target.TargetMethod;
-import com.sun.max.vm.compiler.target.amd64.AMD64TargetMethodUtil;
-import com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil;
-import com.sun.max.vm.heap.Heap;
-import com.sun.max.vm.object.ObjectAccess;
-import com.sun.max.vm.profile.MethodInstrumentation;
-import com.sun.max.vm.profile.MethodProfile;
-import com.sun.max.vm.runtime.FatalError;
-import com.sun.max.vm.runtime.VMRegister;
-import com.sun.max.vm.stack.RawStackFrameVisitor;
-import com.sun.max.vm.stack.StackFrameCursor;
-import com.sun.max.vm.stack.VmStackFrameWalker;
-import com.sun.max.vm.thread.VmThread;
-import com.sun.max.vm.ti.VMTI;
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.AbstractVMScheme.*;
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.VMOptions.*;
+import static com.sun.max.vm.compiler.CallEntryPoint.*;
+import static com.sun.max.vm.compiler.RuntimeCompiler.*;
+import static com.sun.max.vm.compiler.target.Safepoints.*;
+import static com.sun.max.vm.intrinsics.Infopoints.*;
 
 import java.util.*;
 
-import static com.sun.max.platform.Platform.platform;
-import static com.sun.max.vm.AbstractVMScheme.configValue;
-import static com.sun.max.vm.MaxineVM.isHosted;
-import static com.sun.max.vm.MaxineVM.vm;
-import static com.sun.max.vm.VMOptions.addFieldOption;
-import static com.sun.max.vm.VMOptions.verboseOption;
-import static com.sun.max.vm.compiler.CallEntryPoint.*;
-import static com.sun.max.vm.compiler.RuntimeCompiler.*;
-import static com.sun.max.vm.compiler.target.Safepoints.DIRECT_CALL;
-import static com.sun.max.vm.intrinsics.Infopoints.here;
+import com.sun.cri.ci.*;
+import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.code.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.compiler.target.arm.*;
+import com.sun.max.vm.heap.*;
+import com.sun.max.vm.object.*;
+import com.sun.max.vm.profile.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.*;
+import com.sun.max.vm.thread.*;
+import com.sun.max.vm.ti.*;
 
 
 /**
@@ -76,17 +59,7 @@ import static com.sun.max.vm.intrinsics.Infopoints.here;
  * quality tradeoffs. It encapsulates the necessary infrastructure for recording profiling data, selecting what and when
  * to recompile, etc.
  */
-public class CompilationBroker implements NativeCMethodinVM {
-
-    @Override
-    public int maxine_instrumentationBuffer() {
-        return com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.maxine_instrumentationBuffer();
-    }
-
-    @Override
-    public int maxine_flush_instrumentationBuffer() {
-        return com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.maxine_flush_instrumentationBuffer();
-    }
+public class CompilationBroker {
 
     /**
      * The threshold at which a recompilation is triggered from the baseline compiler to the next level
@@ -179,7 +152,6 @@ public class CompilationBroker implements NativeCMethodinVM {
         String methodString = cma.toString();
         for (Map.Entry<String, String> e : compileCommandMap.entrySet()) {
             if (methodString.contains(e.getKey()) || "*".equals(e.getKey())) {
-                //Log.println("CompileCommand: matched " + e.getKey());
                 return e.getValue();
             }
         }
@@ -379,16 +351,6 @@ public class CompilationBroker implements NativeCMethodinVM {
                 compilationThread.start();
             }
         } else if (phase == Phase.RUNNING) {
-            // HOSTED is false here	 ADDED BY APN
-            if (com.oracle.max.asm.AbstractAssembler.SIMULATE_PLATFORM) {
-                // simulation platform is turned on this means we instrument load/stores and
-                // C1X compiled code, but not adapters
-                if (platform().isa == ISA.ARM) {
-                    com.oracle.max.asm.target.armv7.ARMV7MacroAssembler.maxineflush = this;
-                } else {
-                    com.oracle.max.asm.target.armv7.ARMV7MacroAssembler.maxineflush = null;
-                }
-            }
             if (PrintCodeCacheMetrics != 0) {
                 Runtime.getRuntime().addShutdownHook(new Thread("CodeCacheMetricsPrinter") {
                     @Override

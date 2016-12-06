@@ -56,85 +56,6 @@
 #include <pthread.h>
 #endif
 
-#ifdef ENABLE_APT_SIM
-static int APT_SIM_DEBUG = 0;
-extern void enableFPGA(int val);
-extern void pushDSTR(unsigned int address);
-extern void pushDLD(unsigned int address);
-extern int initialiseMemoryCluster();
-extern int initialiseTimingModel();
-extern void pushJumpAddress(int address);
-extern int reportTimingCounters();
-extern void clearTimingCache(char *buffer, int size);
-static unsigned int *simPtr = (0);
-static FILE *simFile = (0);
-#endif
-
-long long d2long(double x) {
-    if (isnan(x)) {
-        return (long long) 0;
-    }
-    if (x <= (double) ((long long) -9223372036854775808ULL)) {
-        return -9223372036854775808ULL;
-    } else if (x >= (double) ((long long) 9223372036854775807ULL)) {
-        return 9223372036854775807ULL;
-    } else {
-        return (long long) x;
-    }
-}
-
-long long f2long(float x) {
-    if (isnan(x)) {
-        return (long long) 0;
-    }
-    if (x <= (float) ((long long) -9223372036854775808ULL)) {
-        return -9223372036854775808ULL;
-    } else if (x >= (float) ((long long) 9223372036854775807ULL)) {
-        return 9223372036854775807ULL;
-    } else {
-        return (long long) x;
-    }
-}
-
-long long arithmeticldiv(long long x, long long y) {
-    if (y == 0) {
-        //raise(SIGFPE);
-        return 0;
-    }
-    return x / y;
-}
-
-jlong arithmeticlrem(jlong x, jlong y) {
-    if (y == 0) {
-        //raise(SIGFPE);
-        return 0;
-    }
-    return x % y;
-}
-
-unsigned long long arithmeticludiv(unsigned long long x, unsigned long long y) {
-    if (y == 0) {
-        //raise(SIGFPE);
-        return 0;
-    }
-    return x / y;
-}
-
-unsigned long long arithmeticlurem(unsigned long long x, unsigned long long y) {
-    if (y == 0) {
-        //raise(SIGFPE);
-        return 0;
-    }
-    return x % y;
-}
-
-double l2double(jlong x) {
-    return (jdouble) x;
-}
-
-float l2float(jlong x) {
-    return (jfloat) x;
-}
 
 static void max_fd_limit() {
 #if os_LINUX || os_SOLARIS || os_DARWIN
@@ -421,7 +342,7 @@ int maxine(int argc, char *argv[], char *executablePath) {
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 
 #ifdef ENABLE_APT_SIM
-    init_APT_Sim();
+    init_FPGA_Sim();
 #endif
 
 #if log_LOADER
@@ -585,17 +506,12 @@ double native_parseDouble(const char* cstring, double nan) {
 #endif
 }
 
-
-/*
- * The functions below define the interaction of MaxineVM and APT Sim
- */
-
+void maxine_cache_flush(char *start, int length) {
 #ifdef arm
-void maxine_cacheflush(char *start, int length) {
     char * end = start + length;
 #ifdef ENABLE_APT_SIM
     if(APT_SIM_DEBUG) {
-        printf("FLUSHED CACHE %p  length: %d \n",start,length);
+        log_println("Flush Cache @ %p  length: %d \n",start,length);
     }
     clearTimingCache(start, length);
 #endif
@@ -606,110 +522,71 @@ void maxine_cacheflush(char *start, int length) {
     asm volatile("isb ");
     asm volatile("dsb ");
     asm volatile("dmb ");
-}
-#else
-void maxine_cacheflush(char *start, int length) {
-}
-#endif
-
-#ifdef ENABLE_APT_SIM
-void init_APT_Sim() {
-    initialiseMemoryCluster();
-    enableFPGA(1);
-    initialiseTimingModel();
-}
-
-void exit_APT_Sim() {
-    reportTimingCounters();
-    maxine_close();
-}
-
-
-jint maxine_instrumentationBuffer() {
-#ifdef arm
-    if(simPtr != (0)) {
-        printf("ERROR: Multiple initializations of simptr in substrate");
-    }
-    simPtr = (unsigned int *) malloc(sizeof(unsigned int) * 4096);
-    *(simPtr + 1023) = (unsigned int)simPtr;
-    return (jint)simPtr;
-#else
-    printf("Instrumentation for simulation not implemented for non armv7 platforms yet\n");
-    return (jint) 0;
 #endif
 }
 
-#ifdef arm
-void maxine_close() {
-    if(simFile != (0)) {
-        fclose(simFile);
+long long d2long(double x) {
+    if (isnan(x)) {
+        return (long long) 0;
+    }
+    if (x <= (double) ((long long) -9223372036854775808ULL)) {
+        return -9223372036854775808ULL;
+    } else if (x >= (double) ((long long) 9223372036854775807ULL)) {
+        return 9223372036854775807ULL;
+    } else {
+        return (long long) x;
     }
 }
-#endif
 
-void real_maxine_instrumentation(int address, unsigned int newpc, int totalPages) {
-#ifdef arm
-    if(APT_SIM_DEBUG) {
-        printf("Address %x NewPC %x\n",address,newpc);
+long long f2long(float x) {
+    if (isnan(x)) {
+        return (long long) 0;
     }
-    switch (address) {
-        case -2:
-            pushJumpAddress(newpc);
-            break;
-        case -3:
-            pushJumpAddress(newpc);
-            break;
-        case -1:
-            pushJumpAddress(newpc);
-            break;
-        default:
-            if(address &0x1) {
-                address = ((unsigned)address) -1;
-                pushDSTR(address);
-            } else if((address & 0x1) == 0) {
-                pushDLD(address);
-            } else {
-                log_println("ERROR address 0x%x\n\n",address);
-            }
-            break;
+    if (x <= (float) ((long long) -9223372036854775808ULL)) {
+        return -9223372036854775808ULL;
+    } else if (x >= (float) ((long long) 9223372036854775807ULL)) {
+        return 9223372036854775807ULL;
+    } else {
+        return (long long) x;
     }
-#endif
 }
 
-void real_maxine_flush_instrumentationBuffer(unsigned int *bufPtr) {
-#ifdef arm
-    unsigned int i;
-    printf("INSTRUMENTATION NEEDS to be rewritten to identify thread %lu\n", (unsigned long int)thread_self());
-    printf("and to push a single address at a time");
-    if((*(simPtr +1023)) != (unsigned int)(simPtr +1022)) {
-        printf("ERROR VALSTORED %u VALEXPECTED %u SIMPTR %u\n", *(simPtr +1023) ,((unsigned int) (simPtr))+4*1022,(unsigned int)simPtr);
+long long arithmeticldiv(long long x, long long y) {
+    if (y == 0) {
+        //raise(SIGFPE);
+        return 0;
     }
-    if(simFile == (0)) {
-        simFile = fopen("address.trace","w");
-    }
-    for(i = 0;i < *(simPtr + 1023);i++) {
-        fprintf(simFile,"%x\n",*(bufPtr+i));
-        *(bufPtr+i) = 0;
-    }
-    *(simPtr +1023) = (unsigned int)simPtr;
-#else
-    printf("INSTRUMENTATION for simulation not implemented for non armv7 platforms yet\n");
-#endif
+    return x / y;
 }
 
-jint maxine_flush_instrumentationBuffer() {
-#ifdef arm
-    return (jint) real_maxine_instrumentation;
-#else
-    printf("INSTRUMENTATION for simulation not implemented for non armv7 platforms yet\n");
-    return (jint) 0;
-#endif
+jlong arithmeticlrem(jlong x, jlong y) {
+    if (y == 0) {
+        //raise(SIGFPE);
+        return 0;
+    }
+    return x % y;
 }
 
-#endif
+unsigned long long arithmeticludiv(unsigned long long x, unsigned long long y) {
+    if (y == 0) {
+        //raise(SIGFPE);
+        return 0;
+    }
+    return x / y;
+}
 
+unsigned long long arithmeticlurem(unsigned long long x, unsigned long long y) {
+    if (y == 0) {
+        //raise(SIGFPE);
+        return 0;
+    }
+    return x % y;
+}
 
+double l2double(jlong x) {
+    return (jdouble) x;
+}
 
-
-
-
+float l2float(jlong x) {
+    return (jfloat) x;
+}

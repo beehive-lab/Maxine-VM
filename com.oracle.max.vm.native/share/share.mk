@@ -52,9 +52,6 @@ endif
 	mkdir -p $(PROJECT)/generated/$(OS)
 	cp -f $(LIBRARY) $(PROJECT)/generated/$(OS)
 
-#	REPLACE line above with this if doing cache sim$(LINK_LIB) $(OBJECTS) $(MAXINE_HOME)/com.oracle.max.vm.native/substrate/libCCluster.a -o $(LIBRARY) $(LINK_LIB_POSTFIX)
-# hacked at the moment will work out a better way ... This will need updating as we have moved to a shared library.
-
 $(MAIN) : $(OBJECTS)
 	$(LINK_MAIN) $(OBJECTS) $(LINK_MAIN_POSTFIX)
 else

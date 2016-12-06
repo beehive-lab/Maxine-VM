@@ -273,12 +273,7 @@ public final class C1XCompilation {
     private CiTargetMethod emitCode() {
         if (C1XOptions.GenLIR && C1XOptions.GenCode) {
             final LIRAssembler lirAssembler = compiler.backend.newLIRAssembler(this, assembler());
-            /**
-             * This flag is used to turn on simulation instrumentation when the MaxineVM is running and the flag has been enabled in the bootimage build
-             */
-            if (AbstractAssembler.SIMULATE_PLATFORM && MaxineVM.isRunning()) {
-                assembler.asm.SIMULATE_DYNAMIC = true;
-            }
+
             lirAssembler.emitCode(hir.linearScanOrder());
 
             // generate code for slow cases

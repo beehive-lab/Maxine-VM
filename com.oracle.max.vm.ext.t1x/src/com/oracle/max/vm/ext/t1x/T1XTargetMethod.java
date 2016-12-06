@@ -31,7 +31,10 @@ import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
+import static com.sun.max.vm.stack.VMFrameLayout.*;
+
 import java.util.*;
+
 import com.oracle.max.vm.ext.t1x.T1XTemplate.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
@@ -247,7 +250,7 @@ public class T1XTargetMethod extends TargetMethod {
             if (install) {
                 linkDirectCalls();
                 if (Platform.target().arch.isARM()) {
-                    ARMTargetMethodUtil.maxine_cacheflush(codeStart().toPointer(), code().length);
+                    ARMTargetMethodUtil.maxine_cache_flush(codeStart().toPointer(), code().length);
                 }
             } else {
                 // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call

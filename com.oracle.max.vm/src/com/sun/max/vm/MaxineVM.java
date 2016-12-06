@@ -26,6 +26,7 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import com.oracle.max.asm.target.armv7.*;
 import com.sun.max.annotate.*;
 import com.sun.max.config.*;
 import com.sun.max.lang.*;
@@ -582,6 +583,13 @@ public final class MaxineVM {
      */
     @C_FUNCTION
     public static native void core_dump();
+
+    @C_FUNCTION
+    public static native int maxine_fpga_instrumentation_buffer();
+
+    @C_FUNCTION
+    public static native int maxine_fpga_flush_instrumentation_buffer();
+
 
     @INSPECTED
     public final VMConfiguration config;

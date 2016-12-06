@@ -164,6 +164,9 @@ public final class C1XOptions {
     public static boolean CommentedAssembly             = ____;
     public static boolean PrintLIRWithAssembly          = ____;
 
+    // Simulation settings
+    public static boolean SimulateFPGA                  = ____;
+
     static {
         setOptimizationLevel(1);
 

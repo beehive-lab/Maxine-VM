@@ -22,55 +22,40 @@
  */
 package com.oracle.max.vm.ext.maxri;
 
-import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiCallingConvention.Type;
-import com.sun.cri.ci.CiRegister.RegisterFlag;
-import com.sun.cri.ci.CiTargetMethod.*;
-import com.sun.cri.ri.RiMethod;
-import com.sun.cri.ri.RiRegisterConfig;
-import com.sun.max.annotate.FOLD;
-import com.sun.max.annotate.HOSTED_ONLY;
-import com.sun.max.annotate.NEVER_INLINE;
-import com.sun.max.lang.Bytes;
-import com.sun.max.lang.ISA;
-import com.sun.max.platform.Platform;
-import com.sun.max.program.ProgramError;
-import com.sun.max.unsafe.CodePointer;
-import com.sun.max.unsafe.Pointer;
-import com.sun.max.unsafe.Word;
-import com.sun.max.vm.Log;
-import com.sun.max.vm.actor.holder.ClassActor;
-import com.sun.max.vm.actor.member.ClassMethodActor;
-import com.sun.max.vm.actor.member.MethodActor;
-import com.sun.max.vm.code.Code;
-import com.sun.max.vm.code.CodeManager.Lifespan;
-import com.sun.max.vm.collect.ByteArrayBitMap;
-import com.sun.max.vm.compiler.CallEntryPoint;
-import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.target.amd64.AMD64TargetMethodUtil;
-import com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil;
-import com.sun.max.vm.object.ObjectAccess;
-import com.sun.max.vm.runtime.FatalError;
-import com.sun.max.vm.runtime.Trap;
-import com.sun.max.vm.stack.*;
-import com.sun.max.vm.thread.VmThread;
-import com.sun.max.vm.type.Kind;
-import com.sun.max.vm.type.SignatureDescriptor;
-import com.sun.max.vm.type.TypeDescriptor;
-
-import java.util.List;
-import java.util.Set;
-
-import static com.sun.max.platform.Platform.platform;
-import static com.sun.max.platform.Platform.target;
-import static com.sun.max.vm.MaxineVM.isHosted;
-import static com.sun.max.vm.MaxineVM.vm;
-import static com.sun.max.vm.compiler.CallEntryPoint.BASELINE_ENTRY_POINT;
-import static com.sun.max.vm.compiler.CallEntryPoint.OPTIMIZED_ENTRY_POINT;
-import static com.sun.max.vm.compiler.deopt.Deoptimization.DEOPT_RETURN_ADDRESS_OFFSET;
-import static com.sun.max.vm.compiler.deopt.Deoptimization.deoptLogger;
+import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.MaxineVM.*;
+import static com.sun.max.vm.compiler.CallEntryPoint.*;
+import static com.sun.max.vm.compiler.deopt.Deoptimization.*;
 import static com.sun.max.vm.compiler.target.Stub.Type.*;
-import static com.sun.max.vm.stack.StackReferenceMapPreparer.logStackRootScanning;
+import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
+
+import java.util.*;
+
+import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiCallingConvention.*;
+import com.sun.cri.ci.CiRegister.*;
+import com.sun.cri.ci.CiTargetMethod.*;
+import com.sun.cri.ri.*;
+import com.sun.max.annotate.*;
+import com.sun.max.lang.*;
+import com.sun.max.platform.*;
+import com.sun.max.program.*;
+import com.sun.max.unsafe.*;
+import com.sun.max.vm.*;
+import com.sun.max.vm.actor.holder.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.code.*;
+import com.sun.max.vm.code.CodeManager.*;
+import com.sun.max.vm.collect.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.compiler.target.*;
+import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.compiler.target.arm.*;
+import com.sun.max.vm.object.*;
+import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.stack.*;
+import com.sun.max.vm.thread.*;
+import com.sun.max.vm.type.*;
 
 /**
  * This class implements a {@link TargetMethod target method} for
@@ -149,7 +134,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
             if (install) {
                 linkDirectCalls();
                 if (Platform.target().arch.isARM()) {
-                    ARMTargetMethodUtil.maxine_cacheflush(codeStart().toPointer(), code().length);
+                    ARMTargetMethodUtil.maxine_cache_flush(codeStart().toPointer(), code().length);
                 }
             } else {
                 // the displacement between a call site in the heap and a code cache location may not fit in the offset

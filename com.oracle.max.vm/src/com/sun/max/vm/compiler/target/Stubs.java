@@ -33,7 +33,6 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import java.util.*;
 
-import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
 import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.*;
@@ -47,7 +46,6 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deopt.*;
-import com.sun.max.vm.compiler.deopt.Deoptimization.*;
 import com.sun.max.vm.compiler.target.Stub.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.compiler.target.arm.*;
@@ -1223,7 +1221,7 @@ public class Stubs {
             patchAddr.writeInt(0, instruction);
             instruction = ARMV7Assembler.movtHelper(ConditionFlag.Always, ARMV7.r12, (disp >> 16) & 0xffff);
             patchAddr.writeInt(4, instruction);
-            ARMTargetMethodUtil.maxine_cacheflush(patchAddr, 8);
+            ARMTargetMethodUtil.maxine_cache_flush(patchAddr, 8);
         }
     }
 

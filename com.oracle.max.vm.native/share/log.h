@@ -82,6 +82,8 @@ extern void log_flush(void);
 #define log_THREADS (log_ALL || 0)
 #define log_TELE (log_ALL || 0)
 #define log_MMAP (log_ALL || 0)
+#define log_FPGA (log_ALL || 0)
+
 
 #if log_JVMNI
 #define jvmni_log_println log_println

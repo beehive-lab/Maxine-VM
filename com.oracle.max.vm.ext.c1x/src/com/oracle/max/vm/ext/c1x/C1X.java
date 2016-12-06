@@ -27,8 +27,9 @@ import static com.sun.max.vm.MaxineVM.*;
 
 import java.io.*;
 import java.util.*;
-
+import com.sun.cri.ci.CiCompiler.*;
 import com.oracle.max.asm.*;
+import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.criutils.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.sun.c1x.*;
@@ -38,13 +39,13 @@ import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.observer.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiCompiler.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
 import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -176,6 +177,12 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         if (phase == Phase.STARTING) {
             // Speculative opts are ok provided the compilation broker can handle deopt
             C1XOptions.UseAssumptions = vm().compilationBroker.isDeoptSupported() && Deoptimization.UseDeopt;
+        } else if (phase == Phase.RUNNING) {
+            if (C1XOptions.SimulateFPGA) {
+                assert Platform.target().arch.isARM() : "FPGA Simulation enabled only for ARMV7!";
+                ARMV7Instrumentation.ENABLED = true;
+                ARMV7Instrumentation.setInstrumentationBufferAddress(MaxineVM.maxine_fpga_flush_instrumentation_buffer());
+            }
         } else if (phase == Phase.TERMINATING) {
             if (C1XOptions.PrintMetrics) {
                 C1XMetrics.print();

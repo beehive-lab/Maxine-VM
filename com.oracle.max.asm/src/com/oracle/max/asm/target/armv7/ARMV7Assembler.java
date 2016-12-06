@@ -11,59 +11,56 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final CiRegister frameRegister;
     public final CiRegister scratchRegister;
     public final RiRegisterConfig registerConfig;
-
-    public static boolean INSTRUMENT = false;
-    public static boolean ARMASMDEBUG = false;
+    public final ARMV7Instrumentation instrumentation;
     public static boolean ASM_DEBUG_MARKERS = false;
-    public static int simBuf = 0;
-    public static int simBuffOffset = 0; // testing only not used in real simulation
-    public static int maxineFlushAddress = 0;
-    public static com.oracle.max.criutils.NativeCMethodinVM maxineflush = null;
-    private int highmask[] = {
-            0xffffff00,// 0
-            0x3fffffc0, // 1
-            0x0ffffff0, // 2
-            0x03fffffc, // 3
-            0x00ffffff, // 4
-            0xc03fffff, // 5
-            0xf00fffff, // 6
-            0xfc03ffff, // 7
-            0xff00ffff, // 8
-            0xffc03fff, // 9
-            0xfff00fff, // 10
-            0xfffc03ff, // 11
-            0xffff00ff, // 12
-            0xffffc03f, // 13
-            0xfffff00f, // 14
-            0xfffffc03}; //15
+
+    private int highmask[] = { 0xffffff00, // 0
+                    0x3fffffc0, // 1
+                    0x0ffffff0, // 2
+                    0x03fffffc, // 3
+                    0x00ffffff, // 4
+                    0xc03fffff, // 5
+                    0xf00fffff, // 6
+                    0xfc03ffff, // 7
+                    0xff00ffff, // 8
+                    0xffc03fff, // 9
+                    0xfff00fff, // 10
+                    0xfffc03ff, // 11
+                    0xffff00ff, // 12
+                    0xffffc03f, // 13
+                    0xfffff00f, // 14
+                    0xfffffc03}; // 15
+
     public boolean isModified12bit(int value) {
 
-        for(int i = 0; i < 16; i++) {
-            if((value & highmask[i]) == 0) return true;
+        for (int i = 0; i < 16; i++) {
+            if ((value & highmask[i]) == 0)
+                return true;
         }
         return false;
     }
 
     public int as12BitValue(int value) {
         int retVal = 0;
-        for(int i = 0; i < 16; i++) {
-            if((value & highmask[i]) == 0) {
-		retVal = value & ~highmask[i];
-		retVal = Integer.rotateLeft(retVal, i*2);
-		assert((retVal & 0xFFFFFF00) == 0);
-		retVal |= (i << 8);
-                assert((retVal & 0xFFFFF000) == 0);
+        for (int i = 0; i < 16; i++) {
+            if ((value & highmask[i]) == 0) {
+                retVal = value & ~highmask[i];
+                retVal = Integer.rotateLeft(retVal, i * 2);
+                assert ((retVal & 0xFFFFFF00) == 0);
+                retVal |= (i << 8);
+                assert ((retVal & 0xFFFFF000) == 0);
                 return retVal;
             }
         }
-        assert (0==1);
         return retVal;
     }
+
     public ARMV7Assembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target);
         this.registerConfig = registerConfig;
         this.scratchRegister = registerConfig == null ? ARMV7.r12 : registerConfig.getScratchRegister();
         this.frameRegister = registerConfig == null ? null : registerConfig.getFrameRegister();
+        this.instrumentation = new ARMV7Instrumentation(this);
     }
 
     public enum ConditionFlag {
@@ -221,16 +218,16 @@ public class ARMV7Assembler extends AbstractAssembler {
     public void branch(ARMV7Label l) {
         if (l.isBound()) {
             int disp = (l.position() - codeBuffer.position() - 8) / 4;
-            if (SIMULATE_DYNAMIC) {
-                disp = instrumentPCChange(ConditionFlag.Always, ConditionFlag.NeverUse, disp);
+            if (ARMV7Instrumentation.ENABLED) {
+                disp = instrumentation.instrumentBranch(ConditionFlag.Always, ConditionFlag.NeverUse, disp);
             }
             b(ConditionFlag.Always, disp);
 
         } else {
-            if (SIMULATE_DYNAMIC) {
-                instrumentPCChange(ConditionFlag.Always, ConditionFlag.NeverUse, -2);
+            if (ARMV7Instrumentation.ENABLED) {
+                instrumentation.instrumentBranch(ConditionFlag.Always, ConditionFlag.NeverUse, -2);
             }
-            BranchInfo info = new BranchInfo(BranchInfo.BranchType.BRANCH, ConditionFlag.Always, SIMULATE_DYNAMIC);
+            BranchInfo info = new BranchInfo(BranchInfo.BranchType.BRANCH, ConditionFlag.Always, ARMV7Instrumentation.ENABLED);
             l.addPatchAt(codeBuffer.position(), info);
             emitInt(ConditionFlag.Always.value << 28 | 0xd0d0);
         }
@@ -243,13 +240,11 @@ public class ARMV7Assembler extends AbstractAssembler {
         // jmp: dead + 2 nops
         // tableswitch: nop
 
-        boolean instrumented = info.isInstrumented();
-        assert instrumented == SIMULATE_DYNAMIC;
-        BranchType type = ((info.getBranchType() == BranchType.UNKNOWN) ? BranchInfo.fromValue(codeBuffer.getInt(branch)  & 0xffff) : info.getBranchType());
+        BranchType type = ((info.getBranchType() == BranchType.UNKNOWN) ? BranchInfo.fromValue(codeBuffer.getInt(branch) & 0xffff) : info.getBranchType());
         ConditionFlag flag = ((info.getBranchType() == BranchType.UNKNOWN) ? ConditionFlag.which((codeBuffer.getInt(branch) >> 28) & 0xf) : info.getConditionFlag());
 
         checkConstraint(-0x800000 <= (target - branch) && (target - branch) <= 0x7fffff, "branch must be within  a 24bit offset");
-        int disp = (target - branch); //-16 implies 4 instruction jump
+        int disp = (target - branch); // -16 implies 4 instruction jump
         int instruction = 0;
 
         int firstPatch = 44;
@@ -258,7 +253,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         int secondPatchOperation = 0;
         int tmpDisp = 0;
         ConditionFlag tmp = ConditionFlag.NeverUse;
-        if (instrumented) {
+        if (info.isInstrumented()) {
             firstPatchOperation = codeBuffer.getInt(branch - firstPatch);
             secondPatchOperation = codeBuffer.getInt(branch - secondPatch);
         }
@@ -276,33 +271,22 @@ public class ARMV7Assembler extends AbstractAssembler {
             instruction = addRegistersHelper(flag, false, ARMV7.PC, ARMV7.PC, ARMV7.r12, 0, 0);
             codeBuffer.emitInt(instruction, branch + 8);
 
-            if (instrumented) {
-                if (ARMASMDEBUG) {
-                    System.out.println("JUMP CASE ONE");
-                }
-                disp = disp + 4;
+            if (info.isInstrumented()) {
+                disp += 4;
                 if ((0xf & (firstPatchOperation >> 28)) == ConditionFlag.Always.value()) {
-                    if (ARMASMDEBUG) {
-                        System.out.println("We have an ALWAYS TAKEN BRANCH");
-                    }
-                    disp = disp + firstPatch;
+                    disp += firstPatch;
                     instruction = movwHelper(ConditionFlag.Always, ARMV7.r1, disp & 0xffff);
                     codeBuffer.emitInt(instruction, branch - firstPatch);
                     instruction = movtHelper(ConditionFlag.Always, ARMV7.r1, (disp >> 16) & 0xffff);
                     codeBuffer.emitInt(instruction, branch - firstPatch + 4);
-
                 } else {
-                    if (ARMASMDEBUG) {
-                        System.out.println("We have an TAKEN NOTTAKEN BRANCH");
-                    }
-                    disp = disp + secondPatch;
+                    disp += secondPatch;
                     // patch operations are therefore reversed
                     tmp = ConditionFlag.which(0xf & (secondPatchOperation >> 28));
                     instruction = movwHelper(tmp, ARMV7.r1, disp & 0xffff);
                     codeBuffer.emitInt(instruction, branch - secondPatch);
                     instruction = movtHelper(tmp, ARMV7.r1, (disp >> 16) & 0xffff);
                     codeBuffer.emitInt(instruction, branch - secondPatch + 4);
-
                     tmp = ConditionFlag.which(0xf & (firstPatchOperation >> 28));
                     disp = 44;
                     instruction = movwHelper(tmp, ARMV7.r1, disp & 0xffff);
@@ -318,7 +302,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                 assert codeBuffer.getInt(branch + 8) == getNop();
             }
             assert flag == ConditionFlag.Always;
-            checkConstraint(-0x800000 <= (disp+8) && disp <= 0x7fffff, "patchJumpTarget TWO must be within  a 24bit offset");
+            checkConstraint(-0x800000 <= (disp + 8) && disp <= 0x7fffff, "patchJumpTarget TWO must be within  a 24bit offset");
             disp -= 16;
             instruction = movwHelper(flag, ARMV7.r12, disp & 0xffff);
             codeBuffer.emitInt(instruction, branch);
@@ -327,24 +311,14 @@ public class ARMV7Assembler extends AbstractAssembler {
             instruction = addRegistersHelper(flag, false, ARMV7.PC, ARMV7.PC, ARMV7.r12, 0, 0);
             codeBuffer.emitInt(instruction, branch + 8);
 
-            if (instrumented) {
-                if (ARMASMDEBUG) {
-                    System.out.println("JUMP CASE TWO");
-                }
+            if (info.isInstrumented()) {
                 if ((0xf & (firstPatchOperation >> 28)) == ConditionFlag.Always.value()) {
-                    if (ARMASMDEBUG) {
-                        System.out.println("We have an ALWAYS TAKEN BRANCH  " + branch);
-                    }
-                    tmpDisp = disp + firstPatch - 8; // found to be 8 too far!
+                    tmpDisp = disp + firstPatch - 8;
                     instruction = movwHelper(ConditionFlag.Always, ARMV7.r1, tmpDisp & 0xffff);
-                    codeBuffer.emitInt(/* 0xbeefbeef */instruction, branch - firstPatch);
+                    codeBuffer.emitInt(instruction, branch - firstPatch);
                     instruction = movtHelper(ConditionFlag.Always, ARMV7.r1, (tmpDisp >> 16) & 0xffff);
-                    codeBuffer.emitInt(/* 0xdeadbeef */instruction, branch - firstPatch + 4);
-
+                    codeBuffer.emitInt(instruction, branch - firstPatch + 4);
                 } else {
-                    if (ARMASMDEBUG) {
-                        System.out.println("WE HAVE  ATAKEN + NOTTAKEN TO PATCH");
-                    }
                     tmpDisp = disp + secondPatch - 8;
                     tmp = ConditionFlag.which(0xf & (secondPatchOperation >> 28));
                     instruction = movwHelper(tmp, ARMV7.r1, tmpDisp & 0xffff);
@@ -362,35 +336,27 @@ public class ARMV7Assembler extends AbstractAssembler {
             }
         } else if (type == BranchType.TABLESWITCH) {
             if (debug) {
-                assert (codeBuffer.getInt(branch) & 0xfff) ==  0x0d0;
+                assert (codeBuffer.getInt(branch) & 0xfff) == 0x0d0;
             }
             assert flag == ConditionFlag.Always;
             checkConstraint(-0x800000 <= (disp) && disp <= 0x7fffff, "patchJumpTarget three must be within  a 24bit offset");
             disp = (disp - 8) / 4;
             codeBuffer.emitInt(0x0a000000 | (disp & 0xffffff) | ((ConditionFlag.Always.value() & 0xf) << 28), branch);
-
-            if (instrumented) {
+            if (info.isInstrumented()) {
                 disp = disp * 4;
-                if (ARMASMDEBUG) {
-                    System.out.println("JUMP CASE THREE");
-                }
                 if ((0xf & (firstPatchOperation >> 28)) == ConditionFlag.Always.value()) {
-                    if (ARMASMDEBUG) {
-                        System.out.println("We have an ALWAYS TAKEN BRANCH " + branch);
-                    }
-                    disp = disp + firstPatch;
+                    disp += firstPatch;
                     instruction = movwHelper(ConditionFlag.Always, ARMV7.r1, disp & 0xffff);
                     codeBuffer.emitInt(instruction, branch - firstPatch);
                     instruction = movtHelper(ConditionFlag.Always, ARMV7.r1, (disp >> 16) & 0xffff);
                     codeBuffer.emitInt(instruction, branch - firstPatch + 4);
                 } else {
-                    disp = disp + secondPatch;
+                    disp += secondPatch;
                     tmp = ConditionFlag.which(0xf & (secondPatchOperation >> 28));
                     instruction = movwHelper(tmp, ARMV7.r1, disp & 0xffff);
                     codeBuffer.emitInt(instruction, branch - secondPatch);
                     instruction = movtHelper(tmp, ARMV7.r1, (disp >> 16) & 0xffff);
                     codeBuffer.emitInt(instruction, branch - secondPatch + 4);
-
                     tmp = ConditionFlag.which(0xf & (firstPatchOperation >> 28));
                     disp = 44;
                     instruction = movwHelper(tmp, ARMV7.r1, disp & 0xffff);
@@ -399,7 +365,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                     codeBuffer.emitInt(instruction, branch - firstPatch + 4);
                 }
             }
-        } else { //branch
+        } else { // branch
             if (debug) {
                 assert codeBuffer.getInt(branch) == ((flag.value() << 28) | 0xd0d0);
             }
@@ -408,22 +374,14 @@ public class ARMV7Assembler extends AbstractAssembler {
             checkConstraint(-0x800000 <= (disp) && disp <= 0x7fffff, "patchJumpTarget four must be within  a 24bit offset");
             disp = (disp - 8) / 4;
             codeBuffer.emitInt(0x0a000000 | (disp & 0xffffff) | ((ConditionFlag.Always.value() & 0xf) << 28), branch);
-
-            if (instrumented) {
-                if (ARMASMDEBUG) {
-                    System.out.println("JUMP CASE DEFAULT");
-                }
-                disp = disp * 4;
+            if (info.isInstrumented()) {
+                disp *= 4;
                 if ((0xf & (firstPatchOperation >> 28)) == ConditionFlag.Always.value()) {
-                    if (ARMASMDEBUG) {
-                        System.out.println("We have an ALWAYS TAKEN BRANCH " + branch);
-                    }
-                    disp = disp + firstPatch;
+                    disp += firstPatch;
                     instruction = movwHelper(ConditionFlag.Always, ARMV7.r1, disp & 0xffff);
                     codeBuffer.emitInt(instruction, branch - firstPatch);
                     instruction = movtHelper(ConditionFlag.Always, ARMV7.r1, (disp >> 16) & 0xffff);
                     codeBuffer.emitInt(instruction, branch - firstPatch + 4);
-
                 } else {
                     disp = disp + secondPatch;
                     tmp = ConditionFlag.which(0xf & (secondPatchOperation >> 28));
@@ -473,8 +431,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public void add(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int immed_8, final int rotate_amount) {
         int instruction = 0x02800000;
         checkConstraint(0 <= immed_8 && immed_8 <= 255, "0 <= immed_8 && immed_8 <= 255");
-        //checkConstraint((rotate_amount % 2) == 0, "(rotate_amount % 2) == 0");
-        checkConstraint(0 <= rotate_amount  && rotate_amount <= 15, "0 <= rotate_amount  && rotate_amount <= 15");
+        checkConstraint(0 <= rotate_amount && rotate_amount <= 15, "0 <= rotate_amount  && rotate_amount <= 15");
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (s ? 1 : 0) << 20;
         instruction |= (Rd.getEncoding() & 0xf) << 12;
@@ -484,8 +441,6 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-
-
     public static int blxHelper(final ConditionFlag cond, final CiRegister Rm) {
         int instruction = 0x12FFF30;
         instruction |= (cond.value() & 0xf) << 28;
@@ -493,7 +448,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         return instruction;
     }
 
-    public void add12BitImmediate(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn,final int imm12) {
+    public void add12BitImmediate(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int imm12) {
         int instruction = 0x2800000;
         assert (0 <= imm12 && imm12 < 4096) : "0 <= imm12 && imm12 < 4096";
         instruction |= (cond.value() & 0xf) << 28;
@@ -503,6 +458,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= imm12;
         emitInt(instruction);
     }
+
     public void addRegisters(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final CiRegister Rm, final int imm2Type, final int imm5) {
         emitInt(addRegistersHelper(cond, s, Rd, Rn, Rm, imm2Type, imm5));
     }
@@ -716,11 +672,12 @@ public class ARMV7Assembler extends AbstractAssembler {
     public void mov(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rm) {
         int instruction = 0x01a00000;
         assert (Rd.getEncoding() < 16 && Rm.getEncoding() < 16); // CORE Register move only!
-        if (Rd == ARMV7.r15 && SIMULATE_DYNAMIC) {
+        // TODO: Add comment
+        if (Rd == ARMV7.r15 && ARMV7Instrumentation.ENABLED) {
             push(ConditionFlag.Always, 1 << 12 | 1 << 8);
             mov(cond, false, ARMV7.r12, Rm);
             ConditionFlag tmp = cond.inverse();
-            instrumentNEWAbsolutePC(cond, tmp, true, ARMV7.r12, 0, false);
+            instrumentation.instrumentPC(cond, tmp, true, ARMV7.r12, 0, false);
             pop(ConditionFlag.Always, 1 << 12 | 1 << 8);
         }
         instruction |= (cond.value() & 0xf) << 28;
@@ -777,6 +734,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= imm16 & 0xfff;
         return instruction;
     }
+
     public void movImm12(final ConditionFlag cond, final CiRegister Rd, final int imm12) {
         int instruction = 0x03a00000;
         checkConstraint(0 <= imm12 && imm12 <= 4095, "0<= imm12 && imm12 <= 4095 ");
@@ -785,6 +743,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (Rd.getEncoding() & 0xf) << 12;
         emitInt(instruction);
     }
+
     public void mvn(final ConditionFlag cond, final CiRegister Rd, final int imm12) {
         int instruction = 0x03800000;
         checkConstraint(0 <= imm12 && imm12 <= 4095, "0<= imm12 && imm12 <= 4095 ");
@@ -793,6 +752,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (Rd.getEncoding() & 0xf) << 12;
         emitInt(instruction);
     }
+
     public void movw(final ConditionFlag cond, final CiRegister Rd, final int imm16) {
         int instruction = 0x03000000;
         checkConstraint(0 <= imm16 && imm16 <= 65535, "0<= imm16 && imm16 <= 65535 ");
@@ -824,8 +784,8 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (ConditionFlag.Always.value() & 0xf) << 28;
         return instruction;
     }
+
     public void sub12BitImmediate(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int imm12) {
-        // not tested
         int instruction = 0x2400000;
         checkConstraint(0 <= imm12 && imm12 < 4096, "0 <= imm12 && imm12 < 4096");
         instruction |= (cond.value() & 0xf) << 28;
@@ -835,6 +795,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= Rn.getEncoding() << 16;
         emitInt(instruction);
     }
+
     public void sub(final ConditionFlag cond, final boolean s, final CiRegister Rd, final CiRegister Rn, final int immed_8, final int rotate_amount) {
         int instruction = 0x02400000; // subtract of an immediate
         checkConstraint(0 <= immed_8 && immed_8 <= 255, "0 <= immed_8 && immed_8 <= 255");
@@ -924,9 +885,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void strd(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, final CiRegister Rm) {
-        if (SIMULATE_DYNAMIC) {
-            assert false : "strd not instrumented";
-            instrument(false, true, true, Rn, 0);
+        if (ARMV7Instrumentation.ENABLED) {
+            instrumentation.instrument(false, true, true, Rn, 0);
         }
         int instruction = 0x000000f0;
         instruction |= (P & 0x1) << 24;
@@ -940,9 +900,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void str(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, final CiRegister Rm, int imm5, int imm2Type) {
-        if (SIMULATE_DYNAMIC) {
-            assert false : "str not instrumented";
-            instrument(false, true, true, Rn, 0);
+        if (ARMV7Instrumentation.ENABLED) {
+            instrumentation.instrument(false, true, true, Rn, 0);
         }
         int instruction = 0x06000000;
         instruction |= (P & 0x1) << 24;
@@ -972,17 +931,16 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void strImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rvalue, final CiRegister Rmemory, int imm12) {
-        if (SIMULATE_DYNAMIC) {
-            assert(0 == 1); // ERROR need to update instrument code to account for use of immediates
-            instrument(false, true, true, Rmemory, imm12);
+        if (ARMV7Instrumentation.ENABLED) {
+            instrumentation.instrument(false, true, true, Rmemory, imm12);
         }
         int instruction = 0x04000000;
         checkConstraint(-4095 <= imm12 && imm12 <= 4095, "strImmediate offset greater than +/- 4095 ");
-        if(imm12 < 0) {
-            assert(U == 0);
+        if (imm12 < 0) {
+            assert (U == 0);
             imm12 = imm12 * -1;
         } else {
-            assert(U == 1);
+            assert (U == 1);
         }
         assert Rvalue.getEncoding() != Rmemory.getEncoding() || !(P == 0 && U == 0 && W == 0);
         instruction |= (P & 0x1) << 24;
@@ -996,14 +954,14 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void strDualImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
-        if (SIMULATE_DYNAMIC) {
-            instrument(false, true, true, Rn, imm8);
+        if (ARMV7Instrumentation.ENABLED) {
+            instrumentation.instrument(false, true, true, Rn, imm8);
         }
         checkConstraint(-255 <= imm8 && imm8 <= 255, "strDualImmediate offset greater than +/- 255 ");
 
-        if(imm8 < 0) {
+        if (imm8 < 0) {
             assert (U == 0);
-            imm8 = -1 *imm8;
+            imm8 = -1 * imm8;
             U = 1;
         } else {
             assert (U == 1);
@@ -1019,7 +977,6 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (imm8 & 0xf0) << 4;
         emitInt(instruction);
     }
-
 
     public void clz(final ConditionFlag cond, final CiRegister Rdest, final CiRegister Rval) {
         int instruction = 0x016f0f10;
@@ -1038,8 +995,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldrex(final ConditionFlag cond, final CiRegister Rdest, final CiRegister Raddr) {
-        if (SIMULATE_DYNAMIC) {
-            instrument(true, true, true, Raddr, 0);
+        if (ARMV7Instrumentation.ENABLED) {
+            instrumentation.instrument(true, true, true, Raddr, 0);
         }
         int instruction = 0x01900f9f;
         instruction |= ((cond.value() & 0xf) << 28);
@@ -1049,8 +1006,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldrexd(final ConditionFlag cond, final CiRegister Rdest, final CiRegister Raddr) {
-        if (SIMULATE_DYNAMIC) {
-            instrument(true, true, true, Raddr, 0);
+        if (ARMV7Instrumentation.ENABLED) {
+            instrumentation.instrument(true, true, true, Raddr, 0);
         }
         int instruction = 0x1B00F9F;
         instruction |= ((cond.value() & 0xf) << 28);
@@ -1066,10 +1023,9 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= ((Raddr.getEncoding() & 0xf) << 16);
         instruction |= Rnewval.getEncoding() & 0xf;
         emitInt(instruction);
-        if (SIMULATE_DYNAMIC) {
-            instrument(false, true, true, Raddr, 0);
+        if (ARMV7Instrumentation.ENABLED) {
+            instrumentation.instrument(false, true, true, Raddr, 0);
         }
-
     }
 
     public void strexd(final ConditionFlag cond, final CiRegister Rd, final CiRegister Rt, final CiRegister Rn) {
@@ -1079,15 +1035,14 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= ((Rd.getEncoding() & 0xf) << 12);
         instruction |= Rt.getEncoding() & 0xf;
         emitInt(instruction);
-        if (SIMULATE_DYNAMIC) {
-            instrument(false, true, true, Rn, 0);
+        if (ARMV7Instrumentation.ENABLED) {
+            instrumentation.instrument(false, true, true, Rn, 0);
         }
-
     }
 
     public void ldruhw(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
-        if (SIMULATE_DYNAMIC) {
-            instrument(true, true, true, Rn, imm8);
+        if (ARMV7Instrumentation.ENABLED) {
+            instrumentation.instrument(true, true, true, Rn, imm8);
         }
         checkConstraint(-255 <= imm8 && imm8 <= 255, "-255 <= offset8 && offset8 <= 255 ldruhw");
         int instruction = 0x005000b0;
@@ -1107,8 +1062,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldrshw(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
-        if (SIMULATE_DYNAMIC) {
-            instrument(true, true, true, Rn, imm8);
+        if (ARMV7Instrumentation.ENABLED) {
+            instrumentation.instrument(true, true, true, Rn, imm8);
         }
         checkConstraint(-255 <= imm8 && imm8 <= 255, "-255 <= offset8 && offset8 <= 255 ldrshw");
 
@@ -1124,13 +1079,13 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (Rn.getEncoding() & 0xf) << 16;
         instruction |= (Rt.getEncoding() & 0xf) << 12;
-        instruction |= 0xf0 | (imm8 & 0xf) | ((0xf0 & imm8) << 4);
+        instruction |= 0xf0 | (imm8 &0xf) | ((0xf0 & imm8) << 4);
         emitInt(instruction);
     }
 
     public void ldrsb(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
-        if (SIMULATE_DYNAMIC) {
-            instrument(true, true, true, Rn, imm8);
+        if (ARMV7Instrumentation.ENABLED) {
+            instrumentation.instrument(true, true, true, Rn, imm8);
         }
         checkConstraint(-255 <= imm8 && imm8 <= 255, "-255 <= offset8 && offset8 <= 255 ldrsb");
 
@@ -1141,7 +1096,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         if (imm8 < 0) {
             U = 0;
             imm8 = imm8 * -1;
-	}
+        }
         instruction |= (P << 24) | (U << 23) | (W << 21);
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (Rn.getEncoding() & 0xf) << 16;
@@ -1152,8 +1107,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldrb(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm12) {
-        if (SIMULATE_DYNAMIC) {
-            instrument(true, true, true, Rn, imm12);
+        if (ARMV7Instrumentation.ENABLED) {
+            instrumentation.instrument(true, true, true, Rn, imm12);
         }
         int instruction = 0x04500000;
         P = P & 1;
@@ -1167,14 +1122,14 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    //TODO: Implement the modified immediate arithmetic to include shifts etc.
+    // TODO: Implement the modified immediate arithmetic to include shifts etc.
     private int modifyImmediate(int imm12) {
         return imm12;
     }
 
     public void strbImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm12) {
-        if (SIMULATE_DYNAMIC) {
-            instrument(false, true, true, Rn, imm12);
+        if (ARMV7Instrumentation.ENABLED) {
+            instrumentation.instrument(false, true, true, Rn, imm12);
         }
         int instruction = 0x04400000;
         P = P & 1;
@@ -1189,8 +1144,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void strHImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
-        if (SIMULATE_DYNAMIC) {
-            instrument(false, true, true, Rn, imm8);
+        if (ARMV7Instrumentation.ENABLED) {
+            instrumentation.instrument(false, true, true, Rn, imm8);
         }
         int instruction = 0x004000b0;
         P = P & 1;
@@ -1199,7 +1154,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         if (imm8 < 0) {
             U = 0;
             imm8 = imm8 * -1;
-	}
+        }
         instruction |= (P << 24) | (U << 23) | (W << 21);
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (Rn.getEncoding() & 0xf) << 16;
@@ -1209,130 +1164,14 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    // TODO: Cleanup
-    private void instrument(boolean read, boolean data, boolean add, final CiRegister base, int immediate) {
-        if (simBuf == 0) {
-            simBuf = maxineflush.maxine_instrumentationBuffer();
-        }
-        if (maxineFlushAddress == 0) {
-            maxineFlushAddress = maxineflush.maxine_flush_instrumentationBuffer();
-        }
-        // TEMPORARILY COMMENTED OUT FOR DEBUGGING OF PC CHANGES
-        // save some registers to the stack using a
-
-        //
-        // Format bottom 2 bits used/ 2 instruction read 1 data write 0 data read i.e. bit 0 = Write bit 1 = Instruction
-        // Instruction Operation Bit 1 Bit 0 ----------------------------- DATAREAD 0 0 DATAWRITE 0 1 CODEREAD 1 0
-        // CODEWRITE 1 1 public static boolean INSTRUMENT = false; public static int simBuf = 0; public static int
-        // simBuffOffset = 0;
-        //
-        CiRegister immReg = null;
-        CiRegister spareAddress = null;
-        CiRegister spareImm = null;
-        CiRegister destAddress = null;
-        CiRegister valAddress = null;
-        switch (base.getEncoding()) {
-            //
-            // r0 r1 r2 r8 r9 r12 are pushed
-            //
-            case 0:
-                spareAddress = ARMV7.r8;
-                spareImm = ARMV7.r9;
-                destAddress = ARMV7.r1;
-                valAddress = ARMV7.r12;
-                immReg = ARMV7.r2;
-                break;
-            case 8:
-                spareAddress = ARMV7.r0;
-                spareImm = ARMV7.r1;
-                destAddress = ARMV7.r1;
-                valAddress = ARMV7.r12;
-                immReg = ARMV7.r9;
-                break;
-
-            case 9:
-                spareAddress = ARMV7.r0;
-                spareImm = ARMV7.r1;
-                destAddress = ARMV7.r2;
-                valAddress = ARMV7.r12;
-                immReg = ARMV7.r8;
-                break;
-            case 1:
-                spareAddress = ARMV7.r0;
-                spareImm = ARMV7.r2;
-                destAddress = ARMV7.r8;
-                valAddress = ARMV7.r12;
-                immReg = ARMV7.r9;
-                break;
-            case 2:
-                spareAddress = ARMV7.r0;
-                spareImm = ARMV7.r1;
-                destAddress = ARMV7.r8;
-                valAddress = ARMV7.r12;
-                immReg = ARMV7.r9;
-                break;
-            case 3:
-            case 4:
-            case 5:
-            case 6:
-            case 7:
-            case 10:
-            case 11:
-            case 14:
-                spareAddress = ARMV7.r0;
-                spareImm = ARMV7.r1;
-                destAddress = ARMV7.r2;
-                valAddress = ARMV7.r12;
-                immReg = ARMV7.r8;
-                break;
-            case 12:
-            case 13:
-                destAddress = ARMV7.r0;
-                valAddress = ARMV7.r1;
-                immReg = ARMV7.r2;
-                spareAddress = ARMV7.r8;
-                spareImm = ARMV7.r9;
-                break;
-            default:
-                assert 0 == 1 : "ERROR insturmentation uses illegal base register";
-                break;
-        }
-        int orint = 0;
-        if (!read) {
-            orint |= 1;
-        }
-
-        if (!data) {
-            orint |= 2;
-        }
-        emitInt(0xeaffffff); // this is the branch to next instruction ... ie the instrumentPush
-        push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384);
-        mrsReadAPSR(ARMV7Assembler.ConditionFlag.Always, valAddress);
-        push(ConditionFlag.Always, 1 << valAddress.getEncoding());
-
-        // vpush(ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double);
-        mov32BitConstant(ConditionFlag.Always, valAddress, immediate);
-        addRegisters(ConditionFlag.Always, false, valAddress, valAddress, base, 0, 0); // forms the address to be
-// read/written
-        or(ConditionFlag.Always, false, valAddress, valAddress, orint); // ors the read/write code/data bits
-        mov(ConditionFlag.Always, false, ARMV7.r0, valAddress);
-        mov32BitConstant(ConditionFlag.Always, ARMV7.r12, maxineFlushAddress);
-        blx(ARMV7.r12);
-        // vpop(ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double);
-        pop(ConditionFlag.Always, 1 << valAddress.getEncoding());
-        msrWriteAPSR(ARMV7Assembler.ConditionFlag.Always, valAddress);
-
-        pop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384);
-    }
-
     public void ldrImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm12) {
-        if (SIMULATE_DYNAMIC) {
-            instrument(true, true, true, Rn, imm12);
+        if (ARMV7Instrumentation.ENABLED) {
+            instrumentation.instrument(true, true, true, Rn, imm12);
         }
         int instruction = 0x04100000;
         checkConstraint(-4095 <= imm12 && imm12 <= 4095, "ldrImmediate offset greater than +/- 4095 ");
-        if(imm12 < 0) {
-            assert(U== 0);
+        if (imm12 < 0) {
+            assert (U == 0);
             imm12 = imm12 * -1;
         } else {
             assert (U == 1);
@@ -1349,9 +1188,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldr(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, final CiRegister Rm, int imm2Type, int imm5) {
-        if (SIMULATE_DYNAMIC) {
-            assert false : "ldr instrumented should never be called";
-            instrument(true, true, true, Rn, imm5);
+        if (ARMV7Instrumentation.ENABLED) {
+            instrumentation.instrument(true, true, true, Rn, imm5);
         }
         int instruction = 0x06100000;
         P = P & 1;
@@ -1406,27 +1244,6 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    private void instrumentTest() {
-        if (simBuf == 0) {
-            simBuf = maxineflush.maxine_instrumentationBuffer();
-
-        }
-        boolean read = false;
-        boolean data = false;
-        push(ConditionFlag.Always, 1 << 8 | 1 << 9, true); // Added 1<<9 so that stack is 8 byte aligned
-        for (int i = 0; i < 1028; i++) {
-            if (i % 4 == 0) {
-                read = !read;
-            }
-            if (i % 3 == 0) {
-                data = !data;
-            }
-            mov32BitConstant(ConditionFlag.Always, ARMV7.r8, i);
-            instrument(read, data, true, ARMV7.r8, 0);
-        }
-        pop(ConditionFlag.Always, 1 << 8 | 1 << 9, true); // Added 1<<9 so that stack is 8 byte aligned
-    }
-
     public int getRegisterList(CiRegister... regs) {
         int regList = 0;
         for (CiRegister reg : regs) {
@@ -1440,12 +1257,12 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void push(final ConditionFlag flag, final int registerList, boolean instrument) {
-        if (instrument && SIMULATE_DYNAMIC) {
+        if (instrument && ARMV7Instrumentation.enabled()) {
             int count = 0;
             if ((registerList & (1 << 14)) == 0) {
                 for (int i = 0; i < 16; i++) {
                     if ((registerList & (1 << i)) != 0) {
-                        instrument(false, true, true, ARMV7.r13, -count++ * 4);
+                        instrumentation.instrument(false, true, true, ARMV7.r13, -count++ * 4);
                     }
                 }
             }
@@ -1466,23 +1283,24 @@ public class ARMV7Assembler extends AbstractAssembler {
     public void saveRegister(int reg, int reg2) {
         push(ConditionFlag.Always, (1 << reg) | (1 << reg2), true);
     }
+
     public void saveInFP(int reg) {
         vmov(ConditionFlag.Always, ARMV7.s28, ARMV7.cpuRegisters[reg], null, CiKind.Float, CiKind.Int);
-
     }
+
     public void restoreFromFP(int reg) {
         vmov(ConditionFlag.Always, ARMV7.cpuRegisters[reg], ARMV7.s28, null, CiKind.Int, CiKind.Float);
     }
-    public void saveTWOInFP(final ConditionFlag flag,int reg, int reg2) {
+
+    public void saveInFP(final ConditionFlag flag, int reg, int reg2) {
         vmov(flag, ARMV7.s28, ARMV7.cpuRegisters[reg], null, CiKind.Float, CiKind.Int);
         vmov(flag, ARMV7.s29, ARMV7.cpuRegisters[reg2], null, CiKind.Float, CiKind.Int);
-
     }
-    public void restoreTWOFromFP(final ConditionFlag flag,int reg, int reg2) {
+
+    public void restoreFromFP(final ConditionFlag flag, int reg, int reg2) {
         vmov(flag, ARMV7.cpuRegisters[reg], ARMV7.s28, null, CiKind.Int, CiKind.Float);
         vmov(flag, ARMV7.cpuRegisters[reg2], ARMV7.s29, null, CiKind.Int, CiKind.Float);
     }
-
 
     public void restoreRegister(int reg, int reg2) {
         pop(ConditionFlag.Always, (1 << reg) | (1 << reg2), true);
@@ -1493,11 +1311,11 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void pop(final ConditionFlag flag, final int registerList, boolean instrument) {
-        if (instrument && SIMULATE_DYNAMIC) {
+        if (instrument && ARMV7Instrumentation.enabled()) {
             int count = 0;
             for (int i = 0; i < 16; i++) {
                 if ((registerList & (1 << i)) != 0) {
-                    instrument(true, true, true, ARMV7.r13, count++ * 4);
+                    instrumentation.instrument(true, true, true, ARMV7.r13, count++ * 4);
                 }
             }
         }
@@ -1520,8 +1338,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldrd(final ConditionFlag flag, final CiRegister valueReg, final CiRegister baseReg, int offset8) {
-        if (SIMULATE_DYNAMIC) {
-            instrument(true, true, true, baseReg, offset8);
+        if (ARMV7Instrumentation.ENABLED) {
+            instrumentation.instrument(true, true, true, baseReg, offset8);
         }
 
         int instruction;
@@ -1551,8 +1369,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void strd(final ConditionFlag flag, final CiRegister valueReg, final CiRegister baseReg, int offset8) {
-        if (SIMULATE_DYNAMIC) {
-            instrument(false, true, true, baseReg, offset8);
+        if (ARMV7Instrumentation.ENABLED) {
+            instrumentation.instrument(false, true, true, baseReg, offset8);
         }
         int instruction;
         instruction = 0x004000f0;
@@ -1581,8 +1399,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void str(final ConditionFlag flag, final CiRegister valueReg, final CiRegister baseRegister, final int offset12) {
-        if (SIMULATE_DYNAMIC) {
-            instrument(false, true, true, baseRegister, offset12);
+        if (ARMV7Instrumentation.ENABLED) {
+            instrumentation.instrument(false, true, true, baseRegister, offset12);
         }
         int instruction;
         instruction = 0x05800000;
@@ -1594,8 +1412,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldr(final ConditionFlag flag, final CiRegister destReg, final CiRegister baseRegister, final int offset12) {
-        if (SIMULATE_DYNAMIC) {
-            instrument(true, true, true, baseRegister, offset12);
+        if (ARMV7Instrumentation.ENABLED) {
+            instrumentation.instrument(true, true, true, baseRegister, offset12);
         }
         int instruction;
         instruction = 0x05900000;
@@ -1650,42 +1468,40 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     int getSingleAddDisp(int desiredDisplacement, int maxdifference) {
         int i;
-        for(i = 0; i < 16;i++) {
+        for (i = 0; i < 16; i++) {
             int tmp = highmask[i] & desiredDisplacement;
             if (tmp == 0) {
                 return i;
             }
-            tmp  = desiredDisplacement - (~highmask[i] & desiredDisplacement);
+            tmp = desiredDisplacement - (~highmask[i] & desiredDisplacement);
             if ((-maxdifference <= tmp) && (tmp <= maxdifference)) {
-                if(tmp % 4 == 0) {
+                if (tmp % 4 == 0) {
                     return i;
                 }
             }
-
         }
 
-        assert(0 == 1);
+        assert (0 == 1);
         return -1;
     }
+
     public void setUpRegisterOptimised(CiRegister tmpScratch, CiRegister operand, boolean isStore, CiKind kind, CiAddress addr) {
         CiRegister base = addr.base();
         CiRegister index = addr.index();
         CiAddress.Scale scale = addr.scale;
         int disp = addr.displacement;
-	//System.out.println("DISP " + disp);
         int usedDisp = disp;
         int maxDisp = 0;
         int desiredDisp = disp;
         int actualDisp = 0;
-        if(kind == CiKind.Float || kind == CiKind.Double) {
+        if (kind == CiKind.Float || kind == CiKind.Double) {
             maxDisp = 1020;
-        } else
-        if ((kind == CiKind.Long) || (kind == CiKind.Char) || (kind == CiKind.Byte) ||(kind == CiKind.Short)) {
+        } else if ((kind == CiKind.Long) || (kind == CiKind.Char) || (kind == CiKind.Byte) || (kind == CiKind.Short)) {
             maxDisp = 255;
         } else {
             maxDisp = 4095;
         }
-        assert(addr != CiAddress.Placeholder);
+        assert (addr != CiAddress.Placeholder);
         assert !(base.isValid() && disp == 0 && base.compareTo(ARMV7.LATCH_REGISTER) == 0);
         assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
         if (base.isValid() || base.compareTo(CiRegister.Frame) == 0) {
@@ -1693,22 +1509,18 @@ public class ARMV7Assembler extends AbstractAssembler {
                 base = frameRegister;
             }
         }
-        switch(addr.format()) {
+        switch (addr.format()) {
             case BASE:
             case BASE_DISP:
-
                 if ((disp > maxDisp) || (disp < -maxDisp)) {
-
                     if (isSingleAddDisp(disp, maxDisp)) {
                         // we can do it in a single instruction so we need to
                         int tableIndex = getSingleAddDisp(disp, maxDisp);
                         int tmp = disp - (~highmask[tableIndex] & disp);
                         actualDisp = ~highmask[tableIndex] & disp;
-                        //System.out.println("ACTUAL " + actualDisp);
                         add12BitImmediate(ConditionFlag.Always, false, tmpScratch, base, as12BitValue(actualDisp));
                         base = tmpScratch;
                         usedDisp = tmp;
-                        //System.out.println("LEFT " + usedDisp);
                     } else {
                         actualDisp = disp;
                         mov32BitConstantOptimised(ConditionFlag.Always, tmpScratch, disp);
@@ -1721,175 +1533,151 @@ public class ARMV7Assembler extends AbstractAssembler {
                 }
 
                 actualDisp += usedDisp;
-                if(actualDisp != desiredDisp) {
+                if (actualDisp != desiredDisp) {
                     System.err.println("ASSERTION FAILURE");
                 }
-                assert(actualDisp == desiredDisp);
-                //insertForeverLoop();
+                assert (actualDisp == desiredDisp);
                 if (isStore) {
-                       switch (kind) {
-                            case Float:
-                            case Double:
-                                vstr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
-                                break;
-                            case Long:
-                                strd(ConditionFlag.Always, operand, base, usedDisp);
-                                break;
-                            default:
-                                str(ConditionFlag.Always, operand, base, usedDisp);
-                                // assuming int but will need to adjust as necessary
-                                break;
-                        }
-                    } else {
-                        switch (kind) {
-                            case Float:
-                            case Double:
-                                vldr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
-                                break;
-                            case Long:
-                                ldrd(ConditionFlag.Always, operand, base, usedDisp);
-                                break;
-
-                            default:
-                                ldr(ConditionFlag.Always, operand, base, usedDisp);
-                                // assuming int but will need to adjust as necessary
-                                break;
-                        }
+                    switch (kind) {
+                        case Float:
+                        case Double:
+                            vstr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
+                            break;
+                        case Long:
+                            strd(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                        default:
+                            str(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
                     }
+                } else {
+                    switch (kind) {
+                        case Float:
+                        case Double:
+                            vldr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
+                            break;
+                        case Long:
+                            ldrd(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                        default:
+                            ldr(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                    }
+                }
 
-                    break;
-
-                    case BASE_INDEX:
-                        assert (disp == 0 ); // "displacement nonzero in index");
+                break;
+            case BASE_INDEX:
+                assert (disp == 0);
+                usedDisp = 0;
+                addlsl(ConditionFlag.Always, false, tmpScratch, base, index, scale.log2);
+                base = tmpScratch;
+                if (isStore) {
+                    switch (kind) {
+                        case Float:
+                        case Double:
+                            vstr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
+                            break;
+                        case Long:
+                            strd(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                        default:
+                            str(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                    }
+                } else {
+                    switch (kind) {
+                        case Float:
+                        case Double:
+                            vldr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
+                            break;
+                        case Long:
+                            ldrd(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                        default:
+                            ldr(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                    }
+                }
+                break;
+            case BASE_INDEX_DISP:
+                if ((disp > maxDisp) || (disp < -maxDisp)) {
+                    if (isSingleAddDisp(disp, maxDisp)) {
+                        // we can do it in a single instruction so we need to
+                        int tableIndex = getSingleAddDisp(disp, maxDisp);
+                        int tmp = disp - (~highmask[tableIndex] & disp);
+                        actualDisp = ~highmask[tableIndex] & disp;
+                        add12BitImmediate(ConditionFlag.Always, false, tmpScratch, base, as12BitValue(actualDisp));
+                        base = tmpScratch;
+                        usedDisp = tmp;
+                    } else {
+                        mov32BitConstantOptimised(ConditionFlag.Always, tmpScratch, disp);
+                        addRegisters(ConditionFlag.Always, false, tmpScratch, base, tmpScratch, 0, 0);
+                        base = tmpScratch;
+                        actualDisp = disp;
                         usedDisp = 0;
-                        addlsl(ConditionFlag.Always, false, tmpScratch, base, index, scale.log2);
-                        base = tmpScratch;
-                        if (isStore) {
-                            switch (kind) {
-                                case Float:
-                                case Double:
-                                    vstr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
-                                    break;
-                                case Long:
-                                    strd(ConditionFlag.Always, operand, base, usedDisp);
-                                    break;
-                                default:
-                                    str(ConditionFlag.Always, operand, base, usedDisp);
-                                    // assuming int but will need to adjust as necessary
-                                    break;
-                            }
-                        } else {
-                            switch (kind) {
-                                case Float:
-                                case Double:
-                                    vldr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
-                                    break;
-                                case Long:
-                                    ldrd(ConditionFlag.Always, operand, base, usedDisp);
-                                    break;
-                                default:
-                                    ldr(ConditionFlag.Always, operand, base, usedDisp);
-                                    // assuming int but will need to adjust as necessary
-                                    break;
-                            }
-                        }
-                        break;
-                    case BASE_INDEX_DISP:
-                        //System.out.println("BASE INDEX DISP enter");
+                    }
+                } else {
+                    usedDisp = disp;
+                }
 
-                        if ((disp > maxDisp) || (disp < -maxDisp)) {
-                            //System.out.println("BASE INDEX DISP");
-                            if (isSingleAddDisp(disp, maxDisp)) {
-                                // we can do it in a single instruction so we need to
-                                int tableIndex = getSingleAddDisp(disp, maxDisp);
-                                int tmp = disp - (~highmask[tableIndex] & disp);
-                                actualDisp = ~highmask[tableIndex] & disp;
-                                //System.out.println("ACTUAL " + actualDisp);
-                                add12BitImmediate(ConditionFlag.Always, false, tmpScratch, base, as12BitValue(actualDisp));
-                                base = tmpScratch;
-                                usedDisp = tmp;
-                                //System.out.println("LEFT " + usedDisp);
-                            } else {
-                                mov32BitConstantOptimised(ConditionFlag.Always, tmpScratch, disp);
-                                addRegisters(ConditionFlag.Always, false, tmpScratch, base, tmpScratch, 0, 0);
-                                base = tmpScratch;
-                                actualDisp = disp;
-                                usedDisp = 0;
-                            }
-                        } else {
-                            usedDisp = disp;
-                        }
+                actualDisp += usedDisp;
 
-                        actualDisp += usedDisp;
-                        if(actualDisp != desiredDisp) {
-                            System.err.println("ASSERTION FAILURE");
-                        }
+                assert (actualDisp == desiredDisp);
+                addlsl(ConditionFlag.Always, false, tmpScratch, base, index, scale.log2);
+                base = tmpScratch;
+                if (isStore) {
+                    switch (kind) {
+                        case Float:
+                        case Double:
+                            vstr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
+                            break;
+                        case Long:
+                            strd(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                        default:
+                            str(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                    }
+                } else {
+                    switch (kind) {
+                        case Float:
+                        case Double:
+                            vldr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
+                            break;
+                        case Long:
+                            ldrd(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                        default:
+                            ldr(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                    }
+                }
 
-
-                        assert(actualDisp == desiredDisp);
-                        addlsl(ConditionFlag.Always, false, tmpScratch, base, index, scale.log2);
-                        base = tmpScratch;
-                        if (isStore) {
-                            switch (kind) {
-                                case Float:
-                                case Double:
-                                    vstr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
-                                    break;
-                                case Long:
-                                    strd(ConditionFlag.Always, operand, base, usedDisp);
-                                    break;
-                                default:
-                                    str(ConditionFlag.Always, operand, base, usedDisp);
-                                    // assuming int but will need to adjust as necessary
-                                    break;
-                            }
-                        } else {
-                            switch (kind) {
-                                case Float:
-                                case Double:
-                                    vldr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
-                                    break;
-                                case Long:
-                                    ldrd(ConditionFlag.Always, operand, base, usedDisp);
-                                    break;
-                                default:
-                                    ldr(ConditionFlag.Always, operand, base, usedDisp);
-                                    // assuming int but will need to adjust as necessary
-                                    break;
-                            }
-                        }
-
-                        break;
-                    default:
-                        assert (true == false); //,"illegal address format state");
-                        break;
-
-
+                break;
+            default:
+                assert false : " Illegal address format state";
+                break;
         }
     }
+
     public void setUpScratchOptimised(CiRegister operand, boolean isStore, CiKind kind, CiAddress addr) {
         CiRegister base = addr.base();
         CiRegister index = addr.index();
         CiAddress.Scale scale = addr.scale;
         int disp = addr.displacement;
-        CiRegister tmpScratch = scratchRegister;
-        if(operand == scratchRegister) {
-            tmpScratch = ARMV7.r8;
-        }
-	//System.out.println("DISP " + disp);
         int usedDisp = disp;
         int maxDisp = 0;
         int desiredDisp = disp;
         int actualDisp = 0;
-        if(kind == CiKind.Float || kind == CiKind.Double) {
+        if (kind == CiKind.Float || kind == CiKind.Double) {
             maxDisp = 1020;
-        } else
-        if ((kind == CiKind.Long) || (kind == CiKind.Char) || (kind == CiKind.Byte) ||(kind == CiKind.Short)) {
+        } else if ((kind == CiKind.Long) || (kind == CiKind.Char) || (kind == CiKind.Byte) || (kind == CiKind.Short)) {
             maxDisp = 255;
         } else if (kind == CiKind.Int) {
             maxDisp = 4095;
-        } else assert(0 == 1);
-        assert(addr != CiAddress.Placeholder);
+        } else
+            assert (0 == 1);
+        assert (addr != CiAddress.Placeholder);
         assert !(base.isValid() && disp == 0 && base.compareTo(ARMV7.LATCH_REGISTER) == 0);
         assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
         if (base.isValid() || base.compareTo(CiRegister.Frame) == 0) {
@@ -1897,22 +1685,17 @@ public class ARMV7Assembler extends AbstractAssembler {
                 base = frameRegister;
             }
         }
-        switch(addr.format()) {
+        switch (addr.format()) {
             case BASE:
             case BASE_DISP:
-
                 if ((disp > maxDisp) || (disp < -maxDisp)) {
-
                     if (isSingleAddDisp(disp, maxDisp)) {
-                        // we can do it in a single instruction so we need to
                         int tableIndex = getSingleAddDisp(disp, maxDisp);
                         int tmp = disp - (~highmask[tableIndex] & disp);
                         actualDisp = ~highmask[tableIndex] & disp;
-                        //System.out.println("ACTUAL " + actualDisp);
                         add12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, as12BitValue(actualDisp));
                         base = scratchRegister;
                         usedDisp = tmp;
-                        //System.out.println("LEFT " + usedDisp);
                     } else {
                         actualDisp = disp;
                         mov32BitConstantOptimised(ConditionFlag.Always, scratchRegister, disp);
@@ -1925,211 +1708,181 @@ public class ARMV7Assembler extends AbstractAssembler {
                 }
 
                 actualDisp += usedDisp;
-                if(actualDisp != desiredDisp) {
-                    System.err.println("ASSERTION FAILURE");
-                }
-                assert(actualDisp == desiredDisp);
-                //insertForeverLoop();
+                assert (actualDisp == desiredDisp);
                 if (isStore) {
-                       switch (kind) {
-                            case Float:
-                            case Double:
-                                vstr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
-                                break;
-                            case Long:
-                                strd(ConditionFlag.Always, operand, base, usedDisp);
-                                break;
-                            case Int:
-                                str(ConditionFlag.Always, operand, base, usedDisp);
-                                // assuming int but will need to adjust as necessary
-                                break;
-				case Short:
-		                strHImmediate(ConditionFlag.Always, 1, 0, 0, operand, base, usedDisp);
-				break;
-
-				default:
-					assert(0==1);
-				break;
-                        }
-                    } else {
-                        switch (kind) {
-                            case Float:
-                            case Double:
-                                vldr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
-                                break;
-                            case Long:
-                                ldrd(ConditionFlag.Always, operand, base, usedDisp);
-                                break;
-			    case Char:
-				// U is corrected in the assembler
-                		ldruhw(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
-				break;
-			    case Byte:
-                		ldrsb(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
-				break;
-			    case Short:
-                		ldrshw(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
-				break;
-                            case Int:
-                                ldr(ConditionFlag.Always, operand, base, usedDisp);
-                                // assuming int but will need to adjust as necessary
-                                break;
-				default:
-				assert(0==1);
-				break;
-                        }
+                    switch (kind) {
+                        case Float:
+                        case Double:
+                            vstr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
+                            break;
+                        case Long:
+                            strd(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                        case Int:
+                            str(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                        case Short:
+                            strHImmediate(ConditionFlag.Always, 1, 0, 0, operand, base, usedDisp);
+                            break;
+                        default:
+                            assert false : "Unimplemented state!";
+                            break;
                     }
-
-                    break;
-
-                    case BASE_INDEX:
-                        assert (disp == 0 ); // "displacement nonzero in index");
+                } else {
+                    switch (kind) {
+                        case Float:
+                        case Double:
+                            vldr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
+                            break;
+                        case Long:
+                            ldrd(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                        case Char:
+                            ldruhw(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
+                            break;
+                        case Byte:
+                            ldrsb(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
+                            break;
+                        case Short:
+                            ldrshw(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
+                            break;
+                        case Int:
+                            ldr(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                        default:
+                            assert false : "Unimplemented state!";
+                            break;
+                    }
+                }
+                break;
+            case BASE_INDEX:
+                assert (disp == 0);
+                usedDisp = 0;
+                addlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
+                base = scratchRegister;
+                if (isStore) {
+                    switch (kind) {
+                        case Float:
+                        case Double:
+                            vstr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
+                            break;
+                        case Long:
+                            strd(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                        case Short:
+                            strHImmediate(ConditionFlag.Always, 1, 0, 0, operand, base, usedDisp);
+                            break;
+                        case Int:
+                            str(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                        default:
+                            assert false : "Unimplemented state!";
+                            break;
+                    }
+                } else {
+                    switch (kind) {
+                        case Float:
+                        case Double:
+                            vldr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
+                            break;
+                        case Long:
+                            ldrd(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                        case Char:
+                            ldruhw(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
+                            break;
+                        case Byte:
+                            ldrsb(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
+                            break;
+                        case Short:
+                            ldrshw(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
+                            break;
+                        case Int:
+                            ldr(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                        default:
+                            assert (0 == 1);
+                            break;
+                    }
+                }
+                break;
+            case BASE_INDEX_DISP:
+                if ((disp > maxDisp) || (disp < -maxDisp)) {
+                    if (isSingleAddDisp(disp, maxDisp)) {
+                        int tableIndex = getSingleAddDisp(disp, maxDisp);
+                        int tmp = disp - (~highmask[tableIndex] & disp);
+                        actualDisp = ~highmask[tableIndex] & disp;
+                        add12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, as12BitValue(actualDisp));
+                        base = scratchRegister;
+                        usedDisp = tmp;
+                    } else {
+                        mov32BitConstantOptimised(ConditionFlag.Always, scratchRegister, disp);
+                        addRegisters(ConditionFlag.Always, false, scratchRegister, base, scratchRegister, 0, 0);
+                        base = scratchRegister;
+                        actualDisp = disp;
                         usedDisp = 0;
-                        addlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
-                        base = scratchRegister;
-                        if (isStore) {
-                            switch (kind) {
-                                case Float:
-                                case Double:
-                                    vstr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
-                                    break;
-                                case Long:
-                                    strd(ConditionFlag.Always, operand, base, usedDisp);
-                                    break;
-				case Short:
-		                strHImmediate(ConditionFlag.Always, 1, 0, 0, operand, base, usedDisp);
-				break;
+                    }
+                } else {
+                    usedDisp = disp;
+                }
 
-				case Int:
-                                    str(ConditionFlag.Always, operand, base, usedDisp);
-                                    // assuming int but will need to adjust as necessary
-				break;
-                                default:
-					assert(0==1);
-                                    break;
-                            }
-                        } else {
-                            switch (kind) {
-                                case Float:
-                                case Double:
-                                    vldr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
-                                    break;
-                                case Long:
-                                    ldrd(ConditionFlag.Always, operand, base, usedDisp);
-                                    break;
-			    case Char:
-				// U is corrected in the assembler
-                		ldruhw(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
-				break;
-			    case Byte:
-                		ldrsb(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
-				break;
-			    case Short:
-                		ldrshw(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
-				break;
-                                case Int:
-                                    ldr(ConditionFlag.Always, operand, base, usedDisp);
-                                    // assuming int but will need to adjust as necessary
-                                    break;
-				default:
-					assert(0==1);
-				break;
-                            }
-                        }
-                        break;
-                    case BASE_INDEX_DISP:
-                        //System.out.println("BASE INDEX DISP enter");
+                actualDisp += usedDisp;
 
-                        if ((disp > maxDisp) || (disp < -maxDisp)) {
-                            //System.out.println("BASE INDEX DISP");
-                            if (isSingleAddDisp(disp, maxDisp)) {
-                                // we can do it in a single instruction so we need to
-                                int tableIndex = getSingleAddDisp(disp, maxDisp);
-                                int tmp = disp - (~highmask[tableIndex] & disp);
-                                actualDisp = ~highmask[tableIndex] & disp;
-                                //System.out.println("ACTUAL " + actualDisp);
-                                add12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, as12BitValue(actualDisp));
-                                base = scratchRegister;
-                                usedDisp = tmp;
-                                //System.out.println("LEFT " + usedDisp);
-                            } else {
-                                mov32BitConstantOptimised(ConditionFlag.Always, scratchRegister, disp);
-                                addRegisters(ConditionFlag.Always, false, scratchRegister, base, scratchRegister, 0, 0);
-                                base = scratchRegister;
-                                actualDisp = disp;
-                                usedDisp = 0;
-                            }
-                        } else {
-                            usedDisp = disp;
-                        }
-
-                        actualDisp += usedDisp;
-                        if(actualDisp != desiredDisp) {
-                            System.err.println("ASSERTION FAILURE");
-                        }
-
-
-                        assert(actualDisp == desiredDisp);
-                        addlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
-                        base = scratchRegister;
-                        if (isStore) {
-                            switch (kind) {
-                                case Float:
-                                case Double:
-                                    vstr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
-                                    break;
-                                case Long:
-                                    strd(ConditionFlag.Always, operand, base, usedDisp);
-                                    break;
-                                case Int:
-                                    str(ConditionFlag.Always, operand, base, usedDisp);
-                                    // assuming int but will need to adjust as necessary
-                                    break;
-				case Short:
-		                strHImmediate(ConditionFlag.Always, 1, 0, 0, operand, base, usedDisp);
-				break;
-
-			default:
-				assert(0==1);
-			break;
-                            }
-                        } else {
-                            switch (kind) {
-                                case Float:
-                                case Double:
-                                    vldr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
-                                    break;
-                                case Long:
-                                    ldrd(ConditionFlag.Always, operand, base, usedDisp);
-                                    break;
-			    case Char:
-				// U is corrected in the assembler
-                		ldruhw(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
-				break;
-			    case Byte:
-                		ldrsb(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
-				break;
-			    case Short:
-                		ldrshw(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
-				break;
-                                case Int:
-                                    ldr(ConditionFlag.Always, operand, base, usedDisp);
-                                    // assuming int but will need to adjust as necessary
-                                    break;
-			default:
-				assert(0==1);
-			break;
-                            }
-                        }
-
-                        break;
-                    default:
-                        assert (true == false); //,"illegal address format state");
-                        break;
-
-
+                assert (actualDisp == desiredDisp);
+                addlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
+                base = scratchRegister;
+                if (isStore) {
+                    switch (kind) {
+                        case Float:
+                        case Double:
+                            vstr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
+                            break;
+                        case Long:
+                            strd(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                        case Int:
+                            str(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                        case Short:
+                            strHImmediate(ConditionFlag.Always, 1, 0, 0, operand, base, usedDisp);
+                            break;
+                        default:
+                            assert false : "Unimplemented state!";
+                            break;
+                    }
+                } else {
+                    switch (kind) {
+                        case Float:
+                        case Double:
+                            vldr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
+                            break;
+                        case Long:
+                            ldrd(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                        case Char:
+                            ldruhw(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
+                            break;
+                        case Byte:
+                            ldrsb(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
+                            break;
+                        case Short:
+                            ldrshw(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
+                            break;
+                        case Int:
+                            ldr(ConditionFlag.Always, operand, base, usedDisp);
+                            break;
+                        default:
+                            assert false : "Unimplemented state!";
+                            break;
+                    }
+                }
+                break;
+            default:
+                assert false : "Unimplemented state!";
+                break;
         }
     }
+
     public void setUpScratch(CiAddress addr) {
         CiRegister base = addr.base();
         CiRegister index = addr.index();
@@ -2217,10 +1970,10 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final void subq(CiRegister dst, int imm32) {
         assert dst.isValid();
 
-        //assert(imm32 >= 0); this will fail so we do get -ve values ...mx imag
-        if(isModified12bit(imm32)) {
-           sub12BitImmediate(ConditionFlag.Always, false, dst, dst, as12BitValue(imm32));
-	   return;
+        // assert(imm32 >= 0); this will fail so we do get -ve values ...mx imag
+        if (isModified12bit(imm32)) {
+            sub12BitImmediate(ConditionFlag.Always, false, dst, dst, as12BitValue(imm32));
+            return;
         }
 
         mov32BitConstantOptimised(ConditionFlag.Always, scratchRegister, imm32);
@@ -2280,7 +2033,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             mov32BitConstant(flag, dest, imm32);
         }
 
-}
+    }
 
     public final void mov64BitConstant(ConditionFlag flag, CiRegister dstLow, CiRegister dstUpper, long imm64) {
         int low32 = (int) (imm64 & 0xffffffffL);
@@ -2335,16 +2088,16 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void movslq(CiAddress dst, int imm32) {
         mov32BitConstantOptimised(ConditionFlag.Always, ARMV7.r8, imm32);
-        if(!dst.isARMV7Immediate(CiKind.Int)) {
+        if (!dst.isARMV7Immediate(CiKind.Int)) {
             setUpScratch(dst);
             str(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
         } else {
             CiRegister tmpRegister = dst.base();
-            if(tmpRegister == CiRegister.Frame) {
+            if (tmpRegister == CiRegister.Frame) {
                 tmpRegister = frameRegister;
             }
             int add = dst.displacement >= 0 ? 1 : 0;
-            strImmediate(ConditionFlag.Always,1, add, 0, ARMV7.r8, tmpRegister, dst.displacement);
+            strImmediate(ConditionFlag.Always, 1, add, 0, ARMV7.r8, tmpRegister, dst.displacement);
 
         }
 
@@ -2352,7 +2105,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void cmpl(CiRegister src, int imm32) {
         assert src.isValid();
-        if(imm32 <=255 && imm32 >= 0) {
+        if (imm32 <= 255 && imm32 >= 0) {
             cmpImmediate(ConditionFlag.Always, src, imm32);
             return;
         }
@@ -2432,7 +2185,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         assert dst.isValid();
 
         // replace with add/sub Immediate if less than 12 bits
-        if(!isModified12bit(imm32)) {
+        if (!isModified12bit(imm32)) {
             mov32BitConstantOptimised(ConditionFlag.Always, scratchRegister, imm32);
             addRegisters(ConditionFlag.Always, false, dst, dst, scratchRegister, 0, 0);
         } else {
@@ -2453,8 +2206,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void mulLong(CiRegister dst, CiRegister src1, CiRegister src2) {
         assert (src1 == dst);
-        //push(ConditionFlag.Always, 1 << src2.number | 1 << (src2.number + 1), true);
-        saveTWOInFP(ConditionFlag.Always,src2.number,src2.number+1);
+        saveInFP(ConditionFlag.Always, src2.number, src2.number + 1);
         mov(ConditionFlag.Always, false, ARMV7.r12, src2); // save src2
         mul(ConditionFlag.Always, false, src2, src2, ARMV7.cpuRegisters[src1.number + 1]);
         mul(ConditionFlag.Always, false, ARMV7.cpuRegisters[src2.number + 1], src1, ARMV7.cpuRegisters[src2.number + 1]);
@@ -2462,8 +2214,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         umull(ConditionFlag.Always, false, ARMV7.cpuRegisters[src2.number], dst, ARMV7.cpuRegisters[scratchRegister.number], src1);
         addRegisters(ConditionFlag.Always, false, scratchRegister, ARMV7.cpuRegisters[src2.number + 1], src2, 0, 0);
         mov(ConditionFlag.Always, false, ARMV7.cpuRegisters[dst.number + 1], scratchRegister);
-        //pop(ConditionFlag.Always, 1 << src2.number | 1 << (src2.number + 1), true);
-        restoreTWOFromFP(ConditionFlag.Always, src2.number,src2.number+1);
+        restoreFromFP(ConditionFlag.Always, src2.number, src2.number + 1);
     }
 
     public void xorq(CiRegister dest, CiAddress src) {
@@ -2537,48 +2288,22 @@ public class ARMV7Assembler extends AbstractAssembler {
         ldr(ConditionFlag.Always, ARMV7.r12, ARMV7.r12, 0);
     }
 
-    // TODO: Cleanup
+    // TODO: Document
     public final void int3() {
-       // emitInt(0xe1200070);
-        /*push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384, true); // push
-                                                                                                                       // r0-r3
-                                                                                                                       // and
-                                                                                                                       // r7
-        vpush(ConditionFlag.Always, ARMV7.s0, ARMV7.s30, CiKind.Double, CiKind.Double);
-        eor(ConditionFlag.Always, false, ARMV7.r0, ARMV7.r0, ARMV7.r0, 0, 0);
-        eor(ConditionFlag.Always, false, ARMV7.r1, ARMV7.r1, ARMV7.r1, 0, 0);
-        eor(ConditionFlag.Always, false, ARMV7.r2, ARMV7.r2, ARMV7.r2, 0, 0);
-        eor(ConditionFlag.Always, false, ARMV7.r3, ARMV7.r3, ARMV7.r3, 0, 0);
-        mov32BitConstantOptimised(ConditionFlag.Always, ARMV7.r7, 224); // gettid
-        emitInt(0xef000000); // replaced with svc 0
-        // r0 has the tid
-        push(ConditionFlag.Always, 1 | 1 << 7, true); // r0 has the tid
-        mov32BitConstantOptimised(ConditionFlag.Always, ARMV7.r7, 47); // getgid
-        emitInt(0xef000000); // replaced with svc 0
-        // r0 has the gid
-        pop(ConditionFlag.Always, 2 | 1 << 7, true); // r1 has the tid
-        mov32BitConstantOptimised(ConditionFlag.Always, ARMV7.r2, 5); // SIGUSR1
-        mov32BitConstantOptimised(ConditionFlag.Always, ARMV7.r7, 268); // tgkill
-        emitInt(0xef000000); // replaced with svc 0
-        vpop(ConditionFlag.Always, ARMV7.s0, ARMV7.s30, CiKind.Double, CiKind.Double);
-        pop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384, true); // push
-        */                                                                                                            // r0-r3
-        emitInt(0xFEDEFFE7); // we use a SIGILL                                                                     // and
-                                                                                                                       // r7
+        emitInt(0xFEDEFFE7);
     }
 
-    // TODO:Cleanup
-    public final void flushicache(CiRegister startAddress, int bytes) {
+    // TODO: Document
+    public final void flushICache(CiRegister startAddress, int bytes) {
         assert (startAddress.getEncoding() == ARMV7.r12.getEncoding());
-        push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 128, true); // added 16 to ensure that stack is 8byte aligned!
+        push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 128, true);
         mov(ConditionFlag.Always, false, ARMV7.r0, scratchRegister);
         mov32BitConstantOptimised(ConditionFlag.Always, ARMV7.r1, bytes);
         eor(ConditionFlag.Always, false, ARMV7.r2, ARMV7.r2, ARMV7.r2, 0, 0);
         mov32BitConstantOptimised(ConditionFlag.Always, ARMV7.r7, 0x000f0002);
         addlsl(ConditionFlag.Always, false, ARMV7.r1, ARMV7.r1, ARMV7.r0, 0);
-        emitInt(0xef000000); // replaced with svc 0
-        pop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 128, true); // added 16 (r4) to ensure stack is 8 byte aligned
-                                                                   // EVEN NO
+        emitInt(0xef000000);
+        pop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 128, true);
     }
 
     public final void hlt() {
@@ -2592,26 +2317,25 @@ public class ARMV7Assembler extends AbstractAssembler {
             nop(ConditionFlag.Always);
         }
     }
+
     public final void enterExceptionHandler() {
-        int instruction = 0xf8ed0500; //srs
+        int instruction = 0xf8ed0500;
         instruction |= 1 << 4;
         emitInt(instruction);
-        // SRS P=0 U=1 W=1
     }
+
     public final void returnFromExceptionHandler() {
-        int instruction = 0x8f08000; // ldm
+        int instruction = 0x8f08000;
         instruction |= (13 << 16);
         instruction |= (0xe) << 28;
         emitInt(instruction);
-        // LDM P=0 U=1 W=1
-
     }
 
     public final void ret() {
-        if (SIMULATE_DYNAMIC) {
-            instrument(true, true, true, ARMV7.r13, 0);
+        if (ARMV7Instrumentation.enabled()) {
+            instrumentation.instrument(true, true, true, ARMV7.r13, 0);
             ldr(ConditionFlag.Always, ARMV7.r12, ARMV7.r13, 0);
-            instrumentNEWAbsolutePC(ConditionFlag.Always, ConditionFlag.NeverUse, true, ARMV7.r12, 0, false);
+            instrumentation.instrumentPC(ConditionFlag.Always, ConditionFlag.NeverUse, true, ARMV7.r12, 0, false);
         }
         pop(ConditionFlag.Always, 1 << 15);
     }
@@ -2643,196 +2367,37 @@ public class ARMV7Assembler extends AbstractAssembler {
         } else {
             emitInt((0xe << 28) | (0x3 << 24) | (0x5 << 20) | (r.getEncoding() << 16) | 0);
             ldr(ConditionFlag.Equal, ARMV7.r8, r, 0);
-
         }
     }
+
     public void clearex() {
         // advised to use this in exception handling code ...
         int instruction = 0xf57ff01f;
         emitInt(instruction);
     }
+
     public void barrierDMB() {
-        int instruction = 0xF57FF050; // DMB
+        int instruction = 0xF57FF050;
         emitInt(instruction);
     }
 
     public void membar(int barriers) {
-        //int instruction = 0xF57FF050; // DMB
-        int instruction = 0xF57FF040; // DSB
-
-        instruction |= 0xf;
+        int instruction = 0xF57FF040 | 0xf;
         emitInt(instruction);
-        instruction = 0xf57ff06f; // ISB FULL SY system
+        instruction = 0xf57ff06f;
         emitInt(instruction);
-
     }
 
     public void enter(short imm16) {
     }
 
-    // TODO: Cleanup
-    public final int instrumentNEWAbsolutePC(ConditionFlag taken, ConditionFlag notTaken, boolean isAbsoluteAddress, CiRegister target, int pcAdjustment, boolean isMethodEntry) {
-        /*
-         * This is intended to be used by the ARMV7LIRAssembler in PushFrame isMethodEntry== true and by an absolute PC
-         * change such as by an BLX /BX / mov to PC .... isMethodEntry == false
-         *
-         *
-         *
-         */
-        if (!SIMULATE_DYNAMIC) {
-            return 0;
-        }
-        if (maxineFlushAddress == 0) {
-            maxineFlushAddress = maxineflush.maxine_flush_instrumentationBuffer();
-        }
-        assert maxineFlushAddress != 0;
-        assert isAbsoluteAddress == true : "instrumentNEWAbsolutePC only works for absolute addresses";
-        assert !isMethodEntry || (isMethodEntry && (pcAdjustment == -4 || pcAdjustment == -16)) : "instrumentNEWAbsolutePC point is after the push $LR and decrement SP";
-        if (isMethodEntry) {
-            pcAdjustment = pcAdjustment - 16; // this will take us to the movw movt but we are not instrumenting the
-            // push of the LR at a C1X optimised method entry point
-        }
-
-        /*
-         * Remember needs changing to ensure that it in VERSION 2 of instrumentation it passes the next PC addrsss NEEDS
-         * CAREFUL THOUGHT ... USED BY METHOD ENTRY
-         */
-        emitInt(0xeaffffff); // this is the branch to next instruction ... ie the instrumentPush
-        push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
-        mrsReadAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4);
-        push(ConditionFlag.Always, 1 << 4);
-
-        // vpush(ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // needs to be changed to
-        // instrumentVPUSH
-        if (isMethodEntry) {
-            mov32BitConstant(ConditionFlag.Always, ARMV7.r0, -2); // -2 signfies it is an absolute PC value + 12 ab
-            mov32BitConstant(ConditionFlag.Always, ARMV7.r1, pcAdjustment + -20); // +20
-        } else {
-            mov32BitConstant(ConditionFlag.Always, ARMV7.r0, -3); // -3 signifies it is an absolute PC value BUT NOT a
-                                                                  // METHOD ENTRY
-            mov32BitConstant(taken, ARMV7.r1, pcAdjustment);
-            /*
-             * 0x1c3affd0: ldr r10, [r12, #-0] 0x1c3affd4: cmp r3, r1 0x1c3affd8: movw r12, #65492 ; 0xffd4 0x1c3affdc:
-             * movt r12, #65535 ; 0xffff 0x1c3affe0: add r12, pc, r12 0x1c3affe4: push {r8, r12} => 0x1c3affe8: movlt
-             * r12, r12 0x1c3affec: b 0x1c3afff0 0x1c3afff0: push {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11,
-             * r12, lr} 0x1c3afff4: mrs r4, CPSR 0x1c3afff8: push {r4} 0x1c3afffc: movw r0, #65533 ; 0xfffd 0x1c3b0000:
-             * movt r0, #65535 ; 0xffff 0x1c3b0004: movwlt r1, #0 0x1c3b0008: movtlt r1, #0 addge r1, pc, r1 0x1c3b000c:
-             * addlt r1, r12, r1 0x1c3b0010: movw r8, #27488 ; 0x6b60 0x1c3b0014: movt r8, #46825 ; 0xb6e9 0x1c3b0018:
-             * blx r8 0x1c3b001c: pop {r4} 0x1c3b0020: msr CPSR_fs, r4 0x1c3b0024: pop {r0, r1, r2, r3, r4, r5, r6, r7,
-             * r8, r9, r10, r11, r12, lr} 0x1c3b0028: pop {r8, r12} 0x1c3b002c: movlt pc, r12 0x1c3b0030: movw r3, #0 //
-             * 32 + 8 gets us to here if the movCOND(pc,r12) is not taken
-             */
-            if (taken != ConditionFlag.Always) {
-                mov32BitConstant(notTaken, ARMV7.r1, +32);
-                addRegisters(notTaken, false, ARMV7.r1, ARMV7.r15, ARMV7.r1, 0, 0);
-
-            }
-        }
-        addRegisters(taken, false, ARMV7.r1, target, ARMV7.r1, 0, 0);
-
-        mov32BitConstant(ConditionFlag.Always, ARMV7.r8, maxineFlushAddress);
-        int instruction = blxHelper(ConditionFlag.Always, ARMV7.r8);
-        // We will need to search for the correct instruction pattern in the C code .... to check the offsets ...
-        emitInt(instruction);
-        // vpop( ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // need to be changed to
-        // instrumentVPOP
-        pop(ConditionFlag.Always, 1 << 4);
-        msrWriteAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4);
-        pop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384);
-        // 3*8 +4*4 = 24+16 = 40 CALCULATION is now WRONG!!!
-        return 40;// not necessary to be correct
-    }
-
-    // TODO:Cleanup
-    public final int instrumentPCChange(ConditionFlag taken, ConditionFlag notTaken, int disp) {
-        /*
-         * Generally used to instrument a PC relative branch Taken and not taken are instrumented with a single call
-         *
-         * 0x1c3af214: eor r8, r8, r8 0x1c3af218: cmp r2, r8 -12 0x1c3af21c: push {r0, r1, r2, r3, r4, r5, r6, r7, r8,
-         * r9, r10, r11, r12, lr} <-- save regs -12 0x1c3af220: mrs r4, CPSR <--- SAVE APSRC FLAGS -12 0x1c3af224: stmfd
-         * sp!, {r4} -12 0x1c3af228: movwne r1, #65523 ; 0xfff3 -12 0x1c3af22c: movtne r1, #65535 ; 0xffff -12
-         * 0x1c3af230: addne r1, pc, r1 <--- in pathcJumpTarget search for 0x08f1001 -12 0x1c3af234: movweq r1, #36 ;
-         * 0x24 -12 0x1c3af238: movteq r1, #0 -12 0x1c3af23c: addeq r1, pc, r1 <---- in pathcJumpTarget search for
-         * 0x08f1001 -12 0x1c3af240: movw r0, #65535 ; 0xffff -12 0x1c3af244: movt r0, #65535 ; 0xffff -12 0x1c3af248:
-         * movw r12, #34832 ; 0x8810 -12 0x1c3af24c: movt r12, #46825 ; 0xb6e9 -12 0x1c3af250: blx r12 -12 0x1c3af254:
-         * ldmfd sp!, {r4} -8 0x1c3af258: msr CPSR_fs, r4 <--- restore APSR FLAGS -4 0x1c3af25c: pop {r0, r1, r2, r3,
-         * r4, r5, r6, r7, r8, r9, r10, r11, r12, lr} <--- end of instrumentPCChange 0x1c3af260: movw r12, #1924 ; 0x784
-         * <---- displacement 0x1c3af264: movt r12, #0 0x1c3af268: nop {0} 0x1c3af26c: addne pc, r12, pc <---- a
-         * conditional branch
-         *
-         */
-        if (maxineFlushAddress == 0) {
-            maxineFlushAddress = maxineflush.maxine_flush_instrumentationBuffer();
-        }
-        int instructions = 0;
-        int notTakenDisp = 0;
-        /*
-         * Label l = new Label(); instrumentBranch(l); bind(l); // not a real instruction binds label to the push, makes
-         * the branch a NOP Same effect as emitInt(0xeaffffff); It avoids it needing to be patched!
-         *
-         */
-        emitInt(0xeaffffff); // this is the branch to next instruction ... ie the instrumentPush
-        /*
-         * in the initial implementation John will stop at the branch, then he will go to where we tell him from this
-         * call out to C real_maxine_instrumentation
-         *
-         * In the second implementation -- to validation cycle accuracy we will tell him the address of the instruction
-         * causing the PC change and also the result of that PC change
-         */
-        push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
-        mrsReadAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4);
-        push(ConditionFlag.Always, 1 << 4);
-        // vpush(ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // needs to be changed to
-        // instrumentVPUSH
-
-        disp = disp - 16; // -4 one instruction aboive // -8 two instructions above , -12 THREE INSTR
-        /* this instruction will be either -36 or -48 bytes from a patch */
-        mov32BitConstant(taken, ARMV7.r1, disp);
-        /* this instruction will be either -28 OR -40 bytes from a patch */
-        addRegisters(taken, false, ARMV7.r1, ARMV7.r15, ARMV7.r1, 0, 0);
-        if (notTaken != ConditionFlag.NeverUse) {
-            notTakenDisp = 8 * 2 + 4 * 2 + 3 * 4;
-            /* if present this instruction will be -36 bytes offset from a patch */
-            mov32BitConstant(notTaken, ARMV7.r1, notTakenDisp);
-            /* if present this instruction will br -28 bytes offset from a patch */
-            addRegisters(notTaken, false, ARMV7.r1, ARMV7.r15, ARMV7.r1, 0, 0);
-            notTakenDisp = 12; // 3 instructions
-        }
-        // at this point the ARMV7.r1 register has the target PC address.
-        /*
-         * This instruction will be -24 bytes offset from a patch
-         */
-        mov32BitConstant(ConditionFlag.Always, ARMV7.r0, -1); // r0 has -1 to signify it is a PC change
-
-        mov32BitConstant(ConditionFlag.Always, ARMV7.r12, maxineFlushAddress);
-        int instruction = blxHelper(ConditionFlag.Always, ARMV7.r12);
-        emitInt(instruction);
-        // vpop( ConditionFlag.Always,ARMV7.s14, ARMV7.s15, CiKind.Double, CiKind.Double); // need to be changed to
-        // instrumentVPOP
-
-        pop(ConditionFlag.Always, 1 << 4);
-        msrWriteAPSR(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4);
-        pop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
-
-        // disp = disp - 3*(8 bytes due to mov32BitConstant) - 3*(4bytes) - 2*(4Bytes pop and restore APSR)
-        disp = disp - 3 * 8 - 3 * 4 - notTakenDisp - 2 * 4;
-        /*
-         * For ConditionFlag.Always when we are using this as part of a branch that is patched. We need to patch the
-         * mov32BitConstant(taken, ARMV7.r1, disp); This instruction will be 9 instructions further back from the
-         * patchposition in patchJumpTarget of the branch instruction
-         *
-         */
-        return disp;
-    }
-
     public final void jcc(ConditionFlag cc, int target, boolean forceDisp32) {
         int disp = (target - codeBuffer.position());
-        if (Math.abs(disp) <= 16777214 && !forceDisp32 && !SIMULATE_DYNAMIC) {
+        if (Math.abs(disp) <= 16777214 && !forceDisp32 && !ARMV7Instrumentation.enabled()) {
             disp = (disp - 8) / 4;
             emitInt((cc.value & 0xf) << 28 | (0xa << 24) | (disp & 0xffffff));
         } else {
             disp -= 16;
-            // can we OPTIMISE -- is IT SEARCHED/PATCHED
             mov32BitConstant(cc, scratchRegister, disp);
             addRegisters(cc, false, ARMV7.PC, ARMV7.PC, scratchRegister, 0, 0);
         }
@@ -2843,12 +2408,12 @@ public class ARMV7Assembler extends AbstractAssembler {
         if (l.isBound()) {
             jcc(cc, l.position(), false);
         } else {
-            if (SIMULATE_DYNAMIC) {
+            if (ARMV7Instrumentation.enabled()) {
                 ConditionFlag tmp = ConditionFlag.Always;
                 tmp = cc.inverse();
-                instrumentPCChange(cc, tmp, -1);
+                instrumentation.instrumentBranch(cc, tmp, -1);
             }
-            BranchInfo info = new BranchInfo(BranchType.JCC, cc, SIMULATE_DYNAMIC);
+            BranchInfo info = new BranchInfo(BranchType.JCC, cc, ARMV7Instrumentation.enabled());
             l.addPatchAt(codeBuffer.position(), info);
             emitInt(cc.value() << 28 | 0xbeef);
             nop(2);
@@ -2859,31 +2424,10 @@ public class ARMV7Assembler extends AbstractAssembler {
         bx(ConditionFlag.Always, absoluteAddress);
     }
 
-    // TODO:Cleanup
     public final void bx(ConditionFlag cond, CiRegister target) {
-        if (SIMULATE_DYNAMIC) {
-            if (maxineFlushAddress == 0) {
-                maxineFlushAddress = maxineflush.maxine_flush_instrumentationBuffer();
-            }
-
-            int notTakenDisp = 0;
-            ConditionFlag notTaken = cond.inverse();
-            push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384);
-            mov(cond, false, ARMV7.r1, target);
-            if (notTaken != ConditionFlag.NeverUse) {
-                notTakenDisp = 20;
-                mov32BitConstant(notTaken, ARMV7.r1, notTakenDisp);
-                addRegisters(notTaken, false, ARMV7.r1, ARMV7.r15, ARMV7.r1, 0, 0);
-                notTakenDisp = 12; // 3 instructions
-            }
-            // at this point the ARMV7.r1 register has the target PC address.
-            mov32BitConstant(ConditionFlag.Always, ARMV7.r0, -1); // r0 has -1 to signify it is a PC change
-            mov32BitConstant(ConditionFlag.Always, ARMV7.r12, maxineFlushAddress);
-            int instruction = blxHelper(ConditionFlag.Always, ARMV7.r12);
-            emitInt(instruction);
-            pop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
+        if (ARMV7Instrumentation.enabled()) {
+            instrumentation.instrumentBX(cond, target);
         }
-
         int instruction = 0x012fff10;
         instruction |= (cond.value() << 28);
         instruction |= target.getEncoding();
@@ -2894,12 +2438,12 @@ public class ARMV7Assembler extends AbstractAssembler {
         if (l.isBound()) {
             jmp(l.position(), false);
         } else {
-            if (SIMULATE_DYNAMIC) {
+            if (ARMV7Instrumentation.enabled()) {
                 ConditionFlag tmp = ConditionFlag.Always;
                 tmp = tmp.inverse();
-                instrumentPCChange(ConditionFlag.Always, tmp, -3);
+                instrumentation.instrumentBranch(ConditionFlag.Always, tmp, -3);
             }
-            BranchInfo info = new BranchInfo(BranchType.JMP, ConditionFlag.Always, SIMULATE_DYNAMIC);
+            BranchInfo info = new BranchInfo(BranchType.JMP, ConditionFlag.Always, ARMV7Instrumentation.enabled());
             l.addPatchAt(codeBuffer.position(), info);
             emitInt(ConditionFlag.Always.value << 28 | 0xdead);
             nop(2);
@@ -2908,7 +2452,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void jmp(int target, boolean forceDisp32) {
         int disp = target - codeBuffer.position();
-        if (disp <= 16777215 && !forceDisp32 && !SIMULATE_DYNAMIC) {
+        if (disp <= 16777215 && !forceDisp32 && !ARMV7Instrumentation.enabled()) {
             disp = (disp - 8) / 4;
             emitInt((0xe << 28) | (0xa << 24) | (disp & 0xffffff));
         } else {
@@ -3005,17 +2549,16 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
 
         if (signed) {
+            op = 1;
             if (toInt) {
                 opc2 = 5;
-                op = 1; // use round to zero mdoe NOT!!! NOT!!! FPSCR rounding mode!!!!
             } else {
                 opc2 = 0;
-                op = 1;
             }
         } else {
             if (toInt) {
                 opc2 = 4;
-                op = 1; // use round to zero mdoe NOT!!! NOT!!! FPSCR rounding mode!!!!
+                op = 1;
             } else {
                 opc2 = 0;
             }
@@ -3073,10 +2616,10 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void vstr(ConditionFlag cond, CiRegister dest, CiRegister src, int imm8, CiKind destKind, CiKind srcKind) {
-        if (SIMULATE_DYNAMIC) {
-            instrument(false, true, true, src, imm8);
+        if (ARMV7Instrumentation.enabled()) {
+            instrumentation.instrument(false, true, true, src, imm8);
         }
-        if(src == CiRegister.Frame) {
+        if (src == CiRegister.Frame) {
             src = frameRegister;
         }
 
@@ -3091,13 +2634,13 @@ public class ARMV7Assembler extends AbstractAssembler {
             imm8 = -1 * imm8;
         }
         imm8 = imm8 >> 2; // divide by 4
-        assert(src.getEncoding() >=0 && src.getEncoding() <= 15);
+        assert (src.getEncoding() >= 0 && src.getEncoding() <= 15);
         instruction |= (imm8 & 0xff);
         instruction |= (src.getEncoding() & 0xf) << 16;
         if (destKind.isDouble()) {
             instruction |= 0x0d000b00;
             instruction |= (dest.getDoubleEncoding() & 0xf) << 12;
-            instruction |= (dest.getDoubleEncoding()>> 4) << 22;
+            instruction |= (dest.getDoubleEncoding() >> 4) << 22;
         } else {
             instruction |= 0xd000a00;
             instruction |= (dest.getEncoding() >> 1) << 12;
@@ -3133,21 +2676,20 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (dest1bit) << 22;
         instruction |= sz << 8;
         emitInt(instruction);
-
     }
 
     public final void vldr(ConditionFlag cond, CiRegister dest, CiRegister src, int imm8, CiKind destKind, CiKind srcKind) {
-        if (SIMULATE_DYNAMIC) {
-            instrument(true, true, true, src, imm8);
+        if (ARMV7Instrumentation.enabled()) {
+            instrumentation.instrument(true, true, true, src, imm8);
         }
         int add = 0;
         int instruction = (cond.value() & 0xf) << 28;
-        if(src == CiRegister.Frame) {
+        if (src == CiRegister.Frame) {
             src = frameRegister;
         }
         checkConstraint(dest.isFpu(), "vldr dest must be a FP/DP reg");
         checkConstraint(-1020 <= imm8 && imm8 <= 1020, "vmov offset greater than +/- 1020 (scaled by 4) ");
-        checkConstraint(imm8 %4 == 0 , "imm8 not a multiple of 4 ");
+        checkConstraint(imm8 % 4 == 0, "imm8 not a multiple of 4 ");
 
         if (imm8 >= 0) {
             add = 1;
@@ -3204,9 +2746,9 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void vpop(ConditionFlag cond, CiRegister first, CiRegister last, CiKind firstKind, CiKind lastKind) {
-        if (SIMULATE_DYNAMIC) {
+        if (ARMV7Instrumentation.enabled()) {
             for (int i = first.getEncoding(); i <= last.getEncoding(); i++) {
-                instrument(true, true, true, ARMV7.r13, -4 * (i - first.getEncoding()));
+                instrumentation.instrument(true, true, true, ARMV7.r13, -4 * (i - first.getEncoding()));
             }
         }
 
@@ -3232,9 +2774,9 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void vpush(ConditionFlag cond, CiRegister first, CiRegister last, CiKind firstKind, CiKind lastKind) {
-        if (SIMULATE_DYNAMIC) {
+        if (ARMV7Instrumentation.enabled()) {
             for (int i = first.getEncoding(); i <= last.getEncoding(); i++) {
-                instrument(false, true, true, ARMV7.r13, 4 * (i - first.getEncoding()));
+                instrumentation.instrument(false, true, true, ARMV7.r13, 4 * (i - first.getEncoding()));
             }
         }
 
@@ -3285,7 +2827,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void sdiv(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
         if (!target.hasIDivider) {
-            floatDIV(true, cond, dest, rn, rm);
+            floatDiv(true, cond, dest, rn, rm);
             return;
         }
         int instruction = (cond.value() & 0xf) << 28;
@@ -3296,7 +2838,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public final void floatDIV(boolean signed, ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
+    public final void floatDiv(boolean signed, ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
         assert (dest != ARMV7.r12);
         assert (rn != ARMV7.r12);
         assert (rm != ARMV7.r12);
@@ -3323,7 +2865,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void udiv(ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
         if (!target.hasIDivider) {
-            floatDIV(false, cond, dest, rn, rm);
+            floatDiv(false, cond, dest, rn, rm);
             return;
         }
         int instruction = (cond.value() & 0xf) << 28;
@@ -3387,9 +2929,9 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void vmov(ConditionFlag cond, CiRegister dest, CiRegister src, CiRegister src2, CiKind destKind, CiKind srcKind) {
         int instruction = (cond.value() & 0xf) << 28;
-        int vmovSameType = 0x0eb00a40; // A8.8.340
-        int vmovSingleCore = 0x0e000a10; // A8.8.343 full word only // ARM core to scalar
-        int vmovDoubleCore = 0x0c400b10; // A8.8.345 // TWO ARM core to doubleword extension
+        int vmovSameType = 0x0eb00a40;
+        int vmovSingleCore = 0x0e000a10;
+        int vmovDoubleCore = 0x0c400b10;
         if (srcKind.isDouble() && destKind.isLong()) {
             assert src2 == null;
         }
@@ -3463,7 +3005,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     @Override
     protected void patchJumpTarget(int branch, int target) {
-      BranchInfo info = new BranchInfo(BranchType.UNKNOWN, null, SIMULATE_DYNAMIC);
-      patchJumpTarget(branch, target, info);
+        BranchInfo info = new BranchInfo(BranchType.UNKNOWN, null, ARMV7Instrumentation.enabled());
+        patchJumpTarget(branch, target, info);
     }
 }

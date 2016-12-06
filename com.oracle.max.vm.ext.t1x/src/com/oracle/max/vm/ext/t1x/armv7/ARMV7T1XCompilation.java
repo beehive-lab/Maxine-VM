@@ -52,7 +52,7 @@ import com.sun.max.vm.stack.armv7.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
-public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethodinVM {
+public class ARMV7T1XCompilation extends T1XCompilation {
 
     protected final ARMV7MacroAssembler asm;
     private final PatchInfoARMV7 patchInfo;
@@ -62,15 +62,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
     public ARMV7T1XCompilation(T1X compiler) {
         super(compiler);
         asm = new ARMV7MacroAssembler(target(), null);
-        if (com.sun.max.vm.MaxineVM.isHosted() == false)
-            // TO TURN SIMULATION ON ...
-            if (com.oracle.max.asm.AbstractAssembler.SIMULATE_PLATFORM) {
-                asm.maxineflush = this; // dirty hacky .... do it properly
-                // END TO TURN SIMULATION ON
-            } else {
-                asm.maxineflush = null;
-                // END TO TURN SIMULATION OFF
-            }
         buf = asm.codeBuffer;
         patchInfo = new PatchInfoARMV7();
         if (T1XOptions.DebugMethods && !debugMethodsEnabled) {
@@ -78,19 +69,6 @@ public class ARMV7T1XCompilation extends T1XCompilation implements NativeCMethod
             debugMethodsEnabled =true;
         }
     }
-
-    @Override
-    public int maxine_instrumentationBuffer() {
-        return com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.maxine_instrumentationBuffer();
-    }
-
-    @Override
-    public int maxine_flush_instrumentationBuffer() {
-        // returns the int address of the method in C ... ugly but fast dynamic linking ....
-        // should really do it the proper way by CriticalMethods etc etc
-        return com.sun.max.vm.compiler.target.arm.ARMTargetMethodUtil.maxine_flush_instrumentationBuffer();
-    }
-
     @Override
     protected void initFrame(ClassMethodActor method, CodeAttribute codeAttribute) {
         int maxLocals = codeAttribute.maxLocals;
