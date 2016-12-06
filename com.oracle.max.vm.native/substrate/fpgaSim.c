@@ -27,7 +27,7 @@ void exit_FPGA_Sim() {
 }
 
 jint maxine_fpga_instrumentation_buffer() {
-#ifdef arm
+#ifdef ENABLE_APT_SIM
     if (simPtr != 0) {
         log_exit(1, "Error: Multiple initializations of simptr in substrate!");
     }
