@@ -30,11 +30,11 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void pushptr(CiAddress src) {
-	crashme();
+        crashme();
     }
 
     public void popptr(CiAddress src) {
-	crashme();
+        crashme();
     }
 
     public final void casInt(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
@@ -51,7 +51,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         setUpScratch(address); // r12 has the address to CAS
         ldrex(ConditionFlag.Always, ARMV7.r8, scratchRegister); // r8 has the current Value
         cmp(ConditionFlag.Always, cmpValue, ARMV7.r8, 0, 0); // compare r8 with cmpValue
-        strex(ConditionFlag.Equal, ARMV7.r8, newValue, scratchRegister); // if equal, store newValue to address and result to r8
+        strex(ConditionFlag.Equal, ARMV7.r8, newValue, scratchRegister); // if equal, store newValue to address and
+                                                                         // result to r8
 
         // If the Condition is NotEqual then the strex did not take place and we need to put the loaded value of r8 into
         // the cmpValue
@@ -67,7 +68,6 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         // If r8 is equal to r12 then there was an issue with atomicity so do the operation again
 
         jcc(ConditionFlag.Equal, atomicFail);
-        // mov(ConditionFlag.NotEqual,false,cmpValue,newValue); WE DO NOT UPDATE the "return value" if the CAS succeeds
         bind(notEqualTocmpValue);
         cmp(ConditionFlag.Always, newValue, cmpValue, 0, 0);
     }
@@ -111,7 +111,6 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert (ARMV7.r0 == cmpValue);
         ARMV7Label atomicFail = new ARMV7Label();
         ARMV7Label notEqualTocmpValue = new ARMV7Label();
-        //saveRegister(8, 9);
         saveInFP(9);
         bind(atomicFail);
         membar(-1);
@@ -132,10 +131,8 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         bind(notEqualTocmpValue);
         cmp(ConditionFlag.Always, newValue, cmpValue, 0, 0);
         cmp(ConditionFlag.Equal, ARMV7.cpuRegisters[newValue.number + 1], ARMV7.cpuRegisters[cmpValue.number + 1], 0, 0);
-        //restoreRegister(8, 9);
         restoreFromFP(9);
         barrierDMB();
-
     }
 
     public final void casLongAsmTest(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
@@ -239,9 +236,9 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
             jcc(ConditionFlag.SignedOverflow, l);
             jcc(ConditionFlag.CarryClearUnsignedLower, l);
             mov32BitConstantOptimised(ConditionFlag.Always, dst, 0);
-            jcc(ConditionFlag.Equal, l); // NEW
+            jcc(ConditionFlag.Equal, l);
             incrementl(dst, 1);
-        } else { // unordered is greater
+        } else {
             mov32BitConstantOptimised(ConditionFlag.Always, dst, 1);
             jcc(ConditionFlag.SignedOverflow, l);
             jcc(ConditionFlag.SignedGreater, l);
@@ -264,12 +261,12 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
             mov32BitConstantOptimised(ConditionFlag.Always, dst, 0);
             jcc(ConditionFlag.Equal, l);
             incrementl(dst, 1);
-        } else { // unordered is greater
+        } else {
             mov32BitConstantOptimised(ConditionFlag.Always, dst, 1);
             jcc(ConditionFlag.SignedOverflow, l);
             jcc(ConditionFlag.SignedGreater, l);
             mov32BitConstantOptimised(ConditionFlag.Always, dst, 0);
-            jcc(ConditionFlag.Equal, l); // NEW
+            jcc(ConditionFlag.Equal, l);
             decrementl(dst, 1);
         }
         bind(l);
@@ -286,7 +283,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     public void cmpptr(CiRegister src1, CiAddress src2) {
         setUpScratch(src2);
         assert (ARMV7.r12.number != src1.number);
-        ldr(ConditionFlag.Always, ARMV7.r12, ARMV7.r12, 0); // TODO is this necessary or is the address the pointer?
+        ldr(ConditionFlag.Always, ARMV7.r12, ARMV7.r12, 0);
         cmp(ConditionFlag.Always, src1, ARMV7.r12, 0, 0);
     }
 
@@ -304,7 +301,6 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void decrementl(CiRegister reg, int value) {
         assert reg == ARMV7.r12 || reg != ARMV7.r8 : "Reg " + reg;
-
         mov32BitConstantOptimised(ConditionFlag.Always, ARMV7.r8, value);
         sub(ConditionFlag.Always, false, reg, reg, ARMV7.r8, 0, 0);
     }
@@ -313,34 +309,22 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         if (value == 0) {
             return;
         }
-       // boolean is12bitARM = isModified12bit(value);
         CiRegister tmpRegister = dst.base();
         int add = dst.displacement >= 0 ? 1 : 0;
-        if(tmpRegister == CiRegister.Frame) {
+        if (tmpRegister == CiRegister.Frame) {
             tmpRegister = frameRegister;
         }
 
-        if(dst.isARMV7Immediate(CiKind.Int)) {
-            ldrImmediate(ConditionFlag.Always,1, add, 0, ARMV7.r12, tmpRegister, dst.displacement);
+        if (dst.isARMV7Immediate(CiKind.Int)) {
+            ldrImmediate(ConditionFlag.Always, 1, add, 0, ARMV7.r12, tmpRegister, dst.displacement);
         } else {
             setUpScratch(dst);
             saveInFP(12);
             ldr(ConditionFlag.Always, ARMV7.r12, ARMV7.r12, 0);
-
         }
-       // if(!is12bitARM) {
-            mov32BitConstantOptimised(ConditionFlag.Always, ARMV7.r8, value);
-            sub(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r12, ARMV7.r8, 0, 0);
-      //  } else {
-       //     int the12BitValue = as12BitValue(value);
-       //     sub(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r12, the12BitValue & 0xFF, the12BitValue >> 8);
-       // }
-//
-        //sub(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r8, 0, 0);
-        //mov(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r12);
-        //setUpScratch(dst); //Recalculate address to save scratch
-        //OPTIMISATION
-        if(dst.isARMV7Immediate(CiKind.Int)) {
+        mov32BitConstantOptimised(ConditionFlag.Always, ARMV7.r8, value);
+        sub(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r12, ARMV7.r8, 0, 0);
+        if (dst.isARMV7Immediate(CiKind.Int)) {
             strImmediate(ConditionFlag.Always, 1, add, 0, ARMV7.r8, tmpRegister, dst.displacement);
         } else {
             restoreFromFP(12);
@@ -352,8 +336,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         if (value == 0) {
             return;
         }
-	    assert(reg != ARMV7.r12);
-
+        assert (reg != ARMV7.r12);
         addq(reg, value);
     }
 
@@ -361,32 +344,21 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         if (value == 0) {
             return;
         }
-        //boolean is12bitARM = isModified12bit(value);
-
         CiRegister tmpRegister = dst.base();
         int add = dst.displacement >= 0 ? 1 : 0;
-        if(tmpRegister == CiRegister.Frame) {
+        if (tmpRegister == CiRegister.Frame) {
             tmpRegister = frameRegister;
         }
-        if(dst.isARMV7Immediate(CiKind.Int)) {
-            ldrImmediate(ConditionFlag.Always,1, add, 0, ARMV7.r12, tmpRegister, dst.displacement);
+        if (dst.isARMV7Immediate(CiKind.Int)) {
+            ldrImmediate(ConditionFlag.Always, 1, add, 0, ARMV7.r12, tmpRegister, dst.displacement);
         } else {
             setUpScratch(dst);
             saveInFP(12);
             ldr(ConditionFlag.Always, r12, r12, 0);
         }
-        //addRegisters(ConditionFlag.Always, false, r12, r12, ARMV7.r8, 0, 0);
-        //mov(ConditionFlag.Always, false, ARMV7.r8, r12);
-        //setUpScratch(dst);
-        // OPTIMISED
-        //if(!is12bitARM) {
-            mov32BitConstantOptimised(ConditionFlag.Always, ARMV7.r8, value);
-            addRegisters(ConditionFlag.Always, false, ARMV7.r8, r12, ARMV7.r8, 0, 0);
-       // } else {
-         //   int the12BitValue = as12BitValue(value);
-         //   add(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r12, the12BitValue & 0xFF, the12BitValue >> 8);
-        //}
-        if(dst.isARMV7Immediate(CiKind.Int)) {
+        mov32BitConstantOptimised(ConditionFlag.Always, ARMV7.r8, value);
+        addRegisters(ConditionFlag.Always, false, ARMV7.r8, r12, ARMV7.r8, 0, 0);
+        if (dst.isARMV7Immediate(CiKind.Int)) {
             strImmediate(ConditionFlag.Always, 1, add, 0, ARMV7.r8, tmpRegister, dst.displacement);
         } else {
             restoreFromFP(12);
@@ -417,40 +389,27 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         assert dst.isFpu();
         if (src.isARMV7Immediate(CiKind.Float)) {
             CiRegister tmpRegister = src.base();
-            if(tmpRegister == CiRegister.Frame) {
+            if (tmpRegister == CiRegister.Frame) {
                 tmpRegister = frameRegister;
             }
             vldr(ConditionFlag.Always, dst, tmpRegister, src.displacement, CiKind.Float, CiKind.Int);
         } else {
             setUpScratchOptimised(dst, false, CiKind.Float, src);
-
-            //setUpScratch(src);
-            //vldr(ConditionFlag.Always, dst, r12, 0, CiKind.Float, CiKind.Int);
         }
     }
-
 
     public void movflt(CiAddress dst, CiRegister src) {
         assert src.isFpu();
         if (dst.isARMV7Immediate(CiKind.Float)) {
             CiRegister tmpRegister = dst.base();
-            if(tmpRegister == CiRegister.Frame) {
+            if (tmpRegister == CiRegister.Frame) {
                 tmpRegister = frameRegister;
             }
-            //System.out.println("BASE " + tmpRegister.getEncoding() + " DISP " + dst.displacement);
             vstr(ConditionFlag.Always, src, tmpRegister, dst.displacement, CiKind.Float, CiKind.Int);
         } else {
-
-                setUpScratchOptimised(src, true, CiKind.Float, dst);
-            //}else {
-              //  setUpScratch(dst);
-
-                //vstr(ConditionFlag.Always, src, ARMV7.r12, 0, CiKind.Float, CiKind.Int);
-
-            //}
+            setUpScratchOptimised(src, true, CiKind.Float, dst);
         }
     }
-
 
     public void movdbl(CiRegister dst, CiRegister src, CiKind dstKind, CiKind srcKind) {
         assert dst.isFpu() && src.isFpu();
@@ -464,32 +423,22 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
             if (tmpRegister == CiRegister.Frame) {
                 tmpRegister = frameRegister;
             }
-            //System.out.println("BASE " + tmpRegister.getEncoding() + " DISP " + dst.displacement);
             vldr(ConditionFlag.Always, dst, tmpRegister, src.displacement, CiKind.Double, CiKind.Int);
         } else {
             setUpScratchOptimised(dst, false, CiKind.Double, src);
-
-            //setUpScratch(src);
-            //vldr(ConditionFlag.Always, dst, r12, 0, CiKind.Double, CiKind.Int);
         }
     }
-
 
     public void movdbl(CiAddress dst, CiRegister src) {
         assert (src.number > 15);
         if (dst.isARMV7Immediate(CiKind.Double)) {
             CiRegister tmpRegister = dst.base();
-            if(tmpRegister == CiRegister.Frame) {
+            if (tmpRegister == CiRegister.Frame) {
                 tmpRegister = frameRegister;
             }
-            //System.out.println("BASE " + tmpRegister.getEncoding() + " DISP " + dst.displacement);
             vstr(ConditionFlag.Always, src, tmpRegister, dst.displacement, CiKind.Double, CiKind.Int);
         } else {
             setUpScratchOptimised(src, true, CiKind.Double, dst);
-
-            //setUpScratch(dst);
-            //vstr(ConditionFlag.Always, src, r12, 0, CiKind.Double, CiKind.Int);
-
         }
     }
 
@@ -498,11 +447,9 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
             mov64BitConstant(ConditionFlag.Always, dst, ARMV7.cpuRegisters[dst.getEncoding() + 1], src);
         } else {
             assert dstKind.isDouble() : "Dst reg must be double";
-            //saveRegister(8,9);
             saveInFP(9);
             mov64BitConstant(ConditionFlag.Always, ARMV7.r8, ARMV7.r9, src);
             vmov(ConditionFlag.Always, dst, ARMV7.r8, ARMV7.r9, dstKind, CiKind.Long);
-            //restoreRegister(8,9);
             restoreFromFP(9);
         }
     }
@@ -543,15 +490,13 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         for (CiRegister r : csl.registers) {
             int offset = csl.offsetOf(r);
             int displacement = offset + frameToCSA;
-
             int add = (displacement < 0) ? 0 : 1;
-            if (displacement < 1020 && displacement > -1020) { // vldr vstr restriction
+            if (displacement < 1020 && displacement > -1020) {
                 if (r.number < 16) {
                     strImmediate(ConditionFlag.Always, 1, add, 0, r, frameRegister, displacement);
                 } else {
                     vstr(ConditionFlag.Always, r, frameRegister, displacement, CiKind.Float, CiKind.Int);
                 }
-
             } else {
                 setUpScratch(new CiAddress(target.wordKind, frame, frameToCSA + offset));
                 if (r.number < 16) {
@@ -559,8 +504,6 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
                 } else {
                     vstr(ConditionFlag.Always, r, r12, 0, CiKind.Float, CiKind.Int);
                 }
-
-
             }
         }
     }
@@ -571,22 +514,17 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
             int offset = csl.offsetOf(r);
             int displacement = offset + frameToCSA;
             int add = (displacement < 0) ? 0 : 1;
-
-            if (displacement < 1020 && displacement > -1020) { // vldr vstr restriction
-
+            if (displacement < 1020 && displacement > -1020) {
                 if (r.number < 16) {
                     ldrImmediate(ConditionFlag.Always, 1, add, 0, r, frameRegister, displacement);
                 } else {
                     vldr(ConditionFlag.Always, r, frameRegister, displacement, CiKind.Float, CiKind.Int);
                 }
-
             } else {
-
                 setUpScratch(new CiAddress(target.wordKind, frame, frameToCSA + offset));
                 if (r.number < 16) {
                     ldrImmediate(ConditionFlag.Always, 1, 0, 0, r, r12, 0);
                 } else {
-                    //vldr(ConditionFlag.Always, r, r12, 0, CiKind.Float, CiKind.Int);
                     vldr(ConditionFlag.Always, r, r12, 0, CiKind.Float, CiKind.Int);
                 }
             }
@@ -606,34 +544,29 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void iadd(CiRegister dest, CiRegister left, CiAddress right) {
-        // these always seem to be stack loads
-        if(right.isARMV7Immediate(CiKind.Int)) {
-            int add = right.displacement >=0 ? 1 : 0;
+        if (right.isARMV7Immediate(CiKind.Int)) {
+            int add = right.displacement >= 0 ? 1 : 0;
             CiRegister tmpRegister = right.base();
-            if(tmpRegister == CiRegister.Frame) {
+            if (tmpRegister == CiRegister.Frame) {
                 tmpRegister = frameRegister;
             }
             ldrImmediate(ConditionFlag.Always, 1, add, 0, r12, tmpRegister, right.displacement);
         } else {
-	    setUpScratchOptimised(ARMV7.r12, false, CiKind.Int, right);
-            //setUpScratch(right);
-            //ldrImmediate(ConditionFlag.Always, 1, 1, 0, r12, r12, 0);
+            setUpScratchOptimised(ARMV7.r12, false, CiKind.Int, right);
         }
         addRegisters(ConditionFlag.Always, true, dest, left, r12, 0, 0);
     }
 
     public void isub(CiRegister dest, CiRegister left, CiAddress right) {
-        if(right.isARMV7Immediate(CiKind.Int)) {
-            int add = right.displacement >=0 ? 1 : 0;
+        if (right.isARMV7Immediate(CiKind.Int)) {
+            int add = right.displacement >= 0 ? 1 : 0;
             CiRegister tmpRegister = right.base();
-            if(tmpRegister == CiRegister.Frame) {
+            if (tmpRegister == CiRegister.Frame) {
                 tmpRegister = frameRegister;
             }
             ldrImmediate(ConditionFlag.Always, 1, add, 0, r12, tmpRegister, right.displacement);
         } else {
-	    setUpScratchOptimised(ARMV7.r12, false, CiKind.Int, right);
-            //setUpScratch(right);
-            //ldrImmediate(ConditionFlag.Always, 1, 1, 0, r12, r12, 0);
+            setUpScratchOptimised(ARMV7.r12, false, CiKind.Int, right);
         }
         sub(ConditionFlag.Always, true, dest, left, r12, 0, 0);
     }
@@ -721,7 +654,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void iushr(CiRegister dest, CiRegister left, int amount) {
-        lsr(ConditionFlag.Always, true, dest, left, amount); // logical shift right is sufficient
+        lsr(ConditionFlag.Always, true, dest, left, amount);
     }
 
     public void iushr(CiRegister dest, CiRegister left, CiRegister right) {
