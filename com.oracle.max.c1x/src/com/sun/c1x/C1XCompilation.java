@@ -37,9 +37,8 @@ import com.sun.c1x.observer.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
+import com.sun.cri.ci.CiCompiler.*;
 import com.sun.cri.ri.*;
-import com.sun.max.vm.MaxineVM;
 
 /**
  * This class encapsulates global information about the compilation of a particular method,

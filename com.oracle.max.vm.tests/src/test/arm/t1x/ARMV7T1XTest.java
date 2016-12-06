@@ -40,7 +40,7 @@ public class ARMV7T1XTest extends MaxTestCase {
     private ARMCodeWriter code;
     private T1X t1x;
     private C1X c1x;
-    private ARMV7T1XCompilation theCompiler;
+    private ARMV7T1XCompilationTest theCompiler;
     private StaticMethodActor anMethod = null;
     private CodeAttribute codeAttr = null;
     private static boolean POST_CLEAN_FILES = true;
@@ -141,7 +141,7 @@ public class ARMV7T1XTest extends MaxTestCase {
             t1x = (T1X) CompilationBroker.addCompiler("t1x", baselineCompilerName);
             c1x = (C1X) CompilationBroker.addCompiler("c1x", optimizingCompilerName);
             c1x.initialize(Phase.HOSTED_TESTING);
-            theCompiler = (ARMV7T1XCompilation) t1x.getT1XCompilation();
+            theCompiler = (ARMV7T1XCompilationTest) t1x.getT1XCompilation();
         } catch (Exception e) {
             System.out.println(e);
             e.printStackTrace();
