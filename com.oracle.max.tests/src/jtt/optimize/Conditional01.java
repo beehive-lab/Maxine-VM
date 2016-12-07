@@ -61,7 +61,7 @@ public class Conditional01 {
         int val;
         int num;
 
-        Register() { /// added
+        Register() {
             negative = -8;
             val = -2;
             num = -3;
@@ -73,16 +73,15 @@ public class Conditional01 {
         public Register r1;
         public Register r2;
 
-        CPC() {// ADDED
+        CPC() {
             negative = -1;
             r1 = new Register();
             r2 = new Register();
         }
 
-        public void setNegative() { // ADDED
+        public void setNegative() {
             negative = -1;
         }
-
     }
 
     private int nextPC;
