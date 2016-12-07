@@ -1017,15 +1017,16 @@ public class Deoptimization extends VmOperation {
 
 // START GENERATED CODE
     private static abstract class DeoptLoggerAuto extends com.sun.max.vm.log.VMLogger {
-
         public enum Operation {
-            ALot, CatchException, Continuation, DoIt, Frames, PatchITable, PatchReturnAddress, PatchVTable, Start, TmPos, Unroll;
+            ALot, CatchException, Continuation,
+            DoIt, Frames, PatchITable, PatchReturnAddress,
+            PatchVTable, Start, TmPos, Unroll;
 
             @SuppressWarnings("hiding")
             public static final Operation[] VALUES = values();
         }
 
-        private static final int[] REFMAPS = new int[] { 0x1, 0x7, 0x0, 0x3, 0x3, 0x0, 0x4f, 0x0, 0x1, 0x1, 0x3};
+        private static final int[] REFMAPS = new int[] {0x1, 0x7, 0x0, 0x3, 0x3, 0x0, 0x4f, 0x0, 0x1, 0x1, 0x3};
 
         protected DeoptLoggerAuto(String name, String optionDescription) {
             super(name, Operation.VALUES.length, optionDescription, REFMAPS);
@@ -1040,129 +1041,120 @@ public class Deoptimization extends VmOperation {
         public final void logALot(ArrayList methods) {
             log(Operation.ALot.ordinal(), objectArg(methods));
         }
-
         protected abstract void traceALot(ArrayList<TargetMethod> methods);
 
         @INLINE
         public final void logCatchException(TargetMethod thisTargetMethod, TargetMethod fromTargetMethod, Stub stub, Pointer sp, Pointer fp) {
             log(Operation.CatchException.ordinal(), objectArg(thisTargetMethod), objectArg(fromTargetMethod), objectArg(stub), sp, fp);
         }
-
         protected abstract void traceCatchException(TargetMethod thisTargetMethod, TargetMethod fromTargetMethod, Stub stub, Pointer sp, Pointer fp);
 
         @INLINE
         public final void logContinuation(Pointer ip) {
             log(Operation.Continuation.ordinal(), ip);
         }
-
         protected abstract void traceContinuation(Pointer ip);
 
         @INLINE
         public final void logDoIt(String msg, TargetMethod targetMethod, boolean ts) {
             log(Operation.DoIt.ordinal(), objectArg(msg), objectArg(targetMethod), booleanArg(ts));
         }
-
         protected abstract void traceDoIt(String msg, TargetMethod targetMethod, boolean ts);
 
         @INLINE
         public final void logFrames(CiFrame topFrame, String label) {
             log(Operation.Frames.ordinal(), objectArg(topFrame), objectArg(label));
         }
-
         protected abstract void traceFrames(CiFrame topFrame, String label);
 
         @INLINE
         public final void logPatchITable(ClassActor classActor, int iIndex) {
             log(Operation.PatchITable.ordinal(), classActorArg(classActor), intArg(iIndex));
         }
-
         protected abstract void tracePatchITable(ClassActor classActor, int iIndex);
 
         @INLINE
-        public final void logPatchReturnAddress(TargetMethod targetMethod, Object callee, Stub stub, CodePointer to, Pointer save, Pointer patch, CodePointer from) {
-            log(Operation.PatchReturnAddress.ordinal(), objectArg(targetMethod), objectArg(callee), objectArg(stub), codePointerArg(to), save, patch, codePointerArg(from));
+        public final void logPatchReturnAddress(TargetMethod targetMethod, Object callee, Stub stub, CodePointer to, Pointer save,
+                Pointer patch, CodePointer from) {
+            log(Operation.PatchReturnAddress.ordinal(), objectArg(targetMethod), objectArg(callee), objectArg(stub), codePointerArg(to), save,
+                patch, codePointerArg(from));
         }
-
-        protected abstract void tracePatchReturnAddress(TargetMethod targetMethod, Object callee, Stub stub, CodePointer to, Pointer save, Pointer patch, CodePointer from);
+        protected abstract void tracePatchReturnAddress(TargetMethod targetMethod, Object callee, Stub stub, CodePointer to, Pointer save,
+                Pointer patch, CodePointer from);
 
         @INLINE
         public final void logPatchVTable(int vtableIndex, ClassActor classActor) {
             log(Operation.PatchVTable.ordinal(), intArg(vtableIndex), classActorArg(classActor));
         }
-
         protected abstract void tracePatchVTable(int vtableIndex, ClassActor classActor);
 
         @INLINE
         public final void logStart(TargetMethod targetMethod) {
             log(Operation.Start.ordinal(), objectArg(targetMethod));
         }
-
         protected abstract void traceStart(TargetMethod targetMethod);
 
         @INLINE
         public final void logTmPos(TargetMethod targetMethod, int safepointIndex) {
             log(Operation.TmPos.ordinal(), objectArg(targetMethod), intArg(safepointIndex));
         }
-
         protected abstract void traceTmPos(TargetMethod targetMethod, int safepointIndex);
 
         @INLINE
         public final void logUnroll(Info info, ArrayList slots, Pointer sp) {
             log(Operation.Unroll.ordinal(), objectArg(info), objectArg(slots), sp);
         }
-
         protected abstract void traceUnroll(Info info, ArrayList<CiConstant> slots, Pointer sp);
 
         @Override
         protected void trace(Record r) {
             switch (r.getOperation()) {
-                case 0: { // ALot
+                case 0: { //ALot
                     traceALot(toArrayListTargetMethod(r, 1));
                     break;
                 }
-                case 1: { // CatchException
+                case 1: { //CatchException
                     traceCatchException(toTargetMethod(r, 1), toTargetMethod(r, 2), toStub(r, 3), toPointer(r, 4), toPointer(r, 5));
                     break;
                 }
-                case 2: { // Continuation
+                case 2: { //Continuation
                     traceContinuation(toPointer(r, 1));
                     break;
                 }
-                case 3: { // DoIt
+                case 3: { //DoIt
                     traceDoIt(toString(r, 1), toTargetMethod(r, 2), toBoolean(r, 3));
                     break;
                 }
-                case 4: { // Frames
+                case 4: { //Frames
                     traceFrames(toCiFrame(r, 1), toString(r, 2));
                     break;
                 }
-                case 5: { // PatchITable
+                case 5: { //PatchITable
                     tracePatchITable(toClassActor(r, 1), toInt(r, 2));
                     break;
                 }
-                case 6: { // PatchReturnAddress
+                case 6: { //PatchReturnAddress
                     tracePatchReturnAddress(toTargetMethod(r, 1), toObject(r, 2), toStub(r, 3), toCodePointer(r, 4), toPointer(r, 5), toPointer(r, 6), toCodePointer(r, 7));
                     break;
                 }
-                case 7: { // PatchVTable
+                case 7: { //PatchVTable
                     tracePatchVTable(toInt(r, 1), toClassActor(r, 2));
                     break;
                 }
-                case 8: { // Start
+                case 8: { //Start
                     traceStart(toTargetMethod(r, 1));
                     break;
                 }
-                case 9: { // TmPos
+                case 9: { //TmPos
                     traceTmPos(toTargetMethod(r, 1), toInt(r, 2));
                     break;
                 }
-                case 10: { // Unroll
+                case 10: { //Unroll
                     traceUnroll(toInfo(r, 1), toArrayListCiConstant(r, 2), toPointer(r, 3));
                     break;
                 }
             }
         }
-
         static ArrayList<CiConstant> toArrayListCiConstant(Record r, int argNum) {
             if (MaxineVM.isHosted()) {
                 Class<ArrayList<CiConstant>> type = null;
@@ -1171,7 +1163,6 @@ public class Deoptimization extends VmOperation {
                 return asArrayListCiConstant(toObject(r, argNum));
             }
         }
-
         @INTRINSIC(UNSAFE_CAST)
         private static native ArrayList<CiConstant> asArrayListCiConstant(Object arg);
 
@@ -1183,7 +1174,6 @@ public class Deoptimization extends VmOperation {
                 return asArrayListTargetMethod(toObject(r, argNum));
             }
         }
-
         @INTRINSIC(UNSAFE_CAST)
         private static native ArrayList<TargetMethod> asArrayListTargetMethod(Object arg);
 
@@ -1194,7 +1184,6 @@ public class Deoptimization extends VmOperation {
                 return asCiFrame(toObject(r, argNum));
             }
         }
-
         @INTRINSIC(UNSAFE_CAST)
         private static native CiFrame asCiFrame(Object arg);
 
@@ -1205,7 +1194,6 @@ public class Deoptimization extends VmOperation {
                 return asInfo(toObject(r, argNum));
             }
         }
-
         @INTRINSIC(UNSAFE_CAST)
         private static native Info asInfo(Object arg);
 
