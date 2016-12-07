@@ -144,7 +144,6 @@ public class CompilationBroker {
                     String key = part.substring(0, colon);
                     String value = part.substring(colon + 1);
                     map.put(key, value);
-                    Log.println("CompileCommand key value " + key + " " + value);
                 }
             }
             compileCommandMap = map;
@@ -247,7 +246,7 @@ public class CompilationBroker {
     protected CompilationBroker() {
         assert optimizingCompilerOption.getValue() != null;
         String optName = optName();
-        String baselineName = baselineName(); // these are of the form com.oracle.max.vm.ext.t1x.T1X/C1X
+        String baselineName = baselineName();
         // trying to use this to add another compiler
         optimizingCompiler = instantiateCompiler(optName);
         assert optimizingCompiler.nature() == Nature.OPT : optimizingCompiler + " is not an optimizing compiler";
