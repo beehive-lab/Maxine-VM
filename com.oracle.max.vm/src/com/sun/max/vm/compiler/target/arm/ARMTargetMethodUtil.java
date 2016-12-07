@@ -432,17 +432,4 @@ public final class ARMTargetMethodUtil {
         Pointer sp = frame.sp();
         return sp.plus(tm.frameSize());
     }
-
-    public static int callInstructionSize(byte[] code, int pos) {
-        if ((code[pos] & 0xFF) == RIP_CALL) {
-            return RIP_CALL_INSTRUCTION_SIZE;
-        }
-        if ((code[pos] & 0xff) == REG_CALL) {
-            return 2;
-        }
-        if ((code[pos + 1] & 0xff) == REG_CALL) {
-            return 3;
-        }
-        return -1;
-    }
 }
