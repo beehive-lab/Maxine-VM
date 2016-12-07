@@ -58,7 +58,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     public ARMV7T1XCompilation(T1X compiler) {
         super(compiler);
-        asm = new ARMV7MacroAssembler(target(), null);
+        asm = new ARMV7MacroAssembler(target(), null, false);
         buf = asm.codeBuffer;
         patchInfo = new PatchInfoARMV7();
         if (T1XOptions.DebugMethods && !debugMethodsEnabled) {
@@ -1156,7 +1156,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         for (int pos = 0; pos < source.codeLength(); pos++) {
             for (CiRegister reg : ARMV7.cpuRegisters) {
                 final int extraOffset = 12;
-                ARMV7Assembler asm = new ARMV7Assembler(target(), null);
+                ARMV7Assembler asm = new ARMV7Assembler(target(), null, false);
                 asm.setUpScratch(CiAddress.Placeholder);
                 asm.addRegisters(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r15, 0, 0);
                 asm.ldr(ConditionFlag.Always, reg, r12, 0);

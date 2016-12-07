@@ -91,7 +91,7 @@ public class ARMV7CompilerStubEmitter {
         compilation.initFrameMap(0);
         this.comp = compilation;
         final RiRegisterConfig registerConfig = compilation.compiler.compilerStubRegisterConfig;
-        this.asm = new ARMV7MacroAssembler(compilation.target, registerConfig);
+        this.asm = new ARMV7MacroAssembler(compilation.target, registerConfig, false);
         this.tasm = new TargetMethodAssembler(asm);
 
         inArgs = new CiStackSlot[argTypes.length];

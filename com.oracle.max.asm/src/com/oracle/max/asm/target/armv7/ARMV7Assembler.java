@@ -55,12 +55,12 @@ public class ARMV7Assembler extends AbstractAssembler {
         return retVal;
     }
 
-    public ARMV7Assembler(CiTarget target, RiRegisterConfig registerConfig) {
+    public ARMV7Assembler(CiTarget target, RiRegisterConfig registerConfig, boolean instrument) {
         super(target);
         this.registerConfig = registerConfig;
         this.scratchRegister = registerConfig == null ? ARMV7.r12 : registerConfig.getScratchRegister();
         this.frameRegister = registerConfig == null ? null : registerConfig.getFrameRegister();
-        this.instrumentation = new ARMV7Instrumentation(this);
+        this.instrumentation = new ARMV7Instrumentation(this, instrument);
     }
 
     public enum ConditionFlag {
@@ -218,16 +218,16 @@ public class ARMV7Assembler extends AbstractAssembler {
     public void branch(ARMV7Label l) {
         if (l.isBound()) {
             int disp = (l.position() - codeBuffer.position() - 8) / 4;
-            if (ARMV7Instrumentation.ENABLED) {
+            if (instrumentation.enabled()) {
                 disp = instrumentation.instrumentBranch(ConditionFlag.Always, ConditionFlag.NeverUse, disp);
             }
             b(ConditionFlag.Always, disp);
 
         } else {
-            if (ARMV7Instrumentation.ENABLED) {
+            if (instrumentation.enabled()) {
                 instrumentation.instrumentBranch(ConditionFlag.Always, ConditionFlag.NeverUse, -2);
             }
-            BranchInfo info = new BranchInfo(BranchInfo.BranchType.BRANCH, ConditionFlag.Always, ARMV7Instrumentation.ENABLED);
+            BranchInfo info = new BranchInfo(BranchInfo.BranchType.BRANCH, ConditionFlag.Always, instrumentation.enabled());
             l.addPatchAt(codeBuffer.position(), info);
             emitInt(ConditionFlag.Always.value << 28 | 0xd0d0);
         }
@@ -673,7 +673,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         int instruction = 0x01a00000;
         assert (Rd.getEncoding() < 16 && Rm.getEncoding() < 16); // CORE Register move only!
         // TODO: Add comment
-        if (Rd == ARMV7.r15 && ARMV7Instrumentation.ENABLED) {
+        if (Rd == ARMV7.r15 && instrumentation.enabled()) {
             push(ConditionFlag.Always, 1 << 12 | 1 << 8);
             mov(cond, false, ARMV7.r12, Rm);
             ConditionFlag tmp = cond.inverse();
@@ -885,7 +885,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void strd(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, final CiRegister Rm) {
-        if (ARMV7Instrumentation.ENABLED) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(false, true, true, Rn, 0);
         }
         int instruction = 0x000000f0;
@@ -900,7 +900,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void str(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, final CiRegister Rm, int imm5, int imm2Type) {
-        if (ARMV7Instrumentation.ENABLED) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(false, true, true, Rn, 0);
         }
         int instruction = 0x06000000;
@@ -931,7 +931,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void strImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rvalue, final CiRegister Rmemory, int imm12) {
-        if (ARMV7Instrumentation.ENABLED) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(false, true, true, Rmemory, imm12);
         }
         int instruction = 0x04000000;
@@ -954,7 +954,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void strDualImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
-        if (ARMV7Instrumentation.ENABLED) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(false, true, true, Rn, imm8);
         }
         checkConstraint(-255 <= imm8 && imm8 <= 255, "strDualImmediate offset greater than +/- 255 ");
@@ -995,7 +995,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldrex(final ConditionFlag cond, final CiRegister Rdest, final CiRegister Raddr) {
-        if (ARMV7Instrumentation.ENABLED) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(true, true, true, Raddr, 0);
         }
         int instruction = 0x01900f9f;
@@ -1006,7 +1006,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldrexd(final ConditionFlag cond, final CiRegister Rdest, final CiRegister Raddr) {
-        if (ARMV7Instrumentation.ENABLED) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(true, true, true, Raddr, 0);
         }
         int instruction = 0x1B00F9F;
@@ -1023,7 +1023,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= ((Raddr.getEncoding() & 0xf) << 16);
         instruction |= Rnewval.getEncoding() & 0xf;
         emitInt(instruction);
-        if (ARMV7Instrumentation.ENABLED) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(false, true, true, Raddr, 0);
         }
     }
@@ -1035,13 +1035,13 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= ((Rd.getEncoding() & 0xf) << 12);
         instruction |= Rt.getEncoding() & 0xf;
         emitInt(instruction);
-        if (ARMV7Instrumentation.ENABLED) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(false, true, true, Rn, 0);
         }
     }
 
     public void ldruhw(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
-        if (ARMV7Instrumentation.ENABLED) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(true, true, true, Rn, imm8);
         }
         checkConstraint(-255 <= imm8 && imm8 <= 255, "-255 <= offset8 && offset8 <= 255 ldruhw");
@@ -1062,7 +1062,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldrshw(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
-        if (ARMV7Instrumentation.ENABLED) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(true, true, true, Rn, imm8);
         }
         checkConstraint(-255 <= imm8 && imm8 <= 255, "-255 <= offset8 && offset8 <= 255 ldrshw");
@@ -1084,7 +1084,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldrsb(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
-        if (ARMV7Instrumentation.ENABLED) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(true, true, true, Rn, imm8);
         }
         checkConstraint(-255 <= imm8 && imm8 <= 255, "-255 <= offset8 && offset8 <= 255 ldrsb");
@@ -1107,7 +1107,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldrb(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm12) {
-        if (ARMV7Instrumentation.ENABLED) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(true, true, true, Rn, imm12);
         }
         int instruction = 0x04500000;
@@ -1128,7 +1128,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void strbImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm12) {
-        if (ARMV7Instrumentation.ENABLED) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(false, true, true, Rn, imm12);
         }
         int instruction = 0x04400000;
@@ -1144,7 +1144,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void strHImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm8) {
-        if (ARMV7Instrumentation.ENABLED) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(false, true, true, Rn, imm8);
         }
         int instruction = 0x004000b0;
@@ -1165,7 +1165,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldrImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, int imm12) {
-        if (ARMV7Instrumentation.ENABLED) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(true, true, true, Rn, imm12);
         }
         int instruction = 0x04100000;
@@ -1188,7 +1188,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldr(final ConditionFlag cond, int P, int U, int W, final CiRegister Rt, final CiRegister Rn, final CiRegister Rm, int imm2Type, int imm5) {
-        if (ARMV7Instrumentation.ENABLED) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(true, true, true, Rn, imm5);
         }
         int instruction = 0x06100000;
@@ -1257,7 +1257,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void push(final ConditionFlag flag, final int registerList, boolean instrument) {
-        if (instrument && ARMV7Instrumentation.enabled()) {
+        if (instrument && instrumentation.enabled()) {
             int count = 0;
             if ((registerList & (1 << 14)) == 0) {
                 for (int i = 0; i < 16; i++) {
@@ -1311,7 +1311,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void pop(final ConditionFlag flag, final int registerList, boolean instrument) {
-        if (instrument && ARMV7Instrumentation.enabled()) {
+        if (instrument && instrumentation.enabled()) {
             int count = 0;
             for (int i = 0; i < 16; i++) {
                 if ((registerList & (1 << i)) != 0) {
@@ -1338,7 +1338,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldrd(final ConditionFlag flag, final CiRegister valueReg, final CiRegister baseReg, int offset8) {
-        if (ARMV7Instrumentation.ENABLED) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(true, true, true, baseReg, offset8);
         }
 
@@ -1369,7 +1369,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void strd(final ConditionFlag flag, final CiRegister valueReg, final CiRegister baseReg, int offset8) {
-        if (ARMV7Instrumentation.ENABLED) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(false, true, true, baseReg, offset8);
         }
         int instruction;
@@ -1399,7 +1399,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void str(final ConditionFlag flag, final CiRegister valueReg, final CiRegister baseRegister, final int offset12) {
-        if (ARMV7Instrumentation.ENABLED) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(false, true, true, baseRegister, offset12);
         }
         int instruction;
@@ -1412,7 +1412,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void ldr(final ConditionFlag flag, final CiRegister destReg, final CiRegister baseRegister, final int offset12) {
-        if (ARMV7Instrumentation.ENABLED) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(true, true, true, baseRegister, offset12);
         }
         int instruction;
@@ -2332,7 +2332,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void ret() {
-        if (ARMV7Instrumentation.enabled()) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(true, true, true, ARMV7.r13, 0);
             ldr(ConditionFlag.Always, ARMV7.r12, ARMV7.r13, 0);
             instrumentation.instrumentPC(ConditionFlag.Always, ConditionFlag.NeverUse, true, ARMV7.r12, 0, false);
@@ -2393,7 +2393,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void jcc(ConditionFlag cc, int target, boolean forceDisp32) {
         int disp = (target - codeBuffer.position());
-        if (Math.abs(disp) <= 16777214 && !forceDisp32 && !ARMV7Instrumentation.enabled()) {
+        if (Math.abs(disp) <= 16777214 && !forceDisp32 && !instrumentation.enabled()) {
             disp = (disp - 8) / 4;
             emitInt((cc.value & 0xf) << 28 | (0xa << 24) | (disp & 0xffffff));
         } else {
@@ -2408,12 +2408,12 @@ public class ARMV7Assembler extends AbstractAssembler {
         if (l.isBound()) {
             jcc(cc, l.position(), false);
         } else {
-            if (ARMV7Instrumentation.enabled()) {
+            if (instrumentation.enabled()) {
                 ConditionFlag tmp = ConditionFlag.Always;
                 tmp = cc.inverse();
                 instrumentation.instrumentBranch(cc, tmp, -1);
             }
-            BranchInfo info = new BranchInfo(BranchType.JCC, cc, ARMV7Instrumentation.enabled());
+            BranchInfo info = new BranchInfo(BranchType.JCC, cc, instrumentation.enabled());
             l.addPatchAt(codeBuffer.position(), info);
             emitInt(cc.value() << 28 | 0xbeef);
             nop(2);
@@ -2425,7 +2425,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void bx(ConditionFlag cond, CiRegister target) {
-        if (ARMV7Instrumentation.enabled()) {
+        if (instrumentation.enabled()) {
             instrumentation.instrumentBX(cond, target);
         }
         int instruction = 0x012fff10;
@@ -2438,12 +2438,12 @@ public class ARMV7Assembler extends AbstractAssembler {
         if (l.isBound()) {
             jmp(l.position(), false);
         } else {
-            if (ARMV7Instrumentation.enabled()) {
+            if (instrumentation.enabled()) {
                 ConditionFlag tmp = ConditionFlag.Always;
                 tmp = tmp.inverse();
                 instrumentation.instrumentBranch(ConditionFlag.Always, tmp, -3);
             }
-            BranchInfo info = new BranchInfo(BranchType.JMP, ConditionFlag.Always, ARMV7Instrumentation.enabled());
+            BranchInfo info = new BranchInfo(BranchType.JMP, ConditionFlag.Always, instrumentation.enabled());
             l.addPatchAt(codeBuffer.position(), info);
             emitInt(ConditionFlag.Always.value << 28 | 0xdead);
             nop(2);
@@ -2452,7 +2452,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void jmp(int target, boolean forceDisp32) {
         int disp = target - codeBuffer.position();
-        if (disp <= 16777215 && !forceDisp32 && !ARMV7Instrumentation.enabled()) {
+        if (disp <= 16777215 && !forceDisp32 && !instrumentation.enabled()) {
             disp = (disp - 8) / 4;
             emitInt((0xe << 28) | (0xa << 24) | (disp & 0xffffff));
         } else {
@@ -2616,7 +2616,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void vstr(ConditionFlag cond, CiRegister dest, CiRegister src, int imm8, CiKind destKind, CiKind srcKind) {
-        if (ARMV7Instrumentation.enabled()) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(false, true, true, src, imm8);
         }
         if (src == CiRegister.Frame) {
@@ -2679,7 +2679,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void vldr(ConditionFlag cond, CiRegister dest, CiRegister src, int imm8, CiKind destKind, CiKind srcKind) {
-        if (ARMV7Instrumentation.enabled()) {
+        if (instrumentation.enabled()) {
             instrumentation.instrument(true, true, true, src, imm8);
         }
         int add = 0;
@@ -2746,7 +2746,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void vpop(ConditionFlag cond, CiRegister first, CiRegister last, CiKind firstKind, CiKind lastKind) {
-        if (ARMV7Instrumentation.enabled()) {
+        if (instrumentation.enabled()) {
             for (int i = first.getEncoding(); i <= last.getEncoding(); i++) {
                 instrumentation.instrument(true, true, true, ARMV7.r13, -4 * (i - first.getEncoding()));
             }
@@ -2774,7 +2774,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void vpush(ConditionFlag cond, CiRegister first, CiRegister last, CiKind firstKind, CiKind lastKind) {
-        if (ARMV7Instrumentation.enabled()) {
+        if (instrumentation.enabled()) {
             for (int i = first.getEncoding(); i <= last.getEncoding(); i++) {
                 instrumentation.instrument(false, true, true, ARMV7.r13, 4 * (i - first.getEncoding()));
             }
@@ -3005,7 +3005,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     @Override
     protected void patchJumpTarget(int branch, int target) {
-        BranchInfo info = new BranchInfo(BranchType.UNKNOWN, null, ARMV7Instrumentation.enabled());
+        BranchInfo info = new BranchInfo(BranchType.UNKNOWN, null, instrumentation.enabled());
         patchJumpTarget(branch, target, info);
     }
 }

@@ -8,15 +8,23 @@ public class ARMV7Instrumentation {
     private ARMV7Assembler asm;
     private static int maxineIntrumentationBufferAddress = 0;
 
-    public static boolean ENABLED = false;
+    public boolean enabled = false;
 
-    public ARMV7Instrumentation(ARMV7Assembler asm) {
+    public ARMV7Instrumentation(ARMV7Assembler asm, boolean enabled) {
         this.asm = asm;
-
+        this.enabled = enabled;
     }
 
-    public static boolean enabled() {
-        return ENABLED;
+    public boolean enabled() {
+        return enabled;
+    }
+
+    public void disable() {
+        enabled = false;
+    }
+
+    public void enable() {
+        enabled = true;
     }
 
     public static void setInstrumentationBufferAddress(int address) {

@@ -180,7 +180,6 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         } else if (phase == Phase.RUNNING) {
             if (C1XOptions.SimulateFPGA) {
                 assert Platform.target().arch.isARM() : "FPGA Simulation enabled only for ARMV7!";
-                ARMV7Instrumentation.ENABLED = true;
                 ARMV7Instrumentation.setInstrumentationBufferAddress(MaxineVM.maxine_fpga_flush_instrumentation_buffer());
             }
         } else if (phase == Phase.TERMINATING) {
