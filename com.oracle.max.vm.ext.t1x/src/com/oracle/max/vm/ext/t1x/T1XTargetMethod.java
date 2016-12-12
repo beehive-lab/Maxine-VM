@@ -1118,9 +1118,6 @@ public class T1XTargetMethod extends TargetMethod {
             cont.setSP(info, CiConstant.forJsr(info.slotsCount()));
             // add operand stack slots
             for (int i = frame.numStack - 1; i >= 0; i--) {
-                if(isARM()) {
-
-                }
                 CiConstant value = (CiConstant) frame.getStackValue(i);
                 info.addSlot(value, "ostack");
                 addSlotPadding(info, "ostack (pad)");
@@ -1225,7 +1222,6 @@ public class T1XTargetMethod extends TargetMethod {
         } else {
             // Unwinding to deoptimized frame containing the handler for 'exception'
             int curPos = bciToPos[bci];
-            com.sun.max.vm.Log.println("DEOPT unwind findContinuationIP throwAddressToCatchAddress");
             CodePointer handler = throwAddressToCatchAddress(codeAt(curPos), exception);
             assert !handler.isZero() : "could not (re)find handler for " + exception + " thrown at " + this + "+" + curPos;
             ip = handler;
