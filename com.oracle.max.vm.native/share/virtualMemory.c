@@ -93,7 +93,7 @@ static Address check_mmap_result(void *result) {
 			    log_println("EPERM\n");
 			break;
 			case ETXTBSY:
-			    log_println(" ETXTBSY\n");
+			    log_println("ETXTBSY\n");
 			break;
 			default:
 			    log_println("UNKNOWN\n");
@@ -104,36 +104,33 @@ static Address check_mmap_result(void *result) {
     return ((Address) (result == (void *) MAP_FAILED ? ALLOC_FAILED : result));
 }
 
+#ifdef arm
+  static int attempt = 0;
+  static Address allocAddress = 0x0;
+#endif
+
 /* Generic virtual space allocator.
  * If the address parameters is specified, allocate at the specified address and fail if it cannot be allocated.
  * Use MAP_NORESERVE if reserveSwap is false
  * Use PROT_NONE if protNone is true, otherwise set all protection (i.e., allow any type of access).
  */
-#ifdef arm
-
-  static int attempt = 0;
-  static Address lastAddress = 0x0;   
-
-#endif
 Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean reserveSwap, jboolean protNone, int type) {
 #ifdef arm
-
-  if(attempt == 0) {
-	attempt++;
-	if(address == 0x0) {
-		address = 0x10000000;
-		lastAddress = address;
-	} 
-   }else {
-		address = lastAddress;
-
-   }
+    //We have to make sure that in ARM 32 bit archs we always allocate in positive memory addresses.
+    if(attempt == 0) {
+        attempt++;
+        if(address == 0x0) {
+            address = 0x10000000;
+            allocAddress = address;
+        }
+    } else {
+        address = lastAddress;
+    }
 #endif
   int flags = MAP_PRIVATE | MAP_ANON;
 #if os_LINUX
   /* For some reason, subsequent calls to mmap to allocate out of the space
    * reserved here only work if the reserved space is in 32-bit space. */
-//  flags |= MAP_32BIT;
 #endif
   int prot = protNone == JNI_TRUE ? PROT_NONE : PROT;
   if (reserveSwap == JNI_FALSE) {
@@ -152,40 +149,35 @@ Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean r
 					result);
 #endif
 #ifdef arm
-
   address =  check_mmap_result(result);
   lastAddress = address + size;
   return address;
 #else
-
   return check_mmap_result(result);
-
 #endif
 }
 
 
 Address virtualMemory_mapFile(Size size, jint fd, Size offset) {
-	
 #ifdef arm
-  Address address = 0x0;
-  if(attempt == 0) { 
-	attempt++;
-	if(address == 0x0) {
-		address = 0x10000000;
-		lastAddress = address;
-	} 
-   }else {
-		address = lastAddress;
-   }
-	void *result =  mmap((void *)address, (size_t) size, PROT, MAP_PRIVATE, fd, (off_t) offset);
-  address =  check_mmap_result(result);
-  lastAddress = address + size;
-  return address;
+    Address address = 0x0;
+    if(attempt == 0) {
+        attempt++;
+        if(address == 0x0) {
+            address = 0x10000000;
+            lastAddress = address;
+        }
+    } else {
+        address = lastAddress;
+    }
+    void *result = mmap((void *)address, (size_t) size, PROT, MAP_PRIVATE, fd, (off_t) offset);
+    address = check_mmap_result(result);
+    lastAddress = address + size;
+    return address;
 #else
 	return check_mmap_result(mmap(0, (size_t) size, PROT, MAP_PRIVATE, fd, (off_t) offset));
-
 #endif
- }
+}
 
 JNIEXPORT jlong JNICALL
 Java_com_sun_max_memory_VirtualMemory_virtualMemory_1mapFile(JNIEnv *env, jclass c, jlong size, jint fd, jlong offset) {
@@ -213,14 +205,12 @@ Address virtualMemory_allocate(Size size, int type) {
 #if os_MAXVE
 	return (Address) maxve_virtualMemory_allocate(size, type);
 #else
-
     return check_mmap_result(mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE, -1, (off_t) 0));
 #endif
 }
 
 Address virtualMemory_allocateIn31BitSpace(Size size, int type) {
 #if os_LINUX
-
     return check_mmap_result(mmap(0, (size_t) size, PROT, MAP_ANON | MAP_PRIVATE | MAP_32BIT, -1, (off_t) 0));
 #elif os_MAXVE
     return (Address) maxve_virtualMemory_allocateIn31BitSpace(size, type);
