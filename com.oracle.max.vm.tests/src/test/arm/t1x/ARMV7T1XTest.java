@@ -1,9 +1,12 @@
 package test.arm.t1x;
 
 import static com.sun.max.vm.MaxineVM.*;
+
 import java.io.*;
 import java.util.*;
+
 import org.objectweb.asm.util.*;
+
 import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.*;
 import com.oracle.max.vm.ext.c1x.*;
@@ -14,12 +17,14 @@ import com.sun.cri.ci.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
 import com.sun.max.program.option.*;
+import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
+
 import test.arm.asm.*;
 
 public class ARMV7T1XTest extends MaxTestCase {
@@ -135,6 +140,7 @@ public class ARMV7T1XTest extends MaxTestCase {
             if (initialised == false) {
                 vmConfigurator.create();
                 vm().compilationBroker.setOffline(true);
+                vm().phase = Phase.HOSTED_TESTING;
                 JavaPrototype.initialize(false);
                 initialised = true;
             }
@@ -1155,7 +1161,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void work_ByteCodeLoad() throws Exception {
+    public void test_ByteCodeLoad() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         ByteCodeTests testClass = new ByteCodeTests();
         expectedValues[0] = testClass.run();
@@ -1164,7 +1170,6 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.pop(ConditionFlag.Always, 1);
-
         int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();

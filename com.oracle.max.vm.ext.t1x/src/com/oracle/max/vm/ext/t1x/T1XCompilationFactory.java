@@ -19,6 +19,7 @@ package com.oracle.max.vm.ext.t1x;
 
 import com.oracle.max.vm.ext.t1x.amd64.*;
 import com.oracle.max.vm.ext.t1x.armv7.*;
+import com.sun.max.vm.*;
 
 /**
  * Controls the exact subclass of {@link T1XCompilation} that is created.
@@ -29,7 +30,7 @@ public class T1XCompilationFactory {
         if (T1X.isAMD64()) {
             return new AMD64T1XCompilation(t1x);
         } else if (T1X.isARM()) {
-            return new ARMV7T1XCompilation(t1x);
+            return MaxineVM.isHostedTesting() ? new ARMV7T1XCompilationTest(t1x) : new ARMV7T1XCompilation(t1x);
         } else {
             throw T1X.unimplISA();
         }

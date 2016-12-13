@@ -393,6 +393,10 @@ public final class MaxineVM {
         return null;
     }
 
+    public static boolean isHostedTesting() {
+        return vm().phase == Phase.HOSTED_TESTING;
+    }
+
     public static boolean isPrimordial() {
         return vm().phase == Phase.PRIMORDIAL;
     }

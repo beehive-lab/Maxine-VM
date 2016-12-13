@@ -20,6 +20,7 @@ import com.sun.max.ide.*;
 import com.sun.max.io.*;
 import com.sun.max.program.option.*;
 import com.sun.max.vm.*;
+import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
