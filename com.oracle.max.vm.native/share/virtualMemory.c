@@ -150,7 +150,7 @@ Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean r
 #endif
 #ifdef arm
   address =  check_mmap_result(result);
-  lastAddress = address + size;
+  allocAddress = address + size;
   return address;
 #else
   return check_mmap_result(result);
@@ -172,7 +172,7 @@ Address virtualMemory_mapFile(Size size, jint fd, Size offset) {
     }
     void *result = mmap((void *)address, (size_t) size, PROT, MAP_PRIVATE, fd, (off_t) offset);
     address = check_mmap_result(result);
-    lastAddress = address + size;
+    allocAddress = address + size;
     return address;
 #else
 	return check_mmap_result(mmap(0, (size_t) size, PROT, MAP_PRIVATE, fd, (off_t) offset));
