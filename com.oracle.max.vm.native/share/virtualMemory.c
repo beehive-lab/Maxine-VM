@@ -124,7 +124,7 @@ Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean r
             allocAddress = address;
         }
     } else {
-        address = lastAddress;
+        address = allocAddress;
     }
 #endif
   int flags = MAP_PRIVATE | MAP_ANON;
@@ -165,10 +165,10 @@ Address virtualMemory_mapFile(Size size, jint fd, Size offset) {
         attempt++;
         if(address == 0x0) {
             address = 0x10000000;
-            lastAddress = address;
+            allocAddress = address;
         }
     } else {
-        address = lastAddress;
+        address = allocAddress;
     }
     void *result = mmap((void *)address, (size_t) size, PROT, MAP_PRIVATE, fd, (off_t) offset);
     address = check_mmap_result(result);
