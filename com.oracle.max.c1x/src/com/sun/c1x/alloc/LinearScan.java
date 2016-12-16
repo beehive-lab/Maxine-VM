@@ -207,11 +207,13 @@ public final class LinearScan {
         // assign the canonical spill slot of the parent (if a part of the interval
         // is already spilled) or allocate a new spill slot
         if (interval.spillSlot() != null) {
+            // Checkstyle: stop
             if (interval.kind() != interval.spillSlot().kind) {
                 TTY.println("Warning: Switch kind of spillslot for interval: " + interval.halfToString() + " with split parent:" + interval.splitParent() + " from kind (spill slot): " +
                                 interval.spillSlot().kind + "  to kind (interval): " + interval.kind() + "  index " + interval.spillSlot().index() + "  hashcode " + interval.spillSlot().hashCode());
                 interval.spillSlot().kind = interval.kind();
             }
+            // Checkstyle: start
             interval.assignLocation(interval.spillSlot());
         } else {
             CiStackSlot slot = allocateSpillSlot(interval.kind());
@@ -913,9 +915,11 @@ public final class LinearScan {
             interval = createInterval(operand);
         }
 
+        // Checkstyle: stop
         if (operand.highPart && interval != null && !interval.location().highPart) {
             interval.location().highPart = true;
         }
+        // Checkstyle: start
 
         if (kind != CiKind.Illegal) {
             interval.setKind(kind);
