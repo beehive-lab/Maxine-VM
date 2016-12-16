@@ -1,19 +1,24 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
- * OR THIS FILE HEADER.
+ * Copyright (c) 2007, 2017, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
- * License version 2 only, as published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
- * more details (a copy is included in the LICENSE file that accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
- * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
- * additional information or have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.oracle.max.asm.target.armv7;
 
@@ -38,10 +43,10 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public final void casInt(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
-        assert (ARMV7.r8 != cmpValue);
-        assert (ARMV7.r8 != newValue);
-        assert (newValue != cmpValue);
-        assert (ARMV7.r0 == cmpValue);
+        assert ARMV7.r8 != cmpValue;
+        assert ARMV7.r8 != newValue;
+        assert newValue != cmpValue;
+        assert ARMV7.r0 == cmpValue;
 
         ARMV7Label atomicFail = new ARMV7Label();
         ARMV7Label notEqualTocmpValue = new ARMV7Label();
@@ -57,7 +62,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         // If the Condition is NotEqual then the strex did not take place and we need to put the loaded value of r8 into
         // the cmpValue
 
-        mov(ConditionFlag.NotEqual, false, cmpValue, ARMV7.r8);// Updated cmpValue to have the value loaded
+        mov(ConditionFlag.NotEqual, false, cmpValue, ARMV7.r8); // Updated cmpValue to have the value loaded
         jcc(ConditionFlag.NotEqual, notEqualTocmpValue); // we were not equal to the cmpValue
 
         // If the Condition is Equal then the strex took place but it might have failed so we need to test for this.
@@ -74,10 +79,10 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     // The same as casInt except the last conditional move since it is added implicitly by the LIR generator.
     public final void casIntAsmTest(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
-        assert (ARMV7.r8 != cmpValue);
-        assert (ARMV7.r8 != newValue);
-        assert (newValue != cmpValue);
-        assert (ARMV7.r0 == cmpValue);
+        assert ARMV7.r8 != cmpValue;
+        assert ARMV7.r8 != newValue;
+        assert newValue != cmpValue;
+        assert ARMV7.r0 == cmpValue;
 
         ARMV7Label atomicFail = new ARMV7Label();
         ARMV7Label notEqualTocmpValue = new ARMV7Label();
@@ -97,7 +102,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         cmp(ConditionFlag.Equal, ARMV7.r8, ARMV7.r12, 0, 0);
         // If r8 is equal to r12 then there was an issue with atomicity so do the operation again
         jcc(ConditionFlag.Equal, atomicFail);
-        mov(ConditionFlag.NotEqual, false, cmpValue, newValue);// differing from the real CAS we return the value we
+        mov(ConditionFlag.NotEqual, false, cmpValue, newValue); // differing from the real CAS we return the value we
                                                                // stored
         bind(notEqualTocmpValue);
         cmp(ConditionFlag.Always, newValue, cmpValue, 0, 0);
@@ -105,10 +110,10 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public final void casLong(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
-        assert (newValue != ARMV7.r8);
-        assert (cmpValue != ARMV7.r8);
-        assert (newValue != cmpValue);
-        assert (ARMV7.r0 == cmpValue);
+        assert newValue != ARMV7.r8;
+        assert cmpValue != ARMV7.r8;
+        assert newValue != cmpValue;
+        assert ARMV7.r0 == cmpValue;
         ARMV7Label atomicFail = new ARMV7Label();
         ARMV7Label notEqualTocmpValue = new ARMV7Label();
         saveInFP(9);
@@ -136,10 +141,10 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public final void casLongAsmTest(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
-        assert (newValue != ARMV7.r8);
-        assert (cmpValue != ARMV7.r8);
-        assert (newValue != cmpValue);
-        assert (ARMV7.r0 == cmpValue);
+        assert newValue != ARMV7.r8;
+        assert cmpValue != ARMV7.r8;
+        assert newValue != cmpValue;
+        assert ARMV7.r0 == cmpValue;
         ARMV7Label atomicFail = new ARMV7Label();
         ARMV7Label notEqualTocmpValue = new ARMV7Label();
 
@@ -151,7 +156,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         lcmpl(ConditionFlag.Equal, cmpValue, ARMV7.r8); // compare r8,r9 with cmpValue
         strexd(ConditionFlag.Equal, ARMV7.r8, newValue, ARMV7.r12); // if equal, store newValue to address and store
                                                                     // result to r8
-        mov(ConditionFlag.NotEqual, false, cmpValue, ARMV7.r8);// Updated cmpValue to have the value loaded
+        mov(ConditionFlag.NotEqual, false, cmpValue, ARMV7.r8); // Updated cmpValue to have the value loaded
         mov(ConditionFlag.NotEqual, false, ARMV7.cpuRegisters[cmpValue.number + 1], ARMV7.r9);
         jcc(ConditionFlag.NotEqual, notEqualTocmpValue); // we were not equal to the cmpValue
 
@@ -161,7 +166,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
         // If r8 is eqaul to r12 then there was an issue with atomicity so do the operation again
         jcc(ConditionFlag.Equal, atomicFail);
-        mov(ConditionFlag.NotEqual, false, cmpValue, newValue);// differing from the real CAS we return the value we
+        mov(ConditionFlag.NotEqual, false, cmpValue, newValue); // differing from the real CAS we return the value we
                                                                // stored
         mov(ConditionFlag.NotEqual, false, ARMV7.cpuRegisters[cmpValue.number + 1], ARMV7.cpuRegisters[newValue.number + 1]);
         bind(notEqualTocmpValue);
@@ -282,13 +287,13 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
 
     public void cmpptr(CiRegister src1, CiAddress src2) {
         setUpScratch(src2);
-        assert (ARMV7.r12.number != src1.number);
+        assert ARMV7.r12.number != src1.number;
         ldr(ConditionFlag.Always, ARMV7.r12, ARMV7.r12, 0);
         cmp(ConditionFlag.Always, src1, ARMV7.r12, 0, 0);
     }
 
     public void cmpptr(CiRegister src1, int src2) {
-        assert (ARMV7.r12.number != src1.number);
+        assert ARMV7.r12.number != src1.number;
         mov32BitConstantOptimised(ConditionFlag.Always, ARMV7.r12, src2);
         cmp(ConditionFlag.Always, src1, ARMV7.r12, 0, 0);
     }
@@ -336,7 +341,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         if (value == 0) {
             return;
         }
-        assert (reg != ARMV7.r12);
+        assert reg != ARMV7.r12;
         addq(reg, value);
     }
 
@@ -430,7 +435,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void movdbl(CiAddress dst, CiRegister src) {
-        assert (src.number > 15);
+        assert src.number > 15;
         if (dst.isARMV7Immediate(CiKind.Double)) {
             CiRegister tmpRegister = dst.base();
             if (tmpRegister == CiRegister.Frame) {
@@ -639,7 +644,7 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void lshr(CiRegister dest, CiRegister left, CiRegister right) {
-        assert (left == dest);
+        assert left == dest;
         assert right == ARMV7.r1;
         assert left != ARMV7.r1;
         assert dest.getEncoding() % 2 == 0;

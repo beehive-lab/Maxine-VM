@@ -34,7 +34,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final CiRegister scratchRegister;
     public final RiRegisterConfig registerConfig;
     public final ARMV7Instrumentation instrumentation;
-    public static boolean ASM_DEBUG_MARKErs = false;
+    public static boolean ASM_DEBUG_MARKERS = false;
 
     private static final int[] highmask = {
         0xffffff00, 0x3fffffc0, 0x0ffffff0, 0x03fffffc, 0x00ffffff,
@@ -2380,7 +2380,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public void barrierdMB() {
+    public void barrierDMB() {
         int instruction = 0xF57FF050;
         emitInt(instruction);
     }

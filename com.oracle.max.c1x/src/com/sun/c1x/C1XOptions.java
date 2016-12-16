@@ -230,8 +230,4 @@ public final class C1XOptions {
         OptCEElimination                = lll;
         OptBlockSkipping                = lll;
     }
-
-    public static boolean PrintCFGToFile() {
-        return PrintCFGToFile;
-    }
 }
