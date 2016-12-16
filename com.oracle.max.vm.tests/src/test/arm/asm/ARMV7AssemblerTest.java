@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2009, 2017, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
 package test.arm.asm;
 
 import com.oracle.max.asm.*;
@@ -35,8 +57,8 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         junit.textui.TestRunner.run(ARMV7AssemblerTest.class);
     }
 
-    private static int[] valueTestSet = { 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
-    private static int[] scratchTestSet = { 0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x7fffffff};
+    private static int[] valueTestSet = {0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
+    private static int[] scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x7fffffff};
     private static boolean[] testValues = new boolean[MaxineARMTester.NUM_REGS];
 
     // Each test should set the contents of this array appropriately,
@@ -44,10 +66,10 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     // comparison i.e. for example ignoring upper or lower 16bits for movt, movw
     // and for ignoring specific bits in the status register etc
     // concerning whether a carry has been set
-    private static MaxineARMTester.BitsFlag[] bitmasks = { MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits};
+    private static MaxineARMTester.BitsFlag[] bitmasks = {MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
+        MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
+        MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
+        MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits};
 
     private static void setBitMask(int i, MaxineARMTester.BitsFlag mask) {
         bitmasks[i] = mask;
@@ -71,9 +93,9 @@ public class ARMV7AssemblerTest extends MaxTestCase {
 
     // The following values will be updated
     // to those expected to be found in a register after simulated execution of code.
-    private static int[] expectedValues = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    private static int[] expectedValues = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
 
-    private static long[] expectedLongValues = { Long.MAX_VALUE - 100, Long.MAX_VALUE};
+    private static long[] expectedLongValues = {Long.MAX_VALUE - 100, Long.MAX_VALUE};
 
     private static void initialiseExpectedValues() {
         for (int i = 0; i < MaxineARMTester.NUM_REGS; i++) {
@@ -141,7 +163,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     }
 
     public void work_Ldrb() throws Exception {
-        int[] testval = { 0x03020100, 0xffedcba9};
+        int[] testval = {0x03020100, 0xffedcba9};
         int mask = 0xff;
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
@@ -208,7 +230,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         values[7] = Long.MAX_VALUE - 5;
         values[8] = (Integer.MIN_VALUE) + 5L;
         values[9] = (Integer.MAX_VALUE) - 5L;
-        int registers[] = null;
+        int[] registers = null;
         for (int i = 0; i < values.length; i++) {
             asm.codeBuffer.reset();
             asm.mov64BitConstant(ConditionFlag.Always, ARMV7.r0, ARMV7.r1, values[i]);
@@ -625,8 +647,8 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     public void work_msb_int() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
-        int[] input = new int[] { 0, 1, 2, -1, 61440};
-        int[] output = new int[] { -1, 0, 1, 31, 15};
+        int[] input = new int[] {0, 1, 2, -1, 61440};
+        int[] output = new int[] {-1, 0, 1, 31, 15};
         for (int i = 0; i < input.length; i++) {
             resetIgnoreValues();
             expectedValues[0] = output[i];
@@ -646,8 +668,8 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     public void work_lsb_int() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
-        int[] input = new int[] { 1, 2, 0, -1, 61440};
-        int[] output = new int[] { 0, 1, -1, 0, 12};
+        int[] input = new int[] {1, 2, 0, -1, 61440};
+        int[] output = new int[] {0, 1, -1, 0, 12};
         for (int i = 0; i < input.length; i++) {
             resetIgnoreValues();
             expectedValues[0] = output[i];
@@ -666,8 +688,8 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     public void work_msb_long() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
-        long[] input = new long[] { 0l, -1l, 2147483648l, 4294967296l};
-        int[] output = new int[] { -1, 63, 31, 32};
+        long[] input = new long[] {0L, -1L, 2147483648L, 4294967296L};
+        int[] output = new int[] {-1, 63, 31, 32};
         for (int i = 0; i < input.length; i++) {
             resetIgnoreValues();
             expectedValues[0] = output[i];
@@ -678,7 +700,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             asm.jcc(ConditionFlag.NotEqual, 40, false); // 20
             asm.cmpImmediate(ConditionFlag.Equal, ARMV7.cpuRegisters[0], 0); // 24
             asm.mov32BitConstant(ConditionFlag.Equal, ARMV7.cpuRegisters[0], -1); // 32
-            asm.jcc(ConditionFlag.Equal, 84, false);// 36
+            asm.jcc(ConditionFlag.Equal, 84, false); // 36
             asm.clz(ConditionFlag.Always, ARMV7.cpuRegisters[2], ARMV7.cpuRegisters[1]); // 40
             asm.cmpImmediate(ConditionFlag.Always, ARMV7.cpuRegisters[2], 32); // 44
             asm.jcc(ConditionFlag.Equal, 72, false); // 48
@@ -687,7 +709,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             asm.nop();
             asm.jcc(ConditionFlag.Always, 84, false); // 68
             asm.mov32BitConstant(ConditionFlag.Always, ARMV7.cpuRegisters[0], 31); // 72
-            asm.sub(ConditionFlag.Always, false, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[1], 0, 0);// 80
+            asm.sub(ConditionFlag.Always, false, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[1], 0, 0); // 80
             generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
         }
     }
@@ -695,8 +717,8 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     public void work_lsb_long() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);
-        long[] input = new long[] { 0l, 1l, 2l, -1l, 61440l, 2147483648l, 4294967296l};
-        int[] output = new int[] { -1, 0, 1, 0, 12, 31, 32};
+        long[] input = new long[] {0L, 1L, 2L, -1L, 61440L, 2147483648L, 4294967296L};
+        int[] output = new int[] {-1, 0, 1, 0, 12, 31, 32};
         for (int i = 0; i < input.length; i++) {
             resetIgnoreValues();
             expectedValues[0] = output[i];
@@ -803,7 +825,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     }
 
     public void work_Ldrsh() throws Exception {
-        int[] testval = { 0x03020100, 0x8fed9ba9};
+        int[] testval = {0x03020100, 0x8fed9ba9};
         int mask = 0xffff;
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMTester.BitsFlag.All32Bits);

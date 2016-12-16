@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2009, 2017, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
 package test.arm.asm;
 
 import java.io.*;
@@ -126,7 +148,7 @@ public class MaxineARMTester {
 
     public void compile() {
         final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.bin", "test.elf");
-        final ProcessBuilder compile = new ProcessBuilder("arm-none-eabi-gcc", "-c", "-DSTATIC" ,"-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-march=armv7-a", "-g", "test.c", "-o", "test.o");
+        final ProcessBuilder compile = new ProcessBuilder("arm-none-eabi-gcc", "-c", "-DSTATIC", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-march=armv7-a", "-g", "test.c", "-o", "test.o");
         compile.redirectOutput(gccOutput);
         compile.redirectError(gccErrors);
         try {
@@ -443,9 +465,11 @@ public class MaxineARMTester {
             long tmp = Long.parseLong(value.substring(2, value.length()).toString(), 16);
 
             if (tmp > Integer.MAX_VALUE) {
-                tmp = (int)(2L*Integer.MIN_VALUE + tmp);
-            } else expectedValues[i] = (int)tmp;
-            expectedValues[i] = new Integer((int)tmp);
+                tmp = (int) (2L * Integer.MIN_VALUE + tmp);
+            } else {
+                expectedValues[i] = (int) tmp;
+            }
+            expectedValues[i] = new Integer((int) tmp);
             if (DEBUGOBJECTS) {
                 System.out.println(" CORE " + i + " " + ((Integer) expectedValues[i]).intValue());
             }
@@ -469,7 +493,7 @@ public class MaxineARMTester {
             if (!enabled) {
                 continue;
             }
-            String values[] = line.split("\\s+");
+            String[] values = line.split("\\s+");
             for (int j = 0; j < values.length; j++) {
                 if (values[j].equals("f64")) {
                     String doubleVal = values[j + 2];
@@ -507,7 +531,7 @@ public class MaxineARMTester {
             if (!enabled) {
                 continue;
             }
-            String values[] = line.split("\\s+");
+            String[] values = line.split("\\s+");
             for (int j = 0; j < values.length; j++) {
 
                 if (values[j].equals("=")) {
@@ -555,10 +579,11 @@ public class MaxineARMTester {
             long tmp = Long.parseLong(value.substring(2, value.length()).toString(), 16);
 
             if (tmp > Integer.MAX_VALUE) {
-                expectedValues[i] = (int)(2L*Integer.MIN_VALUE + tmp);
-            } else expectedValues[i] = (int)tmp;
-
-            //expectedValues[i] = (int) Long.parseLong(value.substring(2, value.length()).toString(), 16);
+                expectedValues[i] = (int) (2L * Integer.MIN_VALUE + tmp);
+            } else {
+                expectedValues[i] = (int) tmp;
+            }
+            // expectedValues[i] = (int) Long.parseLong(value.substring(2, value.length()).toString(), 16);
             i++;
             if (line.contains("cpsr")) {
                 enabled = false;
