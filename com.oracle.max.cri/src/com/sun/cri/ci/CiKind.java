@@ -260,7 +260,7 @@ public enum CiKind {
     }
 
     public boolean isGeneral() {
-        return this != CiKind.Float && this !=CiKind.Double;
+        return this != CiKind.Float && this != CiKind.Double;
     }
 
     /**
