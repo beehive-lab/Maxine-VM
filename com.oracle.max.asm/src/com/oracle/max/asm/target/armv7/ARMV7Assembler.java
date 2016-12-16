@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -8,7 +8,7 @@
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PArtICULAR PURPOSE.  See the GNU General Public License
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * version 2 for more details (a copy is included in the LICENSE file that
  * accompanied this code).
  *
@@ -750,7 +750,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         int instruction = 0x03a00000;
         checkConstraint(0 <= imm12 && imm12 <= 4095, "0<= imm12 && imm12 <= 4095 ");
         instruction |= (cond.value() & 0xf) << 28;
-        instruction |= (imm12);
+        instruction |= imm12;
         instruction |= (rd.getEncoding() & 0xf) << 12;
         emitInt(instruction);
     }
@@ -759,7 +759,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         int instruction = 0x03800000;
         checkConstraint(0 <= imm12 && imm12 <= 4095, "0<= imm12 && imm12 <= 4095 ");
         instruction |= (cond.value() & 0xf) << 28;
-        instruction |= (imm12);
+        instruction |= imm12;
         instruction |= (rd.getEncoding() & 0xf) << 12;
         emitInt(instruction);
     }
@@ -841,7 +841,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (s ? 1 : 0) << 20;
         instruction |= (rd.getEncoding() & 0xf) << 12;
         instruction |= (rn.getEncoding() & 0xf) << 16;
-        instruction |= (rm.getEncoding() & 0xf);
+        instruction |= rm.getEncoding() & 0xf;
         instruction |= (immed5 & 0x1f) << 7;
         instruction |= (rotateAmount & 0x3) << 5;
         emitInt(instruction);
@@ -855,7 +855,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (rn.getEncoding() & 0xf) << 16;
         instruction |= (imm5 & 0x1f) << 7;
         instruction |= (type & 0x3) << 5;
-        instruction |= (rm.getEncoding() & 0xf);
+        instruction |= rm.getEncoding() & 0xf;
         emitInt(instruction);
     }
 
@@ -865,7 +865,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (s ? 1 : 0) << 20;
         instruction |= (rd.getEncoding() & 0xf) << 12;
         instruction |= (rn.getEncoding() & 0xf) << 16;
-        instruction |= (imm12 & 0xfff);
+        instruction |= imm12 & 0xfff;
         emitInt(instruction);
     }
 
@@ -877,7 +877,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         instruction |= (rn.getEncoding() & 0xf) << 16;
         instruction |= (imm5 & 0x1f) << 7;
         instruction |= (type & 0x3) << 5;
-        instruction |= (rm.getEncoding() & 0xf);
+        instruction |= rm.getEncoding() & 0xf;
         emitInt(instruction);
     }
 
@@ -895,14 +895,14 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public void strd(final ConditionFlag cond, int P, int U, int W, final CiRegister rt, final CiRegister rn, final CiRegister rm) {
+    public void strd(final ConditionFlag cond, int p, int u, int w, final CiRegister rt, final CiRegister rn, final CiRegister rm) {
         if (instrumentation.enabled()) {
             instrumentation.instrument(false, true, true, rn, 0);
         }
         int instruction = 0x000000f0;
-        instruction |= (P & 0x1) << 24;
-        instruction |= (U & 0x1) << 23;
-        instruction |= (W & 0x1) << 21;
+        instruction |= (p & 0x1) << 24;
+        instruction |= (u & 0x1) << 23;
+        instruction |= (w & 0x1) << 21;
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (rn.getEncoding() & 0xf) << 16;
         instruction |= (rt.getEncoding() & 0xf) << 12;
@@ -910,14 +910,14 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public void str(final ConditionFlag cond, int P, int U, int W, final CiRegister rt, final CiRegister rn, final CiRegister rm, int imm5, int imm2Type) {
+    public void str(final ConditionFlag cond, int p, int u, int w, final CiRegister rt, final CiRegister rn, final CiRegister rm, int imm5, int imm2Type) {
         if (instrumentation.enabled()) {
             instrumentation.instrument(false, true, true, rn, 0);
         }
         int instruction = 0x06000000;
-        instruction |= (P & 0x1) << 24;
-        instruction |= (U & 0x1) << 23;
-        instruction |= (W & 0x1) << 21;
+        instruction |= (p & 0x1) << 24;
+        instruction |= (u & 0x1) << 23;
+        instruction |= (w & 0x1) << 21;
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (rn.getEncoding() & 0xf) << 16;
         instruction |= (rt.getEncoding() & 0xf) << 12;
@@ -927,11 +927,11 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public static int strHelper(final ConditionFlag cond, int P, int U, int W, final CiRegister rt, final CiRegister rn, final CiRegister rm, int imm5, int imm2Type) {
+    public static int strHelper(final ConditionFlag cond, int p, int u, int w, final CiRegister rt, final CiRegister rn, final CiRegister rm, int imm5, int imm2Type) {
         int instruction = 0x06000000;
-        instruction |= (P & 0x1) << 24;
-        instruction |= (U & 0x1) << 23;
-        instruction |= (W & 0x1) << 21;
+        instruction |= (p & 0x1) << 24;
+        instruction |= (u & 0x1) << 23;
+        instruction |= (w & 0x1) << 21;
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (rn.getEncoding() & 0xf) << 16;
         instruction |= (rt.getEncoding() & 0xf) << 12;
@@ -941,22 +941,22 @@ public class ARMV7Assembler extends AbstractAssembler {
         return instruction;
     }
 
-    public void strImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister rvalue, final CiRegister rmemory, int imm12) {
+    public void strImmediate(final ConditionFlag cond, int p, int u, int w, final CiRegister rvalue, final CiRegister rmemory, int imm12) {
         if (instrumentation.enabled()) {
             instrumentation.instrument(false, true, true, rmemory, imm12);
         }
         int instruction = 0x04000000;
         checkConstraint(-4095 <= imm12 && imm12 <= 4095, "strImmediate offset greater than +/- 4095 ");
         if (imm12 < 0) {
-            assert (U == 0);
-            imm12 = imm12 * -1;
+            assert u == 0;
+            imm12 *= -1;
         } else {
-            assert (U == 1);
+            assert u == 1;
         }
-        assert rvalue.getEncoding() != rmemory.getEncoding() || !(P == 0 && U == 0 && W == 0);
-        instruction |= (P & 0x1) << 24;
-        instruction |= (U & 0x1) << 23;
-        instruction |= (W & 0x1) << 21;
+        assert rvalue.getEncoding() != rmemory.getEncoding() || !(p == 0 && u == 0 && w == 0);
+        instruction |= (p & 0x1) << 24;
+        instruction |= (u & 0x1) << 23;
+        instruction |= (w & 0x1) << 21;
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (rmemory.getEncoding() & 0xf) << 16;
         instruction |= (rvalue.getEncoding() & 0xf) << 12;
@@ -964,23 +964,23 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public void strdualImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister rt, final CiRegister rn, int imm8) {
+    public void strdualImmediate(final ConditionFlag cond, int p, int u, int w, final CiRegister rt, final CiRegister rn, int imm8) {
         if (instrumentation.enabled()) {
             instrumentation.instrument(false, true, true, rn, imm8);
         }
         checkConstraint(-255 <= imm8 && imm8 <= 255, "strdualImmediate offset greater than +/- 255 ");
 
         if (imm8 < 0) {
-            assert (U == 0);
-            imm8 = -1 * imm8;
-            U = 1;
+            assert u == 0;
+            imm8 *= -1;
+            u = 1;
         } else {
-            assert (U == 1);
+            assert u == 1;
         }
         int instruction = 0x004000f0;
-        instruction |= (P & 0x1) << 24;
-        instruction |= (U & 0x1) << 23;
-        instruction |= (W & 0x1) << 21;
+        instruction |= (p & 0x1) << 24;
+        instruction |= (u & 0x1) << 23;
+        instruction |= (w & 0x1) << 21;
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (rn.getEncoding() & 0xf) << 16;
         instruction |= (rt.getEncoding() & 0xf) << 12;
@@ -991,17 +991,17 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void clz(final ConditionFlag cond, final CiRegister rdest, final CiRegister rval) {
         int instruction = 0x016f0f10;
-        instruction |= ((cond.value() & 0xf) << 28);
-        instruction |= ((rdest.getEncoding() & 0xf) << 12);
-        instruction |= ((rval.getEncoding() & 0xf));
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (rdest.getEncoding() & 0xf) << 12;
+        instruction |= rval.getEncoding() & 0xf;
         emitInt(instruction);
     }
 
     public void rbit(final ConditionFlag cond, final CiRegister rdest, final CiRegister rval) {
         int instruction = 0x06ff0f30;
-        instruction |= ((cond.value() & 0xf) << 28);
-        instruction |= ((rdest.getEncoding() & 0xf) << 12);
-        instruction |= ((rval.getEncoding() & 0xf));
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (rdest.getEncoding() & 0xf) << 12;
+        instruction |= rval.getEncoding() & 0xf;
         emitInt(instruction);
     }
 
@@ -1010,9 +1010,9 @@ public class ARMV7Assembler extends AbstractAssembler {
             instrumentation.instrument(true, true, true, raddr, 0);
         }
         int instruction = 0x01900f9f;
-        instruction |= ((cond.value() & 0xf) << 28);
-        instruction |= ((rdest.getEncoding() & 0xf) << 12);
-        instruction |= ((raddr.getEncoding() & 0xf) << 16);
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (rdest.getEncoding() & 0xf) << 12;
+        instruction |= (raddr.getEncoding() & 0xf) << 16;
         emitInt(instruction);
     }
 
@@ -1021,17 +1021,17 @@ public class ARMV7Assembler extends AbstractAssembler {
             instrumentation.instrument(true, true, true, raddr, 0);
         }
         int instruction = 0x1B00F9F;
-        instruction |= ((cond.value() & 0xf) << 28);
-        instruction |= ((raddr.getEncoding() & 0xf) << 16);
-        instruction |= ((rdest.getEncoding() & 0xf) << 12);
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (raddr.getEncoding() & 0xf) << 16;
+        instruction |= (rdest.getEncoding() & 0xf) << 12;
         emitInt(instruction);
     }
 
     public void strex(final ConditionFlag cond, final CiRegister rdest, final CiRegister rnewval, final CiRegister raddr) {
         int instruction = 0x01800f90;
-        instruction |= ((cond.value() & 0xf) << 28);
-        instruction |= ((rdest.getEncoding() & 0xf) << 12);
-        instruction |= ((raddr.getEncoding() & 0xf) << 16);
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (rdest.getEncoding() & 0xf) << 12;
+        instruction |= (raddr.getEncoding() & 0xf) << 16;
         instruction |= rnewval.getEncoding() & 0xf;
         emitInt(instruction);
         if (instrumentation.enabled()) {
@@ -1041,9 +1041,9 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void strexd(final ConditionFlag cond, final CiRegister rd, final CiRegister rt, final CiRegister rn) {
         int instruction = 0x1A00F90;
-        instruction |= ((cond.value() & 0xf) << 28);
-        instruction |= ((rn.getEncoding() & 0xf) << 16);
-        instruction |= ((rd.getEncoding() & 0xf) << 12);
+        instruction |= (cond.value() & 0xf) << 28;
+        instruction |= (rn.getEncoding() & 0xf) << 16;
+        instruction |= (rd.getEncoding() & 0xf) << 12;
         instruction |= rt.getEncoding() & 0xf;
         emitInt(instruction);
         if (instrumentation.enabled()) {
@@ -1051,20 +1051,20 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
     }
 
-    public void ldruhw(final ConditionFlag cond, int P, int U, int W, final CiRegister rt, final CiRegister rn, int imm8) {
+    public void ldruhw(final ConditionFlag cond, int p, int u, int w, final CiRegister rt, final CiRegister rn, int imm8) {
         if (instrumentation.enabled()) {
             instrumentation.instrument(true, true, true, rn, imm8);
         }
         checkConstraint(-255 <= imm8 && imm8 <= 255, "-255 <= offset8 && offset8 <= 255 ldruhw");
         int instruction = 0x005000b0;
-        P = P & 1;
-        U = U & 1;
+        p &= 1;
+        u &= 1;
         if (imm8 < 0) {
-            U = 0;
-            imm8 = imm8 * -1;
+            u = 0;
+            imm8 *= -1;
         }
-        W = W & 1;
-        instruction |= (P << 24) | (U << 23) | (W << 21);
+        w &= 1;
+        instruction |= (p << 24) | (u << 23) | (w << 21);
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (rn.getEncoding() & 0xf) << 16;
         instruction |= (rt.getEncoding() & 0xf) << 12;
@@ -1072,21 +1072,21 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public void ldrshw(final ConditionFlag cond, int P, int U, int W, final CiRegister rt, final CiRegister rn, int imm8) {
+    public void ldrshw(final ConditionFlag cond, int p, int u, int w, final CiRegister rt, final CiRegister rn, int imm8) {
         if (instrumentation.enabled()) {
             instrumentation.instrument(true, true, true, rn, imm8);
         }
         checkConstraint(-255 <= imm8 && imm8 <= 255, "-255 <= offset8 && offset8 <= 255 ldrshw");
 
         int instruction = 0x005000f0;
-        P = P & 1;
-        U = U & 1;
+        p &=  1;
+        u &=  1;
         if (imm8 < 0) {
-            U = 0;
-            imm8 = imm8 * -1;
+            u = 0;
+            imm8 *= -1;
         }
-        W = W & 1;
-        instruction |= (P << 24) | (U << 23) | (W << 21);
+        w &= 1;
+        instruction |= (p << 24) | (u << 23) | (w << 21);
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (rn.getEncoding() & 0xf) << 16;
         instruction |= (rt.getEncoding() & 0xf) << 12;
@@ -1094,21 +1094,21 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public void ldrsb(final ConditionFlag cond, int P, int U, int W, final CiRegister rt, final CiRegister rn, int imm8) {
+    public void ldrsb(final ConditionFlag cond, int p, int u, int w, final CiRegister rt, final CiRegister rn, int imm8) {
         if (instrumentation.enabled()) {
             instrumentation.instrument(true, true, true, rn, imm8);
         }
         checkConstraint(-255 <= imm8 && imm8 <= 255, "-255 <= offset8 && offset8 <= 255 ldrsb");
 
         int instruction = 0x005000d0;
-        P = P & 1;
-        U = U & 1;
-        W = W & 1;
+        p &= 1;
+        u &= 1;
+        w &= 1;
         if (imm8 < 0) {
-            U = 0;
-            imm8 = imm8 * -1;
+            u = 0;
+            imm8 *= -1;
         }
-        instruction |= (P << 24) | (U << 23) | (W << 21);
+        instruction |= (p << 24) | (u << 23) | (w << 21);
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (rn.getEncoding() & 0xf) << 16;
         instruction |= (rt.getEncoding() & 0xf) << 12;
@@ -1117,15 +1117,15 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public void ldrb(final ConditionFlag cond, int P, int U, int W, final CiRegister rt, final CiRegister rn, int imm12) {
+    public void ldrb(final ConditionFlag cond, int p, int u, int w, final CiRegister rt, final CiRegister rn, int imm12) {
         if (instrumentation.enabled()) {
             instrumentation.instrument(true, true, true, rn, imm12);
         }
         int instruction = 0x04500000;
-        P = P & 1;
-        U = U & 1;
-        W = W & 1;
-        instruction |= (P << 24) | (U << 23) | (W << 21);
+        p &= 1;
+        u &= 1;
+        w &= 1;
+        instruction |= (p << 24) | (u << 23) | (w << 21);
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (rn.getEncoding() & 0xf) << 16;
         instruction |= (rt.getEncoding() & 0xf) << 12;
@@ -1138,15 +1138,15 @@ public class ARMV7Assembler extends AbstractAssembler {
         return imm12;
     }
 
-    public void strbImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister rt, final CiRegister rn, int imm12) {
+    public void strbImmediate(final ConditionFlag cond, int p, int u, int w, final CiRegister rt, final CiRegister rn, int imm12) {
         if (instrumentation.enabled()) {
             instrumentation.instrument(false, true, true, rn, imm12);
         }
         int instruction = 0x04400000;
-        P = P & 1;
-        U = U & 1;
-        W = W & 1;
-        instruction |= (P << 24) | (U << 23) | (W << 21);
+        p &= 1;
+        u &= 1;
+        w &= 1;
+        instruction |= (p << 24) | (u << 23) | (w << 21);
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (rn.getEncoding() & 0xf) << 16;
         instruction |= (rt.getEncoding() & 0xf) << 12;
@@ -1154,19 +1154,19 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public void strHImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister rt, final CiRegister rn, int imm8) {
+    public void strHImmediate(final ConditionFlag cond, int p, int u, int w, final CiRegister rt, final CiRegister rn, int imm8) {
         if (instrumentation.enabled()) {
             instrumentation.instrument(false, true, true, rn, imm8);
         }
         int instruction = 0x004000b0;
-        P = P & 1;
-        U = U & 1;
-        W = W & 1;
+        p &= 1;
+        u &= 1;
+        w &= 1;
         if (imm8 < 0) {
-            U = 0;
-            imm8 = imm8 * -1;
+            u = 0;
+            imm8 *= -1;
         }
-        instruction |= (P << 24) | (U << 23) | (W << 21);
+        instruction |= (p << 24) | (u << 23) | (w << 21);
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (rn.getEncoding() & 0xf) << 16;
         instruction |= (rt.getEncoding() & 0xf) << 12;
@@ -1175,38 +1175,38 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public void ldrImmediate(final ConditionFlag cond, int P, int U, int W, final CiRegister rt, final CiRegister rn, int imm12) {
+    public void ldrImmediate(final ConditionFlag cond, int p, int u, int w, final CiRegister rt, final CiRegister rn, int imm12) {
         if (instrumentation.enabled()) {
             instrumentation.instrument(true, true, true, rn, imm12);
         }
         int instruction = 0x04100000;
         checkConstraint(-4095 <= imm12 && imm12 <= 4095, "ldrImmediate offset greater than +/- 4095 ");
         if (imm12 < 0) {
-            assert (U == 0);
-            imm12 = imm12 * -1;
+            assert u == 0;
+            imm12 *= -1;
         } else {
-            assert (U == 1);
+            assert u == 1;
         }
-        P = P & 1;
-        U = U & 1;
-        W = W & 1;
+        p &= 1;
+        u &= 1;
+        w &= 1;
         instruction |= (cond.value() & 0xf) << 28;
-        instruction |= (P << 24) | (U << 23) | (W << 21);
+        instruction |= (p << 24) | (u << 23) | (w << 21);
         instruction |= (rn.getEncoding() & 0xf) << 16;
         instruction |= (rt.getEncoding() & 0xf) << 12;
         instruction |= imm12;
         emitInt(instruction);
     }
 
-    public void ldr(final ConditionFlag cond, int P, int U, int W, final CiRegister rt, final CiRegister rn, final CiRegister rm, int imm2Type, int imm5) {
+    public void ldr(final ConditionFlag cond, int p, int u, int w, final CiRegister rt, final CiRegister rn, final CiRegister rm, int imm2Type, int imm5) {
         if (instrumentation.enabled()) {
             instrumentation.instrument(true, true, true, rn, imm5);
         }
         int instruction = 0x06100000;
-        P = P & 1;
-        U = U & 1;
-        W = W & 1;
-        instruction |= (P << 24) | (U << 23) | (W << 21);
+        p &= 1;
+        u &= 1;
+        w &= 1;
+        instruction |= (p << 24) | (u << 23) | (w << 21);
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (rn.getEncoding() & 0xf) << 16;
         instruction |= (rt.getEncoding() & 0xf) << 12;
@@ -1216,30 +1216,30 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public void movss(final ConditionFlag cond, int P, int U, int W, final CiRegister rn, final CiRegister rt, final CiRegister rm, int imm2Type, int imm5, CiKind destKind, CiKind srcKind) {
+    public void movss(final ConditionFlag cond, int p, int u, int w, final CiRegister rn, final CiRegister rt, final CiRegister rm, int imm2Type, int imm5, CiKind destKind, CiKind srcKind) {
         if (destKind.isGeneral()) {
-            ldr(cond, P, U, W, rn, rt, rm, imm2Type, imm5);
+            ldr(cond, p, u, w, rn, rt, rm, imm2Type, imm5);
         } else {
             assert destKind.isFloatOrDouble();
             vldr(cond, rn, rt, 0, destKind, srcKind);
         }
     }
 
-    public void movsd(final ConditionFlag cond, int P, int U, int W, final CiRegister rn, final CiRegister rt, final CiRegister rm, CiKind destKind, CiKind srcKind) {
+    public void movsd(final ConditionFlag cond, int p, int u, int w, final CiRegister rn, final CiRegister rt, final CiRegister rm, CiKind destKind, CiKind srcKind) {
         if (destKind.isGeneral()) {
-            ldrd(cond, P, U, W, rn, rt, rm);
+            ldrd(cond, p, u, w, rn, rt, rm);
         } else {
             assert destKind.isFloatOrDouble();
             vldr(cond, rn, rt, 0, destKind, srcKind);
         }
     }
 
-    public void ldrd(final ConditionFlag cond, int P, int U, int W, final CiRegister rn, final CiRegister rt, final CiRegister rm) {
+    public void ldrd(final ConditionFlag cond, int p, int u, int w, final CiRegister rn, final CiRegister rt, final CiRegister rm) {
         int instruction = 0x000000d0;
-        P = P & 1;
-        U = U & 1;
-        W = W & 1;
-        instruction |= (P << 24) | (U << 23) | (W << 21);
+        p &= 1;
+        u &= 1;
+        w &= 1;
+        instruction |= (p << 24) | (u << 23) | (w << 21);
         instruction |= (cond.value() & 0xf) << 28;
         instruction |= (rn.getEncoding() & 0xf) << 16;
         instruction |= (rt.getEncoding() & 0xf) << 12;
@@ -1247,11 +1247,11 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public void swi(final ConditionFlag cond, final int immed_24) {
+    public void swi(final ConditionFlag cond, final int imm24) {
         int instruction = 0x0F000000;
-        checkConstraint(0 <= immed_24 && immed_24 <= 16777215, "0 <= immed_24 && immed_24 <= 16777215");
+        checkConstraint(0 <= imm24 && imm24 <= 16777215, "0 <= immed_24 && immed_24 <= 16777215");
         instruction |= (cond.value() & 0xf) << 28;
-        instruction |= immed_24 & 0xffffff;
+        instruction |= imm24 & 0xffffff;
         emitInt(instruction);
     }
 
@@ -1280,8 +1280,8 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
 
         int instruction;
-        assert (registerList > 0);
-        assert (registerList < 0x10000);
+        assert registerList > 0;
+        assert registerList < 0x10000;
         instruction = (flag.value() & 0xf) << 28;
         instruction |= 0x9 << 24;
         instruction |= 0x2 << 20;
@@ -1352,26 +1352,22 @@ public class ARMV7Assembler extends AbstractAssembler {
         if (instrumentation.enabled()) {
             instrumentation.instrument(true, true, true, baseReg, offset8);
         }
-
-        int instruction;
-        int P;
-        int U;
-        int W;
-        instruction = 0x004000d0;
+        int instruction = 0x004000d0;
+        int p = 1;
+        int w = 0;
+        int u;
         checkConstraint(-255 <= offset8 && offset8 <= 255, "-255 <= offset8 && offset8 <= 255 ldrd");
         if (offset8 < 0) {
-            U = 0;
+            u = 0;
             offset8 *= -1;
         } else {
-            U = 1;
+            u = 1;
         }
-        P = 1;
-        W = 0;
         checkConstraint(valueReg.getEncoding() % 2 == 0, "ldrd register must be even");
         instruction |= (flag.value() & 0xf) << 28;
-        instruction |= P << 24;
-        instruction |= U << 23;
-        instruction |= W << 21;
+        instruction |= p << 24;
+        instruction |= u << 23;
+        instruction |= w << 21;
         instruction |= (valueReg.getEncoding() & 0xf) << 12;
         instruction |= (baseReg.getEncoding() & 0xf) << 16;
         instruction |= (offset8 & 0xf0) << 4;
@@ -1385,23 +1381,21 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
         int instruction;
         instruction = 0x004000f0;
-        int P;
-        int U;
-        int W;
+        int p = 1;
+        int u;
+        int w = 0;
         checkConstraint(valueReg.getEncoding() % 2 == 0, "strd register must be even");
         checkConstraint(-255 <= offset8 && offset8 <= 255, "-255 <= offset8 && offset8 <= 255");
         if (offset8 < 0) {
-            U = 0;
+            u = 0;
             offset8 *= -1;
         } else {
-            U = 1;
+            u = 1;
         }
-        P = 1;
-        W = 0;
         instruction |= (flag.value() & 0xf) << 28;
-        instruction |= P << 24;
-        instruction |= U << 23;
-        instruction |= W << 21;
+        instruction |= p << 24;
+        instruction |= u << 23;
+        instruction |= w << 21;
         instruction |= (valueReg.getEncoding() & 0xf) << 12;
         instruction |= (baseReg.getEncoding() & 0xf) << 16;
         instruction |= (offset8 & 0xf0) << 4;
@@ -1437,14 +1431,14 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void cmp(final ConditionFlag flag, final CiRegister rn, final CiRegister rm, int imm5, int imm2Type) {
         int instruction = 0x01500000;
-        assert (!(rn.getEncoding() == 12 && rn.getEncoding() == rm.getEncoding()));
+        assert !(rn.getEncoding() == 12 && rn.getEncoding() == rm.getEncoding());
         checkConstraint(0 <= imm5 && imm5 <= 31, "0 <= imm5 && imm5 <= 31");
         checkConstraint(0 <= imm2Type && imm2Type <= 3, "0 <= imm2Type && imm2Type <= 3");
         instruction |= (flag.value() & 0xf) << 28;
         instruction |= (rn.getEncoding() & 0xf) << 16;
         instruction |= imm5 << 7;
         instruction |= imm2Type << 5;
-        instruction |= (rm.getEncoding() & 0xf);
+        instruction |= rm.getEncoding() & 0xf;
         emitInt(instruction);
     }
 
@@ -1492,7 +1486,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             }
         }
 
-        assert (0 == 1);
+        assert false : "Should not reach here!";
         return -1;
     }
 
@@ -1512,7 +1506,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         } else {
             maxDisp = 4095;
         }
-        assert (addr != CiAddress.Placeholder);
+        assert addr != CiAddress.Placeholder;
         assert !(base.isValid() && disp == 0 && base.compareTo(ARMV7.LATCH_REGISTER) == 0);
         assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
         if (base.isValid() || base.compareTo(CiRegister.Frame) == 0) {
@@ -1547,7 +1541,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                 if (actualDisp != desiredDisp) {
                     System.err.println("ASSErtION FAILURE");
                 }
-                assert (actualDisp == desiredDisp);
+                assert actualDisp == desiredDisp;
                 if (isStore) {
                     switch (kind) {
                         case Float:
@@ -1578,7 +1572,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
                 break;
             case BASE_INDEX:
-                assert (disp == 0);
+                assert disp == 0;
                 usedDisp = 0;
                 addlsl(ConditionFlag.Always, false, tmpScratch, base, index, scale.log2);
                 base = tmpScratch;
@@ -1633,7 +1627,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
                 actualDisp += usedDisp;
 
-                assert (actualDisp == desiredDisp);
+                assert actualDisp == desiredDisp;
                 addlsl(ConditionFlag.Always, false, tmpScratch, base, index, scale.log2);
                 base = tmpScratch;
                 if (isStore) {
@@ -1663,7 +1657,6 @@ public class ARMV7Assembler extends AbstractAssembler {
                             break;
                     }
                 }
-
                 break;
             default:
                 assert false : " Illegal address format state";
@@ -1686,9 +1679,10 @@ public class ARMV7Assembler extends AbstractAssembler {
             maxDisp = 255;
         } else if (kind == CiKind.Int) {
             maxDisp = 4095;
-        } else
-            assert (0 == 1);
-        assert (addr != CiAddress.Placeholder);
+        } else {
+            assert false : "Unknown state!";
+        }
+        assert addr != CiAddress.Placeholder;
         assert !(base.isValid() && disp == 0 && base.compareTo(ARMV7.LATCH_REGISTER) == 0);
         assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
         if (base.isValid() || base.compareTo(CiRegister.Frame) == 0) {
@@ -1719,7 +1713,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                 }
 
                 actualDisp += usedDisp;
-                assert (actualDisp == desiredDisp);
+                assert actualDisp == desiredDisp;
                 if (isStore) {
                     switch (kind) {
                         case Float:
@@ -1767,7 +1761,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                 }
                 break;
             case BASE_INDEX:
-                assert (disp == 0);
+                assert disp == 0;
                 usedDisp = 0;
                 addlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
                 base = scratchRegister;
@@ -1812,7 +1806,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                             ldr(ConditionFlag.Always, operand, base, usedDisp);
                             break;
                         default:
-                            assert (0 == 1);
+                            assert false : "Unknown state";
                             break;
                     }
                 }
@@ -1839,7 +1833,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
                 actualDisp += usedDisp;
 
-                assert (actualDisp == desiredDisp);
+                assert actualDisp == desiredDisp;
                 addlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
                 base = scratchRegister;
                 if (isStore) {
@@ -2005,7 +1999,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void vsqrt(ConditionFlag cond, CiRegister dst, CiRegister src, CiKind kind) {
         int instruction = 0x0eb10ac0;
-        instruction |= (cond.value() << 28);
+        instruction |= cond.value() << 28;
         int dp = (kind == CiKind.Double) ? 1 : 0;
         instruction |= dp << 8; // sets the sz bit
         if (dp == 1) {
@@ -2017,7 +2011,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             instruction |= (dst.getEncoding() >> 1) << 12;
             instruction |= (dst.getEncoding() & 1) << 22;
         }
-        assert (instruction != 0xeeb12bd2);
+        assert instruction != 0xeeb12bd2;
         emitInt(instruction);
     }
 
@@ -2127,7 +2121,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final void cmpImmediate(ConditionFlag condition, CiRegister src, int imm12) {
         int instruction = 0x3500000;
         imm12 = imm12 & 0xfff;
-        instruction |= (condition.value() << 28);
+        instruction |= condition.value() << 28;
         instruction |= imm12;
         instruction |= src.getEncoding() << 16;
         emitInt(instruction);
@@ -2216,7 +2210,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void mulLong(CiRegister dst, CiRegister src1, CiRegister src2) {
-        assert (src1 == dst);
+        assert src1 == dst;
         saveInFP(ConditionFlag.Always, src2.number, src2.number + 1);
         mov(ConditionFlag.Always, false, ARMV7.r12, src2); // save src2
         mul(ConditionFlag.Always, false, src2, src2, ARMV7.cpuRegisters[src1.number + 1]);
@@ -2250,21 +2244,20 @@ public class ARMV7Assembler extends AbstractAssembler {
         if (src1Kind.isDouble()) {
             assert src2Kind.isDouble();
             dpOperation = 1;
-            instruction |= ((src1.getDoubleEncoding() & 0xf) << 12);
+            instruction |= (src1.getDoubleEncoding() & 0xf) << 12;
             instruction |= (src1.getDoubleEncoding() >> 4) << 22;
-            instruction |= (src2.getDoubleEncoding() & 0xf);
+            instruction |= src2.getDoubleEncoding() & 0xf;
             instruction |= (src2.getDoubleEncoding() >> 4) << 5;
-
         } else {
             assert src2Kind.isFloat();
             instruction |= (src1.getEncoding() >> 1) << 12;
             instruction |= (src1.getEncoding() & 0x1) << 22;
-            instruction |= (src2.getEncoding() >> 1);
+            instruction |= src2.getEncoding() >> 1;
             instruction |= (src2.getEncoding() & 0x1) << 5;
         }
-        instruction |= (cond.value() << 28);
-        instruction |= (dpOperation << 8);
-        instruction |= (quietNAN << 7);
+        instruction |= cond.value() << 28;
+        instruction |= dpOperation << 8;
+        instruction |= quietNAN << 7;
         emitInt(instruction);
     }
 
@@ -2277,7 +2270,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void align(int modulus) {
         if (codeBuffer.position() % modulus != 0) {
-            assert (modulus % 4 == 0); // Arm;
+            assert modulus % 4 == 0;
             nop((modulus - (codeBuffer.position() % modulus)) / 4);
         }
     }
@@ -2306,7 +2299,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     // TODO: Document
     public final void flushICache(CiRegister startAddress, int bytes) {
-        assert (startAddress.getEncoding() == ARMV7.r12.getEncoding());
+        assert startAddress.getEncoding() == ARMV7.r12.getEncoding();
         push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 128, true);
         mov(ConditionFlag.Always, false, ARMV7.r0, scratchRegister);
         mov32BitConstantOptimised(ConditionFlag.Always, ARMV7.r1, bytes);
@@ -2337,8 +2330,8 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void returnFromExceptionHandler() {
         int instruction = 0x8f08000;
-        instruction |= (13 << 16);
-        instruction |= (0xe) << 28;
+        instruction |= 13 << 16;
+        instruction |= 0xe << 28;
         emitInt(instruction);
     }
 
@@ -2403,7 +2396,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void jcc(ConditionFlag cc, int target, boolean forceDisp32) {
-        int disp = (target - codeBuffer.position());
+        int disp = target - codeBuffer.position();
         if (Math.abs(disp) <= 16777214 && !forceDisp32 && !instrumentation.enabled()) {
             disp = (disp - 8) / 4;
             emitInt((cc.value & 0xf) << 28 | (0xa << 24) | (disp & 0xffffff));
@@ -2440,7 +2433,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             instrumentation.instrumentBX(cond, target);
         }
         int instruction = 0x012fff10;
-        instruction |= (cond.value() << 28);
+        instruction |= cond.value() << 28;
         instruction |= target.getEncoding();
         emitInt(instruction);
     }
@@ -2522,7 +2515,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         } else {
             instruction |= (dest.getEncoding() >> 1) << 12;
             instruction |= (rn.getEncoding() >> 1) << 16;
-            instruction |= (rm.getEncoding() >> 1);
+            instruction |= rm.getEncoding() >> 1;
             instruction |= (dest.getEncoding() & 0x1) << 22;
             instruction |= (rn.getEncoding() & 0x1) << 7;
             instruction |= (rm.getEncoding() & 0x1) << 5;
@@ -2580,10 +2573,10 @@ public class ARMV7Assembler extends AbstractAssembler {
                 instruction |= (dest.getEncoding() >> 1) << 12; // LSB in bit 22
                 instruction |= (dest.getEncoding() & 0x1) << 22;
                 if (sz == 1) {
-                    instruction |= (src.getDoubleEncoding() & 0xf);
+                    instruction |= src.getDoubleEncoding() & 0xf;
                     instruction |= (src.getDoubleEncoding() >> 4) << 5;
                 } else {
-                    instruction |= (src.getEncoding() >> 1);
+                    instruction |= src.getEncoding() >> 1;
                     instruction |= (src.getEncoding() & 0x1) << 5;
                 }
                 instruction |= opc2 << 16;
@@ -2595,7 +2588,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                 instruction |= (dest.getDoubleEncoding() >> 4) << 22;
                 instruction |= (dest.getDoubleEncoding() & 0xf) << 12;
                 instruction |= (src.getEncoding() & 1) << 5;
-                instruction |= (src.getEncoding() >> 1);
+                instruction |= src.getEncoding() >> 1;
                 instruction |= opc2 << 16;
                 instruction |= op << 7;
             } else { // F2D
@@ -2611,14 +2604,14 @@ public class ARMV7Assembler extends AbstractAssembler {
                 instruction |= 0xEB70AC0;
                 instruction |= (dest.getEncoding() >> 1) << 12;
                 instruction |= (dest.getEncoding() & 1) << 22;
-                instruction |= (src.getDoubleEncoding() & 0xf);
+                instruction |= src.getDoubleEncoding() & 0xf;
                 instruction |= (src.getDoubleEncoding() >> 4) << 5;
             } else if (int2Float) { // I2F
                 instruction |= 0xEB80A40;
                 instruction |= (dest.getEncoding() >> 1) << 12;
                 instruction |= (dest.getEncoding() & 1) << 22;
                 instruction |= (src.getEncoding() & 1) << 5;
-                instruction |= (src.getEncoding() >> 1);
+                instruction |= src.getEncoding() >> 1;
                 instruction |= opc2 << 16;
                 instruction |= op << 7;
             }
@@ -2645,8 +2638,8 @@ public class ARMV7Assembler extends AbstractAssembler {
             imm8 = -1 * imm8;
         }
         imm8 = imm8 >> 2; // divide by 4
-        assert (src.getEncoding() >= 0 && src.getEncoding() <= 15);
-        instruction |= (imm8 & 0xff);
+        assert src.getEncoding() >= 0 && src.getEncoding() <= 15;
+        instruction |= imm8 & 0xff;
         instruction |= (src.getEncoding() & 0xf) << 16;
         if (destKind.isDouble()) {
             instruction |= 0x0d000b00;
@@ -2681,10 +2674,10 @@ public class ARMV7Assembler extends AbstractAssembler {
             dest1bit = (dest.getEncoding()) & 0x1;
         }
         instruction |= 0x0eb10a40;
-        instruction |= (src4bits);
-        instruction |= (src1bit) << 5;
-        instruction |= (dest4bits) << 12;
-        instruction |= (dest1bit) << 22;
+        instruction |= src4bits;
+        instruction |= src1bit << 5;
+        instruction |= dest4bits << 12;
+        instruction |= dest1bit << 22;
         instruction |= sz << 8;
         emitInt(instruction);
     }
@@ -2707,13 +2700,13 @@ public class ARMV7Assembler extends AbstractAssembler {
             instruction |= 1 << 23;
         } else {
             add = 0;
-            imm8 = -1 * imm8;
+            imm8 *= -1;
         }
-        imm8 = imm8 >> 2; // divide by 4
+        imm8 >>= 2; // divide by 4
 
         assert src.getEncoding() <= 0xf;
         assert src.getEncoding() >= 0;
-        instruction |= (imm8 & 0xff);
+        instruction |= imm8 & 0xff;
         instruction |= add << 23;
         instruction |= src.getEncoding() << 16;
         if (destKind.isDouble()) {
@@ -2779,7 +2772,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             instruction |= 0x0cbd0a00;
             instruction |= (first.getEncoding() & 0x1) << 22;
             instruction |= (first.getEncoding() >> 1) << 12;
-            instruction |= (last.getEncoding() - first.getEncoding() + 1);
+            instruction |= last.getEncoding() - first.getEncoding() + 1;
         }
         emitInt(instruction);
     }
@@ -2807,7 +2800,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             instruction |= 0x0d2d0a00;
             instruction |= (first.getEncoding() & 0x1) << 22;
             instruction |= (first.getEncoding() >> 1) << 12;
-            instruction |= (last.getEncoding() - first.getEncoding() + 1);
+            instruction |= last.getEncoding() - first.getEncoding() + 1;
         }
         emitInt(instruction);
     }
@@ -2850,12 +2843,12 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void floatDiv(boolean signed, ConditionFlag cond, CiRegister dest, CiRegister rn, CiRegister rm) {
-        assert (dest != ARMV7.r12);
-        assert (rn != ARMV7.r12);
-        assert (rm != ARMV7.r12);
-        assert (dest != ARMV7.r8);
-        assert (rn != ARMV7.r8);
-        assert (rm != ARMV7.r8);
+        assert dest != ARMV7.r12;
+        assert rn != ARMV7.r12;
+        assert rm != ARMV7.r12;
+        assert dest != ARMV7.r8;
+        assert rn != ARMV7.r8;
+        assert rm != ARMV7.r8;
         vpush(ConditionFlag.Always, ARMV7.s28, ARMV7.s30, CiKind.Double, CiKind.Double);
         push(ConditionFlag.Always, 1 << 8, true);
         vmrs(ConditionFlag.Always, ARMV7.r8); // save rounding mode
@@ -2867,7 +2860,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         vcvt(ConditionFlag.Always, ARMV7.s28, false, signed, ARMV7.s28, CiKind.Double, CiKind.Int);
         vcvt(ConditionFlag.Always, ARMV7.s30, false, signed, ARMV7.s30, CiKind.Double, CiKind.Int);
         vdiv(ConditionFlag.Always, ARMV7.s28, ARMV7.s28, ARMV7.s30, CiKind.Double);
-        vcvt(ConditionFlag.Always, ARMV7.s28, true, signed, ARMV7.s28, CiKind.Int, CiKind.Double);// rounding?
+        vcvt(ConditionFlag.Always, ARMV7.s28, true, signed, ARMV7.s28, CiKind.Int, CiKind.Double);
         vmsr(ConditionFlag.Always, ARMV7.r8); // restore default rounding mode
         pop(ConditionFlag.Always, 1 << 8, true);
         vmov(cond, dest, ARMV7.s28, null, CiKind.Int, CiKind.Float);
@@ -2909,7 +2902,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             instruction |= (rn.getEncoding() & 1) << 7;
             instruction |= (rn.getEncoding() >> 1) << 16;
             instruction |= (rm.getEncoding() & 1) << 5;
-            instruction |= (rm.getEncoding() >> 1);
+            instruction |= rm.getEncoding() >> 1;
         }
         emitInt(instruction);
     }
@@ -2951,7 +2944,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             instruction |= (dest.getDoubleEncoding() >> 4) << 22;
             instruction |= (dest.getDoubleEncoding() & 0xf) << 12;
             instruction |= (src.getDoubleEncoding() >> 4) << 5;
-            instruction |= (src.getDoubleEncoding() & 0xf);
+            instruction |= src.getDoubleEncoding() & 0xf;
         } else if (srcKind.isFloat() && destKind.isFloat()) {
             instruction |= vmovSameType;
             instruction |= ((dest.getEncoding() >> 1) << 12) | ((dest.getEncoding() & 0x1) << 22);
@@ -2994,7 +2987,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
         instruction |= size << 8;
         instruction |= (imm >> 4) << 16;
-        instruction |= (imm & 0xf);
+        instruction |= imm & 0xf;
         if (size == 1) {
             instruction |= (dst.getDoubleEncoding() >> 4) << 22;
             instruction |= (dst.getDoubleEncoding() & 0xf) << 12;
