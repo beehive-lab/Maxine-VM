@@ -46,7 +46,7 @@ public class Main {
 
         JTUtil.reset(start, end);
         JTUtil.verbose = 3;
-	JTRuns.runTests(start, end);
+        JTRuns.runTests(start, end);
         JTUtil.printReport();
     }
 }

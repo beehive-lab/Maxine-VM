@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2009, 2017, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
 package test.arm.t1x;
 
 import static com.sun.max.vm.MaxineVM.*;
@@ -78,7 +100,7 @@ public class ARMV7T1XTest extends MaxTestCase {
 
     private static final OptionSet options = new OptionSet(false);
     private static VMConfigurator vmConfigurator = null;
-    private static boolean initialised = false;
+    private static boolean initialized = false;
 
     private static String[] expandArguments(String[] args) throws IOException {
         List<String> result = new ArrayList<String>(args.length);
@@ -93,14 +115,14 @@ public class ARMV7T1XTest extends MaxTestCase {
         return result.toArray(new String[result.size()]);
     }
 
-    private static int[] valueTestSet = { 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
-    private static long[] scratchTestSet = { 0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x00000000ffffffffL};
-    private static MaxineARMTester.BitsFlag[] bitmasks = { MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits};
+    private static int[] valueTestSet = {0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
+    private static long[] scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x00000000ffffffffL};
+    private static MaxineARMTester.BitsFlag[] bitmasks = {MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
+        MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
+        MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
+        MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits};
 
-    private static int[] expectedValues = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    private static int[] expectedValues = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     private static boolean[] testvalues = new boolean[17];
 
     private int[] generateAndTest(int[] expected, boolean[] tests, MaxineARMTester.BitsFlag[] masks) throws Exception {
@@ -137,12 +159,12 @@ public class ARMV7T1XTest extends MaxTestCase {
             String optimizingCompilerName = new String("com.oracle.max.vm.ext.c1x.C1X");
             RuntimeCompiler.baselineCompilerOption.setValue(baselineCompilerName);
             RuntimeCompiler.optimizingCompilerOption.setValue(optimizingCompilerName);
-            if (initialised == false) {
+            if (initialized == false) {
                 vmConfigurator.create();
                 vm().compilationBroker.setOffline(true);
                 vm().phase = Phase.HOSTED_TESTING;
                 JavaPrototype.initialize(false);
-                initialised = true;
+                initialized = true;
             }
             t1x = (T1X) CompilationBroker.addCompiler("t1x", baselineCompilerName);
             c1x = (C1X) CompilationBroker.addCompiler("c1x", optimizingCompilerName);
@@ -396,7 +418,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         expectedLongValues[2] = Double.doubleToRawLongBits(0.0);
         expectedLongValues[3] = Double.doubleToRawLongBits(-1.0);
         expectedLongValues[4] = Double.doubleToRawLongBits(-100.75);
-        CiRegister[] dRegs = new CiRegister[] { ARMV7.s0, ARMV7.s1, ARMV7.s2, ARMV7.s3, ARMV7.s4};
+        CiRegister[] dRegs = new CiRegister[] {ARMV7.s0, ARMV7.s1, ARMV7.s2, ARMV7.s3, ARMV7.s4};
 
         for (int i = 0; i < 5; i++) {
             theCompiler.assignDoubleTest(dRegs[i], Double.longBitsToDouble(expectedLongValues[i]));
@@ -587,7 +609,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         expectedLongValues[2] = Double.doubleToRawLongBits(0.0);
         expectedLongValues[3] = Double.doubleToRawLongBits(-1.0);
         expectedLongValues[4] = Double.doubleToRawLongBits(-100.75);
-        CiRegister[] dRegs = new CiRegister[] { ARMV7.s0, ARMV7.s1, ARMV7.s2, ARMV7.s3, ARMV7.s4};
+        CiRegister[] dRegs = new CiRegister[] {ARMV7.s0, ARMV7.s1, ARMV7.s2, ARMV7.s3, ARMV7.s4};
         for (int i = 0; i < 5; i++) {
             theCompiler.assignDoubleTest(dRegs[i], Double.longBitsToDouble(expectedLongValues[i]));
         }
@@ -907,8 +929,8 @@ public class ARMV7T1XTest extends MaxTestCase {
         masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r10, ARMV7.s2, ARMV7.s3, CiKind.Int, CiKind.Double);
 
         int[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
-
-        for (int i = 0; i <= 10; i++) {
+        int i = 0;
+        while (i <= 10) {
             if (i == 0) {
                 assert registerValues[0] == a : "TEST " + Integer.toString(i) + "Failed incorrect value " + Long.toString(registerValues[i], 16) + " " + Long.toString(a, 16);
                 i++;
@@ -921,7 +943,7 @@ public class ARMV7T1XTest extends MaxTestCase {
             } else if (i == 3) {
                 assert registerValues[0] == c : "TEST " + Integer.toString(i) + " Failed incorrect value " + Long.toString(registerValues[i], 16) + " " + Long.toString(c, 16);
             } else if (i == 4) {
-                long returnValue = (0xffffffffL & registerValues[i]);
+                long returnValue = 0xffffffffL & registerValues[i];
                 assert returnValue == c : "TEST " + Integer.toString(i) + "Failed incorrect value " + Long.toString(returnValue, 16) + Long.toString(c, 16);
                 i++;
             } else if (i == 5) {
@@ -943,6 +965,8 @@ public class ARMV7T1XTest extends MaxTestCase {
             } else if (i == 10) {
                 long returnValue = (0xffffffffL & registerValues[i]) | ((0xffffffffL & registerValues[i + 1]) << 32);
                 assert returnValue == Double.doubleToLongBits(g) : "TEST " + Integer.toString(i) + " Failed incorrect value " + Double.longBitsToDouble(returnValue) + " " + g;
+                i++;
+            } else {
                 i++;
             }
         }
@@ -1209,7 +1233,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         // 34 iconst_m1
         // 35 ireturn
 
-        int[] values = new int[] { 10, 20, 30, 40};
+        int[] values = new int[] {10, 20, 30, 40};
         for (int i = 0; i < values.length; i++) {
             for (int j = 0; j < values.length; j++) {
                 if (i > j) {
@@ -1304,7 +1328,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         // default:
         // m = 40;
         // }
-        int[] values = new int[] { 10, 20, 30, 40};
+        int[] values = new int[] {10, 20, 30, 40};
         for (int i = 0; i < values.length; i++) {
             for (int j = 0; j < values.length; j++) {
                 if (i > j) {

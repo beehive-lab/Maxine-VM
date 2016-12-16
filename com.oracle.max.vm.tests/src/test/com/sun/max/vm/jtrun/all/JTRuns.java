@@ -39,17 +39,18 @@ import test.com.sun.max.vm.jtrun.*;
  * {@link test.com.sun.max.vm.jtrun.JTGenerator}.
  */
 public class JTRuns {
+
     public static boolean runTests(int start, int end) {
         JTUtil.reset(start, end);
-	while (start < end) {
-            //begin(JTConfig.testClasses.getTestName(start));
+        while (start < end) {
+            // begin(JTConfig.testClasses.getTestName(start));
             if (!runTest(start)) {
                 return false;
             }
             start++;
-	    if(start <= 0) {
-		start = end;
-	    }
+            if (start <= 0) {
+                start = end;
+            }
         }
         return true;
     }
