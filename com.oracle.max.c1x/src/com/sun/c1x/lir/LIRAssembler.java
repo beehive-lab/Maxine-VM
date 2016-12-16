@@ -353,10 +353,10 @@ public abstract class LIRAssembler {
                     emitShiftOp(op.code, op.operand1(), op.operand2(), op.result(), op.tmp());
                 }
                 break;
-
             case Add:
             case Mul:
-                assert(op.operand1().equals(op.result()));
+                assert op.operand1().equals(op.result());
+                break;
             case Sub:
             case Div:
             case Rem:
@@ -371,7 +371,6 @@ public abstract class LIRAssembler {
             case Log10:
                 emitIntrinsicOp(op.code, op.operand1(), op.operand2(), op.result(), op);
                 break;
-
             case LogicAnd:
             case LogicOr:
             case LogicXor:

@@ -1,19 +1,24 @@
 /*
- * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
- * OR THIS FILE HEADER.
+ * Copyright (c) 2009, 2017, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
- * License version 2 only, as published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
- * more details (a copy is included in the LICENSE file that accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
- * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
- * additional information or have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.c1x.target.armv7;
 
@@ -147,17 +152,17 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.mov(ConditionFlag.Always, false, dest, src);
                 masm.mov(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.number + 1], ARMV7.cpuRegisters[src.number + 1]);
             } else if (srcKind == CiKind.Int && destKind == CiKind.Long) {
-                assert (srcKind != CiKind.Float);
-                assert (srcKind != CiKind.Double);
+                assert srcKind != CiKind.Float;
+                assert srcKind != CiKind.Double;
                 masm.mov(ConditionFlag.Always, false, dest, src);
                 masm.asr(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.number + 1], dest, 31);
             } else {
-                assert (srcKind != CiKind.Float);
-                assert (srcKind != CiKind.Double);
+                assert srcKind != CiKind.Float;
+                assert srcKind != CiKind.Double;
                 masm.mov(ConditionFlag.Always, false, dest, src);
             }
         } else if (srcKind == CiKind.Int && destKind == CiKind.Long) {
-            assert (src == dest);
+            assert src == dest;
             masm.asr(ConditionFlag.Always, false, ARMV7.cpuRegisters[dest.number + 1], dest, 31);
         }
     }
@@ -1376,8 +1381,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     @Override
     protected void emitLogicOp(LIROpcode code, CiValue left, CiValue right, CiValue dst) {
         assert left.isRegister();
-
-        assert (dst.isRegister());
+        assert dst.isRegister();
         // Checkstyle: off
         if (left.kind.isInt()) {
             CiRegister reg = left.asRegister();
@@ -1580,10 +1584,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         // normal and special case exit
         masm.bind(continuation);
         tasm.recordImplicitException(offset, info);
-        if (code == LIROpcode.Lrem) {
-        } else {
-            assert code == LIROpcode.Ldiv;
-        }
+        assert code == LIROpcode.Ldiv || code == LIROpcode.Lrem;
         masm.mov32BitConstantOptimised(ConditionFlag.Always, ARMV7.r12, 4);
         masm.blx(ARMV7.r12);
     }
@@ -1595,10 +1596,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert false : "ArithmeticLudiv not implemented";
         int offset = masm.codeBuffer.position();
         tasm.recordImplicitException(offset, info);
-        if (code == LIROpcode.Lurem) {
-        } else {
-            assert code == LIROpcode.Ludiv;
-        }
+        assert code == LIROpcode.Ludiv || code == LIROpcode.Lurem;
         masm.mov32BitConstantOptimised(ConditionFlag.Always, ARMV7.r12, 12);
         masm.blx(ARMV7.r12);
     }
@@ -1979,9 +1977,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert src.asRegister().isCpu();
         if (src.isRegister()) {
             CiRegister value = src.asRegister();
-            assert (value != ARMV7.r8); // just in case!!!
+            assert value != ARMV7.r8;
             CiRegister value1 = ARMV7.cpuRegisters[value.getEncoding() + 1];
-
             assert value != result;
             if (most) {
                 if (src.kind.isLong()) {
@@ -2166,11 +2163,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         assert false : "emitVolatileMove ARMV7IRAssembler";
 
         if (src.kind.isDouble()) {
-            if (dest.isRegister()) {
-            } else if (dest.isStackSlot()) {
-            } else {
-                assert dest.isAddress();
-            }
+            assert dest.isAddress() || dest.isRegister() || dest.isStackSlot();
         } else {
             assert dest.kind.isDouble();
             if (src.isStackSlot()) {

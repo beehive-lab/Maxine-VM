@@ -199,7 +199,7 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     public MaxXirGenerator(boolean printXirTemplates) {
         this.printXirTemplates = printXirTemplates;
-        if(platform().cpu == CPU.ARMV7) {
+        if (platform().cpu == CPU.ARMV7) {
             this.LATCH_REGISTER = ARMSafepointPoll.LATCH_REGISTER;
         } else {
             this.LATCH_REGISTER = AMD64SafepointPoll.LATCH_REGISTER;

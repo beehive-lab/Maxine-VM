@@ -1,19 +1,24 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
- * OR THIS FILE HEADER.
+ * Copyright (c) 2009, 2017, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
- * License version 2 only, as published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
- * more details (a copy is included in the LICENSE file that accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
- * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
- * additional information or have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.sun.c1x.alloc;
 
@@ -38,7 +43,6 @@ final class LinearScanWalker extends IntervalWalker {
 
     private final int[] usePos;
     private final int[] blockPos;
-
 
     private List<Interval>[] spillIntervals;
 
@@ -642,17 +646,17 @@ final class LinearScanWalker extends IntervalWalker {
 
         if (locationHint != null && locationHint.location() != null && locationHint.location().isRegister()) {
             hint = locationHint.location().asRegister();
-            hintHigh = locationHintHigh !=null ? locationHintHigh.location().asRegister() : null;
-            if (hint.isCpu() && hint.number < availableRegs.length-1) {
+            hintHigh = locationHintHigh != null ? locationHintHigh.location().asRegister() : null;
+            if (hint.isCpu() && hint.number < availableRegs.length - 1) {
                 assert hint != null && hintHigh == null : "must be for fixed intervals";
-                hintHigh = availableRegs[hint.number + 1];  // connect e.g. eax-edx
+                hintHigh = availableRegs[hint.number + 1]; // connect e.g. eax-edx
             }
             if (C1XOptions.TraceLinearScanLevel >= 4) {
-                TTY.println("   hint registers %d from interval %s", hint.number, hintHigh!=null ? hintHigh.number : -1, locationHint.logString(allocator));
+                TTY.println("   hint registers %d from interval %s", hint.number, hintHigh != null ? hintHigh.number : -1, locationHint.logString(allocator));
             }
         }
         assert interval.location() == null && interval.locationHigh() == null : "register already assigned to interval";
-        assert hint == null || hint != hintHigh: "hint reg and hitHigh reg are equal";
+        assert hint == null || hint != hintHigh : "hint reg and hitHigh reg are equal";
 
         // the register must be free at least until this position
         int regNeededUntil = interval.from() + 1;
@@ -669,16 +673,16 @@ final class LinearScanWalker extends IntervalWalker {
 
         // AdjacentRegs currently only used for ARM 32
         if (adjacentRegs) {
-            for (int i = 0; i < availableRegs.length; i+=2) {
+            for (int i = 0; i < availableRegs.length; i += 2) {
                 CiRegister availableReg = availableRegs[i];
                 int number = availableReg.number;
-                if (usePos[number] >= intervalTo && usePos[number+1] >= intervalTo) {
+                if (usePos[number] >= intervalTo && usePos[number + 1] >= intervalTo) {
                     // this register is free for the full interval
                     if (minFullReg == null || availableReg == hint || (usePos[number] < usePos[minFullReg.number] && minFullReg != hint)) {
                         minFullReg = availableReg;
                         assert availableReg.number % 2 == 0;
                     }
-                } else if (usePos[number] > regNeededUntil && usePos[number+1] > regNeededUntil) {
+                } else if (usePos[number] > regNeededUntil && usePos[number + 1] > regNeededUntil) {
                     // this register is at least free until regNeededUntil
                     if (maxPartialReg == null || availableReg == hint || (usePos[number] > usePos[maxPartialReg.number] && maxPartialReg != hint)) {
                         maxPartialReg = availableReg;
@@ -822,12 +826,12 @@ final class LinearScanWalker extends IntervalWalker {
 
         CiRegister ignore = interval.location() != null && interval.location().isRegister() ? interval.location().asRegister() : null;
         if (adjacentRegs) {
-            for (int i = 0; i < availableRegs.length; i+=2) {
+            for (int i = 0; i < availableRegs.length; i += 2) {
                 CiRegister availableReg = availableRegs[i];
                 int number = availableReg.number;
                 if (availableReg == ignore) {
                     // this register must be ignored
-                } else if (usePos[number] > regNeededUntil && usePos[number+1] > regNeededUntil) {
+                } else if (usePos[number] > regNeededUntil && usePos[number + 1] > regNeededUntil) {
                     if (reg == null || (usePos[number] > usePos[reg.number])) {
                         reg = availableReg;
                         regHigh = getRegister(reg.number + 1);
@@ -848,14 +852,14 @@ final class LinearScanWalker extends IntervalWalker {
                 }
             }
         }
-        int usePosition = (reg != null ? usePos[reg.number] : -1);
-        int splitPos = (reg != null ? blockPos[reg.number] : -1);
+        int usePosition = reg != null ? usePos[reg.number] : -1;
+        int splitPos = reg != null ? blockPos[reg.number] : -1;
         if (adjacentRegs) {
-            usePosition = (reg != null ? Math.min(usePos[reg.number], usePos[regHigh.number]) : -1);
-            splitPos = (reg != null ? Math.min(blockPos[reg.number], blockPos[regHigh.number]) : -1);
+            usePosition = reg != null ? Math.min(usePos[reg.number], usePos[regHigh.number]) : -1;
+            splitPos = reg != null ? Math.min(blockPos[reg.number], blockPos[regHigh.number]) : -1;
         }
 
-        if (reg == null || (adjacentRegs && regHigh==null) ||usePosition <= firstUsage) {
+        if (reg == null || (adjacentRegs && regHigh == null) || usePosition <= firstUsage) {
 
             // the first use of cur is later than the spilling position -> spill cur
             if (C1XOptions.TraceLinearScanLevel >= 4) {
@@ -873,10 +877,9 @@ final class LinearScanWalker extends IntervalWalker {
             return;
         }
 
-
         boolean needSplit = false;
         if (adjacentRegs) {
-            needSplit = blockPos[reg.number] <= intervalTo || blockPos[reg.number+1] <= intervalTo;
+            needSplit = blockPos[reg.number] <= intervalTo || blockPos[reg.number + 1] <= intervalTo;
         } else {
             needSplit = blockPos[reg.number] <= intervalTo;
         }
@@ -942,7 +945,7 @@ final class LinearScanWalker extends IntervalWalker {
     }
 
     private CiRegister getRegister(int number) {
-        for(CiRegister reg : availableRegs) {
+        for (CiRegister reg : availableRegs) {
             if (reg.number == number) {
                 return reg;
             }
@@ -957,7 +960,7 @@ final class LinearScanWalker extends IntervalWalker {
         return false;
     }
 
-   boolean isMove(LIRInstruction op, Interval from, Interval to) {
+    boolean isMove(LIRInstruction op, Interval from, Interval to) {
         if (op.code != LIROpcode.Move) {
             return false;
         }
@@ -1036,7 +1039,9 @@ final class LinearScanWalker extends IntervalWalker {
         }
 
         if (C1XOptions.TraceLinearScanLevel >= 4) {
-            TTY.println("      splitParent: %s kind: %s index: %s hachode: %s, insertMoveWhenActivated: %b", interval.splitParent().halfToString(),  (interval.spillSlot() != null ? interval.spillSlot().kind : "null"), (interval.spillSlot() != null ? interval.spillSlot().index() : "-1"), (interval.spillSlot() != null ? interval.spillSlot().hashCode() : "-1"), interval.insertMoveWhenActivated());
+            TTY.println("      splitParent: %s kind: %s index: %s hachode: %s, insertMoveWhenActivated: %b", interval.splitParent().halfToString(),
+                            interval.spillSlot() != null ? interval.spillSlot().kind : "null", interval.spillSlot() != null ? interval.spillSlot().index() : "-1",
+                            interval.spillSlot() != null ? interval.spillSlot().hashCode() : "-1", interval.insertMoveWhenActivated());
         }
 
         final CiValue operand = interval.operand;

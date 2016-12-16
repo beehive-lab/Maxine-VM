@@ -360,7 +360,7 @@ public class ARMV7CompilerStubEmitter {
         for (int i = 0; i < cc.locations.length; ++i) {
             CiValue location = cc.locations[i];
             asm.setUpScratch(comp.frameMap().toStackAddress(inArgs[i]));
-            asm.ldr(ARMV7Assembler.ConditionFlag.Always,location.asRegister(),ARMV7.r12,0);
+            asm.ldr(ARMV7Assembler.ConditionFlag.Always, location.asRegister(), ARMV7.r12, 0);
         }
 
         if (C1XOptions.AlignDirectCallsForPatching) {
@@ -378,10 +378,10 @@ public class ARMV7CompilerStubEmitter {
         if (call.resultKind != CiKind.Void) {
             CiRegister returnRegister = comp.registerConfig.getReturnRegister(call.resultKind);
             asm.setUpScratch(comp.frameMap().toStackAddress(outResult));
-            if(returnRegister.number <= 15) {
+            if (returnRegister.number <= 15) {
                 asm.str(ARMV7Assembler.ConditionFlag.Always, returnRegister, ARMV7.r12, 0);
             } else {
-                asm.vstr(ARMV7Assembler.ConditionFlag.Always,returnRegister,ARMV7.r12,0, CiKind.Float, CiKind.Int);
+                asm.vstr(ARMV7Assembler.ConditionFlag.Always, returnRegister, ARMV7.r12, 0, CiKind.Float, CiKind.Int);
             }
         }
     }

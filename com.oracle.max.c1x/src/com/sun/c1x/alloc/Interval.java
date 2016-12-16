@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2007, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,8 +43,10 @@ public final class Interval {
      * A pair of intervals.
      */
     static final class Pair {
+
         public final Interval first;
         public final Interval second;
+
         public Pair(Interval first, Interval second) {
             this.first = first;
             this.second = second;
@@ -187,10 +189,8 @@ public final class Interval {
     }
 
     /**
-     * Constants denoting the register usage priority for an interval.
-     * The constants are declared in increasing order of priority are
-     * are used to optimize spilling when multiple overlapping intervals
-     * compete for limited registers.
+     * Constants denoting the register usage priority for an interval. The constants are declared in increasing order of
+     * priority are are used to optimize spilling when multiple overlapping intervals compete for limited registers.
      */
     enum RegisterPriority {
         /**
@@ -231,8 +231,8 @@ public final class Interval {
     }
 
     /**
-     * Constants denoting whether an interval is bound to a specific register. This models
-     * platform dependencies on register usage for certain instructions.
+     * Constants denoting whether an interval is bound to a specific register. This models platform dependencies on
+     * register usage for certain instructions.
      */
     enum RegisterBinding {
         /**
@@ -249,8 +249,8 @@ public final class Interval {
     }
 
     /**
-     * Constants denoting the linear-scan states an interval may be in with respect to the
-     * {@linkplain Interval#from() start} {@code position} of the interval being processed.
+     * Constants denoting the linear-scan states an interval may be in with respect to the {@linkplain Interval#from()
+     * start} {@code position} of the interval being processed.
      */
     enum State {
         /**
@@ -264,8 +264,8 @@ public final class Interval {
         Active,
 
         /**
-         * An interval that starts before and ends after {@code position} but does not
-         * {@linkplain Interval#covers cover} it due to a lifetime hole.
+         * An interval that starts before and ends after {@code position} but does not {@linkplain Interval#covers
+         * cover} it due to a lifetime hole.
          */
         Inactive,
 
@@ -285,9 +285,9 @@ public final class Interval {
         NoDefinitionFound,
 
         /**
-         * One definition has already been found. Two consecutive definitions are treated as one
-         * (e.g. a consecutive move and add because of two-operand LIR form).
-         * The position of this definition is given by {@link Interval#spillDefinitionPos()}.
+         * One definition has already been found. Two consecutive definitions are treated as one (e.g. a consecutive
+         * move and add because of two-operand LIR form). The position of this definition is given by
+         * {@link Interval#spillDefinitionPos()}.
          */
         NoSpillStore,
 
@@ -297,8 +297,7 @@ public final class Interval {
         OneSpillStore,
 
         /**
-         * The interval should be stored immediately after its definition to prevent
-         * multiple redundant stores.
+         * The interval should be stored immediately after its definition to prevent multiple redundant stores.
          */
         StoreAtDefinition,
 
@@ -308,19 +307,19 @@ public final class Interval {
         StartInMemory,
 
         /**
-         * The interval has more than one definition (e.g. resulting from phi moves), so stores
-         * to memory are not optimized.
+         * The interval has more than one definition (e.g. resulting from phi moves), so stores to memory are not
+         * optimized.
          */
         NoOptimization
     }
 
     /**
-     * List of use positions. Each entry in the list records the use position and register
-     * priority associated with the use position. The entries in the list are in descending
-     * order of use position.
+     * List of use positions. Each entry in the list records the use position and register priority associated with the
+     * use position. The entries in the list are in descending order of use position.
      *
      */
     public static final class UsePosList {
+
         private IntList list;
 
         /**
@@ -341,8 +340,8 @@ public final class Interval {
          * {@code splitPos} are removed from this list and added to the returned list.
          *
          * @param splitPos the position for the split
-         * @return a use position list containing all entries removed from this list that have a use position greater or equal
-         *         than {@code splitPos}
+         * @return a use position list containing all entries removed from this list that have a use position greater or
+         *         equal than {@code splitPos}
          */
         public UsePosList splitAt(int splitPos) {
             int i = size() - 1;
@@ -412,17 +411,20 @@ public final class Interval {
     }
 
     /**
-     * The {@linkplain CiRegisterValue register} or {@linkplain CiVariable variable} for this interval prior to register allocation.
+     * The {@linkplain CiRegisterValue register} or {@linkplain CiVariable variable} for this interval prior to register
+     * allocation.
      */
     public final CiValue operand;
 
     /**
-     * The {@linkplain OperandPool#operandNumber(CiValue) operand number} for this interval's {@linkplain #operand operand}.
+     * The {@linkplain OperandPool#operandNumber(CiValue) operand number} for this interval's {@linkplain #operand
+     * operand}.
      */
     public final int operandNumber;
 
     /**
-     * The {@linkplain CiRegisterValue register}, {@linkplain CiStackSlot spill slot} or {@linkplain CiAddress address} assigned to this interval.
+     * The {@linkplain CiRegisterValue register}, {@linkplain CiStackSlot spill slot} or {@linkplain CiAddress address}
+     * assigned to this interval.
      */
     private CiValue location;
     private CiValue locationHigh;
@@ -433,13 +435,13 @@ public final class Interval {
     private CiStackSlot spillSlot;
 
     /**
-     * The kind of this interval.
-     * Only valid if this is a {@linkplain #isVariable() variable}.
+     * The kind of this interval. Only valid if this is a {@linkplain #isVariable() variable}.
      */
     private CiKind kind;
 
     /**
-     * The head of the list of ranges describing this interval. This list is sorted by {@linkplain LIRInstruction#id instruction ids}.
+     * The head of the list of ranges describing this interval. This list is sorted by {@linkplain LIRInstruction#id
+     * instruction ids}.
      */
     private Range first;
 
@@ -466,12 +468,14 @@ public final class Interval {
     private int cachedTo; // cached value: to of last range (-1: not cached)
 
     /**
-     * The interval from which this one is derived. If this is a {@linkplain #isSplitParent() split parent}, it points to itself.
+     * The interval from which this one is derived. If this is a {@linkplain #isSplitParent() split parent}, it points
+     * to itself.
      */
     private Interval splitParent;
 
     /**
-     * List of all intervals that are split off from this interval. This is only used if this is a {@linkplain #isSplitParent() split parent}.
+     * List of all intervals that are split off from this interval. This is only used if this is a
+     * {@linkplain #isSplitParent() split parent}.
      */
     private List<Interval> splitChildren = Collections.emptyList();
 
@@ -481,7 +485,8 @@ public final class Interval {
     private Interval currentSplitChild;
 
     /**
-     * Specifies if move is inserted between currentSplitChild and this interval when interval gets active the first time.
+     * Specifies if move is inserted between currentSplitChild and this interval when interval gets active the first
+     * time.
      */
     private boolean insertMoveWhenActivated;
 
@@ -533,7 +538,8 @@ public final class Interval {
     }
 
     /**
-     * Gets the {@linkplain CiRegisterValue register}, {@linkplain CiStackSlot spill slot} or {@linkplain CiAddress address} assigned to this interval.
+     * Gets the {@linkplain CiRegisterValue register}, {@linkplain CiStackSlot spill slot} or {@linkplain CiAddress
+     * address} assigned to this interval.
      */
     public CiValue location() {
         return location;
@@ -604,7 +610,7 @@ public final class Interval {
     void setSpillSlot(CiStackSlot slot) {
         Interval parent = splitParent();
         assert parent.spillSlot == null : "connot overwrite existing spill slot";
-        assert slot.kind == this.kind  : "Interval and Spil Slot have different kinds: " + slot.kind + " " + this.kind;
+        assert slot.kind == this.kind : "Interval and Spil Slot have different kinds: " + slot.kind + " " + this.kind;
         parent.spillSlot = slot;
     }
 
@@ -813,7 +819,6 @@ public final class Interval {
         return null;
     }
 
-
     Interval getSplitChildAtOpId(int opId, LIRInstruction.OperandMode mode, LinearScan allocator) {
         assert isSplitParent() : "can only be called for split parents";
         assert opId >= 0 : "invalid opId (method cannot be called for spill moves)";
@@ -1020,7 +1025,7 @@ public final class Interval {
         result.setKind(kind());
         result.splitParent = parent;
         result.setLocationHint(parent);
-        assert parent.kind == result.kind : " Splitting intervals Parent kind "+parent.kind + " child parent: " + result.kind;
+        assert parent.kind == result.kind : " Splitting intervals Parent kind " + parent.kind + " child parent: " + result.kind;
 
         // insert new interval in children-list of parent
         if (parent.splitChildren.isEmpty()) {
@@ -1036,14 +1041,13 @@ public final class Interval {
     }
 
     /**
-     * Splits this interval at a specified position and returns the remainder as a new <i>child</i> interval
-     * of this interval's {@linkplain #splitParent() parent} interval.
+     * Splits this interval at a specified position and returns the remainder as a new <i>child</i> interval of this
+     * interval's {@linkplain #splitParent() parent} interval.
      * <p>
-     * When an interval is split, a bi-directional link is established between the original <i>parent</i>
-     * interval and the <i>children</i> intervals that are split off this interval.
-     * When a split child is split again, the new created interval is a direct child
-     * of the original parent. That is, there is no tree of split children stored, just a flat list.
-     * All split children are spilled to the same {@linkplain #spillSlot spill slot}.
+     * When an interval is split, a bi-directional link is established between the original <i>parent</i> interval and
+     * the <i>children</i> intervals that are split off this interval. When a split child is split again, the new
+     * created interval is a direct child of the original parent. That is, there is no tree of split children stored,
+     * just a flat list. All split children are spilled to the same {@linkplain #spillSlot spill slot}.
      *
      * @param splitPos the position at which to split this interval
      * @param allocator the register allocator context
@@ -1092,8 +1096,7 @@ public final class Interval {
     }
 
     /**
-     * Splits this interval at a specified position and returns
-     * the head as a new interval (this interval is the tail).
+     * Splits this interval at a specified position and returns the head as a new interval (this interval is the tail).
      *
      * Currently, only the first range can be split, and the new interval must not have split positions
      */
@@ -1188,6 +1191,7 @@ public final class Interval {
         String location = this.location == null ? "" : "@" + this.location.name();
         return operandNumber + ":" + operand + (operand.isRegister() ? "" : location) + " kind " + kind;
     }
+
     /**
      * Gets the use position information for this interval.
      */
@@ -1238,6 +1242,8 @@ public final class Interval {
             buf.append(usePosList.usePos(i)).append(':').append(usePosList.registerPriority(i));
             prev = usePosList.usePos(i);
         }
-        return buf.append("} spill-state{").append(spillState()).append("}").append(" spill slot kind " + (this.spillSlot!=null ? this.spillSlot.kind : "null")).append(" spill slot index " + (this.spillSlot!=null ? this.spillSlot.index() : "-1")).append(" spill slot hashcode " + (this.spillSlot!=null ? this.spillSlot.hashCode() : "-1")).toString();
+        return buf.append("} spill-state{").append(spillState()).append("}").append(" spill slot kind " + (this.spillSlot != null ? this.spillSlot.kind : "null")
+        ).append(" spill slot index " + (this.spillSlot != null ? this.spillSlot.index() : "-1")
+        ).append(" spill slot hashcode " + (this.spillSlot != null ? this.spillSlot.hashCode() : "-1")).toString();
     }
 }

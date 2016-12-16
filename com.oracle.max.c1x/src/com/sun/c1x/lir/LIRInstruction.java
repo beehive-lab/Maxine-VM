@@ -269,7 +269,7 @@ public abstract class LIRInstruction {
                 return new LIROperand(operand, C1XCompilation.compilation().compiler.target.arch.is32bit() ? operand.getClone() : null);
             } else if (operand.isConstant()) {
                 // no variables to add
-                return new LIROperand(operand, C1XCompilation.compilation().compiler.target.arch.is32bit() ? operand.getClone(): null);
+                return new LIROperand(operand, C1XCompilation.compilation().compiler.target.arch.is32bit() ? operand.getClone() : null);
             } else {
                 assert allocatorOperands.size() == allocatorOutputCount + allocatorInputCount + allocatorTempInputCount + allocatorTempCount;
                 allocatorOperands.add(operand);

@@ -183,7 +183,8 @@ public class MaxGraalOptions {
         // Options from com.oracle.graal.compiler.GraalDebugConfig
         register(new VMBooleanOption("-G:+", "Debug", "Enable scope-based debugging"), com.oracle.graal.compiler.GraalDebugConfig.class, "DebugEnabled");
         register(new VMStringOption("-G:DebugValueSummary=", false, "Complete",
-                "How to print metric and timing values:%nName - aggregate by unqualified name%nPartial - aggregate by partially qualified name (e.g., A.B.C.D.Counter and X.Y.Z.D.Counter will be merged to D.Counter)%nComplete - aggregate by qualified name%nThread - aggregate by qualified name and thread"),
+                "How to print metric and timing values:%nName - aggregate by unqualified name%nPartial" +
+                " - aggregate by partially qualified name (e.g., A.B.C.D.Counter and X.Y.Z.D.Counter will be merged to D.Counter)%nComplete - aggregate by qualified name%nThread - aggregate by qualified name and thread"),
                 com.oracle.graal.compiler.GraalDebugConfig.class, "DebugValueSummary");
         register(new VMBooleanOption("-G:+", "DetailedAsserts", "Enable expensive assertions"), com.oracle.graal.compiler.GraalDebugConfig.class, "DetailedAsserts");
         register(new VMStringOption("-G:Dump=", false, null, "Scopes to be dumped"), com.oracle.graal.compiler.GraalDebugConfig.class, "Dump");

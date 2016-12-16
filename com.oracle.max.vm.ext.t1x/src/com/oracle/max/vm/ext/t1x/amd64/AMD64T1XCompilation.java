@@ -67,7 +67,7 @@ public class AMD64T1XCompilation extends T1XCompilation {
         patchInfo = new PatchInfoAMD64();
         if (T1XOptions.DebugMethods && !debugMethodsEnabled) {
             debugMethodWriter = new DebugMethodWriter("t1x");
-            debugMethodsEnabled =true;
+            debugMethodsEnabled = true;
         }
     }
 

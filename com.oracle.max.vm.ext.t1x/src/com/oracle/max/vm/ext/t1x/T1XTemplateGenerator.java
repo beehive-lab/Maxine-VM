@@ -1,19 +1,24 @@
 /*
- * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR
- * THIS FILE HEADER.
+ * Copyright (c) 2012, 2017, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
- * License version 2 only, as published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
- * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
- * more details (a copy is included in the LICENSE file that accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
- * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
- * additional information or have any questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
  */
 package com.oracle.max.vm.ext.t1x;
 
@@ -116,9 +121,9 @@ public class T1XTemplateGenerator {
      * {@link String} equivalent of {@link KindEnum} with standard case rules. Arguably this class could use
      * {@link KindEnum} more, but it is mostly doing string processing.
      */
-    public static final Kind[] kinds = { BOOLEAN, BYTE, CHAR, SHORT, INT, FLOAT, LONG, DOUBLE, REFERENCE, WORD, VOID};
+    public static final Kind[] kinds = {BOOLEAN, BYTE, CHAR, SHORT, INT, FLOAT, LONG, DOUBLE, REFERENCE, WORD, VOID};
 
-    public static final String[] conditions = new String[] { "eq", "ne", "lt", "ge", "gt", "le"};
+    public static final String[] conditions = new String[] {"eq", "ne", "lt", "ge", "gt", "le"};
 
     /**
      * Returns {@code k.javaName}.
@@ -1430,15 +1435,15 @@ public class T1XTemplateGenerator {
     public void generateDyadicTemplates() {
         for (Kind k : kinds) {
             if (hasArithTemplates(k)) {
-                for (String op : new String[] { "add", "sub", "mul", "div", "rem"}) {
+                for (String op : new String[] {"add", "sub", "mul", "div", "rem"}) {
                     generateDyadicTemplate(k, op);
                 }
             }
             if (hasLogTemplates(k)) {
-                for (String op : new String[] { "or", "and", "xor"}) {
+                for (String op : new String[] {"or", "and", "xor"}) {
                     generateDyadicTemplate(k, op);
                 }
-                for (String op : new String[] { "shl", "shr", "ushr"}) {
+                for (String op : new String[] {"shl", "shr", "ushr"}) {
                     generateDyadicTemplate(k, op);
                 }
             }
@@ -1570,16 +1575,16 @@ public class T1XTemplateGenerator {
                 generateD2Template(k);
             }
             if (hasArithTemplates(k)) {
-                for (String op : new String[] { "add", "sub", "mul", "div", "rem"}) {
+                for (String op : new String[] {"add", "sub", "mul", "div", "rem"}) {
                     generateDyadicTemplate(k, op);
                 }
                 generateNegTemplate(k);
             }
             if (hasLogTemplates(k)) {
-                for (String op : new String[] { "or", "and", "xor"}) {
+                for (String op : new String[] {"or", "and", "xor"}) {
                     generateDyadicTemplate(k, op);
                 }
-                for (String op : new String[] { "shl", "shr", "ushr"}) {
+                for (String op : new String[] {"shl", "shr", "ushr"}) {
                     generateDyadicTemplate(k, op);
                 }
             }
@@ -1592,12 +1597,12 @@ public class T1XTemplateGenerator {
                 generateArrayStoreTemplate(k);
             }
             if (hasInvokeTemplates(k)) {
-                for (String s : new String[] { "virtual", "interface"}) {
+                for (String s : new String[] {"virtual", "interface"}) {
                     generateUnresolvedInvokeVITemplate(k, s);
                     generateInvokeVITemplate(k, s, false);
                     generateInvokeVITemplate(k, s, true);
                 }
-                for (String s : new String[] { "special", "static"}) {
+                for (String s : new String[] {"special", "static"}) {
                     generateInvokeSSTemplate(k, s);
                 }
             }
