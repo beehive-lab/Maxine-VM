@@ -30,6 +30,7 @@ import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
+import com.sun.max.platform.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -135,17 +136,12 @@ public final class Safepoints {
     /**
      * Mask for extracting position.
      */
-    //public static final int POS_MASK = (1 << 25) - 1;
 
-    //private static final int CAUSE_OFFSET_MASK = ((1 << 28) - 1) & ~POS_MASK;
-    //private static final int CAUSE_OFFSET_SHIFT = 25;
-    //X86 was this .... private static final int MAX_CAUSE_OFFSET = 7;
-    public static final int POS_MASK = (1 << 23) - 1;
-
+    public static final int POS_MASK = Platform.target().arch.isX86() ? (1 << 25) - 1 : (1 << 23) - 1;
     private static final int CAUSE_OFFSET_MASK = ((1 << 28) - 1) & ~POS_MASK;
-    private static final int CAUSE_OFFSET_SHIFT = 23;
+    private static final int CAUSE_OFFSET_SHIFT = Platform.target().arch.isX86() ? 25 : 23;
+    private static final int MAX_CAUSE_OFFSET = Platform.target().arch.isX86() ? 7 : 16;
 
-    private static final int MAX_CAUSE_OFFSET = 16;
     /**
      * Mask for extracting attributes.
      */
