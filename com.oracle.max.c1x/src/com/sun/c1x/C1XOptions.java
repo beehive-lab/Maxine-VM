@@ -195,6 +195,12 @@ public final class C1XOptions {
         } else {
             PrintFilter = new String(value);
         }
+        value = System.getenv("ENABLE_DEBUG_METHODS_ID");
+        if (value == null || value.isEmpty()) {
+            DebugMethods = false;
+        } else {
+            DebugMethods = true;
+        }
     }
 
     public static void setOptimizationLevel(int level) {

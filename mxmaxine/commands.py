@@ -223,6 +223,8 @@ def image(args):
             os.environ['MAXINE_LOG_FILE'] = arg.split('=', 1)[1]
         elif arg.startswith('--XX:+PrintCFGToFile'):
         	os.environ['PRINT_CFG']='1'
+        elif arg.startswith('--XX:+EnableBootImageDebugMethodID'):
+            os.environ['ENABLE_DEBUG_METHODS_ID']='1'	
         elif arg.startswith('--XX:+PrintHIR'):
         	os.environ['PRINT_HIR']='1'		
         elif arg.startswith('--XX:PrintFilter='):
