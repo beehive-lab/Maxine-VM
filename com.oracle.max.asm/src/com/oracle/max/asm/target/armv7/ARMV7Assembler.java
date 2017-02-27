@@ -1348,7 +1348,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public void ldrd(final ConditionFlag flag, final CiRegister valueReg, final CiRegister baseReg, int offset8) {
+    public void ldrd(final ConditionFlag flag, final CiRegister destReg, final CiRegister baseReg, int offset8) {
         if (instrumentation.enabled()) {
             instrumentation.instrument(true, true, true, baseReg, offset8);
         }
@@ -1363,12 +1363,12 @@ public class ARMV7Assembler extends AbstractAssembler {
         } else {
             u = 1;
         }
-        checkConstraint(valueReg.getEncoding() % 2 == 0, "ldrd register must be even");
+        checkConstraint(destReg.getEncoding() % 2 == 0, "ldrd register must be even");
         instruction |= (flag.value() & 0xf) << 28;
         instruction |= p << 24;
         instruction |= u << 23;
         instruction |= w << 21;
-        instruction |= (valueReg.getEncoding() & 0xf) << 12;
+        instruction |= (destReg.getEncoding() & 0xf) << 12;
         instruction |= (baseReg.getEncoding() & 0xf) << 16;
         instruction |= (offset8 & 0xf0) << 4;
         instruction |= offset8 & 0xf;
