@@ -22,6 +22,8 @@
  */
 package com.oracle.max.asm.target.armv7;
 
+import com.sun.cri.ci.*;
+
 /**
  * Handles validations for all immediate operands in ARM instructions.
  *
@@ -30,6 +32,24 @@ package com.oracle.max.asm.target.armv7;
 public final class ARMImmediates {
 
     private ARMImmediates() {
+    }
+
+    public static boolean isValidDisp(int value, CiKind kind) {
+        switch (kind) {
+            case Float:
+            case Double:
+                return value < 1020 && value > -1020;
+            case Long:
+            case Char:
+            case Byte:
+            case Short:
+                return value < 255 && value > -255;
+            case Int:
+                return value < 4095 && value > -4095;
+            default:
+                assert false : "Unknown state!";
+        }
+        return false;
     }
 
     /**
