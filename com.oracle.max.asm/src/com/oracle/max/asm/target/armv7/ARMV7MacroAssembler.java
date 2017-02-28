@@ -390,61 +390,9 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         vmov(ConditionFlag.Always, dst, src, null, dstKind, srcKind);
     }
 
-    public void movflt(CiRegister dst, CiAddress src) {
-        assert dst.isFpu();
-        if (src.isARMV7Immediate(CiKind.Float)) {
-            CiRegister tmpRegister = src.base();
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = frameRegister;
-            }
-            vldr(ConditionFlag.Always, dst, tmpRegister, src.displacement, CiKind.Float, CiKind.Int);
-        } else {
-            setUpScratchOptimised(dst, false, CiKind.Float, src);
-        }
-    }
-
-    public void movflt(CiAddress dst, CiRegister src) {
-        assert src.isFpu();
-        if (dst.isARMV7Immediate(CiKind.Float)) {
-            CiRegister tmpRegister = dst.base();
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = frameRegister;
-            }
-            vstr(ConditionFlag.Always, src, tmpRegister, dst.displacement, CiKind.Float, CiKind.Int);
-        } else {
-            setUpScratchOptimised(src, true, CiKind.Float, dst);
-        }
-    }
-
     public void movdbl(CiRegister dst, CiRegister src, CiKind dstKind, CiKind srcKind) {
         assert dst.isFpu() && src.isFpu();
         vmov(ConditionFlag.Always, dst, src, null, dstKind, srcKind);
-    }
-
-    public void movdbl(CiRegister dst, CiAddress src) {
-        assert dst.isFpu();
-        if (src.isARMV7Immediate(CiKind.Double)) {
-            CiRegister tmpRegister = src.base();
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = frameRegister;
-            }
-            vldr(ConditionFlag.Always, dst, tmpRegister, src.displacement, CiKind.Double, CiKind.Int);
-        } else {
-            setUpScratchOptimised(dst, false, CiKind.Double, src);
-        }
-    }
-
-    public void movdbl(CiAddress dst, CiRegister src) {
-        assert src.number > 15;
-        if (dst.isARMV7Immediate(CiKind.Double)) {
-            CiRegister tmpRegister = dst.base();
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = frameRegister;
-            }
-            vstr(ConditionFlag.Always, src, tmpRegister, dst.displacement, CiKind.Double, CiKind.Int);
-        } else {
-            setUpScratchOptimised(src, true, CiKind.Double, dst);
-        }
     }
 
     public void movlong(CiRegister dst, long src, CiKind dstKind) {
@@ -549,30 +497,12 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
     }
 
     public void iadd(CiRegister dest, CiRegister left, CiAddress right) {
-        if (right.isARMV7Immediate(CiKind.Int)) {
-            int add = right.displacement >= 0 ? 1 : 0;
-            CiRegister tmpRegister = right.base();
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = frameRegister;
-            }
-            ldrImmediate(ConditionFlag.Always, 1, add, 0, r12, tmpRegister, right.displacement);
-        } else {
-            setUpScratchOptimised(ARMV7.r12, false, CiKind.Int, right);
-        }
+        load(dest, right, CiKind.Int);
         addRegisters(ConditionFlag.Always, true, dest, left, r12, 0, 0);
     }
 
     public void isub(CiRegister dest, CiRegister left, CiAddress right) {
-        if (right.isARMV7Immediate(CiKind.Int)) {
-            int add = right.displacement >= 0 ? 1 : 0;
-            CiRegister tmpRegister = right.base();
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = frameRegister;
-            }
-            ldrImmediate(ConditionFlag.Always, 1, add, 0, r12, tmpRegister, right.displacement);
-        } else {
-            setUpScratchOptimised(ARMV7.r12, false, CiKind.Int, right);
-        }
+        load(dest, right, CiKind.Int);
         sub(ConditionFlag.Always, true, dest, left, r12, 0, 0);
     }
 

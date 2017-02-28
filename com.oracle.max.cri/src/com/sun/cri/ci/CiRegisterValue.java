@@ -38,7 +38,7 @@ public final class CiRegisterValue extends CiValue {
     /**
      * Should only be called from {@link CiRegister#CiRegister} to ensure canonicalization.
      */
-    CiRegisterValue(CiKind kind, CiRegister register) {
+    public CiRegisterValue(CiKind kind, CiRegister register) {
         super(kind);
         this.reg = register;
     }

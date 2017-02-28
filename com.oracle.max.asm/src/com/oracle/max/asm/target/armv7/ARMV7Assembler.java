@@ -23,6 +23,7 @@
 package com.oracle.max.asm.target.armv7;
 
 import com.oracle.max.asm.*;
+import com.oracle.max.asm.target.armv7.ARMV7Assembler.*;
 import com.oracle.max.asm.target.armv7.ARMV7Label.*;
 import com.oracle.max.asm.target.armv7.ARMV7Label.BranchInfo.*;
 import com.sun.cri.ci.*;
@@ -1664,227 +1665,128 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
     }
 
-    public void setUpScratchOptimised(CiRegister operand, boolean isStore, CiKind kind, CiAddress addr) {
+    private CiAddress calculateAddress(CiAddress addr) {
         CiRegister base = addr.base();
         CiRegister index = addr.index();
         CiAddress.Scale scale = addr.scale;
         int disp = addr.displacement;
-        int usedDisp = disp;
-        int maxDisp = 0;
-        int desiredDisp = disp;
-        int actualDisp = 0;
-        if (kind == CiKind.Float || kind == CiKind.Double) {
-            maxDisp = 1020;
-        } else if ((kind == CiKind.Long) || (kind == CiKind.Char) || (kind == CiKind.Byte) || (kind == CiKind.Short)) {
-            maxDisp = 255;
-        } else if (kind == CiKind.Int) {
-            maxDisp = 4095;
-        } else {
-            assert false : "Unknown state!";
-        }
+
         assert addr != CiAddress.Placeholder;
         assert !(base.isValid() && disp == 0 && base.compareTo(ARMV7.LATCH_REGISTER) == 0);
         assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
+
         if (base.isValid() || base.compareTo(CiRegister.Frame) == 0) {
             if (base == CiRegister.Frame) {
                 base = frameRegister;
             }
         }
+
         switch (addr.format()) {
             case BASE:
+                break;
             case BASE_DISP:
-                if ((disp > maxDisp) || (disp < -maxDisp)) {
-                    if (isSingleAddDisp(disp, maxDisp)) {
-                        int tableIndex = getSingleAddDisp(disp, maxDisp);
-                        int tmp = disp - (~highmask[tableIndex] & disp);
-                        actualDisp = ~highmask[tableIndex] & disp;
-                        add12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, as12BitValue(actualDisp));
-                        base = scratchRegister;
-                        usedDisp = tmp;
+                if (ARMImmediates.isValidDisp(disp, CiKind.Long)) {
+                    break;
+                } else if (ARMImmediates.isValidImmediate(Math.abs(disp))) {
+                    if (disp > 0) {
+                        add12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, ARMImmediates.calculateShifter(disp));
                     } else {
-                        actualDisp = disp;
-                        mov32BitConstantOptimised(ConditionFlag.Always, scratchRegister, disp);
-                        addRegisters(ConditionFlag.Always, false, scratchRegister, base, scratchRegister, 0, 0);
-                        base = scratchRegister;
-                        usedDisp = 0;
+                        sub12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, ARMImmediates.calculateShifter(disp));
                     }
+                    base = scratchRegister;
+                    disp = 0;
                 } else {
-                    usedDisp = disp;
-                }
-
-                actualDisp += usedDisp;
-                assert actualDisp == desiredDisp;
-                if (isStore) {
-                    switch (kind) {
-                        case Float:
-                        case Double:
-                            vstr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
-                            break;
-                        case Long:
-                            strd(ConditionFlag.Always, operand, base, usedDisp);
-                            break;
-                        case Int:
-                            str(ConditionFlag.Always, operand, base, usedDisp);
-                            break;
-                        case Short:
-                            strHImmediate(ConditionFlag.Always, 1, 0, 0, operand, base, usedDisp);
-                            break;
-                        default:
-                            assert false : "Unimplemented state!";
-                            break;
-                    }
-                } else {
-                    switch (kind) {
-                        case Float:
-                        case Double:
-                            vldr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
-                            break;
-                        case Long:
-                            ldrd(ConditionFlag.Always, operand, base, usedDisp);
-                            break;
-                        case Char:
-                            ldruhw(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
-                            break;
-                        case Byte:
-                            ldrsb(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
-                            break;
-                        case Short:
-                            ldrshw(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
-                            break;
-                        case Int:
-                            ldr(ConditionFlag.Always, operand, base, usedDisp);
-                            break;
-                        default:
-                            assert false : "Unimplemented state!";
-                            break;
-                    }
+                    mov32BitConstantOptimised(ConditionFlag.Always, scratchRegister, disp);
+                    addRegisters(ConditionFlag.Always, false, scratchRegister, base, scratchRegister, 0, 0);
+                    base = scratchRegister;
+                    disp = 0;
                 }
                 break;
             case BASE_INDEX:
-                assert disp == 0;
-                usedDisp = 0;
                 addlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
                 base = scratchRegister;
-                if (isStore) {
-                    switch (kind) {
-                        case Float:
-                        case Double:
-                            vstr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
-                            break;
-                        case Long:
-                            strd(ConditionFlag.Always, operand, base, usedDisp);
-                            break;
-                        case Short:
-                            strHImmediate(ConditionFlag.Always, 1, 0, 0, operand, base, usedDisp);
-                            break;
-                        case Int:
-                            str(ConditionFlag.Always, operand, base, usedDisp);
-                            break;
-                        default:
-                            assert false : "Unimplemented state!";
-                            break;
-                    }
-                } else {
-                    switch (kind) {
-                        case Float:
-                        case Double:
-                            vldr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
-                            break;
-                        case Long:
-                            ldrd(ConditionFlag.Always, operand, base, usedDisp);
-                            break;
-                        case Char:
-                            ldruhw(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
-                            break;
-                        case Byte:
-                            ldrsb(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
-                            break;
-                        case Short:
-                            ldrshw(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
-                            break;
-                        case Int:
-                            ldr(ConditionFlag.Always, operand, base, usedDisp);
-                            break;
-                        default:
-                            assert false : "Unknown state";
-                            break;
-                    }
-                }
+                disp = 0;
                 break;
             case BASE_INDEX_DISP:
-                if ((disp > maxDisp) || (disp < -maxDisp)) {
-                    if (isSingleAddDisp(disp, maxDisp)) {
-                        int tableIndex = getSingleAddDisp(disp, maxDisp);
-                        int tmp = disp - (~highmask[tableIndex] & disp);
-                        actualDisp = ~highmask[tableIndex] & disp;
-                        add12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, as12BitValue(actualDisp));
-                        base = scratchRegister;
-                        usedDisp = tmp;
+                if (ARMImmediates.isValidDisp(disp, CiKind.Long)) {
+                    addlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
+                    base = scratchRegister;
+                } else if (ARMImmediates.isValidImmediate(Math.abs(disp))) {
+                    if (disp > 0) {
+                        add12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, ARMImmediates.calculateShifter(disp));
                     } else {
-                        mov32BitConstantOptimised(ConditionFlag.Always, scratchRegister, disp);
-                        addRegisters(ConditionFlag.Always, false, scratchRegister, base, scratchRegister, 0, 0);
-                        base = scratchRegister;
-                        actualDisp = disp;
-                        usedDisp = 0;
+                        sub12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, ARMImmediates.calculateShifter(disp));
                     }
+                    addlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
+                    base = scratchRegister;
+                    disp = 0;
                 } else {
-                    usedDisp = disp;
-                }
-
-                actualDisp += usedDisp;
-
-                assert actualDisp == desiredDisp;
-                addlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
-                base = scratchRegister;
-                if (isStore) {
-                    switch (kind) {
-                        case Float:
-                        case Double:
-                            vstr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
-                            break;
-                        case Long:
-                            strd(ConditionFlag.Always, operand, base, usedDisp);
-                            break;
-                        case Int:
-                            str(ConditionFlag.Always, operand, base, usedDisp);
-                            break;
-                        case Short:
-                            strHImmediate(ConditionFlag.Always, 1, 0, 0, operand, base, usedDisp);
-                            break;
-                        default:
-                            assert false : "Unimplemented state!";
-                            break;
-                    }
-                } else {
-                    switch (kind) {
-                        case Float:
-                        case Double:
-                            vldr(ConditionFlag.Always, operand, base, usedDisp, kind, CiKind.Int);
-                            break;
-                        case Long:
-                            ldrd(ConditionFlag.Always, operand, base, usedDisp);
-                            break;
-                        case Char:
-                            ldruhw(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
-                            break;
-                        case Byte:
-                            ldrsb(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
-                            break;
-                        case Short:
-                            ldrshw(ConditionFlag.Always, 1, 1, 0, operand, base, usedDisp);
-                            break;
-                        case Int:
-                            ldr(ConditionFlag.Always, operand, base, usedDisp);
-                            break;
-                        default:
-                            assert false : "Unimplemented state!";
-                            break;
-                    }
+                    mov32BitConstantOptimised(ConditionFlag.Always, scratchRegister, disp);
+                    addRegisters(ConditionFlag.Always, false, scratchRegister, base, scratchRegister, 0, 0);
+                    base = scratchRegister;
+                    disp = 0;
                 }
                 break;
             default:
-                assert false : "Unimplemented state!";
+                assert false : "Unknown state!";
+        }
+        return new CiAddress(addr.kind, new CiRegisterValue(CiKind.Int, base), disp);
+    }
+
+    public void load(CiRegister dest, CiAddress addr, CiKind kind) {
+        CiAddress address = calculateAddress(addr);
+        switch (kind) {
+            case Short:
+                ldrshw(ConditionFlag.Always, 1, 1, 0, dest, address.base(), address.displacement);
                 break;
+            case Char:
+                ldruhw(ConditionFlag.Always, 1, 1, 0, dest, address.base(), address.displacement);
+                break;
+            case Boolean:
+            case Byte:
+                ldrsb(ConditionFlag.Always, 1, 1, 0, dest, address.base(), address.displacement);
+                break;
+            case Long:
+                ldrd(ConditionFlag.Always, dest, address.base(), address.displacement);
+                break;
+            case Double:
+                vldr(ConditionFlag.Always, dest, address.base(), address.displacement, CiKind.Double, CiKind.Int);
+                break;
+            case Float:
+                vldr(ConditionFlag.Always, dest, address.base(), address.displacement, CiKind.Float, CiKind.Int);
+                break;
+            case Int:
+            case Object:
+                ldr(ConditionFlag.Always, dest, address.base(), address.displacement);
+                break;
+            default:
+                assert false : "Unknown kind!";
+        }
+    }
+
+    public void store(CiRegister src, CiAddress addr, CiKind kind) {
+        CiAddress address = calculateAddress(addr);
+        switch (kind) {
+            case Short:
+                strHImmediate(ConditionFlag.Always, 1, 0, 0, src, address.base(), address.displacement);
+                break;
+            case Long:
+                strd(ConditionFlag.Always, src, address.base(), address.displacement);
+                break;
+            case Double:
+                vstr(ConditionFlag.Always, src, address.base(), address.displacement, CiKind.Double, CiKind.Int);
+                break;
+            case Float:
+                vstr(ConditionFlag.Always, src, address.base(), address.displacement, CiKind.Float, CiKind.Int);
+                break;
+            case Int:
+            case Object:
+                str(ConditionFlag.Always, src, address.base(), address.displacement);
+                break;
+            case Byte:
+                break;
+            default:
+                assert false : "Unknown kind!";
         }
     }
 
@@ -2023,8 +1925,8 @@ public class ARMV7Assembler extends AbstractAssembler {
         if (dest.number > 15) {
             mov32BitConstantOptimised(flag, ARMV7.r12, imm32);
             vmov(flag, dest, ARMV7.r12, null, CiKind.Float, CiKind.Int);
-
         }
+
         if (isModified12bit(imm32)) {
             mov(flag, dest, as12BitValue(imm32));
             return;
@@ -2037,7 +1939,6 @@ public class ARMV7Assembler extends AbstractAssembler {
         } else {
             mov32BitConstant(flag, dest, imm32);
         }
-
     }
 
     public final void mov64BitConstant(ConditionFlag flag, CiRegister dstLow, CiRegister dstUpper, long imm64) {
