@@ -486,23 +486,8 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     @Override
     protected void mem2mem(CiValue src, CiValue dest, CiKind kind) {
         if (dest.kind.isInt()) {
-            assert !dest.kind.isLong();
-            CiAddress tmp = (CiAddress) src;
-            CiRegister tmpRegister = tmp.base();
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = masm.frameRegister;
-            }
-            int x;
             masm.load(ARMV7.r12, (CiAddress) src, CiKind.Int);
-            tmp = (CiAddress) dest;
-            if (tmp.isARMV7Immediate(CiKind.Int)) {
-                x = tmp.displacement >= 0 ? 1 : 0;
-                masm.strImmediate(ConditionFlag.Always, 1, x, 0, ARMV7.r12, tmpRegister, tmp.displacement);
-            } else {
-                masm.setUpRegisterOptimised(ARMV7.r8, ARMV7.r12, true, CiKind.Int, (CiAddress) dest);
-            }
-            masm.store(ARMV7.r12, (CiAddress) src, CiKind.Int);
-            assert !dest.kind.isLong();
+            masm.store(ARMV7.r12, (CiAddress) dest, CiKind.Int);
         } else {
             assert false : "Not implemented yet";
         }
