@@ -467,7 +467,7 @@ public class Stubs {
             asm.subq(ARMV7.r13, frameSize);
 
             // Save the index in the scratch register
-            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, index);
+            asm.movImm32(ConditionFlag.Always, ARMV7.r8, index);
             if (isHosted() && index == 0) {
                 indexMovInstrPos = asm.codeBuffer.position() - 8;
             }
@@ -478,7 +478,7 @@ public class Stubs {
             CiValue[] args = isInterface ? resolveInterfaceCallArgs : resolveVirtualCallArgs;
 
             // load the index into the second arg register
-            asm.mov32BitConstant(ConditionFlag.Always, args[1].asRegister(), index);
+            asm.movImm32(ConditionFlag.Always, args[1].asRegister(), index);
 
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue(), frameSize));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, args[2].asRegister(), asm.scratchRegister, 0);
@@ -1045,7 +1045,7 @@ public class Stubs {
             int callSize = asm.codeBuffer.position() - callPos;
 
             // should never reach here ...
-            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xffffffff);
+            asm.movImm32(ConditionFlag.Always, ARMV7.r12, 0xffffffff);
             asm.mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12);
 
             // Should never reach here
@@ -1258,7 +1258,7 @@ public class Stubs {
             ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig, false);
             int frameSize = platform().target.alignFrameSize(csl == null ? 0 : csl.size);
 
-            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xdef2def2);
+            asm.movImm32(ConditionFlag.Always, ARMV7.r12, 0xdef2def2);
 
             String runtimeRoutineName = "deoptimize" + kind.name();
             final CriticalMethod runtimeRoutine;
@@ -1334,7 +1334,7 @@ public class Stubs {
             asm.setUpRegister(ARMV7.r8, new CiAddress(WordUtil.archKind(), ARMV7.RSP));
             asm.str(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, ARMV7.r8, 0);
 
-            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xfeeff00f);
+            asm.movImm32(ConditionFlag.Always, ARMV7.r12, 0xfeeff00f);
             asm.ret(0);
 
             String stubName = runtimeRoutineName + "Stub";
@@ -1483,7 +1483,7 @@ public class Stubs {
             int frameSize = platform().target.alignFrameSize(csl.size);
             int cfo = frameSize + 4;
 
-            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xdef1def1);
+            asm.movImm32(ConditionFlag.Always, ARMV7.r12, 0xdef1def1);
             String runtimeRoutineName;
             if (kind == null) {
                 runtimeRoutineName = "deoptimizeAtSafepoint";
@@ -1571,7 +1571,7 @@ public class Stubs {
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg2, ARMV7.r11);
 
             // Copy callee save area into arg3 (i.e. 'csa')
-            asm.mov32BitConstant(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, 0);
+            asm.movImm32(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, 0);
             asm.addRegisters(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r13, 0, 0);
             CiRegister arg3 = args[3].asRegister();
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, arg3, ARMV7.r12);
@@ -1591,7 +1591,7 @@ public class Stubs {
             asm.int3();
             ARMV7Label forever = new ARMV7Label();
             asm.bind(forever);
-            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xc5a0c5a0);
+            asm.movImm32(ConditionFlag.Always, ARMV7.r12, 0xc5a0c5a0);
             asm.branch(forever);
 
             String stubName = runtimeRoutineName + "StubWithCSA";
@@ -1693,7 +1693,7 @@ public class Stubs {
 
             // now allocate the frame for this method
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14, true);
-            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xb00db00d);
+            asm.movImm32(ConditionFlag.Always, ARMV7.r12, 0xb00db00d);
             asm.subq(ARMV7.rsp, frameSize);
 
             // save all the registers
@@ -1732,7 +1732,7 @@ public class Stubs {
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
             ARMV7Label forever = new ARMV7Label();
             asm.bind(forever);
-            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xffffffff);
+            asm.movImm32(ConditionFlag.Always, ARMV7.r12, 0xffffffff);
             asm.blx(ARMV7.r12); // expect it to crash
             asm.branch(forever);
 

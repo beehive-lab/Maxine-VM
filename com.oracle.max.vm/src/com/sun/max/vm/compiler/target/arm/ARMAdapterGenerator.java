@@ -362,7 +362,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
             if (adapter == null) {
                 if (ARMV7Assembler.ASM_DEBUG_MARKERS) {
-                    asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xba5e20af);
+                    asm.movImm32(ConditionFlag.Always, ARMV7.r12, 0xba5e20af);
                     asm.nop(2);
                 } else {
                     asm.nop(4);
@@ -756,7 +756,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             if (adapter == null) {
                 if (ARMV7Assembler.ASM_DEBUG_MARKERS) {
                     asm.nop((OPTIMIZED_ENTRY_POINT.offset() / 4) - 2);
-                    asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xba5eba5e); // signifies OPT2BASE
+                    asm.movImm32(ConditionFlag.Always, ARMV7.r12, 0xba5eba5e); // signifies OPT2BASE
                 } else {
                     asm.nop(OPTIMIZED_ENTRY_POINT.offset() / 4);
                 }
@@ -769,7 +769,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             ARMV7Label end = new ARMV7Label();
             asm.branch(end);
             if (ARMV7Assembler.ASM_DEBUG_MARKERS) {
-                asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0x0af2ba5e);
+                asm.movImm32(ConditionFlag.Always, ARMV7.r12, 0x0af2ba5e);
             }
 
             // Pad with nops up to the OPT entry point

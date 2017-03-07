@@ -70,16 +70,16 @@ public class ARMV7Instrumentation {
         asm.push(ConditionFlag.Always, 1 << 4);
 
         disp = disp - 16;
-        asm.mov32BitConstant(taken, ARMV7.r1, disp);
+        asm.movImm32(taken, ARMV7.r1, disp);
         asm.addRegisters(taken, false, ARMV7.r1, ARMV7.r15, ARMV7.r1, 0, 0);
         if (notTaken != ConditionFlag.NeverUse) {
             notTakenDisp = 8 * 2 + 4 * 2 + 3 * 4;
-            asm.mov32BitConstant(notTaken, ARMV7.r1, notTakenDisp);
+            asm.movImm32(notTaken, ARMV7.r1, notTakenDisp);
             asm.addRegisters(notTaken, false, ARMV7.r1, ARMV7.r15, ARMV7.r1, 0, 0);
             notTakenDisp = 12;
         }
-        asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r0, -1);
-        asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, getInstrumentationBufferAddress());
+        asm.movImm32(ConditionFlag.Always, ARMV7.r0, -1);
+        asm.movImm32(ConditionFlag.Always, ARMV7.r12, getInstrumentationBufferAddress());
         int instruction = ARMV7Assembler.blxHelper(ConditionFlag.Always, ARMV7.r12);
         asm.emitInt(instruction);
         asm.pop(ConditionFlag.Always, 1 << 4);
@@ -104,18 +104,18 @@ public class ARMV7Instrumentation {
         asm.push(ConditionFlag.Always, 1 << 4);
 
         if (isMethodEntry) {
-            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r0, -2);
-            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r1, pcAdjustment - 20); // +20
+            asm.movImm32(ConditionFlag.Always, ARMV7.r0, -2);
+            asm.movImm32(ConditionFlag.Always, ARMV7.r1, pcAdjustment - 20); // +20
         } else {
-            asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r0, -3);
-            asm.mov32BitConstant(taken, ARMV7.r1, pcAdjustment);
+            asm.movImm32(ConditionFlag.Always, ARMV7.r0, -3);
+            asm.movImm32(taken, ARMV7.r1, pcAdjustment);
             if (taken != ConditionFlag.Always) {
-                asm.mov32BitConstant(notTaken, ARMV7.r1, +32);
+                asm.movImm32(notTaken, ARMV7.r1, +32);
                 asm.addRegisters(notTaken, false, ARMV7.r1, ARMV7.r15, ARMV7.r1, 0, 0);
             }
         }
         asm.addRegisters(taken, false, ARMV7.r1, target, ARMV7.r1, 0, 0);
-        asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, getInstrumentationBufferAddress());
+        asm.movImm32(ConditionFlag.Always, ARMV7.r8, getInstrumentationBufferAddress());
         int instruction = ARMV7Assembler.blxHelper(ConditionFlag.Always, ARMV7.r8);
         asm.emitInt(instruction);
         asm.pop(ConditionFlag.Always, 1 << 4);
@@ -174,11 +174,11 @@ public class ARMV7Instrumentation {
         asm.push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384);
         asm.mrsReadAPSR(ARMV7Assembler.ConditionFlag.Always, valAddress);
         asm.push(ConditionFlag.Always, 1 << valAddress.getEncoding());
-        asm.mov32BitConstant(ConditionFlag.Always, valAddress, immediate);
+        asm.movImm32(ConditionFlag.Always, valAddress, immediate);
         asm.addRegisters(ConditionFlag.Always, false, valAddress, valAddress, base, 0, 0);
         asm.or(ConditionFlag.Always, false, valAddress, valAddress, orint);
         asm.mov(ConditionFlag.Always, false, ARMV7.r0, valAddress);
-        asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, getInstrumentationBufferAddress());
+        asm.movImm32(ConditionFlag.Always, ARMV7.r12, getInstrumentationBufferAddress());
         asm.blx(ARMV7.r12);
         asm.pop(ConditionFlag.Always, 1 << valAddress.getEncoding());
         asm.msrWriteAPSR(ARMV7Assembler.ConditionFlag.Always, valAddress);
@@ -193,12 +193,12 @@ public class ARMV7Instrumentation {
         asm.mov(cond, false, ARMV7.r1, target);
         if (notTaken != ConditionFlag.NeverUse) {
             notTakenDisp = 20;
-            asm.mov32BitConstant(notTaken, ARMV7.r1, notTakenDisp);
+            asm.movImm32(notTaken, ARMV7.r1, notTakenDisp);
             asm.addRegisters(notTaken, false, ARMV7.r1, ARMV7.r15, ARMV7.r1, 0, 0);
             notTakenDisp = 12;
         }
-        asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r0, -1);
-        asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, getInstrumentationBufferAddress());
+        asm.movImm32(ConditionFlag.Always, ARMV7.r0, -1);
+        asm.movImm32(ConditionFlag.Always, ARMV7.r12, getInstrumentationBufferAddress());
         int instruction = ARMV7Assembler.blxHelper(ConditionFlag.Always, ARMV7.r12);
         asm.emitInt(instruction);
         asm.pop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048 | 4096 | 16384); // +4
