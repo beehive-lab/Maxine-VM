@@ -23,7 +23,6 @@
 package com.oracle.max.asm.target.armv7;
 
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiAddress.*;
 
 /**
  * Handles validations for all immediate operands in ARM instructions.
