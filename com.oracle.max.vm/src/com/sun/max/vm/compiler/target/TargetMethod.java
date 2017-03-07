@@ -42,6 +42,7 @@ import com.sun.max.vm.compiler.RuntimeCompiler.*;
 import com.sun.max.vm.compiler.deopt.*;
 import com.sun.max.vm.compiler.deopt.Deoptimization.*;
 import com.sun.max.vm.compiler.target.TargetBundleLayout.*;
+import com.sun.max.vm.compiler.target.arm.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.profile.*;
 import com.sun.max.vm.runtime.*;
@@ -828,6 +829,20 @@ public abstract class TargetMethod extends MemoryRegion {
 
         // now copy the code
         System.arraycopy(codeBuffer, 0, this.code, 0, this.code.length);
+        cleanCache();
+    }
+
+    public void cleanCache() {
+        if (!MaxineVM.isHosted() && platform().target.arch.isARM()) {
+            int codePreAmble = 0;
+            if (scalarLiterals != null) {
+                codePreAmble = scalarLiterals.length;
+            }
+            if (referenceLiterals != null) {
+                codePreAmble = codePreAmble + (referenceLiterals.length * 4);
+            }
+            ARMTargetMethodUtil.maxine_cache_flush(CodePointer.from(codeStart.minus(codePreAmble)).toPointer(), codeLength() + codePreAmble);
+        }
     }
 
     public final ClassMethodActor callSiteToCallee(CodePointer callSite) {
