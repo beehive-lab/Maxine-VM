@@ -1,3 +1,0 @@
-#/bin/bash
-methodIndex=$(grep "$1" ../junit-tests/debug_methods | cut -d' ' -f1)
-python ../junit-tests/functionaddress.py $methodIndex
