@@ -588,13 +588,6 @@ public final class MaxineVM {
     @C_FUNCTION
     public static native void core_dump();
 
-    @C_FUNCTION
-    public static native int maxine_fpga_instrumentation_buffer();
-
-    @C_FUNCTION
-    public static native int maxine_fpga_flush_instrumentation_buffer();
-
-
     @INSPECTED
     public final VMConfiguration config;
     public Phase phase = Phase.BOOTSTRAPPING;

@@ -36,12 +36,10 @@ public class ARMV7Label extends Label {
 
         private BranchType type;
         private ConditionFlag flag;
-        private boolean instrumented;
 
-        public BranchInfo(BranchType type, ConditionFlag flag, boolean instrumented) {
+        public BranchInfo(BranchType type, ConditionFlag flag) {
             this.type = type;
             this.flag = flag;
-            this.instrumented = instrumented;
         }
 
         public BranchType getBranchType() {
@@ -63,10 +61,6 @@ public class ARMV7Label extends Label {
                 default:
                     return BranchType.TABLESWITCH;
             }
-        }
-
-        public boolean isInstrumented() {
-            return instrumented;
         }
 
     }

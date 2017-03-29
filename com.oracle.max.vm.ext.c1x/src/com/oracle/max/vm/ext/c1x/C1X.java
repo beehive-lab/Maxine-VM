@@ -177,11 +177,6 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         if (phase == Phase.STARTING) {
             // Speculative opts are ok provided the compilation broker can handle deopt
             C1XOptions.UseAssumptions = vm().compilationBroker.isDeoptSupported() && Deoptimization.UseDeopt;
-        } else if (phase == Phase.RUNNING) {
-            if (C1XOptions.SimulateFPGA) {
-                assert Platform.target().arch.isARM() : "FPGA Simulation enabled only for ARMV7!";
-                ARMV7Instrumentation.setInstrumentationBufferAddress(MaxineVM.maxine_fpga_flush_instrumentation_buffer());
-            }
         } else if (phase == Phase.TERMINATING) {
             if (C1XOptions.PrintMetrics) {
                 C1XMetrics.print();

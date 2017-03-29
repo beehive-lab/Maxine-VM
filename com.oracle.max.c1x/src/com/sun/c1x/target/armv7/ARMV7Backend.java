@@ -74,7 +74,7 @@ public class ARMV7Backend extends Backend {
 
     @Override
     public AbstractAssembler newAssembler(RiRegisterConfig registerConfig) {
-        return new ARMV7MacroAssembler(compiler.target, registerConfig, C1XOptions.SimulateFPGA);
+        return new ARMV7MacroAssembler(compiler.target, registerConfig);
     }
 
     @Override

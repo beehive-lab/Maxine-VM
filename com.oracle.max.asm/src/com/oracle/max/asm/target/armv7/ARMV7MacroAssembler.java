@@ -30,8 +30,8 @@ import com.sun.cri.ri.*;
 
 public class ARMV7MacroAssembler extends ARMV7Assembler {
 
-    public ARMV7MacroAssembler(CiTarget target, RiRegisterConfig registerConfig, boolean instrument) {
-        super(target, registerConfig, instrument);
+    public ARMV7MacroAssembler(CiTarget target, RiRegisterConfig registerConfig) {
+        super(target, registerConfig);
     }
 
     public void pushptr(CiAddress src) {

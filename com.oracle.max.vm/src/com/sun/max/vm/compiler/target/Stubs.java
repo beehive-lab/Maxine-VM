@@ -454,7 +454,7 @@ public class Stubs {
             return new Stub(type, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else if (platform().isa == ISA.ARM) {
             CiRegisterConfig registerConfig = registerConfigs.trampoline;
-            ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig, false);
+            ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
             int frameSize = target().alignFrameSize(csl.size);
             final int frameToCSA = csl.frameOffsetToCSA;
@@ -609,7 +609,7 @@ public class Stubs {
             return new Stub(StaticTrampoline, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else if (platform().isa == ISA.ARM) {
             CiRegisterConfig registerConfig = registerConfigs.trampoline;
-            ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig, false);
+            ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
             int frameSize = target().alignFrameSize(csl.size);
             int frameToCSA = csl.frameOffsetToCSA;
@@ -740,7 +740,7 @@ public class Stubs {
             return new Stub(TrapStub, "trapStub", frameSize, code, callPos, callSize, callee, -1);
         } else if (platform().isa == ISA.ARM) {
             CiRegisterConfig registerConfig = registerConfigs.trapStub;
-            ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig, false);
+            ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
             CiRegister latch = ARMSafepointPoll.LATCH_REGISTER;
             int frameSize = platform().target.alignFrameSize(csl.size);
@@ -897,7 +897,7 @@ public class Stubs {
             return new Stub(UnwindStub, name, frameSize, code, -1, -1, null, -1);
         } else if (platform().isa == ISA.ARM) {
             CiRegisterConfig registerConfig = MaxineVM.vm().stubs.registerConfigs.standard;
-            ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig, false);
+            ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(0);
 
             for (int i = 0; i < prologueSize; ++i) {
@@ -1027,7 +1027,7 @@ public class Stubs {
             return new Stub(UnrollStub, "unrollStub", frameSize, code, callPos, callSize, callee, -1);
         } else if (platform().isa == ISA.ARM) {
             CiRegisterConfig registerConfig = MaxineVM.vm().stubs.registerConfigs.standard;
-            ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig, false);
+            ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(0);
 
             for (int i = 0; i < prologueSize; ++i) {
@@ -1255,7 +1255,7 @@ public class Stubs {
              */
             CiRegisterConfig registerConfig = registerConfigs.standard;
             CiCalleeSaveLayout csl = registerConfig.csl;
-            ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig, false);
+            ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(csl == null ? 0 : csl.size);
 
             asm.movImm32(ConditionFlag.Always, ARMV7.r12, 0xdef2def2);
@@ -1479,7 +1479,7 @@ public class Stubs {
              *   int3                                          // should not reach here
              */
             CiCalleeSaveLayout csl = registerConfig.csl;
-            ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig, false);
+            ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(csl.size);
             int cfo = frameSize + 4;
 
@@ -1682,7 +1682,7 @@ public class Stubs {
             return new Stub(UncommonTrapStub, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else if (platform().isa == ISA.ARM) {
             CiRegisterConfig registerConfig = registerConfigs.uncommonTrapStub;
-            ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig, false);
+            ARMV7MacroAssembler asm = new ARMV7MacroAssembler(target(), registerConfig);
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
             int frameSize = platform().target.alignFrameSize(csl.size);
             int frameToCSA = csl.frameOffsetToCSA;

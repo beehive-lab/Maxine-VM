@@ -356,7 +356,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
 
         @Override
         protected int emitPrologue(Object out, Adapter adapter) {
-            ARMV7Assembler asm = out instanceof OutputStream ? new ARMV7Assembler(target(), null, false) : (ARMV7Assembler) out;
+            ARMV7Assembler asm = out instanceof OutputStream ? new ARMV7Assembler(target(), null) : (ARMV7Assembler) out;
 
             asm.push(ARMV7Assembler.ConditionFlag.Always, asm.getRegisterList(ARMV7.LR));
 
@@ -386,7 +386,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
         protected Adapter create(Sig sig) {
             CiValue[] optArgs = opt.getCallingConvention(JavaCall, WordUtil.ciKinds(sig.kinds, true), target(), false).locations;
 
-            ARMV7Assembler asm = new ARMV7Assembler(target(), null, false);
+            ARMV7Assembler asm = new ARMV7Assembler(target(), null);
 
             // Compute the number of stack args needed for the call (i.e. the args that won't
             // be put into registers)
@@ -752,7 +752,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
          */
         @Override
         protected int emitPrologue(Object out, Adapter adapter) {
-            ARMV7Assembler asm = out instanceof OutputStream ? new ARMV7Assembler(target(), null, false) : (ARMV7Assembler) out;
+            ARMV7Assembler asm = out instanceof OutputStream ? new ARMV7Assembler(target(), null) : (ARMV7Assembler) out;
             if (adapter == null) {
                 if (ARMV7Assembler.ASM_DEBUG_MARKERS) {
                     asm.nop((OPTIMIZED_ENTRY_POINT.offset() / 4) - 2);
@@ -791,7 +791,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
         @Override
         protected Adapter create(Sig sig) {
             CiValue[] optArgs = opt.getCallingConvention(JavaCall, WordUtil.ciKinds(sig.kinds, true), target(), false).locations;
-            ARMV7Assembler asm = new ARMV7Assembler(target(), null, false);
+            ARMV7Assembler asm = new ARMV7Assembler(target(), null);
 
             asm.push(ARMV7Assembler.ConditionFlag.Always, asm.getRegisterList(ARMV7.LR));
 

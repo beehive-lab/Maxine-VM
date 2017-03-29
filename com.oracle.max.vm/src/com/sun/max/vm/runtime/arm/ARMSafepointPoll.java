@@ -46,7 +46,7 @@ public final class ARMSafepointPoll extends SafepointPoll {
     @HOSTED_ONLY
     @Override
     protected byte[] createCode() {
-        final ARMV7Assembler asm = new ARMV7Assembler(target(), null, false);
+        final ARMV7Assembler asm = new ARMV7Assembler(target(), null);
         asm.ldrImmediate(ConditionFlag.Always, 1, 1, 0, ARMV7.LATCH_REGISTER, ARMV7.LATCH_REGISTER, 0);
         return asm.codeBuffer.close(true);
     }
