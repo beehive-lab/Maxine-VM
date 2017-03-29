@@ -1,24 +1,19 @@
 /*
- * Copyright (c) 2009, 2017, Oracle and/or its affiliates. All rights reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ * Copyright (c) 2009, 2017, Oracle and/or its affiliates. All rights reserved. DO NOT ALTER OR REMOVE COPYRIGHT NOTICES
+ * OR THIS FILE HEADER.
  *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.
+ * This code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License version 2 only, as published by the Free Software Foundation.
  *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
+ * This code is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License version 2 for
+ * more details (a copy is included in the LICENSE file that accompanied this code).
  *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ * You should have received a copy of the GNU General Public License version 2 along with this work; if not, write to
+ * the Free Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA or visit www.oracle.com if you need
+ * additional information or have any questions.
  */
 package com.oracle.max.vm.ext.t1x.armv7;
 
@@ -106,233 +101,87 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     public void peekObject(CiRegister dst, int index) {
-        CiAddress tmp = spWord(index);
-        if (tmp.isARMV7Immediate(CiKind.Int)) {
-            CiRegister tmpRegister = tmp.base();
-            int add = tmp.displacement >= 0 ? 1 : 0;
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = asm.frameRegister;
-            }
-            asm.ldrImmediate(ConditionFlag.Always, 1, add, 0, dst, tmpRegister, tmp.displacement);
-            return;
-        }
-        asm.setUpScratch(spWord(index));
-        asm.ldr(ConditionFlag.Always, dst, asm.scratchRegister, 0);
+        asm.load(dst, spWord(index), CiKind.Int);
     }
 
     @Override
     public void pokeObject(CiRegister src, int index) {
-        CiAddress tmp = spWord(index);
-        if (tmp.isARMV7Immediate(CiKind.Int)) {
-            CiRegister tmpRegister = tmp.base();
-            int add = tmp.displacement >= 0 ? 1 : 0;
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = asm.frameRegister;
-            }
-            asm.strImmediate(ConditionFlag.Always, 1, add, 0, src, tmpRegister, tmp.displacement);
-            return;
-        }
-        asm.setUpScratch(spWord(index));
-        asm.str(ConditionFlag.Always, src, asm.scratchRegister, 0);
+        asm.store(src, spWord(index), CiKind.Int);
     }
 
     @Override
     public void peekWord(CiRegister dst, int index) {
-        CiAddress tmp = spWord(index);
-        if (tmp.isARMV7Immediate(CiKind.Int)) {
-            CiRegister tmpRegister = tmp.base();
-            int add = tmp.displacement >= 0 ? 1 : 0;
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = asm.frameRegister;
-            }
-            asm.ldrImmediate(ConditionFlag.Always, 1, add, 0, dst, tmpRegister, tmp.displacement);
-            return;
-        }
-        asm.setUpScratch(spWord(index));
-        asm.ldr(ConditionFlag.Always, dst, asm.scratchRegister, 0);
+        asm.load(dst, spWord(index), CiKind.Int);
     }
 
     @Override
     public void pokeWord(CiRegister src, int index) {
-        CiAddress tmp = spWord(index);
-        if (tmp.isARMV7Immediate(CiKind.Int)) {
-            CiRegister tmpRegister = tmp.base();
-            int add = tmp.displacement >= 0 ? 1 : 0;
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = asm.frameRegister;
-            }
-            asm.strImmediate(ConditionFlag.Always, 1, add, 0, src, tmpRegister, tmp.displacement);
-            return;
-        }
-        asm.setUpScratch(spWord(index));
-        asm.str(ConditionFlag.Always, src, asm.scratchRegister, 0);
+        asm.store(src, spWord(index), CiKind.Int);
     }
 
     public void pokeDoubleWord(CiRegister src, int index) {
-        CiAddress tmp = spWord(index);
-        if (tmp.isARMV7Immediate(CiKind.Long)) {
-            CiRegister tmpRegister = tmp.base();
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = asm.frameRegister;
-            }
-            asm.strd(ConditionFlag.Always, src, tmpRegister, tmp.displacement);
-            return;
-        }
-        asm.setUpScratch(spWord(index));
-        asm.strd(ConditionFlag.Always, src, asm.scratchRegister, 0);
+        asm.store(src, spWord(index), CiKind.Long);
     }
 
     public void peekDoubleWord(CiRegister dst, int index) {
-        CiAddress tmp = spWord(index);
-        if (tmp.isARMV7Immediate(CiKind.Long)) {
-            CiRegister tmpRegister = tmp.base();
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = asm.frameRegister;
-            }
-
-            asm.ldrd(ConditionFlag.Always, dst, tmpRegister, tmp.displacement);
-            return;
-        }
-        asm.setUpScratch(spWord(index));
-        asm.ldrd(ConditionFlag.Always, dst, asm.scratchRegister, 0);
+        asm.load(dst, spWord(index), CiKind.Long);
     }
 
     @Override
     public void peekInt(CiRegister dst, int index) {
-        CiAddress address = spInt(index);
-        if (address.isARMV7Immediate(CiKind.Int)) {
-            CiRegister tmpRegister = address.base();
-            int add = address.displacement >= 0 ? 1 : 0;
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = asm.frameRegister;
-            }
-            asm.ldrImmediate(ConditionFlag.Always, 1, add, 0, dst, tmpRegister, address.displacement);
-            return;
-        }
-        asm.setUpScratch(spInt(index));
-        asm.ldr(ConditionFlag.Always, dst, asm.scratchRegister, 0);
+        asm.load(dst, spInt(index), CiKind.Int);
     }
 
     @Override
     public void pokeInt(CiRegister src, int index) {
-        CiAddress address = spInt(index);
-        if (address.isARMV7Immediate(CiKind.Int)) {
-            CiRegister tmpRegister = address.base();
-            int add = address.displacement >= 0 ? 1 : 0;
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = asm.frameRegister;
-            }
-            asm.strImmediate(ConditionFlag.Always, 1, add, 0, src, tmpRegister, address.displacement);
-            return;
-        }
-        asm.setUpScratch(spInt(index));
-        asm.str(ConditionFlag.Always, src, asm.scratchRegister, 0);
+        asm.store(src, spInt(index), CiKind.Int);
     }
 
     @Override
     public void peekLong(CiRegister dst, int index) {
         assert dst.getEncoding() < 10;
-        CiAddress tmp = spLong(index);
-        if (tmp.isARMV7Immediate(CiKind.Long)) {
-            CiRegister tmpRegister = tmp.base();
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = asm.frameRegister;
-            }
-            asm.ldrd(ConditionFlag.Always, dst, tmpRegister, tmp.displacement);
-            return;
-        }
-        asm.setUpScratch(spLong(index));
-        asm.ldrd(ConditionFlag.Always, dst, scratch, 0);
+        asm.load(dst, spLong(index), CiKind.Long);
     }
 
     @Override
     public void pokeLong(CiRegister src, int index) {
         assert src.getEncoding() < 10;
-        CiAddress tmp = spLong(index);
-        if (tmp.isARMV7Immediate(CiKind.Long)) {
-            CiRegister tmpRegister = tmp.base();
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = asm.frameRegister;
-            }
-            asm.strd(ConditionFlag.Always, src, tmpRegister, tmp.displacement);
-            return;
-        }
-        asm.setUpScratch(spLong(index));
-        asm.strd(ARMV7Assembler.ConditionFlag.Always, src, scratch, 0);
+        asm.store(src, spLong(index), CiKind.Long);
     }
 
     @Override
     public void peekDouble(CiRegister dst, int index) {
         assert dst.isFpu();
-        CiAddress tmp = spLong(index);
-        if (tmp.isARMV7Immediate(CiKind.Double)) {
-            CiRegister tmpRegister = tmp.base();
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = asm.frameRegister;
-            }
-            asm.vldr(ConditionFlag.Always, dst, tmpRegister, tmp.displacement, CiKind.Double, CiKind.Int);
-            return;
-        }
-        asm.setUpScratch(spLong(index));
-        asm.vldr(ARMV7Assembler.ConditionFlag.Always, dst, scratch, 0, CiKind.Double, CiKind.Int);
+        asm.load(dst, spLong(index), CiKind.Double);
     }
 
     @Override
     public void pokeDouble(CiRegister src, int index) {
         assert src.isFpu();
-        CiAddress tmp = spLong(index);
-        if (tmp.isARMV7Immediate(CiKind.Double)) {
-            CiRegister tmpRegister = tmp.base();
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = asm.frameRegister;
-            }
-            asm.vstr(ConditionFlag.Always, src, tmpRegister, tmp.displacement, CiKind.Double, CiKind.Int);
-            return;
-        }
-        asm.setUpScratch(spLong(index));
-        asm.vstr(ARMV7Assembler.ConditionFlag.Always, src, scratch, 0, CiKind.Double, CiKind.Int);
+        asm.store(src, spLong(index), CiKind.Double);
+
     }
 
     @Override
     public void peekFloat(CiRegister dst, int index) {
         assert dst.isFpu();
-        CiAddress tmp = spInt(index);
-        if (tmp.isARMV7Immediate(CiKind.Float)) {
-            CiRegister tmpRegister = tmp.base();
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = asm.frameRegister;
-            }
-            asm.vldr(ConditionFlag.Always, dst, tmpRegister, tmp.displacement, CiKind.Float, CiKind.Int);
-            return;
-        }
-        asm.setUpScratch(spInt(index));
-        asm.vldr(ConditionFlag.Always, dst, asm.scratchRegister, 0, CiKind.Float, CiKind.Int);
+        asm.load(dst, spInt(index), CiKind.Float);
     }
 
     @Override
     public void pokeFloat(CiRegister src, int index) {
         assert src.isFpu();
-        CiAddress tmp = spInt(index);
-        if (tmp.isARMV7Immediate(CiKind.Float)) {
-            CiRegister tmpRegister = tmp.base();
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = asm.frameRegister;
-            }
-            asm.vstr(ConditionFlag.Always, src, tmpRegister, tmp.displacement, CiKind.Float, CiKind.Int);
-            return;
-        }
-        asm.setUpScratch(spInt(index));
-        asm.vstr(ConditionFlag.Always, src, asm.scratchRegister, 0, CiKind.Float, CiKind.Int);
+        asm.store(src, spInt(index), CiKind.Float);
     }
 
     @Override
     protected void assignObjectReg(CiRegister dst, CiRegister src) {
-        asm.mov(ARMV7Assembler.ConditionFlag.Always, false, dst, src); // changed to false for flag update
+        asm.mov(ARMV7Assembler.ConditionFlag.Always, false, dst, src);
     }
 
     @Override
     protected void assignWordReg(CiRegister dst, CiRegister src) {
-        asm.mov(ARMV7Assembler.ConditionFlag.Always, false, dst, src); // changed to false for flag update
+        asm.mov(ARMV7Assembler.ConditionFlag.Always, false, dst, src);
     }
 
     @Override
@@ -392,46 +241,34 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected void loadInt(CiRegister dst, int index) {
-        CiAddress tmp = localSlot(localSlotOffset(index, Kind.INT));
-        if (tmp.isARMV7Immediate(CiKind.Int)) {
-            CiRegister tmpRegister = tmp.base();
-            int add = tmp.displacement >= 0 ? 1 : 0;
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = asm.frameRegister;
+        CiAddress address = localSlot(localSlotOffset(index, Kind.INT));
+        if (ARMImmediates.isARMV7Immediate(address)) {
+            CiRegister register = address.base();
+            if (register == CiRegister.Frame) {
+                register = asm.frameRegister;
             }
-            asm.ldrImmediate(ConditionFlag.Always, 1, add, 0, dst, tmpRegister, tmp.displacement);
+            asm.ldrImmediate(ConditionFlag.Always, 1, (address.displacement >= 0 ? 1 : 0), 0, dst, register, address.displacement);
             return;
         }
-        asm.setUpScratch(tmp);
+        asm.setUpScratch(address);
         asm.ldr(ConditionFlag.Always, dst, ARMV7.r12, 0);
     }
 
     @Override
     protected void loadLong(CiRegister dst, int index) {
-        assert dst.number < 10; // to prevent screwing up scratch 2 registers required for double!
-        CiAddress tmp = localSlot(localSlotOffset(index, Kind.LONG));
-        if (tmp.isARMV7Immediate(CiKind.Long)) {
-            CiRegister tmpRegister = tmp.base();
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = asm.frameRegister;
-            }
-            asm.ldrd(ConditionFlag.Always, dst, tmpRegister, tmp.displacement);
-            return;
-        }
-        asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
-        asm.ldrd(ConditionFlag.Always, dst, scratch, 0);
+        assert dst.number < 10;
+        asm.load(dst, localSlot(localSlotOffset(index, Kind.LONG)), CiKind.Long);
     }
 
     @Override
     protected void loadWord(CiRegister dst, int index) {
-        CiAddress tmp = localSlot(localSlotOffset(index, Kind.WORD));
-        if (tmp.isARMV7Immediate(CiKind.Int)) {
-            CiRegister tmpRegister = tmp.base();
-            int add = tmp.displacement >= 0 ? 1 : 0;
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = asm.frameRegister;
+        CiAddress address = localSlot(localSlotOffset(index, Kind.WORD));
+        if (ARMImmediates.isARMV7Immediate(address)) {
+            CiRegister register = address.base();
+            if (register == CiRegister.Frame) {
+                register = asm.frameRegister;
             }
-            asm.ldrImmediate(ConditionFlag.Always, 1, add, 0, dst, tmpRegister, tmp.displacement);
+            asm.ldrImmediate(ConditionFlag.Always, 1, (address.displacement >= 0 ? 1 : 0), 0, dst, register, address.displacement);
             return;
         }
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.WORD)));
@@ -440,14 +277,13 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected void loadObject(CiRegister dst, int index) {
-        CiAddress tmp = localSlot(localSlotOffset(index, Kind.REFERENCE));
-        if (tmp.isARMV7Immediate(CiKind.Int)) {
-            CiRegister tmpRegister = tmp.base();
-            int add = tmp.displacement >= 0 ? 1 : 0;
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = asm.frameRegister;
+        CiAddress address = localSlot(localSlotOffset(index, Kind.REFERENCE));
+        if (ARMImmediates.isARMV7Immediate(address)) {
+            CiRegister register = address.base();
+            if (register == CiRegister.Frame) {
+                register = asm.frameRegister;
             }
-            asm.ldrImmediate(ConditionFlag.Always, 1, add, 0, dst, tmpRegister, tmp.displacement);
+            asm.ldrImmediate(ConditionFlag.Always, 1, (address.displacement >= 0 ? 1 : 0), 0, dst, register, address.displacement);
             return;
         }
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.REFERENCE)));
@@ -456,14 +292,13 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected void storeInt(CiRegister src, int index) {
-        CiAddress tmp = localSlot(localSlotOffset(index, Kind.INT));
-        if (tmp.isARMV7Immediate(CiKind.Int)) {
-            CiRegister tmpRegister = tmp.base();
-            int add = tmp.displacement >= 0 ? 1 : 0;
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = asm.frameRegister;
+        CiAddress address = localSlot(localSlotOffset(index, Kind.INT));
+        if (ARMImmediates.isARMV7Immediate(address)) {
+            CiRegister register = address.base();
+            if (register == CiRegister.Frame) {
+                register = asm.frameRegister;
             }
-            asm.strImmediate(ConditionFlag.Always, 1, add, 0, src, tmpRegister, tmp.displacement);
+            asm.strImmediate(ConditionFlag.Always, 1, (address.displacement >= 0 ? 1 : 0), 0, src, register, address.displacement);
             return;
         }
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.INT)));
@@ -473,13 +308,13 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected void storeLong(CiRegister src, int index) {
         assert src.number < 10;
-        CiAddress tmp = localSlot(localSlotOffset(index, Kind.LONG));
-        if (tmp.isARMV7Immediate(CiKind.Long)) {
-            CiRegister tmpRegister = tmp.base();
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = asm.frameRegister;
+        CiAddress address = localSlot(localSlotOffset(index, Kind.LONG));
+        if (ARMImmediates.isARMV7Immediate(address)) {
+            CiRegister register = address.base();
+            if (register == CiRegister.Frame) {
+                register = asm.frameRegister;
             }
-            asm.strd(ConditionFlag.Always, src, tmpRegister, tmp.displacement);
+            asm.strImmediate(ConditionFlag.Always, 1, (address.displacement >= 0 ? 1 : 0), 0, src, register, address.displacement);
             return;
         }
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
@@ -488,14 +323,13 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected void storeWord(CiRegister src, int index) {
-        CiAddress tmp = localSlot(localSlotOffset(index, Kind.WORD));
-        if (tmp.isARMV7Immediate(CiKind.Int)) {
-            CiRegister tmpRegister = tmp.base();
-            int add = tmp.displacement >= 0 ? 1 : 0;
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = asm.frameRegister;
+        CiAddress address = localSlot(localSlotOffset(index, Kind.WORD));
+        if (ARMImmediates.isARMV7Immediate(address)) {
+            CiRegister register = address.base();
+            if (register == CiRegister.Frame) {
+                register = asm.frameRegister;
             }
-            asm.strImmediate(ConditionFlag.Always, 1, add, 0, src, tmpRegister, tmp.displacement);
+            asm.strImmediate(ConditionFlag.Always, 1, (address.displacement >= 0 ? 1 : 0), 0, src, register, address.displacement);
             return;
         }
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.WORD)));
@@ -504,14 +338,13 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     protected void storeObject(CiRegister src, int index) {
-        CiAddress tmp = localSlot(localSlotOffset(index, Kind.REFERENCE));
-        if (tmp.isARMV7Immediate(CiKind.Int)) {
-            CiRegister tmpRegister = tmp.base();
-            int add = tmp.displacement >= 0 ? 1 : 0;
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = asm.frameRegister;
+        CiAddress address = localSlot(localSlotOffset(index, Kind.REFERENCE));
+        if (ARMImmediates.isARMV7Immediate(address)) {
+            CiRegister register = address.base();
+            if (register == CiRegister.Frame) {
+                register = asm.frameRegister;
             }
-            asm.strImmediate(ConditionFlag.Always, 1, add, 0, src, tmpRegister, tmp.displacement);
+            asm.strImmediate(ConditionFlag.Always, 1, (address.displacement >= 0 ? 1 : 0), 0, src, register, address.displacement);
             return;
         }
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.REFERENCE)));
@@ -806,7 +639,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         asm.setUpScratch(new CiAddress(CiKind.Int, r7.asValue(), r9.asValue(), Scale.Times4, 0));
         asm.ldr(ConditionFlag.Always, r12, ARMV7.r12, 0);
         asm.addRegisters(ConditionFlag.Always, false, r12, ARMV7.r15, r12, 0, 0);
-        asm.add(ConditionFlag.Always, false, r12, r12, 8, 0);
+        asm.add12BitImmediate(ConditionFlag.Always, false, r12, r12, 8);
         asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 7, true); // restore r9/r10
         asm.mov(ConditionFlag.Always, false, ARMV7.r15, ARMV7.r12);
 
@@ -892,7 +725,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             asm.setUpScratch(new CiAddress(CiKind.Int, r6.asValue(), r7.asValue(), Scale.Times4, 4));
             asm.ldr(ConditionFlag.Always, r12, r12, 0);
             asm.addRegisters(ConditionFlag.Always, false, r12, r15, r12, 0, 0);
-            asm.add(ConditionFlag.Always, false, r12, r12, 8, 0);
+            asm.add12BitImmediate(ConditionFlag.Always, false, r12, r12, 8);
             asm.pop(ConditionFlag.Always, 1 << 9 | 1 << 6 | 1 << 7, true);
             asm.mov(ConditionFlag.Always, false, r15, r12); // changed to false for flag update
 

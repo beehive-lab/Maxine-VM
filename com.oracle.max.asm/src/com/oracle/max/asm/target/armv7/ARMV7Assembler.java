@@ -215,16 +215,11 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     protected void patchJumpTarget(int branch, int target, BranchInfo info) {
-        // branch: d0d0
-        // jcc: beef + 2 nops
-        // jmp: dead + 2 nops
-        // tableswitch: nop
-
         BranchType type = (info.getBranchType() == BranchType.UNKNOWN) ? BranchInfo.fromValue(codeBuffer.getInt(branch) & 0xffff) : info.getBranchType();
         ConditionFlag flag = (info.getBranchType() == BranchType.UNKNOWN) ? ConditionFlag.which((codeBuffer.getInt(branch) >> 28) & 0xf) : info.getConditionFlag();
 
         checkConstraint(-0x800000 <= (target - branch) && (target - branch) <= 0x7fffff, "branch must be within  a 24bit offset");
-        int disp = target - branch; // -16 implies 4 instruction jump
+        int disp = target - branch;
         int instruction = 0;
 
         int firstPatch = 44;
@@ -399,19 +394,6 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public void add(final ConditionFlag cond, final boolean s, final CiRegister rd, final CiRegister rn, final int imm8, final int rotateAmount) {
-        int instruction = 0x02800000;
-        checkConstraint(0 <= imm8 && imm8 <= 255, "0 <= imm8 && imm8 <= 255");
-        checkConstraint(0 <= rotateAmount && rotateAmount <= 15, "0 <= rotateAmount  && rotateAmount <= 15");
-        instruction |= (cond.value() & 0xf) << 28;
-        instruction |= (s ? 1 : 0) << 20;
-        instruction |= (rd.getEncoding() & 0xf) << 12;
-        instruction |= (rn.getEncoding() & 0xf) << 16;
-        instruction |= imm8 & 0xff;
-        instruction |= (rotateAmount & 0xf) << 8;
-        emitInt(instruction);
-    }
-
     public static int blxHelper(final ConditionFlag cond, final CiRegister rm) {
         int instruction = 0x12FFF30;
         instruction |= (cond.value() & 0xf) << 28;
@@ -423,7 +405,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         int instruction = 0x2800000;
         assert 0 <= imm12 && imm12 < 4096 : "0 <= imm12 && imm12 < 4096";
         instruction |= (cond.value() & 0xf) << 28;
-        instruction |= (rn.getEncoding() & 0xf) << 16; // altered
+        instruction |= (rn.getEncoding() & 0xf) << 16;
         instruction |= (rd.getEncoding() & 0xf) << 12;
         instruction |= (s ? 1 : 0) << 20;
         instruction |= imm12;
@@ -757,7 +739,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void sub(final ConditionFlag cond, final boolean s, final CiRegister rd, final CiRegister rn, final int imm8, final int rotateAmount) {
-        int instruction = 0x02400000; // subtract of an immediate
+        int instruction = 0x02400000;
         checkConstraint(0 <= imm8 && imm8 <= 255, "0 <= imm8 && imm8 <= 255");
         checkConstraint(0 <= rotateAmount && rotateAmount <= 15, "0 <= rotateAmount && rotateAmount  <= 15");
         instruction |= (cond.value() & 0xf) << 28;
@@ -913,31 +895,6 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public void strdualImmediate(final ConditionFlag cond, int p, int u, int w, final CiRegister rt, final CiRegister rn, int imm8) {
-        if (instrumentation.enabled()) {
-            instrumentation.instrument(false, true, true, rn, imm8);
-        }
-        checkConstraint(-255 <= imm8 && imm8 <= 255, "strdualImmediate offset greater than +/- 255 ");
-
-        if (imm8 < 0) {
-            assert u == 0;
-            imm8 *= -1;
-            u = 1;
-        } else {
-            assert u == 1;
-        }
-        int instruction = 0x004000f0;
-        instruction |= (p & 0x1) << 24;
-        instruction |= (u & 0x1) << 23;
-        instruction |= (w & 0x1) << 21;
-        instruction |= (cond.value() & 0xf) << 28;
-        instruction |= (rn.getEncoding() & 0xf) << 16;
-        instruction |= (rt.getEncoding() & 0xf) << 12;
-        instruction |= imm8 & 0xf;
-        instruction |= (imm8 & 0xf0) << 4;
-        emitInt(instruction);
-    }
-
     public void clz(final ConditionFlag cond, final CiRegister rdest, final CiRegister rval) {
         int instruction = 0x016f0f10;
         instruction |= (cond.value() & 0xf) << 28;
@@ -1028,8 +985,8 @@ public class ARMV7Assembler extends AbstractAssembler {
         checkConstraint(-255 <= imm8 && imm8 <= 255, "-255 <= offset8 && offset8 <= 255 ldrshw");
 
         int instruction = 0x005000f0;
-        p &=  1;
-        u &=  1;
+        p &= 1;
+        u &= 1;
         if (imm8 < 0) {
             u = 0;
             imm8 *= -1;
@@ -1048,7 +1005,6 @@ public class ARMV7Assembler extends AbstractAssembler {
             instrumentation.instrument(true, true, true, rn, imm8);
         }
         checkConstraint(-255 <= imm8 && imm8 <= 255, "-255 <= offset8 && offset8 <= 255 ldrsb");
-
         int instruction = 0x005000d0;
         p &= 1;
         u &= 1;
@@ -1274,9 +1230,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                 }
             }
         }
-
-        int instruction;
-        instruction = (flag.value() & 0xf) << 28;
+        int instruction = (flag.value() & 0xf) << 28;
         instruction |= 0x8 << 24;
         instruction |= 0xb << 20;
         instruction |= 0xd << 16;
@@ -1337,9 +1291,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             u = 1;
         }
         instruction |= (flag.value() & 0xf) << 28;
-        instruction |= p << 24;
-        instruction |= u << 23;
-        instruction |= w << 21;
+        instruction |= (p << 24) | (u << 23) | (w << 21);
         instruction |= (valueReg.getEncoding() & 0xf) << 12;
         instruction |= (baseReg.getEncoding() & 0xf) << 16;
         instruction |= (offset8 & 0xf0) << 4;
@@ -1347,12 +1299,19 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public void str(final ConditionFlag flag, final CiRegister valueReg, final CiRegister baseRegister, final int offset12) {
+    public void str(final ConditionFlag flag, final CiRegister valueReg, final CiRegister baseRegister, int offset12) {
         if (instrumentation.enabled()) {
             instrumentation.instrument(false, true, true, baseRegister, offset12);
         }
-        int instruction;
-        instruction = 0x05800000;
+        int instruction = 0x05800000;
+        int p = 1;
+        int u = 1;
+        int w = 0;
+        if (offset12 < 0) {
+            u = 0;
+            offset12 *= -1;
+        }
+        instruction |= (p << 24) | (u << 23) | (w << 21);
         instruction |= (flag.value() & 0xf) << 28;
         instruction |= (valueReg.getEncoding() & 0xf) << 12;
         instruction |= (baseRegister.getEncoding() & 0xf) << 16;
@@ -1360,12 +1319,25 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public void ldr(final ConditionFlag flag, final CiRegister destReg, final CiRegister baseRegister, final int offset12) {
+    public void ldr(final ConditionFlag flag, final CiRegister destReg, final CiRegister baseRegister, int offset12) {
         if (instrumentation.enabled()) {
             instrumentation.instrument(true, true, true, baseRegister, offset12);
         }
-        int instruction;
-        instruction = 0x05900000;
+        checkConstraint(-4095 <= offset12 && offset12 <= 4095, "ldrImmediate offset greater than +/- 4095 ");
+
+        int instruction = 0x05900000;
+        int p = 1;
+        int u = 1;
+        int w = 0;
+        if (offset12 < 0) {
+            u = 0;
+            offset12 *= -1;
+        }
+        p &= 1;
+        u &= 1;
+        w &= 1;
+
+        instruction |= (p << 24) | (u << 23) | (w << 21);
         instruction |= (flag.value() & 0xf) << 28;
         instruction |= (destReg.getEncoding() & 0xf) << 12;
         instruction |= (baseRegister.getEncoding() & 0xf) << 16;
@@ -1397,7 +1369,9 @@ public class ARMV7Assembler extends AbstractAssembler {
         return r.getEncoding();
     }
 
-    private CiAddress calculateAddress(CiAddress addr) {
+
+
+    private CiAddress calculateAddress(CiAddress addr, CiKind kind) {
         CiRegister base = addr.base();
         CiRegister index = addr.index();
         CiAddress.Scale scale = addr.scale;
@@ -1407,20 +1381,20 @@ public class ARMV7Assembler extends AbstractAssembler {
         assert !(base.isValid() && disp == 0 && base.compareTo(ARMV7.LATCH_REGISTER) == 0);
         assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
 
-        if (base.isValid() || base.compareTo(CiRegister.Frame) == 0) {
-            if (base == CiRegister.Frame) {
+        if (base == CiRegister.Frame) {
                 base = frameRegister;
-            }
+
         }
+        //assert (base.isValid()) && (base == CiRegister.Frame);
 
         switch (addr.format()) {
             case BASE:
                 break;
             case BASE_DISP:
-                if (ARMImmediates.isValidDisp(disp, CiKind.Long)) {
+                if (ARMImmediates.isValidDisp(disp, kind)) {
                     break;
                 } else if (ARMImmediates.isValidImmediate(Math.abs(disp))) {
-                    if (disp > 0) {
+                    if (disp >= 0) {
                         add12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, ARMImmediates.calculateShifter(disp));
                     } else {
                         sub12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, ARMImmediates.calculateShifter(disp));
@@ -1440,7 +1414,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                 disp = 0;
                 break;
             case BASE_INDEX_DISP:
-                if (ARMImmediates.isValidDisp(disp, CiKind.Long)) {
+                if (ARMImmediates.isValidDisp(disp, kind)) {
                     addlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
                     base = scratchRegister;
                 } else if (ARMImmediates.isValidImmediate(Math.abs(disp))) {
@@ -1466,7 +1440,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void load(CiRegister dest, CiAddress addr, CiKind kind) {
-        CiAddress address = calculateAddress(addr);
+        CiAddress address = calculateAddress(addr, kind);
         switch (kind) {
             case Short:
                 ldrshw(ConditionFlag.Always, 1, 1, 0, dest, address.base(), address.displacement);
@@ -1497,7 +1471,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void store(CiRegister src, CiAddress addr, CiKind kind) {
-        CiAddress address = calculateAddress(addr);
+        CiAddress address = calculateAddress(addr, kind);
         switch (kind) {
             case Short:
                 strHImmediate(ConditionFlag.Always, 1, 0, 0, src, address.base(), address.displacement);
@@ -1715,17 +1689,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void movslq(CiAddress dst, int imm32) {
         mov32BitConstant(ConditionFlag.Always, ARMV7.r8, imm32);
-        if (!dst.isARMV7Immediate(CiKind.Int)) {
-            setUpScratch(dst);
-            str(ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
-        } else {
-            CiRegister tmpRegister = dst.base();
-            if (tmpRegister == CiRegister.Frame) {
-                tmpRegister = frameRegister;
-            }
-            int add = dst.displacement >= 0 ? 1 : 0;
-            strImmediate(ConditionFlag.Always, 1, add, 0, ARMV7.r8, tmpRegister, dst.displacement);
-        }
+        store(ARMV7.r8, dst, CiKind.Int);
     }
 
     public final void cmpl(CiRegister src, int imm32) {
@@ -1803,13 +1767,13 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void incq(CiRegister dst) {
         assert dst.isValid();
-        add(ConditionFlag.Always, false, dst, dst, 1, 0);
+        add12BitImmediate(ConditionFlag.Always, false, dst, dst, 1);
     }
 
     public final void addq(CiRegister dst, int imm32) {
         assert dst.isValid();
         if (ARMImmediates.isValidImmediate(imm32)) {
-            add(ConditionFlag.Always, false, dst, dst, ARMImmediates.calculateShifter(imm32) & 0xFF, ARMImmediates.calculateShifter(imm32) >> 8);
+            add12BitImmediate(ConditionFlag.Always, false, dst, dst, ARMImmediates.calculateShifter(imm32));
             return;
         }
         mov32BitConstant(ConditionFlag.Always, scratchRegister, imm32);
@@ -1912,19 +1876,6 @@ public class ARMV7Assembler extends AbstractAssembler {
     // TODO: Document
     public final void int3() {
         emitInt(0xFEDEFFE7);
-    }
-
-    // TODO: Document
-    public final void flushICache(CiRegister startAddress, int bytes) {
-        assert startAddress.getEncoding() == ARMV7.r12.getEncoding();
-        push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 128, true);
-        mov(ConditionFlag.Always, false, ARMV7.r0, scratchRegister);
-        mov32BitConstant(ConditionFlag.Always, ARMV7.r1, bytes);
-        eor(ConditionFlag.Always, false, ARMV7.r2, ARMV7.r2, ARMV7.r2, 0, 0);
-        mov32BitConstant(ConditionFlag.Always, ARMV7.r7, 0x000f0002);
-        addlsl(ConditionFlag.Always, false, ARMV7.r1, ARMV7.r1, ARMV7.r0, 0);
-        emitInt(0xef000000);
-        pop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 128, true);
     }
 
     public final void hlt() {
@@ -2127,7 +2078,6 @@ public class ARMV7Assembler extends AbstractAssembler {
             instruction |= (dest.getDoubleEncoding() >> 4) << 22;
             instruction |= (rn.getDoubleEncoding() >> 4) << 7;
             instruction |= (rm.getDoubleEncoding() >> 4) << 5;
-
         } else {
             instruction |= (dest.getEncoding() >> 1) << 12;
             instruction |= (rn.getEncoding() >> 1) << 16;
@@ -2249,11 +2199,11 @@ public class ARMV7Assembler extends AbstractAssembler {
         checkConstraint(imm8 % 4 == 0, " imm8 is not a multiple of 4");
         checkConstraint(src.isCpu(), "vstr base src address register must be core");
         if (imm8 >= 0) {
-            instruction |= 1 << 23; // add
+            instruction |= 1 << 23;
         } else {
-            imm8 = -1 * imm8;
+            imm8 *= -1;
         }
-        imm8 = imm8 >> 2; // divide by 4
+        imm8 = imm8 >> 2;
         assert src.getEncoding() >= 0 && src.getEncoding() <= 15;
         instruction |= imm8 & 0xff;
         instruction |= (src.getEncoding() & 0xf) << 16;

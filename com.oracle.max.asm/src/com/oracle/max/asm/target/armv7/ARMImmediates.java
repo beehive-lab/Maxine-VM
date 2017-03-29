@@ -23,6 +23,7 @@
 package com.oracle.max.asm.target.armv7;
 
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiAddress.*;
 
 /**
  * Handles validations for all immediate operands in ARM instructions.
@@ -34,18 +35,28 @@ public final class ARMImmediates {
     private ARMImmediates() {
     }
 
+    public static boolean isARMV7Immediate(CiAddress address) {
+        if ((address.format() != Format.BASE_DISP) || (address.format() != Format.BASE)) {
+            return false;
+        }
+        return isValidDisp(address.displacement, address.kind);
+    }
+
     public static boolean isValidDisp(int value, CiKind kind) {
         switch (kind) {
+            case Boolean:
+            case Byte:
+            case Char:
+            case Short:
+            case Jsr:
+            case Int:
+            case Object:
+                return value >= -4095 && value <= 4095;
+            case Long:
+                return value >= -255 && value <= 255;
             case Float:
             case Double:
-                return value < 1020 && value > -1020;
-            case Long:
-            case Char:
-            case Byte:
-            case Short:
-                return value < 255 && value > -255;
-            case Int:
-                return value < 4095 && value > -4095;
+                return value >= -1020 && value <= 1020;
             default:
                 assert false : "Unknown state!";
         }

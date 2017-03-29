@@ -1287,7 +1287,7 @@ public class Stubs {
                         break;
                     case Long:
                         assert args[4].isRegister() == false;
-                        arg4 = new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4); // new
+                        arg4 = new CiAddress(kind, ARMV7.RSP, ((CiStackSlot) args[4]).index() * 4);
                         asm.setUpScratch(arg4);
                         asm.strd(ConditionFlag.Always, returnRegister, asm.scratchRegister, 0);
                         break;
@@ -1499,7 +1499,7 @@ public class Stubs {
             }
 
             // now allocate the frame for this method (including return address slot)
-            asm.subq(ARMV7.r13, frameSize + 4); // NOT SURE If + 4 is required
+            asm.subq(ARMV7.r13, frameSize + 4);
             // save all the callee save registers
             asm.save(csl, csl.frameOffsetToCSA);
 
@@ -1693,7 +1693,6 @@ public class Stubs {
 
             // now allocate the frame for this method
             asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14, true);
-            asm.movImm32(ConditionFlag.Always, ARMV7.r12, 0xb00db00d);
             asm.subq(ARMV7.rsp, frameSize);
 
             // save all the registers

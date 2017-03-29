@@ -52,39 +52,6 @@ public final class CiAddress extends CiValue {
      */
     public final int displacement;
 
-    public boolean isARMV7Immediate(CiKind mykind) {
-        boolean isBase = (format() == Format.BASE_DISP) || (format() == Format.BASE);
-        switch (mykind) {
-            case Boolean:
-            case Byte:
-            case Char:
-            case Short:
-            case Jsr:
-            case Int:
-            case Object:
-                isBase = isBase && (displacement >= -4095) && (displacement <= 4095);
-                break;
-            case Long:
-                isBase = isBase && (displacement >= -255) && (displacement <= 255);
-                break;
-            case Float:
-            case Double:
-                isBase = isBase && (displacement >= -1020) && (displacement <= 1020);
-                break;
-            default:
-                assert 0 == 1;
-                break;
-
-        }
-        if (format() == Format.BASE) {
-            assert displacement == 0 : "displace non zero and Format.BASE";
-        }
-        if (isBase) {
-            assert index().isValid() == false;
-        }
-        return isBase;
-    }
-
     /**
      * Creates a {@code CiAddress} with given base register, no scaling and no displacement.
      *

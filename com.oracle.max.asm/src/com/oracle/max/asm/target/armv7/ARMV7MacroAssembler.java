@@ -314,27 +314,10 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         if (value == 0) {
             return;
         }
-        CiRegister tmpRegister = dst.base();
-        int add = dst.displacement >= 0 ? 1 : 0;
-        if (tmpRegister == CiRegister.Frame) {
-            tmpRegister = frameRegister;
-        }
-
-        if (dst.isARMV7Immediate(CiKind.Int)) {
-            ldrImmediate(ConditionFlag.Always, 1, add, 0, ARMV7.r12, tmpRegister, dst.displacement);
-        } else {
-            setUpScratch(dst);
-            saveInFP(12);
-            ldr(ConditionFlag.Always, ARMV7.r12, ARMV7.r12, 0);
-        }
+        load(ARMV7.r12, dst, CiKind.Int);
         mov32BitConstant(ConditionFlag.Always, ARMV7.r8, value);
         sub(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r12, ARMV7.r8, 0, 0);
-        if (dst.isARMV7Immediate(CiKind.Int)) {
-            strImmediate(ConditionFlag.Always, 1, add, 0, ARMV7.r8, tmpRegister, dst.displacement);
-        } else {
-            restoreFromFP(12);
-            strImmediate(ConditionFlag.Always, 1, 1, 0, ARMV7.r8, ARMV7.r12, 0);
-        }
+        store(ARMV7.r8, dst, CiKind.Int);
     }
 
     public void incrementl(CiRegister reg, int value) {
@@ -349,26 +332,10 @@ public class ARMV7MacroAssembler extends ARMV7Assembler {
         if (value == 0) {
             return;
         }
-        CiRegister tmpRegister = dst.base();
-        int add = dst.displacement >= 0 ? 1 : 0;
-        if (tmpRegister == CiRegister.Frame) {
-            tmpRegister = frameRegister;
-        }
-        if (dst.isARMV7Immediate(CiKind.Int)) {
-            ldrImmediate(ConditionFlag.Always, 1, add, 0, ARMV7.r12, tmpRegister, dst.displacement);
-        } else {
-            setUpScratch(dst);
-            saveInFP(12);
-            ldr(ConditionFlag.Always, r12, r12, 0);
-        }
+        load(ARMV7.r12, dst, CiKind.Int);
         mov32BitConstant(ConditionFlag.Always, ARMV7.r8, value);
         addRegisters(ConditionFlag.Always, false, ARMV7.r8, r12, ARMV7.r8, 0, 0);
-        if (dst.isARMV7Immediate(CiKind.Int)) {
-            strImmediate(ConditionFlag.Always, 1, add, 0, ARMV7.r8, tmpRegister, dst.displacement);
-        } else {
-            restoreFromFP(12);
-            str(ConditionFlag.Always, ARMV7.r8, r12, 0);
-        }
+        store(ARMV7.r8, dst, CiKind.Int);
     }
 
     public void signExtendByte(CiRegister dest, CiRegister reg) {
