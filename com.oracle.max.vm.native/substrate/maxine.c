@@ -341,10 +341,6 @@ int maxine(int argc, char *argv[], char *executablePath) {
     Address tlBlock = threadLocalsBlock_create(PRIMORDIAL_THREAD_ID, 0, 0);
     NativeThreadLocals ntl = NATIVE_THREAD_LOCALS_FROM_TLBLOCK(tlBlock);
 
-#ifdef ENABLE_APT_SIM
-    init_FPGA_Sim();
-#endif
-
 #if log_LOADER
     log_println("entering Java by calling MaxineVM.run(tlBlock=%p, bootHeapRegionStart=%p, openLibrary=%p, dlsym=%p, dlerror=%p, vmInterface=%p, jniEnv=%p, jmmInterface=%p, jvmtiInterface=%p, argc=%d, argv=%p)",
                     tlBlock, image_heap(), openLibrary, loadSymbol, dlerror, getVMInterface(), jniEnv(), getJMMInterface(-1), getJVMTIInterface(-1), argc, argv);
@@ -400,9 +396,6 @@ void native_exit(jint code) {
     //if (code != 11) {
     //    cleanupCurrentThreadBlockBeforeExit();
     //}
-#ifdef ENABLE_APT_SIM
-    exit_APT_Sim();
-#endif
     exit(code);
 }
 
@@ -509,12 +502,6 @@ double native_parseDouble(const char* cstring, double nan) {
 void maxine_cache_flush(char *start, int length) {
 #ifdef arm
     char * end = start + length;
-#ifdef ENABLE_APT_SIM
-    if(APT_SIM_DEBUG) {
-        log_println("Flush Cache @ %p  length: %d \n",start,length);
-    }
-    clearTimingCache(start, length);
-#endif
     asm volatile("isb ");
     asm volatile("dsb ");
     asm volatile("dmb ");
