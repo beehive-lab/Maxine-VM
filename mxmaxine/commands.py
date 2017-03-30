@@ -3,6 +3,8 @@
 #
 # ----------------------------------------------------------------------------------------------------
 #
+# Copyright (c) 2017, APT Group, School of Computer Science,
+# The University of Manchester. All rights reserved.
 # Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
@@ -19,10 +21,6 @@
 # You should have received a copy of the GNU General Public License version
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
-#
-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
-# or visit www.oracle.com if you need additional information or have any
-# questions.
 #
 # ----------------------------------------------------------------------------------------------------
 
@@ -93,10 +91,10 @@ def gate(args):
 
     If this commands exits with a 0 exit code, then the source code is in
     a state that would be accepted for integration into the main repository."""
-    
+
     check = True
     testArgs = []
-   
+
     i = 0
     while i < len(args):
         arg = args[i]
@@ -224,9 +222,9 @@ def image(args):
         elif arg.startswith('--XX:+PrintCFGToFile'):
         	os.environ['PRINT_CFG']='1'
         elif arg.startswith('--XX:+EnableBootImageDebugMethodID'):
-            os.environ['ENABLE_DEBUG_METHODS_ID']='1'	
+            os.environ['ENABLE_DEBUG_METHODS_ID']='1'
         elif arg.startswith('--XX:+PrintHIR'):
-        	os.environ['PRINT_HIR']='1'		
+        	os.environ['PRINT_HIR']='1'
         elif arg.startswith('--XX:PrintFilter='):
             os.environ['PRINT_FILTER'] = arg.split('=', 1)[1]
         elif arg == '-vma':
@@ -241,7 +239,7 @@ def check_cwd_change(args):
     """Return the current working directory having checked if it is overriden in args"""
     cwd = os.getcwd()
     vmArgs = []
-    
+
     i = 0
     while i < len(args):
         arg = args[i]
@@ -254,7 +252,7 @@ def check_cwd_change(args):
     return [cwd, vmArgs]
 
 
-# Graal classes are loaded from graal.jar by the extension class loader  
+# Graal classes are loaded from graal.jar by the extension class loader
 def sanitized_classpath():
     """Remove Graal projects from the classpath"""
     cp = mx.classpath()
@@ -555,8 +553,8 @@ def t1xgen(args):
 
 def test(args):
     """run some or all of the Maxine tests
-    
-        
+
+
     The Maxine sources include a variety of tests that can be run by a
     special launcher. These include JUnit tests, VM micro tests, certain
     benchmark suites and output comparison tests, amongst others.
@@ -625,7 +623,7 @@ def vm(args):
     cwdArgs = check_cwd_change(args)
     cwd = cwdArgs[0]
     vmArgs = cwdArgs[1]
-    
+
     mx.expand_project_in_args(vmArgs)
     maxvmOptions = os.getenv('MAXVM_OPTIONS', '').split()
 
@@ -738,4 +736,3 @@ def mx_post_parse_cmd_line(opts):
         _vmdir = join(_maxine_home, 'com.oracle.max.vm.native', 'generated',  mx.get_os())
     else:
         _vmdir = opts.vmdir
-
