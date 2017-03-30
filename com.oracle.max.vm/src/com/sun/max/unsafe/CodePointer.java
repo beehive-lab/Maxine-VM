@@ -175,7 +175,7 @@ public final class CodePointer {
             return untag(tagged);
         }
         if (Platform.target().arch.is32bit()) {
-            return (0x7fffffffL & untag(UnsafeCast.asLong(this)));
+            return 0x7fffffffL & untag(UnsafeCast.asLong(this));
         }
         return untag(UnsafeCast.asLong(this));
     }

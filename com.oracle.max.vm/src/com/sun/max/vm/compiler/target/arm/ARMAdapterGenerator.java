@@ -439,7 +439,7 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
             // The new FP is the SP
             asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.FP, ARMV7.rsp);
 
-            asm.subq(ARMV7.rsp, (explicitlyAllocatedFrameSize));
+            asm.subq(ARMV7.rsp, explicitlyAllocatedFrameSize);
 
             // At this point, the top of the baseline caller's stack (i.e the last arg to the call) is immediately
             // above the adapter's RIP slot. That is, it's at RSP + adapterFrameSize + OPT_SLOT_SIZE.

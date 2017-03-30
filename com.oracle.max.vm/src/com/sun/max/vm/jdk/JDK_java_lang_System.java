@@ -841,7 +841,7 @@ public final class JDK_java_lang_System {
      * @return the expanded class path
      */
     private static  String expandClassLibPath(String path, String suffix, boolean debug) {
-	    if (path.equals("") || path == null) {
+        if (path.equals("") || path == null) {
             return "";
         }
         String newClassPath = "";

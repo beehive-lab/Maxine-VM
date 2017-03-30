@@ -698,7 +698,7 @@ public abstract class TargetMethod extends MemoryRegion {
                 case Long: {
                     int offsetAdjustment = platform().target.arch.isARM() ? -12 : 0;
                     assert site.alignment == 0 || targetBundleLayout.firstElementPointer(start, ArrayField.scalarLiterals).plus(literals.scalarPos(dataIndex)).
-	                    isAligned(site.alignment) : "patching to a scalar address that is not aligned";
+                        isAligned(site.alignment) : "patching to a scalar address that is not aligned";
                     patchRelativeInstruction(site.pcOffset, scalarDiff.plus(literals.scalarPos(dataIndex) - site.pcOffset).toInt() + offsetAdjustment);
                     break;
                 }
