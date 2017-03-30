@@ -1182,8 +1182,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
 
         if (base == CiRegister.Frame) {
-                base = frameRegister;
-
+            base = frameRegister;
         }
         //assert (base.isValid()) && (base == CiRegister.Frame);
 

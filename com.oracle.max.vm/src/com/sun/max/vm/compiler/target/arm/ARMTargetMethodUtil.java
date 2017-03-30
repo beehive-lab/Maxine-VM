@@ -216,7 +216,7 @@ public final class ARMTargetMethodUtil {
         int low = (movw & 0xfff) | ((movw & 0xf0000) >> 4);
         int high = (movt & 0xfff) | ((movt & 0xf0000) >> 4);
         high = (high << 16) | low;
-        assert ((0xe3000000 == (movw & 0xfff00000)) && (0xe3400000 == (movt & 0xfff00000))) : "Instruction sequence is wrong!";
+        assert (0xe3000000 == (movw & 0xfff00000)) && (0xe3400000 == (movt & 0xfff00000)) : "Instruction sequence is wrong!";
         return high + 8 + RIP_CALL_INSTRUCTION_LENGTH;
     }
 

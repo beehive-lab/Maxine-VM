@@ -70,7 +70,7 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
     final int miscOffset;
 
     /**
-     * The offset of the hashword: only for 32 bit archs
+     * The offset of the hashword: only for 32 bit archs.
      */
     final int hashOffset;
 
@@ -223,7 +223,7 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
         visitor.visitHeaderField(hubOffset, "hub", JavaTypeDescriptor.forJavaClass(hub.getClass()), ReferenceValue.from(hub));
         visitor.visitHeaderField(miscOffset, "misc", JavaTypeDescriptor.WORD, new WordValue(vmConfig().monitorScheme().createMisc(object)));
         if (Platform.target().arch.is32bit()) {
-            visitor.visitHeaderField(hashOffset, "hash", JavaTypeDescriptor.WORD, IntValue.from((vmConfig().monitorScheme().createHash(object))));
+            visitor.visitHeaderField(hashOffset, "hash", JavaTypeDescriptor.WORD, IntValue.from(vmConfig().monitorScheme().createHash(object)));
         }
     }
 

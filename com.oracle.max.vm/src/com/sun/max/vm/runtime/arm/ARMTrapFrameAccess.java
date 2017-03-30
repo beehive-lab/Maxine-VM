@@ -83,9 +83,9 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
 
     public static final CiCalleeSaveLayout CSL;
     static {
-        CiRegister[] csaRegs = { r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, /* r13, */ r14, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20,
-                        s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31};
-        int size =( 4 * 14) + (8 * 32);
+        CiRegister[] csaRegs = {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, /* r13, */ r14, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20,
+                                s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31};
+        int size = (4 * 14) + (8 * 32);
         TRAP_NUMBER_OFFSET = size;
         size += 4;
         FLAGS_OFFSET = size;
@@ -191,28 +191,28 @@ public final class ARMTrapFrameAccess extends TrapFrameAccess {
         Log.println(Trap.Number.toExceptionName(trapNumber));
     }
 
-    private static final String[] rflags = { "CF", // 0
-                    null, // 1
-                    "PF", // 2
-                    null, // 3
-                    "AF", // 4
-                    null, // 5
-                    "ZF", // 6
-                    "SF", // 7
-                    "TF", // 8
-                    "IF", // 9
-                    "DF", // 10
-                    "OF", // 11
-                    "IO", // 12
-                    "PL", // 13
-                    "NT", // 14
-                    null, // 15
-                    "RF", // 16
-                    "VM", // 17
-                    "AC", // 18
-                    "VIF", // 19
-                    "VIP", // 20
-                    "ID" // 21
+    private static final String[] rflags = {"CF", // 0
+                                            null, // 1
+                                            "PF", // 2
+                                            null, // 3
+                                            "AF", // 4
+                                            null, // 5
+                                            "ZF", // 6
+                                            "SF", // 7
+                                            "TF", // 8
+                                            "IF", // 9
+                                            "DF", // 10
+                                            "OF", // 11
+                                            "IO", // 12
+                                            "PL", // 13
+                                            "NT", // 14
+                                            null, // 15
+                                            "RF", // 16
+                                            "VM", // 17
+                                            "AC", // 18
+                                            "VIF", // 19
+                                            "VIP", // 20
+                                            "ID" // 21
     };
 
     private static void logFlags(int flags) {

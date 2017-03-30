@@ -52,9 +52,9 @@ public class IgnoreMonitorScheme extends AbstractMonitorScheme implements Monito
 
     public int makeHashCode(Object object) {
         if (MaxineVM.isHosted()) {
-	      return createHashCode(object);
+            return createHashCode(object);
         }
-	final Address oldMisc = ObjectAccess.readMisc(object).asAddress();
+        final Address oldMisc = ObjectAccess.readMisc(object).asAddress();
         final int oldResult = miscToHashCode(oldMisc);
         if (oldResult != 0) {
             return oldResult;

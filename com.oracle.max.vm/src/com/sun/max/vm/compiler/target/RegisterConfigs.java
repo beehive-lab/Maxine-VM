@@ -137,11 +137,11 @@ public class RegisterConfigs {
          */
         if (platform().isa == ISA.ARM) {
             if (os == OS.LINUX || os == OS.DARWIN) {
-                allocatable = new CiRegister[] { r0, r1, r2, r3, r4, r5, r6, r7, ARMV7.r9, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23,
-                                s24, s25, s26, s27};
-                parameters = new CiRegister[] { r0, r1, r2, r3, s0, s1, s2, s3, s4, s5, s6, s7};
-                allRegistersExceptLatch = new CiRegister[] { r0, r1, r2, r3, r4, r5, r6, r7, ARMV7.r8, ARMV7.r9, ARMV7.r11, ARMV7.r12, ARMV7.r13, ARMV7.r14, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9,
-                                s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31};
+                allocatable = new CiRegister[] {r0, r1, r2, r3, r4, r5, r6, r7, ARMV7.r9, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23,
+                                                s24, s25, s26, s27};
+                parameters = new CiRegister[] {r0, r1, r2, r3, s0, s1, s2, s3, s4, s5, s6, s7};
+                allRegistersExceptLatch = new CiRegister[] {r0, r1, r2, r3, r4, r5, r6, r7, ARMV7.r8, ARMV7.r9, ARMV7.r11, ARMV7.r12, ARMV7.r13, ARMV7.r14, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9,
+                                                            s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24, s25, s26, s27, s28, s29, s30, s31};
                 roleMap.put(CPU_SP, ARMV7.r13);
                 roleMap.put(CPU_FP, ARMV7.r11);
                 roleMap.put(ABI_SP, ARMV7.r13);
@@ -180,18 +180,18 @@ public class RegisterConfigs {
             }
         } else if (platform().isa == ISA.AMD64) {
             if (os == OS.LINUX || os == OS.SOLARIS || os == OS.DARWIN || os == OS.MAXVE) {
-                allocatable = new CiRegister[] { rax, rcx, rdx, rbx, rsi, rdi, com.oracle.max.asm.target.amd64.AMD64.r8, com.oracle.max.asm.target.amd64.AMD64.r9,
-                                com.oracle.max.asm.target.amd64.AMD64.r10, com.oracle.max.asm.target.amd64.AMD64.r12, com.oracle.max.asm.target.amd64.AMD64.r13,
-                                com.oracle.max.asm.target.amd64.AMD64.r15, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15};
+                allocatable = new CiRegister[] {rax, rcx, rdx, rbx, rsi, rdi, com.oracle.max.asm.target.amd64.AMD64.r8, com.oracle.max.asm.target.amd64.AMD64.r9,
+                                                com.oracle.max.asm.target.amd64.AMD64.r10, com.oracle.max.asm.target.amd64.AMD64.r12, com.oracle.max.asm.target.amd64.AMD64.r13,
+                                                com.oracle.max.asm.target.amd64.AMD64.r15, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15};
 
-                parameters = new CiRegister[] { rdi, rsi, rdx, rcx, com.oracle.max.asm.target.amd64.AMD64.r8, com.oracle.max.asm.target.amd64.AMD64.r9, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7};
+                parameters = new CiRegister[] {rdi, rsi, rdx, rcx, com.oracle.max.asm.target.amd64.AMD64.r8, com.oracle.max.asm.target.amd64.AMD64.r9, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7};
 
                 // A call to the runtime may change the state of the safepoint latch
                 // and so a compiler stub must leave the latch register alone
-                allRegistersExceptLatch = new CiRegister[] { rax, rcx, rdx, rbx, AMD64.rsp, rbp, rsi, rdi, com.oracle.max.asm.target.amd64.AMD64.r8, com.oracle.max.asm.target.amd64.AMD64.r9,
-                                com.oracle.max.asm.target.amd64.AMD64.r10, com.oracle.max.asm.target.amd64.AMD64.r11, com.oracle.max.asm.target.amd64.AMD64.r12,
-                                com.oracle.max.asm.target.amd64.AMD64.r13, /* r14, */
-                                com.oracle.max.asm.target.amd64.AMD64.r15, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15};
+                allRegistersExceptLatch = new CiRegister[] {rax, rcx, rdx, rbx, AMD64.rsp, rbp, rsi, rdi, com.oracle.max.asm.target.amd64.AMD64.r8, com.oracle.max.asm.target.amd64.AMD64.r9,
+                                                            com.oracle.max.asm.target.amd64.AMD64.r10, com.oracle.max.asm.target.amd64.AMD64.r11, com.oracle.max.asm.target.amd64.AMD64.r12,
+                                                            com.oracle.max.asm.target.amd64.AMD64.r13, /* r14, */
+                                                            com.oracle.max.asm.target.amd64.AMD64.r15, xmm0, xmm1, xmm2, xmm3, xmm4, xmm5, xmm6, xmm7, xmm8, xmm9, xmm10, xmm11, xmm12, xmm13, xmm14, xmm15};
 
                 roleMap.put(CPU_SP, AMD64.rsp);
                 roleMap.put(CPU_FP, rbp);

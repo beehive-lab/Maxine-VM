@@ -1413,7 +1413,7 @@ public class Stubs {
                 // Copy return value into arg 4
 
                 CiRegister arg4 = args[4].asRegister();
-                CiStackSlot ss = (CiStackSlot) registerConfigs.compilerStub.getCallingConvention(JavaCall, new CiKind[] { kind}, target(), true).locations[0];
+                CiStackSlot ss = (CiStackSlot) registerConfigs.compilerStub.getCallingConvention(JavaCall, new CiKind[] {kind}, target(), true).locations[0];
                 assert ss.index() == 1 : "compiler stub return value slot index has changed?";
                 CiAddress src = new CiAddress(kind, AMD64.RSP, cfo + (ss.index() * 8));
                 if (kind.isFloat()) {
@@ -1517,7 +1517,7 @@ public class Stubs {
                         if (kind != CiKind.Float) {
                             assert args[4].isRegister() == false;
                         }
-                        ss = (CiStackSlot) registerConfigs.compilerStub.getCallingConvention(JavaCall, new CiKind[] { kind}, target(), true).locations[0];
+                        ss = (CiStackSlot) registerConfigs.compilerStub.getCallingConvention(JavaCall, new CiKind[] {kind}, target(), true).locations[0];
                         assert ss.index() == 1 : "compiler stub return value slot index has changed?";
                         src = new CiAddress(kind, ARMV7.RSP, cfo + ss.index() * 4);
                         asm.setUpScratch(src);
@@ -1538,7 +1538,7 @@ public class Stubs {
                         if (kind != CiKind.Double) {
                             assert args[4].isRegister() == false;
                         }
-                        ss = (CiStackSlot) registerConfigs.compilerStub.getCallingConvention(JavaCall, new CiKind[] { kind}, target(), true).locations[0];
+                        ss = (CiStackSlot) registerConfigs.compilerStub.getCallingConvention(JavaCall, new CiKind[] {kind}, target(), true).locations[0];
                         src = new CiAddress(kind, ARMV7.RSP, cfo + ss.index() * 4);
                         asm.setUpScratch(src);
                         asm.ldrd(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.r12, 0);
@@ -1648,7 +1648,7 @@ public class Stubs {
 
             final CriticalMethod uncommonTrap = new CriticalMethod(Deoptimization.class, name, null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
 
-            CiValue[] args = registerConfig.getCallingConvention(JavaCall, new CiKind[] { WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind()}, target(),
+            CiValue[] args = registerConfig.getCallingConvention(JavaCall, new CiKind[] {WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind()}, target(),
                             false).locations;
 
             // Copy callee save area address into arg 0 (i.e. 'csa')
@@ -1701,7 +1701,7 @@ public class Stubs {
             String name = "uncommonTrap";
             final CriticalMethod uncommonTrap = new CriticalMethod(Deoptimization.class, name, null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
 
-            CiValue[] args = registerConfig.getCallingConvention(JavaCall, new CiKind[] { WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind()}, target(),
+            CiValue[] args = registerConfig.getCallingConvention(JavaCall, new CiKind[] {WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind(), WordUtil.archKind()}, target(),
                             false).locations;
 
             // Copy callee save area address into arg 0 (i.e. 'csa')

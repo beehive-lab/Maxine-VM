@@ -893,7 +893,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             return retryAllocate(size, true);
         }
         // Refill TLAB and allocate (we know the request can be satisfied with a fresh TLAB and will therefore succeed).
-	allocateAndRefillTLAB(etla, nextTLABSize);
+        allocateAndRefillTLAB(etla, nextTLABSize);
         return tlabAllocate(size);
     }
 

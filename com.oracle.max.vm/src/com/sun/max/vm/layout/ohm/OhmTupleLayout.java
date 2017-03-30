@@ -66,9 +66,9 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
 
     public HeaderField[] headerFields() {
         if (Platform.target().arch.is64bit()) {
-            return new HeaderField[] { HeaderField.HUB, HeaderField.MISC};
+            return new HeaderField[] {HeaderField.HUB, HeaderField.MISC};
         } else {
-            return new HeaderField[] { HeaderField.HUB, HeaderField.MISC, HeaderField.HASH};
+            return new HeaderField[] {HeaderField.HUB, HeaderField.MISC, HeaderField.HASH};
         }
     }
 

@@ -263,7 +263,7 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
             if (initialTlabSize.lessThan(0)) {
                 FatalError.unexpected("Specified TLAB size is too small");
             }
-        }else if (phase == MaxineVM.Phase.RUNNING) {
+        } else if (phase == MaxineVM.Phase.RUNNING) {
             HeapSchemeWithTLAB.setTraceTLAB(false);
         } else if (phase == MaxineVM.Phase.TERMINATING) {
             if (PrintTLABStats) {
@@ -717,4 +717,3 @@ public abstract class HeapSchemeWithTLAB extends HeapSchemeAdaptor {
 
 
 }
-

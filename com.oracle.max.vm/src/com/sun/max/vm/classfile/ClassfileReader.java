@@ -1383,7 +1383,7 @@ public final class ClassfileReader {
                     Log.println("[Loading " + name + " from " + optSource + "]");
                 }
             }
-	    enterContext(new Object() {
+            enterContext(new Object() {
                 @Override
                 public String toString() {
                     return "loading " + name;

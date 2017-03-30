@@ -124,7 +124,7 @@ public class ThinLockword64 extends LightweightLockword64 {
      */
     @INLINE
     public final ThinLockword64 asUnlocked() {
-       	return ThinLockword64.from(asAddress().and(UNLOCKED_MASK));
+        return ThinLockword64.from(asAddress().and(UNLOCKED_MASK));
     }
 
     /**

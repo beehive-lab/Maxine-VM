@@ -289,10 +289,10 @@ public final class BootImageGenerator {
      * afterwards, if they had not existed beforehand. Note that all directories of a path have to be given.
      */
     private static String[] proxyDirs = new String[]{
-            "java",
-            "java/lang",
-            "java/lang/invoke",
-            "com/sun/proxy"
+        "java",
+        "java/lang",
+        "java/lang/invoke",
+        "com/sun/proxy"
     };
 
     /**

@@ -572,7 +572,7 @@ public final class Heap {
             return true;
         }
         Pointer origin = ref.toOrigin();
-        
+
         if (!bootHeapRegion.contains(origin) && !heapScheme().contains(origin) && !Code.contains(origin) && !ImmortalHeap.contains(origin)) {
             return false;
         }
@@ -861,7 +861,7 @@ public final class Heap {
                 Log.print(" at ");
                 Log.print(Long.toHexString(Layout.originToCell(ObjectAccess.toOrigin(array)).toLong()));
                 Log.print(" [");
-                Log.print(Layout.size((ObjectAccess.toOrigin(array))));
+                Log.print(Layout.size(ObjectAccess.toOrigin(array)));
                 Log.println(" bytes]");
             }
         }
@@ -874,7 +874,7 @@ public final class Heap {
                 Log.print(" at ");
                 Log.print(Long.toHexString(Layout.originToCell(ObjectAccess.toOrigin(array)).toLong()));
                 Log.print(" [");
-                Log.print(Layout.size((ObjectAccess.toOrigin(array))));
+                Log.print(Layout.size(ObjectAccess.toOrigin(array)));
                 Log.println(" bytes]");
             }
         }
@@ -887,7 +887,7 @@ public final class Heap {
                 Log.print(" at ");
                 Log.print(Long.toHexString(Layout.originToCell(ObjectAccess.toOrigin(array)).toLong()));
                 Log.print(" [");
-                Log.print(Layout.size((ObjectAccess.toOrigin(array))));
+                Log.print(Layout.size(ObjectAccess.toOrigin(array)));
                 Log.println(" bytes]");
             }
         }

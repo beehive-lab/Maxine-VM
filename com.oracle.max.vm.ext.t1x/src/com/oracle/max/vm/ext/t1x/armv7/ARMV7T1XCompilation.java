@@ -252,7 +252,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             if (register == CiRegister.Frame) {
                 register = asm.frameRegister;
             }
-            asm.ldrImmediate(ConditionFlag.Always, 1, (address.displacement >= 0 ? 1 : 0), 0, dst, register, address.displacement);
+            asm.ldrImmediate(ConditionFlag.Always, 1, address.displacement >= 0 ? 1 : 0, 0, dst, register, address.displacement);
             return;
         }
         asm.setUpScratch(address);
@@ -273,7 +273,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             if (register == CiRegister.Frame) {
                 register = asm.frameRegister;
             }
-            asm.ldrImmediate(ConditionFlag.Always, 1, (address.displacement >= 0 ? 1 : 0), 0, dst, register, address.displacement);
+            asm.ldrImmediate(ConditionFlag.Always, 1, address.displacement >= 0 ? 1 : 0, 0, dst, register, address.displacement);
             return;
         }
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.WORD)));
@@ -288,7 +288,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             if (register == CiRegister.Frame) {
                 register = asm.frameRegister;
             }
-            asm.ldrImmediate(ConditionFlag.Always, 1, (address.displacement >= 0 ? 1 : 0), 0, dst, register, address.displacement);
+            asm.ldrImmediate(ConditionFlag.Always, 1, address.displacement >= 0 ? 1 : 0, 0, dst, register, address.displacement);
             return;
         }
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.REFERENCE)));
@@ -303,7 +303,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             if (register == CiRegister.Frame) {
                 register = asm.frameRegister;
             }
-            asm.strImmediate(ConditionFlag.Always, 1, (address.displacement >= 0 ? 1 : 0), 0, src, register, address.displacement);
+            asm.strImmediate(ConditionFlag.Always, 1, address.displacement >= 0 ? 1 : 0, 0, src, register, address.displacement);
             return;
         }
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.INT)));
@@ -319,7 +319,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             if (register == CiRegister.Frame) {
                 register = asm.frameRegister;
             }
-            asm.strImmediate(ConditionFlag.Always, 1, (address.displacement >= 0 ? 1 : 0), 0, src, register, address.displacement);
+            asm.strImmediate(ConditionFlag.Always, 1, address.displacement >= 0 ? 1 : 0, 0, src, register, address.displacement);
             return;
         }
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.LONG)));
@@ -334,7 +334,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             if (register == CiRegister.Frame) {
                 register = asm.frameRegister;
             }
-            asm.strImmediate(ConditionFlag.Always, 1, (address.displacement >= 0 ? 1 : 0), 0, src, register, address.displacement);
+            asm.strImmediate(ConditionFlag.Always, 1, address.displacement >= 0 ? 1 : 0, 0, src, register, address.displacement);
             return;
         }
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.WORD)));
@@ -349,7 +349,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             if (register == CiRegister.Frame) {
                 register = asm.frameRegister;
             }
-            asm.strImmediate(ConditionFlag.Always, 1, (address.displacement >= 0 ? 1 : 0), 0, src, register, address.displacement);
+            asm.strImmediate(ConditionFlag.Always, 1, address.displacement >= 0 ? 1 : 0, 0, src, register, address.displacement);
             return;
         }
         asm.setUpScratch(localSlot(localSlotOffset(index, Kind.REFERENCE)));

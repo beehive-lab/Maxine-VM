@@ -86,7 +86,7 @@ public abstract class InflatedMonitorModeHandler extends AbstractModeHandler {
     protected int makeBoundHashCode(Object object, InflatedMonitorLockword64 lockword, InflatedMonitorLockword64 hashword) {
         assert hashword.isZero() || Platform.target().arch.is32bit() : " Hashword != null in 64 bit mode ";
         final JavaMonitor monitor = Platform.target().arch.is64bit() ? lockword.getBoundMonitor() : hashword.getBoundMonitor();
-	assert monitor != null  : "null monitor in makeboundHashCode";
+        assert monitor != null  : "null monitor in makeboundHashCode";
         final HashableLockword64 swappedLockword = Platform.target().arch.is64bit() ? HashableLockword64.from(monitor.displacedMisc()) : HashableLockword64.from(monitor.displacedHash());
         int hashcode = swappedLockword.getHashcode();
         if (hashcode == 0) {

@@ -55,9 +55,9 @@ public class OhmArrayLayout extends OhmGeneralLayout implements ArrayLayout {
 
     public HeaderField[] headerFields() {
         if (Platform.target().arch.is64bit()) {
-            return new HeaderField[] { HeaderField.HUB, HeaderField.MISC, HeaderField.LENGTH};
+            return new HeaderField[] {HeaderField.HUB, HeaderField.MISC, HeaderField.LENGTH};
         } else {
-            return new HeaderField[] { HeaderField.HUB, HeaderField.MISC, HeaderField.HASH, HeaderField.LENGTH};
+            return new HeaderField[] {HeaderField.HUB, HeaderField.MISC, HeaderField.HASH, HeaderField.LENGTH};
         }
     }
 

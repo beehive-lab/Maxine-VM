@@ -91,7 +91,7 @@ public final class MaxineVM {
     private static final Set<String> KEEP_CLINIT_CLASSES = new HashSet<String>();
 
     @HOSTED_ONLY
-    private static final String[] TEST_PACKAGES = { "test.", "jtt."};
+    private static final String[] TEST_PACKAGES = {"test.", "jtt."};
 
     private static final VMOption HELP_OPTION = register(new VMOption("-help", "Prints this help message.") {
 

@@ -229,7 +229,7 @@ public abstract class Trap {
             // do not currently support Thumb mode compiled methods.
             // It can however happen in third-party libraries which are not instanceof TargetMethod
             if (Platform.target().arch.isARM()) {
-                assert (pc.toInt() % 4 == 0);
+                assert pc.toInt() % 4 == 0;
             }
             final TargetMethod targetMethod = (TargetMethod) origin;
             final Pointer sp = tfa.getSP(trapFrame);
