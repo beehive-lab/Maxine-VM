@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 #include <malloc.h>
 #include <signal.h>
@@ -46,7 +44,11 @@ boolean task_read_registers(pid_t tid,
     isa_CanonicalFloatingPointRegistersStruct *canonicalFloatingPointRegisters) {
 
     if (canonicalIntegerRegisters != NULL || canonicalStateRegisters != NULL) {
+#ifndef __arm__
         struct user_regs_struct osIntegerRegisters;
+#else
+	    struct user_regs osIntegerRegisters;
+#endif
         if (ptrace(PT_GETREGS, tid, 0, &osIntegerRegisters) != 0) {
             return false;
         }
@@ -59,7 +61,11 @@ boolean task_read_registers(pid_t tid,
     }
 
     if (canonicalFloatingPointRegisters != NULL) {
+#ifndef __arm__
         struct user_fpregs_struct osFloatRegisters;
+#else
+	    struct user_fpregs osFloatRegisters;
+#endif
         if (ptrace(PT_GETFPREGS, tid, 0, &osFloatRegisters) != 0) {
             return false;
         }
@@ -95,7 +101,11 @@ static void gatherThread(JNIEnv *env, pid_t tgid, pid_t tid, jobject linuxTelePr
 
     TLA tla = 0;
     if (taskState == 'T' && task_read_registers(tid, &canonicalIntegerRegisters, &canonicalStateRegisters, NULL)) {
+#ifndef __arm__
         Address stackPointer = (Address) canonicalIntegerRegisters.rsp;
+#else
+        Address stackPointer = (Address) canonicalIntegerRegisters.r13;
+#endif
         TLA threadLocals = (TLA) alloca(tlaSize());
         NativeThreadLocalsStruct nativeThreadLocalsStruct;
         ProcessHandleStruct ph = {tgid, tid};

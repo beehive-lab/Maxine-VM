@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2012, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.heap.gcx;
 
@@ -26,13 +24,14 @@ import static com.sun.max.vm.heap.gcx.HeapFreeChunk.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.VMLog.*;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -97,6 +96,9 @@ public final class DarkMatter {
             final Pointer origin = Layout.cellToOrigin(darkMatter.asPointer());
             Layout.writeHubReference(origin, Reference.fromJava(hub()));
             Layout.writeMisc(origin, Word.zero());
+            if (Platform.target().arch.is32bit()) {
+                Layout.writeHash(origin, Word.zero());
+            }
             // FIXME: Tracing  here may lead to issue with GC if used when retiring TLABs during mutator allocation.
             if (logger.enabled()) {
                 logger.logFormatSmall(darkMatter);
@@ -229,6 +231,9 @@ public final class DarkMatter {
         final int length = size.minus(darkMatterHeaderSize()).unsignedShiftedRight(Word.widthValue().log2numberOfBytes).toInt();
         Layout.writeHubReference(origin, Reference.fromJava(hub()));
         Layout.writeMisc(origin, Word.zero());
+        if (Platform.target().arch.is32bit()) {
+            Layout.writeHash(origin, Word.zero());
+        }
         if (MaxineVM.isDebug()) {
             origin.writeWord(Layout.arrayLayout().arrayLengthOffset(), Word.zero());
         }

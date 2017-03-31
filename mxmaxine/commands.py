@@ -3,6 +3,8 @@
 #
 # ----------------------------------------------------------------------------------------------------
 #
+# Copyright (c) 2017, APT Group, School of Computer Science,
+# The University of Manchester. All rights reserved.
 # Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
@@ -19,10 +21,6 @@
 # You should have received a copy of the GNU General Public License version
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
-#
-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
-# or visit www.oracle.com if you need additional information or have any
-# questions.
 #
 # ----------------------------------------------------------------------------------------------------
 
@@ -93,10 +91,10 @@ def gate(args):
 
     If this commands exits with a 0 exit code, then the source code is in
     a state that would be accepted for integration into the main repository."""
-    
+
     check = True
     testArgs = []
-   
+
     i = 0
     while i < len(args):
         arg = args[i]
@@ -175,13 +173,14 @@ def image(args):
     Name            | Description                   | Example values
     ================+===============================+================
     max.platform    | name of a preset platform     | solaris-amd64 linux-amd64 darwin-amd64
-    max.cpu         | processor model               | AMD64 IA32 SPARCV9
+    max.cpu         | processor model               | AMD64 IA32 SPARCV9 ARMV7
     max.isa         | instruction set architecture  | AMD64 ARM PPC SPARC
     max.os          | operating system              | Darwin Linux Solaris
     max.endianness  | endianness                    | BIG LITTLE
     max.bits        | machine word size             | 64 32
     max.page        | page size                     | 4096 8192
     max.nsig        | number of signals             | 32
+    mas.idiv        | has hw integer divider        | 1/0
 
     These system properties can be specified as options to the image
     command (e.g. '-os Darwin -bits 32').
@@ -196,7 +195,7 @@ def image(args):
 
     Use "mx image -help" to see what other options this command accepts."""
 
-    systemProps = ['-esa']
+    systemProps = ['-Xmx1G']
     imageArgs = []
     i = 0
     while i < len(args):
@@ -211,7 +210,7 @@ def image(args):
             del args[i]
             args[i:i] = values
             continue
-        elif arg in ['-platform', '-cpu', '-isa', '-os', '-endianness', '-bits', '-page', '-nsig']:
+        elif arg in ['-platform', '-cpu', '-isa', '-os', '-endianness', '-bits', '-page', '-nsig', '-idiv']:
             name = arg.lstrip('-')
             i += 1
             if i == len(args):
@@ -220,6 +219,14 @@ def image(args):
             systemProps += ['-Dmax.' + name + '=' + value]
         elif arg.startswith('--XX:LogFile='):
             os.environ['MAXINE_LOG_FILE'] = arg.split('=', 1)[1]
+        elif arg.startswith('--XX:+PrintCFGToFile'):
+        	os.environ['PRINT_CFG']='1'
+        elif arg.startswith('--XX:+EnableBootImageDebugMethodID'):
+            os.environ['ENABLE_DEBUG_METHODS_ID']='1'
+        elif arg.startswith('--XX:+PrintHIR'):
+        	os.environ['PRINT_HIR']='1'
+        elif arg.startswith('--XX:PrintFilter='):
+            os.environ['PRINT_FILTER'] = arg.split('=', 1)[1]
         elif arg == '-vma':
             systemProps += ['-Dmax.permsize=2']
         else:
@@ -232,7 +239,7 @@ def check_cwd_change(args):
     """Return the current working directory having checked if it is overriden in args"""
     cwd = os.getcwd()
     vmArgs = []
-    
+
     i = 0
     while i < len(args):
         arg = args[i]
@@ -245,7 +252,7 @@ def check_cwd_change(args):
     return [cwd, vmArgs]
 
 
-# Graal classes are loaded from graal.jar by the extension class loader  
+# Graal classes are loaded from graal.jar by the extension class loader
 def sanitized_classpath():
     """Remove Graal projects from the classpath"""
     cp = mx.classpath()
@@ -552,6 +559,7 @@ def t1xgen(args):
 def test(args):
     """run some or all of the Maxine tests
 
+
     The Maxine sources include a variety of tests that can be run by a
     special launcher. These include JUnit tests, VM micro tests, certain
     benchmark suites and output comparison tests, amongst others.
@@ -620,7 +628,7 @@ def vm(args):
     cwdArgs = check_cwd_change(args)
     cwd = cwdArgs[0]
     vmArgs = cwdArgs[1]
-    
+
     mx.expand_project_in_args(vmArgs)
     maxvmOptions = os.getenv('MAXVM_OPTIONS', '').split()
 
@@ -724,7 +732,7 @@ def mx_init(suite):
         'verify': [verify, '[options] patterns...', _patternHelp],
         'view': [view, '[options]'],
         'vm': [vm, '[options] [class | -jar jarfile]  [args...]'],
-        'wikidoc': [wikidoc, '[options]']
+        'wikidoc': [wikidoc, '[options]'],
     }
     mx.update_commands(suite, commands)
 

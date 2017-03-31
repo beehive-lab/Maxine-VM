@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,23 +17,19 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.layout.xohm;
 
 import static com.sun.max.vm.VMConfiguration.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.HeaderField;
-import com.sun.max.vm.layout.SpecificLayout.ObjectCellVisitor;
-import com.sun.max.vm.layout.SpecificLayout.ObjectMirror;
+import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.layout.SpecificLayout.*;
 import com.sun.max.vm.layout.ohm.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
@@ -151,6 +149,7 @@ public class XOhmGeneralLayout extends AbstractLayout implements GeneralLayout {
     public final int xtraCount;
 
     public XOhmGeneralLayout() {
+        assert !Platform.target().arch.is32bit() : "XOhmGeneral Layout not implemented for 32 bit archs!";
         miscOffset = hubOffset + Word.size();
         xOffset = miscOffset + Word.size();
         final String countProp = System.getProperty(XOHM_WORDS_PROPERTY);
@@ -356,4 +355,19 @@ public class XOhmGeneralLayout extends AbstractLayout implements GeneralLayout {
         return true;
     }
 
+    public Word readHash(Accessor accessor) {
+        throw ProgramError.unexpected();
+    }
+
+    public Word compareAndSwapHash(Accessor accessor, Word expectedValue, Word newValue) {
+        throw ProgramError.unexpected();
+    }
+
+    public void writeHash(Accessor accessor, Word value) {
+        throw ProgramError.unexpected();
+    }
+
+    public long compareAndSwapMiscAndHash(Accessor accessor, long expectedValue, long newValue) {
+        throw ProgramError.unexpected();
+    }
 }

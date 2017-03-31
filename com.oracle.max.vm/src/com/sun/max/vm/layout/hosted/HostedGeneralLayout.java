@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.layout.hosted;
 
@@ -122,6 +120,10 @@ public class HostedGeneralLayout extends AbstractLayout  implements GeneralLayou
         throw ProgramError.unexpected();
     }
 
+    public final long compareAndSwapMiscAndHash(Accessor accessor, long expectedValue, long newValue) {
+        throw ProgramError.unexpected();
+    }
+
     public Reference forwarded(Reference reference) {
         throw ProgramError.unexpected();
     }
@@ -155,6 +157,18 @@ public class HostedGeneralLayout extends AbstractLayout  implements GeneralLayou
     }
 
     public boolean equals(Pointer origin1, Pointer origin2) {
+        throw ProgramError.unexpected();
+    }
+
+    public final Word compareAndSwapHash(Accessor accessor, Word expectedValue, Word newValue) {
+        throw ProgramError.unexpected();
+    }
+
+    public Word readHash(Accessor accessor) {
+        throw ProgramError.unexpected();
+    }
+
+    public void writeHash(Accessor accessor, Word value) {
         throw ProgramError.unexpected();
     }
 }

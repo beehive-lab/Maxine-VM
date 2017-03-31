@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.oracle.max.vm.ext.maxri;
 
@@ -32,13 +30,9 @@ import static com.sun.max.vm.stack.StackReferenceMapPreparer.*;
 import java.util.*;
 
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiCallingConvention.Type;
-import com.sun.cri.ci.CiRegister.RegisterFlag;
-import com.sun.cri.ci.CiTargetMethod.Call;
-import com.sun.cri.ci.CiTargetMethod.CodeAnnotation;
-import com.sun.cri.ci.CiTargetMethod.ExceptionHandler;
-import com.sun.cri.ci.CiTargetMethod.Mark;
-import com.sun.cri.ci.CiTargetMethod.Safepoint;
+import com.sun.cri.ci.CiCallingConvention.*;
+import com.sun.cri.ci.CiRegister.*;
+import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -49,12 +43,13 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.code.CodeManager.Lifespan;
+import com.sun.max.vm.code.CodeManager.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deopt.Deoptimization;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.compiler.target.arm.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
@@ -152,8 +147,12 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
         if (!isHosted()) {
             if (install) {
                 linkDirectCalls();
+                if (Platform.target().arch.isARM()) {
+                    ARMTargetMethodUtil.maxine_cache_flush(codeStart().toPointer(), code().length);
+                }
             } else {
-                // the displacement between a call site in the heap and a code cache location may not fit in the offset operand of a call
+                // the displacement between a call site in the heap and a code cache location may not fit in the offset
+                // operand of a call
             }
         }
     }
@@ -188,6 +187,8 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     public VMFrameLayout frameLayout() {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.frameLayout(this);
+        } else if (platform().isa == ISA.ARM) {
+            return ARMTargetMethodUtil.frameLayout(this);
         } else {
             throw FatalError.unimplemented();
         }
@@ -235,6 +236,8 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     public boolean isPatchableCallSite(CodePointer callSite) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.isPatchableCallSite(callSite);
+        } else if (platform().isa == ISA.ARM) {
+            return ARMTargetMethodUtil.isPatchableCallSite(callSite);
         } else {
             throw FatalError.unimplemented();
         }
@@ -244,6 +247,8 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     public CodePointer fixupCallSite(int callOffset, CodePointer callEntryPoint) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+        } else if (platform().isa == ISA.ARM) {
+            return ARMTargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
         } else {
             throw FatalError.unimplemented();
         }
@@ -253,6 +258,8 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     public CodePointer patchCallSite(int callOffset, CodePointer callEntryPoint) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
+        } else if (platform().isa == ISA.ARM) {
+            return ARMTargetMethodUtil.mtSafePatchCallDisplacement(this, codeAt(callOffset), callEntryPoint);
         } else {
             throw FatalError.unimplemented();
         }
@@ -264,6 +271,12 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
             AMD64TargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(tm));
             if (vm().compilationBroker.needsAdapters()) {
                 AMD64TargetMethodUtil.patchWithJump(this, BASELINE_ENTRY_POINT.offset(), BASELINE_ENTRY_POINT.in(tm));
+            }
+            FatalError.check(Stubs.isJumpToStaticTrampoline(this), "sanity check");
+        } else if (platform().isa == ISA.ARM) {
+            ARMTargetMethodUtil.patchWithJump(this, OPTIMIZED_ENTRY_POINT.offset(), OPTIMIZED_ENTRY_POINT.in(tm));
+            if (vm().compilationBroker.needsAdapters()) {
+                ARMTargetMethodUtil.patchWithJump(this, BASELINE_ENTRY_POINT.offset(), BASELINE_ENTRY_POINT.in(tm));
             }
             FatalError.check(Stubs.isJumpToStaticTrampoline(this), "sanity check");
         } else {
@@ -295,7 +308,7 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
             int catchPos = getCatchPosAt(i);
             ClassActor catchType = getCatchTypeAt(i);
 
-            if (codePos == exceptionPos && checkType(exception, catchType)) {
+            if ((codePos == exceptionPos) && checkType(exception, catchType)) {
                 if (info != null) {
                     info.bci = getHandlerBCIAt(i);
                 }
@@ -432,6 +445,10 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
         int safepointIndex = findSafepointIndex(current.vmIP());
         if (safepointIndex < 0) {
             // this is very bad.
+            Log.print(posFor(current.vmIP()));
+            Log.print(" ");
+            Log.printLocation(current.targetMethod(), current.vmIP(), false);
+            Log.println();
             throw FatalError.unexpected("could not find safepoint index");
         }
 
@@ -735,6 +752,8 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     public boolean acceptStackFrameVisitor(StackFrameCursor current, StackFrameVisitor visitor) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.acceptStackFrameVisitor(current, visitor);
+        } else if (platform().isa == ISA.ARM) {
+            return ARMTargetMethodUtil.acceptStackFrameVisitor(current, visitor);
         }
         throw FatalError.unimplemented();
     }
@@ -753,6 +772,14 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
                 csa = current.sp().plus(frameSize() - csl.size);
             }
             AMD64TargetMethodUtil.advance(current, csl, csa);
+        } else if (platform().isa == ISA.ARM) {
+            CiCalleeSaveLayout csl = calleeSaveLayout();
+            Pointer csa = Pointer.zero();
+            if (csl != null) {
+                // See FrameMap
+                csa = current.sp().plus(frameSize() - csl.size);
+            }
+            ARMTargetMethodUtil.advance(current, csl, csa);
         } else {
             throw FatalError.unimplemented();
         }
@@ -762,6 +789,8 @@ public class MaxTargetMethod extends TargetMethod implements Cloneable {
     public Pointer returnAddressPointer(StackFrameCursor frame) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.returnAddressPointer(frame);
+        } else if (platform().isa == ISA.ARM) {
+            return ARMTargetMethodUtil.returnAddressPointer(frame);
         } else {
             throw FatalError.unimplemented();
         }

@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,16 +17,13 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.monitor.modal.modehandlers.inflated;
 
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
 import com.sun.max.vm.monitor.modal.sync.*;
@@ -36,17 +35,23 @@ import com.sun.max.vm.reference.*;
 public class InflatedMonitorLockword64 extends HashableLockword64 {
 
     /*
-     * Field layout:
+     * Field layout (64 Bit) :
      *
-     * bit [63............................... 1  0]     Shape         Binding   Lock-state
+     * bit [63............................... 1 0] Shape Binding Lock-state
      *
-     *     [            0           ][ hash ][0][1]     Inflated      Unbound   Unlocked
-     *     [ Pointer to JavaMonitor object  ][1][1]     Inflated      Bound     Unlocked or locked
-     *     [           Undefined            ][m][0]     Lightweight
+     * [ 0 ][ hash ][0][1] Inflated Unbound Unlocked [ Pointer to JavaMonitor object ][1][1] Inflated Bound Unlocked or
+     * locked [ Undefined ][m][0] Lightweight
      *
+     * Field layout (32 Bit) :
+     *
+     * bit [31.................................0] Shape Binding Lock-state
+     *
+     * [1/0][ThreadId] 0 [0][1] Locking in-flight op ThreadId Inflated Unbound Unlocked [1/0][ThreadId] [1][1] Locking
+     * in-flight op ThreadId Inflated Bound Unlocked or locked [1/0][ThreadId] [m][0] Locking in-flight op ThreadId
+     * Lightweight
      */
 
-    private static final Address MONITOR_MASK = Word.allOnes().asAddress().shiftedLeft(NUMBER_OF_MODE_BITS);
+    private static final Address MONITOR_MASK = Platform.target().arch.is64bit() ? Word.allOnes().asAddress().shiftedLeft(NUMBER_OF_MODE_BITS) : Word.allOnes().asAddress();
 
     @HOSTED_ONLY
     public InflatedMonitorLockword64(long value) {
@@ -86,18 +91,26 @@ public class InflatedMonitorLockword64 extends HashableLockword64 {
     }
 
     /**
-     * Returns a new {@code InflatedMonitorLockword64} which is bound to the given
-     * {@code JavaMonitor} object.
+     * Returns a new {@code InflatedMonitorLockword64} which is bound to the given {@code JavaMonitor} object.
      *
-     * Note: The binding is only created one-way, i.e. the lock word points to the inflated
-     * monitor, but not the other way-around.
+     * Note: The binding is only created one-way, i.e. the lock word points to the inflated monitor, but not the other
+     * way-around.
      *
      * @param monitor the monitor to which the {@code InflatedMonitorLockword64} should be bound
      * @return a new {@code InflatedMonitorLockword64} which is bound to {@code monitor}
      */
     @INLINE
     public static final InflatedMonitorLockword64 boundFromMonitor(JavaMonitor monitor) {
-        return from(Reference.fromJava(monitor).toOrigin().asAddress().bitSet(SHAPE_BIT_INDEX).bitSet(MISC_BIT_INDEX));
+        if (Platform.target().arch.is64bit()) {
+            return from(Reference.fromJava(monitor).toOrigin().asAddress().bitSet(SHAPE_BIT_INDEX).bitSet(MISC_BIT_INDEX));
+        } else {
+            return from(Reference.fromJava(monitor).toOrigin().asAddress());
+        }
+    }
+
+    @INLINE
+    public static final InflatedMonitorLockword64 boundFromZero() {
+        return InflatedMonitorLockword64.from(HashableLockword64.from(Address.zero()).asAddress().bitSet(SHAPE_BIT_INDEX).bitSet(MISC_BIT_INDEX));
     }
 
     /**
@@ -121,14 +134,23 @@ public class InflatedMonitorLockword64 extends HashableLockword64 {
     }
 
     /**
-     * (Image build support) Returns a new, unbound {@code InflatedMonitorLockword64} with the given
-     * hashcode installed into the hashcode field.
+     * (Image build support) Returns a new, unbound {@code InflatedMonitorLockword64} with the given hashcode installed
+     * into the hashcode field.
      *
      * @param hashcode the hashcode to install
      * @return the lock word
      */
     @INLINE
     public static final InflatedMonitorLockword64 unboundFromHashcode(int hashcode) {
-        return InflatedMonitorLockword64.from(HashableLockword64.from(Address.zero()).setHashcode(hashcode).asAddress().bitSet(SHAPE_BIT_INDEX));
+        if (Platform.target().arch.is64bit()) {
+            return InflatedMonitorLockword64.from(HashableLockword64.from(Address.zero()).setHashcode(hashcode).asAddress().bitSet(SHAPE_BIT_INDEX));
+        } else {
+            return InflatedMonitorLockword64.from(HashableLockword64.from(Address.zero()).asAddress().bitSet(SHAPE_BIT_INDEX));
+        }
+    }
+
+    @INLINE
+    public static final InflatedMonitorLockword64 fromHashcode(int hashcode) {
+        return InflatedMonitorLockword64.from(HashableLockword64.from(Address.zero()).setHashcode(hashcode).asAddress());
     }
 }

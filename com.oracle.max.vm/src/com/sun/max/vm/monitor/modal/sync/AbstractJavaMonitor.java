@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,15 +17,12 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.monitor.modal.sync;
-
+import com.sun.max.vm.reference.*;
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -44,9 +43,13 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     protected volatile VmThread ownerThread;
     protected int recursionCount;
     private final AtomicWord displacedMiscWord = new AtomicWord();
+    private final AtomicWord displacedHashWord = new AtomicWord();
 
     protected BindingProtection bindingProtection;
     private Word preGCLockword;
+
+    //Only for ARM32 bit
+    private Word preGCMiscword;
 
     // Support for direct linked lists of JavaMonitors.
     private ManagedMonitor next;
@@ -85,12 +88,26 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
         return displacedMiscWord.compareAndSwap(expectedValue, newValue);
     }
 
+    public final Word displacedHash() {
+        return displacedHashWord.get();
+    }
+
+    public final void setDisplacedHash(Word hash) {
+        displacedHashWord.set(hash);
+    }
+
+    public final Word compareAndSwapDisplacedHash(Word expectedValue, Word newValue) {
+        return displacedHashWord.compareAndSwap(expectedValue, newValue);
+    }
+
     public void reset() {
         boundObject = null;
         ownerThread = null;
         recursionCount = 0;
         displacedMiscWord.set(Word.zero());
+        displacedHashWord.set(Word.zero());
         preGCLockword = Word.zero();
+        preGCMiscword = Word.zero();
         bindingProtection = BindingProtection.PRE_ACQUIRE;
     }
 
@@ -107,19 +124,28 @@ abstract class AbstractJavaMonitor implements ManagedMonitor {
     }
 
     public final boolean isHardBound() {
-        return isBound() && ObjectAccess.readMisc(boundObject).equals(InflatedMonitorLockword64.boundFromMonitor(this));
+        return isBound() && (Platform.target().arch.is64bit() ? ObjectAccess.readMisc(boundObject).equals(InflatedMonitorLockword64.boundFromMonitor(this))
+                        : ObjectAccess.readHash(boundObject).equals(InflatedMonitorLockword64.boundFromMonitor(this)));
     }
 
     public final void preGCPrepare() {
         preGCLockword = InflatedMonitorLockword64.boundFromMonitor(this);
+        if (Platform.target().arch.is32bit()) {
+            preGCMiscword = InflatedMonitorLockword64.boundFromZero();
+        }
     }
 
     public final boolean requiresPostGCRefresh() {
-        return isBound() && ObjectAccess.readMisc(boundObject).equals(preGCLockword);
+        return isBound() && (Platform.target().arch.is64bit() ? ObjectAccess.readMisc(boundObject).equals(preGCLockword) :  ObjectAccess.readHash(boundObject).equals(preGCLockword));
     }
 
     public final void refreshBoundObject() {
-        ObjectAccess.writeMisc(boundObject, InflatedMonitorLockword64.boundFromMonitor(this));
+        if (Platform.target().arch.is64bit()) {
+            ObjectAccess.writeMisc(boundObject, InflatedMonitorLockword64.boundFromMonitor(this));
+        } else {
+            ObjectAccess.writeMisc(boundObject, InflatedMonitorLockword64.boundFromZero());
+            ObjectAccess.writeHash(boundObject, InflatedMonitorLockword64.boundFromMonitor(this));
+        }
     }
 
     public final BindingProtection bindingProtection() {

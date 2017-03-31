@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.oracle.max.vm.ext.maxri;
 
@@ -32,6 +30,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.criutils.*;
 /*
@@ -41,12 +40,10 @@ import com.oracle.max.graal.nodes.*;
 import com.oracle.max.graal.nodes.calc.*;
 import com.oracle.max.graal.nodes.extended.*;
 */
-import com.oracle.max.vm.ext.maxri.MaxXirGenerator.RuntimeCalls;
+import com.oracle.max.vm.ext.maxri.MaxXirGenerator.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiTargetMethod.Call;
-import com.sun.cri.ci.CiTargetMethod.DataPatch;
-import com.sun.cri.ci.CiTargetMethod.Safepoint;
-import com.sun.cri.ci.CiUtil.RefMapFormatter;
+import com.sun.cri.ci.CiTargetMethod.*;
+import com.sun.cri.ci.CiUtil.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -234,6 +231,9 @@ public class MaxRuntime implements RiRuntime {
         int refMapToFPOffset;
         if (platform.isa == ISA.AMD64) {
             fp = AMD64.rsp;
+            refMapToFPOffset = 0;
+        } else if (platform.isa == ISA.ARM) {
+            fp = ARMV7.r13;
             refMapToFPOffset = 0;
         } else {
             throw FatalError.unimplemented();

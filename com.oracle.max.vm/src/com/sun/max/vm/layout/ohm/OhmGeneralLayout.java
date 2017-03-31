@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,23 +17,19 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.layout.ohm;
 
 import static com.sun.max.vm.VMConfiguration.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.HeaderField;
-import com.sun.max.vm.layout.SpecificLayout.ObjectCellVisitor;
-import com.sun.max.vm.layout.SpecificLayout.ObjectMirror;
+import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.layout.SpecificLayout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.type.*;
@@ -69,8 +67,14 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
      */
     final int miscOffset;
 
+    /**
+     * The offset of the hashword: only for 32 bit archs.
+     */
+    final int hashOffset;
+
     public OhmGeneralLayout() {
         this.miscOffset = hubOffset + Word.size();
+        this.hashOffset = miscOffset + Word.size();
     }
 
     @INLINE
@@ -88,6 +92,9 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
             return Offset.fromInt(hubOffset);
         } else if (headerField == HeaderField.MISC) {
             return Offset.fromInt(miscOffset);
+        } else if (headerField == HeaderField.HASH) {
+            assert Platform.target().arch.is32bit();
+            return Offset.fromInt(hashOffset);
         }
         throw new IllegalArgumentException(getClass().getSimpleName() + " does not know about header field: " + headerField);
     }
@@ -167,6 +174,7 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
         return accessor.compareAndSwapWord(miscOffset, expectedValue, newValue);
     }
 
+
     @INLINE
     public final Reference forwarded(Reference ref) {
         if (ref.isMarked()) {
@@ -212,6 +220,9 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
         final Hub hub = ObjectAccess.readHub(object);
         visitor.visitHeaderField(hubOffset, "hub", JavaTypeDescriptor.forJavaClass(hub.getClass()), ReferenceValue.from(hub));
         visitor.visitHeaderField(miscOffset, "misc", JavaTypeDescriptor.WORD, new WordValue(vmConfig().monitorScheme().createMisc(object)));
+        if (Platform.target().arch.is32bit()) {
+            visitor.visitHeaderField(hashOffset, "hash", JavaTypeDescriptor.WORD, IntValue.from(vmConfig().monitorScheme().createHash(object)));
+        }
     }
 
     public int getHubReferenceOffsetInCell() {
@@ -224,6 +235,8 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
             return mirror.readHub();
         } else if (offset == miscOffset) {
             return mirror.readMisc();
+        } else if (offset == hashOffset) {
+            return mirror.readHash();
         }
         return null;
     }
@@ -234,10 +247,26 @@ public class OhmGeneralLayout extends AbstractLayout implements GeneralLayout {
             mirror.writeHub(value);
         } else if (offset == miscOffset) {
             mirror.writeMisc(value);
+        } else if (offset == hashOffset) {
+            mirror.writeHash(value);
         } else {
             return false;
         }
         return true;
     }
 
+    @INLINE
+    public final Word readHash(Accessor accessor) {
+        return accessor.readWord(hashOffset);
+    }
+
+    @INLINE
+    public final void writeHash(Accessor accessor, Word value) {
+        accessor.writeWord(hashOffset, value);
+    }
+
+    @INLINE
+    public final Word compareAndSwapHash(Accessor accessor, Word expectedValue, Word newValue) {
+        return accessor.compareAndSwapWord(hashOffset, expectedValue, newValue);
+    }
 }

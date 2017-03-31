@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,18 +21,14 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package jtt.max;
+package jtt.bytecode;
 
-import com.sun.max.unsafe.*;
+public class BC_dload_9 {
 
-
-/*
- * @Harness: java
- * @Runs: 1l = 0;  2l = 1; 0l = -1; -1l = 0; 0xf000l = 12;  0x80000000l = 31; 0x100000000l = 32
- */
-public class LeastSignificantBit {
-
-    public static int test(long singleWordBitmap) {
-        return Address.fromLong(singleWordBitmap).leastSignificantBitSet();
+    public static boolean test(double i, double ii, double iii, double iiii, double iiiii, double iiiiii, double iiiiiii, double iiiiiiii, double arg) {
+        if (arg == 0.0D) {
+            return true;
+        }
+        return false;
     }
 }

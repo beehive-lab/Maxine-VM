@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.type;
 
@@ -26,6 +24,7 @@ import static com.sun.max.vm.actor.member.InjectedReferenceFieldActor.*;
 import static com.sun.max.vm.hosted.HostedBootClassLoader.*;
 import static com.sun.max.vm.hosted.HostedVMClassLoader.*;
 import static com.sun.max.vm.jdk.JDK.*;
+
 import java.io.*;
 import java.lang.reflect.*;
 import java.nio.*;
@@ -45,8 +44,7 @@ import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deps.*;
 import com.sun.max.vm.hosted.*;
-import com.sun.max.vm.jdk.JDK.ClassRef;
-import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.VMLog.*;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.reflection.*;
@@ -265,6 +263,7 @@ public final class ClassRegistry {
         final TypeDescriptor typeDescriptor = classActor.typeDescriptor;
 
         final ClassActor existingClassActor = typeDescriptorToClassActor.putIfAbsent(typeDescriptor, classActor);
+
         if (existingClassActor != null) {
             if (classActor.isArrayClass()) {
                 // The IDs of array classes are maintained by ClassActor.arrayClassIDs, they don't need to be released.
@@ -501,7 +500,7 @@ public final class ClassRegistry {
     }
 
     @HOSTED_ONLY
-    private static class BootImageClassesIterator implements Iterable<ClassActor>, Iterator<ClassActor> {
+    private static class BootImageClassesIterator implements Iterable<ClassActor>, java.util.Iterator<ClassActor> {
         Iterator<ClassActor> bootListIter;
         Iterator<ClassActor> vmListIter;
         Iterator<ClassActor> unregisteredListIter;

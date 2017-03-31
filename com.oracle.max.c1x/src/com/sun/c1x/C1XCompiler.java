@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,25 +17,28 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.c1x;
 
-import java.util.*;
-
-import com.oracle.max.cri.intrinsics.*;
-import com.oracle.max.criutils.*;
-import com.sun.c1x.debug.*;
-import com.sun.c1x.intrinsics.*;
-import com.sun.c1x.observer.*;
-import com.sun.c1x.stub.*;
-import com.sun.c1x.target.*;
+import com.oracle.max.cri.intrinsics.IntrinsicImpl;
+import com.oracle.max.criutils.TTY;
+import com.sun.c1x.debug.CFGPrinterObserver;
+import com.sun.c1x.intrinsics.C1XIntrinsicImplementations;
+import com.sun.c1x.observer.CompilationObserver;
+import com.sun.c1x.observer.ObservableCompiler;
+import com.sun.c1x.stub.CompilerStub;
+import com.sun.c1x.target.Backend;
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
-import com.sun.cri.xir.*;
+import com.sun.cri.ri.RiRegisterConfig;
+import com.sun.cri.ri.RiResolvedMethod;
+import com.sun.cri.ri.RiRuntime;
+import com.sun.cri.xir.RiXirGenerator;
+import com.sun.cri.xir.XirTemplate;
+import com.sun.max.platform.*;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class implements the compiler interface for C1X.
@@ -91,11 +96,7 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
         int index = C1XMetrics.CompiledMethods++;
         final boolean printCompilation = C1XOptions.PrintCompilation && !TTY.isSuppressed();
         if (printCompilation) {
-            TTY.println(String.format("C1X %4d %-70s %-45s %-50s ...",
-                            index,
-                            method.holder().name(),
-                            method.name(),
-                            method.signature()));
+            TTY.println(String.format("C1X %4d %-70s %-45s %-50s ...", index, method.holder().name(), method.name(), method.signature()));
             startTime = System.nanoTime();
         }
 
@@ -109,14 +110,7 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
             compilation.close();
             if (printCompilation) {
                 long time = (System.nanoTime() - startTime) / 100000;
-                TTY.println(String.format("C1X %4d %-70s %-45s %-50s | %3d.%dms %5dB",
-                                index,
-                                "",
-                                "",
-                                "",
-                                time / 10,
-                                time % 10,
-                                result.targetMethod().targetCodeSize()));
+                TTY.println(String.format("C1X %4d %-70s %-45s %-50s | %3d.%dms %5dB", index, "", "", "", time / 10, time % 10, result.targetMethod().targetCodeSize()));
             }
         }
 
@@ -140,6 +134,9 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
         }
 
         for (CompilerStub.Id id : CompilerStub.Id.values()) {
+            if (omitStub(id)) {
+                continue;
+            }
             TTY.Filter suppressor = new TTY.Filter(C1XOptions.PrintFilter, id);
             try {
                 stubs.put(id, backend.emit(id));
@@ -153,9 +150,23 @@ public class C1XCompiler extends ObservableCompiler implements CiCompiler {
         }
     }
 
+    /**
+     * The compiler stubs at the moment are generic to target platform. For ARMv7, some stubs have been replaced by
+     * runtime calls and hence, they are omitted from adding them to the stubs list.
+     *
+     * @param id of the stub.
+     * @return true if the stub is omitted.
+     */
+    private boolean omitStub(CompilerStub.Id id) {
+        if (Platform.target().arch.is32bit() && (id == CompilerStub.Id.fneg || id == CompilerStub.Id.dneg || id == CompilerStub.Id.d2l || id == CompilerStub.Id.f2l)) {
+            return true;
+        }
+        return false;
+    }
+
     public CompilerStub lookupStub(CompilerStub.Id id) {
         CompilerStub stub = stubs.get(id);
-        assert stub != null : "no stub for compiler stub id: " + id;
+        assert stub != null || (stub == null && omitStub(id)) : "no stub for compiler stub id: " + id;
         return stub;
     }
 

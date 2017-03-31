@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 
 /**
@@ -31,6 +29,7 @@
 #define isa_IA32               0
 #define isa_AMD64              0
 #define isa_POWER              0
+#define isa_ARM                0
 
 #if defined(__sparc) || defined(sparc)
 #   undef  isa_SPARC
@@ -100,6 +99,22 @@
     typedef struct power_CanonicalIntegerRegisters isa_CanonicalIntegerRegistersStruct;
     typedef power_CanonicalIntegerRegisters isa_CanonicalIntegerRegisters;
 
+#elif defined (__arm__) || defined (ARM) || defined(arm)
+#undef isa_ARM
+#define isa_ARM	1
+#define isa_IDENTIFIER	ARM
+#include "arm.h"
+    typedef arm_OsTeleIntegerRegisters isa_OsTeleIntegerRegisters;
+    typedef struct arm_CanonicalIntegerRegisters isa_CanonicalIntegerRegistersStruct;
+    typedef arm_CanonicalIntegerRegisters isa_CanonicalIntegerRegisters;
+
+    typedef arm_OsTeleFloatingPointRegisters isa_OsTeleFloatingPointRegisters;
+    typedef struct arm_CanonicalFloatingPointRegisters isa_CanonicalFloatingPointRegistersStruct;
+    typedef arm_CanonicalFloatingPointRegisters isa_CanonicalFloatingPointRegisters;
+
+    typedef arm_OsTeleStateRegisters isa_OsTeleStateRegisters;
+    typedef struct arm_CanonicalStateRegisters isa_CanonicalStateRegistersStruct;
+    typedef arm_CanonicalStateRegisters isa_CanonicalStateRegisters;
 #else
 #   error
 #endif

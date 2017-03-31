@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.oracle.max.vm.ext.t1x;
 
@@ -38,9 +36,9 @@ import java.util.*;
 import com.oracle.max.criutils.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.sun.cri.bytecode.*;
-import com.sun.cri.ci.CiCallingConvention.Type;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiUtil.RefMapFormatter;
+import com.sun.cri.ci.CiCallingConvention.Type;
+import com.sun.cri.ci.CiUtil.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -48,7 +46,6 @@ import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
@@ -82,11 +79,11 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     /**
      * Class defining the template definitions, default is {@link T1XTemplateSource}.
      */
-    private Class<?> templateSource;
+    private Class< ? > templateSource;
 
     /**
-     * When using non-standard template definitions, this compiler provides the
-     * standard implementation for any non-overridden templates.
+     * When using non-standard template definitions, this compiler provides the standard implementation for any
+     * non-overridden templates.
      */
     @CONSTANT
     public static T1X stdT1X;
@@ -122,23 +119,29 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     }
 
     /**
-     * Creates a compiler in which some template definitions may be overridden.
-     * by calling {@link #setTemplateSource(Class)} before {@link #initialize}.
+     * Creates a compiler in which some template definitions may be overridden. by calling
+     * {@link #setTemplateSource(Class)} before {@link #initialize}.
+     *
      * @param templateSource class defining the modified template definitions
      * @param factory for creating {@link T1XCompilation} instances
      */
     @HOSTED_ONLY
-    public T1X(Class<?> templateSource, T1XCompilationFactory factory) {
+    public T1X(Class< ? > templateSource, T1XCompilationFactory factory) {
         this.templateSource = templateSource;
         this.t1XCompilationFactory = factory;
     }
 
     private final ThreadLocal<T1XCompilation> compilation = new ThreadLocal<T1XCompilation>() {
+
         @Override
         protected T1XCompilation initialValue() {
             return t1XCompilationFactory.newT1XCompilation(T1X.this);
         }
     };
+
+    public T1XCompilation getT1XCompilation() {
+        return compilation.get();
+    }
 
     @Override
     public RuntimeCompiler.Nature nature() {
@@ -158,9 +161,6 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
             // once the compilation is done. This should be a very rare occurrence.
             c = t1x.t1XCompilationFactory.newT1XCompilation(t1x);
             reentrant = true;
-            if (VMOptions.verboseOption.verboseCompilation || PrintCompilation) {
-                Log.println("Created temporary compilation object for re-entrant T1X compilation");
-            }
         }
 
         long startTime = 0;
@@ -195,6 +195,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
 
     /**
      * Checks whether to use the JVMTI templates.
+     *
      * @param methodActor
      */
     private boolean useVMTITemplates(ClassMethodActor classMethodActor) {
@@ -293,19 +294,12 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
             StringBuilder buf = new StringBuilder("------ Exception Handlers ------").append(nl);
             for (CiExceptionHandler e : t1xMethod.handlers) {
                 if (e.catchTypeCPI == T1XTargetMethod.SYNC_METHOD_CATCH_TYPE_CPI) {
-                    buf.append("    <any> @ [").
-                        append(e.startBCI()).
-                        append(" .. ").
-                        append(e.endBCI()).
-                        append(") -> ").
-                        append(e.handlerBCI()).
-                        append(nl);
+                    buf.append("    <any> @ [").append(e.startBCI()).append(" .. ").append(e.endBCI()).append(") -> ").append(e.handlerBCI()).append(nl);
                 } else {
-                    buf.append("    ").
-                        append(e.catchType == null ? "<any>" : e.catchType).append(" @ [").
-                        append(t1xMethod.posForBci(e.startBCI())).append(" .. ").
-                        append(t1xMethod.posForBci(e.endBCI())).append(") -> ").
-                        append(t1xMethod.posForBci(e.handlerBCI())).append(nl);
+                    buf.append("    ").append(e.catchType == null ? "<any>" : e.catchType);
+                    buf.append(" @ [").append(t1xMethod.posForBci(e.startBCI())).append(" .. ");
+                    buf.append(t1xMethod.posForBci(e.endBCI())).append(") -> ");
+                    buf.append(t1xMethod.posForBci(e.handlerBCI())).append(nl);
                 }
             }
             hcf.addComment(0, buf.toString());
@@ -382,19 +376,20 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     }
 
     /**
-     * Create a set of templates from the methods annotated with {@link T1X_TEMPLATE} in the given class.
-     * Undefined templates are filled from the templates associated with {@link #stdT1X}. The latter
-     * maybe null iff {@code checkComplete} is {@code false}, in which case the result will only
-     * contain the templates defined in the class.
+     * Create a set of templates from the methods annotated with {@link T1X_TEMPLATE} in the given class. Undefined
+     * templates are filled from the templates associated with {@link #stdT1X}. The latter maybe null iff
+     * {@code checkComplete} is {@code false}, in which case the result will only contain the templates defined in the
+     * class.
+     *
      * @param templateSourceClass class containing template methods
      * @param checkComplete if {@code true} check the array for completeness.
-     * @param templates an existing instance that will be incrementally updated.
-     *        Value may be null, in which case a new array will be created.
+     * @param templates an existing instance that will be incrementally updated. Value may be null, in which case a new
+     *            array will be created.
      *
      * @return the templates array, either as passed in or created.
      */
     @HOSTED_ONLY
-    public T1XTemplate[] createTemplates(RuntimeCompiler compiler, Class<?> templateSourceClass, boolean checkComplete, T1XTemplate[] templates) {
+    public T1XTemplate[] createTemplates(RuntimeCompiler compiler, Class< ? > templateSourceClass, boolean checkComplete, T1XTemplate[] templates) {
         Trace.begin(1, "creating T1X templates from " + templateSourceClass.getName());
         if (templates == null) {
             templates = new T1XTemplate[T1XTemplateTag.values().length];
@@ -417,6 +412,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
                     } catch (VerifyError e) {
                         FatalError.unexpected("Error verifying " + templateSource, e);
                     }
+
                     MaxTargetMethod templateCode = compileTemplate(compiler, templateSource);
                     codeSize += templateCode.codeLength();
                     T1XTemplate template = templates[tag.ordinal()];
@@ -430,7 +426,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         if (checkComplete) {
             // ensure everything is implemented
             for (int i = 0; i < T1XTemplateTag.values().length; i++) {
-                T1XTemplateTag tag  = T1XTemplateTag.values()[i];
+                T1XTemplateTag tag = T1XTemplateTag.values()[i];
                 if (templates[i] == null && !isUnimplemented(tag)) {
                     if (stdT1X == this || (stdT1X.templates[i] == null && !stdT1X.isUnimplemented(tag))) {
                         FatalError.unexpected("Template tag " + tag + " is not implemented");
@@ -444,18 +440,84 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         return templates;
     }
 
+    @HOSTED_ONLY
+    public T1XTemplate createOfflineTemplate(RuntimeCompiler compiler, Class< ? > templateSourceClass, T1XTemplate[] templates, String name) {
+        if (templates == null) {
+            templates = new T1XTemplate[T1XTemplateTag.values().length];
+        }
+
+        ClassActor.fromJava(T1XRuntime.class);
+        ClassVerifier verifier = new TypeCheckingVerifier(ClassActor.fromJava(templateSourceClass));
+
+        final Method[] templateMethods = templateSourceClass.getDeclaredMethods();
+        T1XTemplate template = null;
+        for (Method method : templateMethods) {
+            if (!method.getName().equals(name)) {
+                continue;
+            }
+            if (Platform.platform().isAcceptedBy(method.getAnnotation(PLATFORM.class))) {
+                T1X_TEMPLATE anno = method.getAnnotation(T1X_TEMPLATE.class);
+                if (anno != null) {
+                    T1XTemplateTag tag = anno.value();
+                    ClassMethodActor templateSource = ClassMethodActor.fromJava(method);
+                    try {
+                        templateSource.verify(verifier);
+                    } catch (VerifyError e) {
+                        FatalError.unexpected("Error verifying " + templateSource, e);
+                    }
+                    MaxTargetMethod templateCode = compileTemplate(compiler, templateSource);
+                    template = templates[tag.ordinal()];
+                    if (template != null) {
+                        FatalError.unexpected("Template tag " + tag + " is already bound to " + template.method + ", cannot rebind to " + templateSource);
+                    }
+                    templates[tag.ordinal()] = new T1XTemplate(templateCode, tag, templateSource);
+                }
+            }
+        }
+        return template;
+    }
+
+    @HOSTED_ONLY
+    public T1XTemplate createOfflineIntrinsicTemplate(RuntimeCompiler compiler, Class< ? > templateSourceClass, Map<RiMethod, T1XTemplate> templates, String name) {
+        if (templates == null) {
+            templates = new HashMap<RiMethod, T1XTemplate>();
+        }
+
+        ClassActor.fromJava(T1XRuntime.class);
+        final Method[] templateMethods = templateSourceClass.getDeclaredMethods();
+        T1XTemplate template = null;
+        for (Method method : templateMethods) {
+            if (!method.getName().equals(name)) {
+                continue;
+            }
+            if (Platform.platform().isAcceptedBy(method.getAnnotation(PLATFORM.class))) {
+                T1X_INTRINSIC_TEMPLATE anno = method.getAnnotation(T1X_INTRINSIC_TEMPLATE.class);
+                if (anno != null) {
+                    ClassActor source = ClassActor.fromJava(T1XIntrinsicTemplateSource.class);
+                    for (ClassMethodActor intrinsicMethod : intrinsicTemplateMethods()) {
+                        ClassMethodActor templateSource = source.findLocalStaticMethodActor(SymbolTable.makeSymbol(T1XIntrinsicTemplateGenerator.templateInvokerName(intrinsicMethod)));
+                        MaxTargetMethod templateCode = compileTemplate(compiler, templateSource);
+                        template = new T1XTemplate(templateCode, null, templateSource);
+                        templates.put(intrinsicMethod, template);
+                    }
+
+                }
+            }
+        }
+        return template;
+    }
+
     /**
      * These templates are not used by T1X, but may be used by the variants (e.g., VMA). Since enums cannot be
-     * subclassed, it is convenient to keep them in {@link T1XTemplateTag} and just avoid checking
-     * that they are implemented.
+     * subclassed, it is convenient to keep them in {@link T1XTemplateTag} and just avoid checking that they are
+     * implemented.
      */
     protected static final EnumSet UNIMPLEMENTED_TEMPLATES = EnumSet.of(NOP, ACONST_NULL, ICONST, LCONST, FCONST, DCONST, BIPUSH, SIPUSH, LDC$int, LDC$long, LDC$float, LDC$double,
-                    LDC$reference$resolved, ILOAD, LLOAD, FLOAD, DLOAD, ALOAD, ISTORE, LSTORE, FSTORE, DSTORE, ASTORE, POP, POP2, DUP, DUP_X1, DUP_X2, DUP2, DUP2_X1, DUP2_X2, SWAP,
-                    IINC, IFEQ, IFNE, IFLT, IFGE, IFGT, IFLE, IF_ICMPEQ, IF_ICMPNE, IF_ICMPLT, IF_ICMPGE, IF_ICMPGT, IF_ICMPLE, IF_ACMPEQ, IF_ACMPNE, IFNULL, IFNONNULL, GOTO, GOTO_W,
-                    INVOKESPECIAL$void$resolved, INVOKESPECIAL$float$resolved, INVOKESPECIAL$long$resolved, INVOKESPECIAL$double$resolved, INVOKESPECIAL$reference$resolved,
-                    INVOKESPECIAL$word$resolved, INVOKESTATIC$void$init, INVOKESTATIC$float$init, INVOKESTATIC$long$init, INVOKESTATIC$double$init, INVOKESTATIC$reference$init,
-                    INVOKESTATIC$word$init, INVOKEVIRTUAL$adviseafter, INVOKEINTERFACE$adviseafter, INVOKESPECIAL$adviseafter, INVOKESTATIC$adviseafter,
-                    BREAKPOINT);
+                    LDC$reference$resolved, ILOAD, LLOAD, FLOAD, DLOAD, ALOAD, ISTORE, LSTORE, FSTORE, DSTORE, ASTORE, POP, POP2, DUP, DUP_X1, DUP_X2, DUP2, DUP2_X1, DUP2_X2, SWAP, IINC, IFEQ, IFNE,
+                    IFLT, IFGE, IFGT, IFLE, IF_ICMPEQ, IF_ICMPNE, IF_ICMPLT, IF_ICMPGE, IF_ICMPGT, IF_ICMPLE, IF_ACMPEQ, IF_ACMPNE, IFNULL, IFNONNULL, GOTO, GOTO_W, INVOKESPECIAL$void$resolved,
+                    INVOKESPECIAL$float$resolved, INVOKESPECIAL$long$resolved, INVOKESPECIAL$double$resolved, INVOKESPECIAL$reference$resolved, INVOKESPECIAL$word$resolved, INVOKESTATIC$void$init,
+                    INVOKESTATIC$float$init, INVOKESTATIC$long$init, INVOKESTATIC$double$init, INVOKESTATIC$reference$init, INVOKESTATIC$word$init, INVOKEVIRTUAL$adviseafter,
+                    INVOKEINTERFACE$adviseafter, INVOKESPECIAL$adviseafter, INVOKESTATIC$adviseafter, BREAKPOINT);
 
     protected boolean isUnimplemented(T1XTemplateTag tag) {
         return UNIMPLEMENTED_TEMPLATES.contains(tag);
@@ -463,7 +525,8 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
 
     private MaxTargetMethod compileTemplate(RuntimeCompiler bootCompiler, ClassMethodActor templateSource) {
         FatalError.check(templateSource.isTemplate(), "Method with " + T1X_TEMPLATE.class.getSimpleName() + " annotation should be a template: " + templateSource);
-        FatalError.check(!hasStackParameters(templateSource), "Template must not have *any* stack parameters: " + templateSource);
+        FatalError.check((!hasStackParameters(templateSource) && isAMD64()) || (hasStackParameters(templateSource) && isARM() && hasLongValues(templateSource)) ||
+                        (!hasStackParameters(templateSource) && isARM()), "Template must not have *any* stack parameters: " + templateSource);
         FatalError.check(templateSource.resultKind().stackKind == templateSource.resultKind(), "Template return type must be a stack kind: " + templateSource);
         for (int i = 0; i < templateSource.getParameterKinds().length; i++) {
             Kind k = templateSource.getParameterKinds()[i];
@@ -480,30 +543,18 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     }
 
     @HOSTED_ONLY
-    private static final Set<String> templateIntriniscIDs = new HashSet<String>(Arrays.asList(
-        UCMP_AT, UCMP_AE, UCMP_BT, UCMP_BE,
-        UDIV, UREM,
-        LSB, MSB,
-        PREAD_OFF, PREAD_IDX, PWRITE_OFF, PWRITE_IDX, PCMPSWP,
-        HERE,
-        PAUSE
-    ));
+    private static final Set<String> templateIntriniscIDs = new HashSet<String>(
+                    Arrays.asList(UCMP_AT, UCMP_AE, UCMP_BT, UCMP_BE, UDIV, UREM, LSB, MSB, PREAD_OFF, PREAD_IDX, PWRITE_OFF, PWRITE_IDX, PCMPSWP, HERE, PAUSE));
 
     /**
      * List of intrinsic that T1X cannot handle, i.e., methods that call these intrinsics lead to a bailout.
      */
-    public static final Set<String> unsafeIntrinsicIDs = new HashSet<String>(Arrays.asList(
-        READREG, WRITEREG, IFLATCHBITREAD,
-        SAFEPOINT_POLL, HERE, INFO, BREAKPOINT_TRAP,
-        ALLOCA
-    ));
+    public static final Set<String> unsafeIntrinsicIDs = new HashSet<String>(Arrays.asList(READREG, WRITEREG, IFLATCHBITREAD, SAFEPOINT_POLL, HERE, INFO, BREAKPOINT_TRAP, ALLOCA));
 
     @HOSTED_ONLY
     private static final Class[] templateIntrinsicClasses = {
-        com.sun.max.unsafe.Pointer.class,
-        com.oracle.max.cri.intrinsics.UnsignedMath.class,
-        com.sun.max.vm.intrinsics.Infopoints.class,
-        com.sun.max.vm.Intrinsics.class
+        com.sun.max.unsafe.Pointer.class, com.oracle.max.cri.intrinsics.UnsignedMath.class,
+        com.sun.max.vm.intrinsics.Infopoints.class, com.sun.max.vm.Intrinsics.class
     };
 
     @HOSTED_ONLY
@@ -522,8 +573,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         for (ClassActor classActor : ClassRegistry.allBootImageClasses()) {
             for (MethodActor methodActor : classActor.getLocalMethodActors()) {
                 if (T1X.templateIntriniscIDs.contains(methodActor.intrinsic()) && !result.contains(methodActor)) {
-                    System.out.printf("%nClass with intrinisc methods found that should be in templateIntrinsicClasses: class %s, method %s%n%n",
-                        classActor, methodActor);
+                    System.out.printf("%nClass with intrinisc methods found that should be in templateIntrinsicClasses: class %s, method %s%n%n", classActor, methodActor);
                     System.exit(1);
                 }
             }
@@ -561,10 +611,10 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
             try {
                 if (T1XTemplateGenerator.generate(true, T1XTemplateSource.class)) {
                     String thisFile = T1XTemplateSource.class.getSimpleName();
-                    System.out.printf("%nThe generated content in %s " +
-                        " is out of sync. Edit %s instead to make the desired changes and then run 'max t1xgen', " +
-                        "recompile %s (or refresh it in your IDE) and restart the bootstrapping process.%n%n",
-                        thisFile, T1XTemplateGenerator.class.getSimpleName(), thisFile);
+                    System.out.printf(
+                                    "%nThe generated content in %s " + " is out of sync. Edit %s instead to make the desired changes and then run 'max t1xgen', " +
+                                                    "recompile %s (or refresh it in your IDE) and restart the bootstrapping process.%n%n",
+                                    thisFile, T1XTemplateGenerator.class.getSimpleName(), thisFile);
                     System.exit(1);
                 }
             } catch (Exception e) {
@@ -574,7 +624,8 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
             try {
                 boolean modified = T1XIntrinsicTemplateGenerator.generate(T1XIntrinsicTemplateSource.class);
                 if (modified) {
-                    System.out.printf("%nThe generated content in %s was regenerated. Recompile (or refresh it in your IDE) and restart the bootstrapping process.%n%n", T1XIntrinsicTemplateSource.class.getSimpleName());
+                    System.out.printf("%nThe generated content in %s was regenerated. Recompile (or refresh it in your IDE) and restart the bootstrapping process.%n%n",
+                                    T1XIntrinsicTemplateSource.class.getSimpleName());
                     System.exit(1);
                 }
             } catch (Exception e) {
@@ -588,6 +639,16 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     private static boolean hasStackParameters(ClassMethodActor classMethodActor) {
         for (CiValue arg : vm().registerConfigs.standard.getCallingConvention(Type.JavaCall, CiUtil.signatureToKinds(classMethodActor), target(), false).locations) {
             if (!arg.isRegister()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @HOSTED_ONLY
+    private static boolean hasLongValues(ClassMethodActor classMethodActor) {
+        for (CiValue arg : vm().registerConfigs.standard.getCallingConvention(Type.JavaCall, CiUtil.signatureToKinds(classMethodActor), target(), false).locations) {
+            if (arg.kind == CiKind.Long) {
                 return true;
             }
         }
@@ -615,7 +676,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     public static int dispFromCodeStart(int objectLiteralsLength, int scalarLiteralsLength, int dataIndex, boolean isObject) {
         int distance = Layout.byteArrayLayout().headerSize();
         if (DebugHeap.isTagging()) {
-            distance += Word.size();
+            distance += Platform.target().arch.is64bit() ? Word.size() : 2 * Word.size();
         }
         if (isObject) {
             distance += (objectLiteralsLength - dataIndex) * Word.size();
@@ -623,9 +684,27 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
             distance += objectLiteralsLength * Word.size();
             distance += Layout.referenceArrayLayout().headerSize();
             if (DebugHeap.isTagging()) {
-                distance += Word.size();
+                distance += Platform.target().arch.is64bit() ? Word.size() : 2 * Word.size();
             }
             distance += scalarLiteralsLength - dataIndex;
+        }
+        if (Platform.target().arch.isARM()) {
+            // The object literals are allocated as 2 separate regions
+            // They will need alignment individually
+            int scalarsNeedAlignment = 0;
+            int objectsNeedAlignment = 0;
+            if (scalarLiteralsLength % 8 != 0) {
+                scalarsNeedAlignment = 4;
+            }
+            if ((objectLiteralsLength * Word.size() + Layout.byteArrayLayout().headerSize()) % 8 != 0) {
+                objectsNeedAlignment = 4;
+            }
+            distance = distance + scalarsNeedAlignment + objectsNeedAlignment;
+
+            final int size = objectLiteralsLength * Word.size() + Layout.byteArrayLayout().headerSize();
+            if (size % 8 != 0) {
+                // distance += 4;
+            }
         }
         return -distance;
     }
@@ -636,6 +715,11 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     @FOLD
     public static boolean isAMD64() {
         return platform().isa == ISA.AMD64;
+    }
+
+    @FOLD
+    public static boolean isARM() {
+        return platform().isa == ISA.ARM;
     }
 
     /**

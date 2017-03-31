@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.compiler.target.amd64;
 
@@ -82,7 +80,7 @@ public final class AMD64TargetMethodUtil {
         final Address endOfCallSite = callSiteAddress.plus(RIP_CALL_INSTRUCTION_LENGTH - 1);
         return callSiteAddress.plus(1).isWordAligned() ? true :
         // last byte of call site:
-        callSiteAddress.roundedDownBy(8).equals(endOfCallSite.roundedDownBy(8));
+                        callSiteAddress.roundedDownBy(8).equals(endOfCallSite.roundedDownBy(8));
     }
 
     /**
@@ -98,22 +96,16 @@ public final class AMD64TargetMethodUtil {
         if (MaxineVM.isHosted()) {
             final byte[] code = tm.code();
             assert code[0] == (byte) RIP_CALL;
-            disp32 =
-                (code[callPos + 4] & 0xff) << 24 |
-                (code[callPos + 3] & 0xff) << 16 |
-                (code[callPos + 2] & 0xff) << 8 |
-                (code[callPos + 1] & 0xff) << 0;
+            disp32 = (code[callPos + 4] & 0xff) << 24 | (code[callPos + 3] & 0xff) << 16 | (code[callPos + 2] & 0xff) << 8 | (code[callPos + 1] & 0xff) << 0;
         } else {
             final Pointer callSitePointer = callSite.toPointer();
             assert callSitePointer.readByte(0) == (byte) RIP_CALL
-                // deopt might replace the first call in a method with a jump (redirection)
-                || (callSitePointer.readByte(0) == (byte) RIP_JMP && callPos == 0)
-                : callSitePointer.readByte(0);
+            // deopt might replace the first call in a method with a jump (redirection)
+                            || (callSitePointer.readByte(0) == (byte) RIP_JMP && callPos == 0) : callSitePointer.readByte(0);
             disp32 = callSitePointer.readInt(1);
         }
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(disp32);
     }
-
 
     /**
      * Patches the offset operand of a 32-bit relative CALL instruction.
@@ -126,10 +118,12 @@ public final class AMD64TargetMethodUtil {
     public static CodePointer fixupCall32Site(TargetMethod tm, int callOffset, CodePointer target) {
         CodePointer callSite = tm.codeAt(callOffset);
         if (!isPatchableCallSite(callSite)) {
-            // Every call site that is fixed up here might also be patched later.  To avoid failed patching,
+            // Every call site that is fixed up here might also be patched later. To avoid failed patching,
             // check for alignment of call site also here.
-            // TODO(cwi): This is a check that I would like to have, however, T1X does not ensure proper alignment yet when it stitches together templates that contain calls.
-            // FatalError.unexpected(" invalid patchable call site:  " + targetMethod + "+" + offset + " " + callSite.toHexString());
+            // TODO(cwi): This is a check that I would like to have, however, T1X does not ensure proper alignment yet
+            // when it stitches together templates that contain calls.
+            // FatalError.unexpected(" invalid patchable call site: " + targetMethod + "+" + offset + " " +
+            // callSite.toHexString());
         }
 
         long disp64 = target.toLong() - callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).toLong();
@@ -137,12 +131,9 @@ public final class AMD64TargetMethodUtil {
         int oldDisp32;
         FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
         if (MaxineVM.isHosted()) {
+
             final byte[] code = tm.code();
-            oldDisp32 =
-                (code[callOffset + 4] & 0xff) << 24 |
-                (code[callOffset + 3] & 0xff) << 16 |
-                (code[callOffset + 2] & 0xff) << 8 |
-                (code[callOffset + 1] & 0xff) << 0;
+            oldDisp32 = (code[callOffset + 4] & 0xff) << 24 | (code[callOffset + 3] & 0xff) << 16 | (code[callOffset + 2] & 0xff) << 8 | (code[callOffset + 1] & 0xff) << 0;
             if (oldDisp32 != disp32) {
                 code[callOffset] = (byte) RIP_CALL;
                 code[callOffset + 1] = (byte) disp32;
@@ -150,13 +141,10 @@ public final class AMD64TargetMethodUtil {
                 code[callOffset + 3] = (byte) (disp32 >> 16);
                 code[callOffset + 4] = (byte) (disp32 >> 24);
             }
+
         } else {
             final Pointer callSitePointer = callSite.toPointer();
-            oldDisp32 =
-                (callSitePointer.readByte(4) & 0xff) << 24 |
-                (callSitePointer.readByte(3) & 0xff) << 16 |
-                (callSitePointer.readByte(2) & 0xff) << 8 |
-                (callSitePointer.readByte(1) & 0xff) << 0;
+            oldDisp32 = (callSitePointer.readByte(4) & 0xff) << 24 | (callSitePointer.readByte(3) & 0xff) << 16 | (callSitePointer.readByte(2) & 0xff) << 8 | (callSitePointer.readByte(1) & 0xff) << 0;
             if (oldDisp32 != disp32) {
                 callSitePointer.writeByte(0, (byte) RIP_CALL);
                 callSitePointer.writeByte(1, (byte) disp32);
@@ -190,8 +178,9 @@ public final class AMD64TargetMethodUtil {
             synchronized (PatchingLock) {
                 // Just to prevent concurrent writing and invalidation to the same instruction cache line
                 // (although the lock excludes ALL concurrent patching)
-                callSitePointer.writeInt(1,  disp32);
-                // Don't need icache invalidation to be correct (see AMD64's Architecture Programmer Manual Vol.2, p173 on self-modifying code)
+                callSitePointer.writeInt(1, disp32);
+                // Don't need icache invalidation to be correct (see AMD64's Architecture Programmer Manual Vol.2, p173
+                // on self-modifying code)
             }
         }
         return callSite.plus(RIP_CALL_INSTRUCTION_LENGTH).plus(oldDisp32);
@@ -222,8 +211,8 @@ public final class AMD64TargetMethodUtil {
     }
 
     /**
-     * Indicate with the instruction in a target method at a given position is a jump to a specified destination.
-     * Used in particular for testing if the entry points of a target method were patched to jump to a trampoline.
+     * Indicate with the instruction in a target method at a given position is a jump to a specified destination. Used
+     * in particular for testing if the entry points of a target method were patched to jump to a trampoline.
      *
      * @param tm a target method
      * @param pos byte index relative to the start of the method to a call site
@@ -249,9 +238,7 @@ public final class AMD64TargetMethodUtil {
         // check whether the current ip is at the first instruction or a return
         // which means the stack pointer has not been adjusted yet (or has already been adjusted back)
         TargetMethod tm = current.targetMethod();
-        CodePointer entryPoint = tm.callEntryPoint.equals(CallEntryPoint.C_ENTRY_POINT) ?
-            CallEntryPoint.C_ENTRY_POINT.in(tm) :
-            CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(tm);
+        CodePointer entryPoint = tm.callEntryPoint.equals(CallEntryPoint.C_ENTRY_POINT) ? CallEntryPoint.C_ENTRY_POINT.in(tm) : CallEntryPoint.OPTIMIZED_ENTRY_POINT.in(tm);
 
         return entryPoint.equals(current.vmIP()) || current.stackFrameWalker().readByte(current.vmIP().toAddress(), 0) == RET;
     }
@@ -323,18 +310,5 @@ public final class AMD64TargetMethodUtil {
         TargetMethod tm = frame.targetMethod();
         Pointer sp = frame.sp();
         return sp.plus(tm.frameSize());
-    }
-
-    public static int callInstructionSize(byte[] code, int pos) {
-        if ((code[pos] & 0xFF) == RIP_CALL) {
-            return RIP_CALL_INSTRUCTION_SIZE;
-        }
-        if ((code[pos] & 0xff) == REG_CALL) {
-            return 2;
-        }
-        if ((code[pos + 1] & 0xff) == REG_CALL) {
-            return 3;
-        }
-        return -1;
     }
 }

@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.oracle.max.criutils;
 
@@ -33,6 +31,7 @@ import java.util.regex.*;
  */
 public class TTY {
 
+    private static boolean THREAD_ID_PREFIX = false;
     /**
      * Support for thread-local suppression of {@link TTY}.
      */
@@ -134,11 +133,18 @@ public class TTY {
         return out.get();
     }
 
+    private static String printThreadId() {
+        if (THREAD_ID_PREFIX) {
+            return "Thread " + Thread.currentThread().getId() + " ";
+        } else {
+            return "";
+        }
+    }
     /**
      * @see LogStream#print(String)
      */
     public static void print(String s) {
-        out().print(s);
+        out().print(printThreadId() + s);
     }
 
     /**
@@ -187,7 +193,7 @@ public class TTY {
      * @see LogStream#println(String)
      */
     public static void println(String s) {
-        out().println(s);
+        out().println(printThreadId() + s);
     }
 
     /**
@@ -240,11 +246,11 @@ public class TTY {
     }
 
     public static void print(String format, Object... args) {
-        out().printf(format, args);
+        out().printf(printThreadId() + format, args);
     }
 
     public static void println(String format, Object... args) {
-        out().printf(format + "%n", args);
+        out().printf(printThreadId() + format + "%n", args);
     }
 
     public static void fillTo(int i) {

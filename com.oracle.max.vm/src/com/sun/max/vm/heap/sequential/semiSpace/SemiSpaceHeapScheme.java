@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.heap.sequential.semiSpace;
 
@@ -94,9 +92,11 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
 
 
     /**
-     * A VM option for enabling extra checking of references. This is enabled by default in Debug build.
+     * A VM option for enabling extra checking of references. This should be disabled when running GC benchmarks.
+     * It's enabled by default as the primary goal of this collector are simplicity and robustness,
+     * not high performance.
      */
-    private static boolean VerifyReferences = false;
+    private static boolean VerifyReferences = true;
     static {
         VMOptions.addFieldOption("-XX:", "VerifyReferences", SemiSpaceHeapScheme.class, "Do extra verification for each reference scanned by the GC", MaxineVM.Phase.PRISTINE);
     }
@@ -641,6 +641,10 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     private void visitCells(CellVisitor visitor) {
         Pointer start = toSpace.start().asPointer();
         Pointer cell = start;
+        if (Heap.verbose()) {
+            Log.print("Visit Region: To Space");
+            Log.println();
+        }
         while (cell.isNotZero() && cell.lessThan(allocationMark()) && cell.getWord().isNotZero()) {
             cell = DebugHeap.checkDebugCellTag(start, cell);
             cell = visitor.visitCell(cell);
@@ -804,7 +808,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
     public Pointer gcAllocate(Size size) {
         Pointer cell = allocationMark().asPointer();
         if (DebugHeap.isTagging()) {
-            cell = cell.plusWords(1);
+            cell = Platform.target().arch.is64bit() ? cell.plusWords(1) : cell.plusWords(2);
         }
         toSpace.mark.set(cell.plus(size));
         FatalError.check(allocationMark().lessThan(top), "GC allocation overflow");
@@ -879,6 +883,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             return tlabAllocate(size);
         }
         final Size nextTLABSize = refillPolicy.nextTlabSize();
+
         if (size.greaterThan(nextTLABSize)) {
             // This couldn't be allocated in a TLAB, so go directly to direct allocation routine.
             // NOTE: this is where we always go if we don't use TLABs (the "never refill" TLAB policy
@@ -979,7 +984,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
      * @param when a description of the current GC phase
      */
     private void verifyObjectSpaces(GCCallbackPhase when) {
-        if (!VerifyReferences) {
+        if (!MaxineVM.isDebug() && !VerifyReferences) {
             return;
         }
 
@@ -1004,15 +1009,30 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
                 phaseLogger.logVerifyingHeapObjects(Interval.BEGIN);
                 phaseLogger.logVerifyingRegion(toSpace, toSpace.start().asPointer(), allocationMark());
             }
+            if (Heap.verbose()) {
+                Log.println("--To Space Verification: Start");
+            }
             DebugHeap.verifyRegion(toSpace, toSpace.start().asPointer(), allocationMark(), refVerifier, detailLogger);
+            if (Heap.verbose()) {
+                Log.println("--To Space Verification: End");
+            }
             if (Heap.logGCPhases()) {
                 phaseLogger.logVerifyingHeapObjects(Interval.END);
                 phaseLogger.logVerifyingCodeObjects(Interval.BEGIN);
             }
 
+            if (Heap.verbose()) {
+                Log.println("--Code Baseline Verification: Start");
+            }
             verifyCodeRegion(Code.getCodeManager().getRuntimeBaselineCodeRegion());
+            if (Heap.verbose()) {
+                Log.println("--Code Baseline Verification: End");
+                Log.println("--Code Opt Verification: Start");
+            }
             verifyCodeRegion(Code.getCodeManager().getRuntimeOptCodeRegion());
-
+            if (Heap.verbose()) {
+                Log.println("--Code Opt Verification: End");
+            }
             if (Heap.logGCPhases()) {
                 phaseLogger.logVerifyingCodeObjects(Interval.END);
             }

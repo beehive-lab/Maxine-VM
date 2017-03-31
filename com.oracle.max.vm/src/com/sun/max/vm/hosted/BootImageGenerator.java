@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,16 +17,13 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.hosted;
 
 import java.io.*;
 import java.util.*;
 
+import com.oracle.max.asm.*;
 import com.sun.max.*;
 import com.sun.max.ide.*;
 import com.sun.max.lang.*;
@@ -74,7 +73,7 @@ public final class BootImageGenerator {
             "Create a file showing the connectivity of objects in the image.");
 
     public static final Option<Boolean> treeStringOption = options.newBooleanOption("tree-string", true,
-                    "Include toString value in connectivity tree.");
+            "Include toString value in connectivity tree.");
 
     private static final Option<Boolean> statsOption = options.newBooleanOption("stats", false,
             "Create a file detailing the number and size of each type of object in the image.");
@@ -93,10 +92,9 @@ public final class BootImageGenerator {
             "Generate inline TLAB allocation code in boot image.");
     // TODO: clean this up. Just for getting perf numbers.
     private static final Option<Boolean> useOutOfLineStubs = options.newBooleanOption("out-stubs", true,
-                    "Uses out of line runtime stubs when generating inlined TLAB allocations with XIR");
+            "Uses out of line runtime stubs when generating inlined TLAB allocations with XIR");
 
     // Options shared with the Inspector
-
     public static final OptionSet inspectorSharedOptions = new OptionSet();
 
     /**
@@ -241,11 +239,10 @@ public final class BootImageGenerator {
             configurator.create();
 
             // Initialize the Java prototype
-            JavaPrototype.initialize(prototypeGenerator.threadsOption.getValue(),  checkGeneratedCodeOption.getValue());
+            JavaPrototype.initialize(prototypeGenerator.threadsOption.getValue(), checkGeneratedCodeOption.getValue());
 
             Heap.genInlinedTLAB = inlinedTLABOption.getValue(); // TODO: cleanup. Just for evaluating impact on performance of inlined tlab alloc.
             Heap.useOutOfLineStubs = useOutOfLineStubs.getValue(); // TODO: cleanup.
-
             DataPrototype dataPrototype = prototypeGenerator.createDataPrototype(treeOption.getValue());
 
             final GraphPrototype graphPrototype = dataPrototype.graphPrototype();
@@ -289,10 +286,11 @@ public final class BootImageGenerator {
      * to which proxies will be dumped. These directories are created before boot image construction, and deleted
      * afterwards, if they had not existed beforehand. Note that all directories of a path have to be given.
      */
-    private static String[] proxyDirs = new String[] {
+    private static String[] proxyDirs = new String[]{
         "java",
         "java/lang",
         "java/lang/invoke",
+        "com/sun/proxy"
     };
 
     /**
@@ -357,7 +355,7 @@ public final class BootImageGenerator {
      * Writes the image data to the specified file.
      *
      * @param dataPrototype the data prototype containing a data-level representation of the image
-     * @param file the file to which to write the data prototype
+     * @param file          the file to which to write the data prototype
      */
     private void writeImage(DataPrototype dataPrototype, File file) {
         try {
@@ -414,7 +412,7 @@ public final class BootImageGenerator {
      * Writes miscellaneous statistics about the boot image creation process to a file.
      *
      * @param graphPrototype the graph (i.e. nodes/edges) representation of the prototype
-     * @param file the file to which to write the statistics
+     * @param file           the file to which to write the statistics
      * @throws IOException if there is a problem writing to the file
      */
     private void writeStats(GraphPrototype graphPrototype, File file) throws IOException {
@@ -431,9 +429,9 @@ public final class BootImageGenerator {
      * Writes the object tree to a file. The object tree helps to diagnose space usage problems,
      * typically caused by including too much into the image.
      *
-     * @param dataPrototype the data representation of the prototype
+     * @param dataPrototype  the data representation of the prototype
      * @param graphPrototype the graph representation of the prototype
-     * @param file the file to which to write the object
+     * @param file           the file to which to write the object
      * @throws IOException
      */
     private void writeObjectTree(DataPrototype dataPrototype, GraphPrototype graphPrototype, File file) throws IOException {
@@ -451,7 +449,7 @@ public final class BootImageGenerator {
      * of methods into the image that should not be included.
      *
      * @param compiledPrototype the compiled-code representation of the prototype
-     * @param file the file to which to write the tree
+     * @param file              the file to which to write the tree
      * @throws IOException if there is a problem writing to the file
      */
     private void writeMethodTree(CompiledPrototype compiledPrototype, File file) throws IOException {
@@ -475,6 +473,7 @@ public final class BootImageGenerator {
 
     /**
      * Writes various statistics about the image creation process to the standard output.
+     *
      * @param out the output stream to which to write the statistics
      */
     private static void writeMiscStatistics(PrintStream out) {

@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,16 +17,14 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.code;
 
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.compiler.target.Safepoints.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+import static com.sun.max.platform.Platform.*;
+
 
 import java.util.*;
 
@@ -38,6 +38,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.compiler.target.arm.*;
 import com.sun.max.vm.log.VMLog.Record;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.profile.*;
@@ -90,7 +91,14 @@ public final class CodeEviction extends VmOperation {
             }
             final Safepoints sps = tm.safepoints();
             for (int i = sps.nextDirectCall(0); i >= 0; i = sps.nextDirectCall(i + 1)) {
-                TargetMethod directCallee = AMD64TargetMethodUtil.readCall32Target(tm, sps.causePosAt(i)).toTargetMethod();
+                TargetMethod directCallee;
+                if (platform().isa == ISA.AMD64) {
+                    directCallee = AMD64TargetMethodUtil.readCall32Target(tm, sps.causePosAt(i)).toTargetMethod();
+                } else if (platform().isa == ISA.ARM) {
+                    directCallee = ARMTargetMethodUtil.readCall32Target(tm, sps.causePosAt(i)).toTargetMethod();
+                } else {
+                    directCallee = null;
+                }
                 if (directCallee != null && CodeManager.isShortlived(directCallee) && !directCallee.isMarked()) {
                     logMarkLevel("DIRECT CALLEE", directCallee, depthRemaining);
                     directCallee.mark();
@@ -372,7 +380,15 @@ public final class CodeEviction extends VmOperation {
             final Safepoints safepoints = targetMethod.safepoints();
             for (int spi = safepoints.nextDirectCall(0); spi >= 0; spi = safepoints.nextDirectCall(spi + 1)) {
                 final int callPos = safepoints.causePosAt(spi);
-                final CodePointer target = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
+                final CodePointer target;
+                if (platform().isa == ISA.AMD64) {
+                    target = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
+                } else if (platform().isa == ISA.ARM) {
+                    target = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
+                } else {
+                    throw FatalError.unimplemented();
+                }
+
                 final CodePointer itarget = target.minus(delta);
                 logDirectCallInfo(spi, callPos, target, itarget);
                 if (CodeManager.runtimeBaselineCodeRegion.isInFromSpace(itarget.toAddress())) {
@@ -419,7 +435,14 @@ public final class CodeEviction extends VmOperation {
             final Safepoints safepoints = targetMethod.safepoints();
             for (int spi = safepoints.nextDirectCall(0); spi >= 0; spi = safepoints.nextDirectCall(spi + 1)) {
                 final int callPos = safepoints.causePosAt(spi);
-                final CodePointer target = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
+                final CodePointer target;
+                if (platform().isa == ISA.AMD64) {
+                    target  = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
+                } else if (platform().isa == ISA.ARM) {
+                    target  = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
+                } else {
+                    throw FatalError.unimplemented();
+                }
                 if (CodeManager.runtimeBaselineCodeRegion.isInFromSpace(target.toAddress())) {
                     if (!haveLoggedMethod) {
                         logOptMethod(targetMethod);
@@ -820,7 +843,14 @@ public final class CodeEviction extends VmOperation {
         final Safepoints safepoints = tm.safepoints();
         for (int spi = safepoints.nextDirectCall(0); spi >= 0; spi = safepoints.nextDirectCall(spi + 1)) {
             final int callPos = safepoints.causePosAt(spi);
-            final CodePointer target = AMD64TargetMethodUtil.readCall32Target(tm, callPos);
+            final CodePointer target;
+            if (platform().isa == ISA.AMD64) {
+                target = AMD64TargetMethodUtil.readCall32Target(tm, callPos);
+            } else if (platform().isa == ISA.ARM) {
+                target = ARMTargetMethodUtil.readCall32Target(tm, callPos);
+            } else {
+                throw FatalError.unimplemented();
+            }
             final TargetMethod callee = target.toTargetMethod();
             assert callee != null : "callee should not be null in " + tm + "@" + callPos + " " + target.to0xHexString();
             final int dcIndex = directCalleePosition(tm, callPos);
@@ -1008,7 +1038,14 @@ public final class CodeEviction extends VmOperation {
             final Safepoints safepoints = targetMethod.safepoints();
             for (int spi = safepoints.nextDirectCall(0); spi >= 0; spi = safepoints.nextDirectCall(spi + 1)) {
                 final int callPos = safepoints.causePosAt(spi);
-                final CodePointer target = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
+                final CodePointer target;
+                if (platform().isa == ISA.AMD64) {
+                    target  = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
+                } else if (platform().isa == ISA.ARM) {
+                    target  = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
+                } else {
+                    throw FatalError.unimplemented();
+                }
                 final TargetMethod callee = target.toTargetMethod();
                 assert callee != null : "callee should not be null in " + targetMethod + "@" + callPos + "->" + target.to0xHexString();
                 idx = callPos;

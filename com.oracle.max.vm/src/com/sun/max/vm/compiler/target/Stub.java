@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.compiler.target;
 
@@ -29,6 +27,7 @@ import static com.sun.max.vm.compiler.target.Stub.Type.*;
 
 import java.util.*;
 
+import com.oracle.max.asm.target.armv7.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
@@ -36,16 +35,17 @@ import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.code.CodeManager.Lifespan;
+import com.sun.max.vm.code.CodeManager.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.compiler.target.arm.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 
 /**
- * Stubs are for manually-assembled target code. Currently, a stub has the maximum of one
- * direct call to another method, so the callee is passed into the constructor directly.
- * Stack walking of stub frames is done with the same code as for optimized compiler frames.
+ * Stubs are for manually-assembled target code. Currently, a stub has the maximum of one direct call to another method,
+ * so the callee is passed into the constructor directly. Stack walking of stub frames is done with the same code as for
+ * optimized compiler frames.
  */
 public final class Stub extends TargetMethod {
 
@@ -61,16 +61,16 @@ public final class Stub extends TargetMethod {
         InterfaceTrampoline,
 
         /**
-         * Trampoline for static method call (i.e. translation of {@link Bytecodes#INVOKESPECIAL} or {@link Bytecodes#INVOKESTATIC}).
+         * Trampoline for static method call (i.e. translation of {@link Bytecodes#INVOKESPECIAL} or
+         * {@link Bytecodes#INVOKESTATIC}).
          */
         StaticTrampoline,
 
         /**
-         * A stub that performs an operation on behalf of compiled code.
-         * These stubs are called with a callee-save convention; the stub must save any
-         * registers it may destroy and then restore them upon return. This allows the register
-         * allocator to ignore calls to such stubs. Parameters to compiler stubs are
-         * passed on the stack in order to preserve registers for the rest of the code.
+         * A stub that performs an operation on behalf of compiled code. These stubs are called with a callee-save
+         * convention; the stub must save any registers it may destroy and then restore them upon return. This allows
+         * the register allocator to ignore calls to such stubs. Parameters to compiler stubs are passed on the stack in
+         * order to preserve registers for the rest of the code.
          */
         CompilerStub,
 
@@ -86,16 +86,16 @@ public final class Stub extends TargetMethod {
         DeoptStub,
 
         /**
-         * Transition when returning from a compiler stub to a method being deoptimized. This
-         * stub creates an intermediate frame to (re)save all the registers saved by a compiler stub.
+         * Transition when returning from a compiler stub to a method being deoptimized. This stub creates an
+         * intermediate frame to (re)save all the registers saved by a compiler stub.
          *
          * @see #CompilerStub
          */
         DeoptStubFromCompilerStub,
 
         /**
-         * Transition when returning from a trap stub to a method being deoptimized. This
-         * stub creates an intermediate frame to (re)save all the registers saved by the trap stub.
+         * Transition when returning from a trap stub to a method being deoptimized. This stub creates an intermediate
+         * frame to (re)save all the registers saved by the trap stub.
          *
          * @see Stubs#genTrapStub()
          */
@@ -124,7 +124,8 @@ public final class Stub extends TargetMethod {
      * Determines if a given address in a given target method denotes the entry point of a deoptimization stub.
      *
      * @param ip a code address
-     * @param tm the target method {@linkplain Code#codePointerToTargetMethod(Pointer) found} in the code cache based on {@code ip}
+     * @param tm the target method {@linkplain Code#codePointerToTargetMethod(Pointer) found} in the code cache based on
+     *            {@code ip}
      */
     public static boolean isDeoptStubEntry(Pointer ip, TargetMethod tm, StackFrameCursor calee) {
         if (tm != null && (tm.is(DeoptStub) || tm.is(DeoptStubFromCompilerStub) || tm.is(DeoptStubFromSafepoint))) {
@@ -150,7 +151,7 @@ public final class Stub extends TargetMethod {
 
     @HOSTED_ONLY
     private Stub() {
-        super("Invalid Index stub",  CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+        super("Invalid Index stub", CallEntryPoint.OPTIMIZED_ENTRY_POINT);
         type = InvalidIndexTrampoline;
     }
 
@@ -170,6 +171,7 @@ public final class Stub extends TargetMethod {
         }
         if (!isHosted()) {
             linkDirectCalls();
+            ARMTargetMethodUtil.maxine_cache_flush(codeStart().toPointer(), code().length);
         }
     }
 
@@ -214,6 +216,8 @@ public final class Stub extends TargetMethod {
     public Pointer returnAddressPointer(StackFrameCursor frame) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.returnAddressPointer(frame);
+        } else if (platform().isa == ISA.ARM) {
+            return ARMTargetMethodUtil.returnAddressPointer(frame);
         } else {
             throw FatalError.unimplemented();
         }
@@ -229,6 +233,14 @@ public final class Stub extends TargetMethod {
                 csa = current.sp().plus(csl.frameOffsetToCSA);
             }
             AMD64TargetMethodUtil.advance(current, csl, csa);
+        } else if (platform().isa == ISA.ARM) {
+            CiCalleeSaveLayout csl = calleeSaveLayout();
+            Pointer csa = Pointer.zero();
+            if (csl != null) {
+                assert csl.frameOffsetToCSA != Integer.MAX_VALUE : "stub should have fixed offset for CSA";
+                csa = current.sp().plus(csl.frameOffsetToCSA);
+            }
+            ARMTargetMethodUtil.advance(current, csl, csa);
         } else {
             throw FatalError.unimplemented();
         }
@@ -239,6 +251,8 @@ public final class Stub extends TargetMethod {
     public boolean acceptStackFrameVisitor(StackFrameCursor current, StackFrameVisitor visitor) {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.acceptStackFrameVisitor(current, visitor);
+        } else if (platform().isa == ISA.ARM) {
+            return ARMTargetMethodUtil.acceptStackFrameVisitor(current, visitor);
         } else {
             throw FatalError.unimplemented();
         }
@@ -248,6 +262,8 @@ public final class Stub extends TargetMethod {
     public VMFrameLayout frameLayout() {
         if (platform().isa == ISA.AMD64) {
             return AMD64TargetMethodUtil.frameLayout(this);
+        } else if (platform().isa == ISA.ARM) {
+            return ARMTargetMethodUtil.frameLayout(this);
         } else {
             throw FatalError.unimplemented();
         }
@@ -270,7 +286,13 @@ public final class Stub extends TargetMethod {
 
     @Override
     public CodePointer fixupCallSite(int callOffset, CodePointer callEntryPoint) {
-        return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+        if (platform().isa == ISA.AMD64) {
+            return AMD64TargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+        } else if (platform().isa == ISA.ARM) {
+            return ARMTargetMethodUtil.fixupCall32Site(this, callOffset, callEntryPoint);
+        } else {
+            throw FatalError.unimplemented();
+        }
     }
 
     @Override

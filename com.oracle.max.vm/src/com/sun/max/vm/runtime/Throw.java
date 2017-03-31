@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.runtime;
 
@@ -30,12 +28,12 @@ import static com.sun.max.vm.runtime.VMRegister.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.Phase;
+import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.jdk.*;
-import com.sun.max.vm.jdk.JDK_java_lang_Throwable.Backtrace;
+import com.sun.max.vm.jdk.JDK_java_lang_Throwable.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
@@ -118,7 +116,6 @@ public final class Throw {
      */
     public static void raise(Throwable throwable, Pointer sp, Pointer fp, CodePointer ip) {
         VMTI.handler().raise(throwable, sp, fp, ip);
-
         convertAssertionToFatalError(throwable);
 
         FatalError.check(throwable != null, "Trying to raise an exception with a null Throwable object");

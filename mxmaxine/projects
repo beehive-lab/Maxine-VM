@@ -9,10 +9,11 @@ library@JUNIT@path=${HOME}/.maxine/junit-4.8.jar
 library@JUNIT@urls=http://repo1.maven.org/maven2/junit/junit/4.8/junit-4.8.jar
 library@JUNIT@eclipse.container=org.eclipse.jdt.junit.JUNIT_CONTAINER/4
 
-library@CHECKSTYLE@path=${HOME}/.maxine/checkstyle-5.5-all.jar
-library@CHECKSTYLE@urls=jar:http://sourceforge.net/projects/checkstyle/files/checkstyle/5.5/checkstyle-5.5-bin.zip/download!/checkstyle-5.5/checkstyle-5.5-all.jar
+library@CHECKSTYLE@path=lib/checkstyle-5.5-all.jar
 
 library@JLF_ICONS@path=com.oracle.max.tele.ins/jlfgr-1_0.jar
+
+library@ASM@path=lib/asm-5.0.3-maxine.jar
 
 library@NB3_BUTTONS@path=com.oracle.max.tele.ins/NB3B.jar
 
@@ -29,7 +30,7 @@ project@com.oracle.max.base@checkstyle=com.oracle.max.base
 project@com.oracle.max.base@javaCompliance=1.7
 
 project@com.oracle.max.tests@sourceDirs=src
-project@com.oracle.max.tests@dependencies=com.oracle.max.base,TESTS_JASMIN_CLASSES
+project@com.oracle.max.tests@dependencies=com.oracle.max.base,TESTS_JASMIN_CLASSES,com.oracle.max.vm.ext.t1x,com.oracle.max.vm.ext.c1x
 project@com.oracle.max.tests@checkstyle=com.oracle.max.base
 project@com.oracle.max.tests@javaCompliance=1.7
 
@@ -53,7 +54,7 @@ project@com.oracle.max.tele.vm@checkstyle=com.oracle.max.base
 project@com.oracle.max.tele.vm@javaCompliance=1.7
 
 project@com.oracle.max.c1x@sourceDirs=src
-project@com.oracle.max.c1x@dependencies=com.oracle.max.asm
+project@com.oracle.max.c1x@dependencies=com.oracle.max.asm,com.oracle.max.vm
 project@com.oracle.max.c1x@checkstyle=com.oracle.max.base
 project@com.oracle.max.c1x@javaCompliance=1.7
 
@@ -73,7 +74,6 @@ project@com.oracle.max.tools@checkstyle=com.oracle.max.base
 project@com.oracle.max.tools@javaCompliance=1.7
 
 project@com.oracle.max.vm.ext.maxri@sourceDirs=src
-#project@com.oracle.max.vm.ext.maxri@dependencies=com.oracle.max.vm,com.oracle.max.hcfdis
 project@com.oracle.max.vm.ext.maxri@dependencies=com.oracle.max.vm,com.oracle.max.hcfdis
 project@com.oracle.max.vm.ext.maxri@checkstyle=com.oracle.max.base
 project@com.oracle.max.vm.ext.maxri@javaCompliance=1.7
@@ -113,7 +113,7 @@ project@com.oracle.max.vm@checkstyle=com.oracle.max.base
 project@com.oracle.max.vm@javaCompliance=1.7
 
 project@com.oracle.max.vm.tests@sourceDirs=src
-project@com.oracle.max.vm.tests@dependencies=com.oracle.max.vm,com.oracle.max.tests
+project@com.oracle.max.vm.tests@dependencies=com.oracle.max.vm,com.oracle.max.tests,ASM
 project@com.oracle.max.vm.tests@checkstyle=com.oracle.max.base
 project@com.oracle.max.vm.tests@javaCompliance=1.7
 

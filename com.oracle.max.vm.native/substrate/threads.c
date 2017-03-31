@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 
 #include <alloca.h>
@@ -249,7 +247,7 @@ void *thread_run(void *arg) {
     VmThreadAddMethod addMethod = image_offset_as_address(VmThreadAddMethod, vmThreadAddMethodOffset);
 
 #if log_THREADS
-    log_print("thread_run: id=%d, t=%p, calling VmThread.add(): ", id, nativeThread);
+    log_print("thread_run: id=%d, t=%p, calling VmThread.add(): ", id, nativeThread);  
     void image_printAddress(Address address);
     image_printAddress((Address) addMethod);
     log_println("");
@@ -520,7 +518,8 @@ jboolean thread_sleep(jlong numberOfMilliSeconds) {
     if (value == -1) {
         int error = errno;
         if (error != EINTR && error != 0) {
-            /* log_println("Call to nanosleep failed (other than by being interrupted): %s [remaining sec: %d, remaining nano sec: %d]", strerror(error), remainder.tv_sec, remainder.tv_nsec); */
+            log_println("Call to nanosleep failed (other than by being interrupted): %s [remaining sec: %d, remaining nano sec: %d]", strerror(error), remainder.tv_sec,
+                            remainder.tv_nsec);
         }
     }
     return value;

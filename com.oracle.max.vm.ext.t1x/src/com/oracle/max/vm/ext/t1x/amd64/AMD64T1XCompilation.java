@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.oracle.max.vm.ext.t1x.amd64;
 
@@ -32,15 +30,14 @@ import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 import java.util.*;
 
 import com.oracle.max.asm.target.amd64.*;
-import com.oracle.max.asm.target.amd64.AMD64Assembler.ConditionFlag;
+import com.oracle.max.asm.target.amd64.AMD64Assembler.*;
 import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.oracle.max.vm.ext.t1x.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiAddress.Scale;
-import com.sun.cri.ci.CiTargetMethod.JumpTable;
-import com.sun.cri.ci.CiTargetMethod.LookupTable;
+import com.sun.cri.ci.CiAddress.*;
+import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -59,12 +56,18 @@ public class AMD64T1XCompilation extends T1XCompilation {
 
     protected final AMD64MacroAssembler asm;
     final PatchInfoAMD64 patchInfo;
+    private DebugMethodWriter debugMethodWriter;
+    private static boolean debugMethodsEnabled = false;
 
     public AMD64T1XCompilation(T1X compiler) {
         super(compiler);
         asm = new AMD64MacroAssembler(target(), null);
         buf = asm.codeBuffer;
         patchInfo = new PatchInfoAMD64();
+        if (T1XOptions.DebugMethods && !debugMethodsEnabled) {
+            debugMethodWriter = new DebugMethodWriter("t1x");
+            debugMethodsEnabled = true;
+        }
     }
 
     @Override
@@ -315,6 +318,15 @@ public class AMD64T1XCompilation extends T1XCompilation {
                 asm.movq(new CiAddress(WordUtil.archKind(), RSP, -offset), rax);
             }
         }
+        if (T1XOptions.DebugMethods) {
+            int a = debugMethodWriter.getNextID();
+            asm.movl(scratch, a);
+            try {
+                debugMethodWriter.appendDebugMethod(method.holder() + "." + method.name(), a);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         return adapter;
     }
 
@@ -337,6 +349,13 @@ public class AMD64T1XCompilation extends T1XCompilation {
         // when returning, retract from the caller stack by the space used for the arguments.
         final short stackAmountInBytes = (short) frame.sizeOfParameters();
         asm.ret(stackAmountInBytes);
+        if (T1XOptions.DebugMethods) {
+            try {
+                debugMethodWriter.flushDebugMethod();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     @Override

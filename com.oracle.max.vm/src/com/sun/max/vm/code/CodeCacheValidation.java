@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.code;
 
@@ -31,6 +29,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.compiler.target.arm.*;
 import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
@@ -138,8 +137,8 @@ public final class CodeCacheValidation extends VmOperation {
             final Address tmUpperBound = tmDataStart.plus(targetMethod.size()).minus(1);
             CodePointer tmCodeEnd = tmCodeStart.plus(tmCodeSize).minus(1);
             assert tmCodeEnd.toAddress().lessEqual(tmUpperBound)
-                : "code exceeds upper bound for " + targetMethod + " code start: " + tmCodeStart.to0xHexString() + " size: " + tmCodeSize.to0xHexString() +
-                  " ends at: " + tmCodeEnd.to0xHexString() + " exceeds: " + tmUpperBound.to0xHexString();
+                    : "code exceeds upper bound for " + targetMethod + " code start: " + tmCodeStart.to0xHexString() + " size: " + tmCodeSize.to0xHexString() +
+                    " ends at: " + tmCodeEnd.to0xHexString() + " exceeds: " + tmUpperBound.to0xHexString();
             return true;
         }
     }
@@ -220,8 +219,17 @@ public final class CodeCacheValidation extends VmOperation {
             if (platform().isa == ISA.AMD64) {
                 final CodePointer callTarget = AMD64TargetMethodUtil.readCall32Target(targetMethod, callPos);
                 final TargetMethod actualCallee = callTarget.toTargetMethod();
-                assert validCodeAddress(callTarget) : "invalid call target (address) in direct call from " + targetMethod + "@" + spi + "(pos " + callPos + ") -> " + actualCallee + " (target: " + callTarget.to0xHexString() + ")";
-                assert actualCallee != null && validEntryPoint(callTarget, actualCallee) : "invalid entry point in direct call from " + targetMethod + "@" + spi + " -> " + actualCallee + " (target: " + callTarget.to0xHexString() + ")";
+                assert validCodeAddress(callTarget) : "invalid call target (address) in direct call from " + targetMethod + "@" + spi + "(pos " + callPos + ") -> " + actualCallee + " (target: " +
+                                callTarget.to0xHexString() + ")";
+                assert actualCallee != null && validEntryPoint(callTarget, actualCallee) : "invalid entry point in direct call from " + targetMethod + "@" + spi + " -> " + actualCallee +
+                                " (target: " + callTarget.to0xHexString() + ")";
+            } else if (platform().isa == ISA.ARM) {
+                final CodePointer callTarget = ARMTargetMethodUtil.readCall32Target(targetMethod, callPos);
+                final TargetMethod actualCallee = callTarget.toTargetMethod();
+                assert validCodeAddress(callTarget) : "invalid call target (address) in direct call from " + targetMethod + "@" + spi + "(pos " + callPos + ") -> " + actualCallee + " (target: " +
+                                callTarget.to0xHexString() + ")";
+                assert actualCallee != null && validEntryPoint(callTarget, actualCallee) : "invalid entry point in direct call from " + targetMethod + "@" + spi + " -> " + actualCallee +
+                                " (target: " + callTarget.to0xHexString() + ")";
             } else {
                 throw FatalError.unimplemented();
             }
@@ -244,17 +252,17 @@ public final class CodeCacheValidation extends VmOperation {
         for (int i = istart + 1; i < iend; ++i) { // start iterating at istart+1 because the first entry is null
             final CodePointer p = CodePointer.from(hub.getWord(i));
             assert p.isZero()          // itable entries can be zero
-                || Hub.validItableEntry(p)  // or they can represent a class ID
-                || validCodeAddress(p) // or they can point to code
-                : "invalid itable entry: " + hub + "@" + i + " (it@" + (i - istart) + ") -> " + p.toString();
+                    || Hub.validItableEntry(p)  // or they can represent a class ID
+                    || validCodeAddress(p) // or they can point to code
+                    : "invalid itable entry: " + hub + "@" + i + " (it@" + (i - istart) + ") -> " + p.toString();
         }
     }
 
     private boolean validEntryPoint(CodePointer a, TargetMethod tm) {
         return a.equals(tm.getEntryPoint(BASELINE_ENTRY_POINT))
-            || a.equals(tm.getEntryPoint(OPTIMIZED_ENTRY_POINT))
-            || a.equals(tm.getEntryPoint(VTABLE_ENTRY_POINT))
-            || a.equals(tm.getEntryPoint(C_ENTRY_POINT));
+                || a.equals(tm.getEntryPoint(OPTIMIZED_ENTRY_POINT))
+                || a.equals(tm.getEntryPoint(VTABLE_ENTRY_POINT))
+                || a.equals(tm.getEntryPoint(C_ENTRY_POINT));
     }
 
 }

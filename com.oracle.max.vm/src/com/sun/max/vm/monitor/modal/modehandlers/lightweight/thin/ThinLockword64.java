@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,20 +17,22 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.monitor.modal.modehandlers.lightweight.thin;
 
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.annotate.INLINE;
+import com.sun.max.annotate.INTRINSIC;
+import com.sun.max.platform.Platform;
+import com.sun.max.unsafe.Address;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.Log;
+import com.sun.max.vm.monitor.modal.modehandlers.HashableLockword64;
+import com.sun.max.vm.monitor.modal.modehandlers.ModalLockword64;
+import com.sun.max.vm.monitor.modal.modehandlers.lightweight.LightweightLockword64;
 
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.monitor.modal.modehandlers.*;
-import com.sun.max.vm.monitor.modal.modehandlers.lightweight.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
+
 
 /**
  * Abstracts access to a thin lock word's bit fields.
@@ -36,11 +40,20 @@ import com.sun.max.vm.monitor.modal.modehandlers.lightweight.*;
 public class ThinLockword64 extends LightweightLockword64 {
 
     /*
+     * For 64 bit:
      * bit [63........................................ 1  0]     Shape         Lock-state
      *
      *     [     0    ][ util  ][     0      ][ hash ][m][0]     Lightweight   Unlocked
      *     [ r. count ][ util  ][  thread ID ][ hash ][m][0]     Lightweight   Locked (rcount >= 1)
      *     [                 Undefined               ][m][1]     Inflated
+     *
+     * For 32 bit:
+     * bit [32............................................. 1  0]     Shape         Lock-state
+     *
+     *     [     0    ][ util  ][     0                   ][m][0]     Lightweight   Unlocked
+     *     [ r. count 5][ util 1 ][  thread ID 4]          [m][0]     Lightweight   Locked (rcount >= 1)
+     *     [                 Undefined                    ][m][1]     Inflated
+     *     [                  hash                              ]
      *
      * Note:
      * A valid thread ID must be >= 1. This is enforced by VmThreadMap.
@@ -48,8 +61,10 @@ public class ThinLockword64 extends LightweightLockword64 {
      * The 'util' field is not used and is always masked.
      */
 
+
     private static final Address UTIL_MASK = UTIL_SHIFTED_MASK.shiftedLeft(UTIL_SHIFT);
-    private static final Address UNLOCKED_MASK = HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT).bitSet(MISC_BIT_INDEX).or(UTIL_MASK);
+    private static final Address UNLOCKED_MASK = Platform.target().arch.is32bit() ? Word.zero().asAddress().bitSet(MISC_BIT_INDEX).or(UTIL_MASK)
+                    : HASHCODE_SHIFTED_MASK.shiftedLeft(HASHCODE_SHIFT).bitSet(MISC_BIT_INDEX).or(UTIL_MASK);
 
     @HOSTED_ONLY
     public ThinLockword64(long value) {
@@ -140,6 +155,17 @@ public class ThinLockword64 extends LightweightLockword64 {
      */
     @INLINE
     public static final ThinLockword64 unlockedFromHashcode(int hashcode) {
+        if (Platform.target().arch.is64bit()) {
+            return ThinLockword64.from(HashableLockword64.from(Address.zero()).setHashcode(hashcode));
+        } else {
+            return ThinLockword64.from(HashableLockword64.from(Address.zero()));
+        }
+    }
+
+    @INLINE
+    public static final ThinLockword64 fromHashcode(int hashcode) {
+        assert Platform.target().arch.is32bit() : "This function must be called only on 32 bit machines!";
         return ThinLockword64.from(HashableLockword64.from(Address.zero()).setHashcode(hashcode));
     }
+
 }

@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.cri.ci;
 
@@ -58,7 +56,8 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
      * The actual encoding in a target machine instruction for this register, which may or
      * may not be the same as {@link #number}.
      */
-    public final int encoding;
+    private int encoding;
+    private boolean doubleEncoding = false;
 
     /**
      * The size of the stack slot used to spill the value of this register.
@@ -69,6 +68,8 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
      * The set of {@link RegisterFlag} values associated with this register.
      */
     private final int flags;
+
+    public final RegisterFlag[] originalFlags;
 
     /**
      * An array of {@link CiRegisterValue} objects, for this register, with one entry
@@ -95,7 +96,6 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
          * Denotes a floating point register.
          */
         FPU;
-
         public final int mask = 1 << (ordinal() + 1);
     }
 
@@ -113,6 +113,7 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
         this.name = name;
         this.spillSlotSize = spillSlotSize;
         this.flags = createMask(flags);
+        this.originalFlags = flags;
         this.encoding = encoding;
 
         values = new CiRegisterValue[CiKind.VALUES.length];
@@ -226,8 +227,8 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
     public static int maxRegisterEncoding(CiRegister[] registers) {
         int max = Integer.MIN_VALUE;
         for (CiRegister r : registers) {
-            if (r.encoding > max) {
-                max = r.encoding;
+            if (r.getEncoding() > max) {
+                max = r.getEncoding();
             }
         }
         return max;
@@ -249,4 +250,16 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
         return 0;
     }
 
+    public boolean isGeneral() {
+        return isSet(RegisterFlag.CPU);
+    }
+
+    public int getEncoding() {
+        return encoding;
+    }
+
+    public int getDoubleEncoding() {
+        assert encoding % 2 == 0 : encoding;
+        return encoding / 2;
+    }
 }

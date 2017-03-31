@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,18 +17,18 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.monitor.modal.modehandlers;
 
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.annotate.INLINE;
+import com.sun.max.annotate.INTRINSIC;
+import com.sun.max.platform.Platform;
+import com.sun.max.unsafe.Address;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.Log;
 
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
 
 /**
  * Abstracts access to a lock word's hashcode bit field.
@@ -36,17 +38,21 @@ import com.sun.max.vm.*;
 public class HashableLockword64 extends ModalLockword64 {
 
     /*
-     * Field layout:
+     * Field layout (64 Bit):
      *
      * bit [63............................... 1  0]
      *
      *     [     Undefined      ][ hashcode ][m][s]
      *
+     * Field layout (32 Bit):
+     *
+     * bit [31...................................0]
+     *     [                hashcode              ]
      */
 
-    protected static final int HASH_FIELD_WIDTH = 32;
-    protected static final int HASHCODE_SHIFT = NUMBER_OF_MODE_BITS;
-    protected static final Address HASHCODE_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(64 - HASH_FIELD_WIDTH);
+    protected static final int HASH_FIELD_WIDTH = Platform.target().arch.is64bit() ? 32 : 0;
+    protected static final int HASHCODE_SHIFT = Platform.target().arch.is32bit() ? 0 : NUMBER_OF_MODE_BITS;
+    protected static final Address HASHCODE_SHIFTED_MASK = Platform.target().arch.is32bit() ? Word.allOnes().asAddress() : Word.allOnes().asAddress().unsignedShiftedRight(64 - HASH_FIELD_WIDTH);
 
     @HOSTED_ONLY
     public HashableLockword64(long value) {
@@ -91,7 +97,7 @@ public class HashableLockword64 extends ModalLockword64 {
     /**
      * Installs the given hashcode into a <i>copy</i> of this {@code HashableLockword64}. The copied
      * lock word is returned.
-     *
+     * <p/>
      * Note: It is assumed that this lock word does not contain an existing hashcode.
      *
      * @param hashcode the hashcode to install

@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package jtt.optimize;
 
@@ -30,7 +28,12 @@ import java.util.*;
  * @Runs: 0=0; 10=10; 20=20; 40=38;
  */
 public class Conditional01 {
+    public int negative;
     private static final int RAM_SIZE = 0x100;
+
+    public Conditional01() {
+        negative = -5;
+    }
 
     public static int test(int arg) {
         Conditional01 c = new Conditional01();
@@ -42,25 +45,41 @@ public class Conditional01 {
             i2.r1.num = i + RAM_SIZE - 20;
             i2.r2 = new Register();
             i2.r2.val = rnd.nextInt();
-            i2.r2.num = rnd.nextInt(RAM_SIZE);
+            i2.r2.num = rnd.nextInt(0x100);
             try {
                 c.visit(i2);
             } catch (RuntimeException re) {
-
             }
         }
         return c.cyclesConsumed;
     }
 
     private static class Register {
+        int negative;
         int val;
         int num;
+
+        Register() {
+            negative = -8;
+            val = -2;
+            num = -3;
+        }
     }
 
     private static class CPC {
+        public int negative;
         public Register r1;
         public Register r2;
 
+        CPC() {
+            negative = -1;
+            r1 = new Register();
+            r2 = new Register();
+        }
+
+        public void setNegative() {
+            negative = -1;
+        }
     }
 
     private int nextPC;
@@ -97,7 +116,7 @@ public class Conditional01 {
 
     public int getRegisterByte(Register r1) {
         if ((r1.val % 10) == 0) {
-            return sram [r1.num];
+            return sram[r1.num];
         }
         return r1.val;
     }

@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.oracle.max.vm.ext.c1x;
 
@@ -27,8 +25,9 @@ import static com.sun.max.vm.MaxineVM.*;
 
 import java.io.*;
 import java.util.*;
-
+import com.sun.cri.ci.CiCompiler.*;
 import com.oracle.max.asm.*;
+import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.criutils.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.sun.c1x.*;
@@ -37,7 +36,6 @@ import com.sun.c1x.graph.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.observer.*;
-import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.*;
@@ -45,7 +43,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.Phase;
+import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
@@ -90,17 +88,18 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     private static final int DEFAULT_OPT_LEVEL = Integer.getInteger("max.c1x.optlevel", 3);
 
     public static final VMIntOption optLevelOption = VMOptions.register(new VMIntOption("-C1X:OptLevel=", DEFAULT_OPT_LEVEL,
-        "Set the optimization level of C1X.") {
-            @Override
-            public boolean parseValue(com.sun.max.unsafe.Pointer optionValue) {
-                boolean result = super.parseValue(optionValue);
-                if (result) {
-                    C1XOptions.setOptimizationLevel(getValue());
-                    return true;
-                }
-                return false;
+                    "Set the optimization level of C1X.") {
+
+        @Override
+        public boolean parseValue(com.sun.max.unsafe.Pointer optionValue) {
+            boolean result = super.parseValue(optionValue);
+            if (result) {
+                C1XOptions.setOptimizationLevel(getValue());
+                return true;
             }
-        }, MaxineVM.Phase.STARTING);
+            return false;
+        }
+    }, MaxineVM.Phase.STARTING);
 
     /**
      * A map from option field names to some text describing the meaning and
@@ -111,26 +110,18 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     public static Map<String, String> getHelpMap() {
         if (helpMap == null) {
             HashMap<String, String> map = new HashMap<String, String>();
-            map.put("PrintFilter",
-                    "Filter compiler tracing to methods whose fully qualified name " +
-                    "matches <arg>. If <arg> starts with \"~\", then <arg> (without " +
-                    "the \"~\") is interpreted as a regular expression. Otherwise, " +
-                    "<arg> is interpreted as a simple substring.");
+            map.put("PrintFilter", "Filter compiler tracing to methods whose fully qualified name " + "matches <arg>. If <arg> starts with \"~\", then <arg> (without " +
+                            "the \"~\") is interpreted as a regular expression. Otherwise, " + "<arg> is interpreted as a simple substring.");
 
             map.put("TraceBytecodeParserLevel",
-                    "Trace frontend bytecode parser at level <n> where 0 means no " +
-                    "tracing, 1 means instruction tracing and 2 means instruction " +
-                    "plus frame state tracing.");
+                            "Trace frontend bytecode parser at level <n> where 0 means no " + "tracing, 1 means instruction tracing and 2 means instruction " + "plus frame state tracing.");
 
-            map.put("DetailedAsserts",
-                    "Turn on detailed error checking that has a noticeable performance impact.");
+            map.put("DetailedAsserts", "Turn on detailed error checking that has a noticeable performance impact.");
 
             map.put("GenSpecialDivChecks",
-                    "Generate code to check for (Integer.MIN_VALUE / -1) or (Long.MIN_VALUE / -1) " +
-                    "instead of detecting these cases via instruction decoding in a trap handler.");
+                            "Generate code to check for (Integer.MIN_VALUE / -1) or (Long.MIN_VALUE / -1) " + "instead of detecting these cases via instruction decoding in a trap handler.");
 
-            map.put("UseStackMapTableLiveness",
-                    "Use liveness information derived from StackMapTable class file attribute.");
+            map.put("UseStackMapTableLiveness", "Use liveness information derived from StackMapTable class file attribute.");
 
             for (String name : map.keySet()) {
                 try {
@@ -157,8 +148,10 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
 
     @Override
     public void initialize(Phase phase) {
-        if (isHosted() && !optionsRegistered) {
-            runtime.initialize();
+        if ((isHosted() && !optionsRegistered) || phase == Phase.HOSTED_TESTING) {
+            if (phase != Phase.HOSTED_TESTING) {
+                runtime.initialize();
+            }
 
             C1XOptions.setOptimizationLevel(optLevelOption.getValue());
             C1XOptions.OptIntrinsify = true;
@@ -171,10 +164,9 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
             optionsRegistered = true;
         }
 
-        if (isHosted() && phase == Phase.HOSTED_COMPILING) {
+        if (isHosted() && (phase == Phase.HOSTED_COMPILING || phase == Phase.HOSTED_TESTING)) {
             // Temporary work-around to support the @ACCESSOR annotation.
             GraphBuilder.setAccessor(ClassActor.fromJava(Accessor.class));
-
             compiler = new C1XCompiler(runtime, target, xirGenerator, vm().registerConfigs.compilerStub);
             compiler.addCompilationObserver(new WordTypeRewriterObserver());
             MaxineIntrinsicImplementations.initialize(compiler.intrinsicRegistry);
@@ -209,9 +201,12 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         }
 
         @Override
-        public void compilationStarted(CompilationEvent event) { }
+        public void compilationStarted(CompilationEvent event) {
+        }
+
         @Override
-        public void compilationFinished(CompilationEvent event) { }
+        public void compilationFinished(CompilationEvent event) {
+        }
     }
 
     /**
@@ -221,7 +216,7 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
      * Condition 1) can be ensured by careful coding of the templates, i.e., having no return statement in the middle of the
      * template. If one of the fatal errors below triggers, this condition is violated.
      * Condition 2) is guaranteed by this code: we move the return block to the end of the block list.
-     *
+     * <p/>
      * Note that we currently do not check that templates do not have stubs (which would be at the end of the method).
      */
     private static void processTemplate(C1XCompilation compilation) {
@@ -259,6 +254,7 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         do {
             DebugInfoLevel debugInfoLevel = method.isTemplate() ? DebugInfoLevel.REF_MAPS : DebugInfoLevel.FULL;
             compiledMethod = compiler().compileMethod(method, -1, stats, debugInfoLevel).targetMethod();
+
             Dependencies deps = Dependencies.validateDependencies(compiledMethod.assumptions());
             if (deps != Dependencies.INVALID) {
                 if (C1XOptions.PrintTimers) {
@@ -282,11 +278,11 @@ public class C1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
 
             }
             // Loop back and recompile.
-        } while(true);
+        } while (true);
     }
 
     void printMachineCode(CiTargetMethod ciTM, MaxTargetMethod maxTM, boolean reentrant) {
-        if (!C1XOptions.PrintCFGToFile || reentrant || TTY.isSuppressed()) {
+        if (!C1XOptions.PrintCFGToFile || C1XOptions.OmmitAssembly || reentrant || TTY.isSuppressed()) {
             return;
         }
         if (!isHosted() && !isRunning()) {

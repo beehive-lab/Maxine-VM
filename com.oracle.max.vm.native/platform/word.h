@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 #ifndef __word_h__
 #define __word_h__ 1
@@ -28,7 +26,7 @@
 #undef word_LITTLE_ENDIAN
 #undef word_BIG_ENDIAN
 
-#if defined(__x86) || defined(__x86_64) || defined(_X86_) || defined(i386)
+#if defined(__x86) || defined(__x86_64) || defined(_X86_) || defined(i386) || defined (arm)
 #   define word_LITTLE_ENDIAN 1
 #   define word_BIG_ENDIAN    0
 #   define MATH_HI(x) *(1+(int*)&x)

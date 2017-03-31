@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.unsafe;
 
@@ -380,6 +378,11 @@ public class Address extends Word {
     }
 
     @INLINE
+    public Address doubleWordAligned() {
+        return alignUp(2 * Word.size());
+    }
+
+    @INLINE
     public Address alignUp(int alignment) {
         return plus(alignment - 1).alignDown(alignment);
     }
@@ -387,6 +390,12 @@ public class Address extends Word {
     @INLINE
     public Address alignDown(int alignment) {
         return and(Address.fromInt(alignment - 1).not());
+    }
+
+    @INLINE
+    public boolean isDoubleWordAligned() {
+        final int n = 2 * Word.size();
+        return and(n - 1).equals(Address.zero());
     }
 
     @INLINE

@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.oracle.max.vm.ext.t1x.jvmti;
 
@@ -104,6 +102,8 @@ public class JVMTI_T1XTargetMethod extends T1XTargetMethod {
                         if (isAMD64()) {
                             // On x86 the safepoint position of a call *is* the return position
                             return codeAt(safepointPos);
+                        } else if (isARM()) {
+                            return codeAt(safepointPos + 16);
                         } else {
                             throw unimplISA();
                         }

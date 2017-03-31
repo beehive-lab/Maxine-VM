@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 // Checkstyle: stop
 package jtt.hotpath;
@@ -40,7 +38,6 @@ public class HP_life {
         for (int row = 0; row < rows; ++row) {
             for (int col = 0; col < cols; ++col) {
                 boolean value = cell(row, col);
-                // System.out.print(value ? "1" : "0");
                 sum += (row * 15223242 + col * 21623234) ^ ((value ? 1 : 0) * 15323142);
             }
         }

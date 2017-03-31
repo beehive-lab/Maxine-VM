@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.runtime;
 
@@ -31,6 +29,7 @@ import static com.sun.max.vm.thread.VmThreadLocal.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
@@ -51,14 +50,14 @@ import com.sun.max.vm.thread.*;
  * <li>A native handler is notified of the signal (see 'vmSignalHandler' in trap.c)</li>
  * <li>The native handler analyzes the context of the signal to detect stack-overflow.</li>
  * <li>The native handler writes trap {@linkplain VmThreadLocal#TRAP_NUMBER number},
- *     {@linkplain VmThreadLocal#TRAP_FAULT_ADDRESS address} and
- *     {@link VmThreadLocal#TRAP_INSTRUCTION_POINTER pc} into thread locals.</li>
- * <li>The native handler disables safepoints by modifying the register context of the
- *     trap in (almost) the same way as {@link SafepointPoll#disable()}.</li>
- * <li>The native handler modifies the instruction pointer in the trap context to point to the
- *     entry point of the trap stub.</li>
- * <li>The native handler returns which effects a jump to the trap stub in the frame of
- *     the trapped method/function.</li>
+ * {@linkplain VmThreadLocal#TRAP_FAULT_ADDRESS address} and {@link VmThreadLocal#TRAP_INSTRUCTION_POINTER pc} into
+ * thread locals.</li>
+ * <li>The native handler disables safepoints by modifying the register context of the trap in (almost) the same way as
+ * {@link SafepointPoll#disable()}.</li>
+ * <li>The native handler modifies the instruction pointer in the trap context to point to the entry point of the trap
+ * stub.</li>
+ * <li>The native handler returns which effects a jump to the trap stub in the frame of the trapped method/function.
+ * </li>
  * </ol>
  */
 public abstract class Trap {
@@ -66,14 +65,16 @@ public abstract class Trap {
     /**
      * The numeric identifiers for the traps that can be handled by the VM. Note that these do not correspond with the
      * native signals.
-     *
+     * <p/>
      * The values defined here (except for {@link #NULL_POINTER_EXCEPTION} and {@link #SAFEPOINT}) must correspond to
      * those of the same name defined in Native/substrate/trap.c.
-     *
+     * <p/>
      * The {@link #NULL_POINTER_EXCEPTION} and {@link #SAFEPOINT} values are used in
-     * {@link Trap#handleMemoryFault(CodePointer, TargetMethod, Pointer, Pointer, Pointer, Address)} to disambiguate a memory fault.
+     * {@link Trap#handleMemoryFault(CodePointer, TargetMethod, Pointer, Pointer, Pointer, Address)} to disambiguate a
+     * memory fault.
      */
     public static final class Number {
+
         public static final int MEMORY_FAULT = 0;
         public static final int STACK_FAULT = 1;
         public static final int STACK_FATAL = 2;
@@ -102,10 +103,10 @@ public abstract class Trap {
         }
 
         public static boolean isImplicitException(int trapNumber) {
-            return trapNumber == ARITHMETIC_EXCEPTION || trapNumber == NULL_POINTER_EXCEPTION || trapNumber == STACK_FAULT  || trapNumber == STACK_FATAL;
+            return trapNumber == ARITHMETIC_EXCEPTION || trapNumber == NULL_POINTER_EXCEPTION || trapNumber == STACK_FAULT || trapNumber == STACK_FATAL;
         }
 
-        public static Class<? extends Throwable> toImplicitExceptionClass(int trapNumber) {
+        public static Class< ? extends Throwable> toImplicitExceptionClass(int trapNumber) {
             if (trapNumber == ARITHMETIC_EXCEPTION) {
                 return ArithmeticException.class;
             } else if (trapNumber == NULL_POINTER_EXCEPTION) {
@@ -125,6 +126,7 @@ public abstract class Trap {
     }
 
     private static boolean DumpStackOnTrap;
+
     static {
         VMOptions.addFieldOption("-XX:", "DumpStackOnTrap", Trap.class, "Reports a stack trace for every trap, regardless of the cause.", MaxineVM.Phase.PRISTINE);
     }
@@ -135,8 +137,8 @@ public abstract class Trap {
     public static final boolean STACK_BANGING = true;
 
     /**
-     * The number of bytes reserved in the stack as a guard area.
-     * Note that SPARC code is more efficient if this is set below 6K.  Specifically, set to (6K - 1 - typical_frame_size).
+     * The number of bytes reserved in the stack as a guard area. Note that SPARC code is more efficient if this is set
+     * below 6K. Specifically, set to (6K - 1 - typical_frame_size).
      */
     public static final int stackGuardSize = 12 * Ints.K;
 
@@ -153,6 +155,7 @@ public abstract class Trap {
      * A VM option to enable tracing of traps, both in the C and Java parts of trap handling.
      */
     private static VMBooleanOption TraceTrapsOption = register(new VMBooleanOption("-XX:-TraceTraps", "Trace traps.") {
+
         @Override
         public boolean parseValue(Pointer optionValue) {
             TraceTraps = TraceTrapsOption.getValue();
@@ -206,8 +209,26 @@ public abstract class Trap {
         final TrapFrameAccess tfa = vm().trapFrameAccess;
         final Pointer pc = tfa.getPC(trapFrame);
         final Object origin = checkTrapOrigin(trapNumber, trapFrame, faultAddress, pc);
+
+        // In ARM zero divisions do not generate an exception and therefore we have
+        // to check upon trapping the markers inserted by the compiler: ARMV7Assembler.insertDivZeroCheck()
+        if (Platform.target().arch.isARM()) {
+            if (pc.readInt(0) == 0xd9cfa00 && (pc.toLong() % 4 == 0)) {
+                if ((pc.readInt(-4) == -533938164) && (pc.readInt(-8) == -527437812)) {
+                    trapNumber = ARITHMETIC_EXCEPTION;
+                }
+            }
+        }
+
         if (origin instanceof TargetMethod) {
             // the trap occurred in Java
+
+            // Here we check that the exception is not raised in Thumb mode since we
+            // do not currently support Thumb mode compiled methods.
+            // It can however happen in third-party libraries which are not instanceof TargetMethod
+            if (Platform.target().arch.isARM()) {
+                assert pc.toInt() % 4 == 0;
+            }
             final TargetMethod targetMethod = (TargetMethod) origin;
             final Pointer sp = tfa.getSP(trapFrame);
             final Pointer fp = tfa.getFP(trapFrame);
@@ -219,11 +240,9 @@ public abstract class Trap {
                     break;
                 case STACK_FAULT:
                     // stack overflow:
-
                     // the native trap handler unprotected the yellow zone -
                     // propagate this to the thread object
                     VmThread.current().nativeTrapHandlerUnprotectedYellowZone();
-
                     raiseImplicitException(trapFrame, targetMethod, StackOverflowError.class, sp, fp, vmIP);
                     break; // unreachable, except when returning to a local exception handler
                 case ARITHMETIC_EXCEPTION:
@@ -256,16 +275,16 @@ public abstract class Trap {
 
     /**
      * Checks the origin of a trap by looking for a target method or runtime stub in the code regions. If found, this
-     * method will return a reference to the {@code TargetMethod} that produced the trap. If a runtime stub produced
-     * the trap, this method will return a reference to that runtime stub. Otherwise, this method returns {@code null},
+     * method will return a reference to the {@code TargetMethod} that produced the trap. If a runtime stub produced the
+     * trap, this method will return a reference to that runtime stub. Otherwise, this method returns {@code null},
      * indicating the trap occurred in native code.
      *
      * @param trapNumber the trap number
      * @param trapFrame the trap frame
      * @param faultAddress the faulting address that caused the trap (memory faults only)
      * @param pc the address of instruction causing the trap
-     * @return a reference to the {@code TargetMethod} containing the instruction pointer that
-     *         caused the trap or {@code null} if trap occurred in native code
+     * @return a reference to the {@code TargetMethod} containing the instruction pointer that caused the trap or
+     *         {@code null} if trap occurred in native code
      */
     private static Object checkTrapOrigin(int trapNumber, Pointer trapFrame, Address faultAddress, Pointer pc) {
         final TrapFrameAccess tfa = vm().trapFrameAccess;
@@ -304,8 +323,8 @@ public abstract class Trap {
     }
 
     /**
-     * Handle a memory fault for this thread. A memory fault can be caused by an implicit null pointer check,
-     * a safepoint being triggered, or a segmentation fault in native code.
+     * Handle a memory fault for this thread. A memory fault can be caused by an implicit null pointer check, a
+     * safepoint being triggered, or a segmentation fault in native code.
      *
      * @param instructionPointer the instruction pointer that caused the fault
      * @param targetMethod the TargetMethod containing {@code instructionPointer}
@@ -324,7 +343,6 @@ public abstract class Trap {
         if (VmThread.current().isVmOperationThread()) {
             FatalError.unexpected("Memory fault on the VM operation thread", false, null, trapFrame);
         }
-
         // check to see if a safepoint has been triggered for this thread
         if (safepointLatch.equals(ttla) && safepoint.isAt(instructionPointer)) {
             // a safepoint has been triggered for this thread
@@ -344,28 +362,23 @@ public abstract class Trap {
                 TRAP_INSTRUCTION_POINTER.store3(Pointer.zero());
             } else {
                 /*
-                 * The interleaving of a mutator thread and a freezer thread below demonstrates
-                 * one case where this can occur:
+                 * The interleaving of a mutator thread and a freezer thread below demonstrates one case where this can
+                 * occur:
                  *
-                 *    Mutator thread        |  VmOperationThread
-                 *  ------------------------+-----------------------------------------------------------------
-                 *                          |  set VM_OPERATION and trigger safepoints for mutator thread
-                 *  loop: safepoint         |
-                 *        enter native      |
-                 *                          |  complete operation (e.g. GC)
-                 *                          |  reset safepoints and clear VM_OPERATION for mutator thread
-                 *        return from native|
-                 *  loop: safepoint         |
+                 * Mutator thread | VmOperationThread
+                 * ------------------------+----------------------------------------------------------------- | set
+                 * VM_OPERATION and trigger safepoints for mutator thread loop: safepoint | enter native | | complete
+                 * operation (e.g. GC) | reset safepoints and clear VM_OPERATION for mutator thread return from native|
+                 * loop: safepoint |
                  *
-                 * The first safepoint instruction above loads the address of triggered VM thread locals
-                 * into the latch register. The second safepoint instruction dereferences the latch
-                 * register causing the trap. That is, the VM operation thread triggered safepoints in the
-                 * mutator to freeze but actually froze it as a result of the mutator making a
-                 * native call between 2 safepoint instructions (it takes 2 executions of a safepoint
-                 * instruction to cause the trap).
+                 * The first safepoint instruction above loads the address of triggered VM thread locals into the latch
+                 * register. The second safepoint instruction dereferences the latch register causing the trap. That is,
+                 * the VM operation thread triggered safepoints in the mutator to freeze but actually froze it as a
+                 * result of the mutator making a native call between 2 safepoint instructions (it takes 2 executions of
+                 * a safepoint instruction to cause the trap).
                  *
-                 * The second safepoint instruction on the mutator thread will cause a trap when
-                 * VM_OPERATION for the mutator is null.
+                 * The second safepoint instruction on the mutator thread will cause a trap when VM_OPERATION for the
+                 * mutator is null.
                  */
             }
             // The state of the safepoint latch was TRIGGERED when the trap happened. It must be reset back to ENABLED
@@ -384,21 +397,22 @@ public abstract class Trap {
     }
 
     public static boolean DeoptOnImplicitException = true;
+
     static {
         VMOptions.addFieldOption("-XX:", "DeoptOnImplicitException", Trap.class, "Deoptimize on implicit exception occuring in optimized code.");
     }
 
     /**
      * Raises an implicit exception.
-     *
+     * <p/>
      * If there is a local handler for the exception (i.e. a handler in the same frame in which the exception occurred)
      * and the method in which the exception occurred was compiled by the opto compiler, then the trap state is altered
-     * so that the return address for the trap frame is set to be the exception handler entry address.
-     * This means that the register allocator can assume that registers are not modified in the control flow
-     * from an implicit exception to the exception handler.
-     *
-     * Otherwise, the {@linkplain Throw#raise(Throwable, Pointer, Pointer, CodePointer) standard mechanism} for throwing an
-     * exception is used.
+     * so that the return address for the trap frame is set to be the exception handler entry address. This means that
+     * the register allocator can assume that registers are not modified in the control flow from an implicit exception
+     * to the exception handler.
+     * <p/>
+     * Otherwise, the {@linkplain Throw#raise(Throwable, Pointer, Pointer, CodePointer) standard mechanism} for throwing
+     * an exception is used.
      *
      * @param trapFrame a pointer to the trap frame
      * @param tm the target method containing the trap address
@@ -407,7 +421,7 @@ public abstract class Trap {
      * @param fp the frame pointer at the time of the trap
      * @param ip the instruction pointer which caused the trap
      */
-    private static void raiseImplicitException(Pointer trapFrame, TargetMethod tm, Class<? extends Throwable> throwableClass, Pointer sp, Pointer fp, CodePointer ip) {
+    private static void raiseImplicitException(Pointer trapFrame, TargetMethod tm, Class< ? extends Throwable> throwableClass, Pointer sp, Pointer fp, CodePointer ip) {
         if (DeoptOnImplicitException && !tm.isBaseline() && tm.deoptOnImplicitException() && throwableClass != StackOverflowError.class) {
             Stub stub = vm().stubs.deoptStubForSafepointPoll();
             CodePointer to = stub.codeStart();
@@ -434,17 +448,15 @@ public abstract class Trap {
         } else {
             throw FatalError.unexpected("illegal implicit exception class");
         }
-
         Throw.traceThrow(throwable);
-        assert tm.invalidated() == null : "invalidated methods should not be executing";
 
+        assert tm.invalidated() == null : "invalidated methods should not be executing";
 
         if (tm.preserveRegistersForLocalExceptionHandler()) {
             final CodePointer catchAddress = tm.throwAddressToCatchAddress(ip, throwable);
             if (!catchAddress.isZero()) {
                 // Store the exception so that the handler can find it.
                 VmThread.current().storeExceptionForHandler(throwable, tm, tm.posFor(catchAddress));
-
                 final TrapFrameAccess tfa = vm().trapFrameAccess;
                 tfa.setPC(trapFrame, catchAddress.toPointer());
                 return;

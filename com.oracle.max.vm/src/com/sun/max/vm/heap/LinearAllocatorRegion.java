@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,15 +17,12 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.heap;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
@@ -100,23 +99,44 @@ public class LinearAllocatorRegion extends LinearAllocationMemoryRegion {
     private void scanReferences(PointerIndexVisitor pointerIndexVisitor,  Pointer refMap, int refmapWordIndex, boolean logging) {
         final int firstWordIndex = refmapWordIndex << Word.widthValue().log2numberOfBits;
         final Pointer base = start.plusWords(firstWordIndex).asPointer();
-        long refmapWord = refMap.getLong(refmapWordIndex);
-        long w = refmapWord;
-        int bitIndexInWord = 0;
-        while (w != 0L) {
-            bitIndexInWord += Address.fromLong(w).leastSignificantBitSet();
-            if (logging) {
-                final Address value = base.getWord(bitIndexInWord).asAddress();
-                if (!value.isZero() && !contains(value) && !Code.bootCodeRegion().contains(value)) {
-                    final Pointer address = base.plusWords(bitIndexInWord);
-                    Heap.rootScanLogger.logVisitReferenceMapSlot(firstWordIndex + bitIndexInWord, address, value);
+        if (Platform.target().arch.is64bit()) {
+            long refmapWord = refMap.getLong(refmapWordIndex);
+            long w = refmapWord;
+            int bitIndexInWord = 0;
+            while (w != 0L) {
+                bitIndexInWord += Address.fromLong(w).leastSignificantBitSet();
+                if (logging) {
+                    final Address value = base.getWord(bitIndexInWord).asAddress();
+                    if (!value.isZero() && !contains(value) && !Code.bootCodeRegion().contains(value)) {
+                        final Pointer address = base.plusWords(bitIndexInWord);
+                        Heap.rootScanLogger.logVisitReferenceMapSlot(firstWordIndex + bitIndexInWord, address, value);
+                    }
                 }
+                pointerIndexVisitor.visit(base, bitIndexInWord);
+                if (++bitIndexInWord == 64) {
+                    return;
+                }
+                w = refmapWord >>> bitIndexInWord;
             }
-            pointerIndexVisitor.visit(base, bitIndexInWord);
-            if (++bitIndexInWord == 64) {
-                return;
+        } else {
+            int refmapWord = refMap.getInt(refmapWordIndex);
+            int w = refmapWord;
+            int bitIndexInWord = 0;
+            while (w != 0) {
+                bitIndexInWord += Address.fromLong(w).leastSignificantBitSet();
+                if (logging) {
+                    final Address value = base.getWord(bitIndexInWord).asAddress();
+                    if (!value.isZero() && !contains(value) && !Code.bootCodeRegion().contains(value)) {
+                        final Pointer address = base.plusWords(bitIndexInWord);
+                        Heap.rootScanLogger.logVisitReferenceMapSlot(firstWordIndex + bitIndexInWord, address, value);
+                    }
+                }
+                pointerIndexVisitor.visit(base, bitIndexInWord);
+                if (++bitIndexInWord == 32) {
+                    return;
+                }
+                w = refmapWord >>> bitIndexInWord;
             }
-            w = refmapWord >>> bitIndexInWord;
         }
     }
 

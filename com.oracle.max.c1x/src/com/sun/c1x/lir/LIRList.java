@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.c1x.lir;
 
@@ -88,6 +86,10 @@ public final class LIRList {
 
     public void membar(int barriers) {
         append(new LIRMemoryBarrier(barriers));
+    }
+
+    public void debugMethodID(int bci, String parentMethod, String inlinedMethod) {
+        append(new LIRDebugMethodID(bci, parentMethod, inlinedMethod));
     }
 
     public void osrEntry(CiValue osrPointer) {
@@ -326,6 +328,10 @@ public final class LIRList {
 
     public void iurem(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {
         append(new LIROp3(LIROpcode.Iurem, left, right, tmp, res, info));
+    }
+
+    public void insertLongDivExceptionCheck(CiValue dividend, CiValue divisor, CiValue result, CiValue tmp, LIRDebugInfo info) {
+        append(new LIROp3(LIROpcode.LDivExceptionCheck, dividend, divisor, tmp, result, info));
     }
 
     public void ldiv(CiValue left, CiValue right, CiValue res, CiValue tmp, LIRDebugInfo info) {

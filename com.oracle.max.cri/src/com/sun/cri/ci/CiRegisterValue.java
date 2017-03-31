@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,12 +17,9 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.cri.ci;
+
 
 /**
  * Denotes a register that stores a value of a fixed kind. There is exactly one (canonical) instance of {@code
@@ -37,9 +36,17 @@ public final class CiRegisterValue extends CiValue {
     /**
      * Should only be called from {@link CiRegister#CiRegister} to ensure canonicalization.
      */
-    CiRegisterValue(CiKind kind, CiRegister register) {
+    public CiRegisterValue(CiKind kind, CiRegister register) {
         super(kind);
         this.reg = register;
+    }
+
+    CiRegisterValue(CiRegisterValue regValue) {
+        super(regValue.kind);
+        assert regValue.kind.isLong() || regValue.kind.isDouble() : regValue.kind;
+        String name = regValue.reg.name.substring(0, 1) + (new Integer(regValue.reg.name.substring(1, 2)) + 1);
+        this.reg = new CiRegister(regValue.reg.number + 1, regValue.reg.getEncoding(), regValue.reg.spillSlotSize, name, regValue.reg.originalFlags);
+        highPart = true;
     }
 
     @Override
@@ -58,6 +65,15 @@ public final class CiRegisterValue extends CiValue {
             return ((CiRegisterValue) other).reg == reg;
         }
         return false;
+    }
+
+    @Override
+    public CiRegisterValue getClone() {
+        if (kind.isLong() || kind.isDouble()) {
+            return new CiRegisterValue(this);
+        } else {
+            return null;
+        }
     }
 
     @Override

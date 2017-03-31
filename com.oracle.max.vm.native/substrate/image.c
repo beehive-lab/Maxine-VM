@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 #include "os.h"
 
@@ -349,7 +347,11 @@ static void mapHeapAndCode(int fd) {
     theHeap = maxve_remap_boot_code_region(theHeap, heapAndCodeSize);
 #endif
 #if log_LOADER
-    log_println("boot heap mapped at %p", theHeap);
+    log_println("ReservedVSpace Size %d ActualVSpaceSize(*1Mb) %u",theHeader->reservedVirtualSpaceSize, virtualSpaceSize);
+    log_println("boot heap start at %p", theHeap);
+    log_println("code heap start at %p", theCode);
+    log_println("application heap start at %p", theCode + theHeader->codeSize);
+    log_println("application heap stop at %p", theHeap + virtualSpaceSize);
 #endif
     theCode = theHeap + theHeader->heapSize;
     theCodeEnd = theCode + theHeader->codeSize;
@@ -388,6 +390,7 @@ static void relocate(int fd) {
 #if log_LOADER
     log_println("image.relocate [relocation map: %d bytes]", theHeader->relocationDataSize);
 #endif
+
     relocation_apply((void *) theHeap, theHeap, relocationData, theHeader->relocationDataSize, word_BIG_ENDIAN, theHeader->wordSize);
 
 #if !MEMORY_IMAGE

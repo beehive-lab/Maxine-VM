@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.monitor.modal.schemes;
 
@@ -62,7 +60,7 @@ public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
     @Override
     public void initialize(MaxineVM.Phase phase) {
         if (MaxineVM.isHosted()) {
-            ProgramError.check(Word.width() == 64, "ModalMonitorScheme requires a 64-bit word.");
+            ProgramError.check(Word.width() == 64 || Word.width() == 32, "ModalMonitorScheme requires a 32 or a 64-bit word.");
         }
         ModeHandler handler = entryHandler;
         while (handler != null) {
@@ -108,6 +106,11 @@ public abstract class ModalMonitorScheme extends AbstractMonitorScheme {
     @INLINE
     public final Word createMisc(Object object) {
         return entryHandler.createMisc(object);
+    }
+
+    @INLINE
+    public final int createHash(Object object) {
+        return entryHandler.createHash(object);
     }
 
     @INLINE

@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased;
 
@@ -35,18 +33,17 @@ import com.sun.max.vm.monitor.modal.modehandlers.lightweight.*;
 public class BiasedLockword64 extends LightweightLockword64 {
 
     /*
-     * bit [63............................................. 1  0]     Shape         Mode            Lock-state
+     * bit [63............................................. 1 0] Shape Mode Lock-state
      *
-     *     [     0    ][ UNUSED_EPOCH][     0     ][ hash ][m][0]     Lightweight   Biasable        No bias owner. Unlocked
-     *     [     0    ][    epoch    ][ thread ID ][ hash ][m][0]     Lightweight   Biasable        Bias owned. Unlocked
-     *     [ r. count ][    epoch    ][ thread ID ][ hash ][m][0]     Lightweight   Biasable        Bias owned. Locked (rcount >= 1)
+     * [ 0 ][ UNUSED_EPOCH][ 0 ][ hash ][m][0] Lightweight Biasable No bias owner. Unlocked [ 0 ][ epoch ][ thread ID ][
+     * hash ][m][0] Lightweight Biasable Bias owned. Unlocked [ r. count ][ epoch ][ thread ID ][ hash ][m][0]
+     * Lightweight Biasable Bias owned. Locked (rcount >= 1)
      *
-     *     [ r. count ][REVOKED_EPOCH][ thread ID ][ hash ][m][0]     Lightweight   Delegate lightweight lock mode
-     *     [                     Undefined                ][m][1]     Inflated
+     * [ r. count ][REVOKED_EPOCH][ thread ID ][ hash ][m][0] Lightweight Delegate lightweight lock mode [ Undefined
+     * ][m][1] Inflated
      *
      *
-     * Note: a valid thread ID must be >= 1
-     * The per-shape mode bit, m, is not used and is always masked.
+     * Note: a valid thread ID must be >= 1 The per-shape mode bit, m, is not used and is always masked.
      *
      * For REVOKED_EPOCH see BiasedLockEpoch.REVOKED.
      */
@@ -86,8 +83,8 @@ public class BiasedLockword64 extends LightweightLockword64 {
     }
 
     /**
-     * Returns a copy of this lock word in a locked state, where the lock / bias owner is
-     * installed as {@code lockwordThreadID}, and the recursion count is 1.
+     * Returns a copy of this lock word in a locked state, where the lock / bias owner is installed as
+     * {@code lockwordThreadID}, and the recursion count is 1.
      *
      * @param lockwordThreadID the lock and bias owner
      * @return the copy lock word
@@ -98,8 +95,8 @@ public class BiasedLockword64 extends LightweightLockword64 {
     }
 
     /**
-     * Returns a copy of this lock word in a locked state, where the lock / bias owner is
-     * installed as {@code lockwordThreadID}, the bias epoch is set to {@code epoch}, and the recursion count is 1.
+     * Returns a copy of this lock word in a locked state, where the lock / bias owner is installed as
+     * {@code lockwordThreadID}, the bias epoch is set to {@code epoch}, and the recursion count is 1.
      *
      * @param lockwordThreadID the lock and bias owner
      * @param epoch the bias epoch
@@ -111,8 +108,8 @@ public class BiasedLockword64 extends LightweightLockword64 {
     }
 
     /**
-     * Returns a copy of this lock word in a biased but unlocked state, where the bias owner is
-     * installed as {@code lockwordThreadID}.
+     * Returns a copy of this lock word in a biased but unlocked state, where the bias owner is installed as
+     * {@code lockwordThreadID}.
      *
      * @param lockwordThreadID the bias owner
      * @return the copy lock word
@@ -123,8 +120,8 @@ public class BiasedLockword64 extends LightweightLockword64 {
     }
 
     /**
-     * Returns a copy of this lock word in a biased but unlocked state, where the bias owner is
-     * installed as {@code lockwordThreadID}, and the bias epoch is set to {@code epoch}.
+     * Returns a copy of this lock word in a biased but unlocked state, where the bias owner is installed as
+     * {@code lockwordThreadID}, and the bias epoch is set to {@code epoch}.
      *
      * @param lockwordThreadID the bias owner
      * @param epoch the bias epoch
@@ -147,28 +144,31 @@ public class BiasedLockword64 extends LightweightLockword64 {
     }
 
     /**
-     * Tests if the given lock word is a {@code BiasedLockword64}, and if so, if the value of the lock word's
-     * bias owner field equals the given thread ID.
+     * Tests if the given lock word is a {@code BiasedLockword64}, and if so, if the value of the lock word's bias owner
+     * field equals the given thread ID.
      *
      * @param lockword the lock word to test
      * @param lockwordThreadID the thread ID to test against the lock word's bias owner
-     * @return true if {@code lockword} is a {@code BiasedLockword64} and
-     *         {@code lockwordThreadID} is the bias owner; false otherwise
+     * @return true if {@code lockword} is a {@code BiasedLockword64} and {@code lockwordThreadID} is the bias owner;
+     *         false otherwise
      */
     @INLINE
-    public static final boolean isBiasedLockAndBiasedTo(ModalLockword64 lockword, int lockwordThreadID) { // Quicker to use individual tests
+    public static final boolean isBiasedLockAndBiasedTo(ModalLockword64 lockword, int lockwordThreadID) { // Quicker to
+                                                                                                          // use
+                                                                                                          // individual
+                                                                                                          // tests
         return BiasedLockword64.from(lockword).asBiasedTo(lockwordThreadID).equals(lockword.asAddress().and(BIASED_OWNED_MASK));
     }
 
     /**
-     * Tests if the given lock word is a {@code BiasedLockword64}, and if so, if the value of the lock word's
-     * bias owner field equals the given thread ID and the lock word's bias epoch equals the given epoch.
+     * Tests if the given lock word is a {@code BiasedLockword64}, and if so, if the value of the lock word's bias owner
+     * field equals the given thread ID and the lock word's bias epoch equals the given epoch.
      *
      * @param lockword the lock word to test
      * @param epoch the epoch to test against the lock word's bias epoch
      * @param lockwordThreadID the thread ID to test against the lock word's bias owner
-     * @return true if {@code lockword} is a {@code BiasedLockword64} and
-     *         {@code lockwordThreadID} is the bias owner; false otherwise
+     * @return true if {@code lockword} is a {@code BiasedLockword64} and {@code lockwordThreadID} is the bias owner;
+     *         false otherwise
      */
     @INLINE
     public static final boolean isBiasedLockAndBiasedTo(ModalLockword64 lockword, BiasedLockEpoch64 epoch, int lockwordThreadID) {
@@ -217,8 +217,8 @@ public class BiasedLockword64 extends LightweightLockword64 {
     }
 
     /**
-     * (Image build support) Returns a new, unlocked, unbiased {@code BiasedLockword64} with the given
-     * hashcode installed into the hashcode field.
+     * (Image build support) Returns a new, unlocked, unbiased {@code BiasedLockword64} with the given hashcode
+     * installed into the hashcode field.
      *
      * @param hashcode the hashcode to install
      * @return the lock word

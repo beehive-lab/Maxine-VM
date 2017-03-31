@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2010, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.compiler.deps;
 
@@ -26,7 +24,7 @@ import java.util.*;
 import java.util.concurrent.locks.*;
 
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiAssumptions.Assumption;
+import com.sun.cri.ci.CiAssumptions.*;
 import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
@@ -60,11 +58,12 @@ import com.sun.max.vm.log.hosted.*;
  * See <a href="https://wikis.oracle.com/display/MaxineVM/Code+Dependencies">the Wiki page</a> for more details.
  */
 public final class DependenciesManager {
+
     /**
-     * The collection of {@link DependencyProcessor} objects that handle specific types of {@link Assumption}.
-     * This is immutable after image build and we keep an array of the values for fast, allocation free, iteration.
+     * The collection of {@link DependencyProcessor} objects that handle specific types of {@link Assumption}. This is
+     * immutable after image build and we keep an array of the values for fast, allocation free, iteration.
      */
-    public static final Map<Class<? extends CiAssumptions.Assumption>, DependencyProcessor> dependencyProcessors = new HashMap<Class<? extends CiAssumptions.Assumption>, DependencyProcessor>();
+    public static final Map<Class< ? extends CiAssumptions.Assumption>, DependencyProcessor> dependencyProcessors = new HashMap<Class< ? extends CiAssumptions.Assumption>, DependencyProcessor>();
 
     /**
      * The current packed encoding limits the number of {@linkplain DependencyProcessor} instances.

@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.oracle.max.asm.target.amd64;
 
@@ -105,14 +103,7 @@ public class AMD64 extends CiArchitecture {
     public static final CiRegisterValue RSP = rsp.asValue(Long);
 
     public AMD64() {
-        super("AMD64",
-              8,
-              ByteOrder.LittleEndian,
-              allRegisters,
-              LOAD_STORE | STORE_STORE,
-              1,
-              r15.encoding + 1,
-              8);
+        super("AMD64", 8, ByteOrder.LittleEndian, allRegisters, LOAD_STORE | STORE_STORE, 1, r15.getEncoding() + 1, 8);
     }
 
     @Override
@@ -124,5 +115,4 @@ public class AMD64 extends CiArchitecture {
     public boolean twoOperandMode() {
         return true;
     }
-
 }

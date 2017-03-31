@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.monitor.modal.sync;
 
@@ -27,11 +25,12 @@ import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.monitor.*;
-import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.ManagedMonitor.BindingProtection;
+import com.sun.max.vm.monitor.modal.sync.JavaMonitorManager.ManagedMonitor.*;
 import com.sun.max.vm.monitor.modal.sync.nat.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
@@ -74,7 +73,7 @@ public class JavaMonitorManager {
     /**
      * The number of unbound monitors created in the boot image.
      */
-    private static final int UNBOUNDLIST_IMAGE_QTY = 50;
+    private static final int UNBOUNDLIST_IMAGE_QTY = 100;
 
     /**
      * The amount by which the list of unbound monitors grows each time it is {@linkplain #expandUnboundList() expanded}.
@@ -121,6 +120,7 @@ public class JavaMonitorManager {
      */
     public interface UnboundMiscWordWriter {
         void writeUnboundMiscWord(Object object, Word preBindingMiscWord);
+        void writeUnboundHashWord(Object object, Word preBindingMiscWord);
     }
 
     @CONSTANT_WHEN_NOT_ZERO
@@ -162,7 +162,23 @@ public class JavaMonitorManager {
             for (ManagedMonitor monitor : stickyMonitors) {
                 monitor.allocate();
                 monitor.setDisplacedMisc(ObjectAccess.readMisc(monitor.boundObject()));
+                if (Platform.target().arch.is32bit()) {
+                    monitor.setDisplacedHash(ObjectAccess.readHash(monitor.boundObject()));
+                }
                 monitor.refreshBoundObject();
+            }
+            if (Monitor.TraceMonitors && stickyMonitors.length > 0) {
+                final boolean lockDisabledSafepoints = Log.lock();
+                Log.println("Sticky monitors:");
+                for (int i = 0; i < stickyMonitors.length; i++) {
+                    final ManagedMonitor monitor = stickyMonitors[i];
+                    Log.print("  ");
+                    Log.print(i);
+                    Log.print(": ");
+                    monitor.log();
+                    Log.println();
+                }
+                Log.unlock(lockDisabledSafepoints);
             }
         } else if (phase == MaxineVM.Phase.STARTING) {
             assert numberOfBindableMonitors <= bindableMonitors.length;
@@ -329,6 +345,7 @@ public class JavaMonitorManager {
                 if (numberOfUnboundMonitors < UNBOUNDLIST_MIN_QTY) {
                     System.gc();
                 }
+
                 // If we didn't free up enough such that we are at least midway between min and hwm, expand
                 if (numberOfUnboundMonitors < (unboundMonitorsHwm + UNBOUNDLIST_MIN_QTY) >> 1) {
                     expandUnboundList();
@@ -498,6 +515,9 @@ public class JavaMonitorManager {
                 }
                 // Write the object's new misc word
                 unboundMiscWordWriter.writeUnboundMiscWord(monitor.boundObject(), monitor.displacedMisc());
+                if (Platform.target().arch.is32bit()) {
+                    unboundMiscWordWriter.writeUnboundHashWord(monitor.boundObject(), monitor.displacedHash());
+                }
                 monitor.reset();
                 // Put the monitor back on the unbound list.
                 // This is thread-safe as mutator thread access to the free-list is

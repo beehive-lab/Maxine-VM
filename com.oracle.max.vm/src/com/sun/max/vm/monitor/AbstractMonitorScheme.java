@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.monitor;
 
@@ -65,7 +63,8 @@ public abstract class AbstractMonitorScheme extends AbstractVMScheme implements 
 
         int hashCode = Reference.fromJava(object).toOrigin().unsignedShiftedRight(3).toInt() ^ counter++;
         // Ensure the hash code is positive. Even though the specification does not require this, at
-        // least one application (NetBeans) assumes this is the case (see https://netbeans.org/bugzilla/show_bug.cgi?id=178688).
+        // least one application (NetBeans) assumes this is the case (see
+        // https://netbeans.org/bugzilla/show_bug.cgi?id=178688).
         return hashCode & ~0x80000000;
     }
 

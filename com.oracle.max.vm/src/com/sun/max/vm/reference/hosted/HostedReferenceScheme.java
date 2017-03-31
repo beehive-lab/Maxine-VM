@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.reference.hosted;
 
@@ -406,6 +404,15 @@ public final class HostedReferenceScheme extends AbstractVMScheme implements Ref
     public void setReference(Reference ref, int displacement, int index, Reference value) {
         setValue(ref, displacement, index, value.toJava());
     }
+
+    public long compareAndSwapLong(Reference ref, Offset offset, long expectedValue, long newValue) {
+        return toOrigin(ref).compareAndSwapLong(offset, expectedValue, newValue);
+    }
+
+    public long compareAndSwapLong(Reference ref, int offset, long expectedValue, long newValue) {
+        return toOrigin(ref).compareAndSwapLong(offset, expectedValue, newValue);
+    }
+
 
     public int compareAndSwapInt(Reference ref, Offset offset, int expectedValue, int newValue) {
         return toOrigin(ref).compareAndSwapInt(offset, expectedValue, newValue);

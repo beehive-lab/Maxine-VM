@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,13 +17,10 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 /*
  * @Harness: java
+ *
  * @Runs: (1)=true; (10)=true;
  */
 /**
@@ -33,6 +32,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 
 public final class ImmortalHeap_gc {
+
     private ImmortalHeap_gc() {
     }
 
@@ -40,30 +40,24 @@ public final class ImmortalHeap_gc {
         String[] strings;
         ImmortalMemoryRegion immortalMemoryRegion = ImmortalHeap.getImmortalHeap();
         Pointer oldMark = immortalMemoryRegion.mark();
-
         try {
             Heap.enableImmortalMemoryAllocation();
             strings = new String[nrObjects];
         } finally {
             Heap.disableImmortalMemoryAllocation();
         }
-
         if (immortalMemoryRegion.mark().equals(oldMark)) {
             return false;
         }
-
         oldMark = immortalMemoryRegion.mark();
 
         for (int i = 0; i < nrObjects; i++) {
             strings[i] = new String("" + i);
         }
-
         if (!immortalMemoryRegion.mark().equals(oldMark)) {
             return false;
         }
-
         System.gc();
-
         if (!immortalMemoryRegion.mark().equals(oldMark)) {
             return false;
         }
@@ -74,12 +68,9 @@ public final class ImmortalHeap_gc {
             expected += i;
             result += strings[i];
         }
-
         if (expected.equals(result)) {
             return true;
         }
-
         return false;
     }
-
 }

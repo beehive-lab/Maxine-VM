@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.monitor.modal.modehandlers.lightweight.biased;
 
@@ -37,6 +35,7 @@ public final class BiasedLockEpoch64 extends Word {
     static final BiasedLockEpoch64 REVOKED = BiasedLockEpoch64.from(Address.fromInt(2).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
     private static final BiasedLockEpoch64 MIN = BiasedLockEpoch64.from(Address.fromInt(3).shiftedLeft(BiasedLockword64.EPOCH_SHIFT));
     private static final BiasedLockEpoch64 MAX = BiasedLockEpoch64.from(BiasedLockword64.EPOCH_MASK);
+
 
     @HOSTED_ONLY
     public BiasedLockEpoch64(long value) {
@@ -81,5 +80,4 @@ public final class BiasedLockEpoch64 extends Word {
     public static BiasedLockEpoch64 init() {
         return MIN;
     }
-
 }

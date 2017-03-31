@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.heap.debug;
 
@@ -41,6 +39,7 @@ import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
+import com.sun.max.platform.*;
 
 /**
  * A collection of routines useful for placing and operating on special
@@ -76,7 +75,7 @@ public class DebugHeap {
     @INLINE
     public static Pointer adjustForDebugTag(Pointer mark) {
         if (isTagging()) {
-            return mark.plusWords(1);
+            return Platform.target().arch.is64bit() ? mark.plusWords(1) : mark.plusWords(2);
         }
         return mark;
     }
@@ -95,6 +94,18 @@ public class DebugHeap {
             if (!isValidCellTag(cell.getWord(0))) {
                 Log.print("Invalid object tag @ ");
                 Log.print(cell);
+                Log.print(" *(0)=");
+                Log.print(cell.getWord(0));
+                Log.print(" *(4)=");
+                Log.print(cell.getWord(4));
+                Log.print(" *(8)=");
+                Log.print(cell.getWord(8));
+                Log.print(" *(-4)=");
+                Log.print(cell.getWord(-4));
+                Log.print(" *(-8)=");
+                Log.print(cell.getWord(-8));
+                Log.print(" tag=");
+                Log.print(tagWord());
                 if (!regionStart.isZero()) {
                     Log.print(" (start + ");
                     Log.print(cell.minus(regionStart).asOffset().toInt());
@@ -103,7 +114,7 @@ public class DebugHeap {
                 Log.println();
                 FatalError.unexpected("INVALID CELL TAG");
             }
-            return cell.plusWords(1);
+            return Platform.target().arch.is64bit() ? cell.plusWords(1) : cell.plusWords(2);
         }
         return cell;
     }
@@ -119,12 +130,12 @@ public class DebugHeap {
     private static final int INT_OBJECT_PAD = 0xeeeecccc;
 
     public static byte[] tagBytes(DataModel dataModel) {
-        return dataModel.wordWidth == WordWidth.BITS_64 ? dataModel.toBytes(LONG_OBJECT_TAG) : dataModel.toBytes(INT_OBJECT_TAG);
+        return (dataModel.wordWidth == WordWidth.BITS_64 || Platform.target().arch.isARM()) ? dataModel.toBytes(LONG_OBJECT_TAG) : dataModel.toBytes(INT_OBJECT_TAG);
     }
 
     @INLINE
     private static Word tagWord() {
-        if (Word.width() == 64) {
+        if (Word.width() == 64 || Platform.target().arch.isARM()) {
             return Address.fromLong(LONG_OBJECT_TAG);
         }
         return Address.fromInt(INT_OBJECT_TAG);
@@ -154,7 +165,7 @@ public class DebugHeap {
     @INLINE
     public static void writeCellTag(Pointer cell) {
         if (isTagging()) {
-            cell.setWord(-1, tagWord());
+            cell.setWord(Platform.target().arch.is64bit() ? -1 : -2, tagWord());
         }
     }
 
@@ -174,7 +185,7 @@ public class DebugHeap {
             if (!ref.isZero()) {
                 final Pointer origin = ref.toOrigin();
                 final Pointer cell = Layout.originToCell(origin);
-                checkCellTag(cell, cell.minusWords(1).getWord(0));
+                checkCellTag(cell, Platform.target().arch.is64bit() ? cell.minusWords(1).getWord(0) : cell.minusWords(2).getWord(0));
             }
         }
     }
@@ -183,7 +194,7 @@ public class DebugHeap {
         if (isTagging()) {
             final Pointer origin = ref.toOrigin();
             final Pointer cell = Layout.originToCell(origin);
-            checkCellTag(cell, cell.minusWords(1).getWord(0));
+            checkCellTag(cell, Platform.target().arch.is64bit() ? cell.minusWords(1).getWord(0) : cell.minusWords(2).getWord(0));
         }
     }
 
@@ -337,6 +348,7 @@ public class DebugHeap {
                 checkNonNullRefTag(ref);
             }
             final Pointer origin = ref.toOrigin();
+
             if (Heap.bootHeapRegion.contains(origin) || Code.contains(origin) || ImmortalHeap.contains(origin)) {
                 return;
             }
@@ -427,7 +439,7 @@ public class DebugHeap {
         if (isTagging()) {
             final Pointer origin = ref.toOrigin();
             final Pointer cell = Layout.originToCell(origin);
-            return isValidCellTag(cell.minusWords(1).getWord(0));
+            return isValidCellTag(Platform.target().arch.is64bit() ? cell.minusWords(1).getWord(0) : cell.minusWords(2).getWord(0));
         }
         return true;
     }

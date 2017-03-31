@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.jdk;
 
@@ -37,8 +35,9 @@ public final class JDK_java_lang_Runtime {
 
     /**
      * Returns the amount of free memory.
-     * @see java.lang.Runtime#freeMemory()
+     *
      * @return the amount of free memory in bytes
+     * @see java.lang.Runtime#freeMemory()
      */
     @SUBSTITUTE
     private long freeMemory() {
@@ -47,8 +46,9 @@ public final class JDK_java_lang_Runtime {
 
     /**
      * Returns the total amount of memory available to the virtual machine.
-     * @see java.lang.Runtime#totalMemory()
+     *
      * @return the total amount of memory available to the virtual machine in bytes
+     * @see java.lang.Runtime#totalMemory()
      */
     @SUBSTITUTE
     private long totalMemory() {
@@ -58,8 +58,9 @@ public final class JDK_java_lang_Runtime {
 
     /**
      * Returns the maximum heap size.
-     * @see java.lang.Runtime#maxMemory()
+     *
      * @return the maximum heap size in bytes
+     * @see java.lang.Runtime#maxMemory()
      */
     @SUBSTITUTE
     private long maxMemory() {
@@ -68,6 +69,7 @@ public final class JDK_java_lang_Runtime {
 
     /**
      * Request a garbage collection.
+     *
      * @see java.lang.Runtime#gc()
      */
     @SUBSTITUTE
@@ -82,8 +84,10 @@ public final class JDK_java_lang_Runtime {
     @ALIAS(declaringClassName = "java.lang.ref.Finalizer", name = "runFinalization")
     static native void runFinalization();
 
+
     /**
      * Invoke finalizers of garbage collected objects.
+     *
      * @see java.lang.Runtime#runFinalization()
      */
     @SUBSTITUTE
@@ -93,6 +97,7 @@ public final class JDK_java_lang_Runtime {
 
     /**
      * Turn tracing of instructions on or off. Ignored.
+     *
      * @param on {@code true} if instructions should be traced; {@code false} otherwise
      */
     @SUBSTITUTE
@@ -102,6 +107,7 @@ public final class JDK_java_lang_Runtime {
 
     /**
      * Turn tracing of method calls on or off. Ignored.
+     *
      * @param on {@code true} if the instructions should be traced; {@code false} otherwise
      */
     @SUBSTITUTE

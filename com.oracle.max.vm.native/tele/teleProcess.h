@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 #ifndef __teleProcess_h__
 #define __teleProcess_h__ 1
@@ -50,8 +48,9 @@ typedef struct {
     pid_t tgid;
     pid_t tid;
 } ProcessHandleStruct, *ProcessHandle;
-#define readProcessMemory(ph, src, dst, size) task_read(ph->tgid, ph->tid, (const void *) src, (void *) dst, (size_t) size)
-#define writeProcessMemory(ph, dst, src, size) task_write(ph->tgid, ph->tid, (void *) dst, (const void *) src, (size_t) size)
+#include <stdint.h>
+#define readProcessMemory(ph, src, dst, size) task_read(ph->tgid, ph->tid, (const void *) (intptr_t) src, (void *) (intptr_t) dst, (size_t) size)
+#define writeProcessMemory(ph, dst, src, size) task_write(ph->tgid, ph->tid, (void *) (intptr_t) dst, (const void *) (intptr_t) src, (size_t) size)
 #elif os_DARWIN
 #include <mach/mach.h>
 int task_read(task_t task, vm_address_t src, void *dst, size_t size);

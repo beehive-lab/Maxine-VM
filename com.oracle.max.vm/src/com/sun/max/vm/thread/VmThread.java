@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.thread;
 
@@ -30,17 +28,14 @@ import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.vm.thread.VmThreadLocal.*;
 import static com.sun.max.vm.type.ClassRegistry.*;
 
-import java.lang.Thread.State;
+import java.lang.Thread.*;
 import java.security.*;
-
-import sun.misc.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.atomic.*;
 import com.sun.max.lang.*;
 import com.sun.max.memory.*;
-import com.sun.max.platform.OS;
-import com.sun.max.platform.Platform;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
@@ -60,6 +55,7 @@ import com.sun.max.vm.stack.*;
 import com.sun.max.vm.ti.*;
 import com.sun.max.vm.value.*;
 
+import sun.misc.*;
 
 /**
  * The MaxineVM VM specific implementation of threads.
@@ -335,7 +331,7 @@ public class VmThread {
      * handler will reset the guard pages when it calls {@link #loadExceptionForHandler()}.
      */
     public void checkYellowZoneForRaisingException() {
-        if (platform().isa == ISA.AMD64) {
+        if (platform().isa == ISA.AMD64 || platform().isa == ISA.ARM) {
             if (!yellowZoneUnprotected) {
                 Pointer sp = VMRegister.getCpuStackPointer();
                 int safetyMargin = (1 + STACK_SHADOW_PAGES) * platform().pageSize;
@@ -637,8 +633,8 @@ public class VmThread {
         // Enable safepoints:
         Pointer anchor = JniFunctions.prologue(JNI_ENV.addressIn(etla));
         // JniFunctions.prologue calls VMTI.beginUpcallVM but we aren't actually in an upcall into the VM
-        VMTI.handler().endUpcallVM();
 
+        VMTI.handler().endUpcallVM();
         final VmThread thread = VmThread.current();
 
         VMLog.vmLog().threadStart();
@@ -1431,13 +1427,13 @@ public class VmThread {
         // native thread if an InterruptedException is thrown after the
         // interruption.
         interrupted = true;
-        if (Platform.platform().os == OS.DARWIN ||
-            Platform.platform().os == OS.LINUX) {
+        if (Platform.platform().os == OS.DARWIN || Platform.platform().os == OS.LINUX) {
             boolean isInterrupted = interrupt0ByUnparking();
             if (isInterrupted) {
                 return;
             }
         }
+
         if (!nativeThread.isZero()) {
             nativeInterrupt(nativeThread);
         }
@@ -1559,7 +1555,6 @@ public class VmThread {
             return false;
         }
     }
-
 
     public final void pushPrivilegedElement(ClassActor classActor, long frameId, AccessControlContext context) {
         privilegedStackTop = new PrivilegedElement(classActor, frameId, context, privilegedStackTop);

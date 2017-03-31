@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.oracle.max.vm.ext.maxri;
 
@@ -32,6 +30,7 @@ import java.io.*;
 import java.util.*;
 
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.asm.target.armv7.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
@@ -40,8 +39,7 @@ import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.TargetMethod.CodePosClosure;
-import com.sun.max.vm.compiler.target.TargetMethod.FrameAccess;
+import com.sun.max.vm.compiler.target.TargetMethod.*;
 import com.sun.max.vm.reference.*;
 import com.sun.max.vm.runtime.*;
 
@@ -461,6 +459,8 @@ public final class DebugInfo {
                     CiRegister fp;
                     if (platform().isa == ISA.AMD64) {
                         fp = AMD64.rsp;
+                    } else if (platform().isa == ISA.ARM) {
+                        fp = ARMV7.r13;
                     } else {
                         throw FatalError.unimplemented();
                     }

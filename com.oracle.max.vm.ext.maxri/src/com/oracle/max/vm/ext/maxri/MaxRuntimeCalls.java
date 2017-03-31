@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,14 +17,11 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.oracle.max.vm.ext.maxri;
 
 import static com.sun.max.vm.MaxineVM.*;
+
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 
@@ -41,8 +40,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 
 /**
- * This class contains the implementation of runtime calls that are called by
- * code emitted by the CRI compilers.
+ * This class contains the implementation of runtime calls that are called by code emitted by the CRI compilers.
  */
 public class MaxRuntimeCalls {
 
@@ -52,6 +50,7 @@ public class MaxRuntimeCalls {
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
     public @interface MAX_RUNTIME_ENTRYPOINT {
+
         CiRuntimeCall runtimeCall() default CiRuntimeCall.GenericCallback;
     }
 
@@ -100,6 +99,56 @@ public class MaxRuntimeCalls {
             assert kinds[i] == call.arguments[i] : call + " incompatible with " + classMethodActor;
         }
         return true;
+    }
+
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.d2long)
+    public static long runtimeJd2jlong(double val) {
+        verifyRefMaps();
+        return Snippets.d2long(val);
+
+    }
+
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.f2long)
+    public static long runtimeJf2jlong(float val) {
+        verifyRefMaps();
+        return Snippets.f2long(val);
+
+    }
+
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.l2double)
+    public static double runtimel2double(long val) {
+        verifyRefMaps();
+        return Snippets.l2double(val);
+    }
+
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.l2float)
+    public static float runtimel2float(long val) {
+        verifyRefMaps();
+        return Snippets.l2float(val);
+    }
+
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.arithmeticldiv)
+    public static long runtimearithmeticldiv(long a, long b) {
+        verifyRefMaps();
+        return MaxineVM.arithmeticldiv(a, b);
+    }
+
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.arithmeticludiv)
+    public static long runtimearithmeticludiv(long a, long b) {
+        verifyRefMaps();
+        return MaxineVM.arithmeticludiv(a, b);
+    }
+
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.arithmeticlrem)
+    public static long runtimearithmeticlrem(long a, long b) {
+        verifyRefMaps();
+        return MaxineVM.arithmeticlrem(a, b);
+    }
+
+    @MAX_RUNTIME_ENTRYPOINT(runtimeCall = CiRuntimeCall.arithmeticlurem)
+    public static long runtimearithmeticlurem(long a, long b) {
+        verifyRefMaps();
+        return MaxineVM.arithmeticlurem(a, b);
     }
 
     private static void verifyRefMaps() {

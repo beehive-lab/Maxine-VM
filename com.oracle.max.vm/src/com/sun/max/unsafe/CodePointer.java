@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,16 +17,13 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.unsafe;
 
 import static com.sun.max.vm.MaxineVM.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.code.*;
@@ -34,23 +33,24 @@ import com.sun.max.vm.reference.*;
 /**
  * A {@code CodePointer} is a tagged pointer that is known to reference native code.
  *
- * The least significant bit is 1. The remaining 63 bits are interpreted as an offset from the lowest existing {@link CodeRegion}
- * start address. This is typically the start address of the {@linkplain Code#bootCodeRegion() boot code region}.
+ * The least significant bit is 1. The remaining 63 bits are interpreted as an offset from the lowest existing
+ * {@link CodeRegion} start address. This is typically the start address of the {@linkplain Code#bootCodeRegion() boot
+ * code region}.
  *
- * Note that the interpretation as a 63-bit offset from the boot code region start is solely internal. All values passed into
- * creation methods are supposed to be full 64-bit pointers. All values returned from conversion methods are full 64-bit pointers.
+ * Note that the interpretation as a 63-bit offset from the boot code region start is solely internal. All values passed
+ * into creation methods are supposed to be full 64-bit pointers. All values returned from conversion methods are full
+ * 64-bit pointers.
  *
- * {@code CodePointer}s, in spite of their pointer characteristics, inherit from {@link Object} instead of {@link Word} to remain
- * visible to the memory manager. They are recognised as references but treated specially.
+ * {@code CodePointer}s, in spite of their pointer characteristics, inherit from {@link Object} instead of {@link Word}
+ * to remain visible to the memory manager. They are recognised as references but treated specially.
  */
 public final class CodePointer {
 
     private static long BASE_ADDRESS = MaxineVM.isHosted() ? 0x1000000000000000L : Code.bootCodeRegion().start().toLong();
 
     /**
-     * Set the base address. This is needed since the static field will otherwise not be properly initialised
-     * if the VM is running properly. Initialisation is done along with code manager initialisation in
-     * {@link Code#initialize()}.
+     * Set the base address. This is needed since the static field will otherwise not be properly initialised if the VM
+     * is running properly. Initialisation is done along with code manager initialisation in {@link Code#initialize()}.
      */
     public static void initialize(Address baseAddress) {
         BASE_ADDRESS = baseAddress.toLong();
@@ -59,7 +59,8 @@ public final class CodePointer {
     @HOSTED_ONLY
     private long tagged;
 
-    private CodePointer() { }
+    private CodePointer() {
+    }
 
     @HOSTED_ONLY
     private CodePointer(long value) {
@@ -110,7 +111,7 @@ public final class CodePointer {
     }
 
     /**
-     * Relocates a {@code CodePointer} by a given {@link Offset}.
+     * t Relocates a {@code CodePointer} by a given {@link Offset}.
      *
      * @param offset the offset by which the value is to be relocated
      * @return the relocated raw tagged value
@@ -149,6 +150,11 @@ public final class CodePointer {
         return UnsafeCast.asCodePointerTagged(value);
     }
 
+    @INLINE
+    int toTaggedInt() {
+        return UnsafeCast.asTaggedInt(this);
+    }
+
     /**
      * Get the tagged raw value of a {@code CodePointer}.
      */
@@ -157,6 +163,9 @@ public final class CodePointer {
         if (isHosted()) {
             return tagged;
         }
+        if (Platform.target().arch.is32bit()) {
+            return UnsafeCast.asTaggedInt(this);
+        }
         return UnsafeCast.asTaggedLong(this);
     }
 
@@ -164,6 +173,9 @@ public final class CodePointer {
     public long toLong() {
         if (isHosted()) {
             return untag(tagged);
+        }
+        if (Platform.target().arch.is32bit()) {
+            return 0x7fffffffL & untag(UnsafeCast.asLong(this));
         }
         return untag(UnsafeCast.asLong(this));
     }
@@ -253,5 +265,4 @@ public final class CodePointer {
     public String toString() {
         return to0xHexString();
     }
-
 }

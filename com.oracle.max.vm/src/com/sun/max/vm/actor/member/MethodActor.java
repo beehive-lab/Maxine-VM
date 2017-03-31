@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.actor.member;
 
@@ -29,8 +27,6 @@ import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.*;
-
-import sun.reflect.*;
 
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
@@ -46,6 +42,8 @@ import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
+
+import sun.reflect.*;
 
 /**
  * Internal representations of Java methods.
@@ -73,6 +71,7 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
         super(name, descriptor, flags);
         this.intrinsic = intrinsic;
     }
+
 
     /**
      * Gets the intrinsic id of this method.
@@ -362,6 +361,7 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
     public final InvocationStub makeInvocationStub() {
         ClassRegistry classRegistry = holder().classRegistry();
         InvocationStub invocationStub = classRegistry.get(INVOCATION_STUB, this);
+
         if (invocationStub == null) {
             if (isInstanceInitializer()) {
                 invocationStub = InvocationStub.newConstructorStub(toJavaConstructor(), null, Boxing.VALUE);

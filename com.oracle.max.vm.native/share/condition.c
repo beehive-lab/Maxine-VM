@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 #include <sys/time.h>
 #include <time.h>
@@ -42,6 +40,7 @@ void condition_initialize(Condition condition) {
     }
 #elif os_LINUX || os_DARWIN
     if (pthread_cond_init(condition, NULL) != 0) {
+	printf("FATAL ERROR condition_initialize\n");
         c_FATAL();
     }
 #elif os_MAXVE
@@ -124,18 +123,18 @@ static struct timespec* compute_abstime(struct timespec* abstime, jlong millis) 
     struct timeval now;
     int status = gettimeofday(&now, NULL);
     c_ASSERT(status == 0);
-    jlong seconds = millis / 1000;
+    jlong seconds = millis / 1000UL;
     millis %= 1000;
-    if (seconds > 50000000) { // see man cond_timedwait(3T)
-        seconds = 50000000;
+    if (seconds > 50000000L) { // see man cond_timedwait(3T)
+        seconds = 50000000L;
     }
     abstime->tv_sec = now.tv_sec  + seconds;
-    long       usec = now.tv_usec + millis * 1000;
+    jlong usec = now.tv_usec + (jlong) millis * 1000UL;
     if (usec >= 1000000) {
         abstime->tv_sec += 1;
         usec -= 1000000;
     }
-    abstime->tv_nsec = usec * 1000;
+    abstime->tv_nsec = usec * 1000UL;
     return abstime;
 }
 #endif

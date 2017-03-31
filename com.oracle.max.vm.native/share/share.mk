@@ -22,13 +22,17 @@
 #
 
 %.d: %.c
-	$(CC) $(C_DEPENDENCIES_FLAGS) $(CPPFLAGS) $< | sed 's/$*\.o/& $@/g' > $@
+	$(CC) $(C_DEPENDENCIES_FLAGS) $(DARWIN_GCC_MFLAG) $(CPPFLAGS) $< | sed 's/$*\.o/& $@/g' > $@
+
+
 
 DEPENDENCIES = $(SOURCES:%.c=%.d)
+
 
 -include $(DEPENDENCIES)
 
 OBJECTS = $(SOURCES:%.c=%.o)
+
 
 PATHS = $(SOURCE_DIRS:%=$(PROJECT)/%)
 vpath %.c  $(PATHS)
@@ -39,8 +43,9 @@ LIBRARY = $(LIB_PREFIX)$(LIB)$(LIB_SUFFIX)
 
 ifneq ($(OS),maxve)
 
-$(LIBRARY) : $(OBJECTS)
-	$(LINK_LIB) $(OBJECTS) -o $(LIBRARY) $(LINK_LIB_POSTFIX)
+$(LIBRARY) : $(OBJECTS) 
+	$(LINK_LIB) $(OBJECTS) -o $(LIBRARY)  $(LINK_LIB_POSTFIX)
+	
 	mkdir -p $(PROJECT)/generated/$(OS)
 	cp -f $(LIBRARY) $(PROJECT)/generated/$(OS)
 

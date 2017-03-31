@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.layout;
 
@@ -78,6 +76,8 @@ public final class Layout {
          * The header word in which the monitor and hash code details of an object are encoded.
          */
         public static final HeaderField MISC = new HeaderField("MISC", "Encoded monitor and hash code details for the object");
+
+        public static final HeaderField HASH = new HeaderField("HASH", "Encoded hash code only for 32 bit archs");
 
         /**
          * The header word in which the length of an array object is encoded.
@@ -365,6 +365,30 @@ public final class Layout {
     @INLINE
     public static Word readMisc(Reference reference) {
         return generalLayout().readMisc(reference);
+    }
+
+    @ACCESSOR(Reference.class)
+    @INLINE
+    public static Word readHash(Reference reference) {
+        return generalLayout().readHash(reference);
+    }
+
+    @ACCESSOR(Reference.class)
+    @INLINE
+    public static void writeHash(Reference reference, Word value) {
+        generalLayout().writeHash(reference, value);
+    }
+
+    @ACCESSOR(Pointer.class)
+    @INLINE
+    public static void writeHash(Pointer origin, Word value) {
+        generalLayout().writeHash(origin, value);
+    }
+
+    @ACCESSOR(Reference.class)
+    @INLINE
+    public static Word compareAndSwapHash(Reference reference, Word expectedValue, Word newValue) {
+        return generalLayout().compareAndSwapHash(reference, expectedValue, newValue);
     }
 
     /**

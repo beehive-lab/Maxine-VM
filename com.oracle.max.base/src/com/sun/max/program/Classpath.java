@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.program;
 
@@ -263,12 +261,23 @@ public class Classpath {
      * @param paths an array of classpath entries
      */
     public Classpath(String[] paths) {
-        final Entry[] entryArray = new Entry[paths.length];
-        for (int i = 0; i < paths.length; ++i) {
-            final String path = paths[i];
-            entryArray[i] = createEntry(path);
+        entries = new ArrayList<>();
+        for (String path : paths) {
+            File pathFile = new File(path);
+            // We are looking for jars
+            if (path.endsWith("*")) {
+                pathFile = new File(path.substring(0, path.length() - 1));
+                if (pathFile.isDirectory()) {
+                    for (File file : pathFile.listFiles()) {
+                        if (file.getName().endsWith(".jar")) {
+                            entries.add(createEntry(file.getAbsolutePath()));
+                        }
+                    }
+                }
+            } else {
+                entries.add(createEntry(path));
+            }
         }
-        this.entries = Arrays.asList(entryArray);
     }
 
     /**

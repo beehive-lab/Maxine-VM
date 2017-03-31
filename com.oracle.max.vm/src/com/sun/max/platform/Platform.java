@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.platform;
 
@@ -30,6 +28,7 @@ import java.util.*;
 import java.util.regex.*;
 
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.asm.target.armv7.*;
 import com.sun.cri.ci.*;
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
@@ -102,6 +101,8 @@ public final class Platform {
      */
     public static final String NUMBER_OF_SIGNALS_PROPERTY = "max.nsig";
 
+    public static final String IDIV_PROPERTY = "max.idiv";
+
     public final CPU cpu;
 
     public final ISA isa;
@@ -152,16 +153,26 @@ public final class Platform {
             } else {
                 throw FatalError.unexpected("Unimplemented stack alignment: " + os);
             }
-
+        } else if (isa == ISA.ARM) {
+            arch = new ARMV7();
+            if (os == OS.DARWIN) {
+                stackAlignment = 8;
+            } else if (os == OS.SOLARIS || os == OS.LINUX) {
+                stackAlignment = 8;
+            } else if (os == OS.MAXVE) {
+                stackAlignment = 8;
+            } else {
+                throw FatalError.unexpected("Unimplemented stack alignment: " + os);
+            }
         } else {
             return null;
         }
-
         assert arch.wordSize == dataModel.wordWidth.numberOfBytes;
         boolean isMP = true;
         int spillSlotSize = arch.wordSize;
         int cacheAlignment = dataModel.cacheAlignment;
         boolean inlineObjects = false;
+
         return new CiTarget(arch,
                         isMP,
                         spillSlotSize,
@@ -170,7 +181,8 @@ public final class Platform {
                         cacheAlignment,
                         inlineObjects,
                         false,
-                        false);
+                        false,
+                        hasIDiv());
     }
 
     private static final Pattern NON_REGEX_TEST_PATTERN = Pattern.compile("\\w+");
@@ -416,6 +428,15 @@ public final class Platform {
 
     private static native int nativeGetPageSize();
 
+    @HOSTED_ONLY
+    private static boolean hasIDiv() {
+        Prototype.loadHostedLibrary();
+        final int hasIDiv = getInteger(IDIV_PROPERTY) == null ? nativeHasIDiv() : getInteger(IDIV_PROPERTY);
+        return hasIDiv > 0 ? true : false;
+    }
+
+    private static native int nativeHasIDiv();
+
     /**
      * Gets the number of signals supported by the target that may be delivered to the VM.
      * The range of signal numbers that the VM expects to see is between 0 (inclusive) and
@@ -488,7 +509,6 @@ public final class Platform {
         final OS os = OS.fromName(osName);
         final int pageSize = getInteger(PAGE_SIZE_PROPERTY) == null ? getPageSize() : getInteger(PAGE_SIZE_PROPERTY);
         final int nsig = getProperty(NUMBER_OF_SIGNALS_PROPERTY) == null ? getNumberOfSignals() : getInteger(NUMBER_OF_SIGNALS_PROPERTY);
-
         return new Platform(cpu, isa, dataModel, os, pageSize, nsig);
     }
 
@@ -506,8 +526,10 @@ public final class Platform {
         map.put("linux-amd64", new Platform(CPU.AMD64, OS.LINUX, Ints.K * 8, 32));
         map.put("solaris-amd64", new Platform(CPU.AMD64, OS.SOLARIS, Ints.K * 8, 32));
         map.put("solaris-sparcv9", new Platform(CPU.SPARCV9, OS.SOLARIS, Ints.K * 8, 32));
-        map.put("darwin-amd64", new Platform(CPU.AMD64, OS.DARWIN, Ints.K * 8, 32));
+        map.put("darwin-amd64", new Platform(CPU.AMD64, OS.DARWIN, Ints.K * 4, 32));
         map.put("maxve-amd64", new Platform(CPU.AMD64, OS.MAXVE, Ints.K * 8, 32));
+        map.put("linux-arm", new Platform(CPU.ARMV7, OS.LINUX, Ints.K * 4, 32));
+        map.put("darwin-arm", new Platform(CPU.ARMV7, OS.DARWIN, Ints.K * 4, 32));
         Supported = Collections.unmodifiableMap(map);
         Default = map.get("linux-amd64");
     }
@@ -571,6 +593,5 @@ public final class Platform {
             out.println("    " + entry.getKey());
         }
     }
-
 
 }

@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,16 +17,13 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.monitor.modal.modehandlers.lightweight;
 
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.monitor.modal.modehandlers.*;
@@ -35,28 +34,35 @@ import com.sun.max.vm.monitor.modal.modehandlers.*;
 public class LightweightLockword64 extends HashableLockword64 {
 
     /*
-     * Field layout:
+     * Field layout for 64 bit:
      *
      * bit [63........................................ 1  0]     Shape
      *
      *     [ r. count ][ util  ][  thread ID ][ hash ][m][0]     Lightweight
      *     [                 Undefined               ][m][1]     Inflated
      *
+     *
+     * Field layout for 32 bit:
+     *
+     * bit [32........................................ 1  0]     Shape
+     *
+     *     [ r. count 5 ][ util 1 ][  thread ID 4][ hash 20][m][0]     Lightweight
+     *     [                 Undefined                     ][m][1]     Inflated
+     *
      */
 
-    protected static final int RCOUNT_FIELD_WIDTH = 5; // Must be <= 8 (see incrementCount())
+    protected static final int RCOUNT_FIELD_WIDTH = 5;
     protected static final int UTIL_FIELD_WIDTH = 9;
-    protected static final int THREADID_FIELD_WIDTH = 64 - (RCOUNT_FIELD_WIDTH + UTIL_FIELD_WIDTH + HASH_FIELD_WIDTH + NUMBER_OF_MODE_BITS);
-
-    protected static final int THREADID_SHIFT = HASHCODE_SHIFT + HASH_FIELD_WIDTH;
+    protected static final int NUM_BITS = Platform.target().arch.is64bit() ? 64 : 32;
+    protected static final int THREADID_FIELD_WIDTH = NUM_BITS - (RCOUNT_FIELD_WIDTH + UTIL_FIELD_WIDTH + HASH_FIELD_WIDTH + NUMBER_OF_MODE_BITS);
+    protected static final int THREADID_SHIFT = Platform.target().arch.is64bit() ? (HASHCODE_SHIFT + HASH_FIELD_WIDTH) : NUMBER_OF_MODE_BITS;
     protected static final int UTIL_SHIFT = THREADID_SHIFT + THREADID_FIELD_WIDTH;
     protected static final int RCOUNT_SHIFT = UTIL_SHIFT + UTIL_FIELD_WIDTH;
+    protected static final Address THREADID_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(NUM_BITS - THREADID_FIELD_WIDTH);
+    protected static final Address UTIL_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(NUM_BITS - UTIL_FIELD_WIDTH);
+    protected static final Address RCOUNT_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(NUM_BITS - RCOUNT_FIELD_WIDTH);
+    protected static final Address RCOUNT_INC_WORD = Address.zero().bitSet(NUM_BITS - RCOUNT_FIELD_WIDTH);
 
-    protected static final Address THREADID_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(64 - THREADID_FIELD_WIDTH);
-    protected static final Address UTIL_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(64 - UTIL_FIELD_WIDTH);
-    protected static final Address RCOUNT_SHIFTED_MASK = Word.allOnes().asAddress().unsignedShiftedRight(64 - RCOUNT_FIELD_WIDTH);
-
-    protected static final Address RCOUNT_INC_WORD = Address.zero().bitSet(64 - RCOUNT_FIELD_WIDTH);
 
     @HOSTED_ONLY
     public LightweightLockword64(long value) {

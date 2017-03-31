@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 
 /*
@@ -37,18 +35,25 @@
 #include <time.h>
 #include <sys/param.h>
 #include <sys/resource.h>
+#include <sys/stat.h>
+#include <math.h>
 #include "log.h"
 #include "image.h"
 #include "threads.h"
 #include "os.h"
 #include "vm.h"
 #include "virtualMemory.h"
-
 #include "maxine.h"
+#include <fenv.h>
 
 #if os_MAXVE
 #include "maxve.h"
 #endif
+
+#ifdef arm
+#include <pthread.h>
+#endif
+
 
 static void max_fd_limit() {
 #if os_LINUX || os_SOLARIS || os_DARWIN
@@ -60,7 +65,7 @@ static void max_fd_limit() {
         log_println("getrlimit failed");
     } else {
 #if os_DARWIN
-	nbr_files.rlim_cur = MIN(OPEN_MAX, nbr_files.rlim_max);
+        nbr_files.rlim_cur = MIN(OPEN_MAX, nbr_files.rlim_max);
 #else
         nbr_files.rlim_cur = nbr_files.rlim_max;
 #endif
@@ -71,7 +76,6 @@ static void max_fd_limit() {
     }
 #endif
 }
-
 
 #define IMAGE_FILE_NAME  "maxine.vm"
 #define DARWIN_STACK_ALIGNMENT ((Address) 16)
@@ -121,7 +125,6 @@ static void getExecutablePath(char *result) {
 static void getImageFilePath(char *result) {
 #if !os_MAXVE
     getExecutablePath(result);
-
     // append the name of the image to the executable path
     strcpy(result + strlen(result), IMAGE_FILE_NAME);
 #endif
@@ -157,9 +160,6 @@ static void *openLibrary(char *path) {
 }
 
 static void* loadSymbol(void* handle, const char* symbol) {
-#if log_LINKER
-    log_println("loadSymbol(%p, \"%s\")", handle, symbol);
-#endif
     void* result = dlsym(handle, symbol);
 #if log_LINKER
 #if os_MAXVE
@@ -288,19 +288,8 @@ void debugger_initialize() {
 /**
  *  ATTENTION: this signature must match the signatures of 'com.sun.max.vm.MaxineVM.run()':
  */
-typedef jint (*VMRunMethod)(
-                Address tlBlock,
-                int tlBlockSize,
-                Address bootHeapRegionStart,
-                void *openLibrary(char *),
-                void *dlsym(void *, const char *),
-                char *dlerror(void),
-                void* vmInterface,
-                JNIEnv jniEnv,
-                void *jmmInterface,
-                void *jvmtiInterface,
-                int argc,
-                char *argv[]);
+typedef jint (*VMRunMethod)(Address tlBlock, int tlBlockSize, Address bootHeapRegionStart, void *openLibrary(char *), void *dlsym(void *, const char *), char *dlerror(void),
+			    void* vmInterface, JNIEnv jniEnv, void *jmmInterface, void *jvmtiInterface, int argc, char *argv[]);
 
 int maxine(int argc, char *argv[], char *executablePath) {
     VMRunMethod method;
@@ -343,13 +332,9 @@ int maxine(int argc, char *argv[], char *executablePath) {
     }
 #endif
     max_fd_limit();
-
     loadImage();
-
     tla_initialize(image_header()->tlaSize);
-
     debugger_initialize();
-
     method = image_offset_as_address(VMRunMethod, vmRunMethodOffset);
 
     Address tlBlock = threadLocalsBlock_create(PRIMORDIAL_THREAD_ID, 0, 0);
@@ -385,13 +370,14 @@ void *native_executablePath() {
     return result;
 }
 
-static void cleanupCurrentThreadBlockBeforeExit() {
-    Address tlBlock = threadLocalsBlock_current();
-    if (tlBlock != 0) {
-        threadLocalsBlock_setCurrent(0);
-        threadLocalsBlock_destroy(tlBlock);
-    }
-}
+//static void cleanupCurrentThreadBlockBeforeExit() {
+//    Address tlBlock = threadLocalsBlock_current();
+//    log_println("cleanupCurrentThreadBlockBeforeExit\n");
+//    if (tlBlock != 0) {
+//        threadLocalsBlock_setCurrent(0);
+//        threadLocalsBlock_destroy(tlBlock);
+//    }
+//}
 
 void native_exit(jint code) {
     // TODO: unmap the image
@@ -399,17 +385,16 @@ void native_exit(jint code) {
     // (just) the current thread block since we are exiting anyway,
     // but it is a bad idea if we crashed because it calls back into the VM,
     // which can cause a recursive crash.
-    if (code != 11) {
-        // Clean up of the current block fails for threads other than primordial.
-        // As it is not clear why it is important to clean up, 
-        // it is decided to call it conditionally when it does not crash.
-        Address tlBlock = threadLocalsBlock_current();
-        Address tla = ETLA_FROM_TLBLOCK(tlBlock);
-        int id = tla_load(int, tla, ID);
-        if (id == PRIMORDIAL_THREAD_ID) {
-            cleanupCurrentThreadBlockBeforeExit();
-        }
-    }
+    // (ck) Following mjj's comment above the following scenario was observed:
+    // A swing frame is closed with a VM.exit attached to it.
+    // The MaxineVM.exit method calls the native_exit (@C_FUNCTION) without doing an IN_JAVA to IN_NATIVE transition.
+    // The threadLocalsBlock_destroy method is consequently called that does a call back into Java to the VmThread.detach method.
+    // The detach method, does jni prologue which tries to transit a thread from IN_NATIVE to IN_JAVA.
+    // However, the current thread was IN_JAVA state.
+    // The cleanup seems unnecessary and not implemented correctly, so I comment it out.
+    //if (code != 11) {
+    //    cleanupCurrentThreadBlockBeforeExit();
+    //}
     exit(code);
 }
 
@@ -440,14 +425,14 @@ char **environ;
 
 void *native_environment() {
 #if os_DARWIN
-    environ = (char **)*_NSGetEnviron();
+    environ = (char **) *_NSGetEnviron();
 #endif
 #if log_LOADER
     int i = 0;
     for (i = 0; environ[i] != NULL; i++)
     log_println("native_environment[%d]: %s", i, environ[i]);
 #endif
-    return (void *)environ;
+    return (void *) environ;
 }
 
 void *native_properties(void) {
@@ -511,4 +496,83 @@ double native_parseDouble(const char* cstring, double nan) {
     }
     return result;
 #endif
+}
+
+void maxine_cache_flush(char *start, int length) {
+#ifdef arm
+    char * end = start + length;
+    asm volatile("isb ");
+    asm volatile("dsb ");
+    asm volatile("dmb ");
+    __clear_cache(start, end);
+    asm volatile("isb ");
+    asm volatile("dsb ");
+    asm volatile("dmb ");
+#endif
+}
+
+long long d2long(double x) {
+    if (isnan(x)) {
+        return (long long) 0;
+    }
+    if (x <= (double) ((long long) -9223372036854775808ULL)) {
+        return -9223372036854775808ULL;
+    } else if (x >= (double) ((long long) 9223372036854775807ULL)) {
+        return 9223372036854775807ULL;
+    } else {
+        return (long long) x;
+    }
+}
+
+long long f2long(float x) {
+    if (isnan(x)) {
+        return (long long) 0;
+    }
+    if (x <= (float) ((long long) -9223372036854775808ULL)) {
+        return -9223372036854775808ULL;
+    } else if (x >= (float) ((long long) 9223372036854775807ULL)) {
+        return 9223372036854775807ULL;
+    } else {
+        return (long long) x;
+    }
+}
+
+long long arithmeticldiv(long long x, long long y) {
+    if (y == 0) {
+        //raise(SIGFPE);
+        return 0;
+    }
+    return x / y;
+}
+
+jlong arithmeticlrem(jlong x, jlong y) {
+    if (y == 0) {
+        //raise(SIGFPE);
+        return 0;
+    }
+    return x % y;
+}
+
+unsigned long long arithmeticludiv(unsigned long long x, unsigned long long y) {
+    if (y == 0) {
+        //raise(SIGFPE);
+        return 0;
+    }
+    return x / y;
+}
+
+unsigned long long arithmeticlurem(unsigned long long x, unsigned long long y) {
+    if (y == 0) {
+        //raise(SIGFPE);
+        return 0;
+    }
+    return x % y;
+}
+
+double l2double(jlong x) {
+    return (jdouble) x;
+}
+
+float l2float(jlong x) {
+    return (jfloat) x;
 }

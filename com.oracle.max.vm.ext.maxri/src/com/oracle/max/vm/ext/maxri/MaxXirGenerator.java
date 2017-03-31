@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.oracle.max.vm.ext.maxri;
 
@@ -26,24 +24,22 @@ import static com.sun.max.platform.Platform.*;
 import static com.sun.max.vm.VMConfiguration.*;
 import static com.sun.max.vm.compiler.CallEntryPoint.*;
 import static com.sun.max.vm.layout.Layout.*;
-import static com.sun.max.vm.runtime.amd64.AMD64SafepointPoll.*;
 import static java.lang.reflect.Modifier.*;
 
 import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
-import com.sun.cri.ci.CiAddress.Scale;
+import com.oracle.max.asm.target.armv7.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiAddress.*;
 import com.sun.cri.ri.*;
-import com.sun.cri.ri.RiType.Representation;
+import com.sun.cri.ri.RiType.*;
 import com.sun.cri.xir.*;
-import com.sun.cri.xir.CiXirAssembler.XirConstant;
-import com.sun.cri.xir.CiXirAssembler.XirLabel;
-import com.sun.cri.xir.CiXirAssembler.XirOperand;
-import com.sun.cri.xir.CiXirAssembler.XirParameter;
+import com.sun.cri.xir.CiXirAssembler.*;
 import com.sun.max.*;
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.util.*;
@@ -51,8 +47,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.constant.*;
-import com.sun.max.vm.classfile.constant.UnresolvedType.ByAccessingClass;
-import com.sun.max.vm.classfile.constant.UnresolvedType.InPool;
+import com.sun.max.vm.classfile.constant.UnresolvedType.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.heap.*;
@@ -60,6 +55,8 @@ import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.amd64.*;
+import com.sun.max.vm.runtime.arm.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 
@@ -70,7 +67,7 @@ import com.sun.max.vm.type.*;
 public class MaxXirGenerator implements RiXirGenerator {
 
     private static final int SMALL_MULTIANEWARRAY_RANK = 2;
-
+    private CiRegister LATCH_REGISTER = null;
     // (tw) TODO: Up this to 255 / make a loop in the template
     private static final int MAX_MULTIANEWARRAY_RANK = 6;
 
@@ -200,6 +197,11 @@ public class MaxXirGenerator implements RiXirGenerator {
 
     public MaxXirGenerator(boolean printXirTemplates) {
         this.printXirTemplates = printXirTemplates;
+        if (platform().cpu == CPU.ARMV7) {
+            this.LATCH_REGISTER = ARMSafepointPoll.LATCH_REGISTER;
+        } else {
+            this.LATCH_REGISTER = AMD64SafepointPoll.LATCH_REGISTER;
+        }
     }
 
     private static final Class<? extends RuntimeCalls> runtimeCalls = RuntimeCalls.class;
@@ -724,7 +726,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     private XirTemplate buildSafepoint() {
         asm.restart(CiKind.Void);
         XirOperand latch = asm.createRegisterTemp("latch", WordUtil.archKind(), LATCH_REGISTER);
-        asm.safepoint();
+        asm.safepoint(0);
         asm.pload(WordUtil.archKind(), latch, latch, false);
         return finishTemplate(asm, "safepoint");
     }
@@ -967,16 +969,30 @@ public class MaxXirGenerator implements RiXirGenerator {
 
         int elemSize = target().sizeInBytes(kind);
         Scale scale = Scale.fromInt(elemSize);
-
-        if (elemSize == vmConfig().heapScheme().objectAlignment()) {
-            // Assumed here that header size is already aligned.
+        if (Platform.target().arch.isX86()) {
+            if (elemSize == vmConfig().heapScheme().objectAlignment()) {
+                // Assumed here that header size is already aligned.
+                asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
+                asm.lea(arraySize, arraySize, length, 0, scale);
+            } else {
+                // Very x86 / x64 way of doing alignment.
+                asm.mov(arraySize, asm.i(arrayLayout().headerSize() + minObjectAlignmentMask()));
+                asm.lea(arraySize, arraySize, length, 0, scale);
+                asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
+            }
+        } else if (Platform.target().arch.isARM()) {
+            XirOperand scratch = asm.createRegisterTemp("scratch", WordUtil.archKind(), ARMV7.r8);
+            XirLabel aligned = asm.createInlineLabel("aligned");
             asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
             asm.lea(arraySize, arraySize, length, 0, scale);
-        } else {
-            // Very x86 / x64 way of doing alignment.
+            asm.and(scratch, arraySize, asm.i(vmConfig().heapScheme().objectAlignment() - 1));
+            asm.jeq(aligned, scratch, asm.i(0));
             asm.mov(arraySize, asm.i(arrayLayout().headerSize() + minObjectAlignmentMask()));
             asm.lea(arraySize, arraySize, length, 0, scale);
             asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
+            asm.bindInline(aligned);
+        } else {
+            assert false : "Arch unimplemented!";
         }
 
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
@@ -1014,7 +1030,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         XirLabel slowPath = asm.createOutOfLineLabel("slowPath");
         XirLabel reportNegativeIndexError = asm.createOutOfLineLabel("indexError");
 
-        XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), LATCH_REGISTER);
+        XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
         XirOperand etla = asm.createTemp("ETLA", WordUtil.archKind());
         XirOperand tlabEnd = asm.createTemp("tlabEnd", WordUtil.archKind());
         XirOperand newMark = asm.createTemp("newMark", WordUtil.archKind());
@@ -1028,15 +1044,30 @@ public class MaxXirGenerator implements RiXirGenerator {
         int elemSize = target().sizeInBytes(kind);
         Scale scale = Scale.fromInt(elemSize);
 
-        if (elemSize == vmConfig().heapScheme().objectAlignment()) {
-            // Assumed here that header size is already aligned.
+        if (Platform.target().arch.isX86()) {
+            if (elemSize == vmConfig().heapScheme().objectAlignment()) {
+                // Assumed here that header size is already aligned.
+                asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
+                asm.lea(arraySize, arraySize, length, 0, scale);
+            } else {
+                // Very x86 / x64 way of doing alignment.
+                asm.mov(arraySize, asm.i(arrayLayout().headerSize() + minObjectAlignmentMask()));
+                asm.lea(arraySize, arraySize, length, 0, scale);
+                asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
+            }
+        } else if (Platform.target().arch.isARM()) {
+            XirOperand scratch = asm.createRegisterTemp("scratch", WordUtil.archKind(), ARMV7.r8);
+            XirLabel aligned = asm.createInlineLabel("aligned");
             asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
             asm.lea(arraySize, arraySize, length, 0, scale);
-        } else {
-            // Very x86 / x64 way of doing alignment.
+            asm.and(scratch, arraySize, asm.i(vmConfig().heapScheme().objectAlignment() - 1));
+            asm.jeq(aligned, scratch, asm.i(0));
             asm.mov(arraySize, asm.i(arrayLayout().headerSize() + minObjectAlignmentMask()));
             asm.lea(arraySize, arraySize, length, 0, scale);
             asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
+            asm.bindInline(aligned);
+        } else {
+            assert false : "Arch unimplemented!";
         }
 
         asm.pload(WordUtil.archKind(), cell, etla, offsetToTLABMark, false);
@@ -1166,7 +1197,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         XirOperand cell = asm.createTemp("cell",  WordUtil.archKind());
         XirLabel done = asm.createInlineLabel("done");
         XirLabel ok = asm.createInlineLabel("slowPath");
-        XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), LATCH_REGISTER);
+        XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
         XirOperand etla = asm.createTemp("ETLA", WordUtil.archKind());
         XirOperand tlabEnd = asm.createTemp("tlabEnd", WordUtil.archKind());
         XirOperand newMark = asm.createTemp("newMark", WordUtil.archKind());
@@ -1228,7 +1259,7 @@ public class MaxXirGenerator implements RiXirGenerator {
         XirOperand cell = asm.createTemp("cell",  WordUtil.archKind());
         XirLabel done = asm.createInlineLabel("done");
         XirLabel slowPath = asm.createOutOfLineLabel("slowPath");
-        XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), LATCH_REGISTER);
+        XirOperand tla = asm.createRegisterTemp("TLA", WordUtil.archKind(), this.LATCH_REGISTER);
         XirOperand etla = asm.createTemp("ETLA", WordUtil.archKind());
         XirOperand tlabEnd = asm.createTemp("tlabEnd", WordUtil.archKind());
         XirOperand newMark = asm.createTemp("newMark", WordUtil.archKind());
@@ -1718,8 +1749,8 @@ public class MaxXirGenerator implements RiXirGenerator {
     private XirTemplate buildExceptionObject() {
         XirOperand result = asm.restart(CiKind.Object);
         // Emit a safepoint
-        XirOperand latch = asm.createRegisterTemp("latch", WordUtil.archKind(), LATCH_REGISTER);
-        asm.safepoint();
+        XirOperand latch = asm.createRegisterTemp("latch", WordUtil.archKind(), this.LATCH_REGISTER);
+        asm.safepoint(0);
         asm.pload(WordUtil.archKind(), latch, latch, false);
 
         callRuntimeThroughStub(asm, "loadException", result);

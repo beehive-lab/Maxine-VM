@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.c1x.lir;
 
@@ -27,6 +25,7 @@ import static com.sun.c1x.C1XCompilation.*;
 import java.util.*;
 
 import com.sun.c1x.*;
+import com.sun.c1x.alloc.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.LIROperand.LIRAddressOperand;
 import com.sun.c1x.lir.LIROperand.LIRVariableOperand;
@@ -38,7 +37,7 @@ import com.sun.cri.ci.CiValue.Formatter;
  */
 public abstract class LIRInstruction {
 
-    private static final LIROperand ILLEGAL_SLOT = new LIROperand(CiValue.IllegalValue);
+    private static final LIROperand ILLEGAL_SLOT = new LIROperand(CiValue.IllegalValue, CiValue.IllegalValue);
 
     private static final CiValue[] NO_OPERANDS = {};
 
@@ -182,7 +181,8 @@ public abstract class LIRInstruction {
         this.hasCall = hasCall;
 
         assert opcode != LIROpcode.Move || result != CiValue.IllegalValue;
-        allocatorOperands = new ArrayList<CiValue>(operands.length + 3);
+        int operandsSize = operands.length;
+        allocatorOperands = new ArrayList<CiValue>(operandsSize + 3);
         this.result = initOutput(result);
 
         C1XMetrics.LIRInstructions++;
@@ -191,10 +191,17 @@ public abstract class LIRInstruction {
             C1XMetrics.LIRMoveInstructions++;
         }
         id = -1;
-        this.operands = new LIROperand[operands.length];
+        this.operands = new LIROperand[operandsSize];
         initInputsAndTemps(tempInput, temp, operands);
 
         assert verifyOperands();
+    }
+
+    boolean requiresAdjacentRegs(Interval interval) {
+        if (C1XCompilation.compilation().compiler.target.arch.is32bit() && interval.kind() == CiKind.Long) {
+            return true;
+        }
+        return false;
     }
 
     private LIROperand initOutput(CiValue output) {
@@ -204,7 +211,7 @@ public abstract class LIRInstruction {
                 return addAddress((CiAddress) output);
             }
             if (output.isStackSlot()) {
-                return new LIROperand(output);
+                return new LIROperand(output, null);
             }
 
             assert allocatorOperands.size() == allocatorOutputCount;
@@ -248,7 +255,7 @@ public abstract class LIRInstruction {
         }
 
         assert address.base.isRegister() && (address.index.isIllegal() || address.index.isRegister());
-        return new LIROperand(address);
+        return new LIROperand(address, null);
     }
 
     private LIROperand addOperand(CiValue operand, boolean isInput, boolean isTemp) {
@@ -257,24 +264,44 @@ public abstract class LIRInstruction {
             assert !(operand.isAddress());
             if (operand.isStackSlot()) {
                 // no variables to add
-                return new LIROperand(operand);
+                return new LIROperand(operand, C1XCompilation.compilation().compiler.target.arch.is32bit() ? operand.getClone() : null);
             } else if (operand.isConstant()) {
                 // no variables to add
-                return new LIROperand(operand);
+                return new LIROperand(operand, C1XCompilation.compilation().compiler.target.arch.is32bit() ? operand.getClone() : null);
             } else {
                 assert allocatorOperands.size() == allocatorOutputCount + allocatorInputCount + allocatorTempInputCount + allocatorTempCount;
                 allocatorOperands.add(operand);
+                CiValue valueHigh = null;
+                if (C1XCompilation.compilation().compiler.target.arch.is32bit()) {
+                    valueHigh = operand.getClone();
+                    if (valueHigh != null) {
+                        allocatorOperands.add(valueHigh);
+                    }
+                }
 
                 if (isInput && isTemp) {
                     allocatorTempInputCount++;
+                    if (valueHigh != null && C1XCompilation.compilation().compiler.target.arch.is32bit()) {
+                        allocatorTempInputCount++;
+                    }
                 } else if (isInput) {
                     allocatorInputCount++;
+                    if (valueHigh != null && C1XCompilation.compilation().compiler.target.arch.is32bit()) {
+                        allocatorInputCount++;
+                    }
                 } else {
                     assert isTemp;
                     allocatorTempCount++;
+                    if (valueHigh != null && C1XCompilation.compilation().compiler.target.arch.is32bit()) {
+                        allocatorTempCount++;
+                    }
                 }
 
-                return new LIRVariableOperand(allocatorOperands.size() - 1);
+                if (valueHigh != null && C1XCompilation.compilation().compiler.target.arch.is32bit()) {
+                    return new LIRVariableOperand(allocatorOperands.size() - 2);
+                } else {
+                    return new LIRVariableOperand(allocatorOperands.size() - 1);
+                }
             }
         } else {
             return ILLEGAL_SLOT;

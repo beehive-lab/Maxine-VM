@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.heap.gcx.rset.ctbl;
 
@@ -181,9 +179,11 @@ public final class CardTableRSet extends DeadSpaceListener implements HeapManage
             final Size reservedSpace = Size.K.times(VMConfiguration.vmConfig().heapScheme().reservedVirtualSpaceKB());
             final Size bootCardTableSize = memoryRequirement(Heap.bootHeapRegion.size()).roundedUpBy(Platform.platform().pageSize);
             final Address bootCardTableStart = Heap.bootHeapRegion.start().plus(reservedSpace).minus(bootCardTableSize);
-            FatalError.check(reservedSpace.greaterThan(bootCardTableSize.plus(Heap.bootHeapRegion.size())) &&
-                            VMConfiguration.vmConfig().heapScheme().bootRegionMappingConstraint().equals(BootRegionMappingConstraint.AT_START),
-                "card table remembered set initialization invariant violated");
+
+            FatalError.check(
+                            reservedSpace.greaterThan(bootCardTableSize.plus(Heap.bootHeapRegion.size())) &&
+                                            VMConfiguration.vmConfig().heapScheme().bootRegionMappingConstraint().equals(BootRegionMappingConstraint.AT_START),
+                            "card table remembered set initialization invariant violated");
             initialize(Heap.bootHeapRegion.start(), Heap.bootHeapRegion.size(), bootCardTableStart, bootCardTableSize);
         }
     }

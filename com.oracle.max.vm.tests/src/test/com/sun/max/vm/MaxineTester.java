@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package test.com.sun.max.vm;
 
@@ -38,6 +36,7 @@ import test.com.sun.max.vm.ExternalCommand.Result;
 import test.com.sun.max.vm.MaxineTesterConfiguration.ExpectedResult;
 import test.vm.output.*;
 
+import com.oracle.max.vm.ext.c1x.*;
 import com.sun.max.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
@@ -80,10 +79,10 @@ public class MaxineTester {
                     "The VM options to be used when running the reference Java VM.");
     private static final Option<List<String>> maxVMArgsOption = options.newStringListOption("maxvm-args", "",
                     "Additional VM options to be used when running the Maxine VM.");
-    private static final Option<Integer> javaTesterTimeOutOption = options.newIntegerOption("java-tester-timeout", 50,
+    private static final Option<Integer> javaTesterTimeOutOption = options.newIntegerOption("java-tester-timeout", 100,
                     "The number of seconds to wait for the Java tester tests to complete before " +
                     "timing out and killing it.");
-    private static final Option<Integer> javaRunTimeOutOption = options.newIntegerOption("timeout-max", 500,
+    private static final Option<Integer> javaRunTimeOutOption = options.newIntegerOption("timeout-max", 700,
                     "The maximum number of seconds to wait for the target VM to complete before " +
                     "timing out and killing it when running user programs.");
     private static final Option<Integer> javaRunTimeOutScale = options.newIntegerOption("timeout-scale", 20,

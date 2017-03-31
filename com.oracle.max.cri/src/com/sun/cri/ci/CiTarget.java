@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.cri.ci;
 
@@ -87,6 +85,8 @@ public class CiTarget {
      */
     public final int cacheAlignment;
 
+    public boolean hasIDivider;
+
     /**
      * Specifies how {@code long} and {@code double} constants are to be stored
      * in {@linkplain CiFrame frames}. This is useful for VMs such as HotSpot
@@ -113,7 +113,8 @@ public class CiTarget {
              int cacheAlignment,
              boolean inlineObjects,
              boolean debugInfoDoubleWordsInSecondSlot,
-             boolean invokeSnippetAfterArguments) {
+             boolean invokeSnippetAfterArguments,
+             boolean hasIDivider) {
         this.arch = arch;
         this.pageSize = pageSize;
         this.isMP = isMP;
@@ -131,6 +132,7 @@ public class CiTarget {
         this.spillSlotsPerKindMap = new int[CiKind.values().length];
         this.debugInfoDoubleWordsInSecondSlot = debugInfoDoubleWordsInSecondSlot;
         this.invokeSnippetAfterArguments = invokeSnippetAfterArguments;
+        this.hasIDivider = hasIDivider;
 
         for (CiKind k : CiKind.values()) {
             // initialize the number of spill slots required for each kind

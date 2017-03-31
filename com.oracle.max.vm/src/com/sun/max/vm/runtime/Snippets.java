@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.runtime;
 
@@ -44,20 +42,18 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
-import com.sun.max.vm.runtime.ResolutionGuard.InAccessingClass;
-import com.sun.max.vm.runtime.ResolutionGuard.InPool;
+import com.sun.max.vm.runtime.ResolutionGuard.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 
 /**
  * Runtime routines to be used for translating/implementing bytecodes.
  *
- * A compiler could preprocess some/all of these routines into its own
- * IR for direct use during translation (as opposed to making runtime
- * calls).
+ * A compiler could preprocess some/all of these routines into its own IR for direct use during translation (as opposed
+ * to making runtime calls).
  *
- * History: These routines are a collection of some of the routines
- * previously encapsulated in subclasses of the Snippet class.
+ * History: These routines are a collection of some of the routines previously encapsulated in subclasses of the Snippet
+ * class.
  */
 public class Snippets {
 
@@ -96,8 +92,7 @@ public class Snippets {
     }
 
     /**
-     * Recursively create a multi-dimensional array.
-     * Assert: {@code lengths} have already been checked for non-negative.
+     * Recursively create a multi-dimensional array. Assert: {@code lengths} have already been checked for non-negative.
      */
     public static Object createMultiReferenceArrayAtIndex(int index, ClassActor arrayClassActor, int[] lengths) {
         final int length = lengths[index];
@@ -278,8 +273,8 @@ public class Snippets {
     }
 
     /**
-     * Resolves a constant pool entry denoting a class that specifies the component type of an object.
-     * The resolved value returned by this snippet is the array type derived from the component type.
+     * Resolves a constant pool entry denoting a class that specifies the component type of an object. The resolved
+     * value returned by this snippet is the array type derived from the component type.
      *
      * This snippet is used when translating the {@link Bytecodes#ANEWARRAY} instruction.
      */
@@ -448,8 +443,7 @@ public class Snippets {
     /**
      * Produces an address corresponding to a given entry point for the code of a given method.
      *
-     * If the compiled code does not yet exist for the method, it is compiled with the
-     * default compiler.
+     * If the compiled code does not yet exist for the method, it is compiled with the default compiler.
      */
     @INLINE
     public static Address makeEntrypoint(ClassMethodActor classMethodActor, CallEntryPoint cep) {
@@ -459,15 +453,15 @@ public class Snippets {
     static final VmThreadLocal NATIVE_CALLS_DISABLED = new VmThreadLocal("NATIVE_CALLS_DISABLED", false, "");
 
     /**
-     * Disables calling native methods on the current thread. This state is recursive. That is,
-     * natives calls are only re-enabled once {@link #enableNativeCallsForCurrentThread()} is
-     * called the same number of times as this method has been called.
+     * Disables calling native methods on the current thread. This state is recursive. That is, natives calls are only
+     * re-enabled once {@link #enableNativeCallsForCurrentThread()} is called the same number of times as this method
+     * has been called.
      *
-     * It is a {@linkplain FatalError fatal error} if calls to this method and {@link #enableNativeCallsForCurrentThread()}
-     * are unbalanced.
+     * It is a {@linkplain FatalError fatal error} if calls to this method and
+     * {@link #enableNativeCallsForCurrentThread()} are unbalanced.
      *
-     * Note: This feature is only provided as a debugging aid. It imposes an overhead (a test and branch on a VM thread local)
-     * on every native call. It could be removed or disabled in a product build of the VM once GC is debugged.
+     * Note: This feature is only provided as a debugging aid. It imposes an overhead (a test and branch on a VM thread
+     * local) on every native call. It could be removed or disabled in a product build of the VM once GC is debugged.
      */
     public static void disableNativeCallsForCurrentThread() {
         final Address value = NATIVE_CALLS_DISABLED.load(currentTLA());
@@ -475,12 +469,12 @@ public class Snippets {
     }
 
     /**
-     * Re-enables calling native methods on the current thread. This state is recursive. That is,
-     * native calls are only re-enabled once this method is called the same number of times as
-     * {@link #disableNativeCallsForCurrentThread()} has been called.
+     * Re-enables calling native methods on the current thread. This state is recursive. That is, native calls are only
+     * re-enabled once this method is called the same number of times as {@link #disableNativeCallsForCurrentThread()}
+     * has been called.
      *
-     * It is a {@linkplain FatalError fatal error} if calls to this method and {@link #disableNativeCallsForCurrentThread()}
-     * are unbalanced.
+     * It is a {@linkplain FatalError fatal error} if calls to this method and
+     * {@link #disableNativeCallsForCurrentThread()} are unbalanced.
      */
     public static void enableNativeCallsForCurrentThread() {
         final Address value = NATIVE_CALLS_DISABLED.load(currentTLA());
@@ -506,8 +500,8 @@ public class Snippets {
      * Makes the transition from the 'in Java' state to the 'in native' state.
      *
      * @param etla the safepoints-triggered TLA for the current thread
-     * @param anchor the value to which {@link VmThreadLocal#LAST_JAVA_FRAME_ANCHOR} will be set just before
-     *            the transition is made
+     * @param anchor the value to which {@link VmThreadLocal#LAST_JAVA_FRAME_ANCHOR} will be set just before the
+     *            transition is made
      */
     @INLINE
     public static void nativeCallPrologue0(Pointer etla, Word anchor) {
@@ -542,8 +536,8 @@ public class Snippets {
      * {@link VmThreadMap#THREAD_LOCK} if current thread is {@linkplain VmOperation frozen}.
      *
      * @param etla the safepoints-triggered TLA for the current thread
-     * @param anchor the value to which {@link VmThreadLocal#LAST_JAVA_FRAME_ANCHOR} will be set just after
-     *            the transition is made
+     * @param anchor the value to which {@link VmThreadLocal#LAST_JAVA_FRAME_ANCHOR} will be set just after the
+     *            transition is made
      */
     @INLINE
     public static void nativeCallEpilogue0(Pointer etla, Pointer anchor) {
@@ -560,16 +554,13 @@ public class Snippets {
     }
 
     /**
-     * Acquire and immediately release the {@link VmThreadMap#THREAD_LOCK}. We only call this when we assume
-     * that the VM is still at a safepoint, i.e., that the VM Operation thread holds the thread lock.  Therefore,
-     * our thread will be blocked until the end of the safepoint, and we avoid a spin loop while waiting for the
-     * safepoint to end.
-     * <br>
-     * This method is called while the native state of a JNI call is still completely set up. Therefore, no
-     * native prologue and epilogue must be emitted for this native call.
-     * <br>
-     * The native environment already has a pointer to the thread lock for other purposes, so we don't have
-     * to pass it in as a parameter.  This makes the code to call the native method shorter.
+     * Acquire and immediately release the {@link VmThreadMap#THREAD_LOCK}. We only call this when we assume that the VM
+     * is still at a safepoint, i.e., that the VM Operation thread holds the thread lock. Therefore, our thread will be
+     * blocked until the end of the safepoint, and we avoid a spin loop while waiting for the safepoint to end. <br>
+     * This method is called while the native state of a JNI call is still completely set up. Therefore, no native
+     * prologue and epilogue must be emitted for this native call. <br>
+     * The native environment already has a pointer to the thread lock for other purposes, so we don't have to pass it
+     * in as a parameter. This makes the code to call the native method shorter.
      */
     @C_FUNCTION
     private static native void nativeBlockOnThreadLock();
@@ -591,7 +582,8 @@ public class Snippets {
     }
 
     /**
-     * This methods is blocked on {@link VmThreadMap#THREAD_LOCK} while the current thread is {@linkplain VmOperation frozen}.
+     * This methods is blocked on {@link VmThreadMap#THREAD_LOCK} while the current thread is {@linkplain VmOperation
+     * frozen}.
      */
     @INLINE
     @NO_SAFEPOINT_POLLS("Cannot take a trap while frozen")
@@ -632,11 +624,9 @@ public class Snippets {
     }
 
     /**
-     * Saves information about the last Java caller for direct/C_FUNCTION calls.
-     * Used by the Inspector for debugging.
+     * Saves information about the last Java caller for direct/C_FUNCTION calls. Used by the Inspector for debugging.
      *
-     * ATTENTION: If this is ever used for anything else than the inspector,
-     *            use memory barriers properly.
+     * ATTENTION: If this is ever used for anything else than the inspector, use memory barriers properly.
      */
     @INLINE
     public static void nativeCallPrologueForC(NativeFunction nf) {
@@ -689,6 +679,46 @@ public class Snippets {
             return dividend % divisor;
         }
         return nativeDoubleRemainder(dividend, divisor);
+    }
+
+    @C_FUNCTION
+    public static native double l2double(long x);
+
+    public static double long2double(long x) {
+        if (MaxineVM.isHosted()) {
+            return x;
+        }
+        return l2double(x);
+    }
+
+    @C_FUNCTION
+    public static native float l2float(long x);
+
+    public static float long2float(long x) {
+        if (MaxineVM.isHosted()) {
+            return x;
+        }
+        return l2float(x);
+    }
+
+    @C_FUNCTION
+    public static native long d2long(double x);
+
+    public static long double2long(double x) {
+        if (MaxineVM.isHosted()) {
+            return (long) x;
+        }
+        return d2long(x);
+    }
+
+    @C_FUNCTION
+    public static native long f2long(float x);
+
+    public static long float2long(float x) {
+        if (MaxineVM.isHosted()) {
+            return (long) x;
+        }
+        return f2long(x);
     }
 
     @C_FUNCTION

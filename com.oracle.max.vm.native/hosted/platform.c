@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,15 +17,13 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 #include <unistd.h>
 #include "word.h"
 #include "isa.h"
 #include "jni.h"
+#include <string.h>
+#include <stdlib.h>
 
 JNIEXPORT void JNICALL
 JVM_OnLoad(JavaVM *vm, char *options, void *arg)
@@ -57,6 +57,26 @@ Java_com_sun_max_platform_Platform_nativeGetPageSize(JNIEnv *env, jclass c) {
     return (jint) sysconf(_SC_PAGESIZE);
 }
 
+
+JNIEXPORT jint JNICALL
+Java_com_sun_max_platform_Platform_nativeHasIDiv(JNIEnv *env, jclass c) {
+#ifdef arm
+    FILE *cpuinfo = fopen("/proc/cpuinfo", "rb");
+    char *arg = 0;
+    size_t size = 0;
+    while(getdelim(&arg, &size, 0, cpuinfo) != -1) {
+        if (strstr(arg, "idiva") != 0) {
+           return (jint) 1;
+        }
+    }
+    free(arg);
+    fclose(cpuinfo);
+#else
+    return (jint) 1;
+#endif
+    return (jint) 0;
+}
+
 /*
  *  ATTENTION: return value must correspond to an ISA enum value.
  */
@@ -71,6 +91,8 @@ Java_com_sun_max_platform_Platform_nativeGetISA(JNIEnv *env, jclass c)
     return (*env)->NewStringUTF(env, "PPC");
 #elif isa_SPARC
     return (*env)->NewStringUTF(env, "SPARC");
+#elif isa_ARM 
+    return (*env)->NewStringUTF(env, "ARM");
 #else
 #   error
 #endif

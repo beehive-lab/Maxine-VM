@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm;
 
@@ -31,6 +29,7 @@ import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.*;
 
+import com.oracle.max.asm.target.armv7.*;
 import com.sun.max.annotate.*;
 import com.sun.max.config.*;
 import com.sun.max.lang.*;
@@ -92,10 +91,12 @@ public final class MaxineVM {
     private static final String[] TEST_PACKAGES = {"test.", "jtt."};
 
     private static final VMOption HELP_OPTION = register(new VMOption("-help", "Prints this help message.") {
+
         @Override
         protected boolean haltsVM() {
             return true;
         }
+
         @Override
         public boolean parseValue(Pointer optionValue) {
             VMOptions.printUsage(Category.STANDARD);
@@ -126,7 +127,6 @@ public final class MaxineVM {
     @INSPECTED
     private static int primordialTLBlockSize;
 
-
     public enum Phase {
         /**
          * Running on a host VM in order to construct a target VM or to run tests.
@@ -137,6 +137,11 @@ public final class MaxineVM {
          * Starting to compile while in {@link HOSTED_ONLY} mode (e.g. creating the compiled boot image).
          */
         HOSTED_COMPILING,
+
+        /**
+         * Starting jtt tests and require partial initializations.
+         */
+        HOSTED_TESTING,
 
         /**
          * Starting the serialization of a graph of host VM objects into the boot image.
@@ -169,8 +174,9 @@ public final class MaxineVM {
         RUNNING,
 
         /**
-         * VM about to terminate, all non-daemon threads terminated, shutdown hooks run, but {@link VmOperation} thread still live.
-         * Last chance to interpose, but be careful what you do. In particular, thread creation is not permitted.
+         * VM about to terminate, all non-daemon threads terminated, shutdown hooks run, but {@link VmOperation} thread
+         * still live. Last chance to interpose, but be careful what you do. In particular, thread creation is not
+         * permitted.
          */
         TERMINATING
     }
@@ -182,15 +188,14 @@ public final class MaxineVM {
      *
      */
     public enum NativeProperty {
-        USER_NAME,
-        USER_HOME,
-        USER_DIR;
+        USER_NAME, USER_HOME, USER_DIR;
 
         /**
          * Gets the value of this property from a given C struct.
          *
          * @param cStruct the value returned by a call to {@link MaxineVM#native_properties()}
-         * @return the value of this property in {@code cStruct} converted to a {@link String} value (which may be {@code null})
+         * @return the value of this property in {@code cStruct} converted to a {@link String} value (which may be
+         *         {@code null})
          */
         public String value(Pointer cStruct) {
             final Pointer cString = cStruct.readWord(ordinal() * Word.size()).asPointer();
@@ -221,8 +226,8 @@ public final class MaxineVM {
     }
 
     /**
-     * Global variable determining whether class initializers are to be discarded
-     * or preserved by the {@link ClassfileReader}.
+     * Global variable determining whether class initializers are to be discarded or preserved by the
+     * {@link ClassfileReader}.
      */
     @HOSTED_ONLY
     public static boolean preserveClinitMethods = System.getProperty("max.loader.preserveClinitMethods") != null;
@@ -251,10 +256,9 @@ public final class MaxineVM {
     }
 
     /**
-     * Initializes or changes the current VM context.
-     * This also {@linkplain Platform#set(Platform) sets} the current platform context
-     * to {@code vm.configuration.platform}. That is,
-     * changing the VM context also changes the platform context.
+     * Initializes or changes the current VM context. This also {@linkplain Platform#set(Platform) sets} the current
+     * platform context to {@code vm.configuration.platform}. That is, changing the VM context also changes the platform
+     * context.
      *
      * @param vm the new VM context (must not be {@code null})
      * @return the previous VM context
@@ -284,6 +288,7 @@ public final class MaxineVM {
 
     /**
      * Determines if this is a {@link BuildLevel#DEBUG debug} build of the VM.
+     *
      * @return {@code true} if this is a debug build
      */
     @FOLD
@@ -378,11 +383,11 @@ public final class MaxineVM {
             }
         }
         HOSTED_CLASSES.put(javaClass, result);
-        //Trace.line(1, "setHostedOnly: " + javaClass.getName() + " " + result);
+        // Trace.line(1, "setHostedOnly: " + javaClass.getName() + " " + result);
         return result;
     }
 
-    private static Class<?> getEnclosingClass(Class<?> javaClass) {
+    private static Class< ? > getEnclosingClass(Class< ? > javaClass) {
         try {
             final Class< ? > enclosingClass = javaClass.getEnclosingClass();
             return enclosingClass;
@@ -390,6 +395,10 @@ public final class MaxineVM {
             ProgramWarning.message("Error trying to get the enclosing class for " + javaClass + ": " + linkageError);
         }
         return null;
+    }
+
+    public static boolean isHostedTesting() {
+        return vm().phase == Phase.HOSTED_TESTING;
     }
 
     public static boolean isPrimordial() {
@@ -454,7 +463,9 @@ public final class MaxineVM {
      * @return 0 indicating initialization succeeded, non-0 if not
      */
     @VM_ENTRY_POINT
-    public static int run(Pointer tlBlock, int tlBlockSize, Pointer bootHeapRegionStart, Word dlopen, Word dlsym, Word dlerror, Pointer vmInterface, Pointer jniEnv, Pointer jmmInterface, Pointer jvmtiInterface, int argc, Pointer argv) {
+    public static int run(Pointer tlBlock, int tlBlockSize, Pointer bootHeapRegionStart, Word dlopen,
+			  Word dlsym, Word dlerror, Pointer vmInterface, Pointer jniEnv,
+			  Pointer jmmInterface, Pointer jvmtiInterface, int argc, Pointer argv) {
         primordialTLBlock = tlBlock;
         primordialTLBlockSize = tlBlockSize;
         Pointer etla = tlBlock.plus(platform().pageSize - Address.size() + VmThreadLocal.tlaSize().toInt());
@@ -462,7 +473,6 @@ public final class MaxineVM {
 
         // This one field was not marked by the data prototype for relocation
         // to avoid confusion between "offset zero" and "null".
-        // Fix it manually:
         Heap.bootHeapRegion.setStart(bootHeapRegionStart);
 
         VMLog.vmLog().initialize(MaxineVM.Phase.PRIMORDIAL);
@@ -472,12 +482,10 @@ public final class MaxineVM {
 
         // Link the critical native methods:
         CriticalNativeMethod.linkAll();
-
         DynamicLinker.markCriticalLinked();
 
         // Initialize the trap system:
         Trap.initialize();
-
         ImmortalHeap.initialize();
 
         NativeInterfaces.initialize(vmInterface, jniEnv, jmmInterface);
@@ -490,11 +498,9 @@ public final class MaxineVM {
         vmConfig().initializeSchemes(MaxineVM.Phase.PRIMORDIAL);
 
         vm().stubs.intialize();
-
         vm.phase = Phase.PRISTINE;
 
         VMOptions.parsePristine(argc, argv);
-
         return exitCode;
     }
 
@@ -528,6 +534,18 @@ public final class MaxineVM {
     public static void registerCriticalMethod(CriticalMethod criticalEntryPoint) {
         registerImageMethod(criticalEntryPoint.classMethodActor);
     }
+
+    @C_FUNCTION
+    public static native long arithmeticldiv(long x, long y);
+
+    @C_FUNCTION
+    public static native long arithmeticlrem(long x, long y);
+
+    @C_FUNCTION
+    public static native long arithmeticlurem(long x, long y);
+
+    @C_FUNCTION
+    public static native long arithmeticludiv(long x, long y);
 
     /*
      * Global native functions: these functions implement a thin layer over basic native
@@ -571,8 +589,8 @@ public final class MaxineVM {
     public static native void native_trap_exit(int code, Address address);
 
     /**
-     * Generate a core file of the vm process.
-     * Note that this doesn't exit the vm which can progress normally after the core generation.
+     * Generate a core file of the vm process. Note that this doesn't exit the vm which can progress normally after the
+     * core generation.
      */
     @C_FUNCTION
     public static native void core_dump();
@@ -615,7 +633,6 @@ public final class MaxineVM {
      * @param code exit code for the VM process
      */
     public static void exit(int code) {
-
         VMOptions.beforeExit();
 
         // This prevents further thread creation
@@ -632,10 +649,6 @@ public final class MaxineVM {
         VMLog.vmLog().initialize(MaxineVM.Phase.TERMINATING);
         vmConfig().initializeSchemes(MaxineVM.Phase.TERMINATING);
         VmOperationThread.terminate();
-
-        // Drop back to PRIMORDIAL
-        MaxineVM vm = vm();
-        vm.phase = MaxineVM.Phase.PRIMORDIAL;
 
         // Trace main thread before termination
         VmThread.traceMainThreadBeforeTermination();

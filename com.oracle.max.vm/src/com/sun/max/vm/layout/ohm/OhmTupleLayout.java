@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,15 +17,12 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.layout.ohm;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
@@ -56,7 +55,7 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
         return hub.tupleSize;
     }
 
-    private final int headerSize = 2 * Word.size();
+    private final int headerSize = Platform.target().arch.is32bit() ? 3 * Word.size() : 2 * Word.size();
 
     @INLINE
     public int headerSize() {
@@ -64,7 +63,11 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
     }
 
     public HeaderField[] headerFields() {
-        return new HeaderField[] {HeaderField.HUB, HeaderField.MISC};
+        if (Platform.target().arch.is64bit()) {
+            return new HeaderField[] {HeaderField.HUB, HeaderField.MISC};
+        } else {
+            return new HeaderField[] {HeaderField.HUB, HeaderField.MISC, HeaderField.HASH};
+        }
     }
 
     @INLINE
@@ -117,7 +120,7 @@ public final class OhmTupleLayout extends OhmGeneralLayout implements TupleLayou
 
     Size layoutFields(ClassActor superClassActor, FieldActor[] fieldActors, int headerSize) {
         setInvalidOffsets(fieldActors);
-        final int nAlignmentBytes = Word.size();
+        final int nAlignmentBytes = Platform.target().arch.isARM() ? 2 * Word.size() : Word.size();
         int offset;
         if (superClassActor == null || superClassActor.typeDescriptor == JavaTypeDescriptor.OBJECT || superClassActor.typeDescriptor == JavaTypeDescriptor.HYBRID) {
             offset = headerSize;

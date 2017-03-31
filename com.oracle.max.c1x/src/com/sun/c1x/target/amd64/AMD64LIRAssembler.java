@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.c1x.target.amd64;
 
@@ -31,25 +29,21 @@ import java.util.*;
 
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.amd64.*;
-import com.oracle.max.asm.target.amd64.AMD64Assembler.ConditionFlag;
+import com.oracle.max.asm.target.amd64.AMD64Assembler.*;
 import com.oracle.max.criutils.*;
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
-import com.sun.c1x.gen.LIRGenerator.DeoptimizationStub;
+import com.sun.c1x.gen.LIRGenerator.*;
 import com.sun.c1x.ir.*;
-import com.sun.c1x.lir.FrameMap.StackBlock;
 import com.sun.c1x.lir.*;
+import com.sun.c1x.lir.FrameMap.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiAddress.Scale;
-import com.sun.cri.ci.CiTargetMethod.JumpTable;
-import com.sun.cri.ci.CiTargetMethod.Mark;
+import com.sun.cri.ci.CiAddress.*;
+import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.cri.xir.*;
-import com.sun.cri.xir.CiXirAssembler.RuntimeCallInformation;
-import com.sun.cri.xir.CiXirAssembler.XirInstruction;
-import com.sun.cri.xir.CiXirAssembler.XirLabel;
-import com.sun.cri.xir.CiXirAssembler.XirMark;
+import com.sun.cri.xir.CiXirAssembler.*;
 
 /**
  * This class implements the x86-specific code generation for LIR.
@@ -94,6 +88,12 @@ public final class AMD64LIRAssembler extends LIRAssembler {
     protected void emitReturn(CiValue result) {
         // TODO: Consider adding safepoint polling at return!
         masm.ret(0);
+    }
+
+    @Override
+    protected void emitDebugID(String methodName, String inlinedMethodName) {
+        assert C1XOptions.DebugMethods;
+        debugMethodWriter.appendDebugMethod(inlinedMethodName + " " + Integer.toHexString(masm.codeBuffer.position()) + " " + masm.codeBuffer.position(), methodID);
     }
 
     @Override
@@ -2024,6 +2024,11 @@ public final class AMD64LIRAssembler extends LIRAssembler {
                         int frameToCSA = frameMap.offsetToCalleeSaveAreaStart();
                         assert frameToCSA >= 0;
                         masm.save(csl, frameToCSA);
+                    }
+
+                    if (C1XOptions.DebugMethods) {
+                        masm.movl(compilation.registerConfig.getScratchRegister(), methodID);
+                        debugMethodWriter.appendDebugMethod(compilation.method.holder() + "." + compilation.method.name() + ";" + compilation.method.signature(), methodID);
                     }
                     break;
                 }

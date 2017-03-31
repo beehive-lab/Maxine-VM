@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.compiler;
 
@@ -38,14 +36,13 @@ import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
-import com.sun.max.vm.MaxineVM.Phase;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.code.*;
-import com.sun.max.vm.compiler.RuntimeCompiler.Nature;
 import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.compiler.target.amd64.*;
+import com.sun.max.vm.compiler.target.arm.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
@@ -53,6 +50,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.ti.*;
+
 
 /**
  * This class implements an adaptive compilation system with multiple compilers with different compilation time / code
@@ -93,6 +91,9 @@ public class CompilationBroker {
     private static boolean VMExtOpt;
     static int PrintCodeCacheMetrics;
 
+    private static boolean offline = false;
+    private static boolean simulateAdapter = false;
+
     static {
         addFieldOption("-X", "opt", CompilationBroker.class, "Select optimizing compiler whenever possible.");
         addFieldOption("-XX:", "RCT", CompilationBroker.class, "Set the recompilation threshold for methods. Use 0 to disable recompilation. (default: " + RCT + ").");
@@ -105,14 +106,15 @@ public class CompilationBroker {
 
     @RESET
     static String CompileCommand;
+
     static {
         VMOptions.addFieldOption("-XX:", "CompileCommand", CompilationBroker.class,
-            "Specify which compiler to use for methods matching given patterns. For example, " +
-            "'-XX:CompileCommand=test.output:T1X,com.acme.util.Strings:Graal' specifies that " +
-            "any method whose fully qualified name contains the substring 'test.output' " +
-            "should be compiled with the compiler named 'T1X' and any method whose fully " +
-            "qualified name contains 'com.acme.util.String' should be compiled with the 'Graal' " +
-            "compiler. No checking is done to ensure that a named compiler exists.");
+				 "Specify which compiler to use for methods matching given patterns. For example, " +
+				 "'-XX:CompileCommand=test.output:T1X,com.acme.util.Strings:Graal' specifies that " +
+				 "any method whose fully qualified name contains the substring 'test.output' " +
+				 "should be compiled with the compiler named 'T1X' and any method whose fully " +
+				 "qualified name contains 'com.acme.util.String' should be compiled with the 'Graal' " +
+				 "compiler. No checking is done to ensure that a named compiler exists.");
     }
 
     private LinkedHashMap<String, String> compileCommandMap;
@@ -168,6 +170,22 @@ public class CompilationBroker {
         return baselineCompiler != null;
     }
 
+    public boolean isOffline() {
+        return offline;
+    }
+
+    public void setOffline(boolean val) {
+        offline = val;
+    }
+
+    public void setSimulateAdapter(boolean val) {
+        simulateAdapter = val;
+    }
+
+    public boolean simulateAdapter() {
+        return simulateAdapter;
+    }
+
     private static String AddCompiler;
 
     private static final String OPTIMIZING_COMPILER_PROPERTY = CompilationBroker.class.getSimpleName() + "." + optimizingCompilerOption.getName();
@@ -211,7 +229,7 @@ public class CompilationBroker {
             singleton = new CompilationBroker();
         } else {
             try {
-                singleton =  (CompilationBroker) Class.forName(className).newInstance();
+                singleton = (CompilationBroker) Class.forName(className).newInstance();
             } catch (Exception exception) {
                 throw FatalError.unexpected("Error instantiating " + className, exception);
             }
@@ -342,6 +360,7 @@ public class CompilationBroker {
 
     /**
      * Default compilation, not for deopt.
+     *
      * @param cma
      * @param nature
      */
@@ -378,6 +397,7 @@ public class CompilationBroker {
      * Deopt compilation, if necessary.
      * The method is only recompiled if the current target method has been invalidated, which is the normal deopt case.
      * However, a VMTI handler may already have compiled the method before the deoptimzation step happened.
+     *
      * @param cma
      * @param force always compile iff {@code true}.
      */
@@ -404,9 +424,9 @@ public class CompilationBroker {
      * a new compilation is scheduled and its result is returned. Either way, this method
      * waits for the result of a compilation to return it.
      *
-     * @param cma the method for which to make the target method
-     * @param nature the specific type of target method required or {@code null} if any target method is acceptable
-     * @param isDeopt if the compilation is for a deoptimzation
+     * @param cma      the method for which to make the target method
+     * @param nature   the specific type of target method required or {@code null} if any target method is acceptable
+     * @param isDeopt  if the compilation is for a deoptimzation
      * @param failFast don't try recompilation on failure, instead rethrow the exception
      * @return a newly compiled version of a {@code cma}
      * @throws iff failFast the exception that was thrown by first selected compiler
@@ -433,7 +453,7 @@ public class CompilationBroker {
                         doCompile = false;
                     }
                 } else {
-                    Compilations prevCompilations = compilation != null ? compilation.prevCompilations :  (Compilations) compiledState;
+                    Compilations prevCompilations = compilation != null ? compilation.prevCompilations : (Compilations) compiledState;
                     RuntimeCompiler compiler = selectCompiler(cma, nature, isDeopt);
                     if (retryRun) {
                         compiler = selectRetryCompiler(cma, nature, compiler);
@@ -481,8 +501,8 @@ public class CompilationBroker {
     /**
      * Select the appropriate compiler based on the current state of the method.
      *
-     * @param cma the class method actor to compile
-     * @param nature the specific type of target method required or {@code null} if any target method is acceptable
+     * @param cma     the class method actor to compile
+     * @param nature  the specific type of target method required or {@code null} if any target method is acceptable
      * @param isDeopt TODO
      * @return the compiler that should be used to perform the next compilation of the method
      */
@@ -562,8 +582,8 @@ public class CompilationBroker {
      * Select the appropriate compiler to retry compilation based on the current state of the method
      * and the previous compiler.
      *
-     * @param cma the class method actor to compile
-     * @param nature the specific type of target method required or {@code null} if any target method is acceptable
+     * @param cma              the class method actor to compile
+     * @param nature           the specific type of target method required or {@code null} if any target method is acceptable
      * @param previousCompiler compiler compiler that already tried to compile
      * @return the compiler that should be used to perform the next compilation of the method
      */
@@ -591,7 +611,7 @@ public class CompilationBroker {
      * Handles an instrumentation counter overflow upon entry to a profiled method.
      * This method must be called on the thread that overflowed the counter.
      *
-     * @param mpo profiling object (including the method itself)
+     * @param mpo      profiling object (including the method itself)
      * @param receiver the receiver object of the profiled method. This will be {@code null} if the profiled method is static.
      */
     public static void instrumentationCounterOverflow(MethodProfile mpo, Object receiver) {
@@ -657,7 +677,6 @@ public class CompilationBroker {
                         hub.setWord(index, to);
                     }
                 }
-
                 for (int i = 0; i < hub.iTableLength; i++) {
                     int index = hub.iTableStartIndex + i;
                     if (hub.getWord(index).equals(from)) {
@@ -666,15 +685,14 @@ public class CompilationBroker {
                     }
                 }
             }
-
             // Look for a static call to 'oldMethod' and patch it.
             // This occurs even if 'cma' is non-static
             // as it may have been called directly.
             DirectCallPatcher patcher = new DirectCallPatcher(oldMethod, newMethod);
             new VmStackFrameWalker(VmThread.current().tla()).inspect(Pointer.fromLong(here()),
-                            VMRegister.getCpuStackPointer(),
-                            VMRegister.getCpuFramePointer(),
-                            patcher);
+								     VMRegister.getCpuStackPointer(),
+								     VMRegister.getCpuFramePointer(),
+								     patcher);
         }
     }
 
@@ -846,6 +864,43 @@ public class CompilationBroker {
 
         @Override
         public boolean visitFrame(StackFrameCursor current, StackFrameCursor callee) {
+            if (platform().isa == ISA.ARM) {
+                if (current.isTopFrame()) {
+                    return true;
+                }
+                Pointer ip = current.ipAsPointer();
+                Pointer newIp = ip.minus(ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
+                if (ARMTargetMethodUtil.isARMV7RIPCall(current.targetMethod(), newIp)) {
+                    CodePointer callSite = CodePointer.from(newIp);
+                    int ripOffset = ARMTargetMethodUtil.ripCallOffset(current.targetMethod(), newIp);
+                    CodePointer target = CodePointer.from(newIp).plus(ripOffset).minus(8);
+                    if (target.equals(oldMethod.getEntryPoint(BASELINE_ENTRY_POINT))) {
+                        final CodePointer to = newMethod.getEntryPoint(BASELINE_ENTRY_POINT);
+                        final TargetMethod tm = current.targetMethod();
+                        final int dcIndex = directCalleePosition(tm, callSite);
+                        assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
+                        logStaticCallPatch(current, callSite, dcIndex, to);
+                        ARMTargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
+                        // Stop traversing the stack after a direct call site has been patched
+                        return false;
+                    }
+                    if (target.equals(oldMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT))) {
+                        final CodePointer to = newMethod.getEntryPoint(OPTIMIZED_ENTRY_POINT);
+                        final TargetMethod tm = current.targetMethod();
+                        final int dcIndex = directCalleePosition(tm, callSite);
+                        assert dcIndex != -1 : "no valid direct callee for call site " + callSite.to0xHexString();
+                        logStaticCallPatch(current, callSite, dcIndex, to);
+                        ARMTargetMethodUtil.mtSafePatchCallDisplacement(tm, callSite, to);
+                        // Stop traversing the stack after a direct call site has been patched
+                        return false;
+                    }
+                }
+                if (++frameCount > FRAME_SEARCH_LIMIT) {
+                    logNoFurtherStaticCallPatching();
+                    return false;
+                }
+                return true;
+            }
             if (platform().isa == ISA.AMD64) {
                 if (current.isTopFrame()) {
                     return true;
@@ -901,17 +956,21 @@ public class CompilationBroker {
 
         public void initialize(Phase phase) {
         }
+
         public void deoptimize(ClassMethodActor classMethodActor) {
         }
         public TargetMethod compile(ClassMethodActor classMethodActor, boolean isDeopt, boolean install, CiStatistics stats) {
             return null;
         }
+
         public Nature nature() {
             return nature;
         }
+
         public boolean matches(String compilerName) {
             return true;
         }
+
         @Override
         public String toString() {
             return getClass().getSimpleName() + "@" + Integer.toHexString(hashCode()) + "[" + nature + "]";

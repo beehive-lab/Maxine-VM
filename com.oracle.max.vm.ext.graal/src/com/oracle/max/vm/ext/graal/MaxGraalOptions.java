@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.oracle.max.vm.ext.graal;
 
@@ -183,7 +181,10 @@ public class MaxGraalOptions {
         // CheckStyle: stop line length check
         // Options from com.oracle.graal.compiler.GraalDebugConfig
         register(new VMBooleanOption("-G:+", "Debug", "Enable scope-based debugging"), com.oracle.graal.compiler.GraalDebugConfig.class, "DebugEnabled");
-        register(new VMStringOption("-G:DebugValueSummary=", false, "Complete", "How to print metric and timing values:%nName - aggregate by unqualified name%nPartial - aggregate by partially qualified name (e.g., A.B.C.D.Counter and X.Y.Z.D.Counter will be merged to D.Counter)%nComplete - aggregate by qualified name%nThread - aggregate by qualified name and thread"), com.oracle.graal.compiler.GraalDebugConfig.class, "DebugValueSummary");
+        register(new VMStringOption("-G:DebugValueSummary=", false, "Complete",
+                "How to print metric and timing values:%nName - aggregate by unqualified name%nPartial" +
+                " - aggregate by partially qualified name (e.g., A.B.C.D.Counter and X.Y.Z.D.Counter will be merged to D.Counter)%nComplete - aggregate by qualified name%nThread - aggregate by qualified name and thread"),
+                com.oracle.graal.compiler.GraalDebugConfig.class, "DebugValueSummary");
         register(new VMBooleanOption("-G:+", "DetailedAsserts", "Enable expensive assertions"), com.oracle.graal.compiler.GraalDebugConfig.class, "DetailedAsserts");
         register(new VMStringOption("-G:Dump=", false, null, "Scopes to be dumped"), com.oracle.graal.compiler.GraalDebugConfig.class, "Dump");
         register(new VMBooleanOption("-G:-", "DumpOnError", "Send Graal IR to dump handlers on error"), com.oracle.graal.compiler.GraalDebugConfig.class, "DumpOnError");

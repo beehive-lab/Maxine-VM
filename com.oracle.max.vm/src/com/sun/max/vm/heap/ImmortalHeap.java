@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 /**
  */
@@ -31,7 +29,7 @@ import com.sun.max.memory.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.heap.debug.*;
-import com.sun.max.vm.log.VMLog.Record;
+import com.sun.max.vm.log.VMLog.*;
 import com.sun.max.vm.log.hosted.*;
 import com.sun.max.vm.management.*;
 import com.sun.max.vm.runtime.*;
@@ -150,6 +148,10 @@ public final class ImmortalHeap {
         final Pointer firstCell = immortalHeap.start().asPointer();
         final Pointer lastCell = immortalHeap.mark();
         Pointer cell = firstCell;
+        if (Heap.verbose()) {
+            Log.print("Visit Region: Immortal");
+            Log.println();
+        }
         while (cell.isNotZero() && cell.lessThan(lastCell)) {
             cell = DebugHeap.checkDebugCellTag(firstCell, cell);
             cell = cellVisitor.visitCell(cell);

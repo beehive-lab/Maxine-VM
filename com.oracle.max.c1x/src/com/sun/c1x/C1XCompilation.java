@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 
 package com.sun.c1x;
@@ -37,7 +35,7 @@ import com.sun.c1x.observer.*;
 import com.sun.c1x.value.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiCompiler.DebugInfoLevel;
+import com.sun.cri.ci.CiCompiler.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -95,7 +93,6 @@ public final class C1XCompilation {
         this.stats = stats == null ? new CiStatistics() : stats;
         this.registerConfig = method == null ? compiler.compilerStubRegisterConfig : runtime.getRegisterConfig(method);
         this.placeholderState = debugInfoLevel == DebugInfoLevel.REF_MAPS ? new MutableFrameState(new IRScope(null, null, method, -1), 0, 0, 0) : null;
-
         if (compiler.isObserved()) {
             compiler.fireCompilationStarted(new CompilationEvent(this));
         }
@@ -187,6 +184,7 @@ public final class C1XCompilation {
 
     /**
      * Returns the frame map of this compilation.
+     *
      * @return the frame map
      */
     public FrameMap frameMap() {
@@ -272,6 +270,7 @@ public final class C1XCompilation {
     private CiTargetMethod emitCode() {
         if (C1XOptions.GenLIR && C1XOptions.GenCode) {
             final LIRAssembler lirAssembler = compiler.backend.newLIRAssembler(this, assembler());
+
             lirAssembler.emitCode(hir.linearScanOrder());
 
             // generate code for slow cases
@@ -302,6 +301,14 @@ public final class C1XCompilation {
 
             if (C1XOptions.PrintTimers) {
                 C1XTimers.CODE_CREATE.stop();
+            }
+
+            if (C1XOptions.DebugMethods) {
+                try {
+                    lirAssembler.getDebugMethodWriter().flushDebugMethod();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
             return targetMethod;
         }

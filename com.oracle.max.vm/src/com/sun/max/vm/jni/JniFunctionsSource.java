@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.jni;
 
@@ -121,8 +119,12 @@ public final class JniFunctionsSource {
             throw new ClassNotFoundException();
         }
         // Skip our frame
-        Class caller = JDK_sun_reflect_Reflection.getCallerClassForFindClass(1);
+        // (ck): I think we have to skip more than one frame.
+        // Experimentally determined to be three.
+        Class caller = JDK_sun_reflect_Reflection.getCallerClassForFindClass(3);
+
         ClassLoader classLoader = caller == null ? ClassLoader.getSystemClassLoader() : ClassActor.fromJava(caller).classLoader;
+
         final Class javaClass = findClass(classLoader, className);
         Snippets.makeClassInitialized(ClassActor.fromJava(javaClass));
         return JniHandles.createLocalHandle(javaClass);
@@ -1742,6 +1744,7 @@ public final class JniFunctionsSource {
     }
 
     private static final ClassActor DirectByteBuffer = ClassActor.fromJava(Classes.forName("java.nio.DirectByteBuffer"));
+    private static final ClassActor IntBuffer = ClassActor.fromJava(Classes.forName("java.nio.IntBuffer"));
 
     @VM_ENTRY_POINT
     private static JniHandle NewDirectByteBuffer(Pointer env, Pointer address, long capacity) throws Exception {
@@ -1752,7 +1755,7 @@ public final class JniFunctionsSource {
     @VM_ENTRY_POINT
     private static Pointer GetDirectBufferAddress(Pointer env, JniHandle buffer) throws Exception {
         Object buf = buffer.unhand();
-        if (DirectByteBuffer.isInstance(buf)) {
+        if (DirectByteBuffer.isInstance(buf) || IntBuffer.isInstance(buf)) {
             long address = ClassRegistry.Buffer_address.getLong(buf);
             return Pointer.fromLong(address);
         }

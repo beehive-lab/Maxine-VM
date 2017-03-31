@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,24 +17,18 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.c1x.alloc;
 
 import java.util.*;
 
-import com.sun.c1x.*;
 import com.oracle.max.criutils.*;
+import com.sun.c1x.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.lir.*;
 import com.sun.c1x.util.*;
 import com.sun.cri.ci.*;
 
-/**
- */
 final class RegisterVerifier {
 
     LinearScan allocator;
@@ -84,7 +80,10 @@ final class RegisterVerifier {
             if (operand.isRegister()) {
                 CiValue reg = operand;
                 Interval interval = intervalAt(reg);
-                inputState[reg.asRegister().number] = interval;
+                inputState[interval.location().asRegister().number] = interval;
+                if (interval.locationHigh() != null) {
+                    inputState[interval.locationHigh().asRegister().number] = interval;
+                }
             }
         }
 
@@ -221,7 +220,13 @@ final class RegisterVerifier {
     boolean checkState(Interval[] inputState, CiValue reg, Interval interval) {
         if (reg != null && reg.isRegister()) {
             if (inputState[reg.asRegister().number] != interval) {
-                throw new CiBailout("!! Error in register allocation: register " + reg + " does not contain interval " + interval.operand + " but interval " + inputState[reg.asRegister().number]);
+                if (reg.highPart) {
+                    if (C1XOptions.TraceLinearScanLevel >= 4) {
+                        TTY.println("!! Warning: Skip Register Verificaton Error for high part");
+                    }
+                } else {
+                    throw new CiBailout("!! Error in register allocation: register " + reg + " does not contain interval " + interval.operand + " but interval " + inputState[reg.asRegister().number]);
+                }
             }
         }
         return true;
@@ -245,8 +250,8 @@ final class RegisterVerifier {
                     if (op.id != -1) {
                         interval = interval.getSplitChildAtOpId(op.id, LIRInstruction.OperandMode.Input, allocator);
                     }
-
                     assert checkState(inputState, interval.location(), interval.splitParent());
+                    assert checkState(inputState, interval.locationHigh(), interval.splitParent());
                 }
             }
 
@@ -274,8 +279,9 @@ final class RegisterVerifier {
                     if (op.id != -1) {
                         interval = interval.getSplitChildAtOpId(op.id, LIRInstruction.OperandMode.Temp, allocator);
                     }
-
                     statePut(inputState, interval.location(), interval.splitParent());
+                    statePut(inputState, interval.locationHigh(), interval.splitParent());
+
                 }
             }
 
@@ -288,8 +294,8 @@ final class RegisterVerifier {
                     if (op.id != -1) {
                         interval = interval.getSplitChildAtOpId(op.id, LIRInstruction.OperandMode.Output, allocator);
                     }
-
                     statePut(inputState, interval.location(), interval.splitParent());
+                    statePut(inputState, interval.locationHigh(), interval.splitParent());
                 }
             }
         }

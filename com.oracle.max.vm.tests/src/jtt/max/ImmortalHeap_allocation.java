@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 /*
  * @Harness: java
@@ -30,6 +28,7 @@ package jtt.max;
 
 import com.sun.max.annotate.*;
 import com.sun.max.memory.*;
+import com.sun.max.platform.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.heap.*;
 import com.sun.max.vm.heap.debug.*;
@@ -49,7 +48,7 @@ public final class ImmortalHeap_allocation {
         Pointer oldMark = immortalMemoryRegion.mark();
         ImmortalHeap.allocate(Size.fromInt(size), true);
         if (DebugHeap.isTagging()) {
-            size += Word.size();
+            size += Platform.target().arch.is64bit() ? Word.size() : 2 * Word.size();
         }
         if (immortalMemoryRegion.mark().equals(oldMark.plus(Size.fromInt(size).wordAligned()))) {
             resetImmortalHeap(immortalMemoryRegion, oldMark);
@@ -58,5 +57,4 @@ public final class ImmortalHeap_allocation {
         resetImmortalHeap(immortalMemoryRegion, oldMark);
         return false;
     }
-
 }

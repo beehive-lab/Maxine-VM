@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.jdk;
 
@@ -46,8 +44,9 @@ final class JDK_java_lang_Object {
 
     /**
      * Gets the class of this object.
-     * @see java.lang.Object#getClass()
+     *
      * @return the class of this object
+     * @see java.lang.Object#getClass()
      */
     @SUBSTITUTE("getClass")
     public Class getClass_SUBSTITUTE() {
@@ -56,8 +55,9 @@ final class JDK_java_lang_Object {
 
     /**
      * Computes the hashcode of this object.
-     * @see java.lang.Object#hashCode()
+     *
      * @return an integer representing a default hashcode for this object
+     * @see java.lang.Object#hashCode()
      */
     @SUBSTITUTE("hashCode")
     public int hashCode_SUBSTITUTE() {
@@ -66,10 +66,11 @@ final class JDK_java_lang_Object {
 
     /**
      * Clone this object, if the operation is supported.
-     * @see java.lang.Object#clone()
+     *
      * @return a new instance of this object, if this operation is supported
      * @throws CloneNotSupportedException if this object does not implement the
-     * {@link java.lang.Cloneable Cloneable} interface
+     *                                    {@link java.lang.Cloneable Cloneable} interface
+     * @see java.lang.Object#clone()
      */
     @SUBSTITUTE("clone")
     public Object clone_SUBSTITUTE() throws CloneNotSupportedException {
@@ -85,6 +86,7 @@ final class JDK_java_lang_Object {
 
     /**
      * Notify one thread waiting on this object's condition variable.
+     *
      * @see java.lang.Object#notify()
      */
     @SUBSTITUTE("notify")
@@ -94,6 +96,7 @@ final class JDK_java_lang_Object {
 
     /**
      * Notify all threads waiting on this object's condition variable.
+     *
      * @see java.lang.Object#notifyAll()
      */
     @SUBSTITUTE("notifyAll")
@@ -105,7 +108,7 @@ final class JDK_java_lang_Object {
      * Wait for this object's condition variable.
      *
      * @param timeout the maximum number of milliseconds to wait; with {@code 0}
-     * indicating an indefinite wait
+     *                indicating an indefinite wait
      * @throws InterruptedException if this thread is interrupted during the wait
      */
     @SUBSTITUTE("wait")

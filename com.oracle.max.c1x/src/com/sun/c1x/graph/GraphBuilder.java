@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.c1x.graph;
 
@@ -28,9 +26,11 @@ import static java.lang.reflect.Modifier.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.oracle.max.asm.*;
 import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.criutils.*;
 import com.sun.c1x.*;
+import com.sun.c1x.debug.*;
 import com.sun.c1x.graph.ScopeData.ReturnBlock;
 import com.sun.c1x.intrinsics.*;
 import com.sun.c1x.ir.*;
@@ -1855,6 +1855,9 @@ public final class GraphBuilder {
     private void inline(RiResolvedMethod target, Value[] args, boolean forcedInline) {
         if (!forcedInline && C1XOptions.UseAssumptions) {
             compilation.assumptions.recordInlinedMethod(compilation.method, target);
+            if (C1XOptions.DebugMethods) {
+                append(new DebugMethodID(bci(), compilation.method.name(), target.toString()));
+            }
         }
         BlockBegin orig = curBlock;
         if (!forcedInline && !isStatic(target.accessFlags())) {

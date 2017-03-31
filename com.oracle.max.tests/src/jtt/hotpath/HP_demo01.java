@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 // Checkstyle: stop
 package jtt.hotpath;
@@ -30,7 +28,6 @@ public class HP_demo01 {
 
     public static int test(int count) {
         int sum = 0;
-
         for (int i = 0; i < count; i++) {
             int[] ia = new int[count];
             long[] la = new long[count];
@@ -38,7 +35,6 @@ public class HP_demo01 {
             double[] da = new double[count];
             sum += ia[i] = (int) (la[i] = (long) (fa[i] = (float) (da[i] = i)));
         }
-
         return sum;
     }
 }

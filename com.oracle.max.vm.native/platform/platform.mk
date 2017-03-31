@@ -54,13 +54,33 @@ HOSTOS = $(shell uname -s)
 # Set TARGETOS explicitly to cross-compile for a different target 
 # (required for Maxine VE when building tele/inspector)
 TARGETOS ?= $(shell uname -s)
+DARWIN_RELEASE ?= $(shell uname -r | cut -d'.' -f 1)
 
 ifeq ($(TARGETOS),Darwin)
     OS := darwin
     DARWIN_GCC_MFLAG :=
-    a := $(shell uname -m)
-    ifeq ($a,x86_64)
-        ISA := amd64
+    a := $(shell uname -p)
+    ifeq ($a,i386)
+        mach := $(shell ls /usr/include/mach/x86_64)
+        ifneq ($(mach), ) 
+    	    DARWIN_GCC_MFLAG := -m64
+            ISA := amd64
+        else
+        	ifeq ($(DARWIN_RELEASE),13)
+        		DARWIN_GCC_MFLAG := -m64 -DMaverick
+    	    	ISA := amd64
+            endif
+            ifeq ($(DARWIN_RELEASE),15)
+        		DARWIN_GCC_MFLAG := -m64 -DMaverick
+    	    	ISA := amd64
+           	endif
+           	ifeq ($(DARWIN_RELEASE),16)
+        		DARWIN_GCC_MFLAG := -m64 -DMaverick
+    	    	ISA := amd64
+           	else
+            	ISA := ia32
+            endif
+        endif
     else
        ifeq ($a,powerpc)
            ISA := power
@@ -72,15 +92,18 @@ endif
 
 ifeq ($(TARGETOS),Linux)
     OS := linux
-    
     a := $(shell uname -m)
     ifeq ($a,x86_64)
         ISA := amd64
     else 
         ifeq ($a, x86)
             ISA := ia32
+            $(shell echo $ISA)
         else
             ISA := $a
+            ISA := arm
+            OTHER_CFLAGS := -marm -O0 -g -mcpu=cortex-a9
+            TARGET_WORD_SIZE := w32
         endif
     endif
 endif
@@ -207,7 +230,7 @@ ifeq ($(OS),linux)
     endif
     ifneq "$(findstring def, $(origin CFLAGS))" ""
         # origin of CFLAGS is either undefined or default, so set it here
-        CFLAGS = -g -Wall -Wno-long-long -Werror -Wextra -Wno-main -Wno-unused-parameter -fPIC -D_GNU_SOURCE -D$(ISA) -DLINUX -D$(TARGET) -D$(TARGET_WORD_SIZE) $(JDK7)
+        CFLAGS = -g -Wall -Wno-long-long -Werror -Wextra -Wno-main -Wno-unused-parameter -fPIC -D_GNU_SOURCE -D$(ISA) -DLINUX -D$(TARGET) -D$(TARGET_WORD_SIZE) $(JDK7) $(OTHER_CFLAGS)
     endif
     C_DEPENDENCIES_FLAGS = -M -DLINUX -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
     # The '-rpath' linker option is used so that LD_LIBRARY_PATH does not have to be configured at runtime to
@@ -221,9 +244,19 @@ ifeq ($(OS),linux)
     LINK_MAIN = $(CC) -z execstack -g -rdynamic -Xlinker -rpath -Xlinker $(shell cd $(PROJECT)/generated/$(OS) && /bin/pwd) -o $(MAIN)
     # Libraries must be specified after the actual source files, so the POSTFIX variable is used for that
     # (Introduced to solve a linking problem on Ubuntu 11.10)
-    LINK_MAIN_POSTFIX = -lc -lm -lpthread -ldl
+    ifeq ($(ISA),arm) 
+    	LINK_MAIN_POSTFIX = -lstdc++ -lc -lm -lpthread -ldl
+    endif
+    ifneq ($(ISA),arm)
+    	LINK_MAIN_POSTFIX = -lc -lm -lpthread -ldl
+    endif
     LINK_LIB = $(CC) -g -shared
-    LINK_LIB_POSTFIX = -lc -lm -lpthread 
+    ifeq ($(ISA),arm)
+    	LINK_LIB_POSTFIX = -lstdc++ -lc -lm -lpthread -ldl
+    endif
+    ifneq ($(ISA),arm)
+    	LINK_LIB_POSTFIX = -lc -lm -lpthread 
+    endif
     LIB_PREFIX = lib
     LIB_SUFFIX = .so
 endif

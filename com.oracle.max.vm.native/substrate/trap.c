@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 
 #include "c.h"
@@ -87,6 +85,8 @@ int getTrapNumber(int signal) {
 #if !os_MAXVE
     case SIGUSR1:
         return ASYNC_INTERRUPT;
+     default:
+        log_print("Unknown Signal: %d\n", signal);
 #endif
     }
     return -signal;
@@ -124,16 +124,16 @@ void* setSignalHandler(int signal, SignalHandlerFunction handler) {
 	maxve_register_fault_handler(signal, handler);
 	return NULL;
 #else
-
     struct sigaction newSigaction;
     struct sigaction oldSigaction;
 
     memset((char *) &newSigaction, 0, sizeof(newSigaction));
     sigemptyset(&newSigaction.sa_mask);
     newSigaction.sa_flags = SA_SIGINFO | SA_RESTART | SA_ONSTACK;
+
 #if os_SOLARIS || os_LINUX || os_DARWIN
     if (signal == SIGUSR1) {
-        newSigaction.sa_flags = SA_SIGINFO | SA_ONSTACK;
+        newSigaction.sa_flags = SA_SIGINFO |  SA_ONSTACK;
     }
 #endif
     newSigaction.sa_sigaction = handler;
@@ -167,13 +167,15 @@ static Address getInstructionPointer(UContext *ucontext) {
     return ucontext->uc_mcontext.gregs[REG_RIP];
 #   elif isa_IA32
     return ucontext->uc_mcontext.gregs[REG_EIP];
+#elif isa_ARM
+	return ucontext->uc_mcontext.arm_pc ; 
 #   endif
 #elif os_DARWIN
     return ucontext->uc_mcontext->__ss.__rip;
 #elif os_MAXVE
-        return ucontext->rip;
+    return ucontext->rip;
 #else
-        c_UNIMPLEMENTED();
+    c_UNIMPLEMENTED();
 #endif
 }
 
@@ -187,9 +189,11 @@ static void setInstructionPointer(UContext *ucontext, Address stub) {
     ucontext->uc_mcontext->__ss.__rip = stub;
 #elif os_LINUX
 #   if isa_AMD64
-     ucontext->uc_mcontext.gregs[REG_RIP] = (greg_t) stub;
+        ucontext->uc_mcontext.gregs[REG_RIP] = (greg_t) stub;
 #   elif isa_IA32
-     ucontext->uc_mcontext.gregs[REG_EIP] = (greg_t) stub;
+        ucontext->uc_mcontext.gregs[REG_EIP] = (greg_t) stub;
+#	elif isa_ARM
+	    ucontext->uc_mcontext.arm_pc = (greg_t) (stub);
 #   endif
 #elif os_MAXVE
     ucontext->rip = (unsigned long) stub;
@@ -245,9 +249,7 @@ static void blueZoneTrap(NativeThreadLocals ntl) {
  */
 static boolean handleDivideOverflow(UContext *ucontext) {
     unsigned char *rip = (unsigned char *) getInstructionPointer(ucontext);
-
     boolean is64Bit = false;
-
     if ((rip[0] & 0xf0) == 0x40) {
         /* Decode REX byte */
         unsigned char rex = rip[0] & 0x0f;
@@ -347,10 +349,17 @@ static void logTrap(int signal, Address ip, Address fault, TLA dtla) {
  * The handler for signals dealt with by Stubs.trapStub.
  */
 static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext) {
+
     int trapNumber = getTrapNumber(signal);
     Address ip = getInstructionPointer(ucontext);
     Address faultAddress = getFaultAddress(signalInfo, ucontext);
 
+#if isa_ARM
+    if (ucontext->uc_mcontext.arm_cpsr & 0x20) {
+        ip = ip | 0x1;
+        ucontext->uc_mcontext.arm_cpsr = ucontext->uc_mcontext.arm_cpsr & 0xffffffdf;
+    }
+#endif
     /* Only VM signals should get here. */
     if (trapNumber < 0) {
         logTrap(signal, ip, faultAddress, 0);
@@ -417,7 +426,7 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
 
     /* save the trap information in the thread locals */
     tla_store3(dtla, TRAP_NUMBER, trapNumber);
-    tla_store3(dtla, TRAP_INSTRUCTION_POINTER, getInstructionPointer(ucontext));
+    tla_store3(dtla, TRAP_INSTRUCTION_POINTER, ip);
     tla_store3(dtla, TRAP_FAULT_ADDRESS, faultAddress);
 
 #if os_SOLARIS && isa_SPARC
@@ -434,6 +443,9 @@ static void vmSignalHandler(int signal, SigInfo *signalInfo, UContext *ucontext)
 #elif isa_AMD64 && os_MAXVE
     tla_store3(dtla, TRAP_LATCH_REGISTER, ucontext->r14);
     ucontext->r14 = (Address) dtla;
+#elif isa_ARM
+    tla_store3(dtla,TRAP_LATCH_REGISTER, ucontext->uc_mcontext.arm_r10);
+    ucontext->uc_mcontext.arm_r10 = (Address) dtla;
 #else
     c_UNIMPLEMENTED();
 #endif

@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,20 +17,18 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.compiler.target;
 
 import static com.sun.max.platform.Platform.*;
+import static com.sun.max.vm.MaxineVM.*;
 
 import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
+import com.sun.max.platform.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -49,7 +49,9 @@ import com.sun.max.vm.runtime.*;
  *                                                    +------------------ cause position offset
  * </pre>
  *
- * The width of the 'position' field supports a code array of up to 32Mb.
+ * The width of the 'position' field supports a code array of up to 32Mb
+ *
+ * OK so we have to change this for ARM we now ....
  */
 public final class Safepoints {
 
@@ -132,11 +134,11 @@ public final class Safepoints {
     /**
      * Mask for extracting position.
      */
-    public static final int POS_MASK = (1 << 25) - 1;
 
+    public static final int POS_MASK = Platform.target().arch.isX86() ? (1 << 25) - 1 : (1 << 23) - 1;
     private static final int CAUSE_OFFSET_MASK = ((1 << 28) - 1) & ~POS_MASK;
-    private static final int CAUSE_OFFSET_SHIFT = 25;
-    private static final int MAX_CAUSE_OFFSET = 7;
+    private static final int CAUSE_OFFSET_SHIFT = Platform.target().arch.isX86() ? 25 : 23;
+    private static final int MAX_CAUSE_OFFSET = Platform.target().arch.isX86() ? 7 : 16;
 
     /**
      * Mask for extracting attributes.
@@ -269,6 +271,7 @@ public final class Safepoints {
     public int indexOf(int pos) {
         // Use binary search since safepoints are sorted by position
         int left = 0;
+        assert safepoints != null : "Safepoints:indexOf null";
         int right = safepoints.length;
         while (right > left) {
             final int middle = left + ((right - left) >> 1);
@@ -361,7 +364,7 @@ public final class Safepoints {
      * @param callSize size of the call instruction
      */
     public static int safepointPosForCall(int callPos, int callSize) {
-        if (platform().isa == ISA.AMD64) {
+        if (platform().isa == ISA.AMD64 || platform().isa == ISA.ARM) {
             return callPos + callSize;
         } else {
             throw FatalError.unimplemented();
@@ -412,7 +415,9 @@ public final class Safepoints {
         assert pos(safepointPos) == safepointPos : "safepoint position out of range";
         assert (attrs & ATTRS_MASK) == attrs;
         int causeOffset = safepointPos - causePos;
-        assert causeOffset >= 0 && causeOffset <= MAX_CAUSE_OFFSET : "cause position out of range";
+        if (vm().compilationBroker.isOffline()) {
+            assert causeOffset >= 0 && causeOffset <= MAX_CAUSE_OFFSET : "cause position out of range";
+        }
         return safepointPos | (causeOffset << CAUSE_OFFSET_SHIFT) | attrs;
     }
 }

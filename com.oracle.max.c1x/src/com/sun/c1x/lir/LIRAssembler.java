@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,19 +17,15 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.c1x.lir;
 
 import java.util.*;
 
 import com.oracle.max.asm.*;
+import com.oracle.max.criutils.*;
 import com.sun.c1x.*;
 import com.sun.c1x.asm.*;
-import com.oracle.max.criutils.*;
 import com.sun.c1x.gen.*;
 import com.sun.c1x.ir.*;
 import com.sun.c1x.ir.ExceptionHandler;
@@ -38,6 +36,7 @@ import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.cri.ri.*;
 import com.sun.cri.xir.CiXirAssembler.*;
+import com.sun.max.vm.compiler.*;
 
 /**
  * The {@code LIRAssembler} class definition.
@@ -54,6 +53,11 @@ public abstract class LIRAssembler {
     protected final List<BlockBegin> branchTargetBlocks;
 
     private int lastDecodeStart;
+
+    protected static DebugMethodWriter debugMethodWriter;
+    protected int methodID;
+    private static boolean debugMethodsEnabled = false;
+
 
     protected static class SlowPath {
         public final LIRXirInstruction instruction;
@@ -74,6 +78,13 @@ public abstract class LIRAssembler {
         this.frameMap = compilation.frameMap();
         this.branchTargetBlocks = new ArrayList<BlockBegin>();
         this.xirSlowPath = new ArrayList<SlowPath>();
+        if (C1XOptions.DebugMethods) {
+            if (!debugMethodsEnabled) {
+                debugMethodWriter = new DebugMethodWriter("c1x");
+                debugMethodsEnabled = true;
+            }
+            methodID = debugMethodWriter.getNextID();
+        }
     }
 
     protected RiMethod method() {
@@ -88,8 +99,6 @@ public abstract class LIRAssembler {
         for (SlowPath sp : xirSlowPath) {
             emitSlowPath(sp);
         }
-
-        // No more code may be emitted after this point
     }
 
     protected int codePos() {
@@ -342,15 +351,14 @@ public abstract class LIRAssembler {
                     emitShiftOp(op.code, op.operand1(), op.operand2(), op.result(), op.tmp());
                 }
                 break;
-
             case Add:
-            case Sub:
             case Mul:
+                assert op.operand1().equals(op.result());
+            case Sub:
             case Div:
             case Rem:
                 emitArithOp(op.code, op.operand1(), op.operand2(), op.result(), op.info);
                 break;
-
             case Abs:
             case Sqrt:
             case Sin:
@@ -360,7 +368,6 @@ public abstract class LIRAssembler {
             case Log10:
                 emitIntrinsicOp(op.code, op.operand1(), op.operand2(), op.result(), op);
                 break;
-
             case LogicAnd:
             case LogicOr:
             case LogicXor:
@@ -444,6 +451,10 @@ public abstract class LIRAssembler {
         return compilation.runtime.asCallTarget(o);
     }
 
+    public DebugMethodWriter getDebugMethodWriter() {
+        return debugMethodWriter;
+    }
+
     protected abstract int initialFrameSizeInBytes();
 
     protected abstract void doPeephole(LIRList list);
@@ -523,6 +534,8 @@ public abstract class LIRAssembler {
     protected abstract void emitDirectCallAlignment();
 
     protected abstract void emitMemoryBarriers(int barriers);
+
+    protected abstract void emitDebugID(String method, String inlinedMethod);
 
     protected abstract void emitOsrEntry();
 

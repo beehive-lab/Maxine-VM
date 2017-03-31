@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.tele.debug;
 
@@ -65,12 +63,41 @@ public final class TeleStateRegisters extends TeleRegisters {
             return new String(chars);
         }
     }
+    static class ARMV7 {
+        static CiRegister RIP   = new CiRegister(0, 0, -1, "rip");
+        static CiRegister FLAGS = new CiRegister(1, 1, -1, "flags");
+        private static char[] flagNames = {
+                'C', '1', 'P', '3', 'A', '5', 'Z', 'S',
+                'T', 'I', 'D', 'O', 'I', 'L', 'N', 'F',
+                'R', 'V', 'a', 'f', 'p', 'i', '2', '3',
+                '4', '5', '6', '7', '8', '9', '0', '1'
+        };
 
+        private static final int USED_FLAGS = 22;
+
+        public static String flagsToString(long flags) {
+            final char[] chars = new char[USED_FLAGS];
+            long f = flags;
+            int charIndex = chars.length - 1;
+            for (int i = 0; i < USED_FLAGS; i++) {
+                if ((f & 1) != 0) {
+                    chars[charIndex--] = flagNames[i];
+                } else {
+                    chars[charIndex--] = '_';
+                }
+                f >>>= 1;
+            }
+            return new String(chars);
+        }
+    }
     static CiRegister[] createStateRegisters() {
         if (platform().isa == ISA.AMD64) {
-            return new CiRegister[] {AMD64.RIP, AMD64.FLAGS};
+            return new CiRegister[] { AMD64.RIP, AMD64.FLAGS};
+        } else if (platform().isa == ISA.ARM) {
+            return new CiRegister[] { ARMV7.RIP, ARMV7.FLAGS};
+        } else {
+            throw TeleError.unimplemented();
         }
-        throw TeleError.unimplemented();
     }
 
     public TeleStateRegisters(TeleVM vm, TeleRegisterSet teleRegisterSet) {
@@ -78,6 +105,9 @@ public final class TeleStateRegisters extends TeleRegisters {
         if (platform().isa == ISA.AMD64) {
             instructionPointerRegister = AMD64.RIP;
             flagsRegister = AMD64.FLAGS;
+        } else if (platform().isa == ISA.ARM) {
+            instructionPointerRegister = ARMV7.RIP;
+            flagsRegister = ARMV7.FLAGS;
         } else {
             throw TeleError.unimplemented();
         }
@@ -115,7 +145,10 @@ public final class TeleStateRegisters extends TeleRegisters {
     public static String flagsToString(MaxVM vm, long flags) {
         if (platform().isa == ISA.AMD64) {
             return AMD64.flagsToString(flags);
+        } else if (platform().isa == ISA.ARM) {
+            return ARMV7.flagsToString(flags);
+        } else {
+            throw TeleError.unimplemented();
         }
-        throw TeleError.unimplemented();
     }
 }

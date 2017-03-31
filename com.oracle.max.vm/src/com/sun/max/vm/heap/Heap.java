@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.heap;
 
@@ -311,6 +309,7 @@ public final class Heap {
 
     @NEVER_INLINE
     private static void doDebugAfterCreateArray(Hub hub, int length, Object array) {
+	allocationLogger.logUnalignedArray(array, hub.classActor);
         if (Heap.logAllocation()) {
             allocationLogger.logCreateArray(hub, length, array);
         }
@@ -330,6 +329,7 @@ public final class Heap {
 
     @NEVER_INLINE
     private static void doDebugAfterCreateTuple(Hub hub, Object object) {
+	allocationLogger.logUnalignedTuple(object, hub.classActor);
         if (Heap.logAllocation()) {
             allocationLogger.logCreateTuple(hub, object);
         }
@@ -349,6 +349,7 @@ public final class Heap {
 
     @NEVER_INLINE
     private static void doDebugAfterCreateHybrid(Hub hub, Object hybrid) {
+	allocationLogger.logUnalignedHybrid(hybrid, hub.classActor);
         if (Heap.logAllocation()) {
             allocationLogger.logCreateHybrid(hub, hybrid);
         }
@@ -368,6 +369,7 @@ public final class Heap {
 
     @NEVER_INLINE
     private static void doDebugAfterExpandHybrid(Hub hub, Object expandedHybrid) {
+	allocationLogger.logUnalignedHybrid(expandedHybrid, hub.classActor);
         if (Heap.logAllocation()) {
             allocationLogger.logExpandHybrid(hub, expandedHybrid);
         }
@@ -400,7 +402,8 @@ public final class Heap {
         final Object clone = heapScheme().clone(object);
         if (MaxineVM.isDebug()) {
             doDebugAfterClone(ObjectAccess.readHub(object), clone);
-        }
+	    allocationLogger.logUnalignedTuple(object, ObjectAccess.readHub(object).classActor);
+	}
         return clone;
     }
 
@@ -618,6 +621,7 @@ public final class Heap {
             return true;
         }
         Pointer origin = ref.toOrigin();
+
         if (!bootHeapRegion.contains(origin) && !heapScheme().contains(origin) && !Code.contains(origin) && !ImmortalHeap.contains(origin)) {
             return false;
         }
@@ -861,9 +865,6 @@ public final class Heap {
         }
     }
 
-    /*
-     * Logging of object allocation.
-     */
 
     /**
      * Allocation logging interface.
@@ -913,6 +914,45 @@ public final class Heap {
 
         AllocationLogger() {
             super();
+        }
+
+        @NEVER_INLINE
+        void logUnalignedArray(Object array, ClassActor classActor) {
+            if (Layout.originToCell(ObjectAccess.toOrigin(array)).toLong() % 8 != 0) {
+                Log.print("Error Alignment Array ");
+                Log.print(classActor.name.string);
+                Log.print(" at ");
+                Log.print(Long.toHexString(Layout.originToCell(ObjectAccess.toOrigin(array)).toLong()));
+                Log.print(" [");
+                Log.print(Layout.size(ObjectAccess.toOrigin(array)));
+                Log.println(" bytes]");
+            }
+        }
+
+        @NEVER_INLINE
+        void logUnalignedTuple(Object array, ClassActor classActor) {
+            if (Layout.originToCell(ObjectAccess.toOrigin(array)).toLong() % 8 != 0) {
+                Log.print("Error Alignment Tuple ");
+                Log.print(classActor.name.string);
+                Log.print(" at ");
+                Log.print(Long.toHexString(Layout.originToCell(ObjectAccess.toOrigin(array)).toLong()));
+                Log.print(" [");
+                Log.print(Layout.size(ObjectAccess.toOrigin(array)));
+                Log.println(" bytes]");
+            }
+        }
+
+        @NEVER_INLINE
+        void logUnalignedHybrid(Object array, ClassActor classActor) {
+            if (Layout.originToCell(ObjectAccess.toOrigin(array)).toLong() % 8 != 0) {
+                Log.print("Error Alignment Hybrid ");
+                Log.print(classActor.name.string);
+                Log.print(" at ");
+                Log.print(Long.toHexString(Layout.originToCell(ObjectAccess.toOrigin(array)).toLong()));
+                Log.print(" [");
+                Log.print(Layout.size(ObjectAccess.toOrigin(array)));
+                Log.println(" bytes]");
+            }
         }
 
         @NEVER_INLINE

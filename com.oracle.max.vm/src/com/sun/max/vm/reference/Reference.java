@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,18 +17,19 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.reference;
 
-import static com.sun.max.vm.VMConfiguration.*;
+import com.sun.max.annotate.FOLD;
+import com.sun.max.annotate.HOSTED_ONLY;
+import com.sun.max.annotate.INLINE;
+import com.sun.max.unsafe.Accessor;
+import com.sun.max.unsafe.Offset;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.layout.Layout;
 
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.layout.*;
+import static com.sun.max.vm.VMConfiguration.vmConfig;
 
 /**
  * A runtime value (of type {@link java.lang.Object}) that
@@ -418,6 +421,19 @@ public class Reference implements Accessor {
      * @return the value of the memory location before this call; if it is equal to {@code expectedValue}, then the
      *         update occurred, otherwise the update did not occur (assuming {@code expectedValue != newValue})
      */
+    /**
+     * @see #compareAndSwapLong(Offset, long, long)
+     */
+    @INLINE
+    public final long compareAndSwapLong(Offset offset, long expectedValue, long newValue) {
+        return referenceScheme().compareAndSwapLong(this, offset, expectedValue, newValue);
+    }
+
+    @INLINE
+    public final long compareAndSwapLong(int offset, long expectedValue, long newValue) {
+        return referenceScheme().compareAndSwapLong(this, offset, expectedValue, newValue);
+    }
+
     @INLINE
     public final int compareAndSwapInt(Offset offset, int expectedValue, int newValue) {
         return referenceScheme().compareAndSwapInt(this, offset, expectedValue, newValue);

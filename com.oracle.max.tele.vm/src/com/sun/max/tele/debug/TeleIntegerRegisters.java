@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,16 +17,13 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.tele.debug;
 
 import static com.sun.max.platform.Platform.*;
 
 import com.oracle.max.asm.target.amd64.*;
+import com.oracle.max.asm.target.armv7.*;
 import com.sun.cri.ci.*;
 import com.sun.max.lang.*;
 import com.sun.max.tele.*;
@@ -43,6 +42,8 @@ public final class TeleIntegerRegisters extends TeleRegisters {
     public static CiRegister[] getIntegerRegisters() {
         if (platform().isa == ISA.AMD64) {
             return AMD64.cpuRegisters;
+        } else if (platform().isa == ISA.ARM) {
+            return ARMV7.cpuRegisters;
         }
         throw FatalError.unimplemented();
     }
@@ -53,6 +54,10 @@ public final class TeleIntegerRegisters extends TeleRegisters {
             indirectCallRegister = AMD64.rax;
             sp = AMD64.rsp;
             fp = AMD64.rbp;
+        } else if (platform().isa == ISA.ARM) {
+            indirectCallRegister = ARMV7.r14;
+            sp = ARMV7.r13;
+            fp = ARMV7.r11;
         } else {
             throw FatalError.unimplemented();
         }

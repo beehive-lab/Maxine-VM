@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,19 +17,18 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.runtime;
 
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
+import com.sun.max.annotate.INLINE;
+import com.sun.max.annotate.INTRINSIC;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.unsafe.Word;
+import com.sun.max.vm.intrinsics.MaxineIntrinsicIDs;
+import com.sun.max.vm.thread.VmThreadLocal;
 
-import com.sun.max.annotate.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.vm.intrinsics.*;
-import com.sun.max.vm.thread.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.READREG;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.WRITEREG;
 
 /**
  * Direct access to certain CPU registers of the current thread, directed by ABI-managed register roles.
@@ -40,13 +41,13 @@ public final class VMRegister {
     /**
      * The register that is customarily used as "the stack pointer" on the target CPU.
      * Typically this register is not flexibly allocatable for other uses.
-     * AMD64: RSP
+     * AMD64: RSP, ARM: r13
      */
     public static final int CPU_SP = 0;
 
     /**
      * The register that is customarily used as "frame pointer" on the target CPU.
-     * AMD64: RBP
+     * AMD64: RBP, ARM: r11
      */
     public static final int CPU_FP = 1;
 
@@ -68,6 +69,7 @@ public final class VMRegister {
     /**
      * The register denoting the currently active {@link VmThreadLocal thread locals}.
      * AMD64: R14
+     * ARMV7 r10
      */
     public static final int LATCH = 7;
 

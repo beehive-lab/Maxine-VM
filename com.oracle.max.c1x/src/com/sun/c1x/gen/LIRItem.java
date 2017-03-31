@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.c1x.gen;
 
@@ -145,7 +143,7 @@ public class LIRItem {
     }
 
     public void loadByteItem() {
-        if (gen.compilation.target.arch.isX86()) {
+        if (gen.compilation.target.arch.isX86() || gen.compilation.target.arch.isARM()) {
             loadItem();
             CiValue res = result();
 
@@ -164,7 +162,7 @@ public class LIRItem {
     }
 
     public void loadNonconstant() {
-        if (gen.compilation.target.arch.isX86()) {
+        if (gen.compilation.target.arch.isX86() || gen.compilation.target.arch.isARM()) {
             CiValue r = instruction.operand();
             if (r.isConstant()) {
                 resultOperand = r;

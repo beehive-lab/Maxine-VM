@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.oracle.max.vm.ext.t1x;
 
@@ -32,27 +30,27 @@ import java.util.*;
 
 import com.oracle.max.vm.ext.maxri.*;
 import com.oracle.max.vm.ext.t1x.amd64.*;
+import com.oracle.max.vm.ext.t1x.armv7.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ci.CiCallingConvention.Type;
+import com.sun.cri.ci.CiCallingConvention.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.classfile.LocalVariableTable.Entry;
+import com.sun.max.vm.classfile.LocalVariableTable.*;
 import com.sun.max.vm.collect.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.target.*;
-import com.sun.max.vm.compiler.target.Safepoints.Attr;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 
 /**
- * A T1X template is a piece of machine code (and its associated metadata) that
- * is used by the T1X compiler to quickly translate a bytecode instruction
- * to native code.
+ * A T1X template is a piece of machine code (and its associated metadata) that is used by the T1X compiler to quickly
+ * translate a bytecode instruction to native code.
  */
 public class T1XTemplate {
 
     public static class T1XSafepoint {
+
         public static final int NO_BSM_INDEX = Integer.MIN_VALUE;
 
         public T1XSafepoint() {
@@ -98,8 +96,6 @@ public class T1XTemplate {
         CiBitMap frameRefMap;
         CiBitMap regRefMap;
 
-
-
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
@@ -108,10 +104,7 @@ public class T1XTemplate {
                     sb.append(f.name).append(' ');
                 }
             }
-            sb.append("@ ").
-                append(pos()).
-                append(" [bci: ").
-                append(bci);
+            sb.append("@ ").append(pos()).append(" [bci: ").append(bci);
             if (frameRefMap != null) {
                 sb.append(", frameRefMap:").append(frameRefMap);
             }
@@ -148,10 +141,11 @@ public class T1XTemplate {
      * An object literal and the patch positions of the instructions that load it.
      */
     public static class ObjectLiteral {
+
         public final Object value;
         /**
-         * The interpretation of the position is platform dependent.
-         * For example, on AMD64, it is the displacement operand of a MOVQ instruction.
+         * The interpretation of the position is platform dependent. For example, on AMD64, it is the displacement
+         * operand of a MOVQ instruction.
          */
         public final int[] patchPosns;
 
@@ -168,8 +162,8 @@ public class T1XTemplate {
     public final ObjectLiteral[] objectLiterals;
 
     /**
-     * Describes the signature of a {@linkplain T1X_TEMPLATE template}
-     * in terms of register mapping for the parameters and stack usage.
+     * Describes the signature of a {@linkplain T1X_TEMPLATE template} in terms of register mapping for the parameters
+     * and stack usage.
      */
     public final Sig sig;
 
@@ -179,6 +173,7 @@ public class T1XTemplate {
     }
 
     static final class SafepointArray {
+
         T1XSafepoint[] data = new T1XSafepoint[10];
         int size;
 
@@ -221,6 +216,7 @@ public class T1XTemplate {
     }
 
     public static class SafepointsBuilder {
+
         SafepointArray safepointsArray;
         Safepoints safepoints;
         int directCalls;
@@ -258,9 +254,8 @@ public class T1XTemplate {
         }
 
         /**
-         * Adds a safepoint for non-template code. Such a safepoint must come
-         * after all template code safepoints. This way we know that the
-         * template slots are dead and so can be ignored in the gc maps.
+         * Adds a safepoint for non-template code. Such a safepoint must come after all template code safepoints. This
+         * way we know that the template slots are dead and so can be ignored in the gc maps.
          *
          * @param bci
          * @param safepoint
@@ -393,6 +388,7 @@ public class T1XTemplate {
      * Describes an argument or return value of a {@linkplain T1X_TEMPLATE template} method.
      */
     public static class Arg {
+
         /**
          * The kind of this arg.
          */
@@ -405,9 +401,12 @@ public class T1XTemplate {
          */
         public final CiRegister reg;
 
+        public final CiStackSlot stackSlot;
+
         /**
-         * The operand stack index of the slot(s) holding this arg's value.
-         * This will be -1 if this arg does not get its value from the operand stack.
+         * The operand stack index of the slot(s) holding this arg's value. This will be -1 if this arg does not get its
+         * value from the operand stack.
+         *
          * @see Slot
          */
         public final int slot;
@@ -417,20 +416,28 @@ public class T1XTemplate {
             this.name = name;
             this.reg = reg;
             this.slot = slot;
+            this.stackSlot = null;
+        }
+
+        public Arg(Kind kind, CiStackSlot stackSlot, String name, int slot) {
+            this.kind = kind;
+            this.name = name;
+            this.stackSlot = stackSlot;
+            this.slot = slot;
+            this.reg = null;
         }
 
         /**
-         * Determines if this arg gets its value from the operand stack.
-         * If this arg represents the return value, then this method
-         * determines if the result is written to the stack.
+         * Determines if this arg gets its value from the operand stack. If this arg represents the return value, then
+         * this method determines if the result is written to the stack.
          */
         public boolean isStack() {
             return slot >= 0;
         }
 
         /**
-         * Gets the number of stack slots holding this arg's value.
-         * This will be 0 if this arg does not get its value from the stack.
+         * Gets the number of stack slots holding this arg's value. This will be 0 if this arg does not get its value
+         * from the stack.
          */
         public int stackSlots() {
             if (slot < 0) {
@@ -447,10 +454,11 @@ public class T1XTemplate {
     }
 
     /**
-     * Describes the signature of a {@linkplain T1X_TEMPLATE template}
-     * in terms of register mapping for the parameters and stack usage.
+     * Describes the signature of a {@linkplain T1X_TEMPLATE template} in terms of register mapping for the parameters
+     * and stack usage.
      */
     public static class Sig {
+
         /**
          * The parameters of the template method.
          */
@@ -462,8 +470,13 @@ public class T1XTemplate {
         public final Arg out;
 
         /**
-         * The net adjustment in terms of slots to the operand stack based on
-         * the stack-based parameters and stack-based result of the template.
+         * A scratch register that is being used by templates for target address calculation.
+         */
+        public final Arg scratch;
+
+        /**
+         * The net adjustment in terms of slots to the operand stack based on the stack-based parameters and stack-based
+         * result of the template.
          */
         public final int stackDelta;
 
@@ -473,9 +486,10 @@ public class T1XTemplate {
         public final int stackArgs;
 
         @HOSTED_ONLY
-        public Sig(Arg[] in, Arg out) {
+        public Sig(Arg[] in, Arg out, Arg scratch) {
             this.in = in;
             this.out = out;
+            this.scratch = scratch;
 
             int stackDelta = out.stackSlots();
             int stackArgs = 0;
@@ -562,13 +576,15 @@ public class T1XTemplate {
     }
 
     /**
-     * Finds the platform dependent positions needed to patch instructions that load
-     * an object from the object literals array immediately preceding the code array in memory.
+     * Finds the platform dependent positions needed to patch instructions that load an object from the object literals
+     * array immediately preceding the code array in memory.
      */
     @HOSTED_ONLY
     static int[] findDataPatchPosns(MaxTargetMethod source, int dispFromCodeStart) {
         if (T1X.isAMD64()) {
             return AMD64T1XCompilation.findDataPatchPosns(source, dispFromCodeStart);
+        } else if (T1X.isARM()) {
+            return ARMV7T1XCompilation.findDataPatchPosns(source, dispFromCodeStart);
         } else {
             throw T1X.unimplISA();
         }
@@ -588,9 +604,16 @@ public class T1XTemplate {
             Kind kind = kinds[i];
             Integer slotObj = slots.get(i);
             int slot = slotObj == null ? -1 : slotObj;
-            assert cc.locations[i].isRegister() : "templates with non-reg args are not supported: " + method;
-            CiRegister reg = cc.locations[i].asRegister();
-            in[i] = new Arg(kind, reg, localVarName(method, localVarIndex, kind), slot);
+            assert cc.locations[i].isRegister() || (cc.locations[i].isStackSlot() && hasLongValues(cc) && T1X.isARM()) : "templates with non-reg args are not supported: " + method;
+
+            if (cc.locations[i].isRegister()) {
+                CiRegister reg = cc.locations[i].asRegister();
+                in[i] = new Arg(kind, reg, localVarName(method, localVarIndex, kind), slot);
+            } else {
+                assert cc.locations[i].isStackSlot();
+                CiStackSlot reg = (CiStackSlot) cc.locations[i];
+                in[i] = new Arg(kind, reg, localVarName(method, localVarIndex, kind), slot);
+            }
             localVarIndex += kind.stackSlots;
         }
         Kind outKind = sig.resultKind();
@@ -600,8 +623,18 @@ public class T1XTemplate {
             outSlot = slot.value();
         }
         Arg out = new Arg(outKind, regConfig.getReturnRegister(WordUtil.ciKind(outKind, true)), null, outSlot);
-        Sig s = new Sig(in, out);
+        Arg scratch = new Arg(outKind, regConfig.getReturnRegister(WordUtil.ciKind(outKind, true)), null, outSlot);
+        Sig s = new Sig(in, out, scratch);
         return s;
+    }
+
+    private boolean hasLongValues(CiCallingConvention cc) {
+        for (int i = 0; i < cc.locations.length; i++) {
+            if (cc.locations[i].kind == CiKind.Long) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @HOSTED_ONLY
@@ -617,7 +650,8 @@ public class T1XTemplate {
                 }
             }
             if (s != null) {
-                assert !slots.containsValue(s.value()) : "operand stack index of " + sig.parameterDescriptorAt(i).toKind() + " parameter " + i + " of " + template + " conflicts with another parameter";
+                assert !slots.containsValue(s.value()) : "operand stack index of " + sig.parameterDescriptorAt(i).toKind() + " parameter " + i + " of " + template +
+                                " conflicts with another parameter";
                 slots.put(i, s.value());
             }
         }

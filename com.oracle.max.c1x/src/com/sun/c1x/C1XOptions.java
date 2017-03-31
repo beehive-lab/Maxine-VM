@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,12 +17,10 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.c1x;
+
+import com.oracle.max.criutils.TTY.*;
 
 /**
  * This class encapsulates options that control the behavior of the C1X compiler.
@@ -62,6 +62,8 @@ public final class C1XOptions {
      * See {@link Filter#Filter(String, Object)}.
      */
     public static String  PrintFilter                        = null;
+    public static boolean DebugMethods                       = ____;
+
 
     // printing settings
     public static boolean PrintHIR                           = ____;
@@ -83,6 +85,7 @@ public final class C1XOptions {
     public static int     TraceBytecodeParserLevel           = 0;
     public static boolean PrintAssumptions                   = ____;
     public static boolean PrintInlinedIntrinsics             = ____;
+    public static boolean OmmitAssembly                      = false;
 
     // IR checking
     public static boolean InterpretInvokedMethods            = ____;
@@ -164,6 +167,35 @@ public final class C1XOptions {
 
         // turn detailed assertions on when the general assertions are on (misusing the assert keyword for this)
         assert (DetailedAsserts = true) == true;
+        initBootImageOptions();
+    }
+
+    public static void initBootImageOptions() {
+        String value = System.getenv("PRINT_CFG");
+        if (value == null || value.isEmpty()) {
+            PrintCFGToFile = false;
+        } else {
+            PrintCFGToFile = Integer.parseInt(value) == 1 ? true : false;
+            OmmitAssembly = true;
+        }
+        value = System.getenv("PRINT_HIR");
+        if (value == null || value.isEmpty()) {
+            PrintHIR = false;
+        } else {
+            PrintHIR = Integer.parseInt(value) == 1 ? true : false;
+        }
+        value = System.getenv("PRINT_FILTER");
+        if (value == null || value.isEmpty()) {
+            PrintFilter = null;
+        } else {
+            PrintFilter = new String(value);
+        }
+        value = System.getenv("ENABLE_DEBUG_METHODS_ID");
+        if (value == null || value.isEmpty()) {
+            DebugMethods = false;
+        } else {
+            DebugMethods = true;
+        }
     }
 
     public static void setOptimizationLevel(int level) {

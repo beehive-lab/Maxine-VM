@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.tele.method;
 
@@ -140,12 +138,40 @@ public final class TeleDisassembler {
         }
     }
 
+    // TODO: (CK) Port to ARMV7
+    private static class ARMV7LoadLiteralParser extends LoadLiteralParser {
+
+        ARMV7LoadLiteralParser(Disassembler disassembler, Address codeStart) {
+            super(disassembler, codeStart);
+        }
+
+        @Override
+        boolean loadsLiteralData(DisassembledInstruction disassembledInstruction) {
+            if (disassembledInstruction.arguments().size() == 2 && Utils.first(disassembledInstruction.arguments()) instanceof AMD64GeneralRegister64 &&
+                            Utils.last(disassembledInstruction.template().operands()) instanceof X86OffsetParameter &&
+                            ((X86Template) disassembledInstruction.template()).addressSizeAttribute() == WordWidth.BITS_64 &&
+                            ((X86Template) disassembledInstruction.template()).rmCase() == X86TemplateContext.RMCase.SDWORD) {
+                return true;
+            }
+            return false;
+        }
+
+        // TODO: (CK) Port to ARMV7
+        @Override
+        Address literalAddress(DisassembledInstruction disassembledInstruction) {
+            final ImmediateArgument immediateArgument = (ImmediateArgument) disassembledInstruction.arguments().get(1);
+            return Address.fromLong(disassembledInstruction.addressForRelativeAddressing().plus(immediateArgument).asLong());
+        }
+    }
+
     private static LoadLiteralParser createLiteralParser(final Platform platform, Disassembler disassembler, Address codeStart, byte [] code) {
         switch (platform.isa) {
             case AMD64: {
                 return new AMD64LoadLiteralParser(disassembler, codeStart);
             }
-            case ARM:
+            case ARM: {
+                return new ARMV7LoadLiteralParser(disassembler, codeStart);
+            }
             case PPC:
             case IA32:
             case SPARC: {

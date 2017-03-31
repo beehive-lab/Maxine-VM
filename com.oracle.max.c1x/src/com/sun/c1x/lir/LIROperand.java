@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.c1x.lir;
 
@@ -35,9 +33,11 @@ public class LIROperand {
      * The value of the operand.
      */
     CiValue value;
+    CiValue valueHigh;
 
-    LIROperand(CiValue value) {
+    LIROperand(CiValue value, CiValue valueHigh) {
         this.value = value;
+        this.valueHigh = valueHigh;
     }
 
     /**
@@ -48,6 +48,10 @@ public class LIROperand {
      */
     public CiValue value(LIRInstruction inst) {
         return value;
+    }
+
+    public CiValue valueHigh(LIRInstruction inst) {
+        return valueHigh;
     }
 
     @Override
@@ -62,7 +66,7 @@ public class LIROperand {
         final int index;
 
         LIRVariableOperand(int index) {
-            super(null);
+            super(null, null);
             this.index = index;
         }
 
@@ -95,7 +99,7 @@ public class LIROperand {
         int index;
 
         LIRAddressOperand(int base, int index, CiAddress address) {
-            super(address);
+            super(address, null);
             assert base != -1 || index != -1 : "address should have at least one variable part";
             this.base = base;
             this.index = index;

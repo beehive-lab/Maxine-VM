@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2013, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.oracle.max.vm.ext.graal;
 
@@ -67,6 +65,16 @@ public class MaxForeignCallsMap {
     public static void initialize(MaxRuntime runtime) {
         MaxForeignCallsMap.runtime = runtime;
         try {
+
+            createCiRuntimeCall(CiRuntimeCall.d2long, "d2long", RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
+            createCiRuntimeCall(CiRuntimeCall.f2long, "f2long", RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
+            createCiRuntimeCall(CiRuntimeCall.l2double, "l2double", RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
+            createCiRuntimeCall(CiRuntimeCall.l2float, "l2float", RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
+
+            createCiRuntimeCall(CiRuntimeCall.arithmeticlrem, "arithmeticlrem", RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
+            createCiRuntimeCall(CiRuntimeCall.arithmeticlurem, "arithmeticlurem", RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
+            createCiRuntimeCall(CiRuntimeCall.arithmeticludiv, "arithmeticludiv", RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
+
             createCiRuntimeCall(CiRuntimeCall.RegisterFinalizer, null, RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
             createCiRuntimeCall(CiRuntimeCall.CreateNullPointerException, null, RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);
             createCiRuntimeCall(CiRuntimeCall.CreateOutOfBoundsException, null, RegisterEffect.DESTROYS_REGISTERS, Transition.NOT_LEAF, true, ALL_LOCATIONS);

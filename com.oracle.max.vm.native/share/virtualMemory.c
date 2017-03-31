@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 #include "virtualMemory.h"
 #include "log.h"
@@ -65,8 +63,49 @@
 
 /* mmap returns MAP_FAILED on error, we convert to ALLOC_FAILED */
 static Address check_mmap_result(void *result) {
+#if log_MMAP
+	if(result == MAP_FAILED) {
+		switch(errno) {
+			case EACCES:
+			    log_println("EACCES\n");
+			break;
+			case EAGAIN:
+			    log_println("EAGAIN\n");
+			break;
+			case EBADF:
+			    log_println("EBADF\n");
+			break;
+			case EINVAL:
+			    log_println("EINVAL\n");
+			break;
+			case ENFILE:
+			    log_println("ENFILE\n");
+			break;
+			case ENODEV:
+			    log_println("ENODEV\n");
+			break;
+			case ENOMEM:
+			    log_println("ENOMEM\n");
+			break;
+			case EPERM:
+			    log_println("EPERM\n");
+			break;
+			case ETXTBSY:
+			    log_println("ETXTBSY\n");
+			break;
+			default:
+			    log_println("UNKNOWN\n");
+			break;
+		}
+	}
+#endif
     return ((Address) (result == (void *) MAP_FAILED ? ALLOC_FAILED : result));
 }
+
+#ifdef arm
+  static int attempt = 0;
+  static Address allocAddress = 0x0;
+#endif
 
 /* Generic virtual space allocator.
  * If the address parameters is specified, allocate at the specified address and fail if it cannot be allocated.
@@ -74,11 +113,22 @@ static Address check_mmap_result(void *result) {
  * Use PROT_NONE if protNone is true, otherwise set all protection (i.e., allow any type of access).
  */
 Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean reserveSwap, jboolean protNone, int type) {
+#ifdef arm
+    //We have to make sure that in ARM 32 bit archs we always allocate in positive memory addresses.
+    if(attempt == 0) {
+        attempt++;
+        if(address == 0x0) {
+            address = 0x10000000;
+            allocAddress = address;
+        }
+    } else {
+        address = allocAddress;
+    }
+#endif
   int flags = MAP_PRIVATE | MAP_ANON;
 #if os_LINUX
   /* For some reason, subsequent calls to mmap to allocate out of the space
    * reserved here only work if the reserved space is in 32-bit space. */
-//  flags |= MAP_32BIT;
 #endif
   int prot = protNone == JNI_TRUE ? PROT_NONE : PROT;
   if (reserveSwap == JNI_FALSE) {
@@ -87,7 +137,6 @@ Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean r
   if (address != 0) {
 	  flags |= MAP_FIXED;
   }
-
   void * result = mmap((void*) address, (size_t) size, prot, flags, -1, 0);
 
 #if log_LOADER
@@ -97,13 +146,36 @@ Address virtualMemory_allocatePrivateAnon(Address address, Size size, jboolean r
 					protNone==JNI_TRUE ? "none" : "all",
 					result);
 #endif
+#ifdef arm
+  address =  check_mmap_result(result);
+  allocAddress = address + size;
+  return address;
+#else
   return check_mmap_result(result);
+#endif
 }
 
 
 Address virtualMemory_mapFile(Size size, jint fd, Size offset) {
+#ifdef arm
+    Address address = 0x0;
+    if(attempt == 0) {
+        attempt++;
+        if(address == 0x0) {
+            address = 0x10000000;
+            allocAddress = address;
+        }
+    } else {
+        address = allocAddress;
+    }
+    void *result = mmap((void *)address, (size_t) size, PROT, MAP_PRIVATE, fd, (off_t) offset);
+    address = check_mmap_result(result);
+    allocAddress = address + size;
+    return address;
+#else
 	return check_mmap_result(mmap(0, (size_t) size, PROT, MAP_PRIVATE, fd, (off_t) offset));
- }
+#endif
+}
 
 JNIEXPORT jlong JNICALL
 Java_com_sun_max_memory_VirtualMemory_virtualMemory_1mapFile(JNIEnv *env, jclass c, jlong size, jint fd, jlong offset) {

@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
+ * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -15,17 +17,13 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.cri.ci;
 
 import java.util.*;
 
-import com.sun.cri.ci.CiCallingConvention.Type;
-import com.sun.cri.ci.CiRegister.RegisterFlag;
+import com.sun.cri.ci.CiCallingConvention.*;
+import com.sun.cri.ci.CiRegister.*;
 import com.sun.cri.ri.*;
 
 /**
@@ -54,9 +52,8 @@ public class CiRegisterConfig implements RiRegisterConfig {
     public final CiRegister[] allocatable;
 
     /**
-     * The set of registers that can be used by the register allocator,
-     * {@linkplain CiRegister#categorize(CiRegister[]) categorized} by register
-     * {@linkplain RegisterFlag flags}.
+     * The set of registers that can be used by the register allocator, {@linkplain CiRegister#categorize(CiRegister[])
+     * categorized} by register {@linkplain RegisterFlag flags}.
      */
     public final EnumMap<RegisterFlag, CiRegister[]> categorized;
 
@@ -91,38 +88,31 @@ public class CiRegisterConfig implements RiRegisterConfig {
     public final CiRegister floatingPointReturn;
 
     /**
-     * The map from register {@linkplain CiRegister#number numbers} to register
-     * {@linkplain RiRegisterAttributes attributes} for this register configuration.
+     * The map from register {@linkplain CiRegister#number numbers} to register {@linkplain RiRegisterAttributes
+     * attributes} for this register configuration.
      */
     public final RiRegisterAttributes[] attributesMap;
 
     /**
-     * The scratch register.
+     * The scratch register(s).
      */
     public final CiRegister scratch;
+    public final CiRegister scratch1;
 
     /**
      * The frame offset of the first stack argument for each calling convention {@link CiCallingConvention.Type}.
      */
     public final int[] stackArg0Offsets = new int[CiCallingConvention.Type.VALUES.length];
 
-    public CiRegisterConfig(
-                    CiRegister frame,
-                    CiRegister integralReturn,
-                    CiRegister floatingPointReturn,
-                    CiRegister scratch,
-                    CiRegister[] allocatable,
-                    CiRegister[] callerSave,
-                    CiRegister[] parameters,
-                    CiCalleeSaveLayout csl,
-                    CiRegister[] allRegisters,
-                    Map<Integer, CiRegister> roles) {
+    public CiRegisterConfig(CiRegister frame, CiRegister integralReturn, CiRegister floatingPointReturn, CiRegister scratch, CiRegister scratch1, CiRegister[] allocatable, CiRegister[] callerSave,
+                            CiRegister[] parameters, CiCalleeSaveLayout csl, CiRegister[] allRegisters, Map<Integer, CiRegister> roles) {
         this.frame = frame;
         this.csl = csl;
         this.allocatable = allocatable;
         this.callerSave = callerSave;
         assert !Arrays.asList(allocatable).contains(scratch);
         this.scratch = scratch;
+        this.scratch1 = scratch1;
         EnumMap<RegisterFlag, CiRegister[]> categorizedParameters = CiRegister.categorize(parameters);
         this.cpuParameters = categorizedParameters.get(RegisterFlag.CPU);
         this.fpuParameters = categorizedParameters.get(RegisterFlag.FPU);
@@ -156,6 +146,7 @@ public class CiRegisterConfig implements RiRegisterConfig {
         this.allocatable = src.allocatable;
         this.callerSave = src.callerSave;
         this.scratch = src.scratch;
+        this.scratch1 = src.scratch1;
         this.cpuParameters = src.cpuParameters;
         this.fpuParameters = src.fpuParameters;
         this.categorized = src.categorized;
@@ -182,23 +173,25 @@ public class CiRegisterConfig implements RiRegisterConfig {
         return scratch;
     }
 
+    public CiRegister getScratchRegister1() {
+        return scratch1;
+    }
+
     /**
      * {@inheritDoc}
-     *
-     * This implementation assigns all available registers to parameters before assigning
-     * any stack slots to parameters.
+     * <p/>
+     * This implementation assigns all available registers to parameters before assigning any stack slots to parameters.
      */
     public CiCallingConvention getCallingConvention(Type type, CiKind[] parameters, CiTarget target, boolean stackOnly) {
         CiValue[] locations = new CiValue[parameters.length];
-
         int currentGeneral = 0;
-        int currentXMM = 0;
+        int currentFloat = 0;
         int firstStackIndex = (stackArg0Offsets[type.ordinal()]) / target.spillSlotSize;
         int currentStackIndex = firstStackIndex;
 
         for (int i = 0; i < parameters.length; i++) {
+            locations[i] = null;
             final CiKind kind = parameters[i];
-
             switch (kind) {
                 case Byte:
                 case Boolean:
@@ -208,29 +201,58 @@ public class CiRegisterConfig implements RiRegisterConfig {
                 case Long:
                 case Object:
                     if (!stackOnly && currentGeneral < cpuParameters.length) {
-                        CiRegister register = cpuParameters[currentGeneral++];
+                        if (kind.isLong() && target.arch.is32bit()) {
+                            if ((cpuParameters.length - currentGeneral) < 2) {
+                                currentGeneral = cpuParameters.length;
+                                break;
+                            }
+                            if (currentGeneral % 2 != 0) {
+                                currentGeneral++;
+                            }
+                        }
+                        CiRegister register = cpuParameters[currentGeneral];
                         locations[i] = register.asValue(kind);
+                        if (kind.isLong() && target.arch.is32bit()) {
+                            currentGeneral += 2;
+                        } else {
+                            currentGeneral++;
+                        }
                     }
                     break;
-
                 case Float:
                 case Double:
-                    if (!stackOnly && currentXMM < fpuParameters.length) {
-                        CiRegister register = fpuParameters[currentXMM++];
+                    if (!stackOnly && currentFloat < fpuParameters.length) {
+                        if (kind.isDouble() && target.arch.is32bit()) {
+                            if ((fpuParameters.length - currentFloat) < 2) {
+                                currentFloat = fpuParameters.length;
+                                break;
+                            }
+                            if (currentFloat % 2 != 0) {
+                                currentFloat++;
+                            }
+                        }
+                        CiRegister register = fpuParameters[currentFloat];
                         locations[i] = register.asValue(kind);
+                        if (kind.isDouble() && target.arch.is32bit()) {
+                            currentFloat += 2;
+                        } else {
+                            currentFloat++;
+                        }
                     }
                     break;
-
                 default:
                     throw new InternalError("Unexpected parameter kind: " + kind);
             }
 
             if (locations[i] == null) {
+                if (target.arch.is32bit() && (kind.stackKind() == CiKind.Long || kind.stackKind() == CiKind.Double) && ((currentStackIndex * target.spillSlotSize) % 8 != 0)) {
+                    currentStackIndex++;
+                }
+
                 locations[i] = CiStackSlot.get(kind.stackKind(), currentStackIndex, !type.out);
                 currentStackIndex += target.spillSlots(kind);
             }
         }
-
         return new CiCallingConvention(locations, (currentStackIndex - firstStackIndex) * target.spillSlotSize);
     }
 
@@ -285,15 +307,9 @@ public class CiRegisterConfig implements RiRegisterConfig {
             }
             stackArg0OffsetsMap.append(t).append(" -> ").append(stackArg0Offsets[t.ordinal()]);
         }
-        String res = String.format(
-             "Allocatable: " + Arrays.toString(getAllocatableRegisters()) + "%n" +
-             "CallerSave:  " + Arrays.toString(getCallerSaveRegisters()) + "%n" +
-             "CalleeSave:  " + getCalleeSaveLayout() + "%n" +
-             "CPU Params:  " + Arrays.toString(cpuParameters) + "%n" +
-             "FPU Params:  " + Arrays.toString(fpuParameters) + "%n" +
-             "VMRoles:     " + roleMap + "%n" +
-             "stackArg0:   " + stackArg0OffsetsMap + "%n" +
-             "Scratch:     " + getScratchRegister() + "%n");
+        String res = String.format("Allocatable: " + Arrays.toString(getAllocatableRegisters()) + "%n" + "CallerSave:  " + Arrays.toString(getCallerSaveRegisters()) + "%n" + "CalleeSave:  " +
+                getCalleeSaveLayout() + "%n" + "CPU Params:  " + Arrays.toString(cpuParameters) + "%n" + "FPU Params:  " + Arrays.toString(fpuParameters) + "%n" + "VMRoles:     " + roleMap +
+                "%n" + "stackArg0:   " + stackArg0OffsetsMap + "%n" + "Scratch:     " + getScratchRegister() + "%n");
         return res;
     }
 }

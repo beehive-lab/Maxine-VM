@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,25 +17,22 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.layout.hom;
 
 import static com.sun.max.vm.VMConfiguration.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.platform.*;
 import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.layout.*;
-import com.sun.max.vm.layout.Layout.HeaderField;
-import com.sun.max.vm.layout.SpecificLayout.ObjectCellVisitor;
-import com.sun.max.vm.layout.SpecificLayout.ObjectMirror;
+import com.sun.max.vm.layout.Layout.*;
+import com.sun.max.vm.layout.SpecificLayout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -90,6 +89,7 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
     protected final int arrayLengthOffset;
 
     public HomGeneralLayout() {
+        assert !Platform.target().arch.is32bit() : "HomGeneralLayout not implemented for 32bit archs";
         this.miscOffset = 0 - Word.size();
         this.hubOffset = miscOffset - Word.size();
         this.arrayLengthOffset = hubOffset - Word.size();
@@ -259,5 +259,25 @@ public class HomGeneralLayout extends AbstractLayout implements GeneralLayout {
             return false;
         }
         return true;
+    }
+
+    @INLINE
+    public final Word compareAndSwapHash(Accessor accessor, Word expectedValue, Word newValue) {
+        throw FatalError.unimplemented();
+    }
+
+    @INLINE
+    public Word readHash(Accessor accessor) {
+        throw FatalError.unimplemented();
+    }
+
+    @INLINE
+    public void writeHash(Accessor accessor, Word value) {
+        throw FatalError.unimplemented();
+    }
+
+    @INLINE
+    public long compareAndSwapMiscAndHash(Accessor accessor, long expectedValue, long newValue) {
+        throw FatalError.unimplemented();
     }
 }

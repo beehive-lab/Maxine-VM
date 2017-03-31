@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,39 +17,47 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.jdk;
 
-import static com.sun.max.platform.Platform.*;
-import static com.sun.max.vm.MaxineVM.*;
-import static com.sun.max.vm.VMConfiguration.*;
-import static com.sun.max.vm.VMOptions.*;
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
-import static com.sun.max.vm.VMProperty.*;
-
-import java.io.*;
-import java.nio.charset.*;
-import java.util.*;
-
-import sun.misc.*;
-import sun.reflect.*;
-
 import com.sun.max.annotate.*;
-import com.sun.max.lang.*;
-import com.sun.max.platform.*;
-import com.sun.max.program.*;
-import com.sun.max.unsafe.*;
-import com.sun.max.util.*;
+import com.sun.max.lang.Strings;
+import com.sun.max.platform.OS;
+import com.sun.max.platform.Platform;
+import com.sun.max.program.ProgramError;
+import com.sun.max.unsafe.CString;
+import com.sun.max.unsafe.Pointer;
+import com.sun.max.unsafe.Word;
+import com.sun.max.util.Utf8Exception;
 import com.sun.max.vm.*;
 import com.sun.max.vm.MaxineVM.NativeProperty;
-import com.sun.max.vm.actor.holder.*;
-import com.sun.max.vm.object.*;
-import com.sun.max.vm.runtime.*;
-import com.sun.max.vm.type.*;
+import com.sun.max.vm.actor.holder.ClassActor;
+import com.sun.max.vm.actor.holder.Hub;
+import com.sun.max.vm.object.ArrayAccess;
+import com.sun.max.vm.object.ObjectAccess;
+import com.sun.max.vm.runtime.FatalError;
+import com.sun.max.vm.type.BootClassLoader;
+import com.sun.max.vm.type.Kind;
+import sun.misc.Launcher;
+import sun.misc.Perf;
+import sun.reflect.Reflection;
+
+import java.io.File;
+import java.io.InputStream;
+import java.io.PrintStream;
+import java.nio.charset.Charset;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.TreeMap;
+
+import static com.sun.max.platform.Platform.platform;
+import static com.sun.max.vm.MaxineVM.vm;
+import static com.sun.max.vm.VMConfiguration.vmConfig;
+import static com.sun.max.vm.VMOptions.register;
+import static com.sun.max.vm.VMOptions.verboseOption;
+import static com.sun.max.vm.VMProperty.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
 
 /**
  * Implements method substitutions for {@link java.lang.System java.lang.System}.
@@ -127,12 +137,12 @@ public final class JDK_java_lang_System {
     /**
      * Performs an array copy in the forward direction.
      *
-     * @param kind the element kind
-     * @param fromArray the source array
-     * @param fromIndex the start index in the source array
-     * @param toArray the destination array
-     * @param toIndex the start index in the destination array
-     * @param length the number of elements to copy
+     * @param kind                  the element kind
+     * @param fromArray             the source array
+     * @param fromIndex             the start index in the source array
+     * @param toArray               the destination array
+     * @param toIndex               the start index in the destination array
+     * @param length                the number of elements to copy
      * @param toComponentClassActor the class actor representing the component type of the destination array
      */
     private static void arrayCopyForward(final Kind kind, Object fromArray, int fromIndex, Object toArray, int toIndex, int length, ClassActor toComponentClassActor) {
@@ -202,7 +212,7 @@ public final class JDK_java_lang_System {
                 break;
             }
             default: {
-                throw ProgramError.unknownCase();
+                throw ProgramError.unknownCase("arrayCopyForward");
             }
         }
     }
@@ -210,12 +220,12 @@ public final class JDK_java_lang_System {
     /**
      * Performs an array copy in the backward direction.
      *
-     * @param kind the element kind
+     * @param kind      the element kind
      * @param fromArray the source array
      * @param fromIndex the start index in the source array
-     * @param toArray the destination array
-     * @param toIndex the start index in the destination array
-     * @param length the number of elements to copy
+     * @param toArray   the destination array
+     * @param toIndex   the start index in the destination array
+     * @param length    the number of elements to copy
      */
     private static void arrayCopyBackward(final Kind kind, Object fromArray, int fromIndex, Object toArray, int toIndex, int length) {
         switch (kind.asEnum) {
@@ -280,7 +290,7 @@ public final class JDK_java_lang_System {
                 break;
             }
             default: {
-                throw ProgramError.unknownCase();
+                throw ProgramError.unknownCase("arrayCopyBackward");
             }
         }
     }
@@ -288,12 +298,12 @@ public final class JDK_java_lang_System {
     /**
      * Copies a portion of an array from one array to another (possibly the same) array.
      *
-     * @see java.lang.System#arraycopy(Object, int, Object, int, int)
      * @param fromArray the source array
      * @param fromIndex the start index in the source array
-     * @param toArray the destination array
-     * @param toIndex the start index in the destination array
-     * @param length the number of elements to copy
+     * @param toArray   the destination array
+     * @param toIndex   the start index in the destination array
+     * @param length    the number of elements to copy
+     * @see java.lang.System#arraycopy(Object, int, Object, int, int)
      */
     @SUBSTITUTE
     public static void arraycopy(Object fromArray, int fromIndex, Object toArray, int toIndex, int length) {
@@ -349,9 +359,9 @@ public final class JDK_java_lang_System {
     /**
      * Gets the default (identity) hashcode for an object.
      *
-     * @see java.lang.System#identityHashCode(Object)
      * @param object the object for which to get the hashcode
      * @return the identity hashcode of the specified object; {@code 0} if the object reference is null
+     * @see java.lang.System#identityHashCode(Object)
      */
     @SUBSTITUTE
     public static int identityHashCode(Object object) {
@@ -365,8 +375,8 @@ public final class JDK_java_lang_System {
      * Sets a property in the specified property set, if it has not already been set.
      *
      * @param properties the properties set in which to set the property
-     * @param name the name of the property
-     * @param value the value to which the property will be set if it doesn't already have a value
+     * @param name       the name of the property
+     * @param value      the value to which the property will be set if it doesn't already have a value
      * @return the value,whether already set of set by this call
      */
     private static String setIfAbsent(Properties properties, String name, String value) {
@@ -508,8 +518,7 @@ public final class JDK_java_lang_System {
     private static String getISA() {
         switch (Platform.platform().isa) {
             case ARM:
-                FatalError.unimplemented();
-                break;
+                return "arm";
             case AMD64:
                 return "amd64";
             case IA32:
@@ -525,13 +534,13 @@ public final class JDK_java_lang_System {
 
     /**
      * Gets a list of this VM's target instruction sets.
+     *
      * @return a list of this VM's target ISAs
      */
     private static String getISAList() {
         switch (Platform.platform().isa) {
             case ARM:
-                FatalError.unimplemented();
-                break;
+                return "armv7";
             case AMD64:
                 return "amd64";
             case IA32:
@@ -553,10 +562,10 @@ public final class JDK_java_lang_System {
      * Joins an array of strings into a single string.
      *
      * @param separator the separator string
-     * @param strings an array of strings to be joined. Any element of this array that is null or has a length of zero
-     *            is ignored.
+     * @param strings   an array of strings to be joined. Any element of this array that is null or has a length of zero
+     *                  is ignored.
      * @return the result of joining all the non-null and non-empty values in {@code strings} as a single string with
-     *         {@code separator} inserted between each pair of strings
+     * {@code separator} inserted between each pair of strings
      */
     private static String join(String separator, String... strings) {
         int length = 0;
@@ -586,16 +595,17 @@ public final class JDK_java_lang_System {
     }
 
     private static final VMStringOption classpathOption = register(new VMStringOption("-cp", true, null,
-        "A " + File.pathSeparatorChar + " separated list of directories, JAR archives, and ZIP archives to search for class files.") {
+            "A " + File.pathSeparatorChar + " separated list of directories, JAR archives, and ZIP archives to search for class files.") {
         @Override
         public boolean matches(Pointer arg) {
             return CString.equals(arg, prefix) || CString.equals(arg, "-classpath");
         }
+
         @Override
         public void printHelp() {
             VMOptions.printHelpForOption(category(), "-cp", " <class search path of directories and zip/jar files>", null);
             VMOptions.printHelpForOption(category(), "-classpath",
-                " <class search path of directories and zip/jar files>", help);
+                    " <class search path of directories and zip/jar files>", help);
         }
     }, MaxineVM.Phase.PRISTINE);
 
@@ -720,7 +730,7 @@ public final class JDK_java_lang_System {
                 initBasicUnixProperties(properties);
                 break;
             default:
-                throw ProgramError.unknownCase();
+                throw ProgramError.unknownCase("initProperties OS name");
         }
 
         // 5. set up user-specific information
@@ -783,6 +793,8 @@ public final class JDK_java_lang_System {
         properties.setProperty(JAVA_CLASS_PATH.property, javaClassPath);
         JAVA_CLASS_PATH.setValue(javaClassPath);
 
+
+
         // 9. load the native code for zip and java libraries
         BootClassLoader.BOOT_CLASS_LOADER.loadJavaAndZipNativeLibraries(javaAndZipLibraryPaths[0], javaAndZipLibraryPaths[1]);
 
@@ -811,6 +823,10 @@ public final class JDK_java_lang_System {
             }
         }
 
+        String expandedClassPath = expandClassLibPath(System.getProperty("java.class.path"), "jar", false);
+        properties.setProperty(JAVA_CLASS_PATH.property, expandedClassPath);
+        JAVA_CLASS_PATH.setValue(expandedClassPath);
+
         // 13. reinitialize the Java launcher so that it reflects the actual application classpath
         Launcher_clinit();
 
@@ -818,12 +834,59 @@ public final class JDK_java_lang_System {
     }
 
     /**
+     * This method expands directories of jar files when passed as <dir>/* to classpath.
+     * @param path The jar directory
+     * @param suffix The suffix for the files to expand upon
+     * @param debug flag
+     * @return the expanded class path
+     */
+    private static  String expandClassLibPath(String path, String suffix, boolean debug) {
+        if (path.equals("") || path == null) {
+            return "";
+        }
+        String newClassPath = "";
+        String[] paths = path.split(":");
+        for (String p : paths) {
+            if (debug) {
+                System.out.println("Process Path: " + p);
+            }
+            if (p.endsWith("*")) {
+                String potentialDir = p.substring(0, p.length() - 1);
+                if (debug) {
+                    System.out.println("Protential Dir: " + potentialDir);
+                }
+                File file = new File(potentialDir);
+                if (file.isDirectory()) {
+                    for (File f : file.listFiles()) {
+                        if (debug) {
+                            System.out.println("Process File in dir: " + f.getName());
+                        }
+                        if (f.getName().endsWith(suffix)) {
+                            if (debug) {
+                                System.out.println("Match");
+                            }
+                            newClassPath = newClassPath + ":" + f.getAbsolutePath();
+                        }
+                    }
+                }
+            } else {
+                newClassPath = newClassPath + ":" + p;
+            }
+        }
+        newClassPath = newClassPath.substring(1, newClassPath.length());
+        if (debug) {
+            System.out.println("New ClassPath: " + newClassPath);
+        }
+        return newClassPath;
+    }
+
+    /**
      * Initializes the sun.boot.library.path, sun.boot.path, java.endorsed.dirs and java.ext.dirs system properties when running on Unix.
      *
-     * @param properties the system properties
-     * @param javaHome the value of the java.home system property
+     * @param properties             the system properties
+     * @param javaHome               the value of the java.home system property
      * @param javaAndZipLibraryPaths an array of size 2 in which the path to the libjava.jnilib will be returned in
-     *            element 0 and the path to libzip.jnilib will be returned in element 1
+     *                               element 0 and the path to libzip.jnilib will be returned in element 1
      */
     @PLATFORM(os = "!windows")
     private static void initUnixPathProperties(Properties properties, String javaHome, String isa, String[] javaAndZipLibraryPaths) {
@@ -840,12 +903,12 @@ public final class JDK_java_lang_System {
             bootClassPath = bootClasspathOption.path();
         } else {
             String bootClassPathA = join(pathSeparator,
-                            asFilesystemPath(jreLibPath, "resources.jar"),
-                            asFilesystemPath(jreLibPath, "rt.jar"),
-                            asFilesystemPath(jreLibPath, "sunrsasign.jar"),
-                            asFilesystemPath(jreLibPath, "jsse.jar"),
-                            asFilesystemPath(jreLibPath, "jce.jar"),
-                            asFilesystemPath(jreLibPath, "charsets.jar"));
+                    asFilesystemPath(jreLibPath, "resources.jar"),
+                    asFilesystemPath(jreLibPath, "rt.jar"),
+                    asFilesystemPath(jreLibPath, "sunrsasign.jar"),
+                    asFilesystemPath(jreLibPath, "jsse.jar"),
+                    asFilesystemPath(jreLibPath, "jce.jar"),
+                    asFilesystemPath(jreLibPath, "charsets.jar"));
             if (JDK.JDK_VERSION == JDK.JDK_7) {
                 bootClassPathA = join(pathSeparator, bootClassPathA, asFilesystemPath(jreLibPath, "jfr.jar"));
                 if (os == OS.DARWIN) {
@@ -875,7 +938,7 @@ public final class JDK_java_lang_System {
                 javaExtDirs = new File(userHome, "Library/Java/Extensions").getAbsolutePath();
             }
             javaExtDirs = join(pathSeparator, javaExtDirs, asClasspath(extPath), "/Library/Java/Extensions", "/Network/Library/Java/Extensions",
-                            "/System/Library/Java/Extensions", "/usr/lib/java");
+                    "/System/Library/Java/Extensions", "/usr/lib/java");
         } else if (os == OS.MAXVE) {
             javaExtDirs = asClasspath(extPath);
         } else {
@@ -898,6 +961,7 @@ public final class JDK_java_lang_System {
     /**
      * Unlike similar properties, e.g. java.ext.dirs, Hotspot appends any command line definition of sun.boot.library.path
      * to the default value, instead of replacing it, so we copy that behavior.
+     *
      * @param properties
      * @param librariesPath
      */
@@ -915,10 +979,10 @@ public final class JDK_java_lang_System {
     /**
      * Initializes the sun.boot.library.path and sun.boot.path system properties when running on Windows.
      *
-     * @param properties the system properties
-     * @param javaHome the value of the java.home system property
+     * @param properties             the system properties
+     * @param javaHome               the value of the java.home system property
      * @param javaAndZipLibraryPaths an array of size 2 in which the path to the java.dll will be returned in
-     *            element 0 and the path to zip.dll will be returned in element 1
+     *                               element 0 and the path to zip.dll will be returned in element 1
      */
     @PLATFORM(os = "windows")
     private static void initWindowsPathProperties(Properties properties, String javaHome, String[] javaAndZipLibraryPaths) {
@@ -928,10 +992,10 @@ public final class JDK_java_lang_System {
     /**
      * Initializes the sun.boot.library.path, sun.boot.path, java.endorsed.dirs and java.ext.dirs system properties when running on Darwin with JDK6.
      *
-     * @param properties the system properties
-     * @param javaHome the value of the java.home system property
+     * @param properties             the system properties
+     * @param javaHome               the value of the java.home system property
      * @param javaAndZipLibraryPaths an array of size 2 in which the path to the {@code libjava.jnilib} will be returned in
-     *            element 0 and the path to {@code libzip.jnilib} will be returned in element 1
+     *                               element 0 and the path to {@code libzip.jnilib} will be returned in element 1
      */
     @PLATFORM(os = "darwin")
     private static void initDarwinJDK6PathProperties(Properties properties, String javaHome, String[] javaAndZipLibraryPaths) {
@@ -947,13 +1011,13 @@ public final class JDK_java_lang_System {
             bootClassPath = bootClasspathOption.path();
         } else {
             bootClassPath = join(pathSeparator,
-                        asFilesystemPath(classesPath, "classes.jar"),
-                        asFilesystemPath(classesPath, "ui.jar"),
-                        asFilesystemPath(classesPath, "laf.jar"),
-                        asFilesystemPath(classesPath, "sunrsasign.jar"),
-                        asFilesystemPath(classesPath, "jsse.jar"),
-                        asFilesystemPath(classesPath, "jce.jar"),
-                        asFilesystemPath(classesPath, "charsets.jar"));
+                    asFilesystemPath(classesPath, "classes.jar"),
+                    asFilesystemPath(classesPath, "ui.jar"),
+                    asFilesystemPath(classesPath, "laf.jar"),
+                    asFilesystemPath(classesPath, "sunrsasign.jar"),
+                    asFilesystemPath(classesPath, "jsse.jar"),
+                    asFilesystemPath(classesPath, "jce.jar"),
+                    asFilesystemPath(classesPath, "charsets.jar"));
         }
         SUN_BOOT_CLASS_PATH.setValue(setIfAbsent(properties, SUN_BOOT_CLASS_PATH.property, checkAugmentBootClasspath(bootClassPath)));
         javaAndZipLibraryPaths[0] = librariesPath;
@@ -1021,7 +1085,7 @@ public final class JDK_java_lang_System {
             case WINDOWS:
                 return libraryName + ".dll";
             default:
-                throw ProgramError.unknownCase();
+                throw ProgramError.unknownCase("mapLibraryName");
         }
     }
 
@@ -1037,6 +1101,7 @@ public final class JDK_java_lang_System {
      * @param name the name of the library to load
      * @see BootClassLoader#loadJavaAndZipNativeLibraries(String, String)
      */
+    @SuppressWarnings("deprecation")
     @SUBSTITUTE
     @NEVER_INLINE
     public static void loadLibrary(String name) throws Throwable {
