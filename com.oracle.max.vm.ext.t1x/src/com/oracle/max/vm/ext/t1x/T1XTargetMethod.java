@@ -503,8 +503,9 @@ public class T1XTargetMethod extends TargetMethod {
                 actualValues[i] = toLiveSlot(fa, accessValue);
             }
             debugFrame = new CiFrame(debugFrame.caller(), debugFrame.method, debugFrame.bci,
-				     debugFrame.rethrowException, actualValues,
-				     debugFrame.numLocals, debugFrame.numStack, debugFrame.numLocks);
+                                     debugFrame.rethrowException, actualValues,
+                                     debugFrame.numLocals, debugFrame.numStack,
+                                     debugFrame.numLocks);
         }
         return new CiDebugInfo(debugFrame, regRefMap, frameRefMap);
     }
@@ -706,11 +707,11 @@ public class T1XTargetMethod extends TargetMethod {
 
     private static int getInvokeCPI(byte[] code, int invokeBCI) {
         assert invokeBCI >= 0 : "illegal bytecode index";
-        assert code[invokeBCI] == (byte) Bytecodes.INVOKEINTERFACE
-	    || code[invokeBCI] == (byte) Bytecodes.INVOKESPECIAL
-	    || code[invokeBCI] == (byte) Bytecodes.INVOKESTATIC
-	    || code[invokeBCI] == (byte) Bytecodes.INVOKEVIRTUAL
-	    : "expected invoke bytecode at index " + invokeBCI + ", found " + String.format("0x%h", code[invokeBCI]);
+        assert code[invokeBCI] == (byte) Bytecodes.INVOKEINTERFACE ||
+            code[invokeBCI] == (byte) Bytecodes.INVOKESPECIAL ||
+            code[invokeBCI] == (byte) Bytecodes.INVOKESTATIC ||
+            code[invokeBCI] == (byte) Bytecodes.INVOKEVIRTUAL
+            : "expected invoke bytecode at index " + invokeBCI + ", found " + String.format("0x%h", code[invokeBCI]);
         return ((code[invokeBCI + 1] & 0xff) << 8) | (code[invokeBCI + 2] & 0xff);
     }
 
@@ -1149,9 +1150,9 @@ public class T1XTargetMethod extends TargetMethod {
                 addSlotPadding(info, "ostack (pad)");
             }
         } else {
-            assert frame.numStack == 0
-		|| frame.rethrowException && frame.numStack == 1
-		: "operand stack must be clear at exception handler or contain a single slot with exception";
+            assert frame.numStack == 0 ||
+                frame.rethrowException && frame.numStack == 1
+                : "operand stack must be clear at exception handler or contain a single slot with exception";
             // The ref maps for the handler address will expect a valid reference to exception in stack slot 0
             assert STACK_SLOTS_PER_JVMS_SLOT == 2;
             for (int pad = 0; pad < 1; pad++) {
