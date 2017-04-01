@@ -133,7 +133,7 @@
   </module>
   <module name="RegexpHeader">
     <property name="headerFile" value="java.header"/>
-    <property name="multiLines" value="2, 3, 4, 20, 21, 22, 23"/>
+    <property name="multiLines" value="2, 3, 4, 5, 6, 22, 23, 24, 25"/>
   </module>
   <module name="FileTabCharacter">
     <property name="severity" value="error"/>
