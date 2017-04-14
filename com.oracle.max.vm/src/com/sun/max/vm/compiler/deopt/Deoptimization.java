@@ -98,7 +98,7 @@ public class Deoptimization extends VmOperation {
     /**
      * Option for enabling use of deoptimization.
      */
-    public static boolean UseDeopt = false;
+    public static boolean UseDeopt = true;
 
     /**
      * A VM option for triggering deoptimization at fixed intervals.
