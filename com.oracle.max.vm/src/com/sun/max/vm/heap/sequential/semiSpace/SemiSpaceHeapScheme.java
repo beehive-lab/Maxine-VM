@@ -97,7 +97,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
      * It's enabled by default as the primary goal of this collector are simplicity and robustness,
      * not high performance.
      */
-    private static boolean VerifyReferences = true;
+    private static boolean VerifyReferences = false;
     static {
         VMOptions.addFieldOption("-XX:", "VerifyReferences", SemiSpaceHeapScheme.class, "Do extra verification for each reference scanned by the GC", MaxineVM.Phase.PRISTINE);
     }
