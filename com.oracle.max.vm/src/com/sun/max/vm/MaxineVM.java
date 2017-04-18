@@ -71,7 +71,7 @@ public final class MaxineVM {
 
     public static final String NAME = "Maxine Virtual Machine";
     public static final int MAJOR_VERSION = 2;
-    public static final int MINOR_VERSION = 0;
+    public static final int MINOR_VERSION = 1;
     public static final String VERSION_STRING = Integer.toString(MAJOR_VERSION) + "." + Integer.toString(MINOR_VERSION);
     public static final String HOME_URL = "http://labs.oracle.com/projects/maxine/";
     public static final int HARD_EXIT_CODE = -2;
