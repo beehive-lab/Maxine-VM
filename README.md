@@ -40,8 +40,9 @@ external collaborations.
 
 ## Wiki
 
-[Here](https://github.com/beehive-lab/Maxine-VM/wiki) you can find the
-original wiki pages (by Oracle) describing the internals of Maxine VM.
+[Here](https://community.oracle.com/community/java/java_hotspot_virtual_machine/maxine-vm) you
+can find the original wiki pages (by Oracle) describing the internals of
+Maxine VM.
 
 ## Status
 
