@@ -30,8 +30,9 @@ maxinevm@googlegroups.com
 
 #### Collaborations
 
-We welcome collaborations. Please
-contact [Christos Kotselidis](christos.kotselidis@manchester.ac.uk) for
+We welcome collaborations! Please
+contact
+[Christos Kotselidis](mailto:christos.kotselidis@manchester.ac.uk) for
 external collaborations.
 
 #### Relevant Projects
@@ -139,7 +140,7 @@ To run the Maxine Inspector issue `mx inspect`.
 
 ## Contributing
 
-We welcome contributions. Use pull requests on Github. However, note
+We welcome contributions! Use pull requests on Github. However, note
 that we are doing most development in a private git tree and we are
 working on a number of features which are not quite ready for public
 release. Therefore, we would strongly encourage you to get in touch
