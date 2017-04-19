@@ -67,10 +67,10 @@ For reporting new issues please see [Reporting Bugs](#reporting-bugs).
 
 Maxine VM is being developed and tested on the following configurations:
 
-| Architectures | OS | Java |
-| ------------- | -- | ---- |
-| X86 | Ubuntu 14.04 | OpenJDK 7 u25 |
-| ARMv7 | Ubuntu 14.04 | OpenJDK 7 u25 |
+| Architectures | OS           | Java          |
+| ------------- | ------------ | ------------- |
+| X86           | Ubuntu 14.04 | OpenJDK 7 u25 |
+| ARMv7         | Ubuntu 14.04 | OpenJDK 7 u25 |
 
 ### Environment variables
 
