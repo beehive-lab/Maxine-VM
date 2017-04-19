@@ -47,6 +47,46 @@ Maxine VM.
 
 ## Status
 
+### Benchmarks
+
+Maxine VM is tested against
+the [SPECjvm2008](https://www.spec.org/jvm2008/)
+and [DaCapo-9.12-bach](http://dacapobench.org/) benchmark suites.  The
+following tables show the status of each benchmark on each supported
+platform.
+
+#### SpecJVM2008
+
+| Benchmark  | ARMv7 | X86 C1X | X86 C1X-Graal |
+| ---------- | ----- | ------- | ------------- |
+| startup    | PASS  | PASS    | PASS          |
+| compiler   | PASS  | PASS    | FAIL          |
+| compress   | PASS  | PASS    | PASS          |
+| crypto     | PASS  | PASS    | PASS          |
+| derby      | FAIL  | PASS    | FAIL          |
+| scimark    | PASS  | PASS    | PASS          |
+| sunflow    | PASS  | PASS    | FAIL          |
+| xml        | FAIL  | PASS    | PASS          |
+
+#### DaCapo-9.12-bach
+
+| Benchmark  | ARMv7 | X86 C1X | X86 C1X-Graal |
+| ---------- | ----- | ------- | ------------- |
+| avrora     | PASS  | PASS    | PASS          |
+| batik      | FAIL  | FAIL    | FAIL          |
+| eclipse    | FAIL  | PASS    | FAIL          |
+| fop        | FAIL  | PASS    | PASS          |
+| h2         | FAIL  | PASS    | PASS          |
+| jython     | PASS  | PASS    | PASS          |
+| luindex    | PASS  | PASS    | PASS          |
+| lusearch   | PASS  | PASS    | PASS          |
+| sunflow    | PASS  | PASS    | PASS          |
+| pmd        | FAIL  | PASS    | PASS          |
+| tomcat     | FAIL  | PASS    | PASS          |
+| tradebeans | FAIL  | PASS    | PASS          |
+| tradesoap  | FAIL  | PASS    | PASS          |
+| xalan      | PASS  | PASS    | PASS          |
+
 ### Milestones
 
 1. Upgrade to latest Graal, Implement JVMCI ([Foivos Zakkak](https://github.com/zakkak))
