@@ -45,7 +45,7 @@ public enum IA32IndirectRegister16 implements GeneralRegister<IA32IndirectRegist
     private final String externalValue;
     private final String disassembledValue;
 
-    private IA32IndirectRegister16(int id, String externalValue, String disassembledValue) {
+    IA32IndirectRegister16(int id, String externalValue, String disassembledValue) {
         this.id = id;
         this.externalValue = externalValue;
         this.disassembledValue = disassembledValue;

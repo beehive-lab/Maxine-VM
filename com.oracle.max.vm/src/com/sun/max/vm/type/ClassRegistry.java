@@ -395,7 +395,7 @@ public final class ClassRegistry {
          * @param valueType the type of the property's values
          * @param defaultValue the default value of the property
          */
-        private Property(boolean isFinal, Class keyType, Class valueType, Object defaultValue) {
+        Property(boolean isFinal, Class keyType, Class valueType, Object defaultValue) {
             this.keyType = keyType;
             this.valueType = valueType;
             this.defaultValue = defaultValue;
@@ -409,7 +409,7 @@ public final class ClassRegistry {
          * @param valueType the type of the property's values
          * @param defaultValue the default value of the property
          */
-        private Property(Class keyType, Class valueType, Object defaultValue) {
+        Property(Class keyType, Class valueType, Object defaultValue) {
             this(true, keyType, valueType, defaultValue);
         }
 

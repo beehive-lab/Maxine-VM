@@ -55,7 +55,7 @@ public class DeoptAtSafepoint {
 
 
     static class Spinner extends Thread {
-        public Spinner() {
+        Spinner() {
             super("Spinner");
         }
         int counter;

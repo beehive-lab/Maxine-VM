@@ -349,7 +349,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
 
         final MaxMachineCodeRoutine machineCode;
 
-        public MachineCodeTableModel(Inspection inspection, MaxMachineCodeRoutine machineCode) {
+        MachineCodeTableModel(Inspection inspection, MaxMachineCodeRoutine machineCode) {
             super(inspection);
             assert machineCode != null;
             this.machineCode = machineCode;
@@ -484,7 +484,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
 
     private final class TagRenderer extends InspectorLabel implements TableCellRenderer, TextSearchable, Prober {
 
-        public TagRenderer(Inspection inspection) {
+        TagRenderer(Inspection inspection) {
             super(inspection);
         }
 
@@ -549,7 +549,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
 
     private final class NumberRenderer extends PlainLabel implements TableCellRenderer {
 
-        public NumberRenderer() {
+        NumberRenderer() {
             super(inspection, "");
         }
 
@@ -589,7 +589,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
     private final class PositionRenderer extends LocationLabel.AsPosition implements TableCellRenderer {
         private int position;
 
-        public PositionRenderer(Address entryAddress) {
+        PositionRenderer(Address entryAddress) {
             super(inspection, 0, entryAddress);
             this.position = 0;
         }
@@ -613,7 +613,7 @@ public class JTableMachineCodeViewer extends MachineCodeViewer {
 
     private final class LabelRenderer extends LocationLabel.AsTextLabel implements TableCellRenderer {
 
-        public LabelRenderer(Address entryAddress) {
+        LabelRenderer(Address entryAddress) {
             super(inspection, entryAddress);
             setOpaque(true);
         }

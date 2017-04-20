@@ -143,8 +143,7 @@ public class DebugHeap {
     }
 
     @INLINE
-    protected
-    static Word padWord() {
+    protected static Word padWord() {
         if (Word.width() == 64) {
             return Address.fromLong(LONG_OBJECT_PAD);
         }

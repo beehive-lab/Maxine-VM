@@ -101,7 +101,7 @@ public class Classpath {
 
         private final File file;
 
-        public PlainFile(File file) {
+        PlainFile(File file) {
             this.file = file;
         }
 
@@ -174,7 +174,7 @@ public class Classpath {
         private final File file;
         private ZipFile zipFile;
 
-        public Archive(File file) {
+        Archive(File file) {
             this.file = file;
         }
 

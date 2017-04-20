@@ -102,7 +102,7 @@ public class MethodFinder {
 
         final String relationship;
 
-        private PatternType(String relationship) {
+        PatternType(String relationship) {
             this.relationship = relationship;
         }
 

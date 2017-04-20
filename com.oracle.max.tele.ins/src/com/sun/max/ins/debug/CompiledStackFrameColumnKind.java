@@ -48,7 +48,7 @@ public enum CompiledStackFrameColumnKind implements ColumnKind {
     private final boolean defaultVisibility;
     private final int minWidth;
 
-    private CompiledStackFrameColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
+    CompiledStackFrameColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
         this.label = label;
         this.toolTipText = toolTipText;
         this.defaultVisibility = defaultVisibility;

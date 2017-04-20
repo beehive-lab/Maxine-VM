@@ -80,7 +80,7 @@ public class CardTableView extends AbstractView<CardTableView> implements TableC
         return viewManager;
     }
 
-    public static enum ViewMode {
+    public enum ViewMode {
         SET_BIT("Set Mark Bit", "Scroll to next/previous set mark bit",
             "Scroll to previous set mark bit", "Scroll to next set mark bit"),
         BLACK("Black Mark", "Scroll to next/previous object marked BLACK",
@@ -103,7 +103,7 @@ public class CardTableView extends AbstractView<CardTableView> implements TableC
          * @param previousToolTip description of the move backwards action in this mode
          * @param nextToolTip description of the move forward action in this mode
          */
-        private ViewMode(String label, String description, String previousToolTip, String nextToolTip) {
+        ViewMode(String label, String description, String previousToolTip, String nextToolTip) {
             this.label = label;
             this.description = description;
             this.previousToolTip = previousToolTip;
@@ -468,7 +468,7 @@ public class CardTableView extends AbstractView<CardTableView> implements TableC
 
     private final class ScrollToFocusAction extends InspectorAction {
 
-        public ScrollToFocusAction(Inspection inspection) {
+        ScrollToFocusAction(Inspection inspection) {
             super(inspection(), "Scroll to selected (covered) memory location");
             refresh(true);
         }
@@ -489,7 +489,7 @@ public class CardTableView extends AbstractView<CardTableView> implements TableC
 
         private static final String TITLE = "View Bitmap Data as Array";
 
-        public ViewBitmapDataAction(Inspection inspection) {
+        ViewBitmapDataAction(Inspection inspection) {
             super(inspection, TITLE);
             refresh(true);
         }
@@ -511,7 +511,7 @@ public class CardTableView extends AbstractView<CardTableView> implements TableC
 
         private static final String TITLE = "View Card Table Memory";
 
-        public ViewCardTableMemoryAction(Inspection inspection) {
+        ViewCardTableMemoryAction(Inspection inspection) {
             super(inspection, TITLE);
             refresh(true);
         }

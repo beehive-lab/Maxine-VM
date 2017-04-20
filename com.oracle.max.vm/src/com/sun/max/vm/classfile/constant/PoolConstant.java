@@ -73,7 +73,7 @@ public interface PoolConstant<PoolConstant_Type extends PoolConstant<PoolConstan
      */
     String toString();
 
-    public static final class Static {
+    final class Static {
 
         private Static() {
         }
@@ -235,7 +235,7 @@ abstract class UnresolvedRef<PoolConstant_Type extends PoolConstant<PoolConstant
     final Utf8Constant name;
     final Descriptor descriptor;
 
-    public UnresolvedRef(ClassActor holder, Utf8Constant name, Descriptor descriptor) {
+    UnresolvedRef(ClassActor holder, Utf8Constant name, Descriptor descriptor) {
         this.holder = holder;
         this.name = name;
         this.descriptor = descriptor;

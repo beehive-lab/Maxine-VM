@@ -111,7 +111,7 @@ public interface MaxMemoryRegion {
      */
     boolean sameAs(MaxMemoryRegion memoryRegion);
 
-    public static final class Util {
+    final class Util {
 
         public static MemoryUsage  NULL_MEMORY_USAGE = new MemoryUsage(-1L, 0L, 0L, -1L);
 

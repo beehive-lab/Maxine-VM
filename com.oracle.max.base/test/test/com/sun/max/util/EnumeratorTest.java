@@ -43,11 +43,11 @@ public class EnumeratorTest extends MaxTestCase {
             super(type);
         }
     }
-    private static enum NonSuccessiveEnum implements Enumerable<NonSuccessiveEnum> {
+    private enum NonSuccessiveEnum implements Enumerable<NonSuccessiveEnum> {
         E0(0), E100(100), E1000(1000);
 
         private final int value;
-        private NonSuccessiveEnum(int value) {
+        NonSuccessiveEnum(int value) {
             this.value = value;
         }
         public int value() {

@@ -28,7 +28,7 @@ import java.util.*;
  */
 public interface ModRMGroup {
 
-    public enum Opcode {
+    enum Opcode {
         OPCODE_0, OPCODE_1, OPCODE_2, OPCODE_3, OPCODE_4, OPCODE_5, OPCODE_6, OPCODE_7;
 
         public byte byteValue() {

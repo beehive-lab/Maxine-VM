@@ -33,7 +33,7 @@ public enum TestRegister implements EnumerableArgument<TestRegister> {
 
     private final int number;
 
-    private TestRegister(int number) {
+    TestRegister(int number) {
         this.number = number;
     }
 

@@ -489,7 +489,7 @@ public final class CodeEviction extends VmOperation {
     private final VMTIMove vmtiMove = new VMTIMove();
 
 
-    private static enum Phase {
+    private enum Phase {
         DUMPING,
         PATCHING,
         COMPACTING

@@ -317,7 +317,7 @@ public abstract class TeleClassActor extends TeleActor implements ReferenceTypeP
         private final VMValue.Type type;
         private final String signature;
 
-        public FakeFieldProvider(String name, VMValue.Type type, String signature) {
+        FakeFieldProvider(String name, VMValue.Type type, String signature) {
             this.name = PREFIX + name;
             this.type = type;
             this.signature = signature;

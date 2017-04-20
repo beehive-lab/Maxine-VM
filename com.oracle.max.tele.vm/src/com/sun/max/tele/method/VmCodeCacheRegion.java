@@ -74,7 +74,7 @@ public abstract class VmCodeCacheRegion extends AbstractVmHolder
          * @param owner the object that models the code allocation area
          * @param teleCodeRegion the VM object that describes this region of VM memory
          */
-        public CodeCacheMemoryRegion(MaxVM vm, MaxCodeCacheRegion owner, TeleCodeRegion teleCodeRegion) {
+        CodeCacheMemoryRegion(MaxVM vm, MaxCodeCacheRegion owner, TeleCodeRegion teleCodeRegion) {
             super(vm, teleCodeRegion);
             this.owner = owner;
         }

@@ -61,7 +61,7 @@ public enum CiRuntimeCall {
     public final CiKind resultKind;
     public final CiKind[] arguments;
 
-    private CiRuntimeCall(CiKind resultKind, CiKind... args) {
+    CiRuntimeCall(CiKind resultKind, CiKind... args) {
         this.resultKind = resultKind;
         this.arguments = args;
     }

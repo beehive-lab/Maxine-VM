@@ -32,7 +32,7 @@ class ConstantRemoteCodePointer implements RemoteCodePointer {
 
     private final Address address;
 
-    public ConstantRemoteCodePointer(Address address) {
+    ConstantRemoteCodePointer(Address address) {
         assert address != null;
         this.address = address;
     }

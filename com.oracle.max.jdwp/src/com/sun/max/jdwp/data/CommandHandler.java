@@ -84,7 +84,7 @@ public interface CommandHandler<IncomingData_Type extends IncomingData, Outgoing
     /**
      * Static utility functions for the {@link CommandHandler} class.
      */
-    public static class Static {
+    class Static {
 
         /**
          * This method extracts the command name based on a command handler class. The result is heuristic and should be

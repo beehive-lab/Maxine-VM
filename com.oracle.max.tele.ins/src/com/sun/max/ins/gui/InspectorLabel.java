@@ -54,7 +54,7 @@ public abstract class InspectorLabel extends JLabel implements InspectionHolder,
          */
         private Cursor dragCursor = null;
 
-        public InspectorLabelDragSource() {
+        InspectorLabelDragSource() {
         }
 
         public void dragGestureRecognized(DragGestureEvent dge) {

@@ -57,7 +57,7 @@ import com.sun.max.vm.type.*;
 public class CompiledPrototype extends Prototype {
 
     class ClassInfo {
-        public ClassInfo(ClassActor classActor) {
+        ClassInfo(ClassActor classActor) {
             this.classActor = classActor;
         }
         final ClassActor classActor;
@@ -95,7 +95,7 @@ public class CompiledPrototype extends Prototype {
             final String asParent;
             final String asChild;
 
-            private Relationship(String asParent, String asChild) {
+            Relationship(String asParent, String asChild) {
                 this.asParent = asParent;
                 this.asChild = asChild;
             }

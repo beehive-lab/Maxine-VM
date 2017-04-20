@@ -47,7 +47,7 @@ public class CommandLineVerifier extends MethodFinder {
     static Option<Boolean> failFast = options.newBooleanOption("fail-fast", false,
         "Exit after first verification error.");
 
-    static enum Policy {
+    enum Policy {
         DEFAULT, OLD, NEW;
     }
 

@@ -30,7 +30,7 @@ import java.io.*;
  */
 class UntaggedValueTypeNode extends SimpleTypeNode {
 
-    public UntaggedValueTypeNode() {
+    UntaggedValueTypeNode() {
         super("untagged-value", "JDWPValue", "ps.readUntaggedValue()");
     }
 

@@ -240,7 +240,7 @@ public final class MemoryWordsTable extends InspectorTable {
         // Cache of memory descriptors for each row
         private final Map<Long, MaxMemoryRegion> addressToMemoryRegion = new HashMap<Long, MaxMemoryRegion>();
 
-        public MemoryWordsTableModel(Inspection inspection, MemoryWordRegion memoryWordRegion, Address origin) {
+        MemoryWordsTableModel(Inspection inspection, MemoryWordRegion memoryWordRegion, Address origin) {
             super(inspection, origin);
             setMemoryRegion(memoryWordRegion);
             //positionBias = memoryWordRegion.start().minus(origin).dividedBy(getWordSize()).toInt();
@@ -327,7 +327,7 @@ public final class MemoryWordsTable extends InspectorTable {
         // even though they may not always appear in the same row.
         private final Map<Long, WordValueLabel> addressToLabelMap = new HashMap<Long, WordValueLabel>();
 
-        public AddressRenderer(Inspection inspection) {
+        AddressRenderer(Inspection inspection) {
             this.inspection = inspection;
         }
 
@@ -391,7 +391,7 @@ public final class MemoryWordsTable extends InspectorTable {
          *
          * @param inspection
          */
-        public MMTagRenderer(Inspection inspection) {
+        MMTagRenderer(Inspection inspection) {
             super(inspection);
             this.label = new PlainLabel(inspection, "");
             this.label.setOpaque(true);
@@ -432,7 +432,7 @@ public final class MemoryWordsTable extends InspectorTable {
 
     private final class WordOffsetRenderer extends LocationLabel.AsWordOffset implements TableCellRenderer {
 
-        public WordOffsetRenderer(Inspection inspection) {
+        WordOffsetRenderer(Inspection inspection) {
             super(inspection);
             setToolTipPrefix("Memory word location<br>Address= ");
             setOpaque(true);
@@ -458,7 +458,7 @@ public final class MemoryWordsTable extends InspectorTable {
         // even though they may not always appear in the same row.
         private final Map<Long, WordValueLabel> addressToLabelMap = new HashMap<Long, WordValueLabel>();
 
-        public ValueRenderer(Inspection inspection) {
+        ValueRenderer(Inspection inspection) {
             this.inspection = inspection;
         }
 

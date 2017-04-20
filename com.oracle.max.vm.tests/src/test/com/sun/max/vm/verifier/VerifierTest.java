@@ -219,7 +219,7 @@ public class VerifierTest extends VmTestCase {
     }
 
     static class FilteringTypeCheckingVerifier extends TypeCheckingVerifier {
-        public FilteringTypeCheckingVerifier(ClassActor classActor) {
+        FilteringTypeCheckingVerifier(ClassActor classActor) {
             super(classActor);
         }
         @Override
@@ -231,7 +231,7 @@ public class VerifierTest extends VmTestCase {
     }
 
     static class FilteringTypeInferencingVerifier extends TypeInferencingVerifier {
-        public FilteringTypeInferencingVerifier(ClassActor classActor) {
+        FilteringTypeInferencingVerifier(ClassActor classActor) {
             super(classActor);
         }
         @Override
@@ -342,33 +342,33 @@ public class VerifierTest extends VmTestCase {
 
     public void test_jsr() throws Exception {
         final MethodActor classMethodActor = new TestBytecodeAssembler(true, "PerformJsr", "perform_jsr", SignatureDescriptor.create(int.class)) {
-            @Override
-            public void generateCode() {
-                final Label subroutine = newLabel();
-                final Label cont = newLabel();
-                final int entry = currentAddress();
-                final int retAddress = allocateLocal(Kind.REFERENCE);
-                final int var = allocateLocal(Kind.INT);
-                iconst(42);
-                istore(var);
-                jsr(subroutine);
-                iload(var);
-                ireturn();
+                @Override
+                public void generateCode() {
+                    final Label subroutine = newLabel();
+                    final Label cont = newLabel();
+                    final int entry = currentAddress();
+                    final int retAddress = allocateLocal(Kind.REFERENCE);
+                    final int var = allocateLocal(Kind.INT);
+                    iconst(42);
+                    istore(var);
+                    jsr(subroutine);
+                    iload(var);
+                    ireturn();
 
-                subroutine.bind();
-                setStack(1);
-                astore(retAddress);
-                iconst(1);
-                ifne(cont);
+                    subroutine.bind();
+                    setStack(1);
+                    astore(retAddress);
+                    iconst(1);
+                    ifne(cont);
 
-                aconst_null();
-                astore(var);
-                goto_(entry);
+                    aconst_null();
+                    astore(var);
+                    goto_(entry);
 
-                cont.bind();
-                ret(retAddress);
-            }
-        }.classMethodActor(Object.class);
+                    cont.bind();
+                    ret(retAddress);
+                }
+            }.classMethodActor(Object.class);
 
         verify(classMethodActor.holder().name.toString(), true);
 

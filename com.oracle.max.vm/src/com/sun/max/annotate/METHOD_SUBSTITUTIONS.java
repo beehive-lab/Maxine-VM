@@ -66,7 +66,7 @@ public @interface METHOD_SUBSTITUTIONS {
      */
     String innerClass() default "";
 
-    public static final class Static {
+    final class Static {
         private Static() {
         }
 

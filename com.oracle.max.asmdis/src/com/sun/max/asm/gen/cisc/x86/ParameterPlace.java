@@ -44,7 +44,7 @@ public enum ParameterPlace {
 
     private final String comment;
 
-    private ParameterPlace(String comment) {
+    ParameterPlace(String comment) {
         this.comment = comment;
     }
 

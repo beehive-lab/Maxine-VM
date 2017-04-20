@@ -39,7 +39,7 @@ import com.sun.max.vm.reference.*;
  */
 public class HeapRegionInfo {
 
-    static enum Flag {
+    enum Flag {
         /**
          * Indicates that the region is part of an iterable range.
          * GCs and other operations walking over the heap must never come

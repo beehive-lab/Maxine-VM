@@ -41,7 +41,7 @@ public interface StaticFieldName {
         void procedure(StaticFieldName staticFieldName);
     }
 
-    public static final class Static {
+    final class Static {
 
         private Static() {
         }

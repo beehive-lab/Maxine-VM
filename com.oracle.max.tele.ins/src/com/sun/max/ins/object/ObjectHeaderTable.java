@@ -57,7 +57,7 @@ public final class ObjectHeaderTable extends InspectorTable {
 
         private final int row;
 
-        public ToggleObjectHeaderWatchpointAction(Inspection inspection, String name, int row) {
+        ToggleObjectHeaderWatchpointAction(Inspection inspection, String name, int row) {
             super(inspection, name);
             this.row = row;
         }
@@ -189,7 +189,7 @@ public final class ObjectHeaderTable extends InspectorTable {
 
         private TeleHub teleHub;
 
-        public ObjectHeaderTableModel(Inspection inspection, Address origin) {
+        ObjectHeaderTableModel(Inspection inspection, Address origin) {
             super(inspection, origin);
             if (view.object().status().isNotDead()) {
                 teleHub = view.object().getTeleHub();
@@ -272,7 +272,7 @@ public final class ObjectHeaderTable extends InspectorTable {
 
     private final class NameRenderer extends JavaNameLabel implements TableCellRenderer {
 
-        public NameRenderer(Inspection inspection) {
+        NameRenderer(Inspection inspection) {
             super(inspection);
             setOpaque(true);
         }
@@ -291,7 +291,7 @@ public final class ObjectHeaderTable extends InspectorTable {
         private final InspectorLabel[] labels = new InspectorLabel[headerFields.length];
         private boolean live = true;
 
-        public ValueRenderer(Inspection inspection) {
+        ValueRenderer(Inspection inspection) {
             final MaxObject object = view.object();
 
             for (int row = 0; row < headerFields.length; row++) {

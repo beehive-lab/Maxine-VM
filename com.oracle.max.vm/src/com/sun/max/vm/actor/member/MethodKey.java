@@ -62,7 +62,7 @@ public interface MethodKey  {
         }
     };
 
-    public abstract static class AbstractMethodKey implements MethodKey {
+    abstract class AbstractMethodKey implements MethodKey {
         @Override
         public boolean equals(Object object) {
             if (object instanceof MethodKey) {
@@ -87,7 +87,7 @@ public interface MethodKey  {
         }
     }
 
-    public static class DefaultMethodKey extends AbstractMethodKey {
+    class DefaultMethodKey extends AbstractMethodKey {
         protected final TypeDescriptor holder;
         protected final Utf8Constant name;
         protected final SignatureDescriptor signature;
@@ -115,7 +115,7 @@ public interface MethodKey  {
         }
     }
 
-    public static class MethodActorKey extends AbstractMethodKey {
+    class MethodActorKey extends AbstractMethodKey {
         protected final MethodActor methodActor;
 
         public MethodActorKey(MethodActor methodActor) {

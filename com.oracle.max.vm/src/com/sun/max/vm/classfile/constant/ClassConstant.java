@@ -43,7 +43,7 @@ public interface ClassConstant extends PoolConstant<ClassConstant>, ValueConstan
 
     ClassConstant key(ConstantPool pool);
 
-    public static final class Resolved extends AbstractClassConstant {
+    final class Resolved extends AbstractClassConstant {
 
         @INSPECTED
         public final ClassActor classActor;
@@ -78,7 +78,7 @@ public interface ClassConstant extends PoolConstant<ClassConstant>, ValueConstan
         }
     }
 
-    public static class Unresolved extends AbstractClassConstant {
+    class Unresolved extends AbstractClassConstant {
 
         private final TypeDescriptor typeDescriptor;
 

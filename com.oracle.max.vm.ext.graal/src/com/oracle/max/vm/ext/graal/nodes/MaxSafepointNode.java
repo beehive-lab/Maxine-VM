@@ -27,7 +27,7 @@ import com.oracle.graal.nodes.*;
 import com.oracle.graal.nodes.type.*;
 
 public class MaxSafepointNode extends SafepointNode  {
-    public static enum Op {
+    public enum Op {
         SAFEPOINT_POLL, HERE, INFO, BREAKPOINT, PAUSE
     }
 

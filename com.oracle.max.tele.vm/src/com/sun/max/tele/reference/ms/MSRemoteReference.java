@@ -58,7 +58,7 @@ public final class MSRemoteReference extends  RemoteReference {
      * unallocated memory in a fashion similar to ordinary objects. These can be treated as ordinary references for some
      * purposes, but not all.</p>
      */
-    private static enum RefState {
+    private enum RefState {
 
         /**
          * Reference to an object known to be reachable (during {@linkplain HeapPhase#MUTATION mutation} and {@linkplain HeapPhase#RECLAIMING reclaiming}

@@ -141,7 +141,7 @@ public class JDWPServer {
 
         private Socket socket;
 
-        public ClientThread(Socket socket) {
+        ClientThread(Socket socket) {
             this.socket = socket;
         }
 

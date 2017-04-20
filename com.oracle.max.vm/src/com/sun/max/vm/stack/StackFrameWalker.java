@@ -86,7 +86,7 @@ public abstract class StackFrameWalker {
 
         private final Class contextType;
 
-        private Purpose(Class contextType) {
+        Purpose(Class contextType) {
             this.contextType = contextType;
         }
 

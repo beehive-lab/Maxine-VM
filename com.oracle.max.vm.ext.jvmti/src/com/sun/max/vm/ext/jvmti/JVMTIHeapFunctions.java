@@ -44,7 +44,7 @@ public class JVMTIHeapFunctions {
     /**
      * * Must be consistent with {@code struct jvmtiHeapCallbacks} in jvmti.c.
      */
-    static enum HeapCallbacks {
+    enum HeapCallbacks {
         HEAP_ITERATION(0),
         HEAP_REFERENCE(8),
         PRIMITIVE_FIELD(16),

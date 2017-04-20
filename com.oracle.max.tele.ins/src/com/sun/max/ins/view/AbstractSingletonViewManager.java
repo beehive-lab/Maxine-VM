@@ -161,7 +161,7 @@ public abstract class AbstractSingletonViewManager<View_Kind extends InspectorVi
      */
     private final class ActivateViewAction extends InspectorAction {
 
-        public ActivateViewAction(String title) {
+        ActivateViewAction(String title) {
             super(inspection(), "View " + title);
             refresh(true);
         }
@@ -183,7 +183,7 @@ public abstract class AbstractSingletonViewManager<View_Kind extends InspectorVi
      */
     private final class DeactivateAllAction extends InspectorAction {
 
-        public DeactivateAllAction(String title) {
+        DeactivateAllAction(String title) {
             super(inspection(), "Close " + title + " view");
         }
 
@@ -208,7 +208,7 @@ public abstract class AbstractSingletonViewManager<View_Kind extends InspectorVi
 
         private final InspectorView exceptInspector;
 
-        public DeactivateAllExceptAction(String title, InspectorView exceptInspector) {
+        DeactivateAllExceptAction(String title, InspectorView exceptInspector) {
             super(inspection(), "Close " + title + " view");
             this.exceptInspector = exceptInspector;
         }

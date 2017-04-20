@@ -42,7 +42,7 @@ public class TypeLabel extends InspectorLabel {
 
     private final class MyMouseClickAdapter extends InspectorMouseClickAdapter {
 
-        public MyMouseClickAdapter(Inspection inspection) {
+        MyMouseClickAdapter(Inspection inspection) {
             super(inspection);
         }
 

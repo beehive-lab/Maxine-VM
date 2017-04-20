@@ -42,7 +42,7 @@ public final class ClassActorSearchDialog extends ObjectSearchDialog<TeleClassAc
         final TypeDescriptor typeDescriptor;
         final String name;
 
-        public ClassActorListItem(Inspection inspection, TypeDescriptor typeDescriptor) {
+        ClassActorListItem(Inspection inspection, TypeDescriptor typeDescriptor) {
             super(inspection);
             this.typeDescriptor = typeDescriptor;
             this.name = typeDescriptor.toJavaString();

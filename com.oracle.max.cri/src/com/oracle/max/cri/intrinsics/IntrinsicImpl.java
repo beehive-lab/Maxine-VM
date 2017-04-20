@@ -42,7 +42,7 @@ public interface IntrinsicImpl {
      * Intrinsic ID strings can either be explicitly defined as String constants, or inferred from the
      * fully qualified name and signature of a method.
      */
-    public class Registry implements Iterable<Map.Entry<String, IntrinsicImpl>> {
+    class Registry implements Iterable<Map.Entry<String, IntrinsicImpl>> {
         private Map<String, IntrinsicImpl> implRegistry = new ConcurrentHashMap<String, IntrinsicImpl>(100, 0.75f, 1);
 
         /**

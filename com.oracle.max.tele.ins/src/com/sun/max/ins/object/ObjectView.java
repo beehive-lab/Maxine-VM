@@ -409,7 +409,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
         private MaxObject forwardedToObject;
 
-        public VisitForwardedToAction(Inspection inspection) {
+        VisitForwardedToAction(Inspection inspection) {
             super(inspection, "View object forwarded to");
             refresh(true);
         }
@@ -439,7 +439,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
         private MaxObject forwardedFromObject;
 
-        public VisitForwardedFromAction(Inspection inspection) {
+        VisitForwardedFromAction(Inspection inspection) {
             super(inspection, "View object forwarded from");
             refresh(true);
         }
@@ -472,7 +472,7 @@ public abstract class ObjectView<View_Type extends ObjectView> extends AbstractV
 
         private MaxObject forwardedFromObject;
 
-        public VisitOverwritingObjectAction(Inspection inspection) {
+        VisitOverwritingObjectAction(Inspection inspection) {
             super(inspection, "View overwriting object");
             refresh(true);
         }

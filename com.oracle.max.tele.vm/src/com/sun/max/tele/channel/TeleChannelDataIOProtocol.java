@@ -113,7 +113,7 @@ public interface TeleChannelDataIOProtocol {
      * The data passed as arguments to {@link TeleProcess#jniGatherThread}.
      * It is manually serialized and passed as a byte array.
      */
-    public static class GatherThreadData implements Serializable {
+    class GatherThreadData implements Serializable {
         public int id;
         public long localHandle;
         public long handle;

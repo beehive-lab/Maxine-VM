@@ -838,11 +838,31 @@ public class JVMTI {
     private static final ThreadFieldEventData threadFieldEventData = new ThreadFieldEventData();
     private static final ThreadMethodUnloadEventData threadMethodUnloadEventData = new ThreadMethodUnloadEventData();
 
-    @INTRINSIC(UNSAFE_CAST) public static FieldEventData  asFieldEventData(Object object) { return (FieldEventData) object; }
-    @INTRINSIC(UNSAFE_CAST) public static MethodUnloadEventData  asMethodUnloadEventData(Object object) { return (MethodUnloadEventData) object; }
-    @INTRINSIC(UNSAFE_CAST) public static FramePopEventData  asFramePopEventData(Object object) { return (FramePopEventData) object; }
-    @INTRINSIC(UNSAFE_CAST) public static EventBreakpointID  asEventBreakpointID(Object object) { return (EventBreakpointID) object; }
-    @INTRINSIC(UNSAFE_CAST) public static ExceptionEventData  asExceptionEventData(Object object) { return (ExceptionEventData) object; }
+    @INTRINSIC(UNSAFE_CAST)
+    public static FieldEventData asFieldEventData(Object object) {
+        return (FieldEventData) object;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static MethodUnloadEventData asMethodUnloadEventData(Object object) {
+        return (MethodUnloadEventData) object;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static FramePopEventData asFramePopEventData(Object object) {
+        return (FramePopEventData) object;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static EventBreakpointID asEventBreakpointID(Object object) {
+        return (EventBreakpointID) object;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static ExceptionEventData asExceptionEventData(Object object) {
+        return (ExceptionEventData) object;
+    }
+
 
     private static FieldEventData setFieldEventData(JVMTIEvents.E event, Object object, int offset, boolean isStatic) {
         FieldEventData data = threadFieldEventData.get();

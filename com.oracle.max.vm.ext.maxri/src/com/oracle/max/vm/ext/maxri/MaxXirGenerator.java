@@ -97,7 +97,7 @@ public class MaxXirGenerator implements RiXirGenerator {
     static class NewInstanceTemplates extends XirPair {
         final XirTemplate resolvedHybrid;
 
-        public NewInstanceTemplates(XirTemplate resolved, XirTemplate resolvedHybrid, XirTemplate unresolved) {
+        NewInstanceTemplates(XirTemplate resolved, XirTemplate resolvedHybrid, XirTemplate unresolved) {
             super(resolved, unresolved);
             this.resolvedHybrid = resolvedHybrid;
         }

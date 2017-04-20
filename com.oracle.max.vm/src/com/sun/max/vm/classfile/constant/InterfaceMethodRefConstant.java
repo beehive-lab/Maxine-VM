@@ -45,7 +45,7 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
 
         SignatureDescriptor signature();
 
-        public static final class Util {
+        final class Util {
 
             private Util() {
             }
@@ -65,7 +65,7 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
 
     InterfaceMethodRefKey key(final ConstantPool pool);
 
-    static final class Resolved extends ResolvedMethodRefConstant<InterfaceMethodRefConstant> implements InterfaceMethodRefConstant, InterfaceMethodRefKey {
+    final class Resolved extends ResolvedMethodRefConstant<InterfaceMethodRefConstant> implements InterfaceMethodRefConstant, InterfaceMethodRefKey {
 
         public Resolved(MethodActor methodActor) {
             super(methodActor);
@@ -92,7 +92,7 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
         }
     }
 
-    static final class Unresolved extends UnresolvedRef<InterfaceMethodRefConstant> implements InterfaceMethodRefConstant, InterfaceMethodRefKey {
+    final class Unresolved extends UnresolvedRef<InterfaceMethodRefConstant> implements InterfaceMethodRefConstant, InterfaceMethodRefKey {
 
         public Unresolved(ClassActor holder, Utf8Constant name, SignatureDescriptor signature) {
             super(holder, name, signature);
@@ -180,7 +180,7 @@ public interface InterfaceMethodRefConstant extends PoolConstant<InterfaceMethod
         }
     }
 
-    static final class UnresolvedIndices extends UnresolvedRefIndices<InterfaceMethodRefConstant> implements InterfaceMethodRefConstant {
+    final class UnresolvedIndices extends UnresolvedRefIndices<InterfaceMethodRefConstant> implements InterfaceMethodRefConstant {
 
         UnresolvedIndices(int classIndex, int nameAndTypeIndex, Tag[] tags) {
             super(classIndex, nameAndTypeIndex, tags);

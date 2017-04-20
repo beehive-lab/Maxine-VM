@@ -45,7 +45,7 @@ public final class MethodCompilationSearchDialog extends FilteredListDialog<MaxC
         private final String name;
         private final MaxCompilation compilation;
 
-        public MethodCompilationItem(Inspection inspection, String name, MaxCompilation compilation) {
+        MethodCompilationItem(Inspection inspection, String name, MaxCompilation compilation) {
             super(inspection);
             this.name = name;
             this.compilation = compilation;

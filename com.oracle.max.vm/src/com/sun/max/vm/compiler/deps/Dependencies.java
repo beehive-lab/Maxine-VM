@@ -518,7 +518,7 @@ public final class Dependencies {
      */
     private static class IDMap extends LinearIDMap<Dependencies> {
         final BitSet usedIDs;
-        public IDMap(int initialCapacity) {
+        IDMap(int initialCapacity) {
             super(initialCapacity);
             usedIDs = new BitSet();
         }

@@ -283,7 +283,7 @@ public final class MemoryColoringTable extends InspectorTable {
         // Cache of memory descriptors for each row
         private final Map<Long, MaxMemoryRegion> addressToMemoryRegion = new HashMap<Long, MaxMemoryRegion>();
 
-        public MarkBitmapTableModel(Inspection inspection, MaxMarkBitmap markBitmap) {
+        MarkBitmapTableModel(Inspection inspection, MaxMarkBitmap markBitmap) {
             super(inspection, markBitmap.coveredMemoryRegion().start());
             setMemoryRegion(new MemoryWordRegion(inspection(), markBitmap.coveredMemoryRegion()));
             //positionBias = memoryWordRegion.start().minus(origin).dividedBy(getWordSize()).toInt();
@@ -390,7 +390,7 @@ public final class MemoryColoringTable extends InspectorTable {
 
         private int n;
 
-        public MapBitIndexRenderer(Inspection inspection) {
+        MapBitIndexRenderer(Inspection inspection) {
             super(inspection);
             setOpaque(true);
             redisplay();
@@ -422,7 +422,7 @@ public final class MemoryColoringTable extends InspectorTable {
 
         private int n;
 
-        public WordIndexRenderer(Inspection inspection) {
+        WordIndexRenderer(Inspection inspection) {
             super(inspection);
             setOpaque(true);
             redisplay();
@@ -453,7 +453,7 @@ public final class MemoryColoringTable extends InspectorTable {
     private final class BitmapWordAddressRenderer extends InspectorLabel implements TableCellRenderer {
 
 
-        public BitmapWordAddressRenderer(Inspection inspection) {
+        BitmapWordAddressRenderer(Inspection inspection) {
             super(inspection);
             setOpaque(true);
             redisplay();
@@ -487,7 +487,7 @@ public final class MemoryColoringTable extends InspectorTable {
 
         private int n;
 
-        public WordBitIndexRenderer(Inspection inspection) {
+        WordBitIndexRenderer(Inspection inspection) {
             super(inspection);
             setOpaque(true);
             redisplay();
@@ -584,7 +584,7 @@ public final class MemoryColoringTable extends InspectorTable {
         // even though they may not always appear in the same row.
         private final Map<Long, WordValueLabel> addressToLabelMap = new HashMap<Long, WordValueLabel>();
 
-        public CoveredAddressRenderer(Inspection inspection) {
+        CoveredAddressRenderer(Inspection inspection) {
             this.inspection = inspection;
         }
 

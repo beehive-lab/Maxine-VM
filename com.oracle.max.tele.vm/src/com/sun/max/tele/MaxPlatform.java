@@ -34,7 +34,7 @@ public interface MaxPlatform {
     /**
     * Instruction Set Architecture moniker.
     */
-    public enum ISA {
+    enum ISA {
         AMD64,
         ARM,
         IA32,
@@ -49,7 +49,7 @@ public interface MaxPlatform {
     /**
      * Specific processor model.
      */
-    public enum CPU {
+    enum CPU {
         AMD64,
         ARM32,
         IA32,
@@ -65,7 +65,7 @@ public interface MaxPlatform {
     /**
      * Specific operating system.
      */
-    public enum OS {
+    enum OS {
         DARWIN("Darwin"),
         LINUX("Linux"),
         SOLARIS("Solaris"),
@@ -74,7 +74,7 @@ public interface MaxPlatform {
 
         private final String name;
 
-        private OS(String name) {
+        OS(String name) {
             this.name = name;
         }
 

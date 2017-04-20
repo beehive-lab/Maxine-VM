@@ -159,7 +159,7 @@ public final class AllocationsTable extends InspectorTable {
         private MaxMemoryRegion[] sortedRegions = null;
         private int[] displayedRows = null;
 
-        public AllocationsTableModel(Inspection inspection) {
+        AllocationsTableModel(Inspection inspection) {
             super(inspection, Address.zero());
             refresh();
         }

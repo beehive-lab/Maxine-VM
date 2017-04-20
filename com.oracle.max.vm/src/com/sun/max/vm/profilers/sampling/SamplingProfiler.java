@@ -796,7 +796,7 @@ public abstract class SamplingProfiler extends Thread {
     private class CountedStackInfosComparator implements Comparator<VmThread> {
         Map<VmThread, CountedStackInfo[]> unsortedMap;
 
-        public CountedStackInfosComparator(Map<VmThread, CountedStackInfo[]> unsortedMap) {
+        CountedStackInfosComparator(Map<VmThread, CountedStackInfo[]> unsortedMap) {
             this.unsortedMap = unsortedMap;
         }
         public int compare(VmThread a, VmThread b) {

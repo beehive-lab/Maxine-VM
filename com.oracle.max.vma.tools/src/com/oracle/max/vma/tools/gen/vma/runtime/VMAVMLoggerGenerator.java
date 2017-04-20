@@ -73,7 +73,7 @@ public class VMAVMLoggerGenerator {
 
     private static class MyMethodNameOverride extends MethodNameOverride {
 
-        public MyMethodNameOverride(Method m) {
+        MyMethodNameOverride(Method m) {
             super(m);
         }
         @Override

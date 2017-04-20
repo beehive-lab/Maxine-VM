@@ -31,7 +31,7 @@ public class FinalizerTest implements Comparable<FinalizerTest>, Cloneable {
     static final PrintStream out = System.out;
 
     static class WeakerString extends WeakReference<String> {
-        public WeakerString(String s) {
+        WeakerString(String s) {
             super(s);
         }
     }
@@ -41,7 +41,7 @@ public class FinalizerTest implements Comparable<FinalizerTest>, Cloneable {
         // Tests weak-to-weak reference handling
         final WeakerString weakerRef;
 
-        public WeakString(String s) {
+        WeakString(String s) {
             super(s);
             this.weakerRef = new WeakerString(s + "-weaker");
         }

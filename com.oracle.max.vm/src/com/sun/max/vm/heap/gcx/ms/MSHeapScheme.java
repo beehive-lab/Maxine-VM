@@ -215,7 +215,7 @@ public final class MSHeapScheme extends HeapSchemeWithTLABAdaptor {
      * This is the {@link VmOperationThread}'s entry point to garbage collection.
      */
     final class MSCollection extends GCOperation {
-        public MSCollection() {
+        MSCollection() {
             super("MSCollection");
         }
 

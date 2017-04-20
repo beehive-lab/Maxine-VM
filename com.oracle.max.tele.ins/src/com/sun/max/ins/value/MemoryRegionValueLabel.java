@@ -47,7 +47,7 @@ public class MemoryRegionValueLabel extends ValueLabel {
 
     private final class MemoryRegionMouseClickAdapter extends InspectorMouseClickAdapter {
 
-        public MemoryRegionMouseClickAdapter(Inspection inspection) {
+        MemoryRegionMouseClickAdapter(Inspection inspection) {
             super(inspection);
         }
 

@@ -50,7 +50,7 @@ public final class MethodSearchDialog extends FilteredListDialog<MethodKey> {
         private final MethodKey methodKey;
         private final String name;
 
-        public MethodKeyItem(Inspection inspection, MethodKey methodKey) {
+        MethodKeyItem(Inspection inspection, MethodKey methodKey) {
             super(inspection);
             this.methodKey = methodKey;
             this.name = methodKey.name() + methodKey.signature().toJavaString(false, true);

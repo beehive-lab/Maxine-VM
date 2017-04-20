@@ -44,7 +44,7 @@ public enum FloatingPointOperandCode implements WrappableSpecification {
 
     private final String operandTypeSuffix;
 
-    private FloatingPointOperandCode(String operandTypeSuffix) {
+    FloatingPointOperandCode(String operandTypeSuffix) {
         this.operandTypeSuffix = operandTypeSuffix;
     }
 

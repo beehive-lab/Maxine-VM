@@ -49,7 +49,7 @@ public enum ObjectColumnKind implements ColumnKind {
     private final boolean defaultVisibility;
     private final int minWidth;
 
-    private ObjectColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
+    ObjectColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
         this.label = label;
         this.toolTipText = toolTipText;
         this.defaultVisibility = defaultVisibility;

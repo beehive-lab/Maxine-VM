@@ -497,7 +497,7 @@ public final class JavaMethodView extends MethodView<JavaMethodView> {
 
     private final class ViewOptionsPanel extends InspectorPanel {
 
-        public ViewOptionsPanel(Inspection inspection) {
+        ViewOptionsPanel(Inspection inspection) {
             super(inspection, new BorderLayout());
             final InspectorCheckBox[] checkBoxes = new InspectorCheckBox[MethodCodeKind.values().length];
 

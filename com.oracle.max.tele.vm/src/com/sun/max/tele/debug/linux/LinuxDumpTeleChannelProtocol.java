@@ -95,7 +95,7 @@ public class LinuxDumpTeleChannelProtocol extends ELFDumpTeleChannelProtocolAdap
 
     }
 
-    private static enum NoteType {
+    private enum NoteType {
         NT_PRSTATUS(1),
         NT_PRFPREG(2),
         NT_PRPSINFO(3),

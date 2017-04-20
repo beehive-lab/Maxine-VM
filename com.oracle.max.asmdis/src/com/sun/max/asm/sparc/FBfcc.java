@@ -59,5 +59,7 @@ public final class FBfcc extends NameSuffixSymbolicArgument implements Predicate
     public static final FBfcc O = new FBfcc(15, U);
 
     public static final Symbolizer<FBfcc> SYMBOLIZER = Symbolizer.Static.initialize(FBfcc.class);
-    public FBfcc negate() { return negation; }
+    public FBfcc negate() {
+        return negation;
+    }
 }

@@ -98,7 +98,7 @@ public interface RuntimeCompiler {
      * The target method types supported and used by the VM. A compiler produces target methods
      * matching exactly one of the constants declared by this enum.
      */
-    public enum Nature {
+    enum Nature {
         /**
          * A baseline target method supports an interpreter-like execution model. Specifically:
          * <ul>
@@ -128,7 +128,7 @@ public interface RuntimeCompiler {
      */
     String name(ClassMethodActor classMethodActor);
 
-    public static abstract class DefaultNameAdapter implements RuntimeCompiler {
+    abstract class DefaultNameAdapter implements RuntimeCompiler {
         public String name(ClassMethodActor classMethodActor) {
             return getClass().getSimpleName();
         }

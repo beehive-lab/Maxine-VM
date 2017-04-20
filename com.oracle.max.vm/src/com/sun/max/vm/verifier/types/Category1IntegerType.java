@@ -34,8 +34,7 @@ public abstract class Category1IntegerType extends Category1Type {
     }
 
     @Override
-    protected
-    final VerificationType mergeWithDifferentType(VerificationType other) {
+    protected final VerificationType mergeWithDifferentType(VerificationType other) {
         if (isAssignableFrom(other)) {
             return INTEGER;
         }

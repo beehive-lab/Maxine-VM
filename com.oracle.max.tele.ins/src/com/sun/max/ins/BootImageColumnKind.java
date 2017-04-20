@@ -45,7 +45,7 @@ public enum BootImageColumnKind implements ColumnKind {
     private final boolean defaultVisibility;
     private final int minWidth;
 
-    private BootImageColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
+    BootImageColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
         this.label = label;
         this.toolTipText = toolTipText;
         this.defaultVisibility = defaultVisibility;

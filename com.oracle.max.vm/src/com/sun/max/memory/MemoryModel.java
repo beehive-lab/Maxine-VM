@@ -45,7 +45,7 @@ public enum MemoryModel {
     /**
      * @param barriers the barriers that are implied everywhere in the code by this memory model
      */
-    private MemoryModel(int barriers) {
+    MemoryModel(int barriers) {
         this.impliedBarriers = barriers;
     }
 }

@@ -144,7 +144,7 @@ public class SemispaceCodeCacheRemoteCodePointerManager extends AbstractRemoteCo
         private final TeleTargetMethod teleTargetMethod;
         private final int codeOffset;
 
-        public RelativeRemoteCodePointer(TeleTargetMethod teleTargetMethod, int codeOffset) {
+        RelativeRemoteCodePointer(TeleTargetMethod teleTargetMethod, int codeOffset) {
             this.teleTargetMethod = teleTargetMethod;
             this.codeOffset = codeOffset;
         }

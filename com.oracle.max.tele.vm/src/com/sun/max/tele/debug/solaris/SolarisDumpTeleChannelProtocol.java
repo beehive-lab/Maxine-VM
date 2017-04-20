@@ -110,7 +110,7 @@ public class SolarisDumpTeleChannelProtocol extends ELFDumpTeleChannelProtocolAd
         return byteBuffer.getInt(index);
     }
 
-    private static enum NoteType {
+    private enum NoteType {
         NT_PRSTATUS(1),
         NT_PRFPREG(2),
         NT_PRPSINFO(3),

@@ -39,7 +39,7 @@ public interface MaxWatchpointManager {
      * An exception thrown when an attempt is made to create more watchpoints
      * in the VM than is supported by the platform.
      */
-    public static final class MaxTooManyWatchpointsException extends MaxException {
+    final class MaxTooManyWatchpointsException extends MaxException {
 
         public MaxTooManyWatchpointsException(String message) {
             super(message);
@@ -50,7 +50,7 @@ public interface MaxWatchpointManager {
      * An exception thrown when an attempt is made to create a watchpoint
      * in the VM that overlaps with an existing watchpoint.
      */
-    public static final class MaxDuplicateWatchpointException extends MaxException {
+    final class MaxDuplicateWatchpointException extends MaxException {
 
         public MaxDuplicateWatchpointException(String message) {
             super(message);

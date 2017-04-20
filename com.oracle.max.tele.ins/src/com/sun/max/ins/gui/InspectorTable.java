@@ -529,7 +529,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
 
     private final class ShowFirstRowAction extends InspectorAction {
 
-        public ShowFirstRowAction(Inspection inspection) {
+        ShowFirstRowAction(Inspection inspection) {
             super(inspection, "Show first row");
         }
 
@@ -541,7 +541,7 @@ public abstract class InspectorTable extends JTable implements Prober, Inspectio
 
     private final class ShowLastRowAction extends InspectorAction {
 
-        public ShowLastRowAction(Inspection inspection) {
+        ShowLastRowAction(Inspection inspection) {
             super(inspection, "Show last row");
         }
 

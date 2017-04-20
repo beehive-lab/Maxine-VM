@@ -32,7 +32,7 @@ public interface VMValue {
     /**
      * Enumeration of all possible types of a JDWP value.
      */
-    public enum Type {
+    enum Type {
         VOID,
         BYTE,
         CHAR,

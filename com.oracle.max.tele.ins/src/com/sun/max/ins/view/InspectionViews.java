@@ -292,7 +292,7 @@ public final class InspectionViews extends AbstractInspectionHolder {
         private final String description;
         private final String key;
 
-        private ViewKind(boolean isSingleton, boolean activeByDefault, String description) {
+        ViewKind(boolean isSingleton, boolean activeByDefault, String description) {
             this.isSingleton = isSingleton;
             this.activeByDefault = activeByDefault;
             this.description = description;

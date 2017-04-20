@@ -1238,7 +1238,7 @@ public final class TeleInterpreter {
         return MethodStatus.METHOD_CONTINUE;
     }
 
-    public static enum MethodStatus {
+    public enum MethodStatus {
         METHOD_END,
         METHOD_CONTINUE,
     }

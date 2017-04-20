@@ -51,7 +51,7 @@ public enum MachineCodeColumnKind implements ColumnKind {
     private final boolean defaultVisibility;
     private final int minWidth;
 
-    private MachineCodeColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
+    MachineCodeColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
         this.label = label;
         this.toolTipText = toolTipText;
         this.defaultVisibility = defaultVisibility;

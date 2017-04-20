@@ -40,7 +40,7 @@ public interface RiscInstructionDescriptionVisitor {
 
     void visitConstraint(InstructionConstraint constraint);
 
-    public static final class Static {
+    final class Static {
         private Static() {
         }
 

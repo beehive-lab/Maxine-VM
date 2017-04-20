@@ -592,7 +592,7 @@ public abstract class TargetMethod extends MemoryRegion {
             }
         }
 
-        public Literals(List<DataPatch> dataReferences) {
+        Literals(List<DataPatch> dataReferences) {
             objectPool = new IdentityHashMap<Object, Integer>(dataReferences.size());
             ArrayList<Object> objectsBuffer = new ArrayList<Object>(dataReferences.size());
             ByteArrayOutputStream scalarsBuffer = new ByteArrayOutputStream();

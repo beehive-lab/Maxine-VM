@@ -41,7 +41,7 @@ public interface JDWPEventModifier {
 
     boolean isAccepted(JDWPEventContext context);
 
-    public static class Static {
+    class Static {
 
         public static List<JDWPEventModifier> createList(JDWPSession session, EventRequestCommands.Set.Modifier[] modifiers) throws JDWPException {
 
@@ -82,7 +82,7 @@ public interface JDWPEventModifier {
         }
     }
 
-    public static class Count implements JDWPEventModifier {
+    class Count implements JDWPEventModifier {
 
         private int count;
 
@@ -95,7 +95,7 @@ public interface JDWPEventModifier {
         }
     }
 
-    public static class Step extends ThreadOnly {
+    class Step extends ThreadOnly {
         private int size;
         private int depth;
 
@@ -115,7 +115,7 @@ public interface JDWPEventModifier {
 
     }
 
-    public static class ThreadOnly implements JDWPEventModifier {
+    class ThreadOnly implements JDWPEventModifier {
 
         private ThreadProvider thread;
 
@@ -132,7 +132,7 @@ public interface JDWPEventModifier {
         }
     }
 
-    public static class ClassOnly implements JDWPEventModifier {
+    class ClassOnly implements JDWPEventModifier {
 
         private ReferenceTypeProvider klass;
 
@@ -145,7 +145,7 @@ public interface JDWPEventModifier {
         }
     }
 
-    public static class ClassMatch implements JDWPEventModifier {
+    class ClassMatch implements JDWPEventModifier {
 
         private String regexp;
 
@@ -164,7 +164,7 @@ public interface JDWPEventModifier {
         }
     }
 
-    public static class ClassExclude implements JDWPEventModifier {
+    class ClassExclude implements JDWPEventModifier {
 
         private String regexp;
 
@@ -183,7 +183,7 @@ public interface JDWPEventModifier {
         }
     }
 
-    public static class LocationOnly implements JDWPEventModifier {
+    class LocationOnly implements JDWPEventModifier {
 
         private JDWPLocation location;
 
@@ -200,7 +200,7 @@ public interface JDWPEventModifier {
         }
     }
 
-    public static class ExceptionOnly implements JDWPEventModifier {
+    class ExceptionOnly implements JDWPEventModifier {
 
         public ExceptionOnly(ReferenceTypeProvider exceptionType, boolean caught, boolean uncaught) {
         }

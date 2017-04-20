@@ -40,7 +40,7 @@ public class MaxineARMTester {
         public static final BitsFlag[] values = values();
         private final long value;
 
-        private BitsFlag(long value) {
+        BitsFlag(long value) {
             this.value = value;
         }
 

@@ -83,7 +83,9 @@ public final class GenSSHeapSizingPolicy implements GenHeapSizingPolicy {
      * Minimum effective heap size a generational heap can operate with.
      * @return an effective heap size.
      */
-    private static Size minEffectiveHeapSize() { return MinYoungGenSize.times(2); }
+    private static Size minEffectiveHeapSize() {
+        return MinYoungGenSize.times(2);
+    }
 
     /**
      * Log 2 of the size generations are always aligned to.

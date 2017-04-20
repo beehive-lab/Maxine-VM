@@ -62,7 +62,7 @@ public class X86TemplateContext implements Cloneable {
 
         private final int rmFieldValue;
 
-        private RMCase(int rmFieldValue) {
+        RMCase(int rmFieldValue) {
             this.rmFieldValue = rmFieldValue;
         }
 

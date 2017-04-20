@@ -161,7 +161,7 @@ public final class BreakpointsTable extends InspectorTable {
      */
     private final class BreakpointsTableModel extends InspectorTableModel {
 
-        public BreakpointsTableModel(Inspection inspection) {
+        BreakpointsTableModel(Inspection inspection) {
             super(inspection);
         }
 
@@ -392,7 +392,7 @@ public final class BreakpointsTable extends InspectorTable {
 
     private final class DescriptionCellRenderer extends JavaNameLabel implements TableCellRenderer {
 
-        public DescriptionCellRenderer(Inspection inspection) {
+        DescriptionCellRenderer(Inspection inspection) {
             super(inspection, null);
             setOpaque(true);
         }
@@ -410,7 +410,7 @@ public final class BreakpointsTable extends InspectorTable {
 
     private final class LocationCellRenderer extends PlainLabel implements TableCellRenderer {
 
-        public LocationCellRenderer(Inspection inspection) {
+        LocationCellRenderer(Inspection inspection) {
             super(inspection, null);
             setOpaque(true);
         }

@@ -58,7 +58,7 @@ public enum ISA {
      */
     public final int instructionWidth;
 
-    private ISA(Category category, int instructionWidth, boolean relativeBranchFromStart, int offsetToReturnPC) {
+    ISA(Category category, int instructionWidth, boolean relativeBranchFromStart, int offsetToReturnPC) {
         this.category = category;
         this.instructionWidth = instructionWidth;
         this.relativeBranchFromStart = relativeBranchFromStart;

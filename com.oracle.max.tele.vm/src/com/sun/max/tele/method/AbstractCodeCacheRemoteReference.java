@@ -41,7 +41,7 @@ abstract class AbstractCodeCacheRemoteReference extends RemoteReference {
 
     private final TeleTargetMethod teleTargetMethod;
 
-    public AbstractCodeCacheRemoteReference(TeleVM vm, TeleTargetMethod teleTargetMethod) {
+    AbstractCodeCacheRemoteReference(TeleVM vm, TeleTargetMethod teleTargetMethod) {
         super(vm);
         this.teleTargetMethod = teleTargetMethod;
     }

@@ -123,7 +123,7 @@ public abstract class ShortFormHandler {
 
     private static final QualNameTL qualNameTL = new QualNameTL();
 
-    public static enum ShortForm {
+    public enum ShortForm {
         C("C"),
         F("F"),
         T("T"),

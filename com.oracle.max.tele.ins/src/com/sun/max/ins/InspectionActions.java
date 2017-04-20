@@ -733,7 +733,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * regions of the VM.
      */
     final class ViewMemoryAllocationsMenu extends JMenu {
-        public ViewMemoryAllocationsMenu() {
+        ViewMemoryAllocationsMenu() {
             super("View Memory allocated for:");
             addMenuListener(new MenuListener() {
 
@@ -776,7 +776,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * Action: view the HeapRegionInfo for the currently selected WordValueLabel when this one is in a mode denoting a heap address.
      */
     final class ViewSelectedAddressHeapRegionInfo extends InspectorAction {
-        public ViewSelectedAddressHeapRegionInfo(String actionTitle) {
+        ViewSelectedAddressHeapRegionInfo(String actionTitle) {
             super(inspection(), actionTitle == null ? "View heap region info for selected address" : actionTitle);
         }
 
@@ -804,7 +804,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class ViewSelectedThreadStackMemoryAction extends InspectorAction {
 
-        public ViewSelectedThreadStackMemoryAction(String actionTitle) {
+        ViewSelectedThreadStackMemoryAction(String actionTitle) {
             super(inspection(), actionTitle == null ? "View memory for selected thread's stack" : actionTitle);
         }
 
@@ -838,7 +838,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class ViewSelectedThreadVMLogMemoryAction extends InspectorAction {
 
-        public ViewSelectedThreadVMLogMemoryAction(String actionTitle) {
+        ViewSelectedThreadVMLogMemoryAction(String actionTitle) {
             super(inspection(), actionTitle == null ? "View memory for selected thread's VM log" : actionTitle);
         }
 
@@ -877,7 +877,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class ViewSelectedThreadLocalsBlockMemoryAction extends InspectorAction {
 
-        public ViewSelectedThreadLocalsBlockMemoryAction(String actionTitle) {
+        ViewSelectedThreadLocalsBlockMemoryAction(String actionTitle) {
             super(inspection(), actionTitle == null ? "View memory for selected thread's locals block" : actionTitle);
         }
 
@@ -913,7 +913,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private final SafepointPoll.State state;
 
-        public ViewSelectedThreadLocalsAreaMemoryAction(SafepointPoll.State state, String actionTitle) {
+        ViewSelectedThreadLocalsAreaMemoryAction(SafepointPoll.State state, String actionTitle) {
             super(inspection(), actionTitle == null ? "View memory for selected thread's locals area=" + state.name() : actionTitle);
             this.state = state;
         }
@@ -964,7 +964,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class ViewSelectedStackFrameMemoryAction extends InspectorAction {
 
-        public ViewSelectedStackFrameMemoryAction(String actionTitle) {
+        ViewSelectedStackFrameMemoryAction(String actionTitle) {
             super(inspection(), actionTitle == null ? "View memory for selected stack frame" : actionTitle);
             refreshableActions.add(this);
         }
@@ -1001,7 +1001,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private final MaxStackFrame stackFrame;
 
-        public ViewStackFrameMemoryAction(MaxStackFrame stackFrame, String actionTitle) {
+        ViewStackFrameMemoryAction(MaxStackFrame stackFrame, String actionTitle) {
             super(inspection(), actionTitle == null ? "View memory for stack frame" : actionTitle);
             assert stackFrame != null;
             this.stackFrame = stackFrame;
@@ -1031,7 +1031,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      */
     final class ViewSelectedMemoryWatchpointAction extends InspectorAction {
 
-        public ViewSelectedMemoryWatchpointAction(String actionTitle) {
+        ViewSelectedMemoryWatchpointAction(String actionTitle) {
             super(inspection(), actionTitle == null ? "View memory at selected watchpoint" : actionTitle);
         }
 
@@ -1130,7 +1130,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * regions of the VM.
      */
     final class ViewSingletonMenu extends JMenu {
-        public ViewSingletonMenu() {
+        ViewSingletonMenu() {
             super("View VM singletons:");
             addMenuListener(new MenuListener() {
 
@@ -1521,7 +1521,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Compilations";
         private final TeleClassMethodActor teleClassMethodActor;
 
-        public ViewMethodCompilationsMenu(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
+        ViewMethodCompilationsMenu(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
             super(actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.teleClassMethodActor = teleClassMethodActor;
             refresh(true);
@@ -1570,7 +1570,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private final TeleClassMethodActor teleClassMethodActor;
 
-        public ViewJavaSourceAction(TeleClassMethodActor teleClassMethodActor) {
+        ViewJavaSourceAction(TeleClassMethodActor teleClassMethodActor) {
             super(inspection(), "View Java Source (external)");
             this.teleClassMethodActor = teleClassMethodActor;
         }
@@ -1599,7 +1599,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "View code by address...";
 
-        public ViewMachineCodeByAddressAction(String actionTitle) {
+        ViewMachineCodeByAddressAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
@@ -1664,7 +1664,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "View code at a location";
         private final MaxCodeLocation codeLocation;
 
-        public ViewMethodCodeAtLocationAction(MaxCodeLocation codeLocation, String actionTitle) {
+        ViewMethodCodeAtLocationAction(MaxCodeLocation codeLocation, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             assert codeLocation != null;
             this.codeLocation = codeLocation;
@@ -1695,7 +1695,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ViewMethodCodeAtSelectionAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "View code at current selection";
-        public ViewMethodCodeAtSelectionAction(String actionTitle) {
+        ViewMethodCodeAtSelectionAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.add(this);
         }
@@ -1727,7 +1727,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
     final class ViewMethodCodeAtIPAction extends InspectorAction {
 
         private static final String DEFAULT_TITLE = "View code at current IP";
-        public ViewMethodCodeAtIPAction(String actionTitle) {
+        ViewMethodCodeAtIPAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             refreshableActions.add(this);
         }
@@ -1761,7 +1761,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "View bytecode...";
         private final TeleClassMethodActor teleClassMethodActor;
 
-        public ViewMethodBytecodeAction(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
+        ViewMethodBytecodeAction(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.teleClassMethodActor = teleClassMethodActor;
             setEnabled(teleClassMethodActor.hasCodeAttribute());
@@ -1801,7 +1801,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Bytecode...";
 
-        public ViewMethodBytecodeByNameAction(String actionTitle) {
+        ViewMethodBytecodeByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
@@ -1850,7 +1850,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Method compilation...";
 
-        public ViewMethodCompilationByNameAction(String actionTitle) {
+        ViewMethodCompilationByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
@@ -1884,7 +1884,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "Native function...";
 
-        public ViewNativeFunctionByNameAction(String actionTitle) {
+        ViewNativeFunctionByNameAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
@@ -1921,7 +1921,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private static final String DEFAULT_TITLE = "View compiled code...";
 
-        public ViewMethodMachineCodeAction(String actionTitle) {
+        ViewMethodMachineCodeAction(String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
         }
 
@@ -1953,7 +1953,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "View compilations";
         private final TeleClassMethodActor teleClassMethodActor;
 
-        public ViewMethodCompilationsCodeMenu(TeleClassMethodActor teleClassMethodactor, String actionTitle) {
+        ViewMethodCompilationsCodeMenu(TeleClassMethodActor teleClassMethodactor, String actionTitle) {
             super(actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.teleClassMethodActor = teleClassMethodactor;
             refresh(true);
@@ -2007,12 +2007,12 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private final int offset;
 
-        public ViewMethodCodeInBootImageAction(int offset, Class clazz, String name, Class... parameterTypes) {
+        ViewMethodCodeInBootImageAction(int offset, Class clazz, String name, Class... parameterTypes) {
             super(inspection(), clazz.getName() + "." + name + SignatureDescriptor.fromJava(Void.TYPE, parameterTypes).toJavaString(false, false));
             this.offset = offset;
         }
 
-        public ViewMethodCodeInBootImageAction(int offset, Method method) {
+        ViewMethodCodeInBootImageAction(int offset, Method method) {
             this(offset, method.getDeclaringClass(), method.getName(), method.getParameterTypes());
         }
 
@@ -2114,7 +2114,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
      * Menu: display a sub-menu of commands for setting breakpoints at standard locations.
      */
     final class BuiltinBreakpointsMenu extends InspectorMenu {
-        public BuiltinBreakpointsMenu(String title) {
+        BuiltinBreakpointsMenu(String title) {
             super(title == null ? "Break at" : title);
             addMenuListener(new MenuListener() {
 
@@ -2355,7 +2355,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private final MaxCodeLocation codeLocation;
 
-        public SetBreakpointAction(MaxCodeLocation codeLocation, String actionTitle) {
+        SetBreakpointAction(MaxCodeLocation codeLocation, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             assert codeLocation != null;
             this.codeLocation = codeLocation;
@@ -2396,7 +2396,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private final MaxCodeLocation codeLocation;
 
-        public SetMachineCodeBreakpointAction(MaxCodeLocation codeLocation, String actionTitle) {
+        SetMachineCodeBreakpointAction(MaxCodeLocation codeLocation, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             assert codeLocation != null && codeLocation.hasAddress();
             this.codeLocation = codeLocation;
@@ -2433,7 +2433,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
 
         private final MaxCodeLocation codeLocation;
 
-        public RemoveMachineCodeBreakpointAction(MaxCodeLocation codeLocation, String actionTitle) {
+        RemoveMachineCodeBreakpointAction(MaxCodeLocation codeLocation, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             assert codeLocation != null && codeLocation.hasAddress();
             this.codeLocation = codeLocation;
@@ -4221,7 +4221,7 @@ public class InspectionActions extends AbstractInspectionHolder implements Probe
         private static final String DEFAULT_TITLE = "Invoke method";
         private final TeleClassMethodActor teleClassMethodActor;
 
-        public DebugInvokeMethodAction(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
+        DebugInvokeMethodAction(TeleClassMethodActor teleClassMethodActor, String actionTitle) {
             super(inspection(), actionTitle == null ? DEFAULT_TITLE : actionTitle);
             this.teleClassMethodActor =  teleClassMethodActor;
         }

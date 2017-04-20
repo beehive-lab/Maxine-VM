@@ -51,7 +51,7 @@ public enum BreakpointsColumnKind implements ColumnKind {
     private final boolean defaultVisibility;
     private final int minWidth;
 
-    private BreakpointsColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
+    BreakpointsColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
         this.label = label;
         this.toolTipText = toolTipText;
         this.defaultVisibility = defaultVisibility;

@@ -167,7 +167,7 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
         private final MaxThreadLocalsArea tla;
         private final String[] threadLocalDescriptions;
 
-        public ThreadLocalsAreaTableModel(Inspection inspection, MaxThreadLocalsArea tla) {
+        ThreadLocalsAreaTableModel(Inspection inspection, MaxThreadLocalsArea tla) {
             super(inspection, tla.memoryRegion().start());
             this.tla = tla;
             threadLocalDescriptions = new String[tla.variableCount()];
@@ -234,7 +234,7 @@ public final class ThreadLocalsAreaTable extends InspectorTable {
 
     private final class NameRenderer extends JavaNameLabel implements TableCellRenderer {
 
-        public NameRenderer(Inspection inspection) {
+        NameRenderer(Inspection inspection) {
             super(inspection);
             setOpaque(true);
         }

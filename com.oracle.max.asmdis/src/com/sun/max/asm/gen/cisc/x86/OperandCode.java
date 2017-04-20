@@ -113,7 +113,7 @@ public enum OperandCode implements WrappableSpecification {
     private final AddressingMethodCode addressingMethodCode;
     private final OperandTypeCode operandTypeCode;
 
-    private OperandCode(AddressingMethodCode addressingMethodCode, OperandTypeCode operandTypeCode) {
+    OperandCode(AddressingMethodCode addressingMethodCode, OperandTypeCode operandTypeCode) {
         this.addressingMethodCode = addressingMethodCode;
         this.operandTypeCode = operandTypeCode;
     }

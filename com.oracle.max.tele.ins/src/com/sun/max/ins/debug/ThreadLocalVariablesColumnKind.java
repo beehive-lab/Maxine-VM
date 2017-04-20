@@ -51,7 +51,7 @@ public enum ThreadLocalVariablesColumnKind implements ColumnKind {
     private final boolean defaultVisibility;
     private final int minWidth;
 
-    private ThreadLocalVariablesColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
+    ThreadLocalVariablesColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
         this.label = label;
         this.toolTipText = toolTipText;
         this.defaultVisibility = defaultVisibility;

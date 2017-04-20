@@ -349,7 +349,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
         private List<BytecodeInstruction> bytecodeInstructions;
 
-        public BytecodeTableModel(Inspection inspection, List<BytecodeInstruction> bytecodeInstructions) {
+        BytecodeTableModel(Inspection inspection, List<BytecodeInstruction> bytecodeInstructions) {
             super(inspection);
             this.bytecodeInstructions = bytecodeInstructions;
         }
@@ -465,7 +465,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
     private final class TagRenderer extends InspectorLabel implements TableCellRenderer, TextSearchable, Prober {
 
-        public TagRenderer(Inspection inspection) {
+        TagRenderer(Inspection inspection) {
             super(inspection);
         }
 
@@ -537,7 +537,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
     private final class NumberRenderer extends PlainLabel implements TableCellRenderer {
 
-        public NumberRenderer() {
+        NumberRenderer() {
             super(inspection, "");
         }
 
@@ -554,7 +554,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
     private final class BCIRenderer extends LocationLabel.AsPosition implements TableCellRenderer {
         private int bci;
 
-        public BCIRenderer() {
+        BCIRenderer() {
             super(inspection, 0);
             setToolTipPrefix("Instruction");
             bci = 0;
@@ -580,7 +580,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
     private final class InstructionRenderer extends BytecodeMnemonicLabel implements TableCellRenderer {
 
-        public InstructionRenderer() {
+        InstructionRenderer() {
             super(inspection, -1);
         }
 
@@ -600,7 +600,7 @@ public class JTableBytecodeViewer extends BytecodeViewer {
 
     private final class OperandRenderer implements  TableCellRenderer, Prober {
 
-        public OperandRenderer() {
+        OperandRenderer() {
         }
 
         public Component getTableCellRendererComponent(JTable table, Object tableValue, boolean isSelected, boolean hasFocus, int row, int col) {

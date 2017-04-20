@@ -75,7 +75,7 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
      *
      * @param codeCacheRegion the code cache region whose objects are to be managed.
      */
-    public UnmanagedCodeCacheRemoteReferenceManager(TeleVM vm, VmCodeCacheRegion codeCacheRegion) {
+    UnmanagedCodeCacheRemoteReferenceManager(TeleVM vm, VmCodeCacheRegion codeCacheRegion) {
         super(vm);
         this.codeCacheRegion = codeCacheRegion;
         // Create a separate map for references of each kind
@@ -238,7 +238,7 @@ final class UnmanagedCodeCacheRemoteReferenceManager extends AbstractVmHolder im
         private final CodeCacheReferenceKind kind;
         private Address origin = Address.zero();
 
-        public UnmanagedCodeCacheRemoteReference(TeleVM vm, TeleTargetMethod teleTargetMethod, CodeCacheReferenceKind kind) {
+        UnmanagedCodeCacheRemoteReference(TeleVM vm, TeleTargetMethod teleTargetMethod, CodeCacheReferenceKind kind) {
             super(vm, teleTargetMethod);
             this.origin = teleTargetMethod.codeCacheObjectOrigin(kind);
             this.kind = kind;

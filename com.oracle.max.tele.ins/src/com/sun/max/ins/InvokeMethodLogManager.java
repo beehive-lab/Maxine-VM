@@ -53,7 +53,7 @@ public final class InvokeMethodLogManager extends AbstractInspectionHolder {
         // Contents are never null until disposed, at which point the log is useless.
         private String contents = EMPTY_CONTENTS;
 
-        public InvokeMethodLogImpl(InspectionSettings inspectionSettings, InvokeMethodLogManager invokeMethodLogManager, String key) {
+        InvokeMethodLogImpl(InspectionSettings inspectionSettings, InvokeMethodLogManager invokeMethodLogManager, String key) {
             super(PREFIX_KEY);
             this.inspectionSettings = inspectionSettings;
             this.invokeMethodLogManager = invokeMethodLogManager;

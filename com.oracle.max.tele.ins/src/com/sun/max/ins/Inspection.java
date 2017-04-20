@@ -637,7 +637,7 @@ public final class Inspection implements InspectionHolder {
          *
          * @param message identifies what is being traced
          */
-        public Tracer(String message) {
+        Tracer(String message) {
             this.message = message;
         }
 

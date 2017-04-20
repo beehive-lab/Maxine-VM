@@ -57,7 +57,7 @@ public enum MemoryColumnKind implements ColumnKind {
     private final boolean defaultVisibility;
     private final int minWidth;
 
-    private MemoryColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
+    MemoryColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
         this.columnLabel = label;
         this.toolTipText = toolTipText;
         this.defaultVisibility = defaultVisibility;

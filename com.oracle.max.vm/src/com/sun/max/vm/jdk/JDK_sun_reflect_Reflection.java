@@ -43,8 +43,7 @@ import com.sun.max.vm.type.*;
  *
  */
 @METHOD_SUBSTITUTIONS(Reflection.class)
-public
-final class JDK_sun_reflect_Reflection {
+public final class JDK_sun_reflect_Reflection {
 
     private JDK_sun_reflect_Reflection() {
     }

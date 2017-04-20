@@ -44,7 +44,7 @@ class ExecutionFrame {
     private final byte[] code;
     private final int depth;
 
-    public ExecutionFrame(ExecutionFrame callersFrame, ClassMethodActor method) {
+    ExecutionFrame(ExecutionFrame callersFrame, ClassMethodActor method) {
         this.method = method;
         this.locals = new Value[method.codeAttribute().maxLocals];
         this.operands = new Stack<Value>();

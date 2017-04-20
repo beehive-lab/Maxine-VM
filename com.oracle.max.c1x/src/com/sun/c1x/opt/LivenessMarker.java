@@ -113,7 +113,7 @@ public final class LivenessMarker {
         Link head;
         Link tail;
 
-        public InstructionMarker(Value.Flag reason) {
+        InstructionMarker(Value.Flag reason) {
             this.reason = reason;
         }
 

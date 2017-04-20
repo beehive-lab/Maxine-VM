@@ -43,7 +43,7 @@ import com.sun.max.vm.classfile.*;
 @Target(ElementType.METHOD)
 public @interface LOCAL_SUBSTITUTION {
 
-    public static final class Static {
+    final class Static {
 
         private Static() {
         }

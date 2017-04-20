@@ -613,11 +613,11 @@ public abstract class TeleNativeThread extends AbstractVmHolder
         private VMValue[] vmValues;
         private boolean isTopFrame;
 
-        public FrameProviderImpl(boolean isTopFrame, TeleTargetMethod targetMethod, StackFrame stackFrame, CiCodePos codePos) {
+        FrameProviderImpl(boolean isTopFrame, TeleTargetMethod targetMethod, StackFrame stackFrame, CiCodePos codePos) {
             this(isTopFrame, targetMethod, stackFrame, codePos, (ClassMethodActor) codePos.method, 0); //descriptor.bytecodeLocation().());
         }
 
-        public FrameProviderImpl(boolean isTopFrame, TeleTargetMethod targetMethod, StackFrame stackFrame, CiCodePos codePos, ClassMethodActor classMethodActor, int position) {
+        FrameProviderImpl(boolean isTopFrame, TeleTargetMethod targetMethod, StackFrame stackFrame, CiCodePos codePos, ClassMethodActor classMethodActor, int position) {
             this.stackFrame = stackFrame;
             this.codePos = codePos;
             this.classMethodActor = classMethodActor;

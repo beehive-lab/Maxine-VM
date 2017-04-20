@@ -28,7 +28,7 @@ import com.sun.max.asm.arm.*;
  */
 public interface ExampleARMAssemblerSpecification {
 
-    public static class Generator {
+    class Generator {
         public static void main(String[] args) throws Exception {
             final String[] programArguments = {
                 "-i=" + ExampleARMAssemblerSpecification.class.getName(),

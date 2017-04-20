@@ -59,7 +59,7 @@ public interface JJVMTI {
      * JVMTI errors. Whereas native JVMTI indicates errors by a return code, Java JVMTI uses an exception with the error
      * code as argument. Since errors are rare this is a {@link RuntimeException}.
      */
-    public static class JJVMTIException extends RuntimeException {
+    class JJVMTIException extends RuntimeException {
         public final int error;
 
         public JJVMTIException(int error) {
@@ -76,7 +76,7 @@ public interface JJVMTI {
     /**
      * See <a href="http://docs.oracle.com/javase/6/docs/platform/jvmti/jvmti.html#jvmtiFrameInfo">jvmtiFrameInfo</a>.
      */
-    public static class FrameInfo {
+    class FrameInfo {
         public int location;
         public MethodActor method;
 
@@ -92,7 +92,7 @@ public interface JJVMTI {
     /**
      * See <a href="http://docs.oracle.com/javase/6/docs/platform/jvmti/jvmti.html#jvmtiStackInfo">jvmtiStackInfo</a>.
      */
-    public static class StackInfo {
+    class StackInfo {
         public Thread thread;
         public int state;
         public FrameInfo[] frameInfo;
@@ -112,7 +112,7 @@ public interface JJVMTI {
     /**
      * See <a href="http://docs.oracle.com/javase/6/docs/platform/jvmti/jvmti.html#GetMethodLocation">GetMethodLocation</a>.
      */
-    public static class MethodLocation {
+    class MethodLocation {
         public final int start;
         public final int end;
 
@@ -125,7 +125,7 @@ public interface JJVMTI {
     /**
      * See <a href="http://docs.oracle.com/javase/6/docs/platform/jvmti/jvmti.html#jvmtiLineNumberEntry">jvmtiLineNumberEntry</a>.
      */
-    public static class LineNumberEntry {
+    class LineNumberEntry {
         public final int bci;
         public final int lineNumber;
 
@@ -138,7 +138,7 @@ public interface JJVMTI {
     /**
      * See <a href="http://docs.oracle.com/javase/6/docs/platform/jvmti/jvmti.html#jvmtiLocalVariableEntry">jvmtiLocalVariableEntry</a>.
      */
-    public static class LocalVariableEntry {
+    class LocalVariableEntry {
         public final long location;
         public final int length;
         public final String name;
@@ -156,7 +156,7 @@ public interface JJVMTI {
         }
     }
 
-    public static class ClassDefinition {
+    class ClassDefinition {
         public final ClassActor klass;
         public final byte[] classBytes;
 
@@ -166,7 +166,7 @@ public interface JJVMTI {
         }
     }
 
-    public static class ClassVersionInfo {
+    class ClassVersionInfo {
         public final int major;
         public final int minor;
 
@@ -176,11 +176,11 @@ public interface JJVMTI {
         }
     }
 
-    public static class ObjectMonitorUsage {
+    class ObjectMonitorUsage {
         // TODO
     }
 
-    public static class MonitorStackDepthInfo {
+    class MonitorStackDepthInfo {
         public final Object monitor;
         public final int stackDepth;
 
@@ -190,7 +190,7 @@ public interface JJVMTI {
         }
     }
 
-    public static class AddrLocation {
+    class AddrLocation {
         Address startAddress;
         long location;
     }
@@ -199,7 +199,7 @@ public interface JJVMTI {
      * See <a href="http://docs.oracle.com/javase/6/docs/platform/jvmti/jvmti.html#jvmtiThreadInfo">jvmtiThreadInfo</a>
      * Somewhat redundant but for completeness cf native JVMTI.
      */
-    public static class ThreadInfo {
+    class ThreadInfo {
         public final String name;
         public final int priority;
         public final boolean isDaemon;
@@ -219,7 +219,7 @@ public interface JJVMTI {
      * See <a href="http://docs.oracle.com/javase/6/docs/platform/jvmti/jvmti.html#jvmtiThreadGroupInfo">jvmtiThreadGroupInfo</a>
      * Somewhat redundant but for completeness cf native JVMTI.
      */
-    public static class ThreadGroupInfo {
+    class ThreadGroupInfo {
         public final ThreadGroup parent;
         public final String name;
         public final int maxPriority;
@@ -233,7 +233,7 @@ public interface JJVMTI {
         }
     }
 
-    public static class ThreadGroupChildrenInfo {
+    class ThreadGroupChildrenInfo {
         public final Thread[] threads;
         public final ThreadGroup[] groups;
 

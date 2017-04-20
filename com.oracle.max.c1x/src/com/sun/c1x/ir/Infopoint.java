@@ -31,7 +31,7 @@ import com.sun.cri.ci.*;
  */
 public final class Infopoint extends Instruction {
 
-    public static enum Op { SAFEPOINT_POLL, HERE, INFO, UNCOMMON_TRAP }
+    public enum Op { SAFEPOINT_POLL, HERE, INFO, UNCOMMON_TRAP }
 
     public final FrameState state;
 

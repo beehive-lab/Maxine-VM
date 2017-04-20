@@ -42,7 +42,7 @@ public enum SoftwareTrap {
     ST_DTRACE_RETURN(0x3a);
 
     private final int trapNumber;
-    private SoftwareTrap(int trapNumber) {
+    SoftwareTrap(int trapNumber) {
         this.trapNumber = trapNumber;
     }
 

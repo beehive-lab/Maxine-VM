@@ -43,7 +43,7 @@ public interface Expression {
      */
     String valueString();
 
-    public static final class Static {
+    final class Static {
 
         private Static() {
         }

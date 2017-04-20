@@ -368,7 +368,7 @@ public final class InvokeMethodLogView extends AbstractView<InvokeMethodLogView>
 
         private Address address;
 
-        public InspectSelectedAddressMemoryAction(Inspection inspection) {
+        InspectSelectedAddressMemoryAction(Inspection inspection) {
             super(inspection, "View memory at selected address");
             setEnabled(false);
         }
@@ -395,7 +395,7 @@ public final class InvokeMethodLogView extends AbstractView<InvokeMethodLogView>
         private Address address;
         private MaxMemoryRegion memoryRegion;
 
-        public InspectSelectedAddressRegionAction(Inspection inspection) {
+        InspectSelectedAddressRegionAction(Inspection inspection) {
             super(inspection, "View region containing selected address");
             setEnabled(false);
         }
@@ -422,7 +422,7 @@ public final class InvokeMethodLogView extends AbstractView<InvokeMethodLogView>
         private Address address;
         private MaxObject object;
 
-        public InspectSelectedAddressObjectAction(Inspection inspection) {
+        InspectSelectedAddressObjectAction(Inspection inspection) {
             super(inspection, "View object at selected origin");
             setEnabled(false);
         }
@@ -449,7 +449,7 @@ public final class InvokeMethodLogView extends AbstractView<InvokeMethodLogView>
      */
     private final class InvokeMethodLogSelectAllAction extends InspectorAction {
 
-        public InvokeMethodLogSelectAllAction(Inspection inspection) {
+        InvokeMethodLogSelectAllAction(Inspection inspection) {
             super(inspection, "Select all");
         }
 
@@ -465,7 +465,7 @@ public final class InvokeMethodLogView extends AbstractView<InvokeMethodLogView>
      */
     private final class InvokeMethodLogClearAction extends InspectorAction {
 
-        public InvokeMethodLogClearAction(Inspection inspection) {
+        InvokeMethodLogClearAction(Inspection inspection) {
             super(inspection, "Clear all");
         }
 
@@ -514,7 +514,7 @@ public final class InvokeMethodLogView extends AbstractView<InvokeMethodLogView>
      */
     private final class InvokeMethodLogPrintAction extends InspectorAction {
 
-        public InvokeMethodLogPrintAction(Inspection inspection) {
+        InvokeMethodLogPrintAction(Inspection inspection) {
             super(inspection, "Print notepad contents");
         }
 

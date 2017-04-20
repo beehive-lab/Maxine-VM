@@ -32,7 +32,7 @@ public interface MaxWatchpoint {
     /**
      * A collection of configuration settings for watchpoints.
      */
-    public final class WatchpointSettings {
+    final class WatchpointSettings {
         public final boolean trapOnRead;
         public final boolean trapOnWrite;
         public final boolean trapOnExec;

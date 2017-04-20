@@ -582,7 +582,7 @@ public abstract class TeleVM implements MaxVM {
          * An object that delays evaluation of a trace message.
          * @param message identifies what is being traced
          */
-        public Tracer(String message) {
+        Tracer(String message) {
             this.message = message;
         }
 
@@ -1905,7 +1905,7 @@ public abstract class TeleVM implements MaxVM {
 
         private final Set<JdwpCodeLocation> breakpointLocations = new HashSet<JdwpCodeLocation>();
 
-        public VMAccessImpl() {
+        VMAccessImpl() {
             javaProviderFactory = new JavaProviderFactory(this, null);
         }
 

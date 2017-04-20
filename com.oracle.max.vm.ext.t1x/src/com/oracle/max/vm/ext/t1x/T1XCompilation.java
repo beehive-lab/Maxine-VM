@@ -405,7 +405,7 @@ public abstract class T1XCompilation {
         final int bci;
         final int opcode;
 
-        public UnsupportedSubroutineException(int opcode, int bci) {
+        UnsupportedSubroutineException(int opcode, int bci) {
             super(Bytecodes.nameOf(opcode) + "@" + bci + " in " + method);
             this.bci = bci;
             this.opcode = opcode;

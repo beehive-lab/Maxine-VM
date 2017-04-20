@@ -55,7 +55,7 @@ final class InspectorInternalFrame extends JInternalFrame implements InspectorFr
      * @param addMenuBar should the frame have a menu bar installed.
      * @see #makeMenu(MenuKind)
      */
-    public InspectorInternalFrame(AbstractView view, boolean addMenuBar) {
+    InspectorInternalFrame(AbstractView view, boolean addMenuBar) {
         this.view = view;
         menuBar = addMenuBar ? new InspectorMenuBar(view.inspection()) : null;
         setJMenuBar(menuBar);

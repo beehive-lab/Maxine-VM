@@ -73,7 +73,7 @@ public class GenSSRemoteReference extends RemoteReference {
      * Each member encapsulates the <em>behavior</em> associated with a state, including both the interpretation of
      * the data held by the reference and by allowable state transitions.
      */
-    private static enum RefState {
+    private enum RefState {
         /**
          * Live young reference.
          * Address is in the allocated part of the young generation.

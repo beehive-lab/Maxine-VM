@@ -93,7 +93,7 @@ public final class TeleTargetMethod extends TeleMemoryRegion implements TargetMe
      * No other kinds of objects should ever appear in a {@linkplain VmCodeCacheRegion code cache region}, so this enum
      * completely describes the possibilities.
      */
-    public static enum CodeCacheReferenceKind {
+    public enum CodeCacheReferenceKind {
         /**
          * Reference possibly held in a {@link TargetMethod} to an instance of {@code byte[]} in the code cache holding
          * scalar literals needed by the target code. This will be null in the following situations:
@@ -152,7 +152,7 @@ public final class TeleTargetMethod extends TeleMemoryRegion implements TargetMe
     private final class EventTracer {
         private final String event;
 
-        public EventTracer(String event) {
+        EventTracer(String event) {
             this.event = event;
         }
 

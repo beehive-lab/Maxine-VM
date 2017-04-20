@@ -35,7 +35,7 @@ public abstract class CiArchitecture {
     /**
      * The endianness of the architecture.
      */
-    public static enum ByteOrder {
+    public enum ByteOrder {
         LittleEndian,
         BigEndian
     }

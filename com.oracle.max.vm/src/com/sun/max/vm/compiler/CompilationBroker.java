@@ -843,7 +843,7 @@ public class CompilationBroker {
         private final TargetMethod newMethod;
         int frameCount;
 
-        public DirectCallPatcher(TargetMethod oldMethod, TargetMethod newMethod) {
+        DirectCallPatcher(TargetMethod oldMethod, TargetMethod newMethod) {
             this.oldMethod = oldMethod;
             this.newMethod = newMethod;
         }

@@ -41,7 +41,7 @@ public interface VMTriggerEventHandler {
      */
     boolean handleTriggerEvent(TeleNativeThread teleNativeThread);
 
-    public static final class Static {
+    final class Static {
 
         private static final int TRACE_VALUE = 1;
 

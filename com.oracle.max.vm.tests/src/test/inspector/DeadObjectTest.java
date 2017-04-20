@@ -56,7 +56,7 @@ public class DeadObjectTest {
     }
     private static class SimpleObject {
 
-        public SimpleObject(String text) {
+        SimpleObject(String text) {
             this.string = text;
         }
 

@@ -33,7 +33,7 @@ public enum ControlRegister implements EnumerableArgument<ControlRegister> {
 
     private final int number;
 
-    private ControlRegister(int number) {
+    ControlRegister(int number) {
         this.number = number;
     }
 

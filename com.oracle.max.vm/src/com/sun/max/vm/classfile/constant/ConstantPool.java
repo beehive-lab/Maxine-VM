@@ -116,7 +116,7 @@ public final class ConstantPool implements RiConstantPool {
         /**
          * @param classfileTag
          */
-        private Tag(int classfileTag) {
+        Tag(int classfileTag) {
             assert (byte) classfileTag == classfileTag;
             this.classfileTag = (byte) classfileTag;
         }

@@ -610,7 +610,7 @@ public abstract class VMLog implements Heap.GCCallback {
     private static class VMLogFlushOption extends VMStringOption {
 
         @HOSTED_ONLY
-        public VMLogFlushOption() {
+        VMLogFlushOption() {
             super("-XX:VMLogFlush=", false, null, "flush VMLog: mode,output. mode=crash|exit|full, output=raw|trace");
         }
 

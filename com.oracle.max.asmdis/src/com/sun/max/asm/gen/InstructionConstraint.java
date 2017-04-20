@@ -65,7 +65,7 @@ public interface InstructionConstraint {
      */
     Method predicateMethod();
 
-    public abstract static class SimpleInstructionConstraint implements InstructionConstraint {
+    abstract class SimpleInstructionConstraint implements InstructionConstraint {
         public Method predicateMethod() {
             return null;
         }
@@ -76,7 +76,7 @@ public interface InstructionConstraint {
         }
     }
 
-    public static final class Static {
+    final class Static {
 
         private Static() {
         }

@@ -45,7 +45,7 @@ public interface FieldRefConstant extends PoolConstant<FieldRefConstant>, Member
 
         TypeDescriptor type();
 
-        public static final class Util {
+        final class Util {
 
             private Util() {
             }
@@ -69,7 +69,7 @@ public interface FieldRefConstant extends PoolConstant<FieldRefConstant>, Member
 
     FieldRefKey key(final ConstantPool pool);
 
-    public static final class Resolved extends AbstractMemberRefConstant<FieldRefConstant> implements FieldRefConstant, FieldRefKey {
+    final class Resolved extends AbstractMemberRefConstant<FieldRefConstant> implements FieldRefConstant, FieldRefKey {
 
         @INSPECTED
         private final FieldActor fieldActor;
@@ -147,7 +147,7 @@ public interface FieldRefConstant extends PoolConstant<FieldRefConstant>, Member
         }
     }
 
-    static final class Unresolved extends UnresolvedRef<FieldRefConstant> implements FieldRefConstant, FieldRefKey {
+    final class Unresolved extends UnresolvedRef<FieldRefConstant> implements FieldRefConstant, FieldRefKey {
 
         Unresolved(ClassActor holder, Utf8Constant name, Descriptor descriptor) {
             super(holder, name, descriptor);
@@ -211,7 +211,7 @@ public interface FieldRefConstant extends PoolConstant<FieldRefConstant>, Member
         }
     }
 
-    static final class UnresolvedIndices extends UnresolvedRefIndices<FieldRefConstant> implements FieldRefConstant {
+    final class UnresolvedIndices extends UnresolvedRefIndices<FieldRefConstant> implements FieldRefConstant {
 
         UnresolvedIndices(int classIndex, int nameAndTypeIndex, Tag[] tags) {
             super(classIndex, nameAndTypeIndex, tags);

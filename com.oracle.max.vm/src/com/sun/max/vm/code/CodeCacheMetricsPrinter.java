@@ -65,7 +65,7 @@ public final class CodeCacheMetricsPrinter {
         final int cols;
         final ArrayList<Object> cells = new ArrayList<Object>();
 
-        public Table(Object... headerCols) {
+        Table(Object... headerCols) {
             this.cols = headerCols.length;
             addRow(headerCols);
         }

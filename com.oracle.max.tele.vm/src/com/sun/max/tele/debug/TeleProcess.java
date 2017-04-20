@@ -76,7 +76,7 @@ public abstract class TeleProcess extends AbstractVmHolder implements TeleVMCach
      */
     private final class ProcessDied extends Exception {
 
-        public ProcessDied(String message) {
+        ProcessDied(String message) {
             super(message);
         }
     }

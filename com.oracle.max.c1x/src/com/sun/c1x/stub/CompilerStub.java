@@ -46,7 +46,7 @@ public class CompilerStub {
         public final CiKind resultKind;
         public final CiKind[] arguments;
 
-        private Id(CiKind resultKind, CiKind... args) {
+        Id(CiKind resultKind, CiKind... args) {
             this.resultKind = resultKind;
             this.arguments = args;
         }

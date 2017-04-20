@@ -127,7 +127,7 @@ public class JNI_invocations extends RunBench {
 
             private int nrJNIcalls;
 
-            public AllocationThread(int nrJNICalls) {
+            AllocationThread(int nrJNICalls) {
                 this.nrJNIcalls = nrJNICalls;
             }
 
@@ -143,7 +143,7 @@ public class JNI_invocations extends RunBench {
         public static class GCInvokeThread implements Runnable{
             private int nrJNIThreads;
 
-            public GCInvokeThread(int nrJNIThreads) {
+            GCInvokeThread(int nrJNIThreads) {
                 this.nrJNIThreads = nrJNIThreads;
             }
 

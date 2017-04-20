@@ -51,7 +51,7 @@ public interface Symbolizer<S extends Symbol> extends Iterable<S> {
 
     int numberOfValues();
 
-    public static final class Static {
+    final class Static {
 
         private Static() {
         }

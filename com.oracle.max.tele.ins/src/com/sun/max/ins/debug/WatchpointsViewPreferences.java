@@ -104,7 +104,7 @@ public final class WatchpointsViewPreferences extends TableColumnVisibilityPrefe
 
     private static class WatchpointsPreferencesPanel extends InspectorPanel {
 
-        public WatchpointsPreferencesPanel(Inspection inspection) {
+        WatchpointsPreferencesPanel(Inspection inspection) {
             super(inspection);
         }
     }

@@ -42,7 +42,7 @@ public final class MethodActorSearchDialog extends ObjectSearchDialog<TeleMethod
         final TeleMethodActor teleMethodActor;
         final String name;
 
-        public MethodActorListItem(Inspection inspection, String name, TeleMethodActor teleMethodActor) {
+        MethodActorListItem(Inspection inspection, String name, TeleMethodActor teleMethodActor) {
             super(inspection);
             this.teleMethodActor = teleMethodActor;
             this.name = name;

@@ -33,7 +33,7 @@ public enum DebugRegister implements EnumerableArgument<DebugRegister> {
 
     private final int number;
 
-    private DebugRegister(int number) {
+    DebugRegister(int number) {
         this.number = number;
     }
 

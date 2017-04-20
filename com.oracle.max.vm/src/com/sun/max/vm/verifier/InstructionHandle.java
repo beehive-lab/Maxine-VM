@@ -81,7 +81,7 @@ final class InstructionHandle {
 
     public Flag flag;
 
-    public InstructionHandle(Instruction instruction, SubroutineCall caller, InstructionHandle next) {
+    InstructionHandle(Instruction instruction, SubroutineCall caller, InstructionHandle next) {
         this.instruction = instruction;
         this.subroutineCall = caller;
         this.next = next;

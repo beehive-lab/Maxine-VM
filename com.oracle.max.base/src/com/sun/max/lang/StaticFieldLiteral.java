@@ -36,7 +36,7 @@ public interface StaticFieldLiteral {
 
     void setLiteralClass(Class literalClass);
 
-    public static final class Static {
+    final class Static {
 
         private Static() {
         }

@@ -79,7 +79,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
     /**
      * Creates a manager for objects allocated in a {@link SemiSpaceCodeRegion}.
      */
-    public SemispaceCodeCacheRemoteReferenceManager(TeleVM vm, VmSemiSpaceCodeCacheRegion semispaceCodeCacheRegion) {
+    SemispaceCodeCacheRemoteReferenceManager(TeleVM vm, VmSemiSpaceCodeCacheRegion semispaceCodeCacheRegion) {
         super(vm);
         this.semispaceCodeCacheRegion = semispaceCodeCacheRegion;
         this.heapPhase = HeapPhase.MUTATING;
@@ -234,7 +234,7 @@ final class SemispaceCodeCacheRemoteReferenceManager extends AbstractVmHolder im
         private Address origin = Address.zero();
         private ObjectStatus status = ObjectStatus.LIVE;
 
-        public SemispaceCodeCacheRemoteReference(TeleVM vm, TeleTargetMethod teleTargetMethod, CodeCacheReferenceKind kind) {
+        SemispaceCodeCacheRemoteReference(TeleVM vm, TeleTargetMethod teleTargetMethod, CodeCacheReferenceKind kind) {
             super(vm, teleTargetMethod);
             this.origin = teleTargetMethod.codeCacheObjectOrigin(kind);
             this.kind = kind;

@@ -49,7 +49,7 @@ public enum WatchpointsColumnKind implements ColumnKind {
     private final boolean defaultVisibility;
     private final int minWidth;
 
-    private WatchpointsColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
+    WatchpointsColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
         this.label = label;
         this.toolTipText = toolTipText;
         this.defaultVisibility = defaultVisibility;

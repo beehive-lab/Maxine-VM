@@ -133,7 +133,9 @@ public class HeapAccount<T extends HeapAccountOwner>{
      * The owner of the heap account.
      * @return an object
      */
-    public T owner() { return owner; }
+    public T owner() {
+        return owner;
+    }
 
     /**
      * Record a new contiguous range of regions into an accounting list. Region in the ranges may not be linked in the accounting list's shared storage.

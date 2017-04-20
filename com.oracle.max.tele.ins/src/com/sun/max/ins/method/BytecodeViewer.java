@@ -340,7 +340,7 @@ public abstract class BytecodeViewer extends CodeViewer {
 
     private final class InspectorBytecodePrinter extends BytecodePrinter {
 
-        public InspectorBytecodePrinter(PrintStream stream, ConstantPool constantPool) {
+        InspectorBytecodePrinter(PrintStream stream, ConstantPool constantPool) {
             super(new PrintWriter(stream), constantPool, "", "", 0);
         }
 

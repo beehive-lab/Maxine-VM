@@ -106,7 +106,7 @@ public abstract class BytecodeAssembler {
          * @param size
          *                the size of the encoded instruction
          */
-        public LabelInstruction(int opcodeAddress, int size) {
+        LabelInstruction(int opcodeAddress, int size) {
             this.opcodeAddress = opcodeAddress;
             this.size = size;
         }

@@ -41,13 +41,13 @@ import com.sun.max.vm.value.*;
  */
 final class HeapRegionInfoTable extends InspectorTable {
 
-    static public enum HeapRegionInfoColumnKind implements ColumnKind {
+    public enum HeapRegionInfoColumnKind implements ColumnKind {
         NAME("Info", "Heap Region Info"),
         VALUE("Value", "value");
         private final String label;
         private final String toolTipText;
 
-        private HeapRegionInfoColumnKind(String label, String toolTipText) {
+        HeapRegionInfoColumnKind(String label, String toolTipText) {
             this.label = label;
             this.toolTipText = toolTipText;
         }
@@ -120,7 +120,7 @@ final class HeapRegionInfoTable extends InspectorTable {
             setValue(HeapRegionInfo.flagsToString(flags), intTo0xHex(flags));
         }
 
-        public FlagsRenderer(Inspection inspection) {
+        FlagsRenderer(Inspection inspection) {
             super(inspection, "");
             updateText();
         }
@@ -146,7 +146,7 @@ final class HeapRegionInfoTable extends InspectorTable {
             setValue(Integer.toString(tag), Integer.toString(tag));
         }
 
-        public TagRenderer(Inspection inspection) {
+        TagRenderer(Inspection inspection) {
             super(inspection, "");
             updateText();
         }
@@ -169,7 +169,7 @@ final class HeapRegionInfoTable extends InspectorTable {
         TextLabel [] nameLabels = new TextLabel[infoNames.length];
         InspectorLabel[] valueLabels = new InspectorLabel[infoNames.length];
 
-        public HeapRegionInfoTableModel(Inspection inspection) {
+        HeapRegionInfoTableModel(Inspection inspection) {
             super(inspection);
             valueLabels[0] = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, teleHeapRegionInfo.regionStart(), HeapRegionInfoTable.this);
             valueLabels[1] = new WordValueLabel(inspection, WordValueLabel.ValueMode.REFERENCE, teleHeapRegionInfo.regionEnd(), HeapRegionInfoTable.this);
@@ -241,7 +241,7 @@ final class HeapRegionInfoTable extends InspectorTable {
     private final HeapRegionInfoTableModel tableModel;
     final TeleHeapRegionInfo teleHeapRegionInfo;
 
-    public HeapRegionInfoTable(Inspection inspection, InspectorView view, TeleHeapRegionInfo teleHeapRegionInfo) {
+    HeapRegionInfoTable(Inspection inspection, InspectorView view, TeleHeapRegionInfo teleHeapRegionInfo) {
         super(inspection);
         this.view = view;
         this.teleHeapRegionInfo = teleHeapRegionInfo;

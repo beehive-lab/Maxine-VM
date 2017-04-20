@@ -44,7 +44,7 @@ public class PoolSetTest extends MaxTestCase {
 
         private int serial;
 
-        public TestElement(int n) {
+        TestElement(int n) {
             serial = n;
         }
 

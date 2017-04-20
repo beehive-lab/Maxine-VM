@@ -31,7 +31,7 @@ public class VmOperationQueue {
 
     static class Head extends VmOperation {
 
-        public Head() {
+        Head() {
             super("VmOperationQueue.Head", null, null, false);
             this.next = this;
             this.previous = this;

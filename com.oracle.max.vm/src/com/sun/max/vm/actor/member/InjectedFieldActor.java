@@ -48,7 +48,7 @@ public interface InjectedFieldActor<Value_Type extends Value<Value_Type>> {
     @HOSTED_ONLY
     Value_Type readInjectedValue(Object object);
 
-    public static final class Static {
+    final class Static {
 
         private static InjectedFieldActor[] injectedFieldActors = new InjectedFieldActor[0];
 

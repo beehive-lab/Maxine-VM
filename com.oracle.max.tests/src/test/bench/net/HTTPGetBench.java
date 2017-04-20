@@ -53,7 +53,7 @@ public class HTTPGetBench extends RunBench {
         private int responseReps;
         private int writerBufSize = 8192;
 
-        public HTTPGetBenchMark(int port, int responsereps) throws IOException {
+        HTTPGetBenchMark(int port, int responsereps) throws IOException {
             this.responseReps = responsereps;
             this.socket = new ServerSocket(port);
             final String bufSizeProperty = System.getProperty("test.bench.net.http.bufsize");

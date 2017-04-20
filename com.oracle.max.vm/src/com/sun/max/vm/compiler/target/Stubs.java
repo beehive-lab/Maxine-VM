@@ -1086,7 +1086,7 @@ public class Stubs {
          */
         final Stub stub;
 
-        public ARMV7DeoptStubPatch(int pos, CriticalMethod runtimeRoutine, Stub stub) {
+        ARMV7DeoptStubPatch(int pos, CriticalMethod runtimeRoutine, Stub stub) {
             this.pos = pos;
             this.runtimeRoutine = runtimeRoutine;
             this.stub = stub;
@@ -1126,7 +1126,7 @@ public class Stubs {
          */
         final Stub stub;
 
-        public AMD64DeoptStubPatch(int pos, CriticalMethod runtimeRoutine, Stub stub) {
+        AMD64DeoptStubPatch(int pos, CriticalMethod runtimeRoutine, Stub stub) {
             this.pos = pos;
             this.runtimeRoutine = runtimeRoutine;
             this.stub = stub;

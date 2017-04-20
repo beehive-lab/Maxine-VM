@@ -42,7 +42,7 @@ public class CFGPrinterObserver implements CompilationObserver {
     static class Observation {
         final CFGPrinter cfgPrinter;
         final ByteArrayOutputStream buffer;
-        public Observation(CiTarget target) {
+        Observation(CiTarget target) {
             buffer = new ByteArrayOutputStream();
             cfgPrinter = new CFGPrinter(buffer, target);
         }

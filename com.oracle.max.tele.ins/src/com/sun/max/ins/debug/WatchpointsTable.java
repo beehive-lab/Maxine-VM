@@ -141,7 +141,7 @@ public final class WatchpointsTable extends InspectorTable {
      */
     private final class WatchpointsTableModel extends InspectorTableModel {
 
-        public WatchpointsTableModel(Inspection inspection) {
+        WatchpointsTableModel(Inspection inspection) {
             super(inspection);
         }
 
@@ -351,7 +351,7 @@ public final class WatchpointsTable extends InspectorTable {
         // WordValueLabels have important user interaction state, so create one per watchpoint and keep them around
         private final Map<MaxWatchpoint, WeakReference<WordValueLabel> > watchpointToLabelMap = new HashMap<MaxWatchpoint, WeakReference<WordValueLabel> >();
 
-        public StartAddressCellRenderer(Inspection inspection) {
+        StartAddressCellRenderer(Inspection inspection) {
             this.inspection = inspection;
             setOpaque(true);
         }
@@ -411,7 +411,7 @@ public final class WatchpointsTable extends InspectorTable {
 
     private final class SizeCellRenderer extends DataLabel.LongAsDecimal implements TableCellRenderer {
 
-        public SizeCellRenderer(Inspection inspection) {
+        SizeCellRenderer(Inspection inspection) {
             super(inspection, 0);
             setOpaque(true);
         }
@@ -431,7 +431,7 @@ public final class WatchpointsTable extends InspectorTable {
         // WordValueLabels have important user interaction state, so create one per watchpoint and keep them around
         private final Map<MaxWatchpoint, WeakReference<WordValueLabel> > watchpointToLabelMap = new HashMap<MaxWatchpoint, WeakReference<WordValueLabel> >();
 
-        public EndAddressCellRenderer(Inspection inspection) {
+        EndAddressCellRenderer(Inspection inspection) {
             this.inspection = inspection;
         }
 
@@ -491,7 +491,7 @@ public final class WatchpointsTable extends InspectorTable {
 
     private final class DescriptionCellRenderer extends PlainLabel implements TableCellRenderer {
 
-        public DescriptionCellRenderer(Inspection inspection) {
+        DescriptionCellRenderer(Inspection inspection) {
             super(inspection, "");
             setOpaque(true);
         }
@@ -520,7 +520,7 @@ public final class WatchpointsTable extends InspectorTable {
 
     private final class RegionRenderer extends MemoryRegionValueLabel implements TableCellRenderer {
 
-        public RegionRenderer(Inspection inspection) {
+        RegionRenderer(Inspection inspection) {
             super(inspection, "Start address");
         }
 

@@ -66,7 +66,7 @@ public enum HeapPhase {
     private final String label;
     private final String description;
 
-    private HeapPhase(String label, String description) {
+    HeapPhase(String label, String description) {
         this.label = label;
         this.description = description;
     }

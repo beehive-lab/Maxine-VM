@@ -34,7 +34,7 @@ public enum MethodCodeKind {
     private final String label;
     private final boolean defaultVisibility;
 
-    private MethodCodeKind(String label, boolean defaultVisibility) {
+    MethodCodeKind(String label, boolean defaultVisibility) {
         this.label = label;
         this.defaultVisibility = defaultVisibility;
     }

@@ -37,7 +37,7 @@ class ExcessiveGCDaemon extends Thread {
     /**
      * Creates a daemon thread that calls {@link Heap#collectGarbage(Size)} every {@code frequency} milliseconds.
      */
-    public ExcessiveGCDaemon(int frequency) {
+    ExcessiveGCDaemon(int frequency) {
         super("ExcessiveGCDaemon");
         setDaemon(true);
         this.frequency = frequency;

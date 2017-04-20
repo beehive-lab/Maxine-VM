@@ -122,7 +122,7 @@ public @interface ALIAS {
      */
     boolean optional() default false;
 
-    public static class Static {
+    class Static {
 
         /**
          * Map from method alias to aliased method.

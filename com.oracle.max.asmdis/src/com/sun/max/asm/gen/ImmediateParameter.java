@@ -27,7 +27,7 @@ import java.util.*;
  */
 public interface ImmediateParameter extends Parameter {
 
-    public static final class Static {
+    final class Static {
 
         private Static() {
         }

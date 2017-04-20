@@ -30,7 +30,7 @@ public interface Predicate<T> {
 
     boolean evaluate(T object);
 
-    public static final class Static {
+    final class Static {
         private Static() {
         }
 

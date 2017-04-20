@@ -79,7 +79,7 @@ public abstract class AbstractView<View_Type extends AbstractView> extends Abstr
 
         private final String label;
 
-        private MenuKind(String label) {
+        MenuKind(String label) {
             this.label = label;
         }
 

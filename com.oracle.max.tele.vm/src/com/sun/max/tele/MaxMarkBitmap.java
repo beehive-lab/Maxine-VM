@@ -30,7 +30,7 @@ import com.sun.max.unsafe.*;
  */
 public interface MaxMarkBitmap extends MaxEntity<MaxMarkBitmap> {
 
-    public enum MarkColor {
+    enum MarkColor {
         MARK_WHITE(0, "White"),
         MARK_BLACK(1, "Black"),
         MARK_GRAY(2, "Gray"),
@@ -39,7 +39,7 @@ public interface MaxMarkBitmap extends MaxEntity<MaxMarkBitmap> {
 
         public final int id;
         public final String name;
-        private MarkColor(int id, String name) {
+        MarkColor(int id, String name) {
             this.id = id;
             this.name = name;
         }

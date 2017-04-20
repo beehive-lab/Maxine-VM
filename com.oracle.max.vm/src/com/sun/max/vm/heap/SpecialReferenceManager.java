@@ -358,7 +358,7 @@ public class SpecialReferenceManager {
     }
 
     static final class SentinelReference extends java.lang.ref.WeakReference<Object> {
-        public SentinelReference() {
+        SentinelReference() {
             super(null);
         }
     }

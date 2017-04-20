@@ -61,7 +61,7 @@ enum VMLogColumnKind implements ColumnKind {
     private final boolean defaultVisibility;
     private final int minWidth;
 
-    private VMLogColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
+    VMLogColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
         this.label = label;
         this.toolTipText = toolTipText;
         this.defaultVisibility = defaultVisibility;

@@ -401,7 +401,7 @@ public final class VmMachineCodeAccess extends AbstractVmHolder implements MaxMa
          */
         private Map<Long, WeakReference<RemoteCodePointer>> addressToCodePointer = new HashMap<Long, WeakReference<RemoteCodePointer>>();
 
-        public DisconnectedRemoteCodePointerManager(TeleVM vm) {
+        DisconnectedRemoteCodePointerManager(TeleVM vm) {
             super(vm);
         }
 

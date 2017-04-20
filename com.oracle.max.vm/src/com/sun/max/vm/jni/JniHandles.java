@@ -92,7 +92,7 @@ public final class JniHandles {
     static final class Frame {
         final int start;
         final Frame previous;
-        public Frame(int start, Frame previous) {
+        Frame(int start, Frame previous) {
             this.start = start;
             this.previous = previous;
         }

@@ -33,7 +33,7 @@ final class DecodingStream {
     byte[] buf;
     int pos;
 
-    public DecodingStream(byte[] buf) {
+    DecodingStream(byte[] buf) {
         this.buf = buf;
     }
 

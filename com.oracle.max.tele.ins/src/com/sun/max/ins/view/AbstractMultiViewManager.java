@@ -228,7 +228,7 @@ public abstract class AbstractMultiViewManager<View_Kind extends InspectorView>
 
     private final class DeactivateAllAction extends InspectorAction {
 
-        public DeactivateAllAction(String title) {
+        DeactivateAllAction(String title) {
             super(inspection(), "Close unpinned " + title + " views");
         }
 
@@ -247,7 +247,7 @@ public abstract class AbstractMultiViewManager<View_Kind extends InspectorView>
 
         private final InspectorView exceptInspector;
 
-        public DeactivateAllExceptAction(String title, InspectorView exceptInspector) {
+        DeactivateAllExceptAction(String title, InspectorView exceptInspector) {
             super(inspection(), "Close other " + title + " views");
             this.exceptInspector = exceptInspector;
         }

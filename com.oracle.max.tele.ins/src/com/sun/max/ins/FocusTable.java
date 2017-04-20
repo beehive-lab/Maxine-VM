@@ -52,7 +52,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
         private final String toolTipText;
         private final int minWidth;
 
-        private FocusColumnKind(String label, String toolTipText, int minWidth) {
+        FocusColumnKind(String label, String toolTipText, int minWidth) {
             this.label = label;
             this.toolTipText = toolTipText;
             this.minWidth = minWidth;
@@ -135,7 +135,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
         private final String label;
         private final String toolTipText;
 
-        private FocusRowKind(String label, String toolTipText) {
+        FocusRowKind(String label, String toolTipText) {
             this.label = label;
             this.toolTipText = toolTipText;
         }
@@ -188,7 +188,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
 
     private final class FocusTableModel extends InspectorTableModel {
 
-        public FocusTableModel(Inspection inspection) {
+        FocusTableModel(Inspection inspection) {
             super(inspection);
         }
 
@@ -239,7 +239,7 @@ public final class FocusTable extends InspectorTable implements ViewFocusListene
         // A "value" label per row, each suitable for the particular kind of value.
         private InspectorLabel[] labels = new InspectorLabel[rowCount];
 
-        public ValueCellRenderer(final Inspection inspection) {
+        ValueCellRenderer(final Inspection inspection) {
             for (int row = 0; row < rowCount; row++) {
                 InspectorLabel label = null;
                 switch(FocusRowKind.values()[row]) {

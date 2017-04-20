@@ -67,7 +67,7 @@ public interface DataIO {
      */
     int write(ByteBuffer src, int srcOffset, int length, Address dst) throws DataIOError, IndexOutOfBoundsException;
 
-    public static class Static {
+    class Static {
 
         /**
          * Fills a buffer by reading bytes from a source.

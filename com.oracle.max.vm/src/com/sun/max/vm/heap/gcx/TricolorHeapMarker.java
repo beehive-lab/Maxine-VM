@@ -190,7 +190,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         VMOptions.addFieldOption("-XX:", "UseNewCode", TricolorHeapMarker.class, "Use new refactored code)", Phase.PRISTINE);
     }
 
-    private static enum MARK_PHASE {
+    private enum MARK_PHASE {
         SCAN_THREADS("T", "Marking roots from threads and monitors"),
         SCAN_BOOT_HEAP("B", "Marking roots from boot heap"),
         SCAN_CODE("C", "Marking roots from code"),
@@ -202,7 +202,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
         final String tag;
         final String traceMessage;
 
-        private MARK_PHASE(String tag, String traceMessage) {
+        MARK_PHASE(String tag, String traceMessage) {
             this.tag = tag;
             this.traceMessage = traceMessage;
         }
@@ -660,8 +660,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @return a pointer to a word of the color map
   */
     @INLINE
-    protected
-    final Pointer bitmapWordPointerAt(int bitIndex) {
+    protected final Pointer bitmapWordPointerAt(int bitIndex) {
         return base.asPointer().plus(bitmapWordIndex(bitIndex) << Word.widthValue().log2numberOfBytes);
     }
 
@@ -669,14 +668,12 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      *  Bit index in the bitmap for the address into the covered area.
      */
     @INLINE
-    protected
-    final int bitIndexOf(Address address) {
+    protected final int bitIndexOf(Address address) {
         return address.minus(coveredAreaStart).unsignedShiftedRight(log2BytesCoveredPerBit).toInt();
     }
 
     @INLINE
-    protected
-    final Address addressOf(int bitIndex) {
+    protected final Address addressOf(int bitIndex) {
         return coveredAreaStart.plus(Address.fromInt(bitIndex).shiftedLeft(log2BytesCoveredPerBit));
     }
 
@@ -779,8 +776,7 @@ public class TricolorHeapMarker implements MarkingStack.OverflowHandler, HeapMan
      * @return true if the object is white.
      */
     @INLINE
-    protected
-    final boolean isWhite(int bitIndex) {
+    protected final boolean isWhite(int bitIndex) {
         return isClear(bitIndex);
     }
 

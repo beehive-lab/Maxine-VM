@@ -138,26 +138,105 @@ public class HostedArrayLayout extends HostedGeneralLayout implements ArrayLayou
         throw ProgramError.unexpected();
     }
 
-    @INLINE public final boolean   getBoolean(Accessor accessor, int index) { return accessor.getBoolean(0, index); }
-    @INLINE public final byte      getByte(Accessor accessor, int index) { return accessor.getByte(0, index); }
-    @INLINE public final char      getChar(Accessor accessor, int index) { return accessor.getChar(0, index); }
-    @INLINE public final short     getShort(Accessor accessor, int index) { return accessor.getShort(0, index);  }
-    @INLINE public final int       getInt(Accessor accessor, int index) { return accessor.getInt(0, index); }
-    @INLINE public final float     getFloat(Accessor accessor, int index) { return accessor.getFloat(0, index); }
-    @INLINE public final long      getLong(Accessor accessor, int index) { return accessor.getLong(0, index); }
-    @INLINE public final double    getDouble(Accessor accessor, int index) { return accessor.getDouble(0, index); }
-    @INLINE public final Word      getWord(Accessor accessor, int index) { return accessor.getWord(0, index); }
-    @INLINE public final Reference getReference(Accessor accessor, int index) { return accessor.getReference(0, index); }
+    @INLINE
+    public final boolean getBoolean(Accessor accessor, int index) {
+        return accessor.getBoolean(0, index);
+    }
 
-    @INLINE public final void setBoolean(Accessor accessor, int index, boolean value) { accessor.setBoolean(0, index, value); }
-    @INLINE public final void setByte(Accessor accessor, int index, byte value) {  accessor.setByte(0, index, value); }
-    @INLINE public final void setChar(Accessor accessor, int index, char value) { accessor.setChar(0, index, value); }
-    @INLINE public final void setShort(Accessor accessor, int index, short value) { accessor.setShort(0, index, value); }
-    @INLINE public final void setInt(Accessor accessor, int index, int value) { accessor.setInt(0, index, value); }
-    @INLINE public final void setFloat(Accessor accessor, int index, float value) { accessor.setFloat(0, index, value); }
-    @INLINE public final void setLong(Accessor accessor, int index, long value) { accessor.setLong(0, index, value); }
-    @INLINE public final void setDouble(Accessor accessor, int index, double value) { accessor.setDouble(0, index, value); }
-    @INLINE public final void setWord(Accessor accessor, int index, Word value) { accessor.setWord(0, index, value); }
-    @INLINE public final void setReference(Accessor accessor, int index, Reference element) { accessor.setReference(0, index, element); }
+    @INLINE
+    public final byte getByte(Accessor accessor, int index) {
+        return accessor.getByte(0, index);
+    }
+
+    @INLINE
+    public final char getChar(Accessor accessor, int index) {
+        return accessor.getChar(0, index);
+    }
+
+    @INLINE
+    public final short getShort(Accessor accessor, int index) {
+        return accessor.getShort(0, index);
+    }
+
+    @INLINE
+    public final int getInt(Accessor accessor, int index) {
+        return accessor.getInt(0, index);
+    }
+
+    @INLINE
+    public final float getFloat(Accessor accessor, int index) {
+        return accessor.getFloat(0, index);
+    }
+
+    @INLINE
+    public final long getLong(Accessor accessor, int index) {
+        return accessor.getLong(0, index);
+    }
+
+    @INLINE
+    public final double getDouble(Accessor accessor, int index) {
+        return accessor.getDouble(0, index);
+    }
+
+    @INLINE
+    public final Word getWord(Accessor accessor, int index) {
+        return accessor.getWord(0, index);
+    }
+
+    @INLINE
+    public final Reference getReference(Accessor accessor, int index) {
+        return accessor.getReference(0, index);
+    }
+
+
+    @INLINE
+    public final void setBoolean(Accessor accessor, int index, boolean value) {
+        accessor.setBoolean(0, index, value);
+    }
+
+    @INLINE
+    public final void setByte(Accessor accessor, int index, byte value) {
+        accessor.setByte(0, index, value);
+    }
+
+    @INLINE
+    public final void setChar(Accessor accessor, int index, char value) {
+        accessor.setChar(0, index, value);
+    }
+
+    @INLINE
+    public final void setShort(Accessor accessor, int index, short value) {
+        accessor.setShort(0, index, value);
+    }
+
+    @INLINE
+    public final void setInt(Accessor accessor, int index, int value) {
+        accessor.setInt(0, index, value);
+    }
+
+    @INLINE
+    public final void setFloat(Accessor accessor, int index, float value) {
+        accessor.setFloat(0, index, value);
+    }
+
+    @INLINE
+    public final void setLong(Accessor accessor, int index, long value) {
+        accessor.setLong(0, index, value);
+    }
+
+    @INLINE
+    public final void setDouble(Accessor accessor, int index, double value) {
+        accessor.setDouble(0, index, value);
+    }
+
+    @INLINE
+    public final void setWord(Accessor accessor, int index, Word value) {
+        accessor.setWord(0, index, value);
+    }
+
+    @INLINE
+    public final void setReference(Accessor accessor, int index, Reference element) {
+        accessor.setReference(0, index, element);
+    }
 
 }

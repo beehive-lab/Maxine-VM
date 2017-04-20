@@ -366,7 +366,7 @@ public class MaxineTester {
      * Used for per-thread buffering of output.
      */
     static class ByteArrayPrintStream extends PrintStream {
-        public ByteArrayPrintStream() {
+        ByteArrayPrintStream() {
             super(new ByteArrayOutputStream());
         }
         public void writeTo(PrintStream other) {
@@ -917,7 +917,7 @@ public class MaxineTester {
             cache = null;
         }
 
-        public Logs(File outputDir, String baseName, String imageConfig) {
+        Logs(File outputDir, String baseName, String imageConfig) {
             final String configString = imageConfig == null ? "" : "_" + imageConfig;
             base = new File(outputDir, baseName + configString);
             cache = new HashMap<String, File>();

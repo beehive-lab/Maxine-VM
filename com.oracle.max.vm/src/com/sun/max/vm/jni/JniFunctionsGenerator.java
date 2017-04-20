@@ -66,7 +66,7 @@ public class JniFunctionsGenerator {
         int lineNo;
         String line;
         final File file;
-        public LineReader(File file) throws FileNotFoundException {
+        LineReader(File file) throws FileNotFoundException {
             super(new FileReader(file));
             this.file = file;
         }

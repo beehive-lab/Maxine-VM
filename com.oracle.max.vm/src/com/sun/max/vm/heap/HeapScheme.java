@@ -47,7 +47,7 @@ public interface HeapScheme extends VMScheme {
      * Every thread is given one and uses it to communicate details regarding its requests for garbage collection.
      * This class can be extended to allow additional heap scheme specific information to be passed to a GC operation.
      */
-    public static abstract class GCRequest {
+    abstract class GCRequest {
         public final VmThread requester;
         /**
          * Amount of bytes requested if this request was issued by a failed allocation operation.
@@ -130,7 +130,7 @@ public interface HeapScheme extends VMScheme {
      * @see HeapScheme#bootRegionMappingConstraint()
      * @see HeapScheme#reservedVirtualSpaceKB()
      */
-    public enum BootRegionMappingConstraint  {
+    enum BootRegionMappingConstraint  {
         ANYWHERE,
         AT_START,
         AT_END
@@ -491,7 +491,7 @@ public interface HeapScheme extends VMScheme {
      * Logging support.
      */
 
-    public static abstract class PhaseLogger extends VMLogger {
+    abstract class PhaseLogger extends VMLogger {
         /**
          * Create instance. For auto-generation we keep the {@link VMLogger} constructor form.
          */
@@ -514,7 +514,7 @@ public interface HeapScheme extends VMScheme {
     /**
      * A logger for GC timings - implementation provided by the heap scheme.
      */
-    public static abstract class TimeLogger extends VMLogger {
+    abstract class TimeLogger extends VMLogger {
         /**
          * Create instance. For auto-generation we keep the {@link VMLogger} constructor form.
          */
@@ -540,7 +540,7 @@ public interface HeapScheme extends VMScheme {
      * The public methods are to be called by all scheme implementations when
      * the specified events occur.
      */
-    public static final class Inspect {
+    final class Inspect {
 
         /**
          * Sets up machinery for inspection of heap activity.

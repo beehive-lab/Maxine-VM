@@ -100,7 +100,7 @@ public enum ObjectStatus {
     private final String label;
     private final String description;
 
-    private ObjectStatus(String label, String description) {
+    ObjectStatus(String label, String description) {
         this.label = label;
         this.description = description;
     }

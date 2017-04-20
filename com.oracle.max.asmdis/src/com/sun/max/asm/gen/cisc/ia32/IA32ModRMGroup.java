@@ -244,7 +244,7 @@ public enum IA32ModRMGroup implements ModRMGroup {
 
     private final ModRMDescription[] instructionDescriptions;
 
-    private IA32ModRMGroup(ModRMDescription... instructionDescriptions) {
+    IA32ModRMGroup(ModRMDescription... instructionDescriptions) {
         this.instructionDescriptions = instructionDescriptions;
     }
 

@@ -113,7 +113,7 @@ public final class Heap {
         String invalidHeapSizeReason;
 
         @HOSTED_ONLY
-        public InitialHeapSizeOption() {
+        InitialHeapSizeOption() {
             super("-Xms", maxHeapSizeOption.getValue().dividedBy(DEFAULT_INIT_HEAP_SIZE_RATIO), "The initial heap size.");
         }
         @Override
@@ -649,7 +649,7 @@ public final class Heap {
      * Identifies the callback phase, and can also be used within
      * heap implementations for logging purposes.
      */
-    public static enum GCCallbackPhase {
+    public enum GCCallbackPhase {
         INIT("GC initialization"), BEFORE("before GC"), AFTER("after GC");
 
         public final String description;

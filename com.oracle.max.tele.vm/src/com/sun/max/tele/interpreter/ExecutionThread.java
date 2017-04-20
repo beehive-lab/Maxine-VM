@@ -42,7 +42,7 @@ class ExecutionThread {
     //private int _prio;
     //private ThreadType _threadType;
 
-    public ExecutionThread(int prio, ThreadType threadType) {
+    ExecutionThread(int prio, ThreadType threadType) {
         //_prio = prio;
         //_threadType = threadType;
         frame = null;
@@ -65,7 +65,7 @@ class ExecutionThread {
         return frame;
     }
 
-    public static enum ThreadType {
+    public enum ThreadType {
         NORMAL_THREAD,
         VM_THREAD,
     }

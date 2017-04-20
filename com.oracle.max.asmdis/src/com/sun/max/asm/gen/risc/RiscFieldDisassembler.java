@@ -40,7 +40,7 @@ class RiscFieldDisassembler<Template_Type extends Template> implements RiscInstr
     private final int assembledInstruction;
     private String string;
 
-    public RiscFieldDisassembler(Template_Type template, byte[] assembledInstruction) {
+    RiscFieldDisassembler(Template_Type template, byte[] assembledInstruction) {
         assert assembledInstruction.length == 4;
         this.template = template;
         this.assembledInstruction = assembledInstruction[0] << 24 | ((assembledInstruction[1] & 0xFF) << 16) | ((assembledInstruction[2] & 0xFF) << 8) | (assembledInstruction[3] & 0xFF);

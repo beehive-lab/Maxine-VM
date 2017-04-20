@@ -107,7 +107,7 @@ public enum VMATimeMode {
 
     public final boolean canAdvance;
 
-    private VMATimeMode(boolean canAdvance) {
+    VMATimeMode(boolean canAdvance) {
         this.canAdvance = canAdvance;
     }
 

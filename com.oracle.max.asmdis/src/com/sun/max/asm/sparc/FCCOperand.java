@@ -41,7 +41,9 @@ public final class FCCOperand extends AbstractSymbolicArgument implements Condit
     public static final FCCOperand FCC3 = new FCCOperand(3);
 
     private static final FCCOperand [] ALL = new FCCOperand[] {FCC0, FCC1, FCC2, FCC3 };
-    public static  FCCOperand [] all() { return ALL; }
+    public static  FCCOperand [] all() {
+        return ALL;
+    }
 
     public static final Symbolizer<FCCOperand> SYMBOLIZER = Symbolizer.Static.initialize(FCCOperand.class);
 }

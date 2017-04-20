@@ -34,7 +34,7 @@ final class EncodingStream {
     byte[] buf;
     int pos;
 
-    public EncodingStream(int capacity) {
+    EncodingStream(int capacity) {
         buf = new byte[capacity];
     }
 

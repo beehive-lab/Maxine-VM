@@ -101,7 +101,7 @@ public enum JVMTIError {
         }
     }
 
-    private JVMTIError(int code) {
+    JVMTIError(int code) {
         this.code = code;
     }
 

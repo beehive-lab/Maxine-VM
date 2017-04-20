@@ -57,7 +57,7 @@ public enum MaxProcessState {
     private final String label;
     private final String description;
 
-    private MaxProcessState(String label, String description) {
+    MaxProcessState(String label, String description) {
         this.label = label;
         this.description = description;
     }

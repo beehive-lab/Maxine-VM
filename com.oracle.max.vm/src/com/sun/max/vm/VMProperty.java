@@ -85,7 +85,7 @@ public enum VMProperty {
      */
     private Pointer valueCString;
 
-    private VMProperty(String property, String value, boolean mutable) {
+    VMProperty(String property, String value, boolean mutable) {
         this.property = property;
         this.propertyBytes = property.getBytes();
         this.value = value;
@@ -207,4 +207,3 @@ public enum VMProperty {
 
 
 }
-

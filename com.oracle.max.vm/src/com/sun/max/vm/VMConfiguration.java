@@ -131,11 +131,30 @@ public final class VMConfiguration {
         }
     }
 
-    @INLINE public ReferenceScheme       referenceScheme()   { return referenceScheme;   }
-    @INLINE public LayoutScheme          layoutScheme()      { return layoutScheme;      }
-    @INLINE public HeapScheme            heapScheme()        { return heapScheme;        }
-    @INLINE public MonitorScheme         monitorScheme()     { return monitorScheme;     }
-    @INLINE public RunScheme             runScheme()         { return runScheme;         }
+    @INLINE
+    public ReferenceScheme referenceScheme() {
+        return referenceScheme;
+    }
+
+    @INLINE
+    public LayoutScheme layoutScheme() {
+        return layoutScheme;
+    }
+
+    @INLINE
+    public HeapScheme heapScheme() {
+        return heapScheme;
+    }
+
+    @INLINE
+    public MonitorScheme monitorScheme() {
+        return monitorScheme;
+    }
+
+    @INLINE
+    public RunScheme runScheme() {
+        return runScheme;
+    }
 
     @HOSTED_ONLY
     public List<BootImagePackage> packages() {

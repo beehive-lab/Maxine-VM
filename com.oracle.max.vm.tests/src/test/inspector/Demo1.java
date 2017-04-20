@@ -50,7 +50,7 @@ public class Demo1 {
     }
     private static class SimpleObject {
 
-        public SimpleObject(String text) {
+        SimpleObject(String text) {
             this.string = text;
         }
 

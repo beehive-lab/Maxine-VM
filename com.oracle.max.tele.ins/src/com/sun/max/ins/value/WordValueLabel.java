@@ -1816,7 +1816,7 @@ public class WordValueLabel extends ValueLabel {
             }
         }
 
-        public WordValueMenuItems(Inspection inspection, Value value) {
+        WordValueMenuItems(Inspection inspection, Value value) {
             add(actions().copyValue(value, "Copy value to clipboard"));
             add(new MenuViewObjectAction(value));
             add(new MenuViewMemoryAction(value));

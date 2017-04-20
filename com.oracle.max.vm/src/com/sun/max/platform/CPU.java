@@ -43,7 +43,7 @@ public enum CPU {
 
     public final MemoryModel memoryModel;
 
-    private CPU(ISA isa, DataModel defaultDataModel, MemoryModel memoryModel) {
+    CPU(ISA isa, DataModel defaultDataModel, MemoryModel memoryModel) {
         this.isa = isa;
         this.defaultDataModel = defaultDataModel;
         this.memoryModel = memoryModel;

@@ -53,45 +53,197 @@ public final class UnsafeCast {
     private UnsafeCast() {
     }
 
-    @INTRINSIC(UNSAFE_CAST) public static VmThread                 asVmThread(Object object) { return (VmThread) object; }
-    @INTRINSIC(UNSAFE_CAST) public static Object[]                 asObjectArray(Object object) { return (Object[]) object; }
-    @INTRINSIC(UNSAFE_CAST) public static Hybrid                   asHybrid(Object object) { return (Hybrid) object; }
-    @INTRINSIC(UNSAFE_CAST) public static StackUnwindingContext    asStackUnwindingContext(Object object) { return (StackUnwindingContext) object; }
-    @INTRINSIC(UNSAFE_CAST) public static Class                    asClass(Object object) { return (Class) object; }
-    @INTRINSIC(UNSAFE_CAST) public static ClassRegistry            asClassRegistry(Object object) { return (ClassRegistry) object; }
-    @INTRINSIC(UNSAFE_CAST) public static MethodInvocationStub     asMethodInvocationStub(Object object) { return (MethodInvocationStub) object; }
-    @INTRINSIC(UNSAFE_CAST) public static ConstructorInvocationStub asConstructorInvocationStub(Object object) { return (ConstructorInvocationStub) object; }
-    @INTRINSIC(UNSAFE_CAST) public static Throwable                asThrowable(Object object) { return (Throwable) object; }
-    @INTRINSIC(UNSAFE_CAST) public static int[]                    asIntArray(Object object) { return (int[]) object; }
-    @INTRINSIC(UNSAFE_CAST) public static DynamicHub               asDynamicHub(Object object) { return (DynamicHub) object; }
-    @INTRINSIC(UNSAFE_CAST) public static Hub                      asHub(Object object) { return (Hub) object; }
-    @INTRINSIC(UNSAFE_CAST) public static ArrayClassActor          asArrayClassActor(Object object) { return (ArrayClassActor) object; }
-    @INTRINSIC(UNSAFE_CAST) public static ClassActor               asClassActor(Object object) { return (ClassActor) object; }
-    @INTRINSIC(UNSAFE_CAST) public static FieldActor               asFieldActor(Object object) { return (FieldActor) object; }
-    @INTRINSIC(UNSAFE_CAST) public static ClassMethodActor         asClassMethodActor(Object object) { return (ClassMethodActor) object; }
-    @INTRINSIC(UNSAFE_CAST) public static StaticMethodActor        asStaticMethodActor(Object object) { return (StaticMethodActor) object; }
-    @INTRINSIC(UNSAFE_CAST) public static VirtualMethodActor       asVirtualMethodActor(Object object) { return (VirtualMethodActor) object; }
-    @INTRINSIC(UNSAFE_CAST) public static AccessControlContext     asAccessControlContext(Object object) { return (AccessControlContext) object; }
-    @INTRINSIC(UNSAFE_CAST) public static InterfaceActor           asInterfaceActor(Object object) { return (InterfaceActor) object; }
-    @INTRINSIC(UNSAFE_CAST) public static InterfaceMethodActor     asInterfaceMethodActor(Object object) { return (InterfaceMethodActor) object; }
+    @INTRINSIC(UNSAFE_CAST)
+    public static VmThread asVmThread(Object object) {
+        return (VmThread) object;
+    }
 
-    @INTRINSIC(UNSAFE_CAST) public static Address                  asAddress(int value) { return Address.fromUnsignedInt(value); }
-    @INTRINSIC(UNSAFE_CAST) public static Address                  asAddress(long value) { return Address.fromLong(value); }
-    @INTRINSIC(UNSAFE_CAST) public static Offset                   asOffset(int value) { return Offset.fromUnsignedInt(value); }
-    @INTRINSIC(UNSAFE_CAST) public static Offset                   asOffset(long value) { return Offset.fromLong(value); }
+    @INTRINSIC(UNSAFE_CAST)
+    public static Object[] asObjectArray(Object object) {
+        return (Object[]) object;
+    }
 
-    @INTRINSIC(UNSAFE_CAST) public static int                      asInt(Word word) { return word.asAddress().toInt(); }
-    @INTRINSIC(UNSAFE_CAST) public static long                     asLong(Word word) { return word.asAddress().toLong(); }
-    @INTRINSIC(UNSAFE_CAST) public static boolean                  asBoolean(byte value) { return value != 0; }
-    @INTRINSIC(UNSAFE_CAST) public static byte                     asByte(boolean value) { return value ? 1 : (byte) 0; }
-    @INTRINSIC(UNSAFE_CAST) public static int                      asInt(boolean value) { return value ? 1 : 0; }
-    @INTRINSIC(UNSAFE_CAST) public static char                     asChar(short value) { return (char) value; }
-    @INTRINSIC(UNSAFE_CAST) public static short                    asShort(char value) { return (short) value; }
+    @INTRINSIC(UNSAFE_CAST)
+    public static Hybrid asHybrid(Object object) {
+        return (Hybrid) object;
+    }
 
-    @INTRINSIC(UNSAFE_CAST) public static CodePointer              asCodePointer(long value) { return CodePointer.from(value); }
-    @INTRINSIC(UNSAFE_CAST) public static CodePointer              asCodePointerTagged(long value) { return CodePointer.fromTaggedLong(value); }
-    @INTRINSIC(UNSAFE_CAST) public static long                     asLong(CodePointer cp) { return cp.toLong(); }
-    @INTRINSIC(UNSAFE_CAST) public static long                     asTaggedLong(CodePointer cp) { return cp.toTaggedLong(); }
-    @INTRINSIC(UNSAFE_CAST) public static long                     asInt(CodePointer cp) { return cp.toInt(); }
-    @INTRINSIC(UNSAFE_CAST) public static int                      asTaggedInt(CodePointer cp) { return cp.toTaggedInt(); }
+    @INTRINSIC(UNSAFE_CAST)
+    public static StackUnwindingContext asStackUnwindingContext(Object object) {
+        return (StackUnwindingContext) object;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static Class asClass(Object object) {
+        return (Class) object;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static ClassRegistry asClassRegistry(Object object) {
+        return (ClassRegistry) object;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static MethodInvocationStub asMethodInvocationStub(Object object) {
+        return (MethodInvocationStub) object;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static ConstructorInvocationStub asConstructorInvocationStub(Object object) {
+        return (ConstructorInvocationStub) object;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static Throwable asThrowable(Object object) {
+        return (Throwable) object;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static int[] asIntArray(Object object) {
+        return (int[]) object;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static DynamicHub asDynamicHub(Object object) {
+        return (DynamicHub) object;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static Hub asHub(Object object) {
+        return (Hub) object;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static ArrayClassActor asArrayClassActor(Object object) {
+        return (ArrayClassActor) object;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static ClassActor asClassActor(Object object) {
+        return (ClassActor) object;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static FieldActor asFieldActor(Object object) {
+        return (FieldActor) object;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static ClassMethodActor asClassMethodActor(Object object) {
+        return (ClassMethodActor) object;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static StaticMethodActor asStaticMethodActor(Object object) {
+        return (StaticMethodActor) object;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static VirtualMethodActor asVirtualMethodActor(Object object) {
+        return (VirtualMethodActor) object;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static AccessControlContext asAccessControlContext(Object object) {
+        return (AccessControlContext) object;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static InterfaceActor asInterfaceActor(Object object) {
+        return (InterfaceActor) object;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static InterfaceMethodActor asInterfaceMethodActor(Object object) {
+        return (InterfaceMethodActor) object;
+    }
+
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static Address asAddress(int value) {
+        return Address.fromUnsignedInt(value);
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static Address asAddress(long value) {
+        return Address.fromLong(value);
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static Offset asOffset(int value) {
+        return Offset.fromUnsignedInt(value);
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static Offset asOffset(long value) {
+        return Offset.fromLong(value);
+    }
+
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static int asInt(Word word) {
+        return word.asAddress().toInt();
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static long asLong(Word word) {
+        return word.asAddress().toLong();
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static boolean asBoolean(byte value) {
+        return value != 0;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static byte asByte(boolean value) {
+        return value ? 1 : (byte) 0;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static int asInt(boolean value) {
+        return value ? 1 : 0;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static char asChar(short value) {
+        return (char) value;
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static short asShort(char value) {
+        return (short) value;
+    }
+
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static CodePointer asCodePointer(long value) {
+        return CodePointer.from(value);
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static CodePointer asCodePointerTagged(long value) {
+        return CodePointer.fromTaggedLong(value);
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static long asLong(CodePointer cp) {
+        return cp.toLong();
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static long asTaggedLong(CodePointer cp) {
+        return cp.toTaggedLong();
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static long asInt(CodePointer cp) {
+        return cp.toInt();
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static int asTaggedInt(CodePointer cp) {
+        return cp.toTaggedInt();
+    }
+
 }

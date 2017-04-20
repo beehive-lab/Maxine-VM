@@ -38,7 +38,7 @@ public enum T1XTimer {
     private long start;
     private long total;
 
-    private T1XTimer(String name) {
+    T1XTimer(String name) {
         this.name = name;
     }
 

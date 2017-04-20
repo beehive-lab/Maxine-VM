@@ -49,7 +49,7 @@ public enum AllocationsColumnKind implements ColumnKind {
     private final boolean defaultVisibility;
     private final int minWidth;
 
-    private AllocationsColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
+    AllocationsColumnKind(String label, String toolTipText, boolean defaultVisibility, int minWidth) {
         this.label = label;
         this.toolTipText = toolTipText;
         this.defaultVisibility = defaultVisibility;

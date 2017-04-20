@@ -86,7 +86,14 @@ public final class RegionRange extends Word {
         return asAddress().and(REGION_ID_MASK.asAddress()).toInt();
     }
 
-    @INTRINSIC(UNSAFE_CAST) private static RegionRange asRegionRange(long value) { return RegionRange.fromLong(value); }
-    @INTRINSIC(UNSAFE_CAST) private static RegionRange asRegionRange(int value) { return RegionRange.fromInt(value); }
+    @INTRINSIC(UNSAFE_CAST)
+    private static RegionRange asRegionRange(long value) {
+        return RegionRange.fromLong(value);
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    private static RegionRange asRegionRange(int value) {
+        return RegionRange.fromInt(value);
+    }
 
 }

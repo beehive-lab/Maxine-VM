@@ -199,7 +199,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
     }
 
 
-    public static enum ViewMode {
+    public enum ViewMode {
         WORD("Word", "Grows the visible region a word at a time and  navigates to the new location",
             "Grow the visible region upward (lower address) by one word", "Grow the visible region downward (higher address) by one word"),
         OBJECT("Obj", "Move to next/previous object origin",
@@ -218,7 +218,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
          * @param previousToolTip description of the move backwards action in this mode
          * @param nextToolTip description of the move forward action in this mode
          */
-        private ViewMode(String label, String description, String previousToolTip, String nextToolTip) {
+        ViewMode(String label, String description, String previousToolTip, String nextToolTip) {
             this.label = label;
             this.description = description;
             this.previousToolTip = previousToolTip;
@@ -279,7 +279,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
          * @param globalPreferences the global defaults for this kind of view
          * @param memoryView the view
          */
-        public MemoryViewPreferences(MemoryViewPreferences globalPreferences, MemoryView memoryView) {
+        MemoryViewPreferences(MemoryViewPreferences globalPreferences, MemoryView memoryView) {
             super(globalPreferences);
             this.memoryView = memoryView;
             // There are no view preferences beyond the column choices, so no additional machinery needed here.
@@ -566,7 +566,7 @@ public final class MemoryView extends AbstractView<MemoryView> {
          * Creates a scrollable pane containing the {@link InspectorTable}, with preferred height set to match the size
          * of the table up to a specified limit.
          */
-        public SizedScrollPane(Inspection inspection, InspectorTable inspectorTable) {
+        SizedScrollPane(Inspection inspection, InspectorTable inspectorTable) {
             super(inspection, inspectorTable);
             this.inspectorTable = inspectorTable;
             // Try to size the scroll pane vertically for just enough space, up to a specified maximum;

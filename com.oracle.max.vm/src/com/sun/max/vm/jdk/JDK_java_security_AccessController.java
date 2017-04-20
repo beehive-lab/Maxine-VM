@@ -42,8 +42,7 @@ import com.sun.max.vm.thread.*;
  * We leverage some common code in the substitutions for {@link sun.reflect.Reflection}.
  */
 @METHOD_SUBSTITUTIONS(AccessController.class)
-public
-final class JDK_java_security_AccessController {
+public final class JDK_java_security_AccessController {
 
     private JDK_java_security_AccessController() {
     }

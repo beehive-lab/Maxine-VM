@@ -62,7 +62,7 @@ public enum WordWidth {
     public final long min;
     public final long max;
 
-    private WordWidth(int numberOfBits, Class canonicalPrimitiveType, long min, long max, int log2numberOfBits) {
+    WordWidth(int numberOfBits, Class canonicalPrimitiveType, long min, long max, int log2numberOfBits) {
         this.numberOfBits = numberOfBits;
         this.numberOfBytes = numberOfBits / 8;
         this.canonicalPrimitiveType = canonicalPrimitiveType;

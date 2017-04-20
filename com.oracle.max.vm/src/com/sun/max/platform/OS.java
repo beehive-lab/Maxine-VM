@@ -51,7 +51,7 @@ public enum OS {
         return name().toLowerCase();
     }
 
-    private OS(String className) {
+    OS(String className) {
         this.className = className;
     }
 

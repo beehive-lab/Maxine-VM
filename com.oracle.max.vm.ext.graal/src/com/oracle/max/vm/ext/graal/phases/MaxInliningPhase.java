@@ -102,7 +102,7 @@ public class MaxInliningPhase extends InliningPhase {
 
     static class Policy extends GreedyInliningPolicy {
 
-        public Policy() {
+        Policy() {
             super(null);
         }
 

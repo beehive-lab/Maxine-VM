@@ -99,48 +99,48 @@ public class ARMV7JTTTest extends MaxTestCase {
         public long ffirst;
         public long fsecond;
 
-        public Args(int first, int second) {
+        Args(int first, int second) {
             this.first = first;
             this.second = second;
         }
 
-        public Args(int first, int second, int third) {
+        Args(int first, int second, int third) {
             this(first, second);
             this.third = third;
         }
 
-        public Args(int first, int second, int third, int fourth) {
+        Args(int first, int second, int third, int fourth) {
             this(first, second, third);
             this.fourth = fourth;
         }
 
-        public Args(long lfirst, long lsecond) {
+        Args(long lfirst, long lsecond) {
             this.lfirst = lfirst;
             this.lsecond = lsecond;
         }
 
-        public Args(long lfirst, float fsecond) {
+        Args(long lfirst, float fsecond) {
             this.lfirst = lfirst;
             this.fsecond = (long) fsecond;
         }
 
-        public Args(long lfirst, int second) {
+        Args(long lfirst, int second) {
             this.lfirst = lfirst;
             this.second = second;
         }
 
-        public Args(int first, long lfirst) {
+        Args(int first, long lfirst) {
             this.first = first;
             this.lfirst = lfirst;
         }
 
-        public Args(int first, int second, long lfirst) {
+        Args(int first, int second, long lfirst) {
             this.first = first;
             this.second = second;
             this.lfirst = lfirst;
         }
 
-        public Args(int first, int second, int third, long lfirst) {
+        Args(int first, int second, int third, long lfirst) {
             this.first = first;
             this.second = second;
             this.third = third;

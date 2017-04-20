@@ -180,7 +180,7 @@ public abstract class ReferenceMapInterpreter {
         int activeLocals;
         final boolean[] isSecondDoubleWord;
 
-        public FramesInitialization() {
+        FramesInitialization() {
             isSecondDoubleWord = new boolean[codeAttribute.maxLocals];
         }
 

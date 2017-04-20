@@ -150,7 +150,7 @@ public final class Metrics {
             final int total;
             final Object value;
 
-            public Counted(Object value, int total) {
+            Counted(Object value, int total) {
                 this.total = total;
                 this.value = value;
             }

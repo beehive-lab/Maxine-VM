@@ -376,8 +376,7 @@ public final class ObjectViewManager extends AbstractMultiViewManager<ObjectView
         }
 
         @Override
-        public
-        void refresh(boolean force) {
+        public void refresh(boolean force) {
             for (ObjectView view : objectToView.values()) {
                 if (view.object().status() == status) {
                     setEnabled(true);

@@ -330,7 +330,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
             return asSemiSpaceGCRequest(callingThread().gcRequest);
         }
 
-        public CollectHeap() {
+        CollectHeap() {
             super("CollectHeap");
         }
 
@@ -1086,7 +1086,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         boolean result;
         final Size amount;
 
-        public ShrinkHeap(Size amount) {
+        ShrinkHeap(Size amount) {
             super("ShrinkHeap", null, Mode.Safepoint);
             this.amount = amount;
         }
@@ -1128,7 +1128,7 @@ public class SemiSpaceHeapScheme extends HeapSchemeWithTLAB implements CellVisit
         boolean result;
         final Size amount;
 
-        public GrowHeap(Size amount) {
+        GrowHeap(Size amount) {
             super("GrowHeap", null, Mode.Safepoint);
             this.amount = amount;
         }

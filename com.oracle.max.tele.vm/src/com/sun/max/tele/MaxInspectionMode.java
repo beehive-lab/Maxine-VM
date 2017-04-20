@@ -54,7 +54,7 @@ public enum MaxInspectionMode {
     private final String label;
     private final String description;
 
-    private MaxInspectionMode(String label, String description) {
+    MaxInspectionMode(String label, String description) {
         this.label = label;
         this.description = description;
     }

@@ -35,7 +35,7 @@ public interface ImplicitOperand extends Operand {
      * Determines whether the operand is to be omitted or explicitly stated in external syntax.
      *
      */
-    public enum ExternalPresence {
+    enum ExternalPresence {
         OMITTED, EXPLICIT;
     }
 

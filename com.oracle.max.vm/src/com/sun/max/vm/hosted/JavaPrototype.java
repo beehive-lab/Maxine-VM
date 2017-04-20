@@ -230,7 +230,7 @@ public final class JavaPrototype extends Prototype {
      */
     static class PrototypePackageLoader extends PackageLoader {
 
-        public PrototypePackageLoader(ClassLoader classLoader, Classpath classpath) {
+        PrototypePackageLoader(ClassLoader classLoader, Classpath classpath) {
             super(classLoader, classpath);
         }
 

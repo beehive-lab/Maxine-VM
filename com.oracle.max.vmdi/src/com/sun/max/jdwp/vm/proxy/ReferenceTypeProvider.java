@@ -30,7 +30,7 @@ import com.sun.max.jdwp.vm.core.*;
  */
 public interface ReferenceTypeProvider extends ObjectProvider {
 
-    public final class ClassStatus {
+    final class ClassStatus {
 
         public static final int VERIFIED = 1;
         public static final int PREPARED = 2;

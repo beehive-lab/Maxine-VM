@@ -277,7 +277,7 @@ public enum AMD64ModRMGroup implements ModRMGroup {
 
     private final ModRMDescription[] instructionDescriptions;
 
-    private AMD64ModRMGroup(ModRMDescription... instructionDescriptions) {
+    AMD64ModRMGroup(ModRMDescription... instructionDescriptions) {
         this.instructionDescriptions = instructionDescriptions;
     }
 

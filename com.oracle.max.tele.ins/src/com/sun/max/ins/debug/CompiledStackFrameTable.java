@@ -193,7 +193,7 @@ public class CompiledStackFrameTable extends InspectorTable {
         private final MaxMemoryRegion[] regions;
         private final String[] slotDescriptions;
 
-        public CompiledStackFrameTableModel(Inspection inspection,  MaxStackFrame.Compiled javaStackFrame) {
+        CompiledStackFrameTableModel(Inspection inspection,  MaxStackFrame.Compiled javaStackFrame) {
             super(inspection, javaStackFrame.slotBase());
             this.javaStackFrame = javaStackFrame;
             frameSize = javaStackFrame.layout().frameSize();
@@ -313,7 +313,7 @@ public class CompiledStackFrameTable extends InspectorTable {
     }
     private final class NameRenderer extends TextLabel implements TableCellRenderer {
 
-        public NameRenderer(Inspection inspection) {
+        NameRenderer(Inspection inspection) {
             super(inspection, null);
             setOpaque(true);
         }
@@ -343,7 +343,7 @@ public class CompiledStackFrameTable extends InspectorTable {
 
     private final class OffsetSPRenderer extends LocationLabel.AsOffset implements TableCellRenderer {
 
-        public OffsetSPRenderer(Inspection inspection) {
+        OffsetSPRenderer(Inspection inspection) {
             super(inspection);
             setToolTipPrefix("Slot memory address");
             setOpaque(true);
@@ -361,7 +361,7 @@ public class CompiledStackFrameTable extends InspectorTable {
 
     private final class OffsetFPRenderer extends LocationLabel.AsOffset implements TableCellRenderer {
 
-        public OffsetFPRenderer(Inspection inspection) {
+        OffsetFPRenderer(Inspection inspection) {
             super(inspection);
             setToolTipPrefix("Slot memory address");
             setOpaque(true);
@@ -383,7 +383,7 @@ public class CompiledStackFrameTable extends InspectorTable {
         // even though they may not always appear in the same row.
         private final Map<Long, WordValueLabel> addressToLabelMap = new HashMap<Long, WordValueLabel>();
 
-        public ValueRenderer(Inspection inspection) {
+        ValueRenderer(Inspection inspection) {
             this.inspection = inspection;
         }
 

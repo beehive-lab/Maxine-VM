@@ -53,7 +53,7 @@ final class InspectorRootPane extends JRootPane implements InspectorFrame {
      * @param addMenuBar  should the frame have a menu bar installed.
      * @see #makeMenu(MenuKind)
      */
-    public InspectorRootPane(AbstractView view, TabbedView parent, boolean addMenuBar) {
+    InspectorRootPane(AbstractView view, TabbedView parent, boolean addMenuBar) {
         this.view = view;
         this.parent = parent;
         this.menuBar = addMenuBar ? new InspectorMenuBar(view.inspection()) : null;

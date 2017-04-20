@@ -27,7 +27,7 @@ import com.sun.max.util.*;
 
 public interface WriteBarrierSpecification {
 
-    public enum WriteBarrierSpec {
+    enum WriteBarrierSpec {
         /**
          * Indicate that the barrier applies to a reference held by a tuple.
          */

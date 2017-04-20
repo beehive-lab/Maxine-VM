@@ -123,7 +123,7 @@ public final class ThreadsTable extends InspectorTable {
      */
     private final class ThreadsTableModel extends InspectorTableModel {
 
-        public ThreadsTableModel(Inspection inspection) {
+        ThreadsTableModel(Inspection inspection) {
             super(inspection);
             // TODO Auto-generated constructor stub
         }

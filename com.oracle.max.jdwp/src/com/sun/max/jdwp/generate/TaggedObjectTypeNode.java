@@ -30,7 +30,7 @@ import java.io.*;
  */
 class TaggedObjectTypeNode extends SimpleTypeNode {
 
-    public TaggedObjectTypeNode() {
+    TaggedObjectTypeNode() {
         super("tagged-objectID", "JDWPValue", "ps.readValue()");
     }
 

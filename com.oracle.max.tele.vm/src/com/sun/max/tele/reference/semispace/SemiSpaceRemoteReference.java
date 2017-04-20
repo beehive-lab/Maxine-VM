@@ -53,7 +53,7 @@ public class SemiSpaceRemoteReference extends RemoteReference {
      * Each member encapsulates the <em>behavior</em> associated with a state, including both the interpretation of
      * the data held by the reference and by allowable state transitions.
      */
-    private static enum RefState {
+    private enum RefState {
 
         /**
          * Live reference in To-Space, heap not {@linkplain HeapPhase#ANALYZING analyzing}, not forwarded.

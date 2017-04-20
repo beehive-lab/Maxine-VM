@@ -42,7 +42,7 @@ public class ThreadLocal03 extends Thread {
         }
     }
 
-    private static enum AnEnum {
+    private enum AnEnum {
         VALUE1,
         VALUE2
     }

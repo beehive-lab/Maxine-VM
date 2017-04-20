@@ -99,7 +99,7 @@ public final class InspectionPreferences extends AbstractSaveSettingsListener {
 
         private final String label;
 
-        private ToolTipDismissDelayPolicy(String label) {
+        ToolTipDismissDelayPolicy(String label) {
             this.label = label;
         }
 

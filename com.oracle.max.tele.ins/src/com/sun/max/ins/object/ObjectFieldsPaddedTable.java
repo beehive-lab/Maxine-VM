@@ -249,7 +249,7 @@ public final class ObjectFieldsPaddedTable extends InspectorTable {
      */
     private final class ObjectFieldsTableModel extends InspectorMemoryTableModel {
 
-        public ObjectFieldsTableModel(Inspection inspection, Address origin) {
+        ObjectFieldsTableModel(Inspection inspection, Address origin) {
             super(inspection, origin);
         }
 
@@ -326,7 +326,7 @@ public final class ObjectFieldsPaddedTable extends InspectorTable {
 
     private final class NameRenderer extends FieldActorNameLabel implements TableCellRenderer {
 
-        public NameRenderer(Inspection inspection) {
+        NameRenderer(Inspection inspection) {
             super(inspection);
             setOpaque(true);
         }
@@ -343,7 +343,7 @@ public final class ObjectFieldsPaddedTable extends InspectorTable {
 
     private final class ValueRenderer implements TableCellRenderer, Prober {
 
-        public ValueRenderer(Inspection inspection) {
+        ValueRenderer(Inspection inspection) {
         }
 
         private final InspectorLabel[] labels = new InspectorLabel[fieldActors.length];

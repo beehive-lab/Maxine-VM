@@ -44,7 +44,7 @@ public enum C1XTimers {
     private long start;
     private long total;
 
-    private C1XTimers(String name) {
+    C1XTimers(String name) {
         this.name = name;
     }
 

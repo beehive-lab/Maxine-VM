@@ -185,7 +185,7 @@ final class VMValueImpl implements VMValue {
 
         private String stringValue;
 
-        public FakeStringProvider(String stringValue, ReferenceTypeProvider type) {
+        FakeStringProvider(String stringValue, ReferenceTypeProvider type) {
             super(stringValue, type);
             this.stringValue = stringValue;
         }
@@ -200,7 +200,7 @@ final class VMValueImpl implements VMValue {
         private Object innerObject;
         private ReferenceTypeProvider type;
 
-        public FakeObjectProvider(Object innerObject, ReferenceTypeProvider type) {
+        FakeObjectProvider(Object innerObject, ReferenceTypeProvider type) {
             assert innerObject != null : "The inner object must not be null, otherwise the object is a valid value for an object provider anyway!";
             this.innerObject = innerObject;
             this.type = type;
@@ -220,7 +220,7 @@ final class VMValueImpl implements VMValue {
         private ArrayTypeProvider arrayType;
         private VMAccess vm;
 
-        public FakeArrayProvider(Object innerObject, ArrayTypeProvider arrayType, VMAccess vm) {
+        FakeArrayProvider(Object innerObject, ArrayTypeProvider arrayType, VMAccess vm) {
             super(innerObject, arrayType);
             this.arrayType = arrayType;
             this.vm = vm;

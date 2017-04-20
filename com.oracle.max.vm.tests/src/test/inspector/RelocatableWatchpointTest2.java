@@ -74,7 +74,7 @@ public class RelocatableWatchpointTest2 {
 
     private static class SimpleObject {
 
-        public SimpleObject(int value1, int value2, String text) {
+        SimpleObject(int value1, int value2, String text) {
             this.value1 = value1;
             this.value2 = value2;
             this.string = text;

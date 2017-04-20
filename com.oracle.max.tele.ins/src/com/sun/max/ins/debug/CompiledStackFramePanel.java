@@ -58,7 +58,7 @@ abstract class CompiledStackFramePanel extends InspectorPanel {
      * A panel specialized for displaying a stack frame, uses {@link BorderLayout}, and
      * adds a generic frame description at the top.
      */
-    public CompiledStackFramePanel(Inspection inspection, MaxStackFrame.Compiled stackFrame) {
+    CompiledStackFramePanel(Inspection inspection, MaxStackFrame.Compiled stackFrame) {
         super(inspection, new BorderLayout());
         this.stackFrame = stackFrame;
         this.headerPanel = new CompiledStackFrameHeaderPanel(inspection, stackFrame);
@@ -103,7 +103,7 @@ abstract class CompiledStackFramePanel extends InspectorPanel {
         // Labels that may need updating
         private final List<InspectorLabel> labels = new ArrayList<InspectorLabel>();
 
-        public CompiledStackFrameHeaderPanel(Inspection inspection, MaxStackFrame.Compiled stackFrame) {
+        CompiledStackFrameHeaderPanel(Inspection inspection, MaxStackFrame.Compiled stackFrame) {
             super(inspection, new SpringLayout());
 
             final String frameClassName = stackFrame.getClass().getSimpleName();

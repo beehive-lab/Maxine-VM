@@ -254,7 +254,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
         private int visibleElementCount = 0;  // number of array elements being displayed
 
-        public ArrayElementsTableModel(Inspection inspection, Address origin) {
+        ArrayElementsTableModel(Inspection inspection, Address origin) {
             super(inspection, origin);
             this.nBytesInElement = elementKind.width.numberOfBytes;
             this.rowToElementIndex = new int[arrayLength];
@@ -391,7 +391,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
     private final class NameRenderer extends LocationLabel.AsIndex implements TableCellRenderer {
 
-        public NameRenderer(Inspection inspection) {
+        NameRenderer(Inspection inspection) {
             super(inspection, indexPrefix, 0, 0, Address.zero());
             setOpaque(true);
         }
@@ -410,7 +410,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
         private final Inspection inspection;
 
-        public ValueRenderer(Inspection inspection) {
+        ValueRenderer(Inspection inspection) {
             this.inspection = inspection;
         }
 
@@ -483,7 +483,7 @@ public final class ArrayElementsTable extends InspectorTable {
 
     private final class ScrollToIndexAction extends InspectorAction {
 
-        public ScrollToIndexAction(Inspection inspection) {
+        ScrollToIndexAction(Inspection inspection) {
             super(inspection, "Show array index...");
         }
 

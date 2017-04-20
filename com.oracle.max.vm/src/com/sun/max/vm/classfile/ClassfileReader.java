@@ -91,7 +91,7 @@ public final class ClassfileReader {
      * are unique with respect to their names and signatures.
      */
     static class MemberSet extends ChainedHashMapping<MemberActor, MemberActor> {
-        public MemberSet(int initialCapacity) {
+        MemberSet(int initialCapacity) {
             super(initialCapacity);
         }
         @Override

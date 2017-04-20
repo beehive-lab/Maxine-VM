@@ -628,7 +628,7 @@ public abstract class AMD64AdapterGenerator extends AdapterGenerator {
          */
         public static class Opt2BaselineAdapterFrameLayout extends AdapterStackFrameLayout {
 
-            public Opt2BaselineAdapterFrameLayout(int frameSize) {
+            Opt2BaselineAdapterFrameLayout(int frameSize) {
                 super(frameSize, true);
             }
 

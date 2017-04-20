@@ -87,7 +87,7 @@ public final class ThreadLocalsAreaPanel extends InspectorPanel {
 
         private final List<InspectorLabel> labels = new ArrayList<InspectorLabel>();
 
-        public ThreadLocalsAreaHeaderPanel(Inspection inspection, MaxThreadLocalsArea tla) {
+        ThreadLocalsAreaHeaderPanel(Inspection inspection, MaxThreadLocalsArea tla) {
             super(inspection);
             addInspectorLabel(new TextLabel(inspection, "start: "));
             final MaxMemoryRegion memoryRegion = tla.memoryRegion();

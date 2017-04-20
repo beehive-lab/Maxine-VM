@@ -50,7 +50,7 @@ public enum FPStackRegister implements EnumerableArgument<FPStackRegister> {
 
     private final int value;
 
-    private FPStackRegister(int value) {
+    FPStackRegister(int value) {
         this.value = value;
     }
 

@@ -56,7 +56,7 @@ public final class NotepadManager extends AbstractInspectionHolder {
         // Contents are never null until disposed, at which point the notepad is useless.
         private String contents = EMPTY_CONTENTS;
 
-        public NotepadImpl(InspectionSettings inspectionSettings, NotepadManager notepadManager, String key) {
+        NotepadImpl(InspectionSettings inspectionSettings, NotepadManager notepadManager, String key) {
             super(PREFIX_KEY);
             this.inspectionSettings = inspectionSettings;
             this.notepadManager = notepadManager;

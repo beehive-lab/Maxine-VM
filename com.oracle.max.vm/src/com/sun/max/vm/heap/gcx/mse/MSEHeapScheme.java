@@ -266,7 +266,7 @@ public final class MSEHeapScheme extends HeapSchemeWithTLABAdaptor implements He
      * This is the {@link VmOperationThread}'s entry point to garbage collection.
      */
     final class MarkSweepCollection extends GCOperation {
-        public MarkSweepCollection() {
+        MarkSweepCollection() {
             super("MarkSweepCollection");
         }
 

@@ -38,7 +38,7 @@ public final class IconFactory {
         private final int width;
         private final int height;
 
-        public BlankIcon(int width, int height) {
+        BlankIcon(int width, int height) {
             this.width = width;
             this.height = height;
         }
@@ -68,7 +68,7 @@ public final class IconFactory {
     }
 
     private static class CrossIcon extends BlankIcon {
-        public CrossIcon(int width, int height) {
+        CrossIcon(int width, int height) {
             super(width, height);
         }
 
@@ -95,7 +95,7 @@ public final class IconFactory {
 
         private final Color foreground;
 
-        public PixelatedIcon(Color foreground) {
+        PixelatedIcon(Color foreground) {
             super(2, 2);
             this.foreground = foreground;
         }
@@ -120,7 +120,7 @@ public final class IconFactory {
     private static class PolygonIcon extends BlankIcon {
         protected final Polygon polygon = new Polygon();
 
-        public PolygonIcon(int width, int height) {
+        PolygonIcon(int width, int height) {
             super(width, height);
         }
 
