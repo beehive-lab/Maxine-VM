@@ -310,7 +310,7 @@ public final class Heap {
 
     @NEVER_INLINE
     private static void doDebugAfterCreateArray(Hub hub, int length, Object array) {
-	allocationLogger.logUnalignedArray(array, hub.classActor);
+        allocationLogger.logUnalignedArray(array, hub.classActor);
         if (Heap.logAllocation()) {
             allocationLogger.logCreateArray(hub, length, array);
         }
@@ -330,7 +330,7 @@ public final class Heap {
 
     @NEVER_INLINE
     private static void doDebugAfterCreateTuple(Hub hub, Object object) {
-	allocationLogger.logUnalignedTuple(object, hub.classActor);
+        allocationLogger.logUnalignedTuple(object, hub.classActor);
         if (Heap.logAllocation()) {
             allocationLogger.logCreateTuple(hub, object);
         }
@@ -350,7 +350,7 @@ public final class Heap {
 
     @NEVER_INLINE
     private static void doDebugAfterCreateHybrid(Hub hub, Object hybrid) {
-	allocationLogger.logUnalignedHybrid(hybrid, hub.classActor);
+        allocationLogger.logUnalignedHybrid(hybrid, hub.classActor);
         if (Heap.logAllocation()) {
             allocationLogger.logCreateHybrid(hub, hybrid);
         }
@@ -370,7 +370,7 @@ public final class Heap {
 
     @NEVER_INLINE
     private static void doDebugAfterExpandHybrid(Hub hub, Object expandedHybrid) {
-	allocationLogger.logUnalignedHybrid(expandedHybrid, hub.classActor);
+        allocationLogger.logUnalignedHybrid(expandedHybrid, hub.classActor);
         if (Heap.logAllocation()) {
             allocationLogger.logExpandHybrid(hub, expandedHybrid);
         }
@@ -403,8 +403,8 @@ public final class Heap {
         final Object clone = heapScheme().clone(object);
         if (MaxineVM.isDebug()) {
             doDebugAfterClone(ObjectAccess.readHub(object), clone);
-	    allocationLogger.logUnalignedTuple(object, ObjectAccess.readHub(object).classActor);
-	}
+            allocationLogger.logUnalignedTuple(object, ObjectAccess.readHub(object).classActor);
+        }
         return clone;
     }
 
