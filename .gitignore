@@ -50,3 +50,6 @@ mx/
 codebuffer.c
 *_errors
 *_output
+
+# Libraries
+lib/checkstyle-6.11.2-all.jar
