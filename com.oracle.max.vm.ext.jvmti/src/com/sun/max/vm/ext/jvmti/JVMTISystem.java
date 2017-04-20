@@ -147,9 +147,12 @@ public class JVMTISystem {
                     FatalError.check(CString.endsWith(javaHome, "/Home"), "The java.home system property should end with \"/Home\"");
                     final Pointer javaPath = CString.chopSuffix(javaHome, "/Home");
                     return CString.append(javaPath, "/Libraries");
+                } else {
+                    Log.println("JDK version " + JDK.JDK_VERSION + " is not supported on DARWIN");
+                    MaxineVM.native_exit(1);
+                    return Pointer.zero();
                 }
             }
-
             case LINUX:
             case SOLARIS: {
                 FatalError.check(CString.endsWith(javaHome, "jre"), "The java.home system property should end with \"/jre\"");
@@ -162,7 +165,6 @@ public class JVMTISystem {
                 return Pointer.zero();
             }
         }
-
     }
 
     static Pointer asPath(Pointer head, Pointer tail) {

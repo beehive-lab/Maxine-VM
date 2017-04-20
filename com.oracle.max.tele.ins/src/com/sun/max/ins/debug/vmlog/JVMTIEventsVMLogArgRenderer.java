@@ -85,6 +85,7 @@ public class JVMTIEventsVMLogArgRenderer extends VMLogArgRenderer {
                 if (argNum == 3) {
                     return safeGetReferenceValueLabel(getTeleClassMethodActor(argValue));
                 }
+                break;
             default:
         }
         return super.getRenderer(header, argNum, argValue);
