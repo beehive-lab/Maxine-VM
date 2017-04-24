@@ -1,4 +1,6 @@
 #
+# Copyright (c) 2017, APT Group, School of Computer Science,
+# The University of Manchester. All rights reserved.
 # Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
@@ -15,10 +17,6 @@
 # You should have received a copy of the GNU General Public License version
 # 2 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
-#
-# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
-# or visit www.oracle.com if you need additional information or have any
-# questions.
 #
 
 # Currently all Maxine target implementations are 64 bit. 
@@ -189,7 +187,11 @@ else
 endif
 jdk_version := $(shell $(javacmd) -version 2>&1 | head -n 1)
 ifeq ($(findstring 1.7,$(jdk_version)),1.7)
-	JDK7 := -DJDK7
+	JDK := -DJDK7
+else
+    ifeq ($(findstring 1.8,$(jdk_version)),1.8)
+        JDK := -DJDK8
+    endif
 endif
 
 
@@ -200,13 +202,13 @@ ifeq ($(OS),darwin)
     endif
     ifneq "$(findstring def, $(origin CFLAGS))" ""
         # origin of CFLAGS is either undefined or default, so set it here
-        CFLAGS = -g $(DARWIN_GCC_MFLAG) -Wall -Wextra -Werror -Wno-main -Wno-deprecated-declarations -Wno-unused-parameter -fPIC -DDARWIN -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE) $(JDK7)
+        CFLAGS = -g $(DARWIN_GCC_MFLAG) -Wall -Wextra -Werror -Wno-main -Wno-deprecated-declarations -Wno-unused-parameter -fPIC -DDARWIN -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE) $(JDK)
     endif
     C_DEPENDENCIES_FLAGS = -M -DDARWIN -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
     LINK_MAIN = $(CC) -g $(DARWIN_GCC_MFLAG) -lc -lm -ldl -framework CoreFoundation -o $(MAIN)
     # The version linker flags below are required by libjava.jnilib which expects the jvm shared
     # library to have a certain version number.
-    ifdef JDK7
+    ifdef JDK
     	LINK_LIB = $(CC) -g $(DARWIN_GCC_MFLAG) -dynamiclib -undefined dynamic_lookup \
         	-Xlinker -compatibility_version -Xlinker 1.0.0 \
         	-Xlinker -rpath -Xlinker $(shell mkdir -p $(PROJECT)/generated/$(OS) && cd $(PROJECT)/generated/$(OS) && /bin/pwd) \
@@ -230,7 +232,7 @@ ifeq ($(OS),linux)
     endif
     ifneq "$(findstring def, $(origin CFLAGS))" ""
         # origin of CFLAGS is either undefined or default, so set it here
-        CFLAGS = -g -Wall -Wno-long-long -Werror -Wextra -Wno-main -Wno-unused-parameter -fPIC -D_GNU_SOURCE -D$(ISA) -DLINUX -D$(TARGET) -D$(TARGET_WORD_SIZE) $(JDK7) $(OTHER_CFLAGS)
+        CFLAGS = -g -Wall -Wno-long-long -Werror -Wextra -Wno-main -Wno-unused-parameter -fPIC -D_GNU_SOURCE -D$(ISA) -DLINUX -D$(TARGET) -D$(TARGET_WORD_SIZE) $(JDK) $(OTHER_CFLAGS)
     endif
     C_DEPENDENCIES_FLAGS = -M -DLINUX -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
     # The '-rpath' linker option is used so that LD_LIBRARY_PATH does not have to be configured at runtime to
@@ -268,7 +270,7 @@ ifeq ($(OS),solaris)
     endif
     ifneq "$(findstring def, $(origin CFLAGS))" ""
         # origin of CFLAGS is either undefined or default, so set it here
-        CFLAGS = -g -xc99 -errwarn -errtags -errfmt=error $(KPIC_FLAG) $(ARCH_FLAG) -D$(ISA) -DSOLARIS -D$(TARGET) -D$(TARGET_WORD_SIZE) $(OTHER_CFLAGS) $(JDK7)
+        CFLAGS = -g -xc99 -errwarn -errtags -errfmt=error $(KPIC_FLAG) $(ARCH_FLAG) -D$(ISA) -DSOLARIS -D$(TARGET) -D$(TARGET_WORD_SIZE) $(OTHER_CFLAGS) $(JDK)
     endif
     C_DEPENDENCIES_FLAGS = -xM1 -DSOLARIS -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE) 
     # The '-R' linker option is used so that LD_LIBRARY_PATH does not have to be configured at runtime to
@@ -287,8 +289,8 @@ ifeq ($(OS),windows)
     endif
     ifneq "$(findstring def, $(origin CFLAGS))" ""
         # origin of CFLAGS is either undefined or default, so set it here
-        CFLAGS = -g -ansi -Wall -pedantic -Wno-long-long -mno-cygwin -DWINDOWS -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE) $(JDK7)
-    endif   
+        CFLAGS = -g -ansi -Wall -pedantic -Wno-long-long -mno-cygwin -DWINDOWS -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE) $(JDK)
+    endif
     C_DEPENDENCIES_FLAGS = -MM -DWINDOWS -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
     LINK_MAIN = $(CC) -g -mno-cygwin -Wall -W1,----add-stdcall-alias -ldl
     LINK_LIB = $(CC) -g -shared -mno-cygwin -Wall -W1,----add-stdcall-alias
@@ -317,7 +319,7 @@ ifeq ($(OS),maxve)
         CFLAGS = -g -Wall -Wno-format -Wpointer-arith -Winline \
                   $(mf) -mno-red-zone -fpic -fno-reorder-blocks \
                   -fno-asynchronous-unwind-tables -fno-builtin \
-                  -DMAXVE -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE) $(JDK7)
+                  -DMAXVE -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE) $(JDK)
     endif
     C_DEPENDENCIES_FLAGS = -M -DMAXVE -D$(ISA) -D$(TARGET) -D$(TARGET_WORD_SIZE)
     ifeq ($(HOSTOS),Linux)
@@ -373,7 +375,7 @@ ifeq ($(OS),maxve)
     
 else
     ifeq ($(OS),darwin)
-	ifdef JDK7
+	ifdef JDK
              JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(OS)
              JNI_H_PATH = $(wildcard $(JAVA_HOME)/include/jni.h)
 	else

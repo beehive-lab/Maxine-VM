@@ -32,7 +32,7 @@ typedef int (*MaxineFunction)(int argc, char *argv[], char *executablePath);
 #if os_DARWIN
 #include <unistd.h>
 #include <libgen.h>
-#ifdef JDK7
+#if (defined JDK7) || (defined JDK8)
 #define LIBRARY_NAME "libjvm.dylib"
 #else
 #define LIBRARY_NAME "libjvmlinkage.dylib"

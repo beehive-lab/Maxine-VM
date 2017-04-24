@@ -361,7 +361,7 @@ struct jvmtiInterface_1_ jvmti_interface = {
     /* 152 : jvmti_RetransformClasses */ NULL,
     /* 153 : jvmti_GetOwnedMonitorStackDepthInfo */ NULL,
     /* 154 : jvmti_GetObjectSize */ NULL
-#ifdef JDK7
+#if (defined JDK7) || (defined JDK8)
     , /* 155 : jvmti_GetLocalInstance */ NULL
 #endif
 };
