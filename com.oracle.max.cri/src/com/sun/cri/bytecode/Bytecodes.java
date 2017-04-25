@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.cri.bytecode;
 
@@ -228,7 +226,7 @@ public class Bytecodes {
     public static final int INVOKESPECIAL        = 183; // 0xB7
     public static final int INVOKESTATIC         = 184; // 0xB8
     public static final int INVOKEINTERFACE      = 185; // 0xB9
-    public static final int XXXUNUSEDXXX         = 186; // 0xBA
+    public static final int INVOKEDYNAMIC        = 186; // 0xBA
     public static final int NEW                  = 187; // 0xBB
     public static final int NEWARRAY             = 188; // 0xBC
     public static final int ANEWARRAY            = 189; // 0xBD
@@ -342,7 +340,7 @@ public class Bytecodes {
          */
         static final int STORE       = 0x00000800;
         /**
-         * Denotes the 4 INVOKE* instructions.
+         * Denotes the 5 INVOKE* instructions.
          */
         static final int INVOKE       = 0x00001000;
     }
@@ -570,7 +568,7 @@ public class Bytecodes {
         def(INVOKESPECIAL       , "invokespecial"   , "bjj"  , TRAP | INVOKE);
         def(INVOKESTATIC        , "invokestatic"    , "bjj"  , TRAP | INVOKE);
         def(INVOKEINTERFACE     , "invokeinterface" , "bjja_", TRAP | INVOKE);
-        def(XXXUNUSEDXXX        , "xxxunusedxxx"    , ""     );
+        def(INVOKEDYNAMIC       , "invokedynamic"   , "bjj__", TRAP | INVOKE);
         def(NEW                 , "new"             , "bii"  , TRAP);
         def(NEWARRAY            , "newarray"        , "bc"   , TRAP);
         def(ANEWARRAY           , "anewarray"       , "bii"  , TRAP);
