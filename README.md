@@ -41,9 +41,10 @@ external collaborations.
 
 ## Wiki
 
-[Here](https://community.oracle.com/community/java/java_hotspot_virtual_machine/maxine-vm) you
-can find the original wiki pages (by Oracle) describing the internals of
-Maxine VM.
+[Here](https://web.archive.org/web/20150516045940/https://wikis.oracle.com/display/MaxineVM/Home) and
+[here](https://community.oracle.com/community/java/java_hotspot_virtual_machine/maxine-vm) you
+can find the original wiki pages (by Oracle) describing the internals of Maxine
+VM.
 
 ## Status
 
@@ -154,9 +155,9 @@ Maxine VM is being developed and tested on the following configurations:
 
 ### Build
 
-1. Enter the working directory:
+1. Enter the maxine source directory:
    ```
-   cd $WORKDIR
+   cd $MAXINE_HOME
    ```
 
 2. Build the source code:
