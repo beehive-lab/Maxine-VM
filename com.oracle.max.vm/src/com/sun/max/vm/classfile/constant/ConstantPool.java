@@ -17,12 +17,10 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.classfile.constant;
+
+import com.sun.max.program.ProgramWarning;
 
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
@@ -101,6 +99,9 @@ public final class ConstantPool implements RiConstantPool {
         },
         NAME_AND_TYPE(12),
         UTF8(1),
+        METHOD_HANDLE(15),
+        METHOD_TYPE(16),
+        INVOKE_DYNAMIC(18),
         OBJECT(-1) {
             @Override
             public Kind valueKind() {
@@ -152,6 +153,9 @@ public final class ConstantPool implements RiConstantPool {
          * CONSTANT_Double             | 6
          * CONSTANT_NameAndType        | 12
          * CONSTANT_Utf8               | 1
+         * CONSTANT_MethodHandle       | 15
+         * CONSTANT_MethodType         | 16
+         * CONSTANT_InvokeDynamic      | 18
          */
         static Tag fromClassfile(int tag) {
             switch (tag) {
@@ -177,6 +181,12 @@ public final class ConstantPool implements RiConstantPool {
                     return NAME_AND_TYPE;
                 case 1:
                     return UTF8;
+                case 15:
+                    return METHOD_HANDLE;
+                case 16:
+                    return METHOD_TYPE;
+                case 18:
+                    return INVOKE_DYNAMIC;
                 default:
                     throw classFormatError("Invalid constant pool entry tag " + tag);
             }
@@ -316,10 +326,7 @@ public final class ConstantPool implements RiConstantPool {
             final Tag tag = Tag.fromClassfile(tagByte);
             tags[i] = tag;
             switch (tag) {
-                case CLASS: {
-                    rawEntries[i] = classfileStream.readUnsigned2();
-                    break;
-                }
+                case CLASS:
                 case STRING: {
                     rawEntries[i] = classfileStream.readUnsigned2();
                     break;
@@ -370,6 +377,25 @@ public final class ConstantPool implements RiConstantPool {
                 }
                 case UTF8: {
                     poolConstants[i] = makeUtf8Constant(classfileStream.readUtf8String());
+                    break;
+                }
+                case METHOD_HANDLE: {
+                    ProgramWarning.message("METHOD_HANDLE not fully supported yet");
+                    final int referenceKind  = classfileStream.readUnsigned1();
+                    final int referenceIndex = classfileStream.readUnsigned2();
+                    rawEntries[i] = (referenceKind << 16) | (referenceIndex & 0xFFFF);
+                    break;
+                }
+                case METHOD_TYPE: {
+                    ProgramWarning.message("METHOD_TYPE not fully supported yet");
+                    rawEntries[i] = classfileStream.readUnsigned2();
+                    break;
+                }
+                case INVOKE_DYNAMIC: {
+                    ProgramWarning.message("INVOKE_DYNAMIC not fully supported yet");
+                    final int bootstrapMethodAttrIndex = classfileStream.readUnsigned2();
+                    final int nameAndTypeIndex = classfileStream.readUnsigned2();
+                    rawEntries[i] = (bootstrapMethodAttrIndex << 16) | (nameAndTypeIndex & 0xFFFF);
                     break;
                 }
                 default: {
