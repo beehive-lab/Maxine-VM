@@ -67,7 +67,12 @@ public final class ClassfileReader {
     public static final char JAVA_MIN_SUPPORTED_VERSION = 45;
     public static final char JAVA_1_5_VERSION = 49;
     public static final char JAVA_6_VERSION = 50;
-    public static final char JAVA_MAX_SUPPORTED_VERSION = 51;
+    public static final char JAVA_7_VERSION = 51;
+    public static final char JAVA_8_VERSION = 52;
+    public static final char JAVA_MAX_SUPPORTED_VERSION =
+        (JDK.JDK_VERSION == JDK.JDK_8) ?
+        JAVA_8_VERSION :
+        JAVA_7_VERSION;
     public static final char JAVA_MAX_SUPPORTED_MINOR_VERSION = 0;
 
     protected final ClassfileStream classfileStream;
@@ -267,60 +272,67 @@ public final class ClassfileReader {
      * @throws ClassFormatError if the flags are invalid
      */
     public static void verifyMethodFlags(int flags, boolean isInterface, boolean isInit, boolean isClinit, int majorVersion) {
+        // The checks below are based on JVMS8 4.6
 
-        // Class and interface initialization methods (3.9) are called
-        // implicitly by the Java virtual machine; the value of their
-        // access_flags item is ignored except for the settings of the
+        // Class and interface initialization methods are called
+        // implicitly by the Java Virtual Machine. The value of their
+        // access_flags item is ignored except for the setting of the
         // ACC_STRICT flag.
         if (isClinit) {
             return;
         }
 
-        // These are all small bits.  The value is between 0 and 7.
-        final int maskedFlags = flags & (ACC_PUBLIC | ACC_PRIVATE | ACC_PROTECTED);
+        boolean valid = true;
 
-        // Make sure that flags has at most one of its ACC_PRIVATE,
-        // ACC_PROTECTED bits set. That is, do a population count of these
-        // bit positions corresponding to these flags and ensure that it is
-        // at most 1.
-        boolean valid = maskedFlags == 0 || (maskedFlags & ~(maskedFlags - 1)) == maskedFlags;
+        // If a method of a class or interface has its ACC_ABSTRACT flag set, it
+        // must not have any of its ACC_PRIVATE, ACC_STATIC, ACC_FINAL,
+        // ACC_SYNCHRONIZED, ACC_NATIVE, or ACC_STRICT flags set.
+        if ((flags & ACC_ABSTRACT) != 0) {
+            valid &= (flags & (ACC_PRIVATE | ACC_STATIC | ACC_FINAL | ACC_NATIVE)) == 0;
+            if (majorVersion >= JAVA_1_5_VERSION) {
+                valid &= (flags & (ACC_SYNCHRONIZED | ACC_STRICT)) == 0;
+            }
+        }
 
         if (valid) {
             if (!isInterface) {
-                // class or instance methods
-                if ((flags & ACC_ABSTRACT) != 0) {
-                    if ((flags & (ACC_FINAL | ACC_NATIVE | ACC_PRIVATE | ACC_STATIC)) != 0) {
-                        valid = false;
-                    }
-                    if (majorVersion >= JAVA_1_5_VERSION) {
-                        if ((flags & (ACC_SYNCHRONIZED | ACC_STRICT)) != 0) {
-                            valid = false;
-                        }
-                    }
-                }
+                // Methods of classes may have any of the flags in Table 4.6-A
+                // set. However, each method of a class may have at most one of
+                // its ACC_PUBLIC, ACC_PRIVATE, and ACC_PROTECTED flags set
+
+                // These are all small bits.  The value is between 0 and 7.
+                final int maskedFlags = flags & (ACC_PUBLIC | ACC_PRIVATE | ACC_PROTECTED);
+                valid &= maskedFlags == 0 || (maskedFlags & ~(maskedFlags - 1)) == maskedFlags;
             } else {
-                final int publicAndAbstract = ACC_ABSTRACT | ACC_PUBLIC;
-                if ((flags & publicAndAbstract) != publicAndAbstract) {
-                    valid = false;
+                // Methods of interfaces may have any of the flags in Table
+                // 4.6-A set except ACC_PROTECTED, ACC_FINAL, ACC_SYNCHRONIZED,
+                // and ACC_NATIVE
+                valid &= (flags & (ACC_PROTECTED | ACC_FINAL | ACC_SYNCHRONIZED | ACC_NATIVE)) == 0;
+
+                // In a class file whose version number is less than 52.0, each
+                // method of an interface must have its ACC_PUBLIC and
+                // ACC_ABSTRACT flags set; in a class file whose version number
+                // is 52.0 or above, each method of an interface must have
+                // exactly one of its ACC_PUBLIC and ACC_PRIVATE flags set.
+                if (majorVersion < JAVA_8_VERSION) {
+                    final int publicAndAbstract = ACC_PUBLIC | ACC_ABSTRACT;
+                    valid &= (flags & publicAndAbstract) == publicAndAbstract;
+                    // And since it is public it can't be private as well
+                    valid &= (flags & ACC_PRIVATE) == 0;
                 } else {
-                    if ((flags & (ACC_STATIC | ACC_FINAL | ACC_NATIVE)) != 0) {
-                        valid = false;
-                    } else if (majorVersion >= JAVA_1_5_VERSION) {
-                        if ((flags & (ACC_SYNCHRONIZED | ACC_STRICT)) != 0) {
-                            valid = false;
-                        }
-                    }
+                    final int maskedFlags = flags & (ACC_PUBLIC | ACC_PRIVATE);
+                    valid &= (maskedFlags & ~(maskedFlags - 1)) == maskedFlags;
                 }
             }
 
             if (valid) {
                 if (isInit) {
-                    /*
-                     * A specific instance initialization method (3.9) may have at most one of its ACC_PRIVATE,
-                     * ACC_PROTECTED, and ACC_PUBLIC flags set and may also have its ACC_STRICT ACC_VARARGS, and
-                     * ACC_SYNTHETIC flags set, but may not have any of the other flags in Table 4.5 set.
-                     */
-                    valid = (flags & ~(ACC_PUBLIC | ACC_PROTECTED | ACC_PRIVATE | ACC_STRICT | ACC_SYNTHETIC | ACC_VARARGS)) == 0;
+                    // Each instance initialization method may have at most one of
+                    // its ACC_PUBLIC, ACC_PRIVATE, and ACC_PROTECTED flags set
+                    // (this part is already checked above), and may also have its
+                    // ACC_VARARGS, ACC_STRICT, and ACC_SYNTHETIC flags set, but
+                    // must not have any of the other flags in Table 4.6-A set.
+                    valid = (flags & ~(ACC_PUBLIC | ACC_PRIVATE | ACC_PROTECTED | ACC_VARARGS | ACC_STRICT | ACC_SYNTHETIC)) == 0;
                 }
             }
         }
@@ -1001,7 +1013,11 @@ public final class ClassfileReader {
                 }
 
                 final MethodActor methodActor;
-                if (isInterface) {
+                // Make sure to check for static methods first since lambdas are
+                // static and may appear in interfaces as well.
+                if (isStatic) {
+                    methodActor = new StaticMethodActor(name, descriptor, flags, codeAttribute, intrinsic);
+                } else if (isInterface) {
                     if (isClinit) {
                         methodActor = new StaticMethodActor(name, descriptor, flags, codeAttribute, intrinsic);
                     } else if (isInit) {
@@ -1009,8 +1025,6 @@ public final class ClassfileReader {
                     } else {
                         methodActor = new InterfaceMethodActor(name, descriptor, flags, intrinsic);
                     }
-                } else if (isStatic) {
-                    methodActor = new StaticMethodActor(name, descriptor, flags, codeAttribute, intrinsic);
                 } else {
                     methodActor = new VirtualMethodActor(name, descriptor, flags, codeAttribute, intrinsic);
                 }
