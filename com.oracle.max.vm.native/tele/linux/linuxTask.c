@@ -178,7 +178,7 @@ void log_task_stat(pid_t tgid, pid_t tid, const char* messageFormat, ...) {
 #define STAT_STRING_FIELD(name) do { \
     char *name; \
     fscanf(sp, SCANF_MEM_ALLOCATION_FORMAT "s ", &name); \
-        log_println("  %20s: %s", STRINGIZE(name), name); \
+    log_println("  %20s: %s", STRINGIZE(name), name);    \
 } while (0)
 
 #define STAT_SIGNAL_MASK_FIELD(name) do { \
