@@ -424,7 +424,7 @@ public final class JDKInterceptor {
         }
 
         if (UnsafeUsageChecker.isClassUsingUnsafe(className)) {
-            throw ProgramError.unexpected("class is using Unsafe operations to get field or array offsets, but no field interceptor present: " + className);
+            throw ProgramError.unexpected("class is using Unsafe operations to get field or array offsets \"" + fieldName + "\", but no field interceptor present: " + className);
         }
 
         return null;
