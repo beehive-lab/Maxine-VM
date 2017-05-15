@@ -381,7 +381,7 @@ public final class JavaTypeDescriptor {
             return parseTypeDescriptor(name, 0, false);
         }
         // parse a class name separated by '.' without L or ;
-        final int endIndex = parseClassName(name, 0, 0, '.');
+        final int endIndex = parseClassName(name, 0, '.');
         if (endIndex == name.length()) {
             return TypeDescriptor.makeTypeDescriptor(mangleClassName(name, '/'));
         }
@@ -443,13 +443,13 @@ public final class JavaTypeDescriptor {
             case 'L': {
                 if (slashes) {
                     // parse a slashified Java class name
-                    final int endIndex = parseClassName(string, startIndex, startIndex + 1, '/');
+                    final int endIndex = parseClassName(string, startIndex + 1, '/');
                     if (endIndex > startIndex + 1 && endIndex < string.length() && string.charAt(endIndex) == ';') {
                         return TypeDescriptor.makeTypeDescriptor(string.substring(startIndex, endIndex + 1));
                     }
                 } else {
                     // parse a dottified Java class name and convert to slashes
-                    final int endIndex = parseClassName(string, startIndex, startIndex + 1, '.');
+                    final int endIndex = parseClassName(string, startIndex + 1, '.');
                     if (endIndex > startIndex + 1 && endIndex < string.length() && string.charAt(endIndex) == ';') {
                         final String substring = string.substring(startIndex, endIndex + 1);
                         return TypeDescriptor.makeTypeDescriptor(substring.replace('.', '/'));
@@ -474,7 +474,7 @@ public final class JavaTypeDescriptor {
         throw typeDescriptorError("invalid type descriptor", string, startIndex);
     }
 
-    private static int parseClassName(String string, int startIndex, int index, final char separator) throws ClassFormatError {
+    private static int parseClassName(String string, int index, final char separator) throws ClassFormatError {
         int position = index;
         final int length = string.length();
         while (position < length) {
