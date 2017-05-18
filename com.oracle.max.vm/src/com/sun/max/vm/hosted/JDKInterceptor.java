@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.hosted;
 
@@ -129,6 +127,14 @@ public final class JDKInterceptor {
             "cachedConstructor",
             "newInstanceCallerCache",
             "name",
+            "genericInfo",
+            "enumConstants",
+            "enumConstantDirectory",
+            "annotations",
+            "declaredAnnotations",
+            "classRedefinedCount",
+            "reflectionData",
+        JDK.java_lang_Class$ReflectionData,
             "declaredFields",
             "publicFields",
             "declaredMethods",
@@ -137,13 +143,10 @@ public final class JDKInterceptor {
             "publicConstructors",
             "declaredPublicFields",
             "declaredPublicMethods",
-            "genericInfo",
-            "enumConstants",
-            "enumConstantDirectory",
-            "annotations",
-            "declaredAnnotations",
-            "classRedefinedCount",
-            "lastRedefinedCount",
+            "redefinedCount",
+        JDK.java_lang_Class$Atomic,
+            new FieldOffsetRecomputation("reflectionDataOffset", JDK.java_lang_Class, "reflectionData"),
+            new FieldOffsetRecomputation("annotationTypeOffset", JDK.java_lang_Class, "annotationType"),
         JDK.java_lang_ClassLoader,
             new ZeroField("bootstrapClassPath").makeOptional(),
             "scl",
@@ -178,6 +181,7 @@ public final class JDKInterceptor {
         JDK.java_lang_ref_Reference,
             "discovered",
             "pending",
+            "referent", // XXX Need to add this chap to default & 1.7.0.101 branches TimH
         JDK.java_lang_ref_Finalizer,
             "unfinalized",
             new ValueField("queue", ReferenceValue.from(new ReferenceQueue())).makeNonFinal(),
@@ -218,6 +222,8 @@ public final class JDKInterceptor {
             new FieldOffsetRecomputation("tailOffset", "tail"),
         JDK.java_util_concurrent_CopyOnWriteArrayList,
             new FieldOffsetRecomputation("lockOffset", "lock"),
+        JDK.java_nio_Bits,
+            "byteOrder",
         JDK.java_nio_DirectByteBuffer,
             new ArrayBaseOffsetRecomputation("arrayBaseOffset", byte[].class),
         JDK.java_nio_DirectCharBufferS,
@@ -302,6 +308,8 @@ public final class JDKInterceptor {
     };
 
     private static final Object[] interceptedFieldArrayJDK7 = {
+        JDK.java_lang_Class,
+            new ZeroField("classLoader").makeOptional(),
         JDK.java_util_concurrent_atomic_AtomicIntegerArray,
             new ArrayIndexScaleShiftRecomputation("shift", int[].class),
         JDK.java_util_concurrent_atomic_AtomicLongArray,
@@ -327,6 +335,8 @@ public final class JDKInterceptor {
             new ArrayIndexScaleRecomputation("ARRAY_FLOAT_INDEX_SCALE", float[].class),
             new ArrayIndexScaleRecomputation("ARRAY_DOUBLE_INDEX_SCALE", double[].class),
             new ArrayIndexScaleRecomputation("ARRAY_OBJECT_INDEX_SCALE", Object[].class),
+        JDK.sun_util_calendar_ZoneInfo,
+            new ZeroField("aliasTable").makeNonFinal(),
         JDK.java_util_concurrent_ConcurrentHashMap,
             new ArrayBaseOffsetRecomputation("TBASE", Object[].class),
             new ArrayIndexScaleShiftRecomputation("TSHIFT", Object[].class),
@@ -384,6 +394,9 @@ public final class JDKInterceptor {
         JDK.java_util_concurrent_ConcurrentLinkedQueue$Node,
             new FieldOffsetRecomputation("itemOffset", "item"),
             new FieldOffsetRecomputation("nextOffset", "next"),
+        JDK.java_math_BigInteger,
+            new FieldOffsetRecomputation("signumOffset", "signum"),
+            new FieldOffsetRecomputation("magOffset", "mag"),
     };
     // Checkstyle: resume
 
