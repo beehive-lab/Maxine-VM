@@ -25,9 +25,11 @@ import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 
 import com.oracle.max.cri.intrinsics.*;
 import com.sun.max.annotate.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.methodhandle.*;
 import com.sun.max.vm.runtime.*;
 
 /**
@@ -73,6 +75,47 @@ public class T1XRuntime {
         Snippets.makeClassInitialized(classActor);
         final Object tuple = Snippets.createTupleOrHybrid(classActor);
         return tuple;
+    }
+
+    public static Address resolveAndSelectLinkToVirtual(Object memberName, Object receiver) {
+        VMTarget target = VMTarget.fromMemberName(memberName);
+        assert(target != null);
+        assert(target.getVMindex() != VirtualMethodActor.NONVIRTUAL_VTABLE_INDEX);
+        Trace.line(1, "T1XRuntime.resolveAndSelectLinkToVirtual target=" + target + ", mnameid=" + System.identityHashCode(memberName));
+        Address vTableEntrypoint = Snippets.selectNonPrivateVirtualMethod(receiver, target.getVMindex()).asAddress();
+        return vTableEntrypoint.plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
+    public static Address resolveAndSelectLinkToSpecial(Object memberName, Object receiver) {
+        Trace.begin(1, "T1XRuntime.resolveAndSelectLinkToSpecial: memberName=" + memberName);
+
+        /*
+         * TODO At this point we should null check the receiver and make sure that
+         * its class accords with the membername.clazz.
+         */
+        if (receiver != null) {
+            Trace.line(1, "receiver clazz=" + receiver.getClass());
+        }
+        Trace.line(1, "T1XRuntime.resolveAndSelectLinkToSpecial: memberName=" + memberName + "#id=" + System.identityHashCode(memberName));
+        VMTarget target = VMTarget.fromMemberName(memberName);
+        Trace.line(1, "T1XRuntime.resolveAndSelectLinkToSpecial: target=" + target);
+        assert(target != null);
+        Trace.line(1, "T1XRuntime.resolveAndSelectLinkToSpecial: vmtarget=" + target.getVmTarget());
+        Trace.end(1, "T1XRuntime: resolveAndSelectLinkToSpecial");
+        return Snippets.makeEntrypoint(UnsafeCast.asClassMethodActor(target.getVmTarget()), BASELINE_ENTRY_POINT);
+    }
+
+    public static Address resolveAndSelectLinkToStatic(Object memberName) {
+        Trace.begin(1, "T1XRuntime: resolveAndSelectLinkToStatic");
+        Trace.line(1, "T1XRuntime.memberName[class=" + memberName.getClass().getName() + "]");
+        Trace.line(1, "T1XRuntime.linkToStatic: memberName=" + memberName);
+        Trace.line(1, "T1XRuntime.linkToStatic: memberName=" + memberName + "#id=" + System.identityHashCode(memberName));
+        VMTarget target = VMTarget.fromMemberName(memberName);
+        Trace.line(1, "T1XRuntime.linkToStatic: target=" + target);
+        assert(target != null);
+        Trace.line(1, "T1XRuntime.linkToStatic: vmtarget=" + target.getVmTarget());
+
+        return Snippets.makeEntrypoint(UnsafeCast.asClassMethodActor(target.getVmTarget()), BASELINE_ENTRY_POINT);
     }
 
     // ==========================================================================================================
