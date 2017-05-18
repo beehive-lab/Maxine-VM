@@ -517,7 +517,9 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
     }
 
     public final boolean canBeStaticallyBound() {
-        return (flags() & (ACC_STATIC | ACC_PRIVATE | ACC_FINAL)) != 0;
+        // In addition to the method flags we need to check the holder.
+        // If the holder is final then the method can also be statically bound.
+        return (flags() & (ACC_STATIC | ACC_PRIVATE | ACC_FINAL)) != 0 || holder().isFinal();
     }
 
     public byte[] code() {
