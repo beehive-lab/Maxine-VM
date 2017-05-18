@@ -603,9 +603,6 @@ public final class JavaPrototype extends Prototype {
         objectMap.put(Trace.stream(), Log.out);
         objectMap.put(WithoutAccessCheck.getStaticField(System.class, "props"), JDKInterceptor.initialSystemProperties);
 
-        objectMap.put(WithoutAccessCheck.getStaticField(Proxy.class, "loaderToCache"), new WeakHashMap());
-        objectMap.put(WithoutAccessCheck.getStaticField(Proxy.class, "proxyClasses"), Collections.synchronizedMap(new WeakHashMap()));
-
         for (ObjectIdentityMapContributor contributor : objectMapContributors) {
             contributor.initializeObjectIdentityMap(objectMap);
         }
