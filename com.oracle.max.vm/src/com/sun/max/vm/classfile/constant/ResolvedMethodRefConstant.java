@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -33,12 +35,34 @@ public abstract class ResolvedMethodRefConstant<PoolConstant_Type extends PoolCo
     @INSPECTED
     private final MethodActor methodActor;
 
+    /**
+     * Appendix argument for MethodHandle / invokebasic static adapter.
+     */
+    private final Object appendix;
+
     public final MethodActor methodActor() {
         return methodActor;
     }
 
     public ResolvedMethodRefConstant(MethodActor methodActor) {
+        this(methodActor, null);
+    }
+
+    public ResolvedMethodRefConstant(MethodActor methodActor, Object appendix) {
         this.methodActor = methodActor;
+        this.appendix = appendix;
+    }
+
+    /**
+     * If this MethodRefConstant represents a static adapter method created
+     * by the JDK to perform a method handle invoke*, then appendix() returns
+     * the "appendix" argument to type check the call site. If not, then null
+     * is returned.
+     *
+     * @return the appendix, or null.
+     */
+    public final Object appendix() {
+        return appendix;
     }
 
     public final Utf8Constant name(ConstantPool pool) {

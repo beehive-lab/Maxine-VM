@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -28,16 +30,19 @@ import java.lang.reflect.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.lang.*;
+import com.sun.max.program.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.constant.ConstantPool.Tag;
+import com.sun.max.vm.classfile.constant.ConstantPool.*;
+import com.sun.max.vm.methodhandle.*;
 import com.sun.max.vm.type.*;
 
 /**
  * #4.4.2.
  */
-public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConstant>, MethodRefConstant<ClassMethodRefConstant> {
+public interface ClassMethodRefConstant extends /* PoolConstant<ClassMethodRefConstant>,*/ MethodRefConstant<ClassMethodRefConstant> {
+
 
     public interface ClassMethodRefKey extends PoolConstantKey<ClassMethodRefConstant> {
 
@@ -65,6 +70,9 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
         }
     }
 
+
+    public Object appendix();
+
     StaticMethodActor resolveStatic(ConstantPool pool, int index);
 
     VirtualMethodActor resolveVirtual(ConstantPool pool, int index);
@@ -73,8 +81,13 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
 
     final class Resolved extends ResolvedMethodRefConstant<ClassMethodRefConstant> implements ClassMethodRefConstant, ClassMethodRefKey {
 
+
         public Resolved(MethodActor methodActor) {
             super(methodActor);
+        }
+
+        public Resolved(MethodActor methodActor, Object appendix) {
+            super(methodActor, appendix);
         }
 
         @Override
@@ -104,6 +117,7 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
         public VirtualMethodActor resolveVirtual(ConstantPool pool, int index) {
             return verifyIsVirtual(methodActor(), pool);
         }
+
     }
 
     final class Unresolved extends UnresolvedRef<ClassMethodRefConstant> implements ClassMethodRefConstant, ClassMethodRefKey {
@@ -120,6 +134,10 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
         @Override
         public ClassMethodRefKey key(final ConstantPool pool) {
             return this;
+        }
+
+        public Object appendix() {
+            return null;
         }
 
         static MethodActor resolve(ConstantPool pool, int index, ClassActor classActor, Utf8Constant name, SignatureDescriptor signature) {
@@ -147,7 +165,17 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
                     methodActor = aliasedMethodActor;
                 }
                 return methodActor;
+            } else if (!isHosted()) {
+                Trace.line(1, "ClassMethodRefConstant handle? class=" + classActor.name() + ", poolHolder=" + pool.holder() + ", index=" + index);
+                Object [] appendix = new Object[1];
+                methodActor = MaxMethodHandles.lookupPolymorphicMethod(classActor, name.toString(),signature, null, appendix);
+                Trace.line(1, "ClassMethodRefConstant.resolved (Handle) :" + methodActor + ", appendix: " + appendix[0]);
+                if (methodActor != null) {
+                    pool.updateAt(index, new Resolved(methodActor, appendix[0]));
+                    return methodActor;
+                }
             }
+
             final String errorMessage = classActor.javaSignature(true) + "." + name + signature;
             if (isHosted()) {
                 final Class<?> javaClass = classActor.toJava();
@@ -237,6 +265,10 @@ public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConst
 
         public VirtualMethodActor resolveVirtual(ConstantPool pool, int index) {
             return Resolved.verifyIsVirtual(resolve(pool, index), pool);
+        }
+
+        public Object appendix() {
+            return null;
         }
 
         @Override

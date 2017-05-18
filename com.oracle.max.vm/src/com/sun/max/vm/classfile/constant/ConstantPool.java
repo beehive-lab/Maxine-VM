@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -923,6 +925,15 @@ public final class ConstantPool implements RiConstantPool {
 
     public RiSignature lookupSignature(int cpi) {
         return SignatureDescriptor.create(utf8At(cpi).string);
+    }
+
+    public Object lookupAppendix(int cpi, int opcode) {
+        if (opcode != INVOKEVIRTUAL) {
+            return null;
+        }
+
+        ClassMethodRefConstant c = classMethodAt(cpi);
+        return c.appendix();
     }
 
     public Object lookupConstant(int cpi) {
