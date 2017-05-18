@@ -468,6 +468,11 @@ public final class DataPrototype extends Prototype {
             // field to change from null to a new instance.
             if (cell == null) {
                 graphPrototype.printPath(object, System.err);
+                if (object instanceof java.lang.ref.SoftReference) {
+                    Log.print("Missing cell for SoftReference of object: ");
+                    Log.print(((java.lang.ref.SoftReference)object).get().toString());
+                    Log.println(", a field of that type should probably be intercepted!");
+                }
                 throw new MissingCellException(object);
             }
             return objectToOrigin(object);
