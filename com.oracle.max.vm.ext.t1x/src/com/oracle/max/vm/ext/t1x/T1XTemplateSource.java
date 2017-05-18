@@ -34,6 +34,7 @@ import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.heap.*;
+import com.sun.max.vm.methodhandle.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.profile.*;
@@ -145,6 +146,43 @@ public class T1XTemplateSource {
     public static Object createMultianewarrayDimensions(Pointer sp, int n) {
         return T1XRuntime.createMultianewarrayDimensions(sp, n);
     }
+
+    @T1X_TEMPLATE(LINKTOTARGET)
+    @Slot(-1)
+    public static VMTarget linkToTarget(Object memberName) {
+        return VMTarget.fromMemberName(memberName);
+    }
+
+    @T1X_TEMPLATE(LINKTOVIRTUAL)
+    @Slot(-1)
+    public static Address linkToVirtual(Object memberName, Object receiver) {
+        return resolveAndSelectLinkToVirtual(memberName, receiver);
+    }
+
+
+   @T1X_TEMPLATE(LINKTOSTATIC)
+   @Slot(-1)
+   public static Address linkToStatic(Object memberName) {
+       return resolveAndSelectLinkToStatic(memberName);
+   }
+
+
+   @T1X_TEMPLATE(LINKTOSPECIAL)
+   @Slot(-1)
+   public static Address linkToSpecial(Object memberName) {
+       return resolveAndSelectLinkToStatic(memberName);
+   }
+
+   /**
+    *
+    * @param actor MethodActor
+    * @return the {@link CallEntryPoint#BASELINE_ENTRY_POINT} to be invoked
+    */
+   @T1X_TEMPLATE(INVOKEHANDLE)
+   @Slot(-1)
+   public static Address invokeHandle(ClassMethodActor actor) {
+       return Snippets.makeEntrypoint(actor, BASELINE_ENTRY_POINT);
+   }
 
 // START GENERATED CODE
     @T1X_TEMPLATE(GETFIELD$boolean$resolved)

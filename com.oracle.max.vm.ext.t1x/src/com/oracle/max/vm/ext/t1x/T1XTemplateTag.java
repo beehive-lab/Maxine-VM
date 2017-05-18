@@ -337,6 +337,12 @@ public enum T1XTemplateTag {
     INVOKEINTERFACE$reference$instrumented,
     INVOKEINTERFACE$word$instrumented,
 
+    INVOKEHANDLE(-1),
+    LINKTOVIRTUAL(-1),
+    LINKTOSTATIC(-1),
+    LINKTOSPECIAL(-1),
+    LINKTOTARGET(-1),
+
     NEW,
     NEW$init,
     NEW_HYBRID(-1),
