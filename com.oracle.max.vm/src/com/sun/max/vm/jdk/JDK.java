@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -54,9 +56,10 @@ public class JDK {
     public static final ClassRef java_lang_Throwable                 = new ClassRef(Throwable.class);
     public static final ClassRef java_lang_Terminator                = new ClassRef("java.lang.Terminator");
 
+    public static final ClassRef java_lang_invoke_LambdaForm         = new LazyClassRef("java.lang.invoke.LambdaForm");
     public static final ClassRef java_lang_invoke_MethodHandle       = new LazyClassRef("java.lang.invoke.MethodHandle");
     public static final ClassRef java_lang_invoke_MethodType         = new LazyClassRef("java.lang.invoke.MethodType");
-//    public static final ClassRef java_lang_invoke_CallSite           = new LazyClassRef("java.lang.invoke.CallSite");
+    public static final ClassRef java_lang_invoke_MethodType$WeakInternSet = new ClassRef("java.lang.invoke.MethodType$WeakInternSet");
 
     public static final ClassRef java_lang_ref_Finalizer                   = new ClassRef("java.lang.ref.Finalizer");
     public static final ClassRef java_lang_ref_Finalizer$FinalizerThread   = new ClassRef("java.lang.ref.Finalizer$FinalizerThread");

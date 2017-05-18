@@ -21,6 +21,7 @@
 package com.sun.max.vm.hosted;
 
 import java.io.*;
+import java.lang.invoke.*;
 import java.lang.ref.*;
 import java.lang.reflect.*;
 import java.nio.*;
@@ -115,6 +116,21 @@ public final class JDKInterceptor {
         systemNativeLibraries.add(lib);
     }
 
+    private static Object internTable;
+
+    static {
+        try {
+            Class <?> c = JDK.java_lang_invoke_MethodType$WeakInternSet.javaClass();
+            Constructor cons = c.getDeclaredConstructors()[0];
+            cons.setAccessible(true);
+            internTable = cons.newInstance();
+        }
+        catch(Exception e) {
+            throw FatalError.unexpected("Unable to create WeakInternSet xtor", e);
+        }
+    }
+
+
     /**
      * This array contains all the intercepted fields that are either ignored (i.e. set to zero) or
      * specially handled when building the prototype.
@@ -133,17 +149,6 @@ public final class JDKInterceptor {
             "annotations",
             "declaredAnnotations",
             "classRedefinedCount",
-            "reflectionData",
-        JDK.java_lang_Class$ReflectionData,
-            "declaredFields",
-            "publicFields",
-            "declaredMethods",
-            "publicMethods",
-            "declaredConstructors",
-            "publicConstructors",
-            "declaredPublicFields",
-            "declaredPublicMethods",
-            "redefinedCount",
         JDK.java_lang_Class$Atomic,
             new FieldOffsetRecomputation("reflectionDataOffset", JDK.java_lang_Class, "reflectionData"),
             new FieldOffsetRecomputation("annotationTypeOffset", JDK.java_lang_Class, "annotationType"),
@@ -297,6 +302,16 @@ public final class JDKInterceptor {
     };
 
     private static final Object[] interceptedFieldArrayJDK6 = {
+        JDK.java_lang_Class,
+            "declaredFields",
+            "publicFields",
+            "declaredMethods",
+            "publicMethods",
+            "declaredConstructors",
+            "publicConstructors",
+            "declaredPublicFields",
+            "declaredPublicMethods",
+            "lastRedefinedCount",
         JDK.sun_misc_Launcher,
             "bootstrapClassPath",
         JDK.java_util_concurrent_atomic_AtomicIntegerArray,
@@ -310,6 +325,23 @@ public final class JDKInterceptor {
     private static final Object[] interceptedFieldArrayJDK7 = {
         JDK.java_lang_Class,
             new ZeroField("classLoader").makeOptional(),
+            "reflectionData",
+        JDK.java_lang_Class$ReflectionData,
+            "declaredFields",
+            "publicFields",
+            "declaredMethods",
+            "publicMethods",
+            "declaredConstructors",
+            "declaredPublicFields",
+            "declaredPublicMethods",
+        JDK.java_lang_invoke_LambdaForm,
+            "vmentry",
+        JDK.java_lang_invoke_MethodHandle,
+            new FieldOffsetRecomputation("FORM_OFFSET", "form"),
+            "NF_reinvokerTarget",
+        JDK.java_lang_invoke_MethodType,
+            new ValueField("internTable", ReferenceValue.from(internTable)).makeNonFinal(),
+            new ValueField("objectOnlyTypes", ReferenceValue.from(Array.newInstance(MethodType.class, 20))).makeNonFinal(),
         JDK.java_util_concurrent_atomic_AtomicIntegerArray,
             new ArrayIndexScaleShiftRecomputation("shift", int[].class),
         JDK.java_util_concurrent_atomic_AtomicLongArray,
