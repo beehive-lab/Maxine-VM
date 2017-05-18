@@ -251,5 +251,4 @@ public final class UnsafeCast {
     public static int asTaggedInt(CodePointer cp) {
         return cp.toTaggedInt();
     }
-
 }
