@@ -131,6 +131,12 @@ public class Snippets {
     }
 
     @INLINE
+    public static Word selectNonPrivateVirtualMethod(Object receiver, int vTableIndex) {
+        final Hub hub = ObjectAccess.readHub(receiver);
+        return hub.getWord(vTableIndex);
+    }
+
+    @INLINE
     public static Word selectInterfaceMethod(Object receiver, InterfaceMethodActor interfaceMethod) {
         final Hub hub = ObjectAccess.readHub(receiver);
         final InterfaceActor interfaceActor = UnsafeCast.asInterfaceActor(interfaceMethod.holder());
