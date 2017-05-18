@@ -69,6 +69,8 @@ public abstract class MemberActor extends Actor {
      * Index of this field or method within a holder's local field or method array.
      * The index space is shared within each member type (method or field) as follows:
      *
+     * TH - I think this is Method indexes: [virtual][interface][static] now - see
+     * {@link #assignHolderToLocalMethodActors} assignHolderToLocalMethodActors.
      * Method indexes: [virtual methods][static methods][interface methods]
      * Field indexes:  [instance fields][static fields]
      *
@@ -98,6 +100,14 @@ public abstract class MemberActor extends Actor {
                 }
             }
         }
+    }
+
+    /**
+     * Enables synthetic MethodHandle intrinsic methods to be assigned to a containing class.
+     * @param classActor
+     */
+    public final void setHolder (ClassActor classActor) {
+        this.holder = classActor;
     }
 
     @Override
