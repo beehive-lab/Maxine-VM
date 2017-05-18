@@ -58,6 +58,57 @@ public class Package extends BootImagePackage {
         MaxineVM.registerKeepClassInit("java.io.File");
         MaxineVM.registerKeepClassInit("sun.misc.Perf");
         MaxineVM.registerKeepClassInit("sun.misc.Launcher");
+
+        /* The following are from the java.lang.invoke and sun.invoke.util packages
+         * and are to exclude from the boot image static stale MemberName objects.
+         */
+        // MethodHandle
+        Extensions.resetField("java.lang.invoke.MethodHandle", "NF_reinvokerTarget");
+        Extensions.registerClassForReInit("java.lang.invoke.MethodHandle");
+
+        // LambdaForm$NamedFunction
+        Extensions.resetField("java.lang.invoke.LambdaForm$NamedFunction", "INVOKER_METHOD_TYPE");
+        Extensions.registerClassForReInit("java.lang.invoke.LambdaForm$NamedFunction");
+
+        // LambdaForm
+        Extensions.resetField("java.lang.invoke.LambdaForm", "PREPARED_FORMS");
+        Extensions.resetField("java.lang.invoke.LambdaForm", "INTERNED_ARGUMENTS");
+        Extensions.resetField("java.lang.invoke.LambdaForm", "CONSTANT_ZERO");
+        Extensions.registerClassForReInit("java.lang.invoke.LambdaForm");
+
+        // Invokers
+        Extensions.resetField("java.lang.invoke.Invokers", "NF_checkExactType");
+        Extensions.resetField("java.lang.invoke.Invokers", "NF_checkGenericType");
+        Extensions.resetField("java.lang.invoke.Invokers", "NF_asType");
+        Extensions.resetField("java.lang.invoke.Invokers", "NF_getCallSiteTarget");
+        Extensions.registerClassForReInit("java.lang.invoke.Invokers");
+
+        // ValueConversions
+        Extensions.resetField("sun.invoke.util.ValueConversions", "UNBOX_CONVERSIONS");
+        Extensions.resetField("sun.invoke.util.ValueConversions", "BOX_CONVERSIONS");
+        Extensions.resetField("sun.invoke.util.ValueConversions", "CONSTANT_FUNCTIONS");
+        Extensions.resetField("sun.invoke.util.ValueConversions", "IDENTITY");
+        Extensions.resetField("sun.invoke.util.ValueConversions", "CAST_REFERENCE");
+        Extensions.resetField("sun.invoke.util.ValueConversions", "ZERO_OBJECT");
+        Extensions.resetField("sun.invoke.util.ValueConversions", "IGNORE");
+        Extensions.resetField("sun.invoke.util.ValueConversions", "EMPTY");
+        Extensions.resetField("sun.invoke.util.ValueConversions", "ARRAY_IDENTITY");
+        Extensions.resetField("sun.invoke.util.ValueConversions", "FILL_NEW_TYPED_ARRAY");
+        Extensions.resetField("sun.invoke.util.ValueConversions", "FILL_NEW_ARRAY");
+        Extensions.resetField("sun.invoke.util.ValueConversions", "COLLECT_ARGUMENTS");
+        Extensions.resetField("sun.invoke.util.ValueConversions", "WRAPPER_CASTS");
+        Extensions.resetField("sun.invoke.util.ValueConversions", "CONVERT_PRIMITIVE_FUNCTIONS");
+        Extensions.resetField("sun.invoke.util.ValueConversions", "NO_ARGS_ARRAY");
+        Extensions.resetField("sun.invoke.util.ValueConversions", "NO_ARGS_LIST");
+        Extensions.resetField("sun.invoke.util.ValueConversions", "TYPED_COLLECTORS");
+        Extensions.resetField("sun.invoke.util.ValueConversions", "ARRAYS");
+        Extensions.resetField("sun.invoke.util.ValueConversions", "FILL_ARRAYS");
+        Extensions.resetField("sun.invoke.util.ValueConversions", "FILL_ARRAY_TO_RIGHT");
+        Extensions.resetField("sun.invoke.util.ValueConversions", "LISTS");
+        Extensions.registerClassForReInit("sun.invoke.util.ValueConversions");
+
+        Extensions.resetField("java.lang.invoke.MethodHandleImpl$BindCaller", "MH_checkCallerClass");
+        Extensions.registerClassForReInit("java.lang.invoke.MethodHandleImpl$BindCaller");
     }
 
     /**
@@ -120,6 +171,11 @@ public class Package extends BootImagePackage {
         CompiledPrototype.addCompilationBlacklist("java.util.jar.JarVerifier");
         CompiledPrototype.addCompilationBlacklist("java.net");
         CompiledPrototype.addCompilationBlacklist("sun.nio.ch");
+        /*
+         * Avoid caching problems with MemberNames/LambdaForms in MethodHandles.
+         */
+        CompiledPrototype.addCompilationBlacklist("java.lang.invoke.MethodHandleImpl");
+        CompiledPrototype.addCompilationBlacklist("java.lang.invoke.DirectMethodHandle");
 
         // Exceptions from the above blacklisted packages
         CompiledPrototype.addCompilationWhitelist("sun.security.util.Debug");
