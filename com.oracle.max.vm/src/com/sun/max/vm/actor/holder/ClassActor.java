@@ -1365,6 +1365,24 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
     }
 
     /**
+     * A query to get the MethodActors of this ClassActor optionally including interfaces and optionally
+     * including super classes.
+     * @param supers
+     * @param interfaces
+     * @return
+     */
+    public List<MethodActor> getMethodActors(boolean supers, boolean interfaces) {
+        ArrayList<MethodActor> list = new ArrayList<>();
+        ClassActor holder = this;
+        do {
+            list.addAll(Arrays.asList(holder.getLocalMethodActorsArray(interfaces)));
+            holder = holder.superClassActor;
+        }
+        while (supers && holder != null);
+        return list;
+    }
+
+    /**
      * Get all the interfaces implemented by this class or extended by this interface.
      */
     public final List<InterfaceActor> getLocalInterfaceActors() {
@@ -1393,6 +1411,25 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
         System.arraycopy(localInterfaceMethodActors, 0, result, cursor, localInterfaceMethodActors.length);
         return result;
     }
+
+    /**
+     * Gets all the methods declared by this class actor possibly including interface
+     * methods too.
+     */
+    public MethodActor[] getLocalMethodActorsArray(boolean interfaces) {
+        MethodActor[] result = new MethodActor[localVirtualMethodActors.length + localStaticMethodActors.length
+                                               + (interfaces ? localInterfaceMethodActors.length : 0)];
+        int cursor = 0;
+        System.arraycopy(localVirtualMethodActors, 0, result, cursor, localVirtualMethodActors.length);
+        cursor += localVirtualMethodActors.length;
+        System.arraycopy(localStaticMethodActors, 0, result, cursor, localStaticMethodActors.length);
+        cursor += localStaticMethodActors.length;
+        if (interfaces)
+            System.arraycopy(localInterfaceMethodActors, 0, result, cursor, localInterfaceMethodActors.length);
+        return result;
+    }
+
+
 
     public List<MethodActor> getLocalMethodActors() {
         return java.util.Arrays.asList(getLocalMethodActorsArray());
