@@ -699,7 +699,7 @@ public final class ClassfileReader {
             try {
                 Class holder = Classes.forName(classDescriptor.toJavaString(), false, ClassfileReader.class.getClassLoader());
                 return holder.getAnnotations();
-            } catch (NoClassDefFoundError e) {
+            } catch (NoClassDefFoundError | IllegalAccessError e) {
                 // This occurs for synthesized classes that are not available on the class path
                 return new Annotation[0];
             }
@@ -1222,7 +1222,8 @@ public final class ClassfileReader {
         classDescriptor = constantPool.classAt(thisClassIndex, "this class descriptor").typeDescriptor();
 
         String nameLoaded = classDescriptor.toJavaString();
-        if (nameExpected != null && !nameExpected.equals(nameLoaded)) {
+
+        if (nameExpected != null && !nameExpected.replace('/', '.').equals(nameLoaded)) {
             /*
              * VMSpec 5.3.5:
              *
@@ -1231,7 +1232,7 @@ public final class ClassfileReader {
              *   NoClassDefFoundError or an instance of one of its
              *   subclasses.
              */
-            throw noClassDefFoundError("'this_class' indicates wrong type");
+            throw noClassDefFoundError("'this_class' indicates wrong type expected=" + nameExpected + ", loaded=" + nameLoaded);
         }
         Utf8Constant name = SymbolTable.makeSymbol(nameLoaded);
 
