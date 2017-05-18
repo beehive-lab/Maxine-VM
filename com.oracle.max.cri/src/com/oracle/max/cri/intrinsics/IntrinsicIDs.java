@@ -102,4 +102,24 @@ public class IntrinsicIDs {
      * </pre>
      */
     public static final String MEMBAR = p + "MEMBAR";
+
+
+    /**
+     * MethodHandle invokeBasic intrinsic method.
+     */
+    public static final String INVOKEBASIC = p + "INVOKEBASIC";
+    /**
+     * Method handle linkToVirtual intrinsic method.
+     */
+    public static final String LINKTOVIRTUAL = p + "LINKTOVIRTUAL";
+
+    /**
+     * Method handle linkToStatic intrinsic method.
+     */
+    public static final String LINKTOSTATIC = p + "LINKTOSTATIC";
+
+    /**
+     * Method handle linkToSpecial intrinsic method.
+     */
+    public static final String LINKTOSPECIAL = p + "LINKTOSPECIAL";
 }
