@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,28 +17,26 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.jdk;
+
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 
 import java.lang.reflect.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 
 @METHOD_SUBSTITUTIONS(Proxy.class)
 public final class JDK_java_lang_reflect_Proxy {
 
-    public final static String proxyClassNamePrefix = (String) WithoutAccessCheck.getStaticField(Proxy.class, "proxyClassNamePrefix");
+    @ALIAS(declaringClassName = "java.lang.reflect.Proxy$ProxyClassFactory")
+    public final static String proxyClassNamePrefix = "$Proxy";
 
-    @ALIAS(declaringClass = Proxy.class)
-    private static Map proxyClasses = null;
+    @ALIAS(declaringClass = Proxy.class, descriptor="Ljava/lang/reflect/WeakCache;")
+    private static Object proxyClassCache = null;
 
     public static final Set<Class> bootProxyClasses = new HashSet<Class>();
 
@@ -48,9 +48,18 @@ public final class JDK_java_lang_reflect_Proxy {
         if (cl == null) {
             throw new NullPointerException();
         }
-        return bootProxyClasses.contains(cl) ||
-               proxyClasses.containsKey(cl);
+        return Proxy.class.isAssignableFrom(cl) &&
+            (bootProxyClasses.contains(cl) ||
+             asWeakCacheAlias(proxyClassCache).containsValue(cl));
     }
+
+    private static class WeakCacheAlias {
+        @ALIAS(declaringClassName="java.lang.reflect.WeakCache")
+        public native boolean containsValue(Object o);
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    private static native WeakCacheAlias asWeakCacheAlias(Object o);
 
     @SUBSTITUTE
     private static Class defineClass0(ClassLoader cl, String name, byte[] bytes, int offset, int length) {
