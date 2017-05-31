@@ -1,8 +1,10 @@
 # Maxine VM: A Metacircular VM for Java in Java
 
-#### News
+#### Updates
 
-* 2017-04-18: Maxine VM 2.1 Release
+* 2017-05-31: Maxine VM 2.1.1 Release
+  * Port to latest OpenJDK 7 (u131)
+* 2017-04-18: Maxine VM 2.1.0 Release
   * Enable profile-guided optimizations in Graal (T1X profiling info
     added)
   * Bug and stability fixes
