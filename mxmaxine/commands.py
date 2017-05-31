@@ -32,6 +32,19 @@ from argparse import ArgumentParser
 _maxine_home = dirname(dirname(__file__))
 _vmdir = None
 
+# Set LD_LIBRARY_PATH to make dlopen work
+#
+# `DT_RPATH` is deprecated and replaced by `DT_RUNPATH`.  However
+# `DT_RUNPATH` is not transitive and thus it's not propagated through
+# maxvm to `dlopen` when loading `libjava.so`.  As a result, when
+# loading `libjava.so` and chain-loading `libjvm.so` MaxineVM fails
+# (unless `libjava.so` sets `DT_RUNPATH`, which it should NOT anymore).
+# To overcome this issue we set `LD_LIBRARY_PATH`
+# accordingly. Consequently the use of `-rpath` when linking maxvm (see
+# `com.oracle.max.vm.native/platform/platform.mk`) is redundant now.
+ldenv = os.environ
+ldenv['LD_LIBRARY_PATH'] = ldenv['MAXINE_HOME'] + "/com.oracle.max.vm.native/generated/" + mx.get_os()
+
 def c1x(args):
     """alias for "mx olc -c=C1X ..." """
     olc(['-c=C1X'] + args)
@@ -84,7 +97,7 @@ def eclipse(args):
         mx.abort('Could not find org.eclipse.equinox.launcher_*.jar in ' + plugins)
 
     launcher = join(plugins, sorted(launchers)[0])
-    return mx.run([join(_vmdir, 'maxvm'), '-Xms1g', '-Xmx3g', '-XX:+ShowConfiguration'] + args + ['-jar', launcher])
+    return mx.run([join(_vmdir, 'maxvm'), '-Xms1g', '-Xmx3g', '-XX:+ShowConfiguration'] + args + ['-jar', launcher], env=ldenv)
 
 def gate(args):
     """run the tests used to validate a push to the stable Maxine repository
@@ -151,7 +164,7 @@ def hcfdis(args):
 
 def helloworld(args):
     """run the 'hello world' program on the Maxine VM"""
-    mx.run([join(_vmdir, 'maxvm'), '-cp', mx.classpath('com.oracle.max.tests')] + args + ['test.output.HelloWorld'])
+    mx.run([join(_vmdir, 'maxvm'), '-cp', mx.classpath('com.oracle.max.tests')] + args + ['test.output.HelloWorld'], env=ldenv)
 
 def inspecthelloworld(args):
     """run the 'hello world' program in the Inspector"""
@@ -636,7 +649,7 @@ def vm(args):
     if debug_port is not None:
         maxvmOptions += ['-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=' + str(debug_port)]
 
-    mx.run([join(_vmdir, 'maxvm')] + maxvmOptions + vmArgs, cwd=cwd)
+    mx.run([join(_vmdir, 'maxvm')] + maxvmOptions + vmArgs, cwd=cwd, env=ldenv)
 
 _patternHelp="""
     A pattern is a class name pattern followed by an optional method name

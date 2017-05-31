@@ -160,9 +160,24 @@ void log_task_stat(pid_t tgid, pid_t tid, const char* messageFormat, ...) {
 #define STAT_FIELD(type, name, format) _STAT_FIELD(type, name, format, true)
 #define STAT_FIELD_SKIP(type, name, format) _STAT_FIELD(type, name, format, false)
 
+
+/*
+ * scanf requires %m (rather than %a) for memory allocation
+ * since glibc 2.7. Since %m is also required by POSIX best
+ * make it the default. */
+#ifdef __GNU_LIBRARY__
+# if  __GLIBC__ < 2  || (__GLIB__ == 2 && __GLIBC_MINOR__ < 7)
+#  define SCANF_MEM_ALLOCATION_FORMAT "%a"
+# endif
+#endif
+
+#ifndef SCANF_MEM_ALLOCATION_FORMAT
+# define SCANF_MEM_ALLOCATION_FORMAT "%m"
+#endif
+
 #define STAT_STRING_FIELD(name) do { \
     char *name; \
-    fscanf(sp, "%as ", &name); \
+    fscanf(sp, SCANF_MEM_ALLOCATION_FORMAT "s ", &name); \
         log_println("  %20s: %s", STRINGIZE(name), name); \
 } while (0)
 
@@ -912,7 +927,7 @@ Java_com_sun_max_tele_debug_linux_LinuxTask_nativeSetInstructionPointer(JNIEnv *
     }
 #ifndef __arm__
     registers.rip = instructionPointer;
-#else 
+#else
     registers.uregs[13] = instructionPointer;
 #endif
     return ptrace(PT_SETREGS, tid, 0, &registers) == 0;
@@ -1008,4 +1023,3 @@ Java_com_sun_max_tele_debug_linux_LinuxDumpThreadAccess_taskRegisters(JNIEnv *en
                     floatingPointRegisters, floatingPointRegistersLength,
                     stateRegisters, stateRegistersLength);
 }
-

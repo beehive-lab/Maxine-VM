@@ -110,12 +110,12 @@ public class CompilationBroker {
 
     static {
         VMOptions.addFieldOption("-XX:", "CompileCommand", CompilationBroker.class,
-				 "Specify which compiler to use for methods matching given patterns. For example, " +
-				 "'-XX:CompileCommand=test.output:T1X,com.acme.util.Strings:Graal' specifies that " +
-				 "any method whose fully qualified name contains the substring 'test.output' " +
-				 "should be compiled with the compiler named 'T1X' and any method whose fully " +
-				 "qualified name contains 'com.acme.util.String' should be compiled with the 'Graal' " +
-				 "compiler. No checking is done to ensure that a named compiler exists.");
+                                 "Specify which compiler to use for methods matching given patterns. For example, " +
+                                 "'-XX:CompileCommand=test.output:T1X,com.acme.util.Strings:Graal' specifies that " +
+                                 "any method whose fully qualified name contains the substring 'test.output' " +
+                                 "should be compiled with the compiler named 'T1X' and any method whose fully " +
+                                 "qualified name contains 'com.acme.util.String' should be compiled with the 'Graal' " +
+                                 "compiler. No checking is done to ensure that a named compiler exists.");
     }
 
     private LinkedHashMap<String, String> compileCommandMap;
@@ -691,9 +691,9 @@ public class CompilationBroker {
             // as it may have been called directly.
             DirectCallPatcher patcher = new DirectCallPatcher(oldMethod, newMethod);
             new VmStackFrameWalker(VmThread.current().tla()).inspect(Pointer.fromLong(here()),
-								     VMRegister.getCpuStackPointer(),
-								     VMRegister.getCpuFramePointer(),
-								     patcher);
+                                                                     VMRegister.getCpuStackPointer(),
+                                                                     VMRegister.getCpuFramePointer(),
+                                                                     patcher);
         }
     }
 

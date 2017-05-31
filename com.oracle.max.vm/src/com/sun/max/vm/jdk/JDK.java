@@ -37,6 +37,8 @@ public class JDK {
     // Checkstyle: stop field name check
     public static final ClassRef java_lang_ApplicationShutdownHooks  = new ClassRef("java.lang.ApplicationShutdownHooks");
     public static final ClassRef java_lang_Class                     = new ClassRef(Class.class);
+    public static final ClassRef java_lang_Class$Atomic              = new ClassRef(Class.class, "Atomic");
+    public static final ClassRef java_lang_Class$ReflectionData      = new ClassRef(Class.class, "ReflectionData");
     public static final ClassRef java_lang_ClassLoader               = new ClassRef(ClassLoader.class);
     public static final ClassRef java_lang_ClassLoader$NativeLibrary = new ClassRef(ClassLoader.class, "NativeLibrary");
     public static final ClassRef java_lang_Cloneable                 = new ClassRef(Cloneable.class);
@@ -67,6 +69,8 @@ public class JDK {
     public static final ClassRef java_io_ExpiringCache               = new ClassRef("java.io.ExpiringCache");
     public static final ClassRef java_net_InetSocketAddress          = new LazyClassRef("java.net.InetSocketAddress");
 
+    public static final ClassRef java_nio_Bits                       = new LazyClassRef("java.nio.Bits");
+
     public static final ClassRef java_nio_DirectByteBuffer           = new LazyClassRef("java.nio.DirectByteBuffer");
     public static final ClassRef java_nio_DirectCharBufferS          = new LazyClassRef("java.nio.DirectCharBufferS");
     public static final ClassRef java_nio_DirectCharBufferU          = new LazyClassRef("java.nio.DirectCharBufferU");
@@ -87,6 +91,7 @@ public class JDK {
     public static final ClassRef java_lang_reflect_Field             = new ClassRef(java.lang.reflect.Field.class);
     public static final ClassRef java_lang_reflect_Method            = new ClassRef(java.lang.reflect.Method.class);
     public static final ClassRef java_lang_reflect_Proxy             = new LazyClassRef(java.lang.reflect.Proxy.class);
+    public static final ClassRef java_lang_reflect_Proxy$ProxyClassFactory = new LazyClassRef("java.lang.reflect.Proxy$ProxyClassFactory");
 
     public static final ClassRef java_util_EnumMap                   = new ClassRef(java.util.EnumMap.class);
     public static final ClassRef java_util_Random                    = new ClassRef(java.util.Random.class);

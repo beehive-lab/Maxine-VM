@@ -1,0 +1,21 @@
+
+# Eclipse generated
+.project
+.classpath
+.settings
+.factorypath
+*/.gitignore
+*/build.xml
+bin/
+nbproject/
+workingsets.xml
+
+# Python bytecode
+*.pyc
+
+# Checkstyle generated
+checkstyle-timestamps/
+checkstyleOutput.txt
+
+# Generated
+generated/

@@ -67,10 +67,10 @@ public final class TeleStateRegisters extends TeleRegisters {
         static CiRegister RIP   = new CiRegister(0, 0, -1, "rip");
         static CiRegister FLAGS = new CiRegister(1, 1, -1, "flags");
         private static char[] flagNames = {
-                'C', '1', 'P', '3', 'A', '5', 'Z', 'S',
-                'T', 'I', 'D', 'O', 'I', 'L', 'N', 'F',
-                'R', 'V', 'a', 'f', 'p', 'i', '2', '3',
-                '4', '5', '6', '7', '8', '9', '0', '1'
+            'C', '1', 'P', '3', 'A', '5', 'Z', 'S',
+            'T', 'I', 'D', 'O', 'I', 'L', 'N', 'F',
+            'R', 'V', 'a', 'f', 'p', 'i', '2', '3',
+            '4', '5', '6', '7', '8', '9', '0', '1'
         };
 
         private static final int USED_FLAGS = 22;
@@ -92,9 +92,13 @@ public final class TeleStateRegisters extends TeleRegisters {
     }
     static CiRegister[] createStateRegisters() {
         if (platform().isa == ISA.AMD64) {
-            return new CiRegister[] { AMD64.RIP, AMD64.FLAGS};
+            return new CiRegister[] {
+                AMD64.RIP, AMD64.FLAGS
+            };
         } else if (platform().isa == ISA.ARM) {
-            return new CiRegister[] { ARMV7.RIP, ARMV7.FLAGS};
+            return new CiRegister[] {
+                ARMV7.RIP, ARMV7.FLAGS
+            };
         } else {
             throw TeleError.unimplemented();
         }

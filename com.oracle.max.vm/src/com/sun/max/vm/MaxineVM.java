@@ -465,8 +465,8 @@ public final class MaxineVM {
      */
     @VM_ENTRY_POINT
     public static int run(Pointer tlBlock, int tlBlockSize, Pointer bootHeapRegionStart, Word dlopen,
-			  Word dlsym, Word dlerror, Pointer vmInterface, Pointer jniEnv,
-			  Pointer jmmInterface, Pointer jvmtiInterface, int argc, Pointer argv) {
+                          Word dlsym, Word dlerror, Pointer vmInterface, Pointer jniEnv,
+                          Pointer jmmInterface, Pointer jvmtiInterface, int argc, Pointer argv) {
         primordialTLBlock = tlBlock;
         primordialTLBlockSize = tlBlockSize;
         Pointer etla = tlBlock.plus(platform().pageSize - Address.size() + VmThreadLocal.tlaSize().toInt());
