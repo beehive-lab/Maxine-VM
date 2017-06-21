@@ -35,7 +35,7 @@ public final class JDK_java_lang_reflect_Proxy {
     @ALIAS(declaringClassName = "java.lang.reflect.Proxy$ProxyClassFactory")
     public final static String proxyClassNamePrefix = "$Proxy";
 
-    @ALIAS(declaringClass = Proxy.class, descriptor="Ljava/lang/reflect/WeakCache;")
+    @ALIAS(declaringClass = Proxy.class, descriptor = "Ljava/lang/reflect/WeakCache;")
     private static Object proxyClassCache = null;
 
     public static final Set<Class> bootProxyClasses = new HashSet<Class>();
@@ -54,7 +54,7 @@ public final class JDK_java_lang_reflect_Proxy {
     }
 
     private static class WeakCacheAlias {
-        @ALIAS(declaringClassName="java.lang.reflect.WeakCache")
+        @ALIAS(declaringClassName = "java.lang.reflect.WeakCache")
         public native boolean containsValue(Object o);
     }
 

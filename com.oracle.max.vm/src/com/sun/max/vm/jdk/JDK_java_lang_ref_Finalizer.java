@@ -77,7 +77,9 @@ final class JDK_java_lang_ref_Finalizer {
     @SUBSTITUTE
     private void runFinalizer(JavaLangAccess jla) {
         synchronized (this) {
-            if (hasBeenFinalized()) return;
+            if (hasBeenFinalized()) {
+                return;
+            }
             remove();
         }
         try {

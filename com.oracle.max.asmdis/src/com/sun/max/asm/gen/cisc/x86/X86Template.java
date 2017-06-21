@@ -281,7 +281,9 @@ public abstract class X86Template extends Template implements X86InstructionDesc
                 if (operandSizeAttribute() != addressSizeAttribute()) {
                     throw TemplateNotNeededException.raise();
                 }
+            // Checkstyle: stop
             case d_q:
+            // Checkstyle: resume
             case v:
                 switch (operandSizeAttribute()) {
                     case BITS_16:
