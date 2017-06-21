@@ -59,6 +59,18 @@ public class Package extends BootImagePackage {
         MaxineVM.registerKeepClassInit("sun.misc.Perf");
         MaxineVM.registerKeepClassInit("sun.misc.Launcher");
 
+        // The following are needed to make -Djava.lang.invoke.MethodHandle.*=value make an effect
+        Extensions.resetField("java.lang.invoke.MethodHandleStatics", "DEBUG_METHOD_HANDLE_NAMES");
+        Extensions.resetField("java.lang.invoke.MethodHandleStatics", "DUMP_CLASS_FILES");
+        Extensions.resetField("java.lang.invoke.MethodHandleStatics", "TRACE_INTERPRETER");
+        Extensions.resetField("java.lang.invoke.MethodHandleStatics", "TRACE_METHOD_LINKAGE");
+        Extensions.resetField("java.lang.invoke.MethodHandleStatics", "COMPILE_THRESHOLD");
+        Extensions.registerClassForReInit("java.lang.invoke.MethodHandleStatics");
+        // The following fields are affected by java.lang.invoke.MethodHandleStatics.DUMP_CLASS_FILES so they need to be reset too
+        Extensions.resetField("java.lang.invoke.InvokerBytecodeGenerator", "DUMP_CLASS_FILES_DIR");
+        Extensions.resetField("java.lang.invoke.InvokerBytecodeGenerator", "DUMP_CLASS_FILES_COUNTERS");
+        Extensions.registerClassForReInit("java.lang.invoke.InvokerBytecodeGenerator");
+
         /* The following are from the java.lang.invoke and sun.invoke.util packages
          * and are to exclude from the boot image static stale MemberName objects.
          */
