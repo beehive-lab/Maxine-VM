@@ -137,18 +137,6 @@ public class MaxineTesterConfiguration {
 
         vmoutput(findOutputTests("test.vm.output."));
 
-        if (JDK.JDK_VERSION == JDK.JDK_7) {
-            output(Classes.forName("test.output.MethodHandles01"), FAIL_ALL);
-            output(Classes.forName("test.output.MethodHandles02"), FAIL_ALL);
-            output(Classes.forName("test.output.MethodHandles03"), FAIL_ALL);
-            output(Classes.forName("test.output.MethodHandles04"), FAIL_ALL);
-            output(Classes.forName("test.output.MethodHandles05"), FAIL_ALL);
-            output(Classes.forName("test.output.MethodHandles06"), FAIL_ALL);
-            output(Classes.forName("test.output.MethodHandles07"), FAIL_ALL);
-        }
-
-        vmoutput(findOutputTests("test.vm.output."));
-
         // Register all "*.Autotest classes on the class path
         findJUnitTests();
         junit("test.arm.t1x.AutoTest", FAIL_AMD64);
