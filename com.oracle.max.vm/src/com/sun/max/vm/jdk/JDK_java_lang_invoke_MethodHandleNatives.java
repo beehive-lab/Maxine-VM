@@ -202,6 +202,7 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
             init_method_MemberName(memberName, cma, !cma.isConstructor(), null);
 
         } else {
+            // TODO: Implement me
             throw new RuntimeException("Implement Me");
         }
         Trace.end(1, "MHN.getMemberVMInfo");
@@ -261,7 +262,7 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
                     }
                 } else if (ref_kind == JVM_REF_invokeInterface) {
                     Trace.line(1, "Resolving interface method.");
-                    throw new RuntimeException("Implement Me !");
+                    ma = MaxMethodHandles.resolveInterfaceMethod(classActor, name, type, klass, true);
                 } else if (mhInvokeID != MethodHandleIntrinsicID.None) {
                     Trace.line(1, "Resolving handle call.");
                     assert (!MethodHandleIntrinsicID.isSignaturePolymorphicStatic(mhInvokeID));
@@ -504,15 +505,18 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
             TypeDescriptor type = JavaTypeDescriptor.forJavaClass(f.getType());
             FieldActor fa = ClassActor.fromJava(c).findFieldActor(name, type);
             int flags = fa.accessFlags();
+            // TODO: Implement me
             throw new RuntimeException("Implement me");
         } else if (ref instanceof Method) {
             Trace.line(1, "Got Method");
             init_method_MemberName(memberName, (Method) ref, true, ref.getClass());
         } else if (ref instanceof Constructor) {
             Trace.line(1, "Got Constructor");
+            // TODO: Implement me
             throw new RuntimeException("Implement me");
         } else if (ref.getClass().equals(MemberName_Class)) {
             Trace.line(1, "Got MemberName");
+            // TODO: Implement me
             throw new RuntimeException("Implement me");
         }
 
@@ -565,6 +569,7 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
                 }
                 break;
             case IS_FIELD:
+                // TODO: Implement me
                 throw new RuntimeException("Got Field -- implement me");
             default:
                 throw new InternalError("unrecognized MemberName format");

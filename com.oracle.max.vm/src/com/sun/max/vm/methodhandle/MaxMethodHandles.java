@@ -121,14 +121,56 @@ public final class MaxMethodHandles {
     }
 
 
-    private static MethodActor resolveInterfaceMethod(ClassActor classActor, String name,
-                                                      MethodType type, Class<?> caller, boolean checkAccess)
-    {
-        assert(classActor.isInterface());
+    /**
+     * Part of #5.4.3.4.
+     */
+    private static MethodActor findInterfaceMethodActor(InterfaceActor interfaceActor, Utf8Constant name, SignatureDescriptor descriptor) {
+        MethodActor result = interfaceActor.findLocalInterfaceMethodActor(name, descriptor);
+        if (result != null) {
+            return result;
+        }
+        for (InterfaceActor i : interfaceActor.localInterfaceActors()) {
+            result = findInterfaceMethodActor(i, name, descriptor);
+            if (result != null) {
+                return result;
+            }
+        }
+        return null;
+    }
 
-        MethodActor ma;
-        ma = classActor.findClassMethodActor(SymbolTable.makeSymbol(name), SignatureDescriptor.create(type.toMethodDescriptorString()));
+    /**
+     * Resolution of interface method as described in JVM Spec 8 $5.4.3.4
+     *
+     * @param classActor
+     * @param name
+     * @param type
+     * @param caller
+     * @param checkAccess
+     * @return
+     */
+    public static MethodActor resolveInterfaceMethod(ClassActor classActor, String name,
+                                                     MethodType type, Class<?> caller, boolean checkAccess) {
+        // 1  If C is not an interface, interface method resolution throws an IncompatibleClassChangeError.
+        if (!classActor.isInterface()) {
+            throw new IncompatibleClassChangeError("Class found where interface expected -->" + classActor.javaClass().getName());
+        }
 
+        Utf8Constant        utfName   = SymbolTable.makeSymbol(name);
+        SignatureDescriptor signature = SignatureDescriptor.create(type.toMethodDescriptorString());
+        // 2  Otherwise, if C declares a method with the name and descriptor specified by the interface method
+        // reference, method lookup succeeds.
+        // 3  Otherwise, if the class Object declares a method with the name and descriptor specified by the
+        // interface method reference, which has its ACC_PUBLIC flag set and does not have its ACC_STATIC flag set,
+        // method lookup succeeds.
+        // 4 Otherwise, if the maximally-specific superinterface methods (§5.4.3.3) of C for the name and descriptor
+        // specified by the method reference include exactly one method that does not have its ACC_ABSTRACT flag set,
+        // then this method is chosen and method lookup succeeds.
+        // 5 Otherwise, if any superinterface of C declares a method with the name and descriptor specified by the
+        // method reference that has neither its ACC_PRIVATE flag nor its ACC_STATIC flag set, one of these is
+        // arbitrarily chosen and method lookup succeeds.
+        MethodActor ma = classActor.findInterfaceMethodActor(utfName, signature);
+
+        // 6. Otherwise, method lookup fails.
         if (ma == null) {
             throw new NoSuchMethodError(classActor + "." + name + "(" + type + ")");
         }
@@ -138,6 +180,7 @@ public final class MaxMethodHandles {
         }
         return ma;
     }
+
     /**
      *
      * from linkResolver.cpp resolve_method().
@@ -167,9 +210,8 @@ public final class MaxMethodHandles {
 
         // 3. search interfaces
         if (ma == null) {
-
-//            ma = resolveInterfaceMethod(classActor, name, type, caller, checkAccess);
-
+            ma = classActor.findInterfaceMethodActor(SymbolTable.makeSymbol(name), SignatureDescriptor.create
+                    (type.toMethodDescriptorString()));
             // 4. JSR 292 support.
             if (ma == null) {
                 ma = lookupPolymorphicMethod(classActor, name, type, caller, new Object[1]);
