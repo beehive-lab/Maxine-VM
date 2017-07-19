@@ -287,7 +287,7 @@ public class MaxineTesterConfiguration {
         imageConfig("jtt-t1xt1x", opt_c1x, tmpVMArgs, gcScheme, "-threads=4", build, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests",
                         joinCompileCommands(testCallerT1X, testCalleeT1X), "--XX:+FailOverCompilation");
 
-        imageConfig("jtt-c1xc1x", opt_c1x, tmpVMArgs, gcScheme, "-threads=4", "-debug-methods", "-run=test.com.sun.max.vm.jtrun.all", build, "-native-tests");
+        imageConfig("jtt-c1xc1x", opt_c1x, tmpVMArgs, gcScheme, "-threads=4", "-run=test.com.sun.max.vm.jtrun.all", build, "-native-tests");
         imageConfig("jtt-c1xgraal", opt_c1xgraal, "-run=test.com.sun.max.vm.jtrun.all", "-native-tests", joinCompileCommands(testCallerT1X, testCalleeGraal));
 
         imageConfig("jtt-msc1xt1x", opt_c1x, "-run=test.com.sun.max.vm.jtrun.all", "-heap=gcx.ms", "-native-tests", testCalleeT1X);
