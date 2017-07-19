@@ -128,7 +128,8 @@ jlong native_currentTimeMillis(void) {
 #if os_SOLARIS || os_DARWIN || os_LINUX
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
-	return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+	// we need to cast to jlong to avoid overflows in ARMv7
+	return ((jlong) tv.tv_sec * 1000) + ((jlong) tv.tv_usec / 1000);
 #else
 	return 1;
 #endif
