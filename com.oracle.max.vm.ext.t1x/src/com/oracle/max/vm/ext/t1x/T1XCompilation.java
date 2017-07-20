@@ -979,6 +979,17 @@ public abstract class T1XCompilation {
     protected abstract int callDirect();
 
     /**
+     * Emits a direct call instruction which is safe for method handle intrinsic invocation.
+     * Method handle intrinsics such as invokeBasic need to query the receiver in order to
+     * extract the correct target.
+     *
+     * @param reveiverStackIndex The receiver's position in the Java operand stack is copied into
+     *          the receiver register expected by the intrinsic.
+     * @param The {@linkplain Safepoints safepoint} for the call.
+     */
+    protected abstract int callDirect(int receiverStackIndex);
+
+    /**
      * Emits an indirect call instruction.
      *
      * @param target the register holding the address of the call target
@@ -2225,7 +2236,7 @@ public abstract class T1XCompilation {
                         // this is an invokevirtual to a private or final method, treat it like invokespecial
                         do_invokespecial_resolved(tag, virtualMethodActor, receiverStackIndex);
 
-                        int safepoint = callDirect();
+                        int safepoint = callDirect(receiverStackIndex);
                         finishCall(tag, kind, safepoint, virtualMethodActor);
                         return;
                     }

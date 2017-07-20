@@ -265,6 +265,19 @@ public class AMD64T1XCompilation extends T1XCompilation {
     }
 
     @Override
+    protected int callDirect(int receiverStackIndex) {
+        if (receiverStackIndex >= 0) {
+            peekObject(rdi, receiverStackIndex);
+        }
+        alignDirectCall(buf.position());
+        int causePos = buf.position();
+        asm.call();
+        int safepointPos = buf.position();
+        asm.nop(); // nop separates any potential safepoint emitted as a successor to the call
+        return Safepoints.make(safepointPos, causePos, DIRECT_CALL, TEMPLATE_CALL);
+    }
+
+    @Override
     protected int callIndirect(CiRegister target, int receiverStackIndex) {
         if (receiverStackIndex >= 0) {
             peekObject(rdi, receiverStackIndex);

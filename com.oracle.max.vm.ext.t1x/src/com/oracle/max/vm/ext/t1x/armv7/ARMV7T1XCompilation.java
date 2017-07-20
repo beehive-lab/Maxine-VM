@@ -489,6 +489,18 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     }
 
     @Override
+    protected int callDirect(int receiverStackIndex) {
+        if (receiverStackIndex >= 0) {
+            peekObject(ARMV7.r0, receiverStackIndex);
+        }
+        int causePos = buf.position();
+        asm.call();
+        int safepointPos = buf.position();
+        asm.nop();
+        return Safepoints.make(safepointPos, causePos, DIRECT_CALL, TEMPLATE_CALL);
+    }
+
+    @Override
     protected int callIndirect(CiRegister target, int receiverStackIndex) {
         asm.mov(ConditionFlag.Always, false, ARMV7.r8, target);
         if (receiverStackIndex >= 0) {
