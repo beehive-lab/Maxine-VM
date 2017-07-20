@@ -342,6 +342,7 @@ public enum T1XTemplateTag {
     LINKTOSTATIC(-1),
     LINKTOSPECIAL(-1),
     LINKTOTARGET(-1),
+    LINKTOINTERFACE(-1),
 
     NEW,
     NEW$init,

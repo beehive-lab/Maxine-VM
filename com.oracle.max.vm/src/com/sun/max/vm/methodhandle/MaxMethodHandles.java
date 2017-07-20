@@ -66,7 +66,7 @@ public final class MaxMethodHandles {
         LinkToVirtual("linkToVirtual", LINKTOVIRTUAL),
         LinkToStatic("linkToStatic", LINKTOSTATIC),
         LinkToSpecial("linkToSpecial", LINKTOSPECIAL),
-        LinkToInterface("linkToInterface", null),
+        LinkToInterface("linkToInterface", LINKTOINTERFACE),
         None(null, null);
 
 

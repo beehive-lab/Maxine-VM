@@ -122,4 +122,9 @@ public class IntrinsicIDs {
      * Method handle linkToSpecial intrinsic method.
      */
     public static final String LINKTOSPECIAL = p + "LINKTOSPECIAL";
+
+    /**
+     * Method handle linkToSpecial intrinsic method.
+     */
+    public static final String LINKTOINTERFACE = p + "LINKTOINTERFACE";
 }

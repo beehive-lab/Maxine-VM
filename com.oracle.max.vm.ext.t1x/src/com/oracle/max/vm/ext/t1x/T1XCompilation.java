@@ -2441,42 +2441,6 @@ public abstract class T1XCompilation {
         // -2 : Since we have popped off the MemberName
         int safepoint = callIndirect(target, receiverStackIndex - 2);
         finishCall(tag, kind, safepoint, null);
-
-    }
-
-    /**
-     * Method Handle linkToStatic
-     * @param index
-     */
-    protected void do_linktointerface(int index) {
-        ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
-        SignatureDescriptor signature = classMethodRef.signature(cp);
-        Kind kind = invokeKind(signature);
-        int receiverStackIndex = receiverStackIndex(signature);
-        Trace.begin(1, "T1XCompilation.do_linktointerface");
-        Trace.line(1, "index=>" + index);
-        Trace.line(1, "constantPool=>" + cp);
-        Trace.line(1, "poolConstant=>" + cp.at(index));
-        Trace.line(1, "method=>" + method);
-        Trace.line(1, "classMethodRef=>" + classMethodRef.name(cp).string);
-        Trace.line(1, "signature=>" + signature.string);
-        Trace.line(1, "kind=>" + kind);
-        Trace.line(1, "receiverIndex=>" + receiverStackIndex);
-        T1XTemplateTag tag = LINKTOINTERFACE;
-        start(tag);
-        CiRegister target = template.sig.out.reg;
-        peekObject(0, "memberName", 0);
-        /*
-         * -1 : For regular virtual dispatch the receiver follows the arguments however
-         *      for linkage the receiver IS the last argument.
-         */
-        peekObject(1, "receiver", receiverStackIndex - 1);
-        finish();
-        decStack(1);
-        // -2 : Since we have popped off the MemberName
-        int safepoint = callIndirect(target, receiverStackIndex - 2);
-        finishCall(tag, kind, safepoint, null);
-        Trace.end(1, "T1XCompilation.do_linktointerface");
         Trace.end(1, "T1XCompilation.do_linktononstatic");
 
     }
@@ -2577,6 +2541,11 @@ public abstract class T1XCompilation {
         else if (intrinsic == IntrinsicIDs.LINKTOSPECIAL) {
             Trace.line(1, "Got linkToSpecial");
             do_linktononstatic(index, LINKTOSPECIAL);
+            return true;
+        }
+        else if (intrinsic == IntrinsicIDs.LINKTOINTERFACE) {
+            Trace.line(1, "Got linkToInterface");
+            do_linktononstatic(index, LINKTOINTERFACE);
             return true;
         }
 

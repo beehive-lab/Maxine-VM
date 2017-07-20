@@ -86,6 +86,14 @@ public class T1XRuntime {
         return vTableEntrypoint.plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
+    public static Address resolveAndSelectLinkToInterface(Object memberName, Object receiver) {
+        VMTarget target = VMTarget.fromMemberName(memberName);
+        assert target != null;
+        Trace.line(1, "T1XRuntime.resolveAndSelectLinkToInterface target=" + target + ", mnameid=" + System.identityHashCode(memberName));
+        Address vTableEntrypoint = Snippets.selectInterfaceMethod(receiver, UnsafeCast.asInterfaceMethodActor(target.getVmTarget())).asAddress();
+        return vTableEntrypoint.plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
+    }
+
     public static Address resolveAndSelectLinkToSpecial(Object memberName, Object receiver) {
         Trace.begin(1, "T1XRuntime.resolveAndSelectLinkToSpecial: memberName=" + memberName);
 

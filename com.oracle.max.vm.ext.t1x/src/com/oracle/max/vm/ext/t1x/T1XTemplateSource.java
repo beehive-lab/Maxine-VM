@@ -159,6 +159,12 @@ public class T1XTemplateSource {
         return resolveAndSelectLinkToVirtual(memberName, receiver);
     }
 
+    @T1X_TEMPLATE(LINKTOINTERFACE)
+    @Slot(-1)
+    public static Address linkToInterface(Object memberName, Object receiver) {
+        return resolveAndSelectLinkToInterface(memberName, receiver);
+    }
+
 
    @T1X_TEMPLATE(LINKTOSTATIC)
    @Slot(-1)
