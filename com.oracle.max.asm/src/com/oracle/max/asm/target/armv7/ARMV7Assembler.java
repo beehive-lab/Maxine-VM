@@ -1658,10 +1658,10 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void pause() {
-        push(ConditionFlag.Always, 1 | 2 | 4 | 128, true);
+        push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 128, true);
         mov32BitConstant(ConditionFlag.Always, ARMV7.r7, 158); // sched_yield
         emitInt(0xef000000); // replaced with svc 0
-        pop(ConditionFlag.Always, 1 | 2 | 4 | 128, true);
+        pop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 128, true);
     }
 
     public final void crashme() {
