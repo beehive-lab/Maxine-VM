@@ -26,16 +26,21 @@ import com.sun.max.annotate.INLINE;
 import com.sun.max.annotate.METHOD_SUBSTITUTIONS;
 import com.sun.max.annotate.SUBSTITUTE;
 import com.sun.max.memory.Memory;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.holder.ArrayClassActor;
 import com.sun.max.vm.actor.holder.ClassActor;
 import com.sun.max.vm.actor.member.FieldActor;
 import com.sun.max.vm.classfile.ClassfileReader;
+import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.classfile.constant.ConstantPool.*;
 import com.sun.max.vm.heap.Heap;
 import com.sun.max.vm.layout.ArrayLayout;
 import com.sun.max.vm.reference.Reference;
 import com.sun.max.vm.runtime.Snippets;
 import com.sun.max.vm.thread.VmThread;
+import com.sun.max.vm.type.*;
+
 import sun.misc.Unsafe;
 import sun.reflect.Reflection;
 
@@ -660,6 +665,17 @@ final class JDK_sun_misc_Unsafe {
         Snippets.makeClassInitialized(ClassActor.fromJava(c));
     }
 
+
+    /**
+     * Detect if the given class may need to be initialized. This is often
+     * needed in conjunction with obtaining the static field base of a
+     * class.
+     * @return false only if a call to {@code ensureClassInitialized} would have no effect
+     */
+    @SUBSTITUTE
+    public boolean shouldBeInitialized(Class c) {
+        return !ClassActor.fromJava(c).isInitialized();
+    }
     /**
      * Gets the base offset (i.e. offset of element 0) for arrays of the specified class.
      * @see Unsafe#arrayBaseOffset(Class)
@@ -722,6 +738,56 @@ final class JDK_sun_misc_Unsafe {
     }
 
     /**
+     * MethodHandle / LambdaForm support: Load a synthetic adapter class into the VM.
+     * These classes should be defined such that they can be collected once all instances
+     * have expired.
+     * @param hostClass
+     * @param data
+     * @param cpPatches array of live Objects to populate the new classes constant pool.
+     * @return
+     */
+    @SUBSTITUTE
+    public Class defineAnonymousClass(Class hostClass, byte[] data, Object[] cpPatches) {
+        Trace.begin(1,  "Unsafe.defineAnonymousClass()");
+        Trace.line(1, "hostClass=" + hostClass + ", <data>, cpPatches=" + cpPatches + ")");
+
+        final ClassLoader loader = (hostClass.getClassLoader() == null) ? BootClassLoader.BOOT_CLASS_LOADER : hostClass.getClassLoader();
+        ClassActor actor = ClassfileReader.defineClassActor(null, loader, data, null, null, false);
+
+        ConstantPool constantPool = actor.constantPool();
+
+        for (int i = 0; i < cpPatches.length; i++) {
+            final Object cp = cpPatches[i];
+            if (cp == null) { continue;}
+            Tag tag = constantPool.tagAt(i);
+            Trace.line(1, "    cpPatch=" + cp + ", class=" + cp.getClass().getName() +", index=" + i + ", tag=" + tag + ", poolConstant=" + constantPool.lookupConstant(i));
+            final int index = i;
+            switch(tag) {
+                case CLASS:
+                    break;
+                case STRING:
+                    constantPool.edit (new ConstantPoolEditorClient() {
+                        public void edit(ConstantPoolEditor constantPoolEditor) {
+                            constantPoolEditor.pool().setConstant(index, new ObjectConstant(cp));
+                        }
+                    });
+                    break;
+                case INTEGER:
+                case FLOAT:
+                case LONG:
+                case DOUBLE:
+                    break;
+                default:
+                    throw ProgramError.unknownCase(tag.name());
+            }
+        }
+
+        Trace.end(1,  "ClassActor");
+        Trace.end(1, "Unsafe.defineAnonymousClass()");
+        return actor.javaClass();
+
+    }
+    /**
      * Create a class from the specified parameters.
      * @see Unsafe#defineClass(String, byte[], int, int, ClassLoader, ProtectionDomain)
      * @param name the name of the new class
@@ -735,7 +801,9 @@ final class JDK_sun_misc_Unsafe {
     public Class defineClass(String name, byte[] bytes, int offset, int length) {
         @SuppressWarnings("deprecation")
         final Class currentClass = Reflection.getCallerClass(2);
-        return defineClass(name, bytes, offset, length, currentClass.getClassLoader(), currentClass.getProtectionDomain());
+        ClassLoader loader = (currentClass.getClassLoader() == null)
+                        ? BootClassLoader.BOOT_CLASS_LOADER : currentClass.getClassLoader();
+        return defineClass(name, bytes, offset, length, loader, currentClass.getProtectionDomain());
     }
 
     /**
