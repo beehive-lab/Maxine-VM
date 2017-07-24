@@ -250,7 +250,6 @@ public class MaxineIntrinsicImplementations {
         }
     }
 
-
     public static void initialize(IntrinsicImpl.Registry registry) {
         registry.add(LSB, new BitIntrinsic(LIROpcode.Lsb));
         registry.add(MSB, new BitIntrinsic(LIROpcode.Msb));

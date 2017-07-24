@@ -69,6 +69,7 @@ public final class PrototypeGenerator {
         final CompiledPrototype compiledPrototype = new CompiledPrototype(numberOfCompilationThreads);
         compiledPrototype.addEntrypoints();
         compiledPrototype.addJavaLangObject();
+        compiledPrototype.addClassesWithHostedOnlyConstructors();
         do {
             for (MethodActor methodActor : vmConfig().runScheme().gatherNativeInitializationMethods()) {
                 compiledPrototype.add(methodActor, null, null);

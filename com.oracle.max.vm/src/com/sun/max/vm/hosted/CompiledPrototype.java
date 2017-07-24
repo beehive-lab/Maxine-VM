@@ -826,6 +826,19 @@ public class CompiledPrototype extends Prototype {
         addStaticAndVirtualMethods(ClassActor.fromJava(Object.class));
     }
 
+    /**
+     * TODO We need some mechanism to force compilation of specific classes which
+     * are known a priori to cause problems if they are required to be loaded during
+     * the run phase.
+     * For instance some classes have hosted only constructors; and methods which invoke
+     * the constructor conditionally can't be loaded and compiled dynamically.
+     */
+    void addClassesWithHostedOnlyConstructors() {
+        addStaticAndVirtualMethods(ClassActor.fromJava(com.sun.max.unsafe.Offset.class));
+        addStaticAndVirtualMethods(ClassActor.fromJava(com.sun.max.unsafe.Size.class));
+        addStaticAndVirtualMethods(ClassActor.fromJava(com.sun.max.unsafe.Word.class));
+    }
+
     public void addEntrypoints() {
         // 1. create bootcode region.
         final CodeRegion region = Code.bootCodeRegion();

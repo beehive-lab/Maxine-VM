@@ -184,7 +184,6 @@ public class T1XTargetMethod extends TargetMethod {
 
     public T1XTargetMethod(T1XCompilation comp, boolean install) {
         super(comp.method, CallEntryPoint.BASELINE_ENTRY_POINT);
-
         codeAttribute = comp.codeAttribute;
         bciToPos = comp.bciToPos;
         frame = comp.frame;
