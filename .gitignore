@@ -1,4 +1,3 @@
-
 # Eclipse generated
 .project
 .classpath
@@ -6,7 +5,7 @@
 .factorypath
 */.gitignore
 */build.xml
-bin/
+*/bin/
 nbproject/
 workingsets.xml
 \.externalToolBuilders/
