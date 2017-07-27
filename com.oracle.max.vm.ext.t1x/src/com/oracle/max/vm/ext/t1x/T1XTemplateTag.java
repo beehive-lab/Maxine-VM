@@ -437,13 +437,17 @@ public enum T1XTemplateTag {
      */
     public T1XTemplateTag instrumented;
 
+    // Checkstyle: stop
     @HOSTED_ONLY
-    private T1XTemplateTag(int representativeOpcode) {
+    // Checkstyle: resume
+    T1XTemplateTag(int representativeOpcode) {
         this.opcode = representativeOpcode;
     }
 
+    // Checkstyle: stop
     @HOSTED_ONLY
-    private T1XTemplateTag() {
+    // Checkstyle: resume
+    T1XTemplateTag() {
         String name = name();
         int dollar = name.indexOf('$');
         String opcodeName;
