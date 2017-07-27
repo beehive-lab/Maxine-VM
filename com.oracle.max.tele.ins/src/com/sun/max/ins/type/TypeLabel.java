@@ -56,8 +56,8 @@ public class TypeLabel extends InspectorLabel {
                         } else {
                             focus().setHeapObject(teleClassActor);
                         }
-                        break;
                     }
+                    break;
                 }
                 case MouseEvent.BUTTON3: {
                     final InspectorPopupMenu menu = new InspectorPopupMenu();
