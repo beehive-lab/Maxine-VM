@@ -44,6 +44,7 @@ public class MaxineTesterConfiguration {
     static final Expectation FAIL_SOLARIS = new Expectation(OS.SOLARIS, null, ExpectedResult.FAIL);
     static final Expectation FAIL_DARWIN = new Expectation(OS.DARWIN, null, ExpectedResult.FAIL);
     static final Expectation FAIL_LINUX = new Expectation(OS.LINUX, null, ExpectedResult.FAIL);
+    static final Expectation FAIL_AMD64 = new Expectation(null, CPU.AMD64, ExpectedResult.FAIL);
 
     static final Expectation RAND_ALL = new Expectation(null, null, ExpectedResult.NONDETERMINISTIC);
     static final Expectation RAND_LINUX = new Expectation(OS.LINUX, null, ExpectedResult.NONDETERMINISTIC);
@@ -56,6 +57,7 @@ public class MaxineTesterConfiguration {
 
     static final Expectation JTT_FAIL_GRAAL = new Expectation(null, null, "jtt-c1xgraal", ExpectedResult.FAIL);
 
+    static final List<String> zeeJUnitTests = new LinkedList<String>();
     static final List<Class> zeeOutputTests = new LinkedList<Class>();
     static final List<Class> zeeVMOutputTests = new LinkedList<Class>();
     static final List<String> zeeDacapo2006Tests = new LinkedList<String>();
@@ -72,6 +74,18 @@ public class MaxineTesterConfiguration {
     static final Map<Object, Object[]> inputMap = new HashMap<Object, Object[]>();
     static final Map<String, String[]> imageParams = new TreeMap<String, String[]>();
     static final Map<String, String[]> maxvmParams = new HashMap<String, String[]>();
+
+    private static void findJUnitTests() {
+        new ClassSearch() {
+            @Override
+            protected boolean visitClass(String className) {
+                if (className.endsWith(".AutoTest")) {
+                    zeeJUnitTests.add(className);
+                }
+                return true;
+            }
+        }.run(Classpath.fromSystem());
+    }
 
     public static Class[] findOutputTests(final String packagePrefix) {
         final ArrayList<Class> result = new ArrayList<Class>();
@@ -134,6 +148,11 @@ public class MaxineTesterConfiguration {
         }
 
         vmoutput(findOutputTests("test.vm.output."));
+
+        // Register all "*.Autotest classes on the class path
+        findJUnitTests();
+        junit("test.arm.t1x.AutoTest", FAIL_AMD64);
+        junit("test.arm.jtt.AutoTest", FAIL_AMD64);
 
         jtt(jtt.threads.Thread_isInterrupted02.class, FAIL_LINUX);
         jtt(jtt.hotspot.Test6959129.class, FAIL_ALL);
@@ -368,6 +387,11 @@ public class MaxineTesterConfiguration {
         int ix2 = c2.indexOf('=');
         String result = c1 + "," + c2.substring(ix2 + 1);
         return result;
+    }
+
+    private static void junit(String className, Expectation... results) {
+        assert zeeJUnitTests.contains(className) : "JUnit test " + className + " not found by findJUnitTests()";
+        addExpectedResults(className, results);
     }
 
     private static void output(Class javaClass, Expectation... results) {

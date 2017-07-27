@@ -106,6 +106,7 @@ public class MaxineTester {
                     "-tests=specjvm98:jess+db,dacapobach:pmd+fop\n\nwill " +
                     "run the _202_jess and _209_db SpecJVM98 benchmarks as well as the pmd and fop Dacapo-bach benchmarks.\n\n" +
                     "Compiler tests: " + MaxineTesterConfiguration.zeeC1XTests.keySet().toString() + "\n\n" +
+                    "JUnit tests: " + MaxineTesterConfiguration.zeeJUnitTests + "\n\n" +
                     "Output tests: " + MaxineTesterConfiguration.zeeOutputTests.toString().replace("class ", "") + "\n\n" +
                     "Dacapo-2006 tests: " + MaxineTesterConfiguration.zeeDacapo2006Tests + "\n\n" +
                     "Dacapo-bach tests: " + MaxineTesterConfiguration.zeeDacapoBachTests + "\n\n" +
@@ -284,6 +285,7 @@ public class MaxineTester {
     }
 
     static void listTests(String filter) {
+        listTests(filter, "junit", MaxineTesterConfiguration.zeeJUnitTests);
         listTests(filter, "c1x", MaxineTesterConfiguration.zeeC1XTests.keySet());
         listTests(filter, "dacapo2006", MaxineTesterConfiguration.zeeDacapo2006Tests);
         listTests(filter, "dacapobach", MaxineTesterConfiguration.zeeDacapoBachTests);
@@ -1069,24 +1071,24 @@ public class MaxineTester {
 
         public void run() {
             final File outputDir = new File(outputDirOption.getValue(), "junit-tests");
-            final Set<String> junitTests = new TreeSet<String>();
-            new ClassSearch() {
-                @Override
-                protected boolean visitClass(String className) {
-                    if (className.endsWith(".AutoTest")) {
-                        if (testList == null) {
-                            junitTests.add(className);
-                        } else {
-                            for (String test : testList) {
-                                if (className.contains(test)) {
-                                    junitTests.add(className);
-                                }
-                            }
+            final List<String> junitTests;
+            if (testList == null) {
+                junitTests = MaxineTesterConfiguration.zeeJUnitTests;
+            } else {
+                junitTests = new LinkedList<>();
+                for (final String junitTest : MaxineTesterConfiguration.zeeJUnitTests) {
+                    for (final String test : testList) {
+                        if (junitTest.contains(test)) {
+                            junitTests.add(junitTest);
                         }
                     }
-                    return true;
                 }
-            }.run(Classpath.fromSystem());
+            }
+
+            out().println("Junit tests key:");
+            out().println("  failed: test failed (go debug)");
+            out().println("  normal: expected failure and failed");
+            out().println("  passed: expected failure but passed (consider removing from exclusion list)");
 
             if (singleThreadedOption.getValue()) {
                 for (final String junitTest : junitTests) {
@@ -1157,26 +1159,32 @@ public class MaxineTester {
             final int exitValue = exec(outputDir, command, null, null, logs, junitTest, junitTestTimeOutOption.getValue());
             out.print("JUnit auto-test: Stopped " + junitTest);
 
-            final Set<String> unexpectedResults = new HashSet<String>();
-            parseAutoTestResults(passedFile, true, unexpectedResults);
-            parseAutoTestResults(failedFile, false, unexpectedResults);
+            final Set<String> results = new HashSet<String>();
+            parseAutoTestResults(passedFile, true, results, junitTest);
+            parseAutoTestResults(failedFile, false, results, junitTest);
 
-            if (exitValue != 0) {
-                if (exitValue == ExternalCommand.ProcessTimeoutThread.PROCESS_TIMEOUT) {
-                    out.print(" (timed out)");
-                } else {
-                    out.print(" (exit value == " + exitValue + ")");
-                }
-                junitTestsWithExceptions.add(junitTest);
-            }
+            int errors = 0;
             final long runTime = System.currentTimeMillis() - start;
             out.println(" [Time: " + NumberFormat.getInstance().format((double) runTime / 1000) + " seconds]");
-            for (String unexpectedResult : unexpectedResults) {
+            for (String unexpectedResult : results) {
                 out.println("    " + unexpectedResult);
+                if (unexpectedResult.contains("failed")) {
+                    errors++;
+                }
             }
-            if (!unexpectedResults.isEmpty()) {
+            if (!results.isEmpty()) {
                 out.println("    see: " + fileRef(stdoutFile));
                 out.println("    see: " + fileRef(stderrFile));
+            }
+            if (exitValue != 0) {
+                if (exitValue == ExternalCommand.ProcessTimeoutThread.PROCESS_TIMEOUT) {
+                    out.println(" (timed out)");
+                } else {
+                    out.println(" (exit value == " + exitValue + ")");
+                }
+                if (errors != 0) {
+                    junitTestsWithExceptions.add(junitTest);
+                }
             }
         }
 
@@ -1186,15 +1194,21 @@ public class MaxineTester {
          *
          * @param resultsFile the file to parse
          * @param passed specifies if the file list tests that passed or failed
-         * @param unexpectedResults if non-null, then all unexpected test results are added to this set
+         * @param results if non-null, then all unexpected test results are added to this set
+         * @param jUnitTest the name of the AutoTest class generating the unit tests at hand
          */
-        void parseAutoTestResults(File resultsFile, boolean passed, Set<String> unexpectedResults) {
+        void parseAutoTestResults(File resultsFile, boolean passed, Set<String> results, String jUnitTest) {
             try {
                 final List<String> lines = Files.readLines(resultsFile);
                 for (String testName : lines) {
-                    final boolean expectedResult = addTestResult(testName, passed ? null : "failed", MaxineTesterConfiguration.expectedResult(testName, null));
-                    if (unexpectedResults != null && !expectedResult) {
-                        unexpectedResults.add("unexpectedly "  + (passed ? "passed " : "failed ") + testName);
+                    ExpectedResult expectedResult = MaxineTesterConfiguration.expectedResult(jUnitTest, null);
+                    if (!passed) {
+                        results.add(testName + " : " + getMaxvmErrorString(expectedResult));
+                    } else {
+                        final boolean result = addTestResult(testName, null, expectedResult);
+                        if (results != null && !result) {
+                            results.add(testName + ": (passed)");
+                        }
                     }
                 }
             } catch (IOException ioException) {
