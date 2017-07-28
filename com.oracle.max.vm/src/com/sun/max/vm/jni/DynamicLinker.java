@@ -325,7 +325,7 @@ public final class DynamicLinker {
         Address sentinelAddress;
 
         static void add(Pointer pathAsCString, Word handle) {
-            if (libInfoIndex < 16) {
+            if (libInfoIndex < libInfoArray.length) {
                 // TODO increase space
                 LibInfo libInfo = libInfoArray[libInfoIndex];
                 libInfo.pathAsCString = pathAsCString;
