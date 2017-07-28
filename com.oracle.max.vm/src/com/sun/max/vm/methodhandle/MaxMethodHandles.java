@@ -21,10 +21,10 @@
 package com.sun.max.vm.methodhandle;
 
 import static com.oracle.max.cri.intrinsics.IntrinsicIDs.*;
+import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.actor.Actor.*;
 import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
 import static com.sun.max.vm.jdk.JDK_java_lang_invoke_MethodHandleNatives.*;
-import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.methodhandle.MaxMethodHandles.MethodHandleIntrinsicID.*;
 
 import java.lang.invoke.*;
@@ -54,8 +54,8 @@ public final class MaxMethodHandles {
      * Following the HotSpot -- cache synthetic method handle intrinsic methods
      * keyed on signature and intrinsic type.
      */
-    private static final ConcurrentHashMap<MethodHandleIntrinsicKey, MethodActor>
-    IntrinsicMap = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<MethodHandleIntrinsicKey, MethodActor> IntrinsicMap = new ConcurrentHashMap<>();
+
     /**
      * Intrinsics for the MethodHandle VM invocation semantics.
      */
@@ -139,7 +139,7 @@ public final class MaxMethodHandles {
     }
 
     /**
-     * Resolution of interface method as described in JVM Spec 8 $5.4.3.4
+     * Resolution of interface method as described in JVM Spec 8 $5.4.3.4.
      *
      * @param classActor
      * @param name
@@ -192,9 +192,8 @@ public final class MaxMethodHandles {
      * @param checkAccess
      * @return
      */
-    public static MethodActor resolveMethod (ClassActor classActor, String name,
-                    MethodType type, Class <?> caller, boolean checkAccess)
-    {
+    public static MethodActor resolveMethod(ClassActor classActor, String name,
+                                            MethodType type, Class<?> caller, boolean checkAccess) {
         Trace.begin(1, "MethodHandles.resolveMethod()");
         Trace.line(1, "classActor="   + classActor + ":" + classActor.hashCode() +
                         ", name="         + name +
@@ -210,8 +209,7 @@ public final class MaxMethodHandles {
 
         // 3. search interfaces
         if (ma == null) {
-            ma = classActor.findInterfaceMethodActor(SymbolTable.makeSymbol(name), SignatureDescriptor.create
-                    (type.toMethodDescriptorString()));
+            ma = classActor.findInterfaceMethodActor(SymbolTable.makeSymbol(name), SignatureDescriptor.create(type.toMethodDescriptorString()));
             // 4. JSR 292 support.
             if (ma == null) {
                 ma = lookupPolymorphicMethod(classActor, name, type, caller, new Object[1]);
@@ -242,18 +240,14 @@ public final class MaxMethodHandles {
      * @param appendix
      * @return
      */
-    public static MethodActor lookupPolymorphicMethod
-    (ClassActor classActor, String name, SignatureDescriptor signature, Class< ? > caller, Object [] appendix)
-    {
+    public static MethodActor lookupPolymorphicMethod(ClassActor classActor, String name, SignatureDescriptor signature, Class< ? > caller, Object [] appendix) {
         Trace.line(1, "MaxMethodHandles.lookupPolymorphicMethod() : " +
                         "classActor: " + classActor +
                         ", name: " + name +
                         ", signatureDescriptor: " + signature +
                         ", caller: " + caller +
                         ", appendix: " + appendix);
-        return lookupPolymorphicMethod (classActor, name, MethodType.fromMethodDescriptorString(signature.asString(), null),
-                        caller, appendix);
-
+        return lookupPolymorphicMethod(classActor, name, MethodType.fromMethodDescriptorString(signature.asString(), null), caller, appendix);
     }
 
     /**
@@ -281,22 +275,19 @@ public final class MaxMethodHandles {
                 MethodType basicType = basicMethodType(type, isSignaturePolymorphicStatic(iid));
                 actor = maybeMakeMethodHandleIntrinsic(classActor, iid, basicType);
 
-            }
-            else if (iid == InvokeGeneric) {
+            } else if (iid == InvokeGeneric) {
                 Trace.line(1, "InvokeGeneric, calling JDK to spin adapter.");
                 Object memberName = JDK_java_lang_invoke_MethodHandleNatives.
                                 linkMethod(classActor.javaClass(), JVM_REF_invokeVirtual, MethodHandle.class, name, type, appendix);
                 Trace.line(1, "linkMethod returned memberName: " + memberName + ", appendix: " + appendix[0]);
                 if (memberName != null) {
                     VMTarget vmtarget = VMTarget.fromMemberName(memberName);
-                    actor = (MethodActor)vmtarget.getVmTarget();
-                    assert(actor != null);
+                    actor = (MethodActor) vmtarget.getVmTarget();
+                    assert actor != null;
                 }
             }
         }
         // TODO access checks
-
-
 
         Trace.line(1, "MethodActor => " + actor);
         Trace.end(1, "MethodHandles.lookupPolymorphicMethod()");
@@ -311,7 +302,7 @@ public final class MaxMethodHandles {
      * @param type
      * @return
      */
-    private static MethodActor maybeMakeMethodHandleIntrinsic (ClassActor classActor, MethodHandleIntrinsicID iid, MethodType type) {
+    private static MethodActor maybeMakeMethodHandleIntrinsic(ClassActor classActor, MethodHandleIntrinsicID iid, MethodType type) {
         MethodHandleIntrinsicKey key = new MethodHandleIntrinsicKey(type, iid);
         MethodActor method;
         if (IntrinsicMap.containsKey(key)) {
@@ -328,18 +319,16 @@ public final class MaxMethodHandles {
 
 
     /**
-     * from methodOopDesc::make_method_handle_intrinsic
+     * from methodOopDesc::make_method_handle_intrinsic.
      *
      * @return
      */
-    private static MethodActor makeMethodHandleIntrinsic
-    (ClassActor mhClassActor, MethodHandleIntrinsicID iid, MethodType type)
-    {
+    private static MethodActor makeMethodHandleIntrinsic(ClassActor mhClassActor, MethodHandleIntrinsicID iid, MethodType type) {
         Trace.begin(1, "MethodHandles.makeMethodHandleIntrinsic()");
 
         Utf8Constant name = SymbolTable.makeSymbol(iid.name);
 
-        int static_flag = MethodHandleIntrinsicID.isSignaturePolymorphicStatic(iid) ? ACC_STATIC : 0;
+        int staticFlag = MethodHandleIntrinsicID.isSignaturePolymorphicStatic(iid) ? ACC_STATIC : 0;
         MethodActor methodActor;
         ConstantPoolEditor cpe = new ConstantPool(mhClassActor.constantPool().classLoader()).edit();
         cpe.append(PoolConstantFactory.makeUtf8Constant(iid.name));
@@ -349,22 +338,21 @@ public final class MaxMethodHandles {
                         new CodeAttribute(
                                         cpe.pool(),
                                         new byte[0],
-                                        (char)0,
-                                        (char)0,
+                                        (char) 0,
+                                        (char) 0,
                                         CodeAttribute.NO_EXCEPTION_HANDLER_TABLE,
                                         LineNumberTable.EMPTY,
                                         LocalVariableTable.EMPTY,
                                         null);
-        if (static_flag != 0) {
+        if (staticFlag != 0) {
             Trace.line(1, "Making StaticMethodActor: " + name);
             methodActor = new StaticMethodActor(
                             name,
                             SignatureDescriptor.create(type.returnType(), type.parameterArray()),
-                            ACC_SYNTHETIC | ACC_FINAL |/* ACC_NATIVE |*/ static_flag,
+                            ACC_SYNTHETIC | ACC_FINAL | /* ACC_NATIVE |*/ staticFlag,
                             codeAttribute,
                             iid.intrinsic);
-        }
-        else {
+        } else {
             Trace.line(1, "Making VirtualMethodActor: " + name);
             methodActor = new VirtualMethodActor(
 
@@ -376,11 +364,11 @@ public final class MaxMethodHandles {
             /* Virtual dispatch is done on the vtable index of the target, buried
              * in the method handles member name.
              */
-            ((VirtualMethodActor)methodActor).setVTableIndex(VirtualMethodActor.NONVIRTUAL_VTABLE_INDEX);
+            ((VirtualMethodActor) methodActor).setVTableIndex(VirtualMethodActor.NONVIRTUAL_VTABLE_INDEX);
 
             methodActor.setHolder(mhClassActor);
             if (iid == InvokeBasic) {
-                ((ClassMethodActor)methodActor).compiledState = new Compilations(null, vm().stubs.invokeBasic());
+                ((ClassMethodActor) methodActor).compiledState = new Compilations(null, vm().stubs.invokeBasic());
             }
         }
 
@@ -397,7 +385,7 @@ public final class MaxMethodHandles {
      * @return
      */
     private static boolean isSubWordType(Class<?> c) {
-        return (c == boolean.class || c == short.class || c == char.class || c == byte.class);
+        return c == boolean.class || c == short.class || c == char.class || c == byte.class;
     }
 
     /**
@@ -405,18 +393,18 @@ public final class MaxMethodHandles {
      * i.e. one of VLIFJD where L == Object reference only
      */
     private static boolean isBasic(Class<?> c) {
-        return (c == int.class || c == float.class || c == double.class || c == long.class || c == Object.class || c == void.class) ;
+        return c == int.class || c == float.class || c == double.class || c == long.class || c == Object.class || c == void.class;
     }
 
     private static boolean isBasicType(MethodType type, boolean ignoreLastArg) {
-        if (! isBasic(type.returnType())) {
+        if (!isBasic(type.returnType())) {
             Trace.line(1, "Return type: " + type.returnType() + " is not basic");
             return false;
         }
         Class <?> [] params = type.parameterArray();
         int end = ignoreLastArg ? params.length - 1 : params.length;
 
-        for (int i = 0; i < end ; i++) {
+        for (int i = 0; i < end; i++) {
             if (!isBasic(params[i])) {
                 Trace.line(1, "Parameter " + params[i] + " is not basic");
                 return false;
@@ -436,8 +424,7 @@ public final class MaxMethodHandles {
 
         if (isSubWordType(c)) {
             return int.class;
-        }
-        else if (c.isPrimitive()) {
+        } else if (c.isPrimitive()) {
             return c;
         }
         return Object.class;
@@ -473,7 +460,7 @@ public final class MaxMethodHandles {
             end--;
         }
         for (int i = 0; i < end; i++) {
-            ptype[i] = canonicalize (ptype[i]);
+            ptype[i] = canonicalize(ptype[i]);
         }
         MethodType newType = MethodType.methodType(rtype, ptype);
         Trace.line(1, "Created new methodType =>" + newType);
@@ -484,10 +471,10 @@ public final class MaxMethodHandles {
     @INTRINSIC(UNSAFE_CAST)
     private static native MaxMethodHandles asThis(Object o);
 
-    @ALIAS(declaringClass=java.lang.invoke.MethodHandle.class, descriptor="Ljava/lang/invoke/LambdaForm;")
+    @ALIAS(declaringClass = java.lang.invoke.MethodHandle.class, descriptor = "Ljava/lang/invoke/LambdaForm;")
     private Object form;
 
-    @ALIAS(declaringClassName="java.lang.invoke.LambdaForm", descriptor="Ljava/lang/invoke/MemberName;")
+    @ALIAS(declaringClassName = "java.lang.invoke.LambdaForm", descriptor = "Ljava/lang/invoke/MemberName;")
     private Object vmentry;
 
     /**
@@ -502,7 +489,7 @@ public final class MaxMethodHandles {
         Object lambdaForm = asThis(mh).form;
         Object memberName = asThis(lambdaForm).vmentry;
         VMTarget target = VMTarget.fromMemberName(memberName);
-        assert(target != null);
+        assert target != null;
         Trace.end(1, "MaxMethodHandles.getInvokerForInvokeBasic");
         return UnsafeCast.asClassMethodActor(target.getVmTarget());
     }

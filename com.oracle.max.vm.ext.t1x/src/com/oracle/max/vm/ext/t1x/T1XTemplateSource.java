@@ -166,29 +166,29 @@ public class T1XTemplateSource {
     }
 
 
-   @T1X_TEMPLATE(LINKTOSTATIC)
-   @Slot(-1)
-   public static Address linkToStatic(Object memberName) {
-       return resolveAndSelectLinkToStatic(memberName);
-   }
+    @T1X_TEMPLATE(LINKTOSTATIC)
+    @Slot(-1)
+    public static Address linkToStatic(Object memberName) {
+        return resolveAndSelectLinkToStatic(memberName);
+    }
 
 
-   @T1X_TEMPLATE(LINKTOSPECIAL)
-   @Slot(-1)
-   public static Address linkToSpecial(Object memberName) {
-       return resolveAndSelectLinkToStatic(memberName);
-   }
+    @T1X_TEMPLATE(LINKTOSPECIAL)
+    @Slot(-1)
+    public static Address linkToSpecial(Object memberName, Object receiver) {
+        return resolveAndSelectLinkToSpecial(memberName, receiver);
+    }
 
-   /**
-    *
-    * @param actor MethodActor
-    * @return the {@link CallEntryPoint#BASELINE_ENTRY_POINT} to be invoked
-    */
-   @T1X_TEMPLATE(INVOKEHANDLE)
-   @Slot(-1)
-   public static Address invokeHandle(ClassMethodActor actor) {
-       return Snippets.makeEntrypoint(actor, BASELINE_ENTRY_POINT);
-   }
+    /**
+     *
+     * @param actor MethodActor
+     * @return the {@link CallEntryPoint#BASELINE_ENTRY_POINT} to be invoked
+     */
+    @T1X_TEMPLATE(INVOKEHANDLE)
+    @Slot(-1)
+    public static Address invokeHandle(ClassMethodActor actor) {
+        return Snippets.makeEntrypoint(actor, BASELINE_ENTRY_POINT);
+    }
 
 // START GENERATED CODE
     @T1X_TEMPLATE(GETFIELD$boolean$resolved)

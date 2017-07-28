@@ -79,8 +79,8 @@ public class T1XRuntime {
 
     public static Address resolveAndSelectLinkToVirtual(Object memberName, Object receiver) {
         VMTarget target = VMTarget.fromMemberName(memberName);
-        assert(target != null);
-        assert(target.getVMindex() != VirtualMethodActor.NONVIRTUAL_VTABLE_INDEX);
+        assert target != null;
+        assert target.getVMindex() != VirtualMethodActor.NONVIRTUAL_VTABLE_INDEX;
         Trace.line(1, "T1XRuntime.resolveAndSelectLinkToVirtual target=" + target + ", mnameid=" + System.identityHashCode(memberName));
         Address vTableEntrypoint = Snippets.selectNonPrivateVirtualMethod(receiver, target.getVMindex()).asAddress();
         return vTableEntrypoint.plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
@@ -107,7 +107,7 @@ public class T1XRuntime {
         Trace.line(1, "T1XRuntime.resolveAndSelectLinkToSpecial: memberName=" + memberName + "#id=" + System.identityHashCode(memberName));
         VMTarget target = VMTarget.fromMemberName(memberName);
         Trace.line(1, "T1XRuntime.resolveAndSelectLinkToSpecial: target=" + target);
-        assert(target != null);
+        assert target != null;
         Trace.line(1, "T1XRuntime.resolveAndSelectLinkToSpecial: vmtarget=" + target.getVmTarget());
         Trace.end(1, "T1XRuntime: resolveAndSelectLinkToSpecial");
         return Snippets.makeEntrypoint(UnsafeCast.asClassMethodActor(target.getVmTarget()), BASELINE_ENTRY_POINT);
@@ -120,7 +120,7 @@ public class T1XRuntime {
         Trace.line(1, "T1XRuntime.linkToStatic: memberName=" + memberName + "#id=" + System.identityHashCode(memberName));
         VMTarget target = VMTarget.fromMemberName(memberName);
         Trace.line(1, "T1XRuntime.linkToStatic: target=" + target);
-        assert(target != null);
+        assert target != null;
         Trace.line(1, "T1XRuntime.linkToStatic: vmtarget=" + target.getVmTarget());
 
         return Snippets.makeEntrypoint(UnsafeCast.asClassMethodActor(target.getVmTarget()), BASELINE_ENTRY_POINT);

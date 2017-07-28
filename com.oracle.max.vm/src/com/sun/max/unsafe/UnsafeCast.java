@@ -239,7 +239,7 @@ public final class UnsafeCast {
 
     @INTRINSIC(UNSAFE_CAST)
     public static VMTarget asVMTarget(Object o) {
-        return (VMTarget)o;
+        return (VMTarget) o;
     }
 
     @INTRINSIC(UNSAFE_CAST)

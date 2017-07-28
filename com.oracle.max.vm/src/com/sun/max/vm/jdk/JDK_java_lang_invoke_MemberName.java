@@ -93,7 +93,7 @@ public final class JDK_java_lang_invoke_MemberName {
     static native MemberNameAlias asMemberName(Object o);
 
     /**
-     * Allocate a new MemberName object
+     * Allocate a new MemberName object.
      *
      * @return
      */

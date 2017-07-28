@@ -124,8 +124,7 @@ public final class JDKInterceptor {
             Constructor cons = c.getDeclaredConstructors()[0];
             cons.setAccessible(true);
             internTable = cons.newInstance();
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
             throw FatalError.unexpected("Unable to create WeakInternSet xtor", e);
         }
     }

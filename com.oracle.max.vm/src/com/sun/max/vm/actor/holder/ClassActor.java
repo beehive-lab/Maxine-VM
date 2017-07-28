@@ -71,7 +71,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
     public static final Deferrable.Queue DEFERRABLE_QUEUE_1 = Deferrable.createDeferred();
 
     /**
-     * Search method {@code name} with type {@code type} in all interfaces that this class implements
+     * Search method {@code name} with type {@code type} in all interfaces that this class implements.
      *
      * @return the {@code methodActor} of the method or {@code null} if not found
      */
@@ -1441,8 +1441,9 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
         cursor += localVirtualMethodActors.length;
         System.arraycopy(localStaticMethodActors, 0, result, cursor, localStaticMethodActors.length);
         cursor += localStaticMethodActors.length;
-        if (interfaces)
+        if (interfaces) {
             System.arraycopy(localInterfaceMethodActors, 0, result, cursor, localInterfaceMethodActors.length);
+        }
         return result;
     }
 

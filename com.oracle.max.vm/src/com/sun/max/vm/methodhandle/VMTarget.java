@@ -44,7 +44,7 @@ public final class VMTarget {
      */
     private MemberActor vmTarget;
 
-    /** vtable / itable or field offset */
+    /** vtable / itable or field offset. */
     private int vmindex = VirtualMethodActor.INVALID_VTABLE_INDEX;
 
     public static final VMTarget VMTarget = new VMTarget();
@@ -71,7 +71,7 @@ public final class VMTarget {
     }
 
     /**
-     * Returns the VMTarget which has been previously injected into a MemberName
+     * Returns the VMTarget which has been previously injected into a MemberName.
      *
      * @param memberName
      * @return

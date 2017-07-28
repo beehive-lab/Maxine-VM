@@ -20,13 +20,10 @@
 
 package com.sun.max.vm.jdk;
 
-import com.sun.max.annotate.ALIAS;
-import com.sun.max.annotate.METHOD_SUBSTITUTIONS;
-import com.sun.max.annotate.SUBSTITUTE;
+import java.lang.invoke.*;
+import java.util.*;
 
-import java.lang.invoke.MethodType;
-import java.util.HashMap;
-import java.util.Map;
+import com.sun.max.annotate.*;
 
 @METHOD_SUBSTITUTIONS(className = "java.lang.invoke.InvokerBytecodeGenerator")
 public final class JDK_java_lang_invoke_InvokerBytecodeGenerator {
@@ -57,12 +54,15 @@ public final class JDK_java_lang_invoke_InvokerBytecodeGenerator {
         Integer ctr;
         synchronized (UNIQUE_CLASS_NAME_COUNTER) {
             ctr = UNIQUE_CLASS_NAME_COUNTER.get(className);
-            if (ctr == null) ctr = 0;
+            if (ctr == null) {
+                ctr = 0;
+            }
             UNIQUE_CLASS_NAME_COUNTER.put(className, ctr + 1);
         }
         StringBuilder sfx = new StringBuilder(ctr.toString());
-        while (sfx.length() < 3)
+        while (sfx.length() < 3) {
             sfx.insert(0, "0");
+        }
         className += sfx;
         return className;
     }
@@ -78,8 +78,8 @@ public final class JDK_java_lang_invoke_InvokerBytecodeGenerator {
      * @param invokerType
      */
     @SUBSTITUTE(constructor = true, signatureDescriptor = "(Ljava/lang/invoke/LambdaForm;ILjava/lang/String;Ljava/lang/String;Ljava/lang/invoke/MethodType;)V")
-    private void InvokerBytecodeGenerator(Object lambdaForm, int localsMapSize,
-                                          String className, String invokerName, MethodType invokerType) {
+    private void constructorInvokerBytecodeGenerator(Object lambdaForm, int localsMapSize,
+                                                     String className, String invokerName, MethodType invokerType) {
         if (invokerName.contains(".")) {
             int p = invokerName.indexOf(".");
             className = invokerName.substring(0, p);

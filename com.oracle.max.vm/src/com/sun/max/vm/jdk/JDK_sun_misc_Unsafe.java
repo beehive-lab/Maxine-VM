@@ -758,15 +758,17 @@ final class JDK_sun_misc_Unsafe {
 
         for (int i = 0; i < cpPatches.length; i++) {
             final Object cp = cpPatches[i];
-            if (cp == null) { continue;}
+            if (cp == null) {
+                continue;
+            }
             Tag tag = constantPool.tagAt(i);
-            Trace.line(1, "    cpPatch=" + cp + ", class=" + cp.getClass().getName() +", index=" + i + ", tag=" + tag + ", poolConstant=" + constantPool.lookupConstant(i));
+            Trace.line(1, "    cpPatch=" + cp + ", class=" + cp.getClass().getName() + ", index=" + i + ", tag=" + tag + ", poolConstant=" + constantPool.lookupConstant(i));
             final int index = i;
             switch(tag) {
                 case CLASS:
                     break;
                 case STRING:
-                    constantPool.edit (new ConstantPoolEditorClient() {
+                    constantPool.edit(new ConstantPoolEditorClient() {
                         public void edit(ConstantPoolEditor constantPoolEditor) {
                             constantPoolEditor.pool().setConstant(index, new ObjectConstant(cp));
                         }

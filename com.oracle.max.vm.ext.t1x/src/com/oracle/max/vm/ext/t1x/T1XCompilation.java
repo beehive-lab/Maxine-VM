@@ -2532,18 +2532,15 @@ public abstract class T1XCompilation {
         } else if (intrinsic == IntrinsicIDs.LINKTOVIRTUAL) {
             do_linktononstatic(index, LINKTOVIRTUAL);
             return true;
-        }
-        else if (intrinsic == IntrinsicIDs.LINKTOSTATIC) {
+        } else if (intrinsic == IntrinsicIDs.LINKTOSTATIC) {
             Trace.line(1, "Got linkToStatic");
             do_linktostatic(index);
             return true;
-        }
-        else if (intrinsic == IntrinsicIDs.LINKTOSPECIAL) {
+        } else if (intrinsic == IntrinsicIDs.LINKTOSPECIAL) {
             Trace.line(1, "Got linkToSpecial");
             do_linktononstatic(index, LINKTOSPECIAL);
             return true;
-        }
-        else if (intrinsic == IntrinsicIDs.LINKTOINTERFACE) {
+        } else if (intrinsic == IntrinsicIDs.LINKTOINTERFACE) {
             Trace.line(1, "Got linkToInterface");
             do_linktononstatic(index, LINKTOINTERFACE);
             return true;

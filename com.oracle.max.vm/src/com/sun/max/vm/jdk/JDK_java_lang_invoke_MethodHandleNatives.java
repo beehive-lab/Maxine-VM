@@ -51,9 +51,9 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
     public static final int IS_INVOCABLE = IS_METHOD + IS_CONSTRUCTOR;
     public static final int IS_FIELD = 0x00040000; // field
     public static final int IS_TYPE = 0x00080000; // nested type
-    public static final int ALL_KINDS = (IS_METHOD | IS_CONSTRUCTOR | IS_FIELD | IS_TYPE);
+    public static final int ALL_KINDS = IS_METHOD | IS_CONSTRUCTOR | IS_FIELD | IS_TYPE;
     public static final int REFERENCE_KIND_SHIFT = 24; // refKind
-    public static final int REFERENCE_KIND_MASK = (0x0F000000 >> REFERENCE_KIND_SHIFT);
+    public static final int REFERENCE_KIND_MASK = 0x0F000000 >> REFERENCE_KIND_SHIFT;
     // The SEARCH_* bits are not for MN.flags but for the matchFlags argument of MHN.getMembers:
     static final int SEARCH_SUPERCLASSES = 0x00100000; // walk super classes
     static final int SEARCH_INTERFACES = 0x00200000; // walk implemented interfaces
@@ -109,7 +109,7 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
         Trace.begin(1, "MHN:objectFieldOffset");
         Trace.line(1, "memberName=" + memberName + ", id=" + System.identityHashCode(memberName));
         VMTarget t = VMTarget.fromMemberName(memberName);
-        assert (t != null);
+        assert t != null;
         int offset = t.getVMindex();
         Trace.line(1, "Got offset of =>" + (long) offset);
         Trace.end(1, "MHN:objectFieldOffset");
@@ -127,7 +127,7 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
         Trace.begin(1, "MHN:staticFieldOffset");
         Trace.line(1, "memberName=" + memberName + ", id=" + System.identityHashCode(memberName));
         VMTarget t = VMTarget.fromMemberName(memberName);
-        assert (t != null);
+        assert t != null;
         int offset = t.getVMindex();
         Trace.line(1, "Got offset of =>" + (long) offset);
         Trace.end(1, "MHN:staticFieldOffset");
@@ -146,33 +146,33 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
     }
 
     /**
-     * Return true if the ref_kind is a field
+     * Return true if the refKind is a field.
      *
-     * @param ref_kind
+     * @param refKind
      * @return
      */
-    private static boolean ref_kind_is_field(int ref_kind) {
-        return ref_kind <= JVM_REF_putStatic;
+    private static boolean ref_kind_is_field(int refKind) {
+        return refKind <= JVM_REF_putStatic;
     }
 
     /**
-     * Return true if the ref_kind is a getter
+     * Return true if the refKind is a getter.
      *
-     * @param ref_kind
+     * @param refKind
      * @return
      */
-    private static boolean ref_kind_is_getter(int ref_kind) {
-        return ref_kind <= JVM_REF_getStatic;
+    private static boolean ref_kind_is_getter(int refKind) {
+        return refKind <= JVM_REF_getStatic;
     }
 
     /**
-     * Return true if the ref_kind is a setter
+     * Return true if the refKind is a setter.
      *
-     * @param ref_kind
+     * @param refKind
      * @return
      */
-    private static boolean ref_kind_is_setter(int ref_kind) {
-        return ref_kind_is_field(ref_kind) && !ref_kind_is_getter(ref_kind);
+    private static boolean ref_kind_is_setter(int refKind) {
+        return ref_kind_is_field(refKind) && !ref_kind_is_getter(refKind);
     }
 
     /**
@@ -206,7 +206,7 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
             throw new RuntimeException("Implement Me");
         }
         Trace.end(1, "MHN.getMemberVMInfo");
-        return new Object[] { new Long(t.getVMindex()), t.getVmTarget()};
+        return new Object[] {new Long(t.getVMindex()), t.getVmTarget()};
     }
 
     /**
@@ -233,19 +233,19 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
 
         MethodActor ma = null;
         int flags = asMemberName(o).flags;
-        int ref_kind = (flags >> REFERENCE_KIND_SHIFT) & REFERENCE_KIND_MASK;
+        int refKind = (flags >> REFERENCE_KIND_SHIFT) & REFERENCE_KIND_MASK;
 
-        Trace.line(1, "MemberName name=" + name + ", type=" + mnSig + ", clazz=" + clazz.getName() + ", flags=" + flags + ", resolution=" + resolution + ", vmtarget=" + vmtarget + ", ref_kind=" +
-                        ref_kind);
+        Trace.line(1, "MemberName name=" + name + ", type=" + mnSig + ", clazz=" + clazz.getName() + ", flags=" + flags + ", resolution=" + resolution + ", vmtarget=" + vmtarget + ", refKind=" +
+                        refKind);
 
         MethodHandleIntrinsicID iid = MethodHandleIntrinsicID.None;
         MethodHandleIntrinsicID mhInvokeID = MethodHandleIntrinsicID.None;
 
         if ((flags & ALL_KINDS) == IS_METHOD && (clazz == MethodHandle.class) &&
-                        (ref_kind == JVM_REF_invokeVirtual || ref_kind == JVM_REF_invokeSpecial || ref_kind == JVM_REF_invokeStatic)) {
+                        (refKind == JVM_REF_invokeVirtual || refKind == JVM_REF_invokeSpecial || refKind == JVM_REF_invokeStatic)) {
             iid = MethodHandleIntrinsicID.fromName(name);
             if (iid != MethodHandleIntrinsicID.None &&
-                            ((ref_kind == JVM_REF_invokeStatic) == MethodHandleIntrinsicID.isSignaturePolymorphicStatic(iid))) {
+                            ((refKind == JVM_REF_invokeStatic) == MethodHandleIntrinsicID.isSignaturePolymorphicStatic(iid))) {
                 mhInvokeID = iid;
                 Trace.line(1, "mhInvokeID=" + mhInvokeID);
             }
@@ -254,20 +254,20 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
         boolean doDispatch = true;
         switch (flags & ALL_KINDS) {
             case IS_METHOD:
-                if (ref_kind == JVM_REF_invokeStatic) {
+                if (refKind == JVM_REF_invokeStatic) {
                     Trace.line(1, "Resolving static method.");
                     ma = MaxMethodHandles.resolveMethod(classActor, name, type, klass, true);
                     if (!ma.isStatic()) {
                         throw new IncompatibleClassChangeError(name + " is not static");
                     }
-                } else if (ref_kind == JVM_REF_invokeInterface) {
+                } else if (refKind == JVM_REF_invokeInterface) {
                     Trace.line(1, "Resolving interface method.");
                     ma = MaxMethodHandles.resolveInterfaceMethod(classActor, name, type, klass, true);
                 } else if (mhInvokeID != MethodHandleIntrinsicID.None) {
                     Trace.line(1, "Resolving handle call.");
-                    assert (!MethodHandleIntrinsicID.isSignaturePolymorphicStatic(mhInvokeID));
+                    assert !MethodHandleIntrinsicID.isSignaturePolymorphicStatic(mhInvokeID);
                     ma = MaxMethodHandles.lookupPolymorphicMethod(classActor, name, type, klass, new Object[1]);
-                } else if (ref_kind == JVM_REF_invokeSpecial) {
+                } else if (refKind == JVM_REF_invokeSpecial) {
                     Trace.line(1, "Resolving special.");
                     ma = MaxMethodHandles.resolveMethod(classActor, name, type, klass, true);
                     doDispatch = false;
@@ -282,14 +282,14 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
                         throw new AbstractMethodError("Expecting non abstract method " + klass + " method " + name + " " + type);
                     }
                     // ma.setStatic();
-                } else if (ref_kind == JVM_REF_invokeVirtual) {
+                } else if (refKind == JVM_REF_invokeVirtual) {
                     Trace.line(1, "Resolving virtual method.");
                     ma = MaxMethodHandles.resolveMethod(classActor, name, type, klass, true);
                     if (ma.isStatic()) {
                         throw new IncompatibleClassChangeError(name + " cannot be static");
                     }
                 } else {
-                    throw ProgramError.unexpected("ref_kind=" + ref_kind);
+                    throw ProgramError.unexpected("refKind=" + refKind);
                 }
                 Trace.line(1, "Resolved => " + ma);
                 init_method_MemberName(o, ma, ma.canBeStaticallyBound() ? false : doDispatch, clazz);
@@ -306,7 +306,7 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
                 FieldActor fa = classActor.findFieldActor(SymbolTable.makeSymbol(name), td);
                 Trace.line(1, "fieldActor=" + fa);
                 int xflags = fa.accessFlags();
-                boolean isSetter = ref_kind_is_setter(ref_kind);
+                boolean isSetter = ref_kind_is_setter(refKind);
                 init_field_MemberName(o, fa, xflags, isSetter);
                 break;
             default:
@@ -346,7 +346,7 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
 
         accessFlags |= IS_FIELD | ((fieldActor.isStatic() ? JVM_REF_getStatic : JVM_REF_getField) << REFERENCE_KIND_SHIFT);
         if (isSetter) {
-            accessFlags += ((JVM_REF_putField - JVM_REF_getField) << REFERENCE_KIND_SHIFT);
+            accessFlags += JVM_REF_putField - JVM_REF_getField << REFERENCE_KIND_SHIFT;
         }
         asMemberName(mname).flags = accessFlags;
         if (asMemberName(mname).name == null) {
@@ -433,7 +433,7 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
      * @param memberName
      * @param method
      */
-    static Object init_method_MemberName(Object memberName, MethodActor methodActor, boolean doDispatch, Class resolved_class) {
+    static Object init_method_MemberName(Object memberName, MethodActor methodActor, boolean doDispatch, Class resolvedClass) {
         Trace.begin(1, "MHN.init_method_MemberName: methodActor=" + methodActor + ", doDispatch=" + doDispatch);
         int xflags = methodActor.accessFlags();
 
@@ -441,8 +441,8 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
         Class holder = holderActor.javaClass();
 
         int vmindex = VirtualMethodActor.NONVIRTUAL_VTABLE_INDEX;
-        if (resolved_class == null) {
-            resolved_class = holder;
+        if (resolvedClass == null) {
+            resolvedClass = holder;
         }
 
         if (methodActor.isInitializer()) {
@@ -451,14 +451,10 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
         } else if (methodActor.isStatic()) {
             Trace.line(1, "is static.");
             xflags |= IS_METHOD | (JVM_REF_invokeStatic << REFERENCE_KIND_SHIFT);
-        }
-
-        else if (resolved_class.isInterface() && holder.isInterface()) {
+        } else if (resolvedClass.isInterface() && holder.isInterface()) {
             Trace.line(1, "is interface.");
             xflags |= IS_METHOD | (JVM_REF_invokeInterface << REFERENCE_KIND_SHIFT);
-        }
-
-        else if (!holder.equals(resolved_class) && holder.isInterface()) {
+        } else if (!holder.equals(resolvedClass) && holder.isInterface()) {
             Trace.line(1, "is Miranda method");
             xflags |= IS_METHOD | (JVM_REF_invokeVirtual << REFERENCE_KIND_SHIFT);
         } else if (!doDispatch || methodActor.canBeStaticallyBound()) {
@@ -492,10 +488,12 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
 
         Trace.begin(1, "MHN.init(): ref=" + ref + ", memberName id=" + System.identityHashCode(memberName));
 
-        if (memberName == null)
+        if (memberName == null) {
             throw ProgramError.unexpected("memberName is null");
-        if (ref == null)
+        }
+        if (ref == null) {
             throw ProgramError.unexpected("Object ref is null");
+        }
 
         if (ref instanceof Field) {
             Trace.line(1, "Got Field");
@@ -550,13 +548,14 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
         if (v == null) {
             throw new IllegalArgumentException("nothing to expand");
         }
-        if (defc != null && name != null && type != null)
+        if (defc != null && name != null && type != null) {
             return;
+        }
 
         switch (flags & ALL_KINDS) {
             case IS_METHOD:
             case IS_CONSTRUCTOR:
-                assert (v.isMethod()) : "vmtarget must be a method.";
+                assert v.isMethod() : "vmtarget must be a method.";
                 ClassMethodActor cma = v.asClassMethodActor();
                 if (defc == null) {
                     asMemberName(memberName).clazz = cma.holder().toJava();

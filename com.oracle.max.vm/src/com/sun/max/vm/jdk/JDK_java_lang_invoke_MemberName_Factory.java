@@ -64,8 +64,8 @@ public final class JDK_java_lang_invoke_MemberName_Factory {
             }
         }
 
-        boolean searchSupers = ((matchFlags & SEARCH_SUPERCLASSES) != 0);
-        boolean searchInterfaces = ((matchFlags & SEARCH_INTERFACES) != 0);
+        boolean searchSupers = (matchFlags & SEARCH_SUPERCLASSES) != 0;
+        boolean searchInterfaces = (matchFlags & SEARCH_INTERFACES) != 0;
         boolean localOnly = !(searchSupers | searchInterfaces);
 
         ClassActor classActor = ClassActor.fromJava(defc);
@@ -97,13 +97,13 @@ public final class JDK_java_lang_invoke_MemberName_Factory {
     private Object resolve(byte refKind, Object memberName, Class< ? > lookupClass) {
         Trace.begin(1, "MemberName$Lookup.resolve: refKind=" + refKind + ", memberName=" + memberName + ", id=" + System.identityHashCode(memberName) + ", lookupClass=" + lookupClass);
 
-        assert (refKind == (byte) ((asMemberName(memberName).flags >>> REFERENCE_KIND_SHIFT) & REFERENCE_KIND_MASK));
+        assert refKind == (byte) (asMemberName(memberName).flags >>> REFERENCE_KIND_SHIFT & REFERENCE_KIND_MASK);
 
         try {
             memberName = JDK_java_lang_invoke_MethodHandleNatives.resolve(memberName, lookupClass);
             asMemberName(memberName).checkForTypeAlias(asMemberName(memberName).clazz);
             asMemberName(memberName).resolution = null;
-            assert (asMemberName(memberName).referenceKindIsConsistent());
+            assert asMemberName(memberName).referenceKindIsConsistent();
             asMemberName(memberName).initResolved(true);
         } catch (Exception | LinkageError x) {
             Trace.line(1, "***Exception x=" + x.getMessage());

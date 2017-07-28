@@ -45,8 +45,7 @@ public class InjectedReferenceFieldActor<T> extends FieldActor implements Inject
     static {
         try {
             MemberNameClass = Class.forName("java.lang.invoke.MemberName");
-        }
-        catch (ClassNotFoundException x) {
+        } catch (ClassNotFoundException x) {
             throw ProgramError.unexpected("Failed to find MemberName class.", x);
         }
     }
@@ -93,8 +92,7 @@ public class InjectedReferenceFieldActor<T> extends FieldActor implements Inject
     /**
      * Supporting injection of a {@link VMTarget} field into {@link MemberName} for JSR292 method handle support.
      */
-    public static final InjectedReferenceFieldActor<VMTarget>
-    MemberName_VmTarget = new InjectedReferenceFieldActor<VMTarget>(MemberNameClass, VMTarget.class) {
+    public static final InjectedReferenceFieldActor<VMTarget> MemberName_VmTarget = new InjectedReferenceFieldActor<VMTarget>(MemberNameClass, VMTarget.class) {
         @HOSTED_ONLY
         @Override
         public ReferenceValue readInjectedValue(Object object) {

@@ -139,7 +139,7 @@ public class Stubs {
     private final Stub[] deoptStubsForCompilerStubs = new Stub[CiKind.VALUES.length];
 
     /**
-     * Stub for method handle invokebasic intrinsic
+     * Stub for method handle invokebasic intrinsic.
      */
     private Stub invokeBasicStub;
 
@@ -420,7 +420,7 @@ public class Stubs {
      * Generates the stub for invokeBasic target resolution.
      * @return
      */
-    private Stub genResolveInvokeBasicTarget () {
+    private Stub genResolveInvokeBasicTarget() {
         delayedInit();
         if (platform().isa == ISA.AMD64) {
             CiRegisterConfig registerConfig = registerConfigs.trampoline;
@@ -464,7 +464,7 @@ public class Stubs {
 
             byte[] code = asm.codeBuffer.close(true);
 
-            String stubName="invokeBasic";
+            String stubName = "invokeBasic";
             return new Stub(InvokeBasic, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         }
         throw FatalError.unimplemented();

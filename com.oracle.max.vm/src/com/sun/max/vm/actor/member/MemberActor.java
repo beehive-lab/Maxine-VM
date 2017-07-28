@@ -106,7 +106,7 @@ public abstract class MemberActor extends Actor {
      * Enables synthetic MethodHandle intrinsic methods to be assigned to a containing class.
      * @param classActor
      */
-    public final void setHolder (ClassActor classActor) {
+    public final void setHolder(ClassActor classActor) {
         this.holder = classActor;
     }
 
