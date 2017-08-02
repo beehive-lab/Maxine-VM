@@ -95,6 +95,7 @@ public class Package extends BootImagePackage {
         HostedBootClassLoader.omitClass("sun.jkernel.Bundle");
         // Java 7 only class that indirectly caches references to JarFiles
         HostedBootClassLoader.omitClass(sun.misc.Launcher.class.getName() + "$BootClassPathHolder");
+        HostedBootClassLoader.omitClass("java.lang.invoke.BoundMethodHandle");
 
         // Methods that are called using JNI during startup; we want the invocation stub in the boot image to avoid compilation at run time
         CompiledPrototype.registerImageInvocationStub(MethodActor.fromJava(Classes.getDeclaredMethod(java.lang.System.class, "getProperty", String.class)));

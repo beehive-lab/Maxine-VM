@@ -110,7 +110,12 @@ public final class Stub extends TargetMethod {
         /**
          * A place holder for invalid indexes of dispatch tables (virtual / interface).
          */
-        InvalidIndexTrampoline
+        InvalidIndexTrampoline,
+
+        /**
+         * A stub to execute method handle intrinsic invokeBasic methods.
+         */
+        InvokeBasic
     }
 
     @HOSTED_ONLY

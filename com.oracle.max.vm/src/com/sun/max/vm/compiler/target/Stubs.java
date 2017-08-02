@@ -48,6 +48,7 @@ import com.sun.max.vm.compiler.target.Stub.*;
 import com.sun.max.vm.compiler.target.amd64.*;
 import com.sun.max.vm.compiler.target.arm.*;
 import com.sun.max.vm.intrinsics.*;
+import com.sun.max.vm.methodhandle.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.runtime.amd64.*;
@@ -138,6 +139,11 @@ public class Stubs {
     private final Stub[] deoptStubsForCompilerStubs = new Stub[CiKind.VALUES.length];
 
     /**
+     * Stub for method handle invokebasic intrinsic
+     */
+    private Stub invokeBasicStub;
+
+    /**
      * Position of the instruction in virtual / interface trampolines loading the immediate index in the scratch
      * register. Used to quickly retrieve the itable / vtable index the trampoline dispatch to.
      */
@@ -182,6 +188,7 @@ public class Stubs {
 
     private CriticalMethod resolveVirtualCall;
     private CriticalMethod resolveInterfaceCall;
+    private CriticalMethod resolveInvokeBasicCall;
     private CiValue[] resolveVirtualCallArgs;
     private CiValue[] resolveInterfaceCallArgs;
     private RuntimeInitialization[] runtimeInits = {};
@@ -195,6 +202,14 @@ public class Stubs {
      */
     public Stub staticTrampoline() {
         return staticTrampoline;
+    }
+
+    /**
+     * Returns the stub to resolve the target to a MethodHandle.invokeBasic intrinsic.
+     * @return
+     */
+    public Stub invokeBasic() {
+        return invokeBasicStub;
     }
 
     /**
@@ -240,8 +255,10 @@ public class Stubs {
                 resolveInterfaceCall = new CriticalMethod(Stubs.class, "resolveInterfaceCall", null);
                 resolveVirtualCallArgs = registerConfigs.trampoline.getCallingConvention(JavaCall, CiUtil.signatureToKinds(resolveVirtualCall.classMethodActor), target(), false).locations;
                 resolveInterfaceCallArgs = registerConfigs.trampoline.getCallingConvention(JavaCall, CiUtil.signatureToKinds(resolveInterfaceCall.classMethodActor), target(), false).locations;
+                resolveInvokeBasicCall = new CriticalMethod(Stubs.class, "resolveInvokeBasic", null);
                 staticTrampoline = genStaticTrampoline();
                 trapStub = genTrapStub();
+                invokeBasicStub = genResolveInvokeBasicTarget();
 
                 CriticalMethod unroll = new CriticalMethod(Stubs.class, "unroll", null);
                 CiValue[] unrollArgs = registerConfigs.standard.getCallingConvention(JavaCall, CiUtil.signatureToKinds(unroll.classMethodActor), target(), false).locations;
@@ -385,6 +402,72 @@ public class Stubs {
             CodeManager.recordBootToBaselineCaller(caller);
         }
         return adjustedEntryPoint.toAddress();
+    }
+
+    /**
+     * Resolves an invokeBasic target. Note that this resolves to the address of the baseline
+     * entry point.
+     * @param mh
+     * @return
+     */
+    private static Address resolveInvokeBasic(Object mh) {
+        ClassMethodActor target = MaxMethodHandles.getInvokerForInvokeBasic(mh);
+        Address address = target.makeTargetMethod().getEntryPoint(BASELINE_ENTRY_POINT).toAddress();
+        return address;
+    }
+
+    /**
+     * Generates the stub for invokeBasic target resolution.
+     * @return
+     */
+    private Stub genResolveInvokeBasicTarget () {
+        delayedInit();
+        if (platform().isa == ISA.AMD64) {
+            CiRegisterConfig registerConfig = registerConfigs.trampoline;
+            AMD64MacroAssembler asm = new AMD64MacroAssembler(target(), registerConfig);
+            CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
+            int frameSize = target().alignFrameSize(csl.size);
+            final int frameToCSA = csl.frameOffsetToCSA;
+
+            for (int i = 0; i < prologueSize; ++i) {
+                asm.nop();
+            }
+
+            // now allocate the frame for this method
+            asm.subq(AMD64.rsp, frameSize);
+
+            // save all the callee save registers
+            asm.save(csl, frameToCSA);
+
+            asm.alignForPatchableDirectCall();
+            int callPos = asm.codeBuffer.position();
+            ClassMethodActor callee = resolveInvokeBasicCall.classMethodActor;
+            asm.call();
+            int callSize = asm.codeBuffer.position() - callPos;
+
+            // Put the entry point of the resolved method on the stack just below the
+            // return address of the trampoline itself. By adjusting RSP to point at
+            // this second return address and executing a 'ret' instruction, execution
+            // continues in the resolved method as if it was called by the trampoline's
+            // caller which is exactly what we want.
+            CiRegister returnReg = registerConfig.getReturnRegister(WordUtil.archKind());
+            asm.movq(new CiAddress(WordUtil.archKind(), AMD64.rsp.asValue(), frameSize - 8), returnReg);
+
+            // Restore all parameter registers before returning
+            int registerRestoreEpilogueOffset = asm.codeBuffer.position();
+            asm.restore(csl, frameToCSA);
+
+            // Adjust RSP as mentioned above and do the 'ret' that lands us in the
+            // trampolined-to method.
+            asm.addq(AMD64.rsp, frameSize - 8);
+            asm.ret(0);
+
+            byte[] code = asm.codeBuffer.close(true);
+
+            String stubName="invokeBasic";
+            return new Stub(InvokeBasic, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
+        }
+        throw FatalError.unimplemented();
     }
 
     private Stub genDynamicTrampoline(int index, boolean isInterface, String stubName) {
