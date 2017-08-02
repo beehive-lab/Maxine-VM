@@ -28,11 +28,13 @@ import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 import java.util.*;
 
 import com.oracle.max.asm.*;
+import com.oracle.max.cri.intrinsics.*;
 import com.oracle.max.vm.ext.t1x.T1XTemplate.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.max.annotate.*;
+import com.sun.max.program.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
@@ -2208,6 +2210,61 @@ public abstract class T1XCompilation {
     protected void do_invokestatic_resolved(T1XTemplateTag tag, StaticMethodActor staticMethodActor) {
     }
 
+    private void do_invokehandle(int index) {
+        Trace.begin(1, "T1XCompilation.do_invokehandle");
+        Trace.line(1, "index=>" + index);
+        Trace.line(1, "constantPool=>" + cp);
+        Trace.line(1, "poolConstant=>" + cp.at(index));
+        Trace.line(1, "method=>" + method);
+        ClassMethodRefConstant  classMethodRef = cp.classMethodAt(index);
+        SignatureDescriptor signature = classMethodRef.signature(cp);
+        Trace.line(1, "classMethodRef=>" + classMethodRef);
+        Trace.line(1, "classMethodRef.signature=>" + signature);
+        Trace.line(1, "classMethodRef.name=>" + classMethodRef.name(cp));
+        Trace.line(1, "classMethodRef.holder=>" + classMethodRef.holder(cp));
+        Kind kind = invokeKind(signature);
+        T1XTemplateTag tag = INVOKEHANDLE;
+        try {
+            if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
+                try {
+                    MethodActor methodActor = classMethodRef.resolve(cp, index);
+                    /*
+                     * Update our local ClassMethodRefConstant which should
+                     * now be resolved and contain the appendix argument.
+                     */
+                    classMethodRef = cp.classMethodAt(index);
+                    Trace.line(1, "classMethodRef=>" + classMethodRef);
+                    Trace.line(1, "methodname=>" + methodActor.name());
+                    Trace.line(1, "methodSig=>" + methodActor.signature());
+                    Trace.line(1, "holder=>" + methodActor.holder());
+                    Object appendix = classMethodRef.appendix();
+                    Trace.line(1, "appendix=>" + appendix);
+                    Trace.line(1, "methodActor=>" + methodActor);
+
+                    start(tag);
+                    CiRegister target = template.sig.out.reg;
+                    assignObject(0, "actor", methodActor);
+                    finish();
+                    // stack the MethodType appendix argument.
+                    incStack(1);
+                    assignObject(scratch, appendix);
+                    pokeObject(scratch, 0);
+                    int safepoint = callDirect();
+                    finishCall(tag, kind, safepoint, (ClassMethodActor) methodActor);
+                    Trace.end(1, "T1XCompilation.do_invokehandle");
+                    return;
+                } catch (LinkageError e) {
+                    // fall through
+                }
+            }
+        } catch (LinkageError error) {
+            // Fall back on unresolved template that will cause the error to be rethrown at runtime.
+        }
+
+        Trace.end(1, "T1XCompilation.do_invokehandle");
+
+    }
+
     protected void do_invokevirtual(int index) {
         ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
         SignatureDescriptor signature = classMethodRef.signature(cp);
@@ -2228,8 +2285,16 @@ public abstract class T1XCompilation {
         try {
             if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
                 try {
+                    // MethodHandle static adapter method ?
+                    MethodActor methodActor = classMethodRef.resolve(cp, index);
+
+                    if (methodActor.isStatic()) {
+                        Trace.line(1, "IS Static: " + methodActor);
+                        do_invokehandle(index);
+                        return;
+                    }
                     VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
-                    if (processIntrinsic(virtualMethodActor)) {
+                    if (processIntrinsic(virtualMethodActor, index)) {
                         return;
                     }
                     if (virtualMethodActor.isPrivate() || virtualMethodActor.isFinal() || virtualMethodActor.holder().isFinal()) {
@@ -2284,7 +2349,7 @@ public abstract class T1XCompilation {
             if (interfaceMethodRef.isResolvableWithoutClassLoading(cp)) {
                 try {
                     MethodActor interfaceMethod = interfaceMethodRef.resolve(cp, index);
-                    if (processIntrinsic(interfaceMethod)) {
+                    if (processIntrinsic(interfaceMethod, index)) {
                         return;
                     }
                     start(methodProfileBuilder == null ? tag.resolved : tag.instrumented);
@@ -2322,7 +2387,7 @@ public abstract class T1XCompilation {
         try {
             if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
                 VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
-                if (processIntrinsic(virtualMethodActor)) {
+                if (processIntrinsic(virtualMethodActor, index)) {
                     return;
                 }
                 do_invokespecial_resolved(tag, virtualMethodActor, receiverStackIndex);
@@ -2344,6 +2409,104 @@ public abstract class T1XCompilation {
         finishCall(tag, kind, safepoint, null);
     }
 
+    /**
+     * Method handle linkToVirtual intrinsic method.
+     * @param index
+     */
+    protected void do_linktononstatic(int index, T1XTemplateTag tag) {
+        ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
+        SignatureDescriptor signature = classMethodRef.signature(cp);
+        Kind kind = invokeKind(signature);
+        int receiverStackIndex = receiverStackIndex(signature);
+        Trace.begin(1, "T1XCompilation.do_linktononstatic");
+        Trace.line(1, "index=>" + index);
+        Trace.line(1, "constantPool=>" + cp);
+        Trace.line(1, "poolConstant=>" + cp.at(index));
+        Trace.line(1, "method=>" + method);
+        Trace.line(1, "classMethodRef=>" + classMethodRef.name(cp).string);
+        Trace.line(1, "signature=>" + signature.string);
+        Trace.line(1, "kind=>" + kind);
+        Trace.line(1, "tag=>" + tag);
+        Trace.line(1, "receiverIndex=>" + receiverStackIndex);
+        start(tag);
+        CiRegister target = template.sig.out.reg;
+        peekObject(0, "memberName", 0);
+        /*
+         * -1 : For regular virtual dispatch the receiver follows the arguments however
+         *      for linkage the receiver IS the last argument.
+         */
+        peekObject(1, "receiver", receiverStackIndex - 1);
+        finish();
+        decStack(1);
+        // -2 : Since we have popped off the MemberName
+        int safepoint = callIndirect(target, receiverStackIndex - 2);
+        finishCall(tag, kind, safepoint, null);
+
+    }
+
+    /**
+     * Method Handle linkToStatic
+     * @param index
+     */
+    protected void do_linktointerface(int index) {
+        ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
+        SignatureDescriptor signature = classMethodRef.signature(cp);
+        Kind kind = invokeKind(signature);
+        int receiverStackIndex = receiverStackIndex(signature);
+        Trace.begin(1, "T1XCompilation.do_linktointerface");
+        Trace.line(1, "index=>" + index);
+        Trace.line(1, "constantPool=>" + cp);
+        Trace.line(1, "poolConstant=>" + cp.at(index));
+        Trace.line(1, "method=>" + method);
+        Trace.line(1, "classMethodRef=>" + classMethodRef.name(cp).string);
+        Trace.line(1, "signature=>" + signature.string);
+        Trace.line(1, "kind=>" + kind);
+        Trace.line(1, "receiverIndex=>" + receiverStackIndex);
+        T1XTemplateTag tag = LINKTOINTERFACE;
+        start(tag);
+        CiRegister target = template.sig.out.reg;
+        peekObject(0, "memberName", 0);
+        /*
+         * -1 : For regular virtual dispatch the receiver follows the arguments however
+         *      for linkage the receiver IS the last argument.
+         */
+        peekObject(1, "receiver", receiverStackIndex - 1);
+        finish();
+        decStack(1);
+        // -2 : Since we have popped off the MemberName
+        int safepoint = callIndirect(target, receiverStackIndex - 2);
+        finishCall(tag, kind, safepoint, null);
+        Trace.end(1, "T1XCompilation.do_linktointerface");
+        Trace.end(1, "T1XCompilation.do_linktononstatic");
+
+    }
+
+    /**
+     * Method Handle linkToStatic.
+     *
+     * @param index
+     */
+    protected void do_linktostatic(int index) {
+        ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
+        SignatureDescriptor signature = classMethodRef.signature(cp);
+        Kind kind = invokeKind(signature);
+        Trace.begin(1, "T1XCompilation.do_linktostatic");
+        Trace.line(1, "index=" + index + ", poolConstant=" + cp.at(index));
+
+        T1XTemplateTag tag = LINKTOSTATIC;
+        start(tag);
+
+        // pop the trailing memberName argument
+        peekObject(0, "memberName", 0);
+//        decStack(1);
+        CiRegister target = template.sig.out.reg;
+        finish();
+        decStack(1);
+        int safepoint = callIndirect(target, -1);
+        finishCall(tag, kind, safepoint, null);
+        Trace.end(1, "T1XCompilation.do_linktostatic");
+    }
+
     protected void do_invokestatic(int index) {
         ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
         Kind kind = invokeKind(classMethodRef.signature(cp));
@@ -2352,7 +2515,7 @@ public abstract class T1XCompilation {
         try {
             if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
                 StaticMethodActor staticMethodActor = classMethodRef.resolveStatic(cp, index);
-                if (processIntrinsic(staticMethodActor)) {
+                if (processIntrinsic(staticMethodActor, index)) {
                     return;
                 }
                 if (staticMethodActor.holder().isInitialized()) {
@@ -2375,7 +2538,7 @@ public abstract class T1XCompilation {
         finishCall(tag, kind, safepoint, null);
     }
 
-    protected boolean processIntrinsic(MethodActor method) {
+    protected boolean processIntrinsic(MethodActor method, int index) {
         String intrinsic = method.intrinsic();
 
         if (T1X.unsafeIntrinsicIDs.contains(intrinsic)) {
@@ -2401,6 +2564,19 @@ public abstract class T1XCompilation {
             return true;
         } else if (intrinsic == MaxineIntrinsicIDs.UNCOMMON_TRAP) {
             do_uncommonTrap();
+            return true;
+        } else if (intrinsic == IntrinsicIDs.LINKTOVIRTUAL) {
+            do_linktononstatic(index, LINKTOVIRTUAL);
+            return true;
+        }
+        else if (intrinsic == IntrinsicIDs.LINKTOSTATIC) {
+            Trace.line(1, "Got linkToStatic");
+            do_linktostatic(index);
+            return true;
+        }
+        else if (intrinsic == IntrinsicIDs.LINKTOSPECIAL) {
+            Trace.line(1, "Got linkToSpecial");
+            do_linktononstatic(index, LINKTOSPECIAL);
             return true;
         }
 
