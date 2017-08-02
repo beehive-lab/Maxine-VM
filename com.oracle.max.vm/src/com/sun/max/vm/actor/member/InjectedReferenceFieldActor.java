@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -28,6 +30,7 @@ import com.sun.max.annotate.*;
 import com.sun.max.program.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.classfile.constant.*;
+import com.sun.max.vm.methodhandle.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
@@ -36,6 +39,17 @@ import com.sun.max.vm.value.*;
  * Definition of reference fields injected into JDK classes.
  */
 public class InjectedReferenceFieldActor<T> extends FieldActor implements InjectedFieldActor<ReferenceValue> {
+
+    private static final Class MemberNameClass;
+
+    static {
+        try {
+            MemberNameClass = Class.forName("java.lang.invoke.MemberName");
+        }
+        catch (ClassNotFoundException x) {
+            throw ProgramError.unexpected("Failed to find MemberName class.", x);
+        }
+    }
 
     public TypeDescriptor holderTypeDescriptor() {
         return holder;
@@ -76,6 +90,18 @@ public class InjectedReferenceFieldActor<T> extends FieldActor implements Inject
         }
     };
 
+    /**
+     * Supporting injection of a {@link VMTarget} field into {@link MemberName} for JSR292 method handle support.
+     */
+    public static final InjectedReferenceFieldActor<VMTarget>
+    MemberName_VmTarget = new InjectedReferenceFieldActor<VMTarget>(MemberNameClass, VMTarget.class) {
+        @HOSTED_ONLY
+        @Override
+        public ReferenceValue readInjectedValue(Object object) {
+            return ReferenceValue.from(VMTarget.fromMemberName(object));
+        }
+
+    };
     /**
      * A field of type {@link ClassRegistry} injected into {@link ClassLoader}.
      */

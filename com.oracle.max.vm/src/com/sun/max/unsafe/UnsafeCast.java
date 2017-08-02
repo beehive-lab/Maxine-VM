@@ -27,6 +27,7 @@ import java.security.*;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.methodhandle.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reflection.*;
 import com.sun.max.vm.stack.*;
@@ -234,6 +235,11 @@ public final class UnsafeCast {
     @INTRINSIC(UNSAFE_CAST)
     public static long asTaggedLong(CodePointer cp) {
         return cp.toTaggedLong();
+    }
+
+    @INTRINSIC(UNSAFE_CAST)
+    public static VMTarget asVMTarget(Object o) {
+        return (VMTarget)o;
     }
 
     @INTRINSIC(UNSAFE_CAST)
