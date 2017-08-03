@@ -27,17 +27,16 @@ pipeline {
                 }
             }
         }
-        stage('checkstyle') {
+        stage('checkstyle-n-build') {
             steps {
-                dir(env.MAXINE_HOME) {
-                    sh '$MX --suite maxine checkstyle'
-                }
-            }
-        }
-        stage('build') {
-            steps {
-                dir(env.MAXINE_HOME) {
-                    sh '$MX build'
+                parallel 'checkstyle': {
+                    dir(env.MAXINE_HOME) {
+                        sh '$MX --suite maxine checkstyle'
+                    }
+                }, 'build': {
+                    dir(env.MAXINE_HOME) {
+                        sh '$MX build'
+                    }
                 }
             }
         }
