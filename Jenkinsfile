@@ -78,13 +78,10 @@ pipeline {
                     dir(env.MAXINE_HOME) {
                         sh '$MX test -image-configs=java -tests=javatester'
                     }
-                }
-            }
-        }
-        stage('test-gc') {
-            steps {
-                dir(env.MAXINE_HOME) {
-                    sh '$MX test -image-configs=ss -tests=output:Hello+Catch+GC+WeakRef+Final -fail-fast'
+                }, 'test-gc': {
+                    dir(env.MAXINE_HOME) {
+                        sh '$MX test -image-configs=ss -tests=output:Hello+Catch+GC+WeakRef+Final'
+                    }
                 }
             }
         }
