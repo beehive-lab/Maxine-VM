@@ -1598,7 +1598,7 @@ public class MaxineTester {
                     out.flush();
                     final Logs logs = new Logs(outputDir, compilerName, name);
                     final long start = System.currentTimeMillis();
-                    final int exitValue = exec(null, javaArgs, null, null, logs, compilerName + "Test", 60);
+                    final int exitValue = exec(null, javaArgs, null, null, logs, compilerName + "Test", 300);
                     out.print("Stopped " + ucCompilerName + " " + name + ":");
                     if (exitValue != 0) {
                         if (exitValue == ExternalCommand.ProcessTimeoutThread.PROCESS_TIMEOUT) {
