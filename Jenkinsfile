@@ -83,8 +83,26 @@ pipeline {
         }
         stage('javatester') {
             steps {
-                dir(env.MAXINE_HOME) {
-                    sh '$MX test -image-configs=java -tests=javatester'
+                parallel 'c1xc1x': {
+                    dir(env.MAXINE_HOME) {
+                        sh '$MX test -image-configs=java -tests=javatester -jtt-image-configs=jtt-c1xc1x'
+                    }
+                }, 't1xc1x': {
+                    dir(env.MAXINE_HOME) {
+                        sh '$MX test -image-configs=java -tests=javatester -jtt-image-configs=jtt-t1xc1x'
+                    }
+                }, 'c1xt1x': {
+                    dir(env.MAXINE_HOME) {
+                        sh '$MX test -image-configs=java -tests=javatester -jtt-image-configs=jtt-c1xt1x'
+                    }
+                }, 't1xt1x': {
+                    dir(env.MAXINE_HOME) {
+                        sh '$MX test -image-configs=java -tests=javatester -jtt-image-configs=jtt-t1xt1x'
+                    }
+                }, 'c1xgraal': {
+                    dir(env.MAXINE_HOME) {
+                        sh '$MX test -image-configs=java -tests=javatester -jtt-image-configs=jtt-c1xgraal'
+                    }
                 }
             }
         }
