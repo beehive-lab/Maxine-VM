@@ -191,6 +191,7 @@ public class Stubs {
     private CriticalMethod resolveInvokeBasicCall;
     private CiValue[] resolveVirtualCallArgs;
     private CiValue[] resolveInterfaceCallArgs;
+    private CiValue[] resolveInvokeBasicCallArgs;
     private RuntimeInitialization[] runtimeInits = {};
 
     public Stubs(RegisterConfigs registerConfigs) {
@@ -256,6 +257,7 @@ public class Stubs {
                 resolveVirtualCallArgs = registerConfigs.trampoline.getCallingConvention(JavaCall, CiUtil.signatureToKinds(resolveVirtualCall.classMethodActor), target(), false).locations;
                 resolveInterfaceCallArgs = registerConfigs.trampoline.getCallingConvention(JavaCall, CiUtil.signatureToKinds(resolveInterfaceCall.classMethodActor), target(), false).locations;
                 resolveInvokeBasicCall = new CriticalMethod(Stubs.class, "resolveInvokeBasic", null);
+                resolveInvokeBasicCallArgs = registerConfigs.trampoline.getCallingConvention(JavaCall, CiUtil.signatureToKinds(resolveInvokeBasicCall.classMethodActor), target(), false).locations;
                 staticTrampoline = genStaticTrampoline();
                 trapStub = genTrapStub();
                 invokeBasicStub = genResolveInvokeBasicTarget();
@@ -410,9 +412,12 @@ public class Stubs {
      * @param mh
      * @return
      */
-    private static Address resolveInvokeBasic(Object mh) {
+    private static Address resolveInvokeBasic(Object mh, Pointer pcInCaller) {
+        CodePointer cpCallSite = CodePointer.from(pcInCaller);
+        final TargetMethod caller = cpCallSite.toTargetMethod();
         ClassMethodActor target = MaxMethodHandles.getInvokerForInvokeBasic(mh);
-        Address address = target.makeTargetMethod().getEntryPoint(BASELINE_ENTRY_POINT).toAddress();
+        TargetMethod tm = target.makeTargetMethod(caller);
+        Address address = tm.getEntryPoint(caller.callEntryPoint).toAddress();
         return address;
     }
 
@@ -438,6 +443,9 @@ public class Stubs {
 
             // save all the callee save registers
             asm.save(csl, frameToCSA);
+
+            CiValue[] args = resolveInvokeBasicCallArgs;
+            asm.movq(args[1].asRegister(), new CiAddress(WordUtil.archKind(), AMD64.rsp.asValue(), frameSize));
 
             asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
