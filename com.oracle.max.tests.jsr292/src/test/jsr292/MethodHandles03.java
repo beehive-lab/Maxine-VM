@@ -20,17 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package test.output;
+package test.jsr292;
 
 import java.lang.invoke.*;
 
-public class MethodHandles02 {
+public class MethodHandles03 {
 
     public static void main(String[] args) throws Throwable {
         MethodHandles.Lookup lookup = MethodHandles.lookup();
         MethodType mt = MethodType.methodType(String.class, char.class, char.class);
         MethodHandle mh = lookup.findVirtual(String.class, "replace", mt);
-        String s = (String) mh.invokeExact("daddy", 'd', 'n');
+        String s = (String) mh.invokeWithArguments("daddy", 'd', 'n');
         System.out.println(s);
     }
 

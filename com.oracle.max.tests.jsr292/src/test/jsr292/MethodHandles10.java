@@ -17,40 +17,34 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package test.output;
+
+package test.jsr292;
+
+import static java.lang.invoke.MethodType.*;
 
 import java.lang.invoke.*;
 
 /**
- * Unit test for method handle getters.
- *
+ * Test for method handle constructor.
  */
-public class MethodHandles09 {
+public class MethodHandles10 {
 
-    static String hello = "Hello ";
-
-    String world = "World!";
-
-
-    static MethodHandles.Lookup lookup() {
-        return MethodHandles.lookup();
-    }
-
-    public static void main(String [] args) {
+    public static void main(String[] args) {
         try {
-            MethodHandle getHello = lookup().findStaticGetter(MethodHandles09.class, "hello", String.class);
-            MethodHandle getWorld = lookup().findGetter(MethodHandles09.class, "world", String.class);
-
-            MethodHandles09 mh09 = new MethodHandles09();
-            String h = (String) getHello.invokeExact();
-            String w = (String) getWorld.invokeExact(mh09);
-            System.out.print(h);
-            System.out.println(w);
-
+            MethodHandle mh =
+                    MethodHandles.lookup().findConstructor(MethodHandles10.class, methodType(void.class));
+            for (int i = 0; i < 1000000; i++) {
+                MethodHandles10 mh10 = (MethodHandles10) mh.invokeExact();
+                System.out.println(mh10.toString());
+            }
         } catch (Throwable e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
 
+    @Override
+    public String toString() {
+        return "MethodHandles10";
+    }
 }

@@ -20,18 +20,35 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package test.output;
+package test.jsr292;
 
 import java.lang.invoke.*;
 
-public class MethodHandles03 {
+public class MethodHandles01 {
 
     public static void main(String[] args) throws Throwable {
         MethodHandles.Lookup lookup = MethodHandles.lookup();
-        MethodType mt = MethodType.methodType(String.class, char.class, char.class);
-        MethodHandle mh = lookup.findVirtual(String.class, "replace", mt);
-        String s = (String) mh.invokeWithArguments("daddy", 'd', 'n');
-        System.out.println(s);
+        MethodType mt = MethodType.methodType(void.class);
+        MethodHandle mh = lookup.findVirtual(MethodHandles01.class, "hello", mt);
+        MethodHandles01 self = new MethodHandles01();
+        mh.invokeExact(self);
+        MethodHandle mh2 = lookup.findStatic(MethodHandles01.class, "world", mt);
+        mh2.invokeExact();
+        MethodType mtx = MethodType.methodType(void.class, int.class);
+        MethodHandle mhx = lookup.findVirtual(MethodHandles01.class, "ga", mtx);
+        mhx.invokeExact(self, 23);
+    }
+
+    public void hello() {
+        System.out.print("Hello, ");
+    }
+
+    public static void world() {
+        System.out.println("world!");
+    }
+
+    public void ga(int x) {
+        System.out.println(x);
     }
 
 }

@@ -59,6 +59,7 @@ public class MaxineTesterConfiguration {
 
     static final List<String> zeeJUnitTests = new LinkedList<String>();
     static final List<Class> zeeOutputTests = new LinkedList<Class>();
+    static final List<Class> zeeJSR292Tests = new LinkedList<Class>();
     static final List<Class> zeeVMOutputTests = new LinkedList<Class>();
     static final List<String> zeeDacapo2006Tests = new LinkedList<String>();
     static final List<String> zeeDacapoBachTests = new LinkedList<String>();
@@ -123,6 +124,8 @@ public class MaxineTesterConfiguration {
     static {
         // Register all "test.output.*" classes on the class path
         output(findOutputTests("test.output."));
+
+        jsr292(findOutputTests("test.jsr292."));
 
         // Refine expectation for certain output tests
         output(Classes.forName("test.output.AWTFont"), FAIL_DARWIN);
@@ -325,6 +328,9 @@ public class MaxineTesterConfiguration {
         maxvmConfig("noGC", "-XX:+DisableGC", "-Xmx3g");
         maxvmConfig("GC", "-Xmx2g");
 
+        // Configuration to test methodhandles implementation
+        maxvmConfig("jsr292", "-XX:RCT=0");
+
         imageConfig("baseline-c1x0", "--C1X:OptLevel=0");
         imageConfig("baseline-c1x1", "--C1X:OptLevel=1");
         imageConfig("baseline-c1x2", "--C1X:OptLevel=2");
@@ -389,6 +395,10 @@ public class MaxineTesterConfiguration {
 
     private static void output(Class... javaClasses) {
         zeeOutputTests.addAll(Arrays.asList(javaClasses));
+    }
+
+    private static void jsr292(Class... javaClasses) {
+        zeeJSR292Tests.addAll(Arrays.asList(javaClasses));
     }
 
     private static void vmoutput(Class... javaClasses) {

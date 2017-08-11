@@ -74,6 +74,10 @@ pipeline {
                     dir(env.MAXINE_HOME) {
                         sh '$MX test -image-configs=java -tests=output'
                     }
+                }, 'jsr292': {
+                    dir(env.MAXINE_HOME) {
+                        sh '$MX test -maxvm-configs=jsr292 -image-configs=java -tests=jsr292'
+                    }
                 }, 'test-gc': {
                     dir(env.MAXINE_HOME) {
                         sh '$MX test -image-configs=ss -tests=output:Hello+Catch+GC+WeakRef+Final'

@@ -107,6 +107,7 @@ public class MaxineTester {
                     "run the _202_jess and _209_db SpecJVM98 benchmarks as well as the pmd and fop Dacapo-bach benchmarks.\n\n" +
                     "Compiler tests: " + MaxineTesterConfiguration.zeeC1XTests.keySet().toString() + "\n\n" +
                     "JUnit tests: " + MaxineTesterConfiguration.zeeJUnitTests + "\n\n" +
+                    "JSR292 tests: " + MaxineTesterConfiguration.zeeJSR292Tests + "\n\n" +
                     "Output tests: " + MaxineTesterConfiguration.zeeOutputTests.toString().replace("class ", "") + "\n\n" +
                     "Dacapo-2006 tests: " + MaxineTesterConfiguration.zeeDacapo2006Tests + "\n\n" +
                     "Dacapo-bach tests: " + MaxineTesterConfiguration.zeeDacapoBachTests + "\n\n" +
@@ -221,6 +222,12 @@ public class MaxineTester {
                 } else if (test.startsWith("output:")) {
                     // run the Output tests
                     new OutputHarness(filterTestClassesBySubstrings(MaxineTesterConfiguration.zeeOutputTests, test.substring("output:".length()).split("\\+"))).run();
+                } else if ("jsr292".equals(test)) {
+                    // run the JSR292 tests
+                    new OutputHarness(MaxineTesterConfiguration.zeeJSR292Tests).run();
+                } else if (test.startsWith("jsr292:")) {
+                    // run the JSR292 tests
+                    new OutputHarness(filterTestClassesBySubstrings(MaxineTesterConfiguration.zeeJSR292Tests, test.substring("jsr292:".length()).split("\\+"))).run();
                 } else if ("javatester".equals(test)) {
                     // run the JTImage tests
                     new JTImageHarness().run();

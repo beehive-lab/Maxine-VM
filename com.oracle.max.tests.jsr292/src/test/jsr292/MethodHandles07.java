@@ -20,20 +20,17 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package test.output;
+package test.jsr292;
 
 import java.lang.invoke.*;
 
-public class MethodHandles05 {
+public class MethodHandles07 {
 
     public static void main(String[] args) throws Throwable {
         MethodHandles.Lookup lookup = MethodHandles.lookup();
-        MethodType mt = MethodType.methodType(java.util.List.class, Object[].class);
-        MethodHandle mh = lookup.findStatic(java.util.Arrays.class, "asList", mt);
-        MethodType mt2 = MethodType.genericMethodType(3);
-        MethodHandle mh2 = mh.asType(mt2);
-        Object x = mh2.invokeExact((Object) 1, (Object) 2, (Object) 3);
-        System.out.println(x);
+        MethodType mt = MethodType.methodType(void.class, String.class);
+        MethodHandle mh = lookup.findVirtual(java.io.PrintStream.class, "println", mt);
+        mh.invokeExact(System.out, "Hello, world!");
     }
 
 }
