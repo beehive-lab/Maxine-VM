@@ -73,6 +73,8 @@ public final class JDK_sun_reflect_Reflection {
                 || (original.holder().toJava() == MethodActor.class && original.name().startsWith("invoke")) // ignore invocation methods in method actor
                 || (original.holder().toJava() == JniFunctions.class && original.name().startsWith("Call"))  // ignore invocation methods of JNI implementation
                 || original.equals(ClassRegistry.Method_invoke)  // ignore java.lang.reflect.Method.invoke
+                || (original.holder().name().startsWith("Ljava/lang/invoke/LambdaForm")
+                    && original.name().startsWith("invoke")) // Skip internal adapter frames of Method Handles
                 ) {
                 return true;
             }
