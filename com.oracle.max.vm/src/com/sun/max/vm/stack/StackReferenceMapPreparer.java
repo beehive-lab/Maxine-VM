@@ -378,7 +378,7 @@ public final class StackReferenceMapPreparer extends FrameReferenceMapVisitor {
         // clear the reference map covering the as-yet-unprepared stack contents
         clearReferenceMapRange(tla, stackPointer, highestSlot.minus(Word.size()));
 
-        boolean lockDisabledSafepoints = false;
+        boolean lockDisabledSafepoints = logStackRootScanStart(stackPointer, highestSlot, vmThread);
         if (logStackRootScanning()) {
             stackRootScanLogger.logComplete(
                             vmThread,
