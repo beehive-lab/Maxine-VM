@@ -2398,14 +2398,19 @@ public abstract class T1XCompilation {
     }
 
     /**
-     * Method handle linkToVirtual intrinsic method.
+     * Method handle linkToVirtual, linkToSpecial, and linkToInterface intrinsic methods.
      * @param index
+     * @param tag
      */
     protected void do_linktononstatic(int index, T1XTemplateTag tag) {
         ClassMethodRefConstant classMethodRef = cp.classMethodAt(index);
         SignatureDescriptor signature = classMethodRef.signature(cp);
         Kind kind = invokeKind(signature);
-        int receiverStackIndex = receiverStackIndex(signature);
+        /*
+         * -1 : For regular virtual dispatch the receiver follows the arguments however
+         *      for linkage the receiver IS the last argument.
+         */
+        int receiverStackIndex = receiverStackIndex(signature) - 1;
         Trace.begin(1, "T1XCompilation.do_linktononstatic");
         Trace.line(1, "index=>" + index);
         Trace.line(1, "constantPool=>" + cp);
@@ -2419,15 +2424,11 @@ public abstract class T1XCompilation {
         start(tag);
         CiRegister target = template.sig.out.reg;
         peekObject(0, "memberName", 0);
-        /*
-         * -1 : For regular virtual dispatch the receiver follows the arguments however
-         *      for linkage the receiver IS the last argument.
-         */
-        peekObject(1, "receiver", receiverStackIndex - 1);
+        peekObject(1, "receiver", receiverStackIndex);
+        decStack(1); // pop off the MemberName
         finish();
-        decStack(1);
-        // -2 : Since we have popped off the MemberName
-        int safepoint = callIndirect(target, receiverStackIndex - 2);
+        // -1 : Since we have popped off the MemberName
+        int safepoint = callIndirect(target, receiverStackIndex - 1);
         finishCall(tag, kind, safepoint, null);
         Trace.end(1, "T1XCompilation.do_linktononstatic");
 
@@ -2447,13 +2448,12 @@ public abstract class T1XCompilation {
 
         T1XTemplateTag tag = LINKTOSTATIC;
         start(tag);
+        CiRegister target = template.sig.out.reg;
 
         // pop the trailing memberName argument
         peekObject(0, "memberName", 0);
-//        decStack(1);
-        CiRegister target = template.sig.out.reg;
+        decStack(1); // pop off the MemberName
         finish();
-        decStack(1);
         int safepoint = callIndirect(target, -1);
         finishCall(tag, kind, safepoint, null);
         Trace.end(1, "T1XCompilation.do_linktostatic");
@@ -2518,6 +2518,7 @@ public abstract class T1XCompilation {
             do_uncommonTrap();
             return true;
         } else if (intrinsic == IntrinsicIDs.LINKTOVIRTUAL) {
+            Trace.line(1, "Got linkToVirtual");
             do_linktononstatic(index, LINKTOVIRTUAL);
             return true;
         } else if (intrinsic == IntrinsicIDs.LINKTOSTATIC) {
