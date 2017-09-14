@@ -238,12 +238,11 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
         Trace.line(1, "MemberName name=" + name + ", type=" + mnSig + ", clazz=" + clazz.getName() + ", flags=" + flags + ", resolution=" + resolution + ", vmtarget=" + vmtarget + ", refKind=" +
                         refKind);
 
-        MethodHandleIntrinsicID iid = MethodHandleIntrinsicID.None;
         MethodHandleIntrinsicID mhInvokeID = MethodHandleIntrinsicID.None;
 
         if ((flags & ALL_KINDS) == IS_METHOD && (clazz == MethodHandle.class) &&
                         (refKind == JVM_REF_invokeVirtual || refKind == JVM_REF_invokeSpecial || refKind == JVM_REF_invokeStatic)) {
-            iid = MethodHandleIntrinsicID.fromName(name);
+            MethodHandleIntrinsicID iid = MethodHandleIntrinsicID.fromName(name);
             if (iid != MethodHandleIntrinsicID.None &&
                             ((refKind == JVM_REF_invokeStatic) == MethodHandleIntrinsicID.isSignaturePolymorphicStatic(iid))) {
                 mhInvokeID = iid;
