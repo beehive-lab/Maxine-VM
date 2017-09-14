@@ -308,7 +308,7 @@ public final class MaxMethodHandles {
         if (IntrinsicMap.containsKey(key)) {
             method = IntrinsicMap.get(key);
         } else {
-            Trace.line(1, "Making new intrinsic method");
+            Trace.line(1, "Making new intrinsic method: " + iid.name());
             method = makeMethodHandleIntrinsic(classActor, iid, type);
             IntrinsicMap.put(key, method);
             method.setHolder(classActor);
