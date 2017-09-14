@@ -57,31 +57,10 @@ pipeline {
         }
         stage('test') {
             steps {
-                // c1x,graal,junit,output,javatester
-                parallel 'c1x': {
-                    dir(env.MAXINE_HOME) {
-                        sh '$MX test -image-configs=java -tests=c1x'
-                    }
-                }, 'graal': {
-                    dir(env.MAXINE_HOME) {
-                        sh '$MX test -image-configs=java -tests=graal'
-                    }
-                }, 'junit': {
-                    dir(env.MAXINE_HOME) {
-                        sh '$MX test -image-configs=java -tests=junit'
-                    }
-                }, 'output': {
-                    dir(env.MAXINE_HOME) {
-                        sh '$MX test -image-configs=java -tests=output'
-                    }
-                }, 'jsr292': {
-                    dir(env.MAXINE_HOME) {
-                        sh '$MX test -maxvm-configs=jsr292 -image-configs=java -tests=jsr292'
-                    }
-                }, 'test-gc': {
-                    dir(env.MAXINE_HOME) {
-                        sh '$MX test -image-configs=ss -tests=output:Hello+Catch+GC+WeakRef+Final'
-                    }
+                dir(env.MAXINE_HOME) {
+                    sh '$MX test -image-configs=java -tests=c1x,graal,junit,output'
+                    sh '$MX test -maxvm-configs=jsr292 -image-configs=java -tests=jsr292'
+                    sh '$MX test -image-configs=ss -tests=output:Hello+Catch+GC+WeakRef+Final'
                 }
             }
         }
