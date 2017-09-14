@@ -2210,14 +2210,12 @@ public abstract class T1XCompilation {
     protected void do_invokestatic_resolved(T1XTemplateTag tag, StaticMethodActor staticMethodActor) {
     }
 
-    private void do_invokehandle(int index) {
+    private void do_invokehandle(int index, ClassMethodRefConstant classMethodRef, SignatureDescriptor signature, MethodActor methodActor) {
         Trace.begin(1, "T1XCompilation.do_invokehandle");
         Trace.line(1, "index=>" + index);
         Trace.line(1, "constantPool=>" + cp);
         Trace.line(1, "poolConstant=>" + cp.at(index));
         Trace.line(1, "method=>" + method);
-        ClassMethodRefConstant  classMethodRef = cp.classMethodAt(index);
-        SignatureDescriptor signature = classMethodRef.signature(cp);
         Trace.line(1, "classMethodRef=>" + classMethodRef);
         Trace.line(1, "classMethodRef.signature=>" + signature);
         Trace.line(1, "classMethodRef.name=>" + classMethodRef.name(cp));
@@ -2225,44 +2223,34 @@ public abstract class T1XCompilation {
         Kind kind = invokeKind(signature);
         T1XTemplateTag tag = INVOKEHANDLE;
         try {
-            if (classMethodRef.isResolvableWithoutClassLoading(cp)) {
-                try {
-                    MethodActor methodActor = classMethodRef.resolve(cp, index);
-                    /*
-                     * Update our local ClassMethodRefConstant which should
-                     * now be resolved and contain the appendix argument.
-                     */
-                    classMethodRef = cp.classMethodAt(index);
-                    Trace.line(1, "classMethodRef=>" + classMethodRef);
-                    Trace.line(1, "methodname=>" + methodActor.name());
-                    Trace.line(1, "methodSig=>" + methodActor.signature());
-                    Trace.line(1, "holder=>" + methodActor.holder());
-                    Object appendix = classMethodRef.appendix();
-                    Trace.line(1, "appendix=>" + appendix);
-                    Trace.line(1, "methodActor=>" + methodActor);
+            assert classMethodRef.isResolvableWithoutClassLoading(cp);
+            /*
+             * Update our local ClassMethodRefConstant which should
+             * now be resolved and contain the appendix argument.
+             */
+            classMethodRef = cp.classMethodAt(index);
+            Object appendix = classMethodRef.appendix();
+            Trace.line(1, "classMethodRef=>" + classMethodRef);
+            Trace.line(1, "methodname=>" + methodActor.name());
+            Trace.line(1, "methodSig=>" + methodActor.signature());
+            Trace.line(1, "holder=>" + methodActor.holder());
+            Trace.line(1, "appendix=>" + appendix);
+            Trace.line(1, "methodActor=>" + methodActor);
 
-                    start(tag);
-                    CiRegister target = template.sig.out.reg;
-                    assignObject(0, "actor", methodActor);
-                    finish();
-                    // stack the MethodType appendix argument.
-                    incStack(1);
-                    assignObject(scratch, appendix);
-                    pokeObject(scratch, 0);
-                    int safepoint = callDirect();
-                    finishCall(tag, kind, safepoint, (ClassMethodActor) methodActor);
-                    Trace.end(1, "T1XCompilation.do_invokehandle");
-                    return;
-                } catch (LinkageError e) {
-                    // fall through
-                }
-            }
-        } catch (LinkageError error) {
-            // Fall back on unresolved template that will cause the error to be rethrown at runtime.
+            start(tag);
+            assignObject(0, "actor", methodActor);
+            // stack the MethodType appendix argument.
+            incStack(1);
+            assignObject(scratch, appendix);
+            pokeObject(scratch, 0);
+            finish();
+            int safepoint = callDirect();
+            finishCall(tag, kind, safepoint, (ClassMethodActor) methodActor);
+        } catch (LinkageError e) {
+            // fall through
         }
 
         Trace.end(1, "T1XCompilation.do_invokehandle");
-
     }
 
     protected void do_invokevirtual(int index) {
@@ -2290,7 +2278,7 @@ public abstract class T1XCompilation {
 
                     if (methodActor.isStatic()) {
                         Trace.line(1, "IS Static: " + methodActor);
-                        do_invokehandle(index);
+                        do_invokehandle(index, classMethodRef, signature, methodActor);
                         return;
                     }
                     VirtualMethodActor virtualMethodActor = classMethodRef.resolveVirtual(cp, index);
