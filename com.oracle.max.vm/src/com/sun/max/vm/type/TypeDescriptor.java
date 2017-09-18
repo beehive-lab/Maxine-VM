@@ -290,13 +290,13 @@ public abstract class TypeDescriptor extends Descriptor {
 
     public ClassActor resolve(final ClassLoader classLoader) {
         if (MaxineVM.isHosted()) {
-            return resolveHosted(classLoader);
+            return resolveHosted();
         }
         return ClassActor.fromJava(resolveType(classLoader));
     }
 
     @HOSTED_ONLY
-    public ClassActor resolveHosted(final ClassLoader classLoader) {
+    public ClassActor resolveHosted() {
         return HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.mustMakeClassActor(this);
     }
 }

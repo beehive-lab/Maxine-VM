@@ -441,7 +441,7 @@ public final class JavaPrototype extends Prototype {
         if (classActor != null) {
             return classActor;
         }
-        return typeDescriptor.resolveHosted(javaClass.getClassLoader());
+        return typeDescriptor.resolveHosted();
     }
 
     /**
