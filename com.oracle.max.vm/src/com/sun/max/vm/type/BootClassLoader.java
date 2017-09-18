@@ -171,6 +171,9 @@ public final class BootClassLoader extends ClassLoader {
     @ALIAS(declaringClass = ClassLoader.class, innerClass = "NativeLibrary", name = "<init>")
     private native void init(Class fromClass, String name);
 
+    @ALIAS(declaringClass = ClassLoader.class, innerClass = "NativeLibrary", name = "<init>")
+    private native void init(Class fromClass, String name, boolean isBuiltin);
+
     @ALIAS(declaringClass = ClassLoader.class, innerClass = "NativeLibrary")
     private long handle;
 
@@ -186,7 +189,11 @@ public final class BootClassLoader extends ClassLoader {
     private Object createNativeLibrary(String path, Word handle) {
         final Object nativeLibrary = Heap.createTuple(JDK.java_lang_ClassLoader$NativeLibrary.classActor().dynamicHub());
         BootClassLoader thisNativeLibrary = asThis(nativeLibrary);
-        thisNativeLibrary.init(BootClassLoader.class, path);
+        if (JDK.JDK_VERSION == JDK.JDK_7) {
+            thisNativeLibrary.init(BootClassLoader.class, path);
+        } else {
+            thisNativeLibrary.init(BootClassLoader.class, path, false);
+        }
         thisNativeLibrary.handle = handle.asAddress().toLong();
         return nativeLibrary;
     }

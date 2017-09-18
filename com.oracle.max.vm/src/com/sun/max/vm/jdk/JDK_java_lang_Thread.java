@@ -94,8 +94,11 @@ public final class JDK_java_lang_Thread {
     @ALIAS(declaringClass = Thread.class)
     boolean daemon;
 
-    @ALIAS(declaringClass = Thread.class)
-    char[] name;
+    @ALIAS(declaringClass = Thread.class, name = "name", optional = true) // Not available in JDK 8
+    char[] nameArray;
+
+    @ALIAS(declaringClass = Thread.class, name = "name", optional = true) // Not available in JDK 7
+    String nameString;
 
     @ALIAS(declaringClass = Thread.class)
     AccessControlContext inheritedAccessControlContext;
@@ -334,7 +337,11 @@ public final class JDK_java_lang_Thread {
             return thread.getName();
         } else {
             JDK_java_lang_Thread thisThread = asThis(thread);
-            return String.valueOf(thisThread.name);
+            if (JDK.JDK_VERSION == JDK.JDK_7) {
+                return String.valueOf(thisThread.nameArray);
+            } else {
+                return thisThread.nameString;
+            }
         }
     }
 
@@ -347,7 +354,11 @@ public final class JDK_java_lang_Thread {
         if (thisVMThread() != null) {
             return thisVMThread().getName();
         } else {
-            return String.valueOf(name);
+            if (JDK.JDK_VERSION == JDK.JDK_7) {
+                return String.valueOf(nameArray);
+            } else {
+                return nameString;
+            }
         }
     }
 
@@ -361,6 +372,10 @@ public final class JDK_java_lang_Thread {
         if (thisVMThread() != null) {
             thisVMThread().setName(name);
         }
-        this.name = name.toCharArray();
+        if (JDK.JDK_VERSION == JDK.JDK_7) {
+            this.nameArray = name.toCharArray();
+        } else {
+            this.nameString = name;
+        }
     }
 }

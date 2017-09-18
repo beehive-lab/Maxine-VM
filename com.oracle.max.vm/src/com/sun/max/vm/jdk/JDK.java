@@ -17,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.jdk;
 
@@ -36,11 +32,56 @@ import com.sun.max.vm.actor.holder.*;
  */
 public class JDK {
 
+    /**
+     * The format supported for JDK version strings.
+     */
+    public static final Pattern JDK_VERSION_STRING_PATTERN = Pattern.compile("1.(\\d+)");
+
+    /**
+     * JDK version string extract from the "java.specification.version" system property.
+     */
+    public static final String JDK_VERSION_STRING = System.getProperty("java.specification.version");
+
+    /**
+     * Version number of the JDK.
+     */
+    public static final int JDK_VERSION = jdkVersionValue(JDK_VERSION_STRING);
+
+    /**
+     * Value for {@linkplain JDK_VERSION} for JDK 6.
+     */
+    public static final int JDK_6 = 6;
+
+    /**
+     * Value for {@linkplain JDK_VERSION} for JDK 7.
+     */
+    public static final int JDK_7 = 7;
+
+    /**
+     * Value for {@linkplain JDK_VERSION} for JDK 8.
+     */
+    public static final int JDK_8 = 8;
+
+    /**
+     * Parses a JDK version string into an integer.
+     *
+     * @param version a version string that must conform to {@link #JDK_VERSION_STRING_PATTERN}
+     * @return the integer value following the decimal in {@code version}
+     */
+    public static int jdkVersionValue(String version) {
+        Matcher m = JDK_VERSION_STRING_PATTERN.matcher(version);
+        if (!m.matches()) {
+            throw new IllegalArgumentException(version + " is not in a recognized version string format");
+        }
+        return Integer.parseInt(m.group(1));
+    }
+
     // Checkstyle: stop field name check
     public static final ClassRef java_lang_ApplicationShutdownHooks  = new ClassRef("java.lang.ApplicationShutdownHooks");
     public static final ClassRef java_lang_Class                     = new ClassRef(Class.class);
     public static final ClassRef java_lang_Class$Atomic              = new ClassRef(Class.class, "Atomic");
     public static final ClassRef java_lang_Class$ReflectionData      = new ClassRef(Class.class, "ReflectionData");
+    public static final ClassRef java_lang_Class$AnnotationData      = new LazyClassRef(Class.class, "AnnotationData");
     public static final ClassRef java_lang_ClassLoader               = new ClassRef(ClassLoader.class);
     public static final ClassRef java_lang_ClassLoader$NativeLibrary = new ClassRef(ClassLoader.class, "NativeLibrary");
     public static final ClassRef java_lang_Cloneable                 = new ClassRef(Cloneable.class);
@@ -56,10 +97,17 @@ public class JDK {
     public static final ClassRef java_lang_Throwable                 = new ClassRef(Throwable.class);
     public static final ClassRef java_lang_Terminator                = new ClassRef("java.lang.Terminator");
 
+    public static final ClassRef java_lang_invoke_CallSite           = new LazyClassRef("java.lang.invoke.CallSite");
+    public static final ClassRef java_lang_invoke_DirectMethodHandle = new LazyClassRef("java.lang.invoke.DirectMethodHandle");
+    public static final ClassRef java_lang_invoke_InvokerBytecodeGenerator = new LazyClassRef("java.lang.invoke.InvokerBytecodeGenerator");
+    public static final ClassRef java_lang_invoke_Invokers           = new LazyClassRef("java.lang.invoke.Invokers");
     public static final ClassRef java_lang_invoke_LambdaForm         = new LazyClassRef("java.lang.invoke.LambdaForm");
     public static final ClassRef java_lang_invoke_MethodHandle       = new LazyClassRef("java.lang.invoke.MethodHandle");
     public static final ClassRef java_lang_invoke_MethodType         = new LazyClassRef("java.lang.invoke.MethodType");
-    public static final ClassRef java_lang_invoke_MethodType$WeakInternSet = new ClassRef("java.lang.invoke.MethodType$WeakInternSet");
+    public static final ClassRef java_lang_invoke_MethodType$WeakInternSet =
+            new ClassRef("java.lang.invoke.MethodType$WeakInternSet");
+    public static final ClassRef java_lang_invoke_MethodType$ConcurrentWeakInternSet =
+            new ClassRef("java.lang.invoke.MethodType$ConcurrentWeakInternSet");
 
     public static final ClassRef java_lang_ref_Finalizer                   = new ClassRef("java.lang.ref.Finalizer");
     public static final ClassRef java_lang_ref_Finalizer$FinalizerThread   = new ClassRef("java.lang.ref.Finalizer$FinalizerThread");
@@ -71,6 +119,7 @@ public class JDK {
     public static final ClassRef java_io_Serializable                = new ClassRef(java.io.Serializable.class);
     public static final ClassRef java_io_UnixFileSystem              = new ClassRef("java.io.UnixFileSystem", true);
     public static final ClassRef java_io_ExpiringCache               = new ClassRef("java.io.ExpiringCache");
+    public static final ClassRef java_io_File                        = new LazyClassRef("java.io.File");
     public static final ClassRef java_net_InetSocketAddress          = new LazyClassRef("java.net.InetSocketAddress");
 
     public static final ClassRef java_nio_Bits                       = new LazyClassRef("java.nio.Bits");
@@ -92,6 +141,7 @@ public class JDK {
     public static final ClassRef java_nio_charset_CharsetEncoder     = new LazyClassRef(java.nio.charset.CharsetEncoder.class);
 
     public static final ClassRef java_lang_reflect_Constructor       = new ClassRef(java.lang.reflect.Constructor.class);
+    public static final ClassRef java_lang_reflect_Executable        = new LazyClassRef("java.lang.reflect.Executable");
     public static final ClassRef java_lang_reflect_Field             = new ClassRef(java.lang.reflect.Field.class);
     public static final ClassRef java_lang_reflect_Method            = new ClassRef(java.lang.reflect.Method.class);
     public static final ClassRef java_lang_reflect_Proxy             = new LazyClassRef(java.lang.reflect.Proxy.class);
@@ -104,21 +154,28 @@ public class JDK {
     public static final ClassRef java_util_HashMap_Holder            = new ClassRef("java.util.HashMap$Holder", true);
 
     public static final ClassRef java_math_BigInteger                = new LazyClassRef(java.math.BigInteger.class);
+    public static final ClassRef java_math_BigInteger_UnsafeHolder   = new LazyClassRef(java.math.BigInteger.class, "UnsafeHolder");
 
     public static final ClassRef java_util_concurrent_ConcurrentSkipListSet = new LazyClassRef(java.util.concurrent.ConcurrentSkipListSet.class);
     public static final ClassRef java_util_concurrent_ConcurrentLinkedQueue= new LazyClassRef(java.util.concurrent.ConcurrentLinkedQueue.class);
     public static final ClassRef java_util_concurrent_ConcurrentLinkedQueue$Node= new LazyClassRef(java.util.concurrent.ConcurrentLinkedQueue.class, "Node");
     public static final ClassRef java_util_concurrent_CopyOnWriteArrayList = new LazyClassRef(java.util.concurrent.CopyOnWriteArrayList.class);
     public static final ClassRef java_util_concurrent_ConcurrentHashMap = new LazyClassRef(java.util.concurrent.ConcurrentHashMap.class);
+    public static final ClassRef java_util_concurrent_ConcurrentHashMap$CounterCell =
+            new LazyClassRef(java.util.concurrent.ConcurrentHashMap.class, "CounterCell");
     public static final ClassRef java_util_concurrent_ConcurrentHashMap$HashEntry = new LazyClassRef(java.util.concurrent.ConcurrentHashMap.class, "HashEntry");
+    public static final ClassRef java_util_concurrent_ConcurrentHashMap$TreeBin = new LazyClassRef(java.util.concurrent.ConcurrentHashMap.class, "TreeBin");
     public static final ClassRef java_util_concurrent_SynchronousQueue = new LazyClassRef(java.util.concurrent.SynchronousQueue.class);
     public static final ClassRef java_util_concurrent_SynchronousQueue$TransferStack = new LazyClassRef(java.util.concurrent.SynchronousQueue.class, "TransferStack");
     public static final ClassRef java_util_concurrent_SynchronousQueue$TransferStack$SNode = new LazyClassRef(java.util.concurrent.SynchronousQueue.class, "TransferStack$SNode");
     public static final ClassRef java_util_concurrent_SynchronousQueue$TransferQueue = new LazyClassRef(java.util.concurrent.SynchronousQueue.class, "TransferQueue");
     public static final ClassRef java_util_concurrent_SynchronousQueue$TransferQueue$QNode = new LazyClassRef(java.util.concurrent.SynchronousQueue.class, "TransferQueue$QNode");
     public static final ClassRef java_util_concurrent_ForkJoinPool      = new LazyClassRef("java.util.concurrent.ForkJoinPool");
+    public static final ClassRef java_util_concurrent_ForkJoinPool$WorkQueue = new LazyClassRef(java.util.concurrent.ForkJoinPool.class, "WorkQueue");
     public static final ClassRef java_util_concurrent_ForkJoinWorkerThread = new LazyClassRef("java.util.concurrent.ForkJoinWorkerThread");
     public static final ClassRef java_util_concurrent_ForkJoinTask      = new LazyClassRef("java.util.concurrent.ForkJoinTask");
+    public static final ClassRef java_util_concurrent_ThreadLocalRandom  = new LazyClassRef("java.util.concurrent.ThreadLocalRandom");
+    public static final ClassRef java_util_concurrent_ThreadPoolExecutor = new LazyClassRef("java.util.concurrent.ThreadPoolExecutor");
 
     public static final ClassRef java_util_concurrent_atomic_AtomicBoolean = new LazyClassRef(java.util.concurrent.atomic.AtomicBoolean.class);
     public static final ClassRef java_util_concurrent_atomic_AtomicInteger = new LazyClassRef(java.util.concurrent.atomic.AtomicInteger.class);
@@ -139,6 +196,7 @@ public class JDK {
     public static final ClassRef java_util_concurrent_locks_AbstractQueuedLongSynchronizer = new LazyClassRef(java.util.concurrent.locks.AbstractQueuedLongSynchronizer.class);
     public static final ClassRef java_util_concurrent_locks_AbstractQueuedLongSynchronizer$Node = new LazyClassRef(java.util.concurrent.locks.AbstractQueuedLongSynchronizer.class, "Node");
     public static final ClassRef java_util_concurrent_locks_LockSupport = new LazyClassRef(java.util.concurrent.locks.LockSupport.class);
+    public static final ClassRef java_util_concurrent_locks_ReentrantReadWriteLock = new LazyClassRef("java.util.concurrent.locks.ReentrantReadWriteLock");
 
     public static final ClassRef sun_misc_VM                         = new ClassRef(sun.misc.VM.class);
     public static final ClassRef sun_misc_Version                    = new ClassRef(sun.misc.Version.class);
@@ -157,6 +215,11 @@ public class JDK {
 
     public static final ClassRef sun_security_action_GetPropertyAction      = new ClassRef(sun.security.action.GetPropertyAction.class);
     public static final ClassRef sun_security_jca_ProviderConfig            = new LazyClassRef("sun.security.jca.ProviderConfig");
+
+    public static final ClassRef java_time_chrono_AbstractChronology        = new LazyClassRef("java.time.chrono.AbstractChronology");
+    public static final ClassRef java_time_format_DateTimeFormatter         = new LazyClassRef("java.time.format.DateTimeFormatter");
+    public static final ClassRef java_time_format_DateTimeFormatterBuilder  = new LazyClassRef("java.time.format.DateTimeFormatterBuilder");
+    public static final ClassRef java_time_temporal_TemporalQueries         = new LazyClassRef("java.time.temporal.TemporalQueries");
 
     // Checkstyle: resume field name check
 
@@ -258,45 +321,6 @@ public class JDK {
         public final Class javaClass() {
             return Classes.forName(className);
         }
-    }
-
-    /**
-     * The format supported for JDK version strings.
-     */
-    public static final Pattern JDK_VERSION_STRING_PATTERN = Pattern.compile("1.(\\d+)");
-
-    /**
-     * JDK version string extract from the "java.specification.version" system property.
-     */
-    public static final String JDK_VERSION_STRING = System.getProperty("java.specification.version");
-
-    /**
-     * Version number of the JDK.
-     */
-    public static final int JDK_VERSION = jdkVersionValue(JDK_VERSION_STRING);
-
-    /**
-     * Value for {@linkplain JDK_VERSION} for JDK 6.
-     */
-    public static final int JDK_6 = 6;
-
-    /**
-     * Value for {@linkplain JDK_VERSION} for JDK 7.
-     */
-    public static final int JDK_7 = 7;
-
-    /**
-     * Parses a JDK version string into an integer.
-     *
-     * @param version a version string that must conform to {@link #JDK_VERSION_STRING_PATTERN}
-     * @return the integer value following the decimal in {@code version}
-     */
-    public static int jdkVersionValue(String version) {
-        Matcher m = JDK_VERSION_STRING_PATTERN.matcher(version);
-        if (!m.matches()) {
-            throw new IllegalArgumentException(version + " is not in a recognized version string format");
-        }
-        return Integer.parseInt(m.group(1));
     }
 
     /**

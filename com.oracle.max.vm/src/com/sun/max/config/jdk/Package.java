@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2015, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2010, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -74,53 +76,78 @@ public class Package extends BootImagePackage {
         /* The following are from the java.lang.invoke and sun.invoke.util packages
          * and are to exclude from the boot image static stale MemberName objects.
          */
-        // MethodHandle
-        Extensions.resetField("java.lang.invoke.MethodHandle", "NF_reinvokerTarget");
-        Extensions.registerClassForReInit("java.lang.invoke.MethodHandle");
+        if (JDK.JDK_VERSION == JDK.JDK_7) {
+            // MethodHandle
+            Extensions.resetField("java.lang.invoke.MethodHandle", "NF_reinvokerTarget");
+            Extensions.registerClassForReInit("java.lang.invoke.MethodHandle");
+        }
 
         // LambdaForm$NamedFunction
         Extensions.resetField("java.lang.invoke.LambdaForm$NamedFunction", "INVOKER_METHOD_TYPE");
         Extensions.registerClassForReInit("java.lang.invoke.LambdaForm$NamedFunction");
 
+        if (JDK.JDK_VERSION == JDK.JDK_8) {
+            Extensions.resetField("java.lang.invoke.MethodHandles", "ACCESS_PERMISSION");
+            Extensions.resetField("java.lang.invoke.MethodHandles", "IDENTITY_MHS");
+            Extensions.resetField("java.lang.invoke.MethodHandles", "ZERO_MHS");
+        }
+        Extensions.resetField("java.lang.invoke.MethodHandles", "IMPL_NAMES");
+        Extensions.registerClassForReInit("java.lang.invoke.MethodHandles");
+
         // LambdaForm
-        Extensions.resetField("java.lang.invoke.LambdaForm", "PREPARED_FORMS");
+        if (JDK.JDK_VERSION == JDK.JDK_7) {
+            Extensions.resetField("java.lang.invoke.LambdaForm", "PREPARED_FORMS");
+            Extensions.resetField("java.lang.invoke.LambdaForm", "CONSTANT_ZERO");
+        }
         Extensions.resetField("java.lang.invoke.LambdaForm", "INTERNED_ARGUMENTS");
-        Extensions.resetField("java.lang.invoke.LambdaForm", "CONSTANT_ZERO");
         Extensions.registerClassForReInit("java.lang.invoke.LambdaForm");
 
         // Invokers
+        if (JDK.JDK_VERSION == JDK.JDK_7) {
+            Extensions.resetField("java.lang.invoke.Invokers", "NF_asType");
+        } else {
+            Extensions.resetField("java.lang.invoke.Invokers", "NF_checkCustomized");
+        }
         Extensions.resetField("java.lang.invoke.Invokers", "NF_checkExactType");
         Extensions.resetField("java.lang.invoke.Invokers", "NF_checkGenericType");
-        Extensions.resetField("java.lang.invoke.Invokers", "NF_asType");
         Extensions.resetField("java.lang.invoke.Invokers", "NF_getCallSiteTarget");
         Extensions.registerClassForReInit("java.lang.invoke.Invokers");
 
         // ValueConversions
+        if (JDK.JDK_VERSION == JDK.JDK_7) {
+            Extensions.resetField("sun.invoke.util.ValueConversions", "IDENTITY");
+            Extensions.resetField("sun.invoke.util.ValueConversions", "ZERO_OBJECT");
+            Extensions.resetField("sun.invoke.util.ValueConversions", "ARRAY_IDENTITY");
+            Extensions.resetField("sun.invoke.util.ValueConversions", "FILL_NEW_TYPED_ARRAY");
+            Extensions.resetField("sun.invoke.util.ValueConversions", "FILL_NEW_ARRAY");
+            Extensions.resetField("sun.invoke.util.ValueConversions", "COLLECT_ARGUMENTS");
+            Extensions.resetField("sun.invoke.util.ValueConversions", "WRAPPER_CASTS");
+            Extensions.resetField("sun.invoke.util.ValueConversions", "NO_ARGS_ARRAY");
+            Extensions.resetField("sun.invoke.util.ValueConversions", "NO_ARGS_LIST");
+            Extensions.resetField("sun.invoke.util.ValueConversions", "TYPED_COLLECTORS");
+            Extensions.resetField("sun.invoke.util.ValueConversions", "ARRAYS");
+            Extensions.resetField("sun.invoke.util.ValueConversions", "FILL_ARRAYS");
+            Extensions.resetField("sun.invoke.util.ValueConversions", "FILL_ARRAY_TO_RIGHT");
+            Extensions.resetField("sun.invoke.util.ValueConversions", "LISTS");
+        }
         Extensions.resetField("sun.invoke.util.ValueConversions", "UNBOX_CONVERSIONS");
         Extensions.resetField("sun.invoke.util.ValueConversions", "BOX_CONVERSIONS");
         Extensions.resetField("sun.invoke.util.ValueConversions", "CONSTANT_FUNCTIONS");
-        Extensions.resetField("sun.invoke.util.ValueConversions", "IDENTITY");
         Extensions.resetField("sun.invoke.util.ValueConversions", "CAST_REFERENCE");
-        Extensions.resetField("sun.invoke.util.ValueConversions", "ZERO_OBJECT");
         Extensions.resetField("sun.invoke.util.ValueConversions", "IGNORE");
         Extensions.resetField("sun.invoke.util.ValueConversions", "EMPTY");
-        Extensions.resetField("sun.invoke.util.ValueConversions", "ARRAY_IDENTITY");
-        Extensions.resetField("sun.invoke.util.ValueConversions", "FILL_NEW_TYPED_ARRAY");
-        Extensions.resetField("sun.invoke.util.ValueConversions", "FILL_NEW_ARRAY");
-        Extensions.resetField("sun.invoke.util.ValueConversions", "COLLECT_ARGUMENTS");
-        Extensions.resetField("sun.invoke.util.ValueConversions", "WRAPPER_CASTS");
         Extensions.resetField("sun.invoke.util.ValueConversions", "CONVERT_PRIMITIVE_FUNCTIONS");
-        Extensions.resetField("sun.invoke.util.ValueConversions", "NO_ARGS_ARRAY");
-        Extensions.resetField("sun.invoke.util.ValueConversions", "NO_ARGS_LIST");
-        Extensions.resetField("sun.invoke.util.ValueConversions", "TYPED_COLLECTORS");
-        Extensions.resetField("sun.invoke.util.ValueConversions", "ARRAYS");
-        Extensions.resetField("sun.invoke.util.ValueConversions", "FILL_ARRAYS");
-        Extensions.resetField("sun.invoke.util.ValueConversions", "FILL_ARRAY_TO_RIGHT");
-        Extensions.resetField("sun.invoke.util.ValueConversions", "LISTS");
         Extensions.registerClassForReInit("sun.invoke.util.ValueConversions");
 
         Extensions.resetField("java.lang.invoke.MethodHandleImpl$BindCaller", "MH_checkCallerClass");
         Extensions.registerClassForReInit("java.lang.invoke.MethodHandleImpl$BindCaller");
+
+        if (JDK.JDK_VERSION == JDK.JDK_8) {
+            Extensions.resetField("java.lang.invoke.MethodHandles$Lookup", "LOOKASIDE_TABLE");
+            Extensions.registerClassForReInit("java.lang.invoke.MethodHandles$Lookup");
+            Extensions.resetField("java.io.File", "fs");
+            Extensions.registerClassForReInit("java.io.File");
+        }
     }
 
     /**
@@ -188,6 +215,16 @@ public class Package extends BootImagePackage {
          */
         CompiledPrototype.addCompilationBlacklist("java.lang.invoke.MethodHandleImpl");
         CompiledPrototype.addCompilationBlacklist("java.lang.invoke.DirectMethodHandle");
+        CompiledPrototype.addCompilationBlacklist("java.lang.invoke.CallSite");
+
+        if (JDK.JDK_VERSION == JDK.JDK_8) {
+            // Avoid Lambdas
+            CompiledPrototype.addCompilationBlacklist("java.lang.UNIXProcess");
+            // Depends on java.lang.invoke.BoundMethodHandle which is omitted
+            CompiledPrototype.addCompilationBlacklist("java.lang.invoke.LambdaForm");
+            // Classes in this package break compilation
+            CompiledPrototype.addCompilationBlacklist("java.time");
+        }
 
         // Exceptions from the above blacklisted packages
         CompiledPrototype.addCompilationWhitelist("sun.security.util.Debug");

@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.vm.jdk;
 
@@ -44,7 +42,14 @@ public final class JDK_java_lang_ClassLoader_NativeLibrary {
      * @see java.lang.ClassLoader.NativeLibrary#load(String)
      * @param absolutePathname the pathname to the file that is a native library
      */
-    @SUBSTITUTE
+    @SUBSTITUTE(optional = true) // Not available in JDK 7
+    void load(String absolutePathname, boolean isBuiltin) throws Throwable {
+        load(absolutePathname);
+        JDK_java_lang_ClassLoader_NativeLibrary thisNativeLibrary = asThis(this);
+        thisNativeLibrary.isBuiltin = isBuiltin;
+        thisNativeLibrary.loaded = true;
+    }
+    @SUBSTITUTE(optional = true) // Not available in JDK 8
     void load(String absolutePathname) throws Throwable {
         final Address address = DynamicLinker.load(absolutePathname).asAddress();
         if (!address.isZero()) {
@@ -77,6 +82,12 @@ public final class JDK_java_lang_ClassLoader_NativeLibrary {
     @ALIAS(declaringClass = ClassLoader.class, innerClass = "NativeLibrary")
     private long handle;
 
+    @ALIAS(declaringClass = ClassLoader.class, innerClass = "NativeLibrary", optional = true) // Not available in JDK 7
+    private boolean loaded;
+
+    @ALIAS(declaringClass = ClassLoader.class, innerClass = "NativeLibrary", optional = true) // Not available in JDK 7
+    private boolean isBuiltin;
+
     @INTRINSIC(UNSAFE_CAST)
     private static native JDK_java_lang_ClassLoader_NativeLibrary asThis(Object nativeLibrary);
 
@@ -97,7 +108,11 @@ public final class JDK_java_lang_ClassLoader_NativeLibrary {
      * Unloads this native library.
      * @see java.lang.ClassLoader.NativeLibrary#unload()
      */
-    @SUBSTITUTE
+    @SUBSTITUTE(optional = true) // Not available in JDK 7
+    void unload(String symbolName, boolean isBuiltin) {
+        unload();
+    }
+    @SUBSTITUTE(optional = true) // Not available in JDK 8
     void unload() {
         JDK_java_lang_ClassLoader_NativeLibrary thisNativeLibrary = asThis(this);
         final Address handle = Address.fromLong(thisNativeLibrary.handle);

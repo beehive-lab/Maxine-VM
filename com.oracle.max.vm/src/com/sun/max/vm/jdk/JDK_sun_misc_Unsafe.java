@@ -806,7 +806,7 @@ final class JDK_sun_misc_Unsafe {
      * @return a new class from the specified parameters
      */
     @SuppressWarnings("deprecation")
-    @SUBSTITUTE
+    @SUBSTITUTE(optional = true) // Not available in JDK 8
     public Class defineClass(String name, byte[] bytes, int offset, int length) {
         @SuppressWarnings("deprecation")
         final Class currentClass = Reflection.getCallerClass(2);

@@ -304,7 +304,7 @@ final class JDK_java_lang_Class {
      *
      * @param protectionDomain
      */
-    @SUBSTITUTE
+    @SUBSTITUTE(optional = true) // Not available in JDK 8
     void setProtectionDomain0(ProtectionDomain protectionDomain) {
         thisClassActor().setProtectionDomain(protectionDomain);
     }
@@ -330,8 +330,12 @@ final class JDK_java_lang_Class {
      * @see java.lang.Class#getGenericSignature()
      * @return the generic signature of this class as a string
      */
-    @SUBSTITUTE
+    @SUBSTITUTE(optional = true) // Not available in JDK 8
     private String getGenericSignature() {
+        return thisClassActor().genericSignatureString();
+    }
+    @SUBSTITUTE(optional = true) // Not available in JDK 7
+    private String getGenericSignature0() {
         return thisClassActor().genericSignatureString();
     }
 

@@ -48,7 +48,7 @@ public final class JDK_java_lang_invoke_InvokerBytecodeGenerator {
     private        int[]      localsMap;
 
     /**
-     * Customized copy of {@code makeDumpableClassName}.
+     * Customized copy of {@code java.lang.invoke.InvokerBytecodeGenerator.makeDumpableClassName}.
      */
     private static String getUniqueClassName(String className) {
         Integer ctr;
