@@ -166,24 +166,6 @@ public final class MaxMethodHandles {
         }
     }
 
-
-    /**
-     * Part of #5.4.3.4.
-     */
-    private static MethodActor findInterfaceMethodActor(InterfaceActor interfaceActor, Utf8Constant name, SignatureDescriptor descriptor) {
-        MethodActor result = interfaceActor.findLocalInterfaceMethodActor(name, descriptor);
-        if (result != null) {
-            return result;
-        }
-        for (InterfaceActor i : interfaceActor.localInterfaceActors()) {
-            result = findInterfaceMethodActor(i, name, descriptor);
-            if (result != null) {
-                return result;
-            }
-        }
-        return null;
-    }
-
     /**
      * Resolution of interface method as described in JVM Spec 8 $5.4.3.4.
      *
