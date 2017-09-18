@@ -107,6 +107,10 @@ public class IntrinsicIDs {
     /**
      * MethodHandle invokeBasic intrinsic method.
      */
+    public static final String INVOKE = p + "INVOKE";
+    /**
+     * MethodHandle invokeBasic intrinsic method.
+     */
     public static final String INVOKEBASIC = p + "INVOKEBASIC";
     /**
      * Method handle linkToVirtual intrinsic method.

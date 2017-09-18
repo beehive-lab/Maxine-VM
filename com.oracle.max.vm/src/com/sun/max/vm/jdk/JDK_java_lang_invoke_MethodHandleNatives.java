@@ -242,7 +242,7 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
 
         if ((flags & ALL_KINDS) == IS_METHOD && (clazz == MethodHandle.class) &&
                         (refKind == JVM_REF_invokeVirtual || refKind == JVM_REF_invokeSpecial || refKind == JVM_REF_invokeStatic)) {
-            MethodHandleIntrinsicID iid = MethodHandleIntrinsicID.fromName(name);
+            MethodHandleIntrinsicID iid = MethodHandleIntrinsicID.fromName(classActor, name);
             if (iid != MethodHandleIntrinsicID.None &&
                             ((refKind == JVM_REF_invokeStatic) == MethodHandleIntrinsicID.isSignaturePolymorphicStatic(iid))) {
                 mhInvokeID = iid;

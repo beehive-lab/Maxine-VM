@@ -23,7 +23,7 @@ package com.sun.max.vm.methodhandle;
 import static com.oracle.max.cri.intrinsics.IntrinsicIDs.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.actor.Actor.*;
-import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.*;
 import static com.sun.max.vm.jdk.JDK_java_lang_invoke_MethodHandleNatives.*;
 import static com.sun.max.vm.methodhandle.MaxMethodHandles.MethodHandleIntrinsicID.*;
 
@@ -60,15 +60,18 @@ public final class MaxMethodHandles {
      * Intrinsics for the MethodHandle VM invocation semantics.
      */
     public enum MethodHandleIntrinsicID {
-        // TODO check these
-        InvokeGeneric("invoke", null),
+        // The ID _invokeGeneric stands for all non-static signature-polymorphic methods, except built-ins.
+        InvokeGeneric("invoke", INVOKE),
+        // The only built-in non-static signature-polymorphic method is MethodHandle.invokeBasic:
         InvokeBasic("invokeBasic", INVOKEBASIC),
+
+        // There is one static signature-polymorphic method for each JVM invocation mode.
         LinkToVirtual("linkToVirtual", LINKTOVIRTUAL),
         LinkToStatic("linkToStatic", LINKTOSTATIC),
         LinkToSpecial("linkToSpecial", LINKTOSPECIAL),
         LinkToInterface("linkToInterface", LINKTOINTERFACE),
-        None(null, null);
 
+        None(null, null);
 
         MethodHandleIntrinsicID(String name, String intrinsic) {
             this.name = name;
@@ -78,45 +81,88 @@ public final class MaxMethodHandles {
         final String intrinsic;
 
         /**
-         * Return the intrinsic ID given the method name a la HotSpot.
+         * Port of Hotspot's MethodHandles::is_method_handle_invoke_name(Klass* klass, Symbol* name) from
+         * methodHandles.cpp .
+         *
+         * @param classActor
          * @param name
          * @return
          */
-        public static MethodHandleIntrinsicID fromName(String name) {
-            if (name == null || name.equals("")) {
+        private static boolean isMethodHandleInvokeName(ClassActor classActor, String name) {
+            if (classActor == null) {
+                return false;
+            }
+            // A method is signature polymorphic if and only if all of the following conditions hold :
+            // 1) It is declared in the java.lang.invoke.MethodHandle class.
+            if (classActor.javaClass() != java.lang.invoke.MethodHandle.class) {
+                return false;
+            }
+
+            // 2) It has a single formal parameter of type Object[].
+            // 3) It has a return type of Object.
+            MethodType type = MethodType.methodType(Object.class, Object[].class);
+            SignatureDescriptor signature = SignatureDescriptor.create(type.toMethodDescriptorString());
+            MethodActor ma = classActor.findMethodActor(SymbolTable.makeSymbol(name), signature);
+            if (ma == null) {
+                return false;
+            }
+
+            // 4) It has the ACC_VARARGS and ACC_NATIVE flags set.
+            int required = ACC_NATIVE | ACC_VARARGS;
+            int flags    = ma.flags();
+            return (flags & required) == required;
+        }
+
+        /**
+         * Return the intrinsic ID given the method name a la HotSpot.
+         * Port of vmIntrinsics::ID MethodHandles::signature_polymorphic_name_id(Symbol* name) from methodHandles.cpp
+         *
+         * @param name
+         * @return
+         */
+        public static MethodHandleIntrinsicID fromName(ClassActor classActor, String name) {
+            if (name == null) {
                 return None;
             }
 
-            /*
-             * InvokeGeneric is what its called in HotSpot. There is no
-             * reason for explicitly mapping invokeExact to invokeGeneric other
-             * than to align the naming with the HotSpot source to make it easier to follow.
-             */
-            if (name.equals("invokeExact")) {
-                return InvokeGeneric;
-            }
-
             for (MethodHandleIntrinsicID s : values()) {
-                if (s.name == name) {
+                if (name.equals(s.name)) {
                     return s;
                 }
+            }
+
+            // Cover the case of invokeExact and any future variants of invokeFoo.
+            if (isMethodHandleInvokeName(classActor, name)) {
+                return InvokeGeneric;
             }
 
             return None;
         }
 
-        public static boolean isSignaturePolymorphicIntrinsic(MethodHandleIntrinsicID name) {
-            return name != InvokeGeneric;
+        public static boolean isSignaturePolymorphic(MethodHandleIntrinsicID iid) {
+            for (MethodHandleIntrinsicID s : values()) {
+                if (s == iid) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public static boolean isSignaturePolymorphicIntrinsic(MethodHandleIntrinsicID iid) {
+            assert isSignaturePolymorphic(iid);
+            return iid != InvokeGeneric;
         }
 
         /**
          * Return true if the argument is a signature polymorphic static linkTo* method,
          * and false otherwise.
-         * @param name
+         * @param iid
          * @return
          */
-        public static boolean isSignaturePolymorphicStatic(MethodHandleIntrinsicID name) {
-            return name == LinkToVirtual || name == LinkToStatic || name == LinkToSpecial || name == LinkToInterface;
+        public static boolean isSignaturePolymorphicStatic(MethodHandleIntrinsicID iid) {
+            assert isSignaturePolymorphic(iid);
+            return iid.name.startsWith("linkTo");
         }
     }
 
@@ -260,7 +306,7 @@ public final class MaxMethodHandles {
      */
     public static MethodActor lookupPolymorphicMethod(ClassActor classActor, String name, MethodType type, Class< ? > caller, Object [] appendix) {
         Trace.begin(1, "MethodHandles.lookupPolymorphicMethod()");
-        MethodHandleIntrinsicID iid = fromName(name);
+        MethodHandleIntrinsicID iid = fromName(classActor, name);
         MethodActor actor = null;
         Trace.line(1, "iid=" + iid + ", class=" + classActor.javaClass().getName() + ", type=" + type);
         if (classActor.javaClass().equals(MethodHandle.class) && iid != None) {
