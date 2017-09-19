@@ -25,6 +25,7 @@ package test.output;
 /**
  * A simple test for {@link Runtime#runFinalizersOnExit(boolean)}.
  */
+@SuppressWarnings("deprecation")
 public class RunFinalizersOnExit {
 
     @Override
