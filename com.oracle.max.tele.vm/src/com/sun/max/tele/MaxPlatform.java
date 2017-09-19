@@ -93,12 +93,7 @@ public interface MaxPlatform {
         }
 
         public String libjvmName() {
-            String base = "libjvm";
-            if (this == DARWIN && JDK.JDK_VERSION == JDK.JDK_6) {
-                return base + "linkage";
-            } else  {
-                return base;
-            }
+            return "libjvm";
         }
 
         @Override

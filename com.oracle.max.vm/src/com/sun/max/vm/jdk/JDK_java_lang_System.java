@@ -65,7 +65,6 @@ import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
 @METHOD_SUBSTITUTIONS(System.class)
 public final class JDK_java_lang_System {
 
-    public static final String DARWIN_JAVA_HOME_JDK6_DEFAULT = "/System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home";
     public static final String DARWIN_JAVA_HOME_JDK7_DEFAULT = "/Library/Java/JavaVirtualMachines/1.7.0.jdk/Contents/Home";
 
     /**
@@ -422,21 +421,14 @@ public final class JDK_java_lang_System {
 
                 // For now, we just rely on the JAVA_HOME environment variable being set:
                 String javaHome = getenv("JAVA_HOME", false);
-                if (JDK.JDK_VERSION == JDK.JDK_6) {
-                    if (javaHome == null) {
-                        javaHome = DARWIN_JAVA_HOME_JDK6_DEFAULT;
-                    }
-                    if (!javaHome.endsWith("/Home")) {
-                        javaHome = javaHome + "/Home";
-                    }
-                } else if (JDK.JDK_VERSION == JDK.JDK_7) {
+                if (JDK.JDK_VERSION == JDK.JDK_7) {
                     if (javaHome == null) {
                         javaHome = DARWIN_JAVA_HOME_JDK7_DEFAULT;
                     }
                     if (!javaHome.endsWith("/jre")) {
                         javaHome = javaHome + "/jre";
                     }
-                } else {
+                } else { // JDK 8 is not tested on DARWIN yet
                     throw FatalError.unexpected("Unsupported DARWIN JDK version");
                 }
                 return javaHome;
@@ -755,13 +747,7 @@ public final class JDK_java_lang_System {
 
         // 7. set up classpath and library path
         final String[] javaAndZipLibraryPaths = new String[2];
-        if (Platform.platform().os == OS.DARWIN) {
-            if (JDK.JDK_VERSION == JDK.JDK_6) {
-                initDarwinJDK6PathProperties(properties, javaHome, javaAndZipLibraryPaths);
-            } else {
-                initUnixPathProperties(properties, javaHome, isa, javaAndZipLibraryPaths);
-            }
-        } else if (Platform.platform().os == OS.WINDOWS) {
+        if (Platform.platform().os == OS.WINDOWS) {
             initWindowsPathProperties(properties, javaHome, javaAndZipLibraryPaths);
         } else {
             initUnixPathProperties(properties, javaHome, isa, javaAndZipLibraryPaths);
@@ -989,51 +975,6 @@ public final class JDK_java_lang_System {
         throw FatalError.unexpected("Initialization of paths on Windows is unimplemented");
     }
 
-    /**
-     * Initializes the sun.boot.library.path, sun.boot.path, java.endorsed.dirs and java.ext.dirs system properties when running on Darwin with JDK6.
-     *
-     * @param properties             the system properties
-     * @param javaHome               the value of the java.home system property
-     * @param javaAndZipLibraryPaths an array of size 2 in which the path to the {@code libjava.jnilib} will be returned in
-     *                               element 0 and the path to {@code libzip.jnilib} will be returned in element 1
-     */
-    @PLATFORM(os = "darwin")
-    private static void initDarwinJDK6PathProperties(Properties properties, String javaHome, String[] javaAndZipLibraryPaths) {
-        FatalError.check(javaHome.endsWith("/Home"), "The java.home system property should end with \"/Home\"");
-        final String javaPath = Strings.chopSuffix(javaHome, "/Home");
-
-        final String librariesPath = javaPath + "/Libraries";
-        checkSetBootLibraryPath(properties, asClasspath(getenvExecutablePath(), librariesPath));
-
-        final String classesPath = javaPath + "/Classes";
-        String bootClassPath = null;
-        if (bootClasspathOption.isPresent()) {
-            bootClassPath = bootClasspathOption.path();
-        } else {
-            bootClassPath = join(pathSeparator,
-                    asFilesystemPath(classesPath, "classes.jar"),
-                    asFilesystemPath(classesPath, "ui.jar"),
-                    asFilesystemPath(classesPath, "laf.jar"),
-                    asFilesystemPath(classesPath, "sunrsasign.jar"),
-                    asFilesystemPath(classesPath, "jsse.jar"),
-                    asFilesystemPath(classesPath, "jce.jar"),
-                    asFilesystemPath(classesPath, "charsets.jar"));
-        }
-        SUN_BOOT_CLASS_PATH.setValue(setIfAbsent(properties, SUN_BOOT_CLASS_PATH.property, checkAugmentBootClasspath(bootClassPath)));
-        javaAndZipLibraryPaths[0] = librariesPath;
-        javaAndZipLibraryPaths[1] = librariesPath;
-
-        String extDirs = "/Library/Java/Extensions:/System/Library/Java/Extensions:" + javaHome + "/lib/ext";
-        String endorsedDirs = javaHome + "/lib/endorsed";
-        final String userHome = properties.getProperty("user.home");
-        if (userHome != null) {
-            final File userExtDir = new File(userHome, "Library/Java/Extensions/");
-            extDirs += ":" + userExtDir;
-        }
-        JAVA_EXT_DIRS.setValue(setIfAbsent(properties, JAVA_EXT_DIRS.property, extDirs));
-        JAVA_ENDORSED_DIRS.setValue(setIfAbsent(properties, JAVA_ENDORSED_DIRS.property, endorsedDirs));
-    }
-
     @PLATFORM(os = "!windows")
     /**
      * Set basic Unix properties.
@@ -1068,16 +1009,7 @@ public final class JDK_java_lang_System {
         }
         switch (platform().os) {
             case DARWIN:
-                // System.loadLibrary() first wants to look for a library with the extension ".jnilib",
-                // then if the library was not found, try again with extension ".dylib".
-                // We support this by returning its first choice here:
-                // NOTE: The above seems to no longer be true for the JDK7 port to Mac OS X, which
-                // does away with .jnilib files. For JDK 7, we return .dylib.
-                if (JDK.JDK_VERSION == JDK.JDK_6) {
-                    return "lib" + libraryName + ".jnilib";
-                } else {
-                    return "lib" + libraryName + ".dylib";
-                }
+                return "lib" + libraryName + ".dylib";
             case LINUX:
             case MAXVE:
             case SOLARIS:

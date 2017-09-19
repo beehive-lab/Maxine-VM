@@ -65,17 +65,14 @@ public final class JDK_java_lang_reflect_Method {
      * Gets the declared annotations for this method.
      * @return a map from the declaring class to its annotations
      */
-    @SuppressWarnings({ "cast", "unchecked"})
     @SUBSTITUTE
-    private synchronized Map<Class, Annotation> declaredAnnotations() {
+    private synchronized Map<Class<? extends Annotation>, Annotation> declaredAnnotations() {
         final MethodActor methodActor = thisMethodActor();
         if (declaredAnnotations == null) {
             byte[] annotations = methodActor.runtimeVisibleAnnotationsBytes();
             ConstantPoolAdapter cp = new ConstantPoolAdapter(methodActor.holder().constantPool());
             Class declaringClass = methodActor.holder().toJava();
-            // JDK 7 uses the method signature Map<Class<? extends Annotation>, Annotation>. In order to be compatible with both JDK 6 and JDK 7, use the casts below
-            declaredAnnotations = (Map<Class, Annotation>) ((Object) AnnotationParser.parseAnnotations(
-                annotations, cp, declaringClass));
+            declaredAnnotations = AnnotationParser.parseAnnotations(annotations, cp, declaringClass);
         }
         return declaredAnnotations;
     }

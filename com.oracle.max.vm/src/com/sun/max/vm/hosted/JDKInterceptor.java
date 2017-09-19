@@ -53,8 +53,7 @@ public final class JDKInterceptor {
     /**
      * These are the properties that are to be remembered (inherited) from the host VM on which the image was built.
      * Strictly speaking java vendor.* should not be inherited. However, from JDK 7 onwards all the platforms on which
-     * Maxine is built have Oracle as the vendor so it is ok. [On Mac OS/JDK 6 Maxine will incorrectly have java.vendor
-     * set to Apple.]
+     * Maxine is built have Oracle as the vendor so it is ok.
      *
      * Evidently several of these properties are sensitive to the environment the VM is running in.
      * This isn't important for the typical current uses of Maxine, but should be fixed in due course.
@@ -300,27 +299,6 @@ public final class JDKInterceptor {
             new FieldOffsetRecomputation("magOffset", "mag"),
     };
 
-    private static final Object[] interceptedFieldArrayJDK6 = {
-        JDK.java_lang_Class,
-            "declaredFields",
-            "publicFields",
-            "declaredMethods",
-            "publicMethods",
-            "declaredConstructors",
-            "publicConstructors",
-            "declaredPublicFields",
-            "declaredPublicMethods",
-            "lastRedefinedCount",
-        JDK.sun_misc_Launcher,
-            "bootstrapClassPath",
-        JDK.java_util_concurrent_atomic_AtomicIntegerArray,
-            new ArrayIndexScaleRecomputation("scale", int[].class),
-        JDK.java_util_concurrent_atomic_AtomicLongArray,
-            new ArrayIndexScaleRecomputation("scale", long[].class),
-        JDK.java_util_concurrent_atomic_AtomicReferenceArray,
-            new ArrayIndexScaleRecomputation("scale", Object[].class).makeOptional(),
-    };
-
     private static final Object[] interceptedFieldArrayJDK7 = {
         JDK.java_lang_Class,
             new ZeroField("classLoader").makeOptional(),
@@ -479,9 +457,6 @@ public final class JDKInterceptor {
     private static Map<String, Map<String, InterceptedField>> buildInterceptedFieldMap() {
         Map<String, Map<String, InterceptedField>> map = new HashMap<String, Map<String, InterceptedField>>();
         fillInterceptedFieldMap(map, interceptedFieldArray);
-        if (JDK.JDK_VERSION == JDK.JDK_6) {
-            fillInterceptedFieldMap(map, interceptedFieldArrayJDK6);
-        }
         if (JDK.JDK_VERSION == JDK.JDK_7) {
             fillInterceptedFieldMap(map, interceptedFieldArrayJDK7);
         }

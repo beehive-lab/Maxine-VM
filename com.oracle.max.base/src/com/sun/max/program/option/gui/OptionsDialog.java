@@ -192,7 +192,7 @@ public class OptionsDialog extends JDialog {
 
     protected static class ListGUIOption extends GUIOption<List<Object>> {
         private final JTextField textField;
-        private final JList list;
+        private final JList<Object> list;
 
         @SuppressWarnings("unchecked")
         protected ListGUIOption(Option<List<Object>> option) {
@@ -240,12 +240,7 @@ public class OptionsDialog extends JDialog {
         public List<Object> getValue() {
             if (guard.isSelected()) {
                 if (textField == null) {
-                    final List<Object> result = new LinkedList<Object>();
-                    // Stick to deprecated method until we EOL JDK 6 and before.
-                    for (Object value : this.list.getSelectedValues()) {
-                        result.add(value);
-                    }
-                    return null;
+                    return this.list.getSelectedValuesList();
                 }
                 return option.getType().parseValue(textField.getText());
             }

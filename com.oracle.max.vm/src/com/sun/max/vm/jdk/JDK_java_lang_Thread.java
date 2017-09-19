@@ -123,14 +123,7 @@ public final class JDK_java_lang_Thread {
             name = "Thread-" + String.valueOf(nextThreadNum());
         }
         vmThread.setJavaThread(javaThread, name);
-        if (JDK.JDK_VERSION == JDK.JDK_6 && Platform.platform().os == OS.DARWIN) {
-            // The Thread.init() method on Apple takes an extra boolean parameter named 'set_priority'
-            // which indicates if the priority should be explicitly set. For all calls to init() this
-            // argument is true *except* for a call for the purpose of attaching a thread when it is false.
-            thisThread.init(group, null, name, 0L, false);
-        } else {
-            thisThread.init(group, null, name, 0L);
-        }
+        thisThread.init(group, null, name, 0L);
 
         if (daemon) {
             thisThread.daemon = true;

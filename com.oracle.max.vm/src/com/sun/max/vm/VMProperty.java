@@ -43,7 +43,7 @@ import com.sun.max.vm.runtime.*;
  * JVMTI specifically does <b>not</b> require that the values initially set here track changes subsequently made by
  * {@link System#setProperty(String, String)}.
  *
- * We consistently use "Oracle" for vendor even though Hotspot still reports "Sun" for JDK 6.
+ * We consistently use "Oracle" for vendor.
  */
 public enum VMProperty {
     // These are the "strongly recommended" properties

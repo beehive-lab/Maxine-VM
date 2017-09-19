@@ -42,7 +42,6 @@ import com.sun.max.vm.jni.*;
 public class JVMTISystem {
 
     private static final byte[] JAVA_HOME_BYTES = "JAVA_HOME".getBytes();
-    private static final byte[] DARWIN_JAVA_HOME_JDK6_DEFAULT_BYTES = JDK_java_lang_System.DARWIN_JAVA_HOME_JDK6_DEFAULT.getBytes();
     private static final byte[] DARWIN_JAVA_HOME_JDK7_DEFAULT_BYTES = JDK_java_lang_System.DARWIN_JAVA_HOME_JDK7_DEFAULT.getBytes();
     private static final byte[] LD_LIBRARY_PATH_BYTES = "LD_LIBRARY_PATH".getBytes();
     private static final byte[] LIB_BYTES = "lib".getBytes();
@@ -92,19 +91,13 @@ public class JVMTISystem {
                 // String javaHome = getenv("JAVA_HOME", false);
                 Pointer javaHome = JVMTIEnvVar.getValue(JVMTIUtil.getByteArrayStart(JAVA_HOME_BYTES));
                 if (javaHome.isZero()) {
-                    if (JDK.JDK_VERSION == JDK.JDK_6) {
-                        javaHome = JVMTIUtil.getByteArrayStart(DARWIN_JAVA_HOME_JDK6_DEFAULT_BYTES);
-                    } else if (JDK.JDK_VERSION == JDK.JDK_7) {
+                    if (JDK.JDK_VERSION == JDK.JDK_7) {
                         javaHome = JVMTIUtil.getByteArrayStart(DARWIN_JAVA_HOME_JDK7_DEFAULT_BYTES);
                     } else {
                         FatalError.check(false, "Unsupported DARWIN JDK version");
                     }
                 }
-                if (JDK.JDK_VERSION == JDK.JDK_6) {
-                    if (!CString.endsWith(javaHome, "/Home")) {
-                        javaHome = CString.append(javaHome, "/Home");
-                    }
-                } else if (JDK.JDK_VERSION == JDK.JDK_7) {
+                if (JDK.JDK_VERSION == JDK.JDK_7) {
                     if (!CString.endsWith(javaHome, "/jre")) {
                         javaHome = CString.append(javaHome, "/jre");
                     }
@@ -143,10 +136,6 @@ public class JVMTISystem {
                 if (JDK.JDK_VERSION == JDK.JDK_7) {
                     FatalError.check(CString.endsWith(javaHome, "/jre"), "The java.home system property should end with \"/jre\"");
                     return CString.append(javaHome, "/lib");
-                } else if (JDK.JDK_VERSION == JDK.JDK_6) {
-                    FatalError.check(CString.endsWith(javaHome, "/Home"), "The java.home system property should end with \"/Home\"");
-                    final Pointer javaPath = CString.chopSuffix(javaHome, "/Home");
-                    return CString.append(javaPath, "/Libraries");
                 } else {
                     Log.println("JDK version " + JDK.JDK_VERSION + " is not supported on DARWIN");
                     MaxineVM.native_exit(1);

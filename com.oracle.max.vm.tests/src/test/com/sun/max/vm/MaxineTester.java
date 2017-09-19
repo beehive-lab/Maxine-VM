@@ -66,7 +66,7 @@ public class MaxineTester {
                     "The number of seconds to wait for an image build to complete before " +
                     "timing out and killing it.");
     private static final Option<String> javaExecutableOption = options.newStringOption("refvm", "java",
-                    "The name of or full path to the reference Java VM executable to use. This must be a JDK 6 or greater VM.");
+                    "The name of or full path to the reference Java VM executable to use. This must be a JDK 7 or greater VM.");
     /*
      * Why is the refvm-args option a String but the maxvm-args option a List<String>? Well the refvm-args option
      * is intimately tied into the "max" shell script and it's value is used in contexts where a space separated list
@@ -716,11 +716,7 @@ public class MaxineTester {
             if (exitValue == 0) {
                 // if the image was built correctly, copy the maxvm executable and shared libraries to the same directory
                 copyBinary(imageDir, "maxvm");
-                if (OS.current() == OS.DARWIN && JDK.JDK_VERSION == JDK.JDK_6) {
-                    copyBinary(imageDir, mapLibraryName("jvmlinkage"));
-                } else {
-                    copyBinary(imageDir, mapLibraryName("jvm"));
-                }
+                copyBinary(imageDir, mapLibraryName("jvm"));
                 copyBinary(imageDir, mapLibraryName("javatest"));
                 copyBinary(imageDir, mapLibraryName("hosted"));
                 copyBinary(imageDir, mapLibraryName("tele"));

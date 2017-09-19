@@ -25,7 +25,6 @@ package com.sun.max.tele.object;
 import com.sun.max.jdwp.vm.proxy.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.data.*;
-import com.sun.max.tele.field.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.classfile.constant.*;
@@ -35,29 +34,6 @@ import com.sun.max.vm.type.*;
  * Canonical surrogate for an object of type {@link String} in the VM.
  */
 public final class TeleString extends TeleTupleObject implements StringProvider {
-
-    private static final TeleInstanceIntFieldAccess String_count;
-    private static final TeleInstanceIntFieldAccess String_offset;
-    private static boolean jdk7u6orNewer = true;
-
-    static {
-        /**
-         * Starting with JDK 7 update 6, the String class no longer has the offset and count fields.
-         * We want to support both String variants (this is necessary until we drop support for JDK 6).
-         */
-        try {
-            String.class.getDeclaredField("offset");
-            jdk7u6orNewer = false;
-        } catch (NoSuchFieldException e) {
-        }
-        if (jdk7u6orNewer) {
-            String_count = null;
-            String_offset = null;
-        } else {
-            String_count = new TeleInstanceIntFieldAccess(String.class, "count");
-            String_offset = new TeleInstanceIntFieldAccess(String.class, "offset");
-        }
-    }
 
     /**
      * Returns a local copy of a Java {@link String} object in the VM's heap, without creating an instance of {@link TeleString}.
@@ -76,16 +52,9 @@ public final class TeleString extends TeleTupleObject implements StringProvider 
                 return null;
             }
             vm.referenceManager().checkReference(charArrayRef);
-            int charCount = 0;
-            int charOffset = 0;
-            if (jdk7u6orNewer) {
-                charCount = vm.objects().unsafeReadArrayLength(charArrayRef);
-            } else {
-                charCount = String_count.readInt(stringRef);
-                charOffset = String_offset.readInt(stringRef);
-            }
+            int charCount = vm.objects().unsafeReadArrayLength(charArrayRef);
             final char[] chars = new char[charCount];
-            vm.objects().unsafeCopyElements(Kind.CHAR, charArrayRef, charOffset, chars, 0, charCount);
+            vm.objects().unsafeCopyElements(Kind.CHAR, charArrayRef, 0, chars, 0, charCount);
             return new String(chars);
         } catch (DataIOError dataIOError) {
             return null;
@@ -114,16 +83,9 @@ public final class TeleString extends TeleTupleObject implements StringProvider 
             final RemoteReference stringRef = vm.referenceManager().makeTemporaryRemoteReference(origin);
             final Address charArrayAddress = stringRef.readWord(vm.fields().String_value.fieldActor().offset()).asAddress();
             final RemoteReference charArrayRef = vm.referenceManager().makeTemporaryRemoteReference(charArrayAddress);
-            int charCount = 0;
-            int charOffset = 0;
-            if (jdk7u6orNewer) {
-                charCount = vm.objects().unsafeReadArrayLength(charArrayRef);
-            } else {
-                charCount = String_count.readInt(stringRef);
-                charOffset = String_offset.readInt(stringRef);
-            }
+            int charCount = vm.objects().unsafeReadArrayLength(charArrayRef);
             final char[] chars = new char[charCount];
-            vm.objects().unsafeCopyElements(Kind.CHAR, charArrayRef, charOffset, chars, 0, charCount);
+            vm.objects().unsafeCopyElements(Kind.CHAR, charArrayRef, 0, chars, 0, charCount);
             return new String(chars);
         } catch (DataIOError dataIOError) {
             return null;
