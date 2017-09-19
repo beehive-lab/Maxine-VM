@@ -105,40 +105,29 @@ public class TransientVMAdviceHandlerTypes {
 
         public AdviceRecord newAdviceRecord() {
             switch (this) {
+                case ArrayStoreFloat:
+                case PutFieldFloat:
+                case PutStaticFloat:
+                    return new ObjectFloatAdviceRecord();
+                case IfObject:
+                    return new ObjectObjectTBciAdviceRecord();
                 case ConstLoadLong:
                 case ConversionLong:
                 case ReturnLong:
                 case StoreLong:
                     return new LongAdviceRecord();
-                case GC:
-                case Goto:
-                case Load:
-                case Return:
-                case StackAdjust:
-                case ThreadStarting:
-                case ThreadTerminating:
-                    return new AdviceRecord();
-                case IfObject:
-                    return new ObjectObjectTBciAdviceRecord();
-                case OperationLong:
-                    return new LongLongAdviceRecord();
-                case ArrayStoreFloat:
-                case PutFieldFloat:
-                case PutStaticFloat:
-                    return new ObjectFloatAdviceRecord();
-                case ArrayLoadObject:
-                case ArrayStoreObject:
-                case CheckCast:
-                case InstanceOf:
-                case MultiNewArray:
-                case PutFieldObject:
-                case PutStaticObject:
-                    return new ObjectObjectAdviceRecord();
-                case ConstLoadDouble:
-                case ConversionDouble:
-                case ReturnDouble:
-                case StoreDouble:
-                    return new DoubleAdviceRecord();
+                case ArrayStoreDouble:
+                case PutFieldDouble:
+                case PutStaticDouble:
+                    return new ObjectDoubleAdviceRecord();
+                case InvokeInterface:
+                case InvokeSpecial:
+                case InvokeStatic:
+                case InvokeVirtual:
+                case MethodEntry:
+                    return new ObjectMethodAdviceRecord();
+                case OperationFloat:
+                    return new FloatFloatAdviceRecord();
                 case ArrayLength:
                 case ArrayLoad:
                 case ConstLoadObject:
@@ -155,30 +144,41 @@ public class TransientVMAdviceHandlerTypes {
                     return new ObjectAdviceRecord();
                 case OperationDouble:
                     return new DoubleDoubleAdviceRecord();
-                case ConstLoadFloat:
-                case ConversionFloat:
-                case ReturnFloat:
-                case StoreFloat:
-                    return new FloatAdviceRecord();
-                case InvokeInterface:
-                case InvokeSpecial:
-                case InvokeStatic:
-                case InvokeVirtual:
-                case MethodEntry:
-                    return new ObjectMethodAdviceRecord();
-                case OperationFloat:
-                    return new FloatFloatAdviceRecord();
-                case ArrayStoreDouble:
-                case PutFieldDouble:
-                case PutStaticDouble:
-                    return new ObjectDoubleAdviceRecord();
                 case ArrayStoreLong:
                 case PutFieldLong:
                 case PutStaticLong:
                 case ReturnByThrow:
                     return new ObjectLongAdviceRecord();
+                case ArrayLoadObject:
+                case ArrayStoreObject:
+                case CheckCast:
+                case InstanceOf:
+                case MultiNewArray:
+                case PutFieldObject:
+                case PutStaticObject:
+                    return new ObjectObjectAdviceRecord();
+                case GC:
+                case Goto:
+                case Load:
+                case Return:
+                case StackAdjust:
+                case ThreadStarting:
+                case ThreadTerminating:
+                    return new AdviceRecord();
                 case IfInt:
                     return new LongLongTBciAdviceRecord();
+                case OperationLong:
+                    return new LongLongAdviceRecord();
+                case ConstLoadFloat:
+                case ConversionFloat:
+                case ReturnFloat:
+                case StoreFloat:
+                    return new FloatAdviceRecord();
+                case ConstLoadDouble:
+                case ConversionDouble:
+                case ReturnDouble:
+                case StoreDouble:
+                    return new DoubleAdviceRecord();
 // END GENERATED CODE
 
                 case Unseen:

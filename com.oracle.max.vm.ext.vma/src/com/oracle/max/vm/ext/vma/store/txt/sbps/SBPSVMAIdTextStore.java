@@ -1000,7 +1000,7 @@ public abstract class SBPSVMAIdTextStore implements VMAIdTextStoreIntf {
 
     @Override
     public void adviseAfterArrayLength(long time, String threadName, int bci, long objId, int length) {
-        appendTTId(time, ADVISE_BEFORE_ARRAY_LENGTH, objId, threadName, bci);
+        appendTTId(time, ADVISE_AFTER_ARRAY_LENGTH, objId, threadName, bci);
         sb.append(length);
         end();
     }

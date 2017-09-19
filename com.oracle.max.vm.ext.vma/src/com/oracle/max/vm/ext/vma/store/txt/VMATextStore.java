@@ -89,21 +89,35 @@ public interface VMATextStore extends VMAStore {
 
     void adviseBeforeReturnByThrow(long time, String threadName, int bci, long objId, int poppedFrames);
 
+    void adviseAfterNew(long time, String threadName, int bci, long objId, String shortClassName);
+
+    void adviseAfterNewArray(long time, String threadName, int bci, long objId, String shortClassName, int length);
+
+    void adviseAfterMultiNewArray(long time, String threadName, int bci, long objId, String shortClassName, int length);
+
+    void adviseBeforeIfObject(long time, String threadName, int bci, int opcode, long objId1, long objId2, int targetBci);
+
+    void adviseBeforeIf(long time, String threadName, int bci, int opcode, int op1, int op2, int targetBci);
+
+    void adviseAfterLoadObject(long time, String threadName, int bci, int index, long value);
+
+    void adviseBeforeLoad(long time, String threadName, int bci, int arg1);
+
+    void adviseBeforeGoto(long time, String threadName, int bci, int arg1);
+
+    void adviseBeforeConstLoad(long time, String threadName, int bci, double value);
+
+    void adviseBeforeConstLoad(long time, String threadName, int bci, float value);
+
     void adviseBeforeConstLoad(long time, String threadName, int bci, long value);
 
     void adviseBeforeConstLoadObject(long time, String threadName, int bci, long value);
 
-    void adviseBeforeConstLoad(long time, String threadName, int bci, float value);
-
-    void adviseBeforeConstLoad(long time, String threadName, int bci, double value);
-
-    void adviseBeforeLoad(long time, String threadName, int bci, int arg1);
-
     void adviseBeforeArrayLoad(long time, String threadName, int bci, long objId, int index);
 
-    void adviseBeforeStore(long time, String threadName, int bci, int index, long value);
-
     void adviseBeforeStore(long time, String threadName, int bci, int index, float value);
+
+    void adviseBeforeStore(long time, String threadName, int bci, int index, long value);
 
     void adviseBeforeStore(long time, String threadName, int bci, int index, double value);
 
@@ -113,43 +127,35 @@ public interface VMATextStore extends VMAStore {
 
     void adviseBeforeArrayStore(long time, String threadName, int bci, long objId, int index, long value);
 
-    void adviseBeforeArrayStore(long time, String threadName, int bci, long objId, int index, double value);
-
     void adviseBeforeArrayStoreObject(long time, String threadName, int bci, long objId, int index, long value);
 
-    void adviseBeforeStackAdjust(long time, String threadName, int bci, int arg1);
-
-    void adviseBeforeOperation(long time, String threadName, int bci, int arg1, long arg2, long arg3);
-
-    void adviseBeforeOperation(long time, String threadName, int bci, int arg1, float arg2, float arg3);
-
-    void adviseBeforeOperation(long time, String threadName, int bci, int arg1, double arg2, double arg3);
-
-    void adviseBeforeConversion(long time, String threadName, int bci, int arg1, float arg2);
-
-    void adviseBeforeConversion(long time, String threadName, int bci, int arg1, long arg2);
+    void adviseBeforeArrayStore(long time, String threadName, int bci, long objId, int index, double value);
 
     void adviseBeforeConversion(long time, String threadName, int bci, int arg1, double arg2);
 
-    void adviseBeforeIf(long time, String threadName, int bci, int opcode, int op1, int op2, int targetBci);
+    void adviseBeforeConversion(long time, String threadName, int bci, int arg1, long arg2);
 
-    void adviseBeforeIfObject(long time, String threadName, int bci, int opcode, long objId1, long objId2, int targetBci);
+    void adviseBeforeConversion(long time, String threadName, int bci, int arg1, float arg2);
 
-    void adviseBeforeGoto(long time, String threadName, int bci, int arg1);
+    void adviseBeforeReturn(long time, String threadName, int bci, double value);
+
+    void adviseBeforeReturn(long time, String threadName, int bci, float value);
+
+    void adviseBeforeReturn(long time, String threadName, int bci);
 
     void adviseBeforeReturnObject(long time, String threadName, int bci, long value);
 
     void adviseBeforeReturn(long time, String threadName, int bci, long value);
 
-    void adviseBeforeReturn(long time, String threadName, int bci, float value);
+    void adviseBeforeStackAdjust(long time, String threadName, int bci, int arg1);
 
-    void adviseBeforeReturn(long time, String threadName, int bci, double value);
+    void adviseBeforeOperation(long time, String threadName, int bci, int arg1, long arg2, long arg3);
 
-    void adviseBeforeReturn(long time, String threadName, int bci);
+    void adviseBeforeOperation(long time, String threadName, int bci, int arg1, double arg2, double arg3);
+
+    void adviseBeforeOperation(long time, String threadName, int bci, int arg1, float arg2, float arg3);
 
     void adviseBeforeGetStatic(long time, String threadName, int bci, String shortFieldName);
-
-    void adviseBeforePutStaticObject(long time, String threadName, int bci, String shortFieldName, long value);
 
     void adviseBeforePutStatic(long time, String threadName, int bci, String shortFieldName, double value);
 
@@ -157,15 +163,17 @@ public interface VMATextStore extends VMAStore {
 
     void adviseBeforePutStatic(long time, String threadName, int bci, String shortFieldName, float value);
 
+    void adviseBeforePutStaticObject(long time, String threadName, int bci, String shortFieldName, long value);
+
     void adviseBeforeGetField(long time, String threadName, int bci, long objId, String shortFieldName);
 
     void adviseBeforePutFieldObject(long time, String threadName, int bci, long objId, String shortFieldName, long value);
 
     void adviseBeforePutField(long time, String threadName, int bci, long objId, String shortFieldName, double value);
 
-    void adviseBeforePutField(long time, String threadName, int bci, long objId, String shortFieldName, long value);
-
     void adviseBeforePutField(long time, String threadName, int bci, long objId, String shortFieldName, float value);
+
+    void adviseBeforePutField(long time, String threadName, int bci, long objId, String shortFieldName, long value);
 
     void adviseBeforeInvokeVirtual(long time, String threadName, int bci, long objId, String shortMethodName);
 
@@ -174,8 +182,6 @@ public interface VMATextStore extends VMAStore {
     void adviseBeforeInvokeStatic(long time, String threadName, int bci, long objId, String shortMethodName);
 
     void adviseBeforeInvokeInterface(long time, String threadName, int bci, long objId, String shortMethodName);
-
-    void adviseAfterArrayLength(long time, String threadName, int bci, long objId, int length);
 
     void adviseBeforeThrow(long time, String threadName, int bci, long objId);
 
@@ -187,15 +193,9 @@ public interface VMATextStore extends VMAStore {
 
     void adviseBeforeMonitorExit(long time, String threadName, int bci, long objId);
 
-    void adviseAfterLoadObject(long time, String threadName, int bci, int index, long value);
-
     void adviseAfterArrayLoadObject(long time, String threadName, int bci, long objId, int index, long value);
 
-    void adviseAfterNew(long time, String threadName, int bci, long objId, String shortClassName);
-
-    void adviseAfterNewArray(long time, String threadName, int bci, long objId, String shortClassName, int length);
-
-    void adviseAfterMultiNewArray(long time, String threadName, int bci, long objId, String shortClassName, int length);
+    void adviseAfterArrayLength(long time, String threadName, int bci, long objId, int length);
 
     void adviseAfterMethodEntry(long time, String threadName, int bci, long objId, String shortMethodName);
 

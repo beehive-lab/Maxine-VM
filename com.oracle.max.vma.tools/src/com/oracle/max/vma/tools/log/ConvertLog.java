@@ -1047,7 +1047,7 @@ public class ConvertLog {
                     }
                     break;
 
-                case ADVISE_BEFORE_ARRAY_LENGTH:
+                case ADVISE_AFTER_ARRAY_LENGTH:
                     out.printf(" %s", arg(ARRAY_LENGTH_INDEX));
                     break;
 

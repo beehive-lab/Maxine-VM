@@ -128,6 +128,15 @@ public class VMAdviceAfterTemplateSource {
         return Reference.fromJava(array);
     }
 
+    @T1X_TEMPLATE(ARRAYLENGTH)
+    public static int arraylength(@Slot(0) Object array, int bci) {
+        int length = ArrayAccess.readArrayLength(array);
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseAfterArrayLength(bci, array, length);
+        }
+        return length;
+    }
+
     @T1X_TEMPLATE(TRACE_METHOD_ENTRY)
     public static void traceMethodEntry(MethodActor methodActor, Object receiver, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {

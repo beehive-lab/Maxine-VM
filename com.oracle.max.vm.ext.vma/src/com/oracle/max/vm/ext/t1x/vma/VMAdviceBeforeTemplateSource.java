@@ -1149,7 +1149,7 @@ public class VMAdviceBeforeTemplateSource {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
         }
-        return ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress().
+        return selectVirtualMethod(receiver, methodActor.vTableIndex()).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -1528,7 +1528,7 @@ public class VMAdviceBeforeTemplateSource {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
         }
-        return ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress().
+        return selectVirtualMethod(receiver, methodActor.vTableIndex()).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -1865,7 +1865,7 @@ public class VMAdviceBeforeTemplateSource {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
         }
-        return ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress().
+        return selectVirtualMethod(receiver, methodActor.vTableIndex()).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -2125,7 +2125,7 @@ public class VMAdviceBeforeTemplateSource {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
         }
-        return ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress().
+        return selectVirtualMethod(receiver, methodActor.vTableIndex()).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -2343,7 +2343,7 @@ public class VMAdviceBeforeTemplateSource {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
         }
-        return ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress().
+        return selectVirtualMethod(receiver, methodActor.vTableIndex()).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -2461,7 +2461,7 @@ public class VMAdviceBeforeTemplateSource {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInvokeVirtual(bci, receiver, methodActor);
         }
-        return ObjectAccess.readHub(receiver).getWord(methodActor.vTableIndex()).asAddress().
+        return selectVirtualMethod(receiver, methodActor.vTableIndex()).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -2587,6 +2587,12 @@ public class VMAdviceBeforeTemplateSource {
         return result;
     }
 
+    @T1X_TEMPLATE(CHECKCAST)
+    public static Object checkcast(ResolutionGuard guard, @Slot(0) Object object, int bci) {
+        resolveAndCheckcast(guard, object, bci);
+        return object;
+    }
+
     @T1X_TEMPLATE(CHECKCAST$resolved)
     public static Object checkcast(ClassActor classActor, @Slot(0) Object object, int bci) {
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
@@ -2596,9 +2602,13 @@ public class VMAdviceBeforeTemplateSource {
         return object;
     }
 
-    @T1X_TEMPLATE(CHECKCAST)
-    public static Object checkcast(ResolutionGuard guard, @Slot(0) Object object, int bci) {
-        resolveAndCheckcast(guard, object, bci);
+    @T1X_TEMPLATE(CHECKCAST$instrumented)
+    public static Object checkcast(ClassActor classActor, @Slot(0) Object object, int bci, MethodProfile mpo, int mpoIndex) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeCheckCast(bci, object, classActor);
+        }
+        MethodInstrumentation.recordType(mpo, object, mpoIndex, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
+        Snippets.checkCast(classActor, object);
         return object;
     }
 
@@ -2609,15 +2619,6 @@ public class VMAdviceBeforeTemplateSource {
             VMAStaticBytecodeAdvice.adviseBeforeCheckCast(bci, object, classActor);
         }
         Snippets.checkCast(classActor, object);
-    }
-
-    @T1X_TEMPLATE(ARRAYLENGTH)
-    public static int arraylength(@Slot(0) Object array, int bci) {
-        int length = ArrayAccess.readArrayLength(array);
-        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
-            VMAStaticBytecodeAdvice.adviseAfterArrayLength(bci, array, length);
-        }
-        return length;
     }
 
     @T1X_TEMPLATE(ATHROW)
@@ -2664,6 +2665,15 @@ public class VMAdviceBeforeTemplateSource {
 
     @T1X_TEMPLATE(INSTANCEOF$resolved)
     public static int instanceof_(ClassActor classActor, @Slot(0) Object object, int bci) {
+        if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
+            VMAStaticBytecodeAdvice.adviseBeforeInstanceOf(bci, object, classActor);
+        }
+        return UnsafeCast.asByte(Snippets.instanceOf(classActor, object));
+    }
+
+    @T1X_TEMPLATE(INSTANCEOF$instrumented)
+    public static int instanceof_(ClassActor classActor, @Slot(0) Object object, int bci, MethodProfile mpo, int mpoIndex) {
+        MethodInstrumentation.recordType(mpo, object, mpoIndex, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
         if (Intrinsics.readLatchBit(VMAJavaRunScheme.VM_ADVISING.offset, 0)) {
             VMAStaticBytecodeAdvice.adviseBeforeInstanceOf(bci, object, classActor);
         }

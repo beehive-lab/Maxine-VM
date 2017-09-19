@@ -376,9 +376,7 @@ public class BytecodeAdviceGenerator {
     }
 
     private static void generateArrayLength() {
-        assert adviceMode == BEFORE;
         out.printf(METHOD_PREFIX + "Object array, int length);%n%n", adviceModeString, ARRAYLENGTH.methodName);
-
     }
 
     private static void generateThrow() {

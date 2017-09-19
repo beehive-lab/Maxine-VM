@@ -117,17 +117,17 @@ public class GCTestVMAdviceHandler extends VMAdviceHandler {
         New,
         NewArray,
         MultiNewArray,
-        ConstLoad,
+        If,
         Load,
+        Goto,
+        ConstLoad,
         ArrayLoad,
         Store,
         ArrayStore,
+        Conversion,
+        Return,
         StackAdjust,
         Operation,
-        Conversion,
-        If,
-        Goto,
-        Return,
         GetStatic,
         PutStatic,
         GetField,
@@ -136,12 +136,12 @@ public class GCTestVMAdviceHandler extends VMAdviceHandler {
         InvokeSpecial,
         InvokeStatic,
         InvokeInterface,
-        ArrayLength,
         Throw,
         CheckCast,
         InstanceOf,
         MonitorEnter,
         MonitorExit,
+        ArrayLength,
         MethodEntry;
     }
     @Override
@@ -185,23 +185,18 @@ public class GCTestVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeConstLoad(int arg1, float arg2) {
+    public void adviseBeforeIf(int arg1, int arg2, Object arg3, Object arg4, int arg5) {
         randomlyGC(7, 0);
     }
 
     @Override
-    public void adviseBeforeConstLoad(int arg1, double arg2) {
+    public void adviseBeforeIf(int arg1, int arg2, int arg3, int arg4, int arg5) {
         randomlyGC(7, 0);
     }
 
     @Override
-    public void adviseBeforeConstLoad(int arg1, Object arg2) {
-        randomlyGC(7, 0);
-    }
-
-    @Override
-    public void adviseBeforeConstLoad(int arg1, long arg2) {
-        randomlyGC(7, 0);
+    public void adviseAfterLoad(int arg1, int arg2, Object arg3) {
+        randomlyGC(8, 1);
     }
 
     @Override
@@ -210,68 +205,78 @@ public class GCTestVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeArrayLoad(int arg1, Object arg2, int arg3) {
+    public void adviseBeforeGoto(int arg1, int arg2) {
         randomlyGC(9, 0);
     }
 
     @Override
-    public void adviseBeforeStore(int arg1, int arg2, Object arg3) {
+    public void adviseBeforeConstLoad(int arg1, double arg2) {
         randomlyGC(10, 0);
+    }
+
+    @Override
+    public void adviseBeforeConstLoad(int arg1, float arg2) {
+        randomlyGC(10, 0);
+    }
+
+    @Override
+    public void adviseBeforeConstLoad(int arg1, long arg2) {
+        randomlyGC(10, 0);
+    }
+
+    @Override
+    public void adviseBeforeConstLoad(int arg1, Object arg2) {
+        randomlyGC(10, 0);
+    }
+
+    @Override
+    public void adviseBeforeArrayLoad(int arg1, Object arg2, int arg3) {
+        randomlyGC(11, 0);
     }
 
     @Override
     public void adviseBeforeStore(int arg1, int arg2, float arg3) {
-        randomlyGC(10, 0);
-    }
-
-    @Override
-    public void adviseBeforeStore(int arg1, int arg2, double arg3) {
-        randomlyGC(10, 0);
-    }
-
-    @Override
-    public void adviseBeforeStore(int arg1, int arg2, long arg3) {
-        randomlyGC(10, 0);
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, Object arg4) {
-        randomlyGC(11, 0);
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, float arg4) {
-        randomlyGC(11, 0);
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, long arg4) {
-        randomlyGC(11, 0);
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, double arg4) {
-        randomlyGC(11, 0);
-    }
-
-    @Override
-    public void adviseBeforeStackAdjust(int arg1, int arg2) {
         randomlyGC(12, 0);
     }
 
     @Override
-    public void adviseBeforeOperation(int arg1, int arg2, double arg3, double arg4) {
+    public void adviseBeforeStore(int arg1, int arg2, long arg3) {
+        randomlyGC(12, 0);
+    }
+
+    @Override
+    public void adviseBeforeStore(int arg1, int arg2, double arg3) {
+        randomlyGC(12, 0);
+    }
+
+    @Override
+    public void adviseBeforeStore(int arg1, int arg2, Object arg3) {
+        randomlyGC(12, 0);
+    }
+
+    @Override
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, float arg4) {
         randomlyGC(13, 0);
     }
 
     @Override
-    public void adviseBeforeOperation(int arg1, int arg2, long arg3, long arg4) {
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, long arg4) {
         randomlyGC(13, 0);
     }
 
     @Override
-    public void adviseBeforeOperation(int arg1, int arg2, float arg3, float arg4) {
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, Object arg4) {
         randomlyGC(13, 0);
+    }
+
+    @Override
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, double arg4) {
+        randomlyGC(13, 0);
+    }
+
+    @Override
+    public void adviseBeforeConversion(int arg1, int arg2, double arg3) {
+        randomlyGC(14, 0);
     }
 
     @Override
@@ -285,47 +290,47 @@ public class GCTestVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeConversion(int arg1, int arg2, double arg3) {
-        randomlyGC(14, 0);
-    }
-
-    @Override
-    public void adviseBeforeIf(int arg1, int arg2, int arg3, int arg4, int arg5) {
+    public void adviseBeforeReturn(int arg1, double arg2) {
         randomlyGC(15, 0);
-    }
-
-    @Override
-    public void adviseBeforeIf(int arg1, int arg2, Object arg3, Object arg4, int arg5) {
-        randomlyGC(15, 0);
-    }
-
-    @Override
-    public void adviseBeforeGoto(int arg1, int arg2) {
-        randomlyGC(16, 0);
-    }
-
-    @Override
-    public void adviseBeforeReturn(int arg1, Object arg2) {
-        randomlyGC(17, 0);
-    }
-
-    @Override
-    public void adviseBeforeReturn(int arg1, long arg2) {
-        randomlyGC(17, 0);
     }
 
     @Override
     public void adviseBeforeReturn(int arg1, float arg2) {
-        randomlyGC(17, 0);
-    }
-
-    @Override
-    public void adviseBeforeReturn(int arg1, double arg2) {
-        randomlyGC(17, 0);
+        randomlyGC(15, 0);
     }
 
     @Override
     public void adviseBeforeReturn(int arg1) {
+        randomlyGC(15, 0);
+    }
+
+    @Override
+    public void adviseBeforeReturn(int arg1, Object arg2) {
+        randomlyGC(15, 0);
+    }
+
+    @Override
+    public void adviseBeforeReturn(int arg1, long arg2) {
+        randomlyGC(15, 0);
+    }
+
+    @Override
+    public void adviseBeforeStackAdjust(int arg1, int arg2) {
+        randomlyGC(16, 0);
+    }
+
+    @Override
+    public void adviseBeforeOperation(int arg1, int arg2, long arg3, long arg4) {
+        randomlyGC(17, 0);
+    }
+
+    @Override
+    public void adviseBeforeOperation(int arg1, int arg2, double arg3, double arg4) {
+        randomlyGC(17, 0);
+    }
+
+    @Override
+    public void adviseBeforeOperation(int arg1, int arg2, float arg3, float arg4) {
         randomlyGC(17, 0);
     }
 
@@ -335,17 +340,17 @@ public class GCTestVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, float arg4) {
-        randomlyGC(19, 0);
-    }
-
-    @Override
     public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, double arg4) {
         randomlyGC(19, 0);
     }
 
     @Override
     public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, long arg4) {
+        randomlyGC(19, 0);
+    }
+
+    @Override
+    public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, float arg4) {
         randomlyGC(19, 0);
     }
 
@@ -360,22 +365,22 @@ public class GCTestVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, float arg4) {
-        randomlyGC(21, 0);
-    }
-
-    @Override
-    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, long arg4) {
-        randomlyGC(21, 0);
-    }
-
-    @Override
     public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, Object arg4) {
         randomlyGC(21, 0);
     }
 
     @Override
     public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, double arg4) {
+        randomlyGC(21, 0);
+    }
+
+    @Override
+    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, float arg4) {
+        randomlyGC(21, 0);
+    }
+
+    @Override
+    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, long arg4) {
         randomlyGC(21, 0);
     }
 
@@ -400,43 +405,38 @@ public class GCTestVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseAfterArrayLength(int arg1, Object arg2, int arg3) {
+    public void adviseBeforeThrow(int arg1, Object arg2) {
         randomlyGC(26, 0);
     }
 
     @Override
-    public void adviseBeforeThrow(int arg1, Object arg2) {
+    public void adviseBeforeCheckCast(int arg1, Object arg2, Object arg3) {
         randomlyGC(27, 0);
     }
 
     @Override
-    public void adviseBeforeCheckCast(int arg1, Object arg2, Object arg3) {
+    public void adviseBeforeInstanceOf(int arg1, Object arg2, Object arg3) {
         randomlyGC(28, 0);
     }
 
     @Override
-    public void adviseBeforeInstanceOf(int arg1, Object arg2, Object arg3) {
+    public void adviseBeforeMonitorEnter(int arg1, Object arg2) {
         randomlyGC(29, 0);
     }
 
     @Override
-    public void adviseBeforeMonitorEnter(int arg1, Object arg2) {
+    public void adviseBeforeMonitorExit(int arg1, Object arg2) {
         randomlyGC(30, 0);
     }
 
     @Override
-    public void adviseBeforeMonitorExit(int arg1, Object arg2) {
-        randomlyGC(31, 0);
-    }
-
-    @Override
-    public void adviseAfterLoad(int arg1, int arg2, Object arg3) {
-        randomlyGC(8, 1);
-    }
-
-    @Override
     public void adviseAfterArrayLoad(int arg1, Object arg2, int arg3, Object arg4) {
-        randomlyGC(9, 1);
+        randomlyGC(11, 1);
+    }
+
+    @Override
+    public void adviseAfterArrayLength(int arg1, Object arg2, int arg3) {
+        randomlyGC(31, 1);
     }
 
     @Override

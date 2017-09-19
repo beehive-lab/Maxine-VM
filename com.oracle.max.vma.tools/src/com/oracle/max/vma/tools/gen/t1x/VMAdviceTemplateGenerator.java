@@ -571,8 +571,10 @@ public class VMAdviceTemplateGenerator extends T1XTemplateGenerator {
 
                 case CHECKCAST:
                 case CHECKCAST$resolved:
+                case CHECKCAST$instrumented:
                 case INSTANCEOF:
                 case INSTANCEOF$resolved:
+                case INSTANCEOF$instrumented:
                     assert adviceType == AdviceType.BEFORE;
                     generateTypeCheck(tag);
                     break;

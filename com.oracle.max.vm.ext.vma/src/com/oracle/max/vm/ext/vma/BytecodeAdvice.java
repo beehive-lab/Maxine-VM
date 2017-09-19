@@ -96,23 +96,23 @@ public abstract class BytecodeAdvice {
 
     public abstract void adviseBeforeGetStatic(int bci, Object staticTuple, FieldActor f);
 
-    public abstract void adviseBeforePutStatic(int bci, Object staticTuple, FieldActor f, Object value);
-
     public abstract void adviseBeforePutStatic(int bci, Object staticTuple, FieldActor f, double value);
 
-    public abstract void adviseBeforePutStatic(int bci, Object staticTuple, FieldActor f, long value);
+    public abstract void adviseBeforePutStatic(int bci, Object staticTuple, FieldActor f, Object value);
 
     public abstract void adviseBeforePutStatic(int bci, Object staticTuple, FieldActor f, float value);
 
-    public abstract void adviseBeforeGetField(int bci, Object object, FieldActor f);
+    public abstract void adviseBeforePutStatic(int bci, Object staticTuple, FieldActor f, long value);
 
-    public abstract void adviseBeforePutField(int bci, Object object, FieldActor f, Object value);
+    public abstract void adviseBeforeGetField(int bci, Object object, FieldActor f);
 
     public abstract void adviseBeforePutField(int bci, Object object, FieldActor f, double value);
 
-    public abstract void adviseBeforePutField(int bci, Object object, FieldActor f, long value);
+    public abstract void adviseBeforePutField(int bci, Object object, FieldActor f, Object value);
 
     public abstract void adviseBeforePutField(int bci, Object object, FieldActor f, float value);
+
+    public abstract void adviseBeforePutField(int bci, Object object, FieldActor f, long value);
 
     public abstract void adviseBeforeInvokeVirtual(int bci, Object object, MethodActor methodActor);
 

@@ -967,7 +967,7 @@ public class ProcessLog {
                 break;
             }
 
-            case ADVISE_BEFORE_ARRAY_LENGTH: {
+            case ADVISE_AFTER_ARRAY_LENGTH: {
                 objectRecord = getTraceRecord(objIdArg);
                 ObjectAdviceRecord objectAdviceRecord = (ObjectAdviceRecord) createAdviceRecordAndSetTimeAndThread(ArrayLength, AdviceMode.BEFORE, bci);
                 objectAdviceRecord.value = objectRecord;
@@ -1382,7 +1382,7 @@ public class ProcessLog {
                 return Throw;
             case ADVISE_BEFORE_INSTANCE_OF:
                 return InstanceOf;
-            case ADVISE_BEFORE_ARRAY_LENGTH:
+            case ADVISE_AFTER_ARRAY_LENGTH:
                 return ArrayLength;
             case ADVISE_BEFORE_CHECK_CAST:
                 return CheckCast;

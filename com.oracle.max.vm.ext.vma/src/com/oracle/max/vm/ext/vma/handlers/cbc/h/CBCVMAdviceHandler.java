@@ -173,17 +173,17 @@ public class CBCVMAdviceHandler extends VMAdviceHandler {
         New,
         NewArray,
         MultiNewArray,
-        ConstLoad,
+        If,
         Load,
+        Goto,
+        ConstLoad,
         ArrayLoad,
         Store,
         ArrayStore,
+        Conversion,
+        Return,
         StackAdjust,
         Operation,
-        Conversion,
-        If,
-        Goto,
-        Return,
         GetStatic,
         PutStatic,
         GetField,
@@ -192,12 +192,12 @@ public class CBCVMAdviceHandler extends VMAdviceHandler {
         InvokeSpecial,
         InvokeStatic,
         InvokeInterface,
-        ArrayLength,
         Throw,
         CheckCast,
         InstanceOf,
         MonitorEnter,
         MonitorExit,
+        ArrayLength,
         MethodEntry;
     }
 
@@ -244,23 +244,18 @@ public class CBCVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeConstLoad(int arg1, float arg2) {
+    public void adviseBeforeIf(int arg1, int arg2, Object arg3, Object arg4, int arg5) {
         ThreadCounts.get().data[7][0]++;
     }
 
     @Override
-    public void adviseBeforeConstLoad(int arg1, double arg2) {
+    public void adviseBeforeIf(int arg1, int arg2, int arg3, int arg4, int arg5) {
         ThreadCounts.get().data[7][0]++;
     }
 
     @Override
-    public void adviseBeforeConstLoad(int arg1, Object arg2) {
-        ThreadCounts.get().data[7][0]++;
-    }
-
-    @Override
-    public void adviseBeforeConstLoad(int arg1, long arg2) {
-        ThreadCounts.get().data[7][0]++;
+    public void adviseAfterLoad(int arg1, int arg2, Object arg3) {
+        ThreadCounts.get().data[8][1]++;
     }
 
     @Override
@@ -269,68 +264,78 @@ public class CBCVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeArrayLoad(int arg1, Object arg2, int arg3) {
+    public void adviseBeforeGoto(int arg1, int arg2) {
         ThreadCounts.get().data[9][0]++;
     }
 
     @Override
-    public void adviseBeforeStore(int arg1, int arg2, Object arg3) {
+    public void adviseBeforeConstLoad(int arg1, double arg2) {
         ThreadCounts.get().data[10][0]++;
+    }
+
+    @Override
+    public void adviseBeforeConstLoad(int arg1, float arg2) {
+        ThreadCounts.get().data[10][0]++;
+    }
+
+    @Override
+    public void adviseBeforeConstLoad(int arg1, long arg2) {
+        ThreadCounts.get().data[10][0]++;
+    }
+
+    @Override
+    public void adviseBeforeConstLoad(int arg1, Object arg2) {
+        ThreadCounts.get().data[10][0]++;
+    }
+
+    @Override
+    public void adviseBeforeArrayLoad(int arg1, Object arg2, int arg3) {
+        ThreadCounts.get().data[11][0]++;
     }
 
     @Override
     public void adviseBeforeStore(int arg1, int arg2, float arg3) {
-        ThreadCounts.get().data[10][0]++;
-    }
-
-    @Override
-    public void adviseBeforeStore(int arg1, int arg2, double arg3) {
-        ThreadCounts.get().data[10][0]++;
-    }
-
-    @Override
-    public void adviseBeforeStore(int arg1, int arg2, long arg3) {
-        ThreadCounts.get().data[10][0]++;
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, Object arg4) {
-        ThreadCounts.get().data[11][0]++;
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, float arg4) {
-        ThreadCounts.get().data[11][0]++;
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, long arg4) {
-        ThreadCounts.get().data[11][0]++;
-    }
-
-    @Override
-    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, double arg4) {
-        ThreadCounts.get().data[11][0]++;
-    }
-
-    @Override
-    public void adviseBeforeStackAdjust(int arg1, int arg2) {
         ThreadCounts.get().data[12][0]++;
     }
 
     @Override
-    public void adviseBeforeOperation(int arg1, int arg2, double arg3, double arg4) {
+    public void adviseBeforeStore(int arg1, int arg2, long arg3) {
+        ThreadCounts.get().data[12][0]++;
+    }
+
+    @Override
+    public void adviseBeforeStore(int arg1, int arg2, double arg3) {
+        ThreadCounts.get().data[12][0]++;
+    }
+
+    @Override
+    public void adviseBeforeStore(int arg1, int arg2, Object arg3) {
+        ThreadCounts.get().data[12][0]++;
+    }
+
+    @Override
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, float arg4) {
         ThreadCounts.get().data[13][0]++;
     }
 
     @Override
-    public void adviseBeforeOperation(int arg1, int arg2, long arg3, long arg4) {
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, long arg4) {
         ThreadCounts.get().data[13][0]++;
     }
 
     @Override
-    public void adviseBeforeOperation(int arg1, int arg2, float arg3, float arg4) {
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, Object arg4) {
         ThreadCounts.get().data[13][0]++;
+    }
+
+    @Override
+    public void adviseBeforeArrayStore(int arg1, Object arg2, int arg3, double arg4) {
+        ThreadCounts.get().data[13][0]++;
+    }
+
+    @Override
+    public void adviseBeforeConversion(int arg1, int arg2, double arg3) {
+        ThreadCounts.get().data[14][0]++;
     }
 
     @Override
@@ -344,47 +349,47 @@ public class CBCVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforeConversion(int arg1, int arg2, double arg3) {
-        ThreadCounts.get().data[14][0]++;
-    }
-
-    @Override
-    public void adviseBeforeIf(int arg1, int arg2, int arg3, int arg4, int arg5) {
+    public void adviseBeforeReturn(int arg1, double arg2) {
         ThreadCounts.get().data[15][0]++;
-    }
-
-    @Override
-    public void adviseBeforeIf(int arg1, int arg2, Object arg3, Object arg4, int arg5) {
-        ThreadCounts.get().data[15][0]++;
-    }
-
-    @Override
-    public void adviseBeforeGoto(int arg1, int arg2) {
-        ThreadCounts.get().data[16][0]++;
-    }
-
-    @Override
-    public void adviseBeforeReturn(int arg1, Object arg2) {
-        ThreadCounts.get().data[17][0]++;
-    }
-
-    @Override
-    public void adviseBeforeReturn(int arg1, long arg2) {
-        ThreadCounts.get().data[17][0]++;
     }
 
     @Override
     public void adviseBeforeReturn(int arg1, float arg2) {
-        ThreadCounts.get().data[17][0]++;
-    }
-
-    @Override
-    public void adviseBeforeReturn(int arg1, double arg2) {
-        ThreadCounts.get().data[17][0]++;
+        ThreadCounts.get().data[15][0]++;
     }
 
     @Override
     public void adviseBeforeReturn(int arg1) {
+        ThreadCounts.get().data[15][0]++;
+    }
+
+    @Override
+    public void adviseBeforeReturn(int arg1, Object arg2) {
+        ThreadCounts.get().data[15][0]++;
+    }
+
+    @Override
+    public void adviseBeforeReturn(int arg1, long arg2) {
+        ThreadCounts.get().data[15][0]++;
+    }
+
+    @Override
+    public void adviseBeforeStackAdjust(int arg1, int arg2) {
+        ThreadCounts.get().data[16][0]++;
+    }
+
+    @Override
+    public void adviseBeforeOperation(int arg1, int arg2, long arg3, long arg4) {
+        ThreadCounts.get().data[17][0]++;
+    }
+
+    @Override
+    public void adviseBeforeOperation(int arg1, int arg2, double arg3, double arg4) {
+        ThreadCounts.get().data[17][0]++;
+    }
+
+    @Override
+    public void adviseBeforeOperation(int arg1, int arg2, float arg3, float arg4) {
         ThreadCounts.get().data[17][0]++;
     }
 
@@ -394,17 +399,17 @@ public class CBCVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, float arg4) {
-        ThreadCounts.get().data[19][0]++;
-    }
-
-    @Override
     public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, double arg4) {
         ThreadCounts.get().data[19][0]++;
     }
 
     @Override
     public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, long arg4) {
+        ThreadCounts.get().data[19][0]++;
+    }
+
+    @Override
+    public void adviseBeforePutStatic(int arg1, Object arg2, FieldActor arg3, float arg4) {
         ThreadCounts.get().data[19][0]++;
     }
 
@@ -419,22 +424,22 @@ public class CBCVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, float arg4) {
-        ThreadCounts.get().data[21][0]++;
-    }
-
-    @Override
-    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, long arg4) {
-        ThreadCounts.get().data[21][0]++;
-    }
-
-    @Override
     public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, Object arg4) {
         ThreadCounts.get().data[21][0]++;
     }
 
     @Override
     public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, double arg4) {
+        ThreadCounts.get().data[21][0]++;
+    }
+
+    @Override
+    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, float arg4) {
+        ThreadCounts.get().data[21][0]++;
+    }
+
+    @Override
+    public void adviseBeforePutField(int arg1, Object arg2, FieldActor arg3, long arg4) {
         ThreadCounts.get().data[21][0]++;
     }
 
@@ -459,43 +464,38 @@ public class CBCVMAdviceHandler extends VMAdviceHandler {
     }
 
     @Override
-    public void adviseAfterArrayLength(int arg1, Object arg2, int arg3) {
+    public void adviseBeforeThrow(int arg1, Object arg2) {
         ThreadCounts.get().data[26][0]++;
     }
 
     @Override
-    public void adviseBeforeThrow(int arg1, Object arg2) {
+    public void adviseBeforeCheckCast(int arg1, Object arg2, Object arg3) {
         ThreadCounts.get().data[27][0]++;
     }
 
     @Override
-    public void adviseBeforeCheckCast(int arg1, Object arg2, Object arg3) {
+    public void adviseBeforeInstanceOf(int arg1, Object arg2, Object arg3) {
         ThreadCounts.get().data[28][0]++;
     }
 
     @Override
-    public void adviseBeforeInstanceOf(int arg1, Object arg2, Object arg3) {
+    public void adviseBeforeMonitorEnter(int arg1, Object arg2) {
         ThreadCounts.get().data[29][0]++;
     }
 
     @Override
-    public void adviseBeforeMonitorEnter(int arg1, Object arg2) {
+    public void adviseBeforeMonitorExit(int arg1, Object arg2) {
         ThreadCounts.get().data[30][0]++;
     }
 
     @Override
-    public void adviseBeforeMonitorExit(int arg1, Object arg2) {
-        ThreadCounts.get().data[31][0]++;
-    }
-
-    @Override
-    public void adviseAfterLoad(int arg1, int arg2, Object arg3) {
-        ThreadCounts.get().data[8][1]++;
-    }
-
-    @Override
     public void adviseAfterArrayLoad(int arg1, Object arg2, int arg3, Object arg4) {
-        ThreadCounts.get().data[9][1]++;
+        ThreadCounts.get().data[11][1]++;
+    }
+
+    @Override
+    public void adviseAfterArrayLength(int arg1, Object arg2, int arg3) {
+        ThreadCounts.get().data[31][1]++;
     }
 
     @Override
