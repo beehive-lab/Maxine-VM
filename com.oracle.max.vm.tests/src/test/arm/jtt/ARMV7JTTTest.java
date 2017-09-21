@@ -168,10 +168,10 @@ public class ARMV7JTTTest extends MaxTestCase {
     private static int[] valueTestSet = {0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
     private static long[] scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x00000000ffffffffL};
     // Checkstyle: stop
-    private static MaxineARMTester.BitsFlag[] bitmasks = { MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits,
-                    MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits, MaxineARMTester.BitsFlag.All32Bits};
+    private static MaxineARMv7Tester.BitsFlag[] bitmasks           = { MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits,
+                    MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits,
+                    MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits,
+                    MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits};
     // Checkstyle: start
     private static int[] expectedValues = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     private static long[] expectedLongValues = {Long.MIN_VALUE, Long.MAX_VALUE};
@@ -181,10 +181,10 @@ public class ARMV7JTTTest extends MaxTestCase {
         return "^" + klass + "^";
     }
 
-    private Object[] generateObjectsAndTestStubs(String functionPrototype, int entryPoint, byte[] theCode, int[] expected, boolean[] tests, MaxineARMTester.BitsFlag[] masks) throws Exception {
+    private Object[] generateObjectsAndTestStubs(String functionPrototype, int entryPoint, byte[] theCode, int[] expected, boolean[] tests, MaxineARMv7Tester.BitsFlag[] masks) throws Exception {
         ARMCodeWriter code = new ARMCodeWriter(theCode);
         code.createStaticCodeStubsFile(functionPrototype, theCode, entryPoint);
-        MaxineARMTester r = new MaxineARMTester(expected, tests, masks);
+        MaxineARMv7Tester r = new MaxineARMv7Tester(expected, tests, masks);
         r.cleanFiles();
         r.cleanProcesses();
         r.assembleStartup();
@@ -200,10 +200,10 @@ public class ARMV7JTTTest extends MaxTestCase {
         return simulatedRegisters;
     }
 
-    private int[] generateAndTestStubs(String functionPrototype, int entryPoint, byte[] theCode, int[] expected, boolean[] tests, MaxineARMTester.BitsFlag[] masks) throws Exception {
+    private int[] generateAndTestStubs(String functionPrototype, int entryPoint, byte[] theCode, int[] expected, boolean[] tests, MaxineARMv7Tester.BitsFlag[] masks) throws Exception {
         ARMCodeWriter code = new ARMCodeWriter(theCode);
         code.createStaticCodeStubsFile(functionPrototype, theCode, entryPoint);
-        MaxineARMTester r = new MaxineARMTester(expected, tests, masks);
+        MaxineARMv7Tester r = new MaxineARMv7Tester(expected, tests, masks);
         r.cleanFiles();
         r.cleanProcesses();
         r.assembleStartup();
@@ -219,10 +219,10 @@ public class ARMV7JTTTest extends MaxTestCase {
         return simulatedRegisters;
     }
 
-    private int[] generateAndTest(int[] expected, boolean[] tests, MaxineARMTester.BitsFlag[] masks) throws Exception {
+    private int[] generateAndTest(int[] expected, boolean[] tests, MaxineARMv7Tester.BitsFlag[] masks) throws Exception {
         ARMCodeWriter code = new ARMCodeWriter(theCompiler.getMacroAssembler().codeBuffer);
         code.createCodeFile();
-        MaxineARMTester r = new MaxineARMTester(expected, tests, masks);
+        MaxineARMv7Tester r = new MaxineARMv7Tester(expected, tests, masks);
         r.cleanFiles();
         r.cleanProcesses();
         r.assembleStartup();
@@ -238,10 +238,10 @@ public class ARMV7JTTTest extends MaxTestCase {
         return simulatedRegisters;
     }
 
-    private int[] generateAndTest(long[] expected, boolean[] tests, MaxineARMTester.BitsFlag[] masks) throws Exception {
+    private int[] generateAndTest(long[] expected, boolean[] tests, MaxineARMv7Tester.BitsFlag[] masks) throws Exception {
         ARMCodeWriter code = new ARMCodeWriter(theCompiler.getMacroAssembler().codeBuffer);
         code.createCodeFile();
-        MaxineARMTester r = new MaxineARMTester(expected, tests, masks);
+        MaxineARMv7Tester r = new MaxineARMv7Tester(expected, tests, masks);
         r.cleanFiles();
         r.cleanProcesses();
         r.assembleStartup();
@@ -1319,7 +1319,7 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     public void test_T1X_jtt_BC_XXXXfdiv() throws Exception {
-        MaxineARMTester.DEBUGOBJECTS = false;
+        MaxineARMv7Tester.DEBUGOBJECTS = false;
         initTests();
         MaxineByteCode xx = new MaxineByteCode();
         float[] argOne = {14.0f};
@@ -2340,7 +2340,7 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_f2d() throws Exception {
         String klassName = getKlassName("jtt.bytecode.BC_f2d");
-        MaxineARMTester.DEBUGOBJECTS = false;
+        MaxineARMv7Tester.DEBUGOBJECTS = false;
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods);
         float[] arguments = {-2.2f, 0.0f, 1.0f, 01.06f};
@@ -2357,7 +2357,7 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_jtt_BC_i2f() throws Exception {
         String klassName = getKlassName("jtt.bytecode.BC_i2f");
-        MaxineARMTester.DEBUGOBJECTS = false;
+        MaxineARMv7Tester.DEBUGOBJECTS = false;
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_i2f.java", "float test(int)");
         int[] arguments = {-100, 0, 1, -1, -99};

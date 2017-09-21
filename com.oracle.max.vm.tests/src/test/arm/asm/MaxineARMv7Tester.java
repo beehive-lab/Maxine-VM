@@ -21,7 +21,7 @@ package test.arm.asm;
 
 import java.io.*;
 
-public class MaxineARMTester {
+public class MaxineARMv7Tester {
 
     public static boolean DEBUG = false;
     public static boolean RESET = false;
@@ -236,10 +236,10 @@ public class MaxineARMTester {
                 bindTest.start().waitFor();
                 FileInputStream inputStream = new FileInputStream(bindOutput);
                 if (inputStream.available() != 0) {
-                    log("MaxineARMTester:: qemu ready");
+                    log("MaxineARMv7Tester:: qemu ready");
                     break;
                 } else {
-                    log("MaxineARMTester: gemu not ready");
+                    log("MaxineARMv7Tester: gemu not ready");
                     Thread.sleep(500);
                 }
             } while (true);
@@ -277,10 +277,10 @@ public class MaxineARMTester {
                 bindTest.start().waitFor();
                 FileInputStream inputStream = new FileInputStream(bindOutput);
                 if (inputStream.available() != 0) {
-                    log("MaxineARMTester:: qemu ready");
+                    log("MaxineARMv7Tester:: qemu ready");
                     break;
                 } else {
-                    log("MaxineARMTester: gemu not ready");
+                    log("MaxineARMv7Tester: gemu not ready");
                     Thread.sleep(500);
                 }
             } while (true);
@@ -315,10 +315,10 @@ public class MaxineARMTester {
                 binder.start().waitFor();
                 FileInputStream inputStream = new FileInputStream(bindOutput);
                 if (inputStream.available() != 0) {
-                    log("MaxineARMTester:: qemu ready");
+                    log("MaxineARMv7Tester:: qemu ready");
                     break;
                 } else {
-                    log("MaxineARMTester: gemu not ready");
+                    log("MaxineARMv7Tester: gemu not ready");
                     Thread.sleep(500);
                 }
             } while (true);
@@ -356,10 +356,10 @@ public class MaxineARMTester {
                 binder.start().waitFor();
                 FileInputStream inputStream = new FileInputStream(bindOutput);
                 if (inputStream.available() != 0) {
-                    log("MaxineARMTester:: qemu ready");
+                    log("MaxineARMv7Tester:: qemu ready");
                     break;
                 } else {
-                    log("MaxineARMTester: gemu not ready");
+                    log("MaxineARMv7Tester: gemu not ready");
                     Thread.sleep(500);
                 }
             } while (true);
@@ -399,7 +399,7 @@ public class MaxineARMTester {
         return result;
     }
 
-    public MaxineARMTester(int[] expected, boolean[] test, BitsFlag[] range) {
+    public MaxineARMv7Tester(int[] expected, boolean[] test, BitsFlag[] range) {
         initializeQemu();
         bitMasks = range;
         for (int i = 0; i < NUM_REGS; i++) {
@@ -408,7 +408,7 @@ public class MaxineARMTester {
         }
     }
 
-    public MaxineARMTester(long[] expected, boolean[] test, BitsFlag[] range) {
+    public MaxineARMv7Tester(long[] expected, boolean[] test, BitsFlag[] range) {
         initializeQemu();
         bitMasks = range;
         int j = 0;
@@ -421,14 +421,14 @@ public class MaxineARMTester {
             }
         }
     }
-    public MaxineARMTester() {
+    public MaxineARMv7Tester() {
         initializeQemu();
         for (int i = 0; i < NUM_REGS; i++) {
             testRegs[i] = false;
         }
     }
 
-    public MaxineARMTester(String[] args) {
+    public MaxineARMv7Tester(String[] args) {
         initializeQemu();
         for (int i = 0; i < NUM_REGS; i++) {
             testRegs[i] = false;
@@ -613,7 +613,7 @@ public class MaxineARMTester {
     }
 
     public static void main(String[] args) throws Exception {
-        MaxineARMTester tester = new MaxineARMTester(args);
+        MaxineARMv7Tester tester = new MaxineARMv7Tester(args);
         tester.run();
     }
 }
