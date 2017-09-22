@@ -26,14 +26,13 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 
-import com.oracle.max.asm.target.aarch64.Aarch64Address.AddressingMode;
-import com.oracle.max.asm.target.aarch64.Aarch64Assembler.BarrierKind;
-import com.oracle.max.asm.target.aarch64.Aarch64Assembler.ConditionFlag;
 import com.oracle.max.asm.target.aarch64.*;
+import com.oracle.max.asm.target.aarch64.Aarch64Assembler.*;
 import com.oracle.max.vm.ext.maxri.*;
 import com.oracle.max.vm.ext.t1x.*;
 import com.sun.cri.bytecode.*;
 import com.sun.cri.ci.*;
+import com.sun.cri.ci.CiTargetMethod.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
@@ -43,11 +42,9 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.stack.aarch64.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.type.*;
-import com.sun.cri.ci.CiTargetMethod.JumpTable;
-import com.sun.cri.ci.CiTargetMethod.LookupTable;
 // import java.io.PrintWriter;
 
-public class AARCH64T1XCompilation extends T1XCompilation {
+public class Aarch64T1XCompilation extends T1XCompilation {
 
     public static AtomicInteger methodCounter = new AtomicInteger(536870912);
     private static final Object fileLock = new Object();
@@ -59,7 +56,7 @@ public class AARCH64T1XCompilation extends T1XCompilation {
     final PatchInfoAARCH64 patchInfo;
     public static boolean FLOATDOUBLEREGISTERS = true;
 
-    public AARCH64T1XCompilation(T1X compiler) {
+    public Aarch64T1XCompilation(T1X compiler) {
         super(compiler);
         asm = new Aarch64MacroAssembler(target(), null);
         buf = asm.codeBuffer;
@@ -130,55 +127,55 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void adjustReg(CiRegister reg, int delta) {
-    	asm.increment32(reg, delta);
+        asm.increment32(reg, delta);
     }
 
     @Override
     public void peekObject(CiRegister dst, int index) {
-    	CiAddress a = spWord(index);
-    	asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        CiAddress a = spWord(index);
+        asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
     public void pokeObject(CiRegister src, int index) {
-    	CiAddress a = spWord(index);
-    	asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        CiAddress a = spWord(index);
+        asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
     public void peekWord(CiRegister dst, int index) {
-    	CiAddress address = spWord(index);
-    	asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+        CiAddress address = spWord(index);
+        asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
     }
 
     @Override
     public void pokeWord(CiRegister src, int index) {
-    	CiAddress address = spWord(index);
-    	asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+        CiAddress address = spWord(index);
+        asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
     }
 
     @Override
     public void peekInt(CiRegister dst, int index) {
-    	CiAddress a = spInt(index);
-    	asm.ldr(32, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        CiAddress a = spInt(index);
+        asm.ldr(32, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
     public void pokeInt(CiRegister src, int index) {
-    	CiAddress a = spInt(index);
-    	asm.str(32, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        CiAddress a = spInt(index);
+        asm.str(32, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
     public void peekLong(CiRegister dst, int index) {
-    	CiAddress a = spLong(index);
-    	asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        CiAddress a = spLong(index);
+        asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
     public void pokeLong(CiRegister src, int index) {
-    	CiAddress a = spLong(index);
-    	asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        CiAddress a = spLong(index);
+        asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
@@ -190,9 +187,9 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     public void pokeDouble(CiRegister src, int index) {
-    	assert src.isFpu();
-    	CiAddress a = spLong(index);
-    	asm.fstr(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        assert src.isFpu();
+        CiAddress a = spLong(index);
+        asm.fstr(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
@@ -204,9 +201,9 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     public void pokeFloat(CiRegister src, int index) {
-    	assert src.isFpu();
-    	CiAddress a = spInt(index);
-    	asm.fstr(32, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        assert src.isFpu();
+        CiAddress a = spInt(index);
+        asm.fstr(32, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
@@ -222,7 +219,7 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignLong(CiRegister dst, long value) {
-    	asm.mov64BitConstant(dst, value);
+        asm.mov64BitConstant(dst, value);
     }
 
     @Override
@@ -240,61 +237,61 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void loadInt(CiRegister dst, int index) {
-    	CiAddress a = localSlot(localSlotOffset(index, Kind.INT));
-    	asm.ldr(32, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        CiAddress a = localSlot(localSlotOffset(index, Kind.INT));
+        asm.ldr(32, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
     protected void loadLong(CiRegister dst, int index) {
-    	CiAddress a = localSlot(localSlotOffset(index, Kind.LONG));
-    	asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        CiAddress a = localSlot(localSlotOffset(index, Kind.LONG));
+        asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
     protected void loadWord(CiRegister dst, int index) {
-    	CiAddress a = localSlot(localSlotOffset(index, Kind.WORD));
-    	asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        CiAddress a = localSlot(localSlotOffset(index, Kind.WORD));
+        asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
     protected void loadObject(CiRegister dst, int index) {
-    	CiAddress a = localSlot(localSlotOffset(index, Kind.WORD));
-    	asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        CiAddress a = localSlot(localSlotOffset(index, Kind.WORD));
+        asm.ldr(64, dst, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
     protected void storeInt(CiRegister src, int index) {
-    	CiAddress a = localSlot(localSlotOffset(index, Kind.INT));
-    	asm.str(32, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        CiAddress a = localSlot(localSlotOffset(index, Kind.INT));
+        asm.str(32, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
     protected void storeLong(CiRegister src, int index) {
-    	CiAddress a = localSlot(localSlotOffset(index, Kind.LONG));
-    	asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        CiAddress a = localSlot(localSlotOffset(index, Kind.LONG));
+        asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
     protected void storeWord(CiRegister src, int index) {
-    	CiAddress a = localSlot(localSlotOffset(index, Kind.WORD));
-    	asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        CiAddress a = localSlot(localSlotOffset(index, Kind.WORD));
+        asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
     protected void storeObject(CiRegister src, int index) {
-    	CiAddress a = localSlot(localSlotOffset(index, Kind.WORD));
-    	asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
+        CiAddress a = localSlot(localSlotOffset(index, Kind.WORD));
+        asm.str(64, src, Aarch64Address.createUnscaledImmediateAddress(a.base(), a.displacement));
     }
 
     @Override
     public void assignInt(CiRegister dst, int value) {
-    	asm.mov32BitConstant(dst, value);
+        asm.mov32BitConstant(dst, value);
     }
 
     @Override
     protected void assignFloat(CiRegister dst, float value) {
-    	asm.mov32BitConstant(scratch, Float.floatToRawIntBits(value));
-    	asm.fmovCpu2Fpu(32, dst, scratch);
+        asm.mov32BitConstant(scratch, Float.floatToRawIntBits(value));
+        asm.fmovCpu2Fpu(32, dst, scratch);
     }
 
     @Override
@@ -341,8 +338,8 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
     @Override
     protected void assignDouble(CiRegister dst, double value) {
-    	asm.mov64BitConstant(scratch, Double.doubleToRawLongBits(value));
-    	asm.fmovCpu2Fpu(64, dst, scratch);
+        asm.mov64BitConstant(scratch, Double.doubleToRawLongBits(value));
+        asm.fmovCpu2Fpu(64, dst, scratch);
     }
 
     @Override
@@ -470,8 +467,7 @@ public class AARCH64T1XCompilation extends T1XCompilation {
 
         if (lowMatch == 0) {
             asm.cmp(32, scratch, highMatch);
-        }
-        else {
+        } else {
             asm.sub(32, scratch, scratch, lowMatch);
             asm.cmp(32, scratch, highMatch - lowMatch);
         }
@@ -520,18 +516,15 @@ public class AARCH64T1XCompilation extends T1XCompilation {
             startBlock(targetBCI);
             if (stream.nextBCI() == targetBCI) {
                 // Skip completely if default target is next instruction
-            }
-            else if (targetBCI <= bci) {
+            } else if (targetBCI <= bci) {
                 int target = bciToPos[targetBCI];
                 assert target != 0;
                 jmp(target);
-            }
-            else {
+            } else {
                 patchInfo.addJMP(buf.position(), targetBCI);
                 asm.jmp(Aarch64.zr);
             }
-        }
-        else {
+        } else {
             // r1 = loop counter
             // r2 = key from the lookup table under test.
             asm.pop(32, scratch);                               // key
@@ -735,9 +728,9 @@ public class AARCH64T1XCompilation extends T1XCompilation {
      * @param target
      */
     protected void longjmp(int target) {
-    	asm.adrp(scratch, (target >> 12) - (buf.position() >> 12)); // address of target's page
-    	asm.add(64, scratch, scratch, (int)(target & 0xFFFL)); // low 12 bits of
-    	asm.br(scratch);
+        asm.adrp(scratch, (target >> 12) - (buf.position() >> 12)); // address of target's page
+        asm.add(64, scratch, scratch, (int) (target & 0xFFFL)); // low 12 bits of
+        asm.br(scratch);
     }
 
     /**
@@ -756,7 +749,7 @@ public class AARCH64T1XCompilation extends T1XCompilation {
      * @param target
      */
     protected void jcc(ConditionFlag cc, int target) {
-    	asm.b(cc, target - buf.position());
+        asm.b(cc, target - buf.position());
     }
 
     @Override
@@ -771,23 +764,21 @@ public class AARCH64T1XCompilation extends T1XCompilation {
         while (i < patchInfo.size) {
             int tag = data[i++];
             if (tag == PatchInfoAARCH64.JCC) {
-            	ConditionFlag cc = ConditionFlag.values()[data[i++]];
-            	int pos = data[i++];
-            	int targetBCI = data[i++];
-            	int target = bciToPos[targetBCI];
-            	assert target != 0;
-            	buf.setPosition(pos);
-            	jcc(cc, target);
-            }
-            else if (tag == PatchInfoAARCH64.JMP) {
-            	int pos = data[i++];
-            	int targetBCI = data[i++];
-            	int target = bciToPos[targetBCI];
-            	assert target != 0;
-            	buf.setPosition(pos);
-            	jmp(target);
-            }
-            else if (tag == PatchInfoAARCH64.JUMP_TABLE_ENTRY) {
+                ConditionFlag cc = ConditionFlag.values()[data[i++]];
+                int pos = data[i++];
+                int targetBCI = data[i++];
+                int target = bciToPos[targetBCI];
+                assert target != 0;
+                buf.setPosition(pos);
+                jcc(cc, target);
+            } else if (tag == PatchInfoAARCH64.JMP) {
+                int pos = data[i++];
+                int targetBCI = data[i++];
+                int target = bciToPos[targetBCI];
+                assert target != 0;
+                buf.setPosition(pos);
+                jmp(target);
+            } else if (tag == PatchInfoAARCH64.JUMP_TABLE_ENTRY) {
                 int pos = data[i++];
                 int jumpTablePos = data[i++];
                 int targetBCI = data[i++];
@@ -796,8 +787,7 @@ public class AARCH64T1XCompilation extends T1XCompilation {
                 int disp = target - jumpTablePos;
                 buf.setPosition(pos);
                 buf.emitInt(disp);
-            }
-            else if (tag == PatchInfoAARCH64.LOOKUP_TABLE_ENTRY) {
+            } else if (tag == PatchInfoAARCH64.LOOKUP_TABLE_ENTRY) {
                 int pos = data[i++];
                 int key = data[i++];
                 int lookupTablePos = data[i++];
@@ -808,8 +798,7 @@ public class AARCH64T1XCompilation extends T1XCompilation {
                 buf.setPosition(pos);
                 buf.emitInt(key);
                 buf.emitInt(disp);
-            }
-            else if (tag == PatchInfoAARCH64.OBJECT_LITERAL) {
+            } else if (tag == PatchInfoAARCH64.OBJECT_LITERAL) {
                 int dispPos = data[i++];
                 int index = data[i++];
                 assert objectLiterals.get(index) != null;
@@ -818,9 +807,8 @@ public class AARCH64T1XCompilation extends T1XCompilation {
                 //int disp = ldrDisp(dispPos, dispFromCodeStart); see below
                 // create a PC relative address in scratch
                 asm.adr(scratch, dispFromCodeStart - buf.position());
-            }
-            else {
-            	throw new InternalError("Unknown PatchInfoAARCH64." + tag);
+            } else {
+                throw new InternalError("Unknown PatchInfoAARCH64." + tag);
             }
         }
     }

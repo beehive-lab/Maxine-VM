@@ -31,7 +31,7 @@ public enum Aarch64ExceptionCode {
 
     public final int encoding;
 
-    private Aarch64ExceptionCode(int encoding) {
+    Aarch64ExceptionCode(int encoding) {
         this.encoding = encoding;
     }
 }

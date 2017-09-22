@@ -309,7 +309,7 @@ public class RegisterConfigs {
                     Aarch64.d24, Aarch64.d25, Aarch64.d26, Aarch64.d27, Aarch64.d28, Aarch64.d29, Aarch64.d30, Aarch64.d31
                 };
 
-                CiRegister[] calleeSavedRegisters= {
+                CiRegister[] calleeSavedRegisters = {
                     Aarch64.r19, Aarch64.r20, Aarch64.r21, Aarch64.r22, Aarch64.r23,
                     Aarch64.r24, Aarch64.r25, Aarch64.r26, Aarch64.r27, Aarch64.r28,
                 };
@@ -335,7 +335,7 @@ public class RegisterConfigs {
                                 allocatable,         // caller save
                                 parameters,          // parameter registers
                                 null,                // no callee save
-                                Aarch64.allRegisters,// all AMD64 registers
+                                Aarch64.allRegisters, // all AMD64 registers
                                 roleMap);            // VM register role map
 
 
@@ -352,7 +352,7 @@ public class RegisterConfigs {
 
                 CiRegisterConfig compilerStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, calleeSavedRegisters));
                 CiRegisterConfig uncommonTrapStub = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8, Aarch64.calleeSavedRegisters));
-                CiRegisterConfig trapStub = new CiRegisterConfig(standard,  new CiCalleeSaveLayout(0, 34*8+32*16, 8, Aarch64.calleeSavedRegisters));
+                CiRegisterConfig trapStub = new CiRegisterConfig(standard,  new CiCalleeSaveLayout(0, 34 * 8 + 32 * 16, 8, Aarch64.calleeSavedRegisters));
                 CiRegisterConfig trampoline = new CiRegisterConfig(standard, new CiCalleeSaveLayout(0, -1, 8,
                                 Aarch64.r0, Aarch64.r1, Aarch64.r2, Aarch64.r3, Aarch64.r4, Aarch64.r5, Aarch64.r6, Aarch64.r7, // parameters
                                 Aarch64.fp,   // must be preserved for baseline compiler ???frame pointer???

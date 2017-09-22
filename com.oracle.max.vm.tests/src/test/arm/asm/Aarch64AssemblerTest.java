@@ -21,7 +21,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         public final int first;
         public final int second;
 
-        public Pair(int first, int second) {
+        Pair(int first, int second) {
             this.first = first;
             this.second = second;
         }
@@ -38,8 +38,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         junit.textui.TestRunner.run(Aarch64AssemblerTest.class);
     }
 
-    private static int[] valueTestSet = { 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
-    private static int[] scratchTestSet = { 0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x7fffffff};
+    private static int[] valueTestSet = {0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
+    private static int[] scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x7fffffff};
     private static boolean[] testValues = new boolean[MaxineAarch64Tester.NUM_REGS];
 
     // Each test should set the contents of this array appropriately,
@@ -76,9 +76,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
     // The following values will be updated
     // to those expected to be found in a register after simulated execution of code.
-    private static long[] expectedValues = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21 , 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
+    private static long[] expectedValues = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
 
-    private static long[] expectedLongValues = { Long.MAX_VALUE - 100, Long.MAX_VALUE};
+    private static long[] expectedLongValues = {Long.MAX_VALUE - 100, Long.MAX_VALUE};
 
     private static void initialiseExpectedValues() {
         for (int i = 0; i < MaxineAarch64Tester.NUM_REGS; i++) {
@@ -154,134 +154,134 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         long [] reg = generate(expectedValues, testValues, bitmasks, masm.codeBuffer);
 
         System.out.println("REG-0: " + reg[0]);
-        assert (0 == reg[0]);
+        assert 0 == reg[0];
     }
 //    public void work_adr_adrp() throws Exception {
-//	    initialiseExpectedValues();
-//	    setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//	    resetIgnoreValues();
-//	    masm.codeBuffer.reset();
+//      initialiseExpectedValues();
+//      setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+//      resetIgnoreValues();
+//      masm.codeBuffer.reset();
 //
-//	    masm.adrp(Aarch64.r0, 0);
-//	    masm.adrp(Aarch64.r1, 4096);
-//	    masm.adrp(Aarch64.r2, 8192);
-//	    masm.adr(Aarch64.r3, 0);
-//	    masm.mov(Aarch64.r4, 0xfffL);
+//      masm.adrp(Aarch64.r0, 0);
+//      masm.adrp(Aarch64.r1, 4096);
+//      masm.adrp(Aarch64.r2, 8192);
+//      masm.adr(Aarch64.r3, 0);
+//      masm.mov(Aarch64.r4, 0xfffL);
 //
-//	    long [] reg = generate(expectedValues, testValues, bitmasks, masm.codeBuffer);
+//      long [] reg = generate(expectedValues, testValues, bitmasks, masm.codeBuffer);
 //
-//	    for (int i = 0; i < 5; i++) {
-//	    	System.out.println("REG-" + i + ": " + reg[i]);
-//	    }
-//	    assert (reg[3] & ~reg[4]) == reg[0];
+//      for (int i = 0; i < 5; i++) {
+//          System.out.println("REG-" + i + ": " + reg[i]);
+//      }
+//      assert (reg[3] & ~reg[4]) == reg[0];
 //    }
 //    public void test_mov64() throws Exception {
-//	    initialiseExpectedValues();
-//	    setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//	    resetIgnoreValues();
-//	    masm.codeBuffer.reset();
+//      initialiseExpectedValues();
+//      setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+//      resetIgnoreValues();
+//      masm.codeBuffer.reset();
 //
-//	    masm.mov64BitConstant(Aarch64.r0, 10);
-//	    masm.mov64BitConstant(Aarch64.r1, -10);
-//	    masm.mov64BitConstant(Aarch64.r2, -12345678987654321L);
-//	    masm.mov64BitConstant(Aarch64.r3, Long.MAX_VALUE);
-//	    masm.mov64BitConstant(Aarch64.r4, Long.MIN_VALUE);
-//
-//
-//	    expectedValues[0] = 10;
-//	    expectedValues[1] = -10;
-//	    expectedValues[2] = -12345678987654321L;
-//	    expectedValues[3] = Long.MAX_VALUE;
-//	    expectedValues[4] = Long.MIN_VALUE;
+//      masm.mov64BitConstant(Aarch64.r0, 10);
+//      masm.mov64BitConstant(Aarch64.r1, -10);
+//      masm.mov64BitConstant(Aarch64.r2, -12345678987654321L);
+//      masm.mov64BitConstant(Aarch64.r3, Long.MAX_VALUE);
+//      masm.mov64BitConstant(Aarch64.r4, Long.MIN_VALUE);
 //
 //
-//	    testValues[0] = true;
-//	    testValues[1] = true;
-//	    testValues[2] = true;
-//	    testValues[3] = true;
-//	    testValues[4] = true;
+//      expectedValues[0] = 10;
+//      expectedValues[1] = -10;
+//      expectedValues[2] = -12345678987654321L;
+//      expectedValues[3] = Long.MAX_VALUE;
+//      expectedValues[4] = Long.MIN_VALUE;
 //
 //
-//	    generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+//      testValues[0] = true;
+//      testValues[1] = true;
+//      testValues[2] = true;
+//      testValues[3] = true;
+//      testValues[4] = true;
+//
+//
+//    generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
 //    }
 
 
 
-//	public void test_mov() throws Exception {
-//	    initialiseExpectedValues();
-//	    setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//	    resetIgnoreValues();
-//	    masm.codeBuffer.reset();
+//  public void test_mov() throws Exception {
+//      initialiseExpectedValues();
+//      setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+//      resetIgnoreValues();
+//      masm.codeBuffer.reset();
 //
-//	    masm.mov(Aarch64.r0, 10);
-//	    masm.mov(Aarch64.r1, -10);
-//
-//
-//	    expectedValues[0] = 10;
-//	    expectedValues[1] = -10;
+//      masm.mov(Aarch64.r0, 10);
+//      masm.mov(Aarch64.r1, -10);
 //
 //
-//	    testValues[0] = true;
-//	    testValues[1] = true;
+//      expectedValues[0] = 10;
+//      expectedValues[1] = -10;
 //
-//	    generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+//
+//      testValues[0] = true;
+//      testValues[1] = true;
+//
+//      generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
 //}
 
 
-//	public void test_mov() throws Exception {
-//	    initialiseExpectedValues();
-//	    setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//	    resetIgnoreValues();
-//	    masm.codeBuffer.reset();
+//  public void test_mov() throws Exception {
+//      initialiseExpectedValues();
+//      setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+//      resetIgnoreValues();
+//      masm.codeBuffer.reset();
 //
-//	    masm.mov(Aarch64.r0, (int)Integer.MAX_VALUE);
-//	    masm.mov(Aarch64.r1, (int)Integer.MIN_VALUE);
-//	    masm.mov(Aarch64.r2, (long)Long.MAX_VALUE);
-//	    masm.mov(Aarch64.r3, (long)Long.MIN_VALUE);
+//      masm.mov(Aarch64.r0, (int)Integer.MAX_VALUE);
+//      masm.mov(Aarch64.r1, (int)Integer.MIN_VALUE);
+//      masm.mov(Aarch64.r2, (long)Long.MAX_VALUE);
+//      masm.mov(Aarch64.r3, (long)Long.MIN_VALUE);
 //
-//	    expectedValues[0] = Integer.MAX_VALUE;
-//	    expectedValues[1] = Integer.MIN_VALUE;
-//	    expectedValues[2] = Long.MAX_VALUE;
-//	    expectedValues[3] = Long.MIN_VALUE;
+//      expectedValues[0] = Integer.MAX_VALUE;
+//      expectedValues[1] = Integer.MIN_VALUE;
+//      expectedValues[2] = Long.MAX_VALUE;
+//      expectedValues[3] = Long.MIN_VALUE;
 //
-//	    testValues[0] = true;
-//	    testValues[1] = true;
-//	    testValues[2] = true;
-//	    testValues[3] = true;
-//	    generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
-//	}
+//      testValues[0] = true;
+//      testValues[1] = true;
+//      testValues[2] = true;
+//      testValues[3] = true;
+//      generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+//  }
 //
-//	public void test_add_register () throws Exception {
-//	    initialiseExpectedValues();
-//	    setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//	    resetIgnoreValues();
-//	    masm.codeBuffer.reset();
-//	    masm.mov64BitConstant(Aarch64.r0, 10);
-//	    masm.mov64BitConstant(Aarch64.r1, -1);
-//	    masm.mov64BitConstant(Aarch64.r2, 1);
-//	    masm.mov64BitConstant(Aarch64.r3, Long.MAX_VALUE);
-//	    masm.mov64BitConstant(Aarch64.r4, Long.MIN_VALUE);
+//  public void test_add_register () throws Exception {
+//      initialiseExpectedValues();
+//      setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+//      resetIgnoreValues();
+//      masm.codeBuffer.reset();
+//      masm.mov64BitConstant(Aarch64.r0, 10);
+//      masm.mov64BitConstant(Aarch64.r1, -1);
+//      masm.mov64BitConstant(Aarch64.r2, 1);
+//      masm.mov64BitConstant(Aarch64.r3, Long.MAX_VALUE);
+//      masm.mov64BitConstant(Aarch64.r4, Long.MIN_VALUE);
 //
 //
-//	    masm.add(64, Aarch64.r0, Aarch64.r0, Aarch64.r1);
-//	    masm.add(64, Aarch64.r3, Aarch64.r3, Aarch64.r2);
-//	    masm.add(64, Aarch64.r4, Aarch64.r4, Aarch64.r1);
-//	    masm.add(64, Aarch64.r5, Aarch64.r4, Aarch64.r2);
-//	    masm.add(64, Aarch64.r6, Aarch64.r3, Aarch64.r1);
+//      masm.add(64, Aarch64.r0, Aarch64.r0, Aarch64.r1);
+//      masm.add(64, Aarch64.r3, Aarch64.r3, Aarch64.r2);
+//      masm.add(64, Aarch64.r4, Aarch64.r4, Aarch64.r1);
+//      masm.add(64, Aarch64.r5, Aarch64.r4, Aarch64.r2);
+//      masm.add(64, Aarch64.r6, Aarch64.r3, Aarch64.r1);
 //
-//	    expectedValues[0] = 9;
-//	    expectedValues[3] = Long.MIN_VALUE;
-//	    expectedValues[4] = Long.MAX_VALUE;
-//	    expectedValues[5] = Long.MIN_VALUE;
-//	    expectedValues[6] = Long.MAX_VALUE;
-//	    testValues[0] = true;
-//	    testValues[3] = true;
-//	    testValues[4] = true;
-//	    testValues[5] = true;
-//	    testValues[6] = true;
-//	    generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+//      expectedValues[0] = 9;
+//      expectedValues[3] = Long.MIN_VALUE;
+//      expectedValues[4] = Long.MAX_VALUE;
+//      expectedValues[5] = Long.MIN_VALUE;
+//      expectedValues[6] = Long.MAX_VALUE;
+//      testValues[0] = true;
+//      testValues[3] = true;
+//      testValues[4] = true;
+//      testValues[5] = true;
+//      testValues[6] = true;
+//      generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
 //
-//	}
+//  }
 //    TODO: Look again at this.
 //    public void test_movImmediate() throws Exception {
 //      initialiseExpectedValues();
@@ -315,9 +315,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
         asm.mov64BitConstant(Aarch64.r0, -1);
         asm.b(24);
-        asm.nop(4);													// +16 bytes
-        asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 0x123, 0);	// +20 bytes to here (skipped)
-        asm.movz(VARIANT_64, Aarch64.cpuRegisters[1], 0x123, 0);	// +24 bytes to here (landing)
+        asm.nop(4);                                                          // +16 bytes
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 0x123, 0);    // +20 bytes to here (skipped)
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[1], 0x123, 0);    // +24 bytes to here (landing)
 
         expectedValues[0] = -1;
         testValues[0] = true;

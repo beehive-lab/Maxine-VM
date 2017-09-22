@@ -90,7 +90,7 @@ public class AMD64T1XTestCase extends MaxTestCase {
         anMethod = new StaticMethodActor(null, SignatureDescriptor.create(sig), flags, codeAttr, new String());
     }
 
-    public void test_nothing () {
+    public void test_nothing() {
         return;
     }
 

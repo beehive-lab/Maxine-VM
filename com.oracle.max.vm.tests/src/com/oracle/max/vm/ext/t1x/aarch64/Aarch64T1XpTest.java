@@ -1,36 +1,27 @@
 package com.oracle.max.vm.ext.t1x.aarch64;
 
-import static com.sun.max.vm.MaxineVM.vm;
+import static com.sun.max.vm.MaxineVM.*;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
-import test.arm.asm.ARMCodeWriter;
-import test.arm.asm.MaxineAarch64Tester;
-
-import com.oracle.max.asm.target.aarch64.Aarch64;
-import com.oracle.max.asm.target.aarch64.Aarch64Assembler;
-import com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler;
-import com.oracle.max.vm.ext.c1x.C1X;
-import com.oracle.max.vm.ext.t1x.T1X;
+import com.oracle.max.asm.target.aarch64.*;
+import com.oracle.max.vm.ext.c1x.*;
+import com.oracle.max.vm.ext.t1x.*;
 import com.sun.cri.bytecode.*;
-import com.sun.cri.ci.CiRegister;
-import com.sun.cri.ci.CiTarget;
-import com.sun.max.ide.MaxTestCase;
-import com.sun.max.io.Files;
-import com.sun.max.program.option.OptionSet;
-import com.sun.max.vm.MaxineVM.Phase;
-import com.sun.max.vm.actor.Actor;
-import com.sun.max.vm.actor.member.StaticMethodActor;
-import com.sun.max.vm.classfile.CodeAttribute;
-import com.sun.max.vm.classfile.LineNumberTable;
-import com.sun.max.vm.classfile.LocalVariableTable;
-import com.sun.max.vm.compiler.CompilationBroker;
-import com.sun.max.vm.compiler.RuntimeCompiler;
-import com.sun.max.vm.hosted.JavaPrototype;
-import com.sun.max.vm.hosted.VMConfigurator;
-import com.sun.max.vm.type.SignatureDescriptor;
+import com.sun.cri.ci.*;
+import com.sun.max.ide.*;
+import com.sun.max.io.*;
+import com.sun.max.program.option.*;
+import com.sun.max.vm.MaxineVM.*;
+import com.sun.max.vm.actor.*;
+import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
+import com.sun.max.vm.compiler.*;
+import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.type.*;
+
+import test.arm.asm.*;
 
 /**
  * These JUnit tests are for testing protected members of Aarch64T1XCompilation which
@@ -39,12 +30,12 @@ import com.sun.max.vm.type.SignatureDescriptor;
  */
 
 public class Aarch64T1XpTest extends MaxTestCase {
-    private Aarch64Assembler asm;
-    private CiTarget aarch64;
-    private ARMCodeWriter code;
-    private T1X t1x;
-    private C1X c1x;
-    private AARCH64T1XCompilation theCompiler;
+    private Aarch64Assembler      asm;
+    private CiTarget              aarch64;
+    private ARMCodeWriter         code;
+    private T1X                   t1x;
+    private C1X                   c1x;
+    private Aarch64T1XCompilation theCompiler;
     private StaticMethodActor anMethod = null;
     private CodeAttribute codeAttr = null;
     private static boolean POST_CLEAN_FILES = true;
@@ -72,7 +63,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         public final int first;
         public final int second;
 
-        public Pair(int first, int second) {
+        Pair(int first, int second) {
             this.first = first;
             this.second = second;
         }
@@ -95,8 +86,8 @@ public class Aarch64T1XpTest extends MaxTestCase {
         return result.toArray(new String[result.size()]);
     }
 
-    private static int[] valueTestSet = { 0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
-    private static long[] scratchTestSet = { 0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x00000000ffffffffL};
+    private static int[] valueTestSet = {0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
+    private static long[] scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x00000000ffffffffL};
     private static MaxineAarch64Tester.BitsFlag[] bitmasks = new MaxineAarch64Tester.BitsFlag[MaxineAarch64Tester.NUM_REGS];
     static {
         for (int i = 0; i < MaxineAarch64Tester.NUM_REGS; i++) {
@@ -117,9 +108,9 @@ public class Aarch64T1XpTest extends MaxTestCase {
 
     // The following values will be updated
     // to those expected to be found in a register after simulated execution of code.
-    private static long[] expectedValues = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21 , 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
+    private static long[] expectedValues = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
 
-    private static long[] expectedLongValues = { Long.MAX_VALUE - 100, Long.MAX_VALUE};
+    private static long[] expectedLongValues = {Long.MAX_VALUE - 100, Long.MAX_VALUE};
 
     private static void initialiseExpectedValues() {
         for (int i = 0; i < MaxineAarch64Tester.NUM_REGS; i++) {
@@ -179,7 +170,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
             //graal = (MaxGraal)CompilationBroker.addCompiler("Graal", optimizingCompilerName);
             //graal.initialize(Phase.HOSTED_COMPILING);
             c1x.initialize(Phase.HOSTED_COMPILING);
-            theCompiler = (AARCH64T1XCompilation) t1x.getT1XCompilation();
+            theCompiler = (Aarch64T1XCompilation) t1x.getT1XCompilation();
             theCompiler.setDebug(false);
         } catch (Exception e) {
             System.out.println(e);
@@ -213,7 +204,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
     }
 
-    public void work_AssignDouble () throws Exception {
+    public void work_AssignDouble() throws Exception {
         initialiseExpectedValues();
         resetIgnoreValues();
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
@@ -240,7 +231,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
     }
 
-    public void work_AssignInt () throws Exception {
+    public void work_AssignInt() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -261,12 +252,12 @@ public class Aarch64T1XpTest extends MaxTestCase {
         long [] simulatedValues = generateAndTest(expectedValues, testValues, bitmasks);
 
         for (int i = 0; i < 5; i++) {
-            assert (int)simulatedValues[i] == values[i]
-                            : i + "; Simulated: " + (int)simulatedValues[i] + ", expected: " + values[i];
+            assert (int) simulatedValues[i] == values[i]
+                            : i + "; Simulated: " + (int) simulatedValues[i] + ", expected: " + values[i];
         }
     }
 
-    public void work_AssignLong () throws Exception {
+    public void work_AssignLong() throws Exception {
         initialiseExpectedValues();
         resetIgnoreValues();
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
@@ -290,34 +281,34 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
     }
 
-    public void work_AssignFloat () throws Exception {
-    	initialiseExpectedValues();
-    	resetIgnoreValues();
-    	Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
-    	masm.codeBuffer.reset();
+    public void work_AssignFloat() throws Exception {
+        initialiseExpectedValues();
+        resetIgnoreValues();
+        Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.codeBuffer.reset();
 
-    	CiRegister [] dregs = {Aarch64.d0, Aarch64.d1, Aarch64.d2, Aarch64.d3, Aarch64.d4};
-    	CiRegister [] iregs = {Aarch64.r0, Aarch64.r1, Aarch64.r2, Aarch64.r3, Aarch64.r4};
+        CiRegister[] dregs = {Aarch64.d0, Aarch64.d1, Aarch64.d2, Aarch64.d3, Aarch64.d4};
+        CiRegister[] iregs = {Aarch64.r0, Aarch64.r1, Aarch64.r2, Aarch64.r3, Aarch64.r4};
 
-    	float [] fValues = {Float.MAX_VALUE, Float.MIN_VALUE, 1.0f, 0.12345f, -1.345E36f};
+        float[] fValues = {Float.MAX_VALUE, Float.MIN_VALUE, 1.0f, 0.12345f, -1.345E36f};
 
 
-    	for (int  i = 0; i < 5; i++) {
-    	    expectedValues[i] = Float.floatToRawIntBits(fValues[i]);
-    	    theCompiler.assignFloat(dregs[i], fValues[i]);
-    	    masm.fmovFpu2Cpu(32, iregs[i], dregs[i]);
-    	}
+        for (int i = 0; i < 5; i++) {
+            expectedValues[i] = Float.floatToRawIntBits(fValues[i]);
+            theCompiler.assignFloat(dregs[i], fValues[i]);
+            masm.fmovFpu2Cpu(32, iregs[i], dregs[i]);
+        }
 
-    	long [] simulatedValues = generateAndTest(expectedValues, testValues, bitmasks);
+        long[] simulatedValues = generateAndTest(expectedValues, testValues, bitmasks);
 
-    	for (int i = 0; i < 5; i++) {
-    	    Float f = Float.intBitsToFloat((int)simulatedValues[i]);
-    	    assert f == fValues[i]
-    	         : i + "; Simulated: " + f + ", expected: " + fValues[i];
-    	}
+        for (int i = 0; i < 5; i++) {
+            Float f = Float.intBitsToFloat((int) simulatedValues[i]);
+            assert f == fValues[i]
+                    : i + "; Simulated: " + f + ", expected: " + fValues[i];
+        }
     }
 
-    public void work_do_swap () throws Exception {
+    public void work_do_swap() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -632,7 +623,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
     }
 
-    public void work_do_dup_x1 () throws Exception {
+    public void work_do_dup_x1() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -654,7 +645,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         theCompiler.peekInt(Aarch64.r1, 1);
         theCompiler.peekInt(Aarch64.r2, 2);
 
-        long [] simValues = generateAndTest (expectedValues, testValues, bitmasks);
+        long [] simValues = generateAndTest(expectedValues, testValues, bitmasks);
 
         for (int i = 0; i < 3; i++) {
             assert simValues[i] == (0xffffffffL & expectedValues[i])
@@ -664,7 +655,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
     }
 
     // category 2 type test
-    public void work_do_dup2_2 () throws Exception {
+    public void work_do_dup2_2() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -682,7 +673,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         theCompiler.peekLong(Aarch64.r0, 0);
         theCompiler.peekLong(Aarch64.r1, 2);
 
-        long [] simValues = generateAndTest (expectedValues, testValues, bitmasks);
+        long [] simValues = generateAndTest(expectedValues, testValues, bitmasks);
 
         for (int i = 0; i < 2; i++) {
             assert simValues[i] == expectedValues[i]
@@ -692,7 +683,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
     }
 
     // category 1 type test
-    public void work_do_dup2_1 () throws Exception {
+    public void work_do_dup2_1() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -715,7 +706,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         theCompiler.peekInt(Aarch64.r2, 2);
         theCompiler.peekInt(Aarch64.r3, 3);
 
-        long [] simValues = generateAndTest (expectedValues, testValues, bitmasks);
+        long [] simValues = generateAndTest(expectedValues, testValues, bitmasks);
 
 
         for (int i = 0; i < 4; i++) {
@@ -725,8 +716,8 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
     }
 
-    public void work_do_dup () throws Exception {
-        int testVal = (int)Math.random();
+    public void work_do_dup() throws Exception {
+        int testVal = (int) Math.random();
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(Aarch64.r16, testVal);
         theCompiler.incStack(1);
@@ -738,7 +729,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         theCompiler.peekInt(Aarch64.r0, 0);
         theCompiler.peekInt(Aarch64.r1, 1);
 
-        long [] simValues = generateAndTest (expectedValues, testValues, bitmasks);
+        long [] simValues = generateAndTest(expectedValues, testValues, bitmasks);
 
         assert simValues[0] == expectedValues[0];
         assert simValues[1] == expectedValues[1];
@@ -749,8 +740,8 @@ public class Aarch64T1XpTest extends MaxTestCase {
         initialiseExpectedValues();
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.codeBuffer.reset();
-        double values [] = {Double.MAX_VALUE, Double.MIN_VALUE, 0.0d, 1.1d, 1.234e100, -1.234e100};
-        CiRegister [] regs = {Aarch64.r5, Aarch64.r4, Aarch64.r3, Aarch64.r2, Aarch64.r1, Aarch64.r0};
+        double[] values = {Double.MAX_VALUE, Double.MIN_VALUE, 0.0d, 1.1d, 1.234e100, -1.234e100};
+        CiRegister[] regs = {Aarch64.r5, Aarch64.r4, Aarch64.r3, Aarch64.r2, Aarch64.r1, Aarch64.r0};
 
         for (int i = 0; i < values.length; i++) {
             expectedValues[i] = Double.doubleToRawLongBits(values[i]);
@@ -762,7 +753,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
             theCompiler.decStack(2);
         }
 
-        long [] simValues = generateAndTest (expectedValues, testValues, bitmasks);
+        long [] simValues = generateAndTest(expectedValues, testValues, bitmasks);
 
         for (int i = 0; i < values.length; i++) {
             assert values[i] == Double.longBitsToDouble(simValues[i])
@@ -776,8 +767,8 @@ public class Aarch64T1XpTest extends MaxTestCase {
         initialiseExpectedValues();
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.codeBuffer.reset();
-        Long values [] = {Long.MAX_VALUE, Long.MIN_VALUE, 0L, -1000L, 12345678987654321L, -12345678987654321L};
-        CiRegister [] regs = {Aarch64.r5, Aarch64.r4, Aarch64.r3, Aarch64.r2, Aarch64.r1, Aarch64.r0};
+        Long[] values = {Long.MAX_VALUE, Long.MIN_VALUE, 0L, -1000L, 12345678987654321L, -12345678987654321L};
+        CiRegister[] regs = {Aarch64.r5, Aarch64.r4, Aarch64.r3, Aarch64.r2, Aarch64.r1, Aarch64.r0};
 
         for (int i = 0; i < values.length; i++) {
             expectedValues[i] = values[i];
@@ -789,7 +780,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
             theCompiler.decStack(2);
         }
 
-        long [] simValues = generateAndTest (expectedValues, testValues, bitmasks);
+        long [] simValues = generateAndTest(expectedValues, testValues, bitmasks);
 
         for (int i = 0; i < values.length; i++) {
             System.out.println(i + " " + simValues[i]);
@@ -797,14 +788,14 @@ public class Aarch64T1XpTest extends MaxTestCase {
                 : i + "; Simulated: " + simValues[i] + ", expected: " + expectedValues[i];
         }
     }
-    public void work_do_fconst () throws Exception {
+    public void work_do_fconst() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.codeBuffer.reset();
-        float values [] = {Float.MAX_VALUE, Float.MIN_VALUE, 0.0f, 1.1f, 123.456789f, -123.456789f};
-        CiRegister [] regs = {Aarch64.r5, Aarch64.r4, Aarch64.r3, Aarch64.r2, Aarch64.r1, Aarch64.r0};
+        float[] values = {Float.MAX_VALUE, Float.MIN_VALUE, 0.0f, 1.1f, 123.456789f, -123.456789f};
+        CiRegister[] regs = {Aarch64.r5, Aarch64.r4, Aarch64.r3, Aarch64.r2, Aarch64.r1, Aarch64.r0};
 
         for (int i = 0; i < values.length; i++) {
             expectedValues[i] = Float.floatToRawIntBits(values[i]);
@@ -815,21 +806,21 @@ public class Aarch64T1XpTest extends MaxTestCase {
             theCompiler.peekInt(regs[i], i);
         }
 
-        long [] simValues = generateAndTest (expectedValues, testValues, bitmasks);
+        long[] simValues = generateAndTest(expectedValues, testValues, bitmasks);
 
         for (int i = 0; i < values.length; i++) {
-            assert values[i] == Float.intBitsToFloat((int)simValues[i])
-                : i + "; Simulated: " + Float.intBitsToFloat((int)simValues[i]) + ", expected: " + values[i];
+            assert values[i] == Float.intBitsToFloat((int) simValues[i])
+                : i + "; Simulated: " + Float.intBitsToFloat((int) simValues[i]) + ", expected: " + values[i];
         }
     }
-    public void work_do_iconst () throws Exception {
+    public void work_do_iconst() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.codeBuffer.reset();
-        int values [] = {Integer.MAX_VALUE, Integer.MIN_VALUE, 0, 1, 123456789, -123456789};
-        CiRegister [] regs = {Aarch64.r0, Aarch64.r1, Aarch64.r2, Aarch64.r3, Aarch64.r4, Aarch64.r5};
+        int[] values = {Integer.MAX_VALUE, Integer.MIN_VALUE, 0, 1, 123456789, -123456789};
+        CiRegister[] regs = {Aarch64.r0, Aarch64.r1, Aarch64.r2, Aarch64.r3, Aarch64.r4, Aarch64.r5};
 
         for (int i = 0; i < values.length; i++) {
             expectedValues[i] = values[i];
@@ -837,22 +828,22 @@ public class Aarch64T1XpTest extends MaxTestCase {
             theCompiler.peekInt(regs[i], 0);
         }
 
-        long [] simValues = generateAndTest (expectedValues, testValues, bitmasks);
+        long[] simValues = generateAndTest(expectedValues, testValues, bitmasks);
 
         for (int i = 0; i < values.length; i++) {
-            assert values[i] == (int)simValues[i]
+            assert values[i] == (int) simValues[i]
                 : i + "; Simulated: " + simValues[i] + ", expected: " + values[i];
         }
     }
 
-    public void work_do_iinc () throws Exception {
+    public void work_do_iinc() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.codeBuffer.reset();
-        int iValues [] = {Integer.MAX_VALUE, Integer.MIN_VALUE, 0, 1, 123456789, -123456789, 1};
-        int dValues [] = {1, -1, Integer.MIN_VALUE, Integer.MAX_VALUE, -123456789, 123456789, -1};
+        int[] iValues = {Integer.MAX_VALUE, Integer.MIN_VALUE, 0, 1, 123456789, -123456789, 1};
+        int[] dValues = {1, -1, Integer.MIN_VALUE, Integer.MAX_VALUE, -123456789, 123456789, -1};
         CiRegister [] regs = {Aarch64.r0, Aarch64.r1, Aarch64.r2, Aarch64.r3, Aarch64.r4, Aarch64.r5, Aarch64.r6};
         expectedValues [0] = Integer.MIN_VALUE;
         expectedValues [1] = Integer.MAX_VALUE;
@@ -870,19 +861,19 @@ public class Aarch64T1XpTest extends MaxTestCase {
 
         for (int i = 0; i < iValues.length; i++) {
             theCompiler.do_iinc(i, dValues[i]);
-            theCompiler.loadInt(regs[i],i);
+            theCompiler.loadInt(regs[i], i);
         }
 
-        long [] simValues = generateAndTest (expectedValues, testValues, bitmasks);
+        long[] simValues = generateAndTest(expectedValues, testValues, bitmasks);
 
         for (int i = 0; i < iValues.length; i++) {
-            System.out.println(iValues.length + " " + i + " " + (int)simValues[i]);
-            assert expectedValues[i] == (int)simValues[i]
-                : i + "; Simulated: " + (int)simValues[i] + ", expected: " + expectedValues[i];
+            System.out.println(iValues.length + " " + i + " " + (int) simValues[i]);
+            assert expectedValues[i] == (int) simValues[i]
+                : i + "; Simulated: " + (int) simValues[i] + ", expected: " + expectedValues[i];
         }
     }
 
-    public void work_LoadStoreObject () throws Exception {
+    public void work_LoadStoreObject() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -909,7 +900,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
                             : "Register " + i + " " + simulatedValues[i] + " expected " + expectedValues[i];
         }
     }
-    public void work_LoadStoreWord () throws Exception {
+    public void work_LoadStoreWord() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.initFrame(anMethod, codeAttr);
         initialiseExpectedValues();
@@ -1004,7 +995,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         expectedValues[4] = -1;
 
         for (int i = 0; i < 5; i++) {
-            masm.mov32BitConstant(Aarch64.r16, (int)expectedValues[i]);
+            masm.mov32BitConstant(Aarch64.r16, (int) expectedValues[i]);
             theCompiler.storeInt(Aarch64.r16, i);
             //theCompiler.loadInt(regs[i], i);
         }
@@ -1015,8 +1006,8 @@ public class Aarch64T1XpTest extends MaxTestCase {
         long [] simulatedValues = generateAndTest(expectedValues, testValues, bitmasks);
 
         for (int i = 0; i < 5; i++) {
-            assert (int)expectedValues[i] == (int)simulatedValues[i]
-                            : "Register " + i + " " + (int)simulatedValues[i] + " expected " + (int)expectedValues[i];
+            assert (int) expectedValues[i] == (int) simulatedValues[i]
+                            : "Register " + i + " " + (int) simulatedValues[i] + " expected " + (int) expectedValues[i];
         }
 
     }
@@ -1174,7 +1165,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         // 34 iconst_m1
         // 35 ireturn
 
-        int[] values = new int[] { 10, 20, 30, 40};
+        int[] values = new int[] {10, 20, 30, 40};
         for (int i = 0; i < values.length; i++) {
             for (int j = 0; j < values.length; j++) {
                 if (i > j) {
@@ -1270,7 +1261,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
         // default:
         // m = 40;
         // }
-        int[] values = new int[] { 10, 20, 30, 40};
+        int[] values = new int[] {10, 20, 30, 40};
         for (int i = 0; i < values.length; i++) {
             for (int j = 0; j < values.length; j++) {
                 if (i > j) {

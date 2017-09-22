@@ -127,7 +127,7 @@ public class Aarch64 extends CiArchitecture {
     };
 
     private static CiRegister gpCiRegister(int nr) {
-        return new CiRegister(nr, nr, 8, "r"+nr, CPU, RegisterFlag.Byte);
+        return new CiRegister(nr, nr, 8, "r" + nr, CPU, RegisterFlag.Byte);
     }
 
     private static CiRegister fpCiRegister(int nr) {

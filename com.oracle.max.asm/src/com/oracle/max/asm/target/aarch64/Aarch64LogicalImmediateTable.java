@@ -22,9 +22,9 @@
  */
 package com.oracle.max.asm.target.aarch64;
 
-import com.oracle.max.asm.NumUtil;
+import java.util.*;
 
-import java.util.Arrays;
+import com.oracle.max.asm.*;
 
 public class Aarch64LogicalImmediateTable {
     private static final Immediate[] IMMEDIATE_TABLE = buildImmediateTable();
@@ -37,7 +37,7 @@ public class Aarch64LogicalImmediateTable {
      * Specifies whether immediate can be represented in all cases (YES), as a 64bit instruction
      * (SIXTY_FOUR_BIT_ONLY) or not at all (NO).
      */
-    static enum Representable {
+    enum Representable {
         YES, SIXTY_FOUR_BIT_ONLY, NO
     }
 
@@ -120,13 +120,13 @@ public class Aarch64LogicalImmediateTable {
         public final long imm;
         public final int encoding;
 
-        public Immediate(long imm, boolean is64, int s, int r) {
+        Immediate(long imm, boolean is64, int s, int r) {
             this.imm = imm;
             this.encoding = computeEncoding(is64, s, r);
         }
 
         // Used to be able to binary search for an immediate in the table.
-        public Immediate(long imm) {
+        Immediate(long imm) {
             this(imm, false, 0, 0);
         }
 
@@ -163,16 +163,20 @@ public class Aarch64LogicalImmediateTable {
                     long immediate = (val >>> r | val << (e - r)) & mask;
                     // Duplicate pattern to fill whole 64bit range.
                     switch (logE) {
-                    case 1:
-                        immediate |= immediate << 2;
-                    case 2:
-                        immediate |= immediate << 4;
-                    case 3:
-                        immediate |= immediate << 8;
-                    case 4:
-                        immediate |= immediate << 16;
-                    case 5:
-                        immediate |= immediate << 32;
+                        case 1:
+                            immediate |= immediate << 2;
+                            // fall through
+                        case 2:
+                            immediate |= immediate << 4;
+                            // fall through
+                        case 3:
+                            immediate |= immediate << 8;
+                            // fall through
+                        case 4:
+                            immediate |= immediate << 16;
+                            // fall through
+                        case 5:
+                            immediate |= immediate << 32;
                     }
                     // 5 - logE can underflow to -1, but we shift this bogus result
                     // out of the masked area.

@@ -42,7 +42,7 @@ public class MaxineAarch64Tester {
         public static final BitsFlag[] values = values();
         private final long value;
 
-        private BitsFlag(long value) {
+        BitsFlag(long value) {
             this.value = value;
         }
 
@@ -163,7 +163,7 @@ public class MaxineAarch64Tester {
     }
 
     public void assembleStartup() {
-        final ProcessBuilder assemble = new ProcessBuilder("aarch64-none-elf-as", "-march=armv8-a","-g", "startup_aarch64.s", "-o", "startup_aarch64.o");
+        final ProcessBuilder assemble = new ProcessBuilder("aarch64-none-elf-as", "-march=armv8-a", "-g", "startup_aarch64.s", "-o", "startup_aarch64.o");
         assemble.redirectOutput(new File("as_output"));
         assemble.redirectError(new File("as_errors"));
         try {
@@ -465,10 +465,12 @@ public class MaxineAarch64Tester {
             long tmp = Long.parseLong(value.substring(2, value.length()).toString(), 16);
 
             if (tmp > Integer.MAX_VALUE) {
-                tmp = (int)(2L*Integer.MIN_VALUE + tmp);
-            } else expectedValues[i] = (int)tmp;
+                tmp = (int) (2L * Integer.MIN_VALUE + tmp);
+            } else {
+                expectedValues[i] = (int) tmp;
+            }
             //expectedValues[i] = new Integer((int) Long.parseLong(value.substring(2, value.length()).toString(), 16));
-            expectedValues[i] = new Integer((int)tmp);
+            expectedValues[i] = new Integer((int) tmp);
             if (DEBUGOBJECTS) {
                 System.out.println(" CORE " + i + " " + ((Integer) expectedValues[i]).intValue());
             }
@@ -492,7 +494,7 @@ public class MaxineAarch64Tester {
             if (!enabled) {
                 continue;
             }
-            String values[] = line.split("\\s+");
+            String[] values = line.split("\\s+");
             for (int j = 0; j < values.length; j++) {
                 if (values[j].equals("f64")) {
                     String doubleVal = values[j + 2];
@@ -530,7 +532,7 @@ public class MaxineAarch64Tester {
             if (!enabled) {
                 continue;
             }
-            String values[] = line.split("\\s+");
+            String[] values = line.split("\\s+");
             for (int j = 0; j < values.length; j++) {
 
                 if (values[j].equals("=")) {

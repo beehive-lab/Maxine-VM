@@ -23,15 +23,10 @@
 //package com.oracle.graal.asm.armv8;
 package com.oracle.max.asm.target.aarch64;
 
-import com.oracle.max.asm.AbstractAddress;
-import com.oracle.max.asm.target.aarch64.Aarch64;
-import com.oracle.max.asm.NumUtil;
+import static com.oracle.max.asm.target.aarch64.Aarch64.*;
 
 import com.oracle.max.asm.*;
 import com.sun.cri.ci.*;
-import com.sun.cri.ri.*;
-
-import static com.oracle.max.asm.target.aarch64.Aarch64.zr;
 
 /**
  * Represents an address in target machine memory, specified using one of the different addressing modes of the
@@ -49,7 +44,7 @@ public final class Aarch64Address extends AbstractAddress {
     // Placeholder for addresses that get patched later.
     public static final Aarch64Address PLACEHOLDER = createPcLiteralAddress(0);
 
-    public static enum AddressingMode {
+    public enum AddressingMode {
         /**
          * base + uimm12 << log2(memory_transfer_size).
          */
@@ -207,42 +202,42 @@ public final class Aarch64Address extends AbstractAddress {
         assert addressingMode != null;
         assert Aarch64.isIntReg(base) && Aarch64.isIntReg(offset);
         switch (addressingMode) {
-        case IMMEDIATE_SCALED:
+            case IMMEDIATE_SCALED:
 //            System.out.println("@IMMEDIATE_SCALED");
-            return !base.equals(zr) && offset.equals(zr) && extendType == null && NumUtil.isUnsignedNbit(12, immediate);
-        case IMMEDIATE_UNSCALED:
+                return !base.equals(zr) && offset.equals(zr) && extendType == null && NumUtil.isUnsignedNbit(12, immediate);
+            case IMMEDIATE_UNSCALED:
 //            System.out.println("@IMMEDIATE_UNSCALED");
 //            System.out.println("!base.equals(zr): "                             + (!base.equals(zr)));
 //            System.out.println("offset.equals(zr): "                            + (offset.equals(zr)));
 //            System.out.println("extendType == null: "                           + (extendType == null));
 //            System.out.println("NumUtil.isSignedNbit(9, "+ immediate +"): "     + (NumUtil.isSignedNbit(9, immediate)));
-            return !base.equals(zr) &&  offset.equals(zr) && extendType == null && NumUtil.isSignedNbit(9, immediate);
-        case BASE_REGISTER_ONLY:
+                return !base.equals(zr) && offset.equals(zr) && extendType == null && NumUtil.isSignedNbit(9, immediate);
+            case BASE_REGISTER_ONLY:
 //            System.out.println("@BASE_REGISTER_ONLY");
-            return !base.equals(zr) && offset.equals(zr) && extendType == null && immediate == 0;
-        case REGISTER_OFFSET:
+                return !base.equals(zr) && offset.equals(zr) && extendType == null && immediate == 0;
+            case REGISTER_OFFSET:
 //            System.out.println("@REGISTER_OFFSET");
-            return !base.equals(zr) && Aarch64.isGeneralPurposeReg(offset) && extendType == null && immediate == 0;
-        case EXTENDED_REGISTER_OFFSET:
+                return !base.equals(zr) && Aarch64.isGeneralPurposeReg(offset) && extendType == null && immediate == 0;
+            case EXTENDED_REGISTER_OFFSET:
 //            System.out.println("@EXTENDED_REGISTER_OFFSET");
-            return !base.equals(zr) && Aarch64.isGeneralPurposeReg(offset) &&
-                    (extendType == Aarch64Assembler.ExtendType.SXTW || extendType == Aarch64Assembler.ExtendType.UXTW) &&
-                    immediate == 0;
-        case PC_LITERAL:
+                return !base.equals(zr) && Aarch64.isGeneralPurposeReg(offset) &&
+                        (extendType == Aarch64Assembler.ExtendType.SXTW || extendType == Aarch64Assembler.ExtendType.UXTW) &&
+                        immediate == 0;
+            case PC_LITERAL:
 //            System.out.println("@PC_LITERAL");
 //            System.out.println("base.equals(zr):"                              + base.equals(zr));
 //            System.out.println("offset.equals(zr): "                            + offset.equals(zr));
 //            System.out.println("extendType == null: "                           + (extendType == null));
 //            System.out.println("NumUtil.isSignedNbit(21, immediate): "          + NumUtil.isSignedNbit(21, immediate));
 //            System.out.println("(immediate & 0x3) == 0: "                       + ((immediate & 0x3) == 0));
-            return base.equals(zr) && offset.equals(zr) && extendType == null &&
-                    NumUtil.isSignedNbit(21, immediate) && ((immediate & 0x3) == 0);
-        case IMMEDIATE_POST_INDEXED:
-        case IMMEDIATE_PRE_INDEXED:
+                return base.equals(zr) && offset.equals(zr) && extendType == null &&
+                        NumUtil.isSignedNbit(21, immediate) && ((immediate & 0x3) == 0);
+            case IMMEDIATE_POST_INDEXED:
+            case IMMEDIATE_PRE_INDEXED:
 //            System.out.println("@IMMEDIATE_POST_INDEXED|IMMEDIATE_PRE_INDEXED");
-            return !base.equals(zr) && offset.equals(zr) && extendType == null && NumUtil.isSignedNbit(9, immediate);
-        default:
-            throw new Error("should not reach here");
+                return !base.equals(zr) && offset.equals(zr) && extendType == null && NumUtil.isSignedNbit(9, immediate);
+            default:
+                throw new Error("should not reach here");
         }
     }
 
@@ -261,19 +256,19 @@ public final class Aarch64Address extends AbstractAddress {
      */
     public int getImmediate() {
         switch (addressingMode) {
-        case IMMEDIATE_UNSCALED:
-        case IMMEDIATE_POST_INDEXED:
-        case IMMEDIATE_PRE_INDEXED:
-            // 9-bit signed value
-            return immediate & NumUtil.getNbitNumberInt(9);
-        case IMMEDIATE_SCALED:
-            // Unsigned value can be returned as-is.
-            return immediate;
-        case PC_LITERAL:
-            // 21-bit signed value, but lower 2 bits are always 0 and are shifted out.
-            return (immediate >> 2) & NumUtil.getNbitNumberInt(19);
-        default:
-            throw new Error("should not reach here!! Should only be called for addressing modes that use immediate values.");
+            case IMMEDIATE_UNSCALED:
+            case IMMEDIATE_POST_INDEXED:
+            case IMMEDIATE_PRE_INDEXED:
+                // 9-bit signed value
+                return immediate & NumUtil.getNbitNumberInt(9);
+            case IMMEDIATE_SCALED:
+                // Unsigned value can be returned as-is.
+                return immediate;
+            case PC_LITERAL:
+                // 21-bit signed value, but lower 2 bits are always 0 and are shifted out.
+                return (immediate >> 2) & NumUtil.getNbitNumberInt(19);
+            default:
+                throw new Error("should not reach here!! Should only be called for addressing modes that use immediate values.");
 
         }
     }
@@ -283,14 +278,14 @@ public final class Aarch64Address extends AbstractAddress {
      */
     public int getImmediateRaw() {
         switch (addressingMode) {
-        case IMMEDIATE_UNSCALED:
-        case IMMEDIATE_SCALED:
-        case IMMEDIATE_POST_INDEXED:
-        case IMMEDIATE_PRE_INDEXED:
-        case PC_LITERAL:
-            return immediate;
-        default:
-            throw new Error("should not reach here!! Should only be called for addressing modes that use immediate values.");
+            case IMMEDIATE_UNSCALED:
+            case IMMEDIATE_SCALED:
+            case IMMEDIATE_POST_INDEXED:
+            case IMMEDIATE_PRE_INDEXED:
+            case PC_LITERAL:
+                return immediate;
+            default:
+                throw new Error("should not reach here!! Should only be called for addressing modes that use immediate values.");
         }
     }
 
@@ -309,33 +304,33 @@ public final class Aarch64Address extends AbstractAddress {
     public String toString(int log2TransferSize) {
         int shiftVal = scaled ? log2TransferSize : 0;
         switch (addressingMode) {
-        case IMMEDIATE_SCALED:
-            return String.format("[X%d, %d]", base.getEncoding(), immediate << log2TransferSize);
-        case IMMEDIATE_UNSCALED:
-            return String.format("[X%d, %d]", base.getEncoding(), immediate);
-        case BASE_REGISTER_ONLY:
-            return String.format("[X%d]", base.getEncoding());
-        case EXTENDED_REGISTER_OFFSET:
-            if (shiftVal != 0) {
-                return String.format("[X%d, W%d, %s %d]", base.getEncoding(), offset.getEncoding(), extendType.name(), shiftVal);
-            } else {
-                return String.format("[X%d, W%d, %s]", base.getEncoding(), offset.getEncoding(), extendType.name());
-            }
-        case REGISTER_OFFSET:
-            if (shiftVal != 0) {
-                return String.format("[X%d, X%d, LSL %d]", base.getEncoding(), offset.getEncoding(), shiftVal);
-            } else {
-                // LSL 0 may be optional, but still encoded differently so we always leave it off
-                return String.format("[X%d, X%d]", base.getEncoding(), offset.getEncoding());
-            }
-        case PC_LITERAL:
-            return String.format(".%s%d", immediate >= 0 ? "+" : "", immediate);
-        case IMMEDIATE_POST_INDEXED:
-            return String.format("[X%d],%d", base.getEncoding(), immediate);
-        case IMMEDIATE_PRE_INDEXED:
-            return String.format("[X%d,%d]!", base.getEncoding(), immediate);
-        default:
-            throw new Error("should not reach here");
+            case IMMEDIATE_SCALED:
+                return String.format("[X%d, %d]", base.getEncoding(), immediate << log2TransferSize);
+            case IMMEDIATE_UNSCALED:
+                return String.format("[X%d, %d]", base.getEncoding(), immediate);
+            case BASE_REGISTER_ONLY:
+                return String.format("[X%d]", base.getEncoding());
+            case EXTENDED_REGISTER_OFFSET:
+                if (shiftVal != 0) {
+                    return String.format("[X%d, W%d, %s %d]", base.getEncoding(), offset.getEncoding(), extendType.name(), shiftVal);
+                } else {
+                    return String.format("[X%d, W%d, %s]", base.getEncoding(), offset.getEncoding(), extendType.name());
+                }
+            case REGISTER_OFFSET:
+                if (shiftVal != 0) {
+                    return String.format("[X%d, X%d, LSL %d]", base.getEncoding(), offset.getEncoding(), shiftVal);
+                } else {
+                    // LSL 0 may be optional, but still encoded differently so we always leave it off
+                    return String.format("[X%d, X%d]", base.getEncoding(), offset.getEncoding());
+                }
+            case PC_LITERAL:
+                return String.format(".%s%d", immediate >= 0 ? "+" : "", immediate);
+            case IMMEDIATE_POST_INDEXED:
+                return String.format("[X%d],%d", base.getEncoding(), immediate);
+            case IMMEDIATE_PRE_INDEXED:
+                return String.format("[X%d,%d]!", base.getEncoding(), immediate);
+            default:
+                throw new Error("should not reach here");
         }
     }
 

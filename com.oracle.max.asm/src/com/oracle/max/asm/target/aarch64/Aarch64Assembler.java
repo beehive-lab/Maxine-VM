@@ -1,14 +1,12 @@
 package com.oracle.max.asm.target.aarch64;
 
+import static com.oracle.max.asm.target.aarch64.Aarch64Assembler.InstructionType.*;
+import static com.oracle.max.asm.target.aarch64.FunctionalUtils.*;
+
 import com.oracle.max.asm.*;
-import com.oracle.max.asm.target.aarch64.Aarch64Address.AddressingMode;
+import com.oracle.max.asm.target.aarch64.Aarch64Address.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
-
-import static com.oracle.max.asm.target.aarch64.Aarch64Assembler.InstructionType.floatFromSize;
-import static com.oracle.max.asm.target.aarch64.Aarch64Assembler.InstructionType.generalFromSize;
-import static com.oracle.max.asm.target.aarch64.FunctionalUtils.Predicate;
-import static com.oracle.max.asm.target.aarch64.FunctionalUtils.all;
 
 public class Aarch64Assembler extends AbstractAssembler {
     private static final int RdOffset = 0;
@@ -74,7 +72,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * (integer, branch, etc.), for 32-, respectively 64-bit operands.
      * FP32/64 is the encoding for the 32/64bit float operations
      */
-    public static enum InstructionType {
+    public enum InstructionType {
         General32(0x00000000, 32, true),
         General64(0x80000000, 64, true),
         FP32(0x00000000, 32, false),
@@ -84,7 +82,7 @@ public class Aarch64Assembler extends AbstractAssembler {
         public final boolean isGeneral;
         public final int width;
 
-        private InstructionType(int encoding, int width, boolean isGeneral) {
+        InstructionType(int encoding, int width, boolean isGeneral) {
             this.encoding = encoding;
             this.width = width;
             this.isGeneral = isGeneral;
@@ -188,7 +186,7 @@ public class Aarch64Assembler extends AbstractAssembler {
     /**
      * Encoding for all instructions.
      */
-    protected static enum Instruction {
+    protected enum Instruction {
         BCOND(0x54000000),
         CBNZ(0x01000000),
         CBZ(0x00000000),
@@ -312,28 +310,28 @@ public class Aarch64Assembler extends AbstractAssembler {
 
         public final int encoding;
 
-        private Instruction(int encoding) {
+        Instruction(int encoding) {
             this.encoding = encoding;
         }
 
     }
 
-    public static enum ShiftType {
+    public enum ShiftType {
         LSL(0), LSR(1), ASR(2), ROR(3);
 
         public final int encoding;
 
-        private ShiftType(int encoding) {
+        ShiftType(int encoding) {
             this.encoding = encoding;
         }
     }
 
-    public static enum ExtendType {
+    public enum ExtendType {
         UXTB(0), UXTH(1), UXTW(2), UXTX(3), SXTB(4), SXTH(5), SXTW(6), SXTX(7);
 
         public final int encoding;
 
-        private ExtendType(int encoding) {
+        ExtendType(int encoding) {
             this.encoding = encoding;
         }
     }
@@ -341,7 +339,7 @@ public class Aarch64Assembler extends AbstractAssembler {
     /**
      * Condition Flags for branches. See 4.3
      */
-    public static enum ConditionFlag {
+    public enum ConditionFlag {
         // Integer | Floating-point meanings
         /**
          * Equal | Equal.
@@ -410,7 +408,7 @@ public class Aarch64Assembler extends AbstractAssembler {
 
         public final int encoding;
 
-        private ConditionFlag(int encoding) {
+        ConditionFlag(int encoding) {
             this.encoding = encoding;
         }
 
@@ -423,38 +421,38 @@ public class Aarch64Assembler extends AbstractAssembler {
 
         public ConditionFlag negate() {
             switch (this) {
-            case EQ:
-                return NE;
-            case NE:
-                return EQ;
-            case HS:
-                return LO;
-            case LO:
-                return HS;
-            case MI:
-                return PL;
-            case PL:
-                return MI;
-            case VS:
-                return VC;
-            case VC:
-                return VS;
-            case HI:
-                return LS;
-            case LS:
-                return HI;
-            case GE:
-                return LT;
-            case LT:
-                return GE;
-            case GT:
-                return LE;
-            case LE:
-                return GT;
-            case AL:
-            case NV:
-            default:
-                throw new Error("should not reach here");
+                case EQ:
+                    return NE;
+                case NE:
+                    return EQ;
+                case HS:
+                    return LO;
+                case LO:
+                    return HS;
+                case MI:
+                    return PL;
+                case PL:
+                    return MI;
+                case VS:
+                    return VC;
+                case VC:
+                    return VS;
+                case HI:
+                    return LS;
+                case LS:
+                    return HI;
+                case GE:
+                    return LT;
+                case LT:
+                    return GE;
+                case GT:
+                    return LE;
+                case LE:
+                    return GT;
+                case AL:
+                case NV:
+                default:
+                    throw new Error("should not reach here");
             }
         }
     }
@@ -463,7 +461,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * This enum is used to indicate how system registers are encoded.
      * See ARM ARM section C5.3
      */
-    public static enum SystemRegister {
+    public enum SystemRegister {
         NZCV    (0b1101101000010000),
         DAIF    (0b1101101000010001),
         SPSel   (0b1100001000010000),
@@ -471,7 +469,7 @@ public class Aarch64Assembler extends AbstractAssembler {
 
         public final int encoding;
 
-        private SystemRegister(int encoding) {
+        SystemRegister(int encoding) {
             this.encoding = encoding;
         }
     }
@@ -489,14 +487,14 @@ public class Aarch64Assembler extends AbstractAssembler {
      * Between op1 and op2 there are 8 bits used to represent other parts of the instruction encoding.
      * So these 8 bits are set to zeros here.
      */
-    public static enum PStateField {
+    public enum PStateField {
         PSTATEField_SP     (0b00000000000101),
         PSTATEField_DAIFSet(0b01100000000110),
         PSTATEField_DAIFClr(0b01100000000111);
 
         public final int encoding;
 
-        private PStateField(int encoding) {
+        PStateField(int encoding) {
             this.encoding = encoding;
         }
     }
@@ -757,56 +755,56 @@ public class Aarch64Assembler extends AbstractAssembler {
                 isFloat |
                 rt(reg);
         switch (address.getAddressingMode()) {
-        case IMMEDIATE_SCALED:
-            emitInt(memop |
-                    LoadStoreScaledOp |
-                    address.getImmediate() << LoadStoreScaledImmOffset |
-                    rs1(address.getBase()));
-            break;
-        case IMMEDIATE_UNSCALED:
-            emitInt(memop |
-                    LoadStoreUnscaledOp |
-                    address.getImmediate() << LoadStoreUnscaledImmOffset |
-                    rs1(address.getBase()));
-            break;
-        case BASE_REGISTER_ONLY:
-            emitInt(memop | LoadStoreScaledOp | rs1(address.getBase()));
-            break;
-        case EXTENDED_REGISTER_OFFSET:
-        case REGISTER_OFFSET:
-            ExtendType extendType = address.getAddressingMode() == AddressingMode.EXTENDED_REGISTER_OFFSET ?
-                    address.getExtendType() : ExtendType.UXTX;
-            boolean shouldScale = address.isScaled() && log2TransferSize != 0;
-            emitInt(memop |
-                    LoadStoreRegisterOp |
-                    rs2(address.getOffset()) |
-                    extendType.encoding << ExtendTypeOffset |
-                    (shouldScale ? 1 : 0) << LoadStoreScaledRegOffset |
-                    rs1(address.getBase()));
-            break;
-        case PC_LITERAL:
-            assert log2TransferSize >= 2 : "PC literal loads only works for load/stores of 32-bit and larger";
-            transferSizeEncoding = (log2TransferSize - 2) << LoadStoreTransferSizeOffset;
-            emitInt(transferSizeEncoding |
-                    isFloat |
-                    LoadLiteralOp |
-                    rd(reg) |
-                    address.getImmediate() << LoadLiteralImmeOffset);
-            break;
-        case IMMEDIATE_POST_INDEXED:
-            emitInt(memop |
-                    LoadStorePostIndexedOp |
-                    rs1(address.getBase()) |
-                    address.getImmediate() << LoadStoreIndexedImmOffset);
-            break;
-        case IMMEDIATE_PRE_INDEXED:
-            emitInt(memop |
-                    LoadStorePreIndexedOp |
-                    rs1(address.getBase()) |
-                    address.getImmediate() << LoadStoreIndexedImmOffset);
-            break;
-        default:
-            throw new Error("should not reach here");
+            case IMMEDIATE_SCALED:
+                emitInt(memop |
+                        LoadStoreScaledOp |
+                        address.getImmediate() << LoadStoreScaledImmOffset |
+                        rs1(address.getBase()));
+                break;
+            case IMMEDIATE_UNSCALED:
+                emitInt(memop |
+                        LoadStoreUnscaledOp |
+                        address.getImmediate() << LoadStoreUnscaledImmOffset |
+                        rs1(address.getBase()));
+                break;
+            case BASE_REGISTER_ONLY:
+                emitInt(memop | LoadStoreScaledOp | rs1(address.getBase()));
+                break;
+            case EXTENDED_REGISTER_OFFSET:
+            case REGISTER_OFFSET:
+                ExtendType extendType = address.getAddressingMode() == AddressingMode.EXTENDED_REGISTER_OFFSET ?
+                        address.getExtendType() : ExtendType.UXTX;
+                boolean shouldScale = address.isScaled() && log2TransferSize != 0;
+                emitInt(memop |
+                        LoadStoreRegisterOp |
+                        rs2(address.getOffset()) |
+                        extendType.encoding << ExtendTypeOffset |
+                        (shouldScale ? 1 : 0) << LoadStoreScaledRegOffset |
+                        rs1(address.getBase()));
+                break;
+            case PC_LITERAL:
+                assert log2TransferSize >= 2 : "PC literal loads only works for load/stores of 32-bit and larger";
+                transferSizeEncoding = (log2TransferSize - 2) << LoadStoreTransferSizeOffset;
+                emitInt(transferSizeEncoding |
+                        isFloat |
+                        LoadLiteralOp |
+                        rd(reg) |
+                        address.getImmediate() << LoadLiteralImmeOffset);
+                break;
+            case IMMEDIATE_POST_INDEXED:
+                emitInt(memop |
+                        LoadStorePostIndexedOp |
+                        rs1(address.getBase()) |
+                        address.getImmediate() << LoadStoreIndexedImmOffset);
+                break;
+            case IMMEDIATE_PRE_INDEXED:
+                emitInt(memop |
+                        LoadStorePreIndexedOp |
+                        rs1(address.getBase()) |
+                        address.getImmediate() << LoadStoreIndexedImmOffset);
+                break;
+            default:
+                throw new Error("should not reach here");
         }
     }
 
@@ -951,16 +949,16 @@ public class Aarch64Assembler extends AbstractAssembler {
     public void adrp(CiRegister dst, int imm21) {
         //assert (imm & NumUtil.getNbitNumberInt(12)) == 0 : "Lower 12-bit of immediate must be zero.";
         //assert NumUtil.isSignedNbit(33, imm);
-//    	int pc = codeBuffer.position();
-//    	int pcPage = (pc >> 12);
-//    	int immPage = (int)(imm >> 12);
-//    	int offset = immPage - pcPage;
+//      int pc = codeBuffer.position();
+//      int pcPage = (pc >> 12);
+//      int immPage = (int)(imm >> 12);
+//      int offset = immPage - pcPage;
 //
-//    	System.out.println("imm: " + imm);
-//    	System.out.println("pc: " + pc);
-//    	System.out.println("pcPage: " + pcPage);
-//    	System.out.println("immPage: " + immPage);
-//    	System.out.println("offset: " + offset);
+//      System.out.println("imm: " + imm);
+//      System.out.println("pc: " + pc);
+//      System.out.println("pcPage: " + pcPage);
+//      System.out.println("immPage: " + immPage);
+//      System.out.println("offset: " + offset);
 //
         addressCalculationInstruction(dst, getPcRelativeImmEncoding(imm21), Instruction.ADRP);
     }
@@ -1191,11 +1189,11 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param reg
      * @param imm64
      */
-    public void mov64BitConstant (CiRegister reg, long imm64) {
-    	movz(64, reg, (int)imm64 & 0xFFFF, 0);
-    	movk(64, reg, (int)(imm64 >> 16) & 0xFFFF, 16);
-    	movk(64, reg, (int)(imm64 >> 32) & 0xFFFF, 32);
-    	movk(64, reg, (int)(imm64 >> 48) & 0xFFFF, 48);
+    public void mov64BitConstant(CiRegister reg, long imm64) {
+        movz(64, reg, (int) imm64 & 0xFFFF, 0);
+        movk(64, reg, (int) (imm64 >> 16) & 0xFFFF, 16);
+        movk(64, reg, (int) (imm64 >> 32) & 0xFFFF, 32);
+        movk(64, reg, (int) (imm64 >> 48) & 0xFFFF, 48);
     }
 
     /* Move (wide immediate) (5.4.3) */
@@ -1426,8 +1424,8 @@ public class Aarch64Assembler extends AbstractAssembler {
      * @param value
      */
     public void addq(CiRegister reg, long value) {
-    	mov64BitConstant(Aarch64.r15, value);
-    	add(64, reg, reg, Aarch64.r15, ShiftType.LSL, 0);
+        mov64BitConstant(Aarch64.r15, value);
+        add(64, reg, reg, Aarch64.r15, ShiftType.LSL, 0);
     }
 
     /* Arithmetic (extended register) (5.5.2) */
@@ -2337,7 +2335,7 @@ public class Aarch64Assembler extends AbstractAssembler {
 
     /**
      * dst = sysReg
-     * Read system register to general purpose register
+     * Read system register to general purpose register.
      *
      * @param dst general purpose register. May not be SP or ZP.
      * @param srcSysReg system register.
@@ -2352,7 +2350,7 @@ public class Aarch64Assembler extends AbstractAssembler {
 
     /**
      * dstSysReg = src
-     * Set system register with the value in a general purpose register
+     * Set system register with the value in a general purpose register.
      *
      * @param dstSysReg system register.
      * @param src general purpose register. May not be SP or ZP.
@@ -2367,7 +2365,7 @@ public class Aarch64Assembler extends AbstractAssembler {
 
     /**
      * PStateField = uimm4
-     * Set PSTATEField with an unsigned 4-bit immediate value
+     * Set PSTATEField with an unsigned 4-bit immediate value.
      *
      * @param pStateField PStateField
      * @param uimm4 unsigned 4-bit immediate value
@@ -2403,12 +2401,12 @@ public class Aarch64Assembler extends AbstractAssembler {
     }
 
     /* Architectural hints (5.9.4) */
-    public static enum SystemHint {
+    public enum SystemHint {
         NOP(0x0), YIELD(0x1), WFE(0x2), WFI(0x3), SEV(0x4), SEVL(0x5);
 
         private final int encoding;
 
-        private SystemHint(int encoding) {
+        SystemHint(int encoding) {
             this.encoding = encoding;
         }
     }
@@ -2458,7 +2456,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      *
      * We only need synchronization across the inner shareable domain (see B2-90 in the Reference documentation).
      */
-    public static enum BarrierKind {
+    public enum BarrierKind {
         LOAD_LOAD(0x9, "ISHLD"),
         LOAD_STORE(0x9, "ISHLD"),
         STORE_STORE(0xA, "ISHST"),
@@ -2468,7 +2466,7 @@ public class Aarch64Assembler extends AbstractAssembler {
         public final int encoding;
         public final String optionName;
 
-        private BarrierKind(int encoding, String optionName) {
+        BarrierKind(int encoding, String optionName) {
             this.encoding = encoding;
             this.optionName = optionName;
         }
@@ -2592,7 +2590,7 @@ public class Aarch64Assembler extends AbstractAssembler {
         int instruction = 0x52800000;
         instruction |= 1 << 31;
         instruction |= (imm16 & 0xffff) << 5;
-        instruction |= (dst.getEncoding() & 0x1f);
+        instruction |= dst.getEncoding() & 0x1f;
         emitInt(instruction);
     }
 

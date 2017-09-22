@@ -23,20 +23,13 @@
 
 package com.oracle.max.asm.target.aarch64;
 
-import com.oracle.max.asm.target.aarch64.Aarch64;
+import static com.oracle.max.asm.target.aarch64.Aarch64.*;
+import static com.oracle.max.asm.target.aarch64.Aarch64Address.AddressingMode.*;
+import static com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler.AddressGenerationPlan.WorkPlan.*;
+
 import com.oracle.max.asm.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ri.*;
-
-import static com.oracle.max.asm.target.aarch64.Aarch64.zr;
-import static com.oracle.max.asm.target.aarch64.Aarch64Address.AddressingMode.BASE_REGISTER_ONLY;
-import static com.oracle.max.asm.target.aarch64.Aarch64Address.AddressingMode.EXTENDED_REGISTER_OFFSET;
-import static com.oracle.max.asm.target.aarch64.Aarch64Address.AddressingMode.IMMEDIATE_SCALED;
-import static com.oracle.max.asm.target.aarch64.Aarch64Address.AddressingMode.IMMEDIATE_UNSCALED;
-import static com.oracle.max.asm.target.aarch64.Aarch64Address.AddressingMode.REGISTER_OFFSET;
-import static com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler.AddressGenerationPlan.WorkPlan.ADD_TO_BASE;
-import static com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler.AddressGenerationPlan.WorkPlan.ADD_TO_INDEX;
-import static com.oracle.max.asm.target.aarch64.Aarch64MacroAssembler.AddressGenerationPlan.WorkPlan.NO_WORK;
 
 public class Aarch64MacroAssembler extends Aarch64Assembler {
 
@@ -54,7 +47,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         public final Aarch64Address.AddressingMode addressingMode;
         public final boolean needsScratch;
 
-        public static enum WorkPlan {
+        public enum WorkPlan {
             /**
              * Can be used as-is without extra work.
              */
@@ -274,28 +267,6 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
                 throw new Error("should not reach here");
         }
     }
-    
-    
-    /**
-     * Calculate the address and emit an appropriate branch instruction.
-     * @param cc - the condition code
-     * @param target - the target address
-     */
-//    public void jcc(ConditionFlag cc, int target) {
-//    	adrp(scratch, codeBuffer.position(), target);
-//    }
-    
-    /**
-     * Calculate the required offset for a given address relative to a position and construct
-     * the appropriate adrp instruction
-     * @param pos - the position (synthetic program counter)
-     * @param address - the address of the 'label'
-     */
-//    public void adrp(CiRegister reg, int pos, int addr) {
-//    	super.adrp(reg, (addr >> 12) - (pos >> 12));
-//    }
-
-
 
     /**
      * Calculate the address and emit an appropriate branch instruction.
@@ -303,7 +274,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param target - the target address
      */
 //    public void jcc(ConditionFlag cc, int target) {
-//    	adrp(scratch, codeBuffer.position(), target);
+//        adrp(scratch, codeBuffer.position(), target);
 //    }
 
     /**
@@ -313,7 +284,28 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param address - the address of the 'label'
      */
 //    public void adrp(CiRegister reg, int pos, int addr) {
-//    	super.adrp(reg, (addr >> 12) - (pos >> 12));
+//      super.adrp(reg, (addr >> 12) - (pos >> 12));
+//    }
+
+
+
+    /**
+     * Calculate the address and emit an appropriate branch instruction.
+     * @param cc - the condition code
+     * @param target - the target address
+     */
+//    public void jcc(ConditionFlag cc, int target) {
+//      adrp(scratch, codeBuffer.position(), target);
+//    }
+
+    /**
+     * Calculate the required offset for a given address relative to a position and construct
+     * the appropriate adrp instruction
+     * @param pos - the position (synthetic program counter)
+     * @param address - the address of the 'label'
+     */
+//    public void adrp(CiRegister reg, int pos, int addr) {
+//      super.adrp(reg, (addr >> 12) - (pos >> 12));
 //    }
 
 
@@ -324,7 +316,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param reg
      * @param imm32
      */
-    public void mov32BitConstant (CiRegister reg, int imm32) {
+    public void mov32BitConstant(CiRegister reg, int imm32) {
         movz(32, reg, imm32 & 0xFFFF, 0);
         movk(32, reg, (imm32 >> 16) & 0xFFFF, 16);
     }
@@ -349,7 +341,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * Push a register onto the stack using 16byte alignment.
      * @param reg
      */
-    public void push (int size, CiRegister reg) {
+    public void push(int size, CiRegister reg) {
         str(size, reg, Aarch64Address.createPreIndexedImmediateAddress(Aarch64.sp, -16));
     }
 
@@ -358,7 +350,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param size
      * @param reg
      */
-    public void pop (int size, CiRegister reg) {
+    public void pop(int size, CiRegister reg) {
         ldr(size, reg, Aarch64Address.createPostIndexedImmediateAddress(Aarch64.sp, 16));
     }
     /**
@@ -428,7 +420,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param imm immediate loaded into register.
      */
     public void mov(CiRegister dst, int imm) {
-        mov(dst, (long)imm);
+        mov(dst, (long) imm);
     }
 
     /**
@@ -436,8 +428,8 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param reg
      * @param delta
      */
-    public void increment32 (CiRegister reg, int delta) {
-        assert(reg != Aarch64.r16);
+    public void increment32(CiRegister reg, int delta) {
+        assert reg != Aarch64.r16;
         mov32BitConstant(Aarch64.r16, delta);
         add(32, reg, reg, Aarch64.r16, ShiftType.LSL, 0);
     }
@@ -847,7 +839,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     public void sxt(int destSize, int srcSize, CiRegister dst, CiRegister src) {
         assert (destSize == 32 || destSize == 64) && srcSize < destSize;
         assert srcSize == 8 || srcSize == 16 || srcSize == 32;
-        int[] srcSizeValues = { 7, 15, 31};
+        int[] srcSizeValues = {7, 15, 31};
         super.sbfm(destSize, dst, src, 0, srcSizeValues[NumUtil.log2Ceil(srcSize / 8)]);
     }
 
@@ -1009,7 +1001,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     /**
      * When patching up Labels we have to know what kind of code to generate.
      */
-    public static enum PatchLabelKind {
+    public enum PatchLabelKind {
         BRANCH_CONDITIONALLY(0x0), BRANCH_UNCONDITIONALLY(0x1), BRANCH_NONZERO(0x2), BRANCH_ZERO(0x3), JUMP_ADDRESS(0x4);
 
         /**
@@ -1020,7 +1012,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
 
         public final int encoding;
 
-        private PatchLabelKind(int encoding) {
+        PatchLabelKind(int encoding) {
             this.encoding = encoding;
         }
 
