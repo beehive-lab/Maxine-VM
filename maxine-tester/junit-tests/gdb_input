@@ -1,8 +1,7 @@
-file test.elf 
-break c_entry
+file test_aarch64.elf
 target remote localhost:1234
-continue
-stepi 15000
+stepi 1500
 info registers
 quit
-break print_uart0
+
+
