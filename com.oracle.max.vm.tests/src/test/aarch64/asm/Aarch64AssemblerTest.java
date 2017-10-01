@@ -130,22 +130,6 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         r.reset();
     }
     
-    private void generateAndTest(long[] expected, boolean[] tests, MaxineAarch64Tester.BitsFlag[] masks) throws Exception {
-        ARMCodeWriter code = new ARMCodeWriter(asm.codeBuffer);
-        code.createCodeFile();
-        MaxineAarch64Tester r = new MaxineAarch64Tester(expected, tests, masks);
-        if (!MaxineAarch64Tester.ENABLE_SIMULATOR) {
-            System.out.println("Code Generation is disabled!");
-            return;
-        }
-        r.assembleStartup();
-        r.assembleEntry();
-        r.compile();
-        r.link();
-        r.objcopy();
-        r.runSimulation();
-        r.reset();
-    }
 
     public void work_zero() throws Exception {
         initialiseExpectedValues();
