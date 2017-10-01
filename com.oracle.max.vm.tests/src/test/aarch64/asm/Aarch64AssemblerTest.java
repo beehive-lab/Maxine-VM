@@ -17,12 +17,15 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package test.arm.asm;
+package test.aarch64.asm;
 
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.aarch64.*;
 import com.sun.cri.ci.*;
 import com.sun.max.ide.*;
+
+import test.aarch64.asm.MaxineAarch64Tester.BitsFlag;
+import test.armv7.asm.ARMCodeWriter;
 
 public class Aarch64AssemblerTest extends MaxTestCase {
 
@@ -326,7 +329,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     //  /**
 //  * branch
 //  */
-    public void work_b() throws Exception {
+    public void test_b() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
         resetIgnoreValues();
@@ -346,6 +349,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
+    /*
     public void test_bcond() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
@@ -365,7 +369,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
 
-    }
+    }*/
+    
 //
 //
 //    /**
