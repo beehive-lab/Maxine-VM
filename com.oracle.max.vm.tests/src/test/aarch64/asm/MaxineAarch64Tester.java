@@ -33,6 +33,10 @@ public class MaxineAarch64Tester {
 	public static final int NUM_SIMD_REGS = 32;
 	public static final int NUM_DP_REGS = 16;
 
+	private static String[] regs = new String[] { "X00", "X01", "X02", "X03", "X04", "X05", "X06", "X07", "X08", "X09",
+			"X10", "X11", "X12", "X13", "X14", "X15", "X16", "X17", "X18", "X19", "X20", "X21", "X22", "X23", "X24",
+			"X25", "X26", "X27", "X28", "X29", "X30" };
+
 	public enum BitsFlag {
 		Bit0(0x1), Bit1(0x2), Bit2(0x4), Bit3(0x8), Bit4(0x10), Bit5(0x20), Bit6(0x40), Bit7(0x80), Bit8(0x100), Bit9(
 				0x200), Bit10(0x400), Bit11(0x800), Bit12(0x1000), Bit13(0x2000), Bit14(0x4000), Bit15(0x8000), Bit16(
@@ -60,7 +64,6 @@ public class MaxineAarch64Tester {
 	private static final File bindOutput = new File("bind_output");
 	private static final File gdbOutput = new File("gdb_output");
 	private static final File gdbInput = new File("gdb_input");
-	private static final File gdbInputFPREGS = new File("gdb_input_fpregs");
 	private static final File gdbErrors = new File("gdb_errors");
 	private static final File objCopyOutput = new File("obj_copy_output");
 	private static final File objCopyErrors = new File("obj_copy_errors");
@@ -79,9 +82,7 @@ public class MaxineAarch64Tester {
 	private Process qemu;
 	private Process gdb;
 	private BitsFlag[] bitMasks;
-	private char[] chars;
 	private long[] expectRegs = new long[NUM_REGS];
-	private long[] gotRegs = new long[NUM_REGS];
 	private boolean[] testRegs = new boolean[NUM_REGS];
 	public static int oldpos = 0;
 
@@ -95,6 +96,16 @@ public class MaxineAarch64Tester {
 	 * test_aarch64.bin qemu-system-aarch64 -cpu cortex-a57 -M versatilepb -m
 	 * 128M -nographic -s -S -kernel test_aarch64.bin
 	 */
+	public MaxineAarch64Tester(String[] args) {
+		initializeQemu();
+		for (int i = 0; i < NUM_REGS; i++) {
+			testRegs[i] = false;
+		}
+		for (int i = 0; i < args.length; i += 2) {
+			expectRegs[Integer.parseInt(args[i])] = Integer.parseInt(args[i + 1]);
+			testRegs[Integer.parseInt(args[i])] = true;
+		}
+	}
 
 	public void reset() {
 		if (RESET) {
@@ -134,22 +145,6 @@ public class MaxineAarch64Tester {
 		try {
 			objectCopy = objcopy.start();
 			objectCopy.waitFor();
-		} catch (Exception e) {
-			System.err.println(e);
-			e.printStackTrace();
-		}
-	}
-
-	public void newCompile() {
-		final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test_aarch64.bin", "test_aarch64.elf");
-		final ProcessBuilder compile = new ProcessBuilder("aarch64-none-elf-gcc", "-c", "-march=armv8-a",
-				"-mfloat-abi=hard", "-mfpu=fp-armv8", "-g", "test_aarch64.c", "-o", "test_aarch64.o");
-		compile.redirectOutput(gccOutput);
-		compile.redirectError(gccErrors);
-		try {
-			removeFiles.start().waitFor();
-			gcc = compile.start();
-			gcc.waitFor();
 		} catch (Exception e) {
 			System.err.println(e);
 			e.printStackTrace();
@@ -236,52 +231,6 @@ public class MaxineAarch64Tester {
 		}
 	}
 
-	private void runSimulation(boolean captureFPREGs) throws Exception {
-		ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb");
-		if (captureFPREGs) {
-			gdbProcess.redirectInput(gdbInputFPREGS);
-		} else {
-			gdbProcess.redirectInput(gdbInput);
-		}
-		gdbProcess.redirectOutput(gdbOutput);
-		gdbProcess.redirectError(gdbErrors);
-		ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-aarch64", "-cpu", "cortex-a57", "-M", "virt", "-m",
-				"128M", "-nographic", "-s", "-S", "-kernel", "test_aarch64.bin");
-		qemuProcess.redirectOutput(qemuOutput);
-		qemuProcess.redirectError(qemuErrors);
-		try {
-			qemu = qemuProcess.start();
-			while (!qemuOutput.exists()) {
-				Thread.sleep(500);
-			}
-			do {
-				ProcessBuilder bindTest = new ProcessBuilder("lsof", "-i", "TCP:1234");
-				bindTest.redirectOutput(bindOutput);
-				bindTest.start().waitFor();
-				FileInputStream inputStream = new FileInputStream(bindOutput);
-				if (inputStream.available() != 0) {
-					log("MaxineAarch64Tester:: qemu ready");
-					break;
-				} else {
-					log("MaxineAarch64Tester: qemu not ready");
-					Thread.sleep(500);
-				}
-			} while (true);
-			gdbProcess.start().waitFor();
-		} catch (Exception e) {
-			System.out.println(e);
-			e.printStackTrace();
-			cleanProcesses();
-			System.exit(-1);
-		}
-	}
-
-	public Object[] runObjectRegisteredSimulation() throws Exception {
-		runSimulation(true);
-		Object[] simulatedRegisters = parseObjectRegistersToFile(gdbOutput.getName());
-		return simulatedRegisters;
-	}
-
 	public long[] runRegisteredSimulation() throws Exception {
 		ProcessBuilder gdbProcess = new ProcessBuilder("aarch64-none-elf-gdb");
 		gdbProcess.redirectInput(gdbInput);
@@ -303,6 +252,7 @@ public class MaxineAarch64Tester {
 				FileInputStream inputStream = new FileInputStream(bindOutput);
 				if (inputStream.available() != 0) {
 					log("MaxineAarch64Tester:: qemu ready");
+					inputStream.close();
 					break;
 				} else {
 					log("MaxineAarch64Tester: gemu not ready");
@@ -345,6 +295,7 @@ public class MaxineAarch64Tester {
 				FileInputStream inputStream = new FileInputStream(bindOutput);
 				if (inputStream.available() != 0) {
 					log("MaxineAarch64Tester:: qemu ready");
+					inputStream.close();
 					break;
 				} else {
 					log("MaxineAarch64Tester: gemu not ready");
@@ -364,46 +315,6 @@ public class MaxineAarch64Tester {
 			cleanProcesses();
 			assert false : "Error while validating registers";
 		}
-	}
-
-	public long[] runSimulationRegisters() throws Exception {
-		cleanFiles();
-		ProcessBuilder gdbProcess = new ProcessBuilder("aarch64-none-elf-gdb");
-		gdbProcess.redirectInput(gdbInput);
-		gdbProcess.redirectOutput(gdbOutput);
-		gdbProcess.redirectError(gdbErrors);
-		ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-aarch64", "-cpu", "cortex-a57", "-M", "virt", "-m",
-				"128M", "-nographic", "-s", "-S", "-kernel", "test_aarch64.bin");
-		qemuProcess.redirectOutput(qemuOutput);
-		qemuProcess.redirectError(qemuErrors);
-		try {
-			qemu = qemuProcess.start();
-			while (!qemuOutput.exists()) {
-				Thread.sleep(500);
-			}
-			do {
-				ProcessBuilder binder = new ProcessBuilder("lsof", "-i", "TCP:1234");
-				binder.redirectOutput(bindOutput);
-				binder.start().waitFor();
-				FileInputStream inputStream = new FileInputStream(bindOutput);
-				if (inputStream.available() != 0) {
-					log("MaxineAarch64Tester:: qemu ready");
-					break;
-				} else {
-					log("MaxineAarch64Tester: gemu not ready");
-					Thread.sleep(500);
-				}
-			} while (true);
-			gdb = gdbProcess.start();
-			gdb.waitFor();
-		} catch (Exception e) {
-			System.out.println(e);
-			e.printStackTrace();
-			cleanProcesses();
-			System.exit(-1);
-		}
-		long[] simulatedRegisters = parseRegistersToFile(gdbOutput.getName());
-		return simulatedRegisters;
 	}
 
 	private boolean validateRegisters(long[] simRegisters, long[] expectedRegisters, boolean[] testRegisters) {
@@ -431,153 +342,9 @@ public class MaxineAarch64Tester {
 		return result;
 	}
 
-	public MaxineAarch64Tester(long[] expected, boolean[] test, BitsFlag[] range) {
-		initializeQemu();
-		bitMasks = range;
-		for (int i = 0; i < NUM_REGS; i++) {
-			expectRegs[i] = expected[i];
-			testRegs[i] = test[i];
-		}
-	}
-	
-	public MaxineAarch64Tester() {
-		initializeQemu();
-		for (int i = 0; i < NUM_REGS; i++) {
-			testRegs[i] = false;
-		}
-	}
-
-	public MaxineAarch64Tester(String[] args) {
-		initializeQemu();
-		for (int i = 0; i < NUM_REGS; i++) {
-			testRegs[i] = false;
-		}
-		for (int i = 0; i < args.length; i += 2) {
-			expectRegs[Integer.parseInt(args[i])] = Integer.parseInt(args[i + 1]);
-			testRegs[Integer.parseInt(args[i])] = true;
-		}
-	}
-
 	private void initializeQemu() {
 		ENABLE_SIMULATOR = Integer.getInteger(ENABLE_QEMU) != null && Integer.getInteger(ENABLE_QEMU) > 0 ? true
 				: false;
-	}
-
-	private Object[] parseObjectRegistersToFile(String file) throws Exception {
-		BufferedReader reader = new BufferedReader(new FileReader(file));
-		String line = null;
-		boolean enabled = false;
-		int i = 0;
-		Object[] expectedValues = new Object[16 + 1 + 16 + 32];
-		while ((line = reader.readLine()) != null) {
-			if (line.contains("r0")) {
-				enabled = true;
-				line = line.substring(6, line.length());
-			}
-			if (!enabled) {
-				continue;
-			}
-			String value = line.split("\\s+")[1];
-			long tmp = Long.parseLong(value.substring(2, value.length()).toString(), 16);
-
-			if (tmp > Integer.MAX_VALUE) {
-				tmp = (int) (2L * Integer.MIN_VALUE + tmp);
-			} else {
-				expectedValues[i] = (int) tmp;
-			}
-			// expectedValues[i] = new Integer((int)
-			// Long.parseLong(value.substring(2, value.length()).toString(),
-			// 16));
-			expectedValues[i] = new Integer((int) tmp);
-			if (DEBUGOBJECTS) {
-				System.out.println(" CORE " + i + " " + ((Integer) expectedValues[i]).intValue());
-			}
-			i++;
-			if (line.contains("cpsr")) {
-				enabled = false;
-				// might want to get cpsr but we dont need it right now
-				expectedValues[i] = null;
-				break;
-			}
-		}
-		while ((line = reader.readLine()) != null) {
-			if (line.contains("f64")) {
-				enabled = true;
-			} else {
-				enabled = false;
-			}
-			if (i >= (16 + 16 + 1)) {
-				break;
-			}
-			if (!enabled) {
-				continue;
-			}
-			String[] values = line.split("\\s+");
-			for (int j = 0; j < values.length; j++) {
-				if (values[j].equals("f64")) {
-					String doubleVal = values[j + 2];
-					String str = doubleVal.substring(0, doubleVal.length() - 1);
-					try {
-						Double tmp = new Double(str);
-						expectedValues[i++] = tmp;
-					} catch (Exception e) {
-						// we get exceptions when there is a NaN
-						// currently we just set them to null
-						if (str.equals("inf")) {
-							expectedValues[i++] = new Double(Double.POSITIVE_INFINITY);
-						} else if (str.equals("-inf")) {
-							expectedValues[i++] = new Double(Double.NEGATIVE_INFINITY);
-						} else {
-							expectedValues[i++] = new Double(Double.NaN);
-						}
-					}
-					break;
-				}
-			}
-			if (DEBUGOBJECTS) {
-				System.out.println(" DOUBLE " + (i - 1) + " " + ((Double) expectedValues[i - 1]).doubleValue());
-			}
-			if (i >= (16 + 16 + 1)) {
-				break;
-			}
-		}
-		while ((line = reader.readLine()) != null) {
-			if (line.contains("=")) {
-				enabled = true;
-			} else {
-				enabled = false;
-			}
-			if (!enabled) {
-				continue;
-			}
-			String[] values = line.split("\\s+");
-			for (int j = 0; j < values.length; j++) {
-
-				if (values[j].equals("=")) {
-					String doubleVal = values[j + 1];
-					try {
-						Float tmp = new Float(doubleVal);
-						expectedValues[i++] = tmp;
-					} catch (Exception e) {
-						if (doubleVal.equals("inf")) {
-							expectedValues[i++] = new Float(Float.POSITIVE_INFINITY);
-						} else if (doubleVal.equals("-inf")) {
-							expectedValues[i++] = new Float(Float.NEGATIVE_INFINITY);
-						} else {
-							expectedValues[i++] = new Float(Float.NaN);
-						}
-					}
-					break;
-				}
-			}
-			if (i == expectedValues.length) {
-				break;
-			}
-			if (DEBUGOBJECTS) {
-				System.out.println(" FLOAT " + (i - 1) + " " + ((Float) expectedValues[i - 1]).floatValue());
-			}
-		}
-		return expectedValues;
 	}
 
 	private long[] parseRegistersToFile(String file) throws IOException {
@@ -609,13 +376,25 @@ public class MaxineAarch64Tester {
 				enabled = false;
 			}
 		}
+		reader.close();
 		return expectedValues;
 	}
 
-	private static String[] regs = new String[] { "X00", "X01", "X02", "X03", "X04", "X05", "X06", "X07", "X08", "X09",
-			"X10", "X11", "X12", "X13", "X14", "X15", "X16", "X17", "X18", "X19", "X20", "X21", "X22", "X23", "X24",
-			"X25", "X26", "X27", "X28", "X29", "X30" };
-
+	/**
+	 * The following function reads the output registers from the qemu_error file instead of the gdb_output file.
+	 * This is due to recent updates to qemu where it hangs while reading an undefined instruction.
+	 * 
+	 * Our gdb script (gdb_input) steps through the code from the code_buffer.c and then tries to print the output registers.
+	 * At that point of execuction (i.e. after stepi 1500), gdb is at a bogus PC.
+	 * Depending on the version of Qemu, the following can take place:
+	 * before (v2.2): it hard crashes while printing the registers to the qemu_error file. 
+	 * after (v2.2): it raises a SIGILL and tries to invoke an exception handler which hangs the emulation; since we try
+	 * to print the registers after we do "stepi 1500", the command is never executed and therefore we can not retrieve them.
+	 * 
+	 * We opted for v2.1.0-rc1 which exits qemu with a fatal error but manages to dump the registers to the error file.
+	 * The way the registers are printed, is different from the "info registers" command and therefore a different parsing method
+	 * is needed.
+	 */
 	private long[] parseRegistersFromErrorFile(String file) throws Exception {
 		BufferedReader reader = new BufferedReader(new FileReader(file));
 		String line = null;
