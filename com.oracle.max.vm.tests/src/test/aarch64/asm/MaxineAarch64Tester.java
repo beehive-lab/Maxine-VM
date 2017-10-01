@@ -106,6 +106,15 @@ public class MaxineAarch64Tester {
 			testRegs[Integer.parseInt(args[i])] = true;
 		}
 	}
+	
+	public MaxineAarch64Tester(long[] expected, boolean[] test, BitsFlag[] range) {
+		initializeQemu();
+		bitMasks = range;
+		for (int i = 0; i < NUM_REGS; i++) {
+			expectRegs[i] = expected[i];
+			testRegs[i] = test[i];
+		}
+	}
 
 	public void reset() {
 		if (RESET) {
