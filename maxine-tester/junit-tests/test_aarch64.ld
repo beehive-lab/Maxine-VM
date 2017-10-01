@@ -2,7 +2,7 @@ ENTRY(_Reset)
 SECTIONS
 {
  . = 0x40000000;
- .startup . : { startup.o(.text) }
+ .startup . : { startup_aarch64.o(.text) }
  .text : { *(.text) }
  .data : { *(.data) }
  .bss : { *(.bss COMMON) }
