@@ -51,7 +51,7 @@ import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 
 import jtt.bytecode.*;
-import test.arm.asm.*;
+import test.armv7.asm.*;
 
 public class ARMV7JTTTest extends MaxTestCase {
 

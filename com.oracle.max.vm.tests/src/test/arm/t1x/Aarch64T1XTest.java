@@ -40,7 +40,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 
-import test.arm.asm.*;
+import test.aarch64.asm.*;
 
 public class Aarch64T1XTest extends MaxTestCase {
 

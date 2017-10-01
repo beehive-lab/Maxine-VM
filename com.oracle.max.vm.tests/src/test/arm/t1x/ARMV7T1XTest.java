@@ -44,7 +44,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 
-import test.arm.asm.*;
+import test.armv7.asm.*;
 
 public class ARMV7T1XTest extends MaxTestCase {
 

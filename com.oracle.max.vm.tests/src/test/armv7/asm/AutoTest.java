@@ -17,7 +17,7 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package test.arm.asm;
+package test.armv7.asm;
 
 import junit.framework.*;
 import test.com.sun.max.vm.AllTests;
@@ -35,7 +35,7 @@ public final class AutoTest {
 
     public static Test suite() throws Exception {
         final TestSuite suite = new TestCaseClassSet(AllTests.class).toTestSuite();
-        suite.addTest(test.arm.asm.AllTests.suite());
+        suite.addTest(test.armv7.asm.AllTests.suite());
         return suite;
     }
 }
