@@ -129,25 +129,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         r.runSimulation();
         r.reset();
     }
-    private long [] generate(long[] expected, boolean[] tests, MaxineAarch64Tester.BitsFlag[] masks, Buffer codeBuffer) throws Exception {
-        ARMCodeWriter code = new ARMCodeWriter(codeBuffer);
-        code.createCodeFile();
-        long []             retArr;
-        MaxineAarch64Tester r = new MaxineAarch64Tester(expected, tests, masks);
-        if (!MaxineAarch64Tester.ENABLE_SIMULATOR) {
-            System.out.println("Code Generation is disabled!");
-            return null;
-        }
-        r.assembleStartup();
-        r.assembleEntry();
-        r.compile();
-        r.link();
-        r.objcopy();
-        retArr = r.runSimulationRegisters();
-        r.reset();
-        return retArr;
-    }
-
+    
     private void generateAndTest(long[] expected, boolean[] tests, MaxineAarch64Tester.BitsFlag[] masks) throws Exception {
         ARMCodeWriter code = new ARMCodeWriter(asm.codeBuffer);
         code.createCodeFile();
@@ -173,11 +155,11 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
         masm.mov(Aarch64.r0, 0xFF);
         masm.mov(64, Aarch64.r0, Aarch64.zr);
-        long [] reg = generate(expectedValues, testValues, bitmasks, masm.codeBuffer);
-
-        System.out.println("REG-0: " + reg[0]);
-        assert 0 == reg[0];
+        long [] reg = generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+        assert reg[0] == 0;
     }
+    
+    
 //    public void work_adr_adrp() throws Exception {
 //      initialiseExpectedValues();
 //      setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
