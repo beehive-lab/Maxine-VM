@@ -411,7 +411,6 @@ public final class ConstantPool implements RiConstantPool {
                     break;
                 }
                 case METHOD_TYPE: {
-                    ProgramWarning.message("METHOD_TYPE not fully supported yet");
                     rawEntries[i] = classfileStream.readUnsigned2();
                     break;
                 }
@@ -491,6 +490,12 @@ public final class ConstantPool implements RiConstantPool {
                         final int referenceKind         = referenceKindAndIndex >> 16;
                         final int referenceIndex        = referenceKindAndIndex & 0xFFFF;
                         poolConstants[i] = new MethodHandleConstant.Unresolved(referenceKind, referenceIndex);
+                        break;
+                    }
+                    case METHOD_TYPE: {
+                        final int descriptorIndex = rawEntries[i];
+                        final Utf8Constant descriptor = (Utf8Constant) poolConstants[descriptorIndex];
+                        poolConstants[i] = new MethodTypeConstant.Unresolved(descriptor);
                         break;
                     }
                     default:
