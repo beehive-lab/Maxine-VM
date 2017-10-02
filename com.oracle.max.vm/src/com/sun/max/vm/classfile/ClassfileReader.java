@@ -23,6 +23,7 @@ package com.sun.max.vm.classfile;
 import static com.sun.max.annotate.LOCAL_SUBSTITUTION.Static.*;
 import static com.sun.max.vm.VMOptions.*;
 import static com.sun.max.vm.actor.Actor.*;
+import static com.sun.max.vm.actor.holder.ClassActor.*;
 import static com.sun.max.vm.actor.holder.ClassActorFactory.*;
 import static com.sun.max.vm.actor.member.MethodActor.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
@@ -47,7 +48,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.classfile.ClassfileWriter.MaxineFlags;
+import com.sun.max.vm.classfile.ClassfileWriter.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.instrument.*;
@@ -56,7 +57,7 @@ import com.sun.max.vm.jdk.*;
 import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.ti.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.type.ClassRegistry.Property;
+import com.sun.max.vm.type.ClassRegistry.*;
 import com.sun.max.vm.value.*;
 
 /**
@@ -387,7 +388,7 @@ public final class ClassfileReader {
             final Utf8Constant name = constantPool.utf8ConstantAt(nameIndex, "field name");
             verifyFieldName(name);
 
-            final boolean isStatic = isStatic(flags);
+            final boolean isStatic = Actor.isStatic(flags);
 
             try {
                 enterContext(new Object() {
@@ -779,7 +780,7 @@ public final class ClassfileReader {
                 isInit = true;
             }
 
-            final boolean isStatic = isStatic(extraFlags);
+            final boolean isStatic = Actor.isStatic(extraFlags);
 
             try {
                 enterContext(new Object() {
@@ -857,7 +858,7 @@ public final class ClassfileReader {
                     }
                 }
 
-                if (isAbstract(flags) || isNative(flags)) {
+                if (Actor.isAbstract(flags) || Actor.isNative(flags)) {
                     if (codeAttribute != null) {
                         throw classFormatError("Code attribute supplied for native or abstract method");
                     }
@@ -910,12 +911,12 @@ public final class ClassfileReader {
                             continue nextMethod;
                         } else if (annotation.annotationType() == C_FUNCTION.class) {
                             ensureSignatureIsPrimitive(descriptor, C_FUNCTION.class);
-                            ProgramError.check(isStatic(flags), "Cannot apply " + C_FUNCTION.class.getName() + " to a non-static method: " + memberString(name, descriptor));
-                            ProgramError.check(isNative(flags), "Cannot apply " + C_FUNCTION.class.getName() + " to a non-native method: " + memberString(name, descriptor));
+                            ProgramError.check(Actor.isStatic(flags), "Cannot apply " + C_FUNCTION.class.getName() + " to a non-static method: " + memberString(name, descriptor));
+                            ProgramError.check(Actor.isNative(flags), "Cannot apply " + C_FUNCTION.class.getName() + " to a non-native method: " + memberString(name, descriptor));
                             flags |= C_FUNCTION;
                         } else if (annotation.annotationType() == VM_ENTRY_POINT.class) {
                             ensureSignatureIsPrimitive(descriptor, VM_ENTRY_POINT.class);
-                            ProgramError.check(isStatic(flags), "Cannot apply " + VM_ENTRY_POINT.class.getName() + " to a non-static method: " + memberString(name, descriptor));
+                            ProgramError.check(Actor.isStatic(flags), "Cannot apply " + VM_ENTRY_POINT.class.getName() + " to a non-static method: " + memberString(name, descriptor));
                             flags |= VM_ENTRY_POINT;
                         } else if (annotation.annotationType() == NO_SAFEPOINT_POLLS.class) {
                             flags |= NO_SAFEPOINT_POLLS;
@@ -934,7 +935,7 @@ public final class ClassfileReader {
                             flags |= TEMPLATE | UNSAFE | INLINE;
                         } else if (annotation.annotationType() == INLINE.class) {
                             flags |= INLINE;
-                            ProgramError.check(!isAbstract(flags), "Cannot apply " + INLINE.class.getName() + " to an abstract method: " + memberString(name, descriptor));
+                            ProgramError.check(!Actor.isAbstract(flags), "Cannot apply " + INLINE.class.getName() + " to an abstract method: " + memberString(name, descriptor));
                         } else if (annotation.annotationType() == NEVER_INLINE.class) {
                             flags |= NEVER_INLINE;
                         } else if (annotation.annotationType() == INTRINSIC.class) {
@@ -984,14 +985,14 @@ public final class ClassfileReader {
                     }
                 }
 
-                if (classHasNeverInlineAnnotation && !isInline(flags)) {
+                if (classHasNeverInlineAnnotation && !Actor.isInline(flags)) {
                     flags |= NEVER_INLINE;
                 }
 
-                if (isNative(flags)) {
+                if (Actor.isNative(flags)) {
                     flags |= UNSAFE;
                 }
-                if (isNative(flags)) {
+                if (Actor.isNative(flags)) {
                     flags |= UNSAFE;
                 }
 
@@ -1230,7 +1231,7 @@ public final class ClassfileReader {
         classFlags = classfileStream.readUnsigned2();
 
         verifyClassFlags(classFlags, majorVersionChar);
-        final boolean isInterface = isInterface(classFlags);
+        final boolean isInterface = Actor.isInterface(classFlags);
 
         final int thisClassIndex = classfileStream.readUnsigned2();
         classDescriptor = constantPool.classAt(thisClassIndex, "this class descriptor").typeDescriptor();
@@ -1257,10 +1258,11 @@ public final class ClassfileReader {
         final FieldActor[] fieldActors = readFields(isInterface);
         final MethodActor[] methodActors = readMethods(isInterface);
 
-        String sourceFileName = null;
-        byte[] runtimeVisibleAnnotationsBytes = null;
-        Utf8Constant genericSignature = null;
-        EnclosingMethodInfo enclosingMethodInfo = null;
+        String sourceFileName = NO_SOURCE_FILE_NAME;
+        byte[] runtimeVisibleAnnotationsBytes = NO_RUNTIME_VISIBLE_ANNOTATION_BYTES;
+        BootstrapMethod[] bootstrapMethods = NO_BOOTSTRAP_METHODS;
+        Utf8Constant genericSignature = NO_GENERIC_SIGNATURE;
+        EnclosingMethodInfo enclosingMethodInfo = NO_ENCLOSING_METHOD_INFO;
 
         int nAttributes = classfileStream.readUnsigned2();
         while (nAttributes-- != 0) {
@@ -1269,7 +1271,7 @@ public final class ClassfileReader {
             final int attributeSize = classfileStream.readSize4();
             final int startPosition = classfileStream.getPosition();
             if (attributeName.equals("SourceFile")) {
-                if (sourceFileName != null) {
+                if (sourceFileName != NO_SOURCE_FILE_NAME) {
                     throw classFormatError("Duplicate SourceFile attribute");
                 }
                 final int sourceFileNameIndex = classfileStream.readUnsigned2();
@@ -1287,6 +1289,11 @@ public final class ClassfileReader {
                     genericSignature = constantPool.utf8At(classfileStream.readUnsigned2(), "signature index");
                 } else if (attributeName.equals("RuntimeVisibleAnnotations")) {
                     runtimeVisibleAnnotationsBytes = classfileStream.readByteArray(attributeSize);
+                } else if (majorVersion >= JAVA_7_VERSION && attributeName.equals("BootstrapMethods")) {
+                    if (bootstrapMethods != NO_BOOTSTRAP_METHODS) {
+                        throw classFormatError("Duplicate BootstrapMethods attribute");
+                    }
+                    bootstrapMethods = readBootstrapMethods(classfileStream);
                 } else if (attributeName.equals("EnclosingMethod")) {
                     if (enclosingMethodInfo != null) {
                         throw classFormatError("Duplicate EnclosingMethod attribute");
@@ -1343,6 +1350,7 @@ public final class ClassfileReader {
                             methodActors,
                             genericSignature,
                             runtimeVisibleAnnotationsBytes,
+                            bootstrapMethods,
                             sourceFileName,
                             classInnerClasses,
                             classOuterClass,
@@ -1361,6 +1369,7 @@ public final class ClassfileReader {
                             methodActors,
                             genericSignature,
                             runtimeVisibleAnnotationsBytes,
+                            bootstrapMethods,
                             sourceFileName,
                             classInnerClasses,
                             classOuterClass,
@@ -1371,6 +1380,29 @@ public final class ClassfileReader {
         }
 
         return classActor;
+    }
+
+    private BootstrapMethod[] readBootstrapMethods(ClassfileStream classfileStream) {
+        final int numBootstrapMethods = classfileStream.readUnsigned2();
+        BootstrapMethod[] bootstrapMethods = new BootstrapMethod[numBootstrapMethods];
+
+        for (int i = 0; i < numBootstrapMethods; i++) {
+            bootstrapMethods[i] = readBootstrapMethod(classfileStream);
+        }
+
+        return bootstrapMethods;
+    }
+
+    private BootstrapMethod readBootstrapMethod(ClassfileStream classfileStream) {
+        final int   bootstrapMethodRef    = classfileStream.readUnsigned2();
+        final int   numBootstrapArguments = classfileStream.readUnsigned2();
+        final int[] bootstrapArgumentRefs = new int[numBootstrapArguments];
+
+        for (int i = 0; i < numBootstrapArguments; i++) {
+            bootstrapArgumentRefs[i] = classfileStream.readUnsigned2();
+        }
+
+        return new BootstrapMethod.Unresolved(bootstrapMethodRef, bootstrapArgumentRefs);
     }
 
     public static VMStringOption saveClassDir = VMOptions.register(new VMStringOption("-XX:SaveClassDir=", false, null,

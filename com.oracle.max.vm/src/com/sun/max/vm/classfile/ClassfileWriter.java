@@ -44,6 +44,7 @@ import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.bytecode.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.hosted.*;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.type.*;
 import com.sun.max.vm.value.*;
 
@@ -261,6 +262,29 @@ public class ClassfileWriter {
         }
     }
 
+    public static class BootstrapMethodsAttribute extends Attribute {
+        public static final String NAME = "BootstrapMethods";
+        BootstrapMethod[] bootstrapMethods = null;
+
+        BootstrapMethodsAttribute(BootstrapMethod[] bootstrapMethods) {
+            super(NAME);
+            this.bootstrapMethods = bootstrapMethods;
+        }
+
+        @Override
+        protected void writeData(ClassfileWriter cf) throws IOException {
+            throw FatalError.unimplemented();
+//            cf.writeUnsigned2(bootstrapMethods.length);
+//            for (BootstrapMethod bootstrapMethod : bootstrapMethods) {
+//                cf.writeUnsigned2(bootstrapMethod.bootstrapMethodRef);
+//                cf.writeUnsigned2(bootstrapMethod.bootstrapArgumentRefs.length);
+//                for (int bootstrapArgumentRef: bootstrapMethod.bootstrapArgumentRefs) {
+//                    cf.writeUnsigned2(bootstrapArgumentRef);
+//                }
+//            }
+        }
+    }
+
     /**
      * Represents the class file info common to classes, fields and methods.
      */
@@ -280,7 +304,7 @@ public class ClassfileWriter {
                     }
                 });
             }
-            if (runtimeVisibleAnnotationsBytes != null) {
+            if (runtimeVisibleAnnotationsBytes != Actor.NO_RUNTIME_VISIBLE_ANNOTATION_BYTES) {
                 attributes.add(new BytesAttribute("RuntimeVisibleAnnotations", runtimeVisibleAnnotationsBytes));
             }
             if (actor.isSynthetic()) {
@@ -418,6 +442,12 @@ public class ClassfileWriter {
                         }
                     }
                 });
+            }
+
+            final BootstrapMethod[] bootstrapMethods = classActor.bootstrapMethods();
+
+            if (bootstrapMethods != ClassActor.NO_BOOTSTRAP_METHODS) {
+                attributes.add(new BootstrapMethodsAttribute(bootstrapMethods));
             }
 
             if ((classActor.flags() & ~Actor.JAVA_CLASS_FLAGS) != 0) {

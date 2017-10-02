@@ -25,6 +25,7 @@ package com.sun.max.vm.actor.holder;
 import com.sun.max.annotate.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
 
@@ -61,6 +62,7 @@ public final class ClassActorFactory {
                     final MethodActor[] methodActors,
                     Utf8Constant genericSignature,
                     byte[] runtimeVisibleAnnotationsBytes,
+                    BootstrapMethod[] bootstrapMethods,
                     String sourceFileName,
                     TypeDescriptor[] innerClasses,
                     TypeDescriptor outerClass,
@@ -77,6 +79,7 @@ public final class ClassActorFactory {
                         methodActors,
                         genericSignature,
                         runtimeVisibleAnnotationsBytes,
+                        bootstrapMethods,
                         sourceFileName,
                         innerClasses,
                         outerClass,
@@ -100,6 +103,7 @@ public final class ClassActorFactory {
                     MethodActor[] methodActors,
                     Utf8Constant genericSignature,
                     byte[] runtimeVisibleAnnotationsBytes,
+                    BootstrapMethod[] bootstrapMethods,
                     String sourceFileName,
                     TypeDescriptor[] innerClasses,
                     TypeDescriptor outerClass,
@@ -131,6 +135,7 @@ public final class ClassActorFactory {
                             methodActors,
                             genericSignature,
                             runtimeVisibleAnnotationsBytes,
+                            bootstrapMethods,
                             sourceFileName,
                             innerClasses,
                             outerClass, enclosingMethodInfo);

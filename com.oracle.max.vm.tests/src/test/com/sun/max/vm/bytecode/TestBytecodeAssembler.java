@@ -175,6 +175,7 @@ public abstract class TestBytecodeAssembler extends BytecodeAssembler {
                 classMethodActors,
                 Actor.NO_GENERIC_SIGNATURE,
                 Actor.NO_RUNTIME_VISIBLE_ANNOTATION_BYTES,
+                ClassActor.NO_BOOTSTRAP_METHODS,
                 ClassActor.NO_SOURCE_FILE_NAME,
                 ClassActor.NO_INNER_CLASSES,
                 ClassActor.NO_OUTER_CLASS,

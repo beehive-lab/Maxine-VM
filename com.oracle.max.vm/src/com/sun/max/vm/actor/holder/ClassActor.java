@@ -46,6 +46,7 @@ import com.sun.max.util.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deps.*;
@@ -109,6 +110,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
     public static final TypeDescriptor NO_OUTER_CLASS = null;
     public static final String NO_SOURCE_FILE_NAME = null;
     public static final EnclosingMethodInfo NO_ENCLOSING_METHOD_INFO = null;
+    public static final BootstrapMethod[] NO_BOOTSTRAP_METHODS = null;
 
     public static final InterfaceActor[] NO_INTERFACES = new InterfaceActor[0];
     public static final FieldActor[] NO_FIELDS = new FieldActor[0];
@@ -229,6 +231,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
                          MethodActor[] methodActors,
                          Utf8Constant genericSignature,
                          byte[] runtimeVisibleAnnotationsBytes,
+                         BootstrapMethod[] bootstrapMethods,
                          String sourceFileName,
                          TypeDescriptor[] innerClasses,
                          TypeDescriptor outerClass,
@@ -270,6 +273,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
         classRegistry.set(ENCLOSING_METHOD_INFO, this, enclosingMethodInfo);
         classRegistry.set(GENERIC_SIGNATURE, this, genericSignature);
         classRegistry.set(RUNTIME_VISIBLE_ANNOTATION_BYTES, this, runtimeVisibleAnnotationsBytes);
+        classRegistry.set(BOOTSTRAP_METHODS, this, bootstrapMethods);
         classRegistry.set(INNER_CLASSES, this, innerClasses);
 
         if (outerClass != null) {
@@ -681,6 +685,10 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
     @Override
     public byte[] runtimeVisibleAnnotationsBytes() {
         return classRegistry().get(RUNTIME_VISIBLE_ANNOTATION_BYTES, this);
+    }
+
+    public BootstrapMethod[] bootstrapMethods() {
+        return classRegistry().get(BOOTSTRAP_METHODS, this);
     }
 
     public final InterfaceActor[] localInterfaceActors() {

@@ -62,6 +62,7 @@ public class HybridClassActor extends ReferenceClassActor {
               methodActors,
               NO_GENERIC_SIGNATURE,
               NO_RUNTIME_VISIBLE_ANNOTATION_BYTES,
+              NO_BOOTSTRAP_METHODS,
               NO_SOURCE_FILE_NAME,
               NO_INNER_CLASSES,
               NO_OUTER_CLASS,

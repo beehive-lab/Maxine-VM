@@ -188,7 +188,7 @@ abstract class UnresolvedRefIndices<PoolConstant_Type extends PoolConstant<PoolC
 
     public final String valueString(ConstantPool pool) {
         if (pool == null) {
-            return "classIndex=" + classIndex + ",nameAndTypeIndex=" + nameAndTypeIndex;
+            return "bootstrapMethodAttrIndex=" + classIndex + ",nameAndTypeIndex=" + nameAndTypeIndex;
         }
         if (isFieldConstant()) {
             return holder(pool).toJavaString(true) + '.' + name(pool) + ':' + type(pool).toJavaString(false);

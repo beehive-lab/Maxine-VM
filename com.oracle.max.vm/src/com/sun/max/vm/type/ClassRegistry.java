@@ -40,6 +40,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.compiler.deps.*;
@@ -370,6 +371,7 @@ public final class ClassRegistry {
     public enum Property {
         GENERIC_SIGNATURE(Actor.class, Utf8Constant.class, Actor.NO_GENERIC_SIGNATURE),
         RUNTIME_VISIBLE_ANNOTATION_BYTES(Actor.class, byte[].class, Actor.NO_RUNTIME_VISIBLE_ANNOTATION_BYTES),
+        BOOTSTRAP_METHODS(Actor.class, BootstrapMethod[].class, ClassActor.NO_BOOTSTRAP_METHODS),
         ENCLOSING_METHOD_INFO(ClassActor.class, EnclosingMethodInfo.class, null),
         INNER_CLASSES(ClassActor.class, TypeDescriptor[].class, null),
         OUTER_CLASS(ClassActor.class, TypeDescriptor.class, null),

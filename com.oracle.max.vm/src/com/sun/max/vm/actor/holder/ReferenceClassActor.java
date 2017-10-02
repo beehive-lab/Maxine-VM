@@ -23,6 +23,7 @@
 package com.sun.max.vm.actor.holder;
 
 import com.sun.max.vm.actor.member.*;
+import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.type.*;
@@ -52,6 +53,7 @@ public abstract class ReferenceClassActor extends ClassActor {
                                   MethodActor[] methodActors,
                                   Utf8Constant genericSignature,
                                   byte[] runtimeVisibleAnnotationsBytes,
+                                  BootstrapMethod[] bootstrapMethods,
                                   String sourceFileName,
                                   TypeDescriptor[] innerClasses,
                                   TypeDescriptor outerClass,
@@ -71,6 +73,7 @@ public abstract class ReferenceClassActor extends ClassActor {
               methodActors,
               genericSignature,
               runtimeVisibleAnnotationsBytes,
+              bootstrapMethods,
               sourceFileName,
               innerClasses,
               outerClass,
