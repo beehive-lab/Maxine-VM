@@ -21,6 +21,7 @@
 
 package com.sun.max.vm.jdk;
 
+import static com.sun.max.vm.classfile.constant.ConstantPool.ReferenceKind.*;
 import static com.sun.max.vm.jdk.JDK_java_lang_invoke_MemberName.*;
 import static java.lang.invoke.MethodType.*;
 
@@ -58,15 +59,15 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
     static final int SEARCH_SUPERCLASSES = 0x00100000; // walk super classes
     static final int SEARCH_INTERFACES = 0x00200000; // walk implemented interfaces
 
-    public static final int JVM_REF_getField = 1;
-    public static final int JVM_REF_getStatic = 2;
-    public static final int JVM_REF_putField = 3;
-    public static final int JVM_REF_putStatic = 4;
-    public static final int JVM_REF_invokeVirtual = 5;
-    public static final int JVM_REF_invokeStatic = 6;
-    public static final int JVM_REF_invokeSpecial = 7;
-    public static final int JVM_REF_newInvokeSpecial = 8;
-    public static final int JVM_REF_invokeInterface = 9;
+    public static final int JVM_REF_getField         = REF_getField.classfileReferenceKind();
+    public static final int JVM_REF_getStatic        = REF_getStatic.classfileReferenceKind();
+    public static final int JVM_REF_putField         = REF_putField.classfileReferenceKind();
+    public static final int JVM_REF_putStatic        = REF_putStatic.classfileReferenceKind();
+    public static final int JVM_REF_invokeVirtual    = REF_invokeVirtual.classfileReferenceKind();
+    public static final int JVM_REF_invokeStatic     = REF_invokeStatic.classfileReferenceKind();
+    public static final int JVM_REF_invokeSpecial    = REF_invokeSpecial.classfileReferenceKind();
+    public static final int JVM_REF_newInvokeSpecial = REF_newInvokeSpecial.classfileReferenceKind();
+    public static final int JVM_REF_invokeInterface  = REF_invokeInterface.classfileReferenceKind();
 
     private JDK_java_lang_invoke_MethodHandleNatives() {
     }

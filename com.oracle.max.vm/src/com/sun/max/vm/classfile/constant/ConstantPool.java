@@ -186,6 +186,88 @@ public final class ConstantPool implements RiConstantPool {
     }
 
     /**
+     * Table 5.4.3.5 in $5.4.
+     */
+    public enum ReferenceKind {
+        REF_getField(1),
+        REF_getStatic(2),
+        REF_putField(3),
+        REF_putStatic(4),
+        REF_invokeVirtual(5),
+        REF_invokeStatic(6),
+        REF_invokeSpecial(7),
+        REF_newInvokeSpecial(8),
+        REF_invokeInterface(9),
+        INVALID(0);
+
+        /**
+         * A negative value indicates a non-standard constant type only used internally.
+         */
+        private final byte referenceKind;
+
+        /**
+         * @param referenceKind
+         */
+        ReferenceKind(int referenceKind) {
+            assert (byte) referenceKind == referenceKind;
+            this.referenceKind = (byte) referenceKind;
+        }
+
+        /**
+         * Gets the kind of the Java program accessible constant value denoted by this tag.
+         *
+         * @throws ClassFormatError if the pool constant type denoted by this tag is not accessible as a Java program value
+         */
+        public Kind valueKind() {
+            throw classFormatError(this + " pool constants are not accessible as Java program values");
+        }
+
+        public byte classfileReferenceKind() {
+            return referenceKind;
+        }
+
+        /**
+         * Decodes a tag from a classfile to the canonical Tag value representing an entry of the appropriate type.
+         *
+         * Constant Type               | Value
+         * ----------------------------+--------
+         * REF_getField                | 1
+         * REF_getStatic               | 2
+         * REF_putField                | 3
+         * REF_putStatic               | 4
+         * REF_invokeVirtual           | 5
+         * REF_invokeStatic            | 6
+         * REF_invokeSpecial           | 7
+         * REF_newInvokeSpecial        | 8
+         * REF_invokeInterface         | 9
+         */
+        static ReferenceKind fromClassfile(int tag) {
+            switch (tag) {
+                case 1:
+                    return REF_getField;
+                case 2:
+                    return REF_getStatic;
+                case 3:
+                    return REF_putField;
+                case 4:
+                    return REF_putStatic;
+                case 5:
+                    return REF_invokeVirtual;
+                case 6:
+                    return REF_invokeStatic;
+                case 7:
+                    return REF_invokeSpecial;
+                case 8:
+                    return REF_newInvokeSpecial;
+                case 9:
+                    return REF_invokeInterface;
+                default:
+                    throw classFormatError("Invalid constant pool entry tag " + tag);
+            }
+        }
+    }
+
+    /**
      * Must only be updated by {@link ConstantPoolEditor#append(PoolConstant)}.
      */
     @INSPECTED
