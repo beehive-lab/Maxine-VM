@@ -226,7 +226,7 @@ public final class JavaTypeDescriptor {
      * @param descriptor the type descriptor for which to compute the number of dimensions
      * @return the number of dimensions in the specified type descriptor
      */
-    public static int getArrayDimensions(TypeDescriptor descriptor) {
+    public static int getArrayDimensions(Descriptor descriptor) {
         final String s = descriptor.toString();
         int dimension = 0;
         while (s.charAt(dimension) == '[') {
@@ -245,7 +245,7 @@ public final class JavaTypeDescriptor {
      * @throws NoClassDefFoundError if a class definition for this type descriptor could not be found in the specified
      *             class loader
      */
-    public static Class resolveToJavaClass(TypeDescriptor descriptor, ClassLoader classLoader) {
+    public static Class resolveToJavaClass(Descriptor descriptor, ClassLoader classLoader) {
         if (descriptor instanceof AtomicTypeDescriptor) {
             return ((AtomicTypeDescriptor) descriptor).javaClass;
         }

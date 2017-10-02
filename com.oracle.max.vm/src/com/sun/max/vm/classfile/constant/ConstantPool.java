@@ -55,7 +55,7 @@ public final class ConstantPool implements RiConstantPool {
     private static final int INITIAL_CAPACITY = 10;
 
     /**
-     * Table 4.3 in #4.4.
+     * Table 4.4-A in #4.4.
      */
     public enum Tag {
         CLASS(7) {
@@ -236,6 +236,22 @@ public final class ConstantPool implements RiConstantPool {
             return referenceKind;
         }
 
+        public  boolean isFieldRef() {
+            return this == REF_getField || this == REF_getStatic || this == REF_putField || this == REF_putStatic;
+        }
+
+        public  boolean isMethodRef() {
+            return this == REF_invokeVirtual || this == REF_newInvokeSpecial || this == REF_invokeStatic || this == REF_invokeSpecial;
+        }
+
+        public  boolean isInterfaceRef() {
+            return this == REF_invokeInterface;
+        }
+
+        public  boolean isInitializer() {
+            return this == REF_newInvokeSpecial;
+        }
+
         /**
          * Decodes a tag from a classfile to the canonical Tag value representing an entry of the appropriate type.
          *
@@ -275,6 +291,15 @@ public final class ConstantPool implements RiConstantPool {
                     throw classFormatError("Invalid constant pool entry tag " + tag);
             }
         }
+
+        /**
+         * Gets the tag corresponding to this reference kind.
+         *
+         * @return the tag corresponding to this reference kind
+         */
+        int value() {
+            return (int) referenceKind;
+        }
     }
 
     /**
@@ -305,7 +330,7 @@ public final class ConstantPool implements RiConstantPool {
     /**
      * Creates a constant pool from a class file.
      */
-    public ConstantPool(ClassLoader classLoader, ClassfileStream classfileStream) {
+    public ConstantPool(ClassLoader classLoader, ClassfileStream classfileStream, int majorVersion) {
         final int poolLength = classfileStream.readUnsigned2();
         if (poolLength < 1) {
             throw classFormatError("Invalid constant pool size (" + poolLength + ")");
@@ -380,7 +405,6 @@ public final class ConstantPool implements RiConstantPool {
                     break;
                 }
                 case METHOD_HANDLE: {
-                    ProgramWarning.message("METHOD_HANDLE not fully supported yet");
                     final int referenceKind  = classfileStream.readUnsigned1();
                     final int referenceIndex = classfileStream.readUnsigned2();
                     rawEntries[i] = (referenceKind << 16) | (referenceIndex & 0xFFFF);
@@ -460,6 +484,13 @@ public final class ConstantPool implements RiConstantPool {
                         final int nameAndTypeIndex = classNameAndType & 0xFFFF;
                         final InterfaceMethodRefConstant.UnresolvedIndices methodRef = new InterfaceMethodRefConstant.UnresolvedIndices(classIndex, nameAndTypeIndex, tags);
                         poolConstants[i] = methodRef;
+                        break;
+                    }
+                    case METHOD_HANDLE: {
+                        final int referenceKindAndIndex = rawEntries[i];
+                        final int referenceKind         = referenceKindAndIndex >> 16;
+                        final int referenceIndex        = referenceKindAndIndex & 0xFFFF;
+                        poolConstants[i] = new MethodHandleConstant.Unresolved(referenceKind, referenceIndex);
                         break;
                     }
                     default:

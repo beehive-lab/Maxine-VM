@@ -23,8 +23,10 @@
 package com.sun.max.vm.type;
 
 import static com.sun.max.vm.classfile.ErrorContext.*;
+import static com.sun.max.vm.jdk.JDK_java_lang_invoke_MethodHandleNatives.findMethodHandleType;
 import static com.sun.max.vm.type.JavaTypeDescriptor.*;
 
+import java.lang.invoke.*;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -209,6 +211,13 @@ public abstract class SignatureDescriptor extends Descriptor implements RiSignat
      */
     public TypeDescriptor resultDescriptor() {
         return typeDescriptors[0];
+    }
+
+    public MethodType getMethodHandleType(ClassLoader classLoader) {
+        // First resolve the parameters and THEN the return type (per $5.4.3.5)
+        final Class[] parameterTypes = resolveParameterTypes(classLoader);
+        final Class returnType = resolveReturnType(classLoader);
+        return findMethodHandleType(returnType, parameterTypes);
     }
 
     /**

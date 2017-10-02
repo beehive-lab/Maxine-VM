@@ -1224,7 +1224,7 @@ public final class ClassfileReader {
         final char majorVersionChar = (char) classfileStream.readUnsigned2();
 
         verifyVersion(majorVersionChar, minorVersionChar);
-        constantPool = new ConstantPool(classLoader, classfileStream);
+        constantPool = new ConstantPool(classLoader, classfileStream, majorVersionChar);
         majorVersion = majorVersionChar;
 
         classFlags = classfileStream.readUnsigned2();

@@ -100,6 +100,25 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
     public static native Object linkMethod(Class< ? > callerClass, int refKind, Class< ? > defc, String name, Object type, Object[] appendix);
 
     /**
+     * Entry point from the VM to the JDK requesting an adapter for invoking a method handle.
+     *
+     * @param callerClass
+     * @param refKind
+     * @param defc
+     * @param name
+     * @param type
+     * @return
+     */
+    @ALIAS(declaringClassName = "java.lang.invoke.MethodHandleNatives")
+    public static native MethodHandle linkMethodHandleConstant(Class<?> callerClass, int refKind, Class<?> defc, String name, Object type);
+
+    /**
+     * The JVM wants a pointer to a MethodType.  Oblige it by finding or creating one.
+     */
+    @ALIAS(declaringClassName = "java.lang.invoke.MethodHandleNatives")
+    public static native MethodType findMethodHandleType(Class<?> rtype, Class<?>[] ptypes);
+
+    /**
      * For a field MemberName, return the offset of the field in its holder.
      *
      * @param memberName
