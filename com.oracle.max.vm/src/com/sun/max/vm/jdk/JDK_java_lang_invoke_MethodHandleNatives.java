@@ -119,6 +119,14 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
     public static native MethodType findMethodHandleType(Class<?> rtype, Class<?>[] ptypes);
 
     /**
+     * The JVM is linking an invokedynamic instruction.  Create a reified call site for it.
+     */
+    @ALIAS(declaringClassName = "java.lang.invoke.MethodHandleNatives",
+            descriptor = "(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/invoke/MemberName;")
+    public static native Object linkCallSite(Object callerObj, Object bootstrapMethodObj, Object nameObj,
+                                             Object typeObj, Object staticArguments, Object[] appendixResult);
+
+    /**
      * For a field MemberName, return the offset of the field in its holder.
      *
      * @param memberName
