@@ -122,7 +122,7 @@ public class T1XRuntime {
         Trace.line(1, "T1XRuntime.linkToStatic: target=" + target);
         assert target != null;
         Trace.line(1, "T1XRuntime.linkToStatic: vmtarget=" + target.getVmTarget());
-
+        Trace.end(1, "T1XRuntime: resolveAndSelectLinkToStatic");
         return Snippets.makeEntrypoint(UnsafeCast.asClassMethodActor(target.getVmTarget()), BASELINE_ENTRY_POINT);
     }
 
