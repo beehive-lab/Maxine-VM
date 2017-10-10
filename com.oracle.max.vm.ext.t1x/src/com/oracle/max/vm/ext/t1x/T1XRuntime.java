@@ -49,13 +49,13 @@ public class T1XRuntime {
 
     public static Address resolveAndSelectVirtualMethod(Object receiver, ResolutionGuard.InPool guard) {
         final VirtualMethodActor virtualMethodActor = Snippets.resolveVirtualMethod(guard);
-        Address vtableEntryPoint = Snippets.selectNonPrivateVirtualMethod(receiver, virtualMethodActor).asAddress();
+        Address vtableEntryPoint = Snippets.selectNonPrivateVirtualMethod(receiver, virtualMethodActor);
         return vtableEntryPoint.plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
     public static Address resolveAndSelectInterfaceMethod(ResolutionGuard.InPool guard, final Object receiver) {
         final InterfaceMethodActor declaredInterfaceMethod = Snippets.resolveInterfaceMethod(guard);
-        final Address vtableEntryPoint = Snippets.selectInterfaceMethod(receiver, declaredInterfaceMethod).asAddress();
+        final Address vtableEntryPoint = Snippets.selectInterfaceMethod(receiver, declaredInterfaceMethod);
         return vtableEntryPoint.plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -82,7 +82,7 @@ public class T1XRuntime {
         assert target != null;
         assert target.getVMindex() != VirtualMethodActor.NONVIRTUAL_VTABLE_INDEX;
         Trace.line(1, "T1XRuntime.resolveAndSelectLinkToVirtual target=" + target + ", mnameid=" + System.identityHashCode(memberName));
-        Address vTableEntrypoint = Snippets.selectNonPrivateVirtualMethod(receiver, target.getVMindex()).asAddress();
+        Address vTableEntrypoint = Snippets.selectNonPrivateVirtualMethod(receiver, target.getVMindex());
         return vTableEntrypoint.plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -90,7 +90,7 @@ public class T1XRuntime {
         VMTarget target = VMTarget.fromMemberName(memberName);
         assert target != null;
         Trace.line(1, "T1XRuntime.resolveAndSelectLinkToInterface target=" + target + ", mnameid=" + System.identityHashCode(memberName));
-        Address vTableEntrypoint = Snippets.selectInterfaceMethod(receiver, UnsafeCast.asInterfaceMethodActor(target.getVmTarget())).asAddress();
+        Address vTableEntrypoint = Snippets.selectInterfaceMethod(receiver, UnsafeCast.asInterfaceMethodActor(target.getVmTarget()));
         return vTableEntrypoint.plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 

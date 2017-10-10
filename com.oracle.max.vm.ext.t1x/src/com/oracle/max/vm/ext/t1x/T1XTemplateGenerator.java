@@ -1206,7 +1206,7 @@ public class T1XTemplateGenerator {
         generateBeforeAdvice(k, variant);
         if (variant.equals("interface")) {
             if (!instrumented) {
-                out.printf("        return Snippets.selectInterfaceMethod(receiver, methodActor).asAddress().%n");
+                out.printf("        return Snippets.selectInterfaceMethod(receiver, methodActor).%n");
             } else {
                 out.printf("        return Snippets.selectInterfaceMethod(receiver, methodActor, mpo, mpoIndex).%n");
             }

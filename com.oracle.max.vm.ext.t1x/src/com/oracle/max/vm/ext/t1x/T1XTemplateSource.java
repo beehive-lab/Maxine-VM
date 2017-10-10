@@ -1065,7 +1065,7 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(INVOKEINTERFACE$float$resolved)
     @Slot(-1)
     public static Address invokeinterfaceFloat(InterfaceMethodActor methodActor, Reference receiver) {
-        return Snippets.selectInterfaceMethod(receiver, methodActor).asAddress().
+        return Snippets.selectInterfaceMethod(receiver, methodActor).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -1375,7 +1375,7 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(INVOKEINTERFACE$long$resolved)
     @Slot(-1)
     public static Address invokeinterfaceLong(InterfaceMethodActor methodActor, Reference receiver) {
-        return Snippets.selectInterfaceMethod(receiver, methodActor).asAddress().
+        return Snippets.selectInterfaceMethod(receiver, methodActor).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -1661,7 +1661,7 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(INVOKEINTERFACE$double$resolved)
     @Slot(-1)
     public static Address invokeinterfaceDouble(InterfaceMethodActor methodActor, Reference receiver) {
-        return Snippets.selectInterfaceMethod(receiver, methodActor).asAddress().
+        return Snippets.selectInterfaceMethod(receiver, methodActor).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -1897,7 +1897,7 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(INVOKEINTERFACE$reference$resolved)
     @Slot(-1)
     public static Address invokeinterfaceObject(InterfaceMethodActor methodActor, Reference receiver) {
-        return Snippets.selectInterfaceMethod(receiver, methodActor).asAddress().
+        return Snippets.selectInterfaceMethod(receiver, methodActor).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -2106,7 +2106,7 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(INVOKEINTERFACE$word$resolved)
     @Slot(-1)
     public static Address invokeinterfaceWord(InterfaceMethodActor methodActor, Reference receiver) {
-        return Snippets.selectInterfaceMethod(receiver, methodActor).asAddress().
+        return Snippets.selectInterfaceMethod(receiver, methodActor).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 
@@ -2230,7 +2230,7 @@ public class T1XTemplateSource {
     @T1X_TEMPLATE(INVOKEINTERFACE$void$resolved)
     @Slot(-1)
     public static Address invokeinterfaceVoid(InterfaceMethodActor methodActor, Reference receiver) {
-        return Snippets.selectInterfaceMethod(receiver, methodActor).asAddress().
+        return Snippets.selectInterfaceMethod(receiver, methodActor).
             plus(BASELINE_ENTRY_POINT.offset() - VTABLE_ENTRY_POINT.offset());
     }
 

@@ -53,11 +53,11 @@ public class VMAT1XRuntime {
     }
 
     public static Address selectInterfaceMethod(Object receiver, InterfaceMethodActor interfaceMethodActor) {
-        return Snippets.selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        return Snippets.selectInterfaceMethod(receiver, interfaceMethodActor);
     }
 
     public static Address selectNonPrivateVirtualMethod(Object receiver, VirtualMethodActor virtualMethodActor) {
-        return Snippets.selectNonPrivateVirtualMethod(receiver, virtualMethodActor).asAddress();
+        return Snippets.selectNonPrivateVirtualMethod(receiver, virtualMethodActor);
     }
 
 }

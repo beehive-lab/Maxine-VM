@@ -180,13 +180,13 @@ public class MaxInvokeLowerings extends SnippetLowerings {
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static com.sun.max.unsafe.Address addressForVirtualMethodSnippet(Object receiver, VirtualMethodActor methodActor) {
         MaxNullCheckNode.nullCheck(receiver);
-        return Snippets.selectNonPrivateVirtualMethod(receiver, methodActor).asAddress();
+        return Snippets.selectNonPrivateVirtualMethod(receiver, methodActor);
     }
 
     @Snippet(inlining = MaxSnippetInliningPolicy.class)
     private static com.sun.max.unsafe.Address addressForInterfaceMethodSnippet(Object receiver, InterfaceMethodActor methodActor) {
         MaxNullCheckNode.nullCheck(receiver);
-        return Snippets.selectInterfaceMethod(receiver, methodActor).asAddress();
+        return Snippets.selectInterfaceMethod(receiver, methodActor);
     }
 
     private class ResolveMethodLowering extends Lowering implements LoweringProvider<ResolveMethodNode> {

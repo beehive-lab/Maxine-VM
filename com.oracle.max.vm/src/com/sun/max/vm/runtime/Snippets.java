@@ -125,28 +125,28 @@ public class Snippets {
     }
 
     @INLINE
-    public static Word selectNonPrivateVirtualMethod(Object receiver, VirtualMethodActor declaredMethod) {
+    public static Address selectNonPrivateVirtualMethod(Object receiver, VirtualMethodActor declaredMethod) {
         final Hub hub = ObjectAccess.readHub(receiver);
-        return hub.getWord(declaredMethod.vTableIndex());
+        return hub.getWord(declaredMethod.vTableIndex()).asAddress();
     }
 
     @INLINE
-    public static Word selectNonPrivateVirtualMethod(Object receiver, int vTableIndex) {
+    public static Address selectNonPrivateVirtualMethod(Object receiver, int vTableIndex) {
         final Hub hub = ObjectAccess.readHub(receiver);
-        return hub.getWord(vTableIndex);
+        return hub.getWord(vTableIndex).asAddress();
     }
 
     @INLINE
-    public static Word selectInterfaceMethod(Object receiver, InterfaceMethodActor interfaceMethod) {
+    public static Address selectInterfaceMethod(Object receiver, InterfaceMethodActor interfaceMethod) {
         final Hub hub = ObjectAccess.readHub(receiver);
         final InterfaceActor interfaceActor = UnsafeCast.asInterfaceActor(interfaceMethod.holder());
         final int interfaceIndex = hub.getITableIndex(interfaceActor.id);
-        return hub.getWord(interfaceIndex + interfaceMethod.iIndexInInterface());
+        return hub.getWord(interfaceIndex + interfaceMethod.iIndexInInterface()).asAddress();
     }
 
     @INLINE
     public static Address selectInterfaceMethod(Object receiver, InterfaceMethodActor interfaceMethodActor, MethodProfile mpo, int mpoIndex) {
-        Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor).asAddress();
+        Address entryPoint = selectInterfaceMethod(receiver, interfaceMethodActor);
         MethodInstrumentation.recordType(mpo, receiver, mpoIndex, MethodInstrumentation.DEFAULT_RECEIVER_METHOD_PROFILE_ENTRIES);
         return entryPoint;
     }
