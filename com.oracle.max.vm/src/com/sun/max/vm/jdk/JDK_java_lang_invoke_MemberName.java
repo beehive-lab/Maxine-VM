@@ -38,7 +38,7 @@ public final class JDK_java_lang_invoke_MemberName {
      * Aliased members of MemberName.
      *
      */
-    static final class MemberNameAlias {
+    public static final class MemberNameAlias {
 
         @ALIAS(declaringClassName = "java.lang.invoke.MemberName", name = "<init>")
         native void init();
@@ -53,13 +53,13 @@ public final class JDK_java_lang_invoke_MemberName {
         native boolean referenceKindIsConsistent();
 
         @ALIAS(declaringClassName = "java.lang.invoke.MemberName")
-        Class< ? > clazz;
+        public Class< ? > clazz;
 
         @ALIAS(declaringClassName = "java.lang.invoke.MemberName")
         String name;
 
         @ALIAS(declaringClassName = "java.lang.invoke.MemberName")
-        int flags;
+        public int flags;
 
         @ALIAS(declaringClassName = "java.lang.invoke.MemberName")
         native MethodType getMethodType();
@@ -90,7 +90,7 @@ public final class JDK_java_lang_invoke_MemberName {
     }
 
     @INTRINSIC(UNSAFE_CAST)
-    static native MemberNameAlias asMemberName(Object o);
+    public static native MemberNameAlias asMemberName(Object o);
 
     /**
      * Allocate a new MemberName object.

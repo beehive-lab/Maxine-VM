@@ -20,8 +20,6 @@
  */
 package com.sun.max.vm.classfile.constant;
 
-import com.sun.max.program.ProgramWarning;
-
 import static com.sun.cri.bytecode.Bytecodes.*;
 import static com.sun.max.vm.classfile.ErrorContext.*;
 import static com.sun.max.vm.classfile.constant.ConstantPool.Tag.*;
@@ -415,7 +413,6 @@ public final class ConstantPool implements RiConstantPool {
                     break;
                 }
                 case INVOKE_DYNAMIC: {
-                    ProgramWarning.message("INVOKE_DYNAMIC not fully supported yet");
                     final int bootstrapMethodAttrIndex = classfileStream.readUnsigned2();
                     final int nameAndTypeIndex = classfileStream.readUnsigned2();
                     rawEntries[i] = (bootstrapMethodAttrIndex << 16) | (nameAndTypeIndex & 0xFFFF);
@@ -496,6 +493,15 @@ public final class ConstantPool implements RiConstantPool {
                         final int descriptorIndex = rawEntries[i];
                         final Utf8Constant descriptor = (Utf8Constant) poolConstants[descriptorIndex];
                         poolConstants[i] = new MethodTypeConstant.Unresolved(descriptor);
+                        break;
+                    }
+                    case INVOKE_DYNAMIC: {
+                        final int bootstrapAndNameAndTypeIndex = rawEntries[i];
+                        final int bootstrapMethodAttrIndex = bootstrapAndNameAndTypeIndex >> 16;
+                        final int nameAndTypeIndex = bootstrapAndNameAndTypeIndex & 0xFFFF;
+                        final InvokeDynamicConstant invokeDynamic =
+                                new InvokeDynamicConstant(bootstrapMethodAttrIndex, nameAndTypeIndex, tags);
+                        poolConstants[i] = invokeDynamic;
                         break;
                     }
                     default:
@@ -798,6 +804,14 @@ public final class ConstantPool implements RiConstantPool {
             return (InterfaceMethodRefConstant) at(index);
         } catch (ClassCastException e) {
             throw unexpectedEntry(index, null, INTERFACE_METHOD_REF);
+        }
+    }
+
+    public InvokeDynamicConstant invokeDynamicAt(int index) {
+        try {
+            return (InvokeDynamicConstant) at(index);
+        } catch (ClassCastException e) {
+            throw unexpectedEntry(index, null, INVOKE_DYNAMIC);
         }
     }
 

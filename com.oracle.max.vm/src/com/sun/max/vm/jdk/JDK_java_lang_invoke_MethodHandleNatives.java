@@ -460,7 +460,8 @@ public final class JDK_java_lang_invoke_MethodHandleNatives {
      * @param memberName
      * @param method
      */
-    static Object init_method_MemberName(Object memberName, MethodActor methodActor, boolean doDispatch, Class resolvedClass) {
+    public static Object init_method_MemberName(Object memberName, MethodActor methodActor, boolean doDispatch, Class
+            resolvedClass) {
         Trace.begin(1, "MHN.init_method_MemberName: methodActor=" + methodActor + ", doDispatch=" + doDispatch);
         int xflags = methodActor.accessFlags();
 
