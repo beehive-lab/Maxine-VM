@@ -1223,9 +1223,9 @@ public class T1XTemplateGenerator {
         endTemplateMethodGeneration();
     }
 
-    public static final EnumSet<T1XTemplateTag> INVOKE_STATIC_TEMPLATE_TAGS = tags("INVOKESPECIAL$");
+    public static final EnumSet<T1XTemplateTag> INVOKE_STATIC_TEMPLATE_TAGS = tags("INVOKESTATIC$");
 
-    public static final EnumSet<T1XTemplateTag> INVOKE_SPECIAL_TEMPLATE_TAGS = tags("INVOKESTATIC$");
+    public static final EnumSet<T1XTemplateTag> INVOKE_SPECIAL_TEMPLATE_TAGS = tags("INVOKESPECIAL$");
 
     /**
      * Generate all the {@link #INVOKE_STATIC_TEMPLATE_TAGS}.
@@ -1254,7 +1254,6 @@ public class T1XTemplateGenerator {
      *
      * @param k type
      * @param variant one of "special" or "static"
-     * @param xtag one of "" or "init" or "resolved"
      */
     public void generateInvokeSSTemplate(Kind k, String variant) {
         String params = "ResolutionGuard.InPool guard";
