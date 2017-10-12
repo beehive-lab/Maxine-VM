@@ -65,7 +65,7 @@ public final class NameAndTypeConstant extends AbstractPoolConstant<NameAndTypeC
     public TypeDescriptor type() {
         if (descriptor instanceof Utf8Constant) {
             try {
-                descriptor = JavaTypeDescriptor.parseTypeDescriptor(((Utf8Constant) descriptor).toString());
+                descriptor = JavaTypeDescriptor.parseTypeDescriptor(descriptor.toString());
             } catch (ClassCastException e) {
                 // This just means another thread beats us in the race to convert descriptor to a real Descriptor object.
                 // If descriptor still has the wrong Descriptor type, then the cast in the return statement will catch it.
