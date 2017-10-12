@@ -25,6 +25,7 @@ import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static com.sun.max.vm.stack.JVMSFrameLayout.*;
 
+import java.lang.invoke.*;
 import java.util.*;
 
 import com.oracle.max.asm.*;
@@ -1742,6 +1743,9 @@ public abstract class T1XCompilation {
             case Bytecodes.INVOKEINTERFACE:
                 do_invokeinterface(stream.readCPI());
                 break;
+            case Bytecodes.INVOKEDYNAMIC:
+                do_invokedynamic(stream.readCPI());
+                break;
             case Bytecodes.NEWARRAY:
                 do_newarray(stream.readLocalIndex());
                 break;
@@ -2251,6 +2255,32 @@ public abstract class T1XCompilation {
         }
 
         Trace.end(1, "T1XCompilation.do_invokehandle");
+    }
+
+    private void do_invokedynamic(int index) {
+        Trace.begin(1, "T1XCompilation.do_invokedynamic");
+        InvokeDynamicConstant invokeDynamicConstant = cp.invokeDynamicAt(index);
+        StaticMethodActor methodActor = invokeDynamicConstant.resolve(cp, index);
+        CallSite appendix = invokeDynamicConstant.getAppendix();
+        T1XTemplateTag tag = INVOKESTATIC$void;
+
+        Trace.line(1, "methodActor =>" + methodActor);
+        Trace.line(1, "methodname =>" + methodActor.name());
+        Trace.line(1, "methodSig =>" + methodActor.signature());
+        Trace.line(1, "holder =>" + methodActor.holder());
+        Trace.line(1, "appendix =>" + appendix);
+
+        assert methodActor.holder().isInitialized();
+
+        do_profileExceptionSeen();
+        do_invokestatic_resolved(tag, methodActor);
+        // stack the CallSite appendix argument.
+        incStack(1);
+        assignObject(scratch, appendix);
+        pokeObject(scratch, 0);
+        int safepoint = callDirect();
+        finishCall(tag, Kind.VOID, safepoint, methodActor);
+        Trace.end(1, "T1XCompilation.do_invokedynamic");
     }
 
     protected void do_invokevirtual(int index) {

@@ -1086,12 +1086,18 @@ public final class ConstantPool implements RiConstantPool {
     }
 
     public Object lookupAppendix(int cpi, int opcode) {
-        if (opcode != INVOKEVIRTUAL) {
+        if (opcode != INVOKEVIRTUAL && opcode != INVOKESTATIC) {
             return null;
         }
 
-        ClassMethodRefConstant c = classMethodAt(cpi);
-        return c.appendix();
+        PoolConstant poolConstant = at(cpi);
+        if (poolConstant instanceof ClassMethodRefConstant) {
+            return ((ClassMethodRefConstant) poolConstant).appendix();
+        } else if (poolConstant instanceof  InvokeDynamicConstant) {
+            return ((InvokeDynamicConstant) poolConstant).getAppendix();
+        } else {
+            return null;
+        }
     }
 
     public Object lookupConstant(int cpi) {
