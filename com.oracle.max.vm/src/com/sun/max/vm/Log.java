@@ -523,7 +523,7 @@ public final class Log {
         @HOSTED_ONLY
         private static final OutputStream hostedOutputStream;
         static {
-            // Use the same environment variable as used by the native code - see Native/share/debug.c
+            // Use the same environment variable as used by the native code - see com.oracle.max.vm.native/substrate/maxine.c
             String path = System.getenv("MAXINE_LOG_FILE");
             if (path == null) {
                 path = "stdout";
