@@ -131,6 +131,7 @@ final class JDK_sun_misc_Unsafe {
     //TODO (ck): Implement the native part of the function
     @SUBSTITUTE
     public int getLoadAverage(double[] loadavg, int nelems) {
+        ProgramWarning.message("sun.misc.Unsafe.getLoadAverage not implemented in Maxine VM, it always returns -1");
         return -1;
     }
 
