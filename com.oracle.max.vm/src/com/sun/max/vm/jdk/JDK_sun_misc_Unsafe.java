@@ -128,6 +128,12 @@ final class JDK_sun_misc_Unsafe {
         Reference.fromJava(object).writeReference(Offset.fromLong(offset), Reference.fromJava(value));
     }
 
+    //TODO (ck): Implement the native part of the function
+    @SUBSTITUTE
+    public int getLoadAverage(double[] loadavg, int nelems) {
+        return -1;
+    }
+
     /**
      * Reads a boolean field from the specified offset of the specified object.
      * @see sun.misc.Unsafe#getBoolean(Object, long)
