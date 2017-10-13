@@ -2,6 +2,9 @@
 
 #### Updates
 
+* 2017-10-13: Maxine VM 2.1.2 Release
+  * Support method handles
+  * Bug and stability fixes
 * 2017-05-31: Maxine VM 2.1.1 Release
   * Port to latest OpenJDK 7 (u131)
 * 2017-04-18: Maxine VM 2.1.0 Release
