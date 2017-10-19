@@ -178,37 +178,34 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //        }
 //        assert (reg[3] & ~reg[4]) == reg[0];
 //    }
-//
-//    public void test_mov64() throws Exception {
-//        initialiseExpectedValues();
-//        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//        resetIgnoreValues();
-//        masm.codeBuffer.reset();
-//
-//        masm.mov64BitConstant(Aarch64.r0, 10);
-//        masm.mov64BitConstant(Aarch64.r1, -10);
-//        masm.mov64BitConstant(Aarch64.r2, -12345678987654321L);
-//        masm.mov64BitConstant(Aarch64.r3, Long.MAX_VALUE);
-//        masm.mov64BitConstant(Aarch64.r4, Long.MIN_VALUE);
-//
-//
-//        expectedValues[0] = 10;
-//        expectedValues[1] = -10;
-//        expectedValues[2] = -12345678987654321L;
-//        expectedValues[3] = Long.MAX_VALUE;
-//        expectedValues[4] = Long.MIN_VALUE;
-//
-//
-//        testValues[0] = true;
-//        testValues[1] = true;
-//        testValues[2] = true;
-//        testValues[3] = true;
-//        testValues[4] = true;
-//
-//
-//        generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
-//    }
 
+    public void work_mov64() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        masm.codeBuffer.reset();
+
+        masm.mov64BitConstant(Aarch64.r0, 10);
+        masm.mov64BitConstant(Aarch64.r1, -10);
+        masm.mov64BitConstant(Aarch64.r2, -12345678987654321L);
+        masm.mov64BitConstant(Aarch64.r3, Long.MAX_VALUE);
+        masm.mov64BitConstant(Aarch64.r4, Long.MIN_VALUE);
+
+        expectedValues[0] = 10;
+        expectedValues[1] = -10;
+        expectedValues[2] = -12345678987654321L;
+        expectedValues[3] = Long.MAX_VALUE;
+        expectedValues[4] = Long.MIN_VALUE;
+
+
+        testValues[0] = true;
+        testValues[1] = true;
+        testValues[2] = true;
+        testValues[3] = true;
+        testValues[4] = true;
+
+        generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+    }
 
 //  public void test_mov() throws Exception {
 //      initialiseExpectedValues();
