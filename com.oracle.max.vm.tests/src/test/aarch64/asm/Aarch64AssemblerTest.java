@@ -128,7 +128,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         r.reset();
     }
 
-    public void test_b() throws Exception {
+    public void work_b() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
         resetIgnoreValues();
