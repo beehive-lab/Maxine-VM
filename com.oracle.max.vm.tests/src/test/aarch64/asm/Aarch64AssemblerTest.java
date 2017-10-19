@@ -485,22 +485,22 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-//    public void test_sbfm() throws Exception {
-//        initialiseExpectedValues();
-//        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//        resetIgnoreValues();
-//        asm.codeBuffer.reset();
-//
-//        asm.movn(VARIANT_64, Aarch64.cpuRegisters[10], 0x0, 0);
-//        asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 0x0, 0);
-//
-//        asm.ubfm(VARIANT_64, Aarch64.cpuRegisters[0], Aarch64.cpuRegisters[10], 3, 5);
-//        expectedValues[0] = 0b111111l >>> 3;
-//        testValues[0] = true;
-//
-//        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//    }
-//
+    public void work_sbfm() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        asm.codeBuffer.reset();
+
+        asm.movn(VARIANT_64, Aarch64.cpuRegisters[10], 0x0, 0);
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 0x0, 0);
+
+        asm.ubfm(VARIANT_64, Aarch64.cpuRegisters[0], Aarch64.cpuRegisters[10], 3, 5);
+        expectedValues[0] = 0b111111L >>> 3;
+        testValues[0] = true;
+
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
 //    /******* Arithmetic (shifted register) (5.5.1) *******/
 //
 //    public void test_add_shift_reg() throws Exception {
