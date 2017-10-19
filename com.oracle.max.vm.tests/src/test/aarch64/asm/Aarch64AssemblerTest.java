@@ -207,26 +207,23 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-//  public void test_mov() throws Exception {
-//      initialiseExpectedValues();
-//      setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//      resetIgnoreValues();
-//      masm.codeBuffer.reset();
-//
-//      masm.mov(Aarch64.r0, 10);
-//      masm.mov(Aarch64.r1, -10);
-//
-//
-//      expectedValues[0] = 10;
-//      expectedValues[1] = -10;
-//
-//
-//      testValues[0] = true;
-//      testValues[1] = true;
-//
-//      generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
-//}
+    public void work_mov() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        masm.codeBuffer.reset();
 
+        masm.mov(Aarch64.r0, 10);
+        masm.mov(Aarch64.r1, -10);
+
+        expectedValues[0] = 10;
+        expectedValues[1] = -10;
+
+        testValues[0] = true;
+        testValues[1] = true;
+
+        generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+    }
 
 //  public void test_mov() throws Exception {
 //      initialiseExpectedValues();
