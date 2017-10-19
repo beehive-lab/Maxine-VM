@@ -300,13 +300,10 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //      generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
 //    }
 
-    //  /**
-//  * branch
-//  */
-
-
-    /*
-    public void test_bcond() throws Exception {
+    /**
+     * branch.
+     */
+    public void work_bcond() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
         resetIgnoreValues();
@@ -316,19 +313,16 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         masm.mov32BitConstant(Aarch64.r1, 1);
 
         masm.cmp(32, Aarch64.r0, Aarch64.r1);
-        asm.b(Aarch64Assembler.ConditionFlag.EQ, 4);
-        masm.mov32BitConstant(Aarch64.r3, 20);
-        masm.mov32BitConstant(Aarch64.r3, 10);
+        masm.b(Aarch64Assembler.ConditionFlag.EQ, 4);
+        masm.mov32BitConstant(Aarch64.r3, 66);
+        masm.mov32BitConstant(Aarch64.r3, 77);
 
-        expectedValues[3] = 10;
+        expectedValues[3] = 77;
         testValues[3] = true;
 
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+    }
 
-    }*/
-
-//
-//
 //    /**
 //     * load and store instructions
 //     */
