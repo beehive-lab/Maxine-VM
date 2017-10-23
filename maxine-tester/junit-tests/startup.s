@@ -22,7 +22,8 @@ Setup_Undef_Stack:
 
 .EQU VFPVAL, 0x40000000
 VFP_enable:
+	LDR r0, =(0xF << 20)
+	MCR p15, 0, r0, c1, c0, 2
 	MOV r1,#VFPVAL
-	FMXR FPEXC, r1
-        BX LR	
-
+	VMSR FPEXC, r1
+	BX LR
