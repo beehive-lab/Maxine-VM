@@ -452,7 +452,7 @@ public class MaxineARMv7Tester {
         int i = 0;
         Object[] expectedValues = new Object[16 + 1 + 16 + 32];
         while ((line = reader.readLine()) != null) {
-            if (line.contains("r0")) {
+            if (line.contains("r0  ")) {
                 enabled = true;
                 line = line.substring(12, line.length());
             }
@@ -567,7 +567,7 @@ public class MaxineARMv7Tester {
         int i = 0;
         int[] expectedValues = new int[NUM_REGS];
         while ((line = reader.readLine()) != null) {
-            if (line.contains("r0")) {
+            if (line.contains("r0  ")) {
                 enabled = true;
                 line = line.substring(6, line.length());
             }
