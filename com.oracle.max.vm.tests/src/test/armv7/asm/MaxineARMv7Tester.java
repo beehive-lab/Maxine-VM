@@ -83,8 +83,8 @@ public class MaxineARMv7Tester {
      * arm-unknown-eabi-gcc -c -march=armv7-a -g test_armv7.c -o test_armv7.o
      * arm-unknown-eabi-as -mcpu=cortex-a9 -g startup_armv7.s -o startup_armv7.o
      * arm-unknown-eabi-as -mcpu=cortex-a9 -g asm_entry_armv7.s -o asm_entry_armv7.o
-     * arm-unknown-eabi-ld -T test_armv7.ld test_armv7.o startup_armv7.o asm_entry_armv7.o -o test_armv7.elf
-     * arm-unknown-eabi-objcopy -O binary test_armv7.elf test_armv7.bin
+     * arm-unknown-eabi-ld -T test_armv7.ld test_armv7.o startup_armv7.o asm_entry_armv7.o -o test.elf
+     * arm-unknown-eabi-objcopy -O binary test.elf test_armv7.bin
      * qemu-system-arm -cpu cortex-a9 -M versatilepb -m 128M -nographic -s -S -kernel test_armv7.bin
      */
 
@@ -118,7 +118,7 @@ public class MaxineARMv7Tester {
     }
 
     public void objcopy() {
-        final ProcessBuilder objcopy = new ProcessBuilder("arm-none-eabi-objcopy", "-O", "binary", "test_armv7.elf", "test_armv7.bin");
+        final ProcessBuilder objcopy = new ProcessBuilder("arm-none-eabi-objcopy", "-O", "binary", "test.elf", "test_armv7.bin");
         objcopy.redirectOutput(objCopyOutput);
         objcopy.redirectError(objCopyErrors);
         try {
@@ -131,7 +131,7 @@ public class MaxineARMv7Tester {
     }
 
     public void newCompile() {
-        final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test_armv7.bin", "test_armv7.elf");
+        final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test_armv7.bin", "test.elf");
         final ProcessBuilder compile = new ProcessBuilder("arm-none-eabi-gcc", "-c", "-march=armv7-a", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-g", "test_armv7.c", "-o", "test_armv7.o");
         compile.redirectOutput(gccOutput);
         compile.redirectError(gccErrors);
@@ -146,7 +146,7 @@ public class MaxineARMv7Tester {
     }
 
     public void compile() {
-        final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test_armv7.bin", "test_armv7.elf");
+        final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test_armv7.bin", "test.elf");
         final ProcessBuilder compile = new ProcessBuilder("arm-none-eabi-gcc", "-c", "-DSTATIC", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-march=armv7-a", "-g", "test_armv7.c", "-o", "test_armv7.o");
         compile.redirectOutput(gccOutput);
         compile.redirectError(gccErrors);
@@ -187,7 +187,7 @@ public class MaxineARMv7Tester {
     }
 
     public void link() {
-        final ProcessBuilder link = new ProcessBuilder("arm-none-eabi-ld", "-T", "test_armv7.ld", "test_armv7.o", "startup_armv7.o", "asm_entry_armv7.o", "-o", "test_armv7.elf");
+        final ProcessBuilder link = new ProcessBuilder("arm-none-eabi-ld", "-T", "test_armv7.ld", "test_armv7.o", "startup_armv7.o", "asm_entry_armv7.o", "-o", "test.elf");
         link.redirectOutput(linkOutput);
         link.redirectError(linkErrors);
         try {

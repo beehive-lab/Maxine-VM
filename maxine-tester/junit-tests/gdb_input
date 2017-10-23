@@ -1,4 +1,4 @@
-file test_aarch64.elf
+file test.elf
 target remote localhost:1234
 stepi 1500
 info registers

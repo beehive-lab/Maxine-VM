@@ -85,14 +85,12 @@ public class MaxineAarch64Tester {
     public static int oldpos = 0;
 
     /*
-     * arm-unknown-eabi-gcc -c -march=armv8-a -g test_aarch64.c -o
-     * test_aarch64.o aarch64-none-elf-as -march=armv8-a -g startup_aarch64.s -o
-     * startup_aarch64.o aarch64-none-elf-as -march=armv8-a -g
-     * asm_entry_aarch64.s -o asm_entry_aarch64.o aarch64-none-elf-ld -T
-     * test_aarch64.ld test_aarch64.o startup_aarch64.o asm_entry_aarch64.o -o
-     * test_aarch64.elf aarch64-none-elf-objcopy -O binary test_aarch64.elf
-     * test_aarch64.bin qemu-system-aarch64 -cpu cortex-a57 -M versatilepb -m
-     * 128M -nographic -s -S -kernel test_aarch64.bin
+     * arm-unknown-eabi-gcc -c -march=armv8-a -g test_aarch64.c -o test_aarch64.o
+     * aarch64-none-elf-as -march=armv8-a -g startup_aarch64.s -o startup_aarch64.o
+     * aarch64-none-elf-as -march=armv8-a -g asm_entry_aarch64.s -o asm_entry_aarch64.o
+     * aarch64-none-elf-ld -T test_aarch64.ld test_aarch64.o startup_aarch64.o asm_entry_aarch64.o -o test.elf
+     * aarch64-none-elf-objcopy -O binary test.elf test_aarch64.bin
+     * qemu-system-aarch64 -cpu cortex-a57 -M versatilepb -m 128M -nographic -s -S -kernel test_aarch64.bin
      */
     public MaxineAarch64Tester(String[] args) {
         initializeQemu();
@@ -144,9 +142,9 @@ public class MaxineAarch64Tester {
     }
 
     public void objcopy() {
-        // aarch64-none-elf-objcopy -O binary test_aarch64.elf test_aarch64.bin
+        // aarch64-none-elf-objcopy -O binary test.elf test_aarch64.bin
         final ProcessBuilder objcopy = new ProcessBuilder("aarch64-none-elf-objcopy", "-O", "binary",
-                "test_aarch64.elf", "test_aarch64.bin");
+                "test.elf", "test_aarch64.bin");
         objcopy.redirectOutput(objCopyOutput);
         objcopy.redirectError(objCopyErrors);
         try {
@@ -159,9 +157,8 @@ public class MaxineAarch64Tester {
     }
 
     public void compile() {
-        // aarch64-none-elf-gcc -c -march=armv8-a+simd -mgeneral-regs-only -g
-        // test_aarch64.c -o test_aarch64.o
-        final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test_aarch64.bin", "test_aarch64.elf");
+        // aarch64-none-elf-gcc -c -march=armv8-a+simd -mgeneral-regs-only -g test_aarch64.c -o test_aarch64.o
+        final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test_aarch64.bin", "test.elf");
         final ProcessBuilder compile = new ProcessBuilder("aarch64-none-elf-gcc", "-c", "-march=armv8-a+simd",
                 "-mgeneral-regs-only", "-g", "test_aarch64.c", "-o", "test_aarch64.o");
         compile.redirectOutput(gccOutput);
@@ -207,10 +204,9 @@ public class MaxineAarch64Tester {
     }
 
     public void link() {
-        // aarch64-none-elf-ld -T test_aarch64.ld test_aarch64.o
-        // startup_aarch64.o -o test_aarch64.elf
+        // aarch64-none-elf-ld -T test_aarch64.ld test_aarch64.o startup_aarch64.o -o test.elf
         final ProcessBuilder link = new ProcessBuilder("aarch64-none-elf-ld", "-T", "test_aarch64.ld", "test_aarch64.o",
-                "startup_aarch64.o", "-o", "test_aarch64.elf");
+                "startup_aarch64.o", "-o", "test.elf");
         link.redirectOutput(linkOutput);
         link.redirectError(linkErrors);
         try {
@@ -278,8 +274,7 @@ public class MaxineAarch64Tester {
     }
 
     public void runSimulation() throws Exception {
-        // qemu-system-aarch64 -cpu cortex-a57 -M virt -m 128M -nographic -s -S
-        // -kernel test_aarch64.bin
+        // qemu-system-aarch64 -cpu cortex-a57 -M virt -m 128M -nographic -s -S -kernel test_aarch64.bin
         cleanFiles();
         ProcessBuilder gdbProcess = new ProcessBuilder("aarch64-none-elf-gdb");
         gdbProcess.redirectInput(gdbInput);
