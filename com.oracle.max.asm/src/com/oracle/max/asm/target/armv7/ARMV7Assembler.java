@@ -1390,9 +1390,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     public final void movImm32(ConditionFlag flag, CiRegister dst, int imm32) {
         if (dst.number < 16) {
             movw(flag, dst, imm32 & 0xffff);
-            imm32 = imm32 >> 16;
-            imm32 = imm32 & 0xffff;
-            movt(flag, dst, imm32 & 0xffff);
+            imm32 = imm32 >>> 16; // use >>> to zero fill left bits (no sign extend)
+            movt(flag, dst, imm32);
         } else {
             movImm32(flag, ARMV7.r12, imm32);
             vmov(flag, dst, ARMV7.r12, null, CiKind.Float, CiKind.Int);
@@ -1432,7 +1431,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             mov(flag, dest, ARMImmediates.calculateShifter(imm32));
         } else if (imm32 == 0) {
             eor(flag, false, dest, dest, dest, 0, 0);
-        } else if (imm32 > 0 && imm32 <= 0xffff) {
+        } else if (imm32 >>> 16 == 0) { // use >>> to zero fill left bits (no sign extend)
             movImm16(flag, dest, imm32);
         } else {
             movImm32(flag, dest, imm32);
