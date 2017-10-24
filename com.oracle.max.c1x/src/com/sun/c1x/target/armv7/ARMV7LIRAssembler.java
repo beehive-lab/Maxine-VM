@@ -170,7 +170,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     }
 
     private void const2reg(CiRegister dst, int constant) {
-        masm.mov32BitConstant(ConditionFlag.Always, dst, constant);
+        masm.movImmediate(ConditionFlag.Always, dst, constant);
     }
 
     private void const2reg(CiRegister dst, long constant, CiKind dstKind) {
@@ -180,10 +180,10 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     private void const2reg(CiRegister dst, CiConstant constant) {
         assert constant.kind == CiKind.Object;
         if (constant.isNull()) {
-            masm.mov32BitConstant(ConditionFlag.Always, dst, 0x0);
+            masm.movImmediate(ConditionFlag.Always, dst, 0x0);
         } else if (target.inlineObjects) {
             tasm.recordDataReferenceInCode(constant);
-            masm.mov32BitConstant(ConditionFlag.Always, dst, 0xDEADDEAD);
+            masm.movImmediate(ConditionFlag.Always, dst, 0xDEADDEAD);
         } else {
             masm.setUpScratch(tasm.recordDataReferenceInCode(constant));
             masm.addRegisters(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r12, ARMV7.r15, 0, 0);
@@ -200,7 +200,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
     }
 
     private void const2reg(CiRegister dst, float constant, CiKind dstKind) {
-        masm.mov32BitConstant(ConditionFlag.Always, rscratch1, Float.floatToRawIntBits(constant));
+        masm.movImmediate(ConditionFlag.Always, rscratch1, Float.floatToRawIntBits(constant));
         masm.vmov(ConditionFlag.Always, dst, rscratch1, null, dstKind, CiKind.Int);
     }
 
@@ -258,11 +258,11 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case Short:
             case Jsr:
             case Int:
-                masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, c.asInt());
+                masm.movImmediate(ConditionFlag.Always, ARMV7.r8, c.asInt());
                 masm.store(ARMV7.r8, address, CiKind.Int);
                 break;
             case Float:
-                masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, Float.floatToRawIntBits(c.asFloat()));
+                masm.movImmediate(ConditionFlag.Always, ARMV7.r8, Float.floatToRawIntBits(c.asFloat()));
                 masm.store(ARMV7.r8, address, CiKind.Int);
                 break;
             case Object:
@@ -303,17 +303,17 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             case Jsr:
             case Int:
                 if (kind == CiKind.Boolean || kind == CiKind.Byte) {
-                    masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, constant.asInt() & 0xFF);
+                    masm.movImmediate(ConditionFlag.Always, ARMV7.r8, constant.asInt() & 0xFF);
                 } else if (kind == CiKind.Char || kind == CiKind.Short) {
-                    masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, constant.asInt() & 0xFFFF);
+                    masm.movImmediate(ConditionFlag.Always, ARMV7.r8, constant.asInt() & 0xFFFF);
                 } else {
-                    masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, constant.asInt());
+                    masm.movImmediate(ConditionFlag.Always, ARMV7.r8, constant.asInt());
                 }
                 masm.store(ARMV7.r8, addr, CiKind.Int);
                 nullCheckHere = codePos() - 4;
                 break;
             case Float:
-                masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, Float.floatToRawIntBits(constant.asFloat()));
+                masm.movImmediate(ConditionFlag.Always, ARMV7.r8, Float.floatToRawIntBits(constant.asFloat()));
                 masm.store(ARMV7.r8, addr, CiKind.Int);
                 nullCheckHere = codePos() - 4;
                 break;
@@ -772,7 +772,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                 masm.sxtb(ConditionFlag.Always, dest.asRegister(), srcRegister);
                 break;
             case I2C:
-                masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xFFFF);
+                masm.movImmediate(ConditionFlag.Always, ARMV7.r12, 0xFFFF);
                 masm.and(ConditionFlag.Always, true, dest.asRegister(), ARMV7.r12, src.asRegister(), 0, 0);
                 break;
             case I2S:
@@ -1219,7 +1219,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     masm.vmov(ConditionFlag.Always, dest.asRegister(), value.asRegister(), null, CiKind.Double, CiKind.Double);
                 }
                 masm.vmov(ConditionFlag.Always, ARMV7.s30, ARMV7.r9, null, CiKind.Float, CiKind.Int);
-                masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0x7fffffff);
+                masm.movImmediate(ConditionFlag.Always, ARMV7.r12, 0x7fffffff);
                 masm.vmov(ConditionFlag.Always, ARMV7.r8, dest.asRegister(), null, CiKind.Long, CiKind.Double);
                 masm.and(ConditionFlag.Always, false, ARMV7.r9, ARMV7.r9, ARMV7.r12, 0, 0);
                 masm.vmov(ConditionFlag.Always, dest.asRegister(), ARMV7.r8, ARMV7.r9, CiKind.Double, CiKind.Long);
@@ -1242,7 +1242,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             CiRegister reg = left.asRegister();
             if (right.isConstant()) {
                 int val = ((CiConstant) right).asInt();
-                masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, val);
+                masm.movImmediate(ConditionFlag.Always, ARMV7.r12, val);
                 switch (code) {
                     case LogicAnd:
                         masm.iand(reg, reg, ARMV7.r12);
@@ -1348,13 +1348,13 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             ARMV7Label continuation = new ARMV7Label();
             if (C1XOptions.GenSpecialDivChecks) {
                 ARMV7Label normalCase = new ARMV7Label();
-                masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, Integer.MIN_VALUE);
+                masm.movImmediate(ConditionFlag.Always, ARMV7.r12, Integer.MIN_VALUE);
                 masm.cmp(ConditionFlag.Always, lreg, ARMV7.r12, 0, 0);
                 masm.jcc(ConditionFlag.NotEqual, normalCase);
                 if (code == LIROpcode.Irem) {
                     masm.eor(ConditionFlag.Always, false, ARMV7.r8, ARMV7.r8, ARMV7.r8, 0, 0);
                 }
-                masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, -1);
+                masm.movImmediate(ConditionFlag.Always, ARMV7.r12, -1);
                 masm.cmp(ConditionFlag.Always, rreg, ARMV7.r12, 0, 0);
                 masm.jcc(ConditionFlag.Equal, continuation);
                 masm.bind(normalCase);
@@ -1440,7 +1440,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         masm.bind(continuation);
         tasm.recordImplicitException(offset, info);
         assert code == LIROpcode.Ldiv || code == LIROpcode.Lrem;
-        masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 4);
+        masm.movImmediate(ConditionFlag.Always, ARMV7.r12, 4);
         masm.blx(ARMV7.r12);
     }
 
@@ -1452,7 +1452,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         int offset = masm.codeBuffer.position();
         tasm.recordImplicitException(offset, info);
         assert code == LIROpcode.Ludiv || code == LIROpcode.Lurem;
-        masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 12);
+        masm.movImmediate(ConditionFlag.Always, ARMV7.r12, 12);
         masm.blx(ARMV7.r12);
     }
 
@@ -1743,7 +1743,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
         if (left.kind.isInt()) {
             CiRegister value = left.asRegister();
             assert value != SHIFTCount : "left cannot be r8";
-            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0x1f);
+            masm.movImmediate(ConditionFlag.Always, ARMV7.r12, 0x1f);
             masm.and(ConditionFlag.Always, false, ARMV7.r12, count.asRegister(), ARMV7.r12, 0, 0);
             // Checkstyle: off
             switch (code) {
@@ -1787,7 +1787,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             count = count & 0x1F;
             masm.mov(ConditionFlag.Always, false, dest.asRegister(), left.asRegister());
             // Checkstyle: off
-            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, count);
+            masm.movImmediate(ConditionFlag.Always, ARMV7.r12, count);
             switch (code) {
                 case Shl:
                     masm.ishl(dest.asRegister(), value, ARMV7.r12);
@@ -1805,7 +1805,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             CiRegister value = dest.asRegister();
             count = count & 0x3F;
             moveRegs(left.asRegister(), value, left.kind, dest.kind);
-            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, count);
+            masm.movImmediate(ConditionFlag.Always, ARMV7.r12, count);
             switch (code) {
                 case Shl:
                     masm.lshl(value, left.asRegister(), ARMV7.r12);
@@ -1842,26 +1842,26 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     masm.cmpImmediate(ConditionFlag.Always, value1, 0);
                     masm.jcc(ConditionFlag.NotEqual, normal);
                     masm.cmpImmediate(ConditionFlag.Equal, value, 0);
-                    masm.mov32BitConstant(ConditionFlag.Equal, result, -1);
+                    masm.movImmediate(ConditionFlag.Equal, result, -1);
                     masm.jcc(ConditionFlag.Equal, exit);
                     masm.bind(normal);
                     masm.clz(ConditionFlag.Always, ARMV7.r12, value1);
                     masm.cmpImmediate(ConditionFlag.Always, ARMV7.r12, 32);
                     masm.jcc(ConditionFlag.Equal, normal2);
-                    masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, 63);
+                    masm.movImmediate(ConditionFlag.Always, ARMV7.r8, 63);
                     masm.sub(ConditionFlag.Always, false, result, ARMV7.r8, ARMV7.r12, 0, 0);
                     masm.jcc(ConditionFlag.Always, exit);
                     masm.bind(normal2);
-                    masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, 31);
+                    masm.movImmediate(ConditionFlag.Always, ARMV7.r8, 31);
                     masm.sub(ConditionFlag.Always, false, result, ARMV7.r8, value1, 0, 0);
                     masm.bind(exit);
                 } else {
                     ARMV7Label exit = new ARMV7Label();
                     masm.cmpImmediate(ConditionFlag.Always, value, 0);
-                    masm.mov32BitConstant(ConditionFlag.Equal, result, -1);
+                    masm.movImmediate(ConditionFlag.Equal, result, -1);
                     masm.jcc(ConditionFlag.Equal, exit);
                     masm.clz(ConditionFlag.Always, ARMV7.r12, value);
-                    masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, 31);
+                    masm.movImmediate(ConditionFlag.Always, ARMV7.r8, 31);
                     masm.sub(ConditionFlag.Always, false, result, ARMV7.r8, ARMV7.r12, 0, 0);
                     masm.bind(exit);
                 }
@@ -1873,7 +1873,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     masm.cmpImmediate(ConditionFlag.Always, value1, 0);
                     masm.jcc(ConditionFlag.NotEqual, normal);
                     masm.cmpImmediate(ConditionFlag.Always, value, 0);
-                    masm.mov32BitConstant(ConditionFlag.Equal, result, -1);
+                    masm.movImmediate(ConditionFlag.Equal, result, -1);
                     masm.jcc(ConditionFlag.Equal, exit);
                     masm.bind(normal);
                     masm.rbit(ConditionFlag.Always, ARMV7.r12, value);
@@ -1883,14 +1883,14 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     masm.cmpImmediate(ConditionFlag.Always, ARMV7.r12, 32);
                     masm.mov(ConditionFlag.NotEqual, false, result, ARMV7.r12);
                     masm.jcc(ConditionFlag.NotEqual, exit);
-                    masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 32);
+                    masm.movImmediate(ConditionFlag.Always, ARMV7.r12, 32);
                     masm.clz(ConditionFlag.Always, value1, value);
                     masm.addRegisters(ConditionFlag.Always, false, result, ARMV7.r12, value1, 0, 0);
                     masm.bind(exit);
                 } else {
                     ARMV7Label exit = new ARMV7Label();
                     masm.cmpImmediate(ConditionFlag.Always, value, 0);
-                    masm.mov32BitConstant(ConditionFlag.Equal, result, -1);
+                    masm.movImmediate(ConditionFlag.Equal, result, -1);
                     masm.jcc(ConditionFlag.Equal, exit);
                     masm.rbit(ConditionFlag.Always, ARMV7.r8, value);
                     masm.clz(ConditionFlag.Always, result, ARMV7.r8);
@@ -1910,27 +1910,27 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     masm.cmpImmediate(ConditionFlag.Always, ARMV7.r9, 0);
                     masm.jcc(ConditionFlag.NotEqual, normal);
                     masm.cmpImmediate(ConditionFlag.Equal, ARMV7.r9, 0);
-                    masm.mov32BitConstant(ConditionFlag.Equal, result, -1);
+                    masm.movImmediate(ConditionFlag.Equal, result, -1);
                     masm.jcc(ConditionFlag.Equal, exit);
                     masm.bind(normal);
                     masm.clz(ConditionFlag.Always, ARMV7.r12, ARMV7.r9);
                     masm.cmpImmediate(ConditionFlag.Always, ARMV7.r12, 32);
                     masm.jcc(ConditionFlag.Equal, normal2);
-                    masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, 63);
+                    masm.movImmediate(ConditionFlag.Always, ARMV7.r8, 63);
                     masm.sub(ConditionFlag.Always, false, result, ARMV7.r8, ARMV7.r12, 0, 0);
                     masm.jcc(ConditionFlag.Always, exit);
                     masm.bind(normal2);
-                    masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, 31);
+                    masm.movImmediate(ConditionFlag.Always, ARMV7.r8, 31);
                     masm.sub(ConditionFlag.Always, false, result, ARMV7.r8, ARMV7.r9, 0, 0);
                     masm.bind(exit);
                 } else {
                     masm.ldrImmediate(ConditionFlag.Always, 1, 1, 0, ARMV7.r12, ARMV7.r12, 0);
                     ARMV7Label exit = new ARMV7Label();
                     masm.cmpImmediate(ConditionFlag.Always, ARMV7.r12, 0);
-                    masm.mov32BitConstant(ConditionFlag.Equal, result, -1);
+                    masm.movImmediate(ConditionFlag.Equal, result, -1);
                     masm.jcc(ConditionFlag.Equal, exit);
                     masm.clz(ConditionFlag.Always, ARMV7.r8, ARMV7.r12);
-                    masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 31);
+                    masm.movImmediate(ConditionFlag.Always, ARMV7.r12, 31);
                     masm.sub(ConditionFlag.Always, false, result, ARMV7.r12, ARMV7.r8, 0, 0);
                     masm.bind(exit);
                 }
@@ -1943,7 +1943,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     masm.cmpImmediate(ConditionFlag.Always, ARMV7.r9, 0);
                     masm.jcc(ConditionFlag.NotEqual, normal);
                     masm.cmpImmediate(ConditionFlag.Always, ARMV7.r8, 0);
-                    masm.mov32BitConstant(ConditionFlag.Equal, result, -1);
+                    masm.movImmediate(ConditionFlag.Equal, result, -1);
                     masm.jcc(ConditionFlag.Equal, exit);
                     masm.bind(normal);
                     masm.rbit(ConditionFlag.Always, ARMV7.r12, ARMV7.r8);
@@ -1960,7 +1960,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     masm.ldrImmediate(ConditionFlag.Always, 1, 1, 0, ARMV7.r12, ARMV7.r12, 0);
                     ARMV7Label exit = new ARMV7Label();
                     masm.cmpImmediate(ConditionFlag.Always, ARMV7.r12, 0);
-                    masm.mov32BitConstant(ConditionFlag.Equal, result, -1);
+                    masm.movImmediate(ConditionFlag.Equal, result, -1);
                     masm.jcc(ConditionFlag.Equal, exit);
                     masm.rbit(ConditionFlag.Always, ARMV7.r12, ARMV7.r12);
                     masm.clz(ConditionFlag.Always, result, ARMV7.r12);
@@ -2364,13 +2364,13 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                         masm.nop(4);
                     }
                     masm.push(ConditionFlag.Always, 1 << 14);
-                    masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, frameSize);
+                    masm.movImmediate(ConditionFlag.Always, ARMV7.r12, frameSize);
                     masm.sub(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
                     if (C1XOptions.ZapStackOnMethodEntry) {
                         final int intSize = 4;
                         for (int i = 0; i < frameSize / intSize; ++i) {
                             masm.setUpScratch(new CiAddress(CiKind.Int, ARMV7.r13.asValue(), i * intSize));
-                            masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r8, 0xC1C1C1C1);
+                            masm.movImmediate(ConditionFlag.Always, ARMV7.r8, 0xC1C1C1C1);
                             masm.str(ConditionFlag.Always, 0, 0, 0, ARMV7.r8, ARMV7.r12, ARMV7.r0, 0, 0);
                         }
                     }
@@ -2383,7 +2383,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
                     }
 
                     if (C1XOptions.DebugMethods) {
-                        masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, methodID);
+                        masm.movImmediate(ConditionFlag.Always, ARMV7.r12, methodID);
                         debugMethodWriter.appendDebugMethod(compilation.method.holder() + "." + compilation.method.name() + ";" + compilation.method.signature(), methodID);
                     }
                     break;
@@ -2565,7 +2565,7 @@ public final class ARMV7LIRAssembler extends LIRAssembler {
             if (target.inlineObjects) {
                 assert false : "Not implemented yet!";
                 masm.setUpScratch(tasm.recordDataReferenceInCode(obj));
-                masm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xdeaddead); // patched?
+                masm.movImmediate(ConditionFlag.Always, ARMV7.r12, 0xdeaddead); // patched?
                 masm.mov(ConditionFlag.Always, false, dst, ARMV7.r12);
             } else {
                 masm.setUpScratch(tasm.recordDataReferenceInCode(obj));

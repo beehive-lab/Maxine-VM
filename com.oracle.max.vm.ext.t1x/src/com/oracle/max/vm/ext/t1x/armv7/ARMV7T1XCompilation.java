@@ -360,13 +360,13 @@ public class ARMV7T1XCompilation extends T1XCompilation {
 
     @Override
     public void assignInt(CiRegister dst, int value) {
-        asm.mov32BitConstant(ConditionFlag.Always, dst, value);
+        asm.movImmediate(ConditionFlag.Always, dst, value);
     }
 
     @Override
     protected void assignFloat(CiRegister dst, float value) {
         assert dst.number >= ARMV7.s0.number && dst.number <= ARMV7.s31.number;
-        asm.mov32BitConstant(ConditionFlag.Always, ARMV7.r12, Float.floatToRawIntBits(value));
+        asm.movImmediate(ConditionFlag.Always, ARMV7.r12, Float.floatToRawIntBits(value));
         asm.vmov(ConditionFlag.Always, dst, ARMV7.r12, null, CiKind.Float, CiKind.Int);
     }
 
@@ -588,7 +588,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         final short stackAmountInBytes = (short) frame.sizeOfParameters();
         asm.pop(ConditionFlag.Always, asm.getRegisterList(ARMV7.FP), true);
         asm.pop(ConditionFlag.Always, asm.getRegisterList(r8), true);
-        asm.mov32BitConstant(ConditionFlag.Always, scratch, stackAmountInBytes);
+        asm.movImmediate(ConditionFlag.Always, scratch, stackAmountInBytes);
         asm.addRegisters(ConditionFlag.Always, false, ARMV7.rsp, ARMV7.rsp, scratch, 0, 0);
         asm.mov(ConditionFlag.Always, false, ARMV7.PC, ARMV7.r8);
         if (T1XOptions.DebugMethods) {
@@ -711,7 +711,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
             int leaPos = buf.position();
             asm.leaq(r6, CiAddress.Placeholder);
             int afterLea = buf.position();
-            asm.mov32BitConstant(ConditionFlag.Always, r7, (ls.numberOfCases() - 1) * 2);
+            asm.movImmediate(ConditionFlag.Always, r7, (ls.numberOfCases() - 1) * 2);
 
             int loopPos = buf.position();
             asm.setUpScratch(new CiAddress(CiKind.Int, r6.asValue(), r7.asValue(), Scale.Times4, 0));

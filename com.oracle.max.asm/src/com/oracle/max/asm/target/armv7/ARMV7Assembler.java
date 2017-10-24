@@ -1199,7 +1199,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                     base = scratchRegister;
                     disp = 0;
                 } else {
-                    mov32BitConstant(ConditionFlag.Always, scratchRegister, disp);
+                    movImmediate(ConditionFlag.Always, scratchRegister, disp);
                     addRegisters(ConditionFlag.Always, false, scratchRegister, base, scratchRegister, 0, 0);
                     base = scratchRegister;
                     disp = 0;
@@ -1224,7 +1224,7 @@ public class ARMV7Assembler extends AbstractAssembler {
                     base = scratchRegister;
                     disp = 0;
                 } else {
-                    mov32BitConstant(ConditionFlag.Always, scratchRegister, disp);
+                    movImmediate(ConditionFlag.Always, scratchRegister, disp);
                     addRegisters(ConditionFlag.Always, false, scratchRegister, base, scratchRegister, 0, 0);
                     base = scratchRegister;
                     disp = 0;
@@ -1383,7 +1383,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             sub12BitImmediate(ConditionFlag.Always, false, dst, dst, ARMImmediates.calculateShifter(imm32));
             return;
         }
-        mov32BitConstant(ConditionFlag.Always, scratchRegister, imm32);
+        movImmediate(ConditionFlag.Always, scratchRegister, imm32);
         sub(ConditionFlag.Always, false, dst, dst, scratchRegister, 0, 0);
     }
 
@@ -1421,9 +1421,9 @@ public class ARMV7Assembler extends AbstractAssembler {
         movw(cond, dst, imm16);
     }
 
-    public void mov32BitConstant(ConditionFlag flag, CiRegister dest, int imm32) {
+    public void movImmediate(ConditionFlag flag, CiRegister dest, int imm32) {
         if (dest.number > 15) {
-            mov32BitConstant(flag, ARMV7.r12, imm32);
+            movImmediate(flag, ARMV7.r12, imm32);
             vmov(flag, dest, ARMV7.r12, null, CiKind.Float, CiKind.Int);
             return;
         }
@@ -1441,9 +1441,9 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void movImm64(ConditionFlag flag, CiRegister dstLow, CiRegister dstUpper, long imm64) {
         int low32 = (int) (imm64 & 0xffffffffL);
-        mov32BitConstant(flag, dstLow, low32);
+        movImmediate(flag, dstLow, low32);
         int high32 = (int) ((imm64 >> 32) & 0xffffffffL);
-        mov32BitConstant(flag, dstUpper, high32);
+        movImmediate(flag, dstUpper, high32);
     }
 
     public final void alignForPatchableDirectCall() {
@@ -1485,7 +1485,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public final void movslq(CiAddress dst, int imm32) {
-        mov32BitConstant(ConditionFlag.Always, ARMV7.r8, imm32);
+        movImmediate(ConditionFlag.Always, ARMV7.r8, imm32);
         store(ARMV7.r8, dst, CiKind.Int);
     }
 
@@ -1495,7 +1495,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             cmpImmediate(ConditionFlag.Always, src, imm32);
             return;
         }
-        mov32BitConstant(ConditionFlag.Always, scratchRegister, imm32);
+        movImmediate(ConditionFlag.Always, scratchRegister, imm32);
         cmp(ConditionFlag.Always, src, scratchRegister, 0, 0);
     }
 
@@ -1526,11 +1526,11 @@ public class ARMV7Assembler extends AbstractAssembler {
             ARMV7Label isFalse = new ARMV7Label();
             ARMV7Label isEnd = new ARMV7Label();
             jcc(ConditionFlag.UnsignedLowerOrEqual, isFalse);
-            mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 1);
+            movImmediate(ConditionFlag.Always, ARMV7.r12, 1);
             cmpImmediate(ConditionFlag.Always, ARMV7.r12, 0);
             jcc(ConditionFlag.Always, isEnd);
             bind(isFalse);
-            mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0);
+            movImmediate(ConditionFlag.Always, ARMV7.r12, 0);
             cmpImmediate(ConditionFlag.Always, ARMV7.r12, 1);
             bind(isEnd);
             return;
@@ -1573,7 +1573,7 @@ public class ARMV7Assembler extends AbstractAssembler {
             add12BitImmediate(ConditionFlag.Always, false, dst, dst, ARMImmediates.calculateShifter(imm32));
             return;
         }
-        mov32BitConstant(ConditionFlag.Always, scratchRegister, imm32);
+        movImmediate(ConditionFlag.Always, scratchRegister, imm32);
         addRegisters(ConditionFlag.Always, false, dst, dst, scratchRegister, 0, 0);
     }
 
@@ -1659,7 +1659,7 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public final void pause() {
         push(ConditionFlag.Always, 1 | 2 | 4 | 8 | 128, true);
-        mov32BitConstant(ConditionFlag.Always, ARMV7.r7, 158); // sched_yield
+        movImmediate(ConditionFlag.Always, ARMV7.r7, 158); // sched_yield
         emitInt(0xef000000); // replaced with svc 0
         pop(ConditionFlag.Always, 1 | 2 | 4 | 8 | 128, true);
     }
@@ -1716,7 +1716,7 @@ public class ARMV7Assembler extends AbstractAssembler {
     public void enter(short imm16, byte imm8) {
         assert false : "Enter not implemented";
         push(ConditionFlag.Always, 1 << 14, true);
-        mov32BitConstant(ConditionFlag.Always, ARMV7.r12, imm16);
+        movImmediate(ConditionFlag.Always, ARMV7.r12, imm16);
         sub(ConditionFlag.Always, false, ARMV7.r13, ARMV7.r13, ARMV7.r12, 0, 0);
     }
 
@@ -2177,7 +2177,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         vpush(ConditionFlag.Always, ARMV7.s28, ARMV7.s30, CiKind.Double, CiKind.Double);
         push(ConditionFlag.Always, 1 << 8, true);
         vmrs(ConditionFlag.Always, ARMV7.r8); // save rounding mode
-        mov32BitConstant(ConditionFlag.Always, ARMV7.r12, 0xc00000);
+        movImmediate(ConditionFlag.Always, ARMV7.r12, 0xc00000);
         orr(ConditionFlag.Always, false, ARMV7.r12, ARMV7.r8, ARMV7.r12, 0, 0);
         vmsr(ConditionFlag.Always, ARMV7.r12); // set round to zero mode
         vmov(ConditionFlag.Always, ARMV7.s28, rn, null, CiKind.Float, CiKind.Int);
