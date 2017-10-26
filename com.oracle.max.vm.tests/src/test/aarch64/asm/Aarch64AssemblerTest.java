@@ -838,25 +838,25 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-//    /**
-//     * mrs_reg
-//     */
-//    public void test_mrs_reg() throws Exception {
-//        initialiseExpectedValues();
-//        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//        resetIgnoreValues();
-//        asm.codeBuffer.reset();
-//
-//        asm.movz(VARIANT_64, Aarch64.cpuRegisters[1], 0b1111, 0);
-//        asm.msr(SystemRegister.SPSR_EL1, Aarch64.cpuRegisters[1]);
-//        asm.mrs(Aarch64.cpuRegisters[0], SystemRegister.SPSR_EL1);
-//
-//        expectedValues[0] = 0b1111;
-//        testValues[0] = true;
-//
-//        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//    }
-//
+    /**
+     * mrs_reg.
+     */
+    public void work_mrs_reg() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        asm.codeBuffer.reset();
+
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[1], 0b1111, 0);
+        asm.msr(Aarch64Assembler.SystemRegister.SPSR_EL1, Aarch64.cpuRegisters[1]);
+        asm.mrs(Aarch64.cpuRegisters[0], Aarch64Assembler.SystemRegister.SPSR_EL1);
+
+        expectedValues[0] = 0b1111;
+        testValues[0] = true;
+
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
 //    /**
 //     * mrs_imm
 //     */
