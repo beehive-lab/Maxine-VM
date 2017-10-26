@@ -517,21 +517,20 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-//    public void test_sub_shift_reg() throws Exception {
-//        initialiseExpectedValues();
-//        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//        resetIgnoreValues();
-//        asm.codeBuffer.reset();
-//        asm.movImmediate(Aarch64.cpuRegisters[10], 0b1000);
-//        for (int i = 0; i < 1; i++) {
-//            asm.sub(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[10], Aarch64.cpuRegisters[10], ShiftType.LSR, 3);
-//            expectedValues[i] = 0b1000 - (0b1000 >>> 3);
-//            testValues[i] = true;
-//        }
-//        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//    }
-//
-//
+    public void work_sub_shift_reg() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        asm.codeBuffer.reset();
+        asm.movImmediate(Aarch64.cpuRegisters[10], 0b1000);
+        for (int i = 0; i < 1; i++) {
+            asm.sub(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[10], Aarch64.cpuRegisters[10], Aarch64Assembler.ShiftType.LSR, 3);
+            expectedValues[i] = 0b1000 - (0b1000 >>> 3);
+            testValues[i] = true;
+        }
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
 //    /******* Arithmetic (extended register) (5.5.2) *******/
 //
 //
