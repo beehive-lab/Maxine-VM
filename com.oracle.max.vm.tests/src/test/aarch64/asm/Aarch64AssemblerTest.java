@@ -278,16 +278,16 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    //    TODO: Look again at this.
-    public void todo_movImmediate() throws Exception {
+    // TODO: Look again at this.
+    public void work_movImmediate() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
         resetIgnoreValues();
-        asm.codeBuffer.reset();
+        masm.codeBuffer.reset();
 
-        asm.movImmediate(Aarch64.r0, 10);
-        asm.movImmediate(Aarch64.r1, 1);
-        asm.movImmediate(Aarch64.r2, -10);
+        masm.movImmediate(Aarch64.r0, 10);
+        masm.movImmediate(Aarch64.r1, 1);
+        masm.movImmediate(Aarch64.r2, -10);
 
         expectedValues[0] = 10;
         expectedValues[1] = 1;
@@ -297,7 +297,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         testValues[1] = true;
         testValues[2] = true;
 
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
     /**

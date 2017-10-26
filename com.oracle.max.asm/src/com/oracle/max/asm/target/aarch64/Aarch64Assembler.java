@@ -2605,7 +2605,8 @@ public class Aarch64Assembler extends AbstractAssembler {
         }
     };
 
-    public final void movImmediate(CiRegister dst, int imm16) {
+    @Deprecated
+    public void movImmediate(CiRegister dst, int imm16) {
         int instruction = 0x52800000;
         instruction |= 1 << 31;
         instruction |= (imm16 & 0xffff) << 5;

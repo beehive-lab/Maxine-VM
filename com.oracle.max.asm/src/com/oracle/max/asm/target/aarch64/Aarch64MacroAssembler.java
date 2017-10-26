@@ -414,6 +414,18 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     /**
+     * Loads 16-bit immediate into register.
+     *
+     * @param dst general purpose register. May not be null, zero-register or stackpointer.
+     * @param imm16 16-bit immediate loaded into register.
+     * TODO check if it works properly in all cases
+     */
+    @Override
+    public final void movImmediate(CiRegister dst, int imm16) {
+        mov(dst, (long) imm16);
+    }
+
+    /**
      * Loads immediate into register.
      *
      * @param dst general purpose register. May not be null, zero-register or stackpointer.
