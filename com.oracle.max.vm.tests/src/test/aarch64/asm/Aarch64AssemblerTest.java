@@ -735,40 +735,40 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-//    /**
-//     * fmadd, fmsub
-//     */
-//    public void test_float3() throws Exception {
-//        initialiseExpectedValues();
-//        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//        resetIgnoreValues();
-//        asm.codeBuffer.reset();
-//
-//        asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 100, 0);
-//        asm.movz(VARIANT_64, Aarch64.cpuRegisters[1], 110, 0);
-//
-//        asm.scvtf(VARIANT_64, VARIANT_64, Aarch64.fpuRegisters[0], Aarch64.cpuRegisters[0]);
-//        asm.scvtf(VARIANT_64, VARIANT_64, Aarch64.fpuRegisters[1], Aarch64.cpuRegisters[1]);
-//
-//        asm.fmadd(VARIANT_64, Aarch64.fpuRegisters[3], Aarch64.fpuRegisters[0], Aarch64.fpuRegisters[1], Aarch64.fpuRegisters[1]);
-//        asm.fmsub(VARIANT_64, Aarch64.fpuRegisters[4], Aarch64.fpuRegisters[0], Aarch64.fpuRegisters[1], Aarch64.fpuRegisters[1]);
-//
-//        asm.fcvtzs(VARIANT_64, VARIANT_64,  Aarch64.cpuRegisters[3],  Aarch64.fpuRegisters[3]);
-//        asm.fcvtzs(VARIANT_64, VARIANT_64,  Aarch64.cpuRegisters[4],  Aarch64.fpuRegisters[4]);
-//
-//        expectedValues[0] = 100;
-//        testValues[0] = true;
-//        expectedValues[1] = 110;
-//        testValues[1] = true;
-//
-//        expectedValues[3] = 110 + 100 * 110;        // fmadd
-//        testValues[3] = true;
-//        expectedValues[4] = 110 - 100 * 110;        // fmsub
-//        testValues[4] = true;
-//
-//        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//    }
-//
+    /**
+     * fmadd, fmsub.
+     */
+    public void work_float3() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        asm.codeBuffer.reset();
+
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 100, 0);
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[1], 110, 0);
+
+        asm.scvtf(VARIANT_64, VARIANT_64, Aarch64.fpuRegisters[0], Aarch64.cpuRegisters[0]);
+        asm.scvtf(VARIANT_64, VARIANT_64, Aarch64.fpuRegisters[1], Aarch64.cpuRegisters[1]);
+
+        asm.fmadd(VARIANT_64, Aarch64.fpuRegisters[3], Aarch64.fpuRegisters[0], Aarch64.fpuRegisters[1], Aarch64.fpuRegisters[1]);
+        asm.fmsub(VARIANT_64, Aarch64.fpuRegisters[4], Aarch64.fpuRegisters[0], Aarch64.fpuRegisters[1], Aarch64.fpuRegisters[1]);
+
+        asm.fcvtzs(VARIANT_64, VARIANT_64, Aarch64.cpuRegisters[3], Aarch64.fpuRegisters[3]);
+        asm.fcvtzs(VARIANT_64, VARIANT_64, Aarch64.cpuRegisters[4], Aarch64.fpuRegisters[4]);
+
+        expectedValues[0] = 100;
+        testValues[0] = true;
+        expectedValues[1] = 110;
+        testValues[1] = true;
+
+        expectedValues[3] = 110 + 100 * 110;        // fmadd
+        testValues[3] = true;
+        expectedValues[4] = 110 - 100 * 110;        // fmsub
+        testValues[4] = true;
+
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
 //    /**
 //     *  fstr, fldr
 //     */
