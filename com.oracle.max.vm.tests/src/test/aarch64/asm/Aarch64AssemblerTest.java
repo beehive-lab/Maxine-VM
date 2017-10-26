@@ -857,41 +857,34 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-//    /**
-//     * mrs_imm
-//     */
-//    public void test_mrs_imm() throws Exception {
-//        initialiseExpectedValues();
-//        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//        resetIgnoreValues();
-//        asm.codeBuffer.reset();
-//
-//        asm.msr(PStateField.PSTATEField_DAIFClr, 0b1111);
-//        asm.msr(PStateField.PSTATEField_DAIFSet, 0b1001);
-//        asm.mrs(Aarch64.cpuRegisters[0], SystemRegister.DAIF);
-//
-//        // if dst == PSTATEField_SP, then the first 3 digits of the operand is ignored, which means only the last bit is used to set SPSel.
-//        asm.msr(PStateField.PSTATEField_SP, 0b0001);
-//        asm.mrs(Aarch64.cpuRegisters[1], SystemRegister.SPSel);
-//        asm.msr(PStateField.PSTATEField_SP, 0b0000);
-//        asm.mrs(Aarch64.cpuRegisters[2], SystemRegister.SPSel);
-//
-//        expectedValues[0] = 0b1001 << 6;
-//        testValues[0] = true;
-//        expectedValues[1] = 0b1 << 0;
-//        testValues[1] = true;
-//        expectedValues[2] = 0b0 << 0;
-//        testValues[2] = true;
-//
-//        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//    }
-//
-//
-}
+    /**
+     * mrs_imm.
+     */
+    public void work_mrs_imm() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        asm.codeBuffer.reset();
 
+        asm.msr(Aarch64Assembler.PStateField.PSTATEField_DAIFClr, 0b1111);
+        asm.msr(Aarch64Assembler.PStateField.PSTATEField_DAIFSet, 0b1001);
+        asm.mrs(Aarch64.cpuRegisters[0], Aarch64Assembler.SystemRegister.DAIF);
 
+        // if dst == PSTATEField_SP, then the first 3 digits of the operand is ignored, which means only the last bit is used to set SPSel.
+        asm.msr(Aarch64Assembler.PStateField.PSTATEField_SP, 0b0001);
+        asm.mrs(Aarch64.cpuRegisters[1], Aarch64Assembler.SystemRegister.SPSel);
+        asm.msr(Aarch64Assembler.PStateField.PSTATEField_SP, 0b0000);
+        asm.mrs(Aarch64.cpuRegisters[2], Aarch64Assembler.SystemRegister.SPSel);
 
+        expectedValues[0] = 0b1001 << 6;
+        testValues[0] = true;
+        expectedValues[1] = 0b1 << 0;
+        testValues[1] = true;
+        expectedValues[2] = 0b0 << 0;
+        testValues[2] = true;
 
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
 
 /*
     public void ignore_Ldrb() throws Exception {
