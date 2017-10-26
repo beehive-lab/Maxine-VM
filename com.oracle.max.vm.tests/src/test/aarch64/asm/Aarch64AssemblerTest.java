@@ -797,47 +797,47 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-//    /**
-//     * mrs
-//     */
-//    public void test_mrs() throws Exception {
-//        initialiseExpectedValues();
-//        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//        resetIgnoreValues();
-//        asm.codeBuffer.reset();
-//
-//        asm.movz(VARIANT_64, Aarch64.cpuRegisters[10], 1, 0);
-//        asm.movz(VARIANT_64, Aarch64.cpuRegisters[11], 1, 0);
-//        asm.movz(VARIANT_64, Aarch64.cpuRegisters[12], 2, 0);
-//        asm.movz(VARIANT_64, Aarch64.cpuRegisters[13], 3, 0);
-//
-//        asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 0, 0);
-//        asm.movz(VARIANT_64, Aarch64.cpuRegisters[1], 0, 0);
-//        asm.movz(VARIANT_64, Aarch64.cpuRegisters[2], 0, 0);
-//
-//        asm.mrs(Aarch64.cpuRegisters[0], SystemRegister.NZCV);
-//
-//        asm.subs(VARIANT_64, Aarch64.cpuRegisters[15], Aarch64.cpuRegisters[10], Aarch64.cpuRegisters[11], ShiftType.LSL, 0);
-//        asm.mrs(Aarch64.cpuRegisters[1], SystemRegister.NZCV);
-//
-//        asm.subs(VARIANT_64, Aarch64.cpuRegisters[15], Aarch64.cpuRegisters[13], Aarch64.cpuRegisters[12], ShiftType.LSL, 0);
-//        asm.mrs(Aarch64.cpuRegisters[2], SystemRegister.NZCV);
-//
-//        asm.subs(VARIANT_64, Aarch64.cpuRegisters[15], Aarch64.cpuRegisters[12], Aarch64.cpuRegisters[13], ShiftType.LSL, 0);
-//        asm.mrs(Aarch64.cpuRegisters[3], SystemRegister.NZCV);
-//
-//        expectedValues[0] = 0b0110l << 28;
-//        testValues[0] = true;
-//        expectedValues[1] = 0b0110l << 28;
-//        testValues[1] = true;
-//        expectedValues[2] = 0b0010l << 28;
-//        testValues[2] = true;
-//        expectedValues[3] = 0b1000l << 28;
-//        testValues[3] = true;
-//
-//        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//    }
-//
+    /**
+     * mrs.
+     */
+    public void work_mrs() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        asm.codeBuffer.reset();
+
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[10], 1, 0);
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[11], 1, 0);
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[12], 2, 0);
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[13], 3, 0);
+
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 0, 0);
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[1], 0, 0);
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[2], 0, 0);
+
+        asm.mrs(Aarch64.cpuRegisters[0], Aarch64Assembler.SystemRegister.NZCV);
+
+        asm.subs(VARIANT_64, Aarch64.cpuRegisters[15], Aarch64.cpuRegisters[10], Aarch64.cpuRegisters[11], Aarch64Assembler.ShiftType.LSL, 0);
+        asm.mrs(Aarch64.cpuRegisters[1], Aarch64Assembler.SystemRegister.NZCV);
+
+        asm.subs(VARIANT_64, Aarch64.cpuRegisters[15], Aarch64.cpuRegisters[13], Aarch64.cpuRegisters[12], Aarch64Assembler.ShiftType.LSL, 0);
+        asm.mrs(Aarch64.cpuRegisters[2], Aarch64Assembler.SystemRegister.NZCV);
+
+        asm.subs(VARIANT_64, Aarch64.cpuRegisters[15], Aarch64.cpuRegisters[12], Aarch64.cpuRegisters[13], Aarch64Assembler.ShiftType.LSL, 0);
+        asm.mrs(Aarch64.cpuRegisters[3], Aarch64Assembler.SystemRegister.NZCV);
+
+        expectedValues[0] = 0b0110L << 28;
+        testValues[0] = true;
+        expectedValues[1] = 0b0110L << 28;
+        testValues[1] = true;
+        expectedValues[2] = 0b0010L << 28;
+        testValues[2] = true;
+        expectedValues[3] = 0b1000L << 28;
+        testValues[3] = true;
+
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
 //    /**
 //     * mrs_reg
 //     */
