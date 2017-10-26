@@ -566,24 +566,25 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-//    /******* Logical (shifted register) (5.5.3) *******/
-//
-//    public void test_and_shift_reg() throws Exception {
-//        initialiseExpectedValues();
-//        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//        resetIgnoreValues();
-//        asm.codeBuffer.reset();
-//        asm.movn(VARIANT_64, Aarch64.cpuRegisters[0], 0x0, 0);
-//        asm.movz(VARIANT_64, Aarch64.cpuRegisters[10], 0xf, 0);
-//
-//        for (int i = 0; i < 1; i++) {
-//            asm.and(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[10], ShiftType.LSL, 4);
-//            expectedValues[i] = 0xffffffffffffffffl & (0b1111l << 4);
-//            testValues[i] = true;
-//        }
-//        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//    }
-//
+    /******* Logical (shifted register) (5.5.3). *******/
+
+    public void work_and_shift_reg() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        asm.codeBuffer.reset();
+        asm.movn(VARIANT_64, Aarch64.cpuRegisters[0], 0x0, 0);
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[10], 0xf, 0);
+
+        for (int i = 0; i < 1; i++) {
+            asm.and(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[10], Aarch64Assembler.ShiftType.LSL, 4);
+            expectedValues[i] = 0xffffffffffffffffL & (0b1111L << 4);
+            testValues[i] = true;
+        }
+
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
 //    /* Variable Shift (5.5.4) */
 //
 //    public void test_asr() throws Exception {
