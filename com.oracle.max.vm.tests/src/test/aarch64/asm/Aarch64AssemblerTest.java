@@ -622,32 +622,31 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //
 //    /* Integer Multiply/Divide (5.6) */
 //
-//
-//    /* Floating-point Move (register) (5.7.2) */
-//
-//    public void test_float0() throws Exception {
-//        initialiseExpectedValues();
-//        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//        resetIgnoreValues();
-//        asm.codeBuffer.reset();
-//
-//        asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 10, 0);
-//        asm.movz(VARIANT_64, Aarch64.cpuRegisters[1], 11, 0);
-//
-//        asm.fmovCpu2Fpu(VARIANT_64, Aarch64.fpuRegisters[0], Aarch64.cpuRegisters[0]);
-//        asm.fmovCpu2Fpu(VARIANT_64, Aarch64.fpuRegisters[1], Aarch64.cpuRegisters[1]);
-//        asm.fmovFpu2Cpu(VARIANT_64, Aarch64.cpuRegisters[2], Aarch64.fpuRegisters[0]);
-//        asm.fmovFpu2Cpu(VARIANT_64, Aarch64.cpuRegisters[3], Aarch64.fpuRegisters[1]);
-//
-//        expectedValues[2] = 10;
-//        testValues[2] = true;
-//        expectedValues[3] = 11;
-//        testValues[3] = true;
-//
-//        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//
-//    }
-//
+
+   /* Floating-point Move (register) (5.7.2). */
+
+    public void work_float0() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        asm.codeBuffer.reset();
+
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 10, 0);
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[1], 11, 0);
+
+        asm.fmovCpu2Fpu(VARIANT_64, Aarch64.fpuRegisters[0], Aarch64.cpuRegisters[0]);
+        asm.fmovCpu2Fpu(VARIANT_64, Aarch64.fpuRegisters[1], Aarch64.cpuRegisters[1]);
+        asm.fmovFpu2Cpu(VARIANT_64, Aarch64.cpuRegisters[2], Aarch64.fpuRegisters[0]);
+        asm.fmovFpu2Cpu(VARIANT_64, Aarch64.cpuRegisters[3], Aarch64.fpuRegisters[1]);
+
+        expectedValues[2] = 10;
+        testValues[2] = true;
+        expectedValues[3] = 11;
+        testValues[3] = true;
+
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
 //    /**
 //     *  test: fadd, fsub, fmul, fdiv, scvtf, fcvtzs
 //     */
