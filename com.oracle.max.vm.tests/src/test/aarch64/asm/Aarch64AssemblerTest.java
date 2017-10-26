@@ -307,7 +307,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         initialiseExpectedValues();
         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
         resetIgnoreValues();
-        asm.codeBuffer.reset();
+        masm.codeBuffer.reset();
 
         masm.mov32BitConstant(Aarch64.r0, 1);
         masm.mov32BitConstant(Aarch64.r1, 1);
