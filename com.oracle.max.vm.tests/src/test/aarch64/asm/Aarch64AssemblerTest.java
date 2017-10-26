@@ -531,24 +531,24 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-//    /******* Arithmetic (extended register) (5.5.2) *******/
-//
-//
-//    public void test_add_ext_reg() throws Exception {
-//        initialiseExpectedValues();
-//        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//        resetIgnoreValues();
-//        asm.codeBuffer.reset();
-//        asm.movImmediate(Aarch64.cpuRegisters[0], 1);
-//        asm.movn(VARIANT_64, Aarch64.cpuRegisters[10], 0x0, 0);
-//
-//        for (int i = 0; i < 1; i++) {
-//            asm.add(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[10], ExtendType.UXTB, 3);
-//            expectedValues[i] = 1 + 0b11111111000l;
-//            testValues[i] = true;
-//        }
-//        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//    }
+    /******* Arithmetic (extended register) (5.5.2). *******/
+
+    public void work_add_ext_reg() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        asm.codeBuffer.reset();
+        asm.movImmediate(Aarch64.cpuRegisters[0], 1);
+        asm.movn(VARIANT_64, Aarch64.cpuRegisters[10], 0x0, 0);
+
+        for (int i = 0; i < 1; i++) {
+            asm.add(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[10], Aarch64Assembler.ExtendType.UXTB, 3);
+            expectedValues[i] = 1 + 0b11111111000L;
+            testValues[i] = true;
+        }
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
 //
 //
 //    public void test_sub_ext_reg() throws Exception {
