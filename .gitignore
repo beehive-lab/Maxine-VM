@@ -45,6 +45,9 @@ mx/
 *.failed
 *.passed
 *.command
+*.o
+*.bin
+*.elf
 
 # Debugging related
 codebuffer.c
@@ -54,3 +57,5 @@ codebuffer.c
 # Libraries
 lib/checkstyle-6.11.2-all.jar
 
+.metadata/*
+.recommenders/*
