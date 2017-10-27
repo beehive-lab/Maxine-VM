@@ -344,7 +344,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void todo_add_imm() throws Exception {
+    public void work_add_imm() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
         resetIgnoreValues();
@@ -352,7 +352,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         // ADD Xi, Xi, valueof(Xi) ; Xi's value should double
         for (int i = 0; i < 10; i++) {
             // expected values must not be larger than an integer in order to be converted to an int correctly
-            assert (expectedValues[i] < Integer.MAX_VALUE);
+            assert expectedValues[i] < Integer.MAX_VALUE;
             asm.movImmediate(Aarch64.cpuRegisters[i], (int) expectedValues[i]);
             asm.add(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], (int) expectedValues[i]);
             expectedValues[i] += expectedValues[i];
