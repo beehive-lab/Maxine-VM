@@ -601,9 +601,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    /* Bit Operations (5.5.5). */
-    //not working... check cls
-    public void todo_cls() throws Exception {
+    /* Bit Operations (5.5.5) */
+    public void work_cls() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
         resetIgnoreValues();
