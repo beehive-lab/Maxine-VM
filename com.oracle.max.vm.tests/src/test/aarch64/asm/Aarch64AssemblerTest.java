@@ -25,7 +25,6 @@ import com.sun.cri.ci.*;
 import com.sun.max.ide.*;
 
 import test.aarch64.asm.MaxineAarch64Tester.BitsFlag;
-import test.armv7.asm.ARMCodeWriter;
 
 public class Aarch64AssemblerTest extends MaxTestCase {
 
