@@ -393,38 +393,6 @@ public class MaxineAarch64Tester {
         tester.run();
     }
 
-    /**
-     * The following function reads the output registers from the qemu_error file instead of the gdb_output file. This
-     * is due to recent updates to qemu where it hangs while reading an undefined instruction.
-     * <p>
-     * Our gdb script (gdb_input) steps through the code from the code_buffer.c and then tries to print the output
-     * registers. At that point of execuction (i.e. after stepi 1500), gdb is at a bogus PC. Depending on the version of
-     * Qemu, the following can take place: before (v2.2): it hard crashes while printing the registers to the qemu_error
-     * file. after (v2.2): it raises a SIGILL and tries to invoke an exception handler which hangs the emulation; since
-     * we try to print the registers after we do "stepi 1500", the command is never executed and therefore we can not
-     * retrieve them.
-     * <p>
-     * We opted for v2.1.0-rc1 which exits qemu with a fatal error but manages to dump the registers to the error file.
-     * The way the registers are printed, is different from the "info registers" command and therefore a different
-     * parsing method is needed.
-     */
-    private long[] parseRegistersFromErrorFile(String file) throws Exception {
-        BufferedReader reader         = new BufferedReader(new FileReader(file));
-        String         line           = null;
-        long[]         expectedValues = new long[NUM_REGS];
-        while ((line = reader.readLine()) != null) {
-            for (String reg : regs) {
-                if (line.contains(reg)) {
-                    int regVal = new Integer(line.substring(line.indexOf(reg) + 1, line.indexOf(reg) + 3)).intValue();
-                    long value = new BigInteger(line.substring(line.indexOf(reg) + 4, line.indexOf(reg) + 20), 16).longValue();
-                    expectedValues[regVal] = value;
-                }
-            }
-        }
-        reader.close();
-        return expectedValues;
-    }
-
     public void run() throws Exception {
         assembleStartup();
         assembleEntry();
