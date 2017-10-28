@@ -310,7 +310,7 @@ public class MaxineAarch64Tester {
             cleanProcesses();
             System.exit(-1);
         }
-        long[] simulatedRegisters = parseRegistersFromErrorFile(qemuErrors.getName());
+        long[] simulatedRegisters = parseRegistersToFile(gdbOutput.getName());
         if (!validateRegisters(simulatedRegisters, expectRegs, testRegs)) {
             cleanProcesses();
             assert false : "Error while validating registers";
@@ -354,7 +354,7 @@ public class MaxineAarch64Tester {
         int            i              = 0;
         long[]         expectedValues = new long[NUM_REGS];
         while ((line = reader.readLine()) != null) {
-            if (line.contains(" x0") && !line.contains("ADR")) {
+            if (line.startsWith("x0 ")) {
                 enabled = true;
                 line = line.substring(6, line.length());
             }
