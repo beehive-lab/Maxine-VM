@@ -16,5 +16,3 @@ stepi 1500
 # print the registers
 info registers
 quit
-
-
