@@ -61,7 +61,7 @@ public class MaxineAarch64Tester {
     private static final File qemuErrors    = new File("qemu_errors");
     private static final File bindOutput    = new File("bind_output");
     private static final File gdbOutput     = new File("gdb_output");
-    private static final File gdbInput      = new File("gdb_input");
+    private static final String gdbInput    = "gdb_input";
     private static final File gdbErrors     = new File("gdb_errors");
     private static final File objCopyOutput = new File("obj_copy_output");
     private static final File objCopyErrors = new File("obj_copy_errors");
@@ -235,8 +235,7 @@ public class MaxineAarch64Tester {
     }
 
     public long[] runRegisteredSimulation() throws Exception {
-        ProcessBuilder gdbProcess = new ProcessBuilder("aarch64-none-elf-gdb");
-        gdbProcess.redirectInput(gdbInput);
+        ProcessBuilder gdbProcess = new ProcessBuilder("aarch64-none-elf-gdb", "-q", "-x", gdbInput);
         gdbProcess.redirectOutput(gdbOutput);
         gdbProcess.redirectError(gdbErrors);
         ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-aarch64", "-cpu", "cortex-a57", "-M", "virt", "-m",
@@ -276,8 +275,7 @@ public class MaxineAarch64Tester {
     public void runSimulation() throws Exception {
         // qemu-system-aarch64 -cpu cortex-a57 -M virt -m 128M -nographic -s -S -kernel test_aarch64.bin
         cleanFiles();
-        ProcessBuilder gdbProcess = new ProcessBuilder("aarch64-none-elf-gdb");
-        gdbProcess.redirectInput(gdbInput);
+        ProcessBuilder gdbProcess = new ProcessBuilder("aarch64-none-elf-gdb", "-q", "-x", gdbInput);
         gdbProcess.redirectOutput(gdbOutput);
         gdbProcess.redirectError(gdbErrors);
         System.out.println(gdbProcess.command().toString());
