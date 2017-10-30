@@ -1287,6 +1287,18 @@ public class TypeCheckingMethodVerifier extends MethodVerifier {
         }
 
         @Override
+        public void invokedynamic(int index) {
+            final InvokeDynamicConstant invokeDynamicConstant = constantPool().invokeDynamicAt(index);
+            final NameAndTypeConstant nameAndTypeConstant = constantPool().nameAndTypeAt(invokeDynamicConstant.nameAndTypeIndex);
+            if (nameAndTypeConstant.name().toString().startsWith("<")) {
+                verifyError("Invalid INVOKEDYNAMIC on initialization method");
+            }
+            final SignatureDescriptor methodSignature = nameAndTypeConstant.signature();
+            popMethodParameters(methodSignature);
+            pushMethodResult(methodSignature);
+        }
+
+        @Override
         public void jnicall(int nativeFunctionDescriptorIndex) {
             final SignatureDescriptor nativeFunctionDescriptor = SignatureDescriptor.create(constantPool().utf8At(nativeFunctionDescriptorIndex, "native function descriptor"));
             frame.pop(VerificationType.WORD); // the native function address

@@ -1211,6 +1211,11 @@ public class BytecodePrinter extends BytecodeVisitor {
     }
 
     @Override
+    public void invokedynamic(int index) {
+        printInstructionWithConstant(index);
+    }
+
+    @Override
     public void new_(int index) {
         printInstructionWithConstant(index);
     }

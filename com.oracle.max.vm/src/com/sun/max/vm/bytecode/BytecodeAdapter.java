@@ -780,6 +780,10 @@ public class BytecodeAdapter extends BytecodeVisitor {
     }
 
     @Override
+    protected void invokedynamic(int index) {
+    }
+
+    @Override
     protected void new_(int index) {
     }
 

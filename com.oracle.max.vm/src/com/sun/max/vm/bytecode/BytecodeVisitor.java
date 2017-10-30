@@ -284,6 +284,7 @@ public abstract class BytecodeVisitor {
     protected abstract void invokespecial(int index);
     protected abstract void invokestatic(int index);
     protected abstract void invokeinterface(int index, int count);
+    protected abstract void invokedynamic(int index);
     protected abstract void new_(int index);
     protected abstract void newarray(int tag);
     protected abstract void anewarray(int index);

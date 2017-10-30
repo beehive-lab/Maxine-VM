@@ -1066,6 +1066,19 @@ public final class BytecodeScanner {
                 bytecodeVisitor.invokeinterface(index, count);
                 break;
             }
+            case INVOKEDYNAMIC: {
+                final int index = readUnsigned2();
+                byte zero = readByte();
+                if (zero != 0) {
+                    throw verifyError("Third operand byte of invokedynamic must be zero");
+                }
+                zero = readByte();
+                if (zero != 0) {
+                    throw verifyError("Fourth operand byte of invokedynamic must be zero");
+                }
+                bytecodeVisitor.invokedynamic(index);
+                break;
+            }
             case NEW: {
                 final int index = readUnsigned2();
                 bytecodeVisitor.new_(index);
