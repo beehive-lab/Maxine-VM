@@ -44,7 +44,7 @@ import test.aarch64.asm.*;
 
 /**
  * These JUnit tests are for testing protected members of Aarch64T1XCompilation which
- * are not visible from the test.arm.t1x test package suite.
+ * are not visible from the test.armv7.t1x test package suite.
  *
  */
 

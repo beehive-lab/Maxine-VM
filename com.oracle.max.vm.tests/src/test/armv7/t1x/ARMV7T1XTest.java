@@ -17,7 +17,7 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package test.arm.t1x;
+package test.armv7.t1x;
 
 import static com.sun.max.vm.MaxineVM.*;
 
@@ -1186,7 +1186,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         MaxineByteCode xx = new MaxineByteCode();
         ByteCodeTests testClass = new ByteCodeTests();
         expectedValues[0] = testClass.run();
-        byte[] code = xx.getByteArray("run", "test.arm.t1x.ByteCodeTests");
+        byte[] code = xx.getByteArray("run", "test.armv7.t1x.ByteCodeTests");
         initialiseFrameForCompilation(code, "(II)I");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
