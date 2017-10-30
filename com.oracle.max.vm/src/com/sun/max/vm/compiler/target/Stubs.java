@@ -530,8 +530,13 @@ public class Stubs {
 
             String stubName = "invokeBasic";
             return new Stub(InvokeBasic, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
+        } else if (platform().isa == ISA.ARM) {
+            return null;
+        } else if (platform().isa == ISA.Aarch64) {
+            return null;
+        } else {
+            throw FatalError.unimplemented();
         }
-        throw FatalError.unimplemented();
     }
 
     private Stub genDynamicTrampoline(int index, boolean isInterface, String stubName) {
@@ -2310,6 +2315,10 @@ public class Stubs {
             String stubName = name + "Stub";
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UncommonTrapStub, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
+        } else if (platform().isa == ISA.Aarch64) {
+            String name = "uncommonTrap";
+            final CriticalMethod uncommonTrap = new CriticalMethod(Deoptimization.class, name, null, CallEntryPoint.OPTIMIZED_ENTRY_POINT);
+            return new Stub(UncommonTrapStub, "", 0, new byte[] {}, 0, 0, uncommonTrap.classMethodActor, 0);
         } else {
             throw FatalError.unimplemented();
         }
