@@ -63,8 +63,6 @@ public class MaxineAarch64Tester {
     private static final File gdbOutput     = new File("gdb_output");
     private static final String gdbInput    = "gdb_input";
     private static final File gdbErrors     = new File("gdb_errors");
-    private static final File objCopyOutput = new File("obj_copy_output");
-    private static final File objCopyErrors = new File("obj_copy_errors");
     private static final File gccOutput     = new File("gcc_output");
     private static final File gccErrors     = new File("gcc_errors");
     private static final File asOutput      = new File("as_output");
@@ -72,7 +70,6 @@ public class MaxineAarch64Tester {
     private static final File linkOutput    = new File("link_output");
     private static final File linkErrors    = new File("link_errors");
 
-    private Process objectCopy;
     private Process gcc;
     private Process assembler;
     private Process assemblerEntry;
@@ -89,8 +86,7 @@ public class MaxineAarch64Tester {
      * aarch64-none-elf-as -march=armv8-a -g startup_aarch64.s -o startup_aarch64.o
      * aarch64-none-elf-as -march=armv8-a -g asm_entry_aarch64.s -o asm_entry_aarch64.o
      * aarch64-none-elf-ld -T test_aarch64.ld test_aarch64.o startup_aarch64.o asm_entry_aarch64.o -o test.elf
-     * aarch64-none-elf-objcopy -O binary test.elf test_aarch64.bin
-     * qemu-system-aarch64 -cpu cortex-a57 -M versatilepb -m 128M -nographic -s -S -kernel test_aarch64.bin
+     * qemu-system-aarch64 -cpu cortex-a57 -M versatilepb -m 128M -nographic -s -S -kernel test.elf
      */
     public MaxineAarch64Tester(String[] args) {
         initializeQemu();
@@ -125,8 +121,6 @@ public class MaxineAarch64Tester {
         deleteFile(bindOutput);
         deleteFile(gdbOutput);
         deleteFile(gdbErrors);
-        deleteFile(objCopyOutput);
-        deleteFile(objCopyErrors);
         deleteFile(gccOutput);
         deleteFile(gccErrors);
         deleteFile(asOutput);
@@ -141,24 +135,9 @@ public class MaxineAarch64Tester {
         }
     }
 
-    public void objcopy() {
-        // aarch64-none-elf-objcopy -O binary test.elf test_aarch64.bin
-        final ProcessBuilder objcopy = new ProcessBuilder("aarch64-none-elf-objcopy", "-O", "binary",
-                "test.elf", "test_aarch64.bin");
-        objcopy.redirectOutput(objCopyOutput);
-        objcopy.redirectError(objCopyErrors);
-        try {
-            objectCopy = objcopy.start();
-            objectCopy.waitFor();
-        } catch (Exception e) {
-            System.err.println(e);
-            e.printStackTrace();
-        }
-    }
-
     public void compile() {
         // aarch64-none-elf-gcc -c -march=armv8-a+simd -mgeneral-regs-only -g test_aarch64.c -o test_aarch64.o
-        final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test_aarch64.bin", "test.elf");
+        final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.elf");
         final ProcessBuilder compile = new ProcessBuilder("aarch64-none-elf-gcc", "-c", "-march=armv8-a+simd",
                 "-mgeneral-regs-only", "-g", "test_aarch64.c", "-o", "test_aarch64.o");
         compile.redirectOutput(gccOutput);
@@ -219,7 +198,6 @@ public class MaxineAarch64Tester {
     }
 
     public void cleanProcesses() {
-        terminateProcess(objectCopy);
         terminateProcess(gcc);
         terminateProcess(assembler);
         terminateProcess(assemblerEntry);
@@ -239,7 +217,7 @@ public class MaxineAarch64Tester {
         gdbProcess.redirectOutput(gdbOutput);
         gdbProcess.redirectError(gdbErrors);
         ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-aarch64", "-cpu", "cortex-a57", "-M", "virt", "-m",
-                "128M", "-nographic", "-s", "-S", "-kernel", "test_aarch64.bin");
+                "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
         qemuProcess.redirectOutput(qemuOutput);
         qemuProcess.redirectError(qemuErrors);
         try {
@@ -273,14 +251,14 @@ public class MaxineAarch64Tester {
     }
 
     public void runSimulation() throws Exception {
-        // qemu-system-aarch64 -cpu cortex-a57 -M virt -m 128M -nographic -s -S -kernel test_aarch64.bin
+        // qemu-system-aarch64 -cpu cortex-a57 -M virt -m 128M -nographic -s -S -kernel test.elf
         cleanFiles();
         ProcessBuilder gdbProcess = new ProcessBuilder("aarch64-none-elf-gdb", "-q", "-x", gdbInput);
         gdbProcess.redirectOutput(gdbOutput);
         gdbProcess.redirectError(gdbErrors);
         System.out.println(gdbProcess.command().toString());
         ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-aarch64", "-cpu", "cortex-a57", "-M", "virt", "-m",
-                "128M", "-nographic", "-s", "-S", "-kernel", "test_aarch64.bin");
+                "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
         qemuProcess.redirectOutput(qemuOutput);
         qemuProcess.redirectError(qemuErrors);
         try {
@@ -398,7 +376,6 @@ public class MaxineAarch64Tester {
         assembleEntry();
         compile();
         link();
-        objcopy();
         runSimulation();
     }
 

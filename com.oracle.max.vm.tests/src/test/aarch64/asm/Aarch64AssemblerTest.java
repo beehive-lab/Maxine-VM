@@ -124,7 +124,6 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         r.assembleStartup();
         r.compile();
         r.link();
-        r.objcopy();
         r.runSimulation();
         r.reset();
     }
