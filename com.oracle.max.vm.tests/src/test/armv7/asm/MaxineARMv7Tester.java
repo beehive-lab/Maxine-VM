@@ -53,8 +53,8 @@ public class MaxineARMv7Tester {
     private static final File qemuErrors = new File("qemu_errors");
     private static final File bindOutput = new File("bind_output");
     private static final File gdbOutput = new File("gdb_output");
-    private static final File gdbInput = new File("gdb_input");
-    private static final File gdbInputFPREGS = new File("gdb_input_fpregs");
+    private static final String gdbInput = "gdb_input";
+    private static final String gdbInputFPREGS = "gdb_input_fpregs";
     private static final File gdbErrors = new File("gdb_errors");
     private static final File gccOutput = new File("gcc_output");
     private static final File gccErrors = new File("gcc_errors");
@@ -196,12 +196,7 @@ public class MaxineARMv7Tester {
     }
 
     private void runSimulation(boolean captureFPREGs) throws Exception {
-        ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb");
-        if (captureFPREGs) {
-            gdbProcess.redirectInput(gdbInputFPREGS);
-        } else {
-            gdbProcess.redirectInput(gdbInput);
-        }
+        ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb", "-q", "-x", captureFPREGs ? gdbInputFPREGS : gdbInput);
         gdbProcess.redirectOutput(gdbOutput);
         gdbProcess.redirectError(gdbErrors);
         ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
@@ -241,8 +236,7 @@ public class MaxineARMv7Tester {
     }
 
     public int[] runRegisteredSimulation() throws Exception {
-        ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb");
-        gdbProcess.redirectInput(gdbInput);
+        ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb", "-q", "-x", gdbInput);
         gdbProcess.redirectOutput(gdbOutput);
         gdbProcess.redirectError(gdbErrors);
         ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
@@ -279,8 +273,7 @@ public class MaxineARMv7Tester {
 
     public void runSimulation() throws Exception {
         cleanFiles();
-        ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb");
-        gdbProcess.redirectInput(gdbInput);
+        ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb", "-q", "-x", gdbInput);
         gdbProcess.redirectOutput(gdbOutput);
         gdbProcess.redirectError(gdbErrors);
         ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
@@ -320,8 +313,7 @@ public class MaxineARMv7Tester {
     }
     public int [] runSimulationRegisters() throws Exception {
         cleanFiles();
-        ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb");
-        gdbProcess.redirectInput(gdbInput);
+        ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb", "-q", "-x", gdbInput);
         gdbProcess.redirectOutput(gdbOutput);
         gdbProcess.redirectError(gdbErrors);
         ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
