@@ -24,6 +24,7 @@ import java.lang.invoke.*;
 import java.util.*;
 
 import com.sun.max.annotate.*;
+import com.sun.max.vm.*;
 
 @METHOD_SUBSTITUTIONS(className = "java.lang.invoke.InvokerBytecodeGenerator")
 public final class JDK_java_lang_invoke_InvokerBytecodeGenerator {
@@ -46,6 +47,13 @@ public final class JDK_java_lang_invoke_InvokerBytecodeGenerator {
     private        MethodType invokerType;
     @ALIAS(declaringClassName = "java.lang.invoke.InvokerBytecodeGenerator")
     private        int[]      localsMap;
+    @ALIAS(declaringClassName = "java.lang.invoke.InvokerBytecodeGenerator", optional = true) // Not available in JDK 7
+    private static String     LF;
+    @ALIAS(declaringClassName = "java.lang.invoke.InvokerBytecodeGenerator",
+            descriptor = "[Ljava/lang/invoke/LambdaForm$BasicType;", optional = true) // Not available in JDK 7
+    private        Object[]   localTypes; // basic type
+    @ALIAS(declaringClassName = "java.lang.invoke.InvokerBytecodeGenerator", optional = true) // Not available in JDK 7
+    private        Class<?>[] localClasses; // type
 
     /**
      * Customized copy of {@code java.lang.invoke.InvokerBytecodeGenerator.makeDumpableClassName}.
@@ -86,13 +94,25 @@ public final class JDK_java_lang_invoke_InvokerBytecodeGenerator {
             invokerName = invokerName.substring(p + 1);
         }
         className = getUniqueClassName(className);
-        this.className = superName + "$" + className;
+        if (JDK.JDK_VERSION <= JDK.JDK_7) {
+            this.className = superName + "$" + className;
+        } else {
+            this.className = LF + "$" + className;
+        }
         this.sourceFile = "LambdaForm$" + className;
         this.lambdaForm = lambdaForm;
         this.invokerName = invokerName;
         this.invokerType = invokerType;
-        this.localsMap = new int[localsMapSize];
+        if (JDK.JDK_VERSION == JDK.JDK_7) {
+            this.localsMap = new int[localsMapSize];
+        } else {
+            this.localsMap = new int[localsMapSize + 1];
+            // last entry of localsMap is count of allocated local slots
+            this.localTypes = new Object[localsMapSize + 1];
+            this.localClasses = new Class<?>[localsMapSize + 1];
+        }
 
+        // TODO: re-examine
         // When substituting a constructor the non-static initializers of the original class are no longer invoked, thus
         // we need to initialize cpPatches explicitly here
         cpPatches = new HashMap<>();
