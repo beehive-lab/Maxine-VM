@@ -162,10 +162,12 @@ public class ARMV7T1XTest extends MaxTestCase {
                 JavaPrototype.initialize(false);
                 initialized = true;
             }
+
             // Checkstyle: start
             t1x = (T1X) CompilationBroker.addCompiler("t1x", baselineCompilerName);
             c1x = (C1X) CompilationBroker.addCompiler("c1x", optimizingCompilerName);
             c1x.initialize(Phase.HOSTED_TESTING);
+            t1x.initialize(Phase.HOSTED_TESTING);
             theCompiler = (ARMV7T1XCompilationTest) t1x.getT1XCompilation();
         } catch (Exception e) {
             System.out.println(e);
@@ -331,7 +333,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void work_PokeLong() throws Exception {
+    public void test_PokeLong() throws Exception {
         long returnValue = 0;
         long[] expectedLongValues = new long[10];
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
@@ -1182,7 +1184,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void test_ByteCodeLoad() throws Exception {
+    public void ignore_ByteCodeLoad() throws Exception {
         MaxineByteCode xx = new MaxineByteCode();
         ByteCodeTests testClass = new ByteCodeTests();
         expectedValues[0] = testClass.run();
