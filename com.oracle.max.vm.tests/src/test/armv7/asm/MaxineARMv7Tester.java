@@ -65,7 +65,6 @@ public class MaxineARMv7Tester {
 
     private Process gcc;
     private Process assembler;
-    private Process assemblerEntry;
     private Process linker;
     private Process qemu;
     private Process gdb;
@@ -79,8 +78,7 @@ public class MaxineARMv7Tester {
     /*
      * arm-unknown-eabi-gcc -c -march=armv7-a -g test_armv7.c -o test_armv7.o
      * arm-unknown-eabi-as -mcpu=cortex-a9 -g startup_armv7.s -o startup_armv7.o
-     * arm-unknown-eabi-as -mcpu=cortex-a9 -g asm_entry_armv7.s -o asm_entry_armv7.o
-     * arm-unknown-eabi-ld -T test_armv7.ld test_armv7.o startup_armv7.o asm_entry_armv7.o -o test.elf
+     * arm-unknown-eabi-ld -T test_armv7.ld test_armv7.o startup_armv7.o -o test.elf
      * qemu-system-arm -cpu cortex-a9 -M versatilepb -m 128M -nographic -s -S -kernel test.elf
      */
 
@@ -154,21 +152,8 @@ public class MaxineARMv7Tester {
         }
     }
 
-    public void assembleEntry() {
-        final ProcessBuilder assemble = new ProcessBuilder("arm-none-eabi-as", "-mcpu=cortex-a15", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-g", "asm_entry_armv7.s", "-o", "asm_entry_armv7.o");
-        assemble.redirectOutput(asOutput);
-        assemble.redirectError(asErrors);
-        try {
-            assemblerEntry = assemble.start();
-            assemblerEntry.waitFor();
-        } catch (Exception e) {
-            System.err.println(e);
-            e.printStackTrace();
-        }
-    }
-
     public void link() {
-        final ProcessBuilder link = new ProcessBuilder("arm-none-eabi-ld", "-T", "test_armv7.ld", "test_armv7.o", "startup_armv7.o", "asm_entry_armv7.o", "-o", "test.elf");
+        final ProcessBuilder link = new ProcessBuilder("arm-none-eabi-ld", "-T", "test_armv7.ld", "test_armv7.o", "startup_armv7.o", "-o", "test.elf");
         link.redirectOutput(linkOutput);
         link.redirectError(linkErrors);
         try {
@@ -183,7 +168,6 @@ public class MaxineARMv7Tester {
     public void cleanProcesses() {
         terminateProcess(gcc);
         terminateProcess(assembler);
-        terminateProcess(assemblerEntry);
         terminateProcess(linker);
         terminateProcess(gdb);
         terminateProcess(qemu);
@@ -565,7 +549,6 @@ public class MaxineARMv7Tester {
 
     public void run() throws Exception {
         assembleStartup();
-        assembleEntry();
         compile();
         link();
         runSimulation();

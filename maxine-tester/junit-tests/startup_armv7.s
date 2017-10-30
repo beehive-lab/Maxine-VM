@@ -4,7 +4,6 @@ _Reset:
  BL Setup_Undef_Stack
  BL VFP_enable
  BL c_entry	
- B asm_entry
  B .
 
 .EQU Mode_UNDEF, 0x1B

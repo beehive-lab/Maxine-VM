@@ -72,7 +72,6 @@ public class MaxineAarch64Tester {
 
     private Process gcc;
     private Process assembler;
-    private Process assemblerEntry;
     private Process linker;
     private Process qemu;
     private Process gdb;
@@ -84,8 +83,7 @@ public class MaxineAarch64Tester {
     /*
      * arm-unknown-eabi-gcc -c -march=armv8-a -g test_aarch64.c -o test_aarch64.o
      * aarch64-none-elf-as -march=armv8-a -g startup_aarch64.s -o startup_aarch64.o
-     * aarch64-none-elf-as -march=armv8-a -g asm_entry_aarch64.s -o asm_entry_aarch64.o
-     * aarch64-none-elf-ld -T test_aarch64.ld test_aarch64.o startup_aarch64.o asm_entry_aarch64.o -o test.elf
+     * aarch64-none-elf-ld -T test_aarch64.ld test_aarch64.o startup_aarch64.o -o test.elf
      * qemu-system-aarch64 -cpu cortex-a57 -M versatilepb -m 128M -nographic -s -S -kernel test.elf
      */
     public MaxineAarch64Tester(String[] args) {
@@ -168,20 +166,6 @@ public class MaxineAarch64Tester {
         }
     }
 
-    public void assembleEntry() {
-        final ProcessBuilder assemble = new ProcessBuilder("aarch64-none-elf-as", "-march=armv8-a", "-g",
-                "asm_entry_aarch64.s", "-o", "asm_entry_aarch64.o");
-        assemble.redirectOutput(asOutput);
-        assemble.redirectError(asErrors);
-        try {
-            assemblerEntry = assemble.start();
-            assemblerEntry.waitFor();
-        } catch (Exception e) {
-            System.err.println(e);
-            e.printStackTrace();
-        }
-    }
-
     public void link() {
         // aarch64-none-elf-ld -T test_aarch64.ld test_aarch64.o startup_aarch64.o -o test.elf
         final ProcessBuilder link = new ProcessBuilder("aarch64-none-elf-ld", "-T", "test_aarch64.ld", "test_aarch64.o",
@@ -200,7 +184,6 @@ public class MaxineAarch64Tester {
     public void cleanProcesses() {
         terminateProcess(gcc);
         terminateProcess(assembler);
-        terminateProcess(assemblerEntry);
         terminateProcess(linker);
         terminateProcess(gdb);
         terminateProcess(qemu);
@@ -373,7 +356,6 @@ public class MaxineAarch64Tester {
 
     public void run() throws Exception {
         assembleStartup();
-        assembleEntry();
         compile();
         link();
         runSimulation();

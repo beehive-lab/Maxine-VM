@@ -115,7 +115,6 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             return;
         }
         r.assembleStartup();
-        r.assembleEntry();
         r.compile();
         r.link();
         r.runSimulation();
@@ -132,7 +131,6 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             return null;
         }
         r.assembleStartup();
-        r.assembleEntry();
         r.compile();
         r.link();
         retArr = r.runSimulationRegisters();
@@ -149,7 +147,6 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             return;
         }
         r.assembleStartup();
-        r.assembleEntry();
         r.compile();
         r.link();
         r.runSimulation();
