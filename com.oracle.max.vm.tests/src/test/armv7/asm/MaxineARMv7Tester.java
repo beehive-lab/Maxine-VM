@@ -56,8 +56,6 @@ public class MaxineARMv7Tester {
     private static final File gdbInput = new File("gdb_input");
     private static final File gdbInputFPREGS = new File("gdb_input_fpregs");
     private static final File gdbErrors = new File("gdb_errors");
-    private static final File objCopyOutput = new File("obj_copy_output");
-    private static final File objCopyErrors = new File("obj_copy_errors");
     private static final File gccOutput = new File("gcc_output");
     private static final File gccErrors = new File("gcc_errors");
     private static final File asOutput = new File("as_output");
@@ -65,7 +63,6 @@ public class MaxineARMv7Tester {
     private static final File linkOutput = new File("link_output");
     private static final File linkErrors = new File("link_errors");
 
-    private Process objectCopy;
     private Process gcc;
     private Process assembler;
     private Process assemblerEntry;
@@ -84,8 +81,7 @@ public class MaxineARMv7Tester {
      * arm-unknown-eabi-as -mcpu=cortex-a9 -g startup_armv7.s -o startup_armv7.o
      * arm-unknown-eabi-as -mcpu=cortex-a9 -g asm_entry_armv7.s -o asm_entry_armv7.o
      * arm-unknown-eabi-ld -T test_armv7.ld test_armv7.o startup_armv7.o asm_entry_armv7.o -o test.elf
-     * arm-unknown-eabi-objcopy -O binary test.elf test_armv7.bin
-     * qemu-system-arm -cpu cortex-a9 -M versatilepb -m 128M -nographic -s -S -kernel test_armv7.bin
+     * qemu-system-arm -cpu cortex-a9 -M versatilepb -m 128M -nographic -s -S -kernel test.elf
      */
 
     public void reset() {
@@ -101,8 +97,6 @@ public class MaxineARMv7Tester {
         deleteFile(bindOutput);
         deleteFile(gdbOutput);
         deleteFile(gdbErrors);
-        deleteFile(objCopyOutput);
-        deleteFile(objCopyErrors);
         deleteFile(gccOutput);
         deleteFile(gccErrors);
         deleteFile(asOutput);
@@ -117,21 +111,8 @@ public class MaxineARMv7Tester {
         }
     }
 
-    public void objcopy() {
-        final ProcessBuilder objcopy = new ProcessBuilder("arm-none-eabi-objcopy", "-O", "binary", "test.elf", "test_armv7.bin");
-        objcopy.redirectOutput(objCopyOutput);
-        objcopy.redirectError(objCopyErrors);
-        try {
-            objectCopy = objcopy.start();
-            objectCopy.waitFor();
-        } catch (Exception e) {
-            System.err.println(e);
-            e.printStackTrace();
-        }
-    }
-
     public void newCompile() {
-        final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test_armv7.bin", "test.elf");
+        final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.elf");
         final ProcessBuilder compile = new ProcessBuilder("arm-none-eabi-gcc", "-c", "-march=armv7-a", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-g", "test_armv7.c", "-o", "test_armv7.o");
         compile.redirectOutput(gccOutput);
         compile.redirectError(gccErrors);
@@ -146,7 +127,7 @@ public class MaxineARMv7Tester {
     }
 
     public void compile() {
-        final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test_armv7.bin", "test.elf");
+        final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.elf");
         final ProcessBuilder compile = new ProcessBuilder("arm-none-eabi-gcc", "-c", "-DSTATIC", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-march=armv7-a", "-g", "test_armv7.c", "-o", "test_armv7.o");
         compile.redirectOutput(gccOutput);
         compile.redirectError(gccErrors);
@@ -200,7 +181,6 @@ public class MaxineARMv7Tester {
     }
 
     public void cleanProcesses() {
-        terminateProcess(objectCopy);
         terminateProcess(gcc);
         terminateProcess(assembler);
         terminateProcess(assemblerEntry);
@@ -224,7 +204,7 @@ public class MaxineARMv7Tester {
         }
         gdbProcess.redirectOutput(gdbOutput);
         gdbProcess.redirectError(gdbErrors);
-        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test_armv7.bin");
+        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
         qemuProcess.redirectOutput(qemuOutput);
         qemuProcess.redirectError(qemuErrors);
         try {
@@ -265,7 +245,7 @@ public class MaxineARMv7Tester {
         gdbProcess.redirectInput(gdbInput);
         gdbProcess.redirectOutput(gdbOutput);
         gdbProcess.redirectError(gdbErrors);
-        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test_armv7.bin");
+        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
         qemuProcess.redirectOutput(qemuOutput);
         qemuProcess.redirectError(qemuErrors);
         try {
@@ -303,7 +283,7 @@ public class MaxineARMv7Tester {
         gdbProcess.redirectInput(gdbInput);
         gdbProcess.redirectOutput(gdbOutput);
         gdbProcess.redirectError(gdbErrors);
-        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test_armv7.bin");
+        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
         qemuProcess.redirectOutput(qemuOutput);
         qemuProcess.redirectError(qemuErrors);
         try {
@@ -344,7 +324,7 @@ public class MaxineARMv7Tester {
         gdbProcess.redirectInput(gdbInput);
         gdbProcess.redirectOutput(gdbOutput);
         gdbProcess.redirectError(gdbErrors);
-        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test_armv7.bin");
+        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
         qemuProcess.redirectOutput(qemuOutput);
         qemuProcess.redirectError(qemuErrors);
         try {
@@ -596,7 +576,6 @@ public class MaxineARMv7Tester {
         assembleEntry();
         compile();
         link();
-        objcopy();
         runSimulation();
     }
 

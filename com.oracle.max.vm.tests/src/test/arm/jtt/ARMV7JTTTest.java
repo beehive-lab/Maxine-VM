@@ -191,7 +191,6 @@ public class ARMV7JTTTest extends MaxTestCase {
         r.assembleEntry();
         r.newCompile();
         r.link();
-        r.objcopy();
         Object[] simulatedRegisters = r.runObjectRegisteredSimulation();
         r.cleanProcesses();
         if (POST_CLEAN_FILES) {
@@ -210,7 +209,6 @@ public class ARMV7JTTTest extends MaxTestCase {
         r.assembleEntry();
         r.newCompile();
         r.link();
-        r.objcopy();
         int[] simulatedRegisters = r.runRegisteredSimulation();
         r.cleanProcesses();
         if (POST_CLEAN_FILES) {
@@ -229,7 +227,6 @@ public class ARMV7JTTTest extends MaxTestCase {
         r.assembleEntry();
         r.compile();
         r.link();
-        r.objcopy();
         int[] simulatedRegisters = r.runRegisteredSimulation();
         r.cleanProcesses();
         if (POST_CLEAN_FILES) {
@@ -248,7 +245,6 @@ public class ARMV7JTTTest extends MaxTestCase {
         r.assembleEntry();
         r.compile();
         r.link();
-        r.objcopy();
         int[] simulatedRegisters = r.runRegisteredSimulation();
         r.cleanProcesses();
         if (POST_CLEAN_FILES) {

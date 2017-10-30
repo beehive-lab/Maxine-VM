@@ -132,7 +132,6 @@ public class ARMV7T1XTest extends MaxTestCase {
         r.assembleEntry();
         r.compile();
         r.link();
-        r.objcopy();
         int[] simulatedRegisters = r.runRegisteredSimulation();
         r.cleanProcesses();
         if (POST_CLEAN_FILES) {
