@@ -267,7 +267,7 @@ public final class JDKInterceptor {
         JDK.java_net_InetSocketAddress,
             new FieldOffsetRecomputation("FIELDS_OFFSET", "holder").makeOptional(),
         JDK.java_nio_Bits,
-            "byteOrder",
+            "unaligned", // We just intercept it to avoid warning about unsafe accesses
         JDK.java_nio_DirectByteBuffer,
             new ArrayBaseOffsetRecomputation("arrayBaseOffset", byte[].class),
         JDK.java_nio_DirectCharBufferS,
