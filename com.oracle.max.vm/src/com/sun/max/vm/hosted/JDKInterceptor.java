@@ -403,7 +403,7 @@ public final class JDKInterceptor {
         // The following fields have been added in JDK 7 update 6
         JDK.java_util_Hashtable,
             new FieldOffsetRecomputation("HASHSEED_OFFSET", "hashSeed").makeOptional(),
-        JDK.java_util_HashMap_Holder,
+        JDK.java_util_HashMap$Holder,
             new FieldOffsetRecomputation("HASHSEED_OFFSET", JDK.java_util_HashMap, "hashSeed").makeOptional(),
         // Added in JDK 7 update 15
         JDK.java_math_BigInteger,
@@ -441,7 +441,7 @@ public final class JDKInterceptor {
             "NF_zero",
         JDK.java_lang_reflect_Executable,
             "declaredAnnotations",
-        JDK.java_math_BigInteger_UnsafeHolder,
+        JDK.java_math_BigInteger$UnsafeHolder,
             new FieldOffsetRecomputation("signumOffset", JDK.java_math_BigInteger, "signum"),
             new FieldOffsetRecomputation("magOffset", JDK.java_math_BigInteger, "mag"),
         JDK.java_util_concurrent_ConcurrentHashMap,

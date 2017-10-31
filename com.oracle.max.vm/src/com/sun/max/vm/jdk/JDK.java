@@ -151,10 +151,10 @@ public class JDK {
     public static final ClassRef java_util_Random                    = new ClassRef(java.util.Random.class);
     public static final ClassRef java_util_Hashtable                 = new ClassRef(java.util.Hashtable.class);
     public static final ClassRef java_util_HashMap                   = new ClassRef(java.util.HashMap.class);
-    public static final ClassRef java_util_HashMap_Holder            = new ClassRef("java.util.HashMap$Holder", true);
+    public static final ClassRef java_util_HashMap$Holder            = new ClassRef("java.util.HashMap$Holder", true);
 
     public static final ClassRef java_math_BigInteger                = new LazyClassRef(java.math.BigInteger.class);
-    public static final ClassRef java_math_BigInteger_UnsafeHolder   = new LazyClassRef(java.math.BigInteger.class, "UnsafeHolder");
+    public static final ClassRef java_math_BigInteger$UnsafeHolder   = new LazyClassRef(java.math.BigInteger.class, "UnsafeHolder");
 
     public static final ClassRef java_util_concurrent_ConcurrentSkipListSet = new LazyClassRef(java.util.concurrent.ConcurrentSkipListSet.class);
     public static final ClassRef java_util_concurrent_ConcurrentLinkedQueue= new LazyClassRef(java.util.concurrent.ConcurrentLinkedQueue.class);
