@@ -787,6 +787,14 @@ JVM_GetMethodParameterAnnotations(JNIEnv *env, jobject method) {
     return 0;
 }
 
+/* Annotations support (JDK 1.8) */
+
+// Type use annotations support (JDK 1.8) */
+jbyteArray
+JVM_GetClassTypeAnnotations(JNIEnv *env, jclass cls) {
+    UNIMPLEMENTED_WITH_ENV();
+    return 0;
+}
 
 /*
  * New (JDK 1.4) reflection implementation
