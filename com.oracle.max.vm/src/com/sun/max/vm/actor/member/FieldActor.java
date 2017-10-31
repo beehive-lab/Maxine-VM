@@ -538,6 +538,7 @@ public class FieldActor extends MemberActor implements RiResolvedField {
         if (isHosted()) {
             set(obj, value);
         } else {
+            assert type() != null : "A field's type cannot be unknown";
             if (value != null && !type().isInstance(value)) {
                 throw new IllegalArgumentException("Cannot set value of type " + value.getClass().getName() + " to " + this);
             }
