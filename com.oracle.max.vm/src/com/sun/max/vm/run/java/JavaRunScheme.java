@@ -225,7 +225,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
                         final ClassActor classActor = ClassActor.fromJava(Class.forName(className));
                         classActor.callInitializer();
                     } catch (Exception e) {
-                        FatalError.unexpected("Error re-initializing" + className, e);
+                        FatalError.unexpected("Error re-initializing " + className, e);
                     }
                 }
                 break;
