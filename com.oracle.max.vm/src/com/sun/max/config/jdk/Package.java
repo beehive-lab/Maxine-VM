@@ -200,7 +200,6 @@ public class Package extends BootImagePackage {
 
         // Packages and classes whose methods should not be compiled
         CompiledPrototype.addCompilationBlacklist("sun.security");
-        CompiledPrototype.addCompilationBlacklist("sun.util.locale");
         CompiledPrototype.addCompilationBlacklist("java.util.logging");
         CompiledPrototype.addCompilationBlacklist("sun.util.logging");
         CompiledPrototype.addCompilationBlacklist("sun.util.calendar");
