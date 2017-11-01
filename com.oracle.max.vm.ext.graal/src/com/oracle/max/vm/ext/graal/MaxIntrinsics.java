@@ -371,7 +371,7 @@ public class MaxIntrinsics {
     }
 
     /**
-     * Map all cri.UnsignedMath intrinsics to appropriate Graal instrinsic.
+     * Map all cri.UnsignedMath intrinsics to appropriate Graal intrinsic.
      */
     private static void mapUnsignedMathIntrinsics(MaxRuntime runtime, Replacements replacements, MaxTargetDescription target) {
         new GraalMethodSubstitutions().registerReplacements(runtime, replacements, target);

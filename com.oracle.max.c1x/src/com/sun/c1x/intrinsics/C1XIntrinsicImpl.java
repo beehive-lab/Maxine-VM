@@ -30,7 +30,7 @@ import com.sun.cri.ri.*;
 import com.sun.max.annotate.*;
 
 /**
- * Interface for intrinsic implementations targeting C1X. The intrinisc has access to the {@link GraphBuilder} so that
+ * Interface for intrinsic implementations targeting C1X. The intrinsic has access to the {@link GraphBuilder} so that
  * it can append new instructions to the instruction stream.
  */
 public interface C1XIntrinsicImpl extends IntrinsicImpl {
@@ -41,7 +41,7 @@ public interface C1XIntrinsicImpl extends IntrinsicImpl {
      * @param target The intrinsic method, i.e., the method that has the {@link INTRINSIC} annotation.
      * @param args The arguments of the intrinsic methods, to be used as the parameters of the intrinsic instruction.
      * @param isStatic True if it is a static method call for the intrinsic.
-     * @param stateBefore Frame state of the intrinisc call site.
+     * @param stateBefore Frame state of the intrinsic call site.
      * @return The instruction that should be pushed on the operand stack, or null if no result should be pushed.
      */
     Value createHIR(GraphBuilder b, RiMethod target, Value[] args, boolean isStatic, FrameState stateBefore);

@@ -107,7 +107,7 @@ public class MaxRuntime implements RiRuntime {
             }
         }
 
-        // The direct call made from C1X compiled code for the UNCOMMON_TRAP intrinisic
+        // The direct call made from C1X compiled code for the UNCOMMON_TRAP intrinsic
         // must go through a stub that saves the register state before calling the deopt routine.
         CriticalMethod uncommonTrap = new CriticalMethod(MaxRuntimeCalls.class, "uncommonTrap", null);
         uncommonTrap.classMethodActor.compiledState = new Compilations(null, vm().stubs.genUncommonTrapStub());
