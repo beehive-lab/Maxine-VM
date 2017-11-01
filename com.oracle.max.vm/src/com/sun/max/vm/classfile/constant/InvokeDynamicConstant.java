@@ -41,7 +41,7 @@ import com.sun.max.vm.methodhandle.*;
 public class InvokeDynamicConstant extends AbstractPoolConstant<InvokeDynamicConstant> implements PoolConstantKey<InvokeDynamicConstant> {
     final int bootstrapMethodAttrIndex;
     public final int nameAndTypeIndex;
-    CallSite appendix;
+    Object appendix;
 
     InvokeDynamicConstant(int bootstrapMethodAttrIndex, int nameAndTypeIndex, Tag[] tags) {
         this.bootstrapMethodAttrIndex = bootstrapMethodAttrIndex;
@@ -108,7 +108,7 @@ public class InvokeDynamicConstant extends AbstractPoolConstant<InvokeDynamicCon
         }
     }
 
-    public CallSite getAppendix() {
+    public Object getAppendix() {
         return appendix;
     }
 

@@ -38,7 +38,7 @@ import com.sun.max.vm.type.*;
 public interface BootstrapMethod {
 
     MemberNameAlias resolve(ConstantPool pool, int index, NameAndTypeConstant nameAndTypeConstant);
-    CallSite getAppendix();
+    Object getAppendix();
 
     class Unresolved implements BootstrapMethod {
         private final int   bootstrapMethodRef;
@@ -86,9 +86,10 @@ public interface BootstrapMethod {
             assert appendices[0] == null;
             final MemberNameAlias memberName =
                     asMemberName(linkCallSite(holder.javaClass(), bootstrapMethodHandle, name, methodType, arguments, appendices));
-            assert appendices[0] instanceof CallSite;
-            CallSite appendix = (CallSite) appendices[0];
-            assert appendix.type().equals(methodType);
+            Object appendix = appendices[0];
+            assert appendix instanceof CallSite || appendix instanceof MethodHandle;
+            MethodType type = (appendix instanceof CallSite) ? ((CallSite) appendix).type() : ((MethodHandle) appendix).type();
+            assert type.equals(methodType);
 
             // Update bootstrapMethods with the resolved bootstrapmethod
             holder.bootstrapMethods()[index] = new Resolved(memberName, appendix);
@@ -106,16 +107,16 @@ public interface BootstrapMethod {
         }
 
         @Override
-        public CallSite getAppendix() {
+        public Object getAppendix() {
             return null;
         }
     }
 
     class Resolved implements BootstrapMethod{
         private final MemberNameAlias memberName;
-        private final CallSite appendix;
+        private final Object appendix;
 
-        public Resolved(MemberNameAlias memberName, CallSite appendix) {
+        public Resolved(MemberNameAlias memberName, Object appendix) {
             this.memberName = memberName;
             this.appendix = appendix;
         }
@@ -126,7 +127,7 @@ public interface BootstrapMethod {
         }
 
         @Override
-        public CallSite getAppendix() {
+        public Object getAppendix() {
             return appendix;
         }
     }

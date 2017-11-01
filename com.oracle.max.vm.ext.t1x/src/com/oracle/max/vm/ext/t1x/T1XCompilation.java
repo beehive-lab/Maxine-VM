@@ -2261,7 +2261,7 @@ public abstract class T1XCompilation {
         Trace.begin(1, "T1XCompilation.do_invokedynamic");
         InvokeDynamicConstant invokeDynamicConstant = cp.invokeDynamicAt(index);
         StaticMethodActor methodActor = invokeDynamicConstant.resolve(cp, index);
-        CallSite appendix = invokeDynamicConstant.getAppendix();
+        Object appendix = invokeDynamicConstant.getAppendix();
         T1XTemplateTag tag = INVOKESTATIC$void;
 
         Trace.line(1, "methodActor =>" + methodActor);
