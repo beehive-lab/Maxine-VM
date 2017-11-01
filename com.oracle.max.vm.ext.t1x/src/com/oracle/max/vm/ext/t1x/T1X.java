@@ -574,7 +574,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         for (ClassActor classActor : ClassRegistry.allBootImageClasses()) {
             for (MethodActor methodActor : classActor.getLocalMethodActors()) {
                 if (T1X.templateIntriniscIDs.contains(methodActor.intrinsic()) && !result.contains(methodActor)) {
-                    System.out.printf("%nClass with intrinisc methods found that should be in templateIntrinsicClasses: class %s, method %s%n%n", classActor, methodActor);
+                    System.out.printf("%nClass with intrinsic methods found that should be in templateIntrinsicClasses: class %s, method %s%n%n", classActor, methodActor);
                     System.exit(1);
                 }
             }

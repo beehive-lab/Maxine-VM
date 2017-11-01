@@ -89,7 +89,7 @@ public class C1XIntrinsicImplementations {
         public Value createHIR(GraphBuilder b, RiMethod target, Value[] args, boolean isStatic, FrameState stateBefore) {
             assert args.length == 1;
             if (!args[0].isConstant() || args[0].kind != CiKind.Int) {
-                throw new CiBailout("instrinc parameter for barrier must be compile time integer constant");
+                throw new CiBailout("intrinsic parameter for barrier must be compile time integer constant");
             }
             int barriers = args[0].asConstant().asInt();
 

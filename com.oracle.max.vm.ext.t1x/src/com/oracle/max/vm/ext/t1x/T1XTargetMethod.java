@@ -1303,7 +1303,7 @@ public class T1XTargetMethod extends TargetMethod {
         if (templateCallReturnPos != -1) {
             return codeAt(templateCallReturnPos);
         } else {
-            FatalError.check(callee == null || ((RiResolvedMethod) callee).intrinsic() != null, "could not find template call for non-intrinisc method at " + curPos + " in " + this);
+            FatalError.check(callee == null || ((RiResolvedMethod) callee).intrinsic() != null, "could not find template call for non-intrinsic method at " + curPos + " in " + this);
             // Must be a safepoint
             return codeAt(curPos);
         }
