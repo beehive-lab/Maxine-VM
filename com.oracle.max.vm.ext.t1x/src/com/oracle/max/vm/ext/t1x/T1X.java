@@ -544,7 +544,7 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
     }
 
     @HOSTED_ONLY
-    private static final Set<String> templateIntriniscIDs = new HashSet<String>(
+    private static final Set<String> templateIntrinsicIDs = new HashSet<String>(
                     Arrays.asList(UCMP_AT, UCMP_AE, UCMP_BT, UCMP_BE, UDIV, UREM, LSB, MSB, PREAD_OFF, PREAD_IDX, PWRITE_OFF, PWRITE_IDX, PCMPSWP, HERE, PAUSE));
 
     /**
@@ -566,14 +566,14 @@ public class T1X extends RuntimeCompiler.DefaultNameAdapter implements RuntimeCo
         ArrayList<ClassMethodActor> result = new ArrayList<ClassMethodActor>();
         for (Class clazz : templateIntrinsicClasses) {
             for (MethodActor methodActor : ClassActor.fromJava(clazz).getLocalMethodActors()) {
-                if (T1X.templateIntriniscIDs.contains(methodActor.intrinsic())) {
+                if (T1X.templateIntrinsicIDs.contains(methodActor.intrinsic())) {
                     result.add((ClassMethodActor) methodActor);
                 }
             }
         }
         for (ClassActor classActor : ClassRegistry.allBootImageClasses()) {
             for (MethodActor methodActor : classActor.getLocalMethodActors()) {
-                if (T1X.templateIntriniscIDs.contains(methodActor.intrinsic()) && !result.contains(methodActor)) {
+                if (T1X.templateIntrinsicIDs.contains(methodActor.intrinsic()) && !result.contains(methodActor)) {
                     System.out.printf("%nClass with intrinsic methods found that should be in templateIntrinsicClasses: class %s, method %s%n%n", classActor, methodActor);
                     System.exit(1);
                 }
