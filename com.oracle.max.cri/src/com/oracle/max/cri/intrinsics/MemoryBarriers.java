@@ -102,10 +102,14 @@ public class MemoryBarriers {
      */
     public static final int STORE_STORE = 0x0008;
 
-    public static final int JMM_PRE_VOLATILE_WRITE = LOAD_STORE | STORE_STORE;
-    public static final int JMM_POST_VOLATILE_WRITE = STORE_LOAD | STORE_STORE;
-    public static final int JMM_PRE_VOLATILE_READ = 0;
-    public static final int JMM_POST_VOLATILE_READ = LOAD_LOAD | LOAD_STORE;
+    public static final int LOAD_FENCE  = LOAD_LOAD | LOAD_STORE;
+    public static final int STORE_FENCE = STORE_LOAD | STORE_STORE;
+    public static final int FULL_FENCE  = LOAD_FENCE | STORE_FENCE;
+
+    public static final int JMM_PRE_VOLATILE_WRITE  = LOAD_STORE | STORE_STORE;
+    public static final int JMM_POST_VOLATILE_WRITE = STORE_FENCE;
+    public static final int JMM_PRE_VOLATILE_READ   = 0;
+    public static final int JMM_POST_VOLATILE_READ  = LOAD_FENCE;
 
 
     /**
