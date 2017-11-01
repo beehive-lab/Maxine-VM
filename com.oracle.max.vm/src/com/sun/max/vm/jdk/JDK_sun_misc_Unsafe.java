@@ -37,7 +37,7 @@ import com.sun.max.vm.classfile.constant.ConstantPool.*;
 import com.sun.max.vm.heap.Heap;
 import com.sun.max.vm.layout.ArrayLayout;
 import com.sun.max.vm.reference.Reference;
-import com.sun.max.vm.runtime.Snippets;
+import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.VmThread;
 import com.sun.max.vm.type.*;
 
@@ -1263,4 +1263,30 @@ final class JDK_sun_misc_Unsafe {
             thread.setInterrupted();
         }
     }
+
+    /**
+     * @see Unsafe#loadFence()
+     */
+    @SUBSTITUTE(optional = true) // Not available in JDK 7
+    public void loadFence() {
+        MemoryBarriers.barrier(MemoryBarriers.LOAD_FENCE);
+    }
+
+    /**
+     * @see Unsafe#storeFence()
+     */
+    @SUBSTITUTE(optional = true) // Not available in JDK 7
+    public void storeFence() {
+        MemoryBarriers.barrier(MemoryBarriers.STORE_FENCE);
+    }
+
+    /**
+     * @see Unsafe#fullFence()
+     */
+    @SUBSTITUTE(optional = true) // Not available in JDK 7
+    public void fullFence() {
+        MemoryBarriers.barrier(MemoryBarriers.FULL_FENCE);
+    }
+
+
 }
