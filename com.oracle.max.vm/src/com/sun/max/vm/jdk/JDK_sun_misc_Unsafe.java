@@ -796,7 +796,6 @@ final class JDK_sun_misc_Unsafe {
             }
         }
 
-        Trace.end(1,  "ClassActor");
         Trace.end(1, "Unsafe.defineAnonymousClass()");
         return actor.javaClass();
 
