@@ -161,6 +161,11 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
     }
 
     @INLINE
+    public final boolean isCallerSensitive() {
+        return isCallerSensitive(flags());
+    }
+
+    @INLINE
     public final boolean noSafepointPolls() {
         return noSafepointPolls(flags()) || isTemplate();
     }

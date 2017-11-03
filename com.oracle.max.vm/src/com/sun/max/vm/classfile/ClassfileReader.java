@@ -60,6 +60,8 @@ import com.sun.max.vm.type.*;
 import com.sun.max.vm.type.ClassRegistry.*;
 import com.sun.max.vm.value.*;
 
+import sun.reflect.CallerSensitive;
+
 /**
  * Reads a class file to create a corresponding {@link ClassActor}.
  */
@@ -981,6 +983,14 @@ public final class ClassfileReader {
                         if (intrinsic != null) {
                             // discard bytecode for intrinsic methods
                             codeAttribute = null;
+                        }
+                    }
+                }
+
+                if (MaxineVM.isHosted() && runtimeVisibleAnnotationsBytes != null) {
+                    for (Annotation annotation : getAnnotations(name, descriptor)) {
+                        if (annotation.annotationType() == CallerSensitive.class) {
+                            flags |= CALLER_SENSITIVE;
                         }
                     }
                 }

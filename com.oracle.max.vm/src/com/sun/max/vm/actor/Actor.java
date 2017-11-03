@@ -83,6 +83,7 @@ public abstract class Actor {
     // VM-internal flags for methods:
     public static final int NO_SAFEPOINT_POLLS =   0x00004000;
     public static final int VERIFIED =             0x00010000;
+    public static final int CALLER_SENSITIVE =     0x00020000;
     public static final int TEMPLATE =             0x00200000;
     public static final int INITIALIZER =          0x00400000;
     public static final int C_FUNCTION =           0x01000000;
@@ -100,7 +101,8 @@ public abstract class Actor {
     public static final int SUBSTITUTION_ADOPTED_FLAGS =
         FOLD |
         INLINE |
-        NEVER_INLINE;
+        NEVER_INLINE |
+        CALLER_SENSITIVE;
 
     /**
      * Mask of flags used to determine if a method must be compiled with the optimizing compiler.
@@ -422,6 +424,11 @@ public abstract class Actor {
     }
 
     @INLINE
+    public static boolean isCallerSensitive(int flags) {
+        return (flags & CALLER_SENSITIVE) != 0;
+    }
+
+    @INLINE
     public static boolean isDeclaredFoldable(int flags) {
         return (flags & FOLD) != 0;
     }
@@ -508,6 +515,7 @@ public abstract class Actor {
         appendFlag(sb, isDeclaredFoldable(flags), "fold ");
         appendFlag(sb, isUnsafe(flags), "unsafe ");
         appendFlag(sb, isLocalSubstitute(flags), "substitute ");
+        appendFlag(sb, isCallerSensitive(flags), "callerSensitive ");
 
         if (sb.length() > 0) {
             /* trim trailing space */
