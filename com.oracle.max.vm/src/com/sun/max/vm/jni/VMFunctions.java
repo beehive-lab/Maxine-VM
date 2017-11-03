@@ -797,18 +797,25 @@ public class VMFunctions {
         }
     }
 
+    @CallerSensitive
     @SuppressWarnings("deprecation")
     @VM_ENTRY_POINT
     private static JniHandle GetCallerClass(Pointer env, int depth) {
-        // Source: VMFunctionsSource.java:212
+        // Source: VMFunctionsSource.java:213
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetCallerClass.ordinal(), UPCALL_ENTRY, anchor, env, Address.fromInt(depth));
         }
 
         try {
-            // Additionally ignore this method, as well as the Reflection method we call.
-            return createLocalHandle(Reflection.getCallerClass(depth + 2));
+            // Since JDK 8 the use of depth has been deprecated in favor of the CallerSensitive annotation. For backwards
+            // compatibility a depth of -1 denotes that the caller class should be obtained by ignoring CallerSensitive
+            // annotated methods while any other value means we need to ignore that many frames.
+            if (depth != -1) {
+                // Additionally ignore this method, as well as the Reflection method we call.
+                depth += 2;
+            }
+            return createLocalHandle(Reflection.getCallerClass(depth));
         } catch (Throwable t) {
             VmThread.fromJniEnv(env).setJniException(t);
             return asJniHandle(0L);
@@ -823,7 +830,7 @@ public class VMFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle GetSystemPackage(Pointer env, JniHandle name) {
-        // Source: VMFunctionsSource.java:218
+        // Source: VMFunctionsSource.java:225
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetSystemPackage.ordinal(), UPCALL_ENTRY, anchor, env, name);
@@ -845,7 +852,7 @@ public class VMFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle GetSystemPackages(Pointer env) {
-        // Source: VMFunctionsSource.java:223
+        // Source: VMFunctionsSource.java:230
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetSystemPackages.ordinal(), UPCALL_ENTRY, anchor, env);
@@ -867,7 +874,7 @@ public class VMFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle LatestUserDefinedLoader(Pointer env) {
-        // Source: VMFunctionsSource.java:228
+        // Source: VMFunctionsSource.java:235
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.LatestUserDefinedLoader.ordinal(), UPCALL_ENTRY, anchor, env);
@@ -894,7 +901,7 @@ public class VMFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle GetClassName(Pointer env, JniHandle c) {
-        // Source: VMFunctionsSource.java:238
+        // Source: VMFunctionsSource.java:245
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetClassName.ordinal(), UPCALL_ENTRY, anchor, env, c);
@@ -916,7 +923,7 @@ public class VMFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle GetClassLoader(Pointer env, JniHandle c) {
-        // Source: VMFunctionsSource.java:243
+        // Source: VMFunctionsSource.java:250
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetClassLoader.ordinal(), UPCALL_ENTRY, anchor, env, c);
@@ -938,7 +945,7 @@ public class VMFunctions {
 
     @VM_ENTRY_POINT
     private static boolean IsInterface(Pointer env, JniHandle c) {
-        // Source: VMFunctionsSource.java:248
+        // Source: VMFunctionsSource.java:255
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.IsInterface.ordinal(), UPCALL_ENTRY, anchor, env, c);
@@ -960,7 +967,7 @@ public class VMFunctions {
 
     @VM_ENTRY_POINT
     private static boolean IsArrayClass(Pointer env, JniHandle c) {
-        // Source: VMFunctionsSource.java:253
+        // Source: VMFunctionsSource.java:260
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.IsArrayClass.ordinal(), UPCALL_ENTRY, anchor, env, c);
@@ -982,7 +989,7 @@ public class VMFunctions {
 
     @VM_ENTRY_POINT
     private static boolean IsPrimitiveClass(Pointer env, JniHandle c) {
-        // Source: VMFunctionsSource.java:258
+        // Source: VMFunctionsSource.java:265
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.IsPrimitiveClass.ordinal(), UPCALL_ENTRY, anchor, env, c);
@@ -1004,7 +1011,7 @@ public class VMFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle GetClassSigners(Pointer env, JniHandle c) {
-        // Source: VMFunctionsSource.java:263
+        // Source: VMFunctionsSource.java:270
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetClassSigners.ordinal(), UPCALL_ENTRY, anchor, env, c);
@@ -1026,7 +1033,7 @@ public class VMFunctions {
 
     @VM_ENTRY_POINT
     private static void SetClassSigners(Pointer env, JniHandle c, JniHandle signers) {
-        // Source: VMFunctionsSource.java:268
+        // Source: VMFunctionsSource.java:275
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetClassSigners.ordinal(), UPCALL_ENTRY, anchor, env, c, signers);
@@ -1048,7 +1055,7 @@ public class VMFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle GetProtectionDomain(Pointer env, JniHandle c) {
-        // Source: VMFunctionsSource.java:274
+        // Source: VMFunctionsSource.java:281
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetProtectionDomain.ordinal(), UPCALL_ENTRY, anchor, env, c);
@@ -1070,7 +1077,7 @@ public class VMFunctions {
 
     @VM_ENTRY_POINT
     private static void SetProtectionDomain(Pointer env, JniHandle c, JniHandle pd) {
-        // Source: VMFunctionsSource.java:279
+        // Source: VMFunctionsSource.java:286
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetProtectionDomain.ordinal(), UPCALL_ENTRY, anchor, env, c, pd);
@@ -1091,7 +1098,7 @@ public class VMFunctions {
 
     @VM_ENTRY_POINT
     private static void ArrayCopy(Pointer env, JniHandle src, int srcPos, JniHandle dest, int destPos, int length) {
-        // Source: VMFunctionsSource.java:284
+        // Source: VMFunctionsSource.java:291
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.ArrayCopy.ordinal(), UPCALL_ENTRY, anchor, env, src, Address.fromInt(srcPos), dest, Address.fromInt(destPos), Address.fromInt(length));
@@ -1112,7 +1119,7 @@ public class VMFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle GetAllThreads(Pointer env) {
-        // Source: VMFunctionsSource.java:289
+        // Source: VMFunctionsSource.java:296
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetAllThreads.ordinal(), UPCALL_ENTRY, anchor, env);
@@ -1134,7 +1141,7 @@ public class VMFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle GetThreadStateValues(Pointer env, int javaThreadState) {
-        // Source: VMFunctionsSource.java:294
+        // Source: VMFunctionsSource.java:301
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetThreadStateValues.ordinal(), UPCALL_ENTRY, anchor, env, Address.fromInt(javaThreadState));
@@ -1159,7 +1166,7 @@ public class VMFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle GetThreadStateNames(Pointer env, int javaThreadState, JniHandle threadStateValues) {
-        // Source: VMFunctionsSource.java:302
+        // Source: VMFunctionsSource.java:309
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetThreadStateNames.ordinal(), UPCALL_ENTRY, anchor, env, Address.fromInt(javaThreadState), threadStateValues);
@@ -1186,7 +1193,7 @@ public class VMFunctions {
 
     @VM_ENTRY_POINT
     private static JniHandle InitAgentProperties(Pointer env, JniHandle props) {
-        // Source: VMFunctionsSource.java:312
+        // Source: VMFunctionsSource.java:319
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.InitAgentProperties.ordinal(), UPCALL_ENTRY, anchor, env, props);
@@ -1213,7 +1220,7 @@ public class VMFunctions {
 
     @VM_ENTRY_POINT
     private static int GetNumberOfArguments(Pointer env, MethodID methodID) throws NoSuchMethodException {
-        // Source: VMFunctionsSource.java:322
+        // Source: VMFunctionsSource.java:329
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetNumberOfArguments.ordinal(), UPCALL_ENTRY, anchor, env, methodID);
@@ -1239,7 +1246,7 @@ public class VMFunctions {
 
     @VM_ENTRY_POINT
     private static void GetKindsOfArguments(Pointer env, MethodID methodID, Pointer kinds) throws Exception {
-        // Source: VMFunctionsSource.java:331
+        // Source: VMFunctionsSource.java:338
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.GetKindsOfArguments.ordinal(), UPCALL_ENTRY, anchor, env, methodID, kinds);
@@ -1268,7 +1275,7 @@ public class VMFunctions {
 
     @VM_ENTRY_POINT
     private static void SetJVMTIEnv(Pointer env, Pointer jvmtiEnv) {
-        // Source: VMFunctionsSource.java:344
+        // Source: VMFunctionsSource.java:351
         Pointer anchor = prologue(env);
         if (logger.enabled()) {
             logger.log(LogOperations.SetJVMTIEnv.ordinal(), UPCALL_ENTRY, anchor, env, jvmtiEnv);

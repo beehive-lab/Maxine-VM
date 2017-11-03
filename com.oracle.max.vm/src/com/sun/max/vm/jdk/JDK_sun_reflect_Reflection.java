@@ -69,6 +69,13 @@ public final class JDK_sun_reflect_Reflection {
             // java.lang.reflect.Method.invoke() and its implementation are
             // completely ignored and do not count toward the number of "real"
             // frames skipped."
+            if (realFramesToSkip == -1) {
+                if (original.isCallerSensitive()) {
+                    return true;
+                } else {
+                    realFramesToSkip = 0;
+                }
+            }
             if (original.holder().isReflectionStub()  // ignore invocation stubs
                 || (original.holder().toJava() == MethodActor.class && original.name().startsWith("invoke")) // ignore invocation methods in method actor
                 || (original.holder().toJava() == JniFunctions.class && original.name().startsWith("Call"))  // ignore invocation methods of JNI implementation
@@ -114,12 +121,10 @@ public final class JDK_sun_reflect_Reflection {
      * @param realFramesToSkip the number of frames to skip
      * @return the class of the caller at the specified stack depth
      */
+    @CallerSensitive
     @SUBSTITUTE
     @NEVER_INLINE
     private static Class getCallerClass(int realFramesToSkip) {
-        if (realFramesToSkip < 0) {
-            return null;
-        }
         final Context context = new Context(realFramesToSkip);
         context.walk(null, Pointer.fromLong(here()), getCpuStackPointer(), getCpuFramePointer());
         if (context.method == null) {

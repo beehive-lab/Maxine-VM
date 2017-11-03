@@ -207,11 +207,18 @@ public class VMFunctionsSource {
         return createLocalHandle(getClassContext());
     }
 
+    @CallerSensitive
     @SuppressWarnings("deprecation")
     @VM_ENTRY_POINT
     private static JniHandle GetCallerClass(Pointer env, int depth) {
-        // Additionally ignore this method, as well as the Reflection method we call.
-        return createLocalHandle(Reflection.getCallerClass(depth + 2));
+        // Since JDK 8 the use of depth has been deprecated in favor of the CallerSensitive annotation. For backwards
+        // compatibility a depth of -1 denotes that the caller class should be obtained by ignoring CallerSensitive
+        // annotated methods while any other value means we need to ignore that many frames.
+        if (depth != -1) {
+            // Additionally ignore this method, as well as the Reflection method we call.
+            depth += 2;
+        }
+        return createLocalHandle(Reflection.getCallerClass(depth));
     }
 
     @VM_ENTRY_POINT
