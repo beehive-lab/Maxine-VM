@@ -30,7 +30,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     private ARMV7Assembler asm;
     private ARMV7MacroAssembler masm;
     private CiTarget armv7;
-    private ARMCodeWriter code;
+    private ARMV7CodeWriter     code;
 
     static final class Pair {
 
@@ -107,7 +107,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     }
 
     private void generateAndTest(int[] expected, boolean[] tests, MaxineARMv7Tester.BitsFlag[] masks, Buffer codeBuffer) throws Exception {
-        ARMCodeWriter code = new ARMCodeWriter(codeBuffer);
+        ARMV7CodeWriter code = new ARMV7CodeWriter(codeBuffer);
         code.createCodeFile();
         MaxineARMv7Tester r = new MaxineARMv7Tester(expected, tests, masks);
         if (!MaxineARMv7Tester.ENABLE_SIMULATOR) {
@@ -122,7 +122,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     }
 
     private int[] generate() throws Exception {
-        ARMCodeWriter code = new ARMCodeWriter(asm.codeBuffer);
+        ARMV7CodeWriter code = new ARMV7CodeWriter(asm.codeBuffer);
         code.createCodeFile();
         int[] retArr;
         MaxineARMv7Tester r = new MaxineARMv7Tester();
@@ -139,7 +139,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     }
 
     private void generateAndTest(long[] expected, boolean[] tests, MaxineARMv7Tester.BitsFlag[] masks) throws Exception {
-        ARMCodeWriter code = new ARMCodeWriter(asm.codeBuffer);
+        ARMV7CodeWriter code = new ARMV7CodeWriter(asm.codeBuffer);
         code.createCodeFile();
         MaxineARMv7Tester r = new MaxineARMv7Tester(expected, tests, masks);
         if (!MaxineARMv7Tester.ENABLE_SIMULATOR) {

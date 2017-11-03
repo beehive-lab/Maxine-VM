@@ -17,20 +17,20 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package test.armv7.asm;
+package test.aarch64.asm;
 
 import java.io.*;
 
 import com.oracle.max.asm.*;
 
-public class ARMCodeWriter {
+public class Aarch64CodeWriter {
 
     public static boolean debug = false;
     private int[] instructions;
     private byte[] byteVersion;
     private int totalInstructions;
 
-    public ARMCodeWriter(Buffer codeBuffer) {
+    public Aarch64CodeWriter(Buffer codeBuffer) {
         totalInstructions = codeBuffer.position() / 4;
         byteVersion = null;
         instructions = new int[totalInstructions];
@@ -39,7 +39,7 @@ public class ARMCodeWriter {
         }
     }
 
-    public ARMCodeWriter(byte[] codeBuffer) {
+    public Aarch64CodeWriter(byte[] codeBuffer) {
         totalInstructions = codeBuffer.length / 4;
         instructions = null;
         byteVersion = codeBuffer;
@@ -79,8 +79,8 @@ public class ARMCodeWriter {
                 writer.println("0x" + Integer.toHexString(stubs[i]) + ", " + "0x" + Integer.toHexString(stubs[i + 1]) + ", " + "0x" + Integer.toHexString(stubs[i + 2]) + ", " + "0x" +
                                 Integer.toHexString(stubs[i + 3]) + ",\n");
             }
-            // b .
-            writer.println("0xea, 0xff, 0xff, 0xfe  };\n");
+            // ret
+            writer.println("0xd6, 0x5f, 0x03, 0xc0 };\n");
             writer.println("unsigned char *code = codeArray + " + entryPoint + ";");
             writer.println("void c_entry() {");
             writer.print(functionPrototype);
@@ -104,11 +104,11 @@ public class ARMCodeWriter {
                 writer.println("codeArray[" + i + " + 2] = " + stubs[i + 2] + ";");
                 writer.println("codeArray[" + i + " + 3] = " + stubs[i + 3] + ";");
             }
-            // b .
-            writer.println("codeArray[" + (stubs.length + 3) + "] = " + 0xfe + ";");
-            writer.println("codeArray[" + (stubs.length + 2) + "] = " + 0xff + ";");
-            writer.println("codeArray[" + (stubs.length + 1) + "] = " + 0xff + ";");
-            writer.println("codeArray[" + (stubs.length) + "] = " + 0xea + ";");
+            // ret
+            writer.println("codeArray[" + (stubs.length + 3) + "] = " + 0xc0 + ";");
+            writer.println("codeArray[" + (stubs.length + 2) + "] = " + 0x03 + ";");
+            writer.println("codeArray[" + (stubs.length + 1) + "] = " + 0x5f + ";");
+            writer.println("codeArray[" + (stubs.length) + "] = " + 0xd6 + ";");
             writer.println("unsigned char *code = codeArray + " + entryPoint + ";");
             writer.close();
         } catch (Exception e) {
@@ -141,15 +141,15 @@ public class ARMCodeWriter {
                 writer.println("code[" + val + "] = " + (xxx >> 24 & 0xff) + ";");
                 log("code[" + val + "] = 0x" + Long.toString(xxx >> 24 & 0xff, 16) + ";");
             }
-            // b .
-            writer.println("code[" + totalInstructions * 4 + "] = " + 0xfe + ";");
-            log("code[" + totalInstructions * 4 + "] = " + 0xfe + ";");
-            writer.println("code[" + totalInstructions * 4 + "+1] = " + 0xff + ";");
-            log("code[" + totalInstructions * 4 + "+1] = " + 0xff + ";");
-            writer.println("code[" + totalInstructions * 4 + "+2] = " + 0xff + ";");
-            log("code[" + totalInstructions * 4 + "+2] = " + 0xff + ";");
-            writer.println("code[" + totalInstructions * 4 + "+3] = " + 0xea + ";");
-            log("code[" + totalInstructions * 4 + "+3] = " + 0xea + ";");
+            // ret
+            writer.println("code[" + totalInstructions * 4 + "] = " + 0xc0 + ";");
+            log("code[" + totalInstructions * 4 + "] = " + 0xc0 + ";");
+            writer.println("code[" + totalInstructions * 4 + "+1] = " + 0x03 + ";");
+            log("code[" + totalInstructions * 4 + "+1] = " + 0x03 + ";");
+            writer.println("code[" + totalInstructions * 4 + "+2] = " + 0x5f + ";");
+            log("code[" + totalInstructions * 4 + "+2] = " + 0x5f + ";");
+            writer.println("code[" + totalInstructions * 4 + "+3] = " + 0xd6 + ";");
+            log("code[" + totalInstructions * 4 + "+3] = " + 0xd6 + ";");
             writer.close();
         } catch (Exception e) {
             System.err.println(e);

@@ -61,9 +61,9 @@ public class ARMV7T1XTest extends MaxTestCase {
 
     private ARMV7Assembler asm;
     private CiTarget armv7;
-    private ARMCodeWriter code;
     private T1X t1x;
     private C1X c1x;
+    private ARMV7CodeWriter         code;
     private ARMV7T1XCompilationTest theCompiler;
     private StaticMethodActor anMethod = null;
     private CodeAttribute codeAttr = null;
@@ -123,7 +123,7 @@ public class ARMV7T1XTest extends MaxTestCase {
     private static boolean[] testvalues = new boolean[17];
 
     private int[] generateAndTest(int[] expected, boolean[] tests, MaxineARMv7Tester.BitsFlag[] masks) throws Exception {
-        ARMCodeWriter code = new ARMCodeWriter(theCompiler.getMacroAssembler().codeBuffer);
+        ARMV7CodeWriter code = new ARMV7CodeWriter(theCompiler.getMacroAssembler().codeBuffer);
         code.createCodeFile();
         MaxineARMv7Tester r = new MaxineARMv7Tester(expected, tests, masks);
         r.cleanFiles();

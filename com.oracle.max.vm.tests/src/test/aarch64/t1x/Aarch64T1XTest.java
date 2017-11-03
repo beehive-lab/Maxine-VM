@@ -40,14 +40,14 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 
-import test.aarch64.asm.MaxineAarch64Tester;
+import test.aarch64.asm.*;
 import test.armv7.asm.*;
 
 public class Aarch64T1XTest extends MaxTestCase {
 
     private Aarch64Assembler      asm;
     private CiTarget              aarch64;
-    private ARMCodeWriter         code;
+    private Aarch64CodeWriter     code;
     private T1X                   t1x;
     private C1X                   c1x;
     private Aarch64T1XCompilation theCompiler;
@@ -139,7 +139,7 @@ public class Aarch64T1XTest extends MaxTestCase {
         }
     }
     private long[] generateAndTest(long[] expected, boolean[] tests, MaxineAarch64Tester.BitsFlag[] masks) throws Exception {
-        ARMCodeWriter code = new ARMCodeWriter(theCompiler.getMacroAssembler().codeBuffer);
+        Aarch64CodeWriter code = new Aarch64CodeWriter(theCompiler.getMacroAssembler().codeBuffer);
         code.createCodeFile();
         MaxineAarch64Tester r = new MaxineAarch64Tester(expected, tests, masks);
         r.cleanFiles();

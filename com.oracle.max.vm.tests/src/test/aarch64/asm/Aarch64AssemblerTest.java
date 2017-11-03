@@ -35,7 +35,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     private Aarch64MacroAssembler masm;
 
     private CiTarget      aarch64;
-    private ARMCodeWriter code;
+    private Aarch64CodeWriter code;
 
     static final class Pair {
 
@@ -114,7 +114,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     }
 
     private void generateAndTest(long[] expected, boolean[] tests, MaxineAarch64Tester.BitsFlag[] masks, Buffer codeBuffer) throws Exception {
-        ARMCodeWriter code = new ARMCodeWriter(codeBuffer);
+        Aarch64CodeWriter code = new Aarch64CodeWriter(codeBuffer);
         code.createCodeFile();
         MaxineAarch64Tester r = new MaxineAarch64Tester(expected, tests, masks);
         if (!MaxineAarch64Tester.ENABLE_SIMULATOR) {
