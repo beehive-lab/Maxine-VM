@@ -992,9 +992,6 @@ public final class ClassfileReader {
                 if (Actor.isNative(flags)) {
                     flags |= UNSAFE;
                 }
-                if (Actor.isNative(flags)) {
-                    flags |= UNSAFE;
-                }
 
                 if (MaxineVM.isHosted() && classDescriptor.toKind() == Kind.WORD) {
                     // All non-static methods in Word types must be either @INLINE, @FOLD, @INTRINSIC, or @HOSTED_ONLY.
