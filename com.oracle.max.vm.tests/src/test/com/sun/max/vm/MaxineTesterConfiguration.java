@@ -45,6 +45,8 @@ public class MaxineTesterConfiguration {
     static final Expectation FAIL_DARWIN = new Expectation(OS.DARWIN, null, ExpectedResult.FAIL);
     static final Expectation FAIL_LINUX = new Expectation(OS.LINUX, null, ExpectedResult.FAIL);
     static final Expectation FAIL_AMD64 = new Expectation(null, CPU.AMD64, ExpectedResult.FAIL);
+    static final Expectation FAIL_ARMV7 = new Expectation(null, CPU.ARMV7, ExpectedResult.FAIL);
+    static final Expectation FAIL_AARCH64 = new Expectation(null, CPU.Aarch64, ExpectedResult.FAIL);
 
     static final Expectation RAND_ALL = new Expectation(null, null, ExpectedResult.NONDETERMINISTIC);
     static final Expectation RAND_LINUX = new Expectation(OS.LINUX, null, ExpectedResult.NONDETERMINISTIC);
@@ -143,7 +145,9 @@ public class MaxineTesterConfiguration {
         // Register all "*.Autotest classes on the class path
         findJUnitTests();
         junit("test.armv7.t1x.AutoTest", FAIL_AMD64);
+        junit("test.armv7.t1x.AutoTest", FAIL_AARCH64);
         junit("test.aarch64.t1x.AutoTest", FAIL_AMD64);
+        junit("test.aarch64.t1x.AutoTest", FAIL_ARMV7);
         junit("test.armv7.jtt.AutoTest", FAIL_AMD64);
 
         jtt(jtt.threads.Thread_isInterrupted02.class, FAIL_LINUX);
