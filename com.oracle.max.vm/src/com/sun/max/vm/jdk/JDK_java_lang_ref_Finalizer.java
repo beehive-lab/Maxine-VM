@@ -44,27 +44,6 @@ final class JDK_java_lang_ref_Finalizer {
         VMOptions.addFieldOption("-XX:", "TraceFinalization", JDK_java_lang_ref_Finalizer.class, "Trace calls to Object.finalize() by the finalization subsystem.");
     }
 
-    /**
-     * Calls {@link Object#finalize} on a given object.
-     *
-     * This substitution avoids a trip through native code and also provides a point at which
-     * finalization can be traced.
-     */
-    @SUBSTITUTE(optional = true)
-    static void invokeFinalizeMethod(Object o) throws Throwable {
-
-        ClassActor holder = ObjectAccess.readClassActor(o);
-        MethodActor selectedMethod = (MethodActor) holder.resolveMethodImpl(Object_finalize);
-        if (TraceFinalization) {
-            Log.print("Finalizing ");
-            Log.print(ObjectAccess.readClassActor(o).name.string);
-            Log.print(" instance at ");
-            Log.print(Reference.fromJava(o).toOrigin());
-            Log.println(" by calling " + selectedMethod);
-        }
-        selectedMethod.invoke(ReferenceValue.from(o));
-    }
-
     @ALIAS(declaringClassName = "java.lang.ref.Finalizer")
     private native boolean hasBeenFinalized();
 
@@ -74,6 +53,9 @@ final class JDK_java_lang_ref_Finalizer {
     @INTRINSIC(UNSAFE_CAST)
     private static native java.lang.ref.Reference asReference(Object cl);
 
+    /**
+     * This substitution provides a point at which finalization can be traced.
+     */
     @SUBSTITUTE
     private void runFinalizer(JavaLangAccess jla) {
         synchronized (this) {
@@ -84,8 +66,20 @@ final class JDK_java_lang_ref_Finalizer {
         }
         try {
             Object finalizee = asReference(this).get();
+
             if (finalizee != null && !(finalizee instanceof java.lang.Enum)) {
-                invokeFinalizeMethod(finalizee);
+                ClassActor holder = ObjectAccess.readClassActor(finalizee);
+                MethodActor selectedMethod = (MethodActor) holder.resolveMethodImpl(Object_finalize);
+
+                if (TraceFinalization) {
+                    Log.print("Finalizing ");
+                    Log.print(ObjectAccess.readClassActor(finalizee).name.string);
+                    Log.print(" instance at ");
+                    Log.print(Reference.fromJava(finalizee).toOrigin());
+                    Log.println(" by calling " + selectedMethod);
+                }
+
+                selectedMethod.invoke(ReferenceValue.from(finalizee));
                 /* Clear stack slot containing this variable, to decrease
                    the chances of false retention with a conservative GC */
                 finalizee = null;
