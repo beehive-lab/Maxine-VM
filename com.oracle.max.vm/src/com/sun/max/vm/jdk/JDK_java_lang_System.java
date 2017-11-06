@@ -40,7 +40,7 @@ import com.sun.max.vm.type.BootClassLoader;
 import com.sun.max.vm.type.Kind;
 import sun.misc.Launcher;
 import sun.misc.Perf;
-import sun.reflect.Reflection;
+import sun.reflect.*;
 
 import java.io.File;
 import java.io.InputStream;
@@ -1033,7 +1033,7 @@ public final class JDK_java_lang_System {
      * @param name the name of the library to load
      * @see BootClassLoader#loadJavaAndZipNativeLibraries(String, String)
      */
-    @SuppressWarnings("deprecation")
+    @CallerSensitive
     @SUBSTITUTE
     @NEVER_INLINE
     public static void loadLibrary(String name) throws Throwable {
@@ -1043,7 +1043,7 @@ public final class JDK_java_lang_System {
         } else {
             // ATTENTION: these statements must have the exact same side effects as the original code of the substitutee:
             @SuppressWarnings("deprecation")
-            final Class callerClass = Reflection.getCallerClass(2);
+            final Class callerClass = Reflection.getCallerClass();
 
             Runtime runtime = Runtime.getRuntime();
             asThis(runtime).loadLibrary0(callerClass, name);
