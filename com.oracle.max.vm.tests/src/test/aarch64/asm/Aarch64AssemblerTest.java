@@ -326,7 +326,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     /**
      * load and store instructions.
      */
-    public void todo_ldr_str() throws Exception {
+    public void work_ldr_str() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
         resetIgnoreValues();
