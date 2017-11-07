@@ -1215,6 +1215,16 @@ public class Aarch64Assembler extends AbstractAssembler {
         movk(64, reg, (int) (imm64 >> 48) & 0xFFFF, 48);
     }
 
+    /**
+     * Unoptimised (4 instruction) move of a 32bit constant into register.
+     * @param reg
+     * @param imm64
+     */
+    public void mov32BitConstant(CiRegister reg, long imm32) {
+        movz(64, reg, (int) imm32 & 0xFFFF, 0);
+        movk(64, reg, (int) (imm32 >> 16) & 0xFFFF, 16);
+    }
+
     /* Move (wide immediate) (5.4.3) */
 
     /**

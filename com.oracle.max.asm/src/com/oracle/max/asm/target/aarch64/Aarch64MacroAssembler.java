@@ -346,6 +346,21 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     /**
+     * Push multiple registers onto the stack using 16byte alignment.
+     * @param registerList
+     * TODO: optimise
+     */
+    public void push(int registerList) {
+        for (int regNumber = 0; regNumber < Integer.SIZE; regNumber++) {
+            if (registerList % 2 == 1) {
+                str(64, Aarch64.cpuRegisters[regNumber], Aarch64Address.createPreIndexedImmediateAddress(Aarch64.sp, -16));
+            }
+
+            registerList = registerList >> 1;
+        }
+    }
+
+    /**
      * Pop the value from the top of the stack into register. Uses 16byte alignment.
      * @param size
      * @param reg
@@ -353,6 +368,22 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     public void pop(int size, CiRegister reg) {
         ldr(size, reg, Aarch64Address.createPostIndexedImmediateAddress(Aarch64.sp, 16));
     }
+
+    /**
+     * Push multiple registers onto the stack using 16byte alignment.
+     * @param registerList
+     * TODO: optimise
+     */
+    public void pop(int registerList) {
+        for (int regNumber = 0; regNumber < Integer.SIZE; regNumber++) {
+            if (registerList % 2 == 1) {
+                ldr(64, Aarch64.cpuRegisters[regNumber], Aarch64Address.createPreIndexedImmediateAddress(Aarch64.sp, 16));
+            }
+
+            registerList = registerList >> 1;
+        }
+    }
+
     /**
      * Generates a move 64-bit immediate code sequence. The immediate may later be updated by HotSpot.
      *

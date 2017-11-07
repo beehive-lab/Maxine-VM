@@ -1504,45 +1504,45 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //         }
 //     }
 //
-//     public void ignore_PushAndPop() throws Exception {
-//         int registers = 1;
-//         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//         initialiseExpectedValues();
-//         for (int i = 0; i < 16; i++) {
-//             if (i % 2 == 0) {
-//                 expectedValues[i] = i;
-//             } else {
-//                 expectedValues[i] = -i;
-//             }
-//             if (i < 13) {
-//                 testValues[i] = true;
-//             }
-//         }
-//
-//         for (int bitmask = 1; bitmask <= 0xfff; bitmask = bitmask | (bitmask + 1), registers++) {
-//             asm.codeBuffer.reset();
-//             for (int i = 0; i < 13; i++) { // we are not breaking the stack (r13)
-//                 asm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]); // 2 instructions movw, movt
-//                 // all registers initialized.
-//             }
-//             asm.push(Aarch64Assembler.ConditionFlag.Always, bitmask); // store all registers referred to
-//             // by bitmask on the stack
-//             for (int i = 0; i < 13; i++) {
-//                 asm.add(Aarch64Assembler.ConditionFlag.Always, false, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], 1, 0);
-//             }
-//             // r0..r12 should now all have +1 more than their previous values stored on the stack
-//             // restore the same registers that were placed on the stack
-//             asm.pop(Aarch64Assembler.ConditionFlag.Always, bitmask);
-//             for (int i = 0; i < 13; i++) {
-//                 if (i < registers) {
-//                     expectedValues[i] = expectedValues[i];
-//                 } else {
-//                     expectedValues[i] = expectedValues[i] + 1;
-//                 }
-//             }
-//             generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//         }
-//     }
+    public void test_PushAndPop() throws Exception {
+        int registers = 1;
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        initialiseExpectedValues();
+        for (int i = 0; i < 16; i++) {
+            if (i % 2 == 0) {
+                expectedValues[i] = i;
+            } else {
+                expectedValues[i] = -i;
+            }
+            if (i < 13) {
+                testValues[i] = true;
+            }
+        }
+
+        for (int bitmask = 1; bitmask <= 0xfff; bitmask = bitmask | (bitmask + 1), registers++) {
+            masm.codeBuffer.reset();
+            for (int i = 0; i < 13; i++) { // we are not breaking the stack (r13)
+                masm.mov64BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]); // 2 instructions movw, movt
+                // all registers initialized.
+            }
+            masm.push(bitmask); // store all registers referred to
+            // by bitmask on the stack
+            for (int i = 0; i < 13; i++) {
+                masm.add(64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], 1);
+            }
+            // r0..r12 should now all have +1 more than their previous values stored on the stack
+            // restore the same registers that were placed on the stack
+            masm.pop(bitmask);
+            for (int i = 0; i < 13; i++) {
+                if (i < registers) {
+                    expectedValues[i] = expectedValues[i];
+                } else {
+                    expectedValues[i] = expectedValues[i] + 1;
+                }
+            }
+            generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+        }
+    }
 //
 //     public void ignore_MovRor() throws Exception {
 //         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
