@@ -917,66 +917,37 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //       generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
 //      }
 //
-//    public long connectRegs(int reg0, int reg1) {
-//         long returnVal = 0;
-//         long tmp = 0;
-//         //  r1 is MSW
-//         // r2 is LSW
-//         System.out.println(" REG0 " + reg0 + " REG1 " + reg1);
-//         if(reg1 < 0) {
-//             // -ve long number
-//
-//             returnVal = ((long) reg1) << 32;
-//
-//
-//             if(reg0 < 0) {
-//                 returnVal += Long.parseLong(String.format("%32s", Integer.toBinaryString(reg0)).replace(' ', '0'),2);
-//             }else {
-//                 returnVal += reg0;
-//             }
-//         } else {
-//             // +ve long number
-//             returnVal = ((long)reg1) << 32;
-//             if(reg1 == 0) {
-//                 returnVal += reg0;
-//             } else
-//             if(reg0 < 0) {
-//                 //returnVal += 1L << 31;
-//                 returnVal += Long.parseLong(String.format("%32s", Integer.toBinaryString(reg0)).replace(' ', '0'),2);
-//             } else {
-//                 returnVal += reg0;
-//             }
-//         }
-//
-//         return returnVal;
-//     }
-//
-//     public void ignore_mov64BitConstant() throws Exception {
-//         int[] instructions = new int[6];
-//         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//         long[] values = new long[10];
-//         values[0] = 0L;
-//         values[1] = -1L;
-//         values[2] = (long) Integer.MIN_VALUE;
-//         values[3] = (long) Integer.MAX_VALUE;
-//         values[4] = Long.MAX_VALUE;
-//         values[5] = Long.MIN_VALUE;
-//         values[6] = Long.MIN_VALUE + 5;
-//         values[7] = Long.MAX_VALUE - 5;
-//         values[8] = ((long) Integer.MIN_VALUE) + 5L;
-//         values[9] = ((long) Integer.MAX_VALUE) - 5L;
-//         int registers[] = null;
-//         for (int i = 0; i < values.length; i++) {
-//             asm.codeBuffer.reset();
-//             asm.mov64BitConstant(Aarch64.r0, Aarch64.r1, values[i]);
-//             instructions[0] = asm.codeBuffer.getInt(0);
-//             instructions[1] = asm.codeBuffer.getInt(4);
-//             instructions[2] = asm.codeBuffer.getInt(8);
-//             instructions[3] = asm.codeBuffer.getInt(12);
-//             registers = generate();
-//             assert values[i] == connectRegs(registers[0], registers[1]);
-//         }
-//     }
+
+    public void work_mov64BitConstant() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        asm.codeBuffer.reset();
+
+        int[] instructions = new int[6];
+        long[] values = new long[10];
+        values[0] = 0L;
+        values[1] = -1L;
+        values[2] = (long) Integer.MIN_VALUE;
+        values[3] = (long) Integer.MAX_VALUE;
+        values[4] = Long.MAX_VALUE;
+        values[5] = Long.MIN_VALUE;
+        values[6] = Long.MIN_VALUE + 5;
+        values[7] = Long.MAX_VALUE - 5;
+        values[8] = ((long) Integer.MIN_VALUE) + 5L;
+        values[9] = ((long) Integer.MAX_VALUE) - 5L;
+
+        for (int i = 0; i < values.length; i++) {
+            asm.codeBuffer.reset();
+            asm.mov64BitConstant(Aarch64.r0, values[i]);
+
+            expectedValues[0] = values[i];
+            testValues[0] = true;
+
+            generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+
+        }
+    }
 
 //     public void ignore_AddConstant() throws Exception {
 //         int[] instructions = new int[3];
@@ -1504,7 +1475,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //         }
 //     }
 //
-    public void test_PushAndPop() throws Exception {
+    public void work_PushAndPop() throws Exception {
         int registers = 1;
         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
         initialiseExpectedValues();
