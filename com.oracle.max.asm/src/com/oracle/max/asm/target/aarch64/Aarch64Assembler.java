@@ -1281,7 +1281,7 @@ public class Aarch64Assembler extends AbstractAssembler {
     }
 
     /**
-     * implementation of movror from the ARMv7 assembler
+     * Implementation of movror from the ARMv7 assembler.
      *
      * @param rd general purpose register.
      * @param rm general purpose register.
