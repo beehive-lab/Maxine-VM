@@ -1280,6 +1280,17 @@ public class Aarch64Assembler extends AbstractAssembler {
                 shiftAmt << MoveWideShiftOffset);
     }
 
+    /**
+     * implementation of movror from the ARMv7 assembler
+     *
+     * @param rd general purpose register.
+     * @param rm general purpose register.
+     * @param shiftImm 0-63 constant
+     */
+    public void movror(final CiRegister rd, final CiRegister rm, final int shiftImm) {
+        orr(64, rd, Aarch64.zr, rm, ShiftType.ROR, shiftImm);
+    }
+
     /* Bitfield Operations (5.4.5) */
 
     /**

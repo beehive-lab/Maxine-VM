@@ -1510,51 +1510,29 @@ public class Aarch64AssemblerTest extends MaxTestCase {
             generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
         }
     }
-//
-//     public void ignore_MovRor() throws Exception {
-//         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//         resetIgnoreValues();
-//         for (int srcReg = 0; srcReg < 16; srcReg++) {
-//             for (int destReg = 0; destReg < 16; destReg++) {
-//                 for (int shift = 0; shift <= 31; shift++) {
-//                     for (int i = 0; i < Aarch64Assembler.ConditionFlag.values().length; i++) { // test encodings
-//                         asm.movror(Aarch64Assembler.ConditionFlag.values()[i], false, Aarch64.cpuRegisters[destReg], Aarch64.cpuRegisters[srcReg], shift);
-//                         // rotate right two bits 0x30003fff?
-//                         assertTrue(asm.codeBuffer.getInt(0) == (0x01A00060 | (shift << 7) | (destReg << 12) | srcReg | Aarch64Assembler.ConditionFlag.values()[i].value() << 28));
-//                         asm.codeBuffer.reset();
-//                         asm.movror(Aarch64Assembler.ConditionFlag.values()[i], true, Aarch64.cpuRegisters[destReg], Aarch64.cpuRegisters[srcReg], shift);
-//                         // rotate right 30 bits? to get 0x0000ffff
-//                         assertTrue(asm.codeBuffer.getInt(0) == (0x01B00060 | (shift << 7) | srcReg | (destReg << 12) | Aarch64Assembler.ConditionFlag.values()[i].value() << 28));
-//                         asm.codeBuffer.reset();
-//                     }
-//                 }
-//             }
-//         }
-//         int mask = 1;
-//         for (int shift = 1; shift <= 31; shift++) {
-//             asm.codeBuffer.reset();
-//             asm.movw(Aarch64Assembler.ConditionFlag.Always, Aarch64.cpuRegisters[0], 0xffff); // load 0x0000ffff
-//             asm.movt(Aarch64Assembler.ConditionFlag.Always, Aarch64.cpuRegisters[0], 0x0);
-//             asm.movror(Aarch64Assembler.ConditionFlag.Always, true, Aarch64.cpuRegisters[1], Aarch64.cpuRegisters[0], shift);
-//             // not ignoring ROR with ZEROshift as that needs to know the carry bit of the registerA RRX
-//             asm.movror(Aarch64Assembler.ConditionFlag.Always, true, Aarch64.cpuRegisters[2], Aarch64.cpuRegisters[1], 32 - shift);
-//             // rotate right 30 bits?
-//             // implies ... APSR.N = , APSR.Z = , APSR.C =
-//
-//             expectedValues[0] = 0x0000ffff;
-//             testValues[0] = true;
-//             expectedValues[1] = (0x0000ffff >> shift) | (((expectedValues[0] & mask) << (32 - shift)));
-//             testValues[1] = true;
-//             expectedValues[2] = 0x0000ffff;
-//             testValues[2] = true;
-//             expectedValues[16] = 0x0;
-//             testValues[16] = false;
-//             setBitMask(16, MaxineAarch64Tester.BitsFlag.NZCBits);
-//             generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//             mask = mask | (mask + 1);
-//         }
-//     }
-//
+
+     public void work_MovRor() throws Exception {
+         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+         resetIgnoreValues();
+
+         int mask = 1;
+         for (int shift = 1; shift <= 63; shift++) {
+             asm.codeBuffer.reset();
+             asm.mov64BitConstant(Aarch64.cpuRegisters[0], 0xffffffff); // load 0x0000ffff
+             asm.movror(Aarch64.cpuRegisters[1], Aarch64.cpuRegisters[0], shift);
+             asm.movror(Aarch64.cpuRegisters[2], Aarch64.cpuRegisters[1], 63 - shift);
+
+             expectedValues[0] = 0xffffffff;
+             testValues[0] = true;
+             expectedValues[1] = (0xffffffff >> shift) | (((0xffffffff & mask) << (64 - shift)));
+             testValues[1] = true;
+             expectedValues[2] = 0xffffffff;
+             testValues[2] = true;
+             generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+             mask = mask | (mask + 1);
+         }
+     }
+
 //     public void ignore_Movw() throws Exception {
 //         int value;
 //         setAllBitMasks(MaxineAarch64Tester.BitsFlag.Lower16Bits);
