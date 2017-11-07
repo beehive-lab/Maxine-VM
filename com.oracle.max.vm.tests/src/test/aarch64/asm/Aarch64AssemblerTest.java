@@ -949,31 +949,27 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         }
     }
 
-//     public void ignore_AddConstant() throws Exception {
-//         int[] instructions = new int[3];
-//         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//         initialiseExpectedValues();
-//         resetIgnoreValues();
-//         for (int srcReg = 0; srcReg < 3; srcReg++) {
-//             for (int destReg = 0; destReg < 3; destReg++) {
-//                 initialiseTestValues();
-//                 testValues[destReg] = true;
-//                 for (int i = 0; i < scratchTestSet.length; i++) {
-//                     asm.codeBuffer.reset();
-//                     int value = scratchTestSet[i];
-//                     asm.movw(Aarch64Assembler.ConditionFlag.Always, Aarch64.cpuRegisters[srcReg], value & 0xffff);
-//                     asm.movt(Aarch64Assembler.ConditionFlag.Always, Aarch64.cpuRegisters[srcReg], (value >> 16) & 0xffff);
-//                     asm.add(Aarch64Assembler.ConditionFlag.Always, false, Aarch64.cpuRegisters[destReg], Aarch64.cpuRegisters[srcReg], 0, 0);
-//                     instructions[0] = asm.codeBuffer.getInt(0);
-//                     instructions[1] = asm.codeBuffer.getInt(4);
-//                     instructions[2] = asm.codeBuffer.getInt(8);
-//                     expectedValues[destReg] = value;
-//                     generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//                 }
-//             }
-//         }
-//     }
-//
+    public void work_AddConstant() throws Exception {
+        int[] instructions = new int[3];
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        initialiseExpectedValues();
+        resetIgnoreValues();
+        for (int srcReg = 0; srcReg < 3; srcReg++) {
+            for (int destReg = 0; destReg < 3; destReg++) {
+                initialiseTestValues();
+                testValues[destReg] = true;
+                for (int i = 0; i < scratchTestSet.length; i++) {
+                    asm.codeBuffer.reset();
+                    int value = scratchTestSet[i];
+                    asm.mov32BitConstant(Aarch64.cpuRegisters[srcReg], value);
+                    asm.add(64, Aarch64.cpuRegisters[destReg], Aarch64.cpuRegisters[srcReg], 0);
+                    expectedValues[destReg] = value;
+                    generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+                }
+            }
+        }
+    }
+
 //     public void test_VPushPop() throws Exception {
 //         initialiseExpectedValues();
 //         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
