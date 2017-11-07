@@ -1511,77 +1511,28 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         }
     }
 
-     public void work_MovRor() throws Exception {
-         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-         resetIgnoreValues();
+    public void work_MovRor() throws Exception {
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
 
-         int mask = 1;
-         for (int shift = 1; shift <= 63; shift++) {
-             asm.codeBuffer.reset();
-             asm.mov64BitConstant(Aarch64.cpuRegisters[0], 0xffffffff); // load 0x0000ffff
-             asm.movror(Aarch64.cpuRegisters[1], Aarch64.cpuRegisters[0], shift);
-             asm.movror(Aarch64.cpuRegisters[2], Aarch64.cpuRegisters[1], 63 - shift);
+        int mask = 1;
+        for (int shift = 1; shift <= 63; shift++) {
+            asm.codeBuffer.reset();
+            asm.mov64BitConstant(Aarch64.cpuRegisters[0], 0xffffffff); // load 0x0000ffff
+            asm.movror(Aarch64.cpuRegisters[1], Aarch64.cpuRegisters[0], shift);
+            asm.movror(Aarch64.cpuRegisters[2], Aarch64.cpuRegisters[1], 63 - shift);
 
-             expectedValues[0] = 0xffffffff;
-             testValues[0] = true;
-             expectedValues[1] = (0xffffffff >> shift) | (((0xffffffff & mask) << (64 - shift)));
-             testValues[1] = true;
-             expectedValues[2] = 0xffffffff;
-             testValues[2] = true;
-             generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-             mask = mask | (mask + 1);
-         }
-     }
+            expectedValues[0] = 0xffffffff;
+            testValues[0] = true;
+            expectedValues[1] = (0xffffffff >> shift) | (((0xffffffff & mask) << (64 - shift)));
+            testValues[1] = true;
+            expectedValues[2] = 0xffffffff;
+            testValues[2] = true;
+            generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+            mask = mask | (mask + 1);
+        }
+    }
 
-//     public void ignore_Movw() throws Exception {
-//         int value;
-//         setAllBitMasks(MaxineAarch64Tester.BitsFlag.Lower16Bits);
-//         for (int destReg = 0; destReg < 13; destReg++) {
-//             resetIgnoreValues();
-//             testValues[destReg] = true;
-//             for (int j = 0; j < valueTestSet.length; j++) {
-//                 value = valueTestSet[j];
-//                 expectedValues[destReg] = value;
-//                 asm.movw(Aarch64Assembler.ConditionFlag.Always, Aarch64.cpuRegisters[destReg], value);
-//                 generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//                 assert asm.codeBuffer.getInt(0) == (0x03000000 | (Aarch64Assembler.ConditionFlag.Always.value() << 28) | (destReg << 12) | (value & 0xfff) | ((value & 0xf000) << 4));
-//                 asm.codeBuffer.reset();
-//             }
-//         }
-//     }
-//
-//     public void ignore_Movt() throws Exception {
-//         int value;
-//         int j;
-//         setAllBitMasks(MaxineAarch64Tester.BitsFlag.Upper16Bits);
-//         for (int destReg = 0; destReg < 13; destReg++) {
-//             resetIgnoreValues();
-//             testValues[destReg] = true;
-//             for (j = 0; j < valueTestSet.length; j++) {
-//                 value = valueTestSet[j];
-//                 expectedValues[destReg] = (value & 0xffff) << 16;
-//                 asm.movt(Aarch64Assembler.ConditionFlag.Always, Aarch64.cpuRegisters[destReg], value & 0xffff);
-//                 generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//                 assert asm.codeBuffer.getInt(0) == (0x03400000 | (Aarch64Assembler.ConditionFlag.Always.value() << 28) | (destReg << 12) | (value & 0xfff) | (value & 0xf000) << 4);
-//                 asm.codeBuffer.reset();
-//             }
-//         }
-//     }
-//
-//     public void ignore_Flags() throws Exception {
-//         initialiseExpectedValues();
-//         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//         resetIgnoreValues();
-//         asm.codeBuffer.reset();
-//         asm.mov32BitConstant(Aarch64.cpuRegisters[0], 30);
-//         asm.sub(Aarch64Assembler.ConditionFlag.Always, true, Aarch64.cpuRegisters[0], Aarch64.cpuRegisters[0], 10, 0);
-//         asm.sub(Aarch64Assembler.ConditionFlag.Always, true, Aarch64.cpuRegisters[0], Aarch64.cpuRegisters[0], 10, 0);
-//         asm.sub(Aarch64Assembler.ConditionFlag.Always, true, Aarch64.cpuRegisters[0], Aarch64.cpuRegisters[0], 10, 0);
-//         asm.sub(Aarch64Assembler.ConditionFlag.Always, true, Aarch64.cpuRegisters[0], Aarch64.cpuRegisters[0], 10, 0);
-//         expectedValues[0] = -10;
-//         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//     }
-//
 //     public void ignore_Ldrd() throws Exception {
 //         initialiseExpectedValues();
 //         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
