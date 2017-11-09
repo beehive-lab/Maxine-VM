@@ -120,6 +120,8 @@ public class JDK {
     public static final ClassRef java_io_UnixFileSystem              = new ClassRef("java.io.UnixFileSystem", true);
     public static final ClassRef java_io_ExpiringCache               = new ClassRef("java.io.ExpiringCache");
     public static final ClassRef java_io_File                        = new LazyClassRef("java.io.File");
+    public static final ClassRef java_net_Inet6Address               = new LazyClassRef("java.net.Inet6Address");
+    public static final ClassRef java_net_InetAddress                = new LazyClassRef("java.net.InetAddress");
     public static final ClassRef java_net_InetSocketAddress          = new LazyClassRef("java.net.InetSocketAddress");
 
     public static final ClassRef java_nio_Bits                       = new LazyClassRef("java.nio.Bits");
@@ -160,6 +162,8 @@ public class JDK {
     public static final ClassRef java_util_concurrent_ConcurrentLinkedQueue= new LazyClassRef(java.util.concurrent.ConcurrentLinkedQueue.class);
     public static final ClassRef java_util_concurrent_ConcurrentLinkedQueue$Node= new LazyClassRef(java.util.concurrent.ConcurrentLinkedQueue.class, "Node");
     public static final ClassRef java_util_concurrent_CopyOnWriteArrayList = new LazyClassRef(java.util.concurrent.CopyOnWriteArrayList.class);
+    public static final ClassRef java_util_concurrent_CompletableFuture = new LazyClassRef("java.util.concurrent.CompletableFuture");
+    public static final ClassRef java_util_concurrent_CompletableFuture$Completion = new LazyClassRef("java.util.concurrent.CompletableFuture$Completion");
     public static final ClassRef java_util_concurrent_ConcurrentHashMap = new LazyClassRef(java.util.concurrent.ConcurrentHashMap.class);
     public static final ClassRef java_util_concurrent_ConcurrentHashMap$CounterCell =
             new LazyClassRef(java.util.concurrent.ConcurrentHashMap.class, "CounterCell");
@@ -215,6 +219,7 @@ public class JDK {
 
     public static final ClassRef sun_security_action_GetPropertyAction      = new ClassRef(sun.security.action.GetPropertyAction.class);
     public static final ClassRef sun_security_jca_ProviderConfig            = new LazyClassRef("sun.security.jca.ProviderConfig");
+    public static final ClassRef sun_security_krb5_PrincipalName            = new LazyClassRef("sun.security.krb5.PrincipalName");
 
     public static final ClassRef java_time_chrono_AbstractChronology        = new LazyClassRef("java.time.chrono.AbstractChronology");
     public static final ClassRef java_time_format_DateTimeFormatter         = new LazyClassRef("java.time.format.DateTimeFormatter");
