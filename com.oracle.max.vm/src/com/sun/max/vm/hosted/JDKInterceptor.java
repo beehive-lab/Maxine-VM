@@ -258,6 +258,8 @@ public final class JDKInterceptor {
             new ValueField("LOCK", ReferenceValue.from(new Object())).makeOptional(),
         JDK.sun_security_krb5_PrincipalName,
             new FieldOffsetRecomputation("NAME_STRINGS_OFFSET", "nameStrings"),
+        JDK.sun_security_provider_ByteArrayAccess,
+            new ArrayBaseOffsetRecomputation("byteArrayOfs", byte[].class),
         JDK.java_util_Random,
             new FieldOffsetRecomputation("seedOffset", "seed"),
         JDK.java_util_concurrent_ConcurrentSkipListSet,
@@ -320,6 +322,7 @@ public final class JDKInterceptor {
             new ArrayBaseOffsetRecomputation("base", long[].class),
             new ArrayIndexScaleShiftRecomputation("shift", long[].class),
         JDK.java_util_concurrent_atomic_AtomicReferenceArray,
+            new FieldOffsetRecomputation("arrayFieldOffset", "array"),
             new ArrayBaseOffsetRecomputation("base", Object[].class),
             new ArrayIndexScaleShiftRecomputation("shift", Object[].class),
         JDK.java_util_concurrent_atomic_AtomicReferenceFieldUpdater$AtomicReferenceFieldUpdaterImpl,
@@ -460,6 +463,26 @@ public final class JDKInterceptor {
             new ArrayIndexScaleShiftRecomputation("ASHIFT", Object[].class),
         JDK.java_util_concurrent_ConcurrentHashMap$TreeBin,
             new FieldOffsetRecomputation("LOCKSTATE", "lockState"),
+        JDK.java_util_concurrent_Exchanger,
+            new FieldOffsetRecomputation("BOUND", "bound"),
+            new FieldOffsetRecomputation("SLOT", "slot"),
+            new FieldOffsetRecomputation("MATCH", JDK.java_util_concurrent_Exchanger$Node, "match"),
+            new FieldOffsetRecomputation("BLOCKER", JDK.java_lang_Thread, "parkBlocker"),
+            // ABASE absorbs padding in front of element 0 (See Exchanger.java)
+            new ArrayBaseOffsetRecomputation("ABASE", Object[].class, (1 << 7)),
+        JDK.java_util_concurrent_ForkJoinPool,
+            new FieldOffsetRecomputation("CTL", "ctl"),
+            new FieldOffsetRecomputation("RUNSTATE", "runState"),
+            new FieldOffsetRecomputation("STEALCOUNTER", "stealCounter"),
+            new FieldOffsetRecomputation("PARKBLOCKER", JDK.java_lang_Thread, "parkBlocker"),
+            new FieldOffsetRecomputation("QTOP", JDK.java_util_concurrent_ForkJoinPool$WorkQueue, "top"),
+            new FieldOffsetRecomputation("QLOCK", JDK.java_util_concurrent_ForkJoinPool$WorkQueue, "qlock"),
+            new FieldOffsetRecomputation("QSCANSTATE", JDK.java_util_concurrent_ForkJoinPool$WorkQueue, "scanState"),
+            new FieldOffsetRecomputation("QPARKER", JDK.java_util_concurrent_ForkJoinPool$WorkQueue, "parker"),
+            new FieldOffsetRecomputation("QCURRENTSTEAL", JDK.java_util_concurrent_ForkJoinPool$WorkQueue, "currentSteal"),
+            new FieldOffsetRecomputation("QCURRENTJOIN", JDK.java_util_concurrent_ForkJoinPool$WorkQueue, "currentJoin"),
+            new ArrayBaseOffsetRecomputation("ABASE", Object[].class),
+            new ArrayIndexScaleShiftRecomputation("ASHIFT", Object[].class),
         JDK.java_util_concurrent_ForkJoinPool$WorkQueue,
             new ArrayBaseOffsetRecomputation("ABASE", Object[].class),
             new ArrayIndexScaleShiftRecomputation("ASHIFT", Object[].class),
@@ -831,14 +854,21 @@ public final class JDKInterceptor {
      */
     private static class ArrayBaseOffsetRecomputation extends InterceptedField {
         private final Class arrayClass;
+        private final int offset;
         ArrayBaseOffsetRecomputation(String arrayBaseOffsetFieldName, Class arrayClass) {
             super(arrayBaseOffsetFieldName);
             this.arrayClass = arrayClass;
+            this.offset = 0;
+        }
+        ArrayBaseOffsetRecomputation(String arrayBaseOffsetFieldName, Class arrayClass, int offset) {
+            super(arrayBaseOffsetFieldName);
+            this.arrayClass = arrayClass;
+            this.offset = offset;
         }
         @Override
         public Value getValue(Object object, FieldActor fieldActor) {
             ArrayLayout arrayLayout = (ArrayLayout) ClassActor.fromJava(arrayClass).dynamicHub().specificLayout;
-            return fieldActor.kind.convert(IntValue.from(arrayLayout.getElementOffsetFromOrigin(0).toInt()));
+            return fieldActor.kind.convert(IntValue.from(arrayLayout.getElementOffsetFromOrigin(0).toInt() + offset));
         }
     }
 

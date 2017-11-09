@@ -169,6 +169,8 @@ public class JDK {
             new LazyClassRef(java.util.concurrent.ConcurrentHashMap.class, "CounterCell");
     public static final ClassRef java_util_concurrent_ConcurrentHashMap$HashEntry = new LazyClassRef(java.util.concurrent.ConcurrentHashMap.class, "HashEntry");
     public static final ClassRef java_util_concurrent_ConcurrentHashMap$TreeBin = new LazyClassRef(java.util.concurrent.ConcurrentHashMap.class, "TreeBin");
+    public static final ClassRef java_util_concurrent_Exchanger = new LazyClassRef(java.util.concurrent.Exchanger.class);
+    public static final ClassRef java_util_concurrent_Exchanger$Node = new LazyClassRef(java.util.concurrent.Exchanger.class, "Node");
     public static final ClassRef java_util_concurrent_SynchronousQueue = new LazyClassRef(java.util.concurrent.SynchronousQueue.class);
     public static final ClassRef java_util_concurrent_SynchronousQueue$TransferStack = new LazyClassRef(java.util.concurrent.SynchronousQueue.class, "TransferStack");
     public static final ClassRef java_util_concurrent_SynchronousQueue$TransferStack$SNode = new LazyClassRef(java.util.concurrent.SynchronousQueue.class, "TransferStack$SNode");
@@ -220,6 +222,7 @@ public class JDK {
     public static final ClassRef sun_security_action_GetPropertyAction      = new ClassRef(sun.security.action.GetPropertyAction.class);
     public static final ClassRef sun_security_jca_ProviderConfig            = new LazyClassRef("sun.security.jca.ProviderConfig");
     public static final ClassRef sun_security_krb5_PrincipalName            = new LazyClassRef("sun.security.krb5.PrincipalName");
+    public static final ClassRef sun_security_provider_ByteArrayAccess      = new LazyClassRef("sun.security.provider.ByteArrayAccess");
 
     public static final ClassRef java_time_chrono_AbstractChronology        = new LazyClassRef("java.time.chrono.AbstractChronology");
     public static final ClassRef java_time_format_DateTimeFormatter         = new LazyClassRef("java.time.format.DateTimeFormatter");
