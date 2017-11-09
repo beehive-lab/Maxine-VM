@@ -401,11 +401,6 @@ public final class JDKInterceptor {
             new ArrayIndexScaleShiftRecomputation("ASHIFT", Object[].class),
         JDK.java_util_concurrent_ForkJoinTask,
             new FieldOffsetRecomputation("statusOffset", "status"),
-        // The following fields have been added in JDK 7 update 6
-        JDK.java_util_Hashtable,
-            new FieldOffsetRecomputation("HASHSEED_OFFSET", "hashSeed").makeOptional(),
-        JDK.java_util_HashMap$Holder,
-            new FieldOffsetRecomputation("HASHSEED_OFFSET", JDK.java_util_HashMap, "hashSeed").makeOptional(),
         // Added in JDK 7 update 15
         JDK.java_math_BigInteger,
             new FieldOffsetRecomputation("signumOffset", "signum"),
