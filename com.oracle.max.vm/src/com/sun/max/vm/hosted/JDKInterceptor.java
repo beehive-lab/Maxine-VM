@@ -202,7 +202,7 @@ public final class JDKInterceptor {
         JDK.java_lang_ref_Reference,
             "discovered",
             "pending",
-            "referent", // XXX Need to add this chap to default & 1.7.0.101 branches TimH
+            "referent",
         JDK.java_lang_ref_Finalizer,
             "unfinalized",
             new ValueField("queue", ReferenceValue.from(new ReferenceQueue())).makeNonFinal(),
