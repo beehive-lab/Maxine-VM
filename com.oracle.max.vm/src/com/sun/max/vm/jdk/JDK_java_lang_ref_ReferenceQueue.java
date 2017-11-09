@@ -23,6 +23,7 @@
 package com.sun.max.vm.jdk;
 
 import static com.sun.max.vm.heap.SpecialReferenceManager.*;
+import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
 
 import java.lang.ref.*;
 
@@ -59,17 +60,45 @@ public final class JDK_java_lang_ref_ReferenceQueue {
     @ALIAS(declaringClass = ReferenceQueue.class, descriptor = "Ljava/lang/ref/ReferenceQueue$Lock;")
     private Object lock;
 
+    @INTRINSIC(UNSAFE_CAST)
+    protected static native JDK_java_lang_ref_ReferenceQueue asThis(Object cl);
+
     /**
      * Note: Must be kept in sync with the original JDK source.
      */
     @SUBSTITUTE
     boolean enqueue(java.lang.ref.Reference r) {
-        synchronized (r) {
-            JLRRAlias rAlias = asJLRRAlias(r);
-            if (rAlias.queue == ENQUEUED) {
-                return false;
+        if (JDK.JDK_VERSION == JDK.JDK_7) {
+            synchronized (r) {
+                JLRRAlias rAlias = asJLRRAlias(r);
+                if (rAlias.queue == ENQUEUED) {
+                    return false;
+                }
+                synchronized (lock) {
+                    rAlias.queue = ENQUEUED;
+                    rAlias.next = (head == null) ? r : head;
+                    head = r;
+                    queueLength++;
+                    if (ClassRegistry.JLR_FINAL_REFERENCE.isInstance(r)) {
+                        sun.misc.VM.addFinalRefCount(1);
+                    }
+                    lock.notifyAll();
+                    if (SpecialReferenceManager.specialReferenceLogger.enabled()) {
+                        SpecialReferenceManager.specialReferenceLogger.logEnqueue(ObjectAccess.readClassActor(r), Reference.fromJava(r).toOrigin(), Reference.fromJava(this).toOrigin());
+                    }
+                    return true;
+                }
             }
+        } else {
             synchronized (lock) {
+                // Check that since getting the lock this reference hasn't already been
+                // enqueued (and even then removed)
+                JLRRAlias rAlias = asJLRRAlias(r);
+                ReferenceQueue<?> queue = rAlias.queue;
+                if ((queue == NULL) || (queue == ENQUEUED)) {
+                    return false;
+                }
+                assert asThis(queue) == this;
                 rAlias.queue = ENQUEUED;
                 rAlias.next = (head == null) ? r : head;
                 head = r;
