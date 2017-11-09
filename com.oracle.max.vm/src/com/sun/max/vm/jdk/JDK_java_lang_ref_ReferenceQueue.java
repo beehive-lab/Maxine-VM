@@ -121,11 +121,11 @@ public final class JDK_java_lang_ref_ReferenceQueue {
     @SUBSTITUTE
     private java.lang.ref.Reference reallyPoll() {
         FatalError.check(Thread.holdsLock(lock), "ReferenceQueue.lock should be held");
-        if (head != null) {
-            java.lang.ref.Reference r = head;
+        java.lang.ref.Reference r = head;
+        if (r != null) {
             JLRRAlias rAlias = asJLRRAlias(r);
 
-            head = (rAlias.next == r) ? null : asJLRR(rAlias.next);
+            head = (rAlias.next == r) ? null : rAlias.next;
 
             if (rAlias.queue != ENQUEUED) {
                 Log.print(ObjectAccess.readClassActor(r).name.string);
