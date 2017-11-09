@@ -432,7 +432,7 @@ public final class JDKInterceptor {
             "declaredPublicFields",
             "declaredPublicMethods",
         JDK.java_lang_Class$Atomic,
-            new ArrayBaseOffsetRecomputation("annotationDataOffset", Object[].class),
+            new FieldOffsetRecomputation("annotationDataOffset", JDK.java_lang_Class, "annotationData"),
         JDK.java_lang_invoke_CallSite,
             "THROW_UCS",
             "GET_TARGET",
