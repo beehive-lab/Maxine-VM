@@ -290,7 +290,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         setUpScratch(address); // r12 has the address to CAS
         Aarch64Address scratchAddress = Aarch64Address.createRegisterOffsetAddress(scratchRegister, Aarch64.zr, false);
         ldxr(64, Aarch64.r8, scratchAddress); // r8 has the current Value
-        cmp(64, cmpValue, ARMV7.r8); // compare r8 with cmpValue
+        cmp(64, cmpValue, Aarch64.r8); // compare r8 with cmpValue
         stxr(64, Aarch64.r8, newValue, scratchAddress); // if equal, store newValue to address and
                                                                          // result to r8
         branchConditionally(ConditionFlag.NE, notEqualTocmpValue); // we were not equal to the cmpValue
