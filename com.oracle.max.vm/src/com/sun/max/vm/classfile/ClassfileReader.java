@@ -1021,8 +1021,8 @@ public final class ClassfileReader {
                 }
 
                 final MethodActor methodActor;
-                // Make sure to check for static methods first since lambdas are
-                // static and may appear in interfaces as well.
+                // Make sure to check for static methods first since as of JDK 8 lambdas (which are static) and
+                // static default methods may appear in interfaces.
                 if (isStatic) {
                     methodActor = new StaticMethodActor(name, descriptor, flags, codeAttribute, intrinsic);
                 } else if (isInterface) {
