@@ -37,6 +37,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * The register to which {@link CiRegister#Frame} and {@link CiRegister#CallerFrame} are bound.
      */
     public final CiRegister frameRegister;
+    public final CiRegister scratchRegister;
 
     @Override
     public void patchJumpTarget(int branch, int target) {
@@ -528,6 +529,7 @@ public class Aarch64Assembler extends AbstractAssembler {
     public Aarch64Assembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target);
         this.frameRegister = registerConfig == null ? null : registerConfig.getFrameRegister();
+        this.scratchRegister = registerConfig == null ? Aarch64.r16 : registerConfig.getScratchRegister();
     }
 
     /* Conditional Branch (5.2.1) */
