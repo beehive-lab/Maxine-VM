@@ -1403,19 +1403,19 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
 //     }
 //
-//     public void ignore_addq() throws Exception {
-//         initialiseExpectedValues();
-//         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//         resetIgnoreValues();
-//         asm.codeBuffer.reset();
-//         for (int i = 0; i < 10; i++) {
-//             asm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
-//             asm.addq(Aarch64.cpuRegisters[i], expectedValues[i]);
-//             expectedValues[i] += expectedValues[i];
-//             testValues[i] = true;
-//         }
-//         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//     }
+    public void work_addq() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        asm.codeBuffer.reset();
+        for (int i = 0; i < 10; i++) {
+            asm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
+            asm.addq(Aarch64.cpuRegisters[i], expectedValues[i]);
+            expectedValues[i] += expectedValues[i];
+            testValues[i] = true;
+        }
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
 //
 //     public void ignore_Ldrsh() throws Exception {
 //         int[] testval = { 0x03020100, 0x8fed9ba9};
