@@ -1527,6 +1527,12 @@ public class Aarch64Assembler extends AbstractAssembler {
         addSubExtendedInstruction(dst, src1, src2, extendType, shiftAmt, generalFromSize(size), Instruction.ADDS);
     }
 
+    protected void checkConstraint(boolean passed, String expression) {
+        if (!passed) {
+            throw new IllegalArgumentException(expression);
+        }
+    }
+
     public void addlsl(final CiRegister rd, final CiRegister rn, final CiRegister rm, final int shiftImm) {
         int instruction = 0x8b000000;
         checkConstraint(0 <= shiftImm && shiftImm <= 31, "0 <= shitImm && shitImm <= 31");
