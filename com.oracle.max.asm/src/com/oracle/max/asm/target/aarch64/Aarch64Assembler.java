@@ -1527,6 +1527,16 @@ public class Aarch64Assembler extends AbstractAssembler {
         addSubExtendedInstruction(dst, src1, src2, extendType, shiftAmt, generalFromSize(size), Instruction.ADDS);
     }
 
+    public void addlsl(final CiRegister rd, final CiRegister rn, final CiRegister rm, final int shiftImm) {
+        int instruction = 0x8b000000;
+        checkConstraint(0 <= shiftImm && shiftImm <= 31, "0 <= shitImm && shitImm <= 31");
+        instruction |= rd.getEncoding();
+        instruction |= rn.getEncoding() << 5;
+        instruction |= shiftImm << 10;
+        instruction |= rm.getEncoding() << 16;
+        emitInt(instruction);
+    }
+
     /**
      * dst = src1 - extendType(src2) << imm.
      *
