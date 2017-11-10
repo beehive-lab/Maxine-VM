@@ -1049,13 +1049,14 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
 
     public final ClassMethodActor findClassMethodActor(Utf8Constant name, SignatureDescriptor descriptor) {
         ClassActor classActor = this;
+        // Constructors and initializers should be found in this classactor and not any parent.
+        if (name.equals(SymbolTable.INIT) || name.equals(SymbolTable.CLINIT)) {
+            return classActor.findLocalClassMethodActor(name, descriptor);
+        }
         do {
             final ClassMethodActor methodActor = classActor.findLocalClassMethodActor(name, descriptor);
             if (methodActor != null) {
                 return methodActor;
-            }
-            if (name.equals(SymbolTable.INIT) || name.equals(SymbolTable.CLINIT)) {
-                return null;
             }
             classActor = classActor.superClassActor;
         } while (classActor != null);
