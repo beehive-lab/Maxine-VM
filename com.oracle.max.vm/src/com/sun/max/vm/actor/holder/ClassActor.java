@@ -303,6 +303,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
 
         for (MethodActor methodActor : methodActors) {
             if (methodActor.isStatic()) {
+                assert methodActor instanceof StaticMethodActor;
                 staticMethods.add((StaticMethodActor) methodActor);
             } else if (isInterface()) {
                 assert methodActor instanceof InterfaceMethodActor;
