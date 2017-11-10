@@ -2528,7 +2528,8 @@ public class Aarch64Assembler extends AbstractAssembler {
         LOAD_STORE(0x9, "ISHLD"),
         STORE_STORE(0xA, "ISHST"),
         STORE_LOAD(0xA, "ISHST"), /* not too sure about this */
-        ANY_ANY(0xB, "ISH");
+        ANY_ANY(0xB, "ISH"),
+        SY(0xF, "SY");
 
         public final int encoding;
         public final String optionName;
