@@ -180,9 +180,19 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
         return false;
     }
 
+    /**
+     * @return whether this method was generated to provide a proxy to a default method in a vtable slot that would
+     * otherwise be empty.
+     *
+     * @see ProxyToDefaultMethodActor
+     */
+    public boolean isProxyToDefault() {
+        return false;
+    }
+
     @Override
     public final boolean isHiddenToReflection() {
-        return isInitializer() || isMiranda();
+        return isInitializer() || isMiranda() || isProxyToDefault();
     }
 
     public boolean isNativeInitialization() {
@@ -348,7 +358,7 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
         if (isInstanceInitializer()) {
             return toJavaConstructor().getAnnotation(annotationClass);
         }
-        if (isClassInitializer() || isMiranda()) {
+        if (isClassInitializer() || isMiranda() || isProxyToDefault()) {
             return null;
         }
         try {
