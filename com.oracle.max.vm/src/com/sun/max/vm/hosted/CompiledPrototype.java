@@ -789,7 +789,9 @@ public class CompiledPrototype extends Prototype {
             needsCompilationCallback.needsCompilation(methodActor)) {
 
             String holderName = methodActor.holder().typeDescriptor.toJavaString();
-            if (matches(holderName, compilationBlacklist) && !matches(holderName, compilationWhitelist)) {
+            if (!methodActor.isNativeInitialization()
+                    && matches(holderName, compilationBlacklist)
+                    && !matches(holderName, compilationWhitelist)) {
                 return false;
             }
 
