@@ -1031,7 +1031,7 @@ public final class ClassfileReader {
                     } else if (isInit) {
                         throw classFormatError("Interface cannot have a constructor");
                     } else {
-                        methodActor = new InterfaceMethodActor(name, descriptor, flags, intrinsic);
+                        methodActor = new InterfaceMethodActor(name, descriptor, flags, codeAttribute, intrinsic);
                     }
                 } else {
                     methodActor = new VirtualMethodActor(name, descriptor, flags, codeAttribute, intrinsic);

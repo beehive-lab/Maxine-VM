@@ -23,16 +23,17 @@
 package com.sun.max.vm.actor.member;
 
 import com.sun.max.annotate.*;
+import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.type.*;
 
 /**
  * Interface method declarations.
  */
-public class InterfaceMethodActor extends MethodActor {
+public class InterfaceMethodActor extends VirtualMethodActor {
 
-    public InterfaceMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags, String intrinsic) {
-        super(name, descriptor, flags, intrinsic);
+    public InterfaceMethodActor(Utf8Constant name, SignatureDescriptor descriptor, int flags, CodeAttribute codeAttribute, String intrinsic) {
+        super(name, descriptor, flags, codeAttribute, intrinsic);
     }
 
     @CONSTANT
@@ -51,5 +52,9 @@ public class InterfaceMethodActor extends MethodActor {
 
     public StackTraceElement toStackTraceElement(int bci) {
         return new StackTraceElement(holder().name.string, name.string, holder().sourceFileName, -1);
+    }
+
+    public boolean isDefault() {
+        return codeAttribute() != null;
     }
 }
