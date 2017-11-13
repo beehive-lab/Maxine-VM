@@ -221,8 +221,9 @@ public class Package extends BootImagePackage {
             CompiledPrototype.addCompilationBlacklist("java.lang.UNIXProcess");
             // Depends on java.lang.invoke.BoundMethodHandle which is omitted
             CompiledPrototype.addCompilationBlacklist("java.lang.invoke.LambdaForm");
-            // Classes in this package break compilation
+            // Classes in these packages break compilation
             CompiledPrototype.addCompilationBlacklist("java.time");
+            CompiledPrototype.addCompilationBlacklist("java.io.ObjectStreamClass");
         }
 
         // Exceptions from the above blacklisted packages

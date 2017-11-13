@@ -1025,7 +1025,7 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
         ClassActor holder = this;
         do {
             methodActor = holder.findLocalVirtualMethodActor(name, descriptor);
-            if (methodActor != null && !methodActor.isMiranda()) {
+            if (methodActor != null && !methodActor.isMiranda() && !methodActor.isProxyToDefault()) {
                 return methodActor;
             }
             methodActor = holder.findLocalStaticMethodActor(name, descriptor);
@@ -1185,15 +1185,29 @@ public abstract class ClassActor extends Actor implements RiResolvedType {
         for (InterfaceActor interfaceActor : allInterfaceActors) {
             for (InterfaceMethodActor interfaceMethodActor : interfaceActor.localInterfaceMethodActors()) {
                 if (lookup.get(interfaceMethodActor) == null) {
-                    numberOfLocalMirandaMethods++;
-                    final MirandaMethodActor mirandaMethodActor = new MirandaMethodActor(interfaceMethodActor);
-                    mirandaMethodActor.assignHolder(this, memberIndex);
-                    memberIndex++;
-                    lookup.put(mirandaMethodActor, mirandaMethodActor);
+                    if (interfaceMethodActor.codeAttribute() != null) {
+                        numberOfLocalMirandaMethods++;
+                        final ProxyToDefaultMethodActor proxyToDefaultMethodActor =
+                                new ProxyToDefaultMethodActor(interfaceMethodActor);
+                        proxyToDefaultMethodActor.assignHolder(interfaceMethodActor.holder(),
+                                                              interfaceMethodActor.memberIndex());
+                        memberIndex++;
+                        lookup.put(proxyToDefaultMethodActor, proxyToDefaultMethodActor);
 
-                    result.add(mirandaMethodActor);
-                    mirandaMethodActor.setVTableIndex(vTableIndex);
-                    vTableIndex++;
+                        result.add(proxyToDefaultMethodActor);
+                        proxyToDefaultMethodActor.setVTableIndex(vTableIndex);
+                        vTableIndex++;
+                    } else {
+                        numberOfLocalMirandaMethods++;
+                        final MirandaMethodActor mirandaMethodActor = new MirandaMethodActor(interfaceMethodActor);
+                        mirandaMethodActor.assignHolder(this, memberIndex);
+                        memberIndex++;
+                        lookup.put(mirandaMethodActor, mirandaMethodActor);
+
+                        result.add(mirandaMethodActor);
+                        mirandaMethodActor.setVTableIndex(vTableIndex);
+                        vTableIndex++;
+                    }
                 }
             }
         }

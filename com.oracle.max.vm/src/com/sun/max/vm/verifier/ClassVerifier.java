@@ -56,7 +56,7 @@ public abstract class ClassVerifier extends Verifier {
 
     private void verifyMethods(MethodActor[] methodActors) {
         for (MethodActor methodActor : methodActors) {
-            if (methodActor instanceof ClassMethodActor) {
+            if (methodActor instanceof ClassMethodActor && !methodActor.isProxyToDefault()) {
                 final ClassMethodActor classMethodActor = (ClassMethodActor) methodActor;
                 if (classMethodActor.compilee() == classMethodActor) {
                     verifyMethod(classMethodActor);

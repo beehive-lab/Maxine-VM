@@ -387,6 +387,7 @@ public abstract class ClassMethodActor extends MethodActor {
     }
 
     public synchronized void verify(ClassVerifier classVerifier) {
+        assert !this.isProxyToDefault();
         if (codeAttribute() != null && !isVerified(flags())) {
             codeAttribute = verify(compilee, codeAttribute, classVerifier);
         }
