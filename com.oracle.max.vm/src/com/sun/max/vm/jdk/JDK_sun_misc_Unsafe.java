@@ -741,6 +741,9 @@ final class JDK_sun_misc_Unsafe {
      */
     @SUBSTITUTE
     public Class defineClass(String name, byte[] bytes, int offset, int length, ClassLoader loader, ProtectionDomain protectionDomain) {
+        if (loader == null) {
+            loader = BootClassLoader.BOOT_CLASS_LOADER;
+        }
         return ClassfileReader.defineClassActor(name, loader, bytes, offset, length, protectionDomain, null, false).toJava();
     }
 
