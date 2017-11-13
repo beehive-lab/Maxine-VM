@@ -185,6 +185,12 @@ public abstract class MethodActor extends MemberActor implements RiResolvedMetho
         return isInitializer() || isMiranda();
     }
 
+    public boolean isNativeInitialization() {
+        return (name.equals("initIDs") || name.equals("initNative"))
+                && descriptor().numberOfParameters() == 0
+                && resultKind() == Kind.VOID;
+    }
+
     /**
      * Gets the bytes of the RuntimeVisibleParameterAnnotations class file attribute associated with this method actor.
      *

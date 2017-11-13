@@ -131,7 +131,7 @@ public class JavaRunScheme extends AbstractVMScheme implements RunScheme {
         final List<StaticMethodActor> methods = new LinkedList<StaticMethodActor>();
         for (ClassActor classActor : BOOT_CLASS_REGISTRY.bootImageClasses()) {
             for (StaticMethodActor method : classActor.localStaticMethodActors()) {
-                if ((method.name.equals("initIDs") || method.name.equals("initNative")) && (method.descriptor().numberOfParameters() == 0) && method.resultKind() == Kind.VOID) {
+                if (method.isNativeInitialization()) {
                     method.makeInvocationStub();
                     methods.add(method);
                 }
