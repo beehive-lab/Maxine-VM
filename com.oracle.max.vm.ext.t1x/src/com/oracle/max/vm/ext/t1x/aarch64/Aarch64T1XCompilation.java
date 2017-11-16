@@ -235,7 +235,7 @@ public class Aarch64T1XCompilation extends T1XCompilation {
         int index = objectLiterals.size();
         objectLiterals.add(value);
         patchInfo.addObjectLiteral(buf.position(), index);
-        asm.ldr(64, dst, Aarch64Address.PLACEHOLDER);
+        asm.ldr(64, dst, Aarch64Address.Placeholder);
     }
 
     @Override

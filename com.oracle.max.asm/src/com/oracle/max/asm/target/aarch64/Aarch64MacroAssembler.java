@@ -131,8 +131,8 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param allowOverwrite if true allows to change value of base or index register to generate address.
      * @return Aarch64Address pointing to memory at {@code base + displacement + index << log2(transferSize)}.
      */
-    public Aarch64Address makeAddress(CiRegister base, long displacement, CiRegister index, boolean signExtendIndex, int transferSize, CiRegister additionalReg, boolean allowOverwrite) {
-        assert Aarch64.isGeneralPurposeOrSpReg(base) && Aarch64.isGeneralPurposeOrZeroReg(index) && Aarch64.isGeneralPurposeOrZeroReg(additionalReg);
+    public Aarch64Address makeAddress(CiKind kind, CiValue base, long displacement, CiValue index, boolean signExtendIndex, int transferSize, CiValue additionalReg, boolean allowOverwrite) {
+        assert Aarch64.isGeneralPurposeOrSpReg(base.asRegister()) && Aarch64.isGeneralPurposeOrZeroReg(index.asRegister()) && Aarch64.isGeneralPurposeOrZeroReg(additionalReg.asRegister());
         AddressGenerationPlan plan = generateAddressPlan(displacement, !index.equals(zr), transferSize);
         assert allowOverwrite || !Aarch64.zr.equals(additionalReg) || plan.workPlan == NO_WORK;
         assert !plan.needsScratch || !Aarch64.zr.equals(additionalReg);
@@ -148,24 +148,24 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
                 }
                 break;
             case ADD_TO_INDEX:
-                CiRegister oldIndex = index;
+                CiValue oldIndex = index;
                 index = allowOverwrite ? index : additionalReg;
                 if (plan.needsScratch) {
-                    mov(additionalReg, scaledDisplacement);
-                    add(signExtendIndex ? 32 : 64, index, oldIndex, additionalReg);
+                    mov(additionalReg.asRegister(), scaledDisplacement);
+                    add(signExtendIndex ? 32 : 64, index.asRegister(), oldIndex.asRegister(), additionalReg.asRegister());
                 } else {
-                    add(signExtendIndex ? 32 : 64, index, oldIndex, (int) scaledDisplacement);
+                    add(signExtendIndex ? 32 : 64, index.asRegister(), oldIndex.asRegister(), (int) scaledDisplacement);
                 }
                 immediate = 0;
                 break;
             case ADD_TO_BASE:
-                CiRegister oldBase = base;
+                CiValue oldBase = base;
                 base = allowOverwrite ? base : additionalReg;
                 if (plan.needsScratch) {
-                    mov(additionalReg, displacement);
-                    add(64, base, oldBase, additionalReg);
+                    mov(additionalReg.asRegister(), displacement);
+                    add(64, base.asRegister(), oldBase.asRegister(), additionalReg.asRegister());
                 } else {
-                    add(64, base, oldBase, (int) displacement);
+                    add(64, base.asRegister(), oldBase.asRegister(), (int) displacement);
                 }
                 immediate = 0;
                 break;
@@ -182,7 +182,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
                 extendType = ExtendType.SXTW;
             }
         }
-        return Aarch64Address.createAddress(addressingMode, base, index, immediate, transferSize != 0, extendType);
+        return Aarch64Address.createAddress(kind, addressingMode, base.asRegister(), index.asRegister(), immediate, transferSize != 0, extendType);
     }
 
     /**
@@ -197,9 +197,9 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * @param allowOverwrite if true allows to change value of base or index register to generate address.
      * @return Aarch64Address pointing to memory at {@code base + displacement}.
      */
-    public Aarch64Address makeAddress(CiRegister base, long displacement, CiRegister additionalReg, int transferSize, boolean allowOverwrite) {
-        assert Aarch64.isGeneralPurposeReg(additionalReg);
-        return makeAddress(base, displacement, zr, /* sign-extend */false, transferSize, additionalReg, allowOverwrite);
+    public Aarch64Address makeAddress(CiKind kind, CiValue base, long displacement, CiValue additionalReg, int transferSize, boolean allowOverwrite) {
+        assert Aarch64.isGeneralPurposeReg(additionalReg.asRegister());
+        return makeAddress(kind, base, displacement, Aarch64.zr.asValue(), /* sign-extend */false, transferSize, additionalReg, allowOverwrite);
     }
 
     /**
@@ -212,8 +212,8 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      *            scaled. If 0 no scaling is assumed. Can be 0, 1, 2, 4 or 8.
      * @return Aarch64Address pointing to memory at {@code base + displacement}.
      */
-    public Aarch64Address makeAddress(CiRegister base, long displacement, int transferSize) {
-        return makeAddress(base, displacement, Aarch64.zr, /* signExtend */false, transferSize, Aarch64.zr, /* allowOverwrite */false);
+    public Aarch64Address makeAddress(CiKind kind, CiValue base, long displacement, int transferSize) {
+        return makeAddress(kind, base, displacement, Aarch64.zr.asValue(), /* signExtend */false, transferSize, Aarch64.zr.asValue(), /* allowOverwrite */false);
     }
 
     /**

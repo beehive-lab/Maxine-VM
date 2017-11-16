@@ -40,9 +40,9 @@ import com.sun.cri.ci.*;
  * <p>
  * Not all addressing modes are supported for all instructions.
  */
-public final class Aarch64Address extends AbstractAddress {
+public final class Aarch64Address extends CiAddress {
     // Placeholder for addresses that get patched later.
-    public static final Aarch64Address PLACEHOLDER = createPcLiteralAddress(0);
+    public static final Aarch64Address Placeholder = new Aarch64Address(CiKind.Illegal, Aarch64.zr.asValue(), Aarch64.zr.asValue(), 0, false, null, AddressingMode.PC_LITERAL);
 
     public enum AddressingMode {
         /**
@@ -96,9 +96,9 @@ public final class Aarch64Address extends AbstractAddress {
      * Null is never accepted for a register, if an addressMode doesn't use a register the register has to be the zero-register.
      * extendType has to be null for every addressingMode except EXTENDED_REGISTER_OFFSET.
      */
-    public static Aarch64Address createAddress(AddressingMode addressingMode, CiRegister base, CiRegister offset,
+    public static Aarch64Address createAddress(CiKind kind, AddressingMode addressingMode, CiRegister base, CiRegister offset,
                                              int immediate, boolean isScaled, Aarch64Assembler.ExtendType extendType) {
-        return new Aarch64Address(base, offset, immediate, isScaled, extendType, addressingMode);
+        return new Aarch64Address(kind, base.asValue(), offset.asValue(), immediate, isScaled, extendType, addressingMode);
     }
 
     /**
@@ -108,7 +108,7 @@ public final class Aarch64Address extends AbstractAddress {
      *         After ldr/str instruction, base is updated to point to base + imm9
      */
     public static Aarch64Address createPostIndexedImmediateAddress(CiRegister base, int imm9) {
-        return new Aarch64Address(base, zr, imm9, false, null, AddressingMode.IMMEDIATE_POST_INDEXED);
+        return new Aarch64Address(CiKind.Int, base.asValue(), Aarch64.zr.asValue(), imm9, false, null, AddressingMode.IMMEDIATE_POST_INDEXED);
     }
 
     /**
@@ -118,7 +118,7 @@ public final class Aarch64Address extends AbstractAddress {
      *         After ldr/str instruction, base is updated to point to base + imm9
      */
     public static Aarch64Address createPreIndexedImmediateAddress(CiRegister base, int imm9) {
-        return new Aarch64Address(base, zr, imm9, false, null, AddressingMode.IMMEDIATE_PRE_INDEXED);
+        return new Aarch64Address(CiKind.Int, base.asValue(), Aarch64.zr.asValue(), imm9, false, null, AddressingMode.IMMEDIATE_PRE_INDEXED);
     }
 
     /**
@@ -128,7 +128,7 @@ public final class Aarch64Address extends AbstractAddress {
      * @return Aarch64Address specifying a signed address of the form base + imm12 << log2(memory_transfer_size).
      */
     public static Aarch64Address createScaledImmediateAddress(CiRegister base, int imm12) {
-        return new Aarch64Address(base, zr, imm12, true, null, AddressingMode.IMMEDIATE_SCALED);
+        return new Aarch64Address(CiKind.Int, base.asValue(), Aarch64.zr.asValue(), imm12, true, null, AddressingMode.IMMEDIATE_SCALED);
     }
 
     /**
@@ -137,7 +137,7 @@ public final class Aarch64Address extends AbstractAddress {
      * @return Aarch64Address specifying an unscaled immediate address of the form base + imm9
      */
     public static Aarch64Address createUnscaledImmediateAddress(CiRegister base, int imm9) {
-        return new Aarch64Address(base, zr, imm9, false, null, AddressingMode.IMMEDIATE_UNSCALED);
+        return new Aarch64Address(CiKind.Int, base.asValue(), Aarch64.zr.asValue(), imm9, false, null, AddressingMode.IMMEDIATE_UNSCALED);
     }
 
     /**
@@ -145,7 +145,7 @@ public final class Aarch64Address extends AbstractAddress {
      * @return Aarch64Address specifying the address pointed to by base.
      */
     public static Aarch64Address createBaseRegisterOnlyAddress(CiRegister base) {
-        return createRegisterOffsetAddress(base, zr, false);
+        return createRegisterOffsetAddress(base, Aarch64.zr, false);
     }
 
     /**
@@ -157,7 +157,7 @@ public final class Aarch64Address extends AbstractAddress {
      *         (memory_transfer_size)]
      */
     public static Aarch64Address createRegisterOffsetAddress(CiRegister base, CiRegister offset, boolean scaled) {
-        return new Aarch64Address(base, offset, 0, scaled, null, AddressingMode.REGISTER_OFFSET);
+        return new Aarch64Address(CiKind.Int, base.asValue(), offset.asValue(), 0, scaled, null, AddressingMode.REGISTER_OFFSET);
     }
 
     /**
@@ -169,23 +169,17 @@ public final class Aarch64Address extends AbstractAddress {
      * @return Aarch64Address specifying an extended register offset of the form base + extendType(offset)
      *         [<< log2(memory_transfer_size)]
      */
-    public static Aarch64Address createExtendedRegisterOffsetAddress(CiRegister base, CiRegister offset, boolean scaled,
+    public Aarch64Address createExtendedRegisterOffsetAddress(CiRegister base, CiRegister offset, boolean scaled,
                                                                    Aarch64Assembler.ExtendType extendType) {
-        return new Aarch64Address(base, offset, 0, scaled, extendType, AddressingMode.EXTENDED_REGISTER_OFFSET);
+        return new Aarch64Address(CiKind.Int, base.asValue(), offset.asValue(), 0, scaled, extendType, AddressingMode.EXTENDED_REGISTER_OFFSET);
     }
 
-    /**
-     * @param imm21 Signed 21-bit offset, word aligned.
-     * @return Aarch64Address specifying a PC-literal address of the form PC + offset
-     */
-    public static Aarch64Address createPcLiteralAddress(int imm21) {
-        return new Aarch64Address(zr, zr, imm21, false, null, AddressingMode.PC_LITERAL);
-    }
 
-    private Aarch64Address(CiRegister base, CiRegister offset, int immediate, boolean scaled,
+    private Aarch64Address(CiKind kind, CiValue base, CiValue offset, int immediate, boolean scaled,
                          Aarch64Assembler.ExtendType extendType, AddressingMode addressingMode) {
-        this.base = base;
-        this.offset = offset;
+        super(kind, base, offset);
+        this.base = base.asRegister();
+        this.offset = offset.asRegister();
         if ((addressingMode == AddressingMode.REGISTER_OFFSET || addressingMode == AddressingMode.EXTENDED_REGISTER_OFFSET)
                 && offset.equals(zr)) {
             this.addressingMode = AddressingMode.BASE_REGISTER_ONLY;

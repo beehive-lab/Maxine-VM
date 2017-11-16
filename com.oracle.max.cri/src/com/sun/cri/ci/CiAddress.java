@@ -25,7 +25,7 @@ package com.sun.cri.ci;
  * a displacement and a scale. Note that the base and index registers may be {@link CiVariable variable}, that is as yet
  * unassigned to target machine registers.
  */
-public final class CiAddress extends CiValue {
+public class CiAddress extends CiValue {
 
     /**
      * A sentinel value used as a place holder in an instruction stream for an address that will be patched.
