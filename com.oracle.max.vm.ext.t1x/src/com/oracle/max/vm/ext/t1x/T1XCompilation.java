@@ -2261,13 +2261,17 @@ public abstract class T1XCompilation {
         Trace.begin(1, "T1XCompilation.do_invokedynamic");
         InvokeDynamicConstant invokeDynamicConstant = cp.invokeDynamicAt(index);
         StaticMethodActor methodActor = invokeDynamicConstant.resolve(cp, index);
+        SignatureDescriptor signature = methodActor.descriptor();
+        Kind kind = invokeKind(signature);
         Object appendix = invokeDynamicConstant.getAppendix();
-        T1XTemplateTag tag = INVOKESTATIC$void;
+        T1XTemplateTag tag = INVOKESTATICS.get(kind.asEnum);
 
         Trace.line(1, "methodActor =>" + methodActor);
         Trace.line(1, "methodname =>" + methodActor.name());
         Trace.line(1, "methodSig =>" + methodActor.signature());
         Trace.line(1, "holder =>" + methodActor.holder());
+        Trace.line(1, "kind =>" + kind);
+        Trace.line(1, "tag =>" + tag);
         Trace.line(1, "appendix =>" + appendix);
 
         assert methodActor.holder().isInitialized();
@@ -2279,7 +2283,7 @@ public abstract class T1XCompilation {
         assignObject(scratch, appendix);
         pokeObject(scratch, 0);
         int safepoint = callDirect();
-        finishCall(tag, Kind.VOID, safepoint, methodActor);
+        finishCall(tag, kind, safepoint, methodActor);
         Trace.end(1, "T1XCompilation.do_invokedynamic");
     }
 
