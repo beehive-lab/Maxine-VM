@@ -730,7 +730,6 @@ public abstract class Actor {
 
     public final void checkAccessBy(ClassActor accessor) {
         if (!isAccessibleBy(accessor)) {
-            isAccessibleBy(accessor);
             throw new IllegalAccessError(accessor.name + " cannot access " + this);
         }
     }
