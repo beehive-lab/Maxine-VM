@@ -74,4 +74,10 @@ public final class JDK_java_lang_reflect_Method {
         }
         return declaredAnnotations;
     }
+
+    @SUBSTITUTE
+    public Annotation[] getDeclaredAnnotations()  {
+        return AnnotationParser.toArray(declaredAnnotations());
+    }
+
 }
