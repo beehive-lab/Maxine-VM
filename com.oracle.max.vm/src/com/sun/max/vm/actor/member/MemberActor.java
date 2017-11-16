@@ -134,7 +134,7 @@ public abstract class MemberActor extends Actor {
         if (accessor == null || holder() == accessor || isPublic() || accessor.isReflectionStub()) {
             return true;
         }
-        if (isPrivate()) {
+        if (isPrivate() && !isSynthetic() && !accessor.isSynthetic()) {
             return false;
         }
         if (holder().packageName().equals(accessor.packageName())) {
