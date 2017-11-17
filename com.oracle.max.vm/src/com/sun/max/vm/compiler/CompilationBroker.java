@@ -488,6 +488,17 @@ public class CompilationBroker {
                     // This is the final failure: no other compilers available or failover is disabled
                     throw FatalError.unexpected("Compilation of " + cma + " by " + compilation.compiler + " failed (final attempt)", t);
                 }
+                // cannot retry if specific compilation nature is specified so fall back to previous compilations if
+                // available, else throw an exception
+                if (nature != null) {
+                    if (compilation.prevCompilations != Compilations.EMPTY) {
+                        nature = nature == Nature.BASELINE ? Nature.OPT : Nature.BASELINE;
+                        return compilation.prevCompilations.currentTargetMethod(nature);
+                    } else {
+                        throw FatalError.unexpected("Cannot retry compilation of " + cma
+                                + " because a specific compilation nature is specified (" + nature + ")", t);
+                    }
+                }
                 retryRun = true;
                 if (VMOptions.verboseOption.verboseCompilation) {
                     boolean lockDisabledSafepoints = Log.lock();
