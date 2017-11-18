@@ -155,6 +155,13 @@ def gate(args):
     test(['-image-configs=java', '-fail-fast'] + testArgs)
     test(['-image-configs=ss', '-tests=output:Hello+Catch+GC+WeakRef+Final', '-fail-fast'] + testArgs)
 
+def gitinit(args):
+    """
+    Setup git commit template and pre-commit/pre-push hooks
+    """
+    subprocess.call(["git", "config", "--local", "commit.template", "git/commit-template"])
+    subprocess.call(["git", "config", "--local", "core.hooksPath", "git/hooks"])
+
 def hcfdis(args):
     """disassembles HexCodeFiles embedded in text files
 
@@ -722,6 +729,7 @@ def mx_init(suite):
         'copycheck': [copycheck, ''],
         'eclipse': [eclipse, '[VM options]'],
         'gate': [gate, '[options]'],
+        'gitinit': [gitinit, ''],
         'hcfdis': [hcfdis, '[options] files...'],
         'helloworld': [helloworld, '[VM options]'],
         'inspecthelloworld': [inspecthelloworld, '[VM options]'],
