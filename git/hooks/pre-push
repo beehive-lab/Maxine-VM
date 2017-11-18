@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# Parts taken from
+# http://codeinthehole.com/tips/tips-for-using-a-git-pre-commit-hook/ and
+# https://stackoverflow.com/questions/20479794/how-do-i-properly-git-stash-pop-in-pre-commit-hooks-to-get-a-clean-working-tree
+
+# First clean up
+mx clean
+
+# Then, stash index and work dir, keeping only the staged changes in the
+# working directory.
+old_stash=$(git rev-parse -q --verify refs/stash)
+stash_name="pre-commit-$(date +%s)"
+git stash save -q --keep-index --include-untracked $stash_name
+new_stash=$(git rev-parse -q --verify refs/stash)
+
+quit() {
+    # if we stashed any changes pop them
+    if [ "$old_stash" != "$new_stash" ]; then
+        git stash pop --index -q
+    fi
+    exit $1
+}
+
+mx build
+result=$?
+if [ $result -ne 0 ]; then
+    echo "The current workspace fails to build, please fix any errors before pushing"
+    quit $result
+fi
+mx image
+result=$?
+if [ $result -ne 0 ]; then
+    echo "The current workspace fails to create a boot image, please fix any errors before pushing"
+    quit $result
+fi
+mx test --tests=output
+result=$?
+if [ $result -ne 0 ]; then
+    echo "The current workspace fails to pass some tests, please fix any errors before pushing"
+    quit $result
+fi
+
+quit 0
