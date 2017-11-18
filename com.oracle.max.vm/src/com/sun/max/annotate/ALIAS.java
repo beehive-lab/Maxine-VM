@@ -291,7 +291,12 @@ public @interface ALIAS {
                 holder = alias.declaringClass();
             }
             if (!alias.innerClass().isEmpty()) {
-                holder = Classes.getInnerClass(holder, alias.innerClass());
+                final Class innerClass = Classes.getInnerClass(holder, alias.innerClass());
+                if (innerClass == null) {
+                    FatalError.unexpected("Could not find inner class \"" + alias.innerClass()
+                            + "\" in class " + holder.getName());
+                }
+                holder = innerClass;
             }
             return holder;
         }
