@@ -1002,26 +1002,6 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //     }
 //
 //
-//     public void test_Vcvt_double2float() throws Exception {
-//         initialiseExpectedValues();
-//         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//         resetIgnoreValues();
-//         asm.codeBuffer.reset();
-//         asm.mov64BitConstant(Aarch64.cpuRegisters[0], Aarch64.cpuRegisters[1], Double.doubleToRawLongBits(-10));
-//         asm.mov64BitConstant(Aarch64.cpuRegisters[2], Aarch64.cpuRegisters[3], Double.doubleToRawLongBits(-24));
-//         asm.vmov(Aarch64Assembler.ConditionFlag.Always, Aarch64.s0, Aarch64.r0, Aarch64.r1, CiKind.Double, CiKind.Int);
-//         asm.vmov(Aarch64Assembler.ConditionFlag.Always, Aarch64.s1, Aarch64.r2, Aarch64.r3, CiKind.Double, CiKind.Int);
-//         asm.vcvt(Aarch64Assembler.ConditionFlag.Always, Aarch64.s4, false, true, Aarch64.s0, CiKind.Float, CiKind.Double);
-//         asm.vcvt(Aarch64Assembler.ConditionFlag.Always, Aarch64.s5, false, true, Aarch64.s1, CiKind.Float, CiKind.Double);
-//         asm.vmov(Aarch64Assembler.ConditionFlag.Always, Aarch64.r0, Aarch64.s4, null, CiKind.Int, CiKind.Float);
-//         asm.vmov(Aarch64Assembler.ConditionFlag.Always, Aarch64.r2, Aarch64.s5, null, CiKind.Int, CiKind.Float);
-//         expectedValues[0] = Float.floatToRawIntBits(-10);
-//         testValues[0] = true;
-//         expectedValues[2] =Float.floatToRawIntBits(-24);
-//         testValues[2] = true;
-//         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//     }
-//
 //
 //     public void test_VAdd() throws Exception {
 //         initialiseExpectedValues();
@@ -1122,6 +1102,25 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
+    public void work_Vcvt_double2float() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        masm.codeBuffer.reset();
+        masm.mov64BitConstant(Aarch64.cpuRegisters[0], Double.doubleToRawLongBits(-10));
+        masm.mov64BitConstant(Aarch64.cpuRegisters[2], Double.doubleToRawLongBits(-24));
+        masm.fmov(64, Aarch64.d0, Aarch64.r0);
+        masm.fmov(64, Aarch64.d1, Aarch64.r2);
+        masm.fcvt(64, Aarch64.d4, Aarch64.d0);
+        masm.fcvt(64, Aarch64.d5, Aarch64.d1);
+        masm.fmov(32, Aarch64.r0, Aarch64.d4);
+        masm.fmov(32, Aarch64.r2, Aarch64.d5);
+        expectedValues[0] = Float.floatToRawIntBits(-10) & 0xffffffffL;
+        testValues[0] = true;
+        expectedValues[2] = Float.floatToRawIntBits(-24) & 0xffffffffL;
+        testValues[2] = true;
+        generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+    }
     public void work_VcvtvMul() throws Exception {
         initialiseExpectedValues();
         resetIgnoreValues();
