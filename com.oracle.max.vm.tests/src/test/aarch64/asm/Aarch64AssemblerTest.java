@@ -1091,28 +1091,6 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
 //     }
 //
-//     public void test_VcvtvMul() throws Exception {
-//         initialiseExpectedValues();
-//         resetIgnoreValues();
-//         asm.codeBuffer.reset();
-//         asm.mov32BitConstant(Aarch64.cpuRegisters[0], 12);
-//         asm.mov32BitConstant(Aarch64.cpuRegisters[1], 10);
-//         asm.vmov(Aarch64Assembler.ConditionFlag.Always, Aarch64.s0, Aarch64.r0, null, CiKind.Float, CiKind.Int);
-//         asm.vmov(Aarch64Assembler.ConditionFlag.Always, Aarch64.s1, Aarch64.r1, null, CiKind.Float, CiKind.Int);
-//         asm.vcvt(Aarch64Assembler.ConditionFlag.Always, Aarch64.s2, false, false, Aarch64.s0, CiKind.Float, CiKind.Int);
-//         asm.vcvt(Aarch64Assembler.ConditionFlag.Always, Aarch64.s4, false, false, Aarch64.s1, CiKind.Float, CiKind.Int);
-//         asm.vmul(Aarch64Assembler.ConditionFlag.Always, Aarch64.s2, Aarch64.s4, Aarch64.s2, CiKind.Float);
-//         asm.vcvt(Aarch64Assembler.ConditionFlag.Always, Aarch64.s0, true, false, Aarch64.s2, CiKind.Float, CiKind.Float);
-//         asm.vmov(Aarch64Assembler.ConditionFlag.Always, Aarch64.r2, Aarch64.s0, null, CiKind.Int, CiKind.Float);
-//         expectedValues[0] = 12;
-//         testValues[0] = true;
-//         expectedValues[1] = 10;
-//         testValues[1] = true;
-//         expectedValues[2] = 120;
-//         testValues[2] = true;
-//         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//     }
-//
 //     public void test_VldrStr() throws Exception {
 //         initialiseExpectedValues();
 //         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
@@ -1225,6 +1203,28 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
+
+    public void work_VcvtvMul() throws Exception {
+        initialiseExpectedValues();
+        resetIgnoreValues();
+        masm.codeBuffer.reset();
+        masm.mov64BitConstant(Aarch64.cpuRegisters[0], 12);
+        masm.mov64BitConstant(Aarch64.cpuRegisters[1], 10);
+        masm.fmov(64, Aarch64.d0, Aarch64.r0);
+        masm.fmov(64, Aarch64.d1, Aarch64.r1);
+        masm.fcvt(64, Aarch64.d2, Aarch64.d0);
+        masm.fcvt(64, Aarch64.d4, Aarch64.d1);
+        masm.fmul(64, Aarch64.d2, Aarch64.d4, Aarch64.d2);
+        masm.fcvt(64, Aarch64.d0, Aarch64.d2);
+        masm.fmov(64, Aarch64.r2, Aarch64.d0);
+        expectedValues[0] = 12;
+        testValues[0] = true;
+        expectedValues[1] = 10;
+        testValues[1] = true;
+        expectedValues[2] = 120;
+        testValues[2] = true;
+        generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+    }
 //
 //     //TODO: Fix vmovimm
 //     public void broken_vmovimm() throws Exception {
