@@ -332,8 +332,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         resetIgnoreValues();
         asm.codeBuffer.reset();
         asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 0x123, 0);        // value to be stored to stack
-        asm.movz(VARIANT_64, Aarch64.cpuRegisters[10], 8, 0);           // offset
-        Aarch64Address address = Aarch64Address.createRegisterOffsetAddress(Aarch64.sp,  Aarch64.cpuRegisters[10], false); // stack address
+        Aarch64Address address = Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, -8); // stack address
         asm.str(VARIANT_64,  Aarch64.cpuRegisters[0], address);         // store value to stack
         asm.ldr(VARIANT_64, Aarch64.cpuRegisters[1], address);          // load value from stack
         expectedValues[0] = 0x123;
@@ -779,8 +778,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 0x123, 0);        // value to be stored to stack
         asm.scvtf(VARIANT_64, VARIANT_64, Aarch64.fpuRegisters[0], Aarch64.cpuRegisters[0]);
 
-        asm.movz(VARIANT_64, Aarch64.cpuRegisters[10], 8, 0);           // offset
-        Aarch64Address address = Aarch64Address.createRegisterOffsetAddress(Aarch64.sp, Aarch64.cpuRegisters[10], false); // stack address
+        Aarch64Address address = Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, -8); // stack address
 
         asm.fstr(VARIANT_64, Aarch64.fpuRegisters[0], address);         // store value to stack
         asm.fldr(VARIANT_64, Aarch64.fpuRegisters[1], address);          // load value from stack
