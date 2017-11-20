@@ -1146,28 +1146,6 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //         testValues[4] = true;
 //         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
 //     }
-//
-//     public void test_MVov() throws Exception {
-//         initialiseExpectedValues();
-//         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//         resetIgnoreValues();
-//         asm.codeBuffer.reset();
-//         asm.mov32BitConstant(Aarch64.cpuRegisters[0], 12);
-//         asm.mov32BitConstant(Aarch64.cpuRegisters[1], 10);
-//         asm.vmov(Aarch64Assembler.ConditionFlag.Always, Aarch64.s0, Aarch64.r0, null, CiKind.Float, CiKind.Int);
-//         asm.vmov(Aarch64Assembler.ConditionFlag.Always, Aarch64.r2, Aarch64.s0, null, CiKind.Int, CiKind.Float);
-//         asm.vmov(Aarch64Assembler.ConditionFlag.Always, Aarch64.s5, Aarch64.r0, null, CiKind.Float, CiKind.Int);
-//         asm.vmov(Aarch64Assembler.ConditionFlag.Always, Aarch64.r4, Aarch64.s5, null, CiKind.Int, CiKind.Float);
-//         expectedValues[0] = 12;
-//         testValues[0] = true;
-//         expectedValues[1] = 10;
-//         testValues[1] = true;
-//         expectedValues[2] = 12;
-//         testValues[2] = true;
-//         expectedValues[4] = 12;
-//         testValues[4] = true;
-//         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//     }
 
     public void work_Vdiv() throws Exception {
         initialiseExpectedValues();
@@ -1223,6 +1201,29 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         testValues[1] = true;
         expectedValues[2] = 120;
         testValues[2] = true;
+        generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+    }
+
+    public void work_MVov() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        masm.codeBuffer.reset();
+        masm.mov64BitConstant(Aarch64.cpuRegisters[0], 12);
+        masm.mov64BitConstant(Aarch64.cpuRegisters[1], 10);
+        masm.fmov(64, Aarch64.d0, Aarch64.r0);
+        masm.fmov(64, Aarch64.r2, Aarch64.d0);
+        masm.fmov(64, Aarch64.d5, Aarch64.r0);
+        masm.fmov(64, Aarch64.r4, Aarch64.d5);
+
+        expectedValues[0] = 12;
+        testValues[0] = true;
+        expectedValues[1] = 10;
+        testValues[1] = true;
+        expectedValues[2] = 12;
+        testValues[2] = true;
+        expectedValues[4] = 12;
+        testValues[4] = true;
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 //
