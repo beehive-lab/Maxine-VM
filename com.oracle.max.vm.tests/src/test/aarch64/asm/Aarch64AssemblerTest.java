@@ -1124,28 +1124,6 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
 //     }
 //
-//     public void test_Vldr() throws Exception {
-//         initialiseExpectedValues();
-//         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//         resetIgnoreValues();
-//         asm.codeBuffer.reset();
-//         asm.mov32BitConstant(Aarch64.cpuRegisters[0], 12);
-//         asm.mov32BitConstant(Aarch64.cpuRegisters[1], 10);
-//         asm.push(Aarch64Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512); // 1 instruction
-//         asm.vldr(Aarch64Assembler.ConditionFlag.Always, Aarch64.s31, Aarch64.r13, 0, CiKind.Float, CiKind.Int);
-//         asm.vmov(Aarch64Assembler.ConditionFlag.Always, Aarch64.r2, Aarch64.s31, null, CiKind.Int, CiKind.Float);
-//         asm.vldr(Aarch64Assembler.ConditionFlag.Always, Aarch64.s4, Aarch64.r13, 0, CiKind.Int, CiKind.Float);
-//         asm.vmov(Aarch64Assembler.ConditionFlag.Always, Aarch64.r4, Aarch64.s4, null, CiKind.Int, CiKind.Float);
-//         expectedValues[0] = 12;
-//         testValues[0] = true;
-//         expectedValues[1] = 10;
-//         testValues[1] = true;
-//         expectedValues[2] = 12;
-//         testValues[2] = true;
-//         expectedValues[4] = 12;
-//         testValues[4] = true;
-//         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//     }
 
     public void work_Vdiv() throws Exception {
         initialiseExpectedValues();
@@ -1204,6 +1182,38 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
+    public void work_VldrStr() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        masm.codeBuffer.reset();
+        masm.mov64BitConstant(Aarch64.cpuRegisters[0], 12);
+        masm.mov64BitConstant(Aarch64.cpuRegisters[1], 10);
+        masm.push(1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048); // instruction
+        masm.fldr(64, Aarch64.d0, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r13));
+        masm.fmov(64, Aarch64.r2, Aarch64.d0);
+        masm.fldr(64, Aarch64.d4, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r13));
+        masm.fmov(64, Aarch64.r4, Aarch64.d4);
+        masm.fstr(64, Aarch64.d4, Aarch64Address.createUnscaledImmediateAddress(Aarch64.r13, -16));
+        masm.fstr(64, Aarch64.d0, Aarch64Address.createUnscaledImmediateAddress(Aarch64.r13, -32));
+        masm.fldr(64, Aarch64.d10, Aarch64Address.createUnscaledImmediateAddress(Aarch64.r13, -16));
+        masm.fldr(64, Aarch64.d31, Aarch64Address.createUnscaledImmediateAddress(Aarch64.r13, -32));
+        masm.fmov(64, Aarch64.r6, Aarch64.d10);
+        masm.fmov(64, Aarch64.r8, Aarch64.d31);
+        expectedValues[0] = 12;
+        testValues[0] = true;
+        expectedValues[1] = 10;
+        testValues[1] = true;
+        expectedValues[2] = 12;
+        testValues[2] = true;
+        expectedValues[4] = 12;
+        testValues[4] = true;
+        expectedValues[6] = 12;
+        testValues[6] = true;
+        expectedValues[8] = 12;
+        testValues[8] = true;
+        generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+    }
     public void work_MVov() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
