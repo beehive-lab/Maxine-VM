@@ -501,8 +501,6 @@ public final class JDKInterceptor {
             new FieldOffsetRecomputation("SEED", JDK.java_lang_Thread, "threadLocalRandomSeed"),
             new FieldOffsetRecomputation("PROBE", JDK.java_lang_Thread, "threadLocalRandomProbe"),
             new FieldOffsetRecomputation("SECONDARY", JDK.java_lang_Thread, "threadLocalRandomSecondarySeed"),
-        JDK.java_util_concurrent_ThreadPoolExecutor,
-            "threadFactory",
         JDK.java_time_chrono_AbstractChronology,
             "DATE_ORDER",
             "DATE_TIME_ORDER",

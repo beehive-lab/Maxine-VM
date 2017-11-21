@@ -145,6 +145,8 @@ public class Package extends BootImagePackage {
         if (JDK.JDK_VERSION == JDK.JDK_8) {
             Extensions.resetField("java.lang.invoke.MethodHandles$Lookup", "LOOKASIDE_TABLE");
             Extensions.registerClassForReInit("java.lang.invoke.MethodHandles$Lookup");
+            Extensions.resetField("java.lang.UNIXProcess", "processReaperExecutor");
+            Extensions.registerClassForReInit("java.lang.UNIXProcess");
             Extensions.resetField("java.io.File", "fs");
             Extensions.registerClassForReInit("java.io.File");
         }

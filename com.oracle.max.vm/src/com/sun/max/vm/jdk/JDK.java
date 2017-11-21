@@ -181,7 +181,6 @@ public class JDK {
     public static final ClassRef java_util_concurrent_ForkJoinWorkerThread = new LazyClassRef("java.util.concurrent.ForkJoinWorkerThread");
     public static final ClassRef java_util_concurrent_ForkJoinTask      = new LazyClassRef("java.util.concurrent.ForkJoinTask");
     public static final ClassRef java_util_concurrent_ThreadLocalRandom  = new LazyClassRef("java.util.concurrent.ThreadLocalRandom");
-    public static final ClassRef java_util_concurrent_ThreadPoolExecutor = new LazyClassRef("java.util.concurrent.ThreadPoolExecutor");
 
     public static final ClassRef java_util_concurrent_atomic_AtomicBoolean = new LazyClassRef(java.util.concurrent.atomic.AtomicBoolean.class);
     public static final ClassRef java_util_concurrent_atomic_AtomicInteger = new LazyClassRef(java.util.concurrent.atomic.AtomicInteger.class);
