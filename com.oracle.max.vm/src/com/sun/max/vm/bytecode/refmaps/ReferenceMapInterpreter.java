@@ -1465,7 +1465,7 @@ public abstract class ReferenceMapInterpreter {
 
                 default: {
                     String name = Bytecodes.nameOf(opcode);
-                    FatalError.unexpected("Unknown bytcode: " + name);
+                    FatalError.unexpected("Unknown bytecode: " + name);
                 }
             }
 
