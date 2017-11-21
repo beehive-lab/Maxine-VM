@@ -489,6 +489,7 @@ public class JTConfig {
         jtt.lang.Object_wait02.class,
         jtt.lang.Object_wait03.class,
         jtt.lang.ProcessEnvironment_init.class,
+        jtt.lang.Runtime_exec01.class,
         jtt.lang.StringCoding_Scale.class,
         jtt.lang.String_intern01.class,
         jtt.lang.String_intern02.class,
