@@ -1365,6 +1365,32 @@ public abstract class ReferenceMapInterpreter {
                     push(methodSignature.resultKind());
                     break;
                 }
+                case INVOKEDYNAMIC: {
+                    final int index = readUnsigned2();
+                    final InvokeDynamicConstant invokeDynamicConstant = constantPool.invokeDynamicAt(index);
+                    final StaticMethodActor methodActor = invokeDynamicConstant.resolve(constantPool, index);
+                    final SignatureDescriptor methodSignature = methodActor.descriptor();
+
+                    assert constantPool.lookupAppendix(index, opcode) != null;
+
+                    // invokedynamic increases the stack by one slot.
+                    pushRef(1);
+
+                    for (int i = methodSignature.numberOfParameters() - 1; i >= 0; --i) {
+                        final TypeDescriptor parameter = methodSignature.parameterDescriptorAt(i);
+                        pop(parameter.toKind());
+                    }
+
+                    if (atSearchBCI) {
+                        // Record AFTER popping the parameters.
+                        // They will be accounted for in the callee frame,
+                        // with potentially different stack slot kinds - see JVM spec.
+                        visitReferencesAtCurrentBCI(visitor, true);
+                    }
+
+                    push(methodSignature.resultKind());
+                    break;
+                }
                 case NEW: {
                     final int index = readUnsigned2();
                     push(constantPool.classAt(index).typeDescriptor().toKind());

@@ -1086,7 +1086,7 @@ public final class ConstantPool implements RiConstantPool {
     }
 
     public Object lookupAppendix(int cpi, int opcode) {
-        if (opcode != INVOKEVIRTUAL && opcode != INVOKESTATIC) {
+        if (opcode != INVOKEVIRTUAL && opcode != INVOKESTATIC && opcode != INVOKEDYNAMIC) {
             return null;
         }
 
