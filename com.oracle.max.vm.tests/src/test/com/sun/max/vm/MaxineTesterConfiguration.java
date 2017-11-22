@@ -484,7 +484,7 @@ public class MaxineTesterConfiguration {
 
     public static String defaultJavaTesterConfigs() {
         final Platform platform = Platform.platform();
-        if (platform.cpu == CPU.SPARCV9) {
+        if (platform.cpu == CPU.SPARCV9 || platform.cpu == CPU.ARMV7) {
             return "jtt-c1xc1x,jtt-c1xt1x,jtt-t1xc1x,jtt-t1xt1x";
         }
         return "jtt-c1xc1x,jtt-t1xc1x,jtt-c1xt1x,jtt-t1xt1x,jtt-c1xgraal";
