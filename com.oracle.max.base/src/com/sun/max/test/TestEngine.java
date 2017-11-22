@@ -157,6 +157,8 @@ public class TestEngine {
             for (File dirFile : getFilesFromDirectory(file, sort)) {
                 if (!dirFile.isDirectory()) {
                     parseFile(dirFile, reg, filter);
+                } else {
+                    parseTests(dirFile, reg, sort, filter);
                 }
             }
         } else {
