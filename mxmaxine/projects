@@ -35,6 +35,11 @@ project@com.oracle.max.tests@dependencies=com.oracle.max.base,TESTS_JASMIN_CLASS
 project@com.oracle.max.tests@checkstyle=com.oracle.max.base
 project@com.oracle.max.tests@javaCompliance=1.7
 
+project@uk.ac.manchester.tests.jdk8@sourceDirs=src
+project@uk.ac.manchester.tests.jdk8@dependencies=com.oracle.max.base,com.oracle.max.vm.ext.t1x,com.oracle.max.vm.ext.c1x
+project@uk.ac.manchester.tests.jdk8@checkstyle=com.oracle.max.base
+project@uk.ac.manchester.tests.jdk8@javaCompliance=1.8
+
 project@com.oracle.max.vmdi@sourceDirs=src
 project@com.oracle.max.vmdi@checkstyle=com.oracle.max.base
 project@com.oracle.max.vmdi@javaCompliance=1.7
@@ -114,7 +119,7 @@ project@com.oracle.max.vm@checkstyle=com.oracle.max.base
 project@com.oracle.max.vm@javaCompliance=1.7
 
 project@com.oracle.max.vm.tests@sourceDirs=src
-project@com.oracle.max.vm.tests@dependencies=com.oracle.max.vm,com.oracle.max.tests,ASM
+project@com.oracle.max.vm.tests@dependencies=com.oracle.max.vm,com.oracle.max.tests,ASM,uk.ac.manchester.tests.jdk8
 project@com.oracle.max.vm.tests@checkstyle=com.oracle.max.base
 project@com.oracle.max.vm.tests@javaCompliance=1.7
 
