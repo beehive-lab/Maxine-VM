@@ -661,6 +661,16 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         }
     }
 
+    public final void decq(CiRegister dst) {
+        assert dst.isValid();
+        sub(64, dst, dst, 1);
+    }
+
+    public final void incq(CiRegister dst) {
+        assert dst.isValid();
+        add(64, dst, dst, 1);
+    }
+
     /**
      * dst = src1 * src2.
      *
