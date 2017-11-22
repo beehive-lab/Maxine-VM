@@ -40,7 +40,7 @@ public class Test6850611 {
         for (int i = Integer.MIN_VALUE; i < Integer.MAX_VALUE; ++i) {
             x += i;
         }
-        if (x != -4294967295l) {
+        if (x != -4294967295L) {
             return 97;
         }
         // }

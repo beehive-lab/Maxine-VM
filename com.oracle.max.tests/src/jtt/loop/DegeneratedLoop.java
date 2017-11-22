@@ -39,7 +39,7 @@ public class DegeneratedLoop {
             } catch (Unresolved iioe) {
             }
         }
-        return "ok-"+arg;
+        return "ok-" + arg;
     }
 
     public static class Unresolved extends RuntimeException {

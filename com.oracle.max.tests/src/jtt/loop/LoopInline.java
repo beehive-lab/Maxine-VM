@@ -57,7 +57,7 @@ public class LoopInline {
     public static int foo2(int j) {
         int sum = 0;
         while (j > 0) {
-            sum += j*j;
+            sum += j * j;
             j--;
         }
         return sum;

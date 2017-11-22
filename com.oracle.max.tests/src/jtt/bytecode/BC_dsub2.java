@@ -28,6 +28,6 @@ package jtt.bytecode;
  */
 public class BC_dsub2 {
     public static double test(double a) {
-        return 1.0/(0.0 - a);
+        return 1.0 / (0.0 - a);
     }
 }

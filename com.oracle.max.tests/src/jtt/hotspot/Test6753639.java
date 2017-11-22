@@ -35,9 +35,9 @@ package jtt.hotspot;
 public class Test6753639 {
 
     public static int test(int t) throws InterruptedException {
-        int END = Integer.MAX_VALUE;
+        int maxValue = Integer.MAX_VALUE;
         int count = 0;
-        for (int i = Integer.MAX_VALUE - 5; i <= END; i++) {
+        for (int i = Integer.MAX_VALUE - 5; i <= maxValue; i++) {
             count++;
             if (count > 100000) {
                 return 95;

@@ -45,7 +45,7 @@ public class Thread_isInterrupted05 {
 
     static class WaitInterruptee extends Thread {
         Throwable throwable;
-        public WaitInterruptee() {
+        WaitInterruptee() {
             super("WaitInterruptee");
         }
         @Override

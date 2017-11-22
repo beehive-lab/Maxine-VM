@@ -31,8 +31,10 @@ public class Loop12 {
     public static int test(int arg) {
         int i = 0;
         if (source[i] != arg) {
+            // Checkstyle: stop
             while (++i <= 5 && source[i] != arg) {
             }
+            // Checkstyle: resume
         }
         return i;
     }

@@ -52,7 +52,7 @@ public final class ProcessEnvironment_init {
 
     private static final class StringEnvironment extends HashMap<Object, Object> {
 
-        public StringEnvironment(HashMap<Object, Object> theenvironment) {
+        StringEnvironment(HashMap<Object, Object> theenvironment) {
         }
     }
 

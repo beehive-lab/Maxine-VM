@@ -34,16 +34,16 @@ package jtt.hotspot;
 
 public class Test7005594 {
 
-    private static int test0(byte a[]) {
+    private static int test0(byte[] a) {
         int result = 0;
-        for (int i = 0; i < a.length; i += ((0x7fffffff >> 1) + 1)) {
+        for (int i = 0; i < a.length; i += (0x7fffffff >> 1) + 1) {
             result += a[i];
         }
         return result;
     }
 
     public static int test(int t) {
-        byte a[] = new byte[(0x7fffffff >> 1) + 2];
+        byte[] a = new byte[(0x7fffffff >> 1) + 2];
         try {
             test0(a);
         } catch (ArrayIndexOutOfBoundsException e) {

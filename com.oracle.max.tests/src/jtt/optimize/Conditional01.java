@@ -95,22 +95,22 @@ public class Conditional01 {
 
     public void visit(CPC i) {
         nextPC = pc + 2;
-        int tmp_0 = getRegisterByte(i.r1);
-        int tmp_1 = getRegisterByte(i.r2);
-        int tmp_2 = bit(C);
-        int tmp_3 = tmp_0 - tmp_1 - tmp_2;
-        boolean tmp_4 = ((tmp_0 & 128) != 0);
-        boolean tmp_5 = ((tmp_1 & 128) != 0);
-        boolean tmp_6 = ((tmp_3 & 128) != 0);
-        boolean tmp_7 = ((tmp_0 & 8) != 0);
-        boolean tmp_8 = ((tmp_1 & 8) != 0);
-        boolean tmp_9 = ((tmp_3 & 8) != 0);
-        H = !tmp_7 && tmp_8 || tmp_8 && tmp_9 || tmp_9 && !tmp_7;
-        C = !tmp_4 && tmp_5 || tmp_5 && tmp_6 || tmp_6 && !tmp_4;
-        N = tmp_6;
-        Z = low(tmp_3) == 0 && Z;
-        V = tmp_4 && !tmp_5 && !tmp_6 || !tmp_4 && tmp_5 && tmp_6;
-        S = (N != V);
+        int tmp0 = getRegisterByte(i.r1);
+        int tmp1 = getRegisterByte(i.r2);
+        int tmp2 = bit(C);
+        int tmp3 = tmp0 - tmp1 - tmp2;
+        boolean tmp4 = (tmp0 & 128) != 0;
+        boolean tmp5 = (tmp1 & 128) != 0;
+        boolean tmp6 = (tmp3 & 128) != 0;
+        boolean tmp7 = (tmp0 & 8) != 0;
+        boolean tmp8 = (tmp1 & 8) != 0;
+        boolean tmp9 = (tmp3 & 8) != 0;
+        H = !tmp7 && tmp8 || tmp8 && tmp9 || tmp9 && !tmp7;
+        C = !tmp4 && tmp5 || tmp5 && tmp6 || tmp6 && !tmp4;
+        N = tmp6;
+        Z = low(tmp3) == 0 && Z;
+        V = tmp4 && !tmp5 && !tmp6 || !tmp4 && tmp5 && tmp6;
+        S = N != V;
         cyclesConsumed++;
     }
 
@@ -121,8 +121,8 @@ public class Conditional01 {
         return r1.val;
     }
 
-    public int low(int tmp_3) {
-        return tmp_3 & 0x01;
+    public int low(int tmp3) {
+        return tmp3 & 0x01;
     }
 
     public int bit(boolean c2) {

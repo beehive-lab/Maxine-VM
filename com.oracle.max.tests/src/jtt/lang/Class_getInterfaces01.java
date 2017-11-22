@@ -67,11 +67,11 @@ public final class Class_getInterfaces01 {
         return sb.toString();
     }
 
-    static interface I1 {
+    interface I1 {
 
     }
 
-    static interface I2 extends I1 {
+    interface I2 extends I1 {
 
     }
 

@@ -34,7 +34,7 @@ public class Catch_Unresolved01 {
         executed = false;
         try {
             helper1(arg);
-        } catch(Catch_Unresolved_Exception3 e) {
+        } catch (Catch_Unresolved_Exception3 e) {
             return 1;
         } catch (Catch_Unresolved_Exception4 e) {
             return 2;

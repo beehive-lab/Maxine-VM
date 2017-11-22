@@ -36,13 +36,13 @@ public class Loop14 {
 
     public static int calc(int arg) {
         int result = 0;
-        for (int k=0; k<arg; ++k) {
-                value = 5;
-                for (int i=0; i<arg; ++i) {
-                        for (int j=0; j<arg; ++j) {
-                        }
-                        result += value;
+        for (int k = 0; k < arg; ++k) {
+            value = 5;
+            for (int i = 0; i < arg; ++i) {
+                for (int j = 0; j < arg; ++j) {
                 }
+                result += value;
+            }
         }
         return result;
     }

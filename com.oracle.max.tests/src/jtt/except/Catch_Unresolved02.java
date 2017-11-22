@@ -36,7 +36,7 @@ public class Catch_Unresolved02 {
         int result = 0;
         try {
             result = value + helper1(arg) + helper2(arg);
-        } catch(Catch_Unresolved02_Exception1 e) {
+        } catch (Catch_Unresolved02_Exception1 e) {
             return 1 + result;
         } catch (Catch_Unresolved02_Exception2 e) {
             return 2 + result;

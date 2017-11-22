@@ -39,7 +39,7 @@ public class LoopNewInstance {
     private static int count = 0;
     private static class Blop {
         private boolean exists;
-        public Blop() {
+        Blop() {
             if (!exists) {
                 count++;
             }

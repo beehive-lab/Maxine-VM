@@ -28,6 +28,6 @@ package jtt.bytecode;
  */
 public class BC_dneg2 {
     public static double test(double a) {
-        return 1/(-a);
+        return 1 / (-a);
     }
 }

@@ -30,7 +30,7 @@ public class Loop11 {
 
     public static int test(int arg) {
         int v = 0;
-        while(arg-- > 0) {
+        while (arg-- > 0) {
             v = 1;
         }
         return v;
