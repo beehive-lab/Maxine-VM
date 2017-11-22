@@ -968,38 +968,65 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         }
     }
 
-//     public void test_VPushPop() throws Exception {
-//         initialiseExpectedValues();
-//         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//         resetIgnoreValues();
-//         asm.codeBuffer.reset();
-//         for (int i = 0; i < 5; i++) {
-//             asm.mov32BitConstant(Aarch64.cpuRegisters[i], i);
-//             asm.vmov(Aarch64Assembler.ConditionFlag.Always, Aarch64.allRegisters[i + 16], Aarch64.cpuRegisters[i], null, CiKind.Float, CiKind.Int);
-//             asm.mov32BitConstant(Aarch64.cpuRegisters[i], -i);
-//         }
-//         asm.vpush(Aarch64Assembler.ConditionFlag.Always, Aarch64.allRegisters[16], Aarch64.allRegisters[16 + 4], CiKind.Float, CiKind.Float);
-//         for (int i = 0; i < 5; i++) {
-//             asm.vmov(Aarch64Assembler.ConditionFlag.Always, Aarch64.allRegisters[i + 16], Aarch64.cpuRegisters[i], null, CiKind.Float, CiKind.Int);
-//         }
-//         asm.vpop(Aarch64Assembler.ConditionFlag.Always, Aarch64.allRegisters[16], Aarch64.allRegisters[16 + 4], CiKind.Float, CiKind.Float);
-//         for (int i = 0; i < 5; i++) {
-//             asm.vmov(Aarch64Assembler.ConditionFlag.Always, Aarch64.cpuRegisters[i], Aarch64.allRegisters[i + 16], null, CiKind.Int, CiKind.Float);
-//         }
-//         expectedValues[0] = 0;
-//         testValues[0] = true;
-//         expectedValues[1] = 1;
-//         testValues[1] = true;
-//         expectedValues[2] = 2;
-//         testValues[2] = true;
-//         expectedValues[3] = 3;
-//         testValues[3] = true;
-//         expectedValues[4] = 4;
-//         testValues[4] = true;
-//         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//     }
-//
-//
+    public void test_VPushPop() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        masm.codeBuffer.reset();
+        for (int i = 0; i < 5; i++) {
+            masm.mov64BitConstant(Aarch64.cpuRegisters[i], i); // r1 = 1
+            masm.fmov(64, Aarch64.fpuRegisters[i], Aarch64.cpuRegisters[i]); // d1 = r1 = 1
+            masm.mov64BitConstant(Aarch64.cpuRegisters[i], -i); // r1 = -1
+        }
+        masm.fpush(2 | 8); // save d1
+        for (int i = 0; i < 5; i++) {
+            masm.fmov(64, Aarch64.fpuRegisters[i], Aarch64.cpuRegisters[i]); // d1 = r1 = -1
+        }
+        masm.fpop(2 | 8); // pop d1 as 1
+        for (int i = 0; i < 5; i++) {
+            masm.fmov(64, Aarch64.cpuRegisters[i], Aarch64.fpuRegisters[i]); // see if d1 is 1 or -1
+        }
+        expectedValues[0] = 0;
+        testValues[0] = true;
+        expectedValues[1] = 1;
+        testValues[1] = true;
+        expectedValues[2] = -2;
+        testValues[2] = true;
+        expectedValues[3] = 3;
+        testValues[3] = true;
+        expectedValues[4] = -4;
+        testValues[4] = true;
+        generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+    }
+
+    public void work_PushPop() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        masm.codeBuffer.reset();
+        for (int i = 0; i < 5; i++) {
+            masm.mov64BitConstant(Aarch64.cpuRegisters[i], i);
+        }
+        masm.push(1 | 2 | 4 | 8 | 16);
+
+        for (int i = 0; i < 5; i++) {
+            masm.mov64BitConstant(Aarch64.cpuRegisters[i], -i);
+        }
+
+        masm.pop(1 | 2 | 4 | 8 | 16);
+
+        expectedValues[0] = 0;
+        testValues[0] = true;
+        expectedValues[1] = 1;
+        testValues[1] = true;
+        expectedValues[2] = 2;
+        testValues[2] = true;
+        expectedValues[3] = 3;
+        testValues[3] = true;
+        expectedValues[4] = 4;
+        testValues[4] = true;
+        generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+    }
 
     public void work_Vdiv() throws Exception {
         initialiseExpectedValues();

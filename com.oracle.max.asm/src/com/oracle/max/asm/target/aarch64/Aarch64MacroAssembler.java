@@ -360,6 +360,16 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         }
     }
 
+    public void fpush(int registerList) {
+        for (int regNumber = 0; regNumber < Integer.SIZE; regNumber++) {
+            if (registerList % 2 == 1) {
+                fstr(64, Aarch64.fpuRegisters[regNumber], Aarch64Address.createPreIndexedImmediateAddress(Aarch64.sp, -16));
+            }
+
+            registerList = registerList >> 1;
+        }
+    }
+
     /**
      * Pop the value from the top of the stack into register. Uses 16byte alignment.
      * @param size
@@ -375,12 +385,18 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      * TODO: optimise
      */
     public void pop(int registerList) {
-        for (int regNumber = 0; regNumber < Integer.SIZE; regNumber++) {
-            if (registerList % 2 == 1) {
-                ldr(64, Aarch64.cpuRegisters[regNumber], Aarch64Address.createPreIndexedImmediateAddress(Aarch64.sp, 16));
+        for (int regNumber = Integer.SIZE - 1; regNumber >= 0; regNumber--) {
+            if ((registerList >> regNumber) % 2 == 1) {
+                ldr(64, Aarch64.cpuRegisters[regNumber], Aarch64Address.createPostIndexedImmediateAddress(Aarch64.sp, 16));
             }
+        }
+    }
 
-            registerList = registerList >> 1;
+    public void fpop(int registerList) {
+        for (int regNumber = Integer.SIZE - 1; regNumber >= 0; regNumber--) {
+            if ((registerList >> regNumber) % 2 == 1) {
+                fldr(64, Aarch64.fpuRegisters[regNumber], Aarch64Address.createPostIndexedImmediateAddress(Aarch64.sp, 16));
+            }
         }
     }
 
