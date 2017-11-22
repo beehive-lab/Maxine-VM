@@ -213,6 +213,21 @@ public final class Trace {
     }
 
     /**
+     * Prints a line of trace output if tracing is globally enabled and if current tracing level is at least the level required.
+     */
+    public static void line(int requiredLevel, Object message, int integer) {
+        if (ENABLED) {
+            if (hasLevel(requiredLevel)) {
+                printPrefix(requiredLevel);
+                stream.print(message);
+                printInt(integer);
+                stream.println();
+                stream.flush();
+            }
+        }
+    }
+
+    /**
      * Prints a "BEGIN" line of trace output if tracing is globally enabled and if current tracing level is at least the level required; increases indentation.
      */
     public static void begin(int requiredLevel, Object message) {

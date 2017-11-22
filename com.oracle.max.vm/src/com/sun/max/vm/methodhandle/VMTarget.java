@@ -66,7 +66,7 @@ public final class VMTarget {
             vmtarget = new VMTarget();
             MemberName_VmTarget.setObject(memberName, vmtarget);
         }
-        Trace.line(1, "VMTarget.create: memberName id=" + System.identityHashCode(memberName));
+        Trace.line(1, "VMTarget.create: memberName id=", System.identityHashCode(memberName));
         return vmtarget;
     }
 
@@ -82,7 +82,7 @@ public final class VMTarget {
         }
         VMTarget vmt = UnsafeCast.asVMTarget(MemberName_VmTarget.getObject(memberName));
         if (vmt != null) {
-            Trace.line(1, "VMTarget.fromMemberName: memberName id=" + System.identityHashCode(memberName));
+            Trace.line(1, "VMTarget.fromMemberName: memberName id=", System.identityHashCode(memberName));
         }
         return vmt;
     }
