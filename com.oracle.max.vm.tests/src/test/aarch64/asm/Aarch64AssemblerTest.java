@@ -1359,33 +1359,33 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
 //     }
 //
-//     public void ignore_Decq() throws Exception {
-//         initialiseExpectedValues();
-//         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//         resetIgnoreValues();
-//         asm.codeBuffer.reset();
-//         for (int i = 0; i < 10; i++) {
-//             asm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
-//             asm.decq(Aarch64.cpuRegisters[i]);
-//             expectedValues[i] -= 1;
-//             testValues[i] = true;
-//         }
-//         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//     }
-//
-//     public void ignore_Incq() throws Exception {
-//         initialiseExpectedValues();
-//         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//         resetIgnoreValues();
-//         asm.codeBuffer.reset();
-//         for (int i = 0; i < 10; i++) {
-//             asm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
-//             asm.incq(Aarch64.cpuRegisters[i]);
-//             expectedValues[i] += 1;
-//             testValues[i] = true;
-//         }
-//         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//     }
+    public void work_Decq() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        masm.codeBuffer.reset();
+        for (int i = 0; i < 10; i++) {
+            masm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
+            masm.decq(Aarch64.cpuRegisters[i]);
+            expectedValues[i] -= 1;
+            testValues[i] = true;
+        }
+        generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+    }
+
+    public void work_Incq() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        masm.codeBuffer.reset();
+        for (int i = 0; i < 10; i++) {
+            masm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
+            masm.incq(Aarch64.cpuRegisters[i]);
+            expectedValues[i] += 1;
+            testValues[i] = true;
+        }
+        generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+    }
 //
 //     public void ignore_Subq() throws Exception {
 //         initialiseExpectedValues();
