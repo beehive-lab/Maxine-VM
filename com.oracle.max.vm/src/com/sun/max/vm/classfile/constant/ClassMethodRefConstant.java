@@ -41,7 +41,7 @@ import com.sun.max.vm.type.*;
 /**
  * #4.4.2.
  */
-public interface ClassMethodRefConstant extends /* PoolConstant<ClassMethodRefConstant>,*/ MethodRefConstant<ClassMethodRefConstant> {
+public interface ClassMethodRefConstant extends PoolConstant<ClassMethodRefConstant>, MethodRefConstant<ClassMethodRefConstant> {
 
 
     public interface ClassMethodRefKey extends PoolConstantKey<ClassMethodRefConstant> {
