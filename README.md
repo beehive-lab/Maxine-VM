@@ -2,6 +2,13 @@
 
 #### Updates
 
+* 2017-11-23: Maxine VM 2.2.0 Release
+  * Build against OpenJDK8u151-b12
+  * Support invokedynamic
+  * Support lambdas (Only on JDK8 builds)
+  * Support default methods (Only on JDK8 builds)
+  * End support for JDK6
+  * Bug and stability fixes
 * 2017-10-13: Maxine VM 2.1.2 Release
   * Support method handles
   * Bug and stability fixes
