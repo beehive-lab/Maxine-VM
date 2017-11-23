@@ -493,7 +493,35 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         add(32, reg, reg, Aarch64.r16, ShiftType.LSL, 0);
     }
 
+    /**
+     * Add value to the current value pointed by dst.
+     * @param dst
+     * @param value
+     */
+    public void incrementl(Aarch64Address dst, int value) {
+        if (value == 0) {
+            return;
+        }
+        ldr(64, Aarch64.r12, dst);
+        movImmediate(Aarch64.r8, value);
+        add(64, Aarch64.r8, Aarch64.r12, Aarch64.r8);
+        str(64, Aarch64.r8, dst);
+    }
 
+    /**
+     * Subtract value from the current value pointed by address dst.
+     * @param dst
+     * @param value
+     */
+    public void decrementl(Aarch64Address dst, int value) {
+        if (value == 0) {
+            return;
+        }
+        ldr(64, Aarch64.r12, dst);
+        movImmediate(Aarch64.r8, value);
+        sub(64, Aarch64.r8, Aarch64.r12, Aarch64.r8);
+        str(64, Aarch64.r8, dst);
+    }
 
     /**
      * @return Number of instructions necessary to load immediate into register.
