@@ -275,7 +275,14 @@ public final class MaxMethodHandles {
                         ", signatureDescriptor: " + signature +
                         ", caller: " + caller +
                         ", appendix: " + appendix);
-        return lookupPolymorphicMethod(classActor, name, MethodType.fromMethodDescriptorString(signature.asString(), null), caller, appendix);
+        try {
+            MethodType methodType = MethodType.fromMethodDescriptorString(signature.asString(), null);
+            return lookupPolymorphicMethod(classActor, name, methodType, caller, appendix);
+        } catch (TypeNotPresentException ex) {
+            Trace.line(1, "MaxMethodHandles.lookupPolymorphicMethod() : MethodType not found for "
+                    + signature.asString());
+            return null;
+        }
     }
 
     /**
