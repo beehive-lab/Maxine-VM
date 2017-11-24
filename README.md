@@ -20,6 +20,10 @@
   * Bug and stability fixes
   * ARMv7 execution (T1X, C1X)
 
+#### Roadmap
+
+Maxine VM's roadmap can be found in the [wiki](https://github.com/beehive-lab/Maxine-VM-internal/wiki#roadmap).
+
 #### Publications
 
 For the original Maxine VM please cite:  
