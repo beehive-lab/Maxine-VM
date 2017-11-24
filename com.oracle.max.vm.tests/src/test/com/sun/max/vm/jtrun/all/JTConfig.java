@@ -474,6 +474,7 @@ public class JTConfig {
         jtt.lang.Math_sin.class,
         jtt.lang.Math_sqrt.class,
         jtt.lang.Math_tan.class,
+        jtt.lang.Miranda_method01.class,
         jtt.lang.Object_clone01.class,
         jtt.lang.Object_clone02.class,
         jtt.lang.Object_equals01.class,
