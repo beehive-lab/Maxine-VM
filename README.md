@@ -22,7 +22,7 @@
 
 #### Roadmap
 
-Maxine VM's roadmap can be found in the [wiki](https://github.com/beehive-lab/Maxine-VM-internal/wiki#roadmap).
+Maxine VM's roadmap can be found in the [wiki](https://github.com/beehive-lab/Maxine-VM/wiki#roadmap).
 
 #### Publications
 
