@@ -1468,6 +1468,16 @@ public class Aarch64Assembler extends AbstractAssembler {
         add(64, reg, reg, Aarch64.r15, ShiftType.LSL, 0);
     }
 
+    /**
+     * Sub a long value from a register using R15 as temporary.
+     * @param reg
+     * @param value
+     */
+    public void subq(CiRegister reg, long value) {
+        mov64BitConstant(Aarch64.r15, value);
+        sub(64, reg, reg, Aarch64.r15, ShiftType.LSL, 0);
+    }
+
     /* Arithmetic (extended register) (5.5.2) */
     /**
      * dst = src1 + extendType(src2) << imm.

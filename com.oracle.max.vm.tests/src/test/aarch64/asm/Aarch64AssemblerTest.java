@@ -1386,26 +1386,26 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         }
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
-//
-//     public void ignore_Subq() throws Exception {
-//         initialiseExpectedValues();
-//         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//         resetIgnoreValues();
-//         asm.codeBuffer.reset();
-//         for (int i = 0; i < 10; i++) {
-//             asm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
-//             if (i % 2 == 1) {
-//                 asm.subq(Aarch64.cpuRegisters[i], 2 * expectedValues[i]);
-//                 expectedValues[i] -= 2 * expectedValues[i];
-//             } else {
-//                 asm.subq(Aarch64.cpuRegisters[i], expectedValues[i]);
-//                 expectedValues[i] -= expectedValues[i];
-//             }
-//             testValues[i] = true;
-//         }
-//         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//     }
-//
+
+    public void work_Subq() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        asm.codeBuffer.reset();
+        for (int i = 0; i < 10; i++) {
+            asm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
+            if (i % 2 == 1) {
+                asm.subq(Aarch64.cpuRegisters[i], 2 * expectedValues[i]);
+                expectedValues[i] -= 2 * expectedValues[i];
+            } else {
+                asm.subq(Aarch64.cpuRegisters[i], expectedValues[i]);
+                expectedValues[i] -= expectedValues[i];
+            }
+            testValues[i] = true;
+        }
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
     public void work_addq() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
