@@ -1451,29 +1451,31 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
 //     }
 //
-//     public void ignore_StrdAndLdrd() throws Exception {
-//         MaxineAarch64Tester.disableDebug();
-//         initialiseExpectedValues();
-//         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//         resetIgnoreValues();
-//         for (int i = 0; i < 10; i += 2) {
-//             asm.codeBuffer.reset();
-//             asm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
-//             asm.mov32BitConstant(Aarch64.cpuRegisters[i + 1], expectedValues[i + 1]);
-//             asm.strd(Aarch64Assembler.ConditionFlag.Always, Aarch64.cpuRegisters[i], Aarch64.r13, 0);
-//             asm.mov32BitConstant(Aarch64.cpuRegisters[i], 0);
-//             asm.mov32BitConstant(Aarch64.cpuRegisters[i + 1], 0);
-//             asm.ldrd(Aarch64Assembler.ConditionFlag.Always, Aarch64.cpuRegisters[i], Aarch64.r13, 0);
-//             testValues[i] = true;
-//             testValues[i + 1] = true;
-//             if (i != 0) {
-//                 testValues[i - 1] = false;
-//                 testValues[i - 2] = false;
-//             }
-//             generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//         }
-//     }
-//
+    public void work_StrdAndLdrd() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        Aarch64Address address = Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, -16); // stack address
+        for (int i = 0; i < 10; i += 2) {
+            asm.codeBuffer.reset();
+            asm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
+            asm.mov32BitConstant(Aarch64.cpuRegisters[i + 1], expectedValues[i + 1]);
+            asm.str(64, Aarch64.cpuRegisters[i], address);
+            asm.mov32BitConstant(Aarch64.cpuRegisters[i], 0);
+            asm.mov32BitConstant(Aarch64.cpuRegisters[i + 1], 0);
+            asm.ldr(64, Aarch64.cpuRegisters[i], address);
+            testValues[i] = true;
+            testValues[i + 1] = true;
+            if (i != 0) {
+                testValues[i - 1] = false;
+                testValues[i - 2] = false;
+            }
+            expectedValues[i+1] = 0;
+            generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        }
+        
+    }
+
     public void work_PushAndPop() throws Exception {
         int registers = 1;
         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
