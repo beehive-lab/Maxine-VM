@@ -1324,41 +1324,41 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-//     public void ignore_Str() throws Exception {
-//         initialiseExpectedValues();
-//         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//         resetIgnoreValues();
-//         asm.codeBuffer.reset();
-//         asm.mov32BitConstant(Aarch64.cpuRegisters[12], 0);
-//         for (int i = 0; i < 10; i++) {
-//             asm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
-//             testValues[i] = true;
-//             asm.str(Aarch64Assembler.ConditionFlag.Always, 1, 0, 0, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[13], Aarch64.cpuRegisters[12], i * 4, 0);
-//             asm.mov32BitConstant(Aarch64.cpuRegisters[i], -2 * (expectedValues[i]));
-//             asm.ldr(Aarch64Assembler.ConditionFlag.Always, 1, 0, 0, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[13], Aarch64.cpuRegisters[12], i * 4, 0);
-//         }
-//         generateAndTest( expectedValues, testValues, bitmasks, asm.codeBuffer);
-//     }
-//
-//     public void ignore_Ldr() throws Exception {
-//         initialiseExpectedValues();
-//         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
-//         resetIgnoreValues();
-//         asm.codeBuffer.reset();
-//         for (int i = 0; i < 10; i++) {
-//             asm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
-//             testValues[i] = true;
-//         }
-//         asm.push(Aarch64Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
-//         for (int i = 0; i < 10; i++) {
-//             asm.add(Aarch64Assembler.ConditionFlag.Always, false, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], i * 2, 0);
-//             asm.movw(Aarch64Assembler.ConditionFlag.Always, Aarch64.r12, i * 4);
-//             asm.movt(Aarch64Assembler.ConditionFlag.Always, Aarch64.r12, 0);
-//             asm.ldr(Aarch64Assembler.ConditionFlag.Always, 1, 1, 0, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[13], Aarch64.cpuRegisters[12], 0, 0);
-//         }
-//         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-//     }
-//
+    public void work_Str() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        asm.codeBuffer.reset();
+        asm.mov32BitConstant(Aarch64.cpuRegisters[12], 0);
+        Aarch64Address address = Aarch64Address.createRegisterOffsetAddress(Aarch64.sp, Aarch64.cpuRegisters[12], false);
+        for (int i = 0; i < 10; i++) {
+            asm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
+            testValues[i] = true;
+            asm.str(VARIANT_64, Aarch64.cpuRegisters[i], address);
+            asm.mov32BitConstant(Aarch64.cpuRegisters[i], -2 * (expectedValues[i]));
+            asm.ldr(VARIANT_64, Aarch64.cpuRegisters[i], address);
+        }
+        generateAndTest( expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
+    public void work_Ldr() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
+        resetIgnoreValues();
+        masm.codeBuffer.reset();
+        for (int i = 0; i < 10; i++) {
+            masm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
+            testValues[i] = true;
+        }
+        masm.push(1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
+        Aarch64Address address = Aarch64Address.createRegisterOffsetAddress(Aarch64.sp, Aarch64.cpuRegisters[12], false);
+        for (int i = 9; i < -1; i++) {
+            masm.mov32BitConstant(Aarch64.cpuRegisters[12], 16*i);
+            masm.ldr(VARIANT_64, Aarch64.cpuRegisters[i], address);
+        }
+        generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+    }
+
     public void work_Decq() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
