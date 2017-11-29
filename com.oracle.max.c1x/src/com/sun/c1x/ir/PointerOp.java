@@ -48,8 +48,7 @@ public abstract class PointerOp extends StateSplit {
      * pointer plus a byte offset.
      *
      * @param kind the kind of value produced by this operation
-     * @param dataKind the kind of value at the address accessed by the pointer operation
-     * @param opcode the opcode of the instruction
+     * @param dataType the type of value at the address accessed by the pointer operation
      * @param pointer the value producing the pointer
      * @param displacement the value producing the displacement. This may be {@code null}.
      * @param offsetOrIndex the value producing the scaled-index or the byte offset depending on whether {@code displacement} is {@code null}

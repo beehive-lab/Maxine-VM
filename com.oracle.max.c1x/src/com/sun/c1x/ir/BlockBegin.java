@@ -851,7 +851,6 @@ public final class BlockBegin extends Instruction {
      * Determines if a given instruction is a phi whose {@linkplain Phi#block() join block} is a given block.
      *
      * @param value the instruction to test
-     * @param block the block that may be the join block of {@code value} if {@code value} is a phi
      * @return {@code true} if {@code value} is a phi and its join block is {@code block}
      */
     private boolean isPhiAtBlock(Value value) {
@@ -865,8 +864,6 @@ public final class BlockBegin extends Instruction {
      *
      * @param index the index of the value in the frame state
      * @param value the frame state value
-     * @param block if {@code value} is a phi, then its inputs are formatted if {@code block} is its
-     *            {@linkplain Phi#block() join point}
      * @return the instruction representation as a string
      */
     public String stateString(int index, Value value) {

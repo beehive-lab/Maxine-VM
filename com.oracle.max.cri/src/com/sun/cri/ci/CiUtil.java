@@ -267,8 +267,6 @@ public class CiUtil {
      *
      * @param format a format specification
      * @param method the method to be formatted
-     * @param kinds if {@code true} then the types in {@code method}'s signature are printed in the
-     *            {@linkplain CiKind#jniName JNI} form of their {@linkplain CiKind kind}
      * @return the result of formatting this method according to {@code format}
      * @throws IllegalFormatException if an illegal specifier is encountered in {@code format}
      */
@@ -359,8 +357,6 @@ public class CiUtil {
      *
      * @param format a format specification
      * @param field the field to be formatted
-     * @param kinds if {@code true} then {@code field}'s type is printed in the
-     *            {@linkplain CiKind#jniName JNI} form of its {@linkplain CiKind kind}
      * @return the result of formatting this field according to {@code format}
      * @throws IllegalFormatException if an illegal specifier is encountered in {@code format}
      */
