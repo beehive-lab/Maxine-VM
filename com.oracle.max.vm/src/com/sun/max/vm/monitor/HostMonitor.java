@@ -61,6 +61,7 @@ public final class HostMonitor {
         return monitor;
     }
 
+    @SuppressWarnings("deprecation")
     public static void enter(Object object) {
         if (unsafe != null) {
             unsafe.monitorEnter(object);
@@ -69,6 +70,7 @@ public final class HostMonitor {
         }
     }
 
+    @SuppressWarnings("deprecation")
     public static void exit(Object object) {
         if (unsafe != null) {
             unsafe.monitorExit(object);
