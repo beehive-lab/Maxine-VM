@@ -24,7 +24,7 @@
 #
 # ----------------------------------------------------------------------------------------------------
 
-import os, shutil, fnmatch, subprocess
+import os, shutil, fnmatch, subprocess, platform
 from os.path import join, exists, dirname, isdir, pathsep, isfile
 import mx
 from argparse import ArgumentParser
@@ -43,7 +43,12 @@ _vmdir = None
 # accordingly. Consequently the use of `-rpath` when linking maxvm (see
 # `com.oracle.max.vm.native/platform/platform.mk`) is redundant now.
 ldenv = os.environ
-ldenv['LD_LIBRARY_PATH'] = ldenv['MAXINE_HOME'] + "/com.oracle.max.vm.native/generated/" + mx.get_os()
+platform = platform.system()
+if platform == "Linux":
+    ldenv['LD_LIBRARY_PATH'] = ldenv['MAXINE_HOME'] + "/com.oracle.max.vm.native/generated/" + mx.get_os()
+elif platform == "Darwin":
+    ldenv['LD_LIBRARY_PATH'] = ldenv['MAXINE_HOME'] + "/com.oracle.max.vm.native/build/" + mx.get_os() +"/substrate"
+
 
 def c1x(args):
     """alias for "mx olc -c=C1X ..." """

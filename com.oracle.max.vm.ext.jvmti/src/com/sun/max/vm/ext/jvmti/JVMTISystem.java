@@ -43,6 +43,7 @@ public class JVMTISystem {
 
     private static final byte[] JAVA_HOME_BYTES = "JAVA_HOME".getBytes();
     private static final byte[] DARWIN_JAVA_HOME_JDK7_DEFAULT_BYTES = JDK_java_lang_System.DARWIN_JAVA_HOME_JDK7_DEFAULT.getBytes();
+    private static final byte[] DARWIN_JAVA_HOME_JDK8_DEFAULT_BYTES = JDK_java_lang_System.DARWIN_JAVA_HOME_JDK8_DEFAULT.getBytes();
     private static final byte[] LD_LIBRARY_PATH_BYTES = "LD_LIBRARY_PATH".getBytes();
     private static final byte[] LIB_BYTES = "lib".getBytes();
     private static final byte[] JNILIB_BYTES = "jnilib".getBytes();
@@ -93,11 +94,13 @@ public class JVMTISystem {
                 if (javaHome.isZero()) {
                     if (JDK.JDK_VERSION == JDK.JDK_7) {
                         javaHome = JVMTIUtil.getByteArrayStart(DARWIN_JAVA_HOME_JDK7_DEFAULT_BYTES);
+                    } else if (JDK.JDK_VERSION == JDK.JDK_8) {
+                        javaHome = JVMTIUtil.getByteArrayStart(DARWIN_JAVA_HOME_JDK8_DEFAULT_BYTES);
                     } else {
                         FatalError.check(false, "Unsupported DARWIN JDK version");
                     }
                 }
-                if (JDK.JDK_VERSION == JDK.JDK_7) {
+                if (JDK.JDK_VERSION == JDK.JDK_7 || JDK.JDK_VERSION == JDK.JDK_8) {
                     if (!CString.endsWith(javaHome, "/jre")) {
                         javaHome = CString.append(javaHome, "/jre");
                     }

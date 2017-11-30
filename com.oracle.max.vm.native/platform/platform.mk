@@ -52,7 +52,7 @@ HOSTOS = $(shell uname -s)
 # Set TARGETOS explicitly to cross-compile for a different target 
 # (required for Maxine VE when building tele/inspector)
 TARGETOS ?= $(shell uname -s)
-DARWIN_RELEASE ?= $(shell uname -r | cut -d'.' -f 1)
+DARWIN_RELEASE ?= $(shell echo $$(($$(uname -r | cut -d'.' -f 1) > 13 ? 1 : 0)))
 
 ifeq ($(TARGETOS),Darwin)
     OS := darwin
@@ -61,22 +61,14 @@ ifeq ($(TARGETOS),Darwin)
     ifeq ($a,i386)
         mach := $(shell ls /usr/include/mach/x86_64)
         ifneq ($(mach), ) 
-    	    DARWIN_GCC_MFLAG := -m64
+    	        DARWIN_GCC_MFLAG := -m64
             ISA := amd64
         else
-        	ifeq ($(DARWIN_RELEASE),13)
-        		DARWIN_GCC_MFLAG := -m64 -DMaverick
-    	    	ISA := amd64
-            endif
-            ifeq ($(DARWIN_RELEASE),15)
-        		DARWIN_GCC_MFLAG := -m64 -DMaverick
-    	    	ISA := amd64
-           	endif
-           	ifeq ($(DARWIN_RELEASE),16)
-        		DARWIN_GCC_MFLAG := -m64 -DMaverick
-    	    	ISA := amd64
+        	    ifeq ($(DARWIN_RELEASE),1)
+        		    DARWIN_GCC_MFLAG := -m64 -DMaverick
+    	    	        ISA := amd64
            	else
-            	ISA := ia32
+            	    ISA := ia32
             endif
         endif
     else
@@ -222,7 +214,7 @@ ifeq ($(OS),darwin)
     endif
     LIB_PREFIX = lib
     LIB_SUFFIX = .dylib
-    JAVA_HOME ?= /System/Library/Frameworks/JavaVM.framework/Versions/1.6/Home
+    JAVA_HOME ?= /Library/Java/JavaVirtualMachines/jdk1.8.0_151.jdk/Contents/Home
 endif
 
 ifeq ($(OS),linux)

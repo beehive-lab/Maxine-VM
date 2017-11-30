@@ -66,6 +66,7 @@ import static com.sun.max.vm.intrinsics.MaxineIntrinsicIDs.UNSAFE_CAST;
 public final class JDK_java_lang_System {
 
     public static final String DARWIN_JAVA_HOME_JDK7_DEFAULT = "/Library/Java/JavaVirtualMachines/1.7.0.jdk/Contents/Home";
+    public static final String DARWIN_JAVA_HOME_JDK8_DEFAULT = "/Library/Java/JavaVirtualMachines/jdk1.8.0_151.jdk/Contents/Home";
 
     /**
      * Register any native methods through JNI.
@@ -425,11 +426,16 @@ public final class JDK_java_lang_System {
                     if (javaHome == null) {
                         javaHome = DARWIN_JAVA_HOME_JDK7_DEFAULT;
                     }
-                    if (!javaHome.endsWith("/jre")) {
-                        javaHome = javaHome + "/jre";
+
+                } else if (JDK.JDK_VERSION == JDK.JDK_8) {
+                    if (javaHome == null) {
+                        javaHome = DARWIN_JAVA_HOME_JDK8_DEFAULT;
                     }
-                } else { // JDK 8 is not tested on DARWIN yet
+                } else {
                     throw FatalError.unexpected("Unsupported DARWIN JDK version");
+                }
+                if (!javaHome.endsWith("/jre")) {
+                    javaHome = javaHome + "/jre";
                 }
                 return javaHome;
             }
@@ -912,17 +918,12 @@ public final class JDK_java_lang_System {
         JAVA_ENDORSED_DIRS.setValue(setIfAbsent(properties, JAVA_ENDORSED_DIRS.property, javaEndorsedDirs));
 
         String javaExtDirs = null;
-        String extPath = asFilesystemPath(javaHome, "lib/ext");
+        String extPath = asFilesystemPath(javaHome, "/lib/ext");
         if (os == OS.LINUX) {
             javaExtDirs = asClasspath(extPath, "/usr/java/packages/lib/ext");
         } else if (os == OS.SOLARIS) {
             javaExtDirs = asClasspath(extPath, "/usr/jdk/packages/lib/ext");
         } else if (os == OS.DARWIN) {
-            // laundry list (cf Hotspot)!
-            final String userHome = properties.getProperty("user.home");
-            if (userHome != null) {
-                javaExtDirs = new File(userHome, "Library/Java/Extensions").getAbsolutePath();
-            }
             javaExtDirs = join(pathSeparator, javaExtDirs, asClasspath(extPath), "/Library/Java/Extensions", "/Network/Library/Java/Extensions",
                     "/System/Library/Java/Extensions", "/usr/lib/java");
         } else if (os == OS.MAXVE) {
