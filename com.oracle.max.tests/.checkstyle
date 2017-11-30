@@ -9,7 +9,4 @@
   <filter check-config-name="Checks" enabled="true" local="true" name="all">
     <filter-data value="java"/>
   </filter>
-  <filter enabled="true" name="FilesFromPackage">
-    <filter-data value="src/jtt"/>
-  </filter>
 </fileset-config>
