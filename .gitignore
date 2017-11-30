@@ -9,6 +9,7 @@
 nbproject/
 workingsets.xml
 \.externalToolBuilders/
+/.metadata/
 
 # intellij generated
 *.iml
@@ -52,3 +53,4 @@ codebuffer.c
 
 # Libraries
 lib/checkstyle-6.11.2-all.jar
+
