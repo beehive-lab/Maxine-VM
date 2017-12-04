@@ -606,8 +606,8 @@ public class Canonicalizer extends DefaultValueVisitor {
         if (!i.isLoaded() || !C1XOptions.CanonicalizeConstantFields) {
             return;
         }
+        RiField field = i.field();
         if (i.isStatic()) {
-            RiField field = i.field();
             CiConstant value = ((RiResolvedField) field).constantValue(null);
             if (value != null) {
                 if (method.isClassInitializer()) {
@@ -616,13 +616,10 @@ public class Canonicalizer extends DefaultValueVisitor {
                 }
                 canonical = new Constant(value);
             }
-        } else {
-            RiField field = i.field();
-            if (i.object().isConstant()) {
-                CiConstant value = ((RiResolvedField) field).constantValue(i.object().asConstant());
-                if (value != null) {
-                    canonical = new Constant(value);
-                }
+        } else if (i.object().isConstant()) {
+            CiConstant value = ((RiResolvedField) field).constantValue(i.object().asConstant());
+            if (value != null) {
+                canonical = new Constant(value);
             }
         }
     }
