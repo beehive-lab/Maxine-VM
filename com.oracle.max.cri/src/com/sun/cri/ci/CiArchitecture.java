@@ -63,11 +63,6 @@ public abstract class CiArchitecture {
     public final CiRegister[] registers;
 
     /**
-     * Map of all registers keyed by their {@linkplain CiRegister#name names}.
-     */
-    public final HashMap<String, CiRegister> registersByName;
-
-    /**
      * The byte ordering can be either little or big endian.
      */
     public final ByteOrder byteOrder;
@@ -131,12 +126,6 @@ public abstract class CiArchitecture {
         this.machineCodeCallDisplacementOffset = nativeCallDisplacementOffset;
         this.registerReferenceMapBitCount = registerReferenceMapBitCount;
         this.returnAddressSize = returnAddressSize;
-
-        registersByName = new HashMap<String, CiRegister>(registers.length);
-        for (CiRegister register : registers) {
-            registersByName.put(register.name, register);
-            assert registers[register.number] == register;
-        }
 
         registersByTypeAndEncoding = new EnumMap<CiRegister.RegisterFlag, CiRegister[]>(RegisterFlag.class);
         EnumMap<RegisterFlag, CiRegister[]> categorizedRegs = CiRegister.categorize(registers);
