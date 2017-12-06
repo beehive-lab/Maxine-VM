@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2009, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.oracle.max.asm.target.amd64;
 
@@ -312,58 +310,6 @@ public class AMD64MacroAssembler extends AMD64Assembler {
 
     public void xchgptr(CiRegister src1, CiRegister src2) {
         xchgq(src1, src2);
-    }
-
-    public void flog(CiRegister dest, CiRegister value, boolean base10) {
-        assert value.spillSlotSize == dest.spillSlotSize;
-
-        CiAddress tmp = new CiAddress(CiKind.Double, AMD64.RSP);
-        if (base10) {
-            fldlg2();
-        } else {
-            fldln2();
-        }
-        subq(AMD64.rsp, value.spillSlotSize);
-        movsd(tmp, value);
-        fld(tmp);
-        fyl2x();
-        fstp(tmp);
-        movsd(dest, tmp);
-        addq(AMD64.rsp, dest.spillSlotSize);
-    }
-
-    public void fsin(CiRegister dest, CiRegister value) {
-        ftrig(dest, value, 's');
-    }
-
-    public void fcos(CiRegister dest, CiRegister value) {
-        ftrig(dest, value, 'c');
-    }
-
-    public void ftan(CiRegister dest, CiRegister value) {
-        ftrig(dest, value, 't');
-    }
-
-    private void ftrig(CiRegister dest, CiRegister value, char op) {
-        assert value.spillSlotSize == dest.spillSlotSize;
-
-        CiAddress tmp = new CiAddress(CiKind.Double, AMD64.RSP);
-        subq(AMD64.rsp, value.spillSlotSize);
-        movsd(tmp, value);
-        fld(tmp);
-        if (op == 's') {
-            fsin();
-        } else if (op == 'c') {
-            fcos();
-        } else if (op == 't') {
-            fptan();
-            fstp(0); // ftan pushes 1.0 in addition to the actual result, pop
-        } else {
-            throw new InternalError("should not reach here");
-        }
-        fstp(tmp);
-        movsd(dest, tmp);
-        addq(AMD64.rsp, dest.spillSlotSize);
     }
 
     /**
