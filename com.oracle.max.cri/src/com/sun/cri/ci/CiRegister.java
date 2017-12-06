@@ -66,9 +66,7 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
     /**
      * The set of {@link RegisterFlag} values associated with this register.
      */
-    private final int flags;
-
-    public final RegisterFlag[] originalFlags;
+    final int flags;
 
     /**
      * An array of {@link CiRegisterValue} objects, for this register, with one entry
@@ -108,11 +106,14 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
      * @param flags the set of {@link RegisterFlag} values for the register
      */
     public CiRegister(int number, int encoding, int spillSlotSize, String name, RegisterFlag... flags) {
+        this(number, encoding, spillSlotSize, name, createMask(flags));
+    }
+
+    public CiRegister(int number, int encoding, int spillSlotSize, String name, int flags) {
         this.number = number;
         this.name = name;
         this.spillSlotSize = spillSlotSize;
-        this.flags = createMask(flags);
-        this.originalFlags = flags;
+        this.flags = flags;
         this.encoding = encoding;
 
         values = new CiRegisterValue[CiKind.VALUES.length];
@@ -121,7 +122,7 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
         }
     }
 
-    private int createMask(RegisterFlag... flags) {
+    private static int createMask(RegisterFlag... flags) {
         int result = 0;
         for (RegisterFlag f : flags) {
             result |= f.mask;
