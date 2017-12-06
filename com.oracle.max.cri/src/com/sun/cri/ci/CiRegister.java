@@ -57,7 +57,6 @@ public final class CiRegister implements Comparable<CiRegister>, Serializable {
      * may not be the same as {@link #number}.
      */
     private int encoding;
-    private boolean doubleEncoding = false;
 
     /**
      * The size of the stack slot used to spill the value of this register.
