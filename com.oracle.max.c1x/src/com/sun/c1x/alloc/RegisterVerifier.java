@@ -207,10 +207,8 @@ final class RegisterVerifier {
                 if (C1XOptions.TraceLinearScanLevel >= 4) {
                     TTY.println("        %s = %s", reg, interval.operand);
                 }
-            } else if (inputState[regNum] != null) {
-                if (C1XOptions.TraceLinearScanLevel >= 4) {
-                    TTY.println("        %s = null", reg);
-                }
+            } else if (inputState[regNum] != null && C1XOptions.TraceLinearScanLevel >= 4) {
+                TTY.println("        %s = null", reg);
             }
 
             inputState[regNum] = interval;
@@ -218,15 +216,13 @@ final class RegisterVerifier {
     }
 
     boolean checkState(Interval[] inputState, CiValue reg, Interval interval) {
-        if (reg != null && reg.isRegister()) {
-            if (inputState[reg.asRegister().number] != interval) {
-                if (reg.highPart) {
-                    if (C1XOptions.TraceLinearScanLevel >= 4) {
-                        TTY.println("!! Warning: Skip Register Verificaton Error for high part");
-                    }
-                } else {
-                    throw new CiBailout("!! Error in register allocation: register " + reg + " does not contain interval " + interval.operand + " but interval " + inputState[reg.asRegister().number]);
+        if (reg != null && reg.isRegister() && inputState[reg.asRegister().number] != interval) {
+            if (reg.highPart) {
+                if (C1XOptions.TraceLinearScanLevel >= 4) {
+                    TTY.println("!! Warning: Skip Register Verificaton Error for high part");
                 }
+            } else {
+                throw new CiBailout("!! Error in register allocation: register " + reg + " does not contain interval " + interval.operand + " but interval " + inputState[reg.asRegister().number]);
             }
         }
         return true;
