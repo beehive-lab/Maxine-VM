@@ -141,10 +141,6 @@ public abstract class CiValue implements Serializable, Cloneable {
         return ":" + kind.typeChar;
     }
 
-    public final boolean isConstant0() {
-        return isConstant() && ((CiConstant) this).asInt() == 0;
-    }
-
     /**
      * Utility for specializing how a {@linkplain CiValue LIR operand} is formatted to a string.
      * The {@linkplain Formatter#DEFAULT default formatter} returns the value of
