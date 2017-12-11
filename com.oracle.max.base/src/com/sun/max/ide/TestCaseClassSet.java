@@ -1,4 +1,6 @@
 /*
+ * Copyright (c) 2017, APT Group, School of Computer Science,
+ * The University of Manchester. All rights reserved.
  * Copyright (c) 2008, 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -15,10 +17,6 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
 package com.sun.max.ide;
 
@@ -26,6 +24,8 @@ import static com.sun.max.lang.Classes.*;
 
 import java.lang.reflect.*;
 import java.util.*;
+
+import org.junit.Test;
 
 import junit.framework.*;
 
@@ -36,7 +36,7 @@ import com.sun.max.program.*;
 /**
  * A utility for defining and refining a set of {@linkplain #isJUnitTestCaseClass(Class) valid} JUnit test case classes.
  */
-public class TestCaseClassSet extends LinkedHashSet<Class<? extends TestCase>> {
+public class TestCaseClassSet extends LinkedHashSet<Class> {
 
     private final String defaultTestSuiteName;
 
@@ -83,13 +83,11 @@ public class TestCaseClassSet extends LinkedHashSet<Class<? extends TestCase>> {
         new ClassSearch() {
             @Override
             protected boolean visitClass(boolean isArchiveEntry, String className) {
-                if (!className.endsWith("package-info")) {
-                    if (scanSubPackages || (Classes.getPackageName(className).equals(packageName))) {
-                        Class javaClass = Classes.forName(className, false, getClass().getClassLoader());
-                        if (isJUnitTestCaseClass(javaClass)) {
-                            final Class<Class<? extends TestCase>> type = null;
-                            add(Utils.cast(type, javaClass));
-                        }
+                if (!className.endsWith("package-info") && !className.equals("AutoTest")
+                        && (scanSubPackages || (Classes.getPackageName(className).equals(packageName)))) {
+                    Class javaClass = Classes.forName(className, false, getClass().getClassLoader());
+                    if (isJUnitTestCaseClass(javaClass)) {
+                        add(javaClass);
                     }
                 }
                 return true;
@@ -98,7 +96,19 @@ public class TestCaseClassSet extends LinkedHashSet<Class<? extends TestCase>> {
     }
 
     public static boolean isJUnitTestCaseClass(Class javaClass) {
-        return javaClass != null && !Modifier.isAbstract(javaClass.getModifiers()) &&  TestCase.class.isAssignableFrom(javaClass);
+        if (javaClass == null || Modifier.isAbstract(javaClass.getModifiers())) {
+            return false;
+        } else if (TestCase.class.isAssignableFrom(javaClass)) {
+            return true;
+        } else {
+            for (Method method : javaClass.getMethods()) {
+                if (method.getAnnotation(Test.class) != null) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -112,10 +122,9 @@ public class TestCaseClassSet extends LinkedHashSet<Class<? extends TestCase>> {
             final Class c = classes[i];
             if (isJUnitTestCaseClass(c)) {
                 remove(c);
-                final Class<Class<? extends TestCase>> type = null;
-                add(Utils.cast(type, c));
+                add(c);
             } else {
-                ProgramWarning.message("Class is not an instantiable subclass of TestCase: " + c);
+                ProgramWarning.message("Class is not JUnitTestCaseClass: " + c);
             }
         }
         return this;
@@ -137,10 +146,15 @@ public class TestCaseClassSet extends LinkedHashSet<Class<? extends TestCase>> {
      * @param name the name of the suite
      * @return the created suite
      */
+    @SuppressWarnings("unchecked")
     public TestSuite toTestSuite(String name) {
         final TestSuite suite = new TestSuite(name);
-        for (Class<? extends TestCase> testClass : this) {
-            suite.addTestSuite(testClass);
+        for (Class testClass : this) {
+            if (TestCase.class.isAssignableFrom(testClass)) {
+                suite.addTestSuite(testClass);
+            } else {
+                suite.addTest(new JUnit4TestAdapter(testClass));
+            }
         }
         return suite;
     }
