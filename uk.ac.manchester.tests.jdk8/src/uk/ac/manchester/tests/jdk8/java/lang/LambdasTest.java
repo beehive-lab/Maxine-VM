@@ -19,13 +19,16 @@
  */
 package uk.ac.manchester.tests.jdk8.java.lang;
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.concurrent.*;
 
-import junit.framework.*;
+import org.junit.Test;
 
-public class LambdasTest extends TestCase {
+public class LambdasTest {
 
-    public static void test_string() {
+    @Test
+    public void callableLambdaReturningString() {
         String res = null;
         String hello = "Hello world!";
         Callable<String> callee = () -> hello;
@@ -38,7 +41,8 @@ public class LambdasTest extends TestCase {
         assertEquals(res, hello);
     }
 
-    public static void test_int() {
+    @Test
+    public void callableLambdaReturningInteger() {
         Integer res = null;
         Integer integer = 42;
         Callable<Integer> callee = () -> integer;

@@ -19,13 +19,16 @@
  */
 package uk.ac.manchester.tests.jdk8.java.security;
 
+import static org.junit.Assert.assertEquals;
+
 import java.security.*;
 
-import junit.framework.*;
+import org.junit.Test;
 
-public class AccessControllerTest extends TestCase {
+public class AccessControllerTest {
 
-    public static void test_doPrivileged() {
+    @Test
+    public void invokeLambdaThroughDoPrivileged() {
         String res = null;
         try {
             res = AccessController.doPrivileged((PrivilegedExceptionAction<String>) () -> System.getProperty("java.vendor"));

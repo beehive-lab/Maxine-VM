@@ -19,20 +19,26 @@
  */
 package uk.ac.manchester.tests.jdk8.java.lang;
 
-import org.junit.runner.*;
+import static org.junit.Assert.assertEquals;
 
-import com.sun.max.ide.*;
+import org.junit.Test;
 
-import junit.framework.*;
+public class DefaultMethodTest {
 
-@RunWith(org.junit.runners.AllTests.class)
-public final class AllTests {
-
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(AllTests.suite());
+    private interface I {
+        default int get() {
+            return 1;
+        }
     }
 
-    public static Test suite() {
-        return new TestCaseClassSet(AllTests.class).toTestSuite();
+    private static class IWrap implements I {
     }
+
+    private static IWrap wrapped = new IWrap();
+
+    @Test
+    public void defaultMethodInvocation() {
+        assertEquals(wrapped.get(), 1);
+    }
+
 }

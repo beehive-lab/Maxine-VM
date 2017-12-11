@@ -23,16 +23,11 @@ import org.junit.runner.*;
 
 import com.sun.max.ide.*;
 
-import junit.framework.*;
-
 @RunWith(org.junit.runners.AllTests.class)
 public final class AutoTest {
 
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(AutoTest.suite());
+    public static junit.framework.Test suite() {
+        return new TestCaseClassSet(AutoTest.class).toTestSuite();
     }
 
-    public static Test suite() {
-        return new TestCaseClassSet(AllTests.class).toTestSuite();
-    }
 }
