@@ -5,8 +5,11 @@ library@JDK_TOOLS@optional=true
 
 library@JDK_XTOOLS@path=${JAVA_HOME}/lib/xtools.jar
 
-library@JUNIT@path=lib/junit-4.8.jar
-library@JUNIT@urls=http://repo1.maven.org/maven2/junit/junit/4.8/junit-4.8.jar
+library@HAMCREST@path=lib/hamcrest-core-1.3.jar
+library@HAMCREST@urls=http://repo1.maven.org/maven2/org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar
+
+library@JUNIT@path=lib/junit-4.12.jar
+library@JUNIT@urls=http://repo1.maven.org/maven2/junit/junit/4.12/junit-4.12.jar
 library@JUNIT@eclipse.container=org.eclipse.jdt.junit.JUNIT_CONTAINER/4
 
 library@CHECKSTYLE@path=lib/checkstyle-6.11.2-all.jar
@@ -26,7 +29,7 @@ project@com.oracle.max.tele.ins@checkstyle=com.oracle.max.base
 project@com.oracle.max.tele.ins@javaCompliance=1.7
 
 project@com.oracle.max.base@sourceDirs=src,test
-project@com.oracle.max.base@dependencies=JUNIT
+project@com.oracle.max.base@dependencies=JUNIT,HAMCREST
 project@com.oracle.max.base@checkstyle=com.oracle.max.base
 project@com.oracle.max.base@javaCompliance=1.7
 
