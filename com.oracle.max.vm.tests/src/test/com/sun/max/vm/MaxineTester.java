@@ -953,21 +953,6 @@ public class MaxineTester {
         return javaVMArgs.split("\\s+");
     }
 
-    private static String escapeShellCharacters(String s) {
-        final StringBuilder sb = new StringBuilder(s.length());
-        for (int cursor = 0; cursor < s.length(); ++cursor) {
-            final char cursorChar = s.charAt(cursor);
-            if (cursorChar == '$') {
-                sb.append("\\$");
-            } else if (cursorChar == ' ') {
-                sb.append("\\ ");
-            } else {
-                sb.append(cursorChar);
-            }
-        }
-        return sb.toString();
-    }
-
     private static int exec(File workingDir, String[] command, String[] env, File inputFile, Logs files, String name, int timeout) {
         return exec(workingDir, command, env, inputFile, files, false, name, timeout);
     }
