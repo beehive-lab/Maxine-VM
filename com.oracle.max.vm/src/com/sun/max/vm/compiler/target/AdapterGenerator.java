@@ -266,7 +266,23 @@ public abstract class AdapterGenerator {
      * @param current the current stack frame cursor
      * @return true if the cursor was advanced
      */
-    public abstract boolean advanceIfInPrologue(StackFrameCursor current);
+    public boolean advanceIfInPrologue(StackFrameCursor current) {
+        if (inPrologue(current.vmIP(), current.targetMethod())) {
+            StackFrameWalker sfw = current.stackFrameWalker();
+            Pointer callerIP = sfw.readWord(current.sp(), 0).asPointer();
+            Pointer callerSP = current.sp().plus(Word.size()); // skip RIP
+
+            boolean wasDisabled = SafepointPoll.disable();
+            sfw.advance(callerIP, callerSP, current.fp());
+            if (!wasDisabled) {
+                SafepointPoll.enable();
+            }
+
+            return true;
+        }
+        return false;
+    }
+
 
     /**
      * Emits the prologue that makes a calls to a given adapter.

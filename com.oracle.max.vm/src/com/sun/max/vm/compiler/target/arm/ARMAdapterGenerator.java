@@ -64,24 +64,6 @@ public abstract class ARMAdapterGenerator extends AdapterGenerator {
         scratch = opt.getScratchRegister();
     }
 
-    @Override
-    public boolean advanceIfInPrologue(StackFrameCursor current) {
-        if (inPrologue(current.vmIP(), current.targetMethod())) {
-            StackFrameWalker sfw = current.stackFrameWalker();
-            Pointer callerIP = sfw.readWord(current.sp(), 0).asPointer();
-            Pointer callerSP = current.sp().plus(Word.size()); // skip RIP
-
-            boolean wasDisabled = SafepointPoll.disable();
-            sfw.advance(callerIP, callerSP, current.fp());
-            if (!wasDisabled) {
-                SafepointPoll.enable();
-            }
-
-            return true;
-        }
-        return false;
-    }
-
     /**
      * ARMV7 specific generator for {@link Type#BASELINE2OPT} adapters.
      */
