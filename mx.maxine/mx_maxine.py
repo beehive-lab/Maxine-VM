@@ -3,7 +3,7 @@
 #
 # ----------------------------------------------------------------------------------------------------
 #
-# Copyright (c) 2017, APT Group, School of Computer Science,
+# Copyright (c) 2017-2018, APT Group, School of Computer Science,
 # The University of Manchester. All rights reserved.
 # Copyright (c) 2007, 2011, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -63,7 +63,7 @@ def _configs():
             (k, v) = line.split('#')
             self.configs[k] = v.rstrip()
     c = Configs()
-    mx.run([mx.java().java, '-client', '-Xmx40m', '-Xms40m', '-XX:NewSize=30m', '-cp', mx.classpath(resolve=False), 'test.com.sun.max.vm.MaxineTesterConfiguration'], out=c.eat)
+    mx.run([mx.get_jdk().java, '-client', '-Xmx40m', '-Xms40m', '-XX:NewSize=30m', '-cp', mx.classpath(resolve=False), 'test.com.sun.max.vm.MaxineTesterConfiguration'], out=c.eat)
     return c.configs
 
 def configs(arg):
@@ -123,7 +123,7 @@ def gate(args):
         i += 1
 
     if check:
-        mx._opts.specific_suite = "maxine"
+        mx._opts.specific_suites = ["maxine"]
         if mx.checkstyle([]):
             mx.abort('Checkstyle warnings were found')
 
@@ -374,7 +374,7 @@ def inspect(args):
 
     mx.expand_project_in_args(vmArgs)
 
-    cmd = mx.java().format_cmd(sysProps + ['-cp', sanitized_classpath() + pathsep + insCP, 'com.sun.max.ins.MaxineInspector'] +
+    cmd = mx.get_jdk().processArgs(sysProps + ['-cp', sanitized_classpath() + pathsep + insCP, 'com.sun.max.ins.MaxineInspector'] +
                               insArgs + ['-a=' + ' '.join(vmArgs)])
 
     if mx.get_os() == 'darwin' and not remote:
@@ -391,7 +391,7 @@ def inspectoragent(args):
     The agent listens on a given port for an incoming connection from
     a remote Inspector process."""
 
-    cmd = mx.java().format_cmd(['-cp', mx.classpath(), 'com.sun.max.tele.channel.agent.InspectorAgent'] + args)
+    cmd = mx.get_jdk().processArgs(['-cp', mx.classpath(), 'com.sun.max.tele.channel.agent.InspectorAgent'] + args)
     if mx.get_os() == 'darwin':
         # The -E option propagates the environment variables into the sudo process
         mx.run(['sudo', '-E', '-p', 'Debugging is a privileged operation on Mac OS X.\nPlease enter your "sudo" password:'] + cmd)
@@ -412,7 +412,7 @@ def jnigen(args):
 def optionsgen(args):
     """(re)generate Java source for Graal Options"""
 
-    return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm.ext.graal'), 'com.oracle.max.vm.ext.graal.hosted.MaxGraalOptionsGenerator'] + args)
+    return mx.run_java(['-ea', '-cp', mx.classpath('com.oracle.max.vm.ext.graal'), 'com.oracle.max.vm.ext.graal.hosted.MaxGraalOptionsGenerator'] + args)
 
 def jvmtigen(args):
     """(re)generate Java source for JVMTI native function interfaces

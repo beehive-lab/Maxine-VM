@@ -1,0 +1,364 @@
+#
+# Copyright (c) 2017-2018, APT Group, School of Computer Science,
+# The University of Manchester. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+suite = {
+    "mxversion": "5.177.0",
+    "name": "maxine",
+    "sourceinprojectwhitelist": [],
+    "url": "https://github.com/beehive-lab/Maxine-VM",
+    "scm": {
+        "url": "https://github.com/beehive-lab/Maxine-VM",
+        "read": "https://github.com/beehive-lab/Maxine-VM.git",
+        "write": "git@github.com:beehive-lab/Maxine-VM.git",
+    },
+    "outputRoot": "./",
+
+    "imports": {
+        "suites": [
+            {
+                "name": "graal",
+                "version": "96dde1fccc535fd74aa88dc3364cc2d78dfeb759",
+                "urls": [
+                    {"url": "https://github.com/beehive-lab/Maxine-Graal.git", "kind": "git"},
+                ]
+            },
+
+            # {
+            #     "name" : "compiler",
+            #     "subdir" : True,
+            #     "version" : "vm-enterprise-0.30.1",
+            #     "urls" : [
+            #       {"url" : "https://github.com/graalvm/graal.git", "kind" : "git"},
+            #     ]
+            # },
+        ]
+    },
+
+    "licenses": {
+        "GPLv2": {
+            "name": "GNU General Public License, version 2",
+            "url": "https://www.gnu.org/licenses/gpl-2.0.html"
+        },
+    },
+
+    "defaultLicense": "GPLv2",
+
+    # ------------- JDK Libraries -------------
+    "jdklibraries": {
+        "JDK_TOOLS": {
+            "path": 'lib/tools.jar',
+            "jdkStandardizedSince": "999",
+        },
+    },
+
+    # ------------- Libraries -------------
+    "libraries": {
+
+        "JLF_ICONS": {
+            "sha1": "b4680aaa71cd947cbd7ce82b0a569fd99b952985",
+            "maven": {
+                "groupId": "net.java.linoleum",
+                "artifactId": "jlfgr",
+                "version": "1_0",
+            },
+        },
+
+        "NB3_BUTTONS": {
+            "sha1": "40108ac637c3813fe154eb2d15ba8736fb5805f7",
+            "path": "com.oracle.max.tele.ins/NB3B.jar",
+        },
+
+        "TESTS_JASMIN_CLASSES": {
+            "sha1": "cd79f5f455158d6fcbcb066f5175fc96dac9cf71",
+            "path": "com.oracle.max.tests/jasmin_classes.jar",
+        },
+
+        "ASM": {
+            "sha1": "a4581414aab6b45e824d2bcedffad539e74ed29c",
+            "path": "lib/asm-6.0-maxine.jar",
+        },
+
+        "ASMUTIL": {
+            "sha1": "9d5ed2a22332f928c29ce88a2cfb44340313f33e",
+            "path": "lib/asm-util-6.0-maxine.jar",
+        },
+
+    },
+
+    # ------------- Maxine -------------
+
+    "projects": {
+
+        "com.oracle.max.asm": {
+            "sourceDirs": ["src", "test"],
+            "dependencies": ["com.oracle.max.cri", "mx:JUNIT"],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.asmdis": {
+            "sourceDirs": ["src", "test"],
+            "dependencies": ["com.oracle.max.base"],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.base": {
+            "sourceDirs": ["src", "test"],
+            "dependencies": ["mx:JUNIT"],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.c1x": {
+            "sourceDirs": ["src"],
+            "dependencies": [
+                "com.oracle.max.asm",
+                "com.oracle.max.vm",
+            ],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.cri": {
+            "sourceDirs": ["src"],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.criutils": {
+            "sourceDirs": ["src"],
+            "dependencies": ["com.oracle.max.cri"],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.elf": {
+            "sourceDirs": ["src"],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.hcfdis": {
+            "sourceDirs": ["src"],
+            "dependencies": [
+                "com.oracle.max.asmdis",
+                "com.oracle.max.criutils",
+            ],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.jdwp": {
+            "sourceDirs": ["src"],
+            "dependencies": ["com.oracle.max.vmdi"],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.tele.ins": {
+            "sourceDirs": ["src", "test"],
+            "dependencies": [
+                "com.oracle.max.tele.vm",
+                "JLF_ICONS",
+                "NB3_BUTTONS",
+            ],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.tele.jdwp": {
+            "sourceDirs": ["src"],
+            "dependencies": [
+                "com.oracle.max.jdwp",
+                "com.oracle.max.tele.vm",
+            ],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.tele.vm": {
+            "sourceDirs": ["src", "test"],
+            "dependencies": [
+                "com.oracle.max.vm.ext.jvmti",
+                "com.oracle.max.vmdi",
+                "com.oracle.max.elf",
+            ],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.tests": {
+            "sourceDirs": ["src"],
+            "dependencies": [
+                "com.oracle.max.base",
+                "TESTS_JASMIN_CLASSES",
+                "com.oracle.max.vm.ext.t1x",
+                "com.oracle.max.vm.ext.c1x",
+            ],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.tests.jsr292": {
+            "sourceDirs": ["src"],
+            "dependencies": ["com.oracle.max.vm"],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.tools": {
+            "sourceDirs": ["src"],
+            "dependencies": [
+                "JDK_TOOLS",
+                "com.oracle.max.base",
+            ],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.vm": {
+            "sourceDirs": ["src", "demo"],
+            "dependencies": [
+                "com.oracle.max.asm",
+                "com.oracle.max.base",
+                "com.oracle.max.criutils",
+                "JDK_TOOLS",
+            ],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.vm.ext.bctrans": {
+            "sourceDirs": ["src"],
+            "dependencies": ["com.oracle.max.vm"],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.vm.ext.c1x": {
+            "sourceDirs": ["src"],
+            "dependencies": [
+                "com.oracle.max.vm.ext.maxri",
+                "com.oracle.max.c1x",
+            ],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.vm.ext.c1xgraal": {
+            "sourceDirs": ["src"],
+            "dependencies": [
+                "com.oracle.max.vm.ext.c1x",
+                "com.oracle.max.vm.ext.graal",
+            ],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.vm.ext.graal": {
+            "sourceDirs": ["src"],
+            "dependencies": [
+                "com.oracle.max.vm.ext.maxri",
+                "graal:GRAAL_MAXINE",
+                "com.oracle.max.vm",
+            ],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.vm.ext.jvmti": {
+            "sourceDirs": ["src", "demo"],
+            "dependencies": ["com.oracle.max.vm.ext.t1x"],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.vm.ext.maxri": {
+            "sourceDirs": ["src"],
+            "dependencies": [
+                "com.oracle.max.vm",
+                "com.oracle.max.hcfdis",
+            ],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.vm.ext.t1x": {
+            "sourceDirs": ["src"],
+            "dependencies": ["com.oracle.max.vm.ext.maxri"],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.vm.ext.vma": {
+            "sourceDirs": ["src", "test"],
+            "dependencies": [
+                "com.oracle.max.vm",
+                "com.oracle.max.vm.ext.jvmti",
+                "com.oracle.max.vm.ext.graal",
+            ],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.vm.native": {
+            "native": True,
+        },
+
+        "com.oracle.max.vm.tests": {
+            "sourceDirs": ["src"],
+            "dependencies": [
+                "com.oracle.max.vm",
+                "com.oracle.max.tests",
+                "ASM",
+                "ASMUTIL",
+                "TESTS_JASMIN_CLASSES",
+                "uk.ac.manchester.tests.jdk8",
+            ],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.8",
+        },
+
+        "com.oracle.max.vma.tools": {
+            "sourceDirs": ["src"],
+            "dependencies": ["com.oracle.max.vm.ext.vma"],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.oracle.max.vmdi": {
+            "sourceDirs": ["src"],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.7+",
+        },
+
+        "uk.ac.manchester.tests.jdk8": {
+            "sourceDirs": ["src"],
+            "dependencies": [
+                "com.oracle.max.base",
+                "com.oracle.max.vm.ext.t1x",
+                "com.oracle.max.vm.ext.c1x",
+            ],
+            "checkstyle": "com.oracle.max.base",
+            "javaCompliance": "1.8",
+        },
+
+    },
+}

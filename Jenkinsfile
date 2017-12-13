@@ -10,7 +10,8 @@ pipeline {
     environment {
         MAXINE_HOME="$WORKSPACE/maxine"
         GRAAL_HOME="$WORKSPACE/graal"
-        MX="$GRAAL_HOME/mxtool/mx"
+        MX_HOME="$WORKSPACE/mx"
+        MX="$MX_HOME/mx"
         PATH="/localhome/regression/gcc-linaro-7.1.1-2017.08-x86_64_aarch64-linux-gnu/bin:/localhome/regression/gcc-arm-none-eabi-7-2017-q4-major/bin:/localhome/regression/qemu-2.10.1/build/aarch64-softmmu:/localhome/regression/qemu-2.10.1/build/arm-softmmu:/localhome/regression/riscv/bin:$PATH"
     }
 
@@ -24,7 +25,10 @@ pipeline {
                 }
                 dir(env.GRAAL_HOME) {
                     // Use ugly/advanced syntax to perform shallow clone
-                    checkout([$class: 'GitSCM', branches: [[name: 'master']], extensions: [[$class: 'CloneOption', noTags: true, shallow: true]], userRemoteConfigs: [[credentialsId: 'orion_github', url: 'https://github.com/beehive-lab/Maxine-Graal.git']]])
+                    checkout([$class: 'GitSCM', branches: [[name: 'newmx']], extensions: [[$class: 'CloneOption', noTags: true, shallow: true]], userRemoteConfigs: [[credentialsId: 'orion_github', url: 'https://github.com/beehive-lab/Maxine-Graal.git']]])
+                }
+                dir(env.MX_HOME) {
+                    checkout([$class: 'GitSCM', branches: [[name: '5.177.0']], extensions: [[$class: 'CloneOption', shallow: true]], userRemoteConfigs: [[url: 'https://github.com/beehive-lab/mx.git']]])
                 }
             }
         }
