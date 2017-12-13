@@ -75,10 +75,13 @@ def configs(arg):
     for k, v in sorted(c.iteritems()):
         mx.log('    @{0:<16} {1}'.format(k, v.replace('@', ' ')))
 
-def copycheck(args):
-    """run copyright check on the Maxine sources (defined as being under hg control)"""
-    mx.build(['--projects', 'com.oracle.max.base'])
-    mx.run_java(['-cp', mx.classpath('com.oracle.max.base', resolve=False), 'com.sun.max.tools.CheckCopyright'] + args)
+def checkcopyrights(args):
+    """run copyright check on the Maxine sources"""
+    for i in args:
+        if i == '-h' or i == '-help' or i == '--help':
+            print '"for help run mx :checkcopyrights -h"'
+            return
+    mx.checkcopyrights(['--', '--copyright-dir', 'mx.maxine'] + args)
 
 def eclipse(args):
     """launch Eclipse with the Maxine VM
@@ -127,17 +130,11 @@ def gate(args):
         if mx.checkstyle([]):
             mx.abort('Checkstyle warnings were found')
 
-        if exists(join(_maxine_home, '.hg')):
-            # Copyright check depends on the sources being in a Mercurial repo
-            mx.log('Running copycheck')
-            hgNode = os.getenv('hg_node')
-            if hgNode is None:
-                copycheck(['-modified', '-reporterrors=true', '-continueonerror'])
-            else:
-                revTip = int(subprocess.check_output(['hg', 'tip', '--template', "'{rev}'"]).strip("'"))
-                revLast = int(subprocess.check_output(['hg', 'log', '-r', hgNode, '--template', "'{rev}'"]).strip("'"))
-                changesetCount = revTip - revLast + 1
-                copycheck(['-last=' + str(changesetCount), '-reporterrors=true', '-continueonerror'])
+        if exists(join(_maxine_home, '.git')):
+            # Copyright check depends on the sources being in a git repo
+            mx.log('Running checkcopyrights')
+            if checkcopyrights(['--modified', '--report-errors']):
+                mx.abort('Copyright issues were found')
 
     mx.log('Ensuring JavaTester harness is up to date')
     try:
@@ -733,7 +730,7 @@ def mx_init(suite):
     commands = {
         'c1x': [c1x, '[options] patterns...'],
         'configs': [configs, ''],
-        'copycheck': [copycheck, ''],
+        'checkcopyrights': [checkcopyrights, '"for help run mx :checkcopyrights -h"'],
         'eclipse': [eclipse, '[VM options]'],
         'gate': [gate, '[options]'],
         'gitinit': [gitinit, ''],

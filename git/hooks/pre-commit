@@ -26,5 +26,11 @@ if [ $result -ne 0 ]; then
     echo "There are some style errors in your files, please fix them before committing"
     quit $result
 fi
+mx --suite=maxine checkcopyrights --modified
+result=$?
+if [ $result -ne 0 ]; then
+    echo "There are some copyright issues in your files, please fix them before committing"
+    quit $result
+fi
 
 quit 0
