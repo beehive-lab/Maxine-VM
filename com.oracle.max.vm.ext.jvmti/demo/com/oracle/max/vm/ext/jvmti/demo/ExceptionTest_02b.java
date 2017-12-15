@@ -20,12 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package demo.jvmti;
+package com.oracle.max.vm.ext.jvmti.demo;
 
+/**
+ * Program to debug Maxine's implementation of JVMTI Exception events.
+ * Catch an exception thrown up stack.
+ */
+public class ExceptionTest_02b {
+    public static void main(String[] args) {
+        try {
+            foo();
+        } catch (TestException t) {
+            System.err.println(t);
+        }
+    }
 
-class TestException extends Exception {
-    TestException(String msg) {
-        super(msg);
+    public static void foo() throws TestException {
+        bar();
+    }
+
+    public static void bar() throws TestException {
+        throw new TestException("thrown from bar");
     }
 
 }

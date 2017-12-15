@@ -20,30 +20,19 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package demo.jvmti;
+package com.oracle.max.vm.ext.jvmti.demo;
 
 /**
- * Program used to debug Maxine's breakpoint implementation. Basic test 01.
- * Usage:
- * <ol>
- * <li>Set a breakpoint at {@link #foo}.</li>
- * <li>Run the program, should hit breakpoint.</li>
- * <li>Then either exit the test by continuing or step, which should step over the print.
- *     A further step should step into main, which tests that main is instrumented for
- *     single step.</li>
- * </ol>
- * N.B. In the above the breakpoint is set before {@code foo} is compiled,
- * so it is instrumented for the breakpoint on the first compilation.
+ * Program to debug Maxine's implementation of JVMTI Exception events.
+ * This tests an uncaught exception from main
  */
-
-public class BreakpointTest_basic01 {
-    public static void main(String[] args) {
-        int r = foo(args.length == 0 ? 0 : Integer.parseInt(args[0]));
-        System.out.printf("foo returned %d%n", r);
+public class ExceptionTest_01 {
+    public static void main(String[] args) throws TestException {
+        foo();
     }
 
-    private static int foo(int a) {
-        System.out.printf("a=%d%n", a);
-        return a + 1;
+    public static void foo() throws TestException {
+        throw new TestException("thrown from foo");
     }
+
 }

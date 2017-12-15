@@ -20,19 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package demo.jvmti;
+package com.oracle.max.vm.ext.jvmti.demo;
 
 /**
  * Program to debug Maxine's implementation of JVMTI Exception events.
- * Catch an exception thrown in same method.
+ * This tests an uncaught exception from a new thread
  */
-public class ExceptionTest_02a {
+public class ExceptionTest_03 extends Thread {
     public static void main(String[] args) {
-        try {
-            throw new TestException("thrown from main");
-        } catch (TestException t) {
-            System.err.println(t);
-        }
+        new ExceptionTest_03().start();
+    }
+
+    @Override
+    public void run() {
+        throw new RuntimeException("thrown from run");
     }
 
 }

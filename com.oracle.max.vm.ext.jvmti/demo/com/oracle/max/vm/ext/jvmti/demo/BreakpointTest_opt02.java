@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package demo.jvmti;
+package com.oracle.max.vm.ext.jvmti.demo;
 
 /**
  * Program used to debug Maxine's breakpoint implementation for methods that may
@@ -33,17 +33,14 @@ package demo.jvmti;
  * <li>Continue, should hit breakpoint at {@link #incTotal}.</li>
  * <li>Change value of {@link #done} to true and continue; program should terminate.</li>
  * </ol>
- * N.B. In the above scenario, {@code incTotal} should have been optimized
- * independently by {@code forceOptIncTotal} and then inlined into
- * {@code callIncTotal} by {@code forceOpt}.
- * Both need to be deoptimized and {@code incTotal} needs to be
+ * N.B. In the above scenario, {@code incTotal} should have been inlined into
+ * {@code callIncTotal}. Both need to be deoptimized and {@code incTotal} needs to be
  * recompiled with breakpoint support.
  */
-public class BreakpointTest_opt03 {
+public class BreakpointTest_opt02 {
 
     public static void main(String[] args) {
 
-        forceOptIncTotal();
         forceOpt();
         postOpt();
         spinUntilDone();
@@ -72,12 +69,6 @@ public class BreakpointTest_opt03 {
 
     private static void callIncTotal() {
         incTotal();
-    }
-
-    private static void forceOptIncTotal() {
-        for (int i = 0; i < 10000; i++) {
-            incTotal();
-        }
     }
 
     public static void incTotal() {

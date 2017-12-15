@@ -20,42 +20,37 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package demo.jvmti;
+package com.oracle.max.vm.ext.jvmti.demo;
 
 /**
- * Program used to debug Maxine's breakpoint implementation. Basic test 03.
- * Tests that a method does not get optimized after a breakpoint is set.
+ * Program used to debug Maxine's breakpoint implementation. Basic test 02.
  * Usage:
  * <ol>
  * <li>Set a breakpoint at {@link #foo}.</li>
  * <li>Run the program, should hit breakpoint.</li>
- * <li>Disable the breakpoint at {@link #foo}, set one at {@link #bar} and continue</li>
- * <li>Should stop in bar. Re-enable the breakpoint at {@link #foo}</li>
- * <li>Continue, should take the breakpoint.
+ * <li>Now set a breakpoint at {@link #bar} and continue.
  * </ol>
- * N.B. This test isn't definitive since, even if {@link #foo} were optimized, it should be
- * de-optimized when the breakpoint is re-enabled. However, by tracing compilations, the correct
- * behavior can be observed.
- *
+ * N.B. In the above the breakpoint at {@code bar} set after {@code bar} is compiled,
+ * so it is recompiled to instrument for the breakpoint.
  */
 
-public class BreakpointTest_basic03 {
+
+public class BreakpointTest_basic02 {
     public static void main(String[] args) {
-        foo();
-        tryOptFoo();
-        bar();
+        int arg = args.length == 0 ? 0 : Integer.parseInt(args[0]);
+        // this gets bar compiled
+        bar(arg);
+        int r = foo(arg);
+        System.out.printf("foo returned %d%n", r);
     }
 
-    private static void foo() {
+    private static int foo(int arg) {
+        return bar(arg);
     }
 
-    private static void bar() {
-        foo();
+    private static int bar(int a) {
+        System.out.printf("a=%d%n", a);
+        return a + 1;
     }
 
-    private static void tryOptFoo() {
-        for (int i = 0; i < 10000; i++) {
-            foo();
-        }
-    }
 }
