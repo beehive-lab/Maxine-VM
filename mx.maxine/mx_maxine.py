@@ -732,7 +732,7 @@ def mx_init(suite):
         'configs': [configs, ''],
         'checkcopyrights': [checkcopyrights, '"for help run mx :checkcopyrights -h"'],
         'eclipse': [eclipse, '[VM options]'],
-        'gate': [gate, '[options]'],
+        'gate': [gate, '[-nocheck] [args...]'],
         'gitinit': [gitinit, ''],
         'hcfdis': [hcfdis, '[options] files...'],
         'helloworld': [helloworld, '[VM options]'],
