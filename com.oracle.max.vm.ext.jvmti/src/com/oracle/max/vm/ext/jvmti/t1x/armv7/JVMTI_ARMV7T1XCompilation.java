@@ -1,7 +1,6 @@
 /*
  * Copyright (c) 2017, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
- * Copyright (c) 2014, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2011, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -19,21 +18,21 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package com.oracle.max.vm.ext.t1x.jvmti.amd64;
+package com.oracle.max.vm.ext.jvmti.t1x.armv7;
 
 import static com.oracle.max.vm.ext.t1x.T1XTemplateTag.*;
 
 import java.util.*;
 
+import com.oracle.max.vm.ext.jvmti.*;
+import com.oracle.max.vm.ext.jvmti.t1x.*;
 import com.oracle.max.vm.ext.t1x.*;
-import com.oracle.max.vm.ext.t1x.amd64.*;
-import com.oracle.max.vm.ext.t1x.jvmti.*;
+import com.oracle.max.vm.ext.t1x.armv7.*;
 import com.sun.cri.bytecode.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.deps.*;
-import com.oracle.max.vm.ext.jvmti.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.profile.*;
 
@@ -65,7 +64,7 @@ import com.sun.max.vm.profile.*;
  *
  * All per-compilation fields are reset in {@link #initCompile} so no extra {@link #cleanup() cleanup} is needed.
  */
-public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
+public class JVMTI_ARMV7T1XCompilation extends ARMV7T1XCompilation {
     /**
      * The specific templates to be used for processing the current bytecode,
      * based on whether there are any agents registered for associated events.
@@ -107,15 +106,15 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
     /**
      * If {@code true}, all debugging-related events will compiled in from the get go.
      */
-    private static boolean JVMTI_CDE;
+    private static boolean JVMTI_CDEARM;
 
     static {
-        VMOptions.addFieldOption("-XX:", "JVMTI_CDE", JVMTI_AMD64T1XCompilation.class, "Compile for all debugging events");
+        VMOptions.addFieldOption("-XX:", "JVMTI_CDEARM", JVMTI_ARMV7T1XCompilation.class, "Compile for all debugging events");
     }
 
     private final T1X defaultT1X;
 
-    public JVMTI_AMD64T1XCompilation(T1X compiler) {
+    public JVMTI_ARMV7T1XCompilation(T1X compiler) {
         super(compiler);
         defaultT1X = T1X.stdT1X;
         templates = defaultT1X.templates;
@@ -167,7 +166,7 @@ public class JVMTI_AMD64T1XCompilation extends AMD64T1XCompilation {
             eventSettings |= JVMTIEvents.E.EXCEPTION_CATCH.bit;
         }
 
-        if (JVMTI_CDE) {
+        if (JVMTI_CDEARM) {
             // any debug events => all debug events
             if ((eventSettings & DEBUG_EVENTS) != 0) {
                 eventSettings = DEBUG_EVENTS;

@@ -18,11 +18,11 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package com.oracle.max.vm.ext.t1x.jvmti;
+package com.oracle.max.vm.ext.jvmti.t1x;
 
+import com.oracle.max.vm.ext.jvmti.t1x.amd64.*;
+import com.oracle.max.vm.ext.jvmti.t1x.armv7.*;
 import com.oracle.max.vm.ext.t1x.*;
-import com.oracle.max.vm.ext.t1x.jvmti.amd64.*;
-import com.oracle.max.vm.ext.t1x.jvmti.armv7.*;
 
 public class JVMTI_T1XCompilationFactory extends T1XCompilationFactory {
     @Override
