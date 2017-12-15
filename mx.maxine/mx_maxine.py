@@ -420,7 +420,7 @@ def jvmtigen(args):
 
     The exit code is non-zero if a Java source file was modified."""
 
-    return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm.ext.jvmti'), 'com.sun.max.vm.ext.jvmti.JVMTIFunctionsGenerator'])
+    return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm.ext.jvmti', jdk=mx.get_jdk()), 'com.oracle.max.vm.ext.jvmti.JVMTIFunctionsGenerator'])
 
 def jjvmtigen(args):
     """(re)generate Java source for JJVMTI native function interfaces

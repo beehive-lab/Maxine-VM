@@ -32,7 +32,7 @@ import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
 import com.sun.max.vm.compiler.deps.*;
-import com.sun.max.vm.ext.jvmti.*;
+import com.oracle.max.vm.ext.jvmti.*;
 import com.sun.max.vm.jni.*;
 import com.sun.max.vm.profile.*;
 

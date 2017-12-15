@@ -22,17 +22,17 @@
  */
 package com.oracle.max.vm.ext.jjvmti.agents.heapviewer;
 
-import static com.sun.max.vm.ext.jvmti.JVMTICapabilities.E.*;
-import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
-import static com.sun.max.vm.ext.jvmti.JVMTIEvents.*;
+import static com.oracle.max.vm.ext.jvmti.JVMTICapabilities.E.*;
+import static com.oracle.max.vm.ext.jvmti.JVMTIConstants.*;
+import static com.oracle.max.vm.ext.jvmti.JVMTIEvents.*;
 
 import java.util.Arrays;
 import java.util.EnumSet;
 
 import com.oracle.max.vm.ext.jjvmti.agents.util.*;
+import com.oracle.max.vm.ext.jvmti.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.ClassActor;
-import com.sun.max.vm.ext.jvmti.*;
 
 /**
  * The standard JVMTI heap viewer demo using JJVMTI.

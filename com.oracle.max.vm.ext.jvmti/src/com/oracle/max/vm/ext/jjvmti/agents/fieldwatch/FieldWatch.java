@@ -22,18 +22,18 @@
  */
 package com.oracle.max.vm.ext.jjvmti.agents.fieldwatch;
 
-import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
-import static com.sun.max.vm.ext.jvmti.JVMTIEvents.*;
+import static com.oracle.max.vm.ext.jvmti.JVMTIConstants.*;
+import static com.oracle.max.vm.ext.jvmti.JVMTIEvents.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 import com.oracle.max.vm.ext.jjvmti.agents.util.*;
+import com.oracle.max.vm.ext.jvmti.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.ext.jvmti.*;
 
 /**
  * A {@link JJVMTI Java JVMTI agent} that tests the field watch part of the interface.

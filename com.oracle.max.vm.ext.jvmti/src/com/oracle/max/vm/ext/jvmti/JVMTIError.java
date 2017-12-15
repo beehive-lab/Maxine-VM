@@ -1,0 +1,110 @@
+/*
+ * Copyright (c) 2012, Oracle and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+ * or visit www.oracle.com if you need additional information or have any
+ * questions.
+ */
+package com.oracle.max.vm.ext.jvmti;
+
+/**
+ * Support for {@link JVMTIFunctions#GetErrorName}.
+ * The use of an enum has the VM create the strings for us.
+ */
+public enum JVMTIError {
+    // Errors
+    NONE(JVMTIConstants.JVMTI_ERROR_NONE),
+    INVALID_THREAD(JVMTIConstants.JVMTI_ERROR_INVALID_THREAD),
+    INVALID_THREAD_GROUP(JVMTIConstants.JVMTI_ERROR_INVALID_THREAD_GROUP),
+    INVALID_PRIORITY(JVMTIConstants.JVMTI_ERROR_INVALID_PRIORITY),
+    THREAD_NOT_SUSPENDED(JVMTIConstants.JVMTI_ERROR_THREAD_NOT_SUSPENDED),
+    THREAD_SUSPENDED(JVMTIConstants.JVMTI_ERROR_THREAD_SUSPENDED),
+    THREAD_NOT_ALIVE(JVMTIConstants.JVMTI_ERROR_THREAD_NOT_ALIVE),
+    INVALID_OBJECT(JVMTIConstants.JVMTI_ERROR_INVALID_OBJECT),
+    INVALID_CLASS(JVMTIConstants.JVMTI_ERROR_INVALID_CLASS),
+    CLASS_NOT_PREPARED(JVMTIConstants.JVMTI_ERROR_CLASS_NOT_PREPARED),
+    INVALID_METHODID(JVMTIConstants.JVMTI_ERROR_INVALID_METHODID),
+    INVALID_LOCATION(JVMTIConstants.JVMTI_ERROR_INVALID_LOCATION),
+    INVALID_FIELDID(JVMTIConstants.JVMTI_ERROR_INVALID_FIELDID),
+    NO_MORE_FRAMES(JVMTIConstants.JVMTI_ERROR_NO_MORE_FRAMES),
+    OPAQUE_FRAME(JVMTIConstants.JVMTI_ERROR_OPAQUE_FRAME),
+    TYPE_MISMATCH(JVMTIConstants.JVMTI_ERROR_TYPE_MISMATCH),
+    INVALID_SLOT(JVMTIConstants.JVMTI_ERROR_INVALID_SLOT),
+    DUPLICATE(JVMTIConstants.JVMTI_ERROR_DUPLICATE),
+    NOT_FOUND(JVMTIConstants.JVMTI_ERROR_NOT_FOUND),
+    INVALID_MONITOR(JVMTIConstants.JVMTI_ERROR_INVALID_MONITOR),
+    NOT_MONITOR_OWNER(JVMTIConstants.JVMTI_ERROR_NOT_MONITOR_OWNER),
+    INTERRUPT(JVMTIConstants.JVMTI_ERROR_INTERRUPT),
+    INVALID_CLASS_FORMAT(JVMTIConstants.JVMTI_ERROR_INVALID_CLASS_FORMAT),
+    CIRCULAR_CLASS_DEFINITION(JVMTIConstants.JVMTI_ERROR_CIRCULAR_CLASS_DEFINITION),
+    FAILS_VERIFICATION(JVMTIConstants.JVMTI_ERROR_FAILS_VERIFICATION),
+    UNSUPPORTED_REDEFINITION_METHOD_ADDED(JVMTIConstants.JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_ADDED),
+    UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED(JVMTIConstants.JVMTI_ERROR_UNSUPPORTED_REDEFINITION_SCHEMA_CHANGED),
+    INVALID_TYPESTATE(JVMTIConstants.JVMTI_ERROR_INVALID_TYPESTATE),
+    UNSUPPORTED_REDEFINITION_HIERARCHY_CHANGED(JVMTIConstants.JVMTI_ERROR_UNSUPPORTED_REDEFINITION_HIERARCHY_CHANGED),
+    UNSUPPORTED_REDEFINITION_METHOD_DELETED(JVMTIConstants.JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_DELETED),
+    UNSUPPORTED_VERSION(JVMTIConstants.JVMTI_ERROR_UNSUPPORTED_VERSION),
+    NAMES_DONT_MATCH(JVMTIConstants.JVMTI_ERROR_NAMES_DONT_MATCH),
+    UNSUPPORTED_REDEFINITION_CLASS_MODIFIERS_CHANGED(JVMTIConstants.JVMTI_ERROR_UNSUPPORTED_REDEFINITION_CLASS_MODIFIERS_CHANGED),
+    UNSUPPORTED_REDEFINITION_METHOD_MODIFIERS_CHANGED(JVMTIConstants.JVMTI_ERROR_UNSUPPORTED_REDEFINITION_METHOD_MODIFIERS_CHANGED),
+    UNMODIFIABLE_CLASS(JVMTIConstants.JVMTI_ERROR_UNMODIFIABLE_CLASS),
+    NOT_AVAILABLE(JVMTIConstants.JVMTI_ERROR_NOT_AVAILABLE),
+    MUST_POSSESS_CAPABILITY(JVMTIConstants.JVMTI_ERROR_MUST_POSSESS_CAPABILITY),
+    NULL_POINTER(JVMTIConstants.JVMTI_ERROR_NULL_POINTER),
+    ABSENT_INFORMATION(JVMTIConstants.JVMTI_ERROR_ABSENT_INFORMATION),
+    INVALID_EVENT_TYPE(JVMTIConstants.JVMTI_ERROR_INVALID_EVENT_TYPE),
+    ILLEGAL_ARGUMENT(JVMTIConstants.JVMTI_ERROR_ILLEGAL_ARGUMENT),
+    NATIVE_METHOD(JVMTIConstants.JVMTI_ERROR_NATIVE_METHOD),
+    CLASS_LOADER_UNSUPPORTED(JVMTIConstants.JVMTI_ERROR_CLASS_LOADER_UNSUPPORTED),
+    OUT_OF_MEMORY(JVMTIConstants.JVMTI_ERROR_OUT_OF_MEMORY),
+    ACCESS_DENIED(JVMTIConstants.JVMTI_ERROR_ACCESS_DENIED),
+    WRONG_PHASE(JVMTIConstants.JVMTI_ERROR_WRONG_PHASE),
+    INTERNAL(JVMTIConstants.JVMTI_ERROR_INTERNAL),
+    UNATTACHED_THREAD(JVMTIConstants.JVMTI_ERROR_UNATTACHED_THREAD),
+    INVALID_ENVIRONMENT(JVMTIConstants.JVMTI_ERROR_INVALID_ENVIRONMENT),
+    MAX(JVMTIConstants.JVMTI_ERROR_MAX);
+
+    final int code;
+
+    private static final String JVMTI_ERROR_PREFIX = "JVMTI_ERROR_";
+
+    private static final JVMTIError[] VALUES = values();
+
+    /**
+     * Full names as byte arrays. Index is the error code value, NOT {code ordinal()}.
+     */
+    static final byte[][] nameBytes = new byte[JVMTIConstants.JVMTI_ERROR_MAX + 1][];
+
+    static {
+
+        for (int i = 0; i < VALUES.length; i++) {
+            JVMTIError error = VALUES[i];
+            String fullName = JVMTI_ERROR_PREFIX + error.name();
+            nameBytes[error.code] = fullName.getBytes();
+        }
+    }
+
+    JVMTIError(int code) {
+        this.code = code;
+    }
+
+    public static String getName(int code) {
+        return VALUES[code].name();
+    }
+
+}

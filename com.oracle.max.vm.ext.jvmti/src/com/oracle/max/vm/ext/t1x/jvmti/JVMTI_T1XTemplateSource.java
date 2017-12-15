@@ -29,7 +29,7 @@ import com.oracle.max.vm.ext.t1x.*;
 import com.sun.max.annotate.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.ext.jvmti.*;
+import com.oracle.max.vm.ext.jvmti.*;
 import com.sun.max.vm.monitor.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.reference.*;

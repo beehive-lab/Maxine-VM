@@ -24,11 +24,11 @@ package com.sun.max.ins.debug.vmlog;
 
 import java.awt.*;
 
+import com.oracle.max.vm.ext.jvmti.*;
 import com.sun.max.ins.gui.*;
 import com.sun.max.tele.*;
 import com.sun.max.tele.reference.*;
 import com.sun.max.unsafe.*;
-import com.sun.max.vm.ext.jvmti.*;
 import com.sun.max.vm.log.*;
 
 /**

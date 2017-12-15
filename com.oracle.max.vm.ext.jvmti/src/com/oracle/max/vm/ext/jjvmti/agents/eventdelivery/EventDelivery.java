@@ -22,8 +22,8 @@
  */
 package com.oracle.max.vm.ext.jjvmti.agents.eventdelivery;
 
-import static com.sun.max.vm.ext.jvmti.JVMTIEvents.*;
-import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
+import static com.oracle.max.vm.ext.jvmti.JVMTIConstants.*;
+import static com.oracle.max.vm.ext.jvmti.JVMTIEvents.*;
 
 import java.lang.reflect.*;
 import java.security.*;
@@ -31,11 +31,11 @@ import java.util.*;
 import java.util.regex.*;
 
 import com.oracle.max.vm.ext.jjvmti.agents.util.*;
+import com.oracle.max.vm.ext.jvmti.*;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.holder.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.ext.jvmti.*;
 
 /**
  * An agent to test event delivery. With no arguments the agent reports all events, otherwise the argument is

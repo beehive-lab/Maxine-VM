@@ -50,7 +50,7 @@ import com.sun.max.vm.runtime.*;
 import com.sun.max.vm.thread.*;
 import com.sun.max.vm.ti.*;
 import com.sun.max.vm.type.*;
-import com.sun.max.vm.ext.jvmti.*;
+import com.oracle.max.vm.ext.jvmti.*;
 
 /**
  * Variant of {@link JavaRunScheme} that supports the VMA framework.

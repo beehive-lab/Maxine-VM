@@ -76,8 +76,9 @@ public class Package extends BootImagePackage {
             "com.sun.max.vm.verifier.**",
             "com.oracle.max.asm.**",
             "com.oracle.max.vm.ext.t1x.**",
-            "com.sun.max.vm.ext.jvmti.**",
-            "com.oracle.max.vm.ext.jjvmti.**");
+            "com.oracle.max.vm.ext.jvmti.**",
+            "com.oracle.max.vm.ext.jjvmti.**"
+                        );
 
         registerThreadLocal(Compilation.class, "COMPILATION");
         registerThreadLocal(Snippets.class, "NATIVE_CALLS_DISABLED");

@@ -22,17 +22,17 @@
  */
 package com.oracle.max.vm.ext.jjvmti.agents.methodargs;
 
-import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
-import static com.sun.max.vm.ext.jvmti.JVMTIEvents.*;
+import static com.oracle.max.vm.ext.jvmti.JVMTIConstants.*;
+import static com.oracle.max.vm.ext.jvmti.JVMTIEvents.*;
 
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.regex.*;
 
 import com.oracle.max.vm.ext.jjvmti.agents.util.*;
+import com.oracle.max.vm.ext.jvmti.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.actor.member.*;
-import com.sun.max.vm.ext.jvmti.*;
 
 
 public class MethodArgs extends NullJJVMTICallbacks implements JJVMTI.EventCallbacks {

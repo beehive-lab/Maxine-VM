@@ -22,7 +22,7 @@
  */
 package com.oracle.max.vm.ext.jjvmti.agents.util;
 
-import static com.sun.max.vm.ext.jvmti.JVMTIConstants.*;
+import static com.oracle.max.vm.ext.jvmti.JVMTIConstants.*;
 
 import java.io.*;
 
