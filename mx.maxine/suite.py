@@ -229,6 +229,13 @@ suite = {
             "javaCompliance": "1.7+",
         },
 
+        "com.oracle.max.vm.ext.jjvmti": {
+            "sourceDirs": ["src"],
+            "dependencies": ["com.oracle.max.vm.ext.jvmti"],
+            "checkstyle": "com.sun.max",
+            "javaCompliance": "1.7+",
+        },
+
         "com.oracle.max.vm.ext.jvmti": {
             "sourceDirs": ["src", "demo"],
             "dependencies": ["com.oracle.max.vm.ext.t1x"],
@@ -258,6 +265,7 @@ suite = {
             "dependencies": [
                 "com.sun.max",
                 "com.oracle.max.vm.ext.jvmti",
+                "com.oracle.max.vm.ext.jjvmti",
                 "com.oracle.max.vm.ext.graal",
             ],
             "checkstyle": "com.sun.max",
