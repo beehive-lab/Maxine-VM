@@ -114,6 +114,7 @@ suite = {
 
         "com.oracle.max.cri": {
             "sourceDirs": ["src"],
+            "dependencies": ["com.sun.max.annotate"],
             "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
@@ -337,7 +338,13 @@ suite = {
 
         "com.sun.max": {
             "sourceDirs": ["src", "test"],
-            "dependencies": ["mx:JUNIT"],
+            "dependencies": ["mx:JUNIT", "com.sun.max.annotate"],
+            "checkstyle": "com.sun.max",
+            "javaCompliance": "1.7+",
+        },
+
+        "com.sun.max.annotate": {
+            "sourceDirs": ["src"],
             "checkstyle": "com.sun.max",
             "javaCompliance": "1.7+",
         },
