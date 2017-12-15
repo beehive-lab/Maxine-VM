@@ -422,6 +422,17 @@ def jvmtigen(args):
 
     return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm.ext.jvmti'), 'com.sun.max.vm.ext.jvmti.JVMTIFunctionsGenerator'])
 
+def jjvmtigen(args):
+    """(re)generate Java source for JJVMTI native function interfaces
+
+    Run JniFunctionsGenerator.java to update the methods in JVMTIFunctions.java
+    by adding a prologue and epilogue to the @VM_ENTRY_POINT annotated methods in
+    JVMTIFunctionsSource.java.
+
+    The exit code is non-zero if a Java source file was modified."""
+
+    return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm.ext.jvmti', jdk=mx.get_jdk()), 'com.oracle.max.vm.ext.jvmti.JJVMTIAgentAdapterChecker'])
+
 def jttgen(args):
     """(re)generate harness and run scheme for the JavaTester tests
 
@@ -742,6 +753,7 @@ def mx_init(suite):
         'inspectoragent': [inspectoragent, '[-impl target] [-port port]'],
         'jnigen': [jnigen, ''],
         'jvmtigen': [jvmtigen, ''],
+        'jjvmtigen': [jjvmtigen, ''],
         'optionsgen': [optionsgen, ''],
         'jttgen': [jttgen, ''],
         'loggen': [loggen, ''],
