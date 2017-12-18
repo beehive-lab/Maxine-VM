@@ -482,7 +482,7 @@ def makejdk(args):
         mx.log('The destination directory already exists -- it will be deleted')
         shutil.rmtree(maxjdk)
 
-    jdk = mx.java().jdk
+    jdk = mx.get_jdk().home
     if not isdir(jdk):
         mx.log(jdk + " does not exist or is not a directory")
         mx.abort(1)
