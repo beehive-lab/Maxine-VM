@@ -619,10 +619,10 @@ def test(args):
     console = join(maxineTesterDir, 'console')
     with open(console, 'w', 0) as f:
         tee = Tee(f)
-        java = mx.java()
+        jdk = mx.get_jdk()
         mx.run_java(['-cp', sanitized_classpath(), 'test.com.sun.max.vm.MaxineTester', '-output-dir=maxine-tester',
                       '-graal-jar=' + mx.distribution('GRAAL').path,
-                      '-refvm=' + java.java, '-refvm-args=' + ' '.join(java.java_args)] + args, out=tee.eat, err=subprocess.STDOUT)
+                      '-refvm=' + jdk.java, '-refvm-args=' + ' '.join(jdk.java_args)] + args, out=tee.eat, err=subprocess.STDOUT)
 
 def verify(args):
     """verifies a set of methods using the Maxine bytecode verifier
