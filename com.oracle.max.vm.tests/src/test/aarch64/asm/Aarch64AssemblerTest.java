@@ -583,18 +583,17 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     }
 
     /* Variable Shift (5.5.4) */
-    //Duplicate of work_and_shift_reg()
     public void work_asr() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
-        asm.movn(VARIANT_64, Aarch64.cpuRegisters[0], 0x0, 0);
-        asm.movz(VARIANT_64, Aarch64.cpuRegisters[10], 0xf, 0);
 
-        for (int i = 0; i < 1; i++) {
-            asm.and(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[10], Aarch64Assembler.ShiftType.LSL, 4);
-            expectedValues[i] = 0xffffffffffffffffL & (0b1111L << 4);
+        for (int i = 0; i < 10; i++) {
+            asm.mov32BitConstant(Aarch64.cpuRegisters[i], 0b1010101111L);
+            asm.mov32BitConstant(Aarch64.cpuRegisters[10], i);
+            asm.asr(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[10]);
+            expectedValues[i] = 0b1010101111L >> i;
             testValues[i] = true;
         }
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
