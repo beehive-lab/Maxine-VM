@@ -199,6 +199,23 @@ public class MaxineAarch64Tester {
         }
     }
 
+    private void bindToQemu() throws InterruptedException, IOException {
+        do {
+            ProcessBuilder bindTest = new ProcessBuilder("lsof", "-i", "TCP:1234");
+            bindTest.redirectOutput(bindOutput);
+            bindTest.start().waitFor();
+            FileInputStream inputStream = new FileInputStream(bindOutput);
+            if (inputStream.available() != 0) {
+                log("MaxineAarch64Tester:: qemu ready");
+                inputStream.close();
+                break;
+            } else {
+                log("MaxineAarch64Tester: gemu not ready");
+                Thread.sleep(500);
+            }
+        } while (true);
+    }
+
     public long[] runRegisteredSimulation() throws Exception {
         ProcessBuilder gdbProcess = new ProcessBuilder("aarch64-linux-gnu-gdb", "-q", "-x", gdbInput);
         gdbProcess.redirectOutput(gdbOutput);
@@ -212,70 +229,18 @@ public class MaxineAarch64Tester {
             while (!qemuOutput.exists()) {
                 Thread.sleep(500);
             }
-            do {
-                ProcessBuilder bindTest = new ProcessBuilder("lsof", "-i", "TCP:1234");
-                bindTest.redirectOutput(bindOutput);
-                bindTest.start().waitFor();
-                FileInputStream inputStream = new FileInputStream(bindOutput);
-                if (inputStream.available() != 0) {
-                    log("MaxineAarch64Tester:: qemu ready");
-                    inputStream.close();
-                    break;
-                } else {
-                    log("MaxineAarch64Tester: gemu not ready");
-                    Thread.sleep(500);
-                }
-            } while (true);
+            bindToQemu();
             gdbProcess.start().waitFor();
         } catch (Exception e) {
-            System.out.println(e);
             e.printStackTrace();
             cleanProcesses();
             System.exit(-1);
         }
-        long[] simulatedRegisters = parseRegistersToFile(gdbOutput.getName());
-        return simulatedRegisters;
+        return parseRegistersToFile(gdbOutput.getName());
     }
 
     public void runSimulation() throws Exception {
-        // qemu-system-aarch64 -cpu cortex-a57 -M virt -m 128M -nographic -s -S -kernel test.elf
-        cleanFiles();
-        ProcessBuilder gdbProcess = new ProcessBuilder("aarch64-linux-gnu-gdb", "-q", "-x", gdbInput);
-        gdbProcess.redirectOutput(gdbOutput);
-        gdbProcess.redirectError(gdbErrors);
-        System.out.println(gdbProcess.command().toString());
-        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-aarch64", "-cpu", "cortex-a57", "-M", "virt", "-m",
-                "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
-        qemuProcess.redirectOutput(qemuOutput);
-        qemuProcess.redirectError(qemuErrors);
-        try {
-            qemu = qemuProcess.start();
-            while (!qemuOutput.exists()) {
-                Thread.sleep(500);
-            }
-            do {
-                ProcessBuilder binder = new ProcessBuilder("lsof", "-i", "TCP:1234");
-                binder.redirectOutput(bindOutput);
-                binder.start().waitFor();
-                FileInputStream inputStream = new FileInputStream(bindOutput);
-                if (inputStream.available() != 0) {
-                    log("MaxineAarch64Tester:: qemu ready");
-                    inputStream.close();
-                    break;
-                } else {
-                    log("MaxineAarch64Tester: gemu not ready");
-                    Thread.sleep(500);
-                }
-            } while (true);
-            gdb = gdbProcess.start();
-            gdb.waitFor();
-        } catch (Exception e) {
-            System.out.println(e);
-            e.printStackTrace();
-            cleanProcesses();
-            System.exit(-1);
-        }
-        long[] simulatedRegisters = parseRegistersToFile(gdbOutput.getName());
+        long[] simulatedRegisters = runRegisteredSimulation();
         if (!validateRegisters(simulatedRegisters, expectRegs, testRegs)) {
             cleanProcesses();
             assert false : "Error while validating registers";
@@ -305,8 +270,7 @@ public class MaxineAarch64Tester {
     }
 
     private void initializeQemu() {
-        ENABLE_SIMULATOR = Integer.getInteger(ENABLE_QEMU) != null && Integer.getInteger(ENABLE_QEMU) > 0 ? true
-                : false;
+        ENABLE_SIMULATOR = Integer.getInteger(ENABLE_QEMU) != null && Integer.getInteger(ENABLE_QEMU) > 0;
     }
 
     private long[] parseRegistersToFile(String file) throws IOException {
