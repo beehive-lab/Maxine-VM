@@ -22,6 +22,8 @@ package test.aarch64.asm;
 import java.io.*;
 import java.math.*;
 
+import com.sun.max.vm.runtime.*;
+
 public class MaxineAarch64Tester {
 
     public static boolean DEBUG = true;
@@ -274,11 +276,11 @@ public class MaxineAarch64Tester {
     }
 
     private long[] parseRegistersToFile(String file) throws IOException {
-        BufferedReader reader         = new BufferedReader(new FileReader(file));
-        String         line           = null;
-        boolean        enabled        = false;
-        int            i              = 0;
-        long[]         expectedValues = new long[NUM_REGS];
+        BufferedReader reader       = new BufferedReader(new FileReader(file));
+        String         line         = null;
+        boolean        enabled      = false;
+        int            i            = 0;
+        long[]         parsedValues = new long[NUM_REGS];
         while ((line = reader.readLine()) != null) {
             if (line.startsWith("x0 ")) {
                 enabled = true;
@@ -289,11 +291,17 @@ public class MaxineAarch64Tester {
             }
             String value = line.split("\\s+")[1];
 
-            long tmp = new BigInteger(value.substring(2, value.length()).toString(), 16).longValue();
-            if (tmp > Long.MAX_VALUE) {
-                expectedValues[i] = (long) (2L * Long.MIN_VALUE + tmp);
+            BigInteger tmp = new BigInteger(value.substring(2, value.length()), 16);
+            if (tmp.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
+                BigInteger result = BigInteger.valueOf(Long.MIN_VALUE);
+                result = result.multiply(BigInteger.valueOf(2)).add(tmp);
+                if (result.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
+                    throw FatalError.unimplemented();
+                } else {
+                    parsedValues[i] = result.longValue();
+                }
             } else {
-                expectedValues[i] = (long) tmp;
+                parsedValues[i] = tmp.longValue();
             }
             if (++i >= NUM_REGS) {
                 break;
@@ -303,7 +311,7 @@ public class MaxineAarch64Tester {
             }
         }
         reader.close();
-        return expectedValues;
+        return parsedValues;
     }
 
     public static void enableDebug() {
