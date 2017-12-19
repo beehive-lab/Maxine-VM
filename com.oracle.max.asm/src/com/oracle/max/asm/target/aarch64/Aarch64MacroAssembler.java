@@ -461,18 +461,6 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     /**
-     * Loads 16-bit immediate into register.
-     *
-     * @param dst general purpose register. May not be null, zero-register or stackpointer.
-     * @param imm16 16-bit immediate loaded into register.
-     * TODO check if it works properly in all cases
-     */
-    @Override
-    public final void movImmediate(CiRegister dst, int imm16) {
-        mov(dst, (long) imm16);
-    }
-
-    /**
      * Loads immediate into register.
      *
      * @param dst general purpose register. May not be null, zero-register or stackpointer.
@@ -503,7 +491,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
             return;
         }
         ldr(64, Aarch64.r12, dst);
-        movImmediate(Aarch64.r8, value);
+        mov(Aarch64.r8, value);
         add(64, Aarch64.r8, Aarch64.r12, Aarch64.r8);
         str(64, Aarch64.r8, dst);
     }
@@ -518,7 +506,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
             return;
         }
         ldr(64, Aarch64.r12, dst);
-        movImmediate(Aarch64.r8, value);
+        mov(Aarch64.r8, value);
         sub(64, Aarch64.r8, Aarch64.r12, Aarch64.r8);
         str(64, Aarch64.r8, dst);
     }

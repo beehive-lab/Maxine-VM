@@ -2636,15 +2636,6 @@ public class Aarch64Assembler extends AbstractAssembler {
         }
     };
 
-    @Deprecated
-    public void movImmediate(CiRegister dst, int imm16) {
-        int instruction = 0x52800000;
-        instruction |= 1 << 31;
-        instruction |= (imm16 & 0xffff) << 5;
-        instruction |= dst.getEncoding() & 0x1f;
-        emitInt(instruction);
-    }
-
     /**
      * When patching up Labels we have to know what kind of code to generate.
      */
