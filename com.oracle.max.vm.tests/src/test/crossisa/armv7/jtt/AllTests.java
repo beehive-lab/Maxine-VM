@@ -17,7 +17,7 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package test.armv7.asm;
+package test.crossisa.armv7.jtt;
 
 import junit.framework.*;
 
@@ -27,6 +27,7 @@ import com.sun.max.ide.*;
 
 @RunWith(org.junit.runners.AllTests.class)
 public final class AllTests {
+
     private AllTests() {
     }
 

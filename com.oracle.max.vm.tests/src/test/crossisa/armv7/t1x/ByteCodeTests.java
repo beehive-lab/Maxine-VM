@@ -17,25 +17,15 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package test.aarch64.asm;
+package test.crossisa.armv7.t1x;
 
-import junit.framework.*;
-import test.com.sun.max.vm.AllTests;
+public class ByteCodeTests {
 
-import com.sun.max.ide.*;
-
-@org.junit.runner.RunWith(org.junit.runners.AllTests.class)
-public final class AutoTest {
-    private AutoTest() {
-    }
-
-    public static void main(String[] args) throws Exception {
-        junit.textui.TestRunner.run(AutoTest.suite());
-    }
-
-    public static Test suite() throws Exception {
-        final TestSuite suite = new TestCaseClassSet(AllTests.class).toTestSuite();
-        suite.addTest(test.aarch64.asm.AllTests.suite());
-        return suite;
+    public int run() {
+        int mycounter = 0;
+        for (int i = 0; i < 20; i++) {
+            mycounter++;
+        }
+        return mycounter;
     }
 }

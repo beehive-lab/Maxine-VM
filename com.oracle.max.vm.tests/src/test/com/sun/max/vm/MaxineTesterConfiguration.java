@@ -144,11 +144,11 @@ public class MaxineTesterConfiguration {
 
         // Register all "*.Autotest classes on the class path
         findJUnitTests();
-        junit("test.armv7.t1x.AutoTest", FAIL_AMD64);
-        junit("test.armv7.t1x.AutoTest", FAIL_AARCH64);
-        junit("test.aarch64.t1x.AutoTest", FAIL_AMD64);
-        junit("test.aarch64.t1x.AutoTest", FAIL_ARMV7);
-        junit("test.armv7.jtt.AutoTest", FAIL_AMD64);
+        junit("test.crossisa.armv7.t1x.AutoTest", FAIL_AMD64);
+        junit("test.crossisa.armv7.t1x.AutoTest", FAIL_AARCH64);
+        junit("test.crossisa.aarch64.t1x.AutoTest", FAIL_AMD64);
+        junit("test.crossisa.aarch64.t1x.AutoTest", FAIL_ARMV7);
+        junit("test.crossisa.armv7.jtt.AutoTest", FAIL_AMD64);
 
         jtt(jtt.threads.Thread_isInterrupted02.class, FAIL_LINUX);
         jtt(jtt.hotspot.Test6959129.class, FAIL_ALL);

@@ -17,25 +17,24 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package test.armv7.asm;
+package test.crossisa.armv7.t1x;
 
 import junit.framework.*;
-import test.com.sun.max.vm.AllTests;
+
+import org.junit.runner.*;
 
 import com.sun.max.ide.*;
 
-@org.junit.runner.RunWith(org.junit.runners.AllTests.class)
-public final class AutoTest {
-    private AutoTest() {
+@RunWith(org.junit.runners.AllTests.class)
+public final class AllTests {
+    private AllTests() {
     }
 
-    public static void main(String[] args) throws Exception {
-        junit.textui.TestRunner.run(AutoTest.suite());
+    public static void main(String[] args) {
+        junit.textui.TestRunner.run(AllTests.suite());
     }
 
-    public static Test suite() throws Exception {
-        final TestSuite suite = new TestCaseClassSet(AllTests.class).toTestSuite();
-        suite.addTest(test.armv7.asm.AllTests.suite());
-        return suite;
+    public static Test suite() {
+        return new TestCaseClassSet(AllTests.class).toTestSuite();
     }
 }

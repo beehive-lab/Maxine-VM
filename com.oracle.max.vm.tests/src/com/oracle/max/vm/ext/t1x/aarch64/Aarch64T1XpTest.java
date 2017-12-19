@@ -40,7 +40,7 @@ import com.sun.max.vm.compiler.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 
-import test.aarch64.asm.*;
+import test.crossisa.aarch64.asm.*;
 
 /**
  * These JUnit tests are for testing protected members of Aarch64T1XCompilation which

@@ -17,7 +17,7 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package test.aarch64.t1x;
+package test.crossisa.aarch64.asm;
 
 import junit.framework.*;
 

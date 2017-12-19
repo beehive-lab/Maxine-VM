@@ -17,7 +17,7 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package test.armv7.t1x;
+package test.crossisa.aarch64.t1x;
 
 import junit.framework.*;
 import test.com.sun.max.vm.AllTests;
@@ -35,7 +35,7 @@ public final class AutoTest {
 
     public static Test suite() throws Exception {
         final TestSuite suite = new TestCaseClassSet(AllTests.class).toTestSuite();
-        suite.addTest(test.armv7.t1x.AllTests.suite());
+        suite.addTest(test.crossisa.aarch64.t1x.AllTests.suite());
         return suite;
     }
 }

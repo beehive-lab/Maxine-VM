@@ -17,7 +17,7 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package test.armv7.asm;
+package test.crossisa.armv7.asm;
 
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.armv7.*;
@@ -25,29 +25,18 @@ import com.oracle.max.asm.target.armv7.ARMV7Assembler.*;
 import com.sun.cri.ci.*;
 import com.sun.max.ide.*;
 
+import test.crossisa.*;
+
 public class ARMV7AssemblerTest extends MaxTestCase {
 
     private ARMV7Assembler asm;
     private ARMV7MacroAssembler masm;
     private CiTarget armv7;
-    private ARMV7CodeWriter     code;
-
-    static final class Pair {
-
-        public final int first;
-        public final int second;
-
-        Pair(int first, int second) {
-            this.first = first;
-            this.second = second;
-        }
-    }
 
     public ARMV7AssemblerTest() {
         armv7 = new CiTarget(new ARMV7(), true, 8, 0, 4096, 0, false, false, false, true);
         asm = new ARMV7Assembler(armv7, null);
         masm = new ARMV7MacroAssembler(armv7, null);
-        code = null;
     }
 
     public static void main(String[] args) {
@@ -110,7 +99,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         ARMV7CodeWriter code = new ARMV7CodeWriter(codeBuffer);
         code.createCodeFile();
         MaxineARMv7Tester r = new MaxineARMv7Tester(expected, tests, masks);
-        if (!MaxineARMv7Tester.ENABLE_SIMULATOR) {
+        if (!CrossISATester.ENABLE_SIMULATOR) {
             System.out.println("Code Generation is disabled!");
             return;
         }
@@ -121,19 +110,19 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         r.reset();
     }
 
-    private int[] generate() throws Exception {
+    private long[] generate() throws Exception {
         ARMV7CodeWriter code = new ARMV7CodeWriter(asm.codeBuffer);
         code.createCodeFile();
-        int[] retArr;
+        long[]            retArr;
         MaxineARMv7Tester r = new MaxineARMv7Tester();
-        if (!MaxineARMv7Tester.ENABLE_SIMULATOR) {
+        if (!CrossISATester.ENABLE_SIMULATOR) {
             System.out.println("Code Generation is disabled!");
             return null;
         }
         r.assembleStartup();
         r.compile();
         r.link();
-        retArr = r.runSimulationRegisters();
+        retArr = r.runRegisteredSimulation();
         r.reset();
         return retArr;
     }
@@ -142,7 +131,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         ARMV7CodeWriter code = new ARMV7CodeWriter(asm.codeBuffer);
         code.createCodeFile();
         MaxineARMv7Tester r = new MaxineARMv7Tester(expected, tests, masks);
-        if (!MaxineARMv7Tester.ENABLE_SIMULATOR) {
+        if (!CrossISATester.ENABLE_SIMULATOR) {
             System.out.println("Code Generation is disabled!");
             return;
         }
@@ -185,21 +174,21 @@ public class ARMV7AssemblerTest extends MaxTestCase {
 
     }
 
-    public long connectRegs(int reg0, int reg1) {
-        long returnVal = 0;
+    private long connectRegs(long reg0, long reg1) {
+        long returnVal;
         if (reg1 < 0) {
-            returnVal = ((long) reg1) << 32;
+            returnVal = reg1 << 32;
             if (reg0 < 0) {
-                returnVal += Long.parseLong(String.format("%32s", Integer.toBinaryString(reg0)).replace(' ', '0'), 2);
+                returnVal += Long.parseLong(String.format("%32s", Long.toBinaryString(reg0)).replace(' ', '0').substring(32), 2);
             } else {
                 returnVal += reg0;
             }
         } else {
-            returnVal = ((long) reg1) << 32;
+            returnVal = reg1 << 32;
             if (reg1 == 0) {
                 returnVal += reg0;
             } else if (reg0 < 0) {
-                returnVal += Long.parseLong(String.format("%32s", Integer.toBinaryString(reg0)).replace(' ', '0'), 2);
+                returnVal += Long.parseLong(String.format("%32s", Long.toBinaryString(reg0)).replace(' ', '0').substring(32), 2);
             } else {
                 returnVal += reg0;
             }
@@ -221,7 +210,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         values[7] = Long.MAX_VALUE - 5;
         values[8] = (Integer.MIN_VALUE) + 5L;
         values[9] = (Integer.MAX_VALUE) - 5L;
-        int[] registers = null;
+        long[] registers = null;
         for (int i = 0; i < values.length; i++) {
             asm.codeBuffer.reset();
             asm.movImm64(ConditionFlag.Always, ARMV7.r0, ARMV7.r1, values[i]);
@@ -1013,7 +1002,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             asm.movt(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, 0);
             asm.ldrd(ConditionFlag.Always, 1, 1, 0, ARMV7.RSP.asRegister(), ARMV7.cpuRegisters[i * 2], ARMV7.r12);
         }
-        int[] simRegs = generate();
+        long[] simRegs = generate();
         for (int i = 0; i < testValues.length; i++) {
             if (testValues[i]) {
                 assert expectedLongValues[i] == connectRegs(simRegs[2 * i], simRegs[(2 * i) + 1]) : "Expected " + expectedLongValues[i] + " Connected " +

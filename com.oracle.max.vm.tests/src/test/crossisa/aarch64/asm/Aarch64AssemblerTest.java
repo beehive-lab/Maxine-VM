@@ -17,14 +17,14 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package test.aarch64.asm;
-
-import static test.aarch64.asm.MaxineAarch64Tester.setAllBitMasks;
+package test.crossisa.aarch64.asm;
 
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.aarch64.*;
 import com.sun.cri.ci.*;
 import com.sun.max.ide.*;
+
+import test.crossisa.*;
 
 public class Aarch64AssemblerTest extends MaxTestCase {
 
@@ -55,7 +55,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     private static final MaxineAarch64Tester.BitsFlag[] bitmasks =
             new MaxineAarch64Tester.BitsFlag[MaxineAarch64Tester.NUM_REGS];
     static {
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
     }
 
     private static void resetIgnoreValues() {
@@ -84,7 +84,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         Aarch64CodeWriter code = new Aarch64CodeWriter(codeBuffer);
         code.createCodeFile();
         MaxineAarch64Tester r = new MaxineAarch64Tester(expected, tests, masks);
-        if (!MaxineAarch64Tester.ENABLE_SIMULATOR) {
+        if (!CrossISATester.ENABLE_SIMULATOR) {
             System.out.println("Code Generation is disabled!");
             return;
         }
@@ -95,9 +95,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         r.reset();
     }
 
-    public void work_b() throws Exception {
+    public void test_b() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
         asm.mov64BitConstant(Aarch64.r0, -1);
@@ -112,9 +112,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void work_zero() throws Exception {
+    public void test_zero() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
         masm.mov(Aarch64.r0, 0xFF);
@@ -146,9 +146,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //        assert (reg[3] & ~reg[4]) == reg[0];
 //    }
 
-    public void work_mov64() throws Exception {
+    public void test_mov64() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
 
@@ -174,9 +174,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void work_mov() throws Exception {
+    public void test_mov() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
 
@@ -192,9 +192,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void work_mov2() throws Exception {
+    public void test_mov2() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
 
@@ -215,9 +215,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void work_add_register() throws Exception {
+    public void test_add_register() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
         masm.mov64BitConstant(Aarch64.r0, 10);
@@ -248,9 +248,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     /**
      * branch.
      */
-    public void work_bcond() throws Exception {
+    public void test_bcond() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
 
@@ -271,9 +271,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     /**
      * load and store instructions.
      */
-    public void work_ldr_str() throws Exception {
+    public void test_ldr_str() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
         asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 0x123, 0);        // value to be stored to stack
@@ -288,9 +288,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void work_add_imm() throws Exception {
+    public void test_add_imm() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
         // ADD Xi, Xi, valueof(Xi) ; Xi's value should double
@@ -305,9 +305,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void work_sub_imm() throws Exception {
+    public void test_sub_imm() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
         // SUB Xi, Xi, valueof(Xi) ; Xi should then be 0
@@ -322,9 +322,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void work_and_imm() throws Exception {
+    public void test_and_imm() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
         // AND Xi, Xi, 0x1
@@ -337,9 +337,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void work_eor_imm() throws Exception {
+    public void test_eor_imm() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
         // EOR Xi, Xi, 0x1
@@ -352,9 +352,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void work_orr_imm() throws Exception {
+    public void test_orr_imm() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
         // ORR Xi, Xi, 0x1
@@ -367,9 +367,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void work_movz_imm() throws Exception {
+    public void test_movz_imm() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
         // MOVZ Xi, 0x1, LSL #0x10
@@ -381,9 +381,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void work_movn_imm() throws Exception {
+    public void test_movn_imm() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
         // MOVZ Xi, 0x1, LSL #0x10
@@ -395,9 +395,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void work_bfm() throws Exception {
+    public void test_bfm() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
 
@@ -411,9 +411,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void work_ubfm() throws Exception {
+    public void test_ubfm() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
 
@@ -427,10 +427,10 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void work_sbfm() throws Exception {
+    public void test_sbfm() throws Exception {
         int mask;
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
 
@@ -454,9 +454,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
     /******* Arithmetic (shifted register) (5.5.1). *******/
 
-    public void work_add_shift_reg() throws Exception {
+    public void test_add_shift_reg() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
         asm.movz(VARIANT_64, Aarch64.cpuRegisters[10], 1, 0);
@@ -468,9 +468,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void work_sub_shift_reg() throws Exception {
+    public void test_sub_shift_reg() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
         asm.movz(VARIANT_64, Aarch64.cpuRegisters[10], 0b1000, 0);
@@ -484,9 +484,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
     /******* Arithmetic (extended register) (5.5.2). *******/
 
-    public void work_add_ext_reg() throws Exception {
+    public void test_add_ext_reg() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
         asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 1, 0);
@@ -500,9 +500,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void work_sub_ext_reg() throws Exception {
+    public void test_sub_ext_reg() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
         asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 0b11111111000, 0);
@@ -519,9 +519,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
     /******* Logical (shifted register) (5.5.3). *******/
 
-    public void work_and_shift_reg() throws Exception {
+    public void test_and_shift_reg() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
         asm.movn(VARIANT_64, Aarch64.cpuRegisters[0], 0x0, 0);
@@ -537,9 +537,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     }
 
     /* Variable Shift (5.5.4) */
-    public void work_asr() throws Exception {
+    public void test_asr() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
 
@@ -554,9 +554,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     }
 
     /* Bit Operations (5.5.5) */
-    public void work_cls() throws Exception {
+    public void test_cls() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
         asm.movn(VARIANT_64, Aarch64.cpuRegisters[30], 0x0, 0);
@@ -575,9 +575,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
    /* Floating-point Move (register) (5.7.2) */
 
-    public void work_float0() throws Exception {
+    public void test_float0() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
 
@@ -601,9 +601,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     /**
      * test: fadd, fsub, fmul, fdiv, scvtf, fcvtzs.
      */
-    public void work_float1() throws Exception {
+    public void test_float1() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
 
@@ -642,9 +642,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     /**
      * frintz, fabs, fneg, fsqrt.
      */
-    public void work_float2() throws Exception {
+    public void test_float2() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
 
@@ -688,9 +688,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     /**
      * fmadd, fmsub.
      */
-    public void work_float3() throws Exception {
+    public void test_float3() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
 
@@ -722,9 +722,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     /**
      * fstr, fldr.
      */
-    public void work_float4() throws Exception {
+    public void test_float4() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
 
@@ -749,9 +749,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     /**
      * mrs.
      */
-    public void work_mrs() throws Exception {
+    public void test_mrs() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
 
@@ -790,9 +790,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     /**
      * mrs_reg.
      */
-    public void work_mrs_reg() throws Exception {
+    public void test_mrs_reg() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
 
@@ -809,9 +809,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     /**
      * mrs_imm.
      */
-    public void work_mrs_imm() throws Exception {
+    public void test_mrs_imm() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
 
@@ -873,9 +873,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         return x & 0x00000000ffffffffL;
     }
 
-    public void work_mov32BitConstant() throws Exception {
+    public void test_mov32BitConstant() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
 
@@ -897,9 +897,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void work_mov64BitConstant() throws Exception {
+    public void test_mov64BitConstant() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
 
@@ -927,8 +927,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         }
     }
 
-    public void work_AddConstant() throws Exception {
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+    public void test_AddConstant() throws Exception {
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         initialiseExpectedValues();
         resetIgnoreValues();
         for (int srcReg = 0; srcReg < 3; srcReg++) {
@@ -948,7 +948,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
     public void test_VPushPop() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
         for (int i = 0; i < 5; i++) {
@@ -977,9 +977,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void work_PushPop() throws Exception {
+    public void test_PushPop() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
         for (int i = 0; i < 5; i++) {
@@ -1006,9 +1006,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void work_Vdiv() throws Exception {
+    public void test_Vdiv() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
         masm.mov64BitConstant(Aarch64.cpuRegisters[0], Double.doubleToRawLongBits(10));
@@ -1022,9 +1022,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void work_Vcvt_int2float() throws Exception {
+    public void test_Vcvt_int2float() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
         masm.mov32BitConstant(Aarch64.r0, 10);
@@ -1040,9 +1040,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void work_Vcvt_int2double() throws Exception {
+    public void test_Vcvt_int2double() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
         masm.mov64BitConstant(Aarch64.r0, 10);
@@ -1058,9 +1058,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void work_Vcvt_double2float() throws Exception {
+    public void test_Vcvt_double2float() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
         masm.mov64BitConstant(Aarch64.cpuRegisters[0], Double.doubleToRawLongBits(-10));
@@ -1078,9 +1078,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void work_VAdd() throws Exception {
+    public void test_VAdd() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
         masm.mov64BitConstant(Aarch64.r0, 12);
@@ -1098,9 +1098,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void work_VSub() throws Exception {
+    public void test_VSub() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
         masm.mov64BitConstant(Aarch64.r0, 12);
@@ -1118,7 +1118,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void work_VcvtvMul() throws Exception {
+    public void test_VcvtvMul() throws Exception {
         initialiseExpectedValues();
         resetIgnoreValues();
         masm.codeBuffer.reset();
@@ -1140,9 +1140,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void work_VldrStr() throws Exception {
+    public void test_VldrStr() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
         masm.mov64BitConstant(Aarch64.cpuRegisters[0], 12);
@@ -1173,9 +1173,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void work_Vldr() throws Exception {
+    public void test_Vldr() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
         masm.mov64BitConstant(Aarch64.cpuRegisters[0], 12);
@@ -1197,9 +1197,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void work_MVov() throws Exception {
+    public void test_MVov() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
         masm.mov64BitConstant(Aarch64.cpuRegisters[0], 12);
@@ -1257,9 +1257,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
 //     }
 //
-    public void work_SubReg() throws Exception {
+    public void test_SubReg() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
         for (int i = 0; i < 5; i++) {
@@ -1273,9 +1273,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void work_Mov() throws Exception {
+    public void test_Mov() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
         for (int i = 0; i < 5; i++) {
@@ -1288,9 +1288,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void work_Sub() throws Exception {
+    public void test_Sub() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
         for (int i = 0; i < 10; i++) {
@@ -1302,9 +1302,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void work_Str() throws Exception {
+    public void test_Str() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
         asm.mov32BitConstant(Aarch64.cpuRegisters[12], 0);
@@ -1319,9 +1319,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void work_Ldr() throws Exception {
+    public void test_Ldr() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
         for (int i = 0; i < 10; i++) {
@@ -1337,9 +1337,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void work_Decq() throws Exception {
+    public void test_Decq() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
         for (int i = 0; i < 10; i++) {
@@ -1351,9 +1351,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void work_Incq() throws Exception {
+    public void test_Incq() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
         for (int i = 0; i < 10; i++) {
@@ -1365,9 +1365,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void work_Subq() throws Exception {
+    public void test_Subq() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
         for (int i = 0; i < 10; i++) {
@@ -1384,9 +1384,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
-    public void work_addq() throws Exception {
+    public void test_addq() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
         for (int i = 0; i < 10; i++) {
@@ -1429,9 +1429,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
 //     }
 //
-    public void work_StrdAndLdrd() throws Exception {
+    public void test_StrdAndLdrd() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         Aarch64Address address = Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, -16); // stack address
         for (int i = 0; i < 10; i += 2) {
@@ -1453,9 +1453,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         }
     }
 
-    public void work_PushAndPop() throws Exception {
+    public void test_PushAndPop() throws Exception {
         int registers = 1;
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         initialiseExpectedValues();
         for (int i = 0; i < 16; i++) {
             if (i % 2 == 0) {
@@ -1493,8 +1493,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         }
     }
 
-    public void work_MovRor() throws Exception {
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+    public void test_MovRor() throws Exception {
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
 
         int mask = 1;
@@ -1587,7 +1587,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
     public void test_decrementl() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
         masm.mov32BitConstant(Aarch64.r0, 100);
@@ -1602,7 +1602,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
     public void test_incrementl() throws Exception {
         initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
         masm.mov32BitConstant(Aarch64.r0, 100);
