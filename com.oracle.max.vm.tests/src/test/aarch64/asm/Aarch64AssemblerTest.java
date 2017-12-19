@@ -428,17 +428,26 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     }
 
     public void work_sbfm() throws Exception {
+        int mask;
         initialiseExpectedValues();
         setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         asm.codeBuffer.reset();
 
-        asm.movn(VARIANT_64, Aarch64.cpuRegisters[10], 0x0, 0);
-        asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 0x0, 0);
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[10], 0b11110000, 0);
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 0, 0);
+        asm.movz(VARIANT_64, Aarch64.cpuRegisters[1], 0, 0);
 
+        // Signed
         asm.sbfm(VARIANT_64, Aarch64.cpuRegisters[0], Aarch64.cpuRegisters[10], 3, 5);
-        expectedValues[0] = 0b111111L >>> 3;
+        mask = 1 << (5 - 1);
+        expectedValues[0] = ((0b11110000 >> 3) ^ mask) - mask;
         testValues[0] = true;
+        // Unsigned
+        asm.sbfm(VARIANT_64, Aarch64.cpuRegisters[1], Aarch64.cpuRegisters[10], 4, 8);
+        mask = 1 << (8 - 1);
+        expectedValues[1] = ((0b11110000 >> 4) ^ mask) - mask;
+        testValues[1] = true;
 
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
