@@ -491,7 +491,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         asm.movn(VARIANT_64, Aarch64.cpuRegisters[10], 0x0, 0);
         asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 0x0, 0);
 
-        asm.ubfm(VARIANT_64, Aarch64.cpuRegisters[0], Aarch64.cpuRegisters[10], 3, 5);
+        asm.sbfm(VARIANT_64, Aarch64.cpuRegisters[0], Aarch64.cpuRegisters[10], 3, 5);
         expectedValues[0] = 0b111111L >>> 3;
         testValues[0] = true;
 
