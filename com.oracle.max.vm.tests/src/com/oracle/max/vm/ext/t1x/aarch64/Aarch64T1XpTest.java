@@ -109,9 +109,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
     private static long[] scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x00000000ffffffffL};
     private static MaxineAarch64Tester.BitsFlag[] bitmasks = new MaxineAarch64Tester.BitsFlag[MaxineAarch64Tester.NUM_REGS];
     static {
-        for (int i = 0; i < MaxineAarch64Tester.NUM_REGS; i++) {
-            bitmasks[i] = MaxineAarch64Tester.BitsFlag.All32Bits;
-        }
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
     }
     private static boolean[] testValues = new boolean[MaxineAarch64Tester.NUM_REGS];
 

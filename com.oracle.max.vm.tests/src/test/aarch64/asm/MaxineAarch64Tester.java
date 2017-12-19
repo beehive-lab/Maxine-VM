@@ -38,14 +38,8 @@ public class MaxineAarch64Tester {
         "X25", "X26", "X27", "X28", "X29", "X30"};
 
     public enum BitsFlag {
-        Bit0(0x1), Bit1(0x2), Bit2(0x4), Bit3(0x8), Bit4(0x10), Bit5(0x20), Bit6(0x40), Bit7(0x80), Bit8(0x100),
-        Bit9(0x200), Bit10(0x400), Bit11(0x800), Bit12(0x1000), Bit13(0x2000), Bit14(0x4000), Bit15(0x8000),
-        Bit16(0x10000), Bit17(0x20000), Bit18(0x40000), Bit19(0x80000), Bit20(0x100000), Bit21(0x200000),
-        Bit22(0x400000), Bit23(0x800000), Bit24(0x1000000), Bit25(0x2000000), Bit26(0x4000000), Bit27(0x8000000),
-        Bit28(0x10000000), Bit29(0x20000000), Bit30(0x40000000), Bit31(0x80000000), NZCBits(0xe0000000),
-        NZCVBits(0xf0000000), Lower16Bits(0x0000ffff), Upper16Bits(0xffff0000), All32Bits(0xffffffff);
+        Lower16Bits(0x0000ffff), Upper16Bits(0xffff0000), Lower32Bits(0xffffffff), All64Bits(0xffffffffffffffffL);
 
-        public static final BitsFlag[] values = values();
         private final long value;
 
         BitsFlag(long value) {
@@ -79,6 +73,16 @@ public class MaxineAarch64Tester {
     private long[]    expectRegs = new long[NUM_REGS];
     private boolean[] testRegs   = new boolean[NUM_REGS];
     public static int oldpos = 0;
+
+    public static void setBitMask(BitsFlag[] bitmasks, int i, BitsFlag mask) {
+        bitmasks[i] = mask;
+    }
+
+    public static void setAllBitMasks(BitsFlag[] bitmasks, BitsFlag mask) {
+        for (int i = 0; i < bitmasks.length; i++) {
+            setBitMask(bitmasks, i, mask);
+        }
+    }
 
     /*
      * arm-unknown-eabi-gcc -c -march=armv8-a -g test_aarch64.c -o test_aarch64.o
