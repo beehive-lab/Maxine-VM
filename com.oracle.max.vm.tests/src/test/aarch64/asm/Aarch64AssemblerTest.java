@@ -245,28 +245,6 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    // TODO: Look again at this.
-    public void work_movImmediate() throws Exception {
-        initialiseExpectedValues();
-        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
-        resetIgnoreValues();
-        masm.codeBuffer.reset();
-
-        masm.movImmediate(Aarch64.r0, 10);
-        masm.movImmediate(Aarch64.r1, 1);
-        masm.movImmediate(Aarch64.r2, -10);
-
-        expectedValues[0] = 10;
-        expectedValues[1] = 1;
-        expectedValues[2] = -10;
-
-        testValues[0] = true;
-        testValues[1] = true;
-        testValues[2] = true;
-
-        generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
-    }
-
     /**
      * branch.
      */
