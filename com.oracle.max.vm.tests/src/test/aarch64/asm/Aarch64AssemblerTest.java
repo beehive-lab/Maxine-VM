@@ -935,11 +935,11 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         values[8] = ((long) Integer.MIN_VALUE) + 5L;
         values[9] = ((long) Integer.MAX_VALUE) - 5L;
 
-        for (int i = 0; i < values.length; i++) {
+        for (long value : values) {
             asm.codeBuffer.reset();
-            asm.mov64BitConstant(Aarch64.r0, values[i]);
+            asm.mov64BitConstant(Aarch64.r0, value);
 
-            expectedValues[0] = values[i];
+            expectedValues[0] = value;
             testValues[0] = true;
 
             generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
@@ -956,9 +956,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
             for (int destReg = 0; destReg < 3; destReg++) {
                 initialiseTestValues();
                 testValues[destReg] = true;
-                for (int i = 0; i < scratchTestSet.length; i++) {
+                for (int aScratchTestSet : scratchTestSet) {
                     asm.codeBuffer.reset();
-                    int value = scratchTestSet[i];
+                    int value = aScratchTestSet;
                     asm.mov32BitConstant(Aarch64.cpuRegisters[srcReg], value);
                     asm.add(64, Aarch64.cpuRegisters[destReg], Aarch64.cpuRegisters[srcReg], 0);
                     expectedValues[destReg] = value;
