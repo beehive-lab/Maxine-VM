@@ -334,27 +334,25 @@ public class MaxineARMv7Tester {
     }
 
     private boolean validateRegisters(int[] simRegisters, int[] expectedRegisters, boolean[] testRegisters) {
-        for (int i = 0; i < NUM_REGS; i++) {
-            log(i + " sim: " + simRegisters[i] + " exp: " + expectedRegisters[i] + " test: " + testRegisters[i]);
-        }
-        boolean result = true;
+        boolean valid = true;
         int bitmask = 0;
         for (int i = 0; i < NUM_REGS; i++) {
-            long simulatedRegister = simRegisters[i] & bitMasks[i].value();
-            long expectedRegister = expectedRegisters[i];
+            log(i + " sim: " + simRegisters[i] + " exp: " + expectedRegisters[i] + " test: " + testRegisters[i]);
             if (testRegisters[i]) {
+                final long simulatedRegister = simRegisters[i] & bitMasks[i].value();
+                final long expectedRegister = expectedRegisters[i];
                 if (simulatedRegister != expectedRegister) {
                     bitmask = bitmask | (1 << i);
-                    result = false;
+                    valid = false;
                 }
             }
         }
-        if (!result) {
+        if (!valid) {
             for (int i = 0; i < NUM_REGS; i++) {
                 System.out.println(i + " sim: " + simRegisters[i] + " exp: " + expectedRegisters[i] + " test: " + testRegisters[i]);
             }
         }
-        return result;
+        return valid;
     }
 
     public MaxineARMv7Tester(int[] expected, boolean[] test, BitsFlag[] range) {
