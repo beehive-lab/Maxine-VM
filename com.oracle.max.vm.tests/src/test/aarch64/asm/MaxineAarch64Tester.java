@@ -139,6 +139,17 @@ public class MaxineAarch64Tester {
         }
     }
 
+    private Process runBlocking(ProcessBuilder processBuilder) {
+        Process process = null;
+        try {
+            process = processBuilder.start();
+            process.waitFor();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return process;
+    }
+
     public void compile() {
         // aarch64-linux-gnu-gcc -c -march=armv8-a+simd -mgeneral-regs-only -g test_aarch64.c -o test_aarch64.o
         final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.elf");
@@ -146,14 +157,8 @@ public class MaxineAarch64Tester {
                 "-mgeneral-regs-only", "-g", "test_aarch64.c", "-o", "test_aarch64.o");
         compile.redirectOutput(gccOutput);
         compile.redirectError(gccErrors);
-        try {
-            removeFiles.start().waitFor();
-            gcc = compile.start();
-            gcc.waitFor();
-        } catch (Exception e) {
-            System.err.println(e);
-            e.printStackTrace();
-        }
+        runBlocking(removeFiles);
+        gcc = runBlocking(compile);
     }
 
     public void assembleStartup() {
@@ -163,13 +168,7 @@ public class MaxineAarch64Tester {
                 "startup_aarch64.s", "-o", "startup_aarch64.o");
         assemble.redirectOutput(new File("as_output"));
         assemble.redirectError(new File("as_errors"));
-        try {
-            assembler = assemble.start();
-            assembler.waitFor();
-        } catch (Exception e) {
-            System.err.println(e);
-            e.printStackTrace();
-        }
+        assembler = runBlocking(assemble);
     }
 
     public void link() {
@@ -178,13 +177,7 @@ public class MaxineAarch64Tester {
                 "startup_aarch64.o", "-o", "test.elf");
         link.redirectOutput(linkOutput);
         link.redirectError(linkErrors);
-        try {
-            linker = link.start();
-            linker.waitFor();
-        } catch (Exception e) {
-            System.err.println(e);
-            e.printStackTrace();
-        }
+        linker = runBlocking(link);
     }
 
     public void cleanProcesses() {
