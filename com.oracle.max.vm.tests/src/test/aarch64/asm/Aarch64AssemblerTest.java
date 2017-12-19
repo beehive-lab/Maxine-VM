@@ -869,6 +869,34 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 //      }
 //
 
+    private static long getUnsignedInt(int x) {
+        return x & 0x00000000ffffffffL;
+    }
+
+    public void work_mov32BitConstant() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        resetIgnoreValues();
+        asm.codeBuffer.reset();
+
+        int[] values = new int[10];
+        values[0] = 0;
+        values[1] = -1;
+        values[2] = Integer.MIN_VALUE;
+        values[3] = Integer.MAX_VALUE;
+        values[4] = Integer.MIN_VALUE + 5;
+        values[5] = Integer.MAX_VALUE - 5;
+
+        for (int i = 0; i < values.length; i++) {
+            asm.mov32BitConstant(Aarch64.cpuRegisters[i], values[i]);
+
+            expectedValues[i] = getUnsignedInt(values[i]);
+            testValues[i] = true;
+        }
+
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
     public void work_mov64BitConstant() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
