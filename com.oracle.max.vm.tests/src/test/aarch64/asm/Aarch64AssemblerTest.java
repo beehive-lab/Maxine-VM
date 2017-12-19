@@ -957,10 +957,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
                 testValues[destReg] = true;
                 for (int aScratchTestSet : scratchTestSet) {
                     asm.codeBuffer.reset();
-                    int value = aScratchTestSet;
-                    asm.mov32BitConstant(Aarch64.cpuRegisters[srcReg], value);
+                    asm.mov32BitConstant(Aarch64.cpuRegisters[srcReg], aScratchTestSet);
                     asm.add(64, Aarch64.cpuRegisters[destReg], Aarch64.cpuRegisters[srcReg], 0);
-                    expectedValues[destReg] = value;
+                    expectedValues[destReg] = aScratchTestSet;
                     generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
                 }
             }
