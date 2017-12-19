@@ -231,10 +231,10 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         resetIgnoreValues();
         masm.codeBuffer.reset();
 
-        masm.mov(Aarch64.r0, (int) Integer.MAX_VALUE);
-        masm.mov(Aarch64.r1, (int) Integer.MIN_VALUE);
-        masm.mov(Aarch64.r2, (long) Long.MAX_VALUE);
-        masm.mov(Aarch64.r3, (long) Long.MIN_VALUE);
+        masm.mov(Aarch64.r0, Integer.MAX_VALUE);
+        masm.mov(Aarch64.r1, Integer.MIN_VALUE);
+        masm.mov(Aarch64.r2, Long.MAX_VALUE);
+        masm.mov(Aarch64.r3, Long.MIN_VALUE);
 
         expectedValues[0] = Integer.MAX_VALUE;
         expectedValues[1] = Integer.MIN_VALUE;
