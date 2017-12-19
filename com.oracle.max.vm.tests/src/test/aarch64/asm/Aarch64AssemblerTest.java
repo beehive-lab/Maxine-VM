@@ -24,8 +24,6 @@ import com.oracle.max.asm.target.aarch64.*;
 import com.sun.cri.ci.*;
 import com.sun.max.ide.*;
 
-import test.aarch64.asm.MaxineAarch64Tester.BitsFlag;
-
 public class Aarch64AssemblerTest extends MaxTestCase {
 
     private static final int VARIANT_32 = 32;
