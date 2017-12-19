@@ -32,45 +32,28 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     private Aarch64Assembler asm;
     private Aarch64MacroAssembler masm;
 
-    private CiTarget      aarch64;
-    private Aarch64CodeWriter code;
-
-    static final class Pair {
-
-        public final int first;
-        public final int second;
-
-        Pair(int first, int second) {
-            this.first = first;
-            this.second = second;
-        }
-    }
-
     public Aarch64AssemblerTest() {
-        aarch64 = new CiTarget(new Aarch64(), true, 8, 0, 4096, 0, false, false, false, true);
+        CiTarget aarch64 = new CiTarget(new Aarch64(), true, 8, 0, 4096, 0, false, false, false, true);
         asm = new Aarch64Assembler(aarch64, null);
         masm = new Aarch64MacroAssembler(aarch64, null);
-        code = null;
     }
 
     public static void main(String[] args) {
         junit.textui.TestRunner.run(Aarch64AssemblerTest.class);
     }
 
-    private static int[] valueTestSet = {0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
-    private static int[] scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x7fffffff};
-    private static boolean[] testValues = new boolean[MaxineAarch64Tester.NUM_REGS];
+    private static final int[] scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x7fffffff};
+    private static final boolean[] testValues = new boolean[MaxineAarch64Tester.NUM_REGS];
 
     // Each test should set the contents of this array appropriately,
     // it enables the instruction under test to select the specific bit values for
     // comparison i.e. for example ignoring upper or lower 16bits for movt, movw
     // and for ignoring specific bits in the status register etc
     // concerning whether a carry has been set
-    private static MaxineAarch64Tester.BitsFlag[] bitmasks = new MaxineAarch64Tester.BitsFlag[MaxineAarch64Tester.NUM_REGS];
+    private static final MaxineAarch64Tester.BitsFlag[] bitmasks =
+            new MaxineAarch64Tester.BitsFlag[MaxineAarch64Tester.NUM_REGS];
     static {
-        for (int i = 0; i < MaxineAarch64Tester.NUM_REGS; i++) {
-            bitmasks[i] = MaxineAarch64Tester.BitsFlag.All32Bits;
-        }
+        setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
     }
 
     private static void setBitMask(int i, MaxineAarch64Tester.BitsFlag mask) {
@@ -79,12 +62,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
     private static void setAllBitMasks(MaxineAarch64Tester.BitsFlag mask) {
         for (int i = 0; i < bitmasks.length; i++) {
-            bitmasks[i] = mask;
+            setBitMask(i, mask);
         }
-    }
-
-    private static void setIgnoreValue(int i, boolean value, boolean all) {
-        testValues[i] = value;
     }
 
     private static void resetIgnoreValues() {
@@ -95,9 +74,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
     // The following values will be updated
     // to those expected to be found in a register after simulated execution of code.
-    private static long[] expectedValues = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
-
-    private static long[] expectedLongValues = {Long.MAX_VALUE - 100, Long.MAX_VALUE};
+    private static final long[] expectedValues = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
 
     private static void initialiseExpectedValues() {
         for (int i = 0; i < MaxineAarch64Tester.NUM_REGS; i++) {
@@ -573,7 +550,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
         for (int i = 0; i < 1; i++) {
             asm.and(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[10], Aarch64Assembler.ShiftType.LSL, 4);
-            expectedValues[i] = 0xffffffffffffffffL & (0b1111L << 4);
+            expectedValues[i] = 0b1111L << 4;
             testValues[i] = true;
         }
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
@@ -871,9 +848,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
         expectedValues[0] = 0b1001 << 6;
         testValues[0] = true;
-        expectedValues[1] = 0b1 << 0;
+        expectedValues[1] = 0b1;
         testValues[1] = true;
-        expectedValues[2] = 0b0 << 0;
+        expectedValues[2] = 0;
         testValues[2] = true;
 
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
@@ -919,7 +896,6 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         resetIgnoreValues();
         asm.codeBuffer.reset();
 
-        int[] instructions = new int[6];
         long[] values = new long[10];
         values[0] = 0L;
         values[1] = -1L;
@@ -945,7 +921,6 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     }
 
     public void work_AddConstant() throws Exception {
-        int[] instructions = new int[3];
         setAllBitMasks(MaxineAarch64Tester.BitsFlag.All32Bits);
         initialiseExpectedValues();
         resetIgnoreValues();
@@ -1524,7 +1499,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
             expectedValues[0] = 0xffffffff;
             testValues[0] = true;
-            expectedValues[1] = (0xffffffff >> shift) | (((0xffffffff & mask) << (64 - shift)));
+            expectedValues[1] = (0xffffffff >> shift) | ((mask << (64 - shift)));
             testValues[1] = true;
             expectedValues[2] = 0xffffffff;
             testValues[2] = true;
