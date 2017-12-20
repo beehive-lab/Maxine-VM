@@ -11,6 +11,7 @@ pipeline {
         MAXINE_HOME="$WORKSPACE/maxine"
         GRAAL_HOME="$WORKSPACE/graal"
         MX="$GRAAL_HOME/mxtool/mx"
+        PATH="/localhome/regression/gcc-linaro-7.1.1-2017.08-x86_64_aarch64-linux-gnu/bin:/localhome/regression/qemu-2.10.1/build/aarch64-softmmu:$PATH"
     }
 
     stages {
@@ -40,11 +41,17 @@ pipeline {
                 }
             }
         }
-        stage('image') {
+        stage('image-n-crossisa') {
             steps {
-                dir(env.MAXINE_HOME) {
-                    sh '$MX image @c1xgraal'
-                    sh '$MX image'
+                parallel 'image': {
+                    dir(env.MAXINE_HOME) {
+                        sh '$MX image @c1xgraal'
+                        sh '$MX image'
+                    }
+                }, 'aarch64 junit': {
+                    dir(env.MAXINE_HOME) {
+                        sh '$MX --J @"-Dmax.platform=linux-aarch64 -Dmax.arm.qemu=1 -ea" test -junit-test-timeout=10000 -s=t -tests=junit:aarch64.asm'
+                    }
                 }
             }
         }
