@@ -181,7 +181,7 @@ public final class Aarch64Address extends CiAddress {
         this.base = base.asRegister();
         this.offset = offset.asRegister();
         if ((addressingMode == AddressingMode.REGISTER_OFFSET || addressingMode == AddressingMode.EXTENDED_REGISTER_OFFSET)
-                && offset.equals(zr)) {
+                && offset.equals(zr.asValue())) {
             this.addressingMode = AddressingMode.BASE_REGISTER_ONLY;
         } else {
             this.addressingMode = addressingMode;
