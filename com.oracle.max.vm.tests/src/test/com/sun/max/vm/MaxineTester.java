@@ -188,86 +188,86 @@ public class MaxineTester {
             final File outputDir = new File(outputDirOption.getValue()).getAbsoluteFile();
             makeDirectory(outputDir);
             Trace.on(traceOption.getValue());
-            for (String test : testsOption.getValue()) {
+            for (String filter : testsOption.getValue()) {
                 if (stopTesting()) {
                     break;
-                } else if ("junit".equals(test)) {
+                } else if ("junit".equals(filter)) {
                     // run the JUnit tests
-                    new JUnitHarness(null).run();
-                } else if (test.startsWith("junit:")) {
+                    new JUnitHarness().run();
+                } else if (filter.startsWith("junit:")) {
                     // run the JUnit tests
-                    new JUnitHarness(filterTestsBySubstrings(MaxineTesterConfiguration.zeeJUnitTests, test)).run();
-                } else if ("c1x".equals(test)) {
+                    new JUnitHarness(filter).run();
+                } else if ("c1x".equals(filter)) {
                     // run the C1X tests
                     new C1XHarness(null).run();
-                } else if (test.startsWith("c1x:")) {
+                } else if (filter.startsWith("c1x:")) {
                     // run the C1X tests (selected)
-                    new C1XHarness(test.substring("c1x:".length())).run();
-                } else if ("c1xgraal".equals(test)) {
+                    new C1XHarness(filter.substring("c1x:".length())).run();
+                } else if ("c1xgraal".equals(filter)) {
                     // run the C1XGraal tests (selected)
                     new C1XGraalHarness(null).run();
-                } else if (test.startsWith("c1xgraal:")) {
+                } else if (filter.startsWith("c1xgraal:")) {
                     // run the C1XGraal tests
-                    new C1XGraalHarness(test.substring("c1xgraal:".length())).run();
-                } else if ("graal".equals(test)) {
+                    new C1XGraalHarness(filter.substring("c1xgraal:".length())).run();
+                } else if ("graal".equals(filter)) {
                     // run the C1X tests
                     new GraalHarness(null).run();
-                } else if (test.startsWith("graal:")) {
+                } else if (filter.startsWith("graal:")) {
                     // run the C1X tests (selected)
-                    new GraalHarness(test.substring("graal:".length())).run();
-                } else if ("output".equals(test)) {
+                    new GraalHarness(filter.substring("graal:".length())).run();
+                } else if ("output".equals(filter)) {
                     // run the Output tests
                     new OutputHarness(MaxineTesterConfiguration.zeeOutputTests).run();
-                } else if (test.startsWith("output:")) {
+                } else if (filter.startsWith("output:")) {
                     // run the Output tests
-                    new OutputHarness(filterTestClassesBySubstrings(MaxineTesterConfiguration.zeeOutputTests, test)).run();
-                } else if ("jsr292".equals(test)) {
+                    new OutputHarness(MaxineTesterConfiguration.zeeOutputTests, filter).run();
+                } else if ("jsr292".equals(filter)) {
                     // run the JSR292 tests
                     new OutputHarness(MaxineTesterConfiguration.zeeJSR292Tests).run();
-                } else if (test.startsWith("jsr292:")) {
+                } else if (filter.startsWith("jsr292:")) {
                     // run the JSR292 tests
-                    new OutputHarness(filterTestClassesBySubstrings(MaxineTesterConfiguration.zeeJSR292Tests, test)).run();
-                } else if ("javatester".equals(test)) {
+                    new OutputHarness(MaxineTesterConfiguration.zeeJSR292Tests, filter).run();
+                } else if ("javatester".equals(filter)) {
                     // run the JTImage tests
                     new JTImageHarness().run();
-                } else if ("vmoutput".equals(test)) {
+                } else if ("vmoutput".equals(filter)) {
                     // run the VM output tests
                     new OutputImageHarness(MaxineTesterConfiguration.zeeVMOutputTests).run();
-                } else if ("dacapo2006".equals(test)) {
+                } else if ("dacapo2006".equals(filter)) {
                     // run the DaCapo 2006 tests
                     new DaCapo2006Harness(MaxineTesterConfiguration.zeeDacapo2006Tests).run();
-                } else if ("dacapobach".equals(test) || "dacapo".equals(test)) {
+                } else if ("dacapobach".equals(filter) || "dacapo".equals(filter)) {
                     // run the DaCapo bach tests
                     new DaCapoBachHarness(MaxineTesterConfiguration.zeeDacapoBachTests).run();
-                } else if (test.startsWith("dacapo2006:")) {
+                } else if (filter.startsWith("dacapo2006:")) {
                     // run subset of the DaCapo 2006 tests
-                    new DaCapo2006Harness(filterTestsBySubstrings(MaxineTesterConfiguration.zeeDacapo2006Tests, test)).run();
-                } else if (test.startsWith("dacapobach:")) {
+                    new DaCapo2006Harness(filterTestsBySubstrings(MaxineTesterConfiguration.zeeDacapo2006Tests, filter)).run();
+                } else if (filter.startsWith("dacapobach:")) {
                     // run subset of the DaCapo tests
-                    new DaCapoBachHarness(filterTestsBySubstrings(MaxineTesterConfiguration.zeeDacapoBachTests, test)).run();
-                } else if (test.startsWith("dacapo:")) {
+                    new DaCapoBachHarness(filterTestsBySubstrings(MaxineTesterConfiguration.zeeDacapoBachTests, filter)).run();
+                } else if (filter.startsWith("dacapo:")) {
                     // run subset of the DaCapo tests
-                    new DaCapoBachHarness(filterTestsBySubstrings(MaxineTesterConfiguration.zeeDacapoBachTests, test)).run();
-                } else if ("specjvm98".equals(test)) {
+                    new DaCapoBachHarness(filterTestsBySubstrings(MaxineTesterConfiguration.zeeDacapoBachTests, filter)).run();
+                } else if ("specjvm98".equals(filter)) {
                     // run the SpecJVM98 tests
-                    new SpecJVM98Harness(MaxineTesterConfiguration.zeeSpecjvm98Tests).run();
-                } else if (test.startsWith("specjvm98:")) {
+                    new SpecJVM98Harness().run();
+                } else if (filter.startsWith("specjvm98:")) {
                     // run specific SpecJVM98 tests
-                    new SpecJVM98Harness(filterTestsBySubstrings(MaxineTesterConfiguration.zeeSpecjvm98Tests, test)).run();
-                } else if ("specjvm2008".equals(test)) {
+                    new SpecJVM98Harness(filter).run();
+                } else if ("specjvm2008".equals(filter)) {
                     // run the SPECjvm2008 tests
                     new SpecJVM2008Harness().run();
-                } else if (test.startsWith("specjvm2008:")) {
+                } else if (filter.startsWith("specjvm2008:")) {
                     // run specific SPECjvm2008 tests
-                    new SpecJVM2008Harness(filterTestsBySubstrings(MaxineTesterConfiguration.zeeSpecjvm2008Tests, test)).run();
-                } else if ("shootout".equals(test)) {
+                    new SpecJVM2008Harness(filter).run();
+                } else if ("shootout".equals(filter)) {
                     // run the shootout tests
-                    new ShootoutHarness(MaxineTesterConfiguration.zeeShootoutTests).run();
-                } else if (test.startsWith("shootout:")) {
+                    new ShootoutHarness().run();
+                } else if (filter.startsWith("shootout:")) {
                     // run the shootout tests
-                    new ShootoutHarness(filterTestsBySubstrings(MaxineTesterConfiguration.zeeShootoutTests, test)).run();
+                    new ShootoutHarness(filter).run();
                 } else {
-                    out().println("Unrecognized test harness: " + test);
+                    out().println("Unrecognized test harness: " + filter);
                     System.exit(-1);
                 }
             }
@@ -313,7 +313,7 @@ public class MaxineTester {
         }
     }
 
-    private static Iterable<String> filterTestsBySubstrings(Iterable<String> tests, String filter) {
+    private static List<String> filterTestsBySubstrings(Iterable<String> tests, String filter) {
         final String[] split = filter.split(":");
         assert split.length == 2;
         String[] substrings = split[1].split("\\+");
@@ -329,7 +329,7 @@ public class MaxineTester {
         return list;
     }
 
-    private static Iterable<Class> filterTestClassesBySubstrings(Iterable<Class> tests, String filter) {
+    private static List<Class> filterTestClassesBySubstrings(Iterable<Class> tests, String filter) {
         final String[] split = filter.split(":");
         assert split.length == 2;
         String[] substrings = split[1].split("\\+");
@@ -1068,27 +1068,18 @@ public class MaxineTester {
      *
      */
     public static class JUnitHarness implements Harness {
-        final Iterable<String> testList;
+        final List<String> testList;
 
-        JUnitHarness(Iterable<String> testList) {
-            this.testList = testList;
+        JUnitHarness() {
+            testList = MaxineTesterConfiguration.zeeJUnitTests;
+        }
+
+        JUnitHarness(String filter) {
+            testList = filterTestsBySubstrings(MaxineTesterConfiguration.zeeJUnitTests, filter);
         }
 
         public void run() {
             final File outputDir = new File(outputDirOption.getValue(), "junit-tests");
-            final List<String> junitTests;
-            if (testList == null) {
-                junitTests = MaxineTesterConfiguration.zeeJUnitTests;
-            } else {
-                junitTests = new LinkedList<>();
-                for (final String junitTest : MaxineTesterConfiguration.zeeJUnitTests) {
-                    for (final String test : testList) {
-                        if (junitTest.contains(test)) {
-                            junitTests.add(junitTest);
-                        }
-                    }
-                }
-            }
 
             out().println("Junit tests key:");
             out().println("  failed: test failed (go debug)");
@@ -1096,7 +1087,7 @@ public class MaxineTester {
             out().println("  passed: expected failure but passed (consider removing from exclusion list)");
 
             if (singleThreadedOption.getValue()) {
-                for (final String junitTest : junitTests) {
+                for (final String junitTest : testList) {
                     if (!stopTesting()) {
                         runJUnitTest(outputDir, junitTest);
                     }
@@ -1112,7 +1103,7 @@ public class MaxineTester {
                 }
                 final ExecutorService junitTesterService = Executors.newFixedThreadPool(threadCount);
                 final CompletionService<Void> junitTesterCompletionService = new ExecutorCompletionService<>(junitTesterService);
-                for (final String junitTest : junitTests) {
+                for (final String junitTest : testList) {
                     junitTesterCompletionService.submit(new Runnable() {
                         public void run() {
                             if (!stopTesting()) {
@@ -1127,7 +1118,7 @@ public class MaxineTester {
                 }
                 junitTesterService.shutdown();
                 try {
-                    junitTesterService.awaitTermination(javaTesterTimeOutOption.getValue() * 2 * junitTests.size(), TimeUnit.SECONDS);
+                    junitTesterService.awaitTermination(javaTesterTimeOutOption.getValue() * 2 * testList.size(), TimeUnit.SECONDS);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -1501,9 +1492,14 @@ public class MaxineTester {
      *
      */
     public static class OutputHarness implements Harness {
-        final Iterable<Class> testList;
-        OutputHarness(Iterable<Class> tests) {
+        final List<Class> testList;
+
+        OutputHarness(List<Class> tests) {
             this.testList = tests;
+        }
+
+        OutputHarness(List<Class> tests, String filter) {
+            this.testList = filterTestClassesBySubstrings(tests, filter);
         }
 
         public void run() {
@@ -1722,9 +1718,14 @@ public class MaxineTester {
      *
      */
     public static class SpecJVM98Harness extends TimedHarness implements Harness {
-        final Iterable<String> testList;
-        SpecJVM98Harness(Iterable<String> tests) {
-            this.testList = tests;
+        final List<String> testList;
+
+        SpecJVM98Harness() {
+            this.testList = MaxineTesterConfiguration.zeeSpecjvm98Tests;
+        }
+
+        SpecJVM98Harness(String filter) {
+            this.testList = filterTestsBySubstrings(MaxineTesterConfiguration.zeeSpecjvm98Tests, filter);
         }
 
         public void run() {
@@ -1791,12 +1792,13 @@ public class MaxineTester {
      */
     public static class SpecJVM2008Harness extends TimedHarness implements Harness {
         final Iterable<String> testList;
-        SpecJVM2008Harness(Iterable<String> tests) {
-            this.testList = tests;
-        }
 
         SpecJVM2008Harness() {
-            testList = null;
+            this.testList = MaxineTesterConfiguration.zeeSpecjvm2008Tests;
+        }
+
+        SpecJVM2008Harness(String filter) {
+            this.testList = filterTestsBySubstrings(MaxineTesterConfiguration.zeeSpecjvm98Tests, filter);
         }
 
         public void run() {
@@ -1822,17 +1824,10 @@ public class MaxineTester {
                     }
                 }
                 Files.unzip(specjvm2008Zip, specjvm2008Dir);
-                if (testList == null) {
-                    // run all tests from within the SPECjvm2008 harness
-                    for (String test : MaxineTesterConfiguration.zeeSpecjvm2008Tests) {
-                        runSpecJVM2008Test(outputDir, imageDir, specjvm2008Dir, test);
-                    }
-                } else {
-                    for (String test : testList) {
-                        runSpecJVM2008Test(outputDir, imageDir, specjvm2008Dir, test);
-                        if (stopTesting()) {
-                            break;
-                        }
+                for (String test : testList) {
+                    runSpecJVM2008Test(outputDir, imageDir, specjvm2008Dir, test);
+                    if (stopTesting()) {
+                        break;
                     }
                 }
             }
@@ -1975,15 +1970,20 @@ public class MaxineTester {
         }
     }
 
-   /**
+    /**
      * This class implements a test harness that is capable of running the Programming Language Shootout suite of programs
      * and comparing their outputs to that obtained by running each of them on a reference VM.
      *
      */
     public static class ShootoutHarness implements Harness {
-        final Iterable<String> testList;
-        ShootoutHarness(Iterable<String> tests) {
-            this.testList = tests;
+        final List<String> testList;
+
+        ShootoutHarness() {
+            this.testList = MaxineTesterConfiguration.zeeShootoutTests;
+        }
+
+        ShootoutHarness(String filter) {
+            this.testList = filterTestsBySubstrings(MaxineTesterConfiguration.zeeShootoutTests, filter);
         }
 
         public void run() {
