@@ -1294,36 +1294,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void setUpScratch(CiAddress addr) {
-        CiRegister base = addr.base();
-        CiRegister index = addr.index();
-        CiAddress.Scale scale = addr.scale;
-        int disp = addr.displacement;
-
-        if (addr == CiAddress.Placeholder) {
-            nop(numInstructions(addr));
-            return;
-        }
-        assert !(base.isValid() && disp == 0 && base.compareTo(ARMV7.LATCH_REGISTER) == 0);
-        assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
-
-        if (base.isValid() || base.compareTo(CiRegister.Frame) == 0) {
-            if (base == CiRegister.Frame) {
-                base = frameRegister;
-            }
-            if (disp != 0) {
-                movImm32(ConditionFlag.Always, scratchRegister, disp);
-                addRegisters(ConditionFlag.Always, false, scratchRegister, scratchRegister, base, 0, 0);
-                if (index.isValid()) {
-                    addlsl(ConditionFlag.Always, false, scratchRegister, scratchRegister, index, scale.log2);
-                }
-            } else {
-                if (index.isValid()) {
-                    addlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
-                } else {
-                    mov(ConditionFlag.Always, false, scratchRegister, base);
-                }
-            }
-        }
+        assert !(addr.base().isValid() && addr.displacement == 0 && addr.base().compareTo(ARMV7.LATCH_REGISTER) == 0);
+        setUpRegister(scratchRegister, addr);
     }
 
     public void setUpRegister(CiRegister dest, CiAddress addr) {
