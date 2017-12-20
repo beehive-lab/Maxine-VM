@@ -1129,8 +1129,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         masm.fcvt(64, Aarch64.d2, Aarch64.d0);
         masm.fcvt(64, Aarch64.d4, Aarch64.d1);
         masm.fmul(64, Aarch64.d2, Aarch64.d4, Aarch64.d2);
-        masm.fcvt(64, Aarch64.d0, Aarch64.d2);
-        masm.fmov(64, Aarch64.r2, Aarch64.d0);
+        masm.fcvtzs(64, 64, Aarch64.r2, Aarch64.d2);
         expectedValues[0] = 12;
         testValues[0] = true;
         expectedValues[1] = 10;
