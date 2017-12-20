@@ -97,7 +97,7 @@ public class MaxineTester {
                     "The list of JTT boot image configurations to be run.");
     private static final Option<String> listTestsOption = options.newStringOption("ls", null,
                     "List the tests in the categories whose name contain the given value. The categories are: " +
-                    "c1x, junit, output, javatester, dacapo2006, dacapobach, specjvm98, specjvm2008");
+                    "c1x, junit, jsr292, output, javatester, dacapo2006, dacapobach, specjvm98, specjvm2008");
     private static final Option<List<String>> testsOption = options.newStringListOption("tests", "c1x,graal,junit,output,javatester",
                     "The list of test harnesses to run, which may include Compiler tests (c1x,tx1,graal), JUnit tests (junit), output tests (output), " +
                     "the JavaTester (javatester), DaCapo-2006 (dacapo2006), DaCapo-bach (dacapobach), SpecJVM98 (specjvm98) " +
@@ -293,6 +293,7 @@ public class MaxineTester {
 
     static void listTests(String filter) {
         listTests(filter, "junit", MaxineTesterConfiguration.zeeJUnitTests);
+        listTests(filter, "jsr292", MaxineTesterConfiguration.zeeJSR292Tests);
         listTests(filter, "c1x", MaxineTesterConfiguration.zeeC1XTests.keySet());
         listTests(filter, "dacapo2006", MaxineTesterConfiguration.zeeDacapo2006Tests);
         listTests(filter, "dacapobach", MaxineTesterConfiguration.zeeDacapoBachTests);
