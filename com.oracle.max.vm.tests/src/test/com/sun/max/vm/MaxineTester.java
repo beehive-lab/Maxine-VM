@@ -659,10 +659,7 @@ public class MaxineTester {
 
     }
 
-    /**
-     * @param workingDir if {@code null}, then {@code imageDir} is used
-     */
-    private static int runMaxineVM(JavaCommand command, File imageDir, File workingDir, Logs logs, String name, int timeout) {
+    private static int runMaxineVM(JavaCommand command, File imageDir, Logs logs, String name, int timeout) {
         String[] envp = null;
         if (OS.current() == OS.LINUX) {
             // Since the executable may not be in the default location, then the -rpath linker option used when
@@ -680,7 +677,7 @@ public class MaxineTester {
             final String string = env.toString();
             envp = string.substring(1, string.length() - 2).split(", ");
         }
-        return exec(workingDir == null ? imageDir : workingDir, command.getExecArgs(imageDir.getAbsolutePath() + "/maxvm"), envp, logs, name, timeout);
+        return exec(imageDir, command.getExecArgs(imageDir.getAbsolutePath() + "/maxvm"), envp, logs, name, timeout);
     }
 
     /**
@@ -971,10 +968,6 @@ public class MaxineTester {
         return javaVMArgs.split("\\s+");
     }
 
-    private static int exec(File workingDir, String[] command, String[] env, Logs files, String name, int timeout) {
-        return exec(workingDir, command, env, files, false, name, timeout);
-    }
-
     private static final Map<String, Long> execTimes = Collections.synchronizedMap(new LinkedHashMap<String, Long>());
 
     /**
@@ -991,10 +984,10 @@ public class MaxineTester {
      * @param name a descriptive name for the command or {@code null} if {@code command[0]} should be used instead
      * @param timeout the timeout in seconds
      */
-    private static int exec(File workingDir, String[] command, String[] env, Logs logs, boolean append, String name, int timeout) {
+    private static int exec(File workingDir, String[] command, String[] env, Logs logs, String name, int timeout) {
         traceExec(workingDir, command);
         final long start = System.currentTimeMillis();
-        Result result = new ExternalCommand(workingDir, null, logs, command, env).exec(append, timeout);
+        Result result = new ExternalCommand(workingDir, null, logs, command, env).exec(false, timeout);
 
         if (name != null) {
             synchronized (execTimes) {
@@ -1380,7 +1373,7 @@ public class MaxineTester {
             if (maxVMOptions.size() > 0) {
                 command.addVMOptions(maxVMOptions.toArray(new String[maxVMOptions.size()]));
             }
-            int exitValue = runMaxineVM(command, imageDir, null, logs, logs.base.getName(), javaTesterTimeOutOption.getValue());
+            int exitValue = runMaxineVM(command, imageDir, logs, logs.base.getName(), javaTesterTimeOutOption.getValue());
             ImageTestResult result = parseTestOutput(config, logs.get(STDOUT));
             String summary = result.summary;
             final PrintStream out = out();
