@@ -1168,9 +1168,9 @@ public class MaxineTester {
                 } else {
                     out.println(" (exit value == " + exitValue + ")");
                 }
-                if (errors != 0) {
-                    junitTestsWithExceptions.add(junitTest);
-                }
+            }
+            if (errors != 0) {
+                junitTestsWithExceptions.add(junitTest);
             }
         }
 
