@@ -704,7 +704,10 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             expectedValues[0] = output[i];
             testValues[0] = true;
             asm.codeBuffer.reset();
-            asm.movImm64(ConditionFlag.Always, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[1], input[i]); // 12
+            int low32 = (int) (input[i] & 0xffffffffL);
+            asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[0], low32); // 4
+            int high32 = (int) ((input[i] >> 32) & 0xffffffffL);
+            asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[1], high32); // 12
             asm.cmpImmediate(ConditionFlag.Always, ARMV7.cpuRegisters[1], 0); // 16
             asm.jcc(ConditionFlag.NotEqual, 40, false); // 20
             asm.cmpImmediate(ConditionFlag.Always, ARMV7.cpuRegisters[0], 0); // 24
