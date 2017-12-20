@@ -1029,8 +1029,7 @@ public class MaxineTester {
 
     static String findLine(File file, String p1, String p2) {
         try {
-            final BufferedReader f1Reader = new BufferedReader(new FileReader(file));
-            try {
+            try (BufferedReader f1Reader = new BufferedReader(new FileReader(file))) {
                 String line1;
                 while (true) {
                     line1 = f1Reader.readLine();
@@ -1043,8 +1042,6 @@ public class MaxineTester {
                         }
                     }
                 }
-            } finally {
-                f1Reader.close();
             }
         } catch (IOException e) {
             return null;
@@ -1412,9 +1409,8 @@ public class MaxineTester {
             String lastTest = null;
             String lastTestNumber = null;
             try {
-                BufferedReader reader = new BufferedReader(new FileReader(outputFile));
                 List<String> failedLines = new ArrayList<>();
-                try {
+                try (BufferedReader reader = new BufferedReader(new FileReader(outputFile))) {
                     while (true) {
                         String line = reader.readLine();
 
@@ -1468,8 +1464,6 @@ public class MaxineTester {
                         buffer.append("\n").append(failed);
                     }
                     return new ImageTestResult(buffer.toString(), nextTestOption);
-                } finally {
-                    reader.close();
                 }
             } catch (IOException e) {
                 return new ImageTestResult("could not open file: " + outputFile.getPath(), null);
