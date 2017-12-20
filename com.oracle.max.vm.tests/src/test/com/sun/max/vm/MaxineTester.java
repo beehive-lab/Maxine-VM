@@ -552,10 +552,12 @@ public class MaxineTester {
             junit.addListener(new RunListener() {
                 boolean failedFlag;
                 boolean setupDone;
+                long executionTime;
 
                 @Override
                 public void testStarted(Description description) throws Exception {
                     setupDone = true;
+                    executionTime = System.currentTimeMillis();
                     System.out.println("running " + description);
                 }
 
@@ -570,10 +572,11 @@ public class MaxineTester {
 
                 @Override
                 public void testFinished(Description description) throws Exception {
+                    executionTime = System.currentTimeMillis() - executionTime;
                     if (this.failedFlag) {
-                        failed.println(description);
+                        failed.println(description + " (" + executionTime + "ms)");
                     } else {
-                        passed.println(description);
+                        passed.println(description + " (" + executionTime + "ms)");
                     }
                     this.failedFlag = false;
                 }
