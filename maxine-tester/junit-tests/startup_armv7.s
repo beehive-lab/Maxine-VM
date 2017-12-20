@@ -3,7 +3,9 @@ _Reset:
  LDR sp, =stack_top
  BL Setup_Undef_Stack
  BL VFP_enable
- BL c_entry	
+ BL c_entry
+success:
+failure:
  B .
 
 .EQU Mode_UNDEF, 0x1B

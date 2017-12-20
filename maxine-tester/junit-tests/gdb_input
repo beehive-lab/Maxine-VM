@@ -1,18 +1,21 @@
+# Disable pagination
+set pagination off
 # Load the elf file to get access to its symbols
 file test.elf
 # Connect to qemu
 target remote localhost:1234
-# Step a large number (N) of instructions to ensure the generated code
-# has executed.  If the generated code terminates after X steps, where
-# X<N, execution will stop at one of the success or failure breakpoints.
-# Note that there is no way to know a priori the upper bound of the
-# number of instructions we need to execute, since tests might contain
-# loops.  We could always just execute continue and wait to stop at one
-# of the success or failure breakpoints and in case of generated
-# infinite loops we would see a failure when the unit test will
-# eventually time out.  However, when invoked through Java, gdb seems to
-# ignore breakpoints.
-stepi 1500
+# Add a breakpoint at the start of the generated code
+# (stored in code array)
+break *&code
+break success
+break failure
+# Continue execution till we get to the generated code
+continue
+# Continue execution till we succeed or fail.  In case of generated
+# infinite loops or wrong branches that prevent completion we will see a
+# failure when the unit test will eventually time out.  However, when
+# invoked through Java, gdb seems to ignore breakpoints.
+continue
 # print the registers
 info registers
 quit
