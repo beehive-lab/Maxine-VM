@@ -67,6 +67,17 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         }
     }
 
+    /**
+     * Sets the expected value of a register and enables it for inspection.
+     *
+     * @param cpuRegister the number of the cpuRegister
+     * @param expectedValue the expected value
+     */
+    private static void setExpectedValue(int cpuRegister, int expectedValue) {
+        expectedValues[cpuRegister] = expectedValue;
+        testValues[cpuRegister] = true;
+    }
+
     private static void initialiseTestValues() {
         for (int i = 0; i < testValues.length; i++) {
             testValues[i] = false;
@@ -852,6 +863,18 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             }
             generateAndTest(asm.codeBuffer);
         }
+    }
+
+    public void test_StrexdWithoutExclusiveAccess() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineARMv7Tester.BitsFlag.All32Bits);
+        initialiseTestValues();
+        asm.codeBuffer.reset();
+        asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[2], 0);
+        asm.strexd(ConditionFlag.Always, ARMV7.cpuRegisters[2], ARMV7.cpuRegisters[0], ARMV7.rsp);
+        // The exclusive  store should fail since we don't have exclusive access
+        setExpectedValue(2, 1);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_PushAndPop() throws Exception {
