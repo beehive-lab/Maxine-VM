@@ -337,15 +337,13 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.s0, ARMV7.r0, null, CiKind.Float, CiKind.Int);
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.s1, ARMV7.r1, null, CiKind.Float, CiKind.Int);
         asm.vcvt(ARMV7Assembler.ConditionFlag.Always, ARMV7.s2, false, true, ARMV7.s0, CiKind.Double, CiKind.Int);
-        asm.vcvt(ARMV7Assembler.ConditionFlag.Always, ARMV7.s3, false, true, ARMV7.s1, CiKind.Double, CiKind.Int);
+        asm.vcvt(ARMV7Assembler.ConditionFlag.Always, ARMV7.s4, false, true, ARMV7.s1, CiKind.Double, CiKind.Int);
         asm.vcvt(ARMV7Assembler.ConditionFlag.Always, ARMV7.s0, true, true, ARMV7.s2, CiKind.Float, CiKind.Double);
-        asm.vcvt(ARMV7Assembler.ConditionFlag.Always, ARMV7.s1, true, true, ARMV7.s3, CiKind.Float, CiKind.Double);
+        asm.vcvt(ARMV7Assembler.ConditionFlag.Always, ARMV7.s1, true, true, ARMV7.s4, CiKind.Float, CiKind.Double);
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, ARMV7.s0, null, CiKind.Int, CiKind.Float);
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, ARMV7.s1, null, CiKind.Int, CiKind.Float);
-        expectedValues[0] = 10;
-        testValues[0] = true;
-        expectedValues[1] = 24;
-        testValues[1] = true;
+        setExpectedValue(0, 10);
+        setExpectedValue(1, 24);
         generateAndTest(asm.codeBuffer);
     }
 
@@ -357,15 +355,15 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         asm.movImm64(ConditionFlag.Always, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[1], Double.doubleToRawLongBits(-10));
         asm.movImm64(ConditionFlag.Always, ARMV7.cpuRegisters[2], ARMV7.cpuRegisters[3], Double.doubleToRawLongBits(-24));
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.s0, ARMV7.r0, ARMV7.r1, CiKind.Double, CiKind.Int);
-        asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.s1, ARMV7.r2, ARMV7.r3, CiKind.Double, CiKind.Int);
+        asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.s2, ARMV7.r2, ARMV7.r3, CiKind.Double, CiKind.Int);
         asm.vcvt(ARMV7Assembler.ConditionFlag.Always, ARMV7.s4, false, true, ARMV7.s0, CiKind.Float, CiKind.Double);
-        asm.vcvt(ARMV7Assembler.ConditionFlag.Always, ARMV7.s5, false, true, ARMV7.s1, CiKind.Float, CiKind.Double);
+        asm.vcvt(ARMV7Assembler.ConditionFlag.Always, ARMV7.s5, false, true, ARMV7.s2, CiKind.Float, CiKind.Double);
+        asm.vcvt(ARMV7Assembler.ConditionFlag.Always, ARMV7.s4, true, true, ARMV7.s4, CiKind.Int, CiKind.Float);
+        asm.vcvt(ARMV7Assembler.ConditionFlag.Always, ARMV7.s5, true, true, ARMV7.s5, CiKind.Int, CiKind.Float);
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, ARMV7.s4, null, CiKind.Int, CiKind.Float);
-        asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, ARMV7.s5, null, CiKind.Int, CiKind.Float);
-        expectedValues[0] = Float.floatToRawIntBits(-10);
-        testValues[0] = true;
-        expectedValues[2] = Float.floatToRawIntBits(-24);
-        testValues[2] = true;
+        asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r1, ARMV7.s5, null, CiKind.Int, CiKind.Float);
+        setExpectedValue(0, -10);
+        setExpectedValue(1, -24);
         generateAndTest(asm.codeBuffer);
     }
 
