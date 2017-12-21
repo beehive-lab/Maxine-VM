@@ -1149,35 +1149,35 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void test_VldrStr() throws Exception {
+    public void test_FldrStr() throws Exception {
         initialiseExpectedValues();
         MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
         masm.codeBuffer.reset();
         masm.mov64BitConstant(Aarch64.cpuRegisters[0], 12);
         masm.mov64BitConstant(Aarch64.cpuRegisters[1], 10);
-        masm.push(1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048); // instruction
-        masm.fldr(64, Aarch64.d0, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r13));
+        masm.push(1 | 2);
+        masm.fldr(64, Aarch64.d0, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.sp));
         masm.fmov(64, Aarch64.r2, Aarch64.d0);
-        masm.fldr(64, Aarch64.d4, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r13));
+        masm.fldr(64, Aarch64.d4, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.sp));
         masm.fmov(64, Aarch64.r4, Aarch64.d4);
-        masm.fstr(64, Aarch64.d4, Aarch64Address.createUnscaledImmediateAddress(Aarch64.r13, -16));
-        masm.fstr(64, Aarch64.d0, Aarch64Address.createUnscaledImmediateAddress(Aarch64.r13, -32));
-        masm.fldr(64, Aarch64.d10, Aarch64Address.createUnscaledImmediateAddress(Aarch64.r13, -16));
-        masm.fldr(64, Aarch64.d31, Aarch64Address.createUnscaledImmediateAddress(Aarch64.r13, -32));
+        masm.fstr(64, Aarch64.d4, Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, -16));
+        masm.fstr(64, Aarch64.d0, Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, -32));
+        masm.fldr(64, Aarch64.d10, Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, -16));
+        masm.fldr(64, Aarch64.d31, Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, -32));
         masm.fmov(64, Aarch64.r6, Aarch64.d10);
         masm.fmov(64, Aarch64.r8, Aarch64.d31);
         expectedValues[0] = 12;
         testValues[0] = true;
         expectedValues[1] = 10;
         testValues[1] = true;
-        expectedValues[2] = 12;
+        expectedValues[2] = 10;
         testValues[2] = true;
-        expectedValues[4] = 12;
+        expectedValues[4] = 10;
         testValues[4] = true;
-        expectedValues[6] = 12;
+        expectedValues[6] = 10;
         testValues[6] = true;
-        expectedValues[8] = 12;
+        expectedValues[8] = 10;
         testValues[8] = true;
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
