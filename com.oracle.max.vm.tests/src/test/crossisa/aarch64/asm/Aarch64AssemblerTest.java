@@ -74,6 +74,17 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         }
     }
 
+    /**
+     * Sets the expected value of a register and enables it for inspection.
+     *
+     * @param cpuRegister the number of the cpuRegister
+     * @param expectedValue the expected value
+     */
+    private static void setExpectedValue(int cpuRegister, long expectedValue) {
+        expectedValues[cpuRegister] = expectedValue;
+        testValues[cpuRegister] = true;
+    }
+
     private static void initialiseTestValues() {
         for (int i = 0; i < MaxineAarch64Tester.NUM_REGS; i++) {
             testValues[i] = false;
@@ -1493,22 +1504,20 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     public void test_MovRor() throws Exception {
         MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
+        final long value = 0x0fab0dad0badcafeL;
 
-        int mask = 1;
-        for (int shift = 1; shift <= 63; shift++) {
+        for (int shift = 1; shift < 64; shift += 4) {
             asm.codeBuffer.reset();
-            asm.mov64BitConstant(Aarch64.cpuRegisters[0], 0xffffffff); // load 0x0000ffff
-            asm.movror(Aarch64.cpuRegisters[1], Aarch64.cpuRegisters[0], shift);
-            asm.movror(Aarch64.cpuRegisters[2], Aarch64.cpuRegisters[1], 63 - shift);
-
-            expectedValues[0] = 0xffffffff;
-            testValues[0] = true;
-            expectedValues[1] = (0xffffffff >> shift) | ((mask << (64 - shift)));
-            testValues[1] = true;
-            expectedValues[2] = 0xffffffff;
-            testValues[2] = true;
+            for (int i = 0; i < 4 && shift < 64; i++, shift++) {
+                final int index = i * 3;
+                asm.mov64BitConstant(Aarch64.cpuRegisters[index], value);
+                setExpectedValue(index, value);
+                asm.movror(Aarch64.cpuRegisters[index + 1], Aarch64.cpuRegisters[index], shift);
+                setExpectedValue(index, Long.rotateRight(value, shift));
+                asm.movror(Aarch64.cpuRegisters[index + 2], Aarch64.cpuRegisters[index + 1], 63 - shift);
+                setExpectedValue(index, value);
+            }
             generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
-            mask = mask | (mask + 1);
         }
     }
 
