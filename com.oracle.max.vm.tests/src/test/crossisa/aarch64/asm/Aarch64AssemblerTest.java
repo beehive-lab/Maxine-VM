@@ -44,7 +44,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         junit.textui.TestRunner.run(Aarch64AssemblerTest.class);
     }
 
-    private static final int[] scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x7fffffff};
+    private static final long[] scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x7fffffff,
+                                                  0xffffffffffffL, 0x7fffffffffffffffL};
     private static final boolean[] testValues = new boolean[MaxineAarch64Tester.NUM_REGS];
 
     // Each test should set the contents of this array appropriately,
@@ -940,20 +941,20 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
     public void test_AddConstant() throws Exception {
         MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
-        initialiseExpectedValues();
         resetIgnoreValues();
-        for (int srcReg = 0; srcReg < 3; srcReg++) {
-            for (int destReg = 0; destReg < 3; destReg++) {
-                initialiseTestValues();
-                testValues[destReg] = true;
-                for (int aScratchTestSet : scratchTestSet) {
-                    asm.codeBuffer.reset();
-                    asm.mov32BitConstant(Aarch64.cpuRegisters[srcReg], aScratchTestSet);
-                    asm.add(64, Aarch64.cpuRegisters[destReg], Aarch64.cpuRegisters[srcReg], 0);
-                    expectedValues[destReg] = aScratchTestSet;
-                    generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        for (long aScratchTestSet : scratchTestSet) {
+            initialiseExpectedValues();
+            initialiseTestValues();
+            asm.codeBuffer.reset();
+            for (int srcReg = 0; srcReg < 3; srcReg++) {
+                for (int destReg = 0; destReg < 3; destReg++) {
+                    testValues[destReg] = true;
+                    asm.mov64BitConstant(Aarch64.cpuRegisters[srcReg], aScratchTestSet);
+                    asm.add(64, Aarch64.cpuRegisters[destReg], Aarch64.cpuRegisters[srcReg], 5);
+                    expectedValues[destReg] = aScratchTestSet + 5;
                 }
             }
+            generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
         }
     }
 
