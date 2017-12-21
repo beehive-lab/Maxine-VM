@@ -19,6 +19,8 @@
  */
 package test.crossisa.armv7.asm;
 
+import org.junit.*;
+
 import com.oracle.max.asm.*;
 import com.oracle.max.asm.target.armv7.*;
 import com.oracle.max.asm.target.armv7.ARMV7Assembler.*;
@@ -895,6 +897,21 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         // The exclusive  store should fail since we don't have exclusive access
         setExpectedValue(2, 1);
         generateAndTest(asm.codeBuffer);
+    }
+
+    public void test_PushEvenNumberOfRegisters() throws Exception {
+        setAllBitMasks(MaxineARMv7Tester.BitsFlag.All32Bits);
+        initialiseExpectedValues();
+        asm.codeBuffer.reset();
+        for (int i = 0; i < 10; i++) {
+            asm.push(ConditionFlag.Always, (1 << i) | (1 << 10));
+            asm.mov(ConditionFlag.Always, false, ARMV7.cpuRegisters[i], ARMV7.rsp);
+        }
+        long[] resultValues = generate();
+        Assert.assertNotNull(resultValues);
+        for (int i = 0; i < 10; i++) {
+            Assert.assertEquals(resultValues[i] % 8, 0);
+        }
     }
 
     public void work_PushAndPop() throws Exception {
