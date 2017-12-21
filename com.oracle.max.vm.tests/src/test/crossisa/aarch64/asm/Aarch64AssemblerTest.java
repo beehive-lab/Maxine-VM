@@ -1118,17 +1118,15 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void test_VcvtvMul() throws Exception {
+    public void test_FcvtMul() throws Exception {
         initialiseExpectedValues();
         resetIgnoreValues();
         masm.codeBuffer.reset();
         masm.mov64BitConstant(Aarch64.cpuRegisters[0], 12);
         masm.mov64BitConstant(Aarch64.cpuRegisters[1], 10);
-        masm.fmov(64, Aarch64.d0, Aarch64.r0);
-        masm.fmov(64, Aarch64.d1, Aarch64.r1);
-        masm.fcvt(64, Aarch64.d2, Aarch64.d0);
-        masm.fcvt(64, Aarch64.d4, Aarch64.d1);
-        masm.fmul(64, Aarch64.d2, Aarch64.d4, Aarch64.d2);
+        masm.scvtf(64, 64, Aarch64.d0, Aarch64.r0);
+        masm.scvtf(64, 64, Aarch64.d1, Aarch64.r1);
+        masm.fmul(64, Aarch64.d2, Aarch64.d1, Aarch64.d0);
         masm.fcvtzs(64, 64, Aarch64.r2, Aarch64.d2);
         expectedValues[0] = 12;
         testValues[0] = true;
