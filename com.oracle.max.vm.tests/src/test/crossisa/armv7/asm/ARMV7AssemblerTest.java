@@ -913,37 +913,32 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     }
 
     public void work_PushAndPop() throws Exception {
-        int registers = 1;
         setAllBitMasks(MaxineARMv7Tester.BitsFlag.All32Bits);
         initialiseExpectedValues();
-        for (int i = 0; i < 16; i++) {
+        for (int i = 0; i < 11; i++) {
             if (i % 2 == 0) {
-                expectedValues[i] = i;
+                setExpectedValue(i, i);
             } else {
-                expectedValues[i] = -i;
-            }
-            if (i < 13) {
-                testValues[i] = true;
+                setExpectedValue(i, -i);
             }
         }
 
-        for (int bitmask = 1; bitmask <= 0xfff; bitmask = bitmask | (bitmask + 1), registers++) {
+        int registers = 2;
+        for (int bitmask = 0b11; bitmask <= 0xfff; bitmask = (bitmask + 1) * 4 - 1, registers += 2) {
             asm.codeBuffer.reset();
-            for (int i = 0; i < 13; i++) { // we are not breaking the stack (r13)
+            for (int i = 0; i < 11; i++) { // we are not breaking the stack (r13)
                 asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]); // 2 instructions
             }
             asm.push(ARMV7Assembler.ConditionFlag.Always, bitmask); // store all registers referred to
             // by bitmask on the stack
-            for (int i = 0; i < 13; i++) {
+            for (int i = 0; i < 11; i++) {
                 asm.add12BitImmediate(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.cpuRegisters[i], ARMV7.cpuRegisters[i], 1);
             }
             // r0..r12 should now all have +1 more than their previous values stored on the stack
             // restore the same registers that were placed on the stack
             asm.pop(ARMV7Assembler.ConditionFlag.Always, bitmask);
-            for (int i = 0; i < 13; i++) {
-                if (i < registers) {
-                    expectedValues[i] = expectedValues[i];
-                } else {
+            for (int i = 0; i < 11; i++) {
+                if (i >= registers) {
                     expectedValues[i] = expectedValues[i] + 1;
                 }
             }
