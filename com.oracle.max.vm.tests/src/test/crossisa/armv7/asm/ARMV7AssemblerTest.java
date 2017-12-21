@@ -1074,15 +1074,14 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         masm.codeBuffer.reset();
         CiRegister cmpReg = ARMV7.r0;
         CiRegister newReg = ARMV7.r1;
-        for (int i = 1; i < 5; i++) {
+        for (int i = 1; i < 6; i++) {
             masm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], (i + 1) * 10);
         }
         masm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[0], 50);
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16);
-        CiAddress addr = new CiAddress(CiKind.Int, ARMV7.r13.asValue(), 20);
+        masm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32);
+        CiAddress addr = new CiAddress(CiKind.Int, ARMV7.rsp.asValue(), 24);
         masm.casIntAsmTest(newReg, cmpReg, addr);
-        expectedValues[1] = 20;
-        testValues[1] = true;
+        setExpectedValue(1, 20);
         generateAndTest(masm.codeBuffer);
     }
 
