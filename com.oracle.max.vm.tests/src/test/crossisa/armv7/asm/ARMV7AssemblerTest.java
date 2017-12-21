@@ -227,27 +227,19 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     }
 
     public void work_AddConstant() throws Exception {
-        int[] instructions = new int[3];
         setAllBitMasks(MaxineARMv7Tester.BitsFlag.All32Bits);
-        initialiseExpectedValues();
-        initialiseTestValues();
-        for (int srcReg = 0; srcReg < 3; srcReg++) {
-            for (int destReg = 0; destReg < 3; destReg++) {
-                initialiseTestValues();
-                testValues[destReg] = true;
-                for (int i = 0; i < scratchTestSet.length; i++) {
-                    asm.codeBuffer.reset();
-                    int value = scratchTestSet[i];
-                    asm.movw(ARMV7Assembler.ConditionFlag.Always, ARMV7.cpuRegisters[srcReg], value & 0xffff);
-                    asm.movt(ARMV7Assembler.ConditionFlag.Always, ARMV7.cpuRegisters[srcReg], (value >> 16) & 0xffff);
-                    asm.add12BitImmediate(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.cpuRegisters[destReg], ARMV7.cpuRegisters[srcReg], 0);
-                    instructions[0] = asm.codeBuffer.getInt(0);
-                    instructions[1] = asm.codeBuffer.getInt(4);
-                    instructions[2] = asm.codeBuffer.getInt(8);
-                    expectedValues[destReg] = value;
-                    generateAndTest(asm.codeBuffer);
+        for (int value : scratchTestSet) {
+            initialiseExpectedValues();
+            initialiseTestValues();
+            asm.codeBuffer.reset();
+            for (int srcReg = 0; srcReg < 3; srcReg++) {
+                for (int destReg = 0; destReg < 3; destReg++) {
+                    asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[srcReg], value);
+                    asm.add12BitImmediate(ConditionFlag.Always, false, ARMV7.cpuRegisters[destReg], ARMV7.cpuRegisters[srcReg], 5);
+                    setExpectedValue(destReg, value + 5);
                 }
             }
+            generateAndTest(asm.codeBuffer);
         }
     }
 
