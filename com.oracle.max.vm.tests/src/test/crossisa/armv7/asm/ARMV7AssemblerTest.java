@@ -992,19 +992,15 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     }
 
     public void work_Movw() throws Exception {
-        int value;
         setAllBitMasks(MaxineARMv7Tester.BitsFlag.Lower16Bits);
-        for (int destReg = 0; destReg < 13; destReg++) {
+        for (int value : valueTestSet) {
             initialiseTestValues();
-            testValues[destReg] = true;
-            for (int j = 0; j < valueTestSet.length; j++) {
-                value = valueTestSet[j];
-                expectedValues[destReg] = value;
-                asm.movw(ARMV7Assembler.ConditionFlag.Always, ARMV7.cpuRegisters[destReg], value);
-                generateAndTest(asm.codeBuffer);
-                assert asm.codeBuffer.getInt(0) == (0x03000000 | (ARMV7Assembler.ConditionFlag.Always.value() << 28) | (destReg << 12) | (value & 0xfff) | ((value & 0xf000) << 4));
-                asm.codeBuffer.reset();
+            asm.codeBuffer.reset();
+            for (int destReg = 0; destReg < 11; destReg++) {
+                setExpectedValue(destReg, value);
+                asm.movw(ConditionFlag.Always, ARMV7.cpuRegisters[destReg], value);
             }
+            generateAndTest(asm.codeBuffer);
         }
     }
 
