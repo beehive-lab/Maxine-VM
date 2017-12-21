@@ -85,10 +85,10 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         }
     }
 
-    private void generateAndTest(int[] expected, boolean[] tests, MaxineARMv7Tester.BitsFlag[] masks, Buffer codeBuffer) throws Exception {
+    private void generateAndTest(Buffer codeBuffer) throws Exception {
         ARMV7CodeWriter code = new ARMV7CodeWriter(codeBuffer);
         code.createCodeFile();
-        MaxineARMv7Tester r = new MaxineARMv7Tester(expected, tests, masks);
+        MaxineARMv7Tester r = new MaxineARMv7Tester(expectedValues, testValues, bitmasks);
         if (!CrossISATester.ENABLE_SIMULATOR) {
             System.out.println("Code Generation is disabled!");
             return;
@@ -160,7 +160,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             // not affected by sign extension side effects when we take the MSByte of
             // an integer.
         }
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
 
     }
 
@@ -232,7 +232,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                     instructions[1] = asm.codeBuffer.getInt(4);
                     instructions[2] = asm.codeBuffer.getInt(8);
                     expectedValues[destReg] = value;
-                    generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+                    generateAndTest(asm.codeBuffer);
                 }
             }
         }
@@ -266,7 +266,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         testValues[3] = true;
         expectedValues[4] = 4;
         testValues[4] = true;
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void test_Vdiv() throws Exception {
@@ -289,7 +289,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         testValues[1] = true;
         expectedValues[2] = 2;
         testValues[2] = true;
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_Vcvt_int2float() throws Exception {
@@ -311,7 +311,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         testValues[0] = true;
         expectedValues[1] = 24;
         testValues[1] = true;
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_Vcvt_int2double() throws Exception {
@@ -333,7 +333,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         testValues[0] = true;
         expectedValues[1] = 24;
         testValues[1] = true;
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_Vcvt_double2float() throws Exception {
@@ -353,7 +353,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         testValues[0] = true;
         expectedValues[2] = Float.floatToRawIntBits(-24);
         testValues[2] = true;
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_VAdd() throws Exception {
@@ -376,7 +376,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         testValues[1] = true;
         expectedValues[2] = 22;
         testValues[2] = true;
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_VSub() throws Exception {
@@ -399,7 +399,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         testValues[1] = true;
         expectedValues[2] = -2;
         testValues[2] = true;
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_VcvtvMul() throws Exception {
@@ -421,7 +421,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         testValues[1] = true;
         expectedValues[2] = 120;
         testValues[2] = true;
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_VldrStr() throws Exception {
@@ -454,7 +454,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         testValues[6] = true;
         expectedValues[8] = 12;
         testValues[8] = true;
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_Vldr() throws Exception {
@@ -477,7 +477,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         testValues[2] = true;
         expectedValues[4] = 12;
         testValues[4] = true;
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_MVov() throws Exception {
@@ -499,7 +499,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         testValues[2] = true;
         expectedValues[4] = 12;
         testValues[4] = true;
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     // TODO: Fix vmovimm
@@ -517,7 +517,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         testValues[0] = true;
         expectedValues[2] = -100;
         testValues[2] = true;
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_FloatIngPointExperiments() throws Exception {
@@ -536,7 +536,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         asm.codeBuffer.emitInt(0xee100a10);
         expectedValues[0] = 120;
         testValues[0] = true;
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_SubReg() throws Exception {
@@ -552,7 +552,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             expectedValues[i + 5] = expectedValues[5 - (i + 1)] - expectedValues[i];
             testValues[i + 5] = true;
         }
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_Mov() throws Exception {
@@ -567,7 +567,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             testValues[i] = true;
             testValues[i + 5] = true;
         }
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_Sub() throws Exception {
@@ -581,7 +581,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             expectedValues[i] = expectedValues[i] - i * 2;
             testValues[i] = true;
         }
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_Str() throws Exception {
@@ -597,7 +597,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], -2 * (expectedValues[i]));
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, 1, 0, 0, ARMV7.cpuRegisters[i], ARMV7.cpuRegisters[13], ARMV7.cpuRegisters[12], i * 4, 0);
         }
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_neg() throws Exception {
@@ -611,7 +611,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         testValues[1] = true;
         asm.xorq(ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0]);
         asm.mvn(ConditionFlag.Always, false, ARMV7.cpuRegisters[1], ARMV7.cpuRegisters[0], 0);
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_msb_int() throws Exception {
@@ -631,7 +631,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             asm.clz(ConditionFlag.Always, ARMV7.cpuRegisters[1], ARMV7.cpuRegisters[0]);
             asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[0], 31);
             asm.sub(ConditionFlag.Always, false, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[1], 0, 0);
-            generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+            generateAndTest(asm.codeBuffer);
         }
     }
 
@@ -651,7 +651,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             asm.jcc(ConditionFlag.Equal, 32, false);
             asm.rbit(ConditionFlag.Always, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0]);
             asm.clz(ConditionFlag.Always, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0]);
-            generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+            generateAndTest(asm.codeBuffer);
         }
     }
 
@@ -683,7 +683,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             asm.jcc(ConditionFlag.Always, 84, false); // 68
             asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[0], 31); // 72
             asm.sub(ConditionFlag.Always, false, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[1], 0, 0); // 80
-            generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+            generateAndTest(asm.codeBuffer);
         }
     }
 
@@ -716,7 +716,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[2], 32); // 72
             asm.clz(ConditionFlag.Always, ARMV7.cpuRegisters[1], ARMV7.cpuRegisters[0]); // 76
             asm.addRegisters(ConditionFlag.Always, false, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[2], ARMV7.cpuRegisters[1], 0, 0); // 80
-            generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+            generateAndTest(asm.codeBuffer);
         }
     }
 
@@ -736,7 +736,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             asm.movt(ARMV7Assembler.ConditionFlag.Always, ARMV7.r12, 0);
             asm.ldr(ARMV7Assembler.ConditionFlag.Always, 1, 1, 0, ARMV7.cpuRegisters[i], ARMV7.cpuRegisters[13], ARMV7.cpuRegisters[12], 0, 0);
         }
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_Decq() throws Exception {
@@ -750,7 +750,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             expectedValues[i] -= 1;
             testValues[i] = true;
         }
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_Incq() throws Exception {
@@ -764,7 +764,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             expectedValues[i] += 1;
             testValues[i] = true;
         }
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_Subq() throws Exception {
@@ -783,7 +783,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             }
             testValues[i] = true;
         }
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_addq() throws Exception {
@@ -797,7 +797,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             expectedValues[i] += expectedValues[i];
             testValues[i] = true;
         }
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_Ldrsh() throws Exception {
@@ -828,7 +828,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             expectedValues[i] = expectedValues[i] >> 16 * (i % 2);
         }
 
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_StrdAndLdrd() throws Exception {
@@ -850,7 +850,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                 testValues[i - 1] = false;
                 testValues[i - 2] = false;
             }
-            generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+            generateAndTest(asm.codeBuffer);
         }
     }
 
@@ -889,7 +889,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                     expectedValues[i] = expectedValues[i] + 1;
                 }
             }
-            generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+            generateAndTest(asm.codeBuffer);
         }
     }
 
@@ -926,7 +926,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             expectedValues[16] = 0x0;
             testValues[16] = false;
             setBitMask(16, MaxineARMv7Tester.BitsFlag.NZCBits);
-            generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+            generateAndTest(asm.codeBuffer);
             mask = mask | (mask + 1);
         }
     }
@@ -941,7 +941,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                 value = valueTestSet[j];
                 expectedValues[destReg] = value;
                 asm.movw(ARMV7Assembler.ConditionFlag.Always, ARMV7.cpuRegisters[destReg], value);
-                generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+                generateAndTest(asm.codeBuffer);
                 assert asm.codeBuffer.getInt(0) == (0x03000000 | (ARMV7Assembler.ConditionFlag.Always.value() << 28) | (destReg << 12) | (value & 0xfff) | ((value & 0xf000) << 4));
                 asm.codeBuffer.reset();
             }
@@ -959,7 +959,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                 value = valueTestSet[j];
                 expectedValues[destReg] = (value & 0xffff) << 16;
                 asm.movt(ARMV7Assembler.ConditionFlag.Always, ARMV7.cpuRegisters[destReg], value & 0xffff);
-                generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+                generateAndTest(asm.codeBuffer);
                 assert asm.codeBuffer.getInt(0) == (0x03400000 | (ARMV7Assembler.ConditionFlag.Always.value() << 28) | (destReg << 12) | (value & 0xfff) | (value & 0xf000) << 4);
                 asm.codeBuffer.reset();
             }
@@ -977,7 +977,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         asm.sub(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0], 10, 0);
         asm.sub(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0], 10, 0);
         expectedValues[0] = -10;
-        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+        generateAndTest(asm.codeBuffer);
     }
 
     public void work_Ldrd() throws Exception {
@@ -1023,7 +1023,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         masm.casIntAsmTest(newReg, cmpReg, addr);
         expectedValues[1] = 20;
         testValues[1] = true;
-        generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+        generateAndTest(masm.codeBuffer);
     }
 
     public void work_casLong() throws Exception {
@@ -1044,7 +1044,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         testValues[0] = true;
         expectedValues[1] = 0;
         testValues[1] = true;
-        generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+        generateAndTest(masm.codeBuffer);
     }
 
     public void work_decrementl() throws Exception {
@@ -1079,7 +1079,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         testValues[8] = true;
         expectedValues[9] = 100;
         testValues[9] = true;
-        generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+        generateAndTest(masm.codeBuffer);
     }
 
     public void work_incrementl() throws Exception {
@@ -1114,6 +1114,6 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         testValues[8] = true;
         expectedValues[9] = 100;
         testValues[9] = true;
-        generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
+        generateAndTest(masm.codeBuffer);
     }
 }
