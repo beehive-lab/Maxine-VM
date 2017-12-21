@@ -1182,7 +1182,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-    public void test_Vldr() throws Exception {
+    public void test_Fldr() throws Exception {
         initialiseExpectedValues();
         MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         resetIgnoreValues();
@@ -1190,7 +1190,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         masm.mov64BitConstant(Aarch64.cpuRegisters[0], 12);
         masm.mov64BitConstant(Aarch64.cpuRegisters[1], 10);
         masm.push(1 | 2);
-        Aarch64Address address = Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r13);
+        Aarch64Address address = Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.sp);
         masm.fldr(64, Aarch64.d31, address);
         masm.fmov(64, Aarch64.r2, Aarch64.d31);
         masm.fldr(64, Aarch64.d4, address);
@@ -1199,9 +1199,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         testValues[0] = true;
         expectedValues[1] = 10;
         testValues[1] = true;
-        expectedValues[2] = 12;
+        expectedValues[2] = 10;
         testValues[2] = true;
-        expectedValues[4] = 12;
+        expectedValues[4] = 10;
         testValues[4] = true;
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
