@@ -865,6 +865,26 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         }
     }
 
+    public void test_StrexdAndLdrexd() throws Exception {
+        initialiseExpectedValues();
+        setAllBitMasks(MaxineARMv7Tester.BitsFlag.All32Bits);
+        initialiseTestValues();
+        asm.codeBuffer.reset();
+        // Perform an ldrexd to get exclusive access
+        asm.ldrexd(ConditionFlag.Always, ARMV7.cpuRegisters[0], ARMV7.rsp);
+        for (int i = 0; i < 10; i += 2) {
+            asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
+            asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i + 1], expectedValues[i + 1]);
+            asm.strexd(ConditionFlag.Always, ARMV7.cpuRegisters[10], ARMV7.cpuRegisters[i], ARMV7.rsp);
+            asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], 0);
+            asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i + 1], 0);
+            asm.ldrexd(ConditionFlag.Always, ARMV7.cpuRegisters[i], ARMV7.rsp);
+            testValues[i] = true;
+            testValues[i + 1] = true;
+        }
+        generateAndTest(asm.codeBuffer);
+    }
+
     public void test_StrexdWithoutExclusiveAccess() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMv7Tester.BitsFlag.All32Bits);
