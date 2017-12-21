@@ -955,24 +955,19 @@ public class ARMV7AssemblerTest extends MaxTestCase {
                 }
             }
         }
-        int mask = 1;
-        for (int shift = 1; shift <= 31; shift++) {
+        final int value = 0x0fab0dad;
+        for (int shift = 1; shift < 31;) {
             asm.codeBuffer.reset();
-            asm.movw(ARMV7Assembler.ConditionFlag.Always, ARMV7.cpuRegisters[0], 0xffff);
-            asm.movt(ARMV7Assembler.ConditionFlag.Always, ARMV7.cpuRegisters[0], 0x0);
-            asm.movror(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[1], ARMV7.cpuRegisters[0], shift);
-            asm.movror(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[2], ARMV7.cpuRegisters[1], 32 - shift);
-            expectedValues[0] = 0x0000ffff;
-            testValues[0] = true;
-            expectedValues[1] = (0x0000ffff >> shift) | (((expectedValues[0] & mask) << (32 - shift)));
-            testValues[1] = true;
-            expectedValues[2] = 0x0000ffff;
-            testValues[2] = true;
-            expectedValues[16] = 0x0;
-            testValues[16] = false;
-            setBitMask(16, MaxineARMv7Tester.BitsFlag.NZCBits);
+            for (int i = 0; i < 3 && shift < 32; i++, shift++) {
+                final int index = i * 3;
+                asm.movImm32(ARMV7Assembler.ConditionFlag.Always, ARMV7.cpuRegisters[index], value);
+                setExpectedValue(index, value);
+                asm.movror(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[index + 1], ARMV7.cpuRegisters[index], shift);
+                setExpectedValue(index + 1, Integer.rotateRight(value, shift));
+                asm.movror(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[index + 2], ARMV7.cpuRegisters[index + 1], 32 - shift);
+                setExpectedValue(index + 2, value);
+            }
             generateAndTest(asm.codeBuffer);
-            mask = mask | (mask + 1);
         }
     }
 
