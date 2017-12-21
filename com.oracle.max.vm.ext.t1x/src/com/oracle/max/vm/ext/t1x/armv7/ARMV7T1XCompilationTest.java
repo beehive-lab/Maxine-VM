@@ -39,6 +39,10 @@ public class ARMV7T1XCompilationTest extends ARMV7T1XCompilation {
         do_methodTraceEntry();
     }
 
+    public void emitEpilogueTests() {
+        emitEpilogue();
+    }
+
     public void do_iaddTests() {
         peekInt(ARMV7.r0, 0);
         decStack(1);

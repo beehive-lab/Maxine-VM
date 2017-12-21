@@ -752,6 +752,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
         theCompiler.do_loadTests(5, Kind.LONG);
         masm.pop(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64);
+        theCompiler.emitEpilogueTests();
 
         expectedValues[0] = 172;
         expectedValues[1] = 0;
@@ -776,6 +777,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.do_iconstTests(1);
         theCompiler.do_iconstTests(2);
         theCompiler.do_iaddTests();
+        theCompiler.emitEpilogueTests();
         expectedValues[0] = 3;
         expectedValues[1] = 2;
 
@@ -793,6 +795,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.do_iconstTests(3); // push the constant 1 onto the operand stack
         theCompiler.do_iconstTests(4); // push the constant 2 onto the operand stack
         theCompiler.do_imulTests();
+        theCompiler.emitEpilogueTests();
         expectedValues[0] = 12;
         expectedValues[1] = 4;
 
