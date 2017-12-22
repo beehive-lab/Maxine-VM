@@ -77,7 +77,6 @@ public class ARMV7AssemblerTest extends MaxTestCase {
      */
     private static void setExpectedValue(int cpuRegister, int expectedValue) {
         expectedValues[cpuRegister] = expectedValue;
-        testValues[cpuRegister] = true;
     }
 
     private static void initialiseTestValues() {
@@ -159,15 +158,14 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         for (int i = 0; i < 8; i++) {
             // stackpointer advanced by 8
             asm.ldrb(ARMV7Assembler.ConditionFlag.Always, 1, 1, 0, ARMV7.cpuRegisters[i], ARMV7.cpuRegisters[13], i);
-            testValues[i] = true;
             if (i < 4) {
-                expectedValues[i] = testval[0] & (mask << (8 * (i % 4)));
+                setExpectedValue(i, testval[0] & (mask << (8 * (i % 4))));
             } else {
-                expectedValues[i] = testval[1] & (mask << (8 * (i % 4)));
+                setExpectedValue(i, testval[1] & (mask << (8 * (i % 4))));
             }
-            expectedValues[i] = expectedValues[i] >> 8 * (i % 4);
+            setExpectedValue(i, expectedValues[i] >> 8 * (i % 4));
             if (expectedValues[i] < 0) {
-                expectedValues[i] = 0x100 + expectedValues[i];
+                setExpectedValue(i, 0x100 + expectedValues[i]);
             }
             // Bytes do not have a sign! So we need to make sure the expectedValues are
             // not affected by sign extension side effects when we take the MSByte of
@@ -261,16 +259,11 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         for (int i = 0; i < 5; i++) {
             asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.cpuRegisters[i], ARMV7.allRegisters[i + 16], null, CiKind.Int, CiKind.Float);
         }
-        expectedValues[0] = 0;
-        testValues[0] = true;
-        expectedValues[1] = 1;
-        testValues[1] = true;
-        expectedValues[2] = 2;
-        testValues[2] = true;
-        expectedValues[3] = 3;
-        testValues[3] = true;
-        expectedValues[4] = 4;
-        testValues[4] = true;
+        setExpectedValue(0, 0);
+        setExpectedValue(1, 1);
+        setExpectedValue(2, 2);
+        setExpectedValue(3, 3);
+        setExpectedValue(4, 4);
         generateAndTest(asm.codeBuffer);
     }
 
@@ -288,12 +281,9 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         asm.vdiv(ARMV7Assembler.ConditionFlag.Always, ARMV7.s2, ARMV7.s3, ARMV7.s2, CiKind.Float);
         asm.vcvt(ARMV7Assembler.ConditionFlag.Always, ARMV7.s0, true, true, ARMV7.s2, CiKind.Float, CiKind.Int);
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, ARMV7.s0, null, CiKind.Int, CiKind.Float);
-        expectedValues[0] = 10;
-        testValues[0] = true;
-        expectedValues[1] = 24;
-        testValues[1] = true;
-        expectedValues[2] = 2;
-        testValues[2] = true;
+        setExpectedValue(0, 10);
+        setExpectedValue(1, 24);
+        setExpectedValue(2, 2);
         generateAndTest(asm.codeBuffer);
     }
 
@@ -312,10 +302,8 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         asm.vcvt(ARMV7Assembler.ConditionFlag.Always, ARMV7.s3, true, true, ARMV7.s3, CiKind.Float, CiKind.Float);
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, ARMV7.s2, null, CiKind.Int, CiKind.Float);
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r1, ARMV7.s3, null, CiKind.Int, CiKind.Float);
-        expectedValues[0] = 10;
-        testValues[0] = true;
-        expectedValues[1] = 24;
-        testValues[1] = true;
+        setExpectedValue(0, 10);
+        setExpectedValue(1, 24);
         generateAndTest(asm.codeBuffer);
     }
 
@@ -373,12 +361,9 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         asm.vadd(ARMV7Assembler.ConditionFlag.Always, ARMV7.s2, ARMV7.s4, ARMV7.s2, CiKind.Float);
         asm.vcvt(ARMV7Assembler.ConditionFlag.Always, ARMV7.s0, true, true, ARMV7.s2, CiKind.Float, CiKind.Float);
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, ARMV7.s0, null, CiKind.Int, CiKind.Float);
-        expectedValues[0] = 12;
-        testValues[0] = true;
-        expectedValues[1] = 10;
-        testValues[1] = true;
-        expectedValues[2] = 22;
-        testValues[2] = true;
+        setExpectedValue(0, 12);
+        setExpectedValue(1, 10);
+        setExpectedValue(2, 22);
         generateAndTest(asm.codeBuffer);
     }
 
@@ -396,12 +381,9 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         asm.vsub(ARMV7Assembler.ConditionFlag.Always, ARMV7.s2, ARMV7.s4, ARMV7.s2, CiKind.Float);
         asm.vcvt(ARMV7Assembler.ConditionFlag.Always, ARMV7.s0, true, true, ARMV7.s2, CiKind.Float, CiKind.Float);
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, ARMV7.s0, null, CiKind.Int, CiKind.Float);
-        expectedValues[0] = 12;
-        testValues[0] = true;
-        expectedValues[1] = 10;
-        testValues[1] = true;
-        expectedValues[2] = -2;
-        testValues[2] = true;
+        setExpectedValue(0, 12);
+        setExpectedValue(1, 10);
+        setExpectedValue(2, -2);
         generateAndTest(asm.codeBuffer);
     }
 
@@ -418,12 +400,9 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         asm.vmul(ARMV7Assembler.ConditionFlag.Always, ARMV7.s2, ARMV7.s4, ARMV7.s2, CiKind.Float);
         asm.vcvt(ARMV7Assembler.ConditionFlag.Always, ARMV7.s0, true, false, ARMV7.s2, CiKind.Float, CiKind.Float);
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, ARMV7.s0, null, CiKind.Int, CiKind.Float);
-        expectedValues[0] = 12;
-        testValues[0] = true;
-        expectedValues[1] = 10;
-        testValues[1] = true;
-        expectedValues[2] = 120;
-        testValues[2] = true;
+        setExpectedValue(0, 12);
+        setExpectedValue(1, 10);
+        setExpectedValue(2, 120);
         generateAndTest(asm.codeBuffer);
     }
 
@@ -445,18 +424,12 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         asm.vldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.s31, ARMV7.r13, -16, CiKind.Float, CiKind.Int);
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r6, ARMV7.s10, null, CiKind.Int, CiKind.Float);
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, ARMV7.s31, null, CiKind.Int, CiKind.Float);
-        expectedValues[0] = 12;
-        testValues[0] = true;
-        expectedValues[1] = 10;
-        testValues[1] = true;
-        expectedValues[2] = 12;
-        testValues[2] = true;
-        expectedValues[4] = 12;
-        testValues[4] = true;
-        expectedValues[6] = 12;
-        testValues[6] = true;
-        expectedValues[8] = 12;
-        testValues[8] = true;
+        setExpectedValue(0, 12);
+        setExpectedValue(1, 10);
+        setExpectedValue(2, 12);
+        setExpectedValue(4, 12);
+        setExpectedValue(6, 12);
+        setExpectedValue(8, 12);
         generateAndTest(asm.codeBuffer);
     }
 
@@ -472,14 +445,10 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, ARMV7.s31, null, CiKind.Int, CiKind.Float);
         asm.vldr(ARMV7Assembler.ConditionFlag.Always, ARMV7.s4, ARMV7.r13, 0, CiKind.Int, CiKind.Float);
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4, ARMV7.s4, null, CiKind.Int, CiKind.Float);
-        expectedValues[0] = 12;
-        testValues[0] = true;
-        expectedValues[1] = 10;
-        testValues[1] = true;
-        expectedValues[2] = 12;
-        testValues[2] = true;
-        expectedValues[4] = 12;
-        testValues[4] = true;
+        setExpectedValue(0, 12);
+        setExpectedValue(1, 10);
+        setExpectedValue(2, 12);
+        setExpectedValue(4, 12);
         generateAndTest(asm.codeBuffer);
     }
 
@@ -494,14 +463,10 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, ARMV7.s0, null, CiKind.Int, CiKind.Float);
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.s5, ARMV7.r0, null, CiKind.Float, CiKind.Int);
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4, ARMV7.s5, null, CiKind.Int, CiKind.Float);
-        expectedValues[0] = 12;
-        testValues[0] = true;
-        expectedValues[1] = 10;
-        testValues[1] = true;
-        expectedValues[2] = 12;
-        testValues[2] = true;
-        expectedValues[4] = 12;
-        testValues[4] = true;
+        setExpectedValue(0, 12);
+        setExpectedValue(1, 10);
+        setExpectedValue(2, 12);
+        setExpectedValue(4, 12);
         generateAndTest(asm.codeBuffer);
     }
 
@@ -516,10 +481,8 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, ARMV7.s0, null, CiKind.Int, CiKind.Double);
         asm.vmovImm(ARMV7Assembler.ConditionFlag.Always, ARMV7.s1, -100, CiKind.Double);
         asm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, ARMV7.s1, null, CiKind.Int, CiKind.Double);
-        expectedValues[0] = 0;
-        testValues[0] = true;
-        expectedValues[2] = -100;
-        testValues[2] = true;
+        setExpectedValue(0, 0);
+        setExpectedValue(2, -100);
         generateAndTest(asm.codeBuffer);
     }
 
@@ -537,8 +500,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         asm.codeBuffer.emitInt(0xee210a21);
         asm.codeBuffer.emitInt(0xeebd0a40);
         asm.codeBuffer.emitInt(0xee100a10);
-        expectedValues[0] = 120;
-        testValues[0] = true;
+        setExpectedValue(0, 120);
         generateAndTest(asm.codeBuffer);
     }
 
@@ -552,8 +514,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         }
         for (int i = 0; i < 5; i++) {
             asm.sub(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.cpuRegisters[i + 5], ARMV7.cpuRegisters[5 - (i + 1)], ARMV7.cpuRegisters[i], 0, 0);
-            expectedValues[i + 5] = expectedValues[5 - (i + 1)] - expectedValues[i];
-            testValues[i + 5] = true;
+            setExpectedValue(i + 5, expectedValues[5 - (i + 1)] - expectedValues[i]);
         }
         generateAndTest(asm.codeBuffer);
     }
@@ -566,9 +527,8 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         for (int i = 0; i < 5; i++) {
             asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
             asm.mov(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[i + 5], ARMV7.cpuRegisters[i]);
-            expectedValues[i + 5] = expectedValues[i];
+            setExpectedValue(i + 5, expectedValues[i]);
             testValues[i] = true;
-            testValues[i + 5] = true;
         }
         generateAndTest(asm.codeBuffer);
     }
@@ -581,8 +541,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         for (int i = 0; i < 10; i++) {
             asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
             asm.sub(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[i], ARMV7.cpuRegisters[i], i * 2, 0);
-            expectedValues[i] = expectedValues[i] - i * 2;
-            testValues[i] = true;
+            setExpectedValue(i, expectedValues[i] - i * 2);
         }
         generateAndTest(asm.codeBuffer);
     }
@@ -606,12 +565,11 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     public void test_neg() throws Exception {
         initialiseExpectedValues();
         setAllBitMasks(MaxineARMv7Tester.BitsFlag.All32Bits);
-        expectedValues[1] = -1;
+        setExpectedValue(1, -1);
         initialiseTestValues();
         asm.codeBuffer.reset();
         asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[0], 32);
         asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[1], -1);
-        testValues[1] = true;
         asm.xorq(ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0]);
         asm.mvn(ConditionFlag.Always, false, ARMV7.cpuRegisters[1], ARMV7.cpuRegisters[0], 0);
         generateAndTest(asm.codeBuffer);
@@ -624,8 +582,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         int[] output = new int[] {-1, 0, 1, 31, 15};
         for (int i = 0; i < input.length; i++) {
             initialiseTestValues();
-            expectedValues[0] = output[i];
-            testValues[0] = true;
+            setExpectedValue(0, output[i]);
             asm.codeBuffer.reset();
             asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[0], input[i]);
             asm.cmpImmediate(ConditionFlag.Always, ARMV7.cpuRegisters[0], 0);
@@ -645,8 +602,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         int[] output = new int[] {0, 1, -1, 0, 12};
         for (int i = 0; i < input.length; i++) {
             initialiseTestValues();
-            expectedValues[0] = output[i];
-            testValues[0] = true;
+            setExpectedValue(0, output[i]);
             asm.codeBuffer.reset();
             asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[0], input[i]);
             asm.cmpImmediate(ConditionFlag.Always, ARMV7.cpuRegisters[0], 0);
@@ -665,8 +621,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         int[] output = new int[] {-1, 63, 31, 32};
         for (int i = 0; i < input.length; i++) {
             initialiseTestValues();
-            expectedValues[0] = output[i];
-            testValues[0] = true;
+            setExpectedValue(0, output[i]);
             asm.codeBuffer.reset();
             int low32 = (int) (input[i] & 0xffffffffL);
             asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[0], low32); // 4
@@ -697,8 +652,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         int[] output = new int[] {-1, 0, 1, 0, 12, 31, 32};
         for (int i = 0; i < input.length; i++) {
             initialiseTestValues();
-            expectedValues[0] = output[i];
-            testValues[0] = true;
+            setExpectedValue(0, output[i]);
             asm.codeBuffer.reset();
             int low32 = (int) (input[i] & 0xffffffffL);
             asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[0], low32); // 4
@@ -750,8 +704,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         for (int i = 0; i < 10; i++) {
             asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
             asm.decq(ARMV7.cpuRegisters[i]);
-            expectedValues[i] -= 1;
-            testValues[i] = true;
+            setExpectedValue(i, expectedValues[i] - 1);
         }
         generateAndTest(asm.codeBuffer);
     }
@@ -764,8 +717,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         for (int i = 0; i < 10; i++) {
             asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
             asm.incq(ARMV7.cpuRegisters[i]);
-            expectedValues[i] += 1;
-            testValues[i] = true;
+            setExpectedValue(i, expectedValues[i] + 1);
         }
         generateAndTest(asm.codeBuffer);
     }
@@ -779,12 +731,11 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
             if (i % 2 == 1) {
                 asm.subq(ARMV7.cpuRegisters[i], 2 * expectedValues[i]);
-                expectedValues[i] -= 2 * expectedValues[i];
+                setExpectedValue(i, -expectedValues[i]);
             } else {
                 asm.subq(ARMV7.cpuRegisters[i], expectedValues[i]);
-                expectedValues[i] -= expectedValues[i];
+                setExpectedValue(i, 0);
             }
-            testValues[i] = true;
         }
         generateAndTest(asm.codeBuffer);
     }
@@ -797,8 +748,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         for (int i = 0; i < 10; i++) {
             asm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
             asm.addq(ARMV7.cpuRegisters[i], expectedValues[i]);
-            expectedValues[i] += expectedValues[i];
-            testValues[i] = true;
+            setExpectedValue(i, 2 * expectedValues[i]);
         }
         generateAndTest(asm.codeBuffer);
     }
@@ -819,16 +769,15 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         for (int i = 0; i < 4; i++) {
             // in this test we are using the stack register as the base value!
             asm.ldrshw(ARMV7Assembler.ConditionFlag.Always, 1, 1, 0, ARMV7.cpuRegisters[i], ARMV7.cpuRegisters[13], i * 2);
-            testValues[i] = true;
             if (i < 2) {
-                expectedValues[i] = testval[0] & (mask << (16 * (i % 2)));
+                setExpectedValue(i, testval[0] & (mask << (16 * (i % 2))));
             } else {
-                expectedValues[i] = testval[1] & (mask << (16 * (i % 2)));
+                setExpectedValue(i, testval[1] & (mask << (16 * (i % 2))));
             }
             if ((expectedValues[i] & 0x8000) != 0) {
-                expectedValues[i] = expectedValues[i] - 0x10000; // sign extension workaround.
+                setExpectedValue(i, expectedValues[i] - 0x10000); // sign extension workaround.
             }
-            expectedValues[i] = expectedValues[i] >> 16 * (i % 2);
+            setExpectedValue(i, expectedValues[i] >> 16 * (i % 2));
         }
 
         generateAndTest(asm.codeBuffer);
@@ -1007,7 +956,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         asm.sub(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0], 10, 0);
         asm.sub(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0], 10, 0);
         asm.sub(ARMV7Assembler.ConditionFlag.Always, true, ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[0], 10, 0);
-        expectedValues[0] = -10;
+        setExpectedValue(0, -10);
         generateAndTest(asm.codeBuffer);
     }
 
@@ -1070,10 +1019,8 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         masm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
         CiAddress addr = new CiAddress(CiKind.Int, ARMV7.r13.asValue(), 32);
         masm.casLongAsmTest(newReg, cmpReg, addr);
-        expectedValues[0] = 30;
-        testValues[0] = true;
-        expectedValues[1] = 0;
-        testValues[1] = true;
+        setExpectedValue(0, 30);
+        setExpectedValue(1, 0);
         generateAndTest(masm.codeBuffer);
     }
 
@@ -1089,26 +1036,16 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         CiAddress addr = new CiAddress(CiKind.Int, ARMV7.r13.asValue(), 16);
         masm.decrementl(addr, 10);
         masm.pop(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
-        expectedValues[0] = 10;
-        testValues[0] = true;
-        expectedValues[1] = 20;
-        testValues[1] = true;
-        expectedValues[2] = 30;
-        testValues[2] = true;
-        expectedValues[3] = 40;
-        testValues[3] = true;
-        expectedValues[4] = 40;
-        testValues[4] = true;
-        expectedValues[5] = 60;
-        testValues[5] = true;
-        expectedValues[6] = 70;
-        testValues[6] = true;
-        expectedValues[7] = 80;
-        testValues[7] = true;
-        expectedValues[8] = 90;
-        testValues[8] = true;
-        expectedValues[9] = 100;
-        testValues[9] = true;
+        setExpectedValue(0, 10);
+        setExpectedValue(1, 20);
+        setExpectedValue(2, 30);
+        setExpectedValue(3, 40);
+        setExpectedValue(4, 40);
+        setExpectedValue(5, 60);
+        setExpectedValue(6, 70);
+        setExpectedValue(7, 80);
+        setExpectedValue(8, 90);
+        setExpectedValue(9, 100);
         generateAndTest(masm.codeBuffer);
     }
 
@@ -1124,26 +1061,16 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         CiAddress addr = new CiAddress(CiKind.Int, ARMV7.r13.asValue(), 16);
         masm.incrementl(addr, 10);
         masm.pop(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
-        expectedValues[0] = 10;
-        testValues[0] = true;
-        expectedValues[1] = 20;
-        testValues[1] = true;
-        expectedValues[2] = 30;
-        testValues[2] = true;
-        expectedValues[3] = 40;
-        testValues[3] = true;
-        expectedValues[4] = 60;
-        testValues[4] = true;
-        expectedValues[5] = 60;
-        testValues[5] = true;
-        expectedValues[6] = 70;
-        testValues[6] = true;
-        expectedValues[7] = 80;
-        testValues[7] = true;
-        expectedValues[8] = 90;
-        testValues[8] = true;
-        expectedValues[9] = 100;
-        testValues[9] = true;
+        setExpectedValue(0, 10);
+        setExpectedValue(1, 20);
+        setExpectedValue(2, 30);
+        setExpectedValue(3, 40);
+        setExpectedValue(4, 60);
+        setExpectedValue(5, 60);
+        setExpectedValue(6, 70);
+        setExpectedValue(7, 80);
+        setExpectedValue(8, 90);
+        setExpectedValue(9, 100);
         generateAndTest(masm.codeBuffer);
     }
 }

@@ -117,10 +117,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         asm.nop(4);                                                          // +16 bytes
         asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 0x123, 0);    // +20 bytes to here (skipped)
         asm.movz(VARIANT_64, Aarch64.cpuRegisters[1], 0x123, 0);    // +24 bytes to here (landing)
-        expectedValues[0] = -1;
-        testValues[0] = true;
-        expectedValues[1] = 0x123;
-        testValues[1] = true;
+        setExpectedValue(0, -1);
+        setExpectedValue(1, 0x123);
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
@@ -131,8 +129,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         masm.codeBuffer.reset();
         masm.mov(Aarch64.r0, 0xFF);
         masm.mov(64, Aarch64.r0, Aarch64.zr);
-        expectedValues[0] = 0;
-        testValues[0] = true;
+        setExpectedValue(0, 0);
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
@@ -170,18 +167,11 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         masm.mov64BitConstant(Aarch64.r3, Long.MAX_VALUE);
         masm.mov64BitConstant(Aarch64.r4, Long.MIN_VALUE);
 
-        expectedValues[0] = 10;
-        expectedValues[1] = -10;
-        expectedValues[2] = -12345678987654321L;
-        expectedValues[3] = Long.MAX_VALUE;
-        expectedValues[4] = Long.MIN_VALUE;
-
-
-        testValues[0] = true;
-        testValues[1] = true;
-        testValues[2] = true;
-        testValues[3] = true;
-        testValues[4] = true;
+        setExpectedValue(0, 10);
+        setExpectedValue(1, -10);
+        setExpectedValue(2, -12345678987654321L);
+        setExpectedValue(3, Long.MAX_VALUE);
+        setExpectedValue(4, Long.MIN_VALUE);
 
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
@@ -195,11 +185,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         masm.mov(Aarch64.r0, 10);
         masm.mov(Aarch64.r1, -10);
 
-        expectedValues[0] = 10;
-        expectedValues[1] = -10;
-
-        testValues[0] = true;
-        testValues[1] = true;
+        setExpectedValue(0, 10);
+        setExpectedValue(1, -10);
 
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
@@ -215,15 +202,11 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         masm.mov(Aarch64.r2, Long.MAX_VALUE);
         masm.mov(Aarch64.r3, Long.MIN_VALUE);
 
-        expectedValues[0] = Integer.MAX_VALUE;
-        expectedValues[1] = Integer.MIN_VALUE;
-        expectedValues[2] = Long.MAX_VALUE;
-        expectedValues[3] = Long.MIN_VALUE;
+        setExpectedValue(0, Integer.MAX_VALUE);
+        setExpectedValue(1, Integer.MIN_VALUE);
+        setExpectedValue(2, Long.MAX_VALUE);
+        setExpectedValue(3, Long.MIN_VALUE);
 
-        testValues[0] = true;
-        testValues[1] = true;
-        testValues[2] = true;
-        testValues[3] = true;
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
@@ -244,16 +227,12 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         masm.add(64, Aarch64.r5, Aarch64.r4, Aarch64.r2);
         masm.add(64, Aarch64.r6, Aarch64.r3, Aarch64.r1);
 
-        expectedValues[0] = 9;
-        expectedValues[3] = Long.MIN_VALUE;
-        expectedValues[4] = Long.MAX_VALUE;
-        expectedValues[5] = Long.MIN_VALUE;
-        expectedValues[6] = Long.MAX_VALUE;
-        testValues[0] = true;
-        testValues[3] = true;
-        testValues[4] = true;
-        testValues[5] = true;
-        testValues[6] = true;
+        setExpectedValue(0, 9);
+        setExpectedValue(3, Long.MIN_VALUE);
+        setExpectedValue(4, Long.MAX_VALUE);
+        setExpectedValue(5, Long.MIN_VALUE);
+        setExpectedValue(6, Long.MAX_VALUE);
+
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
@@ -274,8 +253,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         masm.mov32BitConstant(Aarch64.r3, 66);
         masm.mov32BitConstant(Aarch64.r3, 77);
 
-        expectedValues[3] = 77;
-        testValues[3] = true;
+        setExpectedValue(3, 77);
 
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
@@ -292,10 +270,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         Aarch64Address address = Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, -8); // stack address
         asm.str(VARIANT_64,  Aarch64.cpuRegisters[0], address);         // store value to stack
         asm.ldr(VARIANT_64, Aarch64.cpuRegisters[1], address);          // load value from stack
-        expectedValues[0] = 0x123;
-        testValues[0] = true;
-        expectedValues[1] = 0x123;
-        testValues[1] = true;
+        setExpectedValue(0, 0x123);
+        setExpectedValue(1, 0x123);
 
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -311,8 +287,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
             assert expectedValues[i] < Integer.MAX_VALUE;
             asm.movz(VARIANT_64, Aarch64.cpuRegisters[i], (int) expectedValues[i], 0);
             asm.add(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], (int) expectedValues[i]);
-            expectedValues[i] += expectedValues[i];
-            testValues[i] = true;
+            setExpectedValue(i, 2L * expectedValues[i]);
         }
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -328,8 +303,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
             assert expectedValues[i] < Integer.MAX_VALUE;
             asm.movz(VARIANT_64, Aarch64.cpuRegisters[i], (int) expectedValues[i], 0);
             asm.sub(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], (int) expectedValues[i]);
-            expectedValues[i] = 0; //expectedValues[i] -= expectedValues[i];
-            testValues[i] = true;
+            setExpectedValue(i, 0);
         }
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -343,8 +317,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         for (int i = 0; i < 10; i++) {
             asm.movz(VARIANT_64, Aarch64.cpuRegisters[i], (int) expectedValues[i], 0);
             asm.and(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], 0x1);
-            expectedValues[i] &= 0x1;
-            testValues[i] = true;
+            setExpectedValue(i, expectedValues[i] & 0x1);
         }
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -358,8 +331,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         for (int i = 0; i < 10; i++) {
             asm.movz(VARIANT_64, Aarch64.cpuRegisters[i], (int) expectedValues[i], 0);
             asm.eor(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], 0x1);
-            expectedValues[i] ^= 0x1;
-            testValues[i] = true;
+            setExpectedValue(i, expectedValues[i] ^ 0x1);
         }
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -373,8 +345,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         for (int i = 0; i < 10; i++) {
             asm.movz(VARIANT_64, Aarch64.cpuRegisters[i], (int) expectedValues[i], 0);
             asm.orr(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], 0x1);
-            expectedValues[i] |= 0x1;
-            testValues[i] = true;
+            setExpectedValue(i, expectedValues[i] | 0x1);
         }
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -387,8 +358,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         // MOVZ Xi, 0x1, LSL #0x10
         for (int i = 0; i < 1; i++) {
             asm.movz(VARIANT_64, Aarch64.cpuRegisters[i], 0x1, 32);
-            expectedValues[i] = (long) 1 << 32;
-            testValues[i] = true;
+            setExpectedValue(i, (long) 1 << 32);
         }
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -401,8 +371,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         // MOVZ Xi, 0x1, LSL #0x10
         for (int i = 0; i < 1; i++) {
             asm.movn(VARIANT_64, Aarch64.cpuRegisters[i], 0x1, 32);
-            expectedValues[i] = ~((long) 1 << 32);
-            testValues[i] = true;
+            setExpectedValue(i, ~((long) 1 << 32));
         }
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -417,8 +386,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 0x0, 0);
 
         asm.bfm(VARIANT_64, Aarch64.cpuRegisters[0], Aarch64.cpuRegisters[10], 3, 5);
-        expectedValues[0] = 0b111111L >>> 3;
-        testValues[0] = true;
+        setExpectedValue(0, 0b111111L >>> 3);
 
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -433,8 +401,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         asm.movz(VARIANT_64, Aarch64.cpuRegisters[0], 0x0, 0);
 
         asm.ubfm(VARIANT_64, Aarch64.cpuRegisters[0], Aarch64.cpuRegisters[10], 3, 5);
-        expectedValues[0] = 0b111111L >>> 3;
-        testValues[0] = true;
+        setExpectedValue(0, 0b111111L >>> 3);
 
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -453,13 +420,11 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         // Signed
         asm.sbfm(VARIANT_64, Aarch64.cpuRegisters[0], Aarch64.cpuRegisters[10], 3, 5);
         mask = 1 << (5 - 1);
-        expectedValues[0] = ((0b11110000 >> 3) ^ mask) - mask;
-        testValues[0] = true;
+        setExpectedValue(0, ((0b11110000 >> 3) ^ mask) - mask);
         // Unsigned
         asm.sbfm(VARIANT_64, Aarch64.cpuRegisters[1], Aarch64.cpuRegisters[10], 4, 8);
         mask = 1 << (8 - 1);
-        expectedValues[1] = ((0b11110000 >> 4) ^ mask) - mask;
-        testValues[1] = true;
+        setExpectedValue(1, ((0b11110000 >> 4) ^ mask) - mask);
 
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -474,8 +439,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         asm.movz(VARIANT_64, Aarch64.cpuRegisters[10], 1, 0);
         for (int i = 0; i < 1; i++) {
             asm.add(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[10], Aarch64.cpuRegisters[10], Aarch64Assembler.ShiftType.LSL, 2);
-            expectedValues[i] = 5;
-            testValues[i] = true;
+            setExpectedValue(i, 5);
         }
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -488,8 +452,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         asm.movz(VARIANT_64, Aarch64.cpuRegisters[10], 0b1000, 0);
         for (int i = 0; i < 1; i++) {
             asm.sub(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[10], Aarch64.cpuRegisters[10], Aarch64Assembler.ShiftType.LSR, 3);
-            expectedValues[i] = 0b1000 - (0b1000 >>> 3);
-            testValues[i] = true;
+            setExpectedValue(i, 0b1000 - (0b1000 >>> 3));
         }
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -506,8 +469,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
         for (int i = 0; i < 1; i++) {
             asm.add(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[10], Aarch64Assembler.ExtendType.UXTB, 3);
-            expectedValues[i] = 1 + 0b11111111000L;
-            testValues[i] = true;
+            setExpectedValue(i, 1 + 0b11111111000L);
         }
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -522,8 +484,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
         for (int i = 0; i < 1; i++) {
             asm.sub(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[10], Aarch64Assembler.ExtendType.UXTB, 3);
-            expectedValues[i] = 0;
-            testValues[i] = true;
+            setExpectedValue(i, 0);
         }
 
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
@@ -541,8 +502,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
         for (int i = 0; i < 1; i++) {
             asm.and(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[10], Aarch64Assembler.ShiftType.LSL, 4);
-            expectedValues[i] = 0b1111L << 4;
-            testValues[i] = true;
+            setExpectedValue(i, 0b1111L << 4);
         }
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
 
@@ -559,8 +519,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
             asm.mov32BitConstant(Aarch64.cpuRegisters[i], 0b1010101111L);
             asm.mov32BitConstant(Aarch64.cpuRegisters[10], i);
             asm.asr(VARIANT_64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[10]);
-            expectedValues[i] = 0b1010101111L >> i;
-            testValues[i] = true;
+            setExpectedValue(i, 0b1010101111L >> i);
         }
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -575,10 +534,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         asm.movz(VARIANT_64, Aarch64.cpuRegisters[10], 0x0, 0);
 
         asm.cls(VARIANT_64, Aarch64.cpuRegisters[30], Aarch64.cpuRegisters[10]);
-        expectedValues[30] = 63;
-        testValues[30] = true;
-        expectedValues[10] = 0;
-        testValues[10] = true;
+        setExpectedValue(30, 63);
+        setExpectedValue(10, 0);
 
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -601,10 +558,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         asm.fmovFpu2Cpu(VARIANT_64, Aarch64.cpuRegisters[2], Aarch64.fpuRegisters[0]);
         asm.fmovFpu2Cpu(VARIANT_64, Aarch64.cpuRegisters[3], Aarch64.fpuRegisters[1]);
 
-        expectedValues[2] = 10;
-        testValues[2] = true;
-        expectedValues[3] = 11;
-        testValues[3] = true;
+        setExpectedValue(2, 10);
+        setExpectedValue(3, 11);
 
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
 
@@ -635,18 +590,12 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         asm.fcvtzs(VARIANT_64, VARIANT_64, Aarch64.cpuRegisters[4], Aarch64.fpuRegisters[4]);
         asm.fcvtzs(VARIANT_64, VARIANT_64, Aarch64.cpuRegisters[5], Aarch64.fpuRegisters[5]);
 
-        expectedValues[0] = 10;
-        testValues[0] = true;
-        expectedValues[1] = 110;
-        testValues[1] = true;
-        expectedValues[2] = 120;         // fadd
-        testValues[2] = true;
-        expectedValues[3] = 100;         // fsub
-        testValues[3] = true;
-        expectedValues[4] = 10 * 110;    // fmul
-        testValues[4] = true;
-        expectedValues[5] = 110 / 10;    // fdiv
-        testValues[5] = true;
+        setExpectedValue(0, 10);
+        setExpectedValue(1, 110);
+        setExpectedValue(2, 120);
+        setExpectedValue(3, 100);
+        setExpectedValue(4, 10 * 110);
+        setExpectedValue(5, 110 / 10);
 
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -681,18 +630,12 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         asm.fsqrt(VARIANT_64, Aarch64.fpuRegisters[5], Aarch64.fpuRegisters[0]);
         asm.fcvtzs(VARIANT_64, VARIANT_64, Aarch64.cpuRegisters[5], Aarch64.fpuRegisters[5]);
 
-        expectedValues[0] = 100;
-        testValues[0] = true;
-        expectedValues[1] = 110;
-        testValues[1] = true;
-        expectedValues[2] = 1;         // frintz
-        testValues[2] = true;
-        expectedValues[3] = 10;        // fabs
-        testValues[3] = true;
-        expectedValues[4] = 10;        // fneg
-        testValues[4] = true;
-        expectedValues[5] = 10;        // fsqrt
-        testValues[5] = true;
+        setExpectedValue(0, 100);
+        setExpectedValue(1, 110);
+        setExpectedValue(2, 1);
+        setExpectedValue(3, 10);
+        setExpectedValue(4, 10);
+        setExpectedValue(5, 10);
 
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -718,15 +661,11 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         asm.fcvtzs(VARIANT_64, VARIANT_64, Aarch64.cpuRegisters[3], Aarch64.fpuRegisters[3]);
         asm.fcvtzs(VARIANT_64, VARIANT_64, Aarch64.cpuRegisters[4], Aarch64.fpuRegisters[4]);
 
-        expectedValues[0] = 100;
-        testValues[0] = true;
-        expectedValues[1] = 110;
-        testValues[1] = true;
+        setExpectedValue(0, 100);
+        setExpectedValue(1, 110);
 
-        expectedValues[3] = 110 + 100 * 110;        // fmadd
-        testValues[3] = true;
-        expectedValues[4] = 110 - 100 * 110;        // fmsub
-        testValues[4] = true;
+        setExpectedValue(3, 110 + 100 * 110);
+        setExpectedValue(4, 110 - 100 * 110);
 
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -750,10 +689,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
         asm.fcvtzs(VARIANT_64, VARIANT_64, Aarch64.cpuRegisters[1], Aarch64.fpuRegisters[1]);
 
-        expectedValues[0] = 0x123;
-        testValues[0] = true;
-        expectedValues[1] = 0x123;
-        testValues[1] = true;
+        setExpectedValue(0, 0x123);
+        setExpectedValue(1, 0x123);
 
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -787,14 +724,10 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         asm.subs(VARIANT_64, Aarch64.cpuRegisters[15], Aarch64.cpuRegisters[12], Aarch64.cpuRegisters[13], Aarch64Assembler.ShiftType.LSL, 0);
         asm.mrs(Aarch64.cpuRegisters[3], Aarch64Assembler.SystemRegister.NZCV);
 
-        expectedValues[0] = 0b0110L << 28;
-        testValues[0] = true;
-        expectedValues[1] = 0b0110L << 28;
-        testValues[1] = true;
-        expectedValues[2] = 0b0010L << 28;
-        testValues[2] = true;
-        expectedValues[3] = 0b1000L << 28;
-        testValues[3] = true;
+        setExpectedValue(0, 0b0110L << 28);
+        setExpectedValue(1, 0b0110L << 28);
+        setExpectedValue(2, 0b0010L << 28);
+        setExpectedValue(3, 0b1000L << 28);
 
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -812,8 +745,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         asm.msr(Aarch64Assembler.SystemRegister.SPSR_EL1, Aarch64.cpuRegisters[1]);
         asm.mrs(Aarch64.cpuRegisters[0], Aarch64Assembler.SystemRegister.SPSR_EL1);
 
-        expectedValues[0] = 0b1111;
-        testValues[0] = true;
+        setExpectedValue(0, 0b1111);
 
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -837,12 +769,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         asm.msr(Aarch64Assembler.PStateField.PSTATEField_SP, 0b0000);
         asm.mrs(Aarch64.cpuRegisters[2], Aarch64Assembler.SystemRegister.SPSel);
 
-        expectedValues[0] = 0b1001 << 6;
-        testValues[0] = true;
-        expectedValues[1] = 0b1;
-        testValues[1] = true;
-        expectedValues[2] = 0;
-        testValues[2] = true;
+        setExpectedValue(0, 0b1001 << 6);
+        setExpectedValue(1, 0b1);
+        setExpectedValue(2, 0);
 
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -902,8 +831,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         for (int i = 0; i < values.length; i++) {
             asm.mov32BitConstant(Aarch64.cpuRegisters[i], values[i]);
 
-            expectedValues[i] = getUnsignedInt(values[i]);
-            testValues[i] = true;
+            setExpectedValue(i, getUnsignedInt(values[i]));
         }
 
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
@@ -931,8 +859,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
             asm.codeBuffer.reset();
             asm.mov64BitConstant(Aarch64.r0, value);
 
-            expectedValues[0] = value;
-            testValues[0] = true;
+            setExpectedValue(0, value);
 
             generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
 
@@ -948,10 +875,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
             asm.codeBuffer.reset();
             for (int srcReg = 0; srcReg < 3; srcReg++) {
                 for (int destReg = 0; destReg < 3; destReg++) {
-                    testValues[destReg] = true;
                     asm.mov64BitConstant(Aarch64.cpuRegisters[srcReg], aScratchTestSet);
                     asm.add(64, Aarch64.cpuRegisters[destReg], Aarch64.cpuRegisters[srcReg], 5);
-                    expectedValues[destReg] = aScratchTestSet + 5;
+                    setExpectedValue(destReg, aScratchTestSet + 5);
                 }
             }
             generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
@@ -976,16 +902,11 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         for (int i = 0; i < 5; i++) {
             masm.fmov(64, Aarch64.cpuRegisters[i], Aarch64.fpuRegisters[i]); // see if d1 is 1 or -1
         }
-        expectedValues[0] = 0;
-        testValues[0] = true;
-        expectedValues[1] = 1;
-        testValues[1] = true;
-        expectedValues[2] = -2;
-        testValues[2] = true;
-        expectedValues[3] = 3;
-        testValues[3] = true;
-        expectedValues[4] = -4;
-        testValues[4] = true;
+        setExpectedValue(0, 0);
+        setExpectedValue(1, 1);
+        setExpectedValue(2, -2);
+        setExpectedValue(3, 3);
+        setExpectedValue(4, -4);
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
@@ -1005,16 +926,12 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
         masm.pop(1 | 2 | 4 | 8 | 16);
 
-        expectedValues[0] = 0;
-        testValues[0] = true;
-        expectedValues[1] = 1;
-        testValues[1] = true;
-        expectedValues[2] = 2;
-        testValues[2] = true;
-        expectedValues[3] = 3;
-        testValues[3] = true;
-        expectedValues[4] = 4;
-        testValues[4] = true;
+        setExpectedValue(0, 0);
+        setExpectedValue(1, 1);
+        setExpectedValue(2, 2);
+        setExpectedValue(3, 3);
+        setExpectedValue(4, 4);
+
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
@@ -1029,8 +946,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         masm.fmov(64, Aarch64.d1, Aarch64.r1);
         masm.fdiv(64, Aarch64.d2, Aarch64.d1, Aarch64.d0);
         masm.fcvtzs(64, 64, Aarch64.r2, Aarch64.d2);
-        expectedValues[2] = 2;
-        testValues[2] = true;
+        setExpectedValue(2, 2);
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
@@ -1045,10 +961,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         masm.scvtf(32, 32, Aarch64.d1, Aarch64.r1);
         masm.fmov(32, Aarch64.r0, Aarch64.d0);
         masm.fmov(32, Aarch64.r1, Aarch64.d1);
-        expectedValues[0] = Float.floatToRawIntBits(10);
-        testValues[0] = true;
-        expectedValues[1] = Float.floatToRawIntBits(24);
-        testValues[1] = true;
+        setExpectedValue(0, Float.floatToRawIntBits(10));
+        setExpectedValue(1, Float.floatToRawIntBits(24));
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
@@ -1063,10 +977,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         masm.scvtf(64, 64, Aarch64.d1, Aarch64.r1);
         masm.fmov(64, Aarch64.r0, Aarch64.d0);
         masm.fmov(64, Aarch64.r1, Aarch64.d1);
-        expectedValues[0] = Double.doubleToRawLongBits(10);
-        testValues[0] = true;
-        expectedValues[1] = Double.doubleToRawLongBits(24);
-        testValues[1] = true;
+        setExpectedValue(0, Double.doubleToRawLongBits(10));
+        setExpectedValue(1, Double.doubleToRawLongBits(24));
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
@@ -1083,10 +995,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         masm.fcvt(64, Aarch64.d5, Aarch64.d1);
         masm.fmov(32, Aarch64.r0, Aarch64.d4);
         masm.fmov(32, Aarch64.r2, Aarch64.d5);
-        expectedValues[0] = Float.floatToRawIntBits(-10) & 0xffffffffL;
-        testValues[0] = true;
-        expectedValues[2] = Float.floatToRawIntBits(-24) & 0xffffffffL;
-        testValues[2] = true;
+        setExpectedValue(0, Float.floatToRawIntBits(-10) & 0xffffffffL);
+        setExpectedValue(2, Float.floatToRawIntBits(-24) & 0xffffffffL);
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
@@ -1101,12 +1011,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         masm.scvtf(64, 64, Aarch64.d1, Aarch64.r1);
         masm.fadd(64, Aarch64.d2, Aarch64.d0, Aarch64.d1);
         masm.fmov(64, Aarch64.r2, Aarch64.d2);
-        expectedValues[0] = 12;
-        testValues[0] = true;
-        expectedValues[1] = 10;
-        testValues[1] = true;
-        expectedValues[2] = Double.doubleToRawLongBits(22);
-        testValues[2] = true;
+        setExpectedValue(0, 12);
+        setExpectedValue(1, 10);
+        setExpectedValue(2, Double.doubleToRawLongBits(22));
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
@@ -1121,12 +1028,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         masm.scvtf(64, 64, Aarch64.d1, Aarch64.r1);
         masm.fsub(64, Aarch64.d2, Aarch64.d1, Aarch64.d0);
         masm.fmov(64, Aarch64.r2, Aarch64.d2);
-        expectedValues[0] = 12;
-        testValues[0] = true;
-        expectedValues[1] = 10;
-        testValues[1] = true;
-        expectedValues[2] = Double.doubleToRawLongBits(-2);
-        testValues[2] = true;
+        setExpectedValue(0, 12);
+        setExpectedValue(1, 10);
+        setExpectedValue(2, Double.doubleToRawLongBits(-2));
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
@@ -1140,12 +1044,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         masm.scvtf(64, 64, Aarch64.d1, Aarch64.r1);
         masm.fmul(64, Aarch64.d2, Aarch64.d1, Aarch64.d0);
         masm.fcvtzs(64, 64, Aarch64.r2, Aarch64.d2);
-        expectedValues[0] = 12;
-        testValues[0] = true;
-        expectedValues[1] = 10;
-        testValues[1] = true;
-        expectedValues[2] = 120;
-        testValues[2] = true;
+        setExpectedValue(0, 12);
+        setExpectedValue(1, 10);
+        setExpectedValue(2, 120);
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
@@ -1167,18 +1068,12 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         masm.fldr(64, Aarch64.d31, Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, -32));
         masm.fmov(64, Aarch64.r6, Aarch64.d10);
         masm.fmov(64, Aarch64.r8, Aarch64.d31);
-        expectedValues[0] = 12;
-        testValues[0] = true;
-        expectedValues[1] = 10;
-        testValues[1] = true;
-        expectedValues[2] = 10;
-        testValues[2] = true;
-        expectedValues[4] = 10;
-        testValues[4] = true;
-        expectedValues[6] = 10;
-        testValues[6] = true;
-        expectedValues[8] = 10;
-        testValues[8] = true;
+        setExpectedValue(0, 12);
+        setExpectedValue(1, 10);
+        setExpectedValue(2, 10);
+        setExpectedValue(4, 10);
+        setExpectedValue(6, 10);
+        setExpectedValue(8, 10);
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
@@ -1195,14 +1090,10 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         masm.fmov(64, Aarch64.r2, Aarch64.d31);
         masm.fldr(64, Aarch64.d4, address);
         masm.fmov(64, Aarch64.r4, Aarch64.d4);
-        expectedValues[0] = 12;
-        testValues[0] = true;
-        expectedValues[1] = 10;
-        testValues[1] = true;
-        expectedValues[2] = 10;
-        testValues[2] = true;
-        expectedValues[4] = 10;
-        testValues[4] = true;
+        setExpectedValue(0, 12);
+        setExpectedValue(1, 10);
+        setExpectedValue(2, 10);
+        setExpectedValue(4, 10);
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
@@ -1218,14 +1109,10 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         masm.fmov(64, Aarch64.d5, Aarch64.r0);
         masm.fmov(64, Aarch64.r4, Aarch64.d5);
 
-        expectedValues[0] = 12;
-        testValues[0] = true;
-        expectedValues[1] = 10;
-        testValues[1] = true;
-        expectedValues[2] = 12;
-        testValues[2] = true;
-        expectedValues[4] = 12;
-        testValues[4] = true;
+        setExpectedValue(0, 12);
+        setExpectedValue(1, 10);
+        setExpectedValue(2, 12);
+        setExpectedValue(4, 12);
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 //
@@ -1276,8 +1163,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         }
         for (int i = 0; i < 5; i++) {
             masm.sub(64, Aarch64.cpuRegisters[i + 5], Aarch64.cpuRegisters[5 - (i + 1)], Aarch64.cpuRegisters[i]);
-            expectedValues[i + 5] = expectedValues[5 - (i + 1)] - expectedValues[i];
-            testValues[i + 5] = true;
+            setExpectedValue(i + 5, expectedValues[5 - (i + 1)] - expectedValues[i]);
         }
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
@@ -1290,9 +1176,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         for (int i = 0; i < 5; i++) {
             masm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
             masm.mov(64, Aarch64.cpuRegisters[i + 5], Aarch64.cpuRegisters[i]);
-            expectedValues[i + 5] = expectedValues[i];
+            setExpectedValue(i + 5, expectedValues[i]);
             testValues[i] = true;
-            testValues[i + 5] = true;
         }
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
@@ -1305,8 +1190,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         for (int i = 0; i < 10; i++) {
             masm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
             masm.sub(64, Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i], i * 2);
-            expectedValues[i] = expectedValues[i] - i * 2;
-            testValues[i] = true;
+            setExpectedValue(i, expectedValues[i] - i * 2);
         }
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
@@ -1354,8 +1238,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         for (int i = 0; i < 10; i++) {
             masm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
             masm.decq(Aarch64.cpuRegisters[i]);
-            expectedValues[i] -= 1;
-            testValues[i] = true;
+            setExpectedValue(i, expectedValues[i] - 1);
         }
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
@@ -1368,8 +1251,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         for (int i = 0; i < 10; i++) {
             masm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
             masm.incq(Aarch64.cpuRegisters[i]);
-            expectedValues[i] += 1;
-            testValues[i] = true;
+            setExpectedValue(i, expectedValues[i] + 1);
         }
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
@@ -1383,12 +1265,11 @@ public class Aarch64AssemblerTest extends MaxTestCase {
             asm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
             if (i % 2 == 1) {
                 asm.subq(Aarch64.cpuRegisters[i], 2 * expectedValues[i]);
-                expectedValues[i] -= 2 * expectedValues[i];
+                setExpectedValue(i, -expectedValues[i]);
             } else {
                 asm.subq(Aarch64.cpuRegisters[i], expectedValues[i]);
-                expectedValues[i] -= expectedValues[i];
+                setExpectedValue(i, 0);
             }
-            testValues[i] = true;
         }
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -1401,8 +1282,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         for (int i = 0; i < 10; i++) {
             asm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
             asm.addq(Aarch64.cpuRegisters[i], expectedValues[i]);
-            expectedValues[i] += expectedValues[i];
-            testValues[i] = true;
+            setExpectedValue(i, 2L * expectedValues[i]);
         }
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
@@ -1452,12 +1332,11 @@ public class Aarch64AssemblerTest extends MaxTestCase {
             asm.mov32BitConstant(Aarch64.cpuRegisters[i + 1], 0);
             asm.ldr(64, Aarch64.cpuRegisters[i], address);
             testValues[i] = true;
-            testValues[i + 1] = true;
             if (i != 0) {
                 testValues[i - 1] = false;
                 testValues[i - 2] = false;
             }
-            expectedValues[i + 1] = 0;
+            setExpectedValue(i + 1, 0);
             generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
         }
     }
@@ -1466,14 +1345,11 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         int registers = 1;
         MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
         initialiseExpectedValues();
-        for (int i = 0; i < 16; i++) {
+        for (int i = 0; i < 13; i++) {
             if (i % 2 == 0) {
-                expectedValues[i] = i;
+                setExpectedValue(i, i);
             } else {
-                expectedValues[i] = -i;
-            }
-            if (i < 13) {
-                testValues[i] = true;
+                setExpectedValue(i, -i);
             }
         }
 
@@ -1602,8 +1478,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         Aarch64Address addr = Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, 0);
         masm.decrementl(addr, 10);
         masm.pop(1);
-        expectedValues[0] = 90;
-        testValues[0] = true;
+        setExpectedValue(0, 90);
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
@@ -1617,8 +1492,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         Aarch64Address addr = Aarch64Address.createUnscaledImmediateAddress(Aarch64.sp, 0);
         masm.incrementl(addr, 10);
         masm.pop(1);
-        expectedValues[0] = 110;
-        testValues[0] = true;
+        setExpectedValue(0, 110);
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 }
