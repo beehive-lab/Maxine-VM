@@ -23,7 +23,7 @@ pipeline {
                 }
                 dir(env.GRAAL_HOME) {
                     // Use ugly/advanced syntax to perform shallow clone
-                    checkout([$class: 'GitSCM', branches: [[name: 'master']], extensions: [[$class: 'CloneOption', noTags: true, shallow: true]], userRemoteConfigs: [[credentialsId: 'orion_github', url: 'https://github.com/beehive-lab/Maxine-Graal-Internal.git']]])
+                    checkout([$class: 'GitSCM', branches: [[name: 'master']], extensions: [[$class: 'CloneOption', noTags: true, shallow: true]], userRemoteConfigs: [[credentialsId: 'orion_github', url: 'https://github.com/beehive-lab/Maxine-Graal.git']]])
                 }
             }
         }
