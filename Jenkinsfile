@@ -43,6 +43,7 @@ pipeline {
         stage('image') {
             steps {
                 dir(env.MAXINE_HOME) {
+                    sh '$MX image @c1xgraal'
                     sh '$MX image'
                 }
             }
