@@ -412,7 +412,7 @@ def jnigen(args):
 def optionsgen(args):
     """(re)generate Java source for Graal Options"""
 
-    return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm.ext.graal'), 'com.oracle.max.vm.ext.graal.hosted.MaxGraalOptionsGenerator'])
+    return mx.run_java(['-cp', mx.classpath('com.oracle.max.vm.ext.graal'), 'com.oracle.max.vm.ext.graal.hosted.MaxGraalOptionsGenerator'] + args)
 
 def jvmtigen(args):
     """(re)generate Java source for JVMTI native function interfaces
