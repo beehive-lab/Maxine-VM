@@ -41,34 +41,34 @@ pipeline {
                 }
             }
         }
-        stage('image-n-crossisa') {
+        stage('image-n-test-init') {
             steps {
                 parallel 'image': {
                     dir(env.MAXINE_HOME) {
                         sh '$MX image @c1xgraal'
                         sh '$MX image'
                     }
-                }, 'aarch64 junit': {
+                }, 'test-init': {
                     dir(env.MAXINE_HOME) {
-                        sh '$MX --J @"-Dmax.platform=linux-aarch64 -Dmax.arm.qemu=1 -ea" test -junit-test-timeout=10000 -s=t -tests=junit:aarch64.asm'
+                        sh '$MX jttgen'
+                        sh '$MX canonicalizeprojects'
                     }
                 }
             }
         }
-        stage('test-init') {
+        stage('test-n-crossisa') {
             steps {
-                dir(env.MAXINE_HOME) {
-                    sh '$MX jttgen'
-                    sh '$MX canonicalizeprojects'
-                }
-            }
-        }
-        stage('test') {
-            steps {
-                dir(env.MAXINE_HOME) {
-                    sh '$MX test -image-configs=java -tests=c1x,graal,junit,output'
-                    sh '$MX test -maxvm-configs=jsr292 -image-configs=java -tests=jsr292'
-                    sh '$MX test -image-configs=ss -tests=output:Hello+Catch+GC+WeakRef+Final'
+                parallel 'test': {
+                    dir(env.MAXINE_HOME) {
+                        sh '$MX test -image-configs=java -tests=c1x,graal,junit:test.com,output'
+                        sh '$MX test -maxvm-configs=jsr292 -image-configs=java -tests=jsr292'
+                        sh '$MX test -image-configs=ss -tests=output:Hello+Catch+GC+WeakRef+Final'
+                    }
+                }, 'crossisa': {
+                    dir(env.MAXINE_HOME) {
+                        sh '$MX --J @"-Dmax.platform=linux-aarch64 -Dmax.arm.qemu=1 -ea" test -s=t -tests=junit:aarch64.asm'
+                        sh '$MX --J @"-Dmax.platform=linux-arm -Dmax.arm.qemu=1 -ea" test -s=t -tests=junit:armv7.asm'
+                    }
                 }
             }
         }
