@@ -231,6 +231,8 @@ def image(args):
             if not name in configs:
                 mx.log()
                 mx.abort('Invalid image configuration: ' + name)
+            if "graal" in name:
+                systemProps += ['-ea', '-esa']
             values = configs[name].split('@')
             del args[i]
             args[i:i] = values
