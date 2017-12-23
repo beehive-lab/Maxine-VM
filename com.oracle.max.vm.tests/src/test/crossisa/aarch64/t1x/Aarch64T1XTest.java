@@ -601,7 +601,7 @@ public class Aarch64T1XTest extends MaxTestCase {
         }
     }
 
-    public void work_PeekWord() throws Exception {
+    public void test_PeekWord() throws Exception {
         initialiseExpectedValues();
         resetIgnoreValues();
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
@@ -634,7 +634,7 @@ public class Aarch64T1XTest extends MaxTestCase {
     }
 
 
-    public void work_PokeWord() throws Exception {
+    public void test_PokeWord() throws Exception {
         initialiseExpectedValues();
         resetIgnoreValues();
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
@@ -665,7 +665,7 @@ public class Aarch64T1XTest extends MaxTestCase {
         }
     }
 
-    public void work_PeekObject() throws Exception {
+    public void test_PeekObject() throws Exception {
         initialiseExpectedValues();
         resetIgnoreValues();
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
@@ -694,7 +694,7 @@ public class Aarch64T1XTest extends MaxTestCase {
         }
     }
 
-    public void work_PokeObject() throws Exception {
+    public void test_PokeObject() throws Exception {
         initialiseExpectedValues();
         resetIgnoreValues();
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
