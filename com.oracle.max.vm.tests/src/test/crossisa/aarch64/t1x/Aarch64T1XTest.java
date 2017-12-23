@@ -285,7 +285,26 @@ public class Aarch64T1XTest extends MaxTestCase {
     }
 
     public void ignore_AssignLong() throws Exception {
-
+        long returnValue = 0;
+        int i;
+        long[] expectedLongValues = new long[10];
+        expectedLongValues[0] = Long.MIN_VALUE;
+        expectedLongValues[2] = Long.MAX_VALUE;
+        expectedLongValues[4] = 0xabdef01023456789L;
+        expectedLongValues[6] = 111;
+        expectedLongValues[8] = 0;
+        for (i = 0; i < 10; i += 2) {
+            theCompiler.assignmentTests(Aarch64.cpuRegisters[i], expectedLongValues[i]);
+        }
+        long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
+        for (i = 0; i < 10; i++) {
+            if (i % 2 == 0) {
+                returnValue = 0xffffffffL & registerValues[i];
+            } else {
+                returnValue |= (0xffffffffL & registerValues[i]) << 32;
+                assert returnValue == expectedLongValues[i - 1] : "Failed incorrect value " + Long.toString(returnValue, 16) + " " + Long.toString(expectedLongValues[i - 1], 16);
+            }
+        }
     }
 
     public void test_PeekLong() throws Exception {
@@ -437,7 +456,32 @@ public class Aarch64T1XTest extends MaxTestCase {
     }
 
     public void ignore_AssignDouble() throws Exception {
-
+        long returnValue = 0;
+        long[] expectedLongValues = new long[5];
+        Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
+        expectedLongValues[0] = Double.doubleToRawLongBits(Double.MIN_VALUE);
+        expectedLongValues[1] = Double.doubleToRawLongBits(Double.MAX_VALUE);
+        expectedLongValues[2] = Double.doubleToRawLongBits(0.0);
+        expectedLongValues[3] = Double.doubleToRawLongBits(-1.0);
+        expectedLongValues[4] = Double.doubleToRawLongBits(-100.75);
+        for (int i = 0; i < 5; i++) {
+            theCompiler.assignDoubleTest(Aarch64.allRegisters[16 + i], Double.longBitsToDouble(expectedLongValues[i]));
+        }
+        for (int i = 0; i <= 9; i++) {
+            masm.mov32BitConstant(Aarch64.cpuRegisters[i], -25);
+        }
+        masm.fmov(32, Aarch64.r0, Aarch64.d0);
+        masm.fmov(32, Aarch64.r2, Aarch64.d1);
+        masm.fmov(32, Aarch64.r4, Aarch64.d2);
+        masm.fmov(32, Aarch64.r6, Aarch64.d3);
+        masm.fmov(32, Aarch64.r8, Aarch64.d4);
+        long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
+        for (int i = 0; i < 10; i += 2) {
+            returnValue = 0xffffffffL & registerValues[i];
+            returnValue |= (0xffffffffL & registerValues[i + 1]) << 32;
+            assert returnValue == expectedLongValues[i / 2] : "Failed incorrect value " + Long.toString(returnValue, 16) + " " + Long.toString(expectedLongValues[i / 2], 16) + " Expected " +
+                            Double.longBitsToDouble(expectedLongValues[i / 2]) + " GOT " + Double.longBitsToDouble(returnValue);
+        }
     }
 
 
@@ -503,11 +547,39 @@ public class Aarch64T1XTest extends MaxTestCase {
     }
 
     public void ignore_Add() throws Exception {
+        initialiseFrameForCompilation();
+        theCompiler.do_initFrameTests(anMethod, codeAttr);
+        theCompiler.emitPrologueTests();
+        Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.push(1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
+        masm.push(1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
+        theCompiler.do_iconstTests(1);
+        theCompiler.do_iconstTests(2);
+        theCompiler.do_iaddTests();
+        theCompiler.emitEpilogueTests();
+        expectedValues[0] = 3;
+        expectedValues[1] = 2;
 
+        long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
+        assert expectedValues[0] == registerValues[0];
     }
 
     public void ignore_Mul() throws Exception {
+        initialiseFrameForCompilation();
+        theCompiler.do_initFrameTests(anMethod, codeAttr);
+        theCompiler.emitPrologueTests();
+        Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.push(1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
+        masm.push(1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
+        theCompiler.do_iconstTests(3); // push the constant 1 onto the operand stack
+        theCompiler.do_iconstTests(4); // push the constant 2 onto the operand stack
+        theCompiler.do_imulTests();
+        theCompiler.emitEpilogueTests();
+        expectedValues[0] = 12;
+        expectedValues[1] = 4;
 
+        long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
+        assert expectedValues[0] == registerValues[0];
     }
 
 

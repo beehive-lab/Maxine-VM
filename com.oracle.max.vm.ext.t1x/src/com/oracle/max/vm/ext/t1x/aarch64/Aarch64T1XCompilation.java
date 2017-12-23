@@ -1016,4 +1016,8 @@ public class Aarch64T1XCompilation extends T1XCompilation {
     public void assignDoubleTest(CiRegister reg, double value) {
         assignDouble(reg, value);
     }
+
+    public void emitEpilogueTests() {
+        emitEpilogue();
+    }
 }
