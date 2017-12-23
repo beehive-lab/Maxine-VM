@@ -188,20 +188,20 @@ public class Aarch64T1XTest extends MaxTestCase {
         junit.textui.TestRunner.run(Aarch64T1XTest.class);
     }
 
-//    public void test_DecStack() throws Exception {
-//        Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
-//        theCompiler.incStack(3);
-//        masm.mov(64, Aarch64.r0, Aarch64.sp); // copy stack value into r0
-//        theCompiler.decStack(1);
-//        masm.mov(64, Aarch64.r1, Aarch64.sp); // copy stack value onto r1
-//        theCompiler.decStack(2);
-//        masm.mov(64, Aarch64.r2, Aarch64.sp);
-//
-//        long[] simulatedValues = generateAndTest(expectedValues, testValues, bitmasks);
-//        for (int i = 0; i < 16; i++) {
-//            assert 2 * (simulatedValues[1] - simulatedValues[0]) == (simulatedValues[2] - simulatedValues[1]) : "Register " + i + " Value " + simulatedValues[i];
-//        }
-//    }
+    public void test_DecStack() throws Exception {
+        Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
+        theCompiler.incStack(3);
+        masm.mov(64, Aarch64.r0, Aarch64.sp); // copy stack value into r0
+        theCompiler.decStack(1);
+        masm.mov(64, Aarch64.r1, Aarch64.sp); // copy stack value onto r1
+        theCompiler.decStack(2);
+        masm.mov(64, Aarch64.r2, Aarch64.sp);
+
+        long[] simulatedValues = generateAndTest(expectedValues, testValues, bitmasks);
+        for (int i = 0; i < 16; i++) {
+            assert 2 * (simulatedValues[1] - simulatedValues[0]) == (simulatedValues[2] - simulatedValues[1]) : "Register " + i + " Value " + simulatedValues[i];
+        }
+    }
 //
 //    public void test_IncStack() throws Exception {
 //        Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
