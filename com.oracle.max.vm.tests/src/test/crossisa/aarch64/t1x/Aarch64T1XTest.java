@@ -545,8 +545,23 @@ public class Aarch64T1XTest extends MaxTestCase {
         assert registerValues[2] - registerValues[3] == 32;
     }
 
-    public void ignore_DoDconst() throws Exception {
+    public void test_DoDconst() throws Exception {
+        initialiseExpectedValues();
+        resetIgnoreValues();
 
+        double myVal = 3.14123;
+
+        Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.codeBuffer.reset();
+
+        masm.mov(64, Aarch64.r2, Aarch64.sp); // copy stack pointer to r2
+        theCompiler.do_dconstTests(myVal);
+        masm.mov(64, Aarch64.r3, Aarch64.sp); // copy revised stack pointer to r3
+        theCompiler.peekLong(Aarch64.r0, 0);  // recover value pushed by do_dconstTests
+
+        long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
+        assert registerValues[0] == Double.doubleToRawLongBits(myVal); // test that poke & peek work
+        assert (registerValues[2] - registerValues[3]) == 32; // test if sp changes correctly
     }
 
     public void test_DoFconst() throws Exception {
