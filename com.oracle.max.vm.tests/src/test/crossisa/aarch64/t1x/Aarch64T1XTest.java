@@ -528,8 +528,21 @@ public class Aarch64T1XTest extends MaxTestCase {
         }
     }
 
-    public void ignore_DoLconst() throws Exception {
+    public void test_DoLconst() throws Exception {
+        initialiseExpectedValues();
+        resetIgnoreValues();
 
+        Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.codeBuffer.reset();
+
+        masm.mov(64, Aarch64.r2, Aarch64.sp); // copy stack pointer to r2
+        theCompiler.do_lconstTests(0xffffffff0000ffffL);
+        masm.mov(64, Aarch64.r3, Aarch64.sp); // copy revised stack pointer to r3
+        theCompiler.peekLong(Aarch64.r0, 0);
+
+        long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
+        assert registerValues[0] == 0xffffffff0000ffffL;
+        assert registerValues[2] - registerValues[3] == 32;
     }
 
     public void ignore_DoDconst() throws Exception {
