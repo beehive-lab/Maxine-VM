@@ -455,32 +455,33 @@ public class Aarch64T1XTest extends MaxTestCase {
         /* not used - test incorporated in test_PeekFloat */
     }
 
-    public void ignore_AssignDouble() throws Exception {
-        long returnValue = 0;
+    public void test_AssignDouble() throws Exception {
         long[] expectedLongValues = new long[5];
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
+
         expectedLongValues[0] = Double.doubleToRawLongBits(Double.MIN_VALUE);
         expectedLongValues[1] = Double.doubleToRawLongBits(Double.MAX_VALUE);
         expectedLongValues[2] = Double.doubleToRawLongBits(0.0);
         expectedLongValues[3] = Double.doubleToRawLongBits(-1.0);
         expectedLongValues[4] = Double.doubleToRawLongBits(-100.75);
+
         for (int i = 0; i < 5; i++) {
-            theCompiler.assignDoubleTest(Aarch64.allRegisters[16 + i], Double.longBitsToDouble(expectedLongValues[i]));
+            theCompiler.assignDoubleTest(Aarch64.fpuRegisters[i], Double.longBitsToDouble(expectedLongValues[i]));
         }
-        for (int i = 0; i <= 9; i++) {
-            masm.mov32BitConstant(Aarch64.cpuRegisters[i], -25);
+
+        for (int i = 0; i < 5; i++) {
+            masm.mov64BitConstant(Aarch64.cpuRegisters[i], -25);
         }
-        masm.fmov(32, Aarch64.r0, Aarch64.d0);
-        masm.fmov(32, Aarch64.r2, Aarch64.d1);
-        masm.fmov(32, Aarch64.r4, Aarch64.d2);
-        masm.fmov(32, Aarch64.r6, Aarch64.d3);
-        masm.fmov(32, Aarch64.r8, Aarch64.d4);
-        long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
-        for (int i = 0; i < 10; i += 2) {
-            returnValue = 0xffffffffL & registerValues[i];
-            returnValue |= (0xffffffffL & registerValues[i + 1]) << 32;
-            assert returnValue == expectedLongValues[i / 2] : "Failed incorrect value " + Long.toString(returnValue, 16) + " " + Long.toString(expectedLongValues[i / 2], 16) + " Expected " +
-                            Double.longBitsToDouble(expectedLongValues[i / 2]) + " GOT " + Double.longBitsToDouble(returnValue);
+
+        masm.fmov(64, Aarch64.r0, Aarch64.d0);
+        masm.fmov(64, Aarch64.r1, Aarch64.d1);
+        masm.fmov(64, Aarch64.r2, Aarch64.d2);
+        masm.fmov(64, Aarch64.r3, Aarch64.d3);
+        masm.fmov(64, Aarch64.r4, Aarch64.d4);
+
+        long[] returnValues = generateAndTest(expectedValues, testValues, bitmasks);
+        for (int i = 0; i < 5; i++) {
+                assert returnValues[i] != expectedLongValues[i];
         }
     }
 
