@@ -284,26 +284,23 @@ public class Aarch64T1XTest extends MaxTestCase {
         }
     }
 
-    public void ignore_AssignLong() throws Exception {
-        long returnValue = 0;
-        int i;
-        long[] expectedLongValues = new long[10];
+    public void test_AssignLong() throws Exception {
+        long[] expectedLongValues = new long[5];
         expectedLongValues[0] = Long.MIN_VALUE;
-        expectedLongValues[2] = Long.MAX_VALUE;
-        expectedLongValues[4] = 0xabdef01023456789L;
-        expectedLongValues[6] = 111;
-        expectedLongValues[8] = 0;
-        for (i = 0; i < 10; i += 2) {
+        expectedLongValues[1] = Long.MAX_VALUE;
+        expectedLongValues[2] = 0xabdef01023456789L;
+        expectedLongValues[3] = 111;
+        expectedLongValues[4] = 0;
+
+        for (int i = 0; i < 5; i++) {
             theCompiler.assignmentTests(Aarch64.cpuRegisters[i], expectedLongValues[i]);
         }
+
         long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
-        for (i = 0; i < 10; i++) {
-            if (i % 2 == 0) {
-                returnValue = 0xffffffffL & registerValues[i];
-            } else {
-                returnValue |= (0xffffffffL & registerValues[i]) << 32;
-                assert returnValue == expectedLongValues[i - 1] : "Failed incorrect value " + Long.toString(returnValue, 16) + " " + Long.toString(expectedLongValues[i - 1], 16);
-            }
+        for (int i = 0; i < 5; i++) {
+            assert registerValues[i] == expectedLongValues[i] :
+                "Failed incorrect value " + Long.toString(registerValues[i], 16) + " "
+                            + Long.toString(expectedLongValues[i], 16);
         }
     }
 
