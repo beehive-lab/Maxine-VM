@@ -984,7 +984,13 @@ public class Aarch64T1XCompilation extends T1XCompilation {
     }
 
     public void do_imulTests() {
-
+        peekInt(Aarch64.r0, 0);
+        decStack(1);
+        peekInt(Aarch64.r1, 0);
+        decStack(1);
+        asm.mul(64, Aarch64.r0, Aarch64.r0, Aarch64.r1);
+        incStack(1);
+        pokeInt(Aarch64.r0, 0);
     }
 
     public void do_initFrameTests(ClassMethodActor method, CodeAttribute codeAttribute) {
