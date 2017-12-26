@@ -400,7 +400,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
             nop(numInstructions(addr));
             return;
         }
-        assert !(base.isValid() && disp == 0 && base.compareTo(ARMV7.LATCH_REGISTER) == 0);
+        assert !(base.isValid() && disp == 0 && base.compareTo(Aarch64.LATCH_REGISTER) == 0);
         assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
 
         if (base.isValid() || base.compareTo(CiRegister.Frame) == 0) {
