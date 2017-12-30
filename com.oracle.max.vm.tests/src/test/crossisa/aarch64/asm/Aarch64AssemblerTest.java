@@ -1441,33 +1441,6 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
 
-//     public void test_casLong() throws Exception {
-//         initialiseExpectedValues();
-//         setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
-//         initializeTestValues();
-//         masm.codeBuffer.reset();
-//         CiRegister cmpReg = Aarch64.r0;
-//         CiRegister newReg = Aarch64.r2;
-//
-//         // r0=10, r1=0
-//         // r2=30, r3=0
-//         // r4=50, r5=0
-//         // r6=70, r7=0
-//         // r8=90, r9=0
-//         for (int i = 2; i < 10; i += 2) {
-//             masm.mov64BitConstant(Aarch64.cpuRegisters[i], Aarch64.cpuRegisters[i + 1], (i + 1) * 10);
-//         }
-//         masm.mov64BitConstant(Aarch64.cpuRegisters[0], Aarch64.cpuRegisters[1], 90);
-//         masm.push(Aarch64Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
-//         CiAddress addr = new CiAddress(CiKind.Int, Aarch64.r13.asValue(), 32);
-//         masm.casLongAsmTest(newReg, cmpReg, addr);
-//         expectedValues[0] = 30;
-//         testValues[0] = true;
-//         expectedValues[1] = 0;
-//         testValues[1] = true;
-//         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
-//     }
-
     public void test_decrementl() throws Exception {
         initialiseExpectedValues();
         MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
