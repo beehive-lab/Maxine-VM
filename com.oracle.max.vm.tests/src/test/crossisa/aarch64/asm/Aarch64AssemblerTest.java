@@ -1423,7 +1423,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     public void test_casInt() throws Exception {
         initialiseExpectedValues();
         MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
-        resetIgnoreValues();
+        initializeTestValues();
         masm.codeBuffer.reset();
         CiRegister cmpReg = Aarch64.r0;
         CiRegister newReg = Aarch64.r1;
