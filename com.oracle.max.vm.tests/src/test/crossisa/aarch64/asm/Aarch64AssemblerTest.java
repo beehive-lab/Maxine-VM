@@ -1223,9 +1223,9 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         }
         masm.push(1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
         Aarch64Address address = Aarch64Address.createRegisterOffsetAddress(Aarch64.sp, Aarch64.cpuRegisters[12], false);
-        for (int i = 9; i < -1; i++) {
+        for (int i = 0; i < 10; i++) {
             masm.mov32BitConstant(Aarch64.cpuRegisters[12], 16 * i);
-            masm.ldr(VARIANT_64, Aarch64.cpuRegisters[i], address);
+            masm.ldr(VARIANT_64, Aarch64.cpuRegisters[9-i], address);
         }
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
