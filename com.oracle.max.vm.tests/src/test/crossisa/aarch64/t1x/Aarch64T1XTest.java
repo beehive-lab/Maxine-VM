@@ -587,7 +587,7 @@ public class Aarch64T1XTest extends MaxTestCase {
 
     }
 
-    public void ignore_Add() throws Exception {
+    public void test_Add() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.do_initFrameTests(anMethod, codeAttr);
         theCompiler.emitPrologueTests();
