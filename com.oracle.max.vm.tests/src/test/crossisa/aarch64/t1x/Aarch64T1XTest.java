@@ -583,7 +583,61 @@ public class Aarch64T1XTest extends MaxTestCase {
         assert (registerValues[2] - registerValues[3]) == 16; // test if sp changes correctly
     }
 
-    public void ignore_DoLoad() throws Exception {
+    public void test_DoLoad() throws Exception {
+        initialiseFrameForCompilation();
+        theCompiler.do_initFrameTests(anMethod, codeAttr);
+        theCompiler.emitPrologueTests();
+        Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
+        expectedValues[0] = -2;
+        expectedValues[1] = -1;
+        expectedValues[2] = 0;
+        expectedValues[3] = 1;
+        expectedValues[4] = 2;
+        expectedValues[5] = 3;
+        expectedValues[6] = 4;
+        expectedValues[7] = 5;
+        expectedValues[8] = 6;
+        expectedValues[9] = 7;
+        expectedValues[10] = 8;
+        for (int i = 0; i < 11; i++) {
+            testValues[i] = true;
+            masm.mov32BitConstant(Aarch64.cpuRegisters[i], expectedValues[i]);
+        }
+        masm.push(1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024);
+        for (int i = 0; i <= 10; i++) {
+            masm.mov32BitConstant(Aarch64.cpuRegisters[i], -25);
+        }
+        for (int i = 0; i < 5; i++) {
+            theCompiler.do_loadTests(i, Kind.INT);
+            masm.pop(1);
+            masm.mov32BitConstant(Aarch64.r0, 100 + i);
+            masm.push(1);
+            theCompiler.do_storeTests(i, Kind.INT);
+        }
+        theCompiler.do_loadTests(5, Kind.LONG);
+        masm.pop(1 | 2);
+        masm.mov32BitConstant(Aarch64.r0, (int) (172L & 0xffff)); //172
+        masm.mov32BitConstant(Aarch64.r1, (int) (((172L >> 32) & 0xffff))); //0
+        masm.push(1 | 2);
+        theCompiler.do_storeTests(5, Kind.LONG);
+        for (int i = 0; i < 5; i++) {
+            theCompiler.do_loadTests(i, Kind.INT);
+        }
+        theCompiler.do_loadTests(5, Kind.LONG);
+        masm.pop(1 | 2 | 4 | 8 | 16 | 32 | 64);
+        theCompiler.emitEpilogueTests();
+
+        expectedValues[0] = 100;
+        expectedValues[1] = 101;
+        expectedValues[2] = 102;
+        expectedValues[3] = 103;
+        expectedValues[4] = 104;
+        expectedValues[5] = 172;
+        expectedValues[6] = 0;
+        long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
+        for (int i = 0; i <= 6; i++) {
+            assert registerValues[i] == expectedValues[i] : "Reg val " + registerValues[i] + "  Exp " + expectedValues[i];
+        }
 
     }
 
