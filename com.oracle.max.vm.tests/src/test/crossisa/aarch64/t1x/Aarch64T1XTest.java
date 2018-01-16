@@ -478,7 +478,7 @@ public class Aarch64T1XTest extends MaxTestCase {
 
         long[] returnValues = generateAndTest(expectedValues, testValues, bitmasks);
         for (int i = 0; i < 5; i++) {
-                assert returnValues[i] != expectedLongValues[i];
+                assert returnValues[i] == expectedLongValues[i];
         }
     }
 
