@@ -1041,6 +1041,8 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void pop(final ConditionFlag flag, final int registerList, boolean instrument) {
+        assert registerList > 0;
+        assert registerList < 0x10000;
         int instruction = (flag.value() & 0xf) << 28;
         instruction |= 0x8 << 24;
         instruction |= 0xb << 20;
