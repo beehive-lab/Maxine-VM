@@ -877,23 +877,19 @@ public class Aarch64T1XTest extends MaxTestCase {
         branches.add(new BranchInfo(Bytecodes.IF_ICMPEQ, 0, 0, 2, 2));
     }
 
-    public void ignore_BranchBytecodes() throws Exception {
-
-    }
-
-    public void ignore_Locals() throws Exception {
-
-    }
+// Waiting to be fixed in ARMv7 first
+// public void ignore_BranchBytecodes() throws Exception {
+// }
+//
+// public void ignore_Locals() throws Exception {
+// }
+//
+// public void ignore_SwitchTable() throws Exception {
+// }
+//
+// public void ignore_LookupTable() throws Exception {
+// }
 
     public void ignore_ByteCodeLoad() throws Exception {
-
-    }
-
-    public void ignore_SwitchTable() throws Exception {
-
-    }
-
-    public void ignore_LookupTable() throws Exception {
-
     }
 }
