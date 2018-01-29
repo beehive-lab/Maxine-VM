@@ -1428,15 +1428,16 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         CiRegister cmpReg = Aarch64.r0;
         CiRegister newReg = Aarch64.r1;
 
-        // r0=10, r1=20, r2=30, r3=40, r4=50
-        for (int i = 0; i < 5; i++) {
-            masm.mov64BitConstant(Aarch64.cpuRegisters[i], (i + 1) * 10);
-        }
+        // r0=50, r1=10, r2=20, r3=30, r4=40
         masm.mov64BitConstant(Aarch64.cpuRegisters[0], 50);
+        for (int i = 1; i < 5; i++) {
+            masm.mov64BitConstant(Aarch64.cpuRegisters[i], i * 10);
+        }
+
         masm.push(1 | 2 | 4 | 8 | 16);
         CiAddress addr = new CiAddress(CiKind.Int, Aarch64.sp.asValue(), 20);
         masm.casIntAsmTest(newReg, cmpReg, addr);
-        expectedValues[1] = 20;
+        expectedValues[1] = 10;
         testValues[1] = true;
         generateAndTest(expectedValues, testValues, bitmasks, masm.codeBuffer);
     }
