@@ -826,10 +826,6 @@ public class Aarch64T1XTest extends MaxTestCase {
         }
     }
 
-    public void failingtestIfEq() throws Exception {
-
-    }
-
     static final class BranchInfo {
 
         private int bc;
