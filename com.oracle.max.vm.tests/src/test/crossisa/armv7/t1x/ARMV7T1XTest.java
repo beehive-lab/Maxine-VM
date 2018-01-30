@@ -1331,6 +1331,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         // default:
         // m = 40;
         // }
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "vreturn");
         int[] values = new int[] {10, 20, 30, 40};
         for (int i = 0; i < values.length; i++) {
             for (int j = 0; j < values.length; j++) {
@@ -1341,7 +1342,7 @@ public class ARMV7T1XTest extends MaxTestCase {
                 }
             }
 
-            byte[] instructions = new byte[48];
+            byte[] instructions = new byte[49];
             if (i == 0) {
                 instructions[0] = (byte) Bytecodes.BIPUSH;
                 instructions[1] = (byte) -100;
@@ -1415,8 +1416,10 @@ public class ARMV7T1XTest extends MaxTestCase {
             instructions[46] = (byte) Bytecodes.BIPUSH;
             instructions[47] = (byte) values[3];
 
-            initialiseFrameForCompilation(instructions, "(II)I");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 48);
+            instructions[48] = (byte) Bytecodes.RETURN;
+
+            initialiseFrameForCompilation(instructions, "(II)I", Actor.ACC_PUBLIC);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, instructions);
             theCompiler.peekInt(ARMV7.r3, 0);
             theCompiler.peekInt(ARMV7.r2, 1);
             theCompiler.peekInt(ARMV7.r1, 2);
