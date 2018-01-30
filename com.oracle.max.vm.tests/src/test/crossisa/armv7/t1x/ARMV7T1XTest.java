@@ -1110,7 +1110,8 @@ public class ARMV7T1XTest extends MaxTestCase {
         branches.add(new BranchInfo(Bytecodes.IF_ICMPEQ, 0, 0, 2, 2));
     }
 
-    public void broken_BranchBytecodes() throws Exception {
+    public void test_BranchBytecodes() throws Exception {
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (BranchInfo bi : branches) {
             expectedValues[0] = bi.getExpected();
             byte[] instructions = new byte[16];
@@ -1133,9 +1134,9 @@ public class ARMV7T1XTest extends MaxTestCase {
             instructions[12] = (byte) 0xff;
             instructions[13] = (byte) 0xfa;
             instructions[14] = (byte) Bytecodes.ILOAD_1;
-            instructions[15] = (byte) Bytecodes.NOP;
+            instructions[15] = (byte) Bytecodes.IRETURN;
 
-            initialiseFrameForCompilation(instructions, "(II)I");
+            initialiseFrameForCompilation(instructions, "(II)I", Actor.ACC_PUBLIC);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 15);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.pop(ARMV7Assembler.ConditionFlag.Always, 1);
