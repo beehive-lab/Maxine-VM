@@ -642,6 +642,21 @@ public class Aarch64Assembler extends AbstractAssembler {
         return imm << ConditionalBranchImmOffset;
     }
 
+    /**
+     * Branch unconditionally to a label.
+     * @param label
+     */
+    public void b(Label label) {
+        // TODO Handle case where offset is too large for a single
+        // branch immediate instruction.
+        if (label.isBound()) {
+            int offset = label.position() - codeBuffer.position();
+            b(offset);
+        } else {
+            label.addPatchAt(codeBuffer.position());
+            emitInt(PatchLabelKind.BRANCH_UNCONDITIONALLY.encoding);
+        }
+    }
     /* Unconditional Branch (immediate) (5.2.2) */
 
     /**
