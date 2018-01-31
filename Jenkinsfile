@@ -30,6 +30,10 @@ pipeline {
                 dir(env.MX_HOME) {
                     checkout([$class: 'GitSCM', branches: [[name: '5.177.0']], extensions: [[$class: 'CloneOption', shallow: true]], userRemoteConfigs: [[url: 'https://github.com/beehive-lab/mx.git']]])
                 }
+                // Trigger fetch of dependencies
+                dir(env.MAXINE_HOME) {
+                    sh '$MX help'
+                }
             }
         }
         stage('checkstyle-n-build') {
