@@ -114,13 +114,6 @@ public class MaxineAarch64Tester extends CrossISATester {
         }
     }
 
-    public void run() throws Exception {
-        assembleStartup();
-        compile();
-        link();
-        runSimulation();
-    }
-
     public static void main(String[] args) throws Exception {
         MaxineAarch64Tester tester = new MaxineAarch64Tester(args);
         tester.run();

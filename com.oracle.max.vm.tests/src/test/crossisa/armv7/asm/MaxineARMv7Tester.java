@@ -274,13 +274,6 @@ public class MaxineARMv7Tester extends CrossISATester {
         return expectedValues;
     }
 
-    public void run() throws Exception {
-        assembleStartup();
-        compile();
-        link();
-        runSimulation();
-    }
-
     public static void main(String[] args) throws Exception {
         MaxineARMv7Tester tester = new MaxineARMv7Tester(args);
         tester.run();

@@ -236,4 +236,18 @@ public abstract class CrossISATester {
         }
     }
 
+    protected abstract void runSimulation() throws Exception;
+
+    protected abstract void link();
+
+    protected abstract void compile();
+
+    protected abstract void assembleStartup();
+
+    public void run() throws Exception {
+        assembleStartup();
+        compile();
+        link();
+        runSimulation();
+    }
 }
