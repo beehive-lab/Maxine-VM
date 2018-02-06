@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -32,15 +32,7 @@ public class MaxineAarch64Tester extends CrossISATester {
      * qemu-system-aarch64 -cpu cortex-a57 -M versatilepb -m 128M -nographic -s -S -kernel test.elf
      */
     public MaxineAarch64Tester(String[] args) {
-        super(NUM_REGS);
-        initializeQemu();
-        for (int i = 0; i < NUM_REGS; i++) {
-            testRegs[i] = false;
-        }
-        for (int i = 0; i < args.length; i += 2) {
-            expectRegs[Integer.parseInt(args[i])] = Integer.parseInt(args[i + 1]);
-            testRegs[Integer.parseInt(args[i])] = true;
-        }
+        super(NUM_REGS, args);
     }
 
     public MaxineAarch64Tester(long[] expected, boolean[] test, BitsFlag[] range) {
@@ -53,65 +45,42 @@ public class MaxineAarch64Tester extends CrossISATester {
         }
     }
 
-    public void compile() {
+    @Override
+    protected ProcessBuilder getCompilerProcessBuilder() {
         // aarch64-linux-gnu-gcc -c -march=armv8-a+simd -mgeneral-regs-only -g test_aarch64.c -o test_aarch64.o
-        final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.elf");
-        final ProcessBuilder compile = new ProcessBuilder("aarch64-linux-gnu-gcc", "-c", "-march=armv8-a+simd",
-                "-mgeneral-regs-only", "-g", "test_aarch64.c", "-o", "test_aarch64.o");
-        compile.redirectOutput(gccOutput);
-        compile.redirectError(gccErrors);
-        runBlocking(removeFiles);
-        gcc = runBlocking(compile);
+        return new ProcessBuilder("aarch64-linux-gnu-gcc", "-c", "-march=armv8-a+simd", "-mgeneral-regs-only", "-g",
+                                  "test_aarch64.c", "-o", "test_aarch64.o");
     }
 
-    public void assembleStartup() {
-        // aarch64-linux-gnu-as -march=armv8-a -g startup_aarch64.s -o
-        // startup_aarch64.o
-        final ProcessBuilder assemble = new ProcessBuilder("aarch64-linux-gnu-as", "-march=armv8-a", "-g",
-                "startup_aarch64.s", "-o", "startup_aarch64.o");
-        assemble.redirectOutput(asOutput);
-        assemble.redirectError(asErrors);
-        assembler = runBlocking(assemble);
+    @Override
+    protected ProcessBuilder getAssemblerProcessBuilder() {
+        // aarch64-linux-gnu-as -march=armv8-a -g startup_aarch64.s -o startup_aarch64.o
+        return new ProcessBuilder("aarch64-linux-gnu-as", "-march=armv8-a", "-g", "startup_aarch64.s",
+                                  "-o", "startup_aarch64.o");
     }
 
-    public void link() {
+    @Override
+    protected ProcessBuilder getLinkerProcessBuilder() {
         // aarch64-linux-gnu-ld -T test_aarch64.ld test_aarch64.o startup_aarch64.o -o test.elf
-        final ProcessBuilder link = new ProcessBuilder("aarch64-linux-gnu-ld", "-T", "test_aarch64.ld", "test_aarch64.o",
+        return new ProcessBuilder("aarch64-linux-gnu-ld", "-T", "test_aarch64.ld", "test_aarch64.o",
                 "startup_aarch64.o", "-o", "test.elf");
-        link.redirectOutput(linkOutput);
-        link.redirectError(linkErrors);
-        linker = runBlocking(link);
     }
 
+    protected ProcessBuilder getGDBProcessBuilder() {
+        return new ProcessBuilder("aarch64-linux-gnu-gdb", "-q", "-x", gdbInput);
+    }
+
+    protected ProcessBuilder getQEMUProcessBuilder() {
+        return new ProcessBuilder("qemu-system-aarch64", "-cpu", "cortex-a57", "-M", "virt", "-m", "128M", "-nographic",
+                                  "-s", "-S", "-kernel", "test.elf");
+    }
+
+    @Override
     public long[] runRegisteredSimulation() throws Exception {
-        ProcessBuilder gdbProcess = new ProcessBuilder("aarch64-linux-gnu-gdb", "-q", "-x", gdbInput);
-        gdbProcess.redirectOutput(gdbOutput);
-        gdbProcess.redirectError(gdbErrors);
-        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-aarch64", "-cpu", "cortex-a57", "-M", "virt", "-m",
-                "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
-        qemuProcess.redirectOutput(qemuOutput);
-        qemuProcess.redirectError(qemuErrors);
-        try {
-            qemu = qemuProcess.start();
-            while (!qemuOutput.exists()) {
-                Thread.sleep(500);
-            }
-            bindToQemu();
-            gdbProcess.start().waitFor();
-        } catch (Exception e) {
-            e.printStackTrace();
-            cleanProcesses();
-            System.exit(-1);
-        }
+        ProcessBuilder gdbProcess = getGDBProcessBuilder();
+        ProcessBuilder qemuProcess = getQEMUProcessBuilder();
+        runSimulation(gdbProcess, qemuProcess);
         return parseRegistersToFile(gdbOutput.getName(), "x0 ", "sp");
-    }
-
-    public void runSimulation() throws Exception {
-        long[] simulatedRegisters = runRegisteredSimulation();
-        if (!validateRegisters(simulatedRegisters, expectRegs, testRegs)) {
-            cleanProcesses();
-            assert false : "Error while validating registers";
-        }
     }
 
     public static void main(String[] args) throws Exception {

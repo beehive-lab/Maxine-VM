@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -50,48 +50,28 @@ public class MaxineARMv7Tester extends CrossISATester {
         }
     }
 
-    public void compile() {
-        final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.elf");
-        final ProcessBuilder compile = new ProcessBuilder("arm-none-eabi-gcc", "-c", "-DSTATIC", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-march=armv7-a", "-g", "test_armv7.c", "-o", "test_armv7.o");
-        compile.redirectOutput(gccOutput);
-        compile.redirectError(gccErrors);
-        runBlocking(removeFiles);
-        gcc = runBlocking(compile);
+    @Override
+    protected ProcessBuilder getCompilerProcessBuilder() {
+        return new ProcessBuilder("arm-none-eabi-gcc", "-c", "-DSTATIC", "-mfloat-abi=hard", "-mfpu=vfpv3-d16",
+                                  "-march=armv7-a", "-g", "test_armv7.c", "-o", "test_armv7.o");
     }
 
-    public void assembleStartup() {
-        final ProcessBuilder assemble = new ProcessBuilder("arm-none-eabi-as", "-mcpu=cortex-a15", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-g", "startup_armv7.s", "-o", "startup_armv7.o");
-        assemble.redirectOutput(asOutput);
-        assemble.redirectError(asErrors);
-        assembler = runBlocking(assemble);
+    @Override
+    protected ProcessBuilder getAssemblerProcessBuilder() {
+        return new ProcessBuilder("arm-none-eabi-as", "-mcpu=cortex-a15", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-g",
+                                  "startup_armv7.s", "-o", "startup_armv7.o");
     }
 
-    public void link() {
-        final ProcessBuilder link = new ProcessBuilder("arm-none-eabi-ld", "-T", "test_armv7.ld", "test_armv7.o", "startup_armv7.o", "-o", "test.elf");
-        link.redirectOutput(linkOutput);
-        link.redirectError(linkErrors);
-        linker = runBlocking(link);
+    @Override
+    protected ProcessBuilder getLinkerProcessBuilder() {
+        return new ProcessBuilder("arm-none-eabi-ld", "-T", "test_armv7.ld", "test_armv7.o", "startup_armv7.o", "-o",
+                                  "test.elf");
     }
 
     private void runSimulation(boolean captureFPREGs) throws Exception {
         ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb", "-q", "-x", captureFPREGs ? gdbInputFPREGS : gdbInput);
         ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
-        gdbProcess.redirectOutput(gdbOutput);
-        gdbProcess.redirectError(gdbErrors);
-        qemuProcess.redirectOutput(qemuOutput);
-        qemuProcess.redirectError(qemuErrors);
-        try {
-            qemu = qemuProcess.start();
-            while (!qemuOutput.exists()) {
-                Thread.sleep(500);
-            }
-            bindToQemu();
-            gdb = runBlocking(gdbProcess);
-        } catch (Exception e) {
-            e.printStackTrace();
-            cleanProcesses();
-            System.exit(-1);
-        }
+        runSimulation(gdbProcess, qemuProcess);
     }
 
     public Object[] runObjectRegisteredSimulation() throws Exception {
@@ -99,6 +79,7 @@ public class MaxineARMv7Tester extends CrossISATester {
         return parseObjectRegistersToFile(gdbOutput.getName());
     }
 
+    @Override
     public long[] runRegisteredSimulation() throws Exception {
         runSimulation(false);
         long[] simulatedValues = parseRegistersToFile(gdbOutput.getName(), "r0  ", "cpsr");
@@ -109,14 +90,6 @@ public class MaxineARMv7Tester extends CrossISATester {
             }
         }
         return simulatedValues;
-    }
-
-    public void runSimulation() throws Exception {
-        long[] simulatedRegisters = runRegisteredSimulation();
-        if (!validateRegisters(simulatedRegisters, expectRegs, testRegs)) {
-            cleanProcesses();
-            assert false : "Error while validating registers";
-        }
     }
 
     public MaxineARMv7Tester(int[] expected, boolean[] test, BitsFlag[] range) {
@@ -152,15 +125,7 @@ public class MaxineARMv7Tester extends CrossISATester {
     }
 
     public MaxineARMv7Tester(String[] args) {
-        super(NUM_REGS);
-        initializeQemu();
-        for (int i = 0; i < NUM_REGS; i++) {
-            testRegs[i] = false;
-        }
-        for (int i = 0; i < args.length; i += 2) {
-            expectRegs[Integer.parseInt(args[i])] = Integer.parseInt(args[i + 1]);
-            testRegs[Integer.parseInt(args[i])] = true;
-        }
+        super(NUM_REGS, args);
     }
 
     private Object[] parseObjectRegistersToFile(String file) throws Exception {

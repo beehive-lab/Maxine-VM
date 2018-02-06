@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -61,6 +61,18 @@ public abstract class CrossISATester {
         NUM_REGS = numRegs;
         expectRegs = new long[NUM_REGS];
         testRegs = new boolean[NUM_REGS];
+    }
+
+    public CrossISATester(int numRegs, String[] args) {
+        NUM_REGS = numRegs;
+        initializeQemu();
+        for (int i = 0; i < NUM_REGS; i++) {
+            testRegs[i] = false;
+        }
+        for (int i = 0; i < args.length; i += 2) {
+            expectRegs[Integer.parseInt(args[i])] = Integer.parseInt(args[i + 1]);
+            testRegs[Integer.parseInt(args[i])] = true;
+        }
     }
 
     public static void setBitMask(BitsFlag[] bitmasks, int i, BitsFlag mask) {
@@ -236,13 +248,63 @@ public abstract class CrossISATester {
         }
     }
 
-    protected abstract void runSimulation() throws Exception;
+    public void runSimulation(ProcessBuilder gdbProcess, ProcessBuilder qemuProcess) {
+        gdbProcess.redirectOutput(gdbOutput);
+        gdbProcess.redirectError(gdbErrors);
+        qemuProcess.redirectOutput(qemuOutput);
+        qemuProcess.redirectError(qemuErrors);
+        try {
+            qemu = qemuProcess.start();
+            while (!qemuOutput.exists()) {
+                Thread.sleep(500);
+            }
+            bindToQemu();
+            gdb = runBlocking(gdbProcess);
+        } catch (Exception e) {
+            e.printStackTrace();
+            cleanProcesses();
+            System.exit(-1);
+        }
+    }
 
-    protected abstract void link();
+    public void runSimulation() throws Exception {
+        long[] simulatedRegisters = runRegisteredSimulation();
+        if (!validateRegisters(simulatedRegisters, expectRegs, testRegs)) {
+            cleanProcesses();
+            assert false : "Error while validating registers";
+        }
+    }
 
-    protected abstract void compile();
+    protected abstract long[] runRegisteredSimulation() throws Exception;
 
-    protected abstract void assembleStartup();
+    public void link() {
+        final ProcessBuilder link = getLinkerProcessBuilder();
+        link.redirectOutput(linkOutput);
+        link.redirectError(linkErrors);
+        linker = runBlocking(link);
+    }
+
+    protected abstract ProcessBuilder getLinkerProcessBuilder();
+
+    public void compile() {
+        final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.elf");
+        final ProcessBuilder compile = getCompilerProcessBuilder();
+        compile.redirectOutput(gccOutput);
+        compile.redirectError(gccErrors);
+        runBlocking(removeFiles);
+        gcc = runBlocking(compile);
+    }
+
+    protected abstract ProcessBuilder getCompilerProcessBuilder();
+
+    public void assembleStartup() {
+        final ProcessBuilder assemble = getAssemblerProcessBuilder();
+        assemble.redirectOutput(asOutput);
+        assemble.redirectError(asErrors);
+        assembler = runBlocking(assemble);
+    }
+
+    protected abstract ProcessBuilder getAssemblerProcessBuilder();
 
     public void run() throws Exception {
         assembleStartup();
