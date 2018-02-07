@@ -23,6 +23,35 @@ import static com.sun.cri.ci.CiRegister.RegisterFlag.*;
 
 import com.sun.cri.ci.*;
 
+/**
+ * Defines the registers of the RISC-V 64 architecture along with their ABI names.
+ *
+ * <pre>
+ *     |----------+----------+-----------------------------------+--------|
+ *     | Register | ABI Name | Description                       | Saver  |
+ *     |----------+----------+-----------------------------------+--------|
+ *     | x0       | zero     | Hard-wired zero                   | —      |
+ *     | x1       | ra       | Return address                    | Caller |
+ *     | x2       | sp       | Stack pointer                     | Callee |
+ *     | x3       | gp       | Global pointer                    | —      |
+ *     | x4       | tp       | Thread pointer                    | —      |
+ *     | x5       | t0       | Temporary/alternate link register | Caller |
+ *     | x6–7     | t1–2     | Temporaries                       | Caller |
+ *     | x8       | s0/fp    | Saved register/frame pointer      | Callee |
+ *     | x9       | s1       | Saved register                    | Callee |
+ *     | x10–11   | a0–1     | Function arguments/return values  | Caller |
+ *     | x12–17   | a2–7     | Function arguments                | Caller |
+ *     | x18–27   | s2–11    | Saved registers                   | Callee |
+ *     | x28–31   | t3–6     | Temporaries                       | Caller |
+ *     | f0–7     | ft0–7    | FP temporaries                    | Caller |
+ *     | f8–9     | fs0–1    | FP saved registers                | Callee |
+ *     | f10–11   | fa0–1    | FP arguments/return values        | Caller |
+ *     | f12–17   | fa2–7    | FP arguments                      | Caller |
+ *     | f18–27   | fs2–11   | FP saved registers                | Callee |
+ *     | f28–31   | ft8–11   | FP temporaries                    | Caller |
+ *     |----------+----------+-----------------------------------+--------|
+ * </pre>
+ */
 public class RISCV64 extends CiArchitecture {
 
     public static final CiRegister x0 = new CiRegister(0, 0, 8, "x0", CPU, Byte);
@@ -90,6 +119,78 @@ public class RISCV64 extends CiArchitecture {
     public static final CiRegister f29 = new CiRegister(29, 29, 8, "f29", FPU, FPU);
     public static final CiRegister f30 = new CiRegister(30, 30, 8, "f30", FPU, FPU);
     public static final CiRegister f31 = new CiRegister(31, 31, 8, "f31", FPU, FPU);
+
+    public static final CiRegister zero = x0;
+    public static final CiRegister ra   = x1;
+    public static final CiRegister sp   = x2;
+    public static final CiRegister gp   = x3;
+    public static final CiRegister tp   = x4;
+
+    public static final CiRegister t0 = x5;
+    public static final CiRegister t1 = x6;
+    public static final CiRegister t2 = x7;
+    public static final CiRegister t3 = x28;
+    public static final CiRegister t4 = x29;
+    public static final CiRegister t5 = x30;
+    public static final CiRegister t6 = x31;
+
+    public static final CiRegister fp = x8;
+
+    public static final CiRegister a0 = x10;
+    public static final CiRegister a1 = x11;
+    public static final CiRegister a2 = x12;
+    public static final CiRegister a3 = x13;
+    public static final CiRegister a4 = x14;
+    public static final CiRegister a5 = x15;
+    public static final CiRegister a6 = x16;
+    public static final CiRegister a7 = x17;
+
+    public static final CiRegister s1  = x9;
+    public static final CiRegister s2  = x17;
+    public static final CiRegister s3  = x18;
+    public static final CiRegister s4  = x19;
+    public static final CiRegister s5  = x20;
+    public static final CiRegister s6  = x21;
+    public static final CiRegister s7  = x22;
+    public static final CiRegister s8  = x23;
+    public static final CiRegister s9  = x24;
+    public static final CiRegister s10 = x25;
+    public static final CiRegister s11 = x26;
+
+    public static final CiRegister ft0  = f0;
+    public static final CiRegister ft1  = f1;
+    public static final CiRegister ft2  = f2;
+    public static final CiRegister ft3  = f3;
+    public static final CiRegister ft4  = f4;
+    public static final CiRegister ft5  = f5;
+    public static final CiRegister ft6  = f6;
+    public static final CiRegister ft7  = f7;
+    public static final CiRegister ft8  = f28;
+    public static final CiRegister ft9  = f29;
+    public static final CiRegister ft10 = f30;
+    public static final CiRegister ft11 = f31;
+
+    public static final CiRegister fs0  = f8;
+    public static final CiRegister fs1  = f9;
+    public static final CiRegister fs2  = f18;
+    public static final CiRegister fs3  = f19;
+    public static final CiRegister fs4  = f20;
+    public static final CiRegister fs5  = f21;
+    public static final CiRegister fs6  = f22;
+    public static final CiRegister fs7  = f23;
+    public static final CiRegister fs8  = f24;
+    public static final CiRegister fs9  = f25;
+    public static final CiRegister fs10 = f26;
+    public static final CiRegister fs11 = f27;
+
+    public static final CiRegister fa0 = f10;
+    public static final CiRegister fa1 = f11;
+    public static final CiRegister fa2 = f12;
+    public static final CiRegister fa3 = f13;
+    public static final CiRegister fa4 = f14;
+    public static final CiRegister fa5 = f15;
+    public static final CiRegister fa6 = f16;
+    public static final CiRegister fa7 = f17;
 
     public static final CiRegister[] cpuRegisters = {
         x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13,
