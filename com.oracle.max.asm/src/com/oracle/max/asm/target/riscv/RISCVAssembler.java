@@ -491,4 +491,126 @@ public class RISCVAssembler extends AbstractAssembler {
         throw new UnsupportedOperationException("Unimplemented");
     }
 
+    // RV64I Base instruction set /////////////////////////////////////////////
+
+    /**
+     *
+     * @param rd
+     * @param rs
+     * @param imm32
+     */
+    public void lwu(CiRegister rd, CiRegister rs, int imm32) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs
+     * @param imm32
+     */
+    public void ld(CiRegister rd, CiRegister rs, int imm32) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    /**
+     *
+     * @param rs1
+     * @param rs2
+     * @param imm32
+     */
+    public void sd(CiRegister rs1, CiRegister rs2, int imm32) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs
+     * @param imm32
+     */
+    public void addiw(CiRegister rd, CiRegister rs, int imm32) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs
+     * @param imm32
+     */
+    public void slliw(CiRegister rd, CiRegister rs, int imm32) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs
+     * @param imm32
+     */
+    public void srliw(CiRegister rd, CiRegister rs, int imm32) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs
+     * @param imm32
+     */
+    public void sraiw(CiRegister rd, CiRegister rs, int imm32) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs1
+     * @param rs2
+     */
+    public void addw(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs1
+     * @param rs2
+     */
+    public void subw(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs1
+     * @param rs2
+     */
+    public void sllw(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs1
+     * @param rs2
+     */
+    public void srlw(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
+    /**
+     *
+     * @param rd
+     * @param rs1
+     * @param rs2
+     */
+    public void sraw(CiRegister rd, CiRegister rs1, CiRegister rs2) {
+        throw new UnsupportedOperationException("Unimplemented");
+    }
+
 }
