@@ -19,6 +19,8 @@
  */
 package com.oracle.max.asm.target.riscv;
 
+import static com.oracle.max.asm.target.riscv.RISCVopCodes.*;
+
 import com.oracle.max.asm.*;
 import com.sun.cri.ci.*;
 
@@ -32,6 +34,27 @@ public class RISCVAssembler extends AbstractAssembler {
         throw new UnsupportedOperationException("Unimplemented");
     }
 
+    /**
+     * Emits an instruction of type U-type.
+     *
+     * <pre>
+     *     | imm[31:12] | rd | opcode |
+     *     |------------|----|--------|
+     *     |     20     |  5 |    7   |
+     * </pre>
+     *  @param opcode
+     * @param rd
+     * @param imm32
+     */
+    private void utype(RISCVopCodes opcode, CiRegister rd, int imm32) {
+        assert opcode.getValue() >> 7 == 0;
+        assert rd.number >> 5 == 0;
+        int instruction = opcode.getValue();
+        instruction |= rd.number << 7;
+        instruction |= imm32 & 0xFFFFF000;
+        emitInt(instruction);
+    }
+
     // RV32I Base instruction set /////////////////////////////////////////////
 
     /**
@@ -40,7 +63,7 @@ public class RISCVAssembler extends AbstractAssembler {
      * @param imm32
      */
     public void lui(CiRegister rd, int imm32) {
-        throw new UnsupportedOperationException("Unimplemented");
+        utype(LUI, rd, imm32);
     }
 
     /**
