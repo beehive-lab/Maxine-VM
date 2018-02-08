@@ -64,23 +64,51 @@ public class MaxineAarch64Tester extends CrossISATester {
         gcc = runBlocking(compile);
     }
 
-    public void assembleStartup() {
-        // aarch64-linux-gnu-as -march=armv8-a -g startup_aarch64.s -o
-        // startup_aarch64.o
+    /**
+     * Assembles the instructions in contained in the assembly file into the object file.
+     * @param assembly
+     * @param object
+     */
+    public void assemble(String assembly, String object) {
         final ProcessBuilder assemble = new ProcessBuilder("aarch64-linux-gnu-as", "-march=armv8-a", "-g",
-                "startup_aarch64.s", "-o", "startup_aarch64.o");
+                        assembly, "-o", object);
         assemble.redirectOutput(asOutput);
         assemble.redirectError(asErrors);
         assembler = runBlocking(assemble);
     }
 
-    public void link() {
-        // aarch64-linux-gnu-ld -T test_aarch64.ld test_aarch64.o startup_aarch64.o -o test.elf
-        final ProcessBuilder link = new ProcessBuilder("aarch64-linux-gnu-ld", "-T", "test_aarch64.ld", "test_aarch64.o",
-                "startup_aarch64.o", "-o", "test.elf");
+    /**
+     * Assemble the startup assembly.
+     */
+    public void assembleStartup() {
+        // aarch64-linux-gnu-as -march=armv8-a -g startup_aarch64.s -o
+        // startup_aarch64.o
+        assemble("startup_aarch64.s", "startup_aarch64.o");
+    }
+
+    /**
+     * Links object files using the specified linker script.
+     * @param linkScript -- name of the file
+     * @param objects -- names of the object files
+     */
+    public void link(String linkScript, String... objects) {
+        String [] args = {"aarch64-linux-gnu-ld", "-T", linkScript, "-o", "test.elf"};
+        String [] fullargs = new String[args.length + objects.length];
+        System.arraycopy(args, 0, fullargs, 0, args.length);
+        System.arraycopy(objects, 0, fullargs, args.length, objects.length);
+        final ProcessBuilder link = new ProcessBuilder(fullargs);
         link.redirectOutput(linkOutput);
         link.redirectError(linkErrors);
         linker = runBlocking(link);
+    }
+
+    /**
+     * Link the default unit test framework.
+     */
+    public void link() {
+        // aarch64-linux-gnu-ld -T test_aarch64.ld test_aarch64.o startup_aarch64.o -o test.elf
+        //link("test_aarch64.ld", "test_aarch64.o", "startup_aarch64.o");
+        link("test_aarch64.ld", "test_aarch64.o", "startup_aarch64.o");
     }
 
     public long[] runRegisteredSimulation() throws Exception {
