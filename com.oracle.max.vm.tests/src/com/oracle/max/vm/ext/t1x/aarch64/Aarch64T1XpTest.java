@@ -32,7 +32,6 @@ import com.sun.cri.ci.*;
 import com.sun.max.ide.*;
 import com.sun.max.io.*;
 import com.sun.max.program.option.*;
-import com.sun.max.vm.MaxineVM.*;
 import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
@@ -1026,52 +1025,6 @@ public class Aarch64T1XpTest extends MaxTestCase {
         }
 
     }
-    static final class BranchInfo {
-
-        private int bc;
-        private int start;
-        private int end;
-        private int expected;
-        private int step;
-
-        private BranchInfo(int bc, int start, int end, int expected, int step) {
-            this.bc = bc;
-            this.end = end;
-            this.start = start;
-            this.expected = expected;
-            this.step = step;
-        }
-
-        public int getBytecode() {
-            return bc;
-        }
-
-        public int getStart() {
-            return start;
-        }
-
-        public int getEnd() {
-            return end;
-        }
-
-        public int getExpected() {
-            return expected;
-        }
-
-        public int getStep() {
-            return step;
-        }
-    }
-
-    private static final List<BranchInfo> branches = new LinkedList<>();
-    static {
-        branches.add(new BranchInfo(Bytecodes.IF_ICMPLT, 0, 10, 10, 1));
-        branches.add(new BranchInfo(Bytecodes.IF_ICMPLE, 0, 10, 11, 1));
-        branches.add(new BranchInfo(Bytecodes.IF_ICMPGT, 5, 0, 0, -1));
-        branches.add(new BranchInfo(Bytecodes.IF_ICMPGE, 5, 0, -1, -1));
-        branches.add(new BranchInfo(Bytecodes.IF_ICMPNE, 5, 6, 6, 1));
-        branches.add(new BranchInfo(Bytecodes.IF_ICMPEQ, 0, 0, 2, 2));
-    }
 
     public void work_emitPrologueTests() throws Exception {
         initialiseFrameForCompilation();
@@ -1101,52 +1054,5 @@ public class Aarch64T1XpTest extends MaxTestCase {
         masm.pop(32, Aarch64.r0);
         long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
     }
-
-    public void work_BranchBytecodes() throws Exception {
-        /*
-         * Based on pg41 JVMSv1.7 ... iconst_0 istore_1 goto 8 wrong it needs to be 6 iinc 1 1 iload_1 bipush 100
-         * if_icmplt 5 this is WRONG it needs to be -6 // no return. corresponding to int i; for(i = 0; i < 100;i++) { ;
-         * // empty loop body } return;
-         */
-        boolean [] testvalues = {true};
-        for (BranchInfo bi : branches) {
-            expectedValues[0] = bi.getExpected();
-            testValues[0] = true;
-            byte[] instructions = new byte[16];
-            if (bi.getStart() == 0) {
-                instructions[0] = (byte) Bytecodes.ICONST_0;
-            } else {
-                instructions[0] = (byte) Bytecodes.ICONST_5;
-            }
-            instructions[1] = (byte) Bytecodes.ISTORE_1;
-            instructions[2] = (byte) Bytecodes.GOTO;
-            instructions[3] = (byte) 0;
-            instructions[4] = (byte) 6;
-            instructions[5] = (byte) Bytecodes.IINC;
-            instructions[6] = (byte) 1;
-            instructions[7] = (byte) bi.getStep();
-            instructions[8] = (byte) Bytecodes.ILOAD_1;
-            instructions[9] = (byte) Bytecodes.BIPUSH;
-            instructions[10] = (byte) bi.getEnd();
-            instructions[11] = (byte) bi.getBytecode();
-            instructions[12] = (byte) 0xff;
-            instructions[13] = (byte) 0xfa;
-            instructions[14] = (byte) Bytecodes.ILOAD_1;
-            instructions[15] = (byte) Bytecodes.NOP;
-
-            // instructions[14] = (byte) Bytecodes.RETURN;
-            initialiseFrameForCompilation(instructions, "(II)I");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, instructions, 15);
-            Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
-            //masm.pop(Aarch64Assembler.ConditionFlag.AL, 1);
-            masm.pop(32, Aarch64.r0);
-            long[] registerValues = generateAndTest(expectedValues, testValues, bitmasks);
-            assert registerValues[0] == (expectedValues[0] & 0xFFFFFFFFL) : "Failed incorrect value " + Long.toString(registerValues[0], 16) + " " + Long.toString(expectedValues[0], 16);
-            theCompiler.cleanup();
-        }
-    }
-
-
-
 
 }
