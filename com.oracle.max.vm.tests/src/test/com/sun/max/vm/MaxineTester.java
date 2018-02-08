@@ -628,7 +628,7 @@ public class MaxineTester {
         final String basePath = new File(outputDirOption.getValue()).getAbsolutePath() + File.separator;
         final String path = file.getAbsolutePath();
         if (path.startsWith(basePath)) {
-            return "file:" + path.substring(basePath.length());
+            return "file:" + outputDirOption.getValue() + "/" + path.substring(basePath.length());
         }
         return file.getAbsolutePath();
     }
