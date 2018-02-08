@@ -94,4 +94,19 @@ public class RISCV64AssemblerTest {
         r.reset();
     }
 
+    @Test
+    public void lui() throws Exception {
+        initialiseExpectedValues();
+        MaxineRISCV64Tester.setAllBitMasks(bitmasks, MaxineRISCV64Tester.BitsFlag.All64Bits);
+        initializeTestValues();
+        asm.codeBuffer.reset();
+        asm.lui(t0, 0xFF);
+        asm.lui(t1, 0xFF << 12);
+        asm.lui(t2, 0xFFFFFFFF << 12);
+        setExpectedValue(t0, 0);
+        setExpectedValue(t1, 0xFF000);
+        setExpectedValue(t2, 0xFFFFF000);
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
 }
