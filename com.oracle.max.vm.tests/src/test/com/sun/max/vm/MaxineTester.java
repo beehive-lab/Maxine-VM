@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -29,6 +29,7 @@ import java.util.concurrent.*;
 import java.util.regex.*;
 
 import org.junit.runner.*;
+import org.junit.runner.manipulation.*;
 import org.junit.runner.notification.*;
 
 import com.oracle.max.vm.ext.c1x.*;
@@ -563,6 +564,15 @@ public class MaxineTester {
 
             final Class<?> testClass = Class.forName(testClassName);
 
+            final ArrayList<String> failingTests = new ArrayList<>();
+            if (failedFile.exists()) {
+                BufferedReader in   = new BufferedReader(new FileReader(failedFile));
+                String line;
+                while ((line = in.readLine()) != null) {
+                    failingTests.add(line);
+                }
+            }
+
             final PrintStream passed = new PrintStream(new FileOutputStream(passedFile));
             final PrintStream failed = new PrintStream(new FileOutputStream(failedFile));
             final JUnitCore junit = new JUnitCore();
@@ -599,9 +609,40 @@ public class MaxineTester {
                 }
             });
 
-            junit.run(testClass);
+            junit.run(generateJUnitRequest(testClass, failingTests));
             passed.close();
             failed.close();
+        }
+
+        private static Request generateJUnitRequest(Class<?> testClass, final ArrayList<String> failingTests) {
+            Request request = Request.aClass(testClass);
+            if (!failingTests.isEmpty()) {
+                Filter failedFilter = new Filter() {
+
+                    @Override
+                    public boolean shouldRun(Description description) {
+                        if (!description.isTest()) {
+                            return false;
+                        }
+                        for (String line : failingTests) {
+                            String methodName = description.getMethodName();
+                            if (methodName != null && line.startsWith(methodName)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+
+                    @Override
+                    public String describe() {
+                        return "Filters out all tests not included in the file containing the failed tests" +
+                                "(unless it is empty)";
+                    }
+                };
+
+                request = request.filterWith(failedFilter);
+            }
+            return request;
         }
     }
 
