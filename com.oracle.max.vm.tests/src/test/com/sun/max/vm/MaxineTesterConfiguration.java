@@ -164,6 +164,21 @@ public class MaxineTesterConfiguration {
 
         // Register all classes containing JUnit tests on the class path
         findJUnitTests();
+        junit("test.com.sun.max.asm.amd64.RawDisassemblerAndExternalTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.amd64.RawDisassemblerTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.amd64.RawExternalTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.arm.RawDisassemblerAndExternalTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.arm.RawDisassemblerTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.arm.RawExternalTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.ia32.RawDisassemblerAndExternalTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.ia32.RawDisassemblerTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.ia32.RawExternalTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.ppc.RawDisassemblerAndExternalTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.ppc.RawDisassemblerTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.ppc.RawExternalTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.sparc.RawDisassemblerAndExternalTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.sparc.RawDisassemblerTest", FAIL_ALL);
+        junit("test.com.sun.max.asm.sparc.RawExternalTest", FAIL_ALL);
 
         jtt(jtt.threads.Thread_isInterrupted02.class, FAIL_LINUX);
         jtt(jtt.hotspot.Test6959129.class, FAIL_ALL);
