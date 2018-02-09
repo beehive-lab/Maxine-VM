@@ -107,7 +107,7 @@ public class MaxineTester {
                     "run the _202_jess and _209_db SpecJVM98 benchmarks as well as the pmd and fop Dacapo-bach benchmarks.\n\n" +
                     "Compiler tests: " + MaxineTesterConfiguration.zeeC1XTests.keySet().toString() + "\n\n" +
                     "JUnit tests: " + MaxineTesterConfiguration.zeeJUnitTests + "\n\n" +
-                    "JSR292 tests: " + MaxineTesterConfiguration.zeeJSR292Tests + "\n\n" +
+                    "JSR292 tests: " + MaxineTesterConfiguration.zeeJSR292Tests.toString().replace("class ", "") + "\n\n" +
                     "Output tests: " + MaxineTesterConfiguration.zeeOutputTests.toString().replace("class ", "") + "\n\n" +
                     "Dacapo-2006 tests: " + MaxineTesterConfiguration.zeeDacapo2006Tests + "\n\n" +
                     "Dacapo-bach tests: " + MaxineTesterConfiguration.zeeDacapoBachTests + "\n\n" +
