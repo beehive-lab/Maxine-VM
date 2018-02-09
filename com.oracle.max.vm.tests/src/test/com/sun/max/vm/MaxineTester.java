@@ -503,12 +503,12 @@ public class MaxineTester {
             }
         }
 
-        int failedAutoTests = 0;
+        int failedTests = 0;
         for (String junitTest : junitTestsWithExceptions) {
             if (out != null) {
                 out.println("Non-zero exit status for '" + junitTest + "'");
             }
-            failedAutoTests++;
+            failedTests++;
         }
 
         if (out != null) {
@@ -526,7 +526,7 @@ public class MaxineTester {
             }
         }
 
-        final int exitCode = unexpectedFailures.size() + unexpectedPasses.size() + failedImages + failedAutoTests;
+        final int exitCode = unexpectedFailures.size() + unexpectedPasses.size() + failedImages + failedTests;
         if (out != null) {
             final Date endDate = new Date();
             final long total = endDate.getTime() - startDate.getTime();
@@ -1180,15 +1180,15 @@ public class MaxineTester {
 
             final PrintStream out = out();
 
-            out.println("JUnit auto-test: Started " + junitTest);
+            out.println("JUnit test: Started " + junitTest);
             out.flush();
             final long start = System.currentTimeMillis();
             final int exitValue = exec(outputDir, command, null, logs, junitTest, junitTestTimeOutOption.getValue());
-            out.print("JUnit auto-test: Stopped " + junitTest);
+            out.print("JUnit test: Stopped " + junitTest);
 
             final Set<String> results = new HashSet<>();
-            parseAutoTestResults(passedFile, true, results, junitTest);
-            parseAutoTestResults(failedFile, false, results, junitTest);
+            parseTestResults(passedFile, true, results, junitTest);
+            parseTestResults(failedFile, false, results, junitTest);
 
             int errors = 0;
             final long runTime = System.currentTimeMillis() - start;
@@ -1222,9 +1222,9 @@ public class MaxineTester {
          * @param resultsFile the file to parse
          * @param passed specifies if the file list tests that passed or failed
          * @param results if non-null, then all unexpected test results are added to this set
-         * @param jUnitTest the name of the AutoTest class generating the unit tests at hand
+         * @param jUnitTest the name of the Test class generating the unit tests at hand
          */
-        void parseAutoTestResults(File resultsFile, boolean passed, Set<String> results, String jUnitTest) {
+        void parseTestResults(File resultsFile, boolean passed, Set<String> results, String jUnitTest) {
             try {
                 final List<String> lines = Files.readLines(resultsFile);
                 for (String testName : lines) {
