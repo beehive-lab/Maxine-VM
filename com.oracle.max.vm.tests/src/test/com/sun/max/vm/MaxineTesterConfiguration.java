@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2015, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2008, 2013, Oracle and/or its affiliates. All rights reserved.
@@ -144,11 +144,6 @@ public class MaxineTesterConfiguration {
 
         // Register all "*.Autotest classes on the class path
         findJUnitTests();
-        junit("test.crossisa.armv7.t1x.AutoTest", FAIL_AMD64);
-        junit("test.crossisa.armv7.t1x.AutoTest", FAIL_AARCH64);
-        junit("test.crossisa.aarch64.t1x.AutoTest", FAIL_AMD64);
-        junit("test.crossisa.aarch64.t1x.AutoTest", FAIL_ARMV7);
-        junit("test.crossisa.armv7.jtt.AutoTest", FAIL_AMD64);
 
         jtt(jtt.threads.Thread_isInterrupted02.class, FAIL_LINUX);
         jtt(jtt.hotspot.Test6959129.class, FAIL_ALL);
