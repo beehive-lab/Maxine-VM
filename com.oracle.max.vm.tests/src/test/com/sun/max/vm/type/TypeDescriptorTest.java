@@ -25,6 +25,8 @@ package test.com.sun.max.vm.type;
 import static com.sun.max.vm.type.JavaTypeDescriptor.*;
 import test.com.sun.max.vm.*;
 
+import com.sun.max.program.option.*;
+import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 
 /**
@@ -33,8 +35,19 @@ import com.sun.max.vm.type.*;
 
 public class TypeDescriptorTest extends VmTestCase {
 
+    private static final OptionSet      options        = new OptionSet(false);
+    private static       VMConfigurator vmConfigurator = null;
+    private static       boolean        initialised    = false;
+
     public TypeDescriptorTest(String name) {
         super(name);
+        if (vmConfigurator == null) {
+            vmConfigurator = new VMConfigurator(options);
+        }
+        if (!initialised) {
+            vmConfigurator.create();
+            initialised = true;
+        }
     }
 
     public static void main(String[] args) {
