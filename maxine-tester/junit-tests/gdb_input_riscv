@@ -1,0 +1,23 @@
+# Disable pagination
+set pagination off
+# Load the elf file to get access to its symbols
+file test.elf
+# Workaround to make breakpoints work for riscv qemu
+set riscv use_compressed_breakpoint off
+# Connect to qemu
+target remote localhost:1234
+# Add a breakpoint at the start of the generated code
+# (stored in code array)
+break *&code
+break success
+break failure
+# Continue execution till we get to the generated code
+continue
+# Continue execution till we succeed or fail.  In case of generated
+# infinite loops or wrong branches that prevent completion we will see a
+# failure when the unit test will eventually time out.  However, when
+# invoked through Java, gdb seems to ignore breakpoints.
+continue
+# print the registers
+info registers
+quit
