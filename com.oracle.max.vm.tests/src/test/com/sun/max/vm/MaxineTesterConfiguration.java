@@ -21,8 +21,11 @@
  */
 package test.com.sun.max.vm;
 
+import static com.sun.max.ide.TestCaseClassSet.isJUnitTestCaseClass;
+
 import java.io.*;
 import java.util.*;
+import java.util.zip.*;
 
 import com.sun.max.lang.*;
 import com.sun.max.platform.*;
@@ -79,11 +82,28 @@ public class MaxineTesterConfiguration {
     static final Map<String, String[]> maxvmParams = new HashMap<String, String[]>();
 
     private static void findJUnitTests() {
-        new ClassSearch() {
+        new ClassSearch(true) {
+            @Override
+            protected boolean visitArchiveEntry(ZipFile archive, ZipEntry resource) {
+                return true;
+            }
+
+            @Override
+            protected boolean visitFile(File parent, String resource) {
+                return !resource.toLowerCase().contains("test")   // Only visit tests
+                       || resource.contains("JsrInliningTestSource") // Omit because of Unverifiable test
+                       || resource.contains("ext/graal")             // Omit because of external dependency
+                       || visit(false, resource.replace(File.separatorChar, '.'));
+            }
+
             @Override
             protected boolean visitClass(String className) {
-                if (className.endsWith(".AutoTest")) {
-                    zeeJUnitTests.add(className);
+                try {
+                    Class javaClass = Class.forName(className, false, getClass().getClassLoader());
+                    if (isJUnitTestCaseClass(javaClass)) {
+                        zeeJUnitTests.add(className);
+                    }
+                } catch (Exception ignored) {
                 }
                 return true;
             }
@@ -142,7 +162,7 @@ public class MaxineTesterConfiguration {
 
         vmoutput(findOutputTests("test.vm.output."));
 
-        // Register all "*.Autotest classes on the class path
+        // Register all classes containing JUnit tests on the class path
         findJUnitTests();
 
         jtt(jtt.threads.Thread_isInterrupted02.class, FAIL_LINUX);
