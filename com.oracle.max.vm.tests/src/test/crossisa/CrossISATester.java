@@ -24,8 +24,6 @@ import java.math.*;
 
 import com.sun.max.vm.runtime.*;
 
-import test.crossisa.aarch64.asm.*;
-
 public abstract class CrossISATester {
 
     private static final   String ENABLE_QEMU    = "max.arm.qemu";
@@ -190,12 +188,12 @@ public abstract class CrossISATester {
         } while (true);
     }
 
-    protected long[] parseRegistersToFile(String file, String startPattern, String endPattern) throws IOException {
+    protected long[] parseRegistersToFile(String file, String startPattern, String endPattern, int numberOfRegisters) throws IOException {
         BufferedReader reader       = new BufferedReader(new FileReader(file));
         String         line;
         boolean        enabled      = false;
         int            i            = 0;
-        long[]         parsedValues = new long[MaxineAarch64Tester.NUM_REGS];
+        long[]         parsedValues = new long[numberOfRegisters];
         while ((line = reader.readLine()) != null) {
             if (line.startsWith(startPattern)) {
                 enabled = true;
@@ -218,7 +216,7 @@ public abstract class CrossISATester {
             } else {
                 parsedValues[i] = tmp.longValue();
             }
-            if (++i >= MaxineAarch64Tester.NUM_REGS) {
+            if (++i >= numberOfRegisters) {
                 break;
             }
             if (line.contains(endPattern)) {

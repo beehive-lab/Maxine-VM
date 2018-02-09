@@ -82,7 +82,7 @@ public class MaxineARMv7Tester extends CrossISATester {
     @Override
     public long[] runRegisteredSimulation() throws Exception {
         runSimulation(false);
-        long[] simulatedValues = parseRegistersToFile(gdbOutput.getName(), "r0  ", "cpsr");
+        long[] simulatedValues = parseRegistersToFile(gdbOutput.getName(), "r0  ", "cpsr", NUM_REGS);
         // Treat values as ints not longs
         for (int i = 0; i < simulatedValues.length; i++) {
             if (simulatedValues[i] > Integer.MAX_VALUE) {

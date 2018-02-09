@@ -80,7 +80,7 @@ public class MaxineAarch64Tester extends CrossISATester {
         ProcessBuilder gdbProcess = getGDBProcessBuilder();
         ProcessBuilder qemuProcess = getQEMUProcessBuilder();
         runSimulation(gdbProcess, qemuProcess);
-        return parseRegistersToFile(gdbOutput.getName(), "x0 ", "sp");
+        return parseRegistersToFile(gdbOutput.getName(), "x0 ", "sp", NUM_REGS);
     }
 
     public static void main(String[] args) throws Exception {
