@@ -232,23 +232,6 @@ public class ARMV7JTTTest extends MaxTestCase {
         return simulatedRegisters;
     }
 
-    private long[] generateAndTest(long[] expected, boolean[] tests, MaxineARMv7Tester.BitsFlag[] masks) throws Exception {
-        ARMV7CodeWriter code = new ARMV7CodeWriter(theCompiler.getMacroAssembler().codeBuffer);
-        code.createCodeFile();
-        MaxineARMv7Tester r = new MaxineARMv7Tester(expected, tests, masks);
-        r.cleanFiles();
-        r.cleanProcesses();
-        r.assembleStartup();
-        r.compile();
-        r.link();
-        long[] simulatedRegisters = r.runRegisteredSimulation();
-        r.cleanProcesses();
-        if (POST_CLEAN_FILES) {
-            r.cleanFiles();
-        }
-        return simulatedRegisters;
-    }
-
     public ARMV7JTTTest() {
         initTests();
     }
