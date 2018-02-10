@@ -226,4 +226,9 @@ public class Aarch64 extends CiArchitecture {
         assert !r31.equals(reg) : "r31 should not be used.";
         return isIntReg(reg) && !reg.equals(zr);
     }
+
+    @Override
+    public boolean isAarch64() {
+        return true;
+    }
 }

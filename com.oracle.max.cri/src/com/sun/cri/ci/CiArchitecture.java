@@ -192,6 +192,10 @@ public abstract class CiArchitecture {
         return false;
     }
 
+    public boolean isAarch64() {
+        return false;
+    }
+
     /**
      * Checks whether the architecture is SPARC.
      * @return {@code true} if the architecture is SPARC
