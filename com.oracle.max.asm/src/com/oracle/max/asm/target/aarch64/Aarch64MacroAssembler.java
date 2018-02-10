@@ -597,6 +597,75 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         str(64, Aarch64.r8, dst);
     }
 
+    public void decrementq(CiRegister reg, int value) {
+        if (value == Integer.MIN_VALUE) {
+            subq(reg, value);
+            return;
+        }
+        if (value < 0) {
+            incrementq(reg, -value);
+            return;
+        }
+        if (value == 0) {
+            return;
+        }
+        if (value == 1 && AsmOptions.UseIncDec) {
+            decq(reg);
+        } else {
+            subq(reg, value);
+        }
+    }
+
+    public void incrementq(CiRegister reg, int value) {
+        if (value == Integer.MIN_VALUE) {
+            addq(reg, value);
+            return;
+        }
+        if (value < 0) {
+            decrementq(reg, -value);
+            return;
+        }
+        if (value == 0) {
+            return;
+        }
+        if (value == 1 && AsmOptions.UseIncDec) {
+            incq(reg);
+        } else {
+            addq(reg, value);
+        }
+    }
+
+    public void xorptr(CiRegister dst, CiRegister src) {
+        xorq(dst, src);
+    }
+
+    public void xorptr(CiRegister dst, CiAddress src) {
+        xorq(dst, src);
+    }
+
+    public void restore(CiCalleeSaveLayout csl, int frameToCSA) {
+        CiRegisterValue frame = frameRegister.asValue();
+        for (CiRegister r : csl.registers) {
+            int offset = csl.offsetOf(r);
+            int displacement = offset + frameToCSA;
+            int add = (displacement < 0) ? 0 : 1;
+            if (displacement < 1020 && displacement > -1020) {
+                if (r.isCpu()) {
+                    ldr(64, r, Aarch64Address.createUnscaledImmediateAddress(frameRegister, displacement));
+                } else if (r.isFpu()) {
+                    fldr(64, r, Aarch64Address.createUnscaledImmediateAddress(frameRegister, displacement));
+                }
+            } else {
+                setUpScratch(new CiAddress(target.wordKind, frame, frameToCSA + offset));
+                if (r.isCpu()) {
+                    ldr(64, r, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r12));
+                } else if (r.isFpu()) {
+                    fldr(64, r, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r12));
+                }
+            }
+        }
+    }
+
     /**
      * @return Number of instructions necessary to load immediate into register.
      */
@@ -961,6 +1030,18 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      */
     public void eor(int size, CiRegister dst, CiRegister src1, CiRegister src2) {
         super.eor(size, dst, src1, src2, ShiftType.LSL, 0);
+    }
+
+    public void xorq(CiRegister dest, CiAddress src) {
+        assert dest.isValid();
+        setUpScratch(src);
+        eor(64, dest, dest, scratchRegister);
+    }
+
+    public void xorq(CiRegister dest, CiRegister src) {
+        assert dest.isValid();
+        assert src.isValid();
+        eor(64, dest, dest, src);
     }
 
     /**
@@ -1346,6 +1427,91 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
 
     public final void call() {
         nop();
+    }
+
+    public final void ret() {
+        pop(1 << 15);
+    }
+
+    public final void ret(int imm16) {
+        if (imm16 == 0) {
+            ret();
+        } else {
+            addq(Aarch64.sp, imm16);
+            ret();
+        }
+    }
+
+    public void leaq(CiRegister dest, CiAddress addr) {
+        if (addr == CiAddress.Placeholder) {
+            nop(4);
+        } else {
+            setUpScratch(addr);
+            mov(64, dest, Aarch64.r12);
+        }
+    }
+
+    public void pause() {
+        push(1 | 2 | 4 | 8 | 128);
+        mov32BitConstant(Aarch64.r7, 158); // sched_yield
+        emitInt(0xd4000001); // svc 0
+        pop(1 | 2 | 4 | 8 | 128);
+    }
+
+    // TODO: emit proper opcode
+    public void int3() {
+//        emitInt(0xFEDEFFE7);
+        throw new Error("unimplemented");
+    }
+
+    public final void crashme() {
+        eor(64, Aarch64.r12, Aarch64.r12, Aarch64.r12);
+        insertForeverLoop();
+        ldr(64, Aarch64.r12, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r12));
+    }
+
+    public void insertForeverLoop() {
+        Aarch64Label forever = new Aarch64Label();
+        bind(forever);
+        branchConditionally(ConditionFlag.AL, forever);
+    }
+
+    public void asr(CiRegister ciRegister, CiRegister dest, int i) {
+        // TODO Port from ARMv7
+        throw new Error("unimplemented");
+    }
+
+    public void xchgptr(CiRegister src1, CiRegister src2) {
+        CiRegister tmp = Aarch64.r8;
+        assert src1 != tmp && src2 != tmp;
+        mov(64, tmp, src1);
+        mov(64, src1, src2);
+        mov(64, src2, tmp);
+    }
+
+    public void movlong(CiRegister dst, long src, CiKind dstKind) {
+        // TODO Port from ARMv7
+        throw new Error("unimplemented");
+    }
+
+    public void store(CiRegister r8, CiAddress addr, CiKind i) {
+        // TODO Port from ARMv7
+        throw new Error("unimplemented");
+    }
+
+    public void restoreFromFP(int i) {
+        // TODO Auto-generated method stub
+        throw new Error("unimplemented");
+    }
+
+    public void saveInFP(int i) {
+        // TODO Auto-generated method stub
+        throw new Error("unimplemented");
+    }
+
+    public void load(CiRegister asRegister, CiAddress addr, CiKind f) {
+        // TODO Auto-generated method stub
+        throw new Error("unimplemented");
     }
 
 // /**
