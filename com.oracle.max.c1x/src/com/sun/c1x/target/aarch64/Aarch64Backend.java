@@ -79,8 +79,7 @@ public class Aarch64Backend extends Backend {
 
     @Override
     public CiXirAssembler newXirAssembler() {
-        throw Util.unimplemented();
-//        return new Aarch64XirAssembler(compiler.target);
+        return new Aarch64XirAssembler(compiler.target);
     }
 
     @Override
