@@ -145,6 +145,8 @@ public class MaxineTester {
     private static final Option<Boolean> helpOption = options.newBooleanOption("help", false,
                     "Show help message and exit.");
     private static final Option<String> graalJarOption = options.newStringOption("graal-jar", null, "location of graal.jar");
+    private static final Option<Boolean> runOnlyFailed = options.newBooleanOption("run-only-failed", false,
+                    "Only run tests that failed in the last run and thus are listed in the *.failed file.");
 
     private static String[] imageConfigs = null;
     private static Date startDate;
@@ -558,9 +560,10 @@ public class MaxineTester {
         public static void main(String[] args) throws Throwable {
             System.setErr(System.out);
 
-            final String testClassName = args[0];
-            final File passedFile = new File(args[1]);
-            final File failedFile = new File(args[2]);
+            final String  testClassName = args[0];
+            final File    passedFile    = new File(args[1]);
+            final File    failedFile    = new File(args[2]);
+            final boolean runOnlyFailed = Boolean.parseBoolean(args[3]);
 
             final Class<?> testClass = Class.forName(testClassName);
 
@@ -609,14 +612,15 @@ public class MaxineTester {
                 }
             });
 
-            junit.run(generateJUnitRequest(testClass, failingTests));
+            junit.run(generateJUnitRequest(testClass, failingTests, runOnlyFailed));
             passed.close();
             failed.close();
         }
 
-        private static Request generateJUnitRequest(Class<?> testClass, final ArrayList<String> failingTests) {
+        private static Request generateJUnitRequest(Class<?> testClass, final ArrayList<String> failingTests,
+                                                    boolean runOnlyFailed) {
             Request request = Request.aClass(testClass);
-            if (!failingTests.isEmpty()) {
+            if (runOnlyFailed && !failingTests.isEmpty()) {
                 Filter failedFilter = new Filter() {
 
                     @Override
@@ -1175,6 +1179,7 @@ public class MaxineTester {
             javaCommand.addArgument(junitTest);
             javaCommand.addArgument(passedFile.getName());
             javaCommand.addArgument(failedFile.getName());
+            javaCommand.addArgument(runOnlyFailed.getString());
 
             final String[] command = javaCommand.getExecArgs(javaExecutableOption.getValue());
 
