@@ -39,6 +39,7 @@ public class Aarch64Assembler extends AbstractAssembler {
      * The register to which {@link CiRegister#Frame} and {@link CiRegister#CallerFrame} are bound.
      */
     public final CiRegister frameRegister;
+    public final CiRegister scratchRegister;
 
     @Override
     public void patchJumpTarget(int branch, int target) {
@@ -540,6 +541,7 @@ public class Aarch64Assembler extends AbstractAssembler {
     public Aarch64Assembler(CiTarget target, RiRegisterConfig registerConfig) {
         super(target);
         this.frameRegister = registerConfig == null ? null : registerConfig.getFrameRegister();
+        this.scratchRegister = registerConfig == null ? Aarch64.r16 : registerConfig.getScratchRegister();
     }
 
     /* Conditional Branch (5.2.1) */
@@ -1557,7 +1559,9 @@ public class Aarch64Assembler extends AbstractAssembler {
     private void addSubShiftedInstruction(CiRegister dst, CiRegister src1,
                                           CiRegister src2, ShiftType shiftType, int imm,
                                           InstructionType type, Instruction instr) {
-        assert all(IS_GENERAL_PURPOSE_OR_ZERO_REG, dst, src1, src2);
+
+        assert all(IS_GENERAL_PURPOSE_OR_ZERO_REG, dst, src1);
+        assert all(IS_GENERAL_PURPOSE_OR_SP_REG, src2);
         assert shiftType != ShiftType.ROR;
         assert imm >= 0 && imm < type.width;
         int instrEncoding = instr.encoding | AddSubShiftedOp;
@@ -1620,6 +1624,22 @@ public class Aarch64Assembler extends AbstractAssembler {
         //TODO unit test CPSR
         assert all(IS_GENERAL_PURPOSE_OR_ZERO_REG, dst, src2) && Aarch64.isGeneralPurposeOrSpReg(src1);
         addSubExtendedInstruction(dst, src1, src2, extendType, shiftAmt, generalFromSize(size), Instruction.ADDS);
+    }
+
+    protected void checkConstraint(boolean passed, String expression) {
+        if (!passed) {
+            throw new IllegalArgumentException(expression);
+        }
+    }
+
+    public void addlsl(final CiRegister rd, final CiRegister rn, final CiRegister rm, final int shiftImm) {
+        int instruction = 0x8b000000;
+        checkConstraint(0 <= shiftImm && shiftImm <= 31, "0 <= shitImm && shitImm <= 31");
+        instruction |= rd.getEncoding();
+        instruction |= rn.getEncoding() << 5;
+        instruction |= shiftImm << 10;
+        instruction |= rm.getEncoding() << 16;
+        emitInt(instruction);
     }
 
     /**
@@ -2623,7 +2643,8 @@ public class Aarch64Assembler extends AbstractAssembler {
         LOAD_STORE(0x9, "ISHLD"),
         STORE_STORE(0xA, "ISHST"),
         STORE_LOAD(0xA, "ISHST"), /* not too sure about this */
-        ANY_ANY(0xB, "ISH");
+        ANY_ANY(0xB, "ISH"),
+        SY(0xF, "SY");
 
         public final int encoding;
         public final String optionName;

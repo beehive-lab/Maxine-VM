@@ -84,6 +84,7 @@ public class Aarch64 extends CiArchitecture {
     // Register used to store metaspace method.
     // see definition in sharedRuntime_aarch64.cpp:gen_c2i_adapter
     public static final CiRegister metaspaceMethodRegister = r12;
+    public static final CiRegister LATCH_REGISTER = r10;
 /********************************************************************************************************/
 
     // Floating point and SIMD registers

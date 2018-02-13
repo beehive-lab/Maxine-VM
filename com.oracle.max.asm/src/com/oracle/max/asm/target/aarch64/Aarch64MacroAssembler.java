@@ -268,6 +268,46 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         }
     }
 
+    public void membar(int barriers) {
+        int instruction = 0xd5033f9f; // DSB SY
+        emitInt(instruction);
+        instruction = 0xd5033fdf; // ISB SY
+        emitInt(instruction);
+    }
+
+    // The same as casInt except the last conditional move since it is added implicitly by the LIR generator.
+    public final void casIntAsmTest(CiRegister newValue, CiRegister cmpValue, CiAddress address) {
+        assert Aarch64.r8 != cmpValue;
+        assert Aarch64.r8 != newValue;
+        assert newValue != cmpValue;
+        assert Aarch64.r0 == cmpValue;
+
+        Aarch64Label atomicFail = new Aarch64Label();
+        Aarch64Label notEqualTocmpValue = new Aarch64Label();
+
+        bind(atomicFail);
+        membar(-1);
+        setUpScratch(address); // r12 has the address to CAS
+        Aarch64Address scratchAddress = Aarch64Address.createRegisterOffsetAddress(scratchRegister, Aarch64.zr, false);
+        ldxr(64, Aarch64.r8, scratchAddress); // r8 has the current Value
+        cmp(64, cmpValue, Aarch64.r8); // compare r8 with cmpValue
+        stxr(64, Aarch64.r8, newValue, scratchAddress); // if equal, store newValue to address and
+                                                                         // result to r8
+        branchConditionally(ConditionFlag.NE, notEqualTocmpValue); // we were not equal to the cmpValue
+
+        // If the Condition isa Equal then the strex took place but it MIGHT have failed so we need to test for this.
+
+        mov64BitConstant(Aarch64.r12, 1); // r12 has value 1
+        cmp(64, Aarch64.r8, Aarch64.r12);
+        // If r8 is equal to r12 then there was an issue with atomicity so do the operation again
+        branchConditionally(ConditionFlag.EQ, atomicFail);
+        mov(64, cmpValue, newValue); // differing from the real CAS we return the value we
+                                                               // stored
+        bind(notEqualTocmpValue);
+        cmp(64, newValue, cmpValue);
+        dmb(BarrierKind.SY);
+    }
+
     /**
      * Calculate the address and emit an appropriate branch instruction.
      * @param cc - the condition code
@@ -336,6 +376,52 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         }
     }
 
+    private int numInstructions(CiAddress addr) {
+        CiRegister index = addr.index();
+        int disp = addr.displacement;
+        if (disp != 0) {
+            if (index.isValid()) {
+                return 4;
+            } else {
+                return 3;
+            }
+        } else {
+            return 2;
+        }
+    }
+
+    public void setUpScratch(CiAddress addr) {
+        CiRegister base = addr.base();
+        CiRegister index = addr.index();
+        CiAddress.Scale scale = addr.scale;
+        int disp = addr.displacement;
+
+        if (addr == CiAddress.Placeholder) {
+            nop(numInstructions(addr));
+            return;
+        }
+        assert !(base.isValid() && disp == 0 && base.compareTo(Aarch64.LATCH_REGISTER) == 0);
+        assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
+
+        if (base.isValid() || base.compareTo(CiRegister.Frame) == 0) {
+            if (base == CiRegister.Frame) {
+                base = frameRegister;
+            }
+            if (disp != 0) {
+                mov64BitConstant(scratchRegister, disp);
+                add(64, scratchRegister, scratchRegister, base, ShiftType.LSL, 0);
+                if (index.isValid()) {
+                    addlsl(scratchRegister, scratchRegister, index, scale.log2);
+                }
+            } else {
+                if (index.isValid()) {
+                    addlsl(scratchRegister, base, index, scale.log2);
+                } else {
+                    mov(64, scratchRegister, base);
+                }
+            }
+        }
+    }
 
     /**
      * Push a register onto the stack using 16byte alignment.
