@@ -86,8 +86,7 @@ public class Aarch64Backend extends Backend {
     public CompilerStub emit(Id stub) {
         final C1XCompilation comp = new C1XCompilation(compiler, null, -1, null, DebugInfoLevel.FULL);
         try {
-            throw Util.unimplemented();
-//            return new Aarch64CompilerStubEmitter(comp, stub.arguments, stub.resultKind).emit(stub);
+            return new Aarch64CompilerStubEmitter(comp, stub.arguments, stub.resultKind).emit(stub);
         } finally {
             comp.close();
         }
@@ -117,8 +116,7 @@ public class Aarch64Backend extends Backend {
     public CompilerStub emit(XirTemplate t) {
         final C1XCompilation comp = new C1XCompilation(compiler, null, -1, null, DebugInfoLevel.FULL);
         try {
-            throw Util.unimplemented();
-//            return new Aarch64CompilerStubEmitter(comp, getArgumentKinds(t), t.resultOperand.kind).emit(t);
+            return new Aarch64CompilerStubEmitter(comp, getArgumentKinds(t), t.resultOperand.kind).emit(t);
         } finally {
             comp.close();
         }
