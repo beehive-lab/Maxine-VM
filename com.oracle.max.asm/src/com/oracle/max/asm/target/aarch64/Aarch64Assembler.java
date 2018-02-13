@@ -33,6 +33,8 @@ public class Aarch64Assembler extends AbstractAssembler {
     private static final int Rs2Offset = 16;
     private static final int Rs3Offset = 10;
     private static final int RtOffset = 0;
+    private static final int Rt2Offset = 10;
+    private static final int RnOffset = 5;
     /**
      * The register to which {@link CiRegister#Frame} and {@link CiRegister#CallerFrame} are bound.
      */
@@ -202,6 +204,12 @@ public class Aarch64Assembler extends AbstractAssembler {
     private static final int BarrierOp = 0xD503301F;
     private static final int BarrierKindOffset = 8;
 
+
+    private static final int LoadStorePairOp = 0b101_0 << 26;
+    private static final int LoadStorePairPostIndexOp = 0b101_0_001 << 23;
+    private static final int LoadStorePairPreIndexOp = 0b101_0_011 << 23;
+    private static final int LoadStorePairImm7Offset = 15;
+
     /**
      * Encoding for all instructions.
      */
@@ -221,6 +229,10 @@ public class Aarch64Assembler extends AbstractAssembler {
         LDXR(0x081f7c00),
         LDAR(0x8dffc00),
         LDAXR(0x85ffc00),
+
+
+        LDP(0b1 << 22),
+        STP(0b0 << 22),
 
         STR(0x00000000),
         STXR(0x08007c00),
@@ -697,7 +709,7 @@ public class Aarch64Assembler extends AbstractAssembler {
 
 
     /**
-     * Mask for the displacement bits of a branch immediate
+     * Mask for the displacement bits of a branch immediate.
      */
     private static final int B_IMM_ADDRESS_MASK = 0x3FFFFFF;
 
@@ -718,6 +730,44 @@ public class Aarch64Assembler extends AbstractAssembler {
         return (displacement << 2) | 0xF0000000;
     }
 
+    /**
+     * Load Pair of Registers calculates an address from a base register value and an immediate
+     * offset, and stores two 32-bit words or two 64-bit doublewords to the calculated address, from
+     * two registers.
+     */
+    public void ldp(int size, CiRegister rt, CiRegister rt2, Aarch64Address address) {
+        assert size == 32 || size == 64;
+        loadStorePairInstruction(Instruction.LDP, rt, rt2, address, generalFromSize(size));
+    }
+
+    /**
+     * Store Pair of Registers calculates an address from a base register value and an immediate
+     * offset, and stores two 32-bit words or two 64-bit doublewords to the calculated address, from
+     * two registers.
+     */
+    public void stp(int size, CiRegister rt, CiRegister rt2, Aarch64Address address) {
+        assert size == 32 || size == 64;
+        loadStorePairInstruction(Instruction.STP, rt, rt2, address, generalFromSize(size));
+    }
+
+    private void loadStorePairInstruction(Instruction instr, CiRegister rt, CiRegister rt2, Aarch64Address address, InstructionType type) {
+        int scaledOffset = NumUtil.getNbitNumberInt(7) & address.getImmediateRaw();  // LDP/STP use a 7-bit scaled
+                                                                     // offset
+        int memop = type.encoding | instr.encoding | scaledOffset << LoadStorePairImm7Offset | rt2(rt2) | rn(address.getBase()) | rt(rt);
+        switch (address.getAddressingMode()) {
+            case IMMEDIATE_SCALED:
+                emitInt(memop | LoadStorePairOp | (0b010 << 23));
+                break;
+            case IMMEDIATE_POST_INDEXED:
+                emitInt(memop | LoadStorePairOp | (0b001 << 23));
+                break;
+            case IMMEDIATE_PRE_INDEXED:
+                emitInt(memop | LoadStorePairOp | (0b011 << 23));
+                break;
+            default:
+                throw new Error("Unhandled addressing mode: " + address.getAddressingMode());
+        }
+    }
     /**
      * Patch the address part of a branch immediate instruction. Returns the
      * patched instruction.
@@ -2669,6 +2719,15 @@ public class Aarch64Assembler extends AbstractAssembler {
     private static int rt(CiRegister reg) {
         return reg.getEncoding() << RtOffset;
     }
+
+    private static int rt2(CiRegister reg) {
+        return reg.getEncoding() << Rt2Offset;
+    }
+
+    private static int rn(CiRegister reg) {
+        return reg.getEncoding() << RnOffset;
+    }
+
 
     private static final Predicate<CiRegister> IS_GENERAL_PURPOSE_REG = new Predicate<CiRegister>() {
         @Override

@@ -44,8 +44,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         junit.textui.TestRunner.run(Aarch64AssemblerTest.class);
     }
 
-    private static final long[] scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x7fffffff,
-                                                  0xffffffffffffL, 0x7fffffffffffffffL};
+    private static final long[] scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x7fffffff, 0xffffffffffffL, 0x7fffffffffffffffL};
     private static final boolean[] testValues = new boolean[MaxineAarch64Tester.NUM_REGS];
 
     // Each test should set the contents of this array appropriately,
@@ -54,7 +53,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
     // and for ignoring specific bits in the status register etc
     // concerning whether a carry has been set
     private static final MaxineAarch64Tester.BitsFlag[] bitmasks =
-            new MaxineAarch64Tester.BitsFlag[MaxineAarch64Tester.NUM_REGS];
+                    new MaxineAarch64Tester.BitsFlag[MaxineAarch64Tester.NUM_REGS];
     static {
         MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
     }
@@ -542,7 +541,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
 
     /* Integer Multiply/Divide (5.6). */
 
-   /* Floating-point Move (register) (5.7.2) */
+    /* Floating-point Move (register) (5.7.2) */
 
     public void test_float0() throws Exception {
         initialiseExpectedValues();
@@ -1209,6 +1208,23 @@ public class Aarch64AssemblerTest extends MaxTestCase {
             asm.mov32BitConstant(Aarch64.cpuRegisters[i], -2 * (expectedValues[i]));
             asm.ldr(VARIANT_64, Aarch64.cpuRegisters[i], address);
         }
+        generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
+    }
+
+    public void test_stp_ldp() throws Exception {
+        initialiseExpectedValues();
+        MaxineAarch64Tester.setAllBitMasks(bitmasks, MaxineAarch64Tester.BitsFlag.All64Bits);
+        initializeTestValues();
+        asm.codeBuffer.reset();
+        expectedValues[0] = expectedValues[2] = 0x00001;
+        expectedValues[1] = expectedValues[3] = 0xFFFFF;
+
+        testValues[0] = testValues[1] = testValues[2] = testValues[3] = true;
+        asm.mov64BitConstant(Aarch64.r0, expectedValues[0]);
+        asm.mov64BitConstant(Aarch64.r1, expectedValues[1]);
+        asm.stp(64, Aarch64.r0, Aarch64.r1, Aarch64Address.createPreIndexedImmediateAddress(Aarch64.sp, -2));
+        asm.ldp(64, Aarch64.r2, Aarch64.r3, Aarch64Address.createPostIndexedImmediateAddress(Aarch64.sp, 2));
+
         generateAndTest(expectedValues, testValues, bitmasks, asm.codeBuffer);
     }
 
