@@ -684,6 +684,53 @@ public class Aarch64Assembler extends AbstractAssembler {
         unconditionalBranchImmInstruction(imm28, Instruction.BL, -1);
     }
 
+
+    /**
+     * Return an integer containing the encoding of an unconditional branch to
+     * label (address) instruction.
+     * @param imm28 -- the branch target displacement
+     * @return
+     */
+    public static int blImmHelper(int imm28) {
+        return Instruction.BL.encoding | UnconditionalBranchImmOp | imm28;
+    }
+
+
+    /**
+     * Mask for the displacement bits of a branch immediate
+     */
+    private static final int B_IMM_ADDRESS_MASK = 0x3FFFFFF;
+
+    /**
+     * Return the displacement of the target of a branch immediate instruction.
+     * @param instruction
+     * @return
+     */
+    public static int bImmExtractDisplacement(int instruction) {
+        assert (UnconditionalBranchImmOp & instruction) != 0 : "Not a branch immediate instruction.";
+        int displacement = B_IMM_ADDRESS_MASK & instruction;
+
+        // check the sign bit
+        if (((1 << 25) & displacement) == 0) {
+            return displacement << 2;
+        }
+        // negative number -- sign extend.
+        return (displacement << 2) | 0xF0000000;
+    }
+
+    /**
+     * Patch the address part of a branch immediate instruction. Returns the
+     * patched instruction.
+     * @param instruction -- the instruction to be patched
+     * @param displacement -- the targets displacement
+     * @return
+     */
+    public static int bImmPatch(int instruction, int displacement) {
+        assert (UnconditionalBranchImmOp & instruction) != 0 : "Not a branch immediate instruction.";
+        assert NumUtil.isSignedNbit(28, displacement) && (displacement & 0x3) == 0
+                        : "Immediate has to be 28bit signed number and word aligned";
+        return (instruction & ~B_IMM_ADDRESS_MASK) | (displacement >> 2);
+    }
     private void unconditionalBranchImmInstruction(int imm28, Instruction instr, int pos) {
         assert NumUtil.isSignedNbit(28, imm28) && (imm28 & 0x3) == 0
                 : "Immediate has to be 28bit signed number and word aligned";
