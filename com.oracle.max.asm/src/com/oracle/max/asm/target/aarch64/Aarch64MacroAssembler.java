@@ -1509,9 +1509,122 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         throw new Error("unimplemented");
     }
 
-    public void load(CiRegister asRegister, CiAddress addr, CiKind f) {
-        // TODO Auto-generated method stub
-        throw new Error("unimplemented");
+    public void load(CiRegister dest, CiAddress addr, CiKind kind) {
+        CiAddress address = calculateAddress(addr, kind);
+        if (true) {
+            throw new Error("unimplemented");
+        }
+//        switch (kind) {
+//            case Short:
+//                ldrshw(ConditionFlag.Always, 1, 1, 0, dest, address.base(), address.displacement);
+//                break;
+//            case Char:
+//                ldruhw(ConditionFlag.Always, 1, 1, 0, dest, address.base(), address.displacement);
+//                break;
+//            case Boolean:
+//            case Byte:
+//                ldrsb(ConditionFlag.Always, 1, 1, 0, dest, address.base(), address.displacement);
+//                break;
+//            case Long:
+//                ldrd(ConditionFlag.Always, dest, address.base(), address.displacement);
+//                break;
+//            case Double:
+//                vldr(ConditionFlag.Always, dest, address.base(), address.displacement, CiKind.Double, CiKind.Int);
+//                break;
+//            case Float:
+//                vldr(ConditionFlag.Always, dest, address.base(), address.displacement, CiKind.Float, CiKind.Int);
+//                break;
+//            case Int:
+//            case Object:
+//                ldr(ConditionFlag.Always, dest, address.base(), address.displacement);
+//                break;
+//            default:
+//                assert false : "Unknown kind!";
+//        }
+    }
+
+    private CiAddress calculateAddress(CiAddress addr, CiKind kind) {
+        CiRegister base = addr.base();
+        CiRegister index = addr.index();
+        CiAddress.Scale scale = addr.scale;
+        int disp = addr.displacement;
+
+        assert addr != CiAddress.Placeholder;
+        assert !(base.isValid() && disp == 0 && base.compareTo(Aarch64.LATCH_REGISTER) == 0);
+        assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
+
+        if (base == CiRegister.Frame) {
+            base = frameRegister;
+        }
+
+        switch (addr.format()) {
+            case BASE:
+                break;
+            case BASE_DISP:
+                if (Aarch64Immediates.isValidDisp(disp, kind)) {
+                    break;
+                } else if (Aarch64Immediates.isValidImmediate(Math.abs(disp))) {
+                    if (true) {
+                        throw new Error("unimplemented");
+                    }
+//                    if (disp >= 0) {
+//                        add12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, Aarch64Immediates.calculateShifter(disp));
+//                    } else {
+//                        sub12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, Aarch64Immediates.calculateShifter(disp));
+//                    }
+//                    base = scratchRegister;
+//                    disp = 0;
+                } else {
+                    if (true) {
+                        throw new Error("unimplemented");
+                    }
+//                    movImmediate(ConditionFlag.Always, scratchRegister, disp);
+//                    addRegisters(ConditionFlag.Always, false, scratchRegister, base, scratchRegister, 0, 0);
+//                    base = scratchRegister;
+//                    disp = 0;
+                }
+                break;
+            case BASE_INDEX:
+                if (true) {
+                    throw new Error("unimplemented");
+                }
+//                addlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
+                base = scratchRegister;
+                disp = 0;
+                break;
+            case BASE_INDEX_DISP:
+                if (Aarch64Immediates.isValidDisp(disp, kind)) {
+                    if (true) {
+                        throw new Error("unimplemented");
+                    }
+//                    addlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
+//                    base = scratchRegister;
+                } else if (Aarch64Immediates.isValidImmediate(Math.abs(disp))) {
+                    if (true) {
+                        throw new Error("unimplemented");
+                    }
+//                    if (disp > 0) {
+//                        add12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, Aarch64Immediates.calculateShifter(disp));
+//                    } else {
+//                        sub12BitImmediate(ConditionFlag.Always, false, scratchRegister, base, Aarch64Immediates.calculateShifter(disp));
+//                    }
+//                    addlsl(ConditionFlag.Always, false, scratchRegister, base, index, scale.log2);
+//                    base = scratchRegister;
+//                    disp = 0;
+                } else {
+                    if (true) {
+                        throw new Error("unimplemented");
+                    }
+//                    movImmediate(ConditionFlag.Always, scratchRegister, disp);
+//                    addRegisters(ConditionFlag.Always, false, scratchRegister, base, scratchRegister, 0, 0);
+//                    base = scratchRegister;
+//                    disp = 0;
+                }
+                break;
+            default:
+                assert false : "Unknown state!";
+        }
+        return new CiAddress(addr.kind, new CiRegisterValue(CiKind.Int, base), disp);
     }
 
 // /**
