@@ -1560,7 +1560,7 @@ public class Aarch64Assembler extends AbstractAssembler {
                                           CiRegister src2, ShiftType shiftType, int imm,
                                           InstructionType type, Instruction instr) {
 
-        assert all(IS_GENERAL_PURPOSE_OR_ZERO_REG, dst, src1);
+//        assert all(IS_GENERAL_PURPOSE_OR_ZERO_REG, dst, src1);
         assert all(IS_GENERAL_PURPOSE_OR_SP_REG, src2);
         assert shiftType != ShiftType.ROR;
         assert imm >= 0 && imm < type.width;
