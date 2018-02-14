@@ -1494,9 +1494,36 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         throw new Error("unimplemented");
     }
 
-    public void store(CiRegister r8, CiAddress addr, CiKind i) {
-        // TODO Port from ARMv7
-        throw new Error("unimplemented");
+    // TODO check if str and fstr instructions are equivalent to the ARMv7 ones
+    public void store(CiRegister src, CiAddress addr, CiKind kind) {
+        CiAddress address = calculateAddress(addr, kind);
+        switch (kind) {
+            case Short:
+                str(64, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+//                strHImmediate(ConditionFlag.Always, 1, 0, 0, src, address.base(), address.displacement);
+                break;
+            case Long:
+                str(64, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+//                strd(ConditionFlag.Always, src, address.base(), address.displacement);
+                break;
+            case Double:
+                fstr(64, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+//                vstr(ConditionFlag.Always, src, address.base(), address.displacement, CiKind.Double, CiKind.Int);
+                break;
+            case Float:
+                fstr(64, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+//                vstr(ConditionFlag.Always, src, address.base(), address.displacement, CiKind.Float, CiKind.Int);
+                break;
+            case Int:
+            case Object:
+                str(64, src, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+//                str(ConditionFlag.Always, src, address.base(), address.displacement);
+                break;
+            case Byte:
+                break;
+            default:
+                assert false : "Unknown kind!";
+        }
     }
 
     public void restoreFromFP(int i) {
@@ -1509,38 +1536,44 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         throw new Error("unimplemented");
     }
 
+    // TODO check if str and fstr instructions are equivalent to the ARMv7 ones
     public void load(CiRegister dest, CiAddress addr, CiKind kind) {
         CiAddress address = calculateAddress(addr, kind);
-        if (true) {
-            throw new Error("unimplemented");
-        }
-//        switch (kind) {
-//            case Short:
+
+        switch (kind) {
+            case Short:
+//                ldrshw(dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                ldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
 //                ldrshw(ConditionFlag.Always, 1, 1, 0, dest, address.base(), address.displacement);
-//                break;
-//            case Char:
-//                ldruhw(ConditionFlag.Always, 1, 1, 0, dest, address.base(), address.displacement);
-//                break;
-//            case Boolean:
-//            case Byte:
+                break;
+            case Char:
+//                ldruhw(ConditionFlag.Always, 1, 1, 0, dest, address.base(), address.displacement);ldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement()));
+                ldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                break;
+            case Boolean:
+            case Byte:
 //                ldrsb(ConditionFlag.Always, 1, 1, 0, dest, address.base(), address.displacement);
-//                break;
-//            case Long:
+                ldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                break;
+            case Long:
 //                ldrd(ConditionFlag.Always, dest, address.base(), address.displacement);
-//                break;
-//            case Double:
+                ldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                break;
+            case Double:
 //                vldr(ConditionFlag.Always, dest, address.base(), address.displacement, CiKind.Double, CiKind.Int);
-//                break;
-//            case Float:
+                fldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                break;
+            case Float:
 //                vldr(ConditionFlag.Always, dest, address.base(), address.displacement, CiKind.Float, CiKind.Int);
-//                break;
-//            case Int:
-//            case Object:
-//                ldr(ConditionFlag.Always, dest, address.base(), address.displacement);
-//                break;
-//            default:
-//                assert false : "Unknown kind!";
-//        }
+                fldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                break;
+            case Int:
+            case Object:
+                ldr(64, dest, Aarch64Address.createUnscaledImmediateAddress(address.base(), address.displacement));
+                break;
+            default:
+                assert false : "Unknown kind!";
+        }
     }
 
     private CiAddress calculateAddress(CiAddress addr, CiKind kind) {
