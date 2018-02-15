@@ -371,8 +371,18 @@ public class Aarch64T1XCompilation extends T1XCompilation {
         // XXX Implement me
     }
 
+    /**
+     * Return the displacement which when subtracted from the stack pointer address
+     * will position the frame pointer between the non-parameter java locals and the
+     * Maxine T1X template slots (see frame layout).
+     *
+     * @return
+     */
     private int framePointerAdjustment() {
-        final int enterSize = frame.frameSize() - Word.size();
+        /*
+         * Frame size minus the slot used for the callers frame pointer.
+         */
+        final int enterSize = frame.frameSize() - JVMS_SLOT_SIZE;
         return enterSize - frame.sizeOfNonParameterLocals();
     }
 
@@ -384,12 +394,19 @@ public class Aarch64T1XCompilation extends T1XCompilation {
         }
 
         int frameSize = frame.frameSize();
-        // TODO implement asm.stp/ldp and change these pushes
+        /*
+         * We could <?> use STP here to stack the LR and FP (and LDP later to unstack). That may however affect some
+         * of the other machinery e.g. stack walking if there is the assumption that the caller's FP lives
+         * in a single JVMS_STACK_SLOT.
+         */
         asm.push(64, Aarch64.linkRegister);
         asm.push(64, Aarch64.fp);
         asm.sub(64, Aarch64.fp, Aarch64.sp, framePointerAdjustment()); // fp set relative to sp
-        // TODO check alignment constraints here
-        asm.sub(64, Aarch64.sp, Aarch64.sp, frame.frameSize() - Word.size());
+        /*
+         * Extend the stack pointer past the frame size minus the slot used for the callers
+         * frame pointer.
+         */
+        asm.sub(64, Aarch64.sp, Aarch64.sp, frameSize - JVMS_SLOT_SIZE);
 
 
         if (Trap.STACK_BANGING) {
@@ -426,9 +443,7 @@ public class Aarch64T1XCompilation extends T1XCompilation {
         asm.add(64, Aarch64.sp, Aarch64.fp, framePointerAdjustment());
         asm.pop(64, Aarch64.fp);
         asm.pop(64, Aarch64.linkRegister);
-        // XXX ret messes up the unit test framework - not sure if we need
-        // to call ret here anyways.
-        //asm.ret(Aarch64.linkRegister);
+        asm.ret(Aarch64.linkRegister);
     }
 
     /*
