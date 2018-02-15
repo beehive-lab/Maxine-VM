@@ -862,6 +862,20 @@ public class Aarch64Assembler extends AbstractAssembler {
         loadStoreInstruction(rt, address, generalFromSize(targetSize), Instruction.LDRS, transferSize);
     }
 
+// Might be same with ldrs from above
+// public void ldrshw(CiRegister dest, Aarch64Address address) {
+// if (address.getAddressingMode() == address.getAddressingMode().IMMEDIATE_UNSCALED) {
+// int instruction = 0x2e6 << 22;
+// instruction |= dest.getEncoding();
+// instruction |= address.base().getEncoding() << 5;
+// instruction |= address.getImmediate() << 10;
+// System.out.println("instruction is " + instruction);
+// emitInt(instruction);
+// } else {
+// throw new Error("unimplemented");
+// }
+// }
+
     /**
      * Stores register rt into memory pointed by address.
      *
@@ -1560,7 +1574,7 @@ public class Aarch64Assembler extends AbstractAssembler {
                                           CiRegister src2, ShiftType shiftType, int imm,
                                           InstructionType type, Instruction instr) {
 
-        assert all(IS_GENERAL_PURPOSE_OR_ZERO_REG, dst, src1);
+//        assert all(IS_GENERAL_PURPOSE_OR_ZERO_REG, dst, src1);
         assert all(IS_GENERAL_PURPOSE_OR_SP_REG, src2);
         assert shiftType != ShiftType.ROR;
         assert imm >= 0 && imm < type.width;

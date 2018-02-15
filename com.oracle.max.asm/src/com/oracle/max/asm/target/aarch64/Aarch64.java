@@ -85,6 +85,7 @@ public class Aarch64 extends CiArchitecture {
     // see definition in sharedRuntime_aarch64.cpp:gen_c2i_adapter
     public static final CiRegister metaspaceMethodRegister = r12;
     public static final CiRegister LATCH_REGISTER = r10;
+    public static final CiRegister rip = new CiRegister(48, -1, 0, "rip"); // TODO: see if this works
 /********************************************************************************************************/
 
     // Floating point and SIMD registers
@@ -229,5 +230,10 @@ public class Aarch64 extends CiArchitecture {
     public static boolean isGeneralPurposeOrSpReg(CiRegister reg) {
         assert !r31.equals(reg) : "r31 should not be used.";
         return isIntReg(reg) && !reg.equals(zr);
+    }
+
+    @Override
+    public boolean isAarch64() {
+        return true;
     }
 }
