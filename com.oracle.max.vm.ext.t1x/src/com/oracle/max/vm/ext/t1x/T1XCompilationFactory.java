@@ -36,7 +36,7 @@ public class T1XCompilationFactory {
         } else if (T1X.isARM()) {
             return MaxineVM.isHostedTesting() ? new ARMV7T1XCompilationTest(t1x) : new ARMV7T1XCompilation(t1x);
         } else if (T1X.isAARCH64()) {
-            return new Aarch64T1XCompilation(t1x);
+            return MaxineVM.isHostedTesting() ? new Aarch64T1XCompilationTest(t1x) : new Aarch64T1XCompilation(t1x);
         } else {
             throw T1X.unimplISA();
         }
