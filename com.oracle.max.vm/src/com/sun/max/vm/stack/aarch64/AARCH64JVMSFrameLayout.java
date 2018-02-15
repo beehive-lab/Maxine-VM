@@ -92,7 +92,7 @@ public class AARCH64JVMSFrameLayout extends JVMSFrameLayout {
     private static final int CALLERS_FP_SIZE = JVMS_SLOT_SIZE;
 
     /**
-     * Callers link register is pushed with 16 byte alignment
+     * Callers link register is pushed with 16 byte alignment.
      */
     private static final int CALLERS_LR_SIZE = JVMS_SLOT_SIZE;
 

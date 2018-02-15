@@ -57,10 +57,10 @@ public final class Aarch64TargetMethodUtil {
         int instruction = extractInstruction(code, callOffset);
         int oldDisplacement = Aarch64Assembler.bImmExtractDisplacement(instruction);
         instruction = Aarch64Assembler.bImmPatch(instruction, displacement);
-        code[callOffset + 0] = (byte)(instruction       & 0xFF);
-        code[callOffset + 1] = (byte)(instruction >> 8  & 0xFF);
-        code[callOffset + 2] = (byte)(instruction >> 16 & 0xFF);
-        code[callOffset + 3] = (byte)(instruction >> 24 & 0xFF);
+        code[callOffset + 0] = (byte) (instruction       & 0xFF);
+        code[callOffset + 1] = (byte) (instruction >> 8  & 0xFF);
+        code[callOffset + 2] = (byte) (instruction >> 16 & 0xFF);
+        code[callOffset + 3] = (byte) (instruction >> 24 & 0xFF);
         return oldDisplacement;
     }
 
@@ -81,7 +81,7 @@ public final class Aarch64TargetMethodUtil {
         int oldDisplacement = 0;
         FatalError.check(disp64 == disp32, "Code displacement out of 32-bit range");
         if (MaxineVM.isHosted()) {
-            byte code [] = tm.code();
+            byte [] code = tm.code();
             oldDisplacement = fixupCall28Site(code, callOffset, disp32);
         } else {
             final Pointer callSitePointer = callSite.toPointer();
