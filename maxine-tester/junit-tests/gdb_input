@@ -7,6 +7,7 @@ target remote localhost:1234
 # Add a breakpoint at the start of the generated code
 # (stored in code array)
 break *&code
+break c_entry 
 break success
 break failure
 # Continue execution till we get to the generated code
