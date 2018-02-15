@@ -164,7 +164,12 @@ public class Aarch64 extends CiArchitecture {
               0, /*LOAD_STORE | STORE_STORE*/   //implicitMemoryBarriers (no implicit barriers)
               -1,                               //nativeCallDisplacementOffset (ingore)
               32,                               //registerReferenceMapBitCount
-              8);                               //returnAddressSize (8 bytes)
+/* Although aarch64 addresses have a 64 bit precision, a callers return address effectively occupies a 16 byte
+ * stack slot in an activation frame according to the AAPCS sp alignment. The returnAddressSize
+ * field is used for stack navigation/alignment purposes.
+ */
+
+              16);                               //returnAddressSize (16 bytes)
     }
 
     /**
