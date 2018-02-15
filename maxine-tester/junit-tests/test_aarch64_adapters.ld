@@ -3,7 +3,7 @@ SECTIONS
 {
  . = 0x40000000;
  .startup . : { startup_aarch64.o(.text) }
- .text : { startup_aarch64.o(.text) prelude.o(.text) method.o(.text) adapter.o(.text) }
+ .text : { *(.text) }
  .data : { *(.data) }
  .bss : { *(.bss COMMON) }
  . = ALIGN(8);
