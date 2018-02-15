@@ -575,7 +575,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
             // stack the return address in the caller, i.e. the instruction following the branch to
             // here in the optimised caller.
             masm.push(64, Aarch64.linkRegister);
-            masm.call();
+            masm.bl(0);
             masm.bind(end);
             int size = masm.codeBuffer.position();
             assert size == PROLOGUE_SIZE : "Bad prologue";
