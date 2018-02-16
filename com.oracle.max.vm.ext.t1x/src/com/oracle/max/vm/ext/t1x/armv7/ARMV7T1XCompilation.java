@@ -499,8 +499,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
         }
 
         int frameSize = frame.frameSize();
-        asm.push(ConditionFlag.Always, asm.getRegisterList(ARMV7.LR), true);
-        asm.push(ConditionFlag.Always, asm.getRegisterList(ARMV7.FP), true);
+        asm.push(ConditionFlag.Always, asm.getRegisterList(ARMV7.LR, ARMV7.FP), true);
         asm.mov(ConditionFlag.Always, false, ARMV7.FP, ARMV7.rsp);
         asm.subq(ARMV7.rsp, frameSize - Word.size());
         asm.subq(ARMV7.FP, framePointerAdjustment());
