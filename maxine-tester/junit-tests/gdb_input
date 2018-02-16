@@ -7,7 +7,6 @@ target remote localhost:1234
 # Add a breakpoint at the start of the generated code
 # (stored in code array)
 break *&code
-break c_entry 
 break success
 break failure
 # Continue execution till we get to the generated code
@@ -18,6 +17,5 @@ continue
 # invoked through Java, gdb seems to ignore breakpoints.
 continue
 # print the registers
-continue
 info registers
 quit
