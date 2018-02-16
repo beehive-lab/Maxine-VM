@@ -28,7 +28,6 @@ import com.sun.max.vm.runtime.*;
 
 public final class Aarch64TargetMethodUtil {
 
-
     public static final int RIP_CALL_INSTRUCTION_SIZE = 4;
 
     /**
