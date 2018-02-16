@@ -537,6 +537,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
             }
             return PROLOGUE_SIZE;
         }
+
         /**
          *
          *
@@ -624,9 +625,6 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
             String description = Type.OPT2BASELINE + "-Adapter" + sig;
             return new Opt2BaselineAdapter(this, description, adapterFrameSize, code, callPos, callSize);
         }
-
-
-
     }
 
     private static void adapt(Aarch64MacroAssembler masm, Kind kind, CiRegister reg, int offset32) {
