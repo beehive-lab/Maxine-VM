@@ -770,6 +770,7 @@ public class Aarch64Assembler extends AbstractAssembler {
                 throw new Error("Unhandled addressing mode: " + address.getAddressingMode());
         }
     }
+
     /**
      * Patch the address part of a branch immediate instruction. Returns the
      * patched instruction.
@@ -783,6 +784,7 @@ public class Aarch64Assembler extends AbstractAssembler {
                         : "Immediate has to be 28bit signed number and word aligned";
         return (instruction & ~B_IMM_ADDRESS_MASK) | (displacement >> 2);
     }
+
     private void unconditionalBranchImmInstruction(int imm28, Instruction instr, int pos) {
         assert NumUtil.isSignedNbit(28, imm28) && (imm28 & 0x3) == 0
                 : "Immediate has to be 28bit signed number and word aligned";
