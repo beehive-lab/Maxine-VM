@@ -2383,20 +2383,22 @@ public class ARMV7JTTTest extends MaxTestCase {
         initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
-        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "add");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "getstaticObject");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "daload");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "d2i");
         byte[] code = getByteArray("test", "jtt.bytecode.BC_d2i02");
+        ClassActor anActor = HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.makeClassActor("jtt.bytecode.BC_d2i02");
         for (int i = 0; i < 5; i++) {
             double answer = jtt.bytecode.BC_d2i02.test(i);
-            initialiseFrameForCompilation(code, "(I)D", Modifier.PUBLIC | Modifier.STATIC);
+            initialiseFrameForCompilation(anActor.constantPool(), code, "(I)D", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.movImm32(ConditionFlag.Always, ARMV7.r0, i);
-            masm.push(ConditionFlag.Always, 1);
-            t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifge_2");
+            masm.movImm32(Always, r0, i);
+            masm.push(Always, 1);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(ConditionFlag.Always, 1);
+            masm.pop(Always, 1);
             String functionPrototype = ARMV7CodeWriter.preAmble("double ", "int", Integer.toString(i));
             Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, 0, masm.codeBuffer.copyData(0, masm.codeBuffer.position()), expectedValues, testvalues, bitmasks);
-            assert ((Double) registerValues[17]).doubleValue() == answer : "Failed incorrect value " + ((Double) registerValues[17]).doubleValue() + " " + answer;
+            assert (Double) registerValues[17] == answer : "Failed incorrect value " + registerValues[17] + " " + answer;
             theCompiler.cleanup();
         }
     }
