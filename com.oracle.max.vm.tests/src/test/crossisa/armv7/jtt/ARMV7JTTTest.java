@@ -380,6 +380,16 @@ public class ARMV7JTTTest extends MaxTestCase {
         entryPoint = entryPoint - minimumValue;
     }
 
+    public void pushArguments(ARMV7MacroAssembler masm, CiRegister... registers) {
+        // Place 42 in r2 and push it on the stack as padding to force
+        // the expected 8-byte stack alignment
+        masm.movImm32(Always, r12, 42);
+        for (CiRegister register: registers) {
+            masm.push(Always, masm.getRegisterList(r12));
+            masm.push(Always, masm.getRegisterList(register));
+        }
+    }
+
     public void test_C1X_jtt_BC_imul() throws Exception {
         initTests();
         int[] argsOne = {1, 0, 33, 1, -2147483648, 2147483647, -2147483648};
@@ -1772,13 +1782,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.movImm32(Always, r0, pair.first);
             masm.movImm32(Always, r1, pair.second);
-            // Place 42 in r2 and push it on the stack as padding to force
-            // the expected 8-byte stack alignment
-            masm.movImm32(Always, r2, 42);
-            masm.push(Always, masm.getRegisterList(r2));
-            masm.push(Always, masm.getRegisterList(r0));
-            masm.push(Always, masm.getRegisterList(r2));
-            masm.push(Always, masm.getRegisterList(r1));
+            pushArguments(masm, r0, r1);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(Always, masm.getRegisterList(r0));
             long[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
