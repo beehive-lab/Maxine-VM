@@ -153,6 +153,7 @@ public class JTConfig {
         jtt.bytecode.BC_iload_0_2.class,
         jtt.bytecode.BC_iload_1.class,
         jtt.bytecode.BC_iload_1_1.class,
+        jtt.bytecode.BC_iload_1_2.class,
         jtt.bytecode.BC_iload_2.class,
         jtt.bytecode.BC_iload_3.class,
         jtt.bytecode.BC_imul.class,

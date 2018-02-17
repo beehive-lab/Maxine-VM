@@ -19,6 +19,8 @@
  */
 package test.crossisa.armv7.jtt;
 
+import static com.oracle.max.asm.target.armv7.ARMV7.*;
+import static com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag.Always;
 import static com.sun.max.vm.MaxineVM.*;
 import static org.objectweb.asm.util.MaxineByteCode.getByteArray;
 
@@ -1747,6 +1749,38 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_1_1");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
+            long[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
+            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            theCompiler.cleanup();
+        }
+    }
+
+    public void test_T1X_jtt_BC_iload_1_2() throws Exception {
+        initTests();
+        List<Args> pairs = new LinkedList<>();
+        pairs.add(new Args(1, 0));
+        pairs.add(new Args(1, -1));
+        pairs.add(new Args(-1, 2));
+        pairs.add(new Args(1000345, 1));
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
+        for (Args pair : pairs) {
+            int answer = jtt.bytecode.BC_iload_1_2.test(pair.first, pair.second);
+            expectedValues[0] = answer;
+            byte[] code = getByteArray("test", "jtt.bytecode.BC_iload_1_2");
+            initialiseFrameForCompilation(code, "(II)I", Modifier.PUBLIC | Modifier.STATIC);
+            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
+            masm.movImm32(Always, r0, pair.first);
+            masm.movImm32(Always, r1, pair.second);
+            // Place 42 in r2 and push it on the stack as padding to force
+            // the expected 8-byte stack alignment
+            masm.movImm32(Always, r2, 42);
+            masm.push(Always, masm.getRegisterList(r2));
+            masm.push(Always, masm.getRegisterList(r0));
+            masm.push(Always, masm.getRegisterList(r2));
+            masm.push(Always, masm.getRegisterList(r1));
+            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            masm.pop(Always, masm.getRegisterList(r0));
             long[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
