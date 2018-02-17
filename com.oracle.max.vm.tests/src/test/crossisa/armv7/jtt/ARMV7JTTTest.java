@@ -497,38 +497,6 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    private void createTemplates() {
-        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
-        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
-        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "LDC");
-    }
-
-    public void test_T1X_jtt_loop_loop01() throws Exception {
-        vm().compilationBroker.setOffline(initialised);
-        CompilationBroker.singleton.setSimulateAdapter(true);
-        createTemplates();
-        String klassName = getKlassName("jtt.loop.Loop01");
-        vm().compilationBroker.setOffline(true);
-        List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "T1X");
-        CompilationBroker.singleton.setSimulateAdapter(false);
-        List<Args> pairs = new LinkedList<Args>();
-        pairs.add(new Args(-1, 2));
-        pairs.add(new Args(0, 0));
-        pairs.add(new Args(1, -1));
-        pairs.add(new Args(62, 2));
-        initializeCodeBuffers(methods, "Loop01.java", "boolean test(int)");
-
-        for (Args pair : pairs) {
-            boolean answer            = jtt.loop.Loop01.test(pair.first);
-            int     expectedValue     = answer ? 1 : 0;
-            String  functionPrototype = ARMV7CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
-            long[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            long    returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
-            theCompiler.cleanup();
-        }
-    }
-
     public void test_T1X_jtt_BC_ineg() throws Exception {
         initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
