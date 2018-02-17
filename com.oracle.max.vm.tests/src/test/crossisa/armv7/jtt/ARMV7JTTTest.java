@@ -618,13 +618,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         byte[] code = getByteArray("test", "jtt.bytecode.BC_ixor");
         initialiseFrameForCompilation(code, "(II)I", Modifier.PUBLIC | Modifier.STATIC);
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.movImm32(ConditionFlag.Always, ARMV7.r0, 50);
-        masm.movImm32(ConditionFlag.Always, ARMV7.r1, 39);
-        masm.push(ConditionFlag.Always, 1);
-        masm.push(ConditionFlag.Always, 2);
+        masm.movImm32(Always, r0, 50);
+        masm.movImm32(Always, r1, 39);
+        pushArguments(masm, r0, r1);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ixor");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        masm.pop(ConditionFlag.Always, 1);
+        masm.pop(Always, masm.getRegisterList(r0));
         long[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
