@@ -446,12 +446,11 @@ public class ARMV7JTTTest extends MaxTestCase {
             expectedValue = jtt.bytecode.BC_iadd3.test(argsOne[i], argsTwo[i]);
             initialiseFrameForCompilation(code, "(SS)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.movImm32(ConditionFlag.Always, ARMV7.r0, argsOne[i]);
-            masm.movImm32(ConditionFlag.Always, ARMV7.r1, argsTwo[i]);
-            masm.push(ConditionFlag.Always, 1);
-            masm.push(ConditionFlag.Always, 2);
+            masm.movImm32(Always, r0, argsOne[i]);
+            masm.movImm32(Always, r1, argsTwo[i]);
+            pushArguments(masm, r0, r1);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(ConditionFlag.Always, 1);
+            masm.pop(Always, masm.getRegisterList(r0));
             long[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
