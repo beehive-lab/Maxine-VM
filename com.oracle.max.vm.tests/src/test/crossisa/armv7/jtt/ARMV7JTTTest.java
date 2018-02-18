@@ -393,6 +393,17 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
+    public void vpushArguments(ARMV7MacroAssembler masm, CiRegister... registers) {
+        // Place 42 in r2 and push it on the stack as padding to force
+        // the expected 8-byte stack alignment
+        masm.movImm32(Always, r12, Float.floatToRawIntBits(42));
+        masm.vmov(Always, s31, r12, null, CiKind.Float, CiKind.Int);
+        for (CiRegister register: registers) {
+            masm.vpush(Always, s31, s31, CiKind.Float, CiKind.Float);
+            masm.vpush(Always, register, register, CiKind.Float, CiKind.Float);
+        }
+    }
+
     public void test_C1X_jtt_BC_imul() throws Exception {
         initTests();
         int[] argsOne = {1, 0, 33, 1, -2147483648, 2147483647, -2147483648};
@@ -1235,32 +1246,28 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_T1X_jtt_BC_XXXXfdiv() throws Exception {
+    public void test_T1X_jtt_BC_fdiv() throws Exception {
         MaxineARMv7Tester.DEBUGOBJECTS = false;
         initTests();
         float[] argOne = {14.0f};
         float[] argTwo = {7.0f};
-        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
-        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "freturn");
-        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "freturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "fdiv");
 
         byte[] code = getByteArray("test", "jtt.bytecode.BC_fdiv");
         for (int i = 0; i < argOne.length; i++) {
             initialiseFrameForCompilation(code, "(FF)F", Modifier.PUBLIC | Modifier.STATIC);
             float answer = jtt.bytecode.BC_fdiv.test(argOne[i], argTwo[i]);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.movImm32(ConditionFlag.Always, ARMV7.s0, Float.floatToRawIntBits(argOne[i]));
-            masm.movImm32(ConditionFlag.Always, ARMV7.s1, Float.floatToRawIntBits(argTwo[i]));
-            masm.vpush(ConditionFlag.Always, ARMV7.s0, ARMV7.s0, CiKind.Float, CiKind.Float);
-            masm.vpush(ConditionFlag.Always, ARMV7.s1, ARMV7.s1, CiKind.Float, CiKind.Float);
-
-            t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "fdiv");
+            masm.movImm32(Always, r0, Float.floatToRawIntBits(argOne[i]));
+            masm.movImm32(Always, r1, Float.floatToRawIntBits(argTwo[i]));
+            masm.vmov(Always, s0, r0, null, CiKind.Float, CiKind.Int);
+            masm.vmov(Always, s1, r1, null, CiKind.Float, CiKind.Int);
+            // Push each register twice to ensure 8-byte stack-alignment
+            vpushArguments(masm, s0, s1);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.vpop(ConditionFlag.Always, ARMV7.s0, ARMV7.s0, CiKind.Float, CiKind.Float);
-            String functionPrototype = ARMV7CodeWriter.preAmble("float", "float, float", Float.toString(argOne[i]) + "," + Float.toString(argTwo[i]));
-            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, 0, masm.codeBuffer.close(false), expectedValues, testvalues, bitmasks);
-            assert ((Float) registerValues[33]).floatValue() == answer : " FDIV T1X " + ((Float) registerValues[33]).floatValue() + " " + answer;
+            long[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
+            assert registerValues[20] == answer : "Failed incorrect value " + registerValues[20] + " " + answer;
         }
     }
 
