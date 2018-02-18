@@ -62,7 +62,7 @@ public class RISCV64CodeWriter {
 
     public static String preAmble(String returnType, String listOfTypes, String listOfValues) {
         String val = new String(returnType + " (*pf)(");
-        val += listOfTypes + ") = (" + returnType + "(*))(code);\n";
+        val += listOfTypes + ") = (" + returnType + "(*)(" + listOfTypes + "))(code);\n";
         val += "print_uart0(\"Changed!\");\n";
         val += "(*pf)(" + listOfValues + ");\n";
         return val;
