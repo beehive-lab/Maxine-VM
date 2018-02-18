@@ -69,11 +69,13 @@ public class Aarch64CodeWriter {
     }
 
     public void createStaticCodeStubsFile(String functionPrototype, byte[] stubs, int entryPoint) {
+        assert entryPoint > 0 : "Entry point cannot be negative : " + entryPoint
+                + " (0x" + Integer.toHexString(entryPoint) + ")";
+        assert entryPoint < (stubs.length + 1) * 4 : "Entry point must be within range of codeArray : " + entryPoint
+                + " (0x" + Integer.toHexString(entryPoint) + ")";
         try {
             PrintWriter writer = new PrintWriter("codebuffer.c", "UTF-8");
-            writer.println("unsigned char codeArray[" + ((totalInstructions + 1) * 4 + stubs.length) + "] __attribute__((aligned(0x1000))) = { \n");
-            log("unsigned char code[" + ((totalInstructions + 1) * 4 + stubs.length) + "] __attribute__((aligned(0x1000))) ;\n");
-            log("void c_entry() {");
+            writer.println("unsigned char codeArray[" + (stubs.length + 1) * 4 + "] __attribute__((aligned(0x1000))) = {");
             for (int i = 0; i < stubs.length; i += 4) {
                 writer.println("0x" + Integer.toHexString(stubs[i] & 0xFF) + ", " +
                                "0x" + Integer.toHexString(stubs[i + 1] & 0xFF) + ", " +
