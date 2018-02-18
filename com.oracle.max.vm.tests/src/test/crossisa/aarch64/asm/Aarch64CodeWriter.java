@@ -75,8 +75,10 @@ public class Aarch64CodeWriter {
             log("unsigned char code[" + ((totalInstructions + 1) * 4 + stubs.length) + "] __attribute__((aligned(0x1000))) ;\n");
             log("void c_entry() {");
             for (int i = 0; i < stubs.length; i += 4) {
-                writer.println("0x" + Integer.toHexString(stubs[i]) + ", " + "0x" + Integer.toHexString(stubs[i + 1]) + ", " + "0x" + Integer.toHexString(stubs[i + 2]) + ", " + "0x" +
-                                Integer.toHexString(stubs[i + 3]) + ",\n");
+                writer.println("0x" + Integer.toHexString(stubs[i] & 0xFF) + ", " +
+                               "0x" + Integer.toHexString(stubs[i + 1] & 0xFF) + ", " +
+                               "0x" + Integer.toHexString(stubs[i + 2] & 0xFF) + ", " +
+                               "0x" + Integer.toHexString(stubs[i + 3] & 0xFF) + ",");
             }
             // ret
             writer.println("0xd6, 0x5f, 0x03, 0xc0 };\n");
