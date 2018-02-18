@@ -2357,7 +2357,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_T1X_jtt_BC_d2i02() throws Exception {
+    /* Accesses a field. Our infrastructure does not yet support such kind of tests because it only generates the
+    machine code without passing the necessary data as well */
+    public void fixme_T1X_jtt_BC_d2i02() throws Exception {
         initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -2969,7 +2971,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_T1X_jtt_BC_getstatic_i() throws Exception {
+    /* Accesses a field. Our infrastructure does not yet support such kind of tests because it only generates the
+    machine code without passing the necessary data as well */
+    public void fixme_T1X_jtt_BC_getstatic_i() throws Exception {
         int[] argsOne = {0, -1, 2, 4};
         initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
