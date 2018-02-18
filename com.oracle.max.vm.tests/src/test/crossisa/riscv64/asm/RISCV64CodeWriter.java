@@ -91,32 +91,6 @@ public class RISCV64CodeWriter {
         }
     }
 
-    public void createCodeStubsFile(byte[] stubs, int entryPoint) {
-        try {
-            PrintWriter writer = new PrintWriter("codebuffer.c", "UTF-8");
-            writer.println("unsigned char codeArray[" + ((totalInstructions + 1) * 4 + stubs.length) + "] __attribute__((aligned(0x1000))) ;\n");
-            writer.println("void c_entry() {");
-            log("unsigned char code[" + ((totalInstructions + 1) * 4 + stubs.length) + "] __attribute__((aligned(0x1000))) ;\n");
-            log("void c_entry() {");
-            for (int i = 0; i < stubs.length; i += 4) {
-                writer.println("codeArray[" + i + " ] = " + stubs[i] + ";");
-                writer.println("codeArray[" + i + " + 1] = " + stubs[i + 1] + ";");
-                writer.println("codeArray[" + i + " + 2] = " + stubs[i + 2] + ";");
-                writer.println("codeArray[" + i + " + 3] = " + stubs[i + 3] + ";");
-            }
-            // jalr zero, ra, 0
-            writer.println("codeArray[" + (stubs.length + 3) + "] = " + 0x67 + ";");
-            writer.println("codeArray[" + (stubs.length + 2) + "] = " + 0x80 + ";");
-            writer.println("codeArray[" + (stubs.length + 1) + "] = " + 0x00 + ";");
-            writer.println("codeArray[" + (stubs.length) + "] = " + 0x00 + ";");
-            writer.println("unsigned char *code = codeArray + " + entryPoint + ";");
-            writer.close();
-        } catch (Exception e) {
-            System.err.println(e);
-            e.printStackTrace();
-        }
-    }
-
     public void createCodeFile() {
         try {
             PrintWriter writer = new PrintWriter("codebuffer.c", "UTF-8");
