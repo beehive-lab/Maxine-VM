@@ -65,7 +65,6 @@ public class ARMV7CodeWriter {
         val += listOfTypes + ") = (" + returnType + "(*))(code);\n";
         val += "print_uart0(\"Changed!\");\n";
         val += "(*pf)(" + listOfValues + ");\n";
-        val += "asm volatile(\"forever: b forever\");\n";
         return val;
     }
 
@@ -84,6 +83,7 @@ public class ARMV7CodeWriter {
             writer.println("unsigned char *code = codeArray + " + entryPoint + ";");
             writer.println("void c_entry() {");
             writer.print(functionPrototype);
+            writer.println("}");
             writer.close();
         } catch (Exception e) {
             System.err.println(e);
@@ -124,6 +124,11 @@ public class ARMV7CodeWriter {
             log("code[" + totalInstructions * 4 + "+2] = " + 0x2f + ";");
             writer.println("code[" + totalInstructions * 4 + "+3] = " + 0xe1 + ";");
             log("code[" + totalInstructions * 4 + "+3] = " + 0xe1 + ";");
+            String preAmble = preAmble("void", "int", "1");
+            writer.print(preAmble);
+            log(preAmble);
+            writer.println("}");
+            log("}");
             writer.close();
         } catch (Exception e) {
             System.err.println(e);
