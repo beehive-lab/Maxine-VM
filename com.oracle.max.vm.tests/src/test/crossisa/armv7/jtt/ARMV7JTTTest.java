@@ -174,9 +174,9 @@ public class ARMV7JTTTest extends MaxTestCase {
                     MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits,
                     MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits};
     // Checkstyle: start
-    private static int[] expectedValues = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    private static int[] expectedValues = new int[MaxineARMv7Tester.NUM_REGS];
     private static long[] expectedLongValues = {Long.MIN_VALUE, Long.MAX_VALUE};
-    private static boolean[] testvalues = new boolean[17];
+    private static boolean[] testvalues = new boolean[MaxineARMv7Tester.NUM_REGS];
 
     private String getKlassName(String klass) {
         return "^" + klass + "^";
@@ -243,6 +243,9 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     private void initTests() {
         try {
+            for (int i = 0; i < expectedValues.length; i++) {
+                expectedValues[i] = i;
+            }
 
             String[] args = new String[2];
             args[0] = new String("t1x");

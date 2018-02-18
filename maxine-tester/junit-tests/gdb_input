@@ -18,4 +18,5 @@ continue
 continue
 # print the registers
 info registers
+info float
 quit

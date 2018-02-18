@@ -22,8 +22,6 @@ package test.crossisa;
 import java.io.*;
 import java.math.*;
 
-import com.sun.max.vm.runtime.*;
-
 public abstract class CrossISATester {
 
     private static final   String ENABLE_QEMU    = "max.arm.qemu";
@@ -204,18 +202,26 @@ public abstract class CrossISATester {
             }
             String value = line.split("\\s+")[1];
 
-            BigInteger tmp = new BigInteger(value.substring(2, value.length()), 16);
+            BigInteger tmp;
+            if (value.startsWith("0x")) {
+                tmp = new BigInteger(value.substring(2, value.length()), 16);
+            } else {
+                try {
+                    tmp = new BigDecimal(value).toBigInteger();
+                } catch (NumberFormatException e) {
+                    System.out.println("Warning: Parsed NaN from register " + i + " assigning 0xdeadbeef value to it");
+                    tmp = BigInteger.valueOf(0xdeadbeef); // Use 0xdeadbeef as invalid value
+                }
+            }
             if (tmp.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
                 BigInteger result = BigInteger.valueOf(Long.MIN_VALUE);
-                result = result.multiply(BigInteger.valueOf(2)).add(tmp);
-                if (result.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
-                    throw FatalError.unimplemented();
-                } else {
-                    parsedValues[i] = result.longValue();
+                tmp = result.multiply(BigInteger.valueOf(2)).add(tmp);
+                if (tmp.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
+                    System.out.println("Warning: Value of " + i + " > Long.MAX_VALUE assigning 0xdeadbeef value to it");
+                    tmp = BigInteger.valueOf(0xdeadbeef);  // Use 0xdeadbeef as invalid value
                 }
-            } else {
-                parsedValues[i] = tmp.longValue();
             }
+            parsedValues[i] = tmp.longValue();
             if (++i >= numberOfRegisters) {
                 break;
             }

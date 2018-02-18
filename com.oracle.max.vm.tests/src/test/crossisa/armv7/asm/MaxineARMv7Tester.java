@@ -26,7 +26,7 @@ import test.crossisa.*;
 public class MaxineARMv7Tester extends CrossISATester {
 
     public static boolean DEBUGOBJECTS = false;
-    public static final int NUM_REGS = 17;
+    public static final int NUM_REGS = 52;
 
     /*
      * arm-unknown-eabi-gcc -c -march=armv7-a -g test_armv7.c -o test_armv7.o
@@ -82,7 +82,7 @@ public class MaxineARMv7Tester extends CrossISATester {
     @Override
     public long[] runRegisteredSimulation() throws Exception {
         runSimulation(false);
-        long[] simulatedValues = parseRegistersToFile(gdbOutput.getName(), "r0  ", "cpsr", NUM_REGS);
+        long[] simulatedValues = parseRegistersToFile(gdbOutput.getName(), "r0  ", "s31", NUM_REGS);
         // Treat values as ints not longs
         for (int i = 0; i < simulatedValues.length; i++) {
             if (simulatedValues[i] > Integer.MAX_VALUE) {

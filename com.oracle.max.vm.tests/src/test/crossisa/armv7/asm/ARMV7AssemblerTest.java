@@ -87,7 +87,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
 
     // The following values will be updated
     // to those expected to be found in a register after simulated execution of code.
-    private static int[] expectedValues = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
+    private static int[] expectedValues = new int[MaxineARMv7Tester.NUM_REGS];
 
     private static long[] expectedLongValues = {Long.MAX_VALUE - 100, Long.MAX_VALUE};
 
