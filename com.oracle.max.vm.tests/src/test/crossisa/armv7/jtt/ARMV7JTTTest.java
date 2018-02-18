@@ -3127,7 +3127,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         initTests();
         short[] argsOne = {1, 0, 33, 1, -128, 127, -32768, 32767};
         short[] argsTwo = {2, -1, 67, -1, 1, 1, 1, 1};
-        String klassName = getKlassName("jtt.bytecode.BC_iadd");
+        String klassName = getKlassName("jtt.bytecode.BC_iadd3");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_iadd3.java", "int test(short, short)");
@@ -3199,7 +3199,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         initTests();
         byte[] argsOne = {1, 0, 33, 1, -128, 127};
         byte[] argsTwo = {2, -1, 67, -1, 1, 1};
-        String klassName = getKlassName("jtt.bytecode.BC_iadd");
+        String klassName = getKlassName("jtt.bytecode.BC_iadd2");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_iadd2.java", "int test(byte, byte)");
