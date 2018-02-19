@@ -3100,7 +3100,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_FLOATIDIV_jtt_BC_div() throws Exception {
+    public void test_C1X_FLOATIDIV_jtt_BC_idiv() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
         initTests();
