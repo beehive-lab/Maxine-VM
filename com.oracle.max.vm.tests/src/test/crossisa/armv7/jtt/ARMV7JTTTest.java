@@ -4364,9 +4364,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_generic_compilation() throws Exception {
+    public void test_C1X_jtt_generic_compilation() throws Exception {
         vm().compilationBroker.setOffline(initialised);
-        String klassName = getKlassName("sun.misc.FloatingDecimal.developLongDigits");
+        String klassName = getKlassName("com.sun.max.vm.MaxineVM");
         // List<TargetMethod> methods = Compile.compileMethod(new String[] {klassName}, "C1X", "patchReturnAddress");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "MaxineVM.java", "int run(Pointer, int," + " Pointer, Word, Word, Word, Pointer, Pointer, Pointer, Pointer, int, Pointer)");
