@@ -1503,7 +1503,6 @@ public class ARMV7JTTTest extends MaxTestCase {
         for (Args pair : pairs) {
             int answer = jtt.bytecode.BC_iinc_1.test(pair.first);
             expectedValues[0] = answer;
-            System.out.println("iinc_1 " + answer);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_iinc_1");
             initialiseFrameForCompilation(code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
             ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
