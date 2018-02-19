@@ -3175,25 +3175,6 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_BC_ladd() throws Exception {
-        initTests();
-        int[] argsOne = {1, 0, 33, 1, -2147483648, -2147483647, 2147483647, 4080};
-        int[] argsTwo = {2, -1, 67, -1, 1, -2, 1, 134217728};
-        String klassName = getKlassName("jtt.bytecode.BC_iadd");
-        List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
-        initializeCodeBuffers(methods, "BC_iadd.java", "int test(int, int)");
-
-        int expectedValue = 0;
-        for (int i = 0; i < argsOne.length; i++) {
-            expectedValue = jtt.bytecode.BC_iadd.test(argsOne[i], argsTwo[i]);
-            String functionPrototype = ARMV7CodeWriter.preAmble("int", "int, int ", Integer.toString(argsOne[i]) + "," + Integer.toString(argsTwo[i]));
-            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            assert (Integer) registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
-            theCompiler.cleanup();
-        }
-    }
-
     public void test_C1X_jtt_BC_iadd2() throws Exception {
         initTests();
         byte[] argsOne = {1, 0, 33, 1, -128, 127};
