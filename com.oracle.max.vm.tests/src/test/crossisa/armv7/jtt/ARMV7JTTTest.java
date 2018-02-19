@@ -2151,7 +2151,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_ificmpne2() throws Exception {
+    public void test_T1X_jtt_BC_ificmpne2() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<Args>();
         pairs.add(new Args(0, 0));
@@ -2233,7 +2233,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_invokestatic() throws Exception {
+    public void test_C1X_jtt_BC_invokestatic() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         List<Args> pairs = new LinkedList<Args>();
         String klassName = getKlassName("jtt.bytecode.BC_invokestatic");
@@ -2253,7 +2253,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_f2d() throws Exception {
+    public void test_C1X_jtt_BC_f2d() throws Exception {
         String klassName = getKlassName("jtt.bytecode.BC_f2d");
         MaxineARMv7Tester.DEBUGOBJECTS = false;
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -2270,7 +2270,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_i2f() throws Exception {
+    public void test_C1X_jtt_BC_i2f() throws Exception {
         String klassName = getKlassName("jtt.bytecode.BC_i2f");
         MaxineARMv7Tester.DEBUGOBJECTS = false;
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -2286,7 +2286,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_f2b() throws Exception {
+    public void test_C1X_jtt_BC_f2b() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
         initTests();
@@ -2306,7 +2306,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_b2f() throws Exception {
+    public void test_C1X_jtt_BC_b2f() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
         initTests();
@@ -2326,7 +2326,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_d2f() throws Exception {
+    public void test_C1X_jtt_BC_d2f() throws Exception {
         String klassName = getKlassName("jtt.bytecode.BC_d2f");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods);
@@ -2341,7 +2341,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_d2i01() throws Exception {
+    public void test_C1X_jtt_BC_d2i01() throws Exception {
         String klassName = getKlassName("jtt.bytecode.BC_d2i01");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_d2i01.java", "int test(double)");
@@ -2423,7 +2423,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_f2i01() throws Exception {
+    public void test_C1X_jtt_BC_f2i01() throws Exception {
         String klassName = getKlassName("jtt.bytecode.BC_f2i01");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods);
@@ -2450,7 +2450,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_i2d() throws Exception {
+    public void test_C1X_jtt_BC_i2d() throws Exception {
         String klassName = getKlassName("jtt.bytecode.BC_i2d");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods);
@@ -2885,7 +2885,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_fmul() throws Exception {
+    public void test_C1X_jtt_BC_fmul() throws Exception {
         initTests();
         float[] argsOne = {311.0f, 2f, -2.5f};
         float[] argsTwo = {10f, 20.1f, -6.01f};
@@ -2902,7 +2902,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_fadd() throws Exception {
+    public void test_C1X_jtt_BC_fadd() throws Exception {
         initTests();
         float[] argsOne = {311.0f, 2f, -2.5f, 0.0f, 1.0f};
         float[] argsTwo = {10f, 20.1f, -6.01f, 0.0f, 1.0f};
@@ -2919,7 +2919,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_fsub() throws Exception {
+    public void test_C1X_jtt_BC_fsub() throws Exception {
         initTests();
         float[] argsOne = {311.0f, 2f, -2.5f};
         float[] argsTwo = {10f, 20.1f, -6.01f};
@@ -2936,7 +2936,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_fdiv() throws Exception {
+    public void test_C1X_jtt_BC_fdiv() throws Exception {
         initTests();
         float[] argsOne = {311.0f, 2f};
         float[] argsTwo = {10f, 20.1f};
@@ -3012,7 +3012,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_irem() throws Exception {
+    public void test_C1X_jtt_BC_irem() throws Exception {
         initTests();
         int[] argsOne = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         int[] argsTwo = {2, 2, 2, 3, 3, 3, 3, 3, 3, 3};
@@ -3048,7 +3048,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_ddiv() throws Exception {
+    public void test_C1X_jtt_BC_ddiv() throws Exception {
         initTests();
         double[] argsOne = {311.0D, 2D, -10.0D};
         double[] argsTwo = {10D, 20.1D, 5.0D};
@@ -3194,7 +3194,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_fload() throws Exception {
+    public void test_C1X_jtt_BC_fload() throws Exception {
         initTests();
         float[] argsOne = {0.0f, 1.1f, -1.4f, 256.33f, 1000.001f};
         String klassName = getKlassName("jtt.bytecode.BC_fload");
@@ -3211,7 +3211,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_fload2() throws Exception {
+    public void test_C1X_jtt_BC_fload2() throws Exception {
         initTests();
         float[] argsOne = {0.0f, 1.1f, -1.4f, 256.33f, 1000.001f};
         float[] argsTwo = {17.1f, 2.5f, 45.32f, -44.5f, -990.9f};
@@ -3229,7 +3229,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_freturn() throws Exception {
+    public void test_C1X_jtt_BC_freturn() throws Exception {
         initTests();
         float[] argsOne = {0.0f, 1.1f, -1.4f, 256.33f, 1000.001f};
         String klassName = getKlassName("jtt.bytecode.BC_freturn");
@@ -3246,7 +3246,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_dreturn() throws Exception {
+    public void test_C1X_jtt_BC_dreturn() throws Exception {
         initTests();
         double[] argsOne = {0.0D, 1.1D, -1.4d, 256.33d, 1000.001d};
         String klassName = getKlassName("jtt.bytecode.BC_dreturn");
@@ -3263,7 +3263,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_dmul() throws Exception {
+    public void test_C1X_jtt_BC_dmul() throws Exception {
         initTests();
         double[] argsOne = {311.0D, 11.2D};
         double[] argsTwo = {10D, 2.0D};
@@ -3281,7 +3281,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_dsub() throws Exception {
+    public void test_C1X_jtt_BC_dsub() throws Exception {
         initTests();
         double[] argsOne = {0.0D, 1.0D, 253.11d, 0.0D};
         double[] argsTwo = {0.0D, 1.0D, 54.43d, 1.0D};
@@ -3299,7 +3299,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_dsub2() throws Exception {
+    public void test_C1X_jtt_BC_dsub2() throws Exception {
         initTests();
         double[] argsOne = {1.0D, 2.0d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dsub2");
@@ -3315,7 +3315,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_fneg() throws Exception {
+    public void test_C1X_jtt_BC_fneg() throws Exception {
         initTests();
         float[] argsOne = {0.0f, -1.01f, 7263.8734f, 0.0f, 7263.8743f};
         String klassName = getKlassName("jtt.bytecode.BC_fneg");
@@ -3351,7 +3351,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_XXdneg9() throws Exception {
+    public void test_C1X_jtt_BC_XXdneg9() throws Exception {
         initTests();
         double[] argsOne = {0.0D, -1.01D, 7263.8734d, 0.0d, -1.01d, 7263.8743d, 0.0d};
         double[] argsTwo = {1.0d, -2.01D, 8263.8734d, 1.0d, -2.01d, 8263.8734d, 1.0d};
@@ -3371,7 +3371,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lload_0() throws Exception {
+    public void test_C1X_jtt_BC_lload_0() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lload_0");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -3394,7 +3394,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lload_4() throws Exception {
+    public void test_C1X_jtt_BC_lload_4() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lload_4");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -3416,7 +3416,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lload_1() throws Exception {
+    public void test_C1X_jtt_BC_lload_1() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lload_1");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -3438,7 +3438,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lload_2() throws Exception {
+    public void test_C1X_jtt_BC_lload_2() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lload_2");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -3461,7 +3461,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lload_3() throws Exception {
+    public void test_C1X_jtt_BC_lload_3() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lload_3");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -3484,7 +3484,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_ladd() throws Exception {
+    public void test_C1X_jtt_BC_ladd() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_ladd");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -3510,7 +3510,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lor() throws Exception {
+    public void test_C1X_jtt_BC_lor() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lor");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -3543,7 +3543,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lxor() throws Exception {
+    public void test_C1X_jtt_BC_lxor() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lxor");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -3616,7 +3616,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lshl() throws Exception {
+    public void test_C1X_jtt_BC_lshl() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lshl");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -3644,7 +3644,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lshr() throws Exception {
+    public void test_C1X_jtt_BC_lshr() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lshr");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -3670,7 +3670,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_loop01() throws Exception {
+    public void test_C1X_jtt_loop01() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.loop.Loop01");
@@ -3695,7 +3695,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_charComp() throws Exception {
+    public void test_C1X_jtt_charComp() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.bytecode.BC_charComp");
@@ -3720,7 +3720,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_loop02() throws Exception {
+    public void test_C1X_jtt_loop02() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.loop.Loop02");
@@ -3745,7 +3745,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_loop03() throws Exception {
+    public void test_C1X_jtt_loop03() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.loop.Loop03");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -3768,7 +3768,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_loop04() throws Exception {
+    public void test_C1X_jtt_loop04() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.loop.Loop04");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -3790,7 +3790,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_loop11() throws Exception {
+    public void test_C1X_jtt_loop11() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.loop.Loop11");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -3812,7 +3812,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_loopPHI() throws Exception {
+    public void test_C1X_jtt_loopPHI() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.loop.LoopPhi");
         CompilationBroker.singleton.setSimulateAdapter(true);
@@ -3844,7 +3844,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_irem2() throws Exception {
+    public void test_C1X_jtt_BC_irem2() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.bytecode.BC_irem");
@@ -3874,7 +3874,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_loopInline() throws Exception {
+    public void test_C1X_jtt_loopInline() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.loop.LoopInline");
@@ -3933,7 +3933,7 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     @SuppressWarnings("cast")
-    public void test_jtt_BC_long_tests() throws Exception {
+    public void test_C1X_jtt_BC_long_tests() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_long_tests");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -3964,7 +3964,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_long_le() throws Exception {
+    public void test_C1X_jtt_BC_long_le() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_long_tests");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -3988,7 +3988,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_long_ge() throws Exception {
+    public void test_C1X_jtt_BC_long_ge() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_long_tests");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -4012,7 +4012,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_long_eq() throws Exception {
+    public void test_C1X_jtt_BC_long_eq() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_long_tests");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -4036,7 +4036,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_long_ne() throws Exception {
+    public void test_C1X_jtt_BC_long_ne() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_long_tests");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -4060,7 +4060,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_long_gt() throws Exception {
+    public void test_C1X_jtt_BC_long_gt() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_long_tests");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -4084,7 +4084,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_long_lt() throws Exception {
+    public void test_C1X_jtt_BC_long_lt() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_long_tests");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -4108,7 +4108,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lushr() throws Exception {
+    public void test_C1X_jtt_BC_lushr() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lushr");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -4132,7 +4132,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lcmp() throws Exception {
+    public void test_C1X_jtt_BC_lcmp() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lcmp");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -4155,7 +4155,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lmul() throws Exception {
+    public void test_C1X_jtt_BC_lmul() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lmul");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -4181,7 +4181,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lneg() throws Exception {
+    public void test_C1X_jtt_BC_lneg() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lneg");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -4203,7 +4203,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lreturn() throws Exception {
+    public void test_C1X_jtt_BC_lreturn() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lreturn");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -4226,7 +4226,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_lsub() throws Exception {
+    public void test_C1X_jtt_BC_lsub() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_lsub");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -4254,7 +4254,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_i2l() throws Exception {
+    public void test_C1X_jtt_BC_i2l() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_i2l");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -4279,7 +4279,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_l2i() throws Exception {
+    public void test_C1X_jtt_BC_l2i() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_l2i");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -4370,7 +4370,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         theCompiler.cleanup();
     }
 
-    public void test_jtt_BC_fload_5() throws Exception {
+    public void test_C1X_jtt_BC_fload_5() throws Exception {
         initTests();
         float[] argsOne = {0.0f, 1.1f};
         float[] argsTwo = {17.1f, 2.5f};
@@ -4393,7 +4393,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_dload_9() throws Exception {
+    public void test_C1X_jtt_BC_dload_9() throws Exception {
         initTests();
         double[] argsOne = {0.0D, 1.1D};
         double[] argsTwo = {17.1D, 2.5D};
@@ -4422,7 +4422,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_dload_10() throws Exception {
+    public void test_C1X_jtt_BC_dload_10() throws Exception {
         initTests();
         double[] argsOne = {0.0D, 1.1D};
         double[] argsTwo = {17.1D, 2.5D};
@@ -4454,7 +4454,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_dload() throws Exception {
+    public void test_C1X_jtt_BC_dload() throws Exception {
         initTests();
         double[] argsOne = {0.0D, 1.1D, -1.4D, 256.33D, 1000.001D};
         String klassName = getKlassName("jtt.bytecode.BC_dload");
@@ -4471,7 +4471,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_dload_2() throws Exception {
+    public void test_C1X_jtt_BC_dload_2() throws Exception {
         initTests();
         double[] argsOne = {0.0D, 1.1D, -1.4D, 256.33D, 1000.001D};
         double[] argsTwo = {0.0D, 1.1D, -1.4D, 256.33D, 1000.001D};
@@ -4489,7 +4489,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_fdload() throws Exception {
+    public void test_C1X_jtt_BC_fdload() throws Exception {
         initTests();
         double[] argsOne = {Double.MAX_VALUE, Double.MIN_VALUE};
         float[] argsTwo = {0.0f, 2.5f};
@@ -4514,7 +4514,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_jtt_BC_dadd() throws Exception {
+    public void test_C1X_jtt_BC_dadd() throws Exception {
         initTests();
         double[] argsOne = {0.0D, 1.0D, 253.11d};
         double[] argsTwo = {0.0D, 1.0D, 54.43D};
