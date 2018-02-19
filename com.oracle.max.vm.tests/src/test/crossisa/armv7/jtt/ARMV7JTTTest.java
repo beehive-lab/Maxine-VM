@@ -2382,7 +2382,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void broken_jtt_BC_d2i02() throws Exception {
+    /* Accesses a field. Our infrastructure does not yet support such kind of tests because it only generates the
+    machine code without passing the necessary data as well */
+    public void fixme_C1X_jtt_BC_d2i02() throws Exception {
         String klassName = getKlassName("jtt.bytecode.BC_d2i02");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_d2i02.java", "int test(int)");
@@ -2390,7 +2392,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             int answer = jtt.bytecode.BC_d2i02.test(i);
             String functionPrototype = ARMV7CodeWriter.preAmble("double ", "int", Integer.toString(i));
             Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            assert ((Integer) registerValues[0]).intValue() == answer : "Failed incorrect value " + ((Integer) registerValues[0]).intValue() + "  " + answer;
+            assert (Integer) registerValues[0] == answer : "Failed incorrect value " + registerValues[0] + "  " + answer;
             theCompiler.cleanup();
         }
     }
@@ -2953,7 +2955,9 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_BC_getstatic_i() throws Exception {
+    /* Accesses a field. Our infrastructure does not yet support such kind of tests because it only generates the
+    machine code without passing the necessary data as well */
+    public void fixme_C1X_jtt_BC_getstatic_i() throws Exception {
         initTests();
         int[] argsOne = {0, -1, 2, 4};
         String klassName = getKlassName("jtt.bytecode.BC_getstatic_i");
