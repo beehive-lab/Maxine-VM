@@ -3208,7 +3208,6 @@ public class ARMV7JTTTest extends MaxTestCase {
             expectedValue = jtt.bytecode.BC_iadd2.test(argsOne[i], argsTwo[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int, int ", Integer.toString(argsOne[i]) + "," + Integer.toString(argsTwo[i]));
             Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            Log.println("IADD2 test " + i + " returned " + ((Integer) registerValues[0]).intValue() + " expected " + expectedValue);
             assert (Integer) registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
