@@ -1105,7 +1105,7 @@ public class ARMV7JTTTest extends MaxTestCase {
 
         int expectedValue = 0;
         for (int i = 0; i < argOne.length; i++) {
-            expectedValue = jtt.bytecode.BC_lookupswitch01.test(argOne[i]);
+            expectedValue = jtt.bytecode.BC_lookupswitch04.test(argOne[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int", Integer.toString(argOne[i]));
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
