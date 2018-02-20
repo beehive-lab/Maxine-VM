@@ -3592,16 +3592,16 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_charComp() throws Exception {
+    public void test_C1X_jtt_charcomp() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
-        String klassName = getKlassName("jtt.bytecode.BC_charComp");
+        String klassName = getKlassName("jtt.bytecode.BC_charcomp");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
         CompilationBroker.singleton.setSimulateAdapter(false);
         char argOne = 'c';
         char[] argTwo = {'a', 'c', 'd'};
-        initializeCodeBuffers(methods, "BC_charComp.java", "boolean test(int, char, char)");
+        initializeCodeBuffers(methods, "BC_charcomp.java", "boolean test(int, char, char)");
 
         for (int j = 0; j < argTwo.length; j++) {
             for (int i = -2; i < 4; i++) {
