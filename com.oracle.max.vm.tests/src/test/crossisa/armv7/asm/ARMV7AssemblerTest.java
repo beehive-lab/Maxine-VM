@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -127,21 +127,6 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         retArr = r.runRegisteredSimulation();
         r.reset();
         return retArr;
-    }
-
-    private void generateAndTest(long[] expected, boolean[] tests, MaxineARMv7Tester.BitsFlag[] masks) throws Exception {
-        ARMV7CodeWriter code = new ARMV7CodeWriter(asm.codeBuffer);
-        code.createCodeFile();
-        MaxineARMv7Tester r = new MaxineARMv7Tester(expected, tests, masks);
-        if (!CrossISATester.ENABLE_SIMULATOR) {
-            System.out.println("Code Generation is disabled!");
-            return;
-        }
-        r.assembleStartup();
-        r.compile();
-        r.link();
-        r.runSimulation();
-        r.reset();
     }
 
     public void test_Ldrb() throws Exception {
