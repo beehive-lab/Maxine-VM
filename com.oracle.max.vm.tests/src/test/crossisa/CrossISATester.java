@@ -283,53 +283,6 @@ public abstract class CrossISATester {
         } while (true);
     }
 
-    protected long[] parseRegistersToFile(String file, String startPattern, String endPattern, int numberOfRegisters) throws IOException {
-        BufferedReader reader       = new BufferedReader(new FileReader(file));
-        String         line;
-        boolean        enabled      = false;
-        int            i            = 0;
-        long[]         parsedValues = new long[numberOfRegisters];
-        while ((line = reader.readLine()) != null) {
-            if (line.startsWith(startPattern)) {
-                enabled = true;
-                line = line.substring(6, line.length());
-            }
-            if (!enabled) {
-                continue;
-            }
-            String value = line.split("\\s+")[1];
-
-            BigInteger tmp;
-            if (value.startsWith("0x")) {
-                tmp = new BigInteger(value.substring(2, value.length()), 16);
-            } else {
-                try {
-                    tmp = new BigDecimal(value).toBigInteger();
-                } catch (NumberFormatException e) {
-                    System.out.println("Warning: Parsed NaN from register " + i + " assigning 0xdeadbeef value to it");
-                    tmp = BigInteger.valueOf(0xdeadbeef); // Use 0xdeadbeef as invalid value
-                }
-            }
-            if (tmp.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
-                BigInteger result = BigInteger.valueOf(Long.MIN_VALUE);
-                tmp = result.multiply(BigInteger.valueOf(2)).add(tmp);
-                if (tmp.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
-                    System.out.println("Warning: Value of " + i + " > Long.MAX_VALUE assigning 0xdeadbeef value to it");
-                    tmp = BigInteger.valueOf(0xdeadbeef);  // Use 0xdeadbeef as invalid value
-                }
-            }
-            parsedValues[i] = tmp.longValue();
-            if (++i >= numberOfRegisters) {
-                break;
-            }
-            if (line.contains(endPattern)) {
-                enabled = false;
-            }
-        }
-        reader.close();
-        return parsedValues;
-    }
-
     /**
      * Parses the integer registers (32-bit) from the output of the gdb command {@code info all-registers}.  The output is
      * expected to be in the form:
