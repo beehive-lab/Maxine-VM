@@ -104,6 +104,10 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         r.compile();
         r.link();
         r.runSimulation();
+        if (!r.validateLongRegisters()) {
+            r.reset();
+            assert false : "Error while validating long registers";
+        }
         r.reset();
     }
 

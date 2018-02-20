@@ -68,10 +68,11 @@ public class MaxineARMv7Tester extends CrossISATester {
                                   "test.elf");
     }
 
-    private void runSimulation(boolean captureFPREGs) throws Exception {
+    public void runSimulation(boolean captureFPREGs) throws Exception {
         ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb", "-q", "-x", captureFPREGs ? gdbInputFPREGS : gdbInput);
         ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
         runSimulation(gdbProcess, qemuProcess);
+        parseIntRegisters("r0  ", "cpsr");
     }
 
     public Object[] runObjectRegisteredSimulation() throws Exception {
@@ -80,52 +81,33 @@ public class MaxineARMv7Tester extends CrossISATester {
     }
 
     @Override
-    public long[] runRegisteredSimulation() throws Exception {
+    public void runSimulation() throws Exception {
         runSimulation(false);
-        long[] simulatedValues = parseRegistersToFile(gdbOutput.getName(), "r0  ", "s31", NUM_REGS);
-        // Treat values as ints not longs
-        for (int i = 0; i < simulatedValues.length; i++) {
-            if (simulatedValues[i] > Integer.MAX_VALUE) {
-                simulatedValues[i] = (int) (2L * Integer.MIN_VALUE + simulatedValues[i]);
-            }
-        }
-        return simulatedValues;
     }
 
     public MaxineARMv7Tester(int[] expected, boolean[] test, BitsFlag[] range) {
-        super(NUM_REGS);
+        super();
         initializeQemu();
         bitMasks = range;
-        for (int i = 0; i < NUM_REGS; i++) {
-            expectRegs[i] = expected[i];
-            testRegs[i] = test[i];
-        }
+        expectedIntRegisters = expected;
+        testIntRegisters = test;
     }
 
-    public MaxineARMv7Tester(long[] expected, boolean[] test, BitsFlag[] range) {
-        super(NUM_REGS);
-        initializeQemu();
-        bitMasks = range;
-        int j = 0;
-        for (int i = 0; i < NUM_REGS; i++) {
-            if (test[i]) {
-                expectRegs[j] = (int) ((expected[i] >> 32));
-                expectRegs[j + 1] = (int) (expected[i]);
-                testRegs[j] = testRegs[j + 1] = test[i];
-                j = +2;
-            }
-        }
-    }
     public MaxineARMv7Tester() {
-        super(NUM_REGS);
+        super();
         initializeQemu();
-        for (int i = 0; i < NUM_REGS; i++) {
-            testRegs[i] = false;
-        }
     }
 
-    public MaxineARMv7Tester(String[] args) {
-        super(NUM_REGS, args);
+    private MaxineARMv7Tester(String[] args) {
+        super();
+        initializeQemu();
+        expectedIntRegisters = new int[Integer.parseInt(args[0])];
+        testIntRegisters = new boolean[Integer.parseInt(args[0])];
+
+        for (int i = 1; i < args.length; i += 2) {
+            expectedIntRegisters[Integer.parseInt(args[i])] = Integer.parseInt(args[i + 1]);
+            testIntRegisters[Integer.parseInt(args[i])] = true;
+        }
     }
 
     private Object[] parseObjectRegistersToFile(String file) throws Exception {

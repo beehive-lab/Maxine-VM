@@ -31,18 +31,24 @@ public class MaxineAarch64Tester extends CrossISATester {
      * aarch64-linux-gnu-ld -T test_aarch64.ld test_aarch64.o startup_aarch64.o -o test.elf
      * qemu-system-aarch64 -cpu cortex-a57 -M versatilepb -m 128M -nographic -s -S -kernel test.elf
      */
-    public MaxineAarch64Tester(String[] args) {
-        super(NUM_REGS, args);
+    private MaxineAarch64Tester(String[] args) {
+        super();
+        initializeQemu();
+        expectedLongRegisters = new long[Integer.parseInt(args[0])];
+        testIntRegisters = new boolean[Integer.parseInt(args[0])];
+
+        for (int i = 1; i < args.length; i += 2) {
+            expectedLongRegisters[Integer.parseInt(args[i])] = Long.parseLong(args[i + 1]);
+            testIntRegisters[Integer.parseInt(args[i])] = true;
+        }
     }
 
     public MaxineAarch64Tester(long[] expected, boolean[] test, BitsFlag[] range) {
-        super(NUM_REGS);
+        super();
         initializeQemu();
         bitMasks = range;
-        for (int i = 0; i < NUM_REGS; i++) {
-            expectRegs[i] = expected[i];
-            testRegs[i] = test[i];
-        }
+        expectedLongRegisters = expected;
+        testLongRegisters = test;
     }
 
     @Override
@@ -76,11 +82,11 @@ public class MaxineAarch64Tester extends CrossISATester {
     }
 
     @Override
-    public long[] runRegisteredSimulation() throws Exception {
+    public void runSimulation() throws Exception {
         ProcessBuilder gdbProcess = getGDBProcessBuilder();
         ProcessBuilder qemuProcess = getQEMUProcessBuilder();
         runSimulation(gdbProcess, qemuProcess);
-        return parseRegistersToFile(gdbOutput.getName(), "x0 ", "sp", NUM_REGS);
+        parseLongRegisters("x0 ", "sp");
     }
 
     public static void main(String[] args) throws Exception {
