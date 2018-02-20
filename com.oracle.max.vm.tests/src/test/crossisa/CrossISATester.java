@@ -233,6 +233,71 @@ public abstract class CrossISATester {
         return parsedValues;
     }
 
+    /**
+     * Parses the integer registers (32-bit) from the output of the gdb command {@code info all-registers}.  The output is
+     * expected to be in the form:
+     *
+     * <pre>
+     *   r0             0x43d78  277880
+     *   r1             0x40000000        1073741824
+     *   r2             0x21     33
+     *   r3             0x43d08  277768
+     *   r4             0x0      0
+     * </pre>
+     *
+     * @param startRegister The first integer register to parse
+     * @param endRegister The last integer register to parse
+     * @return An array with the parsed values of the integer registers
+     * @throws IOException
+     */
+    public static int[] parseIntRegisters(String startRegister, String endRegister)
+            throws IOException {
+        BufferedReader reader       = new BufferedReader(new FileReader(gdbOutput));
+        int[]          parsedValues = new int[32];
+        int            i            = 0;
+        String         line;
+        // Look for the startRegister
+        while ((line = reader.readLine()) != null) {
+            if (line.startsWith(startRegister)) {
+                break;
+            }
+        }
+        assert line != null : "Reached EOF before matching " + startRegister;
+        // Parse the registers
+        do {
+            if (line.contains(endRegister)) {
+                break;
+            }
+            parsedValues[i++] = parseIntRegister(line);
+            assert i < 32;
+        } while ((line = reader.readLine()) != null);
+        reader.close();
+        return parsedValues;
+    }
+
+    /**
+     * Parses an integer register (32-bit) from the output of the gdb command {@code info all-registers}.  The output is
+     * expected to be in the form:
+     *
+     * <pre>
+     *   r0             0x43d78  277880
+     * </pre>
+     *
+     * @param line The line from the gdb output to be parsed
+     * @return The parsed integer value of the register
+     */
+    private static int parseIntRegister(String line) {
+        String value = line.split("\\s+")[1];
+        assert value.startsWith("0x");
+        assert value.length() - 2 <= 8;
+        BigInteger tmp = new BigInteger(value.substring(2, value.length()), 16);
+        if (tmp.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0) {
+            BigInteger result = BigInteger.valueOf(Integer.MIN_VALUE);
+            tmp = result.multiply(BigInteger.valueOf(2)).add(tmp);
+            assert tmp.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) <= 0 : "Parsed non int value";
+        }
+        return tmp.intValue();
+    }
     protected void initializeQemu() {
         ENABLE_SIMULATOR = Integer.getInteger(ENABLE_QEMU) != null && Integer.getInteger(ENABLE_QEMU) > 0;
     }
