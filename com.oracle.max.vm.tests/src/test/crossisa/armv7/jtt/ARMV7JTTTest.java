@@ -1241,7 +1241,6 @@ public class ARMV7JTTTest extends MaxTestCase {
     }
 
     public void test_T1X_jtt_BC_fdiv() throws Exception {
-        MaxineARMv7Tester.DEBUGOBJECTS = false;
         initTests();
         float[] argOne = {14.0f};
         float[] argTwo = {7.0f};
@@ -2249,7 +2248,6 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_C1X_jtt_BC_f2d() throws Exception {
         String klassName = getKlassName("jtt.bytecode.BC_f2d");
-        MaxineARMv7Tester.DEBUGOBJECTS = false;
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods);
         float[] arguments = {-2.2f, 0.0f, 1.0f, 01.06f};
@@ -2266,7 +2264,6 @@ public class ARMV7JTTTest extends MaxTestCase {
 
     public void test_C1X_jtt_BC_i2f() throws Exception {
         String klassName = getKlassName("jtt.bytecode.BC_i2f");
-        MaxineARMv7Tester.DEBUGOBJECTS = false;
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_i2f.java", "float test(int)");
         int[] arguments = {-100, 0, 1, -1, -99};

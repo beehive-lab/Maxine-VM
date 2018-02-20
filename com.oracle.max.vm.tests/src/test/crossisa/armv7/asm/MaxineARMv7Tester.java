@@ -25,7 +25,6 @@ import test.crossisa.*;
 
 public class MaxineARMv7Tester extends CrossISATester {
 
-    public static boolean DEBUGOBJECTS = false;
     public static final int NUM_REGS = 52;
 
     /*
@@ -134,12 +133,8 @@ public class MaxineARMv7Tester extends CrossISATester {
                 expectedValues[i] = (int) tmp;
             }
             expectedValues[i] = new Integer((int) tmp);
-            if (DEBUGOBJECTS) {
-                System.out.println(" CORE " + i + " " + ((Integer) expectedValues[i]).intValue());
-            }
             i++;
             if (line.contains("cpsr")) {
-                enabled = false;
                 // might want to get cpsr but we dont need it right now
                 expectedValues[i] = null;
                 break;
@@ -165,18 +160,15 @@ public class MaxineARMv7Tester extends CrossISATester {
                         // we get exceptions when there is a NaN
                         // currently we just set them to null
                         if (str.equals("inf")) {
-                            expectedValues[i++] = new Double(Double.POSITIVE_INFINITY);
+                            expectedValues[i++] = Double.POSITIVE_INFINITY;
                         } else if (str.equals("-inf")) {
-                            expectedValues[i++] = new Double(Double.NEGATIVE_INFINITY);
+                            expectedValues[i++] = Double.NEGATIVE_INFINITY;
                         } else {
-                            expectedValues[i++] = new Double(Double.NaN);
+                            expectedValues[i++] = Double.NaN;
                         }
                     }
                     break;
                 }
-            }
-            if (DEBUGOBJECTS) {
-                System.out.println(" DOUBLE " + (i - 1) + " " + ((Double) expectedValues[i - 1]).doubleValue());
             }
             if (i >= (16 + 16 + 1)) {
                 break;
@@ -213,9 +205,6 @@ public class MaxineARMv7Tester extends CrossISATester {
             }
             if (i == expectedValues.length) {
                 break;
-            }
-            if (DEBUGOBJECTS) {
-                System.out.println(" FLOAT " + (i - 1) + " " + expectedValues[i - 1]);
             }
         }
         return expectedValues;
