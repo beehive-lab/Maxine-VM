@@ -19,6 +19,8 @@
  */
 package test.crossisa.armv7.asm;
 
+import static com.oracle.max.asm.target.armv7.ARMV7.*;
+
 import org.junit.*;
 
 import com.oracle.max.asm.*;
@@ -183,7 +185,6 @@ public class ARMV7AssemblerTest extends MaxTestCase {
     }
 
     public void test_mov64BitConstant() throws Exception {
-        int[] instructions = new int[6];
         setAllBitMasks(MaxineARMv7Tester.BitsFlag.All32Bits);
         long[] values = new long[10];
         values[0] = 0L;
@@ -196,16 +197,11 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         values[7] = Long.MAX_VALUE - 5;
         values[8] = (Integer.MIN_VALUE) + 5L;
         values[9] = (Integer.MAX_VALUE) - 5L;
-        long[] registers = null;
-        for (int i = 0; i < values.length; i++) {
+        for (long value : values) {
             asm.codeBuffer.reset();
-            asm.movImm64(ConditionFlag.Always, ARMV7.r0, ARMV7.r1, values[i]);
-            instructions[0] = asm.codeBuffer.getInt(0);
-            instructions[1] = asm.codeBuffer.getInt(4);
-            instructions[2] = asm.codeBuffer.getInt(8);
-            instructions[3] = asm.codeBuffer.getInt(12);
-            registers = generate();
-            assert values[i] == connectRegs(registers[0], registers[1]);
+            asm.movImm64(ConditionFlag.Always, r0, r1, value);
+            final long[] registers = generate();
+            assert value == connectRegs(registers[0], registers[1]);
         }
     }
 
