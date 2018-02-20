@@ -24,7 +24,7 @@ import java.math.*;
 
 public abstract class CrossISATester {
 
-    private static final   String ENABLE_QEMU    = "max.arm.qemu";
+    private static final   String ENABLE_QEMU    = "test.crossisa.qemu";
     protected static final File   qemuOutput     = new File("qemu_output");
     protected static final File   qemuErrors     = new File("qemu_errors");
     private static final   File   bindOutput     = new File("bind_output");
