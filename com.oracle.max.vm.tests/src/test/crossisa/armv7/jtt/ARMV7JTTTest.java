@@ -2356,47 +2356,6 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    /* Accesses a field. Our infrastructure does not yet support such kind of tests because it only generates the
-    machine code without passing the necessary data as well */
-    public void fixme_T1X_jtt_BC_d2i02() throws Exception {
-        initTests();
-        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
-        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
-        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "getstaticObject");
-        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "daload");
-        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "d2i");
-        byte[] code = getByteArray("test", "jtt.bytecode.BC_d2i02");
-        ClassActor anActor = HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.makeClassActor("jtt.bytecode.BC_d2i02");
-        for (int i = 0; i < 5; i++) {
-            double answer = jtt.bytecode.BC_d2i02.test(i);
-            initialiseFrameForCompilation(anActor.constantPool(), code, "(I)D", Modifier.PUBLIC | Modifier.STATIC);
-            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.movImm32(Always, r0, i);
-            masm.push(Always, 1);
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(Always, 1);
-            String functionPrototype = ARMV7CodeWriter.preAmble("double ", "int", Integer.toString(i));
-            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, 0, masm.codeBuffer.copyData(0, masm.codeBuffer.position()), expectedValues, testvalues, bitmasks);
-            assert (Double) registerValues[17] == answer : "Failed incorrect value " + registerValues[17] + " " + answer;
-            theCompiler.cleanup();
-        }
-    }
-
-    /* Accesses a field. Our infrastructure does not yet support such kind of tests because it only generates the
-    machine code without passing the necessary data as well */
-    public void fixme_C1X_jtt_BC_d2i02() throws Exception {
-        String klassName = getKlassName("jtt.bytecode.BC_d2i02");
-        List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        initializeCodeBuffers(methods, "BC_d2i02.java", "int test(int)");
-        for (int i = 0; i < 5; i++) {
-            int answer = jtt.bytecode.BC_d2i02.test(i);
-            String functionPrototype = ARMV7CodeWriter.preAmble("double ", "int", Integer.toString(i));
-            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            assert (Integer) registerValues[0] == answer : "Failed incorrect value " + registerValues[0] + "  " + answer;
-            theCompiler.cleanup();
-        }
-    }
-
     public void test_BC_anewarray() throws Exception {
         String klassName = getKlassName("jtt.bytecode.BC_anewarray");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -2435,19 +2394,6 @@ public class ARMV7JTTTest extends MaxTestCase {
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "float", Float.toString(arguments[i]));
             long[] registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             assert registerValues[0] == answer : "Failed incorrect value " + registerValues[0] + " " + answer;
-            theCompiler.cleanup();
-        }
-    }
-
-    public void broken_jtt_BC_f2i02() throws Exception {
-        String klassName = getKlassName("jtt.bytecode.BC_f2i02");
-        List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        initializeCodeBuffers(methods);
-        for (int i = 0; i < 5; i++) {
-            float answer = jtt.bytecode.BC_f2i02.test(i);
-            String functionPrototype = ARMV7CodeWriter.preAmble("float", "int", Integer.toString(i));
-            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            assert ((Integer) registerValues[0]).intValue() == answer : "Failed incorrect value " + ((Float) registerValues[33]).floatValue() + " " + answer;
             theCompiler.cleanup();
         }
     }
@@ -2951,50 +2897,6 @@ public class ARMV7JTTTest extends MaxTestCase {
             String functionPrototype = ARMV7CodeWriter.preAmble("float", "float, float ", Float.toString(argsOne[i]) + "," + Float.toString(argsTwo[i]));
             Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             assert (Float) registerValues[33] == floatValue : "Failed incorrect value " + registerValues[0] + " " + floatValue;
-            theCompiler.cleanup();
-        }
-    }
-
-    /* Accesses a field. Our infrastructure does not yet support such kind of tests because it only generates the
-    machine code without passing the necessary data as well */
-    public void fixme_C1X_jtt_BC_getstatic_i() throws Exception {
-        initTests();
-        int[] argsOne = {0, -1, 2, 4};
-        String klassName = getKlassName("jtt.bytecode.BC_getstatic_i");
-        vm().compilationBroker.setOffline(true);
-        List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
-        initializeCodeBuffers(methods, "BC_getstatic_i.java", "int test(int)");
-        for (int i = 0; i < argsOne.length; i++) {
-            int intValue = BC_getstatic_i.test(argsOne[i]);
-            String functionPrototype = ARMV7CodeWriter.preAmble("int", "int  ", Integer.toString(argsOne[i]));
-            Object[] registerValues = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            assert ((Integer) registerValues[0]).intValue() == intValue : "Failed incorrect value r0 " + ((Integer) registerValues[0]).intValue() + " " + intValue;
-            theCompiler.cleanup();
-        }
-    }
-
-    /* Accesses a field. Our infrastructure does not yet support such kind of tests because it only generates the
-    machine code without passing the necessary data as well */
-    public void fixme_T1X_jtt_BC_getstatic_i() throws Exception {
-        int[] argsOne = {0, -1, 2, 4};
-        initTests();
-        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
-        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
-        byte[] code = getByteArray("test", "jtt.bytecode.BC_getstatic_i");
-        ClassActor anActor = HostedVMClassLoader.HOSTED_VM_CLASS_LOADER.makeClassActor("jtt.bytecode.BC_getstatic_i");
-        for (int i = 0; i < argsOne.length; i++) {
-            int answer = jtt.bytecode.BC_getstatic_i.test(argsOne[i]);
-            expectedValues[0] = answer;
-            initialiseFrameForCompilation(anActor.constantPool(), code, "(I)I", Modifier.PUBLIC | Modifier.STATIC);
-            ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.movImm32(ConditionFlag.Always, ARMV7.r0, argsOne[i]);
-            masm.push(ConditionFlag.Always, 1);
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(ConditionFlag.Always, 1);
-            long[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
-            Log.println("T1X getstatic_i expected " + answer + " got " + registerValues[0]);
-            assert registerValues[0] == answer : "Failed incorrect value " + registerValues[0] + " " + answer;
             theCompiler.cleanup();
         }
     }
