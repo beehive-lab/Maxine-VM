@@ -4171,7 +4171,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             String functionPrototype = ARMV7CodeWriter.preAmble("long long", "int", Integer.toString(pair.first));
             int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             long   returnValue       = connectRegs(registerValues[0], registerValues[1]);
-            assert returnValue == Math.abs(expectedValue) : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
@@ -4200,7 +4200,7 @@ public class ARMV7JTTTest extends MaxTestCase {
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "long long", Long.toString(pair.lfirst) + "LL");
             int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             long   returnValue       = registerValues[0];
-            assert Math.abs(returnValue) == Math.abs(expectedValue) : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
         }
     }
