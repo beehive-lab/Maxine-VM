@@ -365,6 +365,66 @@ public abstract class CrossISATester {
         return tmp.longValue();
     }
 
+    /**
+     * Parses the float registers (32-bit) from the output of the gdb command {@code info all-registers}.  The output is
+     * expected to be in the form:
+     *
+     * <pre>
+     *     s0    0    (raw 0x00000000)
+     * </pre>
+     *
+     * @param startRegister The first float register to parse
+     * @param endRegister The last float register to parse
+     * @return An array with the parsed values of the float registers
+     * @throws IOException
+     */
+    protected float[] parseFloatRegisters(String startRegister, String endRegister)
+            throws IOException {
+        BufferedReader reader       = new BufferedReader(new FileReader(gdbOutput));
+        float[]        parsedValues = new float[32];
+        int            i            = 0;
+        String         line;
+        // Look for the startRegister
+        while ((line = reader.readLine()) != null) {
+            if (line.startsWith(startRegister)) {
+                break;
+            }
+        }
+        assert line != null : "Reached EOF before matching " + startRegister;
+        // Parse the registers
+        do {
+            if (line.contains(endRegister)) {
+                break;
+            }
+            parsedValues[i++] = parseFloatRegister(line);
+            assert i < 32;
+        } while ((line = reader.readLine()) != null);
+        reader.close();
+        return parsedValues;
+    }
+
+    /**
+     * Parses a float register (32-bit) from the output of the gdb command {@code info all-registers}.  The output is
+     * expected to be in the form:
+     *
+     * <pre>
+     *     s0    0    (raw 0x00000000)
+     * </pre>
+     *
+     * @param line The line from the gdb output to be parsed
+     * @return The parsed float value of the register
+     */
+    private static float parseFloatRegister(String line) {
+        String value = line.split("\\s+")[1];
+        BigDecimal tmp = new BigDecimal(value.substring(2, value.length()));
+        if (tmp.compareTo(BigDecimal.valueOf(Float.MAX_VALUE)) > 0) {
+            BigDecimal result = BigDecimal.valueOf(Float.MIN_VALUE);
+            tmp = result.multiply(BigDecimal.valueOf(2)).add(tmp);
+            assert tmp.compareTo(BigDecimal.valueOf(Float.MAX_VALUE)) <= 0 : "Parsed non float value";
+        }
+        return tmp.floatValue();
+    }
+
     protected void initializeQemu() {
         ENABLE_SIMULATOR = Integer.getInteger(ENABLE_QEMU) != null && Integer.getInteger(ENABLE_QEMU) > 0;
     }
