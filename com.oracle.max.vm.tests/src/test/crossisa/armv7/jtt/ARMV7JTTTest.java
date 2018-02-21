@@ -213,7 +213,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         return r.getSimulatedIntRegisters();
     }
 
-    private int[] generate() throws Exception {
+    private MaxineARMv7Tester generate() throws Exception {
         ARMV7CodeWriter code = new ARMV7CodeWriter(theCompiler.getMacroAssembler().codeBuffer);
         code.createCodeFile();
         MaxineARMv7Tester r = new MaxineARMv7Tester();
@@ -224,7 +224,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         r.link();
         r.runSimulation(false);
         r.reset();
-        return r.getSimulatedIntRegisters();
+        return r;
     }
 
     public ARMV7JTTTest() {
@@ -434,7 +434,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             pushArguments(masm, r0, r1);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(Always, masm.getRegisterList(r0));
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == answer : "Failed incorrect value " + registerValues[0] + " " + answer;
             theCompiler.cleanup();
         }
@@ -459,7 +460,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             pushArguments(masm, r0, r1);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(Always, masm.getRegisterList(r0));
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -480,7 +482,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "imul");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(Always, masm.getRegisterList(r0));
-        int[] registerValues = generate();
+        MaxineARMv7Tester tester = generate();
+        int[] registerValues = tester.getSimulatedIntRegisters();
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -500,7 +503,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "isub");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(Always, masm.getRegisterList(r0));
-        int[] registerValues = generate();
+        MaxineARMv7Tester tester = generate();
+        int[] registerValues = tester.getSimulatedIntRegisters();
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -519,7 +523,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ineg");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
-        int[] registerValues = generate();
+        MaxineARMv7Tester tester = generate();
+        int[] registerValues = tester.getSimulatedIntRegisters();
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -538,7 +543,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ineg");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
-        int[] registerValues = generate();
+        MaxineARMv7Tester tester = generate();
+        int[] registerValues = tester.getSimulatedIntRegisters();
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -558,7 +564,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(Always, masm.getRegisterList(r0));
-        int[] registerValues = generate();
+        MaxineARMv7Tester tester = generate();
+        int[] registerValues = tester.getSimulatedIntRegisters();
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -578,7 +585,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ior");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(Always, masm.getRegisterList(r0));
-        int[] registerValues = generate();
+        MaxineARMv7Tester tester = generate();
+        int[] registerValues = tester.getSimulatedIntRegisters();
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -598,7 +606,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ixor");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(Always, masm.getRegisterList(r0));
-        int[] registerValues = generate();
+        MaxineARMv7Tester tester = generate();
+        int[] registerValues = tester.getSimulatedIntRegisters();
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -618,7 +627,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iand");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(Always, masm.getRegisterList(r0));
-        int[] registerValues = generate();
+        MaxineARMv7Tester tester = generate();
+        int[] registerValues = tester.getSimulatedIntRegisters();
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -661,7 +671,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ishl");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(Always, masm.getRegisterList(r0));
-        int[] registerValues = generate();
+        MaxineARMv7Tester tester = generate();
+        int[] registerValues = tester.getSimulatedIntRegisters();
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -755,7 +766,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ishr");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(Always, masm.getRegisterList(r0));
-        int[] registerValues = generate();
+        MaxineARMv7Tester tester = generate();
+        int[] registerValues = tester.getSimulatedIntRegisters();
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -775,7 +787,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ishr");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(Always, masm.getRegisterList(r0));
-        int[] registerValues = generate();
+        MaxineARMv7Tester tester = generate();
+        int[] registerValues = tester.getSimulatedIntRegisters();
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -795,7 +808,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iushr");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(Always, masm.getRegisterList(r0));
-        int[] registerValues = generate();
+        MaxineARMv7Tester tester = generate();
+        int[] registerValues = tester.getSimulatedIntRegisters();
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -818,7 +832,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2b");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
-        int[] registerValues = generate();
+        MaxineARMv7Tester tester = generate();
+        int[] registerValues = tester.getSimulatedIntRegisters();
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -857,7 +872,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2b");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
-        int[] registerValues = generate();
+        MaxineARMv7Tester tester = generate();
+        int[] registerValues = tester.getSimulatedIntRegisters();
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -876,7 +892,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2b");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
-        int[] registerValues = generate();
+        MaxineARMv7Tester tester = generate();
+        int[] registerValues = tester.getSimulatedIntRegisters();
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -895,7 +912,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2s");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
-        int[] registerValues = generate();
+        MaxineARMv7Tester tester = generate();
+        int[] registerValues = tester.getSimulatedIntRegisters();
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -914,7 +932,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2s");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
-        int[] registerValues = generate();
+        MaxineARMv7Tester tester = generate();
+        int[] registerValues = tester.getSimulatedIntRegisters();
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -933,7 +952,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2s");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
-        int[] registerValues = generate();
+        MaxineARMv7Tester tester = generate();
+        int[] registerValues = tester.getSimulatedIntRegisters();
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -952,7 +972,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2c");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
-        int[] registerValues = generate();
+        MaxineARMv7Tester tester = generate();
+        int[] registerValues = tester.getSimulatedIntRegisters();
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -971,7 +992,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2c");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
-        int[] registerValues = generate();
+        MaxineARMv7Tester tester = generate();
+        int[] registerValues = tester.getSimulatedIntRegisters();
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -989,7 +1011,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
-        int[] registerValues = generate();
+        MaxineARMv7Tester tester = generate();
+        int[] registerValues = tester.getSimulatedIntRegisters();
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -1007,7 +1030,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
         masm.pop(ConditionFlag.Always, 1);
-        int[] registerValues = generate();
+        MaxineARMv7Tester tester = generate();
+        int[] registerValues = tester.getSimulatedIntRegisters();
         assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
@@ -1206,7 +1230,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.push(ConditionFlag.Always, 1);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1234,7 +1259,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.push(ConditionFlag.Always, 1);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1259,7 +1285,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             // Push each register twice to ensure 8-byte stack-alignment
             vpushArguments(masm, s0, s1);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[20] == answer : "Failed incorrect value " + registerValues[20] + " " + answer;
         }
     }
@@ -1286,7 +1313,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.push(ConditionFlag.Always, 1);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1314,7 +1342,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.push(ConditionFlag.Always, 1);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1352,7 +1381,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.push(ConditionFlag.Always, 1);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1393,7 +1423,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.push(ConditionFlag.Always, 1);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1435,7 +1466,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.push(ConditionFlag.Always, 1);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1477,7 +1509,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.push(ConditionFlag.Always, 1);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1504,7 +1537,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iinc_1");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1530,7 +1564,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iinc_2");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1556,7 +1591,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iinc_3");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1582,7 +1618,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iinc_4");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1608,7 +1645,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_0");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1635,7 +1673,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_0_1");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1661,7 +1700,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_0_2");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1688,7 +1728,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.push(ConditionFlag.Always, 2);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1715,7 +1756,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_1_1");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1741,7 +1783,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             pushArguments(masm, r0, r1);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(Always, masm.getRegisterList(r0));
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1771,7 +1814,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_2");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1803,7 +1847,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_3");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1833,7 +1878,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iconst");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1882,7 +1928,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifeq");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1905,7 +1952,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.push(ConditionFlag.Always, 1);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1930,7 +1978,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifeq_3");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1956,7 +2005,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifeq_3");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -1982,7 +2032,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifgt");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -2008,7 +2059,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifle");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -2034,7 +2086,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifne");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -2060,7 +2113,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iflt");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -2086,7 +2140,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iflt");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -2112,7 +2167,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iflt");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -2138,7 +2194,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iflt");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -2164,7 +2221,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iflt");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -2193,7 +2251,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifgt");
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(Always, masm.getRegisterList(r0));
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
@@ -2220,7 +2279,8 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.push(ConditionFlag.Always, 2);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
             masm.pop(ConditionFlag.Always, 1);
-            int[] registerValues = generate();
+            MaxineARMv7Tester tester = generate();
+            int[] registerValues = tester.getSimulatedIntRegisters();
             assert registerValues[0] == expectedValues[0] : " Failed incorrect values " + registerValues[0] + " " + expectedValues[0];
             theCompiler.cleanup();
         }
