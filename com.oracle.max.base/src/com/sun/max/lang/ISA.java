@@ -32,7 +32,8 @@ public enum ISA {
     IA32(Category.CISC, 0, false, 0),
     PPC(Category.RISC, 4, true, 0),
     SPARC(Category.RISC, 4, true, 8),
-    Aarch64(Category.RISC, 8, false, 0);
+    Aarch64(Category.RISC, 8, false, 0),
+    RISCV(Category.RISC, 4, false, 0);
 
     public enum Category {
         CISC, RISC;

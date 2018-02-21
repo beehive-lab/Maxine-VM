@@ -144,12 +144,9 @@ public class Aarch64T1XTest extends MaxTestCase {
         r.assembleStartup();
         r.compile();
         r.link();
-        long[] simulatedRegisters = r.runRegisteredSimulation();
-        r.cleanProcesses();
-        if (POST_CLEAN_FILES) {
-            r.cleanFiles();
-        }
-        return simulatedRegisters;
+        r.runSimulation();
+        r.reset();
+        return r.getSimulatedLongRegisters();
     }
 
     public Aarch64T1XTest() {

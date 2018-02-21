@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -17,20 +17,20 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package test.crossisa.armv7.asm;
+package test.crossisa.riscv64.asm;
 
 import java.io.*;
 
 import com.oracle.max.asm.*;
 
-public class ARMV7CodeWriter {
+public class RISCV64CodeWriter {
 
     public static boolean debug = false;
     private int[] instructions;
     private byte[] byteVersion;
     private int totalInstructions;
 
-    public ARMV7CodeWriter(Buffer codeBuffer) {
+    public RISCV64CodeWriter(Buffer codeBuffer) {
         totalInstructions = codeBuffer.position() / 4;
         byteVersion = null;
         instructions = new int[totalInstructions];
@@ -39,7 +39,7 @@ public class ARMV7CodeWriter {
         }
     }
 
-    public ARMV7CodeWriter(byte[] codeBuffer) {
+    public RISCV64CodeWriter(byte[] codeBuffer) {
         totalInstructions = codeBuffer.length / 4;
         instructions = null;
         byteVersion = codeBuffer;
@@ -82,8 +82,8 @@ public class ARMV7CodeWriter {
                                "0x" + Integer.toHexString(stubs[i + 2] & 0xFF) + ", " +
                                "0x" + Integer.toHexString(stubs[i + 3] & 0xFF) + ",");
             }
-            // bx lr
-            writer.println("0xe1, 0x2f, 0xff, 0x1e  };\n");
+            // jalr zero, ra, 0
+            writer.println("0x00, 0x00, 0x80, 0x67  };\n");
             writer.println("unsigned char *code = codeArray + " + entryPoint + ";");
             writer.println("void c_entry() {");
             writer.print(functionPrototype);
@@ -102,31 +102,31 @@ public class ARMV7CodeWriter {
             writer.println("void c_entry() {");
             log("unsigned char code[" + ((totalInstructions + 1) * 4) + "] __attribute__((aligned(0x1000))) ;\n");
             log("void c_entry() {");
-            long xxx = 0xe30090f0; // r9 240
+            long instruction;
             int val;
             for (int i = 0; i < totalInstructions; i++) {
-                xxx = instructions[i];
+                instruction = instructions[i];
                 val = i * 4;
-                writer.println("code[" + val + "] = " + (xxx & 0xff) + ";");
-                log("code[" + val + "] = 0x" + Long.toString(xxx & 0xff, 16) + ";");
+                writer.println("code[" + val + "] = " + (instruction & 0xff) + ";");
+                log("code[" + val + "] = 0x" + Long.toString(instruction & 0xff, 16) + ";");
                 val = val + 1;
-                writer.println("code[" + val + "] = " + ((xxx >> 8) & 0xff) + ";");
-                log("code[" + val + "] = 0x" + Long.toString((xxx >> 8) & 0xff, 16) + ";");
+                writer.println("code[" + val + "] = " + ((instruction >> 8) & 0xff) + ";");
+                log("code[" + val + "] = 0x" + Long.toString((instruction >> 8) & 0xff, 16) + ";");
                 val = val + 1;
-                writer.println("code[" + val + "] = " + ((xxx >> 16) & 0xff) + ";");
-                log("code[" + val + "] = 0x" + Long.toString((xxx >> 16) & 0xff, 16) + ";");
+                writer.println("code[" + val + "] = " + ((instruction >> 16) & 0xff) + ";");
+                log("code[" + val + "] = 0x" + Long.toString((instruction >> 16) & 0xff, 16) + ";");
                 val = val + 1;
-                writer.println("code[" + val + "] = " + (xxx >> 24 & 0xff) + ";");
-                log("code[" + val + "] = 0x" + Long.toString(xxx >> 24 & 0xff, 16) + ";");
+                writer.println("code[" + val + "] = " + (instruction >> 24 & 0xff) + ";");
+                log("code[" + val + "] = 0x" + Long.toString(instruction >> 24 & 0xff, 16) + ";");
             }
-            // bx lr
-            writer.println("code[" + totalInstructions * 4 + "] = " + 0x1e + ";");
+            // jalr zero, ra, 0
+            writer.println("code[" + totalInstructions * 4 + "] = " + 0x67 + ";");
             log("code[" + totalInstructions * 4 + "] = " + 0x1e + ";");
-            writer.println("code[" + totalInstructions * 4 + "+1] = " + 0xff + ";");
+            writer.println("code[" + totalInstructions * 4 + "+1] = " + 0x80 + ";");
             log("code[" + totalInstructions * 4 + "+1] = " + 0xff + ";");
-            writer.println("code[" + totalInstructions * 4 + "+2] = " + 0x2f + ";");
+            writer.println("code[" + totalInstructions * 4 + "+2] = " + 0x00 + ";");
             log("code[" + totalInstructions * 4 + "+2] = " + 0x2f + ";");
-            writer.println("code[" + totalInstructions * 4 + "+3] = " + 0xe1 + ";");
+            writer.println("code[" + totalInstructions * 4 + "+3] = " + 0x00 + ";");
             log("code[" + totalInstructions * 4 + "+3] = " + 0xe1 + ";");
             String preAmble = preAmble("void", "int", "1");
             writer.print(preAmble);

@@ -19,7 +19,7 @@
  */
 package test.crossisa.aarch64.asm;
 
-import test.crossisa.*;
+import test.crossisa.CrossISATester;
 
 public class MaxineAarch64Tester extends CrossISATester {
 
@@ -31,37 +31,24 @@ public class MaxineAarch64Tester extends CrossISATester {
      * aarch64-linux-gnu-ld -T test_aarch64.ld test_aarch64.o startup_aarch64.o -o test.elf
      * qemu-system-aarch64 -cpu cortex-a57 -M versatilepb -m 128M -nographic -s -S -kernel test.elf
      */
-    public MaxineAarch64Tester(String[] args) {
-        super(NUM_REGS);
+    private MaxineAarch64Tester(String[] args) {
+        super();
         initializeQemu();
-        for (int i = 0; i < NUM_REGS; i++) {
-            testRegs[i] = false;
-        }
-        for (int i = 0; i < args.length; i += 2) {
-            expectRegs[Integer.parseInt(args[i])] = Integer.parseInt(args[i + 1]);
-            testRegs[Integer.parseInt(args[i])] = true;
+        expectedLongRegisters = new long[Integer.parseInt(args[0])];
+        testIntRegisters = new boolean[Integer.parseInt(args[0])];
+
+        for (int i = 1; i < args.length; i += 2) {
+            expectedLongRegisters[Integer.parseInt(args[i])] = Long.parseLong(args[i + 1]);
+            testIntRegisters[Integer.parseInt(args[i])] = true;
         }
     }
 
     public MaxineAarch64Tester(long[] expected, boolean[] test, BitsFlag[] range) {
-        super(NUM_REGS);
+        super();
         initializeQemu();
         bitMasks = range;
-        for (int i = 0; i < NUM_REGS; i++) {
-            expectRegs[i] = expected[i];
-            testRegs[i] = test[i];
-        }
-    }
-
-    public void compile() {
-        // aarch64-linux-gnu-gcc -c -march=armv8-a+simd -mgeneral-regs-only -g test_aarch64.c -o test_aarch64.o
-        final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.elf");
-        final ProcessBuilder compile = new ProcessBuilder("aarch64-linux-gnu-gcc", "-c", "-march=armv8-a+simd",
-                "-mgeneral-regs-only", "-g", "test_aarch64.c", "-o", "test_aarch64.o");
-        compile.redirectOutput(gccOutput);
-        compile.redirectError(gccErrors);
-        runBlocking(removeFiles);
-        gcc = runBlocking(compile);
+        expectedLongRegisters = expected;
+        testLongRegisters = test;
     }
 
     /**
@@ -75,15 +62,6 @@ public class MaxineAarch64Tester extends CrossISATester {
         assemble.redirectOutput(asOutput);
         assemble.redirectError(asErrors);
         assembler = runBlocking(assemble);
-    }
-
-    /**
-     * Assemble the startup assembly.
-     */
-    public void assembleStartup() {
-        // aarch64-linux-gnu-as -march=armv8-a -g startup_aarch64.s -o
-        // startup_aarch64.o
-        assemble("startup_aarch64.s", "startup_aarch64.o");
     }
 
     /**
@@ -102,13 +80,34 @@ public class MaxineAarch64Tester extends CrossISATester {
         linker = runBlocking(link);
     }
 
-    /**
-     * Link the default unit test framework.
-     */
-    public void link() {
+    @Override
+    protected ProcessBuilder getCompilerProcessBuilder() {
+        // aarch64-linux-gnu-gcc -c -march=armv8-a+simd -mgeneral-regs-only -g test_aarch64.c -o test_aarch64.o
+        return new ProcessBuilder("aarch64-linux-gnu-gcc", "-c", "-march=armv8-a+simd", "-mgeneral-regs-only", "-g",
+                "test_aarch64.c", "-o", "test_aarch64.o");
+    }
+
+    @Override
+    protected ProcessBuilder getAssemblerProcessBuilder() {
+        // aarch64-linux-gnu-as -march=armv8-a -g startup_aarch64.s -o startup_aarch64.o
+        return new ProcessBuilder("aarch64-linux-gnu-as", "-march=armv8-a", "-g", "startup_aarch64.s",
+                "-o", "startup_aarch64.o");
+    }
+
+    @Override
+    protected ProcessBuilder getLinkerProcessBuilder() {
         // aarch64-linux-gnu-ld -T test_aarch64.ld test_aarch64.o startup_aarch64.o -o test.elf
-        //link("test_aarch64.ld", "test_aarch64.o", "startup_aarch64.o");
-        link("test_aarch64.ld", "test_aarch64.o", "startup_aarch64.o");
+        return new ProcessBuilder("aarch64-linux-gnu-ld", "-T", "test_aarch64.ld", "test_aarch64.o",
+                "startup_aarch64.o", "-o", "test.elf");
+    }
+
+    protected ProcessBuilder getGDBProcessBuilder() {
+        return new ProcessBuilder("aarch64-linux-gnu-gdb", "-q", "-x", gdbInput);
+    }
+
+    protected ProcessBuilder getQEMUProcessBuilder() {
+        return new ProcessBuilder("qemu-system-aarch64", "-cpu", "cortex-a57", "-M", "virt", "-m", "128M", "-nographic",
+                "-s", "-S", "-kernel", "test.elf");
     }
 
     public long[] runRegisteredSimulation() throws Exception {
@@ -116,7 +115,7 @@ public class MaxineAarch64Tester extends CrossISATester {
         gdbProcess.redirectOutput(gdbOutput);
         gdbProcess.redirectError(gdbErrors);
         ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-aarch64", "-cpu", "cortex-a57", "-M", "virt", "-m",
-                "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
+                                                        "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
         qemuProcess.redirectOutput(qemuOutput);
         qemuProcess.redirectError(qemuErrors);
         try {
@@ -131,22 +130,16 @@ public class MaxineAarch64Tester extends CrossISATester {
             cleanProcesses();
             System.exit(-1);
         }
-        return parseRegistersToFile(gdbOutput.getName(), "x0 ", "sp");
+        parseLongRegisters("x0 ", "sp");
+        return simulatedLongRegisters;
     }
 
+    @Override
     public void runSimulation() throws Exception {
-        long[] simulatedRegisters = runRegisteredSimulation();
-        if (!validateRegisters(simulatedRegisters, expectRegs, testRegs)) {
-            cleanProcesses();
-            assert false : "Error while validating registers";
-        }
-    }
-
-    public void run() throws Exception {
-        assembleStartup();
-        compile();
-        link();
-        runSimulation();
+        ProcessBuilder gdbProcess = getGDBProcessBuilder();
+        ProcessBuilder qemuProcess = getQEMUProcessBuilder();
+        runSimulation(gdbProcess, qemuProcess);
+        parseLongRegisters("x0 ", "sp");
     }
 
     public static void main(String[] args) throws Exception {

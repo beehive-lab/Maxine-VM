@@ -139,6 +139,7 @@ public class Aarch64T1XpTest extends MaxTestCase {
             testValues[i] = false;
         }
     }
+
     private long[] generateAndTest(long[] expected, boolean[] tests, MaxineAarch64Tester.BitsFlag[] masks) throws Exception {
         Aarch64CodeWriter code = new Aarch64CodeWriter(theCompiler.getMacroAssembler().codeBuffer);
         code.createCodeFile();
@@ -148,12 +149,9 @@ public class Aarch64T1XpTest extends MaxTestCase {
         r.assembleStartup();
         r.compile();
         r.link();
-        long[] simulatedRegisters = r.runRegisteredSimulation();
-        r.cleanProcesses();
-        if (POST_CLEAN_FILES) {
-            r.cleanFiles();
-        }
-        return simulatedRegisters;
+        r.runSimulation();
+        r.reset();
+        return r.getSimulatedLongRegisters();
     }
 
     public Aarch64T1XpTest() {

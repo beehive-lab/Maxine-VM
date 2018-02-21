@@ -2,6 +2,8 @@
 set pagination off
 # Load the elf file to get access to its symbols
 file test.elf
+# Workaround to make breakpoints work for riscv qemu
+set riscv use_compressed_breakpoint off
 # Connect to qemu
 target remote localhost:1234
 # Add a breakpoint at the start of the generated code
@@ -18,5 +20,4 @@ continue
 continue
 # print the registers
 info registers
-info float
 quit

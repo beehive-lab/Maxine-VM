@@ -50,13 +50,15 @@ public class DisassemblyPrinter {
      */
     public void print(Disassembler disassembler, OutputStream outputStream, List<DisassembledObject> disassembledObjects) throws IOException {
         final PrintStream stream = outputStream instanceof PrintStream ? (PrintStream) outputStream : new PrintStream(outputStream);
-        final int nOffsetChars = Integer.toString(Utils.last(disassembledObjects).startPosition()).length();
-        final int nLabelChars = disassembler.addressMapper().maximumLabelNameLength();
-        if (includeHeader) {
-            printHeading(disassembler, stream, nOffsetChars, nLabelChars);
-        }
-        for (DisassembledObject disassembledObject : disassembledObjects) {
-            printDisassembledObject(disassembler, stream, nOffsetChars, nLabelChars, disassembledObject);
+        if (Utils.last(disassembledObjects) != null) {
+            final int nOffsetChars = Integer.toString(Utils.last(disassembledObjects).startPosition()).length();
+            final int nLabelChars  = disassembler.addressMapper().maximumLabelNameLength();
+            if (includeHeader) {
+                printHeading(disassembler, stream, nOffsetChars, nLabelChars);
+            }
+            for (DisassembledObject disassembledObject : disassembledObjects) {
+                printDisassembledObject(disassembler, stream, nOffsetChars, nLabelChars, disassembledObject);
+            }
         }
     }
 

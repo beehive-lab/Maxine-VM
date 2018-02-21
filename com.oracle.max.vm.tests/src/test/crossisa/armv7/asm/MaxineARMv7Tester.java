@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -25,8 +25,7 @@ import test.crossisa.*;
 
 public class MaxineARMv7Tester extends CrossISATester {
 
-    public static boolean DEBUGOBJECTS = false;
-    public static final int NUM_REGS = 17;
+    public static final int NUM_REGS = 52;
 
     /*
      * arm-unknown-eabi-gcc -c -march=armv7-a -g test_armv7.c -o test_armv7.o
@@ -50,48 +49,29 @@ public class MaxineARMv7Tester extends CrossISATester {
         }
     }
 
-    public void compile() {
-        final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.elf");
-        final ProcessBuilder compile = new ProcessBuilder("arm-none-eabi-gcc", "-c", "-DSTATIC", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-march=armv7-a", "-g", "test_armv7.c", "-o", "test_armv7.o");
-        compile.redirectOutput(gccOutput);
-        compile.redirectError(gccErrors);
-        runBlocking(removeFiles);
-        gcc = runBlocking(compile);
+    @Override
+    protected ProcessBuilder getCompilerProcessBuilder() {
+        return new ProcessBuilder("arm-none-eabi-gcc", "-c", "-DSTATIC", "-mfloat-abi=hard", "-mfpu=vfpv3-d16",
+                                  "-march=armv7-a", "-g", "test_armv7.c", "-o", "test_armv7.o");
     }
 
-    public void assembleStartup() {
-        final ProcessBuilder assemble = new ProcessBuilder("arm-none-eabi-as", "-mcpu=cortex-a15", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-g", "startup_armv7.s", "-o", "startup_armv7.o");
-        assemble.redirectOutput(asOutput);
-        assemble.redirectError(asErrors);
-        assembler = runBlocking(assemble);
+    @Override
+    protected ProcessBuilder getAssemblerProcessBuilder() {
+        return new ProcessBuilder("arm-none-eabi-as", "-mcpu=cortex-a15", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-g",
+                                  "startup_armv7.s", "-o", "startup_armv7.o");
     }
 
-    public void link() {
-        final ProcessBuilder link = new ProcessBuilder("arm-none-eabi-ld", "-T", "test_armv7.ld", "test_armv7.o", "startup_armv7.o", "-o", "test.elf");
-        link.redirectOutput(linkOutput);
-        link.redirectError(linkErrors);
-        linker = runBlocking(link);
+    @Override
+    protected ProcessBuilder getLinkerProcessBuilder() {
+        return new ProcessBuilder("arm-none-eabi-ld", "-T", "test_armv7.ld", "test_armv7.o", "startup_armv7.o", "-o",
+                                  "test.elf");
     }
 
-    private void runSimulation(boolean captureFPREGs) throws Exception {
+    public void runSimulation(boolean captureFPREGs) throws Exception {
         ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb", "-q", "-x", captureFPREGs ? gdbInputFPREGS : gdbInput);
         ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
-        gdbProcess.redirectOutput(gdbOutput);
-        gdbProcess.redirectError(gdbErrors);
-        qemuProcess.redirectOutput(qemuOutput);
-        qemuProcess.redirectError(qemuErrors);
-        try {
-            qemu = qemuProcess.start();
-            while (!qemuOutput.exists()) {
-                Thread.sleep(500);
-            }
-            bindToQemu();
-            gdb = runBlocking(gdbProcess);
-        } catch (Exception e) {
-            e.printStackTrace();
-            cleanProcesses();
-            System.exit(-1);
-        }
+        runSimulation(gdbProcess, qemuProcess);
+        parseIntRegisters("r0  ", "cpsr");
     }
 
     public Object[] runObjectRegisteredSimulation() throws Exception {
@@ -99,67 +79,33 @@ public class MaxineARMv7Tester extends CrossISATester {
         return parseObjectRegistersToFile(gdbOutput.getName());
     }
 
-    public long[] runRegisteredSimulation() throws Exception {
-        runSimulation(false);
-        long[] simulatedValues = parseRegistersToFile(gdbOutput.getName(), "r0  ", "cpsr");
-        // Treat values as ints not longs
-        for (int i = 0; i < simulatedValues.length; i++) {
-            if (simulatedValues[i] > Integer.MAX_VALUE) {
-                simulatedValues[i] = (int) (2L * Integer.MIN_VALUE + simulatedValues[i]);
-            }
-        }
-        return simulatedValues;
-    }
-
+    @Override
     public void runSimulation() throws Exception {
-        long[] simulatedRegisters = runRegisteredSimulation();
-        if (!validateRegisters(simulatedRegisters, expectRegs, testRegs)) {
-            cleanProcesses();
-            assert false : "Error while validating registers";
-        }
+        runSimulation(false);
     }
 
     public MaxineARMv7Tester(int[] expected, boolean[] test, BitsFlag[] range) {
-        super(NUM_REGS);
+        super();
         initializeQemu();
         bitMasks = range;
-        for (int i = 0; i < NUM_REGS; i++) {
-            expectRegs[i] = expected[i];
-            testRegs[i] = test[i];
-        }
+        expectedIntRegisters = expected;
+        testIntRegisters = test;
     }
 
-    public MaxineARMv7Tester(long[] expected, boolean[] test, BitsFlag[] range) {
-        super(NUM_REGS);
-        initializeQemu();
-        bitMasks = range;
-        int j = 0;
-        for (int i = 0; i < NUM_REGS; i++) {
-            if (test[i]) {
-                expectRegs[j] = (int) ((expected[i] >> 32));
-                expectRegs[j + 1] = (int) (expected[i]);
-                testRegs[j] = testRegs[j + 1] = test[i];
-                j = +2;
-            }
-        }
-    }
     public MaxineARMv7Tester() {
-        super(NUM_REGS);
+        super();
         initializeQemu();
-        for (int i = 0; i < NUM_REGS; i++) {
-            testRegs[i] = false;
-        }
     }
 
-    public MaxineARMv7Tester(String[] args) {
-        super(NUM_REGS);
+    private MaxineARMv7Tester(String[] args) {
+        super();
         initializeQemu();
-        for (int i = 0; i < NUM_REGS; i++) {
-            testRegs[i] = false;
-        }
-        for (int i = 0; i < args.length; i += 2) {
-            expectRegs[Integer.parseInt(args[i])] = Integer.parseInt(args[i + 1]);
-            testRegs[Integer.parseInt(args[i])] = true;
+        expectedIntRegisters = new int[Integer.parseInt(args[0])];
+        testIntRegisters = new boolean[Integer.parseInt(args[0])];
+
+        for (int i = 1; i < args.length; i += 2) {
+            expectedIntRegisters[Integer.parseInt(args[i])] = Integer.parseInt(args[i + 1]);
+            testIntRegisters[Integer.parseInt(args[i])] = true;
         }
     }
 
@@ -187,12 +133,8 @@ public class MaxineARMv7Tester extends CrossISATester {
                 expectedValues[i] = (int) tmp;
             }
             expectedValues[i] = new Integer((int) tmp);
-            if (DEBUGOBJECTS) {
-                System.out.println(" CORE " + i + " " + ((Integer) expectedValues[i]).intValue());
-            }
             i++;
             if (line.contains("cpsr")) {
-                enabled = false;
                 // might want to get cpsr but we dont need it right now
                 expectedValues[i] = null;
                 break;
@@ -218,18 +160,15 @@ public class MaxineARMv7Tester extends CrossISATester {
                         // we get exceptions when there is a NaN
                         // currently we just set them to null
                         if (str.equals("inf")) {
-                            expectedValues[i++] = new Double(Double.POSITIVE_INFINITY);
+                            expectedValues[i++] = Double.POSITIVE_INFINITY;
                         } else if (str.equals("-inf")) {
-                            expectedValues[i++] = new Double(Double.NEGATIVE_INFINITY);
+                            expectedValues[i++] = Double.NEGATIVE_INFINITY;
                         } else {
-                            expectedValues[i++] = new Double(Double.NaN);
+                            expectedValues[i++] = Double.NaN;
                         }
                     }
                     break;
                 }
-            }
-            if (DEBUGOBJECTS) {
-                System.out.println(" DOUBLE " + (i - 1) + " " + ((Double) expectedValues[i - 1]).doubleValue());
             }
             if (i >= (16 + 16 + 1)) {
                 break;
@@ -267,18 +206,8 @@ public class MaxineARMv7Tester extends CrossISATester {
             if (i == expectedValues.length) {
                 break;
             }
-            if (DEBUGOBJECTS) {
-                System.out.println(" FLOAT " + (i - 1) + " " + expectedValues[i - 1]);
-            }
         }
         return expectedValues;
-    }
-
-    public void run() throws Exception {
-        assembleStartup();
-        compile();
-        link();
-        runSimulation();
     }
 
     public static void main(String[] args) throws Exception {
