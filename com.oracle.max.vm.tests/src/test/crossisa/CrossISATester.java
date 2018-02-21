@@ -466,7 +466,7 @@ public abstract class CrossISATester {
      */
     private static float parseFloatRegister(String line) {
         String value = line.split("\\s+")[1];
-        BigDecimal tmp = new BigDecimal(value.substring(2, value.length()));
+        BigDecimal tmp = new BigDecimal(value);
         if (tmp.compareTo(BigDecimal.valueOf(Float.MAX_VALUE)) > 0) {
             BigDecimal result = BigDecimal.valueOf(Float.MIN_VALUE);
             tmp = result.multiply(BigDecimal.valueOf(2)).add(tmp);
