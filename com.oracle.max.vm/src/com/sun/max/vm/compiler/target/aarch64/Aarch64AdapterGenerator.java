@@ -268,6 +268,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
                 };
             }
         }
+
         /**
          * The size in bytes of the prologue, see {@link Baseline2Opt#emitPrologue(Object, Adapter)}.
          */
@@ -277,6 +278,7 @@ public abstract class Aarch64AdapterGenerator extends AdapterGenerator {
         public int prologueSizeForCallee(ClassMethodActor callee) {
             return PROLOGUE_SIZE;
         }
+
         /**
          * The prologue for a method with a BASELINE2OPT pushes the link register onto the stack
          * at the {@link CallEntryPoint#BASELINE_ENTRY_POINT} and branches to the adapter.
