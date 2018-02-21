@@ -1282,12 +1282,11 @@ public class ARMV7JTTTest extends MaxTestCase {
             masm.movImm32(Always, r1, Float.floatToRawIntBits(argTwo[i]));
             masm.vmov(Always, s0, r0, null, CiKind.Float, CiKind.Int);
             masm.vmov(Always, s1, r1, null, CiKind.Float, CiKind.Int);
-            // Push each register twice to ensure 8-byte stack-alignment
             vpushArguments(masm, s0, s1);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             MaxineARMv7Tester tester = generate();
-            int[] registerValues = tester.getSimulatedIntRegisters();
-            assert registerValues[20] == answer : "Failed incorrect value " + registerValues[20] + " " + answer;
+            float[] registerValues = tester.getSimulatedFloatRegisters();
+            assert registerValues[0] == answer : "Failed incorrect value " + registerValues[0] + " " + answer;
         }
     }
 
