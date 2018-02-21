@@ -997,20 +997,10 @@ public class ARMV7Assembler extends AbstractAssembler {
         push(flag, registerList, false);
     }
 
-    private boolean evenParity(int registerList) {
-        registerList ^= registerList >> 16;
-        registerList ^= registerList >> 8;
-        registerList ^= registerList >> 4;
-        registerList ^= registerList >> 2;
-        registerList ^= registerList >> 1;
-        return (~registerList & 1) == 1;
-    }
-
     public void push(final ConditionFlag flag, final int registerList, boolean instrument) {
         int instruction;
         assert registerList > 0;
         assert registerList < 0x10000;
-        assert evenParity(registerList) : "odd number of pushes break the 8byte-alignment of the stack";
         instruction = (flag.value() & 0xf) << 28;
         instruction |= 0x9 << 24;
         instruction |= 0x2 << 20;
@@ -1051,9 +1041,6 @@ public class ARMV7Assembler extends AbstractAssembler {
     }
 
     public void pop(final ConditionFlag flag, final int registerList, boolean instrument) {
-        assert registerList > 0;
-        assert registerList < 0x10000;
-        assert evenParity(registerList) : "odd number of pops break the 8byte-alignment of the stack";
         int instruction = (flag.value() & 0xf) << 28;
         instruction |= 0x8 << 24;
         instruction |= 0xb << 20;

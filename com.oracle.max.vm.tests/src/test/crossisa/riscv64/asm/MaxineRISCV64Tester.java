@@ -28,18 +28,24 @@ public class MaxineRISCV64Tester extends CrossISATester {
      * riscv64-unknown-elf-gcc -g -march=rv64g -mabi=lp64d -static -mcmodel=medany -fvisibility=hidden -nostdlib -nostartfiles -Ttest_riscv64.ld startup_riscv64.s test_riscv64.c -o test.elf
      * qemu-system-riscv64 -nographic -S -s -kernel test.elf
      */
-    public MaxineRISCV64Tester(String[] args) {
-        super(NUM_REGS, args);
+    private MaxineRISCV64Tester(String[] args) {
+        super();
+        initializeQemu();
+        expectedLongRegisters = new long[Integer.parseInt(args[0])];
+        testIntRegisters = new boolean[Integer.parseInt(args[0])];
+
+        for (int i = 1; i < args.length; i += 2) {
+            expectedLongRegisters[Integer.parseInt(args[i])] = Long.parseLong(args[i + 1]);
+            testIntRegisters[Integer.parseInt(args[i])] = true;
+        }
     }
 
     public MaxineRISCV64Tester(long[] expected, boolean[] test, BitsFlag[] range) {
-        super(NUM_REGS);
+        super();
         initializeQemu();
         bitMasks = range;
-        for (int i = 0; i < NUM_REGS; i++) {
-            expectRegs[i] = expected[i];
-            testRegs[i] = test[i];
-        }
+        expectedLongRegisters = expected;
+        testLongRegisters = test;
     }
 
     @Override
@@ -59,11 +65,11 @@ public class MaxineRISCV64Tester extends CrossISATester {
         return new ProcessBuilder("true");
     }
 
-    public long[] runRegisteredSimulation() throws Exception {
+    public void runSimulation() throws Exception {
         ProcessBuilder gdbProcess = new ProcessBuilder("riscv64-unknown-elf-gdb", "-q", "-x", "gdb_input_riscv");
         ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-riscv64", "-M", "virt", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
         runSimulation(gdbProcess, qemuProcess);
-        return parseRegistersToFile(gdbOutput.getName(), "ra ", "pc", NUM_REGS);
+        parseLongRegisters("ra ", "pc");
     }
 
     public static void main(String[] args) throws Exception {

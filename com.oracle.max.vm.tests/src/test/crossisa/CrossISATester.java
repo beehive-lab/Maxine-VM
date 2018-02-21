@@ -21,12 +21,11 @@ package test.crossisa;
 
 import java.io.*;
 import java.math.*;
-
-import com.sun.max.vm.runtime.*;
+import java.util.*;
 
 public abstract class CrossISATester {
 
-    private static final   String ENABLE_QEMU    = "max.arm.qemu";
+    private static final   String ENABLE_QEMU    = "test.crossisa.qemu";
     protected static final File   qemuOutput     = new File("qemu_output");
     protected static final File   qemuErrors     = new File("qemu_errors");
     private static final   File   bindOutput     = new File("bind_output");
@@ -45,32 +44,26 @@ public abstract class CrossISATester {
     private static boolean RESET            = false;
     private static boolean DEBUG            = false;
 
-    final     int        NUM_REGS;
     protected BitsFlag[] bitMasks;
     protected Process    gcc;
     protected Process    assembler;
     protected Process    linker;
     protected Process    qemu;
     protected Process    gdb;
-    protected long[]     expectRegs;
-    protected boolean[]  testRegs;
+    protected int[]      simulatedIntRegisters;
+    protected int[]      expectedIntRegisters;
+    protected boolean[]  testIntRegisters;
+    protected long[]     simulatedLongRegisters;
+    protected long[]     expectedLongRegisters;
+    protected boolean[]  testLongRegisters;
+    protected float[]    simulatedFloatRegisters;
+    protected float[]    expectedFloatRegisters;
+    protected boolean[]  testFloatRegisters;
+    protected double[]   simulatedDoubleRegisters;
+    protected double[]   expectedDoubleRegisters;
+    protected boolean[]  testDoubleRegisters;
 
-    protected CrossISATester(int numRegs) {
-        NUM_REGS = numRegs;
-        expectRegs = new long[NUM_REGS];
-        testRegs = new boolean[NUM_REGS];
-    }
-
-    public CrossISATester(int numRegs, String[] args) {
-        NUM_REGS = numRegs;
-        initializeQemu();
-        for (int i = 0; i < NUM_REGS; i++) {
-            testRegs[i] = false;
-        }
-        for (int i = 0; i < args.length; i += 2) {
-            expectRegs[Integer.parseInt(args[i])] = Integer.parseInt(args[i + 1]);
-            testRegs[Integer.parseInt(args[i])] = true;
-        }
+    protected CrossISATester() {
     }
 
     public static void setBitMask(BitsFlag[] bitmasks, int i, BitsFlag mask) {
@@ -91,25 +84,127 @@ public abstract class CrossISATester {
         DEBUG = false;
     }
 
-    protected boolean validateRegisters(long[] simRegisters, long[] expectedRegisters, boolean[] testRegisters) {
+    public int[] getSimulatedIntRegisters() {
+        return simulatedIntRegisters;
+    }
+
+    public long[] getSimulatedLongRegisters() {
+        return simulatedLongRegisters;
+    }
+
+    public float[] getSimulatedFloatRegisters() {
+        return simulatedFloatRegisters;
+    }
+
+    public double[] getSimulatedDoubleRegisters() {
+        return simulatedDoubleRegisters;
+    }
+
+    public boolean validateIntRegisters() {
         boolean valid   = true;
-        long    bitmask = 0;
-        for (int i = 0; i < NUM_REGS; i++) {
-            log(i + " sim: " + simRegisters[i] + " exp: " + expectedRegisters[i] + " test: " + testRegisters[i]);
-            if (testRegisters[i]) {
-                final long simulatedRegister = simRegisters[i] & bitMasks[i].value();
-                final long expectedRegister  = expectedRegisters[i];
+
+        assert expectedIntRegisters != null;
+        assert simulatedIntRegisters != null;
+        assert testIntRegisters != null;
+        for (int i = 0; i < simulatedIntRegisters.length; i++) {
+            log(i + " sim: " + simulatedIntRegisters[i] + " exp: " + expectedIntRegisters[i] + " test: " + testIntRegisters[i]);
+            if (testIntRegisters[i]) {
+                final int simulatedRegister = simulatedIntRegisters[i] & (int) bitMasks[i].value();
+                final int expectedRegister  = expectedIntRegisters[i];
                 if (simulatedRegister != expectedRegister) {
-                    bitmask = bitmask | (1 << i);
                     valid = false;
                 }
             }
         }
+
         if (!valid) {
-            for (int i = 0; i < NUM_REGS; i++) {
-                System.out.println(i + " sim: " + simRegisters[i] + " exp: " + expectedRegisters[i] + " test: " + testRegisters[i]);
+            for (int i = 0; i < simulatedIntRegisters.length; i++) {
+                System.out.println(i + " sim: " + simulatedIntRegisters[i] + " exp: " + expectedIntRegisters[i]
+                                   + " test: " + testIntRegisters[i]);
             }
         }
+
+        return valid;
+    }
+
+    public boolean validateLongRegisters() {
+        boolean valid   = true;
+
+        assert expectedLongRegisters != null;
+        assert simulatedLongRegisters != null;
+        assert testLongRegisters != null;
+        for (int i = 0; i < simulatedLongRegisters.length; i++) {
+            log(i + " sim: " + simulatedLongRegisters[i] + " exp: " + expectedLongRegisters[i] + " test: " + testLongRegisters[i]);
+            if (testLongRegisters[i]) {
+                final long simulatedRegister = simulatedLongRegisters[i] & bitMasks[i].value();
+                final long expectedRegister  = expectedLongRegisters[i];
+                if (simulatedRegister != expectedRegister) {
+                    valid = false;
+                }
+            }
+        }
+
+        if (!valid) {
+            for (int i = 0; i < simulatedLongRegisters.length; i++) {
+                System.out.println(i + " sim: " + simulatedLongRegisters[i] + " exp: " + expectedLongRegisters[i]
+                                   + " test: " + testLongRegisters[i]);
+            }
+        }
+
+        return valid;
+    }
+
+    protected boolean validateFloatRegisters() {
+        boolean valid   = true;
+
+        assert expectedFloatRegisters != null;
+        assert simulatedFloatRegisters != null;
+        assert testFloatRegisters != null;
+        for (int i = 0; i < simulatedFloatRegisters.length; i++) {
+            log(i + " sim: " + simulatedFloatRegisters[i] + " exp: " + expectedFloatRegisters[i] + " test: " + testFloatRegisters[i]);
+            if (testFloatRegisters[i]) {
+                final float simulatedRegister = simulatedFloatRegisters[i];
+                final float expectedRegister  = expectedFloatRegisters[i];
+                if (simulatedRegister != expectedRegister) {
+                    valid = false;
+                }
+            }
+        }
+
+        if (!valid) {
+            for (int i = 0; i < simulatedFloatRegisters.length; i++) {
+                System.out.println(i + " sim: " + simulatedFloatRegisters[i] + " exp: " + expectedFloatRegisters[i]
+                                   + " test: " + testFloatRegisters[i]);
+            }
+        }
+
+        return valid;
+    }
+
+    protected boolean validateDoubleRegisters() {
+        boolean valid   = true;
+
+        assert expectedDoubleRegisters != null;
+        assert simulatedDoubleRegisters != null;
+        assert testDoubleRegisters != null;
+        for (int i = 0; i < simulatedDoubleRegisters.length; i++) {
+            log(i + " sim: " + simulatedDoubleRegisters[i] + " exp: " + expectedDoubleRegisters[i] + " test: " + testDoubleRegisters[i]);
+            if (testDoubleRegisters[i]) {
+                final double simulatedRegister = simulatedDoubleRegisters[i];
+                final double expectedRegister  = expectedDoubleRegisters[i];
+                if (simulatedRegister != expectedRegister) {
+                    valid = false;
+                }
+            }
+        }
+
+        if (!valid) {
+            for (int i = 0; i < simulatedDoubleRegisters.length; i++) {
+                System.out.println(i + " sim: " + simulatedDoubleRegisters[i] + " exp: " + expectedDoubleRegisters[i]
+                                   + " test: " + testDoubleRegisters[i]);
+            }
+        }
+
         return valid;
     }
 
@@ -188,43 +283,196 @@ public abstract class CrossISATester {
         } while (true);
     }
 
-    protected long[] parseRegistersToFile(String file, String startPattern, String endPattern, int numberOfRegisters) throws IOException {
-        BufferedReader reader       = new BufferedReader(new FileReader(file));
-        String         line;
-        boolean        enabled      = false;
-        int            i            = 0;
-        long[]         parsedValues = new long[numberOfRegisters];
+    /**
+     * Parses the integer registers (32-bit) from the output of the gdb command {@code info all-registers}.  The output is
+     * expected to be in the form:
+     *
+     * <pre>
+     *   r0             0x43d78  277880
+     *   r1             0x40000000        1073741824
+     *   r2             0x21     33
+     *   r3             0x43d08  277768
+     *   r4             0x0      0
+     * </pre>
+     *
+     * @param startRegister The first integer register to parse
+     * @param endRegister The last integer register to parse
+     * @return An array with the parsed values of the integer registers
+     * @throws IOException
+     */
+    protected void parseIntRegisters(String startRegister, String endRegister) throws IOException {
+        BufferedReader     reader       = new BufferedReader(new FileReader(gdbOutput));
+        ArrayList<Integer> parsedValues = new ArrayList<>(32);
+        String             line;
+        // Look for the startRegister
         while ((line = reader.readLine()) != null) {
-            if (line.startsWith(startPattern)) {
-                enabled = true;
-                line = line.substring(6, line.length());
-            }
-            if (!enabled) {
-                continue;
-            }
-            String value = line.split("\\s+")[1];
-
-            BigInteger tmp = new BigInteger(value.substring(2, value.length()), 16);
-            if (tmp.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
-                BigInteger result = BigInteger.valueOf(Long.MIN_VALUE);
-                result = result.multiply(BigInteger.valueOf(2)).add(tmp);
-                if (result.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
-                    throw FatalError.unimplemented();
-                } else {
-                    parsedValues[i] = result.longValue();
-                }
-            } else {
-                parsedValues[i] = tmp.longValue();
-            }
-            if (++i >= numberOfRegisters) {
+            if (line.startsWith(startRegister)) {
                 break;
             }
-            if (line.contains(endPattern)) {
-                enabled = false;
+        }
+        assert line != null : "Reached EOF before matching " + startRegister;
+        // Parse the registers
+        do {
+            if (line.contains(endRegister)) {
+                break;
             }
+            parsedValues.add(parseIntRegister(line));
+        } while ((line = reader.readLine()) != null);
+        simulatedIntRegisters = new int[parsedValues.size()];
+        for (int i = 0; i < simulatedIntRegisters.length; i++) {
+            simulatedIntRegisters[i] = parsedValues.get(i);
         }
         reader.close();
-        return parsedValues;
+    }
+
+    /**
+     * Parses an integer register (32-bit) from the output of the gdb command {@code info all-registers}.  The output is
+     * expected to be in the form:
+     *
+     * <pre>
+     *   r0             0x43d78  277880
+     * </pre>
+     *
+     * @param line The line from the gdb output to be parsed
+     * @return The parsed integer value of the register
+     */
+    private static int parseIntRegister(String line) {
+        String value = line.split("\\s+")[1];
+        assert value.startsWith("0x");
+        assert value.length() - 2 <= 8;
+        BigInteger tmp = new BigInteger(value.substring(2, value.length()), 16);
+        if (tmp.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0) {
+            BigInteger result = BigInteger.valueOf(Integer.MIN_VALUE);
+            tmp = result.multiply(BigInteger.valueOf(2)).add(tmp);
+            assert tmp.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) <= 0 : "Parsed non int value";
+        }
+        return tmp.intValue();
+    }
+
+    /**
+     * Parses the long registers (64-bit) from the output of the gdb command {@code info all-registers}.  The output is
+     * expected to be in the form:
+     *
+     * <pre>
+     *     r0             0x43d78  277880
+     *     r1             0x40000000        1073741824
+     *     r2             0x21     33
+     *     r3             0x43d08  277768
+     *     r4             0x0      0
+     * </pre>
+     *
+     * @param startRegister The first integer register to parse
+     * @param endRegister The last integer register to parse
+     * @return An array with the parsed values of the integer registers
+     * @throws IOException
+     */
+    protected void parseLongRegisters(String startRegister, String endRegister) throws IOException {
+        BufferedReader  reader       = new BufferedReader(new FileReader(gdbOutput));
+        ArrayList<Long> parsedValues = new ArrayList<>(32);
+        String          line;
+        // Look for the startRegister
+        while ((line = reader.readLine()) != null) {
+            if (line.startsWith(startRegister)) {
+                break;
+            }
+        }
+        assert line != null : "Reached EOF before matching " + startRegister;
+        // Parse the registers
+        do {
+            if (line.contains(endRegister)) {
+                break;
+            }
+            parsedValues.add(parseLongRegister(line));
+        } while ((line = reader.readLine()) != null);
+        simulatedLongRegisters = new long[parsedValues.size()];
+        for (int i = 0; i < simulatedLongRegisters.length; i++) {
+            simulatedLongRegisters[i] = parsedValues.get(i);
+        }
+        reader.close();
+    }
+
+    /**
+     * Parses a long register (64-bit) from the output of the gdb command {@code info all-registers}.  The output is
+     * expected to be in the form:
+     *
+     * <pre>
+     *     r0             0x43d78  277880
+     * </pre>
+     *
+     * @param line The line from the gdb output to be parsed
+     * @return The parsed integer value of the register
+     */
+    private static long parseLongRegister(String line) {
+        String value = line.split("\\s+")[1];
+        assert value.startsWith("0x");
+        assert value.length() - 2 <= 16;
+        BigInteger tmp = new BigInteger(value.substring(2, value.length()), 16);
+        if (tmp.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) > 0) {
+            BigInteger result = BigInteger.valueOf(Long.MIN_VALUE);
+            tmp = result.multiply(BigInteger.valueOf(2)).add(tmp);
+            assert tmp.compareTo(BigInteger.valueOf(Long.MAX_VALUE)) <= 0 : "Parsed non long value";
+        }
+        return tmp.longValue();
+    }
+
+    /**
+     * Parses the float registers (32-bit) from the output of the gdb command {@code info all-registers}.  The output is
+     * expected to be in the form:
+     *
+     * <pre>
+     *     s0    0    (raw 0x00000000)
+     * </pre>
+     *
+     * @param startRegister The first float register to parse
+     * @param endRegister The last float register to parse
+     * @return An array with the parsed values of the float registers
+     * @throws IOException
+     */
+    protected void parseFloatRegisters(String startRegister, String endRegister) throws IOException {
+        BufferedReader   reader       = new BufferedReader(new FileReader(gdbOutput));
+        ArrayList<Float> parsedValues = new ArrayList<>(32);
+        String           line;
+        // Look for the startRegister
+        while ((line = reader.readLine()) != null) {
+            if (line.startsWith(startRegister)) {
+                break;
+            }
+        }
+        assert line != null : "Reached EOF before matching " + startRegister;
+        // Parse the registers
+        do {
+            if (line.contains(endRegister)) {
+                break;
+            }
+            parsedValues.add(parseFloatRegister(line));
+        } while ((line = reader.readLine()) != null);
+        simulatedFloatRegisters = new float[parsedValues.size()];
+        for (int i = 0; i < simulatedFloatRegisters.length; i++) {
+            simulatedFloatRegisters[i] = parsedValues.get(i);
+        }
+        reader.close();
+    }
+
+    /**
+     * Parses a float register (32-bit) from the output of the gdb command {@code info all-registers}.  The output is
+     * expected to be in the form:
+     *
+     * <pre>
+     *     s0    0    (raw 0x00000000)
+     * </pre>
+     *
+     * @param line The line from the gdb output to be parsed
+     * @return The parsed float value of the register
+     */
+    private static float parseFloatRegister(String line) {
+        String value = line.split("\\s+")[1];
+        BigDecimal tmp = new BigDecimal(value.substring(2, value.length()));
+        if (tmp.compareTo(BigDecimal.valueOf(Float.MAX_VALUE)) > 0) {
+            BigDecimal result = BigDecimal.valueOf(Float.MIN_VALUE);
+            tmp = result.multiply(BigDecimal.valueOf(2)).add(tmp);
+            assert tmp.compareTo(BigDecimal.valueOf(Float.MAX_VALUE)) <= 0 : "Parsed non float value";
+        }
+        return tmp.floatValue();
     }
 
     protected void initializeQemu() {
@@ -265,15 +513,7 @@ public abstract class CrossISATester {
         }
     }
 
-    public void runSimulation() throws Exception {
-        long[] simulatedRegisters = runRegisteredSimulation();
-        if (!validateRegisters(simulatedRegisters, expectRegs, testRegs)) {
-            cleanProcesses();
-            assert false : "Error while validating registers";
-        }
-    }
-
-    protected abstract long[] runRegisteredSimulation() throws Exception;
+    protected abstract void runSimulation() throws Exception;
 
     public void link() {
         final ProcessBuilder link = getLinkerProcessBuilder();
