@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -36,7 +36,7 @@ public class T1XCompilationFactory {
         } else if (T1X.isARM()) {
             return MaxineVM.isHostedTesting() ? new ARMV7T1XCompilationTest(t1x) : new ARMV7T1XCompilation(t1x);
         } else if (T1X.isAARCH64()) {
-            return new Aarch64T1XCompilation(t1x);
+            return MaxineVM.isHostedTesting() ? new Aarch64T1XCompilationTest(t1x) : new Aarch64T1XCompilation(t1x);
         } else {
             throw T1X.unimplISA();
         }

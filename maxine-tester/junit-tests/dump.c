@@ -1,7 +1,6 @@
 /*
  * Copyright (c) 2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
- * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -17,29 +16,35 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
-package test.amd64.t1x;
 
-import junit.framework.*;
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-import org.junit.runner.*;
+/*
+ * Writes the contents of the codebuffer to stdout in binary format.
+ * The output can be disassembled using e.g. objdump.
+ */
+static void print_code_buffer();
+static void c_entry();
 
-import com.sun.max.ide.*;
+int main (int c, char **v)
+{
+	c_entry(); /* initialise code array */
+	print_code_buffer();     /* print code array in binary */
+	exit(0);
+}
 
-@RunWith(org.junit.runners.AllTests.class)
-public final class AllTests {
-    private AllTests() {
-    }
+#include "./codebuffer.c"
+	
+}
 
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(AllTests.suite());
-    }
-
-    public static Test suite() {
-        return new TestCaseClassSet(AllTests.class).toTestSuite();
-    }
+void print_code_buffer()
+{
+	int i;
+	fprintf(stderr, "Bytes: %lu\n", sizeof(code)/sizeof(char));
+	for (i = 0; i < (sizeof(code)/sizeof(char)); i+=4) {
+		write(fileno(stdout), &code[i], 4); 
+	}
 }

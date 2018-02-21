@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -84,6 +84,8 @@ public class Aarch64 extends CiArchitecture {
     // Register used to store metaspace method.
     // see definition in sharedRuntime_aarch64.cpp:gen_c2i_adapter
     public static final CiRegister metaspaceMethodRegister = r12;
+    public static final CiRegister LATCH_REGISTER = r10;
+    public static final CiRegister rip = new CiRegister(48, -1, 0, "rip"); // TODO: see if this works
 /********************************************************************************************************/
 
     // Floating point and SIMD registers
@@ -163,7 +165,10 @@ public class Aarch64 extends CiArchitecture {
               0, /*LOAD_STORE | STORE_STORE*/   //implicitMemoryBarriers (no implicit barriers)
               -1,                               //nativeCallDisplacementOffset (ingore)
               32,                               //registerReferenceMapBitCount
-              8);                               //returnAddressSize (8 bytes)
+              16);                              //returnAddressSize (16 bytes)
+        /* Although aarch64 addresses have a 64 bit precision, a callers return address effectively occupies a 16 byte
+         * stack slot in an activation frame according to the AAPCS sp alignment. The returnAddressSize field is used
+         * for stack navigation/alignment purposes. */
     }
 
     /**
@@ -223,5 +228,10 @@ public class Aarch64 extends CiArchitecture {
     public static boolean isGeneralPurposeOrSpReg(CiRegister reg) {
         assert !r31.equals(reg) : "r31 should not be used.";
         return isIntReg(reg) && !reg.equals(zr);
+    }
+
+    @Override
+    public boolean isAarch64() {
+        return true;
     }
 }

@@ -19,7 +19,7 @@
  */
 package test.crossisa.aarch64.asm;
 
-import test.crossisa.*;
+import test.crossisa.CrossISATester;
 
 public class MaxineAarch64Tester extends CrossISATester {
 
@@ -51,18 +51,47 @@ public class MaxineAarch64Tester extends CrossISATester {
         testLongRegisters = test;
     }
 
+    /**
+     * Assembles the instructions in contained in the assembly file into the object file.
+     * @param assembly
+     * @param object
+     */
+    public void assemble(String assembly, String object) {
+        final ProcessBuilder assemble = new ProcessBuilder("aarch64-linux-gnu-as", "-march=armv8-a", "-g",
+                        assembly, "-o", object);
+        assemble.redirectOutput(asOutput);
+        assemble.redirectError(asErrors);
+        assembler = runBlocking(assemble);
+    }
+
+    /**
+     * Links object files using the specified linker script.
+     * @param linkScript -- name of the file
+     * @param objects -- names of the object files
+     */
+    public void link(String linkScript, String... objects) {
+        String [] args = {"aarch64-linux-gnu-ld", "-T", linkScript, "-o", "test.elf"};
+        String [] fullargs = new String[args.length + objects.length];
+        System.arraycopy(args, 0, fullargs, 0, args.length);
+        System.arraycopy(objects, 0, fullargs, args.length, objects.length);
+        final ProcessBuilder link = new ProcessBuilder(fullargs);
+        link.redirectOutput(linkOutput);
+        link.redirectError(linkErrors);
+        linker = runBlocking(link);
+    }
+
     @Override
     protected ProcessBuilder getCompilerProcessBuilder() {
         // aarch64-linux-gnu-gcc -c -march=armv8-a+simd -mgeneral-regs-only -g test_aarch64.c -o test_aarch64.o
         return new ProcessBuilder("aarch64-linux-gnu-gcc", "-c", "-march=armv8-a+simd", "-mgeneral-regs-only", "-g",
-                                  "test_aarch64.c", "-o", "test_aarch64.o");
+                "test_aarch64.c", "-o", "test_aarch64.o");
     }
 
     @Override
     protected ProcessBuilder getAssemblerProcessBuilder() {
         // aarch64-linux-gnu-as -march=armv8-a -g startup_aarch64.s -o startup_aarch64.o
         return new ProcessBuilder("aarch64-linux-gnu-as", "-march=armv8-a", "-g", "startup_aarch64.s",
-                                  "-o", "startup_aarch64.o");
+                "-o", "startup_aarch64.o");
     }
 
     @Override
@@ -78,7 +107,31 @@ public class MaxineAarch64Tester extends CrossISATester {
 
     protected ProcessBuilder getQEMUProcessBuilder() {
         return new ProcessBuilder("qemu-system-aarch64", "-cpu", "cortex-a57", "-M", "virt", "-m", "128M", "-nographic",
-                                  "-s", "-S", "-kernel", "test.elf");
+                "-s", "-S", "-kernel", "test.elf");
+    }
+
+    public long[] runRegisteredSimulation() throws Exception {
+        ProcessBuilder gdbProcess = new ProcessBuilder("aarch64-linux-gnu-gdb", "-q", "-x", gdbInput);
+        gdbProcess.redirectOutput(gdbOutput);
+        gdbProcess.redirectError(gdbErrors);
+        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-aarch64", "-cpu", "cortex-a57", "-M", "virt", "-m",
+                                                        "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
+        qemuProcess.redirectOutput(qemuOutput);
+        qemuProcess.redirectError(qemuErrors);
+        try {
+            qemu = qemuProcess.start();
+            while (!qemuOutput.exists()) {
+                Thread.sleep(500);
+            }
+            bindToQemu();
+            gdbProcess.start().waitFor();
+        } catch (Exception e) {
+            e.printStackTrace();
+            cleanProcesses();
+            System.exit(-1);
+        }
+        parseLongRegisters("x0 ", "sp");
+        return simulatedLongRegisters;
     }
 
     @Override

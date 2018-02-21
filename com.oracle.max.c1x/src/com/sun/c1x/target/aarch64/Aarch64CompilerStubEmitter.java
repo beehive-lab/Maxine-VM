@@ -18,14 +18,14 @@
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-package com.sun.c1x.target.armv7;
+package com.sun.c1x.target.aarch64;
 
 import static com.sun.cri.ci.CiCallingConvention.Type.*;
 
 import java.util.*;
 
 import com.oracle.max.asm.*;
-import com.oracle.max.asm.target.armv7.*;
+import com.oracle.max.asm.target.aarch64.*;
 import com.sun.c1x.*;
 import com.sun.c1x.stub.*;
 import com.sun.c1x.target.*;
@@ -37,15 +37,15 @@ import com.sun.cri.xir.*;
 /**
  * An object used to produce a single compiler stub.
  */
-public class ARMV7CompilerStubEmitter extends CompilerStubEmitter {
+public class Aarch64CompilerStubEmitter extends CompilerStubEmitter {
 
-    private final ARMV7MacroAssembler asm;
+    private final Aarch64MacroAssembler asm;
 
-    public ARMV7CompilerStubEmitter(C1XCompilation compilation, CiKind[] argTypes, CiKind resultKind) {
-        super(compilation, new ARMV7MacroAssembler(compilation.target, compilation.compiler.compilerStubRegisterConfig),
+    public Aarch64CompilerStubEmitter(C1XCompilation compilation, CiKind[] argTypes, CiKind resultKind) {
+        super(compilation, new Aarch64MacroAssembler(compilation.target, compilation.compiler.compilerStubRegisterConfig),
                 argTypes, resultKind, 0x8000000080000000L, 0x8000000000000000L,
-                ARMV7.s0, ARMV7.s0, ARMV7.s0, ARMV7.s30);
-        this.asm = (ARMV7MacroAssembler) super.getAssembler();
+                Aarch64.d0, Aarch64.d0, Aarch64.d0, Aarch64.d30);
+        this.asm = (Aarch64MacroAssembler) super.getAssembler();
     }
 
     @Override
@@ -88,7 +88,7 @@ public class ARMV7CompilerStubEmitter extends CompilerStubEmitter {
             operands[resultOperand.index] = outputOperand;
         }
 
-        ARMV7LIRAssembler lasm = new ARMV7LIRAssembler(comp, tasm);
+        Aarch64LIRAssembler lasm = new Aarch64LIRAssembler(comp, tasm);
         prepareOperands(template, allocatableRegisters, operands, lasm);
 
         for (XirConstant c : template.constants) {
@@ -124,13 +124,13 @@ public class ARMV7CompilerStubEmitter extends CompilerStubEmitter {
     protected void convertPrologue() {
         prologue(new CiCalleeSaveLayout(0, -1, comp.target.wordSize, convertArgument, convertResult));
         asm.setUpScratch(comp.frameMap().toStackAddress(inArgs[0]));
-        asm.vldr(ARMV7Assembler.ConditionFlag.Always, convertArgument, ARMV7.r12, 0, CiKind.Int, CiKind.Int);
+        asm.fldr(64, convertArgument, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r12));
     }
 
     @Override
     protected void convertEpilogue() {
         asm.setUpScratch(comp.frameMap().toStackAddress(outResult));
-        asm.vstr(ARMV7Assembler.ConditionFlag.Always, convertResult, ARMV7.r12, 0, CiKind.Int, CiKind.Int);
+        asm.fstr(64, convertResult, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r12));
         epilogue();
     }
 
@@ -143,7 +143,7 @@ public class ARMV7CompilerStubEmitter extends CompilerStubEmitter {
         if (isInt) {
             // input is > 0 -> return maxInt
             // result register already contains 0x80000000, so subtracting 1 gives 0x7fffffff
-            asm.decrementl(convertResult, 1);
+            asm.decrementl(Aarch64Address.createBaseRegisterOnlyAddress(convertResult), 1);
         } else {
             // input is > 0 -> return maxLong
             // result register already contains 0x8000000000000000, so subtracting 1 gives 0x7fffffffffffffff
@@ -167,9 +167,9 @@ public class ARMV7CompilerStubEmitter extends CompilerStubEmitter {
             // pad to normal code entry point
             asm.nop(entryCodeOffset);
         }
-        asm.push(ARMV7Assembler.ConditionFlag.Always, 1 << 14, true);
+        asm.push(1 << 14);
         final int frameSize = frameSize();
-        asm.subq(ARMV7.r13, frameSize);
+        asm.subq(Aarch64.r13, frameSize);
         tasm.setFrameSize(frameSize);
         comp.frameMap().setFrameSize(frameSize);
         asm.save(csl, csl.frameOffsetToCSA);
@@ -185,7 +185,7 @@ public class ARMV7CompilerStubEmitter extends CompilerStubEmitter {
         asm.restore(csl, frameToCSA);
 
         // Restore rsp
-        asm.addq(ARMV7.rsp, frameSize());
+        asm.addq(Aarch64.sp, frameSize());
         asm.ret(0);
     }
 
@@ -196,7 +196,7 @@ public class ARMV7CompilerStubEmitter extends CompilerStubEmitter {
         for (int i = 0; i < cc.locations.length; ++i) {
             CiValue location = cc.locations[i];
             asm.setUpScratch(comp.frameMap().toStackAddress(inArgs[i]));
-            asm.ldr(ARMV7Assembler.ConditionFlag.Always, location.asRegister(), ARMV7.r12, 0);
+            asm.ldr(64, location.asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r12));
         }
 
         if (C1XOptions.AlignDirectCallsForPatching) {
@@ -215,9 +215,9 @@ public class ARMV7CompilerStubEmitter extends CompilerStubEmitter {
             CiRegister returnRegister = comp.registerConfig.getReturnRegister(call.resultKind);
             asm.setUpScratch(comp.frameMap().toStackAddress(outResult));
             if (returnRegister.number <= 15) {
-                asm.str(ARMV7Assembler.ConditionFlag.Always, returnRegister, ARMV7.r12, 0);
+                asm.str(64, returnRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r12));
             } else {
-                asm.vstr(ARMV7Assembler.ConditionFlag.Always, returnRegister, ARMV7.r12, 0, CiKind.Float, CiKind.Int);
+                asm.fstr(64, returnRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r12));
             }
         }
     }

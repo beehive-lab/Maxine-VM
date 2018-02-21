@@ -1,7 +1,6 @@
 /*
  * Copyright (c) 2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
- * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -17,29 +16,26 @@
  * You should have received a copy of the GNU General Public License version
  * 2 along with this work; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
- * or visit www.oracle.com if you need additional information or have any
- * questions.
  */
-package test.amd64.t1x;
-
-import junit.framework.*;
-
-import org.junit.runner.*;
+package test.crossisa.aarch64.adapters;
 
 import com.sun.max.ide.*;
 
-@RunWith(org.junit.runners.AllTests.class)
-public final class AllTests {
-    private AllTests() {
+import junit.framework.*;
+import test.com.sun.max.vm.AllTests;
+
+@org.junit.runner.RunWith(org.junit.runners.AllTests.class)
+public final class AutoTest {
+    private AutoTest() {
     }
 
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(AllTests.suite());
+    public static void main(String[] args) throws Exception {
+        junit.textui.TestRunner.run(AutoTest.suite());
     }
 
-    public static Test suite() {
-        return new TestCaseClassSet(AllTests.class).toTestSuite();
+    public static Test suite() throws Exception {
+        final TestSuite suite = new TestCaseClassSet(AllTests.class).toTestSuite();
+        suite.addTest(test.crossisa.aarch64.adapters.AllTests.suite());
+        return suite;
     }
 }

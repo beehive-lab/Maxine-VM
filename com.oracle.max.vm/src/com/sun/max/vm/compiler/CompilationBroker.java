@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -95,6 +95,9 @@ public class CompilationBroker {
     private static boolean offline = false;
     private static boolean simulateAdapter = false;
 
+    @HOSTED_ONLY
+    private static boolean needOfflineAdapters = false;
+
     static {
         addFieldOption("-X", "opt", CompilationBroker.class, "Select optimizing compiler whenever possible.");
         addFieldOption("-XX:", "RCT", CompilationBroker.class, "Set the recompilation threshold for methods. Use 0 to disable recompilation. (default: " + RCT + ").");
@@ -173,6 +176,15 @@ public class CompilationBroker {
 
     public boolean isOffline() {
         return offline;
+    }
+
+    @HOSTED_ONLY
+    public boolean needOfflineAdapters() {
+        return needOfflineAdapters;
+    }
+    @HOSTED_ONLY
+    public static void setNeedOfflineAdapters(boolean b) {
+        needOfflineAdapters = b;
     }
 
     public void setOffline(boolean val) {

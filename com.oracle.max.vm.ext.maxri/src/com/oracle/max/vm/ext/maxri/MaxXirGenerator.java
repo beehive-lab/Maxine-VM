@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2015, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2009, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -31,6 +31,7 @@ import java.io.*;
 import java.lang.reflect.*;
 import java.util.*;
 
+import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.asm.target.armv7.*;
 import com.sun.cri.ci.*;
 import com.sun.cri.ci.CiAddress.*;
@@ -56,6 +57,7 @@ import com.sun.max.vm.heap.debug.*;
 import com.sun.max.vm.layout.*;
 import com.sun.max.vm.object.*;
 import com.sun.max.vm.runtime.*;
+import com.sun.max.vm.runtime.aarch64.*;
 import com.sun.max.vm.runtime.amd64.*;
 import com.sun.max.vm.runtime.arm.*;
 import com.sun.max.vm.thread.*;
@@ -200,6 +202,8 @@ public class MaxXirGenerator implements RiXirGenerator {
         this.printXirTemplates = printXirTemplates;
         if (platform().cpu == CPU.ARMV7) {
             this.LATCH_REGISTER = ARMSafepointPoll.LATCH_REGISTER;
+        } else if (platform().target.arch.isAarch64()) {
+            this.LATCH_REGISTER = Aarch64SafepointPoll.LATCH_REGISTER;
         } else {
             this.LATCH_REGISTER = AMD64SafepointPoll.LATCH_REGISTER;
         }
@@ -992,6 +996,17 @@ public class MaxXirGenerator implements RiXirGenerator {
             asm.lea(arraySize, arraySize, length, 0, scale);
             asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
             asm.bindInline(aligned);
+        } else if (Platform.target().arch.isAarch64()) {
+            XirOperand scratch = asm.createRegisterTemp("scratch", WordUtil.archKind(), Aarch64.r8);
+            XirLabel aligned = asm.createInlineLabel("aligned");
+            asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
+            asm.lea(arraySize, arraySize, length, 0, scale);
+            asm.and(scratch, arraySize, asm.i(vmConfig().heapScheme().objectAlignment() - 1));
+            asm.jeq(aligned, scratch, asm.i(0));
+            asm.mov(arraySize, asm.i(arrayLayout().headerSize() + minObjectAlignmentMask()));
+            asm.lea(arraySize, arraySize, length, 0, scale);
+            asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
+            asm.bindInline(aligned);
         } else {
             assert false : "Arch unimplemented!";
         }
@@ -1058,6 +1073,17 @@ public class MaxXirGenerator implements RiXirGenerator {
             }
         } else if (Platform.target().arch.isARM()) {
             XirOperand scratch = asm.createRegisterTemp("scratch", WordUtil.archKind(), ARMV7.r8);
+            XirLabel aligned = asm.createInlineLabel("aligned");
+            asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
+            asm.lea(arraySize, arraySize, length, 0, scale);
+            asm.and(scratch, arraySize, asm.i(vmConfig().heapScheme().objectAlignment() - 1));
+            asm.jeq(aligned, scratch, asm.i(0));
+            asm.mov(arraySize, asm.i(arrayLayout().headerSize() + minObjectAlignmentMask()));
+            asm.lea(arraySize, arraySize, length, 0, scale);
+            asm.and(arraySize, arraySize, asm.i(~minObjectAlignmentMask()));
+            asm.bindInline(aligned);
+        } else if (Platform.target().arch.isAarch64()) {
+            XirOperand scratch = asm.createRegisterTemp("scratch", WordUtil.archKind(), Aarch64.r8);
             XirLabel aligned = asm.createInlineLabel("aligned");
             asm.mov(arraySize, asm.i(arrayLayout().headerSize()));
             asm.lea(arraySize, arraySize, length, 0, scale);
