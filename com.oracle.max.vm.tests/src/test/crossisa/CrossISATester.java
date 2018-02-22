@@ -420,7 +420,13 @@ public abstract class CrossISATester {
      * expected to be in the form:
      *
      * <pre>
-     *     s0    0    (raw 0x00000000)
+     *     s0  1.55405596e-31  (raw 0x0c49ba5e)
+     *     s1  4.47656345  (raw 0x408f4002)
+     *     s2  1.55405596e-31  (raw 0x0c49ba5e)
+     *     s3  4.47656345  (raw 0x408f4002)
+     *     s4  1.55405596e-31  (raw 0x0c49ba5e)
+     *     s5  4.47656345  (raw 0x408f4002)
+     *     s6  0  (raw 0x00000000)
      * </pre>
      *
      * @param startRegister The first float register to parse
@@ -458,7 +464,7 @@ public abstract class CrossISATester {
      * expected to be in the form:
      *
      * <pre>
-     *     s0    0    (raw 0x00000000)
+     *     s0  1.55405596e-31  (raw 0x0c49ba5e)
      * </pre>
      *
      * @param line The line from the gdb output to be parsed
@@ -466,13 +472,16 @@ public abstract class CrossISATester {
      */
     private static float parseFloatRegister(String line) {
         String value = line.split("\\s+")[1];
-        BigDecimal tmp = new BigDecimal(value);
-        if (tmp.compareTo(BigDecimal.valueOf(Float.MAX_VALUE)) > 0) {
-            BigDecimal result = BigDecimal.valueOf(Float.MIN_VALUE);
-            tmp = result.multiply(BigDecimal.valueOf(2)).add(tmp);
-            assert tmp.compareTo(BigDecimal.valueOf(Float.MAX_VALUE)) <= 0 : "Parsed non float value";
+
+        if (value.contains("nan")) {
+            return Float.NaN;
+        } else if (value.equals("inf")) {
+            return Float.POSITIVE_INFINITY;
+        } else if (value.equals("-inf")) {
+            return Float.NEGATIVE_INFINITY;
         }
-        return tmp.floatValue();
+
+        return Float.parseFloat(value);
     }
 
     /**
