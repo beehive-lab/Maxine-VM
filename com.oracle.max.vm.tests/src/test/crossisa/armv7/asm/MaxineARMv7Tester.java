@@ -73,6 +73,7 @@ public class MaxineARMv7Tester extends CrossISATester {
         runSimulation(gdbProcess, qemuProcess);
         parseIntRegisters("r0  ", "cpsr");
         parseFloatRegisters("s0  ", "s31");
+        parseDoubleRegisters("d0  ", "d31");
     }
 
     public Object[] runObjectRegisteredSimulation() throws Exception {
