@@ -875,14 +875,13 @@ public class Stubs {
             asm.restore(csl, frameToCSA);
 
             // undo the frame
-            asm.addq(ARMV7.r13, frameSize);
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
-            asm.ldr(ARMV7Assembler.ConditionFlag.Always, callSite, asm.scratchRegister, 0);
-            asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
-            asm.setUpRegister(ARMV7.r12, new CiAddress(WordUtil.archKind(), ARMV7.r13.asValue()));
+            asm.addq(ARMV7.rsp, frameSize);
 
-            asm.strImmediate(ARMV7Assembler.ConditionFlag.Always, 1, 1, 0, callSite, ARMV7.r12, 0);
-            asm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r12, callSite);
+            // patch the return address to re-execute the static call
+            asm.ldr(ARMV7Assembler.ConditionFlag.Always, asm.scratchRegister, ARMV7.rsp, 0);
+            asm.subq(asm.scratchRegister, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
+            asm.strImmediate(ARMV7Assembler.ConditionFlag.Always, 1, 1, 0, asm.scratchRegister, ARMV7.rsp, 0);
+
             asm.ret(0);
             String stubName = "strampoline";
             byte[] code = asm.codeBuffer.close(true);
