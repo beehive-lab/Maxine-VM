@@ -2939,7 +2939,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_BC_frem() throws Exception {
+    public void infinite_C1X_jtt_BC_frem() throws Exception {
         initTests();
         float[] argsOne = {311.0f, 2f};
         float[] argsTwo = {10f, 20.1f};
@@ -2976,7 +2976,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void broken_jtt_BC_drem() throws Exception {
+    public void infinite_jtt_BC_drem() throws Exception {
         initTests();
         double[] argsOne = {311.0D, 2D};
         double[] argsTwo = {10D, 20.1D};
@@ -3012,7 +3012,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_FLOATDIV_jtt_BC_ldiv() throws Exception {
+    public void infinite_C1X_FLOATDIV_jtt_BC_ldiv() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         initTests();
         CompilationBroker.singleton.setSimulateAdapter(true);
@@ -3769,7 +3769,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_loopPHI() throws Exception {
+    public void infinite_C1X_jtt_loopPHI() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.loop.LoopPhi");
         CompilationBroker.singleton.setSimulateAdapter(true);
@@ -3831,7 +3831,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_loopInline() throws Exception {
+    public void infinite_C1X_jtt_loopInline() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         CompilationBroker.singleton.setSimulateAdapter(true);
         String klassName = getKlassName("jtt.loop.LoopInline");
@@ -4265,8 +4265,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    @SuppressWarnings("cast")
-    public void broken_jtt_BC_l2f() throws Exception {
+    public void infinite_C1X_jtt_BC_l2f() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_l2f");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -4349,7 +4348,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_BC_dload_9() throws Exception {
+    public void wrong_C1X_jtt_BC_dload_9() throws Exception {
         initTests();
         double[] argsOne = {0.0D, 1.1D};
         double[] argsTwo = {17.1D, 2.5D};
@@ -4378,7 +4377,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_BC_dload_10() throws Exception {
+    public void wrong_C1X_jtt_BC_dload_10() throws Exception {
         initTests();
         double[] argsOne = {0.0D, 1.1D};
         double[] argsTwo = {17.1D, 2.5D};
