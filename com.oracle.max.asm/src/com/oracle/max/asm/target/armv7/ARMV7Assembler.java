@@ -985,12 +985,16 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public int getRegisterList(CiRegister... regs) {
+    public int getRegisterList(CiRegister... registers) {
         int regList = 0;
-        for (CiRegister reg : regs) {
+        for (CiRegister reg : registers) {
             regList |= 1 << reg.getEncoding();
         }
         return regList;
+    }
+
+    public void push(final ConditionFlag flag, CiRegister... registers) {
+        push(flag, getRegisterList(registers), false);
     }
 
     public void push(final ConditionFlag flag, final int registerList) {
@@ -1034,6 +1038,10 @@ public class ARMV7Assembler extends AbstractAssembler {
 
     public void restoreRegister(int reg, int reg2) {
         pop(ConditionFlag.Always, (1 << reg) | (1 << reg2), true);
+    }
+
+    public void pop(final ConditionFlag flag, CiRegister... registers) {
+        pop(flag, getRegisterList(registers), false);
     }
 
     public void pop(final ConditionFlag flag, final int registerList) {

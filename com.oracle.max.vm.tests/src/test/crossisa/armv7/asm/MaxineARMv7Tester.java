@@ -72,6 +72,8 @@ public class MaxineARMv7Tester extends CrossISATester {
         ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
         runSimulation(gdbProcess, qemuProcess);
         parseIntRegisters("r0  ", "cpsr");
+        parseFloatRegisters("s0  ", "s31");
+        parseDoubleRegisters("d0  ", "d31");
     }
 
     public Object[] runObjectRegisteredSimulation() throws Exception {

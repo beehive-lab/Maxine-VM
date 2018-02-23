@@ -420,7 +420,13 @@ public abstract class CrossISATester {
      * expected to be in the form:
      *
      * <pre>
-     *     s0    0    (raw 0x00000000)
+     *     s0  1.55405596e-31  (raw 0x0c49ba5e)
+     *     s1  4.47656345  (raw 0x408f4002)
+     *     s2  1.55405596e-31  (raw 0x0c49ba5e)
+     *     s3  4.47656345  (raw 0x408f4002)
+     *     s4  1.55405596e-31  (raw 0x0c49ba5e)
+     *     s5  4.47656345  (raw 0x408f4002)
+     *     s6  0  (raw 0x00000000)
      * </pre>
      *
      * @param startRegister The first float register to parse
@@ -458,7 +464,7 @@ public abstract class CrossISATester {
      * expected to be in the form:
      *
      * <pre>
-     *     s0    0    (raw 0x00000000)
+     *     s0  1.55405596e-31  (raw 0x0c49ba5e)
      * </pre>
      *
      * @param line The line from the gdb output to be parsed
@@ -466,13 +472,91 @@ public abstract class CrossISATester {
      */
     private static float parseFloatRegister(String line) {
         String value = line.split("\\s+")[1];
-        BigDecimal tmp = new BigDecimal(value.substring(2, value.length()));
-        if (tmp.compareTo(BigDecimal.valueOf(Float.MAX_VALUE)) > 0) {
-            BigDecimal result = BigDecimal.valueOf(Float.MIN_VALUE);
-            tmp = result.multiply(BigDecimal.valueOf(2)).add(tmp);
-            assert tmp.compareTo(BigDecimal.valueOf(Float.MAX_VALUE)) <= 0 : "Parsed non float value";
+
+        if (value.contains("nan")) {
+            return Float.NaN;
+        } else if (value.equals("inf")) {
+            return Float.POSITIVE_INFINITY;
+        } else if (value.equals("-inf")) {
+            return Float.NEGATIVE_INFINITY;
         }
-        return tmp.floatValue();
+
+        return Float.parseFloat(value);
+    }
+
+    /**
+     * Parses the double registers (64-bit) from the output of the gdb command {@code info all-registers}.  The
+     * output is expected to be in the form:
+     *
+     * <pre>
+     *     d0  {u8 = {0x5e, 0xba, 0x49, 0xc, 0x2, 0x40, 0x8f, 0x40}, u16 = {0xba5e, 0xc49, 0x4002, 0x408f}, u32 = {0xc49ba5e, 0x408f4002}, u64 = 0x408f40020c49ba5e, f32 = {0x0, 0x4}, f64 = 0x3e8}
+     *     d1  {u8 = {0x5e, 0xba, 0x49, 0xc, 0x2, 0x40, 0x8f, 0x40}, u16 = {0xba5e, 0xc49, 0x4002, 0x408f}, u32 = {0xc49ba5e, 0x408f4002}, u64 = 0x408f40020c49ba5e, f32 = {0x0, 0x4}, f64 = 0x3e8}
+     *     d2  {u8 = {0x5e, 0xba, 0x49, 0xc, 0x2, 0x40, 0x8f, 0x40}, u16 = {0xba5e, 0xc49, 0x4002, 0x408f}, u32 = {0xc49ba5e, 0x408f4002}, u64 = 0x408f40020c49ba5e, f32 = {0x0, 0x4}, f64 = 0x3e8}
+     *     d3  {u8 = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}, u16 = {0x0, 0x0, 0x0, 0x0}, u32 = {0x0, 0x0}, u64 = 0x0, f32 = {0x0, 0x0}, f64 = 0x0}
+     *     d4  {u8 = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}, u16 = {0x0, 0x0, 0x0, 0x0}, u32 = {0x0, 0x0}, u64 = 0x0, f32 = {0x0, 0x0}, f64 = 0x0}
+     * </pre>
+     *
+     * @param startRegister The first double register to parse
+     * @param endRegister The last double register to parse
+     * @return An array with the parsed values of the double registers
+     * @throws IOException
+     */
+    protected void parseDoubleRegisters(String startRegister, String endRegister) throws IOException {
+        BufferedReader    reader       = new BufferedReader(new FileReader(gdbOutput));
+        ArrayList<Double> parsedValues = new ArrayList<>(32);
+        String            line;
+        // Look for the startRegister
+        while ((line = reader.readLine()) != null) {
+            if (line.startsWith(startRegister)) {
+                break;
+            }
+        }
+        assert line != null : "Reached EOF before matching " + startRegister;
+        // Parse the registers
+        do {
+            if (line.contains(endRegister)) {
+                break;
+            }
+            parsedValues.add(parseDoubleRegister(line));
+        } while ((line = reader.readLine()) != null);
+        simulatedDoubleRegisters = new double[parsedValues.size()];
+        for (int i = 0; i < simulatedDoubleRegisters.length; i++) {
+            simulatedDoubleRegisters[i] = parsedValues.get(i);
+        }
+        reader.close();
+    }
+
+    /**
+     * Parses a double register (64-bit) from the output of the gdb command {@code info all-registers}.  The output is
+     * expected to be in the form:
+     *
+     * <pre>
+     *     d0  {u8 = {0x5e, 0xba, 0x49, 0xc, 0x2, 0x40, 0x8f, 0x40}, u16 = {0xba5e, 0xc49, 0x4002, 0x408f}, u32 = {0xc49ba5e, 0x408f4002}, u64 = 0x408f40020c49ba5e, f32 = {0x0, 0x4}, f64 = 0x3e8}
+     * </pre>
+     *
+     * @param line The line from the gdb output to be parsed
+     * @return The parsed double value of the register
+     */
+    private static double parseDoubleRegister(String line) {
+        String value = line.split("\\s+")[23];
+        value = value.substring(2, value.length() - 1);
+        return Double.longBitsToDouble(hexToLongBits(value));
+    }
+
+    /**
+     * Decodes a hex string representing a double.
+     *
+     * @param hex The hex string to decode
+     * @return The double decoded from {@code hex}
+     */
+    private static long hexToLongBits(String hex) {
+        assert hex.length() <= 16;
+        if (hex.length() == 16) { // Split hex string to allow parsing
+            long lsbs = hexToLongBits(hex.substring(8));
+            long msbs = hexToLongBits(hex.substring(0, 8));
+            return msbs << 32 | lsbs;
+        }
+        return Long.parseLong(hex, 16);
     }
 
     protected void initializeQemu() {

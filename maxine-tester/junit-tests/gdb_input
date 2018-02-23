@@ -17,6 +17,5 @@ continue
 # invoked through Java, gdb seems to ignore breakpoints.
 continue
 # print the registers
-info registers
-info float
+info all-registers
 quit
