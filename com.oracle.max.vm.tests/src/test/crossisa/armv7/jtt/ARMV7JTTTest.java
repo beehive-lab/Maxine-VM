@@ -3866,22 +3866,21 @@ public class ARMV7JTTTest extends MaxTestCase {
         return b.toString();
     }
 
-    @SuppressWarnings("cast")
     public long connectRegs(long reg0, long reg1) {
-        long returnVal = 0;
+        long returnVal;
         if (reg1 < 0) {
-            returnVal = ((long) reg1) << 32;
+            returnVal = reg1 << 32;
             if (reg0 < 0) {
                 returnVal += 1L << 31;
-                returnVal += ((long) reg0) + (1L << 31);
+                returnVal += reg0 + (1L << 31);
             } else {
                 returnVal += reg0;
             }
         } else {
-            returnVal = ((long) reg1) << 32;
+            returnVal = reg1 << 32;
             if (reg0 < 0) {
                 returnVal += 1L << 31;
-                returnVal += ((long) reg0) + (1L << 31);
+                returnVal += reg0 + (1L << 31);
             } else {
                 returnVal += reg0;
             }
