@@ -276,6 +276,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         int maximumValue = Integer.MIN_VALUE;
         int offset;
         entryPoint = -1; // Offset in the global array of the method we call from C.
+        assert !methods.isEmpty();
         for (TargetMethod m : methods) {
             byte[] b = m.code();
             if (entryPoint == -1) {
@@ -302,15 +303,11 @@ public class ARMV7JTTTest extends MaxTestCase {
             m.linkDirectCalls();
             byte[] b = m.code();
             offset = m.codeAt(0).toInt() - minimumValue;
-            for (int i = 0; i < b.length; i++) {
-                codeBytes[offset + i] = b[i];
-            }
+            System.arraycopy(b, 0, codeBytes, offset, b.length);
         }
         byte[] b = MaxineVM.vm().stubs.staticTrampoline().code();
         offset = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() - minimumValue;
-        for (int i = 0; i < b.length; i++) {
-            codeBytes[i + offset] = b[i];
-        }
+        System.arraycopy(b, 0, codeBytes, offset, b.length);
         entryPoint = entryPoint - minimumValue;
     }
 
@@ -319,6 +316,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         int maximumValue = Integer.MIN_VALUE;
         int offset;
         entryPoint = -1; // offset in the global array of the method we call from C.
+        assert !methods.isEmpty();
         for (TargetMethod m : methods) {
             m.linkDirectCalls();
             if (!fileName.equals(m.classMethodActor.sourceFileName())) {
@@ -361,16 +359,12 @@ public class ARMV7JTTTest extends MaxTestCase {
             }
             byte[] b = m.code();
             offset = m.codeAt(0).toInt() - minimumValue;
-            for (int i = 0; i < b.length; i++) {
-                codeBytes[offset + i] = b[i];
-            }
+            System.arraycopy(b, 0, codeBytes, offset, b.length);
             m.offlineCopyCode(minimumValue, codeBytes);
         }
         byte[] b = MaxineVM.vm().stubs.staticTrampoline().code();
         offset = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() - minimumValue;
-        for (int i = 0; i < b.length; i++) {
-            codeBytes[i + offset] = b[i];
-        }
+        System.arraycopy(b, 0, codeBytes, offset, b.length);
         entryPoint = entryPoint - minimumValue;
     }
 
