@@ -985,9 +985,9 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
-    public int getRegisterList(CiRegister... regs) {
+    public int getRegisterList(CiRegister... registers) {
         int regList = 0;
-        for (CiRegister reg : regs) {
+        for (CiRegister reg : registers) {
             regList |= 1 << reg.getEncoding();
         }
         return regList;
