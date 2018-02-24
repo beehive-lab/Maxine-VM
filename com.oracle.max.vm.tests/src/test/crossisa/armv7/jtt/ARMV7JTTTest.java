@@ -2942,7 +2942,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void infinite_C1X_jtt_BC_frem() throws Exception {
+    /* frem depends on the runtime call runtimeArithmeticFrem which cannot be tested offline yet */
+    public void broken_C1X_jtt_BC_frem() throws Exception {
         initTests();
         float[] argsOne = {311.0f, 2f};
         float[] argsTwo = {10f, 20.1f};
@@ -2979,7 +2980,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void infinite_jtt_BC_drem() throws Exception {
+    /* drem depends on the runtime call runtimeArithmeticDrem which cannot be tested offline yet */
+    public void broken_jtt_BC_drem() throws Exception {
         initTests();
         double[] argsOne = {311.0D, 2D};
         double[] argsTwo = {10D, 20.1D};
@@ -3015,7 +3017,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void infinite_C1X_FLOATDIV_jtt_BC_ldiv() throws Exception {
+    /* ldiv depends on the runtime call runtimeArithmeticLdiv which cannot be used offline */
+    public void broken_C1X_FLOATDIV_jtt_BC_ldiv() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         initTests();
         CompilationBroker.singleton.setSimulateAdapter(true);
@@ -4266,32 +4269,34 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void infinite_C1X_jtt_BC_l2f() throws Exception {
+    /* l2f depends on the runtime call runtimel2float which cannot be tested offline yet */
+    public void broken_C1X_jtt_BC_l2f() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_l2f");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
-        List<Args> pairs = new LinkedList<Args>();
+        List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0L, 0.0f));
         pairs.add(new Args(1L, 1.0f));
         pairs.add(new Args((long) Integer.MAX_VALUE, (float) Integer.MAX_VALUE));
-        pairs.add(new Args((long) Long.MAX_VALUE, (float) Long.MAX_VALUE));
+        pairs.add(new Args(Long.MAX_VALUE, (float) Long.MAX_VALUE));
         pairs.add(new Args(-74652389L, -74652389.00f));
         pairs.add(new Args((long) Integer.MIN_VALUE, (float) Integer.MIN_VALUE));
-        pairs.add(new Args((long) Long.MIN_VALUE, (float) Long.MIN_VALUE));
+        pairs.add(new Args(Long.MIN_VALUE, (float) Long.MIN_VALUE));
         initializeCodeBuffers(methods, "BC_l2f.java", "float test(long)");
 
         for (Args pair : pairs) {
             float  expectedValue     = jtt.bytecode.BC_l2f.test(pair.lfirst);
-            String functionPrototype = ARMV7CodeWriter.preAmble("float", "long long", Long.toString(pair.lfirst));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            float  returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            String functionPrototype = ARMV7CodeWriter.preAmble("float", "long long", Long.toString(pair.lfirst) + "LL");
+            MaxineARMv7Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
+            float  returnValue       = tester.getSimulatedFloatRegisters()[0];
+            assert returnValue == expectedValue : "Failed incorrect value " + returnValue + " expected: " + expectedValue;
             theCompiler.cleanup();
         }
     }
 
-    public void infinite_C1X_jtt_BC_l2d() throws Exception {
+    /* l2d depends on the runtime call runtimel2double which cannot be tested offline yet */
+    public void broken_C1X_jtt_BC_l2d() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_l2d");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
