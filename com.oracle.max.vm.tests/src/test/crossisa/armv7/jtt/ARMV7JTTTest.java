@@ -354,7 +354,7 @@ public class ARMV7JTTTest extends MaxTestCase {
 
         codeBytes = new byte[maximumValue - minimumValue];
         for (TargetMethod m : methods) {
-            if (!fileName.equals(m.classMethodActor.sourceFileName())) {
+            if (!methodName.equals(m.classMethodActor.simpleName())) {
                 continue;
             }
             byte[] b = m.code();
