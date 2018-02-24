@@ -52,23 +52,14 @@ public class MaxineARMv7Tester extends CrossISATester {
                                   "test.elf");
     }
 
-    public void runSimulation(boolean captureFPREGs) throws Exception {
-        ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb", "-q", "-x", captureFPREGs ? gdbInputFPREGS : gdbInput);
+    @Override
+    public void runSimulation() throws Exception {
+        ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb", "-q", "-x", gdbInput);
         ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
         runSimulation(gdbProcess, qemuProcess);
         parseIntRegisters("r0  ", "cpsr");
         parseFloatRegisters("s0  ", "s31");
         parseDoubleRegisters("d0  ", "d31");
-    }
-
-    public Object[] runObjectRegisteredSimulation() throws Exception {
-        runSimulation(true);
-        return parseObjectRegistersToFile(gdbOutput.getName());
-    }
-
-    @Override
-    public void runSimulation() throws Exception {
-        runSimulation(false);
     }
 
     public MaxineARMv7Tester(int[] expected, boolean[] test, BitsFlag[] range) {
