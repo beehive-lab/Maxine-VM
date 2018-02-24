@@ -34,21 +34,6 @@ public class MaxineARMv7Tester extends CrossISATester {
      * qemu-system-arm -cpu cortex-a9 -M versatilepb -m 128M -nographic -s -S -kernel test.elf
      */
 
-    public void newCompile() {
-        final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.elf");
-        final ProcessBuilder compile = new ProcessBuilder("arm-none-eabi-gcc", "-c", "-march=armv7-a", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-g", "test_armv7.c", "-o", "test_armv7.o");
-        compile.redirectOutput(gccOutput);
-        compile.redirectError(gccErrors);
-        try {
-            removeFiles.start().waitFor();
-            gcc = compile.start();
-            gcc.waitFor();
-        } catch (Exception e) {
-            System.err.println(e);
-            e.printStackTrace();
-        }
-    }
-
     @Override
     protected ProcessBuilder getCompilerProcessBuilder() {
         return new ProcessBuilder("arm-none-eabi-gcc", "-c", "-DSTATIC", "-mfloat-abi=hard", "-mfpu=vfpv3-d16",

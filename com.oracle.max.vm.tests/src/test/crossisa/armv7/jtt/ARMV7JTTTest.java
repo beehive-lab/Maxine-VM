@@ -188,7 +188,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         r.cleanFiles();
         r.cleanProcesses();
         r.assembleStartup();
-        r.newCompile();
+        r.compile();
         r.link();
         r.runSimulation();
         r.reset();
@@ -203,7 +203,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         r.cleanFiles();
         r.cleanProcesses();
         r.assembleStartup();
-        r.newCompile();
+        r.compile();
         r.link();
         r.runSimulation();
         r.reset();
