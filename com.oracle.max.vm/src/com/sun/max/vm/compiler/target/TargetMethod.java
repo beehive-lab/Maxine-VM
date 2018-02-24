@@ -1471,9 +1471,7 @@ public abstract class TargetMethod extends MemoryRegion {
                     if (callee != null) {
                         byte[] b = callee.code();
                         int myoffset = callee.codeAt(0).toInt() - minimumValue;
-                        for (int i = 0; i < b.length; i++) {
-                            codeBytes[myoffset + i] = b[i];
-                        }
+                        System.arraycopy(b, 0, codeBytes, myoffset, b.length);
                         callee.offlineCopyCode(minimumValue, codeBytes);
                     }
                 } else {
