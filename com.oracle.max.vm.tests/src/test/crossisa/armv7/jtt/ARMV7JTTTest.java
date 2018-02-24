@@ -311,7 +311,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         entryPoint = entryPoint - minimumValue;
     }
 
-    private void initializeCodeBuffers(List<TargetMethod> methods, String fileName, String methodName) {
+    private void initializeCodeBuffers(List<TargetMethod> methods, String fileName, String methodName) throws IOException {
         int minimumValue = Integer.MAX_VALUE;
         int maximumValue = Integer.MIN_VALUE;
         int offset;
@@ -362,6 +362,15 @@ public class ARMV7JTTTest extends MaxTestCase {
             System.arraycopy(b, 0, codeBytes, offset, b.length);
             m.offlineCopyCode(minimumValue, codeBytes);
         }
+        // Compile Stubs class to get access to the target method of patchStaticTrampolineCallSiteARMV7 needed to patch
+        // static trampolines
+        String klassName = getKlassName("com.sun.max.vm.compiler.target.Stubs");
+        Compile.compile(new String[] {klassName}, "C1X");
+        // Fixup static trampoline's direct call to patchStaticTrampolineCallSiteARMV7 to avoid infinite loops.
+        // Note that the patchStaticTrampolineCallSiteARMV7 is not copied to the codeBuffer, because of its big chain of
+        // dependencies on other classes and methods that would need to be copied as well.  That said the actual
+        // patching is never performed, braking tests that rely on it.
+        MaxineVM.vm().stubs.staticTrampoline().offlineFixupTrampolineCallSite();
         byte[] b = MaxineVM.vm().stubs.staticTrampoline().code();
         offset = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() - minimumValue;
         System.arraycopy(b, 0, codeBytes, offset, b.length);
