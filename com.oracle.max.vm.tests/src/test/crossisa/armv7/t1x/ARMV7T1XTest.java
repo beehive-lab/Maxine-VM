@@ -128,9 +128,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         MaxineARMv7Tester r = new MaxineARMv7Tester(expected, tests, masks);
         r.cleanFiles();
         r.cleanProcesses();
-        r.assembleStartup();
         r.compile();
-        r.link();
         r.runSimulation();
         r.reset();
         return r.getSimulatedLongRegisters();

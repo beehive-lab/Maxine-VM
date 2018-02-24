@@ -2,7 +2,6 @@ ENTRY(_Reset)
 SECTIONS
 {
  . = 0x10000;
- .startup . : { startup_armv7.o(.text) }
  .text : { *(.text) }
  .data : { *(.data) }
  .bss : { *(.bss COMMON) }

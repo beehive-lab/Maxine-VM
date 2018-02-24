@@ -36,20 +36,19 @@ public class MaxineARMv7Tester extends CrossISATester {
 
     @Override
     protected ProcessBuilder getCompilerProcessBuilder() {
-        return new ProcessBuilder("arm-none-eabi-gcc", "-c", "-DSTATIC", "-mfloat-abi=hard", "-mfpu=vfpv3-d16",
-                                  "-march=armv7-a", "-g", "test_armv7.c", "-o", "test_armv7.o");
+        return new ProcessBuilder("arm-none-eabi-gcc", "-DSTATIC", "-mfloat-abi=hard", "-mfpu=vfpv3-d16",
+                                  "-march=armv7-a", "-nostdlib", "-nostartfiles", "-g", "-Ttest_armv7.ld",
+                                  "startup_armv7.s", "test_armv7.c", "-o", "test.elf");
     }
 
     @Override
     protected ProcessBuilder getAssemblerProcessBuilder() {
-        return new ProcessBuilder("arm-none-eabi-as", "-mcpu=cortex-a15", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-g",
-                                  "startup_armv7.s", "-o", "startup_armv7.o");
+        return new ProcessBuilder("true");
     }
 
     @Override
     protected ProcessBuilder getLinkerProcessBuilder() {
-        return new ProcessBuilder("arm-none-eabi-ld", "-T", "test_armv7.ld", "test_armv7.o", "startup_armv7.o", "-o",
-                                  "test.elf");
+        return new ProcessBuilder("true");
     }
 
     protected ProcessBuilder getGDBProcessBuilder() {
