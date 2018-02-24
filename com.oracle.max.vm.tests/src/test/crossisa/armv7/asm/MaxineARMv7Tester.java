@@ -52,10 +52,19 @@ public class MaxineARMv7Tester extends CrossISATester {
                                   "test.elf");
     }
 
+    protected ProcessBuilder getGDBProcessBuilder() {
+        return new ProcessBuilder("arm-none-eabi-gdb", "-q", "-x", gdbInput);
+    }
+
+    protected ProcessBuilder getQEMUProcessBuilder() {
+        return new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M",
+                                  "-nographic", "-s", "-S", "-kernel", "test.elf");
+    }
+
     @Override
     public void runSimulation() throws Exception {
-        ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb", "-q", "-x", gdbInput);
-        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
+        ProcessBuilder gdbProcess = getGDBProcessBuilder();
+        ProcessBuilder qemuProcess = getQEMUProcessBuilder();
         runSimulation(gdbProcess, qemuProcess);
         parseIntRegisters("r0  ", "cpsr");
         parseFloatRegisters("s0  ", "s31");
