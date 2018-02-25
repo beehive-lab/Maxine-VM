@@ -232,45 +232,6 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void work_PokeInt() throws Exception {
-        ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        expectedValues[0] = Integer.MIN_VALUE;
-        expectedValues[1] = Integer.MAX_VALUE;
-        expectedValues[2] = 0;
-        expectedValues[3] = -1;
-        expectedValues[4] = 40;
-        expectedValues[5] = -40;
-        for (int i = 0; i < 6; i++) {
-            masm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], i);
-        }
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 4 | 8);
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 1);
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 2);
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 16);
-        for (int i = 0; i <= 5; i++) {
-            masm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
-        }
-        theCompiler.pokeInt(ARMV7.cpuRegisters[0], 5);
-        theCompiler.pokeInt(ARMV7.cpuRegisters[1], 4);
-        theCompiler.pokeInt(ARMV7.cpuRegisters[2], 3);
-        theCompiler.pokeInt(ARMV7.cpuRegisters[3], 2);
-        theCompiler.pokeInt(ARMV7.cpuRegisters[4], 1);
-        theCompiler.pokeInt(ARMV7.cpuRegisters[5], 0);
-        for (int i = 0; i <= 5; i++) {
-            masm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], -25);
-        }
-        theCompiler.peekInt(ARMV7.cpuRegisters[0], 5);
-        theCompiler.peekInt(ARMV7.cpuRegisters[1], 4);
-        theCompiler.peekInt(ARMV7.cpuRegisters[2], 3);
-        theCompiler.peekInt(ARMV7.cpuRegisters[3], 2);
-        theCompiler.peekInt(ARMV7.cpuRegisters[4], 1);
-        theCompiler.peekInt(ARMV7.cpuRegisters[5], 0);
-        int[] registerValues  = generateAndTest(expectedValues, testvalues, bitmasks);
-        for (int i = 0; i < 6; i++) {
-            assert registerValues[i] == expectedValues[i] : "Failed incorrect value " + Long.toString(registerValues[i], 16) + " " + Long.toString(expectedValues[i], 16);
-        }
-    }
-
     public void work_AssignLong() throws Exception {
         long returnValue = 0;
         int i;
@@ -323,7 +284,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void work_PeekInt() throws Exception {
+    public void works_Poke_n_Peek_Int() throws Exception {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         expectedValues[0] = Integer.MIN_VALUE;
         expectedValues[1] = Integer.MAX_VALUE;
@@ -331,24 +292,20 @@ public class ARMV7T1XTest extends MaxTestCase {
         expectedValues[3] = -1;
         expectedValues[4] = 40;
         expectedValues[5] = -40;
-        for (int i = 0; i < 6; i++) {
-            masm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
-        }
-        theCompiler.pokeInt(ARMV7.cpuRegisters[0], 5);
-        theCompiler.pokeInt(ARMV7.cpuRegisters[1], 4);
-        theCompiler.pokeInt(ARMV7.cpuRegisters[2], 3);
-        theCompiler.pokeInt(ARMV7.cpuRegisters[3], 2);
-        theCompiler.pokeInt(ARMV7.cpuRegisters[4], 1);
-        theCompiler.pokeInt(ARMV7.cpuRegisters[5], 0);
+        theCompiler.incStack(1);
         for (int i = 0; i <= 5; i++) {
-            masm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], -25);
+            masm.movImm32(Always, cpuRegisters[i], expectedValues[i]);
         }
-        theCompiler.peekInt(ARMV7.cpuRegisters[0], 5);
-        theCompiler.peekInt(ARMV7.cpuRegisters[1], 4);
-        theCompiler.peekInt(ARMV7.cpuRegisters[2], 3);
-        theCompiler.peekInt(ARMV7.cpuRegisters[3], 2);
-        theCompiler.peekInt(ARMV7.cpuRegisters[4], 1);
-        theCompiler.peekInt(ARMV7.cpuRegisters[5], 0);
+        for (int i = 0; i <= 5; i++) {
+            theCompiler.pokeInt(cpuRegisters[i], 5 - i);
+        }
+        for (int i = 0; i <= 5; i++) {
+            masm.movImm32(Always, cpuRegisters[i], -25);
+        }
+        for (int i = 0; i <= 5; i++) {
+            theCompiler.peekInt(cpuRegisters[i], 5 - i);
+        }
+        theCompiler.decStack(1);
         int[] registerValues  = generateAndTest(expectedValues, testvalues, bitmasks);
         for (int i = 0; i < 6; i++) {
             assert registerValues[i] == expectedValues[i] : "Failed incorrect value " + Long.toString(registerValues[i], 16) + " " + Long.toString(expectedValues[i], 16);
