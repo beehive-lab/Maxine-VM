@@ -203,22 +203,22 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void work_AdjustReg() throws Exception {
+    public void test_AdjustReg() throws Exception {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.movImm32(ConditionFlag.Always, ARMV7.r0, 0);
-        masm.movImm32(ConditionFlag.Always, ARMV7.r1, 1);
-        masm.movImm32(ConditionFlag.Always, ARMV7.r2, Integer.MIN_VALUE);
-        masm.movImm32(ConditionFlag.Always, ARMV7.r3, Integer.MAX_VALUE);
-        masm.movImm32(ConditionFlag.Always, ARMV7.r4, 0);
-        masm.movImm32(ConditionFlag.Always, ARMV7.r5, 0);
-        masm.incrementl(ARMV7.r0, 1);
-        masm.incrementl(ARMV7.r1, -1);
-        masm.incrementl(ARMV7.r2, -1);
-        masm.incrementl(ARMV7.r3, 1);
-        masm.incrementl(ARMV7.r4, Integer.MAX_VALUE);
-        masm.incrementl(ARMV7.r5, 0);
-        masm.movImm32(ConditionFlag.Always, ARMV7.r6, -10);
-        masm.incrementl(ARMV7.r6, -1);
+        masm.movImm32(Always, r0, 0);
+        masm.movImm32(Always, r1, 1);
+        masm.movImm32(Always, r2, Integer.MIN_VALUE);
+        masm.movImm32(Always, r3, Integer.MAX_VALUE);
+        masm.movImm32(Always, r4, 0);
+        masm.movImm32(Always, r5, 0);
+        masm.incrementl(r0, 1);
+        masm.incrementl(r1, -1);
+        masm.incrementl(r2, -1);
+        masm.incrementl(r3, 1);
+        masm.incrementl(r4, Integer.MAX_VALUE);
+        masm.incrementl(r5, 0);
+        masm.movImm32(Always, r6, -10);
+        masm.incrementl(r6, -1);
         int[] simulatedValues  = generateAndTest(expectedValues, testvalues, bitmasks);
         expectedValues[0] = 1;
         expectedValues[1] = 0;
