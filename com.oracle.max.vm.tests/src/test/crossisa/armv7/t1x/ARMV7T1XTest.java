@@ -19,6 +19,8 @@
  */
 package test.crossisa.armv7.t1x;
 
+import static com.oracle.max.asm.target.armv7.ARMV7.*;
+import static com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag.Always;
 import static com.sun.max.vm.MaxineVM.*;
 
 import java.io.*;
@@ -706,56 +708,50 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.do_initFrameTests(anMethod, codeAttr);
         theCompiler.emitPrologueTests();
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        expectedValues[0] = -2;
-        expectedValues[1] = -1;
-        expectedValues[2] = 0;
-        expectedValues[3] = 1;
-        expectedValues[4] = 2;
-        expectedValues[5] = 3;
-        expectedValues[6] = 4;
-        expectedValues[7] = 5;
-        expectedValues[8] = 6;
-        expectedValues[9] = 7;
-        expectedValues[10] = 8;
-        for (int i = 0; i < 11; i++) {
-            masm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
+        for (int i = 0; i <= 7; i++) {
+            masm.movImm32(Always, ARMV7.cpuRegisters[i], i - 2);
         }
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64 | 128 | 256 | 512);
-        for (int i = 0; i <= 10; i++) {
-            masm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], -25);
+        masm.push(Always, r0, r1, r2, r3, r4, r5, r6, r7);
+        for (int i = 0; i <= 7; i++) {
+            masm.movImm32(Always, ARMV7.cpuRegisters[i], -25);
         }
-        for (int i = 0; i < 5; i++) {
-            theCompiler.do_loadTests(i, Kind.INT);
-            masm.pop(ARMV7Assembler.ConditionFlag.Always, 1);
-            masm.movImm32(ConditionFlag.Always, ARMV7.r0, 100 + i);
-            masm.push(ARMV7Assembler.ConditionFlag.Always, 1);
+        for (int i = 0; i < 6; i++) {
+            masm.movImm32(Always, r0, 100 + i);
+            masm.push(Always, r0);
+            masm.push(Always, r0); // Double push to get the stack alignment right (8-byte)
             theCompiler.do_storeTests(i, Kind.INT);
         }
-        theCompiler.do_loadTests(5, Kind.LONG);
-        masm.pop(ARMV7Assembler.ConditionFlag.Always, 1 | 2);
-        masm.movw(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, (int) (172L & 0xffff));
-        masm.movt(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, (int) ((172L >> 16) & 0xffff));
-        masm.movw(ARMV7Assembler.ConditionFlag.Always, ARMV7.r1, (int) (((172L >> 32) & 0xffff)));
-        masm.movt(ARMV7Assembler.ConditionFlag.Always, ARMV7.r1, (int) (((172L >> 48) & 0xffff)));
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 1 | 2);
-        theCompiler.do_storeTests(5, Kind.LONG);
-        for (int i = 4; i >= 0; i--) {
+        long longValue = 0x0000001400000028L;
+        masm.movw(Always, r0, (int) (longValue & 0xffff));
+        masm.movt(Always, r0, (int) ((longValue >> 16) & 0xffff));
+        masm.movw(Always, r1, (int) (((longValue >> 32) & 0xffff)));
+        masm.movt(Always, r1, (int) (((longValue >> 48) & 0xffff)));
+        masm.push(Always, r0, r1);
+        masm.push(Always, r0, r1); // Double push to get the stack pointer for longs right
+        theCompiler.do_storeTests(6, Kind.LONG);
+        for (int i = 5; i >= 0; i--) {
             theCompiler.do_loadTests(i, Kind.INT);
         }
-        theCompiler.do_loadTests(5, Kind.LONG);
-        masm.pop(ARMV7Assembler.ConditionFlag.Always, 1 | 2 | 4 | 8 | 16 | 32 | 64);
+        theCompiler.do_loadTests(6, Kind.LONG);
+        // First pop slots holding the long value
+        masm.pop(Always, r8); // pop empty slots due to 8-byte alignment
+        masm.pop(Always, r8);
+        masm.pop(Always, r0); // pop actual slots
+        masm.pop(Always, r1);
+        for (int i = 2; i <= 7; i++) {
+            masm.pop(Always, cpuRegisters[i]); // pop actual slot
+            masm.pop(Always, r8); // pop empty slot due to 8-byte alignment
+        }
         theCompiler.emitEpilogueTests();
 
-        expectedValues[0] = 172;
-        expectedValues[1] = 0;
+        expectedValues[0] = (int) (longValue);
+        expectedValues[1] = (int) (longValue >> 32);
         expectedValues[2] = 100;
         expectedValues[3] = 101;
         expectedValues[4] = 102;
         expectedValues[5] = 103;
         expectedValues[6] = 104;
+        expectedValues[7] = 105;
         int[] registerValues  = generateAndTest(expectedValues, testvalues, bitmasks);
         for (int i = 0; i <= 6; i++) {
             assert registerValues[i] == expectedValues[i] : "Reg val " + registerValues[i] + "  Exp " + expectedValues[i];
