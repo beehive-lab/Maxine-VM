@@ -353,7 +353,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void work_PeekFloat() throws Exception {
+    public void test_Poke_n_Peek_Float() throws Exception {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         long[] expectedLongValues = new long[6];
         expectedLongValues[0] = Float.floatToRawIntBits(Float.MIN_VALUE);
@@ -399,7 +399,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void work_PokeFloat() throws Exception {
+    public void test_PokeFloat() throws Exception {
         long[] expectedLongValues = new long[6];
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         expectedLongValues[0] = Float.floatToRawIntBits(Float.MIN_VALUE);
