@@ -176,27 +176,27 @@ public class ARMV7T1XTest extends MaxTestCase {
         junit.textui.TestRunner.run(ARMV7T1XTest.class);
     }
 
-    public void work_DecStack() throws Exception {
+    public void test_DecStack() throws Exception {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         theCompiler.incStack(3);
-        masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, ARMV7.r13); // copy stack value into r0
+        masm.mov(Always, false, r0, rsp); // copy stack value into r0
         theCompiler.decStack(1);
-        masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r1, ARMV7.r13); // copy stack value onto r1
+        masm.mov(Always, false, r1, rsp); // copy stack value onto r1
         theCompiler.decStack(2);
-        masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r2, ARMV7.r13);
+        masm.mov(Always, false, r2, rsp);
         int[] simulatedValues  = generateAndTest(expectedValues, testvalues, bitmasks);
         for (int i = 0; i < 16; i++) {
             assert 2 * (simulatedValues[1] - simulatedValues[0]) == (simulatedValues[2] - simulatedValues[1]) : "Register " + i + " Value " + simulatedValues[i];
         }
     }
 
-    public void work_IncStack() throws Exception {
+    public void test_IncStack() throws Exception {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r0, ARMV7.r13); // copy stack value into r0
+        masm.mov(Always, false, r0, rsp); // copy stack value into r0
         theCompiler.incStack(1);
-        masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r1, ARMV7.r13); // copy stack value onto r1
+        masm.mov(Always, false, r1, rsp); // copy stack value onto r1
         theCompiler.incStack(2);
-        masm.mov(ARMV7Assembler.ConditionFlag.Always, false, ARMV7.r2, ARMV7.r13);
+        masm.mov(Always, false, r2, rsp);
         int[] simulatedValues  = generateAndTest(expectedValues, testvalues, bitmasks);
         for (int i = 0; i < 16; i++) {
             assert 2 * (simulatedValues[0] - simulatedValues[1]) == (simulatedValues[1] - simulatedValues[2]) : "Register " + i + " Value " + simulatedValues[i];
