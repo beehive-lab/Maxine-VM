@@ -289,7 +289,7 @@ public class ARMV7T1XCompilation extends T1XCompilation {
     @Override
     protected void storeLong(CiRegister src, int index) {
         assert src.number < 10;
-        storeGeneric(src, index, Kind.LONG);
+        asm.store(src, localSlot(localSlotOffset(index, Kind.LONG)), CiKind.Long);
     }
 
     @Override
