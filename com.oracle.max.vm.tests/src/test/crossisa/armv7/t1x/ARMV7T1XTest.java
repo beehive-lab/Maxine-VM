@@ -136,6 +136,18 @@ public class ARMV7T1XTest extends MaxTestCase {
         return r.getSimulatedIntRegisters();
     }
 
+    private MaxineARMv7Tester simulateTest() throws Exception {
+        ARMV7CodeWriter code = new ARMV7CodeWriter(theCompiler.getMacroAssembler().codeBuffer);
+        code.createCodeFile();
+        MaxineARMv7Tester r = new MaxineARMv7Tester();
+        r.cleanFiles();
+        r.cleanProcesses();
+        r.compile();
+        r.runSimulation();
+        r.reset();
+        return r;
+    }
+
     public ARMV7T1XTest() {
         try {
             String[] args = new String[2];
@@ -312,43 +324,19 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void work_PokeDouble() throws Exception {
-        long returnValue = 0;
+    public void test_Poke_n_Peek_Double() throws Exception {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        long[] expectedLongValues = new long[5];
-        expectedLongValues[0] = Double.doubleToRawLongBits(Double.MIN_VALUE);
-        expectedLongValues[1] = Double.doubleToRawLongBits(Double.MAX_VALUE);
-        expectedLongValues[2] = Double.doubleToRawLongBits(0.0);
-        expectedLongValues[3] = Double.doubleToRawLongBits(-1.0);
-        expectedLongValues[4] = Double.doubleToRawLongBits(-100.75);
-        CiRegister[] dRegs = new CiRegister[] {ARMV7.s0, ARMV7.s1, ARMV7.s2, ARMV7.s3, ARMV7.s4};
-
+        double[] expectedValues = {Double.MIN_VALUE, Double.MAX_VALUE, 0.0D, -1.0D, -100.75D};
+        CiRegister[] dRegs = new CiRegister[] {s0, s2, s4, s6, s8};
+        theCompiler.incStack(1);
         for (int i = 0; i < 5; i++) {
-            theCompiler.assignDoubleTest(dRegs[i], Double.longBitsToDouble(expectedLongValues[i]));
-        }
-        masm.vpush(ARMV7Assembler.ConditionFlag.Always, dRegs[0], dRegs[0], CiKind.Double, CiKind.Double);
-        masm.vpush(ARMV7Assembler.ConditionFlag.Always, dRegs[0], dRegs[0], CiKind.Double, CiKind.Double); // index 8
-        masm.vpush(ARMV7Assembler.ConditionFlag.Always, dRegs[1], dRegs[1], CiKind.Double, CiKind.Double); // index 6
-        masm.vpush(ARMV7Assembler.ConditionFlag.Always, dRegs[2], dRegs[2], CiKind.Double, CiKind.Double); // index 4
-        masm.vpush(ARMV7Assembler.ConditionFlag.Always, dRegs[3], dRegs[3], CiKind.Double, CiKind.Double); // index 2
-        masm.vpush(ARMV7Assembler.ConditionFlag.Always, dRegs[4], dRegs[4], CiKind.Double, CiKind.Double); // index 0
-        for (int i = 0; i <= 9; i++) {
-            masm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], -25);
-        }
-        expectedLongValues[0] = Double.doubleToRawLongBits(-100.1);
-        expectedLongValues[1] = Double.doubleToRawLongBits(-200.2);
-        expectedLongValues[2] = Double.doubleToRawLongBits(1.123456);
-        expectedLongValues[3] = Double.doubleToRawLongBits(99.9876543);
-        expectedLongValues[4] = Double.doubleToRawLongBits(3000000.000);
-        for (int i = 0; i < 5; i++) {
-            theCompiler.assignDoubleTest(dRegs[i], Double.longBitsToDouble(expectedLongValues[i]));
+            theCompiler.assignDoubleTest(dRegs[i], expectedValues[i]);
         }
         theCompiler.pokeDouble(dRegs[0], 8);
         theCompiler.pokeDouble(dRegs[1], 6);
         theCompiler.pokeDouble(dRegs[2], 4);
         theCompiler.pokeDouble(dRegs[3], 2);
         theCompiler.pokeDouble(dRegs[4], 0);
-
         for (int i = 0; i < 5; i++) {
             theCompiler.assignDoubleTest(dRegs[i], Double.longBitsToDouble(i));
         }
@@ -357,23 +345,11 @@ public class ARMV7T1XTest extends MaxTestCase {
         theCompiler.peekDouble(dRegs[2], 4);
         theCompiler.peekDouble(dRegs[3], 2);
         theCompiler.peekDouble(dRegs[4], 0);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, dRegs[0], null, CiKind.Int, CiKind.Double);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, dRegs[1], null, CiKind.Int, CiKind.Double);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4, dRegs[2], null, CiKind.Int, CiKind.Double);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r6, dRegs[3], null, CiKind.Int, CiKind.Double);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, dRegs[4], null, CiKind.Int, CiKind.Double);
-        int[] registerValues  = generateAndTest(expectedValues, testvalues, bitmasks);
-        for (int i = 0; i < 10; i += 2) {
-            returnValue = 0xffffffffL & registerValues[i];
-            returnValue |= (0xffffffffL & registerValues[i + 1]) << 32;
-            System.out.println("Failed incorrect value " + Long.toString(returnValue, 16) + " " + Long.toString(expectedLongValues[i / 2], 16) + " Expected " +
-                            Double.longBitsToDouble(expectedLongValues[i / 2]) + " GOT " + Double.longBitsToDouble(returnValue));
-        }
-        for (int i = 0; i < 10; i += 2) {
-            returnValue = 0xffffffffL & registerValues[i];
-            returnValue |= (0xffffffffL & registerValues[i + 1]) << 32;
-            assert returnValue == expectedLongValues[i / 2] : "Failed incorrect value " + Long.toString(returnValue, 16) + " " + Long.toString(expectedLongValues[i / 2], 16) + " Expected " +
-                            Double.longBitsToDouble(expectedLongValues[i / 2]) + " GOT " + Double.longBitsToDouble(returnValue);
+        theCompiler.decStack(1);
+        double[] registerValues  = simulateTest().getSimulatedDoubleRegisters();
+        for (int i = 0; i < 5; i ++) {
+            assert registerValues[i] == expectedValues[i] :
+                    "Failed with incorrect value, Expected " + expectedValues[i] + " GOT " + registerValues[i];
         }
     }
 
@@ -500,46 +476,6 @@ public class ARMV7T1XTest extends MaxTestCase {
             returnValue |= (0xffffffffL & registerValues[i + 1]) << 32;
             assert returnValue == expectedLongValues[i / 2] : "Failed incorrect value " + Long.toString(returnValue, 16) + " " + Long.toString(expectedLongValues[i / 2], 16) + " Expected " +
                             Double.longBitsToDouble(expectedLongValues[i / 2]) + " GOT " + Double.longBitsToDouble(returnValue);
-        }
-    }
-
-    public void work_PeekDouble() throws Exception {
-        long returnValue = 0;
-        long[] expectedLongValues = new long[5];
-        ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        expectedLongValues[0] = Double.doubleToRawLongBits(Double.MIN_VALUE);
-        expectedLongValues[1] = Double.doubleToRawLongBits(Double.MAX_VALUE);
-        expectedLongValues[2] = Double.doubleToRawLongBits(0.0);
-        expectedLongValues[3] = Double.doubleToRawLongBits(-1.0);
-        expectedLongValues[4] = Double.doubleToRawLongBits(-100.75);
-        CiRegister[] dRegs = new CiRegister[] {ARMV7.s0, ARMV7.s1, ARMV7.s2, ARMV7.s3, ARMV7.s4};
-        for (int i = 0; i < 5; i++) {
-            theCompiler.assignDoubleTest(dRegs[i], Double.longBitsToDouble(expectedLongValues[i]));
-        }
-        theCompiler.pokeDouble(dRegs[0], 8);
-        theCompiler.pokeDouble(dRegs[1], 6);
-        theCompiler.pokeDouble(dRegs[2], 4);
-        theCompiler.pokeDouble(dRegs[3], 2);
-        theCompiler.pokeDouble(dRegs[4], 0);
-        for (int i = 0; i <= 9; i++) {
-            masm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], -25);
-        }
-        theCompiler.peekDouble(dRegs[0], 8);
-        theCompiler.peekDouble(dRegs[1], 6);
-        theCompiler.peekDouble(dRegs[2], 4);
-        theCompiler.peekDouble(dRegs[3], 2);
-        theCompiler.peekDouble(dRegs[4], 0);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r0, dRegs[0], null, CiKind.Int, CiKind.Double);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r2, dRegs[1], null, CiKind.Int, CiKind.Double);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r4, dRegs[2], null, CiKind.Int, CiKind.Double);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r6, dRegs[3], null, CiKind.Int, CiKind.Double);
-        masm.vmov(ARMV7Assembler.ConditionFlag.Always, ARMV7.r8, dRegs[4], null, CiKind.Int, CiKind.Double);
-        int[] registerValues  = generateAndTest(expectedValues, testvalues, bitmasks);
-        for (int i = 0; i < 10; i += 2) {
-            returnValue = 0xffffffffL & registerValues[i];
-            returnValue |= (0xffffffffL & registerValues[i + 1]) << 32;
-            assert returnValue == expectedLongValues[i / 2] : "Failed incorrect value " + Long.toString(returnValue, 16) + " " + Long.toString(expectedLongValues[i / 2], 16) + " Expected " +
-                            Double.longBitsToDouble(expectedLongValues[i / 2]) + " got " + Double.longBitsToDouble(returnValue);
         }
     }
 
