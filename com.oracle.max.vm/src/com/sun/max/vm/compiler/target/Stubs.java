@@ -531,7 +531,55 @@ public class Stubs {
             String stubName = "invokeBasic";
             return new Stub(InvokeBasic, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else if (platform().isa == ISA.Aarch64) {
-            throw FatalError.unimplemented();
+            CiRegisterConfig registerConfig = registerConfigs.trampoline;
+            Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
+            CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
+            int frameSize = target().alignFrameSize(csl.size);
+            final int frameToCSA = csl.frameOffsetToCSA;
+
+            for (int i = 0; i < prologueSize; ++i) {
+                asm.nop();
+            }
+            asm.push(1 << 14);
+
+            // now allocate the frame for this method
+            asm.subq(Aarch64.sp, frameSize);
+
+            // save all the callee save registers
+            asm.save(csl, frameToCSA);
+
+            CiValue[] args = resolveInvokeBasicCallArgs;
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.rsp.asValue(), frameSize));
+            asm.ldr(64, args[1].asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+
+            asm.alignForPatchableDirectCall();
+            int callPos = asm.codeBuffer.position();
+            ClassMethodActor callee = resolveInvokeBasicCall.classMethodActor;
+            asm.call();
+            int callSize = asm.codeBuffer.position() - callPos;
+
+            // Put the entry point of the resolved method on the stack just below the
+            // return address of the trampoline itself. By adjusting RSP to point at
+            // this second return address and executing a 'ret' instruction, execution
+            // continues in the resolved method as if it was called by the trampoline's
+            // caller which is exactly what we want.
+            CiRegister returnReg = registerConfig.getReturnRegister(WordUtil.archKind());
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), Aarch64.rsp, frameSize - 4));
+            asm.ldr(64, returnReg, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+
+            // Restore all parameter registers before returning
+            int registerRestoreEpilogueOffset = asm.codeBuffer.position();
+            asm.restore(csl, frameToCSA);
+
+            // Adjust RSP as mentioned above and do the 'ret' that lands us in the
+            // trampolined-to method.
+            asm.addq(Aarch64.sp, frameSize - 4);
+            asm.ret(0);
+
+            byte[] code = asm.codeBuffer.close(true);
+
+            String stubName = "invokeBasic";
+            return new Stub(InvokeBasic, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else {
             throw FatalError.unimplemented();
         }
