@@ -69,7 +69,7 @@ public class ARMV7CodeWriter {
     }
 
     public void createStaticCodeStubsFile(String functionPrototype, byte[] stubs, int entryPoint) {
-        assert entryPoint > 0 : "Entry point cannot be negative : " + entryPoint
+        assert entryPoint >= 0 : "Entry point cannot be negative : " + entryPoint
                 + " (0x" + Integer.toHexString(entryPoint) + ")";
         assert entryPoint < (stubs.length + 1) * 4 : "Entry point must be within range of codeArray : " + entryPoint
                 + " (0x" + Integer.toHexString(entryPoint) + ")";

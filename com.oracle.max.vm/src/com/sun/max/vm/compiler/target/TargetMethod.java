@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, APT Group, School of Computer Science,
+ * Copyright (c) 2017-2018, APT Group, School of Computer Science,
  * The University of Manchester. All rights reserved.
  * Copyright (c) 2014, 2015, Andrey Rodchenko. All rights reserved.
  * Copyright (c) 2007, 2012, Oracle and/or its affiliates. All rights reserved.
@@ -1471,9 +1471,7 @@ public abstract class TargetMethod extends MemoryRegion {
                     if (callee != null) {
                         byte[] b = callee.code();
                         int myoffset = callee.codeAt(0).toInt() - minimumValue;
-                        for (int i = 0; i < b.length; i++) {
-                            codeBytes[myoffset + i] = b[i];
-                        }
+                        System.arraycopy(b, 0, codeBytes, myoffset, b.length);
                         callee.offlineCopyCode(minimumValue, codeBytes);
                     }
                 } else {
@@ -1482,6 +1480,21 @@ public abstract class TargetMethod extends MemoryRegion {
                 dcIndex++;
             }
         }
+    }
+
+    public final void offlineFixupTrampolineCallSite() {
+        assert MaxineVM.isHosted();
+        assert directCallees.length == 1;
+        int safepointIndex = safepoints.nextDirectCall(0);
+        Object currentDirectCallee = directCallees[0];
+        assert currentDirectCallee != null;
+        assert currentDirectCallee instanceof ClassMethodActor;
+        ClassMethodActor cma = (ClassMethodActor) currentDirectCallee;
+        TargetMethod callee = cma.currentTargetMethod();
+        assert callee != null;
+        final int offset = getCallEntryOffset(currentDirectCallee, safepointIndex);
+        int callPos = safepoints.causePosAt(safepointIndex);
+        fixupCallSite(callPos, callee.codeAt(offset));
     }
     // END OFFLINE TESTING METHODS
 }

@@ -187,9 +187,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         MaxineARMv7Tester r = new MaxineARMv7Tester();
         r.cleanFiles();
         r.cleanProcesses();
-        r.assembleStartup();
-        r.newCompile();
-        r.link();
+        r.compile();
         r.runSimulation();
         r.reset();
         return r;
@@ -202,9 +200,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         MaxineARMv7Tester r = new MaxineARMv7Tester(expected, tests, masks);
         r.cleanFiles();
         r.cleanProcesses();
-        r.assembleStartup();
-        r.newCompile();
-        r.link();
+        r.compile();
         r.runSimulation();
         r.reset();
         return r.getSimulatedIntRegisters();
@@ -216,9 +212,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         MaxineARMv7Tester r = new MaxineARMv7Tester();
         r.cleanFiles();
         r.cleanProcesses();
-        r.assembleStartup();
         r.compile();
-        r.link();
         r.runSimulation();
         r.reset();
         return r;
@@ -271,54 +265,12 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    private void initializeCodeBuffers(List<TargetMethod> methods) {
-        int minimumValue = Integer.MAX_VALUE;
-        int maximumValue = Integer.MIN_VALUE;
-        int offset;
-        entryPoint = -1; // Offset in the global array of the method we call from C.
-        for (TargetMethod m : methods) {
-            byte[] b = m.code();
-            if (entryPoint == -1) {
-                entryPoint = m.codeAt(0).toInt();
-            }
-            if ((m.codeAt(0)).toInt() < minimumValue) {
-                minimumValue = m.codeAt(0).toInt(); // Update minimum offset in address space
-            }
-            if ((m.codeAt(0)).toInt() + b.length > maximumValue) {
-                maximumValue = m.codeAt(0).toInt() + b.length; // Update maximum offset in address space
-            }
-        }
-
-        if (MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() < minimumValue) {
-            minimumValue = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt();
-        }
-
-        if ((MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() + MaxineVM.vm().stubs.staticTrampoline().code().length) > maximumValue) {
-            maximumValue = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() + MaxineVM.vm().stubs.staticTrampoline().code().length;
-        }
-
-        codeBytes = new byte[maximumValue - minimumValue];
-        for (TargetMethod m : methods) {
-            m.linkDirectCalls();
-            byte[] b = m.code();
-            offset = m.codeAt(0).toInt() - minimumValue;
-            for (int i = 0; i < b.length; i++) {
-                codeBytes[offset + i] = b[i];
-            }
-        }
-        byte[] b = MaxineVM.vm().stubs.staticTrampoline().code();
-        offset = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() - minimumValue;
-        for (int i = 0; i < b.length; i++) {
-            codeBytes[i + offset] = b[i];
-        }
-        entryPoint = entryPoint - minimumValue;
-    }
-
-    private void initializeCodeBuffers(List<TargetMethod> methods, String fileName, String methodName) {
+    private void initializeCodeBuffers(List<TargetMethod> methods, String fileName, String methodName) throws IOException {
         int minimumValue = Integer.MAX_VALUE;
         int maximumValue = Integer.MIN_VALUE;
         int offset;
         entryPoint = -1; // offset in the global array of the method we call from C.
+        assert !methods.isEmpty();
         for (TargetMethod m : methods) {
             m.linkDirectCalls();
             if (!fileName.equals(m.classMethodActor.sourceFileName())) {
@@ -356,21 +308,26 @@ public class ARMV7JTTTest extends MaxTestCase {
 
         codeBytes = new byte[maximumValue - minimumValue];
         for (TargetMethod m : methods) {
-            if (!fileName.equals(m.classMethodActor.sourceFileName())) {
+            if (!methodName.equals(m.classMethodActor.simpleName())) {
                 continue;
             }
             byte[] b = m.code();
             offset = m.codeAt(0).toInt() - minimumValue;
-            for (int i = 0; i < b.length; i++) {
-                codeBytes[offset + i] = b[i];
-            }
+            System.arraycopy(b, 0, codeBytes, offset, b.length);
             m.offlineCopyCode(minimumValue, codeBytes);
         }
+        // Compile Stubs class to get access to the target method of patchStaticTrampolineCallSiteARMV7 needed to patch
+        // static trampolines
+        String klassName = getKlassName("com.sun.max.vm.compiler.target.Stubs");
+        Compile.compile(new String[] {klassName}, "C1X");
+        // Fixup static trampoline's direct call to patchStaticTrampolineCallSiteARMV7 to avoid infinite loops.
+        // Note that the patchStaticTrampolineCallSiteARMV7 is not copied to the codeBuffer, because of its big chain of
+        // dependencies on other classes and methods that would need to be copied as well.  That said the actual
+        // patching is never performed, braking tests that rely on it.
+        MaxineVM.vm().stubs.staticTrampoline().offlineFixupTrampolineCallSite();
         byte[] b = MaxineVM.vm().stubs.staticTrampoline().code();
         offset = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() - minimumValue;
-        for (int i = 0; i < b.length; i++) {
-            codeBytes[i + offset] = b[i];
-        }
+        System.arraycopy(b, 0, codeBytes, offset, b.length);
         entryPoint = entryPoint - minimumValue;
     }
 
@@ -2271,7 +2228,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         String klassName = getKlassName("jtt.bytecode.BC_invokestatic");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
-        initializeCodeBuffers(methods);
+        initializeCodeBuffers(methods, "BC_invokestatic.java", "int test(int)");
         pairs.add(new Args(1, 1));
         pairs.add(new Args(2, 2));
         pairs.add(new Args(-2, -2));
@@ -2288,7 +2245,7 @@ public class ARMV7JTTTest extends MaxTestCase {
     public void test_C1X_jtt_BC_f2d() throws Exception {
         String klassName = getKlassName("jtt.bytecode.BC_f2d");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        initializeCodeBuffers(methods);
+        initializeCodeBuffers(methods, "BC_f2d.java", "double test(float)");
         float[] arguments = {-2.2f, 0.0f, 1.0f, 01.06f};
         double expectedDouble;
         for (int i = 0; i < arguments.length; i++) {
@@ -2361,7 +2318,7 @@ public class ARMV7JTTTest extends MaxTestCase {
     public void test_C1X_jtt_BC_d2f() throws Exception {
         String klassName = getKlassName("jtt.bytecode.BC_d2f");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        initializeCodeBuffers(methods);
+        initializeCodeBuffers(methods, "BC_d2f.java", "float test(double)");
         double[] arguments = {-2.2d, 0.0d, 1.0d, 01.06d};
         float expectedFloat = -9;
         for (int i = 0; i < arguments.length; i++) {
@@ -2420,7 +2377,7 @@ public class ARMV7JTTTest extends MaxTestCase {
     public void test_C1X_jtt_BC_f2i01() throws Exception {
         String klassName = getKlassName("jtt.bytecode.BC_f2i01");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        initializeCodeBuffers(methods);
+        initializeCodeBuffers(methods, "BC_f2i01.java", "int test(float)");
         float[] arguments = {0.0f/* , 0.0f, 1.0f, 1.06f */};
         for (int i = 0; i < arguments.length; i++) {
             int    answer            = jtt.bytecode.BC_f2i01.test(arguments[i]);
@@ -2434,7 +2391,7 @@ public class ARMV7JTTTest extends MaxTestCase {
     public void test_C1X_jtt_BC_i2d() throws Exception {
         String klassName = getKlassName("jtt.bytecode.BC_i2d");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        initializeCodeBuffers(methods);
+        initializeCodeBuffers(methods, "BC_i2d.java", "double test(int)");
         int[] arguments = {-2, 0, 1, 2, 99};
         for (int i = 0; i < arguments.length; i++) {
             double answer = jtt.bytecode.BC_i2d.test(arguments[i]);
@@ -2874,7 +2831,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         String klassName = getKlassName("jtt.bytecode.BC_fmul");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
-        initializeCodeBuffers(methods);
+        initializeCodeBuffers(methods, "BC_fmul.java", "float test(float, float)");
         for (int i = 0; i < argsOne.length; i++) {
             float floatValue = jtt.bytecode.BC_fmul.test(argsOne[i], argsTwo[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("float", "float, float ", Float.toString(argsOne[i]) + "," + Float.toString(argsTwo[i]));
@@ -2892,7 +2849,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         String klassName = getKlassName("jtt.bytecode.BC_fadd");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
-        initializeCodeBuffers(methods);
+        initializeCodeBuffers(methods, "BC_fadd.java", "float test(float, float)");
         for (int i = 0; i < argsOne.length; i++) {
             float floatValue = jtt.bytecode.BC_fadd.test(argsOne[i], argsTwo[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("float", "float, float ", Float.toString(argsOne[i]) + "," + Float.toString(argsTwo[i]));
@@ -2910,7 +2867,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         String klassName = getKlassName("jtt.bytecode.BC_fsub");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
-        initializeCodeBuffers(methods);
+        initializeCodeBuffers(methods, "BC_fsub.java", "float test(float, float)");
         for (int i = 0; i < argsOne.length; i++) {
             float floatValue = jtt.bytecode.BC_fsub.test(argsOne[i], argsTwo[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("float", "float, float ", Float.toString(argsOne[i]) + "," + Float.toString(argsTwo[i]));
@@ -2928,7 +2885,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         String klassName = getKlassName("jtt.bytecode.BC_fdiv");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
-        initializeCodeBuffers(methods);
+        initializeCodeBuffers(methods, "BC_fdiv.java", "float test(float, float)");
         for (int i = 0; i < argsOne.length; i++) {
             float floatValue = jtt.bytecode.BC_fdiv.test(argsOne[i], argsTwo[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("float", "float, float ", Float.toString(argsOne[i]) + "," + Float.toString(argsTwo[i]));
@@ -2939,7 +2896,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void infinite_C1X_jtt_BC_frem() throws Exception {
+    /* frem depends on the runtime call runtimeArithmeticFrem which cannot be tested offline yet */
+    public void broken_C1X_jtt_BC_frem() throws Exception {
         initTests();
         float[] argsOne = {311.0f, 2f};
         float[] argsTwo = {10f, 20.1f};
@@ -2964,7 +2922,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         String klassName = getKlassName("jtt.bytecode.BC_irem");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
-        initializeCodeBuffers(methods);
+        initializeCodeBuffers(methods, "BC_irem.java", "int test(int, int)");
 
         int expectedValue = 0;
         for (int i = 0; i < argsOne.length; i++) {
@@ -2976,14 +2934,15 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void infinite_jtt_BC_drem() throws Exception {
+    /* drem depends on the runtime call runtimeArithmeticDrem which cannot be tested offline yet */
+    public void broken_jtt_BC_drem() throws Exception {
         initTests();
         double[] argsOne = {311.0D, 2D};
         double[] argsTwo = {10D, 20.1D};
         String klassName = getKlassName("jtt.bytecode.BC_drem");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
-        initializeCodeBuffers(methods);
+        initializeCodeBuffers(methods, "BC_drem.java", "double test(double, double)");
         for (int i = 0; i < argsOne.length; i++) {
             double doubleValue = jtt.bytecode.BC_drem.test(argsOne[i], argsTwo[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("double", "double, double ", Double.toString(argsOne[i]) + "," + Double.toString(argsTwo[i]));
@@ -3001,7 +2960,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         String klassName = getKlassName("jtt.bytecode.BC_ddiv");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
-        initializeCodeBuffers(methods);
+        initializeCodeBuffers(methods, "BC_ddiv.java", "double test(double, double)");
         for (int i = 0; i < argsOne.length; i++) {
             double doubleValue = jtt.bytecode.BC_ddiv.test(argsOne[i], argsTwo[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("double", "double, double ", Double.toString(argsOne[i]) + "," + Double.toString(argsTwo[i]));
@@ -3012,7 +2971,8 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void infinite_C1X_FLOATDIV_jtt_BC_ldiv() throws Exception {
+    /* ldiv depends on the runtime call runtimeArithmeticLdiv which cannot be used offline */
+    public void broken_C1X_FLOATDIV_jtt_BC_ldiv() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         initTests();
         CompilationBroker.singleton.setSimulateAdapter(true);
@@ -3184,7 +3144,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         String klassName = getKlassName("jtt.bytecode.BC_freturn");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
-        initializeCodeBuffers(methods);
+        initializeCodeBuffers(methods, "BC_freturn.java", "float test(float)");
 
         for (int i = 0; i < argsOne.length; i++) {
             float floatValue = jtt.bytecode.BC_freturn.test(argsOne[i]);
@@ -3202,7 +3162,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         String klassName = getKlassName("jtt.bytecode.BC_dreturn");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
-        initializeCodeBuffers(methods);
+        initializeCodeBuffers(methods, "BC_dreturn.java", "double test(double)");
 
         for (int i = 0; i < argsOne.length; i++) {
             double doubleValue = jtt.bytecode.BC_dreturn.test(argsOne[i]);
@@ -3221,7 +3181,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         String klassName = getKlassName("jtt.bytecode.BC_dmul");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
-        initializeCodeBuffers(methods);
+        initializeCodeBuffers(methods, "BC_dmul.java", "double test(double, double)");
 
         for (int i = 0; i < argsOne.length; i++) {
             double doubleValue = jtt.bytecode.BC_dmul.test(argsOne[i], argsTwo[i]);
@@ -4263,32 +4223,34 @@ public class ARMV7JTTTest extends MaxTestCase {
         }
     }
 
-    public void infinite_C1X_jtt_BC_l2f() throws Exception {
+    /* l2f depends on the runtime call runtimel2float which cannot be tested offline yet */
+    public void broken_C1X_jtt_BC_l2f() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_l2f");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
-        List<Args> pairs = new LinkedList<Args>();
+        List<Args> pairs = new LinkedList<>();
         pairs.add(new Args(0L, 0.0f));
         pairs.add(new Args(1L, 1.0f));
         pairs.add(new Args((long) Integer.MAX_VALUE, (float) Integer.MAX_VALUE));
-        pairs.add(new Args((long) Long.MAX_VALUE, (float) Long.MAX_VALUE));
+        pairs.add(new Args(Long.MAX_VALUE, (float) Long.MAX_VALUE));
         pairs.add(new Args(-74652389L, -74652389.00f));
         pairs.add(new Args((long) Integer.MIN_VALUE, (float) Integer.MIN_VALUE));
-        pairs.add(new Args((long) Long.MIN_VALUE, (float) Long.MIN_VALUE));
+        pairs.add(new Args(Long.MIN_VALUE, (float) Long.MIN_VALUE));
         initializeCodeBuffers(methods, "BC_l2f.java", "float test(long)");
 
         for (Args pair : pairs) {
             float  expectedValue     = jtt.bytecode.BC_l2f.test(pair.lfirst);
-            String functionPrototype = ARMV7CodeWriter.preAmble("float", "long long", Long.toString(pair.lfirst));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            float  returnValue       = registerValues[0];
-            assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
+            String functionPrototype = ARMV7CodeWriter.preAmble("float", "long long", Long.toString(pair.lfirst) + "LL");
+            MaxineARMv7Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
+            float  returnValue       = tester.getSimulatedFloatRegisters()[0];
+            assert returnValue == expectedValue : "Failed incorrect value " + returnValue + " expected: " + expectedValue;
             theCompiler.cleanup();
         }
     }
 
-    public void infinite_C1X_jtt_BC_l2d() throws Exception {
+    /* l2d depends on the runtime call runtimel2double which cannot be tested offline yet */
+    public void broken_C1X_jtt_BC_l2d() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.bytecode.BC_l2d");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -4475,7 +4437,7 @@ public class ARMV7JTTTest extends MaxTestCase {
         String klassName = getKlassName("jtt.bytecode.BC_dadd");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         vm().compilationBroker.setOffline(true);
-        initializeCodeBuffers(methods);
+        initializeCodeBuffers(methods, "BC_dadd.java", "double test(double, double)");
 
         for (int i = 0; i < argsOne.length; i++) {
             double doubleValue = jtt.bytecode.BC_dadd.test(argsOne[i], argsTwo[i]);

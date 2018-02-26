@@ -106,9 +106,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             System.out.println("Code Generation is disabled!");
             return;
         }
-        r.assembleStartup();
         r.compile();
-        r.link();
         r.runSimulation();
         if (!r.validateIntRegisters()) {
             r.reset();
@@ -125,9 +123,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
             System.out.println("Code Generation is disabled!");
             return null;
         }
-        r.assembleStartup();
         r.compile();
-        r.link();
         r.runSimulation();
         r.reset();
         return r.getSimulatedIntRegisters();

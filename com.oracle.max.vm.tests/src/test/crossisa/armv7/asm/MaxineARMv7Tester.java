@@ -34,56 +34,40 @@ public class MaxineARMv7Tester extends CrossISATester {
      * qemu-system-arm -cpu cortex-a9 -M versatilepb -m 128M -nographic -s -S -kernel test.elf
      */
 
-    public void newCompile() {
-        final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.elf");
-        final ProcessBuilder compile = new ProcessBuilder("arm-none-eabi-gcc", "-c", "-march=armv7-a", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-g", "test_armv7.c", "-o", "test_armv7.o");
-        compile.redirectOutput(gccOutput);
-        compile.redirectError(gccErrors);
-        try {
-            removeFiles.start().waitFor();
-            gcc = compile.start();
-            gcc.waitFor();
-        } catch (Exception e) {
-            System.err.println(e);
-            e.printStackTrace();
-        }
-    }
-
     @Override
     protected ProcessBuilder getCompilerProcessBuilder() {
-        return new ProcessBuilder("arm-none-eabi-gcc", "-c", "-DSTATIC", "-mfloat-abi=hard", "-mfpu=vfpv3-d16",
-                                  "-march=armv7-a", "-g", "test_armv7.c", "-o", "test_armv7.o");
+        return new ProcessBuilder("arm-none-eabi-gcc", "-DSTATIC", "-mfloat-abi=hard", "-mfpu=vfpv3-d16",
+                                  "-march=armv7-a", "-nostdlib", "-nostartfiles", "-g", "-Ttest_armv7.ld",
+                                  "startup_armv7.s", "test_armv7.c", "-o", "test.elf");
     }
 
     @Override
     protected ProcessBuilder getAssemblerProcessBuilder() {
-        return new ProcessBuilder("arm-none-eabi-as", "-mcpu=cortex-a15", "-mfloat-abi=hard", "-mfpu=vfpv3-d16", "-g",
-                                  "startup_armv7.s", "-o", "startup_armv7.o");
+        return new ProcessBuilder("true");
     }
 
     @Override
     protected ProcessBuilder getLinkerProcessBuilder() {
-        return new ProcessBuilder("arm-none-eabi-ld", "-T", "test_armv7.ld", "test_armv7.o", "startup_armv7.o", "-o",
-                                  "test.elf");
+        return new ProcessBuilder("true");
     }
 
-    public void runSimulation(boolean captureFPREGs) throws Exception {
-        ProcessBuilder gdbProcess = new ProcessBuilder("arm-none-eabi-gdb", "-q", "-x", captureFPREGs ? gdbInputFPREGS : gdbInput);
-        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
-        runSimulation(gdbProcess, qemuProcess);
-        parseIntRegisters("r0  ", "cpsr");
-        parseFloatRegisters("s0  ", "s31");
-        parseDoubleRegisters("d0  ", "d31");
+    protected ProcessBuilder getGDBProcessBuilder() {
+        return new ProcessBuilder("arm-none-eabi-gdb", "-q", "-x", gdbInput);
     }
 
-    public Object[] runObjectRegisteredSimulation() throws Exception {
-        runSimulation(true);
-        return parseObjectRegistersToFile(gdbOutput.getName());
+    protected ProcessBuilder getQEMUProcessBuilder() {
+        return new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M",
+                                  "-nographic", "-s", "-S", "-kernel", "test.elf");
     }
 
     @Override
     public void runSimulation() throws Exception {
-        runSimulation(false);
+        ProcessBuilder gdbProcess = getGDBProcessBuilder();
+        ProcessBuilder qemuProcess = getQEMUProcessBuilder();
+        runSimulation(gdbProcess, qemuProcess);
+        parseIntRegisters("r0  ", "cpsr");
+        parseFloatRegisters("s0  ", "s31");
+        parseDoubleRegisters("d0  ", "d31");
     }
 
     public MaxineARMv7Tester(int[] expected, boolean[] test, BitsFlag[] range) {
