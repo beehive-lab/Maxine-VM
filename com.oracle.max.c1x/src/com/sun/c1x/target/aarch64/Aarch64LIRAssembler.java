@@ -2615,12 +2615,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
      *            RSP).
      */
     private void bangStackWithOffset(int offset) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
-//        masm.setUpScratch(new CiAddress(target.wordKind, Aarch64.RSP, -offset));
-//        masm.strImmediate(ConditionFlag.Always, 1, 1, 0, Aarch64.r0, Aarch64.r12, 0);
+        masm.setUpScratch(new CiAddress(target.wordKind, Aarch64.rsp, -offset));
+        masm.str(64, Aarch64.r0, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r12));
     }
 
     private CiRegisterValue assureInRegister(CiValue pointer) {
