@@ -695,13 +695,9 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitBranch(LIRBranch op) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
         assert assertEmitBranch(op);
         if (op.cond() == Condition.TRUE) {
-//            masm.jmp(new Aarch64Label(op.label()));
+            masm.b(new Aarch64Label(op.label()));
             if (op.info != null) {
                 tasm.recordImplicitException(codePos() - 4, op.info); // ADDED EXCEPTION
             }
@@ -709,7 +705,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             ConditionFlag acond = ConditionFlag.AL;
             if (op.code == LIROpcode.CondFloatBranch) {
                 assert op.unorderedBlock() != null : "must have unordered successor";
-//                masm.jcc(ConditionFlag.SignedOverflow, new Aarch64Label(op.unorderedBlock().label()));
+                masm.branchConditionally(ConditionFlag.VS, new Aarch64Label(op.unorderedBlock().label()));
 
                 // Checkstyle: off
                 switch (op.cond()) {
@@ -720,16 +716,16 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         acond = ConditionFlag.NE;
                         break;
                     case LT:
-//                        acond = ConditionFlag.CarryClearUnsignedLower;
+                        acond = ConditionFlag.LO;
                         break;
                     case LE:
-//                        acond = ConditionFlag.UnsignedLowerOrEqual;
+                        acond = ConditionFlag.LS;
                         break;
                     case GE:
-//                        acond = ConditionFlag.SignedGreaterOrEqual;
+                        acond = ConditionFlag.GE;
                         break;
                     case GT:
-//                        acond = ConditionFlag.SignedGreater;
+                        acond = ConditionFlag.GT;
                         break;
                     default:
                         throw Util.shouldNotReachHere();
@@ -743,35 +739,35 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         acond = ConditionFlag.NE;
                         break;
                     case LT:
-//                        acond = ConditionFlag.SignedLesser;
+                        acond = ConditionFlag.LT;
                         break;
                     case LE:
-//                        acond = ConditionFlag.SignedLowerOrEqual;
+                        acond = ConditionFlag.LE;
                         break;
                     case GE:
-//                        acond = ConditionFlag.SignedGreaterOrEqual;
+                        acond = ConditionFlag.GE;
                         break;
                     case GT:
-//                        acond = ConditionFlag.SignedGreater;
+                        acond = ConditionFlag.GT;
                         break;
                     case BE:
-//                        acond = ConditionFlag.UnsignedLowerOrEqual;
+                        acond = ConditionFlag.LS;
                         break;
                     case AE:
-//                        acond = ConditionFlag.CarrySetUnsignedHigherEqual;
+                        acond = ConditionFlag.HS;
                         break;
                     case BT:
-//                        acond = ConditionFlag.CarryClearUnsignedLower;
+                        acond = ConditionFlag.LO;
                         break;
                     case AT:
-//                        acond = ConditionFlag.UnsignedHigher;
+                        acond = ConditionFlag.HI;
                         break;
                     default:
                         throw Util.shouldNotReachHere();
                 }
                 // Checkstyle: on
             }
-//            masm.jcc(acond, new Aarch64Label(op.label()));
+            masm.branchConditionally(acond, new Aarch64Label(op.label()));
         }
     }
 
