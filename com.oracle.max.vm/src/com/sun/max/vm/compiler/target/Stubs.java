@@ -893,10 +893,6 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(StaticTrampoline, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else if (platform().isa == ISA.Aarch64) {
-            if (true) {
-                throw FatalError.unimplemented();
-            }
-
             CiRegisterConfig registerConfig = registerConfigs.trampoline;
             Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
@@ -906,53 +902,49 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
+            // Push LR (r30) on the stack to make asm.ret work
+            asm.push(1 << 30);
 
             // compute the static trampoline call site
-            CiRegister callSite = registerConfig.getScratchRegister();
-//            asm.movq(callSite, new CiAddress(WordUtil.archKind(), ARMv8.sp.asValue()));
-            //asm.subq(callSite, AARCH64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
-
-
+            CiRegister callSite = Aarch64.r8;
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), Aarch64.rsp));
+            asm.ldr(64, callSite, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
 
             // now allocate the frame for this method
-            //asm.subq(AMD64.rsp, frameSize);
+            asm.subq(Aarch64.sp, frameSize);
 
             // save all the callee save registers
-            //asm.save(csl, frameToCSA);
+            asm.save(csl, frameToCSA);
 
             CriticalMethod patchStaticTrampoline = new CriticalMethod(Stubs.class, "patchStaticTrampolineCallSiteAarch64", null);
             CiKind[] trampolineParameters = CiUtil.signatureToKinds(patchStaticTrampoline.classMethodActor);
             CiValue[] locations = registerConfig.getCallingConvention(JavaCall, trampolineParameters, target(), false).locations;
 
             // load the static trampoline call site into the first parameter register
-            //asm.movq(locations[0].asRegister(), callSite);
+            asm.mov(64, locations[0].asRegister(), callSite);
 
-            //asm.alignForPatchableDirectCall();
+            asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
             ClassMethodActor callee = patchStaticTrampoline.classMethodActor;
-            //asm.call();
+            asm.call();
             int callSize = asm.codeBuffer.position() - callPos;
 
             // restore all parameter registers before returning
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
-            //asm.restore(csl, frameToCSA);
+            asm.restore(csl, frameToCSA);
 
             // undo the frame
-            //asm.addq(AMD64.rsp, frameSize);
+            asm.addq(Aarch64.sp, frameSize);
 
             // patch the return address to re-execute the static call
-            //asm.movq(callSite, new CiAddress(WordUtil.archKind(), AMD64.rsp.asValue()));
-            //asm.subq(callSite, AMD64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
-            //asm.movq(new CiAddress(WordUtil.archKind(), AMD64.rsp.asValue()), callSite);
+            asm.ldr(64, asm.scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.sp));
+            asm.subq(asm.scratchRegister, Aarch64TargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
+            asm.str(64, asm.scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.sp));
 
-            //asm.ret(0);
-
+            asm.ret(0);
             String stubName = "strampoline";
-
-            asm.nop(); // dummy
-
             byte[] code = asm.codeBuffer.close(true);
-
             return new Stub(StaticTrampoline, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else {
             throw FatalError.unimplemented();
