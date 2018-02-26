@@ -20,7 +20,7 @@
 package test.crossisa.armv7.t1x;
 
 import static com.oracle.max.asm.target.armv7.ARMV7.*;
-import static com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag.Always;
+import static com.oracle.max.asm.target.armv7.ARMV7Assembler.ConditionFlag.*;
 import static com.sun.max.vm.MaxineVM.*;
 
 import java.util.*;
@@ -746,63 +746,24 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void failingtestIfEq() throws Exception {
+    public void test_IfEq() throws Exception {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         expectedValues[0] = 10;
         expectedValues[1] = 20;
         expectedValues[2] = 1;
         expectedValues[3] = 2;
         for (int i = 0; i < 4; i++) {
-            masm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
+            masm.movImm32(Always, cpuRegisters[i], expectedValues[i]);
         }
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 1);
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 2);
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 4);
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 8);
-        for (int i = 0; i < 4; i++) {
-            masm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], -1);
-        }
-
-        theCompiler.peekInt(ARMV7.cpuRegisters[0], 0);
-        theCompiler.assignInt(ARMV7.cpuRegisters[1], 2);
-        theCompiler.decStack(1);
-        masm.cmpl(ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[1]);
-        ConditionFlag cc = ConditionFlag.Equal; // testing the jump (eq)
-        theCompiler.assignInt(ARMV7.r12, 99); // APN deliberate ... make scratch have nonzero value
-        masm.jcc(cc, masm.codeBuffer.position() + 1, false); // 1 as a false will insert one instructions!!!
-        theCompiler.assignInt(ARMV7.cpuRegisters[2], 20);
-        theCompiler.assignInt(ARMV7.cpuRegisters[3], 10);
+        masm.cmpl(cpuRegisters[0], cpuRegisters[1]);
+        masm.jcc(Equal, masm.codeBuffer.position() + 16, false);
+        masm.jcc(NotEqual, masm.codeBuffer.position() + 16, true);
+        theCompiler.assignInt(cpuRegisters[2], 20);
+        theCompiler.assignInt(cpuRegisters[3], 10);
 
         int[] registerValues  = generateAndTest();
-        assert registerValues[3] == 10 : "Failed incorrect value " + Long.toString(registerValues[3], 16) + " 10";
-        assert registerValues[2] == -1 : "Failed incorrect value " + Long.toString(registerValues[2], 16) + " -1";
-
-        expectedValues[0] = 10;
-        expectedValues[1] = 20;
-        expectedValues[2] = 1;
-        expectedValues[3] = 1;
-        for (int i = 0; i < 4; i++) {
-            masm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], expectedValues[i]);
-        }
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 1);
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 2);
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 4);
-        masm.push(ARMV7Assembler.ConditionFlag.Always, 8);
-        for (int i = 0; i < 4; i++) {
-            masm.movImm32(ConditionFlag.Always, ARMV7.cpuRegisters[i], -1);
-        }
-
-        theCompiler.peekInt(ARMV7.cpuRegisters[0], 0);
-        theCompiler.assignInt(ARMV7.cpuRegisters[1], 1);
-        theCompiler.decStack(1);
-        masm.cmpl(ARMV7.cpuRegisters[0], ARMV7.cpuRegisters[1]);
-        cc = ConditionFlag.NotEqual; // testing the fallthrough (ne)
-        masm.jcc(cc, masm.codeBuffer.position() + 8, true);
-        theCompiler.assignInt(ARMV7.cpuRegisters[2], 20);
-        theCompiler.assignInt(ARMV7.cpuRegisters[3], 10);
-        registerValues = generateAndTest();
-        assert registerValues[3] == 10 : "Failed incorrect value " + Long.toString(registerValues[0], 16) + " 10";
-        assert registerValues[2] == 20 : "Failed incorrect value " + Long.toString(registerValues[0], 16) + " 20";
+        assert registerValues[3] == 10 : "Failed incorrect value " + registerValues[3] + " 10";
+        assert registerValues[2] == 1 : "Failed incorrect value " + registerValues[2] + " 1";
     }
 
     static final class BranchInfo {
