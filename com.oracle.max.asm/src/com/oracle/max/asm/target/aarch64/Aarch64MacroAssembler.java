@@ -1539,14 +1539,19 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         }
     }
 
-    public void restoreFromFP(int i) {
-        // TODO Auto-generated method stub
-        throw new Error("unimplemented");
+    public final void ucomisd(CiRegister dst, CiRegister src, CiKind destKind, CiKind srcKind) {
+        assert destKind.isFloatOrDouble();
+        assert srcKind.isFloatOrDouble();
+        fcmp(64, dst, src);
+        mrs(Aarch64.r15, SystemRegister.SPSR_EL1);
     }
 
-    public void saveInFP(int i) {
-        // TODO Auto-generated method stub
-        throw new Error("unimplemented");
+    public void restoreFromFP(int reg) {
+        fmov(64, Aarch64.cpuRegisters[reg], Aarch64.d28);
+    }
+
+    public void saveInFP(int reg) {
+        fmov(64, Aarch64.d28, Aarch64.cpuRegisters[reg]);
     }
 
     // TODO check if str and fstr instructions are equivalent to the ARMv7 ones
