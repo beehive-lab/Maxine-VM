@@ -45,7 +45,7 @@ import com.sun.max.vm.type.*;
 
 import test.crossisa.aarch64.asm.*;
 
-public class Aarch64JTTTest extends MaxTestCase {
+public class Aarch64JTTT1XTest extends MaxTestCase {
 
     private Aarch64Assembler asm;
     private CiTarget aarch64;
@@ -174,23 +174,6 @@ public class Aarch64JTTTest extends MaxTestCase {
         return "^" + klass + "^";
     }
 
-    private long[] generateAndTestStubs(String functionPrototype, int entryPoint, byte[] theCode, long[] expected, boolean[] tests, MaxineAarch64Tester.BitsFlag[] masks) throws Exception {
-        Aarch64CodeWriter code = new Aarch64CodeWriter(theCode);
-        code.createStaticCodeStubsFile(functionPrototype, theCode, entryPoint);
-        MaxineAarch64Tester r = new MaxineAarch64Tester(expected, tests, masks);
-        r.cleanFiles();
-        r.cleanProcesses();
-        r.assembleStartup();
-        r.compile();
-        r.link();
-        long[] simulatedRegisters = r.runRegisteredSimulation();
-        r.cleanProcesses();
-        if (POST_CLEAN_FILES) {
-            r.cleanFiles();
-        }
-        return simulatedRegisters;
-    }
-
     private long[] generateAndTest(long[] expected, boolean[] tests, MaxineAarch64Tester.BitsFlag[] masks) throws Exception {
         Aarch64CodeWriter code = new Aarch64CodeWriter(theCompiler.getMacroAssembler().codeBuffer);
         code.createCodeFile();
@@ -208,12 +191,12 @@ public class Aarch64JTTTest extends MaxTestCase {
         return simulatedRegisters;
     }
 
-    public Aarch64JTTTest() {
+    public Aarch64JTTT1XTest() {
         initTests();
     }
 
     public static void main(String[] args) {
-        junit.textui.TestRunner.run(Aarch64JTTTest.class);
+        junit.textui.TestRunner.run(Aarch64JTTT1XTest.class);
     }
 
     private void initTests() {
@@ -252,123 +235,4 @@ public class Aarch64JTTTest extends MaxTestCase {
         }
     }
 
-    private void initializeCodeBuffers(List<TargetMethod> methods) {
-        int minimumValue = Integer.MAX_VALUE;
-        int maximumValue = Integer.MIN_VALUE;
-        int offset;
-        entryPoint = -1; // Offset in the global array of the method we call from C.
-        for (TargetMethod m : methods) {
-            byte[] b = m.code();
-            if (entryPoint == -1) {
-                entryPoint = m.codeAt(0).toInt();
-            }
-            if ((m.codeAt(0)).toInt() < minimumValue) {
-                minimumValue = m.codeAt(0).toInt(); // Update minimum offset in address space
-            }
-            if ((m.codeAt(0)).toInt() + b.length > maximumValue) {
-                maximumValue = m.codeAt(0).toInt() + b.length; // Update maximum offset in address space
-            }
-        }
-
-        if (MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() < minimumValue) {
-            minimumValue = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt();
-        }
-
-        if ((MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() + MaxineVM.vm().stubs.staticTrampoline().code().length) > maximumValue) {
-            maximumValue = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() + MaxineVM.vm().stubs.staticTrampoline().code().length;
-        }
-
-        codeBytes = new byte[maximumValue - minimumValue];
-        for (TargetMethod m : methods) {
-            m.linkDirectCalls();
-            byte[] b = m.code();
-            offset = m.codeAt(0).toInt() - minimumValue;
-            for (int i = 0; i < b.length; i++) {
-                codeBytes[offset + i] = b[i];
-            }
-        }
-        byte[] b = MaxineVM.vm().stubs.staticTrampoline().code();
-        offset = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() - minimumValue;
-        for (int i = 0; i < b.length; i++) {
-            codeBytes[i + offset] = b[i];
-        }
-        entryPoint = entryPoint - minimumValue;
-    }
-
-    private void initializeCodeBuffers(List<TargetMethod> methods, String fileName, String methodName) {
-        int minimumValue = Integer.MAX_VALUE;
-        int maximumValue = Integer.MIN_VALUE;
-        int offset;
-        entryPoint = -1; // offset in the global array of the method we call from C.
-        for (TargetMethod m : methods) {
-            m.linkDirectCalls();
-            if (!fileName.equals(m.classMethodActor.sourceFileName())) {
-                continue;
-            }
-            byte[] b = m.code();
-            if (entryPoint == -1) {
-                if (methodName.equals(m.classMethodActor().simpleName())) {
-                    entryPoint = m.codeAt(0).toInt();
-                }
-            }
-            if ((m.codeAt(0)).toInt() < minimumValue) {
-                minimumValue = m.codeAt(0).toInt();
-            }
-            if ((m.codeAt(0)).toInt() + b.length > maximumValue) {
-                maximumValue = m.codeAt(0).toInt() + b.length;
-            }
-            int tmp = m.offlineMinDirectCalls();
-            if (tmp < minimumValue) {
-                minimumValue = tmp;
-            }
-            tmp = m.offlineMaxDirectCalls();
-            if (tmp > maximumValue) {
-                maximumValue = tmp;
-            }
-        }
-
-        if (MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() < minimumValue) {
-            minimumValue = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt();
-        }
-
-        if ((MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() + MaxineVM.vm().stubs.staticTrampoline().code().length) > maximumValue) {
-            maximumValue = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() + MaxineVM.vm().stubs.staticTrampoline().code().length;
-        }
-
-        codeBytes = new byte[maximumValue - minimumValue];
-        for (TargetMethod m : methods) {
-            if (!fileName.equals(m.classMethodActor.sourceFileName())) {
-                continue;
-            }
-            byte[] b = m.code();
-            offset = m.codeAt(0).toInt() - minimumValue;
-            for (int i = 0; i < b.length; i++) {
-                codeBytes[offset + i] = b[i];
-            }
-            m.offlineCopyCode(minimumValue, codeBytes);
-        }
-        byte[] b = MaxineVM.vm().stubs.staticTrampoline().code();
-        offset = MaxineVM.vm().stubs.staticTrampoline().codeAt(0).toInt() - minimumValue;
-        for (int i = 0; i < b.length; i++) {
-            codeBytes[i + offset] = b[i];
-        }
-        entryPoint = entryPoint - minimumValue;
-    }
-
-
-    public void test_C1X_jtt_BC_dcmp02() throws Exception {
-        double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
-        String klassName = getKlassName("jtt.bytecode.BC_dcmp02");
-        List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
-        vm().compilationBroker.setOffline(true);
-        initializeCodeBuffers(methods, "BC_dcmp02.java", "boolean test(double)");
-        for (int i = 0; i < argOne.length; i++) {
-            boolean answer = jtt.bytecode.BC_dcmp02.test(argOne[i]);
-            int expectedValue = answer ? 1 : 0;
-            String functionPrototype = Aarch64CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
-            long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
-            theCompiler.cleanup();
-        }
-    }
 }
