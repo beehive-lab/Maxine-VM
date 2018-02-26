@@ -1492,8 +1492,15 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     public void movlong(CiRegister dst, long src, CiKind dstKind) {
-        // TODO Port from ARMv7
-        throw new Error("unimplemented");
+        if (dstKind.isGeneral()) {
+            mov64BitConstant(dst, src);
+        } else {
+            assert dstKind.isDouble() : "Dst reg must be double";
+            saveInFP(9);
+            mov64BitConstant(Aarch64.r8, src);
+            fmov(64, dst, Aarch64.r8);
+            restoreFromFP(9);
+        }
     }
 
     // TODO check if str and fstr instructions are equivalent to the ARMv7 ones
