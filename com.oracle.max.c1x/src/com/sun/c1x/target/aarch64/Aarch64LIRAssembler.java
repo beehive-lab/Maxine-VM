@@ -353,16 +353,12 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void reg2reg(CiValue src, CiValue dest) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
         assert src.isRegister();
         assert dest.isRegister();
         if (dest.kind.isFloat()) {
-//            masm.movflt(dest.asRegister(), src.asRegister(), dest.kind, src.kind);
+            masm.fmov(32, dest.asRegister(), src.asRegister());
         } else if (dest.kind.isDouble()) {
-//            masm.movdbl(dest.asRegister(), src.asRegister(), dest.kind, src.kind);
+            masm.fmov(64, dest.asRegister(), src.asRegister());
         } else {
             moveRegs(src.asRegister(), dest.asRegister(), src.kind, dest.kind);
         }
