@@ -1451,7 +1451,7 @@ public class Stubs {
         FatalError.unexpected("stub should be overwritten");
     }
 
-    // TODO: Is ARM version working?
+    // TODO: Is ARM (+Aarch64) version working?
     @HOSTED_ONLY
     private Stub genUnroll(CiValue[] unrollArgs) {
         if (platform().isa == ISA.AMD64) {
@@ -1506,10 +1506,6 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnrollStub, "unrollStub", frameSize, code, callPos, callSize, callee, -1);
         } else if (platform().isa == ISA.Aarch64) {
-            if (true) {
-                throw FatalError.unimplemented();
-            }
-
             CiRegisterConfig registerConfig = MaxineVM.vm().stubs.registerConfigs.standard;
             Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(0);
@@ -1517,20 +1513,22 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
-
-//            asm.subq(AMD64.rsp, AMD64.rsi);
+            // We are called from Java so we do need to push the LR.
+            asm.push(1 << 14);
+            asm.sub(64, Aarch64.sp, Aarch64.sp, ARMV7.r1);
 
             CriticalMethod unroll = new CriticalMethod(Deoptimization.class, "unroll", null);
-//            asm.alignForPatchableDirectCall();
+            asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
             ClassMethodActor callee = unroll.classMethodActor;
-//            asm.call();
+            asm.call();
             int callSize = asm.codeBuffer.position() - callPos;
 
+            // should never reach here ...
+            asm.mov64BitConstant(asm.scratchRegister, 0xffffffff);
+            asm.jmp(asm.scratchRegister);
             // Should never reach here
-//            asm.hlt();
-
-            asm.nop(); // dummy
+            asm.hlt();
 
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnrollStub, "unrollStub", frameSize, code, callPos, callSize, callee, -1);
