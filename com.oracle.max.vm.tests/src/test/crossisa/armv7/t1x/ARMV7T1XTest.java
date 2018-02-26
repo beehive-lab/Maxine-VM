@@ -187,7 +187,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void work_AssignLong() throws Exception {
+    public void test_AssignLong() throws Exception {
         long returnValue = 0;
         int i;
         long[] expectedLongValues = new long[10];
@@ -210,7 +210,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void works_Poke_n_Peek_Long() throws Exception {
+    public void test_Poke_n_Peek_Long() throws Exception {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         long[] expectedLongValues = new long[10];
         expectedLongValues[0] = Long.MIN_VALUE;
@@ -239,7 +239,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void works_Poke_n_Peek_Int() throws Exception {
+    public void test_Poke_n_Peek_Int() throws Exception {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         expectedValues[0] = Integer.MIN_VALUE;
         expectedValues[1] = Integer.MAX_VALUE;
@@ -411,7 +411,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void work_DoLconst() throws Exception {
+    public void test_DoLconst() throws Exception {
         long returnValue = 0;
         long[] expectedLongValues = new long[8];
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
@@ -433,7 +433,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         assert registerValues[2] - registerValues[3] == 16; // stack pointer has increased by 8 due to pushing the
     }
 
-    public void work_DoDconst() throws Exception {
+    public void test_DoDconst() throws Exception {
         long returnValue = 0;
         double myVal = 3.14123;
         long[] expectedLongValues = new long[8];
@@ -458,7 +458,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         assert registerValues[2] - registerValues[3] == 16 : registerValues[2] - registerValues[3];
     }
 
-    public void work_DoFconst() throws Exception {
+    public void test_DoFconst() throws Exception {
         long returnValue = 0;
         float myVal = 3.14123f;
         long[] expectedLongValues = new long[1];
@@ -533,7 +533,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void work_Add() throws Exception {
+    public void test_Add() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.do_initFrameTests(anMethod, codeAttr);
         theCompiler.emitPrologueTests();
@@ -551,7 +551,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         assert expectedValues[0] == registerValues[0];
     }
 
-    public void work_Mul() throws Exception {
+    public void test_Mul() throws Exception {
         initialiseFrameForCompilation();
         theCompiler.do_initFrameTests(anMethod, codeAttr);
         theCompiler.emitPrologueTests();
@@ -569,7 +569,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         assert expectedValues[0] == registerValues[0];
     }
 
-    public void work_PeekWord() throws Exception {
+    public void test_Peek_n_Poke_Word() throws Exception {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         expectedValues[0] = 134480128;
         expectedValues[1] = 671351040;
@@ -619,7 +619,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void work_PeekObject() throws Exception {
+    public void test_PeekObject() throws Exception {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         expectedValues[0] = 134480128;
         expectedValues[1] = 671351040;
@@ -644,7 +644,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         }
     }
 
-    public void work_Peek_Poke_Mix() throws Exception {
+    public void test_Peek_Poke_Mix() throws Exception {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         int a = 100;
         long b = Long.MAX_VALUE;
@@ -705,7 +705,7 @@ public class ARMV7T1XTest extends MaxTestCase {
         assert registerDoubleValues[1] == g : "Failed incorrect value " + registerDoubleValues[1] + " expected: " + g;
     }
 
-    public void works_PokeObject() throws Exception {
+    public void test_PokeObject() throws Exception {
         ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
         expectedValues[0] = 134480128;
         expectedValues[1] = 671351040;
