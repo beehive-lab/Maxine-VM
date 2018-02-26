@@ -997,14 +997,11 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitArithOp(LIROpcode code, CiValue left, CiValue right, CiValue dest, LIRDebugInfo info) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
         assert info == null : "should never be used :  idiv/irem and ldiv/lrem not handled by this method";
         assert Util.archKindsEqual(left.kind, right.kind) || (left.kind == CiKind.Long && right.kind == CiKind.Int) : code.toString() + " left arch is " + left.kind + " and right arch is " +
                         right.kind;
-        assert left.equals(dest) : "left and dest must be equal";
+        // TODO: compare assert with ARMV7LIRAssembler equivalent
+        //        assert left.equals(dest) : "left and dest must be equal";
         CiKind kind = left.kind;
 
         // Checkstyle: off
@@ -1015,7 +1012,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 if (kind.isInt()) {
                     switch (code) {
                         case Add:
-//                            masm.iadd(dest.asRegister(), lreg, rreg);
+                            masm.iadd(dest.asRegister(), lreg, rreg);
                             break;
                         case Sub:
 //                            masm.isub(dest.asRegister(), lreg, rreg);
@@ -2538,10 +2535,6 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     break;
                 }
                 case PushFrame: {
-                    if (true) {
-                        throw Util.unimplemented();
-                    }
-
                     int frameSize = initialFrameSizeInBytes();
                     if (CompilationBroker.singleton.simulateAdapter()) {
                         masm.nop(4);
@@ -2550,16 +2543,13 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     masm.push(1 << 14);
                     masm.mov64BitConstant(Aarch64.r12, frameSize);
 
-//                    masm.sub(ConditionFlag.Always, false, Aarch64.r13, Aarch64.r13, Aarch64.r12, 0, 0);
+                    masm.sub(64, Aarch64.r13, Aarch64.r13, Aarch64.r12);
                     if (C1XOptions.ZapStackOnMethodEntry) {
                         final int intSize = 4;
                         for (int i = 0; i < frameSize / intSize; ++i) {
                             masm.setUpScratch(new CiAddress(CiKind.Int, Aarch64.r13.asValue(), i * intSize));
                             masm.mov64BitConstant(Aarch64.r8, 0xC1C1C1C1);
-                            if (true) {
-                                throw Util.unimplemented();
-                            }
-//                            masm.str(ConditionFlag.Always, 0, 0, 0, Aarch64.r8, Aarch64.r12, Aarch64.r0, 0, 0);
+                            masm.str(64, Aarch64.r8, Aarch64Address.createRegisterOffsetAddress(Aarch64.r12, Aarch64.r0, false));
                         }
                     }
 
