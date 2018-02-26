@@ -44,6 +44,15 @@ public final class Aarch64TargetMethodUtil {
     }
 
     /**
+     * Thread safe patching of the displacement field in a direct call.
+     *
+     * @return the target of the call prior to patching
+     */
+    public static CodePointer mtSafePatchCallDisplacement(TargetMethod tm, CodePointer callSite, CodePointer target) {
+        throw FatalError.unimplemented();
+    }
+
+    /**
      * Fixup the target displacement (28bit) in a branch immediate instruction.
      * Returns the old displacement.
      *
