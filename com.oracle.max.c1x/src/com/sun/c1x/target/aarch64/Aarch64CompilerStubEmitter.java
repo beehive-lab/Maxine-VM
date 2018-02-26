@@ -140,15 +140,7 @@ public class Aarch64CompilerStubEmitter extends CompilerStubEmitter {
         Label nan = new Label();
         Label ret = new Label();
 
-        if (isInt) {
-            // input is > 0 -> return maxInt
-            // result register already contains 0x80000000, so subtracting 1 gives 0x7fffffff
-            asm.decrementl(Aarch64Address.createBaseRegisterOnlyAddress(convertResult), 1);
-        } else {
-            // input is > 0 -> return maxLong
-            // result register already contains 0x8000000000000000, so subtracting 1 gives 0x7fffffffffffffff
-            asm.decrementq(convertResult, 1);
-        }
+        asm.decrementq(convertResult, 1);
 
         // input is NaN -> return 0
         asm.bind(nan);
