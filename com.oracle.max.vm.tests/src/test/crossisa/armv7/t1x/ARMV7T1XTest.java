@@ -48,17 +48,6 @@ import test.crossisa.armv7.asm.*;
 
 public class ARMV7T1XTest extends MaxTestCase {
 
-    static class ByteCodeTests {
-
-        public int run() {
-            int mycounter = 0;
-            for (int i = 0; i < 20; i++) {
-                mycounter++;
-            }
-            return mycounter;
-        }
-    }
-
     private T1X                     t1x;
     private C1X                     c1x;
     private ARMV7T1XCompilationTest theCompiler;
@@ -888,20 +877,6 @@ public class ARMV7T1XTest extends MaxTestCase {
         assert registerValues[1] == expectedValues[1] : "Failed incorrect value " + registerValues[1] + " " + expectedValues[1];
         assert registerValues[2] == expectedValues[2] : "Failed incorrect value " + registerValues[2] + " " + expectedValues[2];
         assert registerValues[3] == expectedValues[3] : "Failed incorrect value " + registerValues[3] + " " + expectedValues[3];
-        theCompiler.cleanup();
-    }
-
-    public void ignore_ByteCodeLoad() throws Exception {
-        MaxineByteCode xx = new MaxineByteCode();
-        ByteCodeTests testClass = new ByteCodeTests();
-        expectedValues[0] = testClass.run();
-        byte[] code = xx.getByteArray("run", "ByteCodeTests");
-        initialiseFrameForCompilation(code, "(II)I");
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        ARMV7MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.pop(ConditionFlag.Always, 1);
-        int[] registerValues  = generateAndTest();
-        assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
         theCompiler.cleanup();
     }
 
