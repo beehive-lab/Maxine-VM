@@ -39,6 +39,10 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         super(target, registerConfig);
     }
 
+    public void iadd(CiRegister dest, CiRegister left, CiRegister right) {
+        add(64, dest, left, right);
+    }
+
     /**
      * Specifies what actions have to be taken to turn an arbitrary address of the form
      * {@code base + displacement [+ index [<< scale]]} into a valid Aarch64Address.
