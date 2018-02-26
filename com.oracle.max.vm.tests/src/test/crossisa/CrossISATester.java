@@ -277,7 +277,7 @@ public abstract class CrossISATester {
                 inputStream.close();
                 break;
             } else {
-                log("CrossISATester: gemu not ready");
+                log("CrossISATester: qemu not ready");
                 Thread.sleep(500);
             }
         } while (true);

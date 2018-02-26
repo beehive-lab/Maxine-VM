@@ -353,16 +353,12 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void reg2reg(CiValue src, CiValue dest) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
         assert src.isRegister();
         assert dest.isRegister();
         if (dest.kind.isFloat()) {
-//            masm.movflt(dest.asRegister(), src.asRegister(), dest.kind, src.kind);
+            masm.fmov(32, dest.asRegister(), src.asRegister());
         } else if (dest.kind.isDouble()) {
-//            masm.movdbl(dest.asRegister(), src.asRegister(), dest.kind, src.kind);
+            masm.fmov(64, dest.asRegister(), src.asRegister());
         } else {
             moveRegs(src.asRegister(), dest.asRegister(), src.kind, dest.kind);
         }
@@ -699,13 +695,9 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitBranch(LIRBranch op) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
         assert assertEmitBranch(op);
         if (op.cond() == Condition.TRUE) {
-//            masm.jmp(new Aarch64Label(op.label()));
+            masm.b(new Aarch64Label(op.label()));
             if (op.info != null) {
                 tasm.recordImplicitException(codePos() - 4, op.info); // ADDED EXCEPTION
             }
@@ -713,7 +705,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             ConditionFlag acond = ConditionFlag.AL;
             if (op.code == LIROpcode.CondFloatBranch) {
                 assert op.unorderedBlock() != null : "must have unordered successor";
-//                masm.jcc(ConditionFlag.SignedOverflow, new Aarch64Label(op.unorderedBlock().label()));
+                masm.branchConditionally(ConditionFlag.VS, new Aarch64Label(op.unorderedBlock().label()));
 
                 // Checkstyle: off
                 switch (op.cond()) {
@@ -724,16 +716,16 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         acond = ConditionFlag.NE;
                         break;
                     case LT:
-//                        acond = ConditionFlag.CarryClearUnsignedLower;
+                        acond = ConditionFlag.LO;
                         break;
                     case LE:
-//                        acond = ConditionFlag.UnsignedLowerOrEqual;
+                        acond = ConditionFlag.LS;
                         break;
                     case GE:
-//                        acond = ConditionFlag.SignedGreaterOrEqual;
+                        acond = ConditionFlag.GE;
                         break;
                     case GT:
-//                        acond = ConditionFlag.SignedGreater;
+                        acond = ConditionFlag.GT;
                         break;
                     default:
                         throw Util.shouldNotReachHere();
@@ -747,35 +739,35 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         acond = ConditionFlag.NE;
                         break;
                     case LT:
-//                        acond = ConditionFlag.SignedLesser;
+                        acond = ConditionFlag.LT;
                         break;
                     case LE:
-//                        acond = ConditionFlag.SignedLowerOrEqual;
+                        acond = ConditionFlag.LE;
                         break;
                     case GE:
-//                        acond = ConditionFlag.SignedGreaterOrEqual;
+                        acond = ConditionFlag.GE;
                         break;
                     case GT:
-//                        acond = ConditionFlag.SignedGreater;
+                        acond = ConditionFlag.GT;
                         break;
                     case BE:
-//                        acond = ConditionFlag.UnsignedLowerOrEqual;
+                        acond = ConditionFlag.LS;
                         break;
                     case AE:
-//                        acond = ConditionFlag.CarrySetUnsignedHigherEqual;
+                        acond = ConditionFlag.HS;
                         break;
                     case BT:
-//                        acond = ConditionFlag.CarryClearUnsignedLower;
+                        acond = ConditionFlag.LO;
                         break;
                     case AT:
-//                        acond = ConditionFlag.UnsignedHigher;
+                        acond = ConditionFlag.HI;
                         break;
                     default:
                         throw Util.shouldNotReachHere();
                 }
                 // Checkstyle: on
             }
-//            masm.jcc(acond, new Aarch64Label(op.label()));
+            masm.branchConditionally(acond, new Aarch64Label(op.label()));
         }
     }
 
@@ -1005,14 +997,11 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitArithOp(LIROpcode code, CiValue left, CiValue right, CiValue dest, LIRDebugInfo info) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
         assert info == null : "should never be used :  idiv/irem and ldiv/lrem not handled by this method";
         assert Util.archKindsEqual(left.kind, right.kind) || (left.kind == CiKind.Long && right.kind == CiKind.Int) : code.toString() + " left arch is " + left.kind + " and right arch is " +
                         right.kind;
-        assert left.equals(dest) : "left and dest must be equal";
+        // TODO: compare assert with ARMV7LIRAssembler equivalent
+        //        assert left.equals(dest) : "left and dest must be equal";
         CiKind kind = left.kind;
 
         // Checkstyle: off
@@ -1023,7 +1012,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 if (kind.isInt()) {
                     switch (code) {
                         case Add:
-//                            masm.iadd(dest.asRegister(), lreg, rreg);
+                            masm.iadd(dest.asRegister(), lreg, rreg);
                             break;
                         case Sub:
 //                            masm.isub(dest.asRegister(), lreg, rreg);
@@ -1570,10 +1559,6 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitCompare(Condition condition, CiValue opr1, CiValue opr2, LIROp2 op) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
         // Checkstyle: off
         assert Util.archKindsEqual(opr1.kind.stackKind(), opr2.kind.stackKind()) || (opr1.kind == CiKind.Long && opr2.kind == CiKind.Int) : "nonmatching stack kinds (" + condition + "): " +
                         opr1.kind.stackKind() + "==" + opr2.kind.stackKind();
@@ -1596,20 +1581,36 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     case Char:
                     case Short:
                     case Int:
+                        if (true) {
+                            throw Util.unimplemented();
+                        }
+
 //                        masm.cmpl(reg1, opr2.asRegister());
                         break;
                     case Object:
-//                        masm.cmpq(reg1, opr2.asRegister());
+                        if (true) {
+                            throw Util.unimplemented();
+                        }
+
+                        //                        masm.cmpq(reg1, opr2.asRegister());
                         break;
                     case Long:
+                        if (true) {
+                            throw Util.unimplemented();
+                        }
+
                         assert (reg1 != Aarch64.r12);
 //                        masm.lcmpl(convertCondition(condition), reg1, opr2.asRegister());
                         break;
                     case Float:
-//                        masm.ucomisd(opr1.asRegister(), opr2.asRegister(), opr1.kind, opr2.kind);
+                        if (true) {
+                            throw Util.unimplemented();
+                        }
+
+                        //                        masm.ucomisd(opr1.asRegister(), opr2.asRegister(), opr1.kind, opr2.kind);
                         break;
                     case Double:
-//                        masm.ucomisd(reg1, opr2.asRegister(), opr1.kind, opr2.kind);
+                        masm.ucomisd(reg1, opr2.asRegister(), opr1.kind, opr2.kind);
                         break;
                     default:
                         throw Util.shouldNotReachHere(opr1.kind.toString());
@@ -1623,24 +1624,44 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     case Char:
                     case Short:
                     case Int:
-//                        masm.cmpl(reg1, frameMap.toStackAddress(opr2Slot));
+                        if (true) {
+                            throw Util.unimplemented();
+                        }
+
+                        //                        masm.cmpl(reg1, frameMap.toStackAddress(opr2Slot));
                         break;
                     case Long:
-//                        masm.vmov(ConditionFlag.Always, Aarch64.d30, Aarch64.r9, null, CiKind.Float, CiKind.Int);
+                        if (true) {
+                            throw Util.unimplemented();
+                        }
+
+                        //                        masm.vmov(ConditionFlag.Always, Aarch64.d30, Aarch64.r9, null, CiKind.Float, CiKind.Int);
                         masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
 //                        masm.ldrd(ConditionFlag.Always, Aarch64.r8, Aarch64.r12, 0);
 //                        masm.lcmpl(convertCondition(condition), reg1, Aarch64.r8);
 //                        masm.vmov(ConditionFlag.Always, Aarch64.r9, Aarch64.d30, null, CiKind.Int, CiKind.Float);
                         break;
                     case Object:
-//                        masm.cmpptr(reg1, frameMap.toStackAddress(opr2Slot));
+                        if (true) {
+                            throw Util.unimplemented();
+                        }
+
+                        //                        masm.cmpptr(reg1, frameMap.toStackAddress(opr2Slot));
                         break;
                     case Float:
+                        if (true) {
+                            throw Util.unimplemented();
+                        }
+
                         masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
 //                        masm.vldr(ConditionFlag.Always, Aarch64.d30, Aarch64.r12, 0, CiKind.Float, CiKind.Int);
 //                        masm.ucomisd(reg1, Aarch64.d30, opr1.kind, CiKind.Float);
                         break;
                     case Double:
+                        if (true) {
+                            throw Util.unimplemented();
+                        }
+
                         masm.setUpScratch(frameMap.toStackAddress(opr2Slot));
 //                        masm.vldr(ConditionFlag.Always, Aarch64.d15, Aarch64.r12, 0, CiKind.Double, CiKind.Int);
 //                        masm.ucomisd(reg1, Aarch64.d15, opr1.kind, CiKind.Double);
@@ -1657,21 +1678,37 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     case Char:
                     case Short:
                     case Int:
-//                        masm.cmpl(reg1, c.asInt());
+                        if (true) {
+                            throw Util.unimplemented();
+                        }
+
+                        //                        masm.cmpl(reg1, c.asInt());
                         break;
                     case Float:
+                        if (true) {
+                            throw Util.unimplemented();
+                        }
+
                         masm.setUpScratch(tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) opr2).asFloat())));
 //                        masm.addRegisters(ConditionFlag.Always, false, Aarch64.r12, Aarch64.r12, Aarch64.r15, 0, 0);
 //                        masm.vldr(ConditionFlag.Always, Aarch64.d30, Aarch64.r12, 0, CiKind.Float, CiKind.Int);
 //                        masm.ucomisd(reg1, Aarch64.d30, opr1.kind, CiKind.Float);
                         break;
                     case Double:
+                        if (true) {
+                            throw Util.unimplemented();
+                        }
+
                         masm.setUpScratch(tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) opr2).asDouble())));
 //                        masm.addRegisters(ConditionFlag.Always, false, Aarch64.r12, Aarch64.r12, Aarch64.r15, 0, 0);
 //                        masm.vldr(ConditionFlag.Always, Aarch64.d15, Aarch64.r12, 0, CiKind.Double, CiKind.Int);
 //                        masm.ucomisd(reg1, Aarch64.d15, opr1.kind, CiKind.Double);
                         break;
                     case Long: {
+                        if (true) {
+                            throw Util.unimplemented();
+                        }
+
                         masm.saveInFP(9);
                         if (c.asLong() == 0) {
                             masm.movlong(Aarch64.r8, 0, CiKind.Long);
@@ -1683,6 +1720,10 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                         break;
                     }
                     case Object: {
+                        if (true) {
+                            throw Util.unimplemented();
+                        }
+
                         movoop(Aarch64.r8, c);
                         if (oldOpr1.isConstant()) {
                             CiValue newOpr1 = compilation.registerConfig.getScratchRegister().asValue(oldOpr1.kind);
@@ -2494,10 +2535,6 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     break;
                 }
                 case PushFrame: {
-                    if (true) {
-                        throw Util.unimplemented();
-                    }
-
                     int frameSize = initialFrameSizeInBytes();
                     if (CompilationBroker.singleton.simulateAdapter()) {
                         masm.nop(4);
@@ -2506,16 +2543,13 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     masm.push(1 << 14);
                     masm.mov64BitConstant(Aarch64.r12, frameSize);
 
-//                    masm.sub(ConditionFlag.Always, false, Aarch64.r13, Aarch64.r13, Aarch64.r12, 0, 0);
+                    masm.sub(64, Aarch64.r13, Aarch64.r13, Aarch64.r12);
                     if (C1XOptions.ZapStackOnMethodEntry) {
                         final int intSize = 4;
                         for (int i = 0; i < frameSize / intSize; ++i) {
                             masm.setUpScratch(new CiAddress(CiKind.Int, Aarch64.r13.asValue(), i * intSize));
                             masm.mov64BitConstant(Aarch64.r8, 0xC1C1C1C1);
-                            if (true) {
-                                throw Util.unimplemented();
-                            }
-//                            masm.str(ConditionFlag.Always, 0, 0, 0, Aarch64.r8, Aarch64.r12, Aarch64.r0, 0, 0);
+                            masm.str(64, Aarch64.r8, Aarch64Address.createRegisterOffsetAddress(Aarch64.r12, Aarch64.r0, false));
                         }
                     }
 
@@ -2619,12 +2653,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
      *            RSP).
      */
     private void bangStackWithOffset(int offset) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
-//        masm.setUpScratch(new CiAddress(target.wordKind, Aarch64.RSP, -offset));
-//        masm.strImmediate(ConditionFlag.Always, 1, 1, 0, Aarch64.r0, Aarch64.r12, 0);
+        masm.setUpScratch(new CiAddress(target.wordKind, Aarch64.rsp, -offset));
+        masm.str(64, Aarch64.r0, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r12));
     }
 
     private CiRegisterValue assureInRegister(CiValue pointer) {

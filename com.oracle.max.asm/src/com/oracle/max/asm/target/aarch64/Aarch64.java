@@ -71,6 +71,7 @@ public class Aarch64 extends CiArchitecture {
     // be sequential, hence we also need a general r31 register here, which is never used.
     public static final CiRegister r31 = gpCiRegister(31);
     public static final CiRegister sp = new CiRegister(32, 31, 8, "SP", CPU);
+    public static final CiRegisterValue rsp = sp.asValue(CiKind.Int);
     public static final CiRegister zr = new CiRegister(33, 31, 8, "ZR", CPU);
 
     // Names for special registers.

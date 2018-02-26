@@ -1809,6 +1809,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
+    //  vmrs dest, fpscr
     public final void vmrs(ConditionFlag cond, CiRegister dest) {
         int instruction = (cond.value() & 0xf) << 28;
         instruction |= 0x0ef10a10;

@@ -52,8 +52,7 @@ public class Aarch64Backend extends Backend {
      */
     @Override
     public LIRGenerator newLIRGenerator(C1XCompilation compilation) {
-        throw Util.unimplemented();
-//        return new Aarch64LIRGenerator(compilation);
+        return new Aarch64LIRGenerator(compilation);
     }
 
     /**

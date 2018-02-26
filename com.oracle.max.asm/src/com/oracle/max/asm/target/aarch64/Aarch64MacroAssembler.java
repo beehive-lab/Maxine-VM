@@ -39,6 +39,10 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         super(target, registerConfig);
     }
 
+    public void iadd(CiRegister dest, CiRegister left, CiRegister right) {
+        add(64, dest, left, right);
+    }
+
     /**
      * Specifies what actions have to be taken to turn an arbitrary address of the form
      * {@code base + displacement [+ index [<< scale]]} into a valid Aarch64Address.
@@ -1492,8 +1496,15 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     public void movlong(CiRegister dst, long src, CiKind dstKind) {
-        // TODO Port from ARMv7
-        throw new Error("unimplemented");
+        if (dstKind.isGeneral()) {
+            mov64BitConstant(dst, src);
+        } else {
+            assert dstKind.isDouble() : "Dst reg must be double";
+            saveInFP(9);
+            mov64BitConstant(Aarch64.r8, src);
+            fmov(64, dst, Aarch64.r8);
+            restoreFromFP(9);
+        }
     }
 
     // TODO check if str and fstr instructions are equivalent to the ARMv7 ones
@@ -1528,14 +1539,19 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         }
     }
 
-    public void restoreFromFP(int i) {
-        // TODO Auto-generated method stub
-        throw new Error("unimplemented");
+    public final void ucomisd(CiRegister dst, CiRegister src, CiKind destKind, CiKind srcKind) {
+        assert destKind.isFloatOrDouble();
+        assert srcKind.isFloatOrDouble();
+        fcmp(64, dst, src);
+        mrs(Aarch64.r15, SystemRegister.SPSR_EL1);
     }
 
-    public void saveInFP(int i) {
-        // TODO Auto-generated method stub
-        throw new Error("unimplemented");
+    public void restoreFromFP(int reg) {
+        fmov(64, Aarch64.cpuRegisters[reg], Aarch64.d28);
+    }
+
+    public void saveInFP(int reg) {
+        fmov(64, Aarch64.d28, Aarch64.cpuRegisters[reg]);
     }
 
     // TODO check if str and fstr instructions are equivalent to the ARMv7 ones

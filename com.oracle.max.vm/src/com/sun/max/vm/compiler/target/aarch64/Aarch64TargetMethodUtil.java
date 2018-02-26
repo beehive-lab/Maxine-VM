@@ -90,4 +90,9 @@ public final class Aarch64TargetMethodUtil {
         }
         return callSite.plus(RIP_CALL_INSTRUCTION_SIZE).plus(oldDisplacement);
     }
+
+    public static boolean isPatchableCallSite(CodePointer callSite) {
+        final Address callSiteAddress = callSite.toAddress();
+        return callSiteAddress.isWordAligned();
+    }
 }
