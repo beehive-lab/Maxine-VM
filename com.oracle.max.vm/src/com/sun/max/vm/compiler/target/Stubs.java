@@ -530,10 +530,8 @@ public class Stubs {
 
             String stubName = "invokeBasic";
             return new Stub(InvokeBasic, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
-        } else if (platform().isa == ISA.ARM) {
-            return null;
         } else if (platform().isa == ISA.Aarch64) {
-            return null;
+            throw FatalError.unimplemented();
         } else {
             throw FatalError.unimplemented();
         }
@@ -663,6 +661,10 @@ public class Stubs {
             final Type type = isInterface ? InterfaceTrampoline : VirtualTrampoline;
             return new Stub(type, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else if (platform().isa == ISA.Aarch64) {
+            if (true) {
+                throw FatalError.unimplemented();
+            }
+
             CiRegisterConfig registerConfig = registerConfigs.trampoline;
             Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
@@ -891,6 +893,10 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(StaticTrampoline, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else if (platform().isa == ISA.Aarch64) {
+            if (true) {
+                throw FatalError.unimplemented();
+            }
+
             CiRegisterConfig registerConfig = registerConfigs.trampoline;
             Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
@@ -1089,6 +1095,10 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(TrapStub, "trapStub", frameSize, code, callPos, callSize, callee, -1);
         } else if (platform().isa == ISA.Aarch64) {
+            if (true) {
+                throw FatalError.unimplemented();
+            }
+
             CiRegisterConfig registerConfig = registerConfigs.trapStub;
             Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
@@ -1330,6 +1340,10 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnwindStub, name, frameSize, code, -1, -1, null, -1);
         } else if (platform().isa == ISA.Aarch64) {
+            if (true) {
+                throw FatalError.unimplemented();
+            }
+
             CiRegisterConfig registerConfig = MaxineVM.vm().stubs.registerConfigs.standard;
             Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(0);
@@ -1452,6 +1466,10 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(UnrollStub, "unrollStub", frameSize, code, callPos, callSize, callee, -1);
         } else if (platform().isa == ISA.Aarch64) {
+            if (true) {
+                throw FatalError.unimplemented();
+            }
+
             CiRegisterConfig registerConfig = MaxineVM.vm().stubs.registerConfigs.standard;
             Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(0);
@@ -1770,6 +1788,10 @@ public class Stubs {
 
             return stub;
         } else if (platform().isa == ISA.Aarch64) {
+            if (true) {
+                throw FatalError.unimplemented();
+            }
+
             CiRegisterConfig registerConfig = registerConfigs.standard;
             CiCalleeSaveLayout csl = registerConfig.csl;
             Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
