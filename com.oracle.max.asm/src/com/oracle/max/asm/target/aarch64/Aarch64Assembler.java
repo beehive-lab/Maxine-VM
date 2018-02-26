@@ -2640,12 +2640,11 @@ public class Aarch64Assembler extends AbstractAssembler {
                 uimm16 << SystemImmediateOffset);
     }
 
-
     /**
      * Clear Exclusive: clears the local record of the executing processor that an address has had a request for
      * an exclusive access.
      */
-    public void clrex() {
+    public void clearex() {
         emitInt(Instruction.CLREX.encoding);
     }
 

@@ -1087,65 +1087,65 @@ public class Stubs {
             byte[] code = asm.codeBuffer.close(true);
             return new Stub(TrapStub, "trapStub", frameSize, code, callPos, callSize, callee, -1);
         } else if (platform().isa == ISA.Aarch64) {
-            if (true) {
-                throw FatalError.unimplemented();
-            }
-
             CiRegisterConfig registerConfig = registerConfigs.trapStub;
             Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
             CiRegister latch = Aarch64SafepointPoll.LATCH_REGISTER;
-            CiRegister scratch = registerConfig.getScratchRegister();
             int frameSize = platform().target.alignFrameSize(csl.size);
             int frameToCSA = csl.frameOffsetToCSA;
             CiKind[] handleTrapParameters = CiUtil.signatureToKinds(Trap.handleTrap.classMethodActor);
             CiValue[] args = registerConfig.getCallingConvention(JavaCallee, handleTrapParameters, target(), false).locations;
 
-            // the very first instruction must save the flags.
-            // we save them twice and overwrite the first copy with the trap instruction/return address.
-//            asm.pushfq();
-//            asm.pushfq();
+            asm.push(1 << 12);
+            asm.push(1 << 12);
+            // should be: mrs r0, CPSR
+            asm.mrs(Aarch64.r0, Aarch64Assembler.SystemRegister.SPSR_EL1);
+            asm.push(1 << 12);
 
-            // now allocate the frame for this method (first word of which was allocated by the second pushfq above)
-//            asm.subq(AMD64.rsp, frameSize - 8);
-
-            // save all the callee save registers
-//            asm.save(csl, frameToCSA);
+            asm.subq(Aarch64.sp, frameSize - 8);
+            asm.save(csl, frameToCSA);
 
             // Now that we have saved all general purpose registers (including the scratch register),
             // store the value of the latch register from the thread locals into the trap frame
-//            asm.movq(scratch, new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_LATCH_REGISTER.offset));
-//            asm.movq(new CiAddress(WordUtil.archKind(), AMD64.rsp.asValue(), frameToCSA + csl.offsetOf(latch)), scratch);
-
-            // write the return address pointer to the end of the frame
-//            asm.movq(scratch, new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
-//            asm.movq(new CiAddress(WordUtil.archKind(), AMD64.rsp.asValue(), frameSize), scratch);
-
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_LATCH_REGISTER.offset));
+            asm.ldr(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), Aarch64.rsp, frameToCSA + csl.offsetOf(latch)));
+            asm.str(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
+            asm.ldr(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), Aarch64.rsp, frameSize));
+            asm.str(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
 
             // load the trap number from the thread locals into the first parameter register
-//            asm.movq(args[0].asRegister(), new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_NUMBER.offset));
-            // also save the trap number into the trap frame
-//            asm.movq(new CiAddress(WordUtil.archKind(), AMD64.rsp.asValue(), frameToCSA + AMD64TrapFrameAccess.TRAP_NUMBER_OFFSET), args[0].asRegister());
-            // load the trap frame pointer into the second parameter register
-//            asm.leaq(args[1].asRegister(), new CiAddress(WordUtil.archKind(), AMD64.rsp.asValue(), frameToCSA));
-            // load the fault address from the thread locals into the third parameter register
-//            asm.movq(args[2].asRegister(), new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_FAULT_ADDRESS.offset));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_NUMBER.offset));
+            asm.ldr(64, args[0].asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
 
-//            asm.alignForPatchableDirectCall();
+            // also save the trap number into the trap frame
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), Aarch64.rsp, frameToCSA + ARMTrapFrameAccess.TRAP_NUMBER_OFFSET));
+            asm.str(64, args[0].asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+
+            // load the trap frame pointer into the second parameter register
+            asm.leaq(args[1].asRegister(), new CiAddress(WordUtil.archKind(), Aarch64.rsp, frameToCSA));
+
+            // load the fault address from the thread locals into the third parameter register
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_FAULT_ADDRESS.offset));
+            asm.ldr(64, args[2].asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+
+            asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
             ClassMethodActor callee = Trap.handleTrap.classMethodActor;
-//            asm.call();
+            asm.call();
             int callSize = asm.codeBuffer.position() - callPos;
-//            asm.restore(csl, frameToCSA);
+            asm.restore(csl, frameToCSA);
 
-            // now pop the flags register off the stack before returning
-//            asm.addq(AMD64.rsp, frameSize - 8);
-//            asm.popfq();
-//            asm.ret(0);
-
-            asm.nop(); // dummy
+            asm.addq(Aarch64.sp, frameSize - 8);
+            asm.pop(1 << 12);
+            asm.msr(Aarch64Assembler.SystemRegister.SPSR_EL1, asm.scratchRegister);
+            asm.pop(1 << 12);
+            asm.clearex();
+            asm.ret(0);
+            asm.insertForeverLoop();
             byte[] code = asm.codeBuffer.close(true);
-
             return new Stub(TrapStub, "trapStub", frameSize, code, callPos, callSize, callee, -1);
         } else {
             throw FatalError.unimplemented();
