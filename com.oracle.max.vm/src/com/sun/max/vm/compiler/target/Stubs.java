@@ -1895,35 +1895,14 @@ public class Stubs {
             CiKind[] params = CiUtil.signatureToKinds(runtimeRoutine.classMethodActor);
             CiValue[] args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
             if (!kind.isVoid()) {
-                CiAddress arg4;
+                CiRegister arg4 = args[4].asRegister();
                 CiRegister returnRegister = registerConfig.getReturnRegister(kind);
-                switch (kind) {
-                    case Byte:
-                    case Boolean:
-                    case Short:
-                    case Char:
-                    case Int:
-                    case Object:
-                        assert args[4].isRegister() == false;
-                        arg4 = new CiAddress(kind, Aarch64.rsp, ((CiStackSlot) args[4]).index() * 4);
-                        asm.setUpScratch(arg4);
-                        asm.str(64, returnRegister, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-                        break;
-                    case Long:
-                        assert args[4].isRegister() == false;
-                        arg4 = new CiAddress(kind, Aarch64.rsp, ((CiStackSlot) args[4]).index() * 4);
-                        asm.setUpScratch(arg4);
-                        asm.str(64, returnRegister, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-                        break;
-                    case Float:
-                    case Double:
-                        CiRegister tmp = args[4].asRegister();
-                        if (tmp != returnRegister) {
-                            asm.mov(64, returnRegister, tmp);
-                        }
-                        break;
-                    default:
-                        throw new InternalError("Unexpected parameter kind: " + kind);
+                if (arg4 != returnRegister) {
+                    if (kind.isFloat() || kind.isDouble()) {
+                        asm.fmov(64, arg4, returnRegister);
+                    } else {
+                        asm.mov(64, arg4, returnRegister);
+                    }
                 }
             }
 
