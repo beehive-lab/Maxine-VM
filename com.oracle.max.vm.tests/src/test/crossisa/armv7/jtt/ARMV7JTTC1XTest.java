@@ -112,15 +112,6 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
     private static VMConfigurator vmConfigurator = null;
     private static boolean initialised = false;
 
-    // Checkstyle: stop
-    private static MaxineARMv7Tester.BitsFlag[] bitmasks = { MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits,
-                    MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits,
-                    MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits,
-                    MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits, MaxineARMv7Tester.BitsFlag.All32Bits};
-    // Checkstyle: start
-    private static int[] expectedValues = new int[MaxineARMv7Tester.NUM_REGS];
-    private static boolean[] testvalues = new boolean[MaxineARMv7Tester.NUM_REGS];
-
     private String getKlassName(String klass) {
         return "^" + klass + "^";
     }
@@ -137,11 +128,10 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         return r;
     }
 
-    private int[] generateAndTestStubs(String functionPrototype, int entryPoint, byte[] theCode, int[] expected,
-                                       boolean[] tests, MaxineARMv7Tester.BitsFlag[] masks) throws Exception {
+    private int[] generateAndTestStubs(String functionPrototype, int entryPoint, byte[] theCode) throws Exception {
         ARMV7CodeWriter code = new ARMV7CodeWriter(theCode);
         code.createStaticCodeStubsFile(functionPrototype, theCode, entryPoint);
-        MaxineARMv7Tester r = new MaxineARMv7Tester(expected, tests, masks);
+        MaxineARMv7Tester r = new MaxineARMv7Tester();
         r.cleanFiles();
         r.cleanProcesses();
         r.compile();
@@ -160,10 +150,6 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
 
     private void initTests() {
         try {
-            for (int i = 0; i < expectedValues.length; i++) {
-                expectedValues[i] = i;
-            }
-
             String[] args = new String[2];
             args[0] = new String("t1x");
             args[1] = new String("HelloWorld");
@@ -275,7 +261,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (int i = 0; i < argsOne.length; i++) {
             expectedValue = BC_imul.test(argsOne[i], argsTwo[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int, int ", Integer.toString(argsOne[i]) + "," + Integer.toString(argsTwo[i]));
-            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -297,7 +283,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             long   expectedValue     = BC_iand.test(pair.first, pair.second);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int, int", Integer.toString(pair.first) + "," + Integer.toString(pair.second));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = registerValues[0];
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -321,7 +307,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             int    expectedValue     = BC_ishl.test(pair.first, pair.second);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int, int", Integer.toString(pair.first) + "," + Integer.toString(pair.second));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = registerValues[0];
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -345,7 +331,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             int    expectedValue     = BC_ishr.test(pair.first, pair.second);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int, int", Integer.toString(pair.first) + "," + Integer.toString(pair.second));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = registerValues[0];
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -371,7 +357,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             int    expectedValue     = BC_iushr.test(pair.first, pair.second);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int, int", Integer.toString(pair.first) + "," + Integer.toString(pair.second));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = registerValues[0];
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -392,7 +378,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (int i = 0; i < argsOne.length; i++) {
             expectedValue = BC_i2b.test(argsOne[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("char", "int", Integer.toString(argsOne[i]));
-            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -411,7 +397,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (int i = 0; i < argOne.length; i++) {
             expectedValue = BC_ireturn.test(argOne[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int", Integer.toString(argOne[i]));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -430,7 +416,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (int i = 0; i < argOne.length; i++) {
             expectedValue = BC_lookupswitch01.test(argOne[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int", Integer.toString(argOne[i]));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -449,7 +435,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (int i = 0; i < argOne.length; i++) {
             expectedValue = BC_lookupswitch02.test(argOne[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int", Integer.toString(argOne[i]));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -468,7 +454,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (int i = 0; i < argOne.length; i++) {
             expectedValue = BC_lookupswitch03.test(argOne[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int", Integer.toString(argOne[i]));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -487,7 +473,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (int i = 0; i < argOne.length; i++) {
             expectedValue = BC_lookupswitch04.test(argOne[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int", Integer.toString(argOne[i]));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -506,7 +492,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (int i = 0; i < argOne.length; i++) {
             expectedValue = BC_tableswitch.test(argOne[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int", Integer.toString(argOne[i]));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -525,7 +511,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (int i = 0; i < argOne.length; i++) {
             expectedValue = BC_tableswitch2.test(argOne[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int", Integer.toString(argOne[i]));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -544,7 +530,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (int i = 0; i < argOne.length; i++) {
             expectedValue = BC_tableswitch3.test(argOne[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int", Integer.toString(argOne[i]));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -563,7 +549,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (int i = 0; i < argOne.length; i++) {
             expectedValue = BC_tableswitch4.test(argOne[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int", Integer.toString(argOne[i]));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -586,7 +572,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             int    expectedValue     = BC_iconst.test(pair.first);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int", Integer.toString(pair.first));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -604,10 +590,9 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         pairs.add(new Args(-2, -2));
         for (Args pair : pairs) {
             int answer = BC_invokestatic.test(pair.first);
-            expectedValues[0] = answer;
             String functionPrototype = ARMV7CodeWriter.preAmble("void", "int", Integer.toString(pair.first));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
-            assert registerValues[0] == expectedValues[0] : "Failed incorrect value " + registerValues[0] + " " + expectedValues[0];
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
+            assert registerValues[0] == answer : "Failed incorrect value " + registerValues[0] + " " + answer;
             theCompiler.cleanup();
         }
     }
@@ -623,7 +608,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             String functionPrototype = ARMV7CodeWriter.preAmble("double", "float", Float.toString(arguments[i]));
             MaxineARMv7Tester tester = generateObjectsAndTestStubs(functionPrototype, entryPoint, codeBytes);
             double returnValue = tester.getSimulatedDoubleRegisters()[0];
-            assert (returnValue == expectedDouble) : "Failed incorrect value " + returnValue + " " + expectedDouble;
+            assert returnValue == expectedDouble : "Failed incorrect value " + returnValue + " " + expectedDouble;
             theCompiler.cleanup();
         }
     }
@@ -658,7 +643,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (int i = 0; i < arguments.length; i++) {
             expectedByte = BC_f2b.test(arguments[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("char", "float", Float.toString(arguments[i]));
-            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedByte : "Failed incorrect value " + registerValues[0] + " " + expectedByte;
             theCompiler.cleanup();
         }
@@ -710,7 +695,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (int i = 0; i < arguments.length; i++) {
             expectedInt = BC_d2i01.test(arguments[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "double", Double.toString(arguments[i]));
-            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedInt : "Failed incorrect value " + registerValues[0] + " " + expectedInt;
             theCompiler.cleanup();
         }
@@ -724,7 +709,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (int i = 0; i < arguments.length; i++) {
             int    answer            = BC_anewarray.test(arguments[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int", Integer.toString(arguments[i]));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == answer : "Failed incorrect value " + registerValues[0] + " " + answer;
             theCompiler.cleanup();
         }
@@ -738,7 +723,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (int i = 0; i < arguments.length; i++) {
             int    answer            = BC_new.test(arguments[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int", Integer.toString(arguments[i]));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == answer : "Failed incorrect value " + registerValues[0] + " " + answer;
             theCompiler.cleanup();
         }
@@ -752,7 +737,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (int i = 0; i < arguments.length; i++) {
             int    answer            = BC_f2i01.test(arguments[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "float", Float.toString(arguments[i]));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == answer : "Failed incorrect value " + registerValues[0] + " " + answer;
             theCompiler.cleanup();
         }
@@ -785,7 +770,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean answer = BC_ifge_2.test(argOne[i], argTwo[i]);
             int expectedValue = answer ? 1 : 0;
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int, int", Integer.toString(argOne[i]) + new String(", ") + Integer.toString(argTwo[i]));
-            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + "   " + expectedValue;
             theCompiler.cleanup();
         }
@@ -803,7 +788,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean answer            = BC_dcmp01.test(argOne[i], argTwo[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "double, double", Double.toString(argOne[i]) + new String(", ") + Double.toString(argTwo[i]));
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + "   " + expectedValue;
             theCompiler.cleanup();
         }
@@ -819,7 +804,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean answer            = BC_dcmp02.test(argOne[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -838,7 +823,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             int answer = jtt.max.MostSignificantBit32.test(input[i]);
             int    expectedValue     = output[i];
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "long long", Long.toString(input[i]) + "LL");
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -856,7 +841,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             int answer = jtt.max.LeastSignificantBit64.test(input[i]);
             int    expectedValue     = output[i];
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "long long", Long.toString(input[i]) + "LL");
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -874,7 +859,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean answer            = BC_dcmp03.test(argOne[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -892,7 +877,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean answer            = BC_dcmp04.test(argOne[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -910,7 +895,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean answer            = BC_dcmp05.test(argOne[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -928,7 +913,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean answer            = BC_dcmp06.test(argOne[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -946,7 +931,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean answer            = BC_dcmp07.test(argOne[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -964,7 +949,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean answer            = BC_dcmp08.test(argOne[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -982,7 +967,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean answer            = BC_dcmp09.test(argOne[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -999,7 +984,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean answer            = BC_dcmp10.test(i);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "int", Integer.toString(i));
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -1027,7 +1012,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
                 tmp = Float.toString(argOne[i]);
             }
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "float, float", tmp + new String(",") + Float.toString(argTwo[i]));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -1045,7 +1030,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean answer            = BC_fcmp02.test(argOne[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -1063,7 +1048,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean answer            = BC_fcmp03.test(argOne[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -1081,7 +1066,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean answer            = BC_fcmp04.test(argOne[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -1099,7 +1084,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean answer            = BC_fcmp05.test(argOne[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -1117,7 +1102,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean answer            = BC_fcmp06.test(argOne[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -1135,7 +1120,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean answer            = BC_fcmp07.test(argOne[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -1153,7 +1138,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean answer            = BC_fcmp08.test(argOne[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -1171,7 +1156,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean answer            = BC_fcmp09.test(argOne[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "float", Float.toString(argOne[i]));
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -1188,7 +1173,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean answer            = BC_fcmp10.test(i);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "int", Integer.toString(i));
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -1298,7 +1283,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (int i = 0; i < argsOne.length; i++) {
             expectedValue = BC_irem.test(argsOne[i], argsTwo[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int, int ", Integer.toString(argsOne[i]) + "," + Integer.toString(argsTwo[i]));
-            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -1370,7 +1355,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             long   expectedValue     = BC_ldiv.test(pair.lfirst, pair.lsecond);
             String functionPrototype = ARMV7CodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = connectRegs(registerValues[0], registerValues[1]);
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -1392,7 +1377,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (int i = 0; i < argsOne.length; i++) {
             expectedValue = BC_idiv.test(argsOne[i], argsTwo[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int, int ", Integer.toString(argsOne[i]) + "," + Integer.toString(argsTwo[i]));
-            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues != null : "Failed to return array of register values";
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
@@ -1411,7 +1396,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (int i = 0; i < argsOne.length; i++) {
             expectedValue = BC_iadd3.test(argsOne[i], argsTwo[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "short, short ", Short.toString(argsOne[i]) + "," + Short.toString(argsTwo[i]));
-            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -1428,7 +1413,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (int i = 0; i < argsOne.length; i++) {
             expectedValue = BC_i2s.test(argsOne[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("short", "int  ", Integer.toString(argsOne[i]));
-            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -1446,7 +1431,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (int i = 0; i < argsOne.length; i++) {
             expectedValue = BC_iadd.test(argsOne[i], argsTwo[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int, int ", Integer.toString(argsOne[i]) + "," + Integer.toString(argsTwo[i]));
-            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -1465,7 +1450,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (int i = 0; i < argsOne.length; i++) {
             expectedValue = BC_iadd2.test(argsOne[i], argsTwo[i]);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "int, int ", Integer.toString(argsOne[i]) + "," + Integer.toString(argsTwo[i]));
-            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -1673,7 +1658,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lload_0.test(pair.lfirst);
             String functionPrototype = ARMV7CodeWriter.preAmble("long long", "long long", Long.toString(pair.lfirst));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = 0xffffffffL & registerValues[0];
             returnValue |= (0xffffffffL & registerValues[1]) << 32;
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue;
@@ -1696,7 +1681,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lload_4.test(pair.lfirst, pair.second);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "long long, int", Long.toString(pair.lfirst) + "," + Long.toString(pair.second));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = registerValues[0];
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue;
             theCompiler.cleanup();
@@ -1717,7 +1702,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lload_1.test(pair.first, pair.lfirst);
             String functionPrototype = ARMV7CodeWriter.preAmble("long long", "int, long long", Integer.toString(pair.first) + "," + Long.toString(pair.lfirst));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = 0xffffffffL & registerValues[0];
             returnValue |= (0xffffffffL & registerValues[1]) << 32;
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " r2 " + registerValues[2] + " " + expectedValue;
@@ -1740,7 +1725,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             long expectedValue = BC_lload_2.test(pair.first, pair.second, pair.lfirst);
             String functionPrototype = ARMV7CodeWriter.preAmble("long long", "int, int, long long",
                             Integer.toString(pair.first) + "," + Integer.toString(pair.second) + "," + Long.toString(pair.lfirst));
-            int[]  registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue    = 0xffffffffL & registerValues[0];
             returnValue |= (0xffffffffL & registerValues[1]) << 32;
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue;
@@ -1763,7 +1748,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             long expectedValue = BC_lload_3.test(pair.first, pair.second, pair.third, pair.lfirst);
             String functionPrototype = ARMV7CodeWriter.preAmble("long long", "int, int, int, long long",
                             Integer.toString(pair.first) + "," + Integer.toString(pair.second) + "," + Integer.toString(pair.third) + "," + Long.toString(pair.lfirst));
-            int[]  registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue    = 0xffffffffL & registerValues[0];
             returnValue |= (0xffffffffL & registerValues[1]) << 32;
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue;
@@ -1790,7 +1775,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             long   expectedValue     = BC_ladd.test(pair.lfirst, pair.lsecond);
             String functionPrototype = ARMV7CodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = connectRegs(registerValues[0], registerValues[1]);
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -1823,7 +1808,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lor.test(pair.lfirst, pair.lsecond);
             String functionPrototype = ARMV7CodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = connectRegs(registerValues[0], registerValues[1]);
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -1848,7 +1833,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lxor.test(pair.lfirst, pair.lsecond);
             String functionPrototype = ARMV7CodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "," + Long.toString(pair.lsecond));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = registerValues[0] | ((0xffffffffL & registerValues[1]) << 32);
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -1874,7 +1859,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             long   expectedValue     = BC_land.test(pair.lfirst, pair.lsecond);
             String functionPrototype = ARMV7CodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = connectRegs(registerValues[0], registerValues[1]);
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -1896,7 +1881,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             long   expectedValue     = BC_land_const.test(pair.first);
             String functionPrototype = ARMV7CodeWriter.preAmble("long long", "int", Long.toString(pair.first));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = connectRegs(registerValues[0], registerValues[1]);
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -1924,7 +1909,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lshl.test(pair.lfirst, pair.second);
             String functionPrototype = ARMV7CodeWriter.preAmble("long long", "long long, int", Long.toString(pair.lfirst) + "LL," + Integer.toString(pair.second));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = connectRegs(registerValues[0], registerValues[1]);
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -1950,7 +1935,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lshr.test(pair.lfirst, pair.second);
             String functionPrototype = ARMV7CodeWriter.preAmble("long long", "long long, int", Long.toString(pair.lfirst) + "LL," + Integer.toString(pair.second));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = connectRegs(registerValues[0], registerValues[1]);
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -1975,7 +1960,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean answer            = jtt.loop.Loop01.test(pair.first);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = ARMV7CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long    returnValue       = registerValues[0];
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -1999,7 +1984,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
                 int expectedValue = answer ? 1 : 0;
                 String functionPrototype = ARMV7CodeWriter.preAmble("int ", " int, char, char",
                                 Integer.toString(i) + ", " + "'" + Character.toString(argOne) + "'" + ", " + "'" + Character.toString(argTwo[j]) + "'");
-                int[]  registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+                int[]  registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
                 long   returnValue    = registerValues[0];
                 assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
                 theCompiler.cleanup();
@@ -2025,7 +2010,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             boolean answer            = jtt.loop.Loop02.test(pair.first);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = ARMV7CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long    returnValue       = registerValues[0];
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -2048,7 +2033,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             int    expectedValue     = jtt.loop.Loop03.test(pair.first);
             String functionPrototype = ARMV7CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = registerValues[0];
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -2070,7 +2055,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             int    expectedValue     = jtt.loop.Loop04.test(pair.first);
             String functionPrototype = ARMV7CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = registerValues[0];
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -2092,7 +2077,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             int    expectedValue     = jtt.loop.Loop11.test(pair.first);
             String functionPrototype = ARMV7CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = registerValues[0];
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -2124,7 +2109,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             int    expectedValue     = jtt.loop.LoopPhi.test(pair.first);
             String functionPrototype = ARMV7CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = registerValues[0];
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -2154,7 +2139,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             int    expectedValue     = BC_irem.test(pair.first, pair.second);
             String functionPrototype = ARMV7CodeWriter.preAmble("int ", " int, int ", Integer.toString(pair.first) + ", " + Integer.toString(pair.second));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = registerValues[0];
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -2179,7 +2164,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             int    expectedValue     = jtt.loop.LoopInline.test(pair.first);
             String functionPrototype = ARMV7CodeWriter.preAmble("int ", " int", Integer.toString(pair.first));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = registerValues[0];
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -2242,7 +2227,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             long   expectedValue     = BC_long_tests.test(pair.lfirst);
             String functionPrototype = ARMV7CodeWriter.preAmble("long long", "long long", Long.toString(pair.lfirst) + "LL");
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = connectRegs(registerValues[0], registerValues[1]);
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -2266,7 +2251,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             boolean expectedValue     = BC_long_tests.le(pair.lfirst, pair.lsecond);
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             boolean returnValue       = registerValues[0] == 1 ? true : false;
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -2290,7 +2275,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             boolean expectedValue     = BC_long_tests.ge(pair.lfirst, pair.lsecond);
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             boolean returnValue       = registerValues[0] == 1 ? true : false;
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -2314,7 +2299,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             boolean expectedValue     = BC_long_tests.eq(pair.lfirst, pair.lsecond);
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             boolean returnValue       = registerValues[0] == 1 ? true : false;
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -2338,7 +2323,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             boolean expectedValue     = BC_long_tests.ne(pair.lfirst, pair.lsecond);
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             boolean returnValue       = registerValues[0] == 1 ? true : false;
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -2362,7 +2347,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             boolean expectedValue     = BC_long_tests.gt(pair.lfirst, pair.lsecond);
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             boolean returnValue       = registerValues[0] == 1 ? true : false;
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -2386,7 +2371,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             boolean expectedValue     = BC_long_tests.lt(pair.lfirst, pair.lsecond);
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             boolean returnValue       = registerValues[0] == 1 ? true : false;
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -2410,7 +2395,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lushr.test(pair.lfirst, pair.second);
             String functionPrototype = ARMV7CodeWriter.preAmble("unsigned long long", "unsigned long long, int", asUnsignedDecimalString(pair.lfirst) + "," + Integer.toString(pair.second));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = connectRegs(registerValues[0], registerValues[1]);
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -2433,7 +2418,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             boolean expectedValue     = BC_lcmp.test(pair.lfirst, pair.lsecond);
             String  functionPrototype = ARMV7CodeWriter.preAmble("int", "long long, long long", Long.toString(pair.lfirst) + "," + Long.toString(pair.lsecond));
-            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             boolean returnValue       = registerValues[0] > 0 ? true : false;
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -2459,7 +2444,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lmul.test(pair.lfirst, pair.lsecond);
             String functionPrototype = ARMV7CodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = connectRegs(registerValues[0], registerValues[1]);
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -2481,7 +2466,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lneg.test(pair.lfirst);
             String functionPrototype = ARMV7CodeWriter.preAmble("long long", "long long", Long.toString(pair.lfirst) + "LL");
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = connectRegs(registerValues[0], registerValues[1]);
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -2504,7 +2489,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lreturn.test(pair.lfirst);
             String functionPrototype = ARMV7CodeWriter.preAmble("long long", "long long", Long.toString(pair.lfirst));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = connectRegs(registerValues[0], registerValues[1]);
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -2532,7 +2517,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             long   expectedValue     = BC_lsub.test(pair.lfirst, pair.lsecond);
             String functionPrototype = ARMV7CodeWriter.preAmble("long long", "long long, long long", Long.toString(pair.lfirst) + "LL," + Long.toString(pair.lsecond) + "LL");
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = connectRegs(registerValues[0], registerValues[1]);
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -2557,7 +2542,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             long   expectedValue     = BC_i2l.test(pair.first);
             String functionPrototype = ARMV7CodeWriter.preAmble("long long", "int", Integer.toString(pair.first));
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = connectRegs(registerValues[0], registerValues[1]);
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -2586,7 +2571,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         for (Args pair : pairs) {
             int    expectedValue     = BC_l2i.test(pair.lfirst);
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "long long", Long.toString(pair.lfirst) + "LL");
-            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[]  registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             long   returnValue       = registerValues[0];
             assert returnValue == expectedValue : "Failed incorrect value r0 " + registerValues[0] + " r1 " + registerValues[1] + " " + expectedValue + " " + returnValue;
             theCompiler.cleanup();
@@ -2671,7 +2656,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             int expectedValue = rt ? 1 : 0;
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "float, float, float, float, float",
                             Float.toString(argsOne[i]) + "," + Float.toString(argsTwo[i]) + "," + Float.toString(argsThree[i]) + "," + Float.toString(argsFour[i]) + "," + Float.toString(argsFive[i]));
-            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -2700,7 +2685,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
                             Double.toString(argsOne[i]) + "," + Double.toString(argsTwo[i]) + "," + Double.toString(argsThree[i]) + "," + Double.toString(argsFour[i]) + "," +
                                             Double.toString(argsFive[i]) + "," + Double.toString(argsSix[i]) + "," + Double.toString(argsSeven[i]) + "," + Double.toString(argsEight[i]) + "," +
                                             Double.toString(argsNine[i]));
-            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -2732,7 +2717,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
                                             Double.toString(argsFive[i]) + "," + Double.toString(argsSix[i]) + "," + Double.toString(argsSeven[i]) + "," + Double.toString(argsEight[i]) + "," +
                                             Double.toString(argsNine[i]) + "," + Float.toString(argsTen[i]));
 
-            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -2794,7 +2779,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
             int expectedValue = rt ? 1 : 0;
             String functionPrototype = ARMV7CodeWriter.preAmble("int", "double, float, double, float, float", Double.toString(argsOne[i]) + "," + Float.toString(argsTwo[i]) + "," +
                             Double.toString(argsThree[i]) + "," + Float.toString(argsFour[i]) + "," + Float.toString(argsFive[i]));
-            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            int[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
