@@ -1861,14 +1861,28 @@ public class Stubs {
 
             return stub;
         } else if (platform().isa == ISA.Aarch64) {
-            if (true) {
-                throw FatalError.unimplemented();
-            }
-
+            /*
+             * The deopt stub initially executes in the frame of the method that was returned to and is about to be
+             * deoptimized. It then allocates a temporary frame of 2 slots to transfer control to the deopt
+             * routine by "returning" to it. As execution enters the deopt routine, the stack looks like
+             * the about-to-be-deoptimized frame called the deopt routine directly.
+             *
+             * [ mov  rcx, rax ]                               // if non-void return value, copy it into arg3 (omitted for void/float/double values)
+             *   mov  rdi [rsp + DEOPT_RETURN_ADDRESS_OFFSET]  // copy deopt IP into arg0
+             *   mov  rsi, rsp                                 // copy deopt SP into arg1
+             *   mov  rdx, rbp                                 // copy deopt FP into arg2
+             *   subq rsp, 16                                  // allocate 2 slots
+             *   mov  [rsp + 8], rdi                           // put deopt IP (i.e. original return address) into first slot
+             *   mov  scratch, 0xFFFFFFFFFFFFFFFFL             // put (placeholder) address of deopt ...
+             *   mov  [rsp], scratch                           // ... routine into second slot
+             *   ret                                           // call deopt method by "returning" to it
+             */
             CiRegisterConfig registerConfig = registerConfigs.standard;
             CiCalleeSaveLayout csl = registerConfig.csl;
             Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
             int frameSize = platform().target.alignFrameSize(csl == null ? 0 : csl.size);
+
+            asm.mov64BitConstant(asm.scratchRegister, 0xdef2def2);
 
             String runtimeRoutineName = "deoptimize" + kind.name();
             final CriticalMethod runtimeRoutine;
@@ -1878,65 +1892,81 @@ public class Stubs {
                 // No deoptimization stub for kind
                 return null;
             }
-
             CiKind[] params = CiUtil.signatureToKinds(runtimeRoutine.classMethodActor);
             CiValue[] args = registerConfig.getCallingConvention(JavaCall, params, target(), false).locations;
             if (!kind.isVoid()) {
-                // Copy return value into arg 4
-                CiRegister arg4 = args[4].asRegister();
+                CiAddress arg4;
                 CiRegister returnRegister = registerConfig.getReturnRegister(kind);
-                if (arg4 != returnRegister) {
-                    if (kind.isFloat()) {
-//                        asm.movflt(arg4, returnRegister);
-                    } else if (kind.isDouble()) {
-//                        asm.movdbl(arg4, returnRegister);
-                    } else {
-//                        asm.movq(arg4, returnRegister);
-                    }
+                switch (kind) {
+                    case Byte:
+                    case Boolean:
+                    case Short:
+                    case Char:
+                    case Int:
+                    case Object:
+                        assert args[4].isRegister() == false;
+                        arg4 = new CiAddress(kind, Aarch64.rsp, ((CiStackSlot) args[4]).index() * 4);
+                        asm.setUpScratch(arg4);
+                        asm.str(64, returnRegister, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+                        break;
+                    case Long:
+                        assert args[4].isRegister() == false;
+                        arg4 = new CiAddress(kind, Aarch64.rsp, ((CiStackSlot) args[4]).index() * 4);
+                        asm.setUpScratch(arg4);
+                        asm.str(64, returnRegister, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+                        break;
+                    case Float:
+                    case Double:
+                        CiRegister tmp = args[4].asRegister();
+                        if (tmp != returnRegister) {
+                            asm.mov(64, returnRegister, tmp);
+                        }
+                        break;
+                    default:
+                        throw new InternalError("Unexpected parameter kind: " + kind);
                 }
             }
 
             // Copy original return address into arg 0 (i.e. 'ip')
             CiRegister arg0 = args[0].asRegister();
-//            asm.movq(arg0, new CiAddress(WordUtil.archKind(), AMD64.RSP, DEOPT_RETURN_ADDRESS_OFFSET));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), Aarch64.rsp, DEOPT_RETURN_ADDRESS_OFFSET));
+            asm.ldr(64, arg0, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
 
             // Copy original stack pointer into arg 1 (i.e. 'sp')
             CiRegister arg1 = args[1].asRegister();
-//            asm.movq(arg1, AMD64.rsp);
+            asm.mov(64, arg1, Aarch64.sp);
 
             // Copy original frame pointer into arg 2 (i.e. 'sp')
             CiRegister arg2 = args[2].asRegister();
-//            asm.movq(arg2, AMD64.rbp);
+            asm.mov(64, arg2, Aarch64.fp);
 
             // Zero arg 3 (i.e. 'csa')
             CiRegister arg3 = args[3].asRegister();
-//            asm.xorq(arg3, arg3);
+            asm.xorq(arg3, arg3);
 
-            // Allocate 2 extra stack slots
-//            asm.subq(AMD64.rsp, 16);
+            // Allocate 2 extra stack slots ? one in ARM?
+            asm.subq(Aarch64.sp, 8);
 
             // Put original return address into high slot
-//            asm.movq(new CiAddress(WordUtil.archKind(), AMD64.RSP, 8), arg0);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), Aarch64.rsp, 4));
+            asm.str(64, arg0, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
 
             // Put deopt method entry point into low slot
-            CiRegister scratch = registerConfig.getScratchRegister();
-//            asm.movq(scratch, 0xFFFFFFFFFFFFFFFFL);
-            final int patchPos = asm.codeBuffer.position() - 8;
-//            asm.movq(new CiAddress(WordUtil.archKind(), AMD64.RSP), scratch);
+            asm.mov64BitConstant(asm.scratchRegister, 0xffffffff);
+            final int patchPos = asm.codeBuffer.position() - 4;
+            asm.setUpRegister(Aarch64.r8, new CiAddress(WordUtil.archKind(), Aarch64.rsp));
+            asm.str(64, asm.scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r8));
 
-            // "return" to deopt routine
-//            asm.ret(0);
+            asm.mov64BitConstant(asm.scratchRegister, 0xfeeff00f);
+            asm.ret(0);
 
             String stubName = runtimeRoutineName + "Stub";
-
-            asm.nop(); // dummy
-
             byte[] code = asm.codeBuffer.close(true);
             final Stub stub = new Stub(DeoptStub, stubName, frameSize, code, -1, 0, null, -1);
 
-//            AMD64DeoptStubPatch patch = new AMD64DeoptStubPatch(patchPos, runtimeRoutine, stub);
-//            runtimeInits = Arrays.copyOf(runtimeInits, runtimeInits.length + 1);
-//            runtimeInits[runtimeInits.length - 1] = patch;
+            Aarch64DeoptStubPatch patch = new Aarch64DeoptStubPatch(patchPos, runtimeRoutine, stub);
+            runtimeInits = Arrays.copyOf(runtimeInits, runtimeInits.length + 1);
+            runtimeInits[runtimeInits.length - 1] = patch;
 
             return stub;
         } else {
