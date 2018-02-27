@@ -709,10 +709,6 @@ public class Stubs {
             final Type type = isInterface ? InterfaceTrampoline : VirtualTrampoline;
             return new Stub(type, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
         } else if (platform().isa == ISA.Aarch64) {
-            if (true) {
-                throw FatalError.unimplemented();
-            }
-
             CiRegisterConfig registerConfig = registerConfigs.trampoline;
             Aarch64MacroAssembler asm = new Aarch64MacroAssembler(target(), registerConfig);
             CiCalleeSaveLayout csl = registerConfig.getCalleeSaveLayout();
@@ -722,36 +718,31 @@ public class Stubs {
             for (int i = 0; i < prologueSize; ++i) {
                 asm.nop();
             }
-
+            asm.push(1 << 14);
             // now allocate the frame for this method
-//            asm.subq(AMD64.rsp, frameSize);
+            asm.subq(Aarch64.sp, frameSize);
 
-            // save the index in the scratch register. This register is then callee-saved
-            // so that the stack walker can find it.
-//            asm.movl(registerConfig.getScratchRegister(), index);
+            // Save the index in the scratch register
+            asm.mov32BitConstant(Aarch64.r8, index);
             if (isHosted() && index == 0) {
-                indexMovInstrPos = asm.codeBuffer.position() -  WordWidth.BITS_32.numberOfBytes;
+                indexMovInstrPos = asm.codeBuffer.position() - 8;
             }
 
-
             // save all the callee save registers
-//            asm.save(csl, frameToCSA);
+            asm.save(csl, frameToCSA);
 
             CiValue[] args = isInterface ? resolveInterfaceCallArgs : resolveVirtualCallArgs;
 
-            // the receiver is already in the first arg register
-            //asm.movq(locations[0].asRegister(), locations[0].asRegister());
-
             // load the index into the second arg register
-//            asm.movl(args[1].asRegister(), index);
+            asm.mov32BitConstant(args[1].asRegister(), index);
 
-            // load the return address into the third arg register
-//            asm.movq(args[2].asRegister(), new CiAddress(WordUtil.archKind(), AMD64.rsp.asValue(), frameSize));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), Aarch64.rsp, frameSize));
+            asm.ldr(64, args[2].asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
 
-//            asm.alignForPatchableDirectCall();
+            asm.alignForPatchableDirectCall();
             int callPos = asm.codeBuffer.position();
             ClassMethodActor callee = isInterface ? resolveInterfaceCall.classMethodActor : resolveVirtualCall.classMethodActor;
-//            asm.call();
+            asm.call();
             int callSize = asm.codeBuffer.position() - callPos;
 
             // Put the entry point of the resolved method on the stack just below the
@@ -760,18 +751,20 @@ public class Stubs {
             // continues in the resolved method as if it was called by the trampoline's
             // caller which is exactly what we want.
             CiRegister returnReg = registerConfig.getReturnRegister(WordUtil.archKind());
-//            asm.movq(new CiAddress(WordUtil.archKind(), AMD64.rsp.asValue(), frameSize - 8), returnReg);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), Aarch64.rsp, frameSize - 4));
+            asm.str(64, returnReg, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
 
             // Restore all parameter registers before returning
             int registerRestoreEpilogueOffset = asm.codeBuffer.position();
-//            asm.restore(csl, frameToCSA);
+            asm.restore(csl, frameToCSA);
 
-            // Adjust RSP as mentioned above and do the 'ret' that lands us in the
-            // trampolined-to method.
-//            asm.addq(AMD64.rsp, frameSize - 8);
-//            asm.ret(0);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize - 4));
+            asm.ldr(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize));
+            asm.ldr(64, Aarch64.linkRegister, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
+            asm.addq(Aarch64.sp, frameSize + 4);
+            asm.jmp(Aarch64.r8);
 
-            asm.nop(); // dummy
             byte[] code = asm.codeBuffer.close(true);
             final Type type = isInterface ? InterfaceTrampoline : VirtualTrampoline;
             return new Stub(type, stubName, frameSize, code, callPos, callSize, callee, registerRestoreEpilogueOffset);
