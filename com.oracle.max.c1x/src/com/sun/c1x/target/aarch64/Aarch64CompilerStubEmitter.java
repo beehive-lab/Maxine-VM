@@ -144,7 +144,8 @@ public class Aarch64CompilerStubEmitter extends CompilerStubEmitter {
 
         // input is NaN -> return 0
         asm.bind(nan);
-        asm.xorptr(convertResult, convertResult);
+        // FIXME
+//        asm.xorptr(convertResult, convertResult);
         asm.bind(ret);
         convertEpilogue();
     }
