@@ -1614,6 +1614,48 @@ public class Stubs {
     }
 
     /**
+     * Helper to patch the address of a deoptimization runtime routine into a deopt stub. This can only be done at
+     * runtime once the address is known and relocated.
+     */
+    @PLATFORM(cpu = "aarch64")
+    static class Aarch64DeoptStubPatch extends RuntimeInitialization {
+
+        /**
+         * The position of the 64-bit operand to be patched.
+         */
+        final int pos;
+
+        /**
+         * The routine whose relocated address is the patch value.
+         */
+        final CriticalMethod runtimeRoutine;
+
+        /**
+         * The stub whose code is to be patched.
+         */
+        final Stub stub;
+
+        Aarch64DeoptStubPatch(int pos, CriticalMethod runtimeRoutine, Stub stub) {
+            this.pos = pos;
+            this.runtimeRoutine = runtimeRoutine;
+            this.stub = stub;
+        }
+
+        @Override
+        void apply() {
+            Pointer patchAddr = stub.codeAt(pos).toPointer();
+            int disp = runtimeRoutine.address().toInt();
+
+            int instruction = Aarch64MacroAssembler.movzHelper(64, Aarch64.r12, disp & 0xffff, 0);
+            patchAddr.writeInt(0, instruction);
+            instruction = Aarch64MacroAssembler.movkHelper(64, Aarch64.r12, (disp >> 16) & 0xffff, 16);
+            patchAddr.writeInt(4, instruction);
+
+            Aarch64TargetMethodUtil.maxine_cache_flush(patchAddr, 8);
+        }
+    }
+
+    /**
      * Generates a stub to deoptimize a method upon returning to it.
      *
      * @param kind the return value kind
