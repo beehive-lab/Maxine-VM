@@ -21,6 +21,7 @@
 package com.sun.max.vm.compiler.target.aarch64;
 
 import com.oracle.max.asm.target.aarch64.*;
+import com.sun.max.annotate.C_FUNCTION;
 import com.sun.max.unsafe.*;
 import com.sun.max.vm.*;
 import com.sun.max.vm.compiler.target.*;
@@ -42,6 +43,10 @@ public final class Aarch64TargetMethodUtil {
         instruction = ((code[idx + 3] & 0xFF) << 24) | ((code[idx + 2] & 0xFF) << 16) | ((code[idx + 1] & 0xFF) << 8) | (code[idx + 0] & 0xFF);
         return instruction;
     }
+
+    // TODO: Check if this works in A64 as well or just ARMV7
+    @C_FUNCTION
+    public static native void maxine_cache_flush(Pointer start, int length);
 
     /**
      * Thread safe patching of the displacement field in a direct call.
