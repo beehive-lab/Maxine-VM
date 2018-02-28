@@ -2084,7 +2084,7 @@ public class ARMV7JTTC1XTest extends MaxTestCase {
         }
     }
 
-    public void infinite_C1X_jtt_loopPHI() throws Exception {
+    public void test_C1X_jtt_loopPHI() throws Exception {
         vm().compilationBroker.setOffline(initialised);
         String klassName = getKlassName("jtt.loop.LoopPhi");
         CompilationBroker.singleton.setSimulateAdapter(true);
