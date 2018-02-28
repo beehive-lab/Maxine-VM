@@ -429,12 +429,24 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         }
     }
 
+    private int getRegisterList(CiRegister... registers) {
+        int regList = 0;
+        for (CiRegister reg : registers) {
+            regList |= 1 << reg.getEncoding();
+        }
+        return regList;
+    }
+
     /**
      * Push a register onto the stack using 16byte alignment.
      * @param reg
      */
     public void push(int size, CiRegister reg) {
         str(size, reg, Aarch64Address.createPreIndexedImmediateAddress(Aarch64.sp, -16));
+    }
+
+    public void push(CiRegister... registers) {
+        push(getRegisterList(registers));
     }
 
     /**
@@ -469,6 +481,10 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
      */
     public void pop(int size, CiRegister reg) {
         ldr(size, reg, Aarch64Address.createPostIndexedImmediateAddress(Aarch64.sp, 16));
+    }
+
+    public void pop(CiRegister... registers) {
+        pop(getRegisterList(registers));
     }
 
     /**
