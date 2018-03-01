@@ -201,7 +201,7 @@ public class Aarch64JTTT1XTest {
     }
 
     @Test
-    public void T1X_jtt_BC_iadd() throws Exception {
+    public void t1x_jtt_BC_iadd() throws Exception {
         initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
@@ -221,7 +221,7 @@ public class Aarch64JTTT1XTest {
     }
 
     @Test
-    public void T1X_jtt_BC_iadd2() throws Exception {
+    public void t1x_jtt_BC_iadd2() throws Exception {
         byte[] argsOne = {1, 0, 33, 1, -128, 127};
         byte[] argsTwo = {2, -1, 67, -1, 1, 1};
         initTests();
@@ -245,7 +245,7 @@ public class Aarch64JTTT1XTest {
     }
 
     @Test
-    public void T1X_jtt_BC_iadd3() throws Exception {
+    public void t1x_jtt_BC_iadd3() throws Exception {
         initTests();
         short[] argsOne = {1, 0, 33, 1, -128, 127, -32768, 32767};
         short[] argsTwo = {2, -1, 67, -1, 1, 1, 1, 1};
