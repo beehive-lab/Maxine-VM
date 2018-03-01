@@ -110,7 +110,7 @@ public abstract class CrossISATester {
             log(i + " sim: " + simulatedIntRegisters[i] + " exp: " + expectedIntRegisters[i] + " test: " + testIntRegisters[i]);
             if (testIntRegisters[i]) {
                 final int simulatedRegister = simulatedIntRegisters[i] & (int) bitMasks[i].value();
-                final int expectedRegister  = expectedIntRegisters[i];
+                final int expectedRegister  = expectedIntRegisters[i] & (int) bitMasks[i].value();
                 if (simulatedRegister != expectedRegister) {
                     valid = false;
                 }
@@ -137,7 +137,7 @@ public abstract class CrossISATester {
             log(i + " sim: " + simulatedLongRegisters[i] + " exp: " + expectedLongRegisters[i] + " test: " + testLongRegisters[i]);
             if (testLongRegisters[i]) {
                 final long simulatedRegister = simulatedLongRegisters[i] & bitMasks[i].value();
-                final long expectedRegister  = expectedLongRegisters[i];
+                final long expectedRegister  = expectedLongRegisters[i] & bitMasks[i].value();
                 if (simulatedRegister != expectedRegister) {
                     valid = false;
                 }
@@ -564,8 +564,8 @@ public abstract class CrossISATester {
     }
 
     public enum BitsFlag {
-        NZCBits(0xe0000000), NZCVBits(0xf0000000), Lower16Bits(0x0000ffff), Upper16Bits(0xffff0000),
-        All32Bits(0xffffffff), Lower32Bits(0xffffffff), All64Bits(0xffffffffffffffffL);
+        NZCBits(0xe0000000L), NZCVBits(0xf0000000L), Lower16Bits(0x0000ffffL), Upper16Bits(0xffff0000L),
+        All32Bits(0xffffffffL), Lower32Bits(0xffffffffL), All64Bits(0xffffffffffffffffL);
 
         private final long value;
 
