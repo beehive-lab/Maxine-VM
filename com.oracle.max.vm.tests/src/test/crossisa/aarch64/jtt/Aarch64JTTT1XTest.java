@@ -253,6 +253,26 @@ public class Aarch64JTTT1XTest {
     }
 
     @Test
+    public void T1X_jtt_BC_iadd() throws Exception {
+        initTests();
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
+        int answer = jtt.bytecode.BC_iadd.test(50, -49);
+        setExpectedValue(r0, answer);
+        byte[] code = getByteArray("test", "jtt.bytecode.BC_iadd");
+        initialiseFrameForCompilation(code, "(II)I", Modifier.PUBLIC | Modifier.STATIC);
+        Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
+        masm.mov64BitConstant(r0, 50);
+        masm.mov64BitConstant(r1, -49);
+        masm.push(r0, r1);
+        t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd");
+        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+        masm.pop(r0);
+        generateAndTest();
+        theCompiler.cleanup();
+    }
+
+    @Test
     public void T1X_jtt_BC_iadd2() throws Exception {
         byte[] argsOne = {1, 0, 33, 1, -128, 127};
         byte[] argsTwo = {2, -1, 67, -1, 1, 1};
