@@ -181,10 +181,10 @@ public class Aarch64JTTT1XTest {
         }
     }
 
-    private void generateAndTest(long[] expected, boolean[] tests, MaxineAarch64Tester.BitsFlag[] masks) throws Exception {
+    private void generateAndTest() throws Exception {
         Aarch64CodeWriter code = new Aarch64CodeWriter(theCompiler.getMacroAssembler().codeBuffer);
         code.createCodeFile();
-        MaxineAarch64Tester r = new MaxineAarch64Tester(expected, tests, masks);
+        MaxineAarch64Tester r = new MaxineAarch64Tester(expectedValues, testValues, bitmasks);
         r.cleanFiles();
         r.cleanProcesses();
         r.assembleStartup();
@@ -271,7 +271,7 @@ public class Aarch64JTTT1XTest {
             masm.push(r0, r1);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(r0);
-            generateAndTest(expectedValues, testValues, bitmasks);
+            generateAndTest();
             theCompiler.cleanup();
         }
     }
