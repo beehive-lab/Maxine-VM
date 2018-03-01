@@ -24,26 +24,17 @@ import static com.sun.max.vm.MaxineVM.*;
 import static org.objectweb.asm.util.MaxineByteCode.getByteArray;
 import static test.crossisa.CrossISATester.BitsFlag.*;
 
-import java.io.*;
 import java.lang.reflect.Modifier;
-import java.util.*;
 
 import com.oracle.max.asm.target.aarch64.*;
 import com.oracle.max.vm.ext.c1x.*;
-import com.oracle.max.vm.ext.maxri.*;
 import com.oracle.max.vm.ext.t1x.*;
 import com.oracle.max.vm.ext.t1x.aarch64.*;
 import com.sun.cri.ci.*;
-import com.sun.max.ide.*;
-import com.sun.max.io.*;
 import com.sun.max.program.option.*;
-import com.sun.max.vm.*;
-import com.sun.max.vm.actor.*;
 import com.sun.max.vm.actor.member.*;
 import com.sun.max.vm.classfile.*;
-import com.sun.max.vm.classfile.constant.*;
 import com.sun.max.vm.compiler.*;
-import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 
@@ -53,36 +44,15 @@ import test.crossisa.aarch64.asm.*;
 
 public class Aarch64JTTT1XTest {
 
-    private Aarch64Assembler asm;
-    private CiTarget aarch64;
     private T1X t1x;
     private C1X c1x;
-    private Aarch64CodeWriter code;
     private Aarch64T1XCompilation theCompiler;
     private StaticMethodActor anMethod = null;
     private CodeAttribute codeAttr = null;
     private static boolean POST_CLEAN_FILES = false;
-    private int bufferSize = -1;
-    private int entryPoint = -1;
-    private byte[] codeBytes = null;
-
-    public void initialiseFrameForCompilation() {
-        codeAttr = new CodeAttribute(null, new byte[15], (char) 40, (char) 20, CodeAttribute.NO_EXCEPTION_HANDLER_TABLE, LineNumberTable.EMPTY, LocalVariableTable.EMPTY, null);
-        anMethod = new StaticMethodActor(null, SignatureDescriptor.create("(Ljava/util/Map;)V"), Actor.JAVA_METHOD_FLAGS, codeAttr, new String());
-    }
-
-    public void initialiseFrameForCompilation(byte[] code, String sig) {
-        codeAttr = new CodeAttribute(null, code, (char) 40, (char) 20, CodeAttribute.NO_EXCEPTION_HANDLER_TABLE, LineNumberTable.EMPTY, LocalVariableTable.EMPTY, null);
-        anMethod = new StaticMethodActor(null, SignatureDescriptor.create(sig), Actor.JAVA_METHOD_FLAGS, codeAttr, new String());
-    }
 
     public void initialiseFrameForCompilation(byte[] code, String sig, int flags) {
         codeAttr = new CodeAttribute(null, code, (char) 40, (char) 20, CodeAttribute.NO_EXCEPTION_HANDLER_TABLE, LineNumberTable.EMPTY, LocalVariableTable.EMPTY, null);
-        anMethod = new StaticMethodActor(null, SignatureDescriptor.create(sig), flags, codeAttr, new String());
-    }
-
-    public void initialiseFrameForCompilation(ConstantPool cp, byte[] code, String sig, int flags) {
-        codeAttr = new CodeAttribute(cp, code, (char) 40, (char) 20, CodeAttribute.NO_EXCEPTION_HANDLER_TABLE, LineNumberTable.EMPTY, LocalVariableTable.EMPTY, null);
         anMethod = new StaticMethodActor(null, SignatureDescriptor.create(sig), flags, codeAttr, new String());
     }
 
@@ -149,31 +119,9 @@ public class Aarch64JTTT1XTest {
     private static final OptionSet options = new OptionSet(false);
     private static VMConfigurator vmConfigurator = null;
     private static boolean initialised = false;
-
-    private static String[] expandArguments(String[] args) throws IOException {
-        List<String> result = new ArrayList<String>(args.length);
-        for (String arg : args) {
-            if (arg.charAt(0) == '@') {
-                File file = new File(arg.substring(1));
-                result.addAll(Files.readLines(file));
-            } else {
-                result.add(arg);
-            }
-        }
-        return result.toArray(new String[result.size()]);
-    }
-
-    private static int[] valueTestSet = {0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
-    private static long[] scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x00000000ffffffffL};
-    // Checkstyle: stop
     private static CrossISATester.BitsFlag[] bitmasks = new CrossISATester.BitsFlag[cpuRegisters.length];
-    // Checkstyle: start
     private static long[] expectedValues = new long[cpuRegisters.length];
     private static boolean[] testValues = new boolean[cpuRegisters.length > fpuRegisters.length ? cpuRegisters.length : fpuRegisters.length];
-
-    private String getKlassName(String klass) {
-        return "^" + klass + "^";
-    }
 
     private void resetTestValues() {
         for (int i = 0; i < testValues.length; i++) {
