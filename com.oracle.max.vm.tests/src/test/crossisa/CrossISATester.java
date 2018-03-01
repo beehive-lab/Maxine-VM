@@ -110,7 +110,7 @@ public abstract class CrossISATester {
             log(i + " sim: " + simulatedIntRegisters[i] + " exp: " + expectedIntRegisters[i] + " test: " + testIntRegisters[i]);
             if (testIntRegisters[i]) {
                 final int simulatedRegister = simulatedIntRegisters[i] & (int) bitMasks[i].value();
-                final int expectedRegister  = expectedIntRegisters[i];
+                final int expectedRegister  = expectedIntRegisters[i] & (int) bitMasks[i].value();
                 if (simulatedRegister != expectedRegister) {
                     valid = false;
                 }
@@ -137,7 +137,7 @@ public abstract class CrossISATester {
             log(i + " sim: " + simulatedLongRegisters[i] + " exp: " + expectedLongRegisters[i] + " test: " + testLongRegisters[i]);
             if (testLongRegisters[i]) {
                 final long simulatedRegister = simulatedLongRegisters[i] & bitMasks[i].value();
-                final long expectedRegister  = expectedLongRegisters[i];
+                final long expectedRegister  = expectedLongRegisters[i] & bitMasks[i].value();
                 if (simulatedRegister != expectedRegister) {
                     valid = false;
                 }
