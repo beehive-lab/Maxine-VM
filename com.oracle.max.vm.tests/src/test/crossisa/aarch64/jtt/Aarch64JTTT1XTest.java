@@ -51,9 +51,9 @@ public class Aarch64JTTT1XTest {
     private CodeAttribute codeAttr = null;
     private static boolean POST_CLEAN_FILES = false;
 
-    public void initialiseFrameForCompilation(byte[] code, String sig, int flags) {
+    public void initialiseFrameForCompilation(byte[] code, String sig) {
         codeAttr = new CodeAttribute(null, code, (char) 40, (char) 20, CodeAttribute.NO_EXCEPTION_HANDLER_TABLE, LineNumberTable.EMPTY, LocalVariableTable.EMPTY, null);
-        anMethod = new StaticMethodActor(null, SignatureDescriptor.create(sig), flags, codeAttr, new String());
+        anMethod = new StaticMethodActor(null, SignatureDescriptor.create(sig), Modifier.PUBLIC | Modifier.STATIC, codeAttr, new String());
     }
 
     static final class Args {
@@ -208,7 +208,7 @@ public class Aarch64JTTT1XTest {
         int answer = jtt.bytecode.BC_iadd.test(50, -49);
         setExpectedValue(r0, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_iadd");
-        initialiseFrameForCompilation(code, "(II)I", Modifier.PUBLIC | Modifier.STATIC);
+        initialiseFrameForCompilation(code, "(II)I");
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
         masm.mov32BitConstant(r0, 50);
         masm.mov32BitConstant(r1, -49);
@@ -232,7 +232,7 @@ public class Aarch64JTTT1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             int answer = jtt.bytecode.BC_iadd2.test(argsOne[i], argsTwo[i]);
             setExpectedValue(r0, answer);
-            initialiseFrameForCompilation(code, "(BB)I", Modifier.PUBLIC | Modifier.STATIC);
+            initialiseFrameForCompilation(code, "(BB)I");
             Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(r0, argsOne[i]);
             masm.mov32BitConstant(r1, argsTwo[i]);
@@ -257,7 +257,7 @@ public class Aarch64JTTT1XTest {
         for (int i = 0; i < argsOne.length; i++) {
             expectedValue = jtt.bytecode.BC_iadd3.test(argsOne[i], argsTwo[i]);
             setExpectedValue(r0, expectedValue);
-            initialiseFrameForCompilation(code, "(SS)I", Modifier.PUBLIC | Modifier.STATIC);
+            initialiseFrameForCompilation(code, "(SS)I");
             Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(r0, argsOne[i]);
             masm.mov32BitConstant(r1, argsTwo[i]);
