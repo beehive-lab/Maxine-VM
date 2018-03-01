@@ -178,7 +178,7 @@ public class Aarch64CompilerStubEmitter extends CompilerStubEmitter {
         asm.restore(csl, frameToCSA);
 
         // Restore rsp
-        asm.addq(Aarch64.sp, frameSize());
+        asm.add(64, Aarch64.sp, Aarch64.sp, frameSize());
         asm.ret(0);
     }
 

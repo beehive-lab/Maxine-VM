@@ -1455,7 +1455,8 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         }
 
         masm.push(1 | 2 | 4 | 8 | 16);
-        CiAddress addr = new CiAddress(CiKind.Int, Aarch64.sp.asValue(), 20);
+        masm.mov(64, Aarch64.r5, Aarch64.sp); // Copy sp in r5 to avoid using sp directly
+        CiAddress addr = new CiAddress(CiKind.Int, Aarch64.r5.asValue(), 20);
         masm.casIntAsmTest(newReg, cmpReg, addr);
         expectedValues[1] = 10;
         testValues[1] = true;

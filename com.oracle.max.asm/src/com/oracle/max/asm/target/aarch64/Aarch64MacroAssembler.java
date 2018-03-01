@@ -1459,7 +1459,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         if (imm16 == 0) {
             ret();
         } else {
-            addq(Aarch64.sp, imm16);
+            add(64, Aarch64.sp, Aarch64.sp, imm16);
             ret();
         }
     }
