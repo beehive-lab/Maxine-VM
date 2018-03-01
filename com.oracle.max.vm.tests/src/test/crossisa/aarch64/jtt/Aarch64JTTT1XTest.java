@@ -51,7 +51,7 @@ import org.junit.*;
 import test.crossisa.CrossISATester;
 import test.crossisa.aarch64.asm.*;
 
-public class Aarch64JTTT1XTest extends MaxTestCase {
+public class Aarch64JTTT1XTest {
 
     private Aarch64Assembler asm;
     private CiTarget aarch64;
@@ -202,10 +202,6 @@ public class Aarch64JTTT1XTest extends MaxTestCase {
         initTests();
     }
 
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(Aarch64JTTT1XTest.class);
-    }
-
     private void initTests() {
         try {
             resetTestValues();
@@ -256,7 +252,8 @@ public class Aarch64JTTT1XTest extends MaxTestCase {
         bitmasks[index] = Lower32Bits;
     }
 
-    public void test_T1X_jtt_BC_iadd2() throws Exception {
+    @Test
+    public void T1X_jtt_BC_iadd2() throws Exception {
         byte[] argsOne = {1, 0, 33, 1, -128, 127};
         byte[] argsTwo = {2, -1, 67, -1, 1, 1};
         initTests();
