@@ -22,6 +22,7 @@ package test.crossisa.aarch64.jtt;
 import static com.oracle.max.asm.target.aarch64.Aarch64.*;
 import static com.sun.max.vm.MaxineVM.*;
 import static org.objectweb.asm.util.MaxineByteCode.getByteArray;
+import static test.crossisa.CrossISATester.BitsFlag.*;
 
 import java.io.*;
 import java.lang.reflect.Modifier;
@@ -46,6 +47,8 @@ import com.sun.max.vm.compiler.target.*;
 import com.sun.max.vm.hosted.*;
 import com.sun.max.vm.type.*;
 
+import org.junit.*;
+import test.crossisa.CrossISATester;
 import test.crossisa.aarch64.asm.*;
 
 public class Aarch64JTTT1XTest extends MaxTestCase {
@@ -163,21 +166,22 @@ public class Aarch64JTTT1XTest extends MaxTestCase {
     private static int[] valueTestSet = {0, 1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65535};
     private static long[] scratchTestSet = {0, 1, 0xff, 0xffff, 0xffffff, 0xfffffff, 0x00000000ffffffffL};
     // Checkstyle: stop
-    private static MaxineAarch64Tester.BitsFlag[] bitmasks = {MaxineAarch64Tester.BitsFlag.All32Bits, MaxineAarch64Tester.BitsFlag.All32Bits, MaxineAarch64Tester.BitsFlag.All32Bits,
-                    MaxineAarch64Tester.BitsFlag.All32Bits, MaxineAarch64Tester.BitsFlag.All32Bits, MaxineAarch64Tester.BitsFlag.All32Bits, MaxineAarch64Tester.BitsFlag.All32Bits,
-                    MaxineAarch64Tester.BitsFlag.All32Bits, MaxineAarch64Tester.BitsFlag.All32Bits, MaxineAarch64Tester.BitsFlag.All32Bits, MaxineAarch64Tester.BitsFlag.All32Bits,
-                    MaxineAarch64Tester.BitsFlag.All32Bits, MaxineAarch64Tester.BitsFlag.All32Bits, MaxineAarch64Tester.BitsFlag.All32Bits, MaxineAarch64Tester.BitsFlag.All32Bits,
-                    MaxineAarch64Tester.BitsFlag.All32Bits, MaxineAarch64Tester.BitsFlag.All32Bits};
+    private static CrossISATester.BitsFlag[] bitmasks = new CrossISATester.BitsFlag[cpuRegisters.length];
     // Checkstyle: start
-    private static long[] expectedValues = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
-    private static long[] expectedLongValues = {Long.MIN_VALUE, Long.MAX_VALUE};
-    private static boolean[] testvalues = new boolean[17];
+    private static long[] expectedValues = new long[cpuRegisters.length];
+    private static boolean[] testValues = new boolean[cpuRegisters.length > fpuRegisters.length ? cpuRegisters.length : fpuRegisters.length];
 
     private String getKlassName(String klass) {
         return "^" + klass + "^";
     }
 
-    private long[] generateAndTest(long[] expected, boolean[] tests, MaxineAarch64Tester.BitsFlag[] masks) throws Exception {
+    private void resetTestValues() {
+        for (int i = 0; i < testValues.length; i++) {
+            testValues[i] = false;
+        }
+    }
+
+    private void generateAndTest(long[] expected, boolean[] tests, MaxineAarch64Tester.BitsFlag[] masks) throws Exception {
         Aarch64CodeWriter code = new Aarch64CodeWriter(theCompiler.getMacroAssembler().codeBuffer);
         code.createCodeFile();
         MaxineAarch64Tester r = new MaxineAarch64Tester(expected, tests, masks);
@@ -186,12 +190,12 @@ public class Aarch64JTTT1XTest extends MaxTestCase {
         r.assembleStartup();
         r.compile();
         r.link();
-        long[] simulatedRegisters = r.runRegisteredSimulation();
+        r.runRegisteredSimulation();
         r.cleanProcesses();
         if (POST_CLEAN_FILES) {
             r.cleanFiles();
         }
-        return simulatedRegisters;
+        Assert.assertTrue(r.validateLongRegisters());
     }
 
     public Aarch64JTTT1XTest() {
@@ -204,6 +208,7 @@ public class Aarch64JTTT1XTest extends MaxTestCase {
 
     private void initTests() {
         try {
+            resetTestValues();
 
             String[] args = new String[2];
             args[0] = new String("t1x");
@@ -238,6 +243,19 @@ public class Aarch64JTTT1XTest extends MaxTestCase {
         }
     }
 
+    /**
+     * Sets the expected value of a register and enables it for inspection.
+     *
+     * @param cpuRegister the number of the cpuRegister
+     * @param expectedValue the expected value
+     */
+    private static void setExpectedValue(CiRegister cpuRegister, int expectedValue) {
+        final int index = cpuRegister.number;
+        expectedValues[index] = expectedValue;
+        testValues[index] = true;
+        bitmasks[index] = Lower32Bits;
+    }
+
     public void test_T1X_jtt_BC_iadd2() throws Exception {
         byte[] argsOne = {1, 0, 33, 1, -128, 127};
         byte[] argsTwo = {2, -1, 67, -1, 1, 1};
@@ -248,7 +266,7 @@ public class Aarch64JTTT1XTest extends MaxTestCase {
         byte[] code = getByteArray("test", "jtt.bytecode.BC_iadd2");
         for (int i = 0; i < argsOne.length; i++) {
             int answer = jtt.bytecode.BC_iadd2.test(argsOne[i], argsTwo[i]);
-            expectedValues[0] = answer;
+            setExpectedValue(r0, answer);
             initialiseFrameForCompilation(code, "(BB)I", Modifier.PUBLIC | Modifier.STATIC);
             Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov64BitConstant(r0, argsOne[i]);
@@ -256,8 +274,7 @@ public class Aarch64JTTT1XTest extends MaxTestCase {
             masm.push(r0, r1);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(r0);
-            long[] registerValues = generateAndTest(expectedValues, testvalues, bitmasks);
-            assert registerValues[0] == answer : "Failed incorrect value " + registerValues[0] + " " + answer;
+            generateAndTest(expectedValues, testValues, bitmasks);
             theCompiler.cleanup();
         }
     }
