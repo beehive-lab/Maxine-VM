@@ -262,8 +262,8 @@ public class Aarch64JTTT1XTest {
         byte[] code = getByteArray("test", "jtt.bytecode.BC_iadd");
         initialiseFrameForCompilation(code, "(II)I", Modifier.PUBLIC | Modifier.STATIC);
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
-        masm.mov64BitConstant(r0, 50);
-        masm.mov64BitConstant(r1, -49);
+        masm.mov32BitConstant(r0, 50);
+        masm.mov32BitConstant(r1, -49);
         masm.push(r0, r1);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd");
         theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
@@ -286,8 +286,8 @@ public class Aarch64JTTT1XTest {
             setExpectedValue(r0, answer);
             initialiseFrameForCompilation(code, "(BB)I", Modifier.PUBLIC | Modifier.STATIC);
             Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov64BitConstant(r0, argsOne[i]);
-            masm.mov64BitConstant(r1, argsTwo[i]);
+            masm.mov32BitConstant(r0, argsOne[i]);
+            masm.mov32BitConstant(r1, argsTwo[i]);
             masm.push(r0, r1);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(r0);
@@ -311,8 +311,8 @@ public class Aarch64JTTT1XTest {
             setExpectedValue(r0, expectedValue);
             initialiseFrameForCompilation(code, "(SS)I", Modifier.PUBLIC | Modifier.STATIC);
             Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
-            masm.mov64BitConstant(r0, argsOne[i]);
-            masm.mov64BitConstant(r1, argsTwo[i]);
+            masm.mov32BitConstant(r0, argsOne[i]);
+            masm.mov32BitConstant(r1, argsTwo[i]);
             masm.push(r0, r1);
             theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
             masm.pop(r0);
