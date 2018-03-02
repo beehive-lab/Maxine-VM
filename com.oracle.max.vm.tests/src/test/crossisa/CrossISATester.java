@@ -154,7 +154,7 @@ public abstract class CrossISATester {
         return valid;
     }
 
-    protected boolean validateFloatRegisters() {
+    public boolean validateFloatRegisters() {
         boolean valid   = true;
 
         assert expectedFloatRegisters != null;
@@ -181,7 +181,7 @@ public abstract class CrossISATester {
         return valid;
     }
 
-    protected boolean validateDoubleRegisters() {
+    public boolean validateDoubleRegisters() {
         boolean valid   = true;
 
         assert expectedDoubleRegisters != null;
