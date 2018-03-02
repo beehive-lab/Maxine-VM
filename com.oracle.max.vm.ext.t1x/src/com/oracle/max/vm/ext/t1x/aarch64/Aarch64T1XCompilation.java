@@ -481,17 +481,23 @@ public class Aarch64T1XCompilation extends T1XCompilation {
             throw verifyError("Low must be less than or equal to high in TABLESWITCH");
         }
 
-        asm.pop(32, scratch);
+        asm.pop(32, scratch); // Pop index from stack
 
+        // Jump to default target if index is not within the jump table
+        asm.cmp(32, scratch, lowMatch); // Check if index is lower than lowMatch
+        startBlock(ts.defaultTarget());
+        int pos = buf.position();
+        patchInfo.addJCC(ConditionFlag.LT, pos, ts.defaultTarget());
+        jcc(ConditionFlag.LT, 0);
+
+        // Check if index is higher than highMatch
         if (lowMatch == 0) {
             asm.cmp(32, scratch, highMatch);
         } else {
             asm.sub(32, scratch, scratch, lowMatch);
             asm.cmp(32, scratch, highMatch - lowMatch);
         }
-        startBlock(ts.defaultTarget());
-        int pos = buf.position();
-        // Jump to default target if index is not within the jump table
+        pos = buf.position();
         patchInfo.addJCC(ConditionFlag.GT, pos, ts.defaultTarget());
         jcc(ConditionFlag.GT, 0);
         pos = buf.position();
