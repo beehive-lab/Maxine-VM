@@ -1295,6 +1295,7 @@ public class Aarch64JTTT1XTest {
         }
     }
 
+    @Test
     public void t1x_jtt_BC_ifeq() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<>();
@@ -1320,6 +1321,7 @@ public class Aarch64JTTT1XTest {
         }
     }
 
+    @Test
     public void t1x_jtt_BC_ifeq_2() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<>();
@@ -1342,6 +1344,7 @@ public class Aarch64JTTT1XTest {
         }
     }
 
+    @Test
     public void t1x_jtt_BC_ifeq_3() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<>();
@@ -1366,6 +1369,7 @@ public class Aarch64JTTT1XTest {
         }
     }
 
+    @Test
     public void t1x_jtt_BC_ifge() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<>();
@@ -1391,6 +1395,7 @@ public class Aarch64JTTT1XTest {
         }
     }
 
+    @Test
     public void t1x_jtt_BC_ifgt() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<>();
@@ -1416,6 +1421,7 @@ public class Aarch64JTTT1XTest {
         }
     }
 
+    @Test
     public void t1x_jtt_BC_ifle() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<>();
@@ -1441,6 +1447,7 @@ public class Aarch64JTTT1XTest {
         }
     }
 
+    @Test
     public void t1x_jtt_BC_ifne() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<>();
@@ -1466,6 +1473,7 @@ public class Aarch64JTTT1XTest {
         }
     }
 
+    @Test
     public void t1x_jtt_BC_iflt() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<>();
