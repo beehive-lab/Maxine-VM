@@ -202,6 +202,42 @@ public class Aarch64JTTT1XTest {
         bitmasks[index] = Lower32Bits;
     }
 
+    /**
+     * Sets the expected value of a register and enables it for inspection.
+     *
+     * @param cpuRegister the number of the cpuRegister
+     * @param expectedValue the expected value
+     */
+    private static void setExpectedValue(CiRegister cpuRegister, short expectedValue) {
+        final int index = cpuRegister.number;
+        expectedValues[index] = expectedValue;
+        testValues[index] = true;
+        bitmasks[index] = Lower16Bits;
+    }
+
+    /**
+     * Sets the expected value of a register and enables it for inspection.
+     *
+     * @param cpuRegister the number of the cpuRegister
+     * @param expectedValue the expected value
+     */
+    private static void setExpectedValue(CiRegister cpuRegister, byte expectedValue) {
+        final int index = cpuRegister.number;
+        expectedValues[index] = expectedValue;
+        testValues[index] = true;
+        bitmasks[index] = Lower8Bits;
+    }
+
+    /**
+     * Sets the expected value of a register and enables it for inspection.
+     *
+     * @param cpuRegister the number of the cpuRegister
+     * @param expectedValue the expected value
+     */
+    private static void setExpectedValue(CiRegister cpuRegister, char expectedValue) {
+        setExpectedValue(cpuRegister, (byte) expectedValue);
+    }
+
     @Test
     public void t1x_jtt_BC_iadd() throws Exception {
         initTests();
@@ -478,6 +514,7 @@ public class Aarch64JTTT1XTest {
         theCompiler.cleanup();
     }
 
+    @Test
     public void t1x_jtt_BC_i2b() throws Exception {
         initTests();
         vm().compilationBroker.setOffline(initialised);
@@ -485,6 +522,7 @@ public class Aarch64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         byte answer = jtt.bytecode.BC_i2b.test(255);
+        setExpectedValue(r0, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_i2b");
         initialiseFrameForCompilation(code, "(I)B");
         Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
@@ -499,11 +537,12 @@ public class Aarch64JTTT1XTest {
         theCompiler.cleanup();
     }
 
+    @Test
     public void t1x_jtt_BC_i2b_1() throws Exception {
         initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
-        int answer = jtt.bytecode.BC_i2b.test(-1);
+        byte answer = jtt.bytecode.BC_i2b.test(-1);
         setExpectedValue(r0, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_i2b");
         initialiseFrameForCompilation(code, "(I)I");
@@ -517,11 +556,12 @@ public class Aarch64JTTT1XTest {
         theCompiler.cleanup();
     }
 
+    @Test
     public void t1x_jtt_BC_i2b_2() throws Exception {
         initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
-        int answer = jtt.bytecode.BC_i2b.test(128);
+        byte answer = jtt.bytecode.BC_i2b.test(128);
         setExpectedValue(r0, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_i2b");
         initialiseFrameForCompilation(code, "(I)I");
@@ -535,11 +575,12 @@ public class Aarch64JTTT1XTest {
         theCompiler.cleanup();
     }
 
+    @Test
     public void t1x_jtt_BC_i2s() throws Exception {
         initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
-        int answer = jtt.bytecode.BC_i2s.test(65535);
+        short answer = jtt.bytecode.BC_i2s.test(65535);
         setExpectedValue(r0, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_i2s");
         initialiseFrameForCompilation(code, "(I)I");
@@ -553,11 +594,12 @@ public class Aarch64JTTT1XTest {
         theCompiler.cleanup();
     }
 
+    @Test
     public void t1x_jtt_BC_i2s_1() throws Exception {
         initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
-        int answer = jtt.bytecode.BC_i2s.test(32768);
+        short answer = jtt.bytecode.BC_i2s.test(32768);
         setExpectedValue(r0, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_i2s");
         initialiseFrameForCompilation(code, "(I)I");
@@ -571,11 +613,12 @@ public class Aarch64JTTT1XTest {
         theCompiler.cleanup();
     }
 
+    @Test
     public void t1x_jtt_BC_i2s_2() throws Exception {
         initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
-        int answer = jtt.bytecode.BC_i2s.test(-1);
+        short answer = jtt.bytecode.BC_i2s.test(-1);
         setExpectedValue(r0, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_i2s");
         initialiseFrameForCompilation(code, "(I)I");
@@ -589,11 +632,12 @@ public class Aarch64JTTT1XTest {
         theCompiler.cleanup();
     }
 
+    @Test
     public void t1x_jtt_BC_i2c() throws Exception {
         initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
-        int answer = jtt.bytecode.BC_i2c.test(-1);
+        char answer = jtt.bytecode.BC_i2c.test(-1);
         setExpectedValue(r0, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_i2c");
         initialiseFrameForCompilation(code, "(I)I");
@@ -607,11 +651,12 @@ public class Aarch64JTTT1XTest {
         theCompiler.cleanup();
     }
 
+    @Test
     public void t1x_jtt_BC_i2c_1() throws Exception {
         initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
-        int answer = jtt.bytecode.BC_i2c.test(65535);
+        char answer = jtt.bytecode.BC_i2c.test(65535);
         setExpectedValue(r0, answer);
         byte[] code = getByteArray("test", "jtt.bytecode.BC_i2c");
         initialiseFrameForCompilation(code, "(I)I");

@@ -555,7 +555,7 @@ public abstract class CrossISATester {
     }
 
     public enum BitsFlag {
-        NZCBits(0xe0000000L), NZCVBits(0xf0000000L), Lower16Bits(0x0000ffffL), Upper16Bits(0xffff0000L),
+        NZCBits(0xe0000000L), NZCVBits(0xf0000000L), Lower8Bits(0x0000ffL), Lower16Bits(0x0000ffffL), Upper16Bits(0xffff0000L),
         All32Bits(0xffffffffL), Lower32Bits(0xffffffffL), All64Bits(0xffffffffffffffffL);
 
         private final long value;
