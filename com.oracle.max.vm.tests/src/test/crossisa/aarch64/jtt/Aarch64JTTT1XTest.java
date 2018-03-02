@@ -645,6 +645,7 @@ public class Aarch64JTTT1XTest {
         }
     }
 
+    @Test
     public void t1x_jtt_BC_tableswitch() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<>();
@@ -673,6 +674,7 @@ public class Aarch64JTTT1XTest {
         }
     }
 
+    @Test
     public void t1x_jtt_BC_tableswitch_2() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<>();
@@ -723,6 +725,7 @@ public class Aarch64JTTT1XTest {
         }
     }
 
+    @Test
     public void t1x_jtt_BC_tableswitch_3() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<>();
@@ -750,6 +753,7 @@ public class Aarch64JTTT1XTest {
         }
     }
 
+    @Test
     public void t1x_jtt_BC_tableswitch_4() throws Exception {
         initTests();
         List<Args> pairs = new LinkedList<>();
