@@ -773,85 +773,63 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitConvert(LIRConvert op) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
         CiValue src = op.operand();
         CiValue dest = op.result();
-        CiRegister srcRegister = src.asRegister();
         switch (op.opcode) {
             case I2L:
-                moveRegs(srcRegister, dest.asRegister(), src.kind, dest.kind);
+                moveRegs(src.asRegister(), dest.asRegister());
                 break;
             case L2I:
-                moveRegs(srcRegister, dest.asRegister(), src.kind, dest.kind);
+                masm.and(64, dest.asRegister(), src.asRegister(), 0xFFFFFFFF);
                 break;
             case I2B:
-                moveRegs(srcRegister, dest.asRegister());
-//                masm.sxtb(ConditionFlag.Always, dest.asRegister(), srcRegister);
-                break;
             case I2C:
-                masm.mov64BitConstant(Aarch64.r12, 0xFFFF);
-//                masm.and(ConditionFlag.Always, true, dest.asRegister(), Aarch64.r12, src.asRegister(), 0, 0);
+                masm.and(64, dest.asRegister(), src.asRegister(), 0xFF);
                 break;
             case I2S:
-                moveRegs(srcRegister, dest.asRegister());
-//                masm.sxth(ConditionFlag.Always, dest.asRegister(), srcRegister);
+                masm.and(64, dest.asRegister(), src.asRegister(), 0xFFFF);
                 break;
             case F2D:
-//                masm.vcvt(ConditionFlag.Always, dest.asRegister(), false, false, src.asRegister(), dest.kind, src.kind);
+                masm.fcvt(32, dest.asRegister(), src.asRegister());
                 break;
             case D2F:
-//                masm.vcvt(ConditionFlag.Always, dest.asRegister(), false, false, src.asRegister(), CiKind.Float, CiKind.Double);
+                masm.fcvt(64, dest.asRegister(), src.asRegister());
                 break;
             case I2F:
-//                masm.vmov(ConditionFlag.Always, Aarch64.d30, srcRegister, null, CiKind.Float, src.kind);
-//                masm.vcvt(ConditionFlag.Always, dest.asRegister(), false, true, Aarch64.d30, CiKind.Float, CiKind.Int);
+                masm.scvtf(32, 32, dest.asRegister(), src.asRegister());
                 break;
             case I2D:
-//                masm.vmov(ConditionFlag.Always, Aarch64.d30, srcRegister, null, CiKind.Float, src.kind);
-//                masm.vcvt(ConditionFlag.Always, dest.asRegister(), false, true, Aarch64.d30, CiKind.Double, CiKind.Int);
+                masm.scvtf(64, 32, dest.asRegister(), src.asRegister());
                 break;
-            case F2I: {
-                assert srcRegister.isFpu() && dest.isRegister() : "must both be S-register (no fpu stack)";
-//                masm.vcvt(ConditionFlag.Always, Aarch64.d30, true, true, src.asRegister(), CiKind.Float, src.kind);
-//                masm.vmov(ConditionFlag.Always, dest.asRegister(), Aarch64.d30, null, dest.kind, CiKind.Float);
+            case F2I:
+                masm.fcvtzs(32, 32, dest.asRegister(), src.asRegister());
                 break;
-            }
-            case D2I: {
-                assert srcRegister.isFpu() && dest.isRegister() : "must both be S-register (no fpu stack)";
-                if (dest.asRegister().isFpu()) {
-//                    masm.vcvt(ConditionFlag.Always, dest.asRegister(), true, true, src.asRegister(), dest.kind, src.kind);
-                } else {
-//                    masm.vcvt(ConditionFlag.Always, Aarch64.d30, true, true, src.asRegister(), dest.kind, src.kind);
-//                    masm.vmov(ConditionFlag.Always, dest.asRegister(), Aarch64.d30, null, dest.kind, CiKind.Float);
-                }
+            case D2I:
+                masm.fcvtzs(32, 64, dest.asRegister(), src.asRegister());
                 break;
-            }
             case L2F:
-                assert false : "L2F is implemented as runtime call!";
+                masm.scvtf(32, 64, dest.asRegister(), src.asRegister());
                 break;
             case L2D:
-                assert false : "L2D is implemented as runtime call!";
+                masm.scvtf(64, 64, dest.asRegister(), src.asRegister());
                 break;
             case F2L:
-                assert false : "F2L is implemented as runtime call!";
+                masm.fcvtzs(64, 32, dest.asRegister(), src.asRegister());
                 break;
             case D2L:
-                assert false : "D2L is implemented as runtime call!";
+                masm.fcvtzs(64, 64, dest.asRegister(), src.asRegister());
                 break;
             case MOV_I2F:
-//                masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, null, CiKind.Float, CiKind.Int);
+                masm.fmovCpu2Fpu(32, dest.asRegister(), src.asRegister());
                 break;
             case MOV_L2D:
-//                masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, Aarch64.cpuRegisters[srcRegister.getEncoding() + 1], CiKind.Double, CiKind.Long);
+                masm.fmovCpu2Fpu(64, dest.asRegister(), src.asRegister());
                 break;
             case MOV_F2I:
-//                masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, null, CiKind.Int, CiKind.Float);
+                masm.fmovFpu2Cpu(32, dest.asRegister(), src.asRegister());
                 break;
             case MOV_D2L:
-//                masm.vmov(ConditionFlag.Always, dest.asRegister(), srcRegister, null, CiKind.Long, CiKind.Double);
+                masm.fmovFpu2Cpu(64, dest.asRegister(), src.asRegister());
                 break;
             default:
                 throw Util.shouldNotReachHere();
