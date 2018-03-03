@@ -464,6 +464,10 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         }
     }
 
+    public void fpush(CiRegister... registers) {
+        fpush(getRegisterList(registers));
+    }
+
     public void fpush(int registerList) {
         for (int regNumber = 0; regNumber < Integer.SIZE; regNumber++) {
             if (registerList % 2 == 1) {
@@ -498,6 +502,10 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
                 ldr(64, Aarch64.cpuRegisters[regNumber], Aarch64Address.createPostIndexedImmediateAddress(Aarch64.sp, 16));
             }
         }
+    }
+
+    public void fpop(CiRegister... registers) {
+        fpop(getRegisterList(registers));
     }
 
     public void fpop(int registerList) {
