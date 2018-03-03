@@ -97,7 +97,7 @@ public class Aarch64AssemblerTest extends MaxTestCase {
         MaxineAarch64Tester r = new MaxineAarch64Tester(expected, tests, masks);
         if (!CrossISATester.ENABLE_SIMULATOR) {
             System.out.println("Code Generation is disabled!");
-            return;
+            System.exit(1);
         }
         r.assembleStartup();
         r.compile();
