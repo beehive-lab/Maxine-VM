@@ -123,18 +123,24 @@ public class Aarch64JTTT1XTest {
     private static boolean initialised = false;
     private static CrossISATester.BitsFlag[] bitmasks = new CrossISATester.BitsFlag[cpuRegisters.length];
     private static long[] expectedValues = new long[cpuRegisters.length];
-    private static boolean[] testValues = new boolean[cpuRegisters.length > fpuRegisters.length ? cpuRegisters.length : fpuRegisters.length];
+    private static float[] expectedFloatValues = new float[fpuRegisters.length];
+    private static boolean[] testValues = new boolean[cpuRegisters.length];
+    private static boolean[] testFloatValues = new boolean[fpuRegisters.length];
 
     private void resetTestValues() {
         for (int i = 0; i < testValues.length; i++) {
             testValues[i] = false;
+        }
+        for (int i = 0; i < testFloatValues.length; i++) {
+            testFloatValues[i] = false;
         }
     }
 
     private void generateAndTest() throws Exception {
         Aarch64CodeWriter code = new Aarch64CodeWriter(theCompiler.getMacroAssembler().codeBuffer);
         code.createCodeFile();
-        MaxineAarch64Tester r = new MaxineAarch64Tester(expectedValues, testValues, bitmasks);
+        MaxineAarch64Tester r =
+                new MaxineAarch64Tester(expectedValues, testValues, bitmasks, expectedFloatValues, testFloatValues);
         r.cleanFiles();
         r.cleanProcesses();
         r.assembleStartup();
@@ -146,6 +152,7 @@ public class Aarch64JTTT1XTest {
             r.cleanFiles();
         }
         Assert.assertTrue(r.validateLongRegisters());
+        Assert.assertTrue(r.validateFloatRegisters());
     }
 
     public Aarch64JTTT1XTest() {
@@ -236,6 +243,18 @@ public class Aarch64JTTT1XTest {
      */
     private static void setExpectedValue(CiRegister cpuRegister, char expectedValue) {
         setExpectedValue(cpuRegister, (byte) expectedValue);
+    }
+
+    /**
+     * Sets the expected value of a register and enables it for inspection.
+     *
+     * @param cpuRegister the number of the cpuRegister
+     * @param expectedValue the expected value
+     */
+    private static void setExpectedValue(CiRegister fpuRegister, float expectedValue) {
+        final int index = fpuRegister.number - zr.number - 1;
+        expectedFloatValues[index] = expectedValue;
+        testFloatValues[index] = true;
     }
 
     @Test
