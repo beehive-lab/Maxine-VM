@@ -544,12 +544,28 @@ public abstract class CrossISATester {
     }
 
     /**
-     * Decodes a hex string representing a double.
+     * Gets an int with the encoding of a hex string representing a float.
      *
-     * @param hex The hex string to decode
-     * @return The double decoded from {@code hex}
+     * @param hex The hex string to parse
+     * @return The encoding of the float parsed from {@code hex}
      */
-    private static long hexToLongBits(String hex) {
+    protected static int hexToIntBits(String hex) {
+        assert hex.length() <= 8;
+        if (hex.length() == 8) { // Split hex string to allow parsing
+            int lsbs = hexToIntBits(hex.substring(4));
+            int msbs = hexToIntBits(hex.substring(0, 4));
+            return msbs << 16 | lsbs;
+        }
+        return Integer.parseInt(hex, 16);
+    }
+
+    /**
+     * Gets a long with the encoding of a hex string representing a double.
+     *
+     * @param hex The hex string to parse
+     * @return The encoding of the double parsed from {@code hex}
+     */
+    protected static long hexToLongBits(String hex) {
         assert hex.length() <= 16;
         if (hex.length() == 16) { // Split hex string to allow parsing
             long lsbs = hexToLongBits(hex.substring(8));
