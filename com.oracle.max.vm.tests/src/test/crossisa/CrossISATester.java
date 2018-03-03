@@ -336,7 +336,7 @@ public abstract class CrossISATester {
      * @param line The line from the gdb output to be parsed
      * @return The parsed integer value of the register
      */
-    private static int parseIntRegister(String line) {
+    protected int parseIntRegister(String line) {
         String value = line.split("\\s+")[1];
         assert value.startsWith("0x");
         assert value.length() - 2 <= 8;
@@ -402,7 +402,7 @@ public abstract class CrossISATester {
      * @param line The line from the gdb output to be parsed
      * @return The parsed integer value of the register
      */
-    private static long parseLongRegister(String line) {
+    protected long parseLongRegister(String line) {
         String value = line.split("\\s+")[1];
         assert value.startsWith("0x");
         assert value.length() - 2 <= 16;
@@ -470,7 +470,7 @@ public abstract class CrossISATester {
      * @param line The line from the gdb output to be parsed
      * @return The parsed float value of the register
      */
-    private static float parseFloatRegister(String line) {
+    protected float parseFloatRegister(String line) {
         String value = line.split("\\s+")[1];
 
         if (value.contains("nan")) {
@@ -537,7 +537,7 @@ public abstract class CrossISATester {
      * @param line The line from the gdb output to be parsed
      * @return The parsed double value of the register
      */
-    private static double parseDoubleRegister(String line) {
+    protected double parseDoubleRegister(String line) {
         String value = line.split("\\s+")[23];
         value = value.substring(2, value.length() - 1);
         return Double.longBitsToDouble(hexToLongBits(value));
