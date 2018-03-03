@@ -19,6 +19,7 @@
  */
 package test.crossisa.riscv64.asm;
 
+import com.sun.max.vm.runtime.FatalError;
 import test.crossisa.*;
 
 public class MaxineRISCV64Tester extends CrossISATester {
@@ -63,6 +64,37 @@ public class MaxineRISCV64Tester extends CrossISATester {
     @Override
     protected ProcessBuilder getLinkerProcessBuilder() {
         return new ProcessBuilder("true");
+    }
+
+    /**
+     * Parses a float register (32-bit) from the output of the gdb command {@code info all-registers}.  The output is
+     * expected to be in the form:
+     *
+     * <pre>
+     *     TODO
+     * </pre>
+     *
+     * @param line The line from the gdb output to be parsed
+     * @return The parsed float value of the register
+     */
+    @Override
+    protected float parseFloatRegister(String line) {
+        throw FatalError.unimplemented();
+    }
+
+    /**
+     * Parses a double register (64-bit) from the output of the gdb command {@code info all-registers}.  The output is
+     * expected to be in the form:
+     *
+     * <pre>
+     *     TODO
+     * </pre>
+     *
+     * @param line The line from the gdb output to be parsed
+     * @return The parsed double value of the register
+     */
+    protected double parseDoubleRegister(String line) {
+        throw FatalError.unimplemented();
     }
 
     public void runSimulation() throws Exception {

@@ -95,6 +95,49 @@ public class MaxineARMv7Tester extends CrossISATester {
         }
     }
 
+    /**
+     * Parses a float register (32-bit) from the output of the gdb command {@code info all-registers}.  The output is
+     * expected to be in the form:
+     *
+     * <pre>
+     *     s0  1.55405596e-31  (raw 0x0c49ba5e)
+     * </pre>
+     *
+     * @param line The line from the gdb output to be parsed
+     * @return The parsed float value of the register
+     */
+    @Override
+    protected float parseFloatRegister(String line) {
+        String value = line.split("\\s+")[1];
+
+        if (value.contains("nan")) {
+            return Float.NaN;
+        } else if (value.equals("inf")) {
+            return Float.POSITIVE_INFINITY;
+        } else if (value.equals("-inf")) {
+            return Float.NEGATIVE_INFINITY;
+        }
+
+        return Float.parseFloat(value);
+    }
+
+    /**
+     * Parses a double register (64-bit) from the output of the gdb command {@code info all-registers}.  The output is
+     * expected to be in the form:
+     *
+     * <pre>
+     *     d0  {u8 = {0x5e, 0xba, 0x49, 0xc, 0x2, 0x40, 0x8f, 0x40}, u16 = {0xba5e, 0xc49, 0x4002, 0x408f}, u32 = {0xc49ba5e, 0x408f4002}, u64 = 0x408f40020c49ba5e, f32 = {0x0, 0x4}, f64 = 0x3e8}
+     * </pre>
+     *
+     * @param line The line from the gdb output to be parsed
+     * @return The parsed double value of the register
+     */
+    protected double parseDoubleRegister(String line) {
+        String value = line.split("\\s+")[23];
+        value = value.substring(2, value.length() - 1);
+        return Double.longBitsToDouble(hexToLongBits(value));
+    }
+
     private Object[] parseObjectRegistersToFile(String file) throws Exception {
         BufferedReader reader = new BufferedReader(new FileReader(file));
         String line;

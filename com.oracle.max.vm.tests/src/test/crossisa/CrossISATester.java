@@ -416,18 +416,7 @@ public abstract class CrossISATester {
     }
 
     /**
-     * Parses the float registers (32-bit) from the output of the gdb command {@code info all-registers}.  The output is
-     * expected to be in the form:
-     *
-     * <pre>
-     *     s0  1.55405596e-31  (raw 0x0c49ba5e)
-     *     s1  4.47656345  (raw 0x408f4002)
-     *     s2  1.55405596e-31  (raw 0x0c49ba5e)
-     *     s3  4.47656345  (raw 0x408f4002)
-     *     s4  1.55405596e-31  (raw 0x0c49ba5e)
-     *     s5  4.47656345  (raw 0x408f4002)
-     *     s6  0  (raw 0x00000000)
-     * </pre>
+     * Parses the float registers (32-bit) from the output of the gdb command {@code info all-registers}.
      *
      * @param startRegister The first float register to parse
      * @param endRegister The last float register to parse
@@ -460,41 +449,15 @@ public abstract class CrossISATester {
     }
 
     /**
-     * Parses a float register (32-bit) from the output of the gdb command {@code info all-registers}.  The output is
-     * expected to be in the form:
-     *
-     * <pre>
-     *     s0  1.55405596e-31  (raw 0x0c49ba5e)
-     * </pre>
+     * Parses a float register (32-bit) from the output of the gdb command {@code info all-registers}.
      *
      * @param line The line from the gdb output to be parsed
      * @return The parsed float value of the register
      */
-    protected float parseFloatRegister(String line) {
-        String value = line.split("\\s+")[1];
-
-        if (value.contains("nan")) {
-            return Float.NaN;
-        } else if (value.equals("inf")) {
-            return Float.POSITIVE_INFINITY;
-        } else if (value.equals("-inf")) {
-            return Float.NEGATIVE_INFINITY;
-        }
-
-        return Float.parseFloat(value);
-    }
+    protected abstract float parseFloatRegister(String line);
 
     /**
-     * Parses the double registers (64-bit) from the output of the gdb command {@code info all-registers}.  The
-     * output is expected to be in the form:
-     *
-     * <pre>
-     *     d0  {u8 = {0x5e, 0xba, 0x49, 0xc, 0x2, 0x40, 0x8f, 0x40}, u16 = {0xba5e, 0xc49, 0x4002, 0x408f}, u32 = {0xc49ba5e, 0x408f4002}, u64 = 0x408f40020c49ba5e, f32 = {0x0, 0x4}, f64 = 0x3e8}
-     *     d1  {u8 = {0x5e, 0xba, 0x49, 0xc, 0x2, 0x40, 0x8f, 0x40}, u16 = {0xba5e, 0xc49, 0x4002, 0x408f}, u32 = {0xc49ba5e, 0x408f4002}, u64 = 0x408f40020c49ba5e, f32 = {0x0, 0x4}, f64 = 0x3e8}
-     *     d2  {u8 = {0x5e, 0xba, 0x49, 0xc, 0x2, 0x40, 0x8f, 0x40}, u16 = {0xba5e, 0xc49, 0x4002, 0x408f}, u32 = {0xc49ba5e, 0x408f4002}, u64 = 0x408f40020c49ba5e, f32 = {0x0, 0x4}, f64 = 0x3e8}
-     *     d3  {u8 = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}, u16 = {0x0, 0x0, 0x0, 0x0}, u32 = {0x0, 0x0}, u64 = 0x0, f32 = {0x0, 0x0}, f64 = 0x0}
-     *     d4  {u8 = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}, u16 = {0x0, 0x0, 0x0, 0x0}, u32 = {0x0, 0x0}, u64 = 0x0, f32 = {0x0, 0x0}, f64 = 0x0}
-     * </pre>
+     * Parses the double registers (64-bit) from the output of the gdb command {@code info all-registers}.
      *
      * @param startRegister The first double register to parse
      * @param endRegister The last double register to parse
@@ -527,21 +490,12 @@ public abstract class CrossISATester {
     }
 
     /**
-     * Parses a double register (64-bit) from the output of the gdb command {@code info all-registers}.  The output is
-     * expected to be in the form:
-     *
-     * <pre>
-     *     d0  {u8 = {0x5e, 0xba, 0x49, 0xc, 0x2, 0x40, 0x8f, 0x40}, u16 = {0xba5e, 0xc49, 0x4002, 0x408f}, u32 = {0xc49ba5e, 0x408f4002}, u64 = 0x408f40020c49ba5e, f32 = {0x0, 0x4}, f64 = 0x3e8}
-     * </pre>
+     * Parses a double register (64-bit) from the output of the gdb command {@code info all-registers}.
      *
      * @param line The line from the gdb output to be parsed
      * @return The parsed double value of the register
      */
-    protected double parseDoubleRegister(String line) {
-        String value = line.split("\\s+")[23];
-        value = value.substring(2, value.length() - 1);
-        return Double.longBitsToDouble(hexToLongBits(value));
-    }
+    protected abstract double parseDoubleRegister(String line);
 
     /**
      * Gets an int with the encoding of a hex string representing a float.
