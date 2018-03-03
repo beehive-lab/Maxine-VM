@@ -104,7 +104,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         MaxineARMv7Tester r = new MaxineARMv7Tester(expectedIntValues, testValues, bitmasks);
         if (!CrossISATester.ENABLE_SIMULATOR) {
             System.out.println("Code Generation is disabled!");
-            return;
+            System.exit(1);
         }
         r.compile();
         r.runSimulation();
@@ -121,7 +121,7 @@ public class ARMV7AssemblerTest extends MaxTestCase {
         MaxineARMv7Tester r = new MaxineARMv7Tester();
         if (!CrossISATester.ENABLE_SIMULATOR) {
             System.out.println("Code Generation is disabled!");
-            return null;
+            System.exit(1);
         }
         r.compile();
         r.runSimulation();
