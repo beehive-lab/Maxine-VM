@@ -976,13 +976,11 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     @Override
     protected void emitArithOp(LIROpcode code, CiValue left, CiValue right, CiValue dest, LIRDebugInfo info) {
         assert info == null : "should never be used :  idiv/irem and ldiv/lrem not handled by this method";
-        assert Util.archKindsEqual(left.kind, right.kind) || (left.kind == CiKind.Long && right.kind == CiKind.Int) : code.toString() + " left arch is " + left.kind + " and right arch is " +
-                        right.kind;
-        // TODO: compare assert with ARMV7LIRAssembler equivalent
-        //        assert left.equals(dest) : "left and dest must be equal";
+        assert Util.archKindsEqual(left.kind, right.kind) || (left.kind == CiKind.Long && right.kind == CiKind.Int)
+                : code.toString() + " left arch is " + left.kind + " and right arch is " + right.kind;
+//        assert left.equals(dest) : "left and dest must be equal";
         CiKind kind = left.kind;
 
-        // Checkstyle: off
         if (left.isRegister()) {
             CiRegister lreg = left.asRegister();
             if (right.isRegister()) {
@@ -990,13 +988,13 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 if (kind.isInt()) {
                     switch (code) {
                         case Add:
-                            masm.iadd(dest.asRegister(), lreg, rreg);
+                            masm.add(32, dest.asRegister(), lreg, rreg);
                             break;
                         case Sub:
-//                            masm.isub(dest.asRegister(), lreg, rreg);
+                            masm.sub(32, dest.asRegister(), lreg, rreg);
                             break;
                         case Mul:
-//                            masm.imul(dest.asRegister(), lreg, rreg);
+                            masm.mul(32, dest.asRegister(), lreg, rreg);
                             break;
                         default:
                             throw Util.shouldNotReachHere();
@@ -1005,16 +1003,16 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     assert rreg.isFpu() : "must be xmm";
                     switch (code) {
                         case Add:
-//                            masm.vadd(ConditionFlag.Always, lreg, lreg, rreg, CiKind.Float);
+                            masm.fadd(32, dest.asRegister(), lreg, rreg);
                             break;
                         case Sub:
-//                            masm.vsub(ConditionFlag.Always, lreg, lreg, rreg, CiKind.Float);
+                            masm.fsub(32, dest.asRegister(), lreg, rreg);
                             break;
                         case Mul:
-//                            masm.vmul(ConditionFlag.Always, lreg, lreg, rreg, CiKind.Float);
+                            masm.fmul(32, dest.asRegister(), lreg, rreg);
                             break;
                         case Div:
-//                            masm.vdiv(ConditionFlag.Always, lreg, lreg, rreg, CiKind.Float);
+                            masm.fdiv(32, dest.asRegister(), lreg, rreg);
                             break;
                         default:
                             throw Util.shouldNotReachHere();
@@ -1023,16 +1021,16 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     assert rreg.isFpu();
                     switch (code) {
                         case Add:
-//                            masm.vadd(ConditionFlag.Always, lreg, lreg, rreg, CiKind.Double);
+                            masm.fadd(64, dest.asRegister(), lreg, rreg);
                             break;
                         case Sub:
-//                            masm.vsub(ConditionFlag.Always, lreg, lreg, rreg, CiKind.Double);
+                            masm.fsub(64, dest.asRegister(), lreg, rreg);
                             break;
                         case Mul:
-//                            masm.vmul(ConditionFlag.Always, lreg, lreg, rreg, CiKind.Double);
+                            masm.fmul(64, dest.asRegister(), lreg, rreg);
                             break;
                         case Div:
-//                            masm.vdiv(ConditionFlag.Always, lreg, lreg, rreg, CiKind.Double);
+                            masm.fdiv(64, dest.asRegister(), lreg, rreg);
                             break;
                         default:
                             throw Util.shouldNotReachHere();
@@ -1041,23 +1039,26 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     assert kind.isLong();
                     switch (code) {
                         case Add:
-//                            masm.addLong(dest.asRegister(), lreg, rreg);
+                            masm.add(64, dest.asRegister(), lreg, rreg);
                             break;
                         case Sub:
-//                            masm.subLong(dest.asRegister(), lreg, rreg);
+                            masm.sub(64, dest.asRegister(), lreg, rreg);
                             break;
                         case Mul:
-//                            masm.mulLong(dest.asRegister(), lreg, rreg);
+                            masm.mul(64, dest.asRegister(), lreg, rreg);
                             break;
                         default:
                             throw Util.shouldNotReachHere();
                     }
                 }
             } else {
+                if (true) {
+                    throw Util.unimplemented();
+                }
                 if (kind.isInt()) {
                     if (right.isStackSlot()) {
                         // register - stack
-                        CiAddress raddr = frameMap.toStackAddress(((CiStackSlot) right));
+                        CiAddress raddr = frameMap.toStackAddress((CiStackSlot) right);
                         switch (code) {
                             case Add:
 //                                masm.iadd(dest.asRegister(), lreg, raddr);
@@ -1087,8 +1088,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     // register - stack/constant
                     CiAddress raddr;
                     if (right.isStackSlot()) {
-                        raddr = frameMap.toStackAddress(((CiStackSlot) right));
-                        masm.load( Aarch64.d30, raddr, CiKind.Float);
+                        raddr = frameMap.toStackAddress((CiStackSlot) right);
+                        masm.load(Aarch64.d30, raddr, CiKind.Float);
                     } else {
                         assert right.isConstant();
                         raddr = tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) right).asFloat()));
@@ -1116,27 +1117,27 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     // register - stack/constant
                     CiAddress raddr;
                     if (right.isStackSlot()) {
-                        raddr = frameMap.toStackAddress(((CiStackSlot) right));
-                        masm.load( Aarch64.d30, raddr, CiKind.Double);
+                        raddr = frameMap.toStackAddress((CiStackSlot) right);
+                        masm.load(Aarch64.d30, raddr, CiKind.Double);
                     } else {
                         assert right.isConstant();
                         raddr = tasm.recordDataReferenceInCode(CiConstant.forDouble(((CiConstant) right).asDouble()));
                         masm.setUpScratch(raddr);
-//                        masm.addRegisters(ConditionFlag.Always, false, Aarch64.r12, Aarch64.r12, Aarch64.r15, 0, 0);
+                        masm.add(64, Aarch64.r12, Aarch64.r12, Aarch64.r15);
 //                        masm.vldr(ConditionFlag.Always, Aarch64.d30, Aarch64.r12, 0, CiKind.Double, CiKind.Int);
                     }
                     switch (code) {
                         case Add:
-//                            masm.vadd(ConditionFlag.Always, lreg, lreg, Aarch64.d30, CiKind.Double);
+                            masm.fadd(64, dest.asRegister(), lreg, Aarch64.d30);
                             break;
                         case Sub:
-//                            masm.vsub(ConditionFlag.Always, lreg, lreg, Aarch64.d30, CiKind.Double);
+                            masm.fsub(64, dest.asRegister(), lreg, Aarch64.d30);
                             break;
                         case Mul:
-//                            masm.vmul(ConditionFlag.Always, lreg, lreg, Aarch64.d30, CiKind.Double);
+                            masm.fmul(64, dest.asRegister(), lreg, Aarch64.d30);
                             break;
                         case Div:
-//                            masm.vdiv(ConditionFlag.Always, lreg, lreg, Aarch64.d30, CiKind.Double);
+                            masm.fdiv(64, dest.asRegister(), lreg, Aarch64.d30);
                             break;
                         default:
                             throw Util.shouldNotReachHere();
@@ -1145,8 +1146,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     assert target.sizeInBytes(kind) == 8;
                     if (right.isStackSlot()) {
                         // register - stack
-                        assert (right.kind == CiKind.Long);
-                        CiAddress raddr = frameMap.toStackAddress(((CiStackSlot) right));
+                        assert right.kind == CiKind.Long;
+                        CiAddress raddr = frameMap.toStackAddress((CiStackSlot) right);
                         masm.saveInFP(9);
                         masm.load(Aarch64.r8, raddr, CiKind.Long);
                         switch (code) {
@@ -1189,10 +1190,10 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 masm.load(Aarch64.r8, laddr, CiKind.Int);
                 switch (code) {
                     case Add:
-//                        masm.addRegisters(ConditionFlag.Always, false, Aarch64.r8, Aarch64.r8, rreg, 0, 0);
+                        masm.add(32, Aarch64.r8, Aarch64.r8, rreg);
                         break;
                     case Sub:
-//                        masm.sub(ConditionFlag.Always, false, Aarch64.r8, Aarch64.r8, rreg, 0, 0);
+                        masm.sub(32, Aarch64.r8, Aarch64.r8, rreg);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
@@ -1200,6 +1201,9 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 }
                 masm.store(Aarch64.r8, laddr, CiKind.Int);
             } else {
+                if (true) {
+                    throw Util.unimplemented();
+                }
                 assert right.isConstant();
                 int c = ((CiConstant) right).asInt();
                 switch (code) {
@@ -1214,7 +1218,6 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 }
             }
         }
-        // Checkstyle: on
     }
 
     @Override
