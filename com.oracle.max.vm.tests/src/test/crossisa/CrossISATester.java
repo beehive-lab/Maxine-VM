@@ -20,8 +20,8 @@
 package test.crossisa;
 
 import java.io.*;
-import java.math.*;
-import java.util.*;
+import java.math.BigInteger;
+import java.util.ArrayList;
 
 public abstract class CrossISATester {
 
@@ -31,7 +31,6 @@ public abstract class CrossISATester {
     private static final   File   bindOutput     = new File("bind_output");
     protected static final File   gdbOutput      = new File("gdb_output");
     protected static final String gdbInput       = "gdb_input";
-    protected static final String gdbInputFPREGS = "gdb_input_fpregs";
     protected static final File   gdbErrors      = new File("gdb_errors");
     protected static final File   gccOutput      = new File("gcc_output");
     protected static final File   gccErrors      = new File("gcc_errors");
@@ -45,25 +44,47 @@ public abstract class CrossISATester {
     private static boolean DEBUG            = false;
 
     protected BitsFlag[] bitMasks;
-    protected Process    gcc;
-    protected Process    assembler;
-    protected Process    linker;
-    protected Process    qemu;
-    protected Process    gdb;
-    protected int[]      simulatedIntRegisters;
-    protected int[]      expectedIntRegisters;
-    protected boolean[]  testIntRegisters;
-    protected long[]     simulatedLongRegisters;
-    protected long[]     expectedLongRegisters;
-    protected boolean[]  testLongRegisters;
-    protected float[]    simulatedFloatRegisters;
-    protected float[]    expectedFloatRegisters;
-    protected boolean[]  testFloatRegisters;
-    protected double[]   simulatedDoubleRegisters;
-    protected double[]   expectedDoubleRegisters;
-    protected boolean[]  testDoubleRegisters;
+    protected Process gcc;
+    protected Process assembler;
+    protected Process linker;
+    protected Process qemu;
+    protected Process gdb;
+    protected ProcessBuilder gccProcessBuilder;
+    protected ProcessBuilder assemblerProcessBuilder;
+    protected ProcessBuilder linkerProcessBuilder;
+    protected ProcessBuilder qemuProcessBuilder;
+    protected ProcessBuilder gdbProcessBuilder;
+    private ProcessBuilder removeFiles;
+    protected int[] simulatedIntRegisters;
+    protected int[] expectedIntRegisters;
+    protected boolean[] testIntRegisters;
+    protected long[] simulatedLongRegisters;
+    protected long[] expectedLongRegisters;
+    protected boolean[] testLongRegisters;
+    protected float[] simulatedFloatRegisters;
+    protected float[] expectedFloatRegisters;
+    protected boolean[] testFloatRegisters;
+    protected double[] simulatedDoubleRegisters;
+    protected double[] expectedDoubleRegisters;
+    protected boolean[] testDoubleRegisters;
 
     protected CrossISATester() {
+        gccProcessBuilder = getCompilerProcessBuilder();
+        gccProcessBuilder.redirectOutput(gccOutput);
+        gccProcessBuilder.redirectError(gccErrors);
+        assemblerProcessBuilder = getAssemblerProcessBuilder();
+        assemblerProcessBuilder.redirectOutput(asOutput);
+        assemblerProcessBuilder.redirectError(asErrors);
+        linkerProcessBuilder = getLinkerProcessBuilder();
+        linkerProcessBuilder.redirectOutput(linkOutput);
+        linkerProcessBuilder.redirectError(linkErrors);
+        qemuProcessBuilder = getQEMUProcessBuilder();
+        qemuProcessBuilder.redirectOutput(qemuOutput);
+        qemuProcessBuilder.redirectError(qemuErrors);
+        gdbProcessBuilder = getGDBProcessBuilder();
+        gdbProcessBuilder.redirectOutput(gdbOutput);
+        gdbProcessBuilder.redirectError(gdbErrors);
+        removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.elf");
     }
 
     public static void setBitMask(BitsFlag[] bitmasks, int i, BitsFlag mask) {
@@ -548,18 +569,14 @@ public abstract class CrossISATester {
         }
     }
 
-    public void runSimulation(ProcessBuilder gdbProcess, ProcessBuilder qemuProcess) {
-        gdbProcess.redirectOutput(gdbOutput);
-        gdbProcess.redirectError(gdbErrors);
-        qemuProcess.redirectOutput(qemuOutput);
-        qemuProcess.redirectError(qemuErrors);
+    public void runSimulation() throws Exception {
         try {
-            qemu = qemuProcess.start();
+            qemu = qemuProcessBuilder.start();
             while (!qemuOutput.exists()) {
                 Thread.sleep(500);
             }
             bindToQemu();
-            gdb = runBlocking(gdbProcess);
+            gdb = runBlocking(gdbProcessBuilder);
         } catch (Exception e) {
             e.printStackTrace();
             cleanProcesses();
@@ -567,36 +584,28 @@ public abstract class CrossISATester {
         }
     }
 
-    protected abstract void runSimulation() throws Exception;
-
     public void link() {
-        final ProcessBuilder link = getLinkerProcessBuilder();
-        link.redirectOutput(linkOutput);
-        link.redirectError(linkErrors);
-        linker = runBlocking(link);
+        linker = runBlocking(linkerProcessBuilder);
     }
 
     protected abstract ProcessBuilder getLinkerProcessBuilder();
 
     public void compile() {
-        final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.elf");
-        final ProcessBuilder compile = getCompilerProcessBuilder();
-        compile.redirectOutput(gccOutput);
-        compile.redirectError(gccErrors);
         runBlocking(removeFiles);
-        gcc = runBlocking(compile);
+        gcc = runBlocking(gccProcessBuilder);
     }
 
     protected abstract ProcessBuilder getCompilerProcessBuilder();
 
     public void assembleStartup() {
-        final ProcessBuilder assemble = getAssemblerProcessBuilder();
-        assemble.redirectOutput(asOutput);
-        assemble.redirectError(asErrors);
-        assembler = runBlocking(assemble);
+        assembler = runBlocking(assemblerProcessBuilder);
     }
 
     protected abstract ProcessBuilder getAssemblerProcessBuilder();
+
+    protected abstract ProcessBuilder getQEMUProcessBuilder();
+
+    protected abstract ProcessBuilder getGDBProcessBuilder();
 
     public void run() throws Exception {
         assembleStartup();

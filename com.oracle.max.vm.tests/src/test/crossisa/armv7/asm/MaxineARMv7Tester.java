@@ -19,8 +19,6 @@
  */
 package test.crossisa.armv7.asm;
 
-import java.io.*;
-
 import test.crossisa.*;
 
 public class MaxineARMv7Tester extends CrossISATester {
@@ -28,14 +26,14 @@ public class MaxineARMv7Tester extends CrossISATester {
     public static final int NUM_REGS = 52;
 
     /*
-     * arm-unknown-eabi-gcc -c -march=armv7-a -g test_armv7.c -o test_armv7.o
-     * arm-unknown-eabi-as -mcpu=cortex-a9 -g startup_armv7.s -o startup_armv7.o
-     * arm-unknown-eabi-ld -T test_armv7.ld test_armv7.o startup_armv7.o -o test.elf
-     * qemu-system-arm -cpu cortex-a9 -M versatilepb -m 128M -nographic -s -S -kernel test.elf
+     * arm-unknown-eabi-gcc -DSTATIC -mfloat-abi=hard -mfpu=vfpv3-d16 -march=armv7-a -nostdlib -nostartfiles -g -Ttest_armv7.ld startup_armv7.s test_armv7.c -o test.elf
      */
 
     @Override
     protected ProcessBuilder getCompilerProcessBuilder() {
+        if (gccProcessBuilder != null) {
+            return gccProcessBuilder;
+        }
         return new ProcessBuilder("arm-none-eabi-gcc", "-DSTATIC", "-mfloat-abi=hard", "-mfpu=vfpv3-d16",
                                   "-march=armv7-a", "-nostdlib", "-nostartfiles", "-g", "-Ttest_armv7.ld",
                                   "startup_armv7.s", "test_armv7.c", "-o", "test.elf");
@@ -43,28 +41,38 @@ public class MaxineARMv7Tester extends CrossISATester {
 
     @Override
     protected ProcessBuilder getAssemblerProcessBuilder() {
+        if (assemblerProcessBuilder != null) {
+            return assemblerProcessBuilder;
+        }
         return new ProcessBuilder("true");
     }
 
     @Override
     protected ProcessBuilder getLinkerProcessBuilder() {
+        if (linkerProcessBuilder != null) {
+            return linkerProcessBuilder;
+        }
         return new ProcessBuilder("true");
     }
 
     protected ProcessBuilder getGDBProcessBuilder() {
+        if (gdbProcessBuilder != null) {
+            return gdbProcessBuilder;
+        }
         return new ProcessBuilder("arm-none-eabi-gdb", "-q", "-x", gdbInput);
     }
 
     protected ProcessBuilder getQEMUProcessBuilder() {
+        if (qemuProcessBuilder != null) {
+            return qemuProcessBuilder;
+        }
         return new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M",
                                   "-nographic", "-s", "-S", "-kernel", "test.elf");
     }
 
     @Override
     public void runSimulation() throws Exception {
-        ProcessBuilder gdbProcess = getGDBProcessBuilder();
-        ProcessBuilder qemuProcess = getQEMUProcessBuilder();
-        runSimulation(gdbProcess, qemuProcess);
+        super.runSimulation();
         parseIntRegisters("r0  ", "cpsr");
         parseFloatRegisters("s0  ", "s31");
         parseDoubleRegisters("d0  ", "d31");

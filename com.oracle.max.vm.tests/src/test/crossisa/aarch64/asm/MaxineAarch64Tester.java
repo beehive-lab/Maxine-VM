@@ -83,6 +83,9 @@ public class MaxineAarch64Tester extends CrossISATester {
     @Override
     protected ProcessBuilder getCompilerProcessBuilder() {
         // aarch64-linux-gnu-gcc -c -march=armv8-a+simd -mgeneral-regs-only -g test_aarch64.c -o test_aarch64.o
+        if (gccProcessBuilder != null) {
+            return gccProcessBuilder;
+        }
         return new ProcessBuilder("aarch64-linux-gnu-gcc", "-c", "-march=armv8-a+simd", "-mgeneral-regs-only", "-g",
                 "test_aarch64.c", "-o", "test_aarch64.o");
     }
@@ -90,47 +93,40 @@ public class MaxineAarch64Tester extends CrossISATester {
     @Override
     protected ProcessBuilder getAssemblerProcessBuilder() {
         // aarch64-linux-gnu-as -march=armv8-a -g startup_aarch64.s -o startup_aarch64.o
+        if (assemblerProcessBuilder != null) {
+            return assemblerProcessBuilder;
+        }
         return new ProcessBuilder("aarch64-linux-gnu-as", "-march=armv8-a", "-g", "startup_aarch64.s",
                 "-o", "startup_aarch64.o");
     }
 
     @Override
     protected ProcessBuilder getLinkerProcessBuilder() {
+        if (linkerProcessBuilder != null) {
+            return linkerProcessBuilder;
+        }
         // aarch64-linux-gnu-ld -T test_aarch64.ld test_aarch64.o startup_aarch64.o -o test.elf
         return new ProcessBuilder("aarch64-linux-gnu-ld", "-T", "test_aarch64.ld", "test_aarch64.o",
                 "startup_aarch64.o", "-o", "test.elf");
     }
 
     protected ProcessBuilder getGDBProcessBuilder() {
+        if (gdbProcessBuilder != null) {
+            return gdbProcessBuilder;
+        }
         return new ProcessBuilder("aarch64-linux-gnu-gdb", "-q", "-x", gdbInput);
     }
 
     protected ProcessBuilder getQEMUProcessBuilder() {
+        if (qemuProcessBuilder != null) {
+            return qemuProcessBuilder;
+        }
         return new ProcessBuilder("qemu-system-aarch64", "-cpu", "cortex-a57", "-M", "virt", "-m", "128M", "-nographic",
                 "-s", "-S", "-kernel", "test.elf");
     }
 
     public long[] runRegisteredSimulation() throws Exception {
-        ProcessBuilder gdbProcess = new ProcessBuilder("aarch64-linux-gnu-gdb", "-q", "-x", gdbInput);
-        gdbProcess.redirectOutput(gdbOutput);
-        gdbProcess.redirectError(gdbErrors);
-        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-aarch64", "-cpu", "cortex-a57", "-M", "virt", "-m",
-                                                        "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
-        qemuProcess.redirectOutput(qemuOutput);
-        qemuProcess.redirectError(qemuErrors);
-        try {
-            qemu = qemuProcess.start();
-            while (!qemuOutput.exists()) {
-                Thread.sleep(500);
-            }
-            bindToQemu();
-            gdbProcess.start().waitFor();
-        } catch (Exception e) {
-            e.printStackTrace();
-            cleanProcesses();
-            System.exit(-1);
-        }
-        parseLongRegisters("x0 ", "sp");
+        runSimulation();
         return simulatedLongRegisters;
     }
 
@@ -172,9 +168,7 @@ public class MaxineAarch64Tester extends CrossISATester {
 
     @Override
     public void runSimulation() throws Exception {
-        ProcessBuilder gdbProcess = getGDBProcessBuilder();
-        ProcessBuilder qemuProcess = getQEMUProcessBuilder();
-        runSimulation(gdbProcess, qemuProcess);
+        super.runSimulation();
         parseLongRegisters("x0 ", "sp");
     }
 
