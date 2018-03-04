@@ -461,6 +461,7 @@ public class Aarch64JTTT1XTest {
         theCompiler.cleanup();
     }
 
+    @Test
     public void t1x_jtt_BC_ishl() throws Exception {
         initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
