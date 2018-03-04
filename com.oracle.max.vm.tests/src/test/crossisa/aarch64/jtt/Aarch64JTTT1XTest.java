@@ -326,6 +326,7 @@ public class Aarch64JTTT1XTest {
         }
     }
 
+    @Test
     public void t1x_jtt_BC_imul() throws Exception {
         initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -345,6 +346,7 @@ public class Aarch64JTTT1XTest {
         theCompiler.cleanup();
     }
 
+    @Test
     public void t1x_jtt_BC_isub() throws Exception {
         initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -364,6 +366,7 @@ public class Aarch64JTTT1XTest {
         theCompiler.cleanup();
     }
 
+    @Test
     public void t1x_jtt_BC_ineg() throws Exception {
         initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -382,6 +385,7 @@ public class Aarch64JTTT1XTest {
         theCompiler.cleanup();
     }
 
+    @Test
     public void t1x_jtt_BC_ineg_1() throws Exception {
         initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -766,6 +770,7 @@ public class Aarch64JTTT1XTest {
         }
     }
 
+    @Test
     public void t1x_jtt_BC_fdiv() throws Exception {
         initTests();
         float[] argOne = {14.0f};
