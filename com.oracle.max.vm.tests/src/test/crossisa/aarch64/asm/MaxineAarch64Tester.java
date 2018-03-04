@@ -86,8 +86,7 @@ public class MaxineAarch64Tester extends CrossISATester {
         if (gccProcessBuilder != null) {
             return gccProcessBuilder;
         }
-        return new ProcessBuilder("aarch64-linux-gnu-gcc", "-c", "-march=armv8-a+simd", "-mgeneral-regs-only", "-g",
-                "test_aarch64.c", "-o", "test_aarch64.o");
+        return new ProcessBuilder("aarch64-linux-gnu-gcc", "-c", "-march=armv8-a+simd", "-g", "test_aarch64.c", "-o", "test_aarch64.o");
     }
 
     @Override
