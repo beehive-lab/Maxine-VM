@@ -1832,10 +1832,6 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitShiftOp(LIROpcode code, CiValue left, CiValue count, CiValue dest, CiValue tmp) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
         assert count.asRegister() == SHIFTCount : "count must be in r8";
         assert left == dest : "left and dest must be equal";
         assert tmp.isIllegal() : "wasting a register if tmp is allocated";
@@ -1844,17 +1840,20 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         if (left.kind.isInt()) {
             CiRegister value = left.asRegister();
             assert value != SHIFTCount : "left cannot be r8";
-            masm.mov64BitConstant(Aarch64.r12, 0x1f);
-//            masm.and(ConditionFlag.Always, false, Aarch64.r12, count.asRegister(), Aarch64.r12, 0, 0);
-            // Checkstyle: off
             switch (code) {
                 case Shl:
-//                    masm.ishl(dest.asRegister(), value, Aarch64.r12);
+                    masm.shl(32, dest.asRegister(), value, count.asRegister());
                     break;
                 case Shr:
+                    if (true) {
+                        throw Util.unimplemented();
+                    }
 //                    masm.ishr(dest.asRegister(), value, Aarch64.r12);
                     break;
                 case Ushr:
+                    if (true) {
+                        throw Util.unimplemented();
+                    }
 //                    masm.iushr(dest.asRegister(), value, Aarch64.r12);
                     break;
                 default:
@@ -1865,18 +1864,23 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             assert lreg != SHIFTCount : "left cannot be r8";
             switch (code) {
                 case Shl:
-//                    masm.lshl(dest.asRegister(), lreg, count.asRegister());
+                    masm.shl(64, dest.asRegister(), lreg, count.asRegister());
                     break;
                 case Shr:
+                    if (true) {
+                        throw Util.unimplemented();
+                    }
 //                    masm.lshr(dest.asRegister(), lreg, count.asRegister());
                     break;
                 case Ushr:
+                    if (true) {
+                        throw Util.unimplemented();
+                    }
 //                    masm.lushr(dest.asRegister(), lreg, count.asRegister());
                     break;
                 default:
                     throw Util.shouldNotReachHere();
             }
-            // Checkstyle: on
         }
     }
 
