@@ -1249,37 +1249,34 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitLogicOp(LIROpcode code, CiValue left, CiValue right, CiValue dst) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
         assert left.isRegister();
         assert dst.isRegister();
-        // Checkstyle: off
         if (left.kind.isInt()) {
             CiRegister reg = left.asRegister();
             if (right.isConstant()) {
                 int val = ((CiConstant) right).asInt();
-                masm.mov64BitConstant(Aarch64.r12, val);
                 switch (code) {
                     case LogicAnd:
-//                        masm.iand(reg, reg, Aarch64.r12);
+                        masm.and(32, dst.asRegister(), reg, val);
                         break;
                     case LogicOr:
-//                        masm.ior(reg, reg, Aarch64.r12);
+                        masm.or(32, dst.asRegister(), reg, val);
                         break;
                     case LogicXor:
-//                        masm.ixor(reg, reg, Aarch64.r12);
+                        masm.eor(32, dst.asRegister(), reg, val);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
                 }
             } else if (right.isStackSlot()) {
+                if (true) {
+                    throw Util.unimplemented();
+                }
                 // added support for stack operands
-                CiAddress raddr = frameMap.toStackAddress(((CiStackSlot) right));
+                CiAddress raddr = frameMap.toStackAddress((CiStackSlot) right);
                 masm.setUpScratch(raddr);
 //                masm.ldrImmediate(ConditionFlag.Always, 1, 1, 0, Aarch64.r8, Aarch64.r12, 0);
-                assert (reg != Aarch64.r12);
+                assert reg != Aarch64.r12;
                 switch (code) {
                     case LogicAnd:
 //                        masm.iand(reg, reg, Aarch64.r8);
@@ -1297,13 +1294,13 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 CiRegister rright = right.asRegister();
                 switch (code) {
                     case LogicAnd:
-//                        masm.iand(reg, reg, rright);
+                        masm.and(32, dst.asRegister(), reg, rright);
                         break;
                     case LogicOr:
-//                        masm.ior(reg, reg, rright);
+                        masm.or(32, dst.asRegister(), reg, rright);
                         break;
                     case LogicXor:
-//                        masm.ixor(reg, reg, rright);
+                        masm.eor(32, dst.asRegister(), reg, rright);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
@@ -1313,18 +1310,16 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         } else {
             CiRegister lreg = left.asRegister();
             if (right.isConstant()) {
-                CiConstant rightConstant = (CiConstant) right;
-                masm.saveInFP(9);
-                masm.movlong(Aarch64.r8, rightConstant.asLong(), CiKind.Long);
+                long val = ((CiConstant) right).asLong();
                 switch (code) {
                     case LogicAnd:
-//                        masm.land(lreg, lreg, Aarch64.r8);
+                        masm.and(64, dst.asRegister(), lreg, val);
                         break;
                     case LogicOr:
-//                        masm.lor(lreg, lreg, Aarch64.r8);
+                        masm.or(64, dst.asRegister(), lreg, val);
                         break;
                     case LogicXor:
-//                        masm.lxor(lreg, lreg, Aarch64.r8);
+                        masm.eor(64, dst.asRegister(), lreg, val);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
@@ -1334,13 +1329,13 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 CiRegister rreg = right.asRegister();
                 switch (code) {
                     case LogicAnd:
-//                        masm.land(lreg, lreg, rreg);
+                        masm.and(64, dst.asRegister(), lreg, rreg);
                         break;
                     case LogicOr:
-//                        masm.lor(lreg, lreg, rreg);
+                        masm.or(64, dst.asRegister(), lreg, rreg);
                         break;
                     case LogicXor:
-//                        masm.lxor(lreg, lreg, rreg);
+                        masm.eor(64, dst.asRegister(), lreg, rreg);
                         break;
                     default:
                         throw Util.shouldNotReachHere();
@@ -1349,7 +1344,6 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
             CiRegister dreg = dst.asRegister();
             moveRegs(lreg, dreg, left.kind, dst.kind);
         }
-        // Checkstyle: on
     }
 
     void arithmeticIdiv(LIROpcode code, CiValue left, CiValue right, CiValue result, LIRDebugInfo info) {
