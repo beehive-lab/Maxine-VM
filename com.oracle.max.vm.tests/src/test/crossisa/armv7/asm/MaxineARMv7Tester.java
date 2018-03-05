@@ -19,8 +19,6 @@
  */
 package test.crossisa.armv7.asm;
 
-import java.io.*;
-
 import test.crossisa.*;
 
 public class MaxineARMv7Tester extends CrossISATester {
@@ -28,14 +26,14 @@ public class MaxineARMv7Tester extends CrossISATester {
     public static final int NUM_REGS = 52;
 
     /*
-     * arm-unknown-eabi-gcc -c -march=armv7-a -g test_armv7.c -o test_armv7.o
-     * arm-unknown-eabi-as -mcpu=cortex-a9 -g startup_armv7.s -o startup_armv7.o
-     * arm-unknown-eabi-ld -T test_armv7.ld test_armv7.o startup_armv7.o -o test.elf
-     * qemu-system-arm -cpu cortex-a9 -M versatilepb -m 128M -nographic -s -S -kernel test.elf
+     * arm-unknown-eabi-gcc -DSTATIC -mfloat-abi=hard -mfpu=vfpv3-d16 -march=armv7-a -nostdlib -nostartfiles -g -Ttest_armv7.ld startup_armv7.s test_armv7.c -o test.elf
      */
 
     @Override
     protected ProcessBuilder getCompilerProcessBuilder() {
+        if (gccProcessBuilder != null) {
+            return gccProcessBuilder;
+        }
         return new ProcessBuilder("arm-none-eabi-gcc", "-DSTATIC", "-mfloat-abi=hard", "-mfpu=vfpv3-d16",
                                   "-march=armv7-a", "-nostdlib", "-nostartfiles", "-g", "-Ttest_armv7.ld",
                                   "startup_armv7.s", "test_armv7.c", "-o", "test.elf");
@@ -43,28 +41,38 @@ public class MaxineARMv7Tester extends CrossISATester {
 
     @Override
     protected ProcessBuilder getAssemblerProcessBuilder() {
+        if (assemblerProcessBuilder != null) {
+            return assemblerProcessBuilder;
+        }
         return new ProcessBuilder("true");
     }
 
     @Override
     protected ProcessBuilder getLinkerProcessBuilder() {
+        if (linkerProcessBuilder != null) {
+            return linkerProcessBuilder;
+        }
         return new ProcessBuilder("true");
     }
 
     protected ProcessBuilder getGDBProcessBuilder() {
+        if (gdbProcessBuilder != null) {
+            return gdbProcessBuilder;
+        }
         return new ProcessBuilder("arm-none-eabi-gdb", "-q", "-x", gdbInput);
     }
 
     protected ProcessBuilder getQEMUProcessBuilder() {
+        if (qemuProcessBuilder != null) {
+            return qemuProcessBuilder;
+        }
         return new ProcessBuilder("qemu-system-arm", "-cpu", "cortex-a15", "-M", "versatilepb", "-m", "128M",
                                   "-nographic", "-s", "-S", "-kernel", "test.elf");
     }
 
     @Override
     public void runSimulation() throws Exception {
-        ProcessBuilder gdbProcess = getGDBProcessBuilder();
-        ProcessBuilder qemuProcess = getQEMUProcessBuilder();
-        runSimulation(gdbProcess, qemuProcess);
+        super.runSimulation();
         parseIntRegisters("r0  ", "cpsr");
         parseFloatRegisters("s0  ", "s31");
         parseDoubleRegisters("d0  ", "d31");
@@ -95,105 +103,47 @@ public class MaxineARMv7Tester extends CrossISATester {
         }
     }
 
-    private Object[] parseObjectRegistersToFile(String file) throws Exception {
-        BufferedReader reader = new BufferedReader(new FileReader(file));
-        String line;
-        boolean enabled = false;
-        int i = 0;
-        Object[] expectedValues = new Object[16 + 1 + 16 + 32];
-        while ((line = reader.readLine()) != null) {
-            if (line.contains("r0  ")) {
-                enabled = true;
-                line = line.substring(12, line.length());
-            }
-            if (!enabled) {
-                continue;
-            }
+    /**
+     * Parses a float register (32-bit) from the output of the gdb command {@code info all-registers}.  The output is
+     * expected to be in the form:
+     *
+     * <pre>
+     *     s0  1.55405596e-31  (raw 0x0c49ba5e)
+     * </pre>
+     *
+     * @param line The line from the gdb output to be parsed
+     * @return The parsed float value of the register
+     */
+    @Override
+    protected float parseFloatRegister(String line) {
+        String value = line.split("\\s+")[1];
 
-            String value = line.split("\\s+")[1];
-            long tmp = Long.parseLong(value.substring(2, value.length()).toString(), 16);
+        if (value.contains("nan")) {
+            return Float.NaN;
+        } else if (value.equals("inf")) {
+            return Float.POSITIVE_INFINITY;
+        } else if (value.equals("-inf")) {
+            return Float.NEGATIVE_INFINITY;
+        }
 
-            if (tmp > Integer.MAX_VALUE) {
-                tmp = (int) (2L * Integer.MIN_VALUE + tmp);
-            } else {
-                expectedValues[i] = (int) tmp;
-            }
-            expectedValues[i] = new Integer((int) tmp);
-            i++;
-            if (line.contains("cpsr")) {
-                // might want to get cpsr but we dont need it right now
-                expectedValues[i] = null;
-                break;
-            }
-        }
-        while ((line = reader.readLine()) != null) {
-            enabled = line.contains("f64");
-            if (i >= (16 + 16 + 1)) {
-                break;
-            }
-            if (!enabled) {
-                continue;
-            }
-            String[] values = line.split("\\s+");
-            for (int j = 0; j < values.length; j++) {
-                if (values[j].equals("f64")) {
-                    String doubleVal = values[j + 2];
-                    String str = doubleVal.substring(0, doubleVal.length() - 1);
-                    try {
-                        Double tmp = new Double(str);
-                        expectedValues[i++] = tmp;
-                    } catch (Exception e) {
-                        // we get exceptions when there is a NaN
-                        // currently we just set them to null
-                        if (str.equals("inf")) {
-                            expectedValues[i++] = Double.POSITIVE_INFINITY;
-                        } else if (str.equals("-inf")) {
-                            expectedValues[i++] = Double.NEGATIVE_INFINITY;
-                        } else {
-                            expectedValues[i++] = Double.NaN;
-                        }
-                    }
-                    break;
-                }
-            }
-            if (i >= (16 + 16 + 1)) {
-                break;
-            }
-        }
-        while ((line = reader.readLine()) != null) {
-            enabled = line.contains("=");
-            if (!enabled) {
-                continue;
-            }
-            String[] values = line.split("\\s+");
-            for (int j = 0; j < values.length; j++) {
+        return Float.parseFloat(value);
+    }
 
-                if (values[j].equals("=")) {
-                    String doubleVal = values[j + 1];
-                    try {
-                        Float tmp = new Float(doubleVal);
-                        expectedValues[i++] = tmp;
-                    } catch (Exception e) {
-                        switch (doubleVal) {
-                            case "inf":
-                                expectedValues[i++] = Float.POSITIVE_INFINITY;
-                                break;
-                            case "-inf":
-                                expectedValues[i++] = Float.NEGATIVE_INFINITY;
-                                break;
-                            default:
-                                expectedValues[i++] = Float.NaN;
-                                break;
-                        }
-                    }
-                    break;
-                }
-            }
-            if (i == expectedValues.length) {
-                break;
-            }
-        }
-        return expectedValues;
+    /**
+     * Parses a double register (64-bit) from the output of the gdb command {@code info all-registers}.  The output is
+     * expected to be in the form:
+     *
+     * <pre>
+     *     d0  {u8 = {0x5e, 0xba, 0x49, 0xc, 0x2, 0x40, 0x8f, 0x40}, u16 = {0xba5e, 0xc49, 0x4002, 0x408f}, u32 = {0xc49ba5e, 0x408f4002}, u64 = 0x408f40020c49ba5e, f32 = {0x0, 0x4}, f64 = 0x3e8}
+     * </pre>
+     *
+     * @param line The line from the gdb output to be parsed
+     * @return The parsed double value of the register
+     */
+    protected double parseDoubleRegister(String line) {
+        String value = line.split("\\s+")[23];
+        value = value.substring(2, value.length() - 1);
+        return Double.longBitsToDouble(hexToLongBits(value));
     }
 
     public static void main(String[] args) throws Exception {

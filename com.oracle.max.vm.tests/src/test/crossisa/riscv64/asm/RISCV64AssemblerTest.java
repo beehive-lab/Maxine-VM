@@ -85,7 +85,7 @@ public class RISCV64AssemblerTest {
         MaxineRISCV64Tester r = new MaxineRISCV64Tester(expected, tests, masks);
         if (!CrossISATester.ENABLE_SIMULATOR) {
             System.out.println("Code Generation is disabled!");
-            return;
+            System.exit(1);
         }
         r.assembleStartup();
         r.compile();

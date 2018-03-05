@@ -429,12 +429,24 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         }
     }
 
+    private int getRegisterList(CiRegister... registers) {
+        int regList = 0;
+        for (CiRegister reg : registers) {
+            regList |= 1 << reg.getEncoding();
+        }
+        return regList;
+    }
+
     /**
      * Push a register onto the stack using 16byte alignment.
      * @param reg
      */
     public void push(int size, CiRegister reg) {
         str(size, reg, Aarch64Address.createPreIndexedImmediateAddress(Aarch64.sp, -16));
+    }
+
+    public void push(CiRegister... registers) {
+        push(getRegisterList(registers));
     }
 
     /**
@@ -450,6 +462,10 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
 
             registerList = registerList >> 1;
         }
+    }
+
+    public void fpush(CiRegister... registers) {
+        fpush(getRegisterList(registers));
     }
 
     public void fpush(int registerList) {
@@ -471,6 +487,10 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         ldr(size, reg, Aarch64Address.createPostIndexedImmediateAddress(Aarch64.sp, 16));
     }
 
+    public void pop(CiRegister... registers) {
+        pop(getRegisterList(registers));
+    }
+
     /**
      * Push multiple registers onto the stack using 16byte alignment.
      * @param registerList
@@ -482,6 +502,10 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
                 ldr(64, Aarch64.cpuRegisters[regNumber], Aarch64Address.createPostIndexedImmediateAddress(Aarch64.sp, 16));
             }
         }
+    }
+
+    public void fpop(CiRegister... registers) {
+        fpop(getRegisterList(registers));
     }
 
     public void fpop(int registerList) {
@@ -1443,7 +1467,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         if (imm16 == 0) {
             ret();
         } else {
-            addq(Aarch64.sp, imm16);
+            add(64, Aarch64.sp, Aarch64.sp, imm16);
             ret();
         }
     }

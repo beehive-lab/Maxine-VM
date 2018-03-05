@@ -44,7 +44,7 @@ public class Aarch64CompilerStubEmitter extends CompilerStubEmitter {
     public Aarch64CompilerStubEmitter(C1XCompilation compilation, CiKind[] argTypes, CiKind resultKind) {
         super(compilation, new Aarch64MacroAssembler(compilation.target, compilation.compiler.compilerStubRegisterConfig),
                 argTypes, resultKind, 0x8000000080000000L, 0x8000000000000000L,
-                Aarch64.d0, Aarch64.d0, Aarch64.d0, Aarch64.d30);
+                Aarch64.d0, Aarch64.r16, Aarch64.d0, Aarch64.d30);
         this.asm = (Aarch64MacroAssembler) super.getAssembler();
     }
 
@@ -122,31 +122,21 @@ public class Aarch64CompilerStubEmitter extends CompilerStubEmitter {
 
     @Override
     protected void convertPrologue() {
-        prologue(new CiCalleeSaveLayout(0, -1, comp.target.wordSize, convertArgument, convertResult));
-        asm.setUpScratch(comp.frameMap().toStackAddress(inArgs[0]));
-        asm.fldr(64, convertArgument, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r12));
+        // Unused in Aarch64
     }
 
     @Override
     protected void convertEpilogue() {
-        asm.setUpScratch(comp.frameMap().toStackAddress(outResult));
-        asm.fstr(64, convertResult, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r12));
-        epilogue();
+        // Unused in Aarch64
     }
 
     @Override
     protected void emitCOMISSD(boolean isDouble, boolean isInt) {
-        convertPrologue();
-        Label nan = new Label();
-        Label ret = new Label();
-
-        asm.decrementq(convertResult, 1);
-
-        // input is NaN -> return 0
-        asm.bind(nan);
-        asm.fmov(64, convertResult, 0);
-        asm.bind(ret);
-        convertEpilogue();
+        prologue(new CiCalleeSaveLayout(0, -1, comp.target.wordSize, convertArgument, convertResult));
+        asm.load(convertArgument, comp.frameMap().toStackAddress(inArgs[0]), isDouble ? CiKind.Double : CiKind.Float);
+        asm.fcvtzs(isInt ? 32 : 64, isDouble ? 32 : 64, convertResult, convertArgument);
+        asm.store(convertArgument, comp.frameMap().toStackAddress(inArgs[0]), isInt ? CiKind.Int : CiKind.Long);
+        epilogue();
     }
 
     @Override
@@ -177,7 +167,7 @@ public class Aarch64CompilerStubEmitter extends CompilerStubEmitter {
         asm.restore(csl, frameToCSA);
 
         // Restore rsp
-        asm.addq(Aarch64.sp, frameSize());
+        asm.add(64, Aarch64.sp, Aarch64.sp, frameSize());
         asm.ret(0);
     }
 

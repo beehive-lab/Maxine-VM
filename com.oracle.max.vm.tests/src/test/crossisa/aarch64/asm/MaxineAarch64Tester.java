@@ -83,62 +83,91 @@ public class MaxineAarch64Tester extends CrossISATester {
     @Override
     protected ProcessBuilder getCompilerProcessBuilder() {
         // aarch64-linux-gnu-gcc -c -march=armv8-a+simd -mgeneral-regs-only -g test_aarch64.c -o test_aarch64.o
-        return new ProcessBuilder("aarch64-linux-gnu-gcc", "-c", "-march=armv8-a+simd", "-mgeneral-regs-only", "-g",
-                "test_aarch64.c", "-o", "test_aarch64.o");
+        if (gccProcessBuilder != null) {
+            return gccProcessBuilder;
+        }
+        return new ProcessBuilder("aarch64-linux-gnu-gcc", "-c", "-march=armv8-a+simd", "-g", "test_aarch64.c", "-o", "test_aarch64.o");
     }
 
     @Override
     protected ProcessBuilder getAssemblerProcessBuilder() {
         // aarch64-linux-gnu-as -march=armv8-a -g startup_aarch64.s -o startup_aarch64.o
+        if (assemblerProcessBuilder != null) {
+            return assemblerProcessBuilder;
+        }
         return new ProcessBuilder("aarch64-linux-gnu-as", "-march=armv8-a", "-g", "startup_aarch64.s",
                 "-o", "startup_aarch64.o");
     }
 
     @Override
     protected ProcessBuilder getLinkerProcessBuilder() {
+        if (linkerProcessBuilder != null) {
+            return linkerProcessBuilder;
+        }
         // aarch64-linux-gnu-ld -T test_aarch64.ld test_aarch64.o startup_aarch64.o -o test.elf
         return new ProcessBuilder("aarch64-linux-gnu-ld", "-T", "test_aarch64.ld", "test_aarch64.o",
                 "startup_aarch64.o", "-o", "test.elf");
     }
 
     protected ProcessBuilder getGDBProcessBuilder() {
+        if (gdbProcessBuilder != null) {
+            return gdbProcessBuilder;
+        }
         return new ProcessBuilder("aarch64-linux-gnu-gdb", "-q", "-x", gdbInput);
     }
 
     protected ProcessBuilder getQEMUProcessBuilder() {
+        if (qemuProcessBuilder != null) {
+            return qemuProcessBuilder;
+        }
         return new ProcessBuilder("qemu-system-aarch64", "-cpu", "cortex-a57", "-M", "virt", "-m", "128M", "-nographic",
                 "-s", "-S", "-kernel", "test.elf");
     }
 
     public long[] runRegisteredSimulation() throws Exception {
-        ProcessBuilder gdbProcess = new ProcessBuilder("aarch64-linux-gnu-gdb", "-q", "-x", gdbInput);
-        gdbProcess.redirectOutput(gdbOutput);
-        gdbProcess.redirectError(gdbErrors);
-        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-aarch64", "-cpu", "cortex-a57", "-M", "virt", "-m",
-                                                        "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
-        qemuProcess.redirectOutput(qemuOutput);
-        qemuProcess.redirectError(qemuErrors);
-        try {
-            qemu = qemuProcess.start();
-            while (!qemuOutput.exists()) {
-                Thread.sleep(500);
-            }
-            bindToQemu();
-            gdbProcess.start().waitFor();
-        } catch (Exception e) {
-            e.printStackTrace();
-            cleanProcesses();
-            System.exit(-1);
-        }
-        parseLongRegisters("x0 ", "sp");
+        runSimulation();
         return simulatedLongRegisters;
+    }
+
+    /**
+     * Parses a float register (32-bit) from the output of the gdb command {@code info all-registers}.  The output is
+     * expected to be in the form:
+     *
+     * <pre>
+     *     s0  1.55405596e-31  (raw 0x0c49ba5e)
+     * </pre>
+     *
+     * @param line The line from the gdb output to be parsed
+     * @return The parsed float value of the register
+     */
+    @Override
+    protected float parseFloatRegister(String line) {
+        String value = line.split("\\s+")[9];
+        value = value.substring(2, value.length() - 1);
+        return Float.intBitsToFloat(hexToIntBits(value));
+    }
+
+    /**
+     * Parses a double register (64-bit) from the output of the gdb command {@code info all-registers}.  The output is
+     * expected to be in the form:
+     *
+     * <pre>
+     *     d0  {u8 = {0x5e, 0xba, 0x49, 0xc, 0x2, 0x40, 0x8f, 0x40}, u16 = {0xba5e, 0xc49, 0x4002, 0x408f}, u32 = {0xc49ba5e, 0x408f4002}, u64 = 0x408f40020c49ba5e, f32 = {0x0, 0x4}, f64 = 0x3e8}
+     * </pre>
+     *
+     * @param line The line from the gdb output to be parsed
+     * @return The parsed double value of the register
+     */
+    @Override
+    protected double parseDoubleRegister(String line) {
+        String value = line.split("\\s+")[9];
+        value = value.substring(2, value.length() - 1);
+        return Double.longBitsToDouble(hexToLongBits(value));
     }
 
     @Override
     public void runSimulation() throws Exception {
-        ProcessBuilder gdbProcess = getGDBProcessBuilder();
-        ProcessBuilder qemuProcess = getQEMUProcessBuilder();
-        runSimulation(gdbProcess, qemuProcess);
+        super.runSimulation();
         parseLongRegisters("x0 ", "sp");
     }
 

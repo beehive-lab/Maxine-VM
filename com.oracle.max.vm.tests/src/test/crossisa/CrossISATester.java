@@ -20,8 +20,8 @@
 package test.crossisa;
 
 import java.io.*;
-import java.math.*;
-import java.util.*;
+import java.math.BigInteger;
+import java.util.ArrayList;
 
 public abstract class CrossISATester {
 
@@ -31,7 +31,6 @@ public abstract class CrossISATester {
     private static final   File   bindOutput     = new File("bind_output");
     protected static final File   gdbOutput      = new File("gdb_output");
     protected static final String gdbInput       = "gdb_input";
-    protected static final String gdbInputFPREGS = "gdb_input_fpregs";
     protected static final File   gdbErrors      = new File("gdb_errors");
     protected static final File   gccOutput      = new File("gcc_output");
     protected static final File   gccErrors      = new File("gcc_errors");
@@ -45,25 +44,47 @@ public abstract class CrossISATester {
     private static boolean DEBUG            = false;
 
     protected BitsFlag[] bitMasks;
-    protected Process    gcc;
-    protected Process    assembler;
-    protected Process    linker;
-    protected Process    qemu;
-    protected Process    gdb;
-    protected int[]      simulatedIntRegisters;
-    protected int[]      expectedIntRegisters;
-    protected boolean[]  testIntRegisters;
-    protected long[]     simulatedLongRegisters;
-    protected long[]     expectedLongRegisters;
-    protected boolean[]  testLongRegisters;
-    protected float[]    simulatedFloatRegisters;
-    protected float[]    expectedFloatRegisters;
-    protected boolean[]  testFloatRegisters;
-    protected double[]   simulatedDoubleRegisters;
-    protected double[]   expectedDoubleRegisters;
-    protected boolean[]  testDoubleRegisters;
+    protected Process gcc;
+    protected Process assembler;
+    protected Process linker;
+    protected Process qemu;
+    protected Process gdb;
+    protected ProcessBuilder gccProcessBuilder;
+    protected ProcessBuilder assemblerProcessBuilder;
+    protected ProcessBuilder linkerProcessBuilder;
+    protected ProcessBuilder qemuProcessBuilder;
+    protected ProcessBuilder gdbProcessBuilder;
+    private ProcessBuilder removeFiles;
+    protected int[] simulatedIntRegisters;
+    protected int[] expectedIntRegisters;
+    protected boolean[] testIntRegisters;
+    protected long[] simulatedLongRegisters;
+    protected long[] expectedLongRegisters;
+    protected boolean[] testLongRegisters;
+    protected float[] simulatedFloatRegisters;
+    protected float[] expectedFloatRegisters;
+    protected boolean[] testFloatRegisters;
+    protected double[] simulatedDoubleRegisters;
+    protected double[] expectedDoubleRegisters;
+    protected boolean[] testDoubleRegisters;
 
     protected CrossISATester() {
+        gccProcessBuilder = getCompilerProcessBuilder();
+        gccProcessBuilder.redirectOutput(gccOutput);
+        gccProcessBuilder.redirectError(gccErrors);
+        assemblerProcessBuilder = getAssemblerProcessBuilder();
+        assemblerProcessBuilder.redirectOutput(asOutput);
+        assemblerProcessBuilder.redirectError(asErrors);
+        linkerProcessBuilder = getLinkerProcessBuilder();
+        linkerProcessBuilder.redirectOutput(linkOutput);
+        linkerProcessBuilder.redirectError(linkErrors);
+        qemuProcessBuilder = getQEMUProcessBuilder();
+        qemuProcessBuilder.redirectOutput(qemuOutput);
+        qemuProcessBuilder.redirectError(qemuErrors);
+        gdbProcessBuilder = getGDBProcessBuilder();
+        gdbProcessBuilder.redirectOutput(gdbOutput);
+        gdbProcessBuilder.redirectError(gdbErrors);
+        removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.elf");
     }
 
     public static void setBitMask(BitsFlag[] bitmasks, int i, BitsFlag mask) {
@@ -110,7 +131,7 @@ public abstract class CrossISATester {
             log(i + " sim: " + simulatedIntRegisters[i] + " exp: " + expectedIntRegisters[i] + " test: " + testIntRegisters[i]);
             if (testIntRegisters[i]) {
                 final int simulatedRegister = simulatedIntRegisters[i] & (int) bitMasks[i].value();
-                final int expectedRegister  = expectedIntRegisters[i];
+                final int expectedRegister  = expectedIntRegisters[i] & (int) bitMasks[i].value();
                 if (simulatedRegister != expectedRegister) {
                     valid = false;
                 }
@@ -137,7 +158,7 @@ public abstract class CrossISATester {
             log(i + " sim: " + simulatedLongRegisters[i] + " exp: " + expectedLongRegisters[i] + " test: " + testLongRegisters[i]);
             if (testLongRegisters[i]) {
                 final long simulatedRegister = simulatedLongRegisters[i] & bitMasks[i].value();
-                final long expectedRegister  = expectedLongRegisters[i];
+                final long expectedRegister  = expectedLongRegisters[i] & bitMasks[i].value();
                 if (simulatedRegister != expectedRegister) {
                     valid = false;
                 }
@@ -154,7 +175,7 @@ public abstract class CrossISATester {
         return valid;
     }
 
-    protected boolean validateFloatRegisters() {
+    public boolean validateFloatRegisters() {
         boolean valid   = true;
 
         assert expectedFloatRegisters != null;
@@ -181,7 +202,7 @@ public abstract class CrossISATester {
         return valid;
     }
 
-    protected boolean validateDoubleRegisters() {
+    public boolean validateDoubleRegisters() {
         boolean valid   = true;
 
         assert expectedDoubleRegisters != null;
@@ -336,7 +357,7 @@ public abstract class CrossISATester {
      * @param line The line from the gdb output to be parsed
      * @return The parsed integer value of the register
      */
-    private static int parseIntRegister(String line) {
+    protected int parseIntRegister(String line) {
         String value = line.split("\\s+")[1];
         assert value.startsWith("0x");
         assert value.length() - 2 <= 8;
@@ -402,7 +423,7 @@ public abstract class CrossISATester {
      * @param line The line from the gdb output to be parsed
      * @return The parsed integer value of the register
      */
-    private static long parseLongRegister(String line) {
+    protected long parseLongRegister(String line) {
         String value = line.split("\\s+")[1];
         assert value.startsWith("0x");
         assert value.length() - 2 <= 16;
@@ -416,18 +437,7 @@ public abstract class CrossISATester {
     }
 
     /**
-     * Parses the float registers (32-bit) from the output of the gdb command {@code info all-registers}.  The output is
-     * expected to be in the form:
-     *
-     * <pre>
-     *     s0  1.55405596e-31  (raw 0x0c49ba5e)
-     *     s1  4.47656345  (raw 0x408f4002)
-     *     s2  1.55405596e-31  (raw 0x0c49ba5e)
-     *     s3  4.47656345  (raw 0x408f4002)
-     *     s4  1.55405596e-31  (raw 0x0c49ba5e)
-     *     s5  4.47656345  (raw 0x408f4002)
-     *     s6  0  (raw 0x00000000)
-     * </pre>
+     * Parses the float registers (32-bit) from the output of the gdb command {@code info all-registers}.
      *
      * @param startRegister The first float register to parse
      * @param endRegister The last float register to parse
@@ -460,41 +470,15 @@ public abstract class CrossISATester {
     }
 
     /**
-     * Parses a float register (32-bit) from the output of the gdb command {@code info all-registers}.  The output is
-     * expected to be in the form:
-     *
-     * <pre>
-     *     s0  1.55405596e-31  (raw 0x0c49ba5e)
-     * </pre>
+     * Parses a float register (32-bit) from the output of the gdb command {@code info all-registers}.
      *
      * @param line The line from the gdb output to be parsed
      * @return The parsed float value of the register
      */
-    private static float parseFloatRegister(String line) {
-        String value = line.split("\\s+")[1];
-
-        if (value.contains("nan")) {
-            return Float.NaN;
-        } else if (value.equals("inf")) {
-            return Float.POSITIVE_INFINITY;
-        } else if (value.equals("-inf")) {
-            return Float.NEGATIVE_INFINITY;
-        }
-
-        return Float.parseFloat(value);
-    }
+    protected abstract float parseFloatRegister(String line);
 
     /**
-     * Parses the double registers (64-bit) from the output of the gdb command {@code info all-registers}.  The
-     * output is expected to be in the form:
-     *
-     * <pre>
-     *     d0  {u8 = {0x5e, 0xba, 0x49, 0xc, 0x2, 0x40, 0x8f, 0x40}, u16 = {0xba5e, 0xc49, 0x4002, 0x408f}, u32 = {0xc49ba5e, 0x408f4002}, u64 = 0x408f40020c49ba5e, f32 = {0x0, 0x4}, f64 = 0x3e8}
-     *     d1  {u8 = {0x5e, 0xba, 0x49, 0xc, 0x2, 0x40, 0x8f, 0x40}, u16 = {0xba5e, 0xc49, 0x4002, 0x408f}, u32 = {0xc49ba5e, 0x408f4002}, u64 = 0x408f40020c49ba5e, f32 = {0x0, 0x4}, f64 = 0x3e8}
-     *     d2  {u8 = {0x5e, 0xba, 0x49, 0xc, 0x2, 0x40, 0x8f, 0x40}, u16 = {0xba5e, 0xc49, 0x4002, 0x408f}, u32 = {0xc49ba5e, 0x408f4002}, u64 = 0x408f40020c49ba5e, f32 = {0x0, 0x4}, f64 = 0x3e8}
-     *     d3  {u8 = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}, u16 = {0x0, 0x0, 0x0, 0x0}, u32 = {0x0, 0x0}, u64 = 0x0, f32 = {0x0, 0x0}, f64 = 0x0}
-     *     d4  {u8 = {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}, u16 = {0x0, 0x0, 0x0, 0x0}, u32 = {0x0, 0x0}, u64 = 0x0, f32 = {0x0, 0x0}, f64 = 0x0}
-     * </pre>
+     * Parses the double registers (64-bit) from the output of the gdb command {@code info all-registers}.
      *
      * @param startRegister The first double register to parse
      * @param endRegister The last double register to parse
@@ -527,29 +511,36 @@ public abstract class CrossISATester {
     }
 
     /**
-     * Parses a double register (64-bit) from the output of the gdb command {@code info all-registers}.  The output is
-     * expected to be in the form:
-     *
-     * <pre>
-     *     d0  {u8 = {0x5e, 0xba, 0x49, 0xc, 0x2, 0x40, 0x8f, 0x40}, u16 = {0xba5e, 0xc49, 0x4002, 0x408f}, u32 = {0xc49ba5e, 0x408f4002}, u64 = 0x408f40020c49ba5e, f32 = {0x0, 0x4}, f64 = 0x3e8}
-     * </pre>
+     * Parses a double register (64-bit) from the output of the gdb command {@code info all-registers}.
      *
      * @param line The line from the gdb output to be parsed
      * @return The parsed double value of the register
      */
-    private static double parseDoubleRegister(String line) {
-        String value = line.split("\\s+")[23];
-        value = value.substring(2, value.length() - 1);
-        return Double.longBitsToDouble(hexToLongBits(value));
+    protected abstract double parseDoubleRegister(String line);
+
+    /**
+     * Gets an int with the encoding of a hex string representing a float.
+     *
+     * @param hex The hex string to parse
+     * @return The encoding of the float parsed from {@code hex}
+     */
+    protected static int hexToIntBits(String hex) {
+        assert hex.length() <= 8;
+        if (hex.length() == 8) { // Split hex string to allow parsing
+            int lsbs = hexToIntBits(hex.substring(4));
+            int msbs = hexToIntBits(hex.substring(0, 4));
+            return msbs << 16 | lsbs;
+        }
+        return Integer.parseInt(hex, 16);
     }
 
     /**
-     * Decodes a hex string representing a double.
+     * Gets a long with the encoding of a hex string representing a double.
      *
-     * @param hex The hex string to decode
-     * @return The double decoded from {@code hex}
+     * @param hex The hex string to parse
+     * @return The encoding of the double parsed from {@code hex}
      */
-    private static long hexToLongBits(String hex) {
+    protected static long hexToLongBits(String hex) {
         assert hex.length() <= 16;
         if (hex.length() == 16) { // Split hex string to allow parsing
             long lsbs = hexToLongBits(hex.substring(8));
@@ -564,8 +555,8 @@ public abstract class CrossISATester {
     }
 
     public enum BitsFlag {
-        NZCBits(0xe0000000), NZCVBits(0xf0000000), Lower16Bits(0x0000ffff), Upper16Bits(0xffff0000),
-        All32Bits(0xffffffff), Lower32Bits(0xffffffff), All64Bits(0xffffffffffffffffL);
+        NZCBits(0xe0000000L), NZCVBits(0xf0000000L), Lower16Bits(0x0000ffffL), Upper16Bits(0xffff0000L),
+        All32Bits(0xffffffffL), Lower32Bits(0xffffffffL), All64Bits(0xffffffffffffffffL);
 
         private final long value;
 
@@ -578,18 +569,14 @@ public abstract class CrossISATester {
         }
     }
 
-    public void runSimulation(ProcessBuilder gdbProcess, ProcessBuilder qemuProcess) {
-        gdbProcess.redirectOutput(gdbOutput);
-        gdbProcess.redirectError(gdbErrors);
-        qemuProcess.redirectOutput(qemuOutput);
-        qemuProcess.redirectError(qemuErrors);
+    public void runSimulation() throws Exception {
         try {
-            qemu = qemuProcess.start();
+            qemu = qemuProcessBuilder.start();
             while (!qemuOutput.exists()) {
                 Thread.sleep(500);
             }
             bindToQemu();
-            gdb = runBlocking(gdbProcess);
+            gdb = runBlocking(gdbProcessBuilder);
         } catch (Exception e) {
             e.printStackTrace();
             cleanProcesses();
@@ -597,36 +584,28 @@ public abstract class CrossISATester {
         }
     }
 
-    protected abstract void runSimulation() throws Exception;
-
     public void link() {
-        final ProcessBuilder link = getLinkerProcessBuilder();
-        link.redirectOutput(linkOutput);
-        link.redirectError(linkErrors);
-        linker = runBlocking(link);
+        linker = runBlocking(linkerProcessBuilder);
     }
 
     protected abstract ProcessBuilder getLinkerProcessBuilder();
 
     public void compile() {
-        final ProcessBuilder removeFiles = new ProcessBuilder("/bin/rm", "-rR", "test.elf");
-        final ProcessBuilder compile = getCompilerProcessBuilder();
-        compile.redirectOutput(gccOutput);
-        compile.redirectError(gccErrors);
         runBlocking(removeFiles);
-        gcc = runBlocking(compile);
+        gcc = runBlocking(gccProcessBuilder);
     }
 
     protected abstract ProcessBuilder getCompilerProcessBuilder();
 
     public void assembleStartup() {
-        final ProcessBuilder assemble = getAssemblerProcessBuilder();
-        assemble.redirectOutput(asOutput);
-        assemble.redirectError(asErrors);
-        assembler = runBlocking(assemble);
+        assembler = runBlocking(assemblerProcessBuilder);
     }
 
     protected abstract ProcessBuilder getAssemblerProcessBuilder();
+
+    protected abstract ProcessBuilder getQEMUProcessBuilder();
+
+    protected abstract ProcessBuilder getGDBProcessBuilder();
 
     public void run() throws Exception {
         assembleStartup();

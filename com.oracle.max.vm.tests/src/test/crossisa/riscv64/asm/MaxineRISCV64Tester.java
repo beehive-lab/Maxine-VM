@@ -19,6 +19,7 @@
  */
 package test.crossisa.riscv64.asm;
 
+import com.sun.max.vm.runtime.FatalError;
 import test.crossisa.*;
 
 public class MaxineRISCV64Tester extends CrossISATester {
@@ -50,6 +51,9 @@ public class MaxineRISCV64Tester extends CrossISATester {
 
     @Override
     protected ProcessBuilder getCompilerProcessBuilder() {
+        if (gccProcessBuilder != null) {
+            return gccProcessBuilder;
+        }
         return new ProcessBuilder("riscv64-unknown-elf-gcc", "-g", "-march=rv64g", "-mabi=lp64d", "-static",
                                   "-mcmodel=medany", "-fvisibility=hidden", "-nostdlib", "-nostartfiles",
                                   "-Ttest_riscv64.ld", "startup_riscv64.s", "test_riscv64.c", "-o", "test.elf");
@@ -57,18 +61,69 @@ public class MaxineRISCV64Tester extends CrossISATester {
 
     @Override
     protected ProcessBuilder getAssemblerProcessBuilder() {
+        if (assemblerProcessBuilder != null) {
+            return assemblerProcessBuilder;
+        }
         return new ProcessBuilder("true");
     }
 
     @Override
     protected ProcessBuilder getLinkerProcessBuilder() {
+        if (linkerProcessBuilder != null) {
+            return linkerProcessBuilder;
+        }
         return new ProcessBuilder("true");
     }
 
+    @Override
+    protected ProcessBuilder getGDBProcessBuilder() {
+        if (gdbProcessBuilder != null) {
+            return gdbProcessBuilder;
+        }
+        return new ProcessBuilder("riscv64-unknown-elf-gdb", "-q", "-x", "gdb_input_riscv");
+    }
+
+    @Override
+    protected ProcessBuilder getQEMUProcessBuilder() {
+        if (qemuProcessBuilder != null) {
+            return qemuProcessBuilder;
+        }
+        return new ProcessBuilder("qemu-system-riscv64", "-M", "virt", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
+    }
+
+    /**
+     * Parses a float register (32-bit) from the output of the gdb command {@code info all-registers}.  The output is
+     * expected to be in the form:
+     *
+     * <pre>
+     *     TODO
+     * </pre>
+     *
+     * @param line The line from the gdb output to be parsed
+     * @return The parsed float value of the register
+     */
+    @Override
+    protected float parseFloatRegister(String line) {
+        throw FatalError.unimplemented();
+    }
+
+    /**
+     * Parses a double register (64-bit) from the output of the gdb command {@code info all-registers}.  The output is
+     * expected to be in the form:
+     *
+     * <pre>
+     *     TODO
+     * </pre>
+     *
+     * @param line The line from the gdb output to be parsed
+     * @return The parsed double value of the register
+     */
+    protected double parseDoubleRegister(String line) {
+        throw FatalError.unimplemented();
+    }
+
     public void runSimulation() throws Exception {
-        ProcessBuilder gdbProcess = new ProcessBuilder("riscv64-unknown-elf-gdb", "-q", "-x", "gdb_input_riscv");
-        ProcessBuilder qemuProcess = new ProcessBuilder("qemu-system-riscv64", "-M", "virt", "-m", "128M", "-nographic", "-s", "-S", "-kernel", "test.elf");
-        runSimulation(gdbProcess, qemuProcess);
+        super.runSimulation();
         parseLongRegisters("ra ", "pc");
     }
 
