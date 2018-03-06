@@ -1003,7 +1003,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     /**
-     * dst = src >> (shiftAmt & log2(size)).
+     * dst = src >> (shiftAmt & (size-1)).
      *
      * @param size register size. Has to be 32 or 64.
      * @param dst general purpose register. May not be null, stackpointer or zero-register.
@@ -1016,7 +1016,7 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
     }
 
     /**
-     * dst = src1 >> (src2 & log2(size)).
+     * dst = src1 >> src2.
      *
      * @param size register size. Has to be 32 or 64.
      * @param dst general purpose register. May not be null or stackpointer.

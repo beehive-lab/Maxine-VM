@@ -1829,7 +1829,7 @@ public class Aarch64Assembler extends AbstractAssembler {
 
     /* Variable Shift (5.5.4) */
     /**
-     * dst = src1 >> (src2 & log2(size)).
+     * dst = src1 >> src2.
      *
      * @param size register size. Has to be 32 or 64.
      * @param dst general purpose register. May not be null or stackpointer.
@@ -1841,7 +1841,7 @@ public class Aarch64Assembler extends AbstractAssembler {
     }
 
     /**
-     * dst = src1 << (src2 & log2(size)).
+     * dst = src1 << src2.
      *
      * @param size register size. Has to be 32 or 64.
      * @param dst general purpose register. May not be null or stackpointer.
@@ -1853,7 +1853,7 @@ public class Aarch64Assembler extends AbstractAssembler {
     }
 
     /**
-     * dst = src1 >>> (src2 & log2(size)).
+     * dst = src1 >>> src2.
      *
      * @param size register size. Has to be 32 or 64.
      * @param dst general purpose register. May not be null or stackpointer.
