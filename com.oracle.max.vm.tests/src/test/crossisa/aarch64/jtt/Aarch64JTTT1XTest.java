@@ -404,6 +404,7 @@ public class Aarch64JTTT1XTest {
         theCompiler.cleanup();
     }
 
+    @Test
     public void t1x_jtt_BC_ior() throws Exception {
         initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
@@ -423,6 +424,7 @@ public class Aarch64JTTT1XTest {
         theCompiler.cleanup();
     }
 
+    @Test
     public void t1x_jtt_BC_ixor() throws Exception {
         initTests();
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturnUnlock");
