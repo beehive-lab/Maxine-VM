@@ -44,7 +44,6 @@ public final class Aarch64TargetMethodUtil {
         return instruction;
     }
 
-    // TODO: Check if this works in A64 as well or just ARMV7
     @C_FUNCTION
     public static native void maxine_cache_flush(Pointer start, int length);
 
