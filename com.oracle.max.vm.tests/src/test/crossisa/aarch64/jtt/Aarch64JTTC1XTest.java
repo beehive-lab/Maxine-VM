@@ -345,7 +345,6 @@ public class Aarch64JTTC1XTest extends MaxTestCase {
         entryPoint = entryPoint - minimumValue;
     }
 
-
     public void test_C1X_jtt_BC_dcmp02() throws Exception {
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp02");
@@ -361,6 +360,7 @@ public class Aarch64JTTC1XTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+
     public void test_C1X_jtt_BC_dcmp04() throws Exception {
         initTests();
         vm().compilationBroker.setOffline(initialised);
@@ -373,7 +373,7 @@ public class Aarch64JTTC1XTest extends MaxTestCase {
             boolean answer            = jtt.bytecode.BC_dcmp04.test(argOne[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
-            long[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            long[]   registerValues   = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -391,7 +391,7 @@ public class Aarch64JTTC1XTest extends MaxTestCase {
             boolean answer            = jtt.bytecode.BC_dcmp07.test(argOne[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
-            long[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            long[]   registerValues   = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
@@ -409,7 +409,7 @@ public class Aarch64JTTC1XTest extends MaxTestCase {
             boolean answer            = jtt.bytecode.BC_dcmp09.test(argOne[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
-            long[]   registerValues    = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            long[]   registerValues   = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
             assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
             theCompiler.cleanup();
         }
