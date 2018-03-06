@@ -543,7 +543,7 @@ public class Stubs {
             asm.push(1 << 14);
 
             // now allocate the frame for this method
-            asm.subq(Aarch64.sp, frameSize);
+            asm.sub(64, Aarch64.sp, Aarch64.sp, frameSize);
 
             // save all the callee save registers
             asm.save(csl, frameToCSA);
@@ -564,7 +564,8 @@ public class Stubs {
             // continues in the resolved method as if it was called by the trampoline's
             // caller which is exactly what we want.
             CiRegister returnReg = registerConfig.getReturnRegister(WordUtil.archKind());
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), Aarch64.rsp, frameSize - 4));
+            asm.mov(64, asm.scratchRegister, Aarch64.sp);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue(), frameSize - 4));
             asm.ldr(64, returnReg, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
 
             // Restore all parameter registers before returning
@@ -573,7 +574,7 @@ public class Stubs {
 
             // Adjust RSP as mentioned above and do the 'ret' that lands us in the
             // trampolined-to method.
-            asm.addq(Aarch64.sp, frameSize - 4);
+            asm.add(64, Aarch64.sp, Aarch64.sp, frameSize - 4);
             asm.ret(0);
 
             byte[] code = asm.codeBuffer.close(true);
@@ -720,7 +721,7 @@ public class Stubs {
             }
             asm.push(1 << 14);
             // now allocate the frame for this method
-            asm.subq(Aarch64.sp, frameSize);
+            asm.sub(64, Aarch64.sp, Aarch64.sp, frameSize);
 
             // Save the index in the scratch register
             asm.mov32BitConstant(Aarch64.r8, index);
@@ -736,7 +737,8 @@ public class Stubs {
             // load the index into the second arg register
             asm.mov32BitConstant(args[1].asRegister(), index);
 
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), Aarch64.rsp, frameSize));
+            asm.mov(64, asm.scratchRegister, Aarch64.sp);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue(), frameSize));
             asm.ldr(64, args[2].asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
 
             asm.alignForPatchableDirectCall();
@@ -751,7 +753,8 @@ public class Stubs {
             // continues in the resolved method as if it was called by the trampoline's
             // caller which is exactly what we want.
             CiRegister returnReg = registerConfig.getReturnRegister(WordUtil.archKind());
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), Aarch64.rsp, frameSize - 4));
+            asm.mov(64, asm.scratchRegister, Aarch64.sp);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue(), frameSize - 4));
             asm.str(64, returnReg, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
 
             // Restore all parameter registers before returning
@@ -762,7 +765,7 @@ public class Stubs {
             asm.ldr(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), ARMV7.RSP, frameSize));
             asm.ldr(64, Aarch64.linkRegister, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-            asm.addq(Aarch64.sp, frameSize + 4);
+            asm.add(64, Aarch64.sp, Aarch64.sp, frameSize + 4);
             asm.jmp(Aarch64.r8);
 
             byte[] code = asm.codeBuffer.close(true);
@@ -948,12 +951,13 @@ public class Stubs {
 
             // compute the static trampoline call site
             CiRegister callSite = Aarch64.r8;
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), Aarch64.rsp));
+            asm.mov(64, asm.scratchRegister, Aarch64.sp);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue()));
             asm.ldr(64, callSite, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
             asm.subq(callSite, ARMTargetMethodUtil.RIP_CALL_INSTRUCTION_SIZE);
 
             // now allocate the frame for this method
-            asm.subq(Aarch64.sp, frameSize);
+            asm.add(64, Aarch64.sp, Aarch64.sp, frameSize);
 
             // save all the callee save registers
             asm.save(csl, frameToCSA);
@@ -976,7 +980,7 @@ public class Stubs {
             asm.restore(csl, frameToCSA);
 
             // undo the frame
-            asm.addq(Aarch64.sp, frameSize);
+            asm.add(64, Aarch64.sp, Aarch64.sp, frameSize);
 
             // patch the return address to re-execute the static call
             asm.ldr(64, asm.scratchRegister, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.sp));
@@ -1143,18 +1147,20 @@ public class Stubs {
             asm.mrs(Aarch64.r0, Aarch64Assembler.SystemRegister.SPSR_EL1);
             asm.push(1 << 12);
 
-            asm.subq(Aarch64.sp, frameSize - 8);
+            asm.sub(64, Aarch64.sp, Aarch64.sp, frameSize - 8);
             asm.save(csl, frameToCSA);
 
             // Now that we have saved all general purpose registers (including the scratch register),
             // store the value of the latch register from the thread locals into the trap frame
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_LATCH_REGISTER.offset));
             asm.ldr(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), Aarch64.rsp, frameToCSA + csl.offsetOf(latch)));
+            asm.mov(64, asm.scratchRegister, Aarch64.sp);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue(), frameToCSA + csl.offsetOf(latch)));
             asm.str(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
             asm.setUpScratch(new CiAddress(WordUtil.archKind(), latch.asValue(), TRAP_INSTRUCTION_POINTER.offset));
             asm.ldr(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), Aarch64.rsp, frameSize));
+            asm.mov(64, asm.scratchRegister, Aarch64.sp);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue(), frameSize));
             asm.str(64, Aarch64.r8, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
 
             // load the trap number from the thread locals into the first parameter register
@@ -1162,7 +1168,8 @@ public class Stubs {
             asm.ldr(64, args[0].asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
 
             // also save the trap number into the trap frame
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), Aarch64.rsp, frameToCSA + ARMTrapFrameAccess.TRAP_NUMBER_OFFSET));
+            asm.mov(64, asm.scratchRegister, Aarch64.sp);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue(), frameToCSA + ARMTrapFrameAccess.TRAP_NUMBER_OFFSET));
             asm.str(64, args[0].asRegister(), Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
 
             // load the trap frame pointer into the second parameter register
@@ -1179,7 +1186,7 @@ public class Stubs {
             int callSize = asm.codeBuffer.position() - callPos;
             asm.restore(csl, frameToCSA);
 
-            asm.addq(Aarch64.sp, frameSize - 8);
+            asm.add(64, Aarch64.sp, Aarch64.sp, frameSize - 8);
             asm.pop(1 << 12);
             asm.msr(Aarch64Assembler.SystemRegister.SPSR_EL1, asm.scratchRegister);
             asm.pop(1 << 12);
@@ -1591,7 +1598,9 @@ public class Stubs {
             }
             // We are called from Java so we do need to push the LR.
             asm.push(1 << 14);
-            asm.sub(64, Aarch64.sp, Aarch64.sp, ARMV7.r1);
+            asm.mov(64, asm.scratchRegister, Aarch64.sp);
+            asm.sub(64, asm.scratchRegister, asm.scratchRegister, Aarch64.r1);
+            asm.mov(64, Aarch64.sp, asm.scratchRegister);
 
             CriticalMethod unroll = new CriticalMethod(Deoptimization.class, "unroll", null);
             asm.alignForPatchableDirectCall();
@@ -1991,7 +2000,8 @@ public class Stubs {
 
             // Copy original return address into arg 0 (i.e. 'ip')
             CiRegister arg0 = args[0].asRegister();
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), Aarch64.rsp, DEOPT_RETURN_ADDRESS_OFFSET));
+            asm.mov(64, asm.scratchRegister, Aarch64.sp);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue(), DEOPT_RETURN_ADDRESS_OFFSET));
             asm.ldr(64, arg0, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
 
             // Copy original stack pointer into arg 1 (i.e. 'sp')
@@ -2007,10 +2017,11 @@ public class Stubs {
             asm.xorq(arg3, arg3);
 
             // Allocate 2 extra stack slots ? one in ARM?
-            asm.subq(Aarch64.sp, 8);
+            asm.sub(64, Aarch64.sp, Aarch64.sp, 8);
 
             // Put original return address into high slot
-            asm.setUpScratch(new CiAddress(WordUtil.archKind(), Aarch64.rsp, 4));
+            asm.mov(64, asm.scratchRegister, Aarch64.sp);
+            asm.setUpScratch(new CiAddress(WordUtil.archKind(), asm.scratchRegister.asValue(), 4));
             asm.str(64, arg0, Aarch64Address.createBaseRegisterOnlyAddress(asm.scratchRegister));
 
             // Put deopt method entry point into low slot
