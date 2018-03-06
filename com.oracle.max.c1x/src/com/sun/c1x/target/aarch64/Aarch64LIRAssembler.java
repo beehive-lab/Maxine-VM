@@ -1837,98 +1837,42 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         assert tmp.isIllegal() : "wasting a register if tmp is allocated";
         assert left.isRegister();
         assert count.asRegister() != Aarch64.r12 : "count register must not be scratch";
-        if (left.kind.isInt()) {
-            CiRegister value = left.asRegister();
-            assert value != SHIFTCount : "left cannot be r8";
-            switch (code) {
-                case Shl:
-                    masm.shl(32, dest.asRegister(), value, count.asRegister());
-                    break;
-                case Shr:
-                    if (true) {
-                        throw Util.unimplemented();
-                    }
-//                    masm.ishr(dest.asRegister(), value, Aarch64.r12);
-                    break;
-                case Ushr:
-                    if (true) {
-                        throw Util.unimplemented();
-                    }
-//                    masm.iushr(dest.asRegister(), value, Aarch64.r12);
-                    break;
-                default:
-                    throw Util.shouldNotReachHere();
-            }
-        } else {
-            CiRegister lreg = left.asRegister();
-            assert lreg != SHIFTCount : "left cannot be r8";
-            switch (code) {
-                case Shl:
-                    masm.shl(64, dest.asRegister(), lreg, count.asRegister());
-                    break;
-                case Shr:
-                    if (true) {
-                        throw Util.unimplemented();
-                    }
-//                    masm.lshr(dest.asRegister(), lreg, count.asRegister());
-                    break;
-                case Ushr:
-                    if (true) {
-                        throw Util.unimplemented();
-                    }
-//                    masm.lushr(dest.asRegister(), lreg, count.asRegister());
-                    break;
-                default:
-                    throw Util.shouldNotReachHere();
-            }
+        CiRegister register = left.asRegister();
+        assert register != SHIFTCount : "left cannot be r8";
+        int size = left.kind.isInt() ? 32 : 64;
+        switch (code) {
+            case Shl:
+                masm.shl(size, register, register, count.asRegister());
+                break;
+            case Shr:
+                masm.ashr(size, register, register, count.asRegister());
+                break;
+            case Ushr:
+                masm.lshr(size, register, register, count.asRegister());
+                break;
+            default:
+                throw Util.shouldNotReachHere();
         }
     }
 
     @Override
     protected void emitShiftOp(LIROpcode code, CiValue left, int count, CiValue dest) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
-        assert dest.isRegister();
-        if (dest.kind.isInt()) {
-            CiRegister value = dest.asRegister();
-            count = count & 0x1F;
-            masm.mov(64, dest.asRegister(), left.asRegister());
-            // Checkstyle: off
-            masm.mov64BitConstant(Aarch64.r12, count);
-            switch (code) {
-                case Shl:
-//                    masm.ishl(dest.asRegister(), value, Aarch64.r12);
-                    break;
-                case Shr:
-//                    masm.ishr(dest.asRegister(), value, Aarch64.r12);
-                    break;
-                case Ushr:
-//                    masm.iushr(dest.asRegister(), value, Aarch64.r12);
-                    break;
-                default:
-                    throw Util.shouldNotReachHere();
-            }
-        } else {
-            CiRegister value = dest.asRegister();
-            count = count & 0x3F;
-            moveRegs(left.asRegister(), value, left.kind, dest.kind);
-            masm.mov64BitConstant(Aarch64.r12, count);
-            switch (code) {
-                case Shl:
-//                    masm.lshl(value, left.asRegister(), Aarch64.r12);
-                    break;
-                case Shr:
-//                    masm.lshr(value, left.asRegister(), Aarch64.r12);
-                    break;
-                case Ushr:
-//                    masm.lushr(value, left.asRegister(), Aarch64.r12);
-                    break;
-                default:
-                    throw Util.shouldNotReachHere();
-            }
-            // Checkstyle: on
+        assert left == dest : "left and dest must be equal";
+        assert left.isRegister();
+        CiRegister register = left.asRegister();
+        int size = left.kind.isInt() ? 32 : 64;
+        switch (code) {
+            case Shl:
+                masm.shl(size, register, register, count);
+                break;
+            case Shr:
+                masm.ashr(size, register, register, count);
+                break;
+            case Ushr:
+                masm.lshr(size, register, register, count);
+                break;
+            default:
+                throw Util.shouldNotReachHere();
         }
     }
 
