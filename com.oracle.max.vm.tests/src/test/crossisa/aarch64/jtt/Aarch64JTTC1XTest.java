@@ -345,7 +345,6 @@ public class Aarch64JTTC1XTest extends MaxTestCase {
         entryPoint = entryPoint - minimumValue;
     }
 
-
     public void test_C1X_jtt_BC_dcmp02() throws Exception {
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp02");
@@ -361,4 +360,59 @@ public class Aarch64JTTC1XTest extends MaxTestCase {
             theCompiler.cleanup();
         }
     }
+
+    public void test_C1X_jtt_BC_dcmp04() throws Exception {
+        initTests();
+        vm().compilationBroker.setOffline(initialised);
+        double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
+        String klassName = getKlassName("jtt.bytecode.BC_dcmp04");
+        List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
+        vm().compilationBroker.setOffline(true);
+        initializeCodeBuffers(methods, "BC_dcmp04.java", "boolean test(double)");
+        for (int i = 0; i < argOne.length; i++) {
+            boolean answer            = jtt.bytecode.BC_dcmp04.test(argOne[i]);
+            int     expectedValue     = answer ? 1 : 0;
+            String  functionPrototype = Aarch64CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
+            long[]   registerValues   = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+
+    public void test_C1X_jtt_BC_dcmp07() throws Exception {
+        initTests();
+        vm().compilationBroker.setOffline(initialised);
+        double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
+        String klassName = getKlassName("jtt.bytecode.BC_dcmp07");
+        List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
+        vm().compilationBroker.setOffline(true);
+        initializeCodeBuffers(methods, "BC_dcmp07.java", "boolean test(double)");
+        for (int i = 0; i < argOne.length; i++) {
+            boolean answer            = jtt.bytecode.BC_dcmp07.test(argOne[i]);
+            int     expectedValue     = answer ? 1 : 0;
+            String  functionPrototype = Aarch64CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
+            long[]   registerValues   = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+
+    public void test_C1X_jtt_BC_dcmp09() throws Exception {
+        initTests();
+        vm().compilationBroker.setOffline(initialised);
+        double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
+        String klassName = getKlassName("jtt.bytecode.BC_dcmp09");
+        List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
+        vm().compilationBroker.setOffline(true);
+        initializeCodeBuffers(methods, "BC_dcmp09.java", "boolean test(double)");
+        for (int i = 0; i < argOne.length; i++) {
+            boolean answer            = jtt.bytecode.BC_dcmp09.test(argOne[i]);
+            int     expectedValue     = answer ? 1 : 0;
+            String  functionPrototype = Aarch64CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
+            long[]   registerValues   = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            assert registerValues[0] == expectedValue : "Failed incorrect value " + registerValues[0] + " " + expectedValue;
+            theCompiler.cleanup();
+        }
+    }
+
 }

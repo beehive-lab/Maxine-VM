@@ -1369,6 +1369,10 @@ public class Aarch64Assembler extends AbstractAssembler {
         moveWideImmInstruction(dst, uimm16, shiftAmt, generalFromSize(size), Instruction.MOVZ);
     }
 
+    public static int movzHelper(int size, CiRegister dst, int uimm16, int shiftAmt) {
+        return moveWideImmInstructionHelper(dst, uimm16, shiftAmt, generalFromSize(size), Instruction.MOVZ);
+    }
+
     /**
      * dst = ~(uimm16 << shiftAmt).
      *
@@ -1394,6 +1398,10 @@ public class Aarch64Assembler extends AbstractAssembler {
         moveWideImmInstruction(dst, uimm16, pos, generalFromSize(size), Instruction.MOVK);
     }
 
+    public static int movkHelper(int size, CiRegister dst, int uimm16, int pos) {
+        return moveWideImmInstructionHelper(dst, uimm16, pos, generalFromSize(size), Instruction.MOVK);
+    }
+
     private void moveWideImmInstruction(CiRegister dst, int uimm16, int shiftAmt,
                                         InstructionType type, Instruction instr) {
         assert Aarch64.isGeneralPurposeReg(dst);
@@ -1408,6 +1416,22 @@ public class Aarch64Assembler extends AbstractAssembler {
                 rd(dst) |
                 uimm16 << MoveWideImmOffset |
                 shiftAmt << MoveWideShiftOffset);
+    }
+
+    private static int moveWideImmInstructionHelper(CiRegister dst, int uimm16, int shiftAmt,
+                                        InstructionType type, Instruction instr) {
+        assert Aarch64.isGeneralPurposeReg(dst);
+        assert NumUtil.isUnsignedNbit(16, uimm16) : "Immediate has to be unsigned 16bit";
+        assert shiftAmt == 0 || shiftAmt == 16 ||
+                (type == InstructionType.General64 && (shiftAmt == 32 || shiftAmt == 48)) :
+                "Invalid shift amount: " + shiftAmt;
+        shiftAmt >>= 4;
+        int instrEncoding = instr.encoding | MoveWideImmOp;
+        return type.encoding |
+                instrEncoding |
+                rd(dst) |
+                uimm16 << MoveWideImmOffset |
+                shiftAmt << MoveWideShiftOffset;
     }
 
     /**
@@ -2638,12 +2662,11 @@ public class Aarch64Assembler extends AbstractAssembler {
                 uimm16 << SystemImmediateOffset);
     }
 
-
     /**
      * Clear Exclusive: clears the local record of the executing processor that an address has had a request for
      * an exclusive access.
      */
-    public void clrex() {
+    public void clearex() {
         emitInt(Instruction.CLREX.encoding);
     }
 

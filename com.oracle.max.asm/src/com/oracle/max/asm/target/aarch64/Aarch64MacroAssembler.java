@@ -1702,6 +1702,39 @@ public class Aarch64MacroAssembler extends Aarch64Assembler {
         return new CiAddress(addr.kind, new CiRegisterValue(CiKind.Int, base), disp);
     }
 
+    // TODO: check if this works on Aarch64 (migrated from ARMV7)
+    public void setUpRegister(CiRegister dest, CiAddress addr) {
+        CiRegister base = addr.base();
+        CiRegister index = addr.index();
+        CiAddress.Scale scale = addr.scale;
+        int disp = addr.displacement;
+        if (addr == CiAddress.Placeholder) {
+            nop(numInstructions(addr));
+            return;
+        }
+
+        assert base.isValid() || base.compareTo(CiRegister.Frame) == 0;
+
+        if (base.isValid() || base.compareTo(CiRegister.Frame) == 0) {
+            if (base == CiRegister.Frame) {
+                base = frameRegister;
+            }
+            if (disp != 0) {
+                mov64BitConstant(dest, disp);
+                add(64, dest, dest, base);
+                if (index.isValid()) {
+                    addlsl(dest, dest, index, scale.log2);
+                }
+            } else {
+                if (index.isValid()) {
+                    addlsl(dest, base, index, scale.log2);
+                } else {
+                    mov(64, dest, base);
+                }
+            }
+        }
+    }
+
 // /**
 // * Aligns PC.
 // *

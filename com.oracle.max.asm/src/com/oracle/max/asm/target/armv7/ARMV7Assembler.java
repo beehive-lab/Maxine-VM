@@ -1793,6 +1793,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         }
     }
 
+    // mrs r0, CPSR
     public final void mrsReadAPSR(ConditionFlag cond, CiRegister reg) {
         int instruction = (cond.value() & 0xf) << 28;
         instruction |= 0x10f0000;
@@ -1800,6 +1801,7 @@ public class ARMV7Assembler extends AbstractAssembler {
         emitInt(instruction);
     }
 
+    // msr CPSR_fs, r0, lsl r0
     public void msrWriteAPSR(ConditionFlag cond, CiRegister reg) {
         int bits = 3;
         int instruction = (cond.value() & 0xf) << 28;
