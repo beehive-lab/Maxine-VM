@@ -93,21 +93,20 @@ public class MaxineAarch64Tester extends CrossISATester {
 
     @Override
     protected ProcessBuilder getCompilerProcessBuilder() {
-        // aarch64-linux-gnu-gcc -c -march=armv8-a+simd -mgeneral-regs-only -g test_aarch64.c -o test_aarch64.o
+        // aarch64-linux-gnu-gcc -march=armv8-a+simd -nostdlib -nostartfiles -g -Ttest_aarch64.ld startup_aarch64.s test_aarch64.c -o test.elf
         if (gccProcessBuilder != null) {
             return gccProcessBuilder;
         }
-        return new ProcessBuilder("aarch64-linux-gnu-gcc", "-c", "-march=armv8-a+simd", "-g", "test_aarch64.c", "-o", "test_aarch64.o");
+        return new ProcessBuilder("aarch64-linux-gnu-gcc", "-march=armv8-a+simd", "-nostdlib", "-nostartfiles", "-g",
+                                  "-Ttest_aarch64.ld", "startup_aarch64.s", "test_aarch64.c", "-o", "test.elf");
     }
 
     @Override
     protected ProcessBuilder getAssemblerProcessBuilder() {
-        // aarch64-linux-gnu-as -march=armv8-a -g startup_aarch64.s -o startup_aarch64.o
         if (assemblerProcessBuilder != null) {
             return assemblerProcessBuilder;
         }
-        return new ProcessBuilder("aarch64-linux-gnu-as", "-march=armv8-a", "-g", "startup_aarch64.s",
-                "-o", "startup_aarch64.o");
+        return new ProcessBuilder("true");
     }
 
     @Override
@@ -115,9 +114,7 @@ public class MaxineAarch64Tester extends CrossISATester {
         if (linkerProcessBuilder != null) {
             return linkerProcessBuilder;
         }
-        // aarch64-linux-gnu-ld -T test_aarch64.ld test_aarch64.o startup_aarch64.o -o test.elf
-        return new ProcessBuilder("aarch64-linux-gnu-ld", "-T", "test_aarch64.ld", "test_aarch64.o",
-                "startup_aarch64.o", "-o", "test.elf");
+        return new ProcessBuilder("true");
     }
 
     protected ProcessBuilder getGDBProcessBuilder() {
