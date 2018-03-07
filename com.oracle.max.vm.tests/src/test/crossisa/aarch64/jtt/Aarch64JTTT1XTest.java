@@ -271,8 +271,7 @@ public class Aarch64JTTT1XTest {
         masm.mov32BitConstant(r1, -49);
         masm.push(r0, r1);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iadd");
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        masm.pop(r0);
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest();
         theCompiler.cleanup();
     }
@@ -294,8 +293,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, argsOne[i]);
             masm.mov32BitConstant(r1, argsTwo[i]);
             masm.push(r0, r1);
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -319,8 +317,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, argsOne[i]);
             masm.mov32BitConstant(r1, argsTwo[i]);
             masm.push(r0, r1);
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -340,8 +337,7 @@ public class Aarch64JTTT1XTest {
         masm.mov32BitConstant(r1, 12);
         masm.push(r0, r1);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "imul");
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        masm.pop(r0);
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest();
         theCompiler.cleanup();
     }
@@ -360,8 +356,7 @@ public class Aarch64JTTT1XTest {
         masm.mov32BitConstant(r1, 50);
         masm.push(r0, r1);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "isub");
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        masm.pop(r0);
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest();
         theCompiler.cleanup();
     }
@@ -379,8 +374,7 @@ public class Aarch64JTTT1XTest {
         masm.mov32BitConstant(r0, 100);
         masm.push(r0);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ineg");
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        masm.pop(r0);
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest();
         theCompiler.cleanup();
     }
@@ -398,8 +392,7 @@ public class Aarch64JTTT1XTest {
         masm.mov32BitConstant(r0, -100);
         masm.push(r0);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ineg");
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        masm.pop(r0);
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest();
         theCompiler.cleanup();
     }
@@ -418,8 +411,7 @@ public class Aarch64JTTT1XTest {
         masm.mov32BitConstant(r1, 100);
         masm.push(r0, r1);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ior");
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        masm.pop(r0);
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest();
         theCompiler.cleanup();
     }
@@ -438,8 +430,7 @@ public class Aarch64JTTT1XTest {
         masm.mov32BitConstant(r1, 39);
         masm.push(r0, r1);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ixor");
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        masm.pop(r0);
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest();
         theCompiler.cleanup();
     }
@@ -458,8 +449,7 @@ public class Aarch64JTTT1XTest {
         masm.mov32BitConstant(r1, 39);
         masm.push(r0, r1);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iand");
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        masm.pop(r0);
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest();
         theCompiler.cleanup();
     }
@@ -478,8 +468,7 @@ public class Aarch64JTTT1XTest {
         masm.mov32BitConstant(r1, 2);
         masm.push(r0, r1);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ishl");
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        masm.pop(r0);
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest();
         theCompiler.cleanup();
     }
@@ -498,8 +487,7 @@ public class Aarch64JTTT1XTest {
         masm.mov32BitConstant(r1, 2);
         masm.push(r0, r1);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ishr");
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        masm.pop(r0);
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest();
         theCompiler.cleanup();
     }
@@ -518,8 +506,7 @@ public class Aarch64JTTT1XTest {
         masm.mov32BitConstant(r1, 16);
         masm.push(r0, r1);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ishr");
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        masm.pop(r0);
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest();
         theCompiler.cleanup();
     }
@@ -538,8 +525,7 @@ public class Aarch64JTTT1XTest {
         masm.mov32BitConstant(r1, 16);
         masm.push(r0, r1);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iushr");
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        masm.pop(r0);
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest();
         theCompiler.cleanup();
     }
@@ -561,8 +547,7 @@ public class Aarch64JTTT1XTest {
         masm.mov32BitConstant(r0, 255);
         masm.push(r0);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2b");
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        masm.pop(r0);
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest();
         theCompiler.cleanup();
     }
@@ -580,8 +565,7 @@ public class Aarch64JTTT1XTest {
         masm.mov32BitConstant(r0, -1);
         masm.push(r0);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2b");
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        masm.pop(r0);
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest();
         theCompiler.cleanup();
     }
@@ -599,8 +583,7 @@ public class Aarch64JTTT1XTest {
         masm.mov32BitConstant(r0, 128);
         masm.push(r0);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2b");
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        masm.pop(r0);
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest();
         theCompiler.cleanup();
     }
@@ -618,8 +601,7 @@ public class Aarch64JTTT1XTest {
         masm.mov32BitConstant(r0, 65535);
         masm.push(r0);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2s");
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        masm.pop(r0);
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest();
         theCompiler.cleanup();
     }
@@ -637,8 +619,7 @@ public class Aarch64JTTT1XTest {
         masm.mov32BitConstant(r0, 32768);
         masm.push(r0);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2s");
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        masm.pop(r0);
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest();
         theCompiler.cleanup();
     }
@@ -656,8 +637,7 @@ public class Aarch64JTTT1XTest {
         masm.mov32BitConstant(r0, -1);
         masm.push(r0);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2s");
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        masm.pop(r0);
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest();
         theCompiler.cleanup();
     }
@@ -675,8 +655,7 @@ public class Aarch64JTTT1XTest {
         masm.mov32BitConstant(r0, -1);
         masm.push(r0);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2c");
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        masm.pop(r0);
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest();
         theCompiler.cleanup();
     }
@@ -694,8 +673,7 @@ public class Aarch64JTTT1XTest {
         masm.mov32BitConstant(r0, 65535);
         masm.push(r0);
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "i2c");
-        theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-        masm.pop(r0);
+        theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
         generateAndTest();
         theCompiler.cleanup();
     }
@@ -708,13 +686,13 @@ public class Aarch64JTTT1XTest {
         t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ireturn");
         for (int i = 0; i < args.length; i++) {
             int expectedValue = jtt.bytecode.BC_ireturn.test(args[i]);
+            setExpectedValue(r0, expectedValue);
             byte[] code = getByteArray("test", "jtt.bytecode.BC_ireturn");
             initialiseFrameForCompilation(code, "(I)I");
             Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(r0, args[i]);
             masm.push(r0);
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -742,8 +720,7 @@ public class Aarch64JTTT1XTest {
             Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -770,8 +747,7 @@ public class Aarch64JTTT1XTest {
             Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -796,7 +772,7 @@ public class Aarch64JTTT1XTest {
             masm.fmovCpu2Fpu(32, d0, r0);
             masm.fmovCpu2Fpu(32, d1, r1);
             masm.fpush(d0, d1);
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
         }
     }
@@ -822,8 +798,7 @@ public class Aarch64JTTT1XTest {
             Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -850,8 +825,7 @@ public class Aarch64JTTT1XTest {
             Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -888,8 +862,7 @@ public class Aarch64JTTT1XTest {
             Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -929,8 +902,7 @@ public class Aarch64JTTT1XTest {
             Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -971,8 +943,7 @@ public class Aarch64JTTT1XTest {
             Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1013,8 +984,7 @@ public class Aarch64JTTT1XTest {
             Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1040,8 +1010,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iinc_1");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1066,8 +1035,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iinc_2");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1092,8 +1060,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iinc_3");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1118,8 +1085,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iinc_4");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1144,8 +1110,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_0");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1171,8 +1136,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_0_1");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1197,8 +1161,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0); // local slot is argument r0
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_0_2");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1224,8 +1187,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r1, pair.second);
             masm.push(r0);
             masm.push(r1);
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1251,8 +1213,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_1_1");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1277,8 +1238,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, pair.first);
             masm.mov32BitConstant(r1, pair.second);
             masm.push(r0, r1);
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1307,8 +1267,7 @@ public class Aarch64JTTT1XTest {
             masm.push(r1);
             masm.push(r2);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_2");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1339,8 +1298,7 @@ public class Aarch64JTTT1XTest {
             masm.push(r2);
             masm.push(r3);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iload_3");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1368,8 +1326,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iconst");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1394,8 +1351,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifeq");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length - 1);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1417,8 +1373,7 @@ public class Aarch64JTTT1XTest {
             Aarch64MacroAssembler masm = theCompiler.getMacroAssembler();
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1442,8 +1397,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifeq_3");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1468,8 +1422,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifeq_3");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1494,8 +1447,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifgt");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1520,8 +1472,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifle");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1546,8 +1497,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifne");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1572,8 +1522,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iflt");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1598,8 +1547,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iflt");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1624,8 +1572,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iflt");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1650,8 +1597,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iflt");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1676,8 +1622,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r0, pair.first);
             masm.push(r0);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "iflt");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1706,8 +1651,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r1, pair.second);
             masm.push(r0, r1);
             t1x.createOfflineTemplate(c1x, T1XTemplateSource.class, t1x.templates, "ifgt");
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
@@ -1733,8 +1677,7 @@ public class Aarch64JTTT1XTest {
             masm.mov32BitConstant(r1, pair.second);
             masm.push(r0);
             masm.push(r1);
-            theCompiler.offlineT1XCompile(anMethod, codeAttr, code, code.length);
-            masm.pop(r0);
+            theCompiler.offlineT1XCompileNoEpilogue(anMethod, codeAttr, code);
             generateAndTest();
             theCompiler.cleanup();
         }
