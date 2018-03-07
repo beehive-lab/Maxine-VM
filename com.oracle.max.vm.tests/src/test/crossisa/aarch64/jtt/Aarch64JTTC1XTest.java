@@ -429,4 +429,19 @@ public class Aarch64JTTC1XTest extends MaxTestCase {
         }
     }
 
+    public void test_C1X_jtt_BC_d2i01() throws Exception {
+        String klassName = getKlassName("jtt.bytecode.BC_d2i01");
+        List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
+        initializeCodeBuffers(methods, "BC_d2i01.java", "int test(double)");
+        double[] arguments = {0.0d, 1.0d, 01.06d, -2.2d};
+        int expectedInt = -9;
+        for (int i = 0; i < arguments.length; i++) {
+            expectedInt = BC_d2i01.test(arguments[i]);
+            String functionPrototype = Aarch64CodeWriter.preAmble("int", "double", Double.toString(arguments[i]));
+            long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
+            assert (int) registerValues[0] == expectedInt : "Failed incorrect value " + (int) registerValues[0] + " " + expectedInt;
+            theCompiler.cleanup();
+        }
+    }
+
 }
