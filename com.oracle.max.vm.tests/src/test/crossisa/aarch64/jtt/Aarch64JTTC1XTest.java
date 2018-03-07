@@ -199,6 +199,19 @@ public class Aarch64JTTC1XTest extends MaxTestCase {
         return simulatedRegisters;
     }
 
+    private MaxineAarch64Tester generateObjectsAndTestStubs(String functionPrototype, int entryPoint, byte[] theCode) throws Exception {
+        Aarch64CodeWriter code = new Aarch64CodeWriter(theCode);
+        code.createStaticCodeStubsFile(functionPrototype, theCode, entryPoint);
+        MaxineAarch64Tester r = new MaxineAarch64Tester();
+        r.cleanFiles();
+        r.cleanProcesses();
+        r.compile();
+        r.runSimulation();
+        r.reset();
+        return r;
+    }
+
+
     public Aarch64JTTC1XTest() {
         initTests();
     }
