@@ -23,6 +23,8 @@ import java.io.*;
 
 import com.oracle.max.asm.*;
 
+import static com.sun.max.vm.stack.JVMSFrameLayout.JVMS_SLOT_SIZE;
+
 public class Aarch64CodeWriter {
 
     public static boolean debug = false;
@@ -96,6 +98,11 @@ public class Aarch64CodeWriter {
     }
 
     public void createCodeFile() {
+        createCodeFile(0);
+    }
+
+    public void createCodeFile(int numberOfArguemnts) {
+        assert numberOfArguemnts >= 0;
         try {
             PrintWriter writer = new PrintWriter("codebuffer.c", "UTF-8");
             writer.println("unsigned char code[" + ((totalInstructions + 1) * 4) + "] __attribute__((aligned(0x1000))) = {");
@@ -112,6 +119,10 @@ public class Aarch64CodeWriter {
             writer.println("void c_entry() {");
             String preAmble = preAmble("void", "", "");
             writer.print(preAmble);
+            if (numberOfArguemnts != 0) {
+                final int size = numberOfArguemnts * JVMS_SLOT_SIZE;
+                writer.println("asm (\"add sp, sp, #" + size + "\");");
+            }
             writer.println("}");
             writer.close();
         } catch (Exception e) {
