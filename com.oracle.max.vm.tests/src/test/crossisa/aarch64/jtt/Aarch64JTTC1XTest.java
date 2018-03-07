@@ -41,6 +41,7 @@ import com.sun.max.vm.compiler.target.TargetMethod;
 import com.sun.max.vm.hosted.JavaPrototype;
 import com.sun.max.vm.hosted.VMConfigurator;
 import com.sun.max.vm.type.SignatureDescriptor;
+import jtt.bytecode.*;
 import test.crossisa.aarch64.asm.Aarch64CodeWriter;
 import test.crossisa.aarch64.asm.MaxineAarch64Tester;
 
@@ -352,7 +353,7 @@ public class Aarch64JTTC1XTest extends MaxTestCase {
         vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dcmp02.java", "boolean test(double)");
         for (int i = 0; i < argOne.length; i++) {
-            boolean answer = jtt.bytecode.BC_dcmp02.test(argOne[i]);
+            boolean answer = BC_dcmp02.test(argOne[i]);
             int expectedValue = answer ? 1 : 0;
             String functionPrototype = Aarch64CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
             long[] registerValues = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
@@ -370,7 +371,7 @@ public class Aarch64JTTC1XTest extends MaxTestCase {
         vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dcmp04.java", "boolean test(double)");
         for (int i = 0; i < argOne.length; i++) {
-            boolean answer            = jtt.bytecode.BC_dcmp04.test(argOne[i]);
+            boolean answer            = BC_dcmp04.test(argOne[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
             long[]   registerValues   = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
@@ -388,7 +389,7 @@ public class Aarch64JTTC1XTest extends MaxTestCase {
         vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dcmp07.java", "boolean test(double)");
         for (int i = 0; i < argOne.length; i++) {
-            boolean answer            = jtt.bytecode.BC_dcmp07.test(argOne[i]);
+            boolean answer            = BC_dcmp07.test(argOne[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
             long[]   registerValues   = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
@@ -406,7 +407,7 @@ public class Aarch64JTTC1XTest extends MaxTestCase {
         vm().compilationBroker.setOffline(true);
         initializeCodeBuffers(methods, "BC_dcmp09.java", "boolean test(double)");
         for (int i = 0; i < argOne.length; i++) {
-            boolean answer            = jtt.bytecode.BC_dcmp09.test(argOne[i]);
+            boolean answer            = BC_dcmp09.test(argOne[i]);
             int     expectedValue     = answer ? 1 : 0;
             String  functionPrototype = Aarch64CodeWriter.preAmble("int", "double", Double.toString(argOne[i]));
             long[]   registerValues   = generateAndTestStubs(functionPrototype, entryPoint, codeBytes, expectedValues, testvalues, bitmasks);
