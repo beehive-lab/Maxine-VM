@@ -42,6 +42,7 @@ import com.sun.max.vm.hosted.JavaPrototype;
 import com.sun.max.vm.hosted.VMConfigurator;
 import com.sun.max.vm.type.SignatureDescriptor;
 import jtt.bytecode.*;
+import org.junit.*;
 import test.crossisa.aarch64.asm.Aarch64CodeWriter;
 import test.crossisa.aarch64.asm.MaxineAarch64Tester;
 
@@ -53,7 +54,7 @@ import java.util.List;
 import static com.sun.max.vm.MaxineVM.Phase;
 import static com.sun.max.vm.MaxineVM.vm;
 
-public class Aarch64JTTC1XTest extends MaxTestCase {
+public class Aarch64JTTC1XTest {
 
     private Aarch64Assembler asm;
     private CiTarget aarch64;
@@ -216,10 +217,6 @@ public class Aarch64JTTC1XTest extends MaxTestCase {
         initTests();
     }
 
-    public static void main(String[] args) {
-        junit.textui.TestRunner.run(Aarch64JTTC1XTest.class);
-    }
-
     private void initTests() {
         try {
 
@@ -359,7 +356,8 @@ public class Aarch64JTTC1XTest extends MaxTestCase {
         entryPoint = entryPoint - minimumValue;
     }
 
-    public void test_C1X_jtt_BC_dcmp02() throws Exception {
+    @Test
+    public void C1X_jtt_BC_dcmp02() throws Exception {
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
         String klassName = getKlassName("jtt.bytecode.BC_dcmp02");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
@@ -375,7 +373,8 @@ public class Aarch64JTTC1XTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_BC_dcmp04() throws Exception {
+    @Test
+    public void C1X_jtt_BC_dcmp04() throws Exception {
         initTests();
         vm().compilationBroker.setOffline(initialised);
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
@@ -393,7 +392,8 @@ public class Aarch64JTTC1XTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_BC_dcmp07() throws Exception {
+    @Test
+    public void C1X_jtt_BC_dcmp07() throws Exception {
         initTests();
         vm().compilationBroker.setOffline(initialised);
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
@@ -411,7 +411,8 @@ public class Aarch64JTTC1XTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_BC_dcmp09() throws Exception {
+    @Test
+    public void C1X_jtt_BC_dcmp09() throws Exception {
         initTests();
         vm().compilationBroker.setOffline(initialised);
         double[] argOne = {-1.0d, 1.0d, 0.0d, -0.0d, 5.1d, -5.1d, 0.0d};
@@ -429,7 +430,8 @@ public class Aarch64JTTC1XTest extends MaxTestCase {
         }
     }
 
-    public void test_C1X_jtt_BC_d2i01() throws Exception {
+    @Test
+    public void C1X_jtt_BC_d2i01() throws Exception {
         String klassName = getKlassName("jtt.bytecode.BC_d2i01");
         List<TargetMethod> methods = Compile.compile(new String[] {klassName}, "C1X");
         initializeCodeBuffers(methods, "BC_d2i01.java", "int test(double)");
