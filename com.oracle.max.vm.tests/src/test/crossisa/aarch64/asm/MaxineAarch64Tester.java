@@ -51,6 +51,17 @@ public class MaxineAarch64Tester extends CrossISATester {
         testLongRegisters = test;
     }
 
+    public MaxineAarch64Tester(long[] expected, boolean[] test, BitsFlag[] range,
+                               float[] expectedFloats, boolean[] testFloats) {
+        super();
+        initializeQemu();
+        bitMasks = range;
+        expectedLongRegisters = expected;
+        expectedFloatRegisters = expectedFloats;
+        testLongRegisters = test;
+        testFloatRegisters = testFloats;
+    }
+
     /**
      * Assembles the instructions in contained in the assembly file into the object file.
      * @param assembly
@@ -169,6 +180,8 @@ public class MaxineAarch64Tester extends CrossISATester {
     public void runSimulation() throws Exception {
         super.runSimulation();
         parseLongRegisters("x0 ", "sp");
+        parseFloatRegisters("s0 ", "s31");
+        parseDoubleRegisters("d0 ", "d31");
     }
 
     public static void main(String[] args) throws Exception {
