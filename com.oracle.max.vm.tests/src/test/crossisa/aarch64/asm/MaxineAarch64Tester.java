@@ -62,6 +62,11 @@ public class MaxineAarch64Tester extends CrossISATester {
         testFloatRegisters = testFloats;
     }
 
+    public MaxineAarch64Tester() {
+        super();
+        initializeQemu();
+    }
+
     /**
      * Assembles the instructions in contained in the assembly file into the object file.
      * @param assembly
