@@ -8,3 +8,11 @@ void print_uart0(const char *s) {
 }
 
 #include "./codebuffer.c"
+
+// Add a main method to trick gcc to consider c_entry as a normal
+// function and save LR register
+int main(int argc, char *argv[argc])
+{
+    c_entry();
+    return 0;
+}

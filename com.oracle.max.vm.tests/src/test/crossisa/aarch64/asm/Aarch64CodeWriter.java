@@ -23,6 +23,8 @@ import java.io.*;
 
 import com.oracle.max.asm.*;
 
+import static com.sun.max.vm.stack.JVMSFrameLayout.JVMS_SLOT_SIZE;
+
 public class Aarch64CodeWriter {
 
     public static boolean debug = false;
@@ -96,43 +98,32 @@ public class Aarch64CodeWriter {
     }
 
     public void createCodeFile() {
+        createCodeFile(0);
+    }
+
+    public void createCodeFile(int numberOfArguemnts) {
+        assert numberOfArguemnts >= 0;
         try {
             PrintWriter writer = new PrintWriter("codebuffer.c", "UTF-8");
-            writer.println("unsigned char code[" + ((totalInstructions + 1) * 4) + "] __attribute__((aligned(0x1000))) ;\n");
-            writer.println("void c_entry() {");
-            log("unsigned char code[" + ((totalInstructions + 1) * 4) + "] __attribute__((aligned(0x1000))) ;\n");
-            log("void c_entry() {");
-            long xxx = 0xe30090f0; // r9 240
-            int val;
+            writer.println("unsigned char code[" + ((totalInstructions + 1) * 4) + "] __attribute__((aligned(0x1000))) = {");
+            long xxx;
             for (int i = 0; i < totalInstructions; i++) {
                 xxx = instructions[i];
-                val = i * 4;
-                writer.println("code[" + val + "] = " + (xxx & 0xff) + ";");
-                log("code[" + val + "] = 0x" + Long.toString(xxx & 0xff, 16) + ";");
-                val = val + 1;
-                writer.println("code[" + val + "] = " + ((xxx >> 8) & 0xff) + ";");
-                log("code[" + val + "] = 0x" + Long.toString((xxx >> 8) & 0xff, 16) + ";");
-                val = val + 1;
-                writer.println("code[" + val + "] = " + ((xxx >> 16) & 0xff) + ";");
-                log("code[" + val + "] = 0x" + Long.toString((xxx >> 16) & 0xff, 16) + ";");
-                val = val + 1;
-                writer.println("code[" + val + "] = " + (xxx >> 24 & 0xff) + ";");
-                log("code[" + val + "] = 0x" + Long.toString(xxx >> 24 & 0xff, 16) + ";");
+                writer.println("0x" + Long.toHexString(xxx & 0xFF) + ", " +
+                        "0x" + Long.toHexString(xxx >> 8 & 0xFF) + ", " +
+                        "0x" + Long.toHexString(xxx >> 16 & 0xFF) + ", " +
+                        "0x" + Long.toHexString(xxx >> 24 & 0xFF) + ",");
             }
             // ret
-            writer.println("code[" + totalInstructions * 4 + "] = " + 0xc0 + ";");
-            log("code[" + totalInstructions * 4 + "] = " + 0xc0 + ";");
-            writer.println("code[" + totalInstructions * 4 + "+1] = " + 0x03 + ";");
-            log("code[" + totalInstructions * 4 + "+1] = " + 0x03 + ";");
-            writer.println("code[" + totalInstructions * 4 + "+2] = " + 0x5f + ";");
-            log("code[" + totalInstructions * 4 + "+2] = " + 0x5f + ";");
-            writer.println("code[" + totalInstructions * 4 + "+3] = " + 0xd6 + ";");
-            log("code[" + totalInstructions * 4 + "+3] = " + 0xd6 + ";");
-            String preAmble = preAmble("void", "int", "1");
+            writer.println("0xd6, 0x5f, 0x03, 0xc0 };\n");
+            writer.println("void c_entry() {");
+            String preAmble = preAmble("void", "", "");
             writer.print(preAmble);
-            log(preAmble);
+            if (numberOfArguemnts != 0) {
+                final int size = numberOfArguemnts * JVMS_SLOT_SIZE;
+                writer.println("asm (\"add sp, sp, #" + size + "\");");
+            }
             writer.println("}");
-            log("}");
             writer.close();
         } catch (Exception e) {
             System.err.println(e);
