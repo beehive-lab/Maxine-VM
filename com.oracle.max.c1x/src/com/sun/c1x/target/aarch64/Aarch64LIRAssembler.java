@@ -2038,21 +2038,17 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
 
     @Override
     protected void emitNegate(LIRNegate op) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
         CiValue left = op.operand();
         CiValue dest = op.result();
         assert left.isRegister();
         if (left.kind.isInt()) {
-//            masm.ineg(dest.asRegister(), left.asRegister());
+            masm.neg(32, dest.asRegister(), left.asRegister());
         } else if (dest.kind.isFloat()) {
-//            masm.vneg(ConditionFlag.Always, dest.asRegister(), left.asRegister(), CiKind.Float);
+            masm.fneg(32, dest.asRegister(), left.asRegister());
         } else if (dest.kind.isDouble()) {
-//            masm.vneg(ConditionFlag.Always, dest.asRegister(), left.asRegister(), CiKind.Double);
+            masm.fneg(64, dest.asRegister(), left.asRegister());
         } else {
-//            masm.lneg(dest.asRegister(), left.asRegister());
+            masm.neg(64, dest.asRegister(), left.asRegister());
         }
     }
 
