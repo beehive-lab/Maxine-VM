@@ -46,10 +46,9 @@ import org.junit.*;
 import test.crossisa.aarch64.asm.Aarch64CodeWriter;
 import test.crossisa.aarch64.asm.MaxineAarch64Tester;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.*;
+import java.math.*;
+import java.util.*;
 
 import static com.sun.max.vm.MaxineVM.Phase;
 import static com.sun.max.vm.MaxineVM.vm;
