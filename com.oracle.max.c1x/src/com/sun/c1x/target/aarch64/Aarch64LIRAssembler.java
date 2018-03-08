@@ -204,12 +204,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
     }
 
     private void const2reg(CiRegister dst, float constant, CiKind dstKind) {
-        if (true) {
-            throw Util.unimplemented();
-        }
-
-        masm.mov64BitConstant(rscratch1, Float.floatToRawIntBits(constant));
-//        masm.vmov(ConditionFlag.Always, dst, rscratch1, null, dstKind, CiKind.Int);
+        masm.mov32BitConstant(rscratch1, Float.floatToRawIntBits(constant));
+        masm.fmov(32, dst, rscratch1);
     }
 
     private void const2reg(CiRegister dst, double constant, CiKind dstKind) {
