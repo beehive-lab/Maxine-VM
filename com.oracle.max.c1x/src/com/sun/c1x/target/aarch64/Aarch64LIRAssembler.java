@@ -1552,33 +1552,17 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     case Char:
                     case Short:
                     case Int:
-                        if (true) {
-                            throw Util.unimplemented();
-                        }
-
-//                        masm.cmpl(reg1, opr2.asRegister());
+                        masm.cmp(32, reg1, opr2.asRegister());
                         break;
                     case Object:
-                        if (true) {
-                            throw Util.unimplemented();
-                        }
-
-                        //                        masm.cmpq(reg1, opr2.asRegister());
+                        masm.cmp(32, reg1, opr2.asRegister());
                         break;
                     case Long:
-                        if (true) {
-                            throw Util.unimplemented();
-                        }
-
                         assert (reg1 != Aarch64.r12);
-//                        masm.lcmpl(convertCondition(condition), reg1, opr2.asRegister());
+                        masm.cmp(64, reg1, opr2.asRegister());
                         break;
                     case Float:
-                        if (true) {
-                            throw Util.unimplemented();
-                        }
-
-                        //                        masm.ucomisd(opr1.asRegister(), opr2.asRegister(), opr1.kind, opr2.kind);
+                        masm.ucomisd(opr1.asRegister(), opr2.asRegister(), opr1.kind, opr2.kind);
                         break;
                     case Double:
                         masm.ucomisd(reg1, opr2.asRegister(), opr1.kind, opr2.kind);
