@@ -1633,21 +1633,13 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                     case Char:
                     case Short:
                     case Int:
-                        if (true) {
-                            throw Util.unimplemented();
-                        }
-
-                        //                        masm.cmpl(reg1, c.asInt());
+                        masm.cmp(32, reg1, c.asInt());
                         break;
                     case Float:
-                        if (true) {
-                            throw Util.unimplemented();
-                        }
-
                         masm.setUpScratch(tasm.recordDataReferenceInCode(CiConstant.forFloat(((CiConstant) opr2).asFloat())));
-//                        masm.addRegisters(ConditionFlag.Always, false, Aarch64.r12, Aarch64.r12, Aarch64.r15, 0, 0);
-//                        masm.vldr(ConditionFlag.Always, Aarch64.d30, Aarch64.r12, 0, CiKind.Float, CiKind.Int);
-//                        masm.ucomisd(reg1, Aarch64.d30, opr1.kind, CiKind.Float);
+                        masm.add(32, Aarch64.r12, Aarch64.r12, Aarch64.r15);
+                        masm.fldr(32, Aarch64.d30, Aarch64Address.createBaseRegisterOnlyAddress(Aarch64.r12));
+                        masm.ucomisd(reg1, Aarch64.d30, opr1.kind, CiKind.Float);
                         break;
                     case Double:
                         if (true) {
