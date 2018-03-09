@@ -2472,8 +2472,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 }
                 case Push: {
                     CiRegisterValue value = assureInRegister(operands[inst.x().index]);
-                    if (value.asRegister().number < 16) {
-                        masm.push(1 << value.asRegister().number);
+                    if (value.asRegister().number <= Aarch64.zr.number) {
+                        masm.push(value.asRegister());
                     } else {
                         if (true) {
                             throw Util.unimplemented();
@@ -2486,8 +2486,8 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                 case Pop: {
                     CiValue result = operands[inst.result.index];
                     if (result.isRegister()) {
-                        if (result.asRegister().getEncoding() < 16) {
-                            masm.pop(1 << result.asRegister().getEncoding());
+                        if (result.asRegister().number <= Aarch64.zr.number) {
+                            masm.pop(result.asRegister());
                         } else {
                             if (true) {
                                 throw Util.unimplemented();
@@ -2495,7 +2495,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
                             //                            masm.vpop(ConditionFlag.Always, result.asRegister(), result.asRegister(), result.kind, result.kind);
                         }
                     } else {
-                        masm.pop(1 << 12);
+                        masm.pop(rscratch1);
                         moveOp(rscratch1.asValue(), result, result.kind, null, true);
                     }
                     break;
