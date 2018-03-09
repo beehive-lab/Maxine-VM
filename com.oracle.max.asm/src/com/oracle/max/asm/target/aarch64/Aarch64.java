@@ -235,4 +235,9 @@ public class Aarch64 extends CiArchitecture {
     public boolean isAarch64() {
         return true;
     }
+
+    @Override
+    public boolean twoOperandMode() {
+        return true;
+    }
 }
