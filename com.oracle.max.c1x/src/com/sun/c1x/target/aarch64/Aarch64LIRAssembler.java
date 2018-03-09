@@ -974,7 +974,7 @@ public final class Aarch64LIRAssembler extends LIRAssembler {
         assert info == null : "should never be used :  idiv/irem and ldiv/lrem not handled by this method";
         assert Util.archKindsEqual(left.kind, right.kind) || (left.kind == CiKind.Long && right.kind == CiKind.Int)
                 : code.toString() + " left arch is " + left.kind + " and right arch is " + right.kind;
-//        assert left.equals(dest) : "left and dest must be equal";
+        assert left.equals(dest) : "left and dest must be equal";
         CiKind kind = left.kind;
 
         if (left.isRegister()) {
