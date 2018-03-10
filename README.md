@@ -2,6 +2,12 @@
 
 #### Updates
 
+* 2018-03-09: Maxine VM 2.3.0 Release
+  * Implemented Aarch64 Assembler
+  * Implemented Aarch64 T1X port, Adapters
+  * Ported Cross-ISA testing infrastructure to RISC-V
+  * Bug and stability fixes
+  * Code refactoring and cleanup
 * 2017-11-23: Maxine VM 2.2.0 Release
   * Build against OpenJDK8u151-b12
   * Support invokedynamic
